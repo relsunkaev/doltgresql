@@ -44,6 +44,18 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 			return nodeResolvableTypeReference(ctx, uon, mayBeTrigger)
 		}
 		return nil, nil, errors.Errorf("the given array type is not yet supported")
+	case *tree.TypeReferenceWithModifiers:
+		convertType, doltgresType, err := nodeResolvableTypeReference(ctx, columnType.Type, mayBeTrigger)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(columnType.Modifiers) != 1 {
+			return nil, nil, errors.Errorf("invalid type modifier")
+		}
+		if doltgresType != nil {
+			doltgresType = doltgresType.WithAttTypMod(columnType.Modifiers[0])
+		}
+		return convertType, doltgresType, nil
 	case *tree.OIDTypeReference:
 		return nil, nil, errors.Errorf("referencing types by their OID is not yet supported")
 	case *tree.UnresolvedObjectName:

@@ -806,7 +806,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> UPDATE UPSERT UNTIL USAGE USE USER USERS USING UUID
 
 %token <str> VACUUM VALID VALIDATE VALIDATOR VALUE VALUES VERBOSE
-%token <str> VARBIT VARCHAR VARIABLE VARIADIC VARYING VERSION VIEW VIEWACTIVITY VIRTUAL VOLATILE
+%token <str> VARBIT VARCHAR VARIABLE VARIADIC VARYING VECTOR VERSION VIEW VIEWACTIVITY VIRTUAL VOLATILE
 
 %token <str> WHEN WHERE WINDOW WITH WITHIN WITHOUT WORK WRAPPER WRITE
 
@@ -11884,6 +11884,24 @@ simple_typename:
   {
     $$.val = $1.typeReference()
   }
+| VECTOR
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"vector"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = typ
+  }
+| VECTOR '(' iconst32 ')'
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"vector"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = &tree.TypeReferenceWithModifiers{Type: typ, Modifiers: []int32{$3.int32()}}
+  }
+| complex_type_name '(' iconst32 ')'
+  {
+    $$.val = &tree.TypeReferenceWithModifiers{Type: $1.typeReference(), Modifiers: []int32{$3.int32()}}
+  }
 | const_typename
 | bit_with_length
 | character_with_length
@@ -15276,6 +15294,7 @@ col_name_keyword:
 | VALUES
 | VARBIT
 | VARCHAR
+| VECTOR
 | VIRTUAL
 | VOLATILE
 | WORK

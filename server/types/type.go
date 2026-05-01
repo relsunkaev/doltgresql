@@ -117,6 +117,7 @@ func NewUnresolvedDoltgresTypeFromID(idType id.Type) *DoltgresType {
 	return &DoltgresType{
 		ID:           idType,
 		IsUnresolved: true,
+		attTypMod:    -1,
 	}
 }
 
@@ -316,6 +317,9 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 	case []byte:
 		bb := v2.([]byte)
 		return bytes.Compare(ab, bb), nil
+	case []float32:
+		bb := v2.([]float32)
+		return CompareVectors(ab, bb), nil
 	case time.Time:
 		bb := v2.(time.Time)
 		return ab.Compare(bb), nil

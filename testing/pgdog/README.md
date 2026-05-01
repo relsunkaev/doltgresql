@@ -68,7 +68,7 @@ column = "tenant_id"
 data_type = "bigint"
 ```
 
-PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, and `uuid`. PgDog also documents `vector` shard keys, but Doltgres does not currently provide a native `vector` type, so this smoke path intentionally uses `bigint`.
+PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, `uuid`, and `vector`. This smoke path keeps `bigint` as the distribution check and adds a routed `vector` lookup to cover pgvector-style shard keys.
 
 ## Unsupported Paths
 
@@ -81,7 +81,7 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 | Publication and subscription DDL | Publication/subscription commands and local publication catalogs are not implemented enough for PgDog setup. | Treat PgDog logical replication setup as unsupported. |
 | Replication slots and replication stats | `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots` are placeholders without local producer state. | Do not use PgDog replica or replication-health workflows against Doltgres. |
 | COPY movement | Text, CSV, and binary `COPY FROM` plus table `COPY TO STDOUT` are supported for PgDog data movement smoke coverage. Query-form `COPY (SELECT ...) TO STDOUT` is not implemented yet. | Use table-based COPY movement only. |
-| Vector shard keys | PgDog can route `vector` keys, but Doltgres has no native `vector` type. | Use `bigint`, `varchar` / `text`, or `uuid` shard keys. |
+| Vector shard keys | Doltgres provides a pgvector-compatible `vector` scalar with text/binary IO and equality for PgDog shard-key routing. Distance operators and ANN indexes are not implemented. | Use `vector` for equality-routed shard keys only. |
 | Replica routing | `pg_is_in_recovery()` reports primary mode, `pg_current_wal_lsn()` returns the synthetic primary compatibility LSN `0/0`, and replay/receive LSNs are `NULL`. There is no standby or lag stream. | Configure only primary Doltgres entries. Do not use PgDog replica routing or lag checks. |
 
 SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for PgDog's full prepared-statement mode smoke coverage.

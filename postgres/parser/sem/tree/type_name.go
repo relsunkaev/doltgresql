@@ -130,6 +130,7 @@ type ResolvableTypeReference interface {
 
 var _ ResolvableTypeReference = &UnresolvedObjectName{}
 var _ ResolvableTypeReference = &ArrayTypeReference{}
+var _ ResolvableTypeReference = &TypeReferenceWithModifiers{}
 var _ ResolvableTypeReference = &types.T{}
 var _ ResolvableTypeReference = &OIDTypeReference{}
 
@@ -146,6 +147,8 @@ func ResolveType(
 			return nil, err
 		}
 		return types.MakeArray(typ), nil
+	case *TypeReferenceWithModifiers:
+		return ResolveType(ctx, t.Type, resolver)
 	case *UnresolvedObjectName:
 		if resolver == nil {
 			// If we don't have a resolver, we can't actually resolve this
@@ -225,6 +228,28 @@ func (node *ArrayTypeReference) SQLString() string {
 		ctx.WriteString(node.ElementType.SQLString())
 		ctx.WriteString("[]")
 	}
+	return ctx.String()
+}
+
+// TypeReferenceWithModifiers represents a possibly unresolved type reference with
+// PostgreSQL type modifiers, such as vector(3).
+type TypeReferenceWithModifiers struct {
+	Type      ResolvableTypeReference
+	Modifiers []int32
+}
+
+// SQLString implements the ResolvableTypeReference interface.
+func (node *TypeReferenceWithModifiers) SQLString() string {
+	var ctx FmtCtx
+	ctx.FormatTypeReference(node.Type)
+	ctx.WriteString("(")
+	for i, modifier := range node.Modifiers {
+		if i > 0 {
+			ctx.WriteString(",")
+		}
+		ctx.WriteString(fmt.Sprintf("%d", modifier))
+	}
+	ctx.WriteString(")")
 	return ctx.String()
 }
 

@@ -128,6 +128,12 @@ database = "pgdog"
 name = "pgdog_items"
 column = "tenant_id"
 data_type = "bigint"
+
+[[sharded_tables]]
+database = "pgdog"
+name = "pgdog_vectors"
+column = "tenant_id"
+data_type = "vector"
 EOF
 
   cat > "$TMP_DIR/pgdog/users.toml" <<EOF
@@ -238,7 +244,14 @@ if ! grep -q "42" <<< "$sql_prepare_result"; then
   echo "sql-prepare: expected EXECUTE result 42, got: $sql_prepare_result" >&2
   exit 1
 fi
-expect_pgdog_failure "vector" "CREATE TABLE pgdog_vectors (tenant_id vector);" "vector"
+psql_pgdog -c "CREATE TABLE pgdog_vectors (tenant_id vector PRIMARY KEY, label TEXT);"
+psql_pgdog -c "INSERT INTO pgdog_vectors (tenant_id, label) VALUES ('[1,0]'::vector, 'vector-1');"
+psql_pgdog -c "INSERT INTO pgdog_vectors (tenant_id, label) VALUES ('[2,0]'::vector, 'vector-2');"
+vector_result="$(psql_pgdog -At -c "SELECT label FROM pgdog_vectors WHERE tenant_id = '[1,0]'::vector;")"
+if [[ "$vector_result" != "vector-1" ]]; then
+  echo "vector: expected routed vector shard-key lookup to return vector-1, got: $vector_result" >&2
+  exit 1
+fi
 wal_lsn_result="$(psql_pgdog -At -c "SELECT pg_current_wal_lsn(), pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);")"
 if [[ "$wal_lsn_result" != "0/0|1" ]]; then
   echo "wal-lsn: expected 0/0|1, got: $wal_lsn_result" >&2

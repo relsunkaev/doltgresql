@@ -225,12 +225,27 @@ func resolveType(ctx *sql.Context, db sql.Database, typ *pgtypes.DoltgresType) (
 				return nil, err
 			}
 			if resolvedTyp != nil && (typ.ID.TypeName() == "unknown" || resolvedTyp.ID != pgtypes.Unknown.ID) {
-				return resolvedTyp, nil
+				return withResolvedTypmod(resolvedTyp, typ)
 			}
 		}
 		return nil, pgtypes.ErrTypeDoesNotExist.New(typ.Name())
 	}
-	return resolvedTyp, nil
+	return withResolvedTypmod(resolvedTyp, typ)
+}
+
+func withResolvedTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	typmod := unresolvedTyp.GetAttTypMod()
+	if typmod == -1 {
+		return resolvedTyp, nil
+	}
+	if resolvedTyp.ID == pgtypes.Vector.ID {
+		var err error
+		typmod, err = pgtypes.GetTypmodFromVectorDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return resolvedTyp.WithAttTypMod(typmod), nil
 }
 
 // resolveDefaultColumnType resolves the OutType of a *sql.ColumnDefaultValue if it's not nil (and not already resolved).

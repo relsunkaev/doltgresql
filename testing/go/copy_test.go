@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"path/filepath"
 	"testing"
 
@@ -439,7 +440,7 @@ func TestBinaryCopyFromAndToStdout(t *testing.T) {
 		require.NoError(t, controller.WaitForStop())
 	}()
 
-	_, err := connection.Exec(ctx, "CREATE TABLE copy_binary (id int primary key, name text, amount bigint, note text);")
+	_, err := connection.Exec(ctx, "CREATE TABLE copy_binary (id int primary key, name text, amount bigint, note text, embedding vector);")
 	require.NoError(t, err)
 
 	binaryInput := buildBinaryCopyData([][][]byte{
@@ -448,15 +449,17 @@ func TestBinaryCopyFromAndToStdout(t *testing.T) {
 			[]byte("alice"),
 			int64Binary(100),
 			[]byte("loaded"),
+			vectorBinary(1, 2, 3),
 		},
 		{
 			int32Binary(2),
 			[]byte("bob"),
 			int64Binary(200),
 			nil,
+			vectorBinary(-1.5, 0, 2.25),
 		},
 	})
-	tag, err := connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryInput), "COPY copy_binary (id, name, amount, note) FROM STDIN WITH (FORMAT BINARY);")
+	tag, err := connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryInput), "COPY copy_binary (id, name, amount, note, embedding) FROM STDIN WITH (FORMAT BINARY);")
 	require.NoError(t, err)
 	require.Equal(t, "COPY 2", tag.String())
 
@@ -465,18 +468,18 @@ func TestBinaryCopyFromAndToStdout(t *testing.T) {
 	readRows, _, err := ReadRows(rows, true)
 	require.NoError(t, err)
 	require.Equal(t, []sql.Row{
-		{int64(1), "alice", int64(100), "loaded"},
-		{int64(2), "bob", int64(200), nil},
+		{int64(1), "alice", int64(100), "loaded", "[1,2,3]"},
+		{int64(2), "bob", int64(200), nil, "[-1.5,0,2.25]"},
 	}, readRows)
 
 	var binaryOut bytes.Buffer
-	tag, err = connection.Default.PgConn().CopyTo(ctx, &binaryOut, "COPY copy_binary (id, name, amount, note) TO STDOUT WITH (FORMAT BINARY);")
+	tag, err = connection.Default.PgConn().CopyTo(ctx, &binaryOut, "COPY copy_binary (id, name, amount, note, embedding) TO STDOUT WITH (FORMAT BINARY);")
 	require.NoError(t, err)
 	require.Equal(t, "COPY 2", tag.String())
 
-	_, err = connection.Exec(ctx, "CREATE TABLE copy_binary_roundtrip (id int primary key, name text, amount bigint, note text);")
+	_, err = connection.Exec(ctx, "CREATE TABLE copy_binary_roundtrip (id int primary key, name text, amount bigint, note text, embedding vector);")
 	require.NoError(t, err)
-	tag, err = connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryOut.Bytes()), "COPY copy_binary_roundtrip (id, name, amount, note) FROM STDIN WITH (FORMAT BINARY);")
+	tag, err = connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryOut.Bytes()), "COPY copy_binary_roundtrip (id, name, amount, note, embedding) FROM STDIN WITH (FORMAT BINARY);")
 	require.NoError(t, err)
 	require.Equal(t, "COPY 2", tag.String())
 
@@ -485,8 +488,8 @@ func TestBinaryCopyFromAndToStdout(t *testing.T) {
 	readRows, _, err = ReadRows(rows, true)
 	require.NoError(t, err)
 	require.Equal(t, []sql.Row{
-		{int64(1), "alice", int64(100), "loaded"},
-		{int64(2), "bob", int64(200), nil},
+		{int64(1), "alice", int64(100), "loaded", "[1,2,3]"},
+		{int64(2), "bob", int64(200), nil, "[-1.5,0,2.25]"},
 	}, readRows)
 }
 
@@ -517,5 +520,15 @@ func int32Binary(value int32) []byte {
 func int64Binary(value int64) []byte {
 	data := make([]byte, 8)
 	binary.BigEndian.PutUint64(data, uint64(value))
+	return data
+}
+
+func vectorBinary(values ...float32) []byte {
+	data := make([]byte, 4+(len(values)*4))
+	binary.BigEndian.PutUint16(data, uint16(len(values)))
+	binary.BigEndian.PutUint16(data[2:], 0)
+	for i, value := range values {
+		binary.BigEndian.PutUint32(data[4+(i*4):], math.Float32bits(value))
+	}
 	return data
 }

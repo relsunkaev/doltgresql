@@ -2035,6 +2035,81 @@ var typesTests = []ScriptTest{
 		},
 	},
 	{
+		Name: "Vector type",
+		SetUpScript: []string{
+			"CREATE TABLE t_vector (id INTEGER primary key, v1 vector);",
+			"INSERT INTO t_vector VALUES (1, '[1,2,3]'), (2, '[-1.5,0,2.25]');",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "SELECT * FROM t_vector ORDER BY id;",
+				Expected: []sql.Row{
+					{1, "[1,2,3]"},
+					{2, "[-1.5,0,2.25]"},
+				},
+			},
+			{
+				Query: "SELECT '[1,2,3]'::vector = '[1,2,3]'::vector, '[1,2,3]'::vector <> '[1,2,4]'::vector;",
+				Expected: []sql.Row{
+					{"t", "t"},
+				},
+			},
+			{
+				Query:       "SELECT '[1,]'::vector;",
+				ExpectedErr: "invalid input syntax for type vector",
+			},
+			{
+				Query:       "SELECT '[]'::vector;",
+				ExpectedErr: "invalid input syntax for type vector",
+			},
+		},
+	},
+	{
+		Name: "Vector typmod",
+		SetUpScript: []string{
+			"CREATE TABLE t_vector_dim (id INTEGER primary key, v1 vector(3));",
+			"INSERT INTO t_vector_dim VALUES (1, '[1,2,3]');",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "SELECT * FROM t_vector_dim ORDER BY id;",
+				Expected: []sql.Row{
+					{1, "[1,2,3]"},
+				},
+			},
+			{
+				Query:       "INSERT INTO t_vector_dim VALUES (2, '[1,2]');",
+				ExpectedErr: "expected 3 dimensions, not 2",
+			},
+			{
+				Query:       "CREATE TABLE t_vector_bad_dim (v1 vector(0));",
+				ExpectedErr: "dimensions for type vector must be between 1 and 16000",
+			},
+		},
+	},
+	{
+		Name: "Vector key",
+		SetUpScript: []string{
+			"CREATE TABLE t_vector_key (tenant_id vector primary key, label TEXT);",
+			"INSERT INTO t_vector_key VALUES ('[1,0]', 'one'), ('[2,0]', 'two');",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "SELECT label FROM t_vector_key WHERE tenant_id = '[1,0]'::vector;",
+				Expected: []sql.Row{
+					{"one"},
+				},
+			},
+			{
+				Query: "SELECT tenant_id FROM t_vector_key ORDER BY tenant_id;",
+				Expected: []sql.Row{
+					{"[1,0]"},
+					{"[2,0]"},
+				},
+			},
+		},
+	},
+	{
 		Name: "Oid type, explicit casts",
 		SetUpScript: []string{
 			"CREATE TABLE t_oid (id INTEGER primary key, coid OID);",

@@ -63,6 +63,7 @@ func initTypeFunctions() {
 	initUuid()
 	initVarBit()
 	initVarChar()
+	initVector()
 	initVoid()
 	initXid()
 }

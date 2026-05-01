@@ -31,6 +31,8 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 			SetUpScript: []string{
 				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
 				"INSERT INTO pgdog_items VALUES (1, 'one'), (2, 'two');",
+				"CREATE TABLE pgdog_vectors (tenant_id vector PRIMARY KEY, label TEXT);",
+				"INSERT INTO pgdog_vectors VALUES ('[1,0]'::vector, 'vector-one'), ('[2,0]'::vector, 'vector-two');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -52,6 +54,12 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 				{
 					Query:    "SELECT pg_is_in_recovery();",
 					Expected: []sql.Row{{"f"}},
+				},
+				{
+					Query: "SELECT label FROM pgdog_vectors WHERE tenant_id = '[1,0]'::vector;",
+					Expected: []sql.Row{
+						{"vector-one"},
+					},
 				},
 			},
 		},
@@ -95,10 +103,6 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					Expected: []sql.Row{
 						{"dg_pgdog_stmt", "t"},
 					},
-				},
-				{
-					Query:       "CREATE TABLE pgdog_vectors (tenant_id vector);",
-					ExpectedErr: "type \"vector\" does not exist",
 				},
 				{
 					Query: "SELECT pg_current_wal_lsn();",
