@@ -639,7 +639,11 @@ func (h *ConnectionHandler) rollbackPrepared(stmt node.RollbackPrepared, query C
 	if h.inTransaction {
 		return errors.Errorf("ROLLBACK PREPARED cannot run inside a transaction block")
 	}
-	if err := sessionstate.RollbackPreparedTransaction(stmt.GID); err != nil {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	if err := sessionstate.RollbackPreparedTransaction(sqlCtx, stmt.GID); err != nil {
 		return err
 	}
 	return h.send(&pgproto3.CommandComplete{

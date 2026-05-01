@@ -15,13 +15,21 @@
 package sessionstate
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"os"
+	"path"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/ref"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+	"github.com/dolthub/dolt/go/libraries/utils/filesys"
+	"github.com/dolthub/dolt/go/store/hash"
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
@@ -33,17 +41,55 @@ type PreparedTransaction struct {
 	Owner         string
 	Database      string
 
-	transaction *dsess.DoltTransaction
-	workingSet  *doltdb.WorkingSet
+	transaction            *dsess.DoltTransaction
+	workingSet             *doltdb.WorkingSet
+	workingSetName         string
+	preparedWorkingSetName string
+	baseWorkingSetHash     hash.Hash
 }
 
 var preparedTransactions = struct {
 	sync.RWMutex
 	nextTransactionID uint32
 	byGID             map[string]PreparedTransaction
+	storageFS         filesys.Filesys
+	storagePath       string
 }{
 	nextTransactionID: 1,
 	byGID:             make(map[string]PreparedTransaction),
+}
+
+type persistentPreparedTransactionState struct {
+	Version           int                             `json:"version"`
+	NextTransactionID uint32                          `json:"next_transaction_id"`
+	Transactions      []persistentPreparedTransaction `json:"transactions"`
+}
+
+type persistentPreparedTransaction struct {
+	TransactionID          uint32    `json:"transaction_id"`
+	GID                    string    `json:"gid"`
+	Prepared               time.Time `json:"prepared"`
+	Owner                  string    `json:"owner"`
+	Database               string    `json:"database"`
+	WorkingSetName         string    `json:"working_set_name"`
+	PreparedWorkingSetName string    `json:"prepared_working_set_name"`
+	BaseWorkingSetHash     string    `json:"base_working_set_hash"`
+}
+
+const preparedTransactionStateVersion = 1
+
+// ConfigurePreparedTransactionStorage loads and persists prepared transaction metadata in the supplied filesystem.
+func ConfigurePreparedTransactionStorage(fs filesys.Filesys, storagePath string) error {
+	preparedTransactions.Lock()
+	defer preparedTransactions.Unlock()
+	preparedTransactions.storageFS = fs
+	preparedTransactions.storagePath = storagePath
+	preparedTransactions.nextTransactionID = 1
+	preparedTransactions.byGID = make(map[string]PreparedTransaction)
+	if fs == nil || storagePath == "" {
+		return nil
+	}
+	return loadPreparedTransactionsLocked()
 }
 
 // PrepareTransaction records the active transaction under gid and rolls the current session back. The stored working
@@ -77,18 +123,29 @@ func PrepareTransaction(ctx *sql.Context, gid string) error {
 	if workingSet == nil {
 		return errors.Errorf("cannot prepare transaction on detached head")
 	}
+	doltDB, err := doltDBForPreparedTransaction(ctx, sess, dbName)
+	if err != nil {
+		return err
+	}
+	baseWorkingSetHash, err := baseWorkingSetHashForTransaction(ctx, doltDB, doltTx, dbName, workingSet.Ref())
+	if err != nil {
+		return err
+	}
 
 	owner := sess.Username()
 	if owner == "" {
 		owner = "postgres"
 	}
 	prepared := PreparedTransaction{
-		GID:         gid,
-		Prepared:    time.Now(),
-		Owner:       owner,
-		Database:    dbName,
-		transaction: doltTx,
-		workingSet:  workingSet,
+		GID:                    gid,
+		Prepared:               time.Now(),
+		Owner:                  owner,
+		Database:               dbName,
+		transaction:            doltTx,
+		workingSet:             workingSet,
+		workingSetName:         workingSet.Ref().GetPath(),
+		preparedWorkingSetName: preparedWorkingSetName(gid),
+		baseWorkingSetHash:     baseWorkingSetHash,
 	}
 
 	preparedTransactions.Lock()
@@ -96,13 +153,23 @@ func PrepareTransaction(ctx *sql.Context, gid string) error {
 		preparedTransactions.Unlock()
 		return errors.Errorf("prepared transaction with identifier %q already exists", gid)
 	}
+	if err = writePreparedWorkingSet(ctx, doltDB, prepared, workingSet); err != nil {
+		preparedTransactions.Unlock()
+		return err
+	}
 	prepared.TransactionID = preparedTransactions.nextTransactionID
 	preparedTransactions.nextTransactionID++
 	preparedTransactions.byGID[gid] = prepared
+	if err = persistPreparedTransactionsLocked(); err != nil {
+		delete(preparedTransactions.byGID, gid)
+		preparedTransactions.Unlock()
+		_ = deletePreparedWorkingSet(ctx, doltDB, prepared)
+		return err
+	}
 	preparedTransactions.Unlock()
 
 	if err = sess.Rollback(ctx, tx); err != nil {
-		_ = RollbackPreparedTransaction(gid)
+		_ = RollbackPreparedTransaction(ctx, gid)
 		return err
 	}
 	ctx.SetTransaction(nil)
@@ -118,28 +185,34 @@ func CommitPreparedTransaction(ctx *sql.Context, gid string) error {
 	}
 
 	sess := dsess.DSessFromSess(ctx.Session)
+	var err error
 	if _, ok, err := sess.LookupDbState(ctx, prepared.Database); err != nil {
-		preparedTransactions.Lock()
-		preparedTransactions.byGID[gid] = prepared
-		preparedTransactions.Unlock()
+		restorePreparedTransaction(prepared)
 		return err
 	} else if !ok {
-		preparedTransactions.Lock()
-		preparedTransactions.byGID[gid] = prepared
-		preparedTransactions.Unlock()
+		restorePreparedTransaction(prepared)
 		return sql.ErrDatabaseNotFound.New(prepared.Database)
 	}
-	if err := sess.SetWorkingSet(ctx, prepared.Database, prepared.workingSet); err != nil {
-		preparedTransactions.Lock()
-		preparedTransactions.byGID[gid] = prepared
-		preparedTransactions.Unlock()
+	if prepared.transaction != nil && prepared.workingSet != nil {
+		if err = sess.SetWorkingSet(ctx, prepared.Database, prepared.workingSet); err != nil {
+			restorePreparedTransaction(prepared)
+			return err
+		}
+		if err = sess.CommitWorkingSet(ctx, prepared.Database, prepared.transaction); err != nil {
+			restorePreparedTransaction(prepared)
+			return err
+		}
+	} else {
+		if err = commitRecoveredPreparedTransaction(ctx, prepared); err != nil {
+			restorePreparedTransaction(prepared)
+			return err
+		}
+	}
+	if err = forgetPreparedTransaction(prepared); err != nil {
 		return err
 	}
-	if err := sess.CommitWorkingSet(ctx, prepared.Database, prepared.transaction); err != nil {
-		preparedTransactions.Lock()
-		preparedTransactions.byGID[gid] = prepared
-		preparedTransactions.Unlock()
-		return err
+	if doltDB, dbErr := doltDBForPreparedTransaction(ctx, sess, prepared.Database); dbErr == nil {
+		_ = deletePreparedWorkingSet(ctx, doltDB, prepared)
 	}
 	ctx.SetTransaction(nil)
 	ctx.SetIgnoreAutoCommit(false)
@@ -147,13 +220,26 @@ func CommitPreparedTransaction(ctx *sql.Context, gid string) error {
 }
 
 // RollbackPreparedTransaction removes the prepared transaction with gid without applying it.
-func RollbackPreparedTransaction(gid string) error {
+func RollbackPreparedTransaction(ctx *sql.Context, gid string) error {
 	preparedTransactions.Lock()
-	defer preparedTransactions.Unlock()
-	if _, ok := preparedTransactions.byGID[gid]; !ok {
+	prepared, ok := preparedTransactions.byGID[gid]
+	if !ok {
+		preparedTransactions.Unlock()
 		return errors.Errorf("prepared transaction with identifier %q does not exist", gid)
 	}
 	delete(preparedTransactions.byGID, gid)
+	err := persistPreparedTransactionsLocked()
+	preparedTransactions.Unlock()
+	if err != nil {
+		restorePreparedTransaction(prepared)
+		return err
+	}
+	if ctx != nil {
+		sess := dsess.DSessFromSess(ctx.Session)
+		if doltDB, dbErr := doltDBForPreparedTransaction(ctx, sess, prepared.Database); dbErr == nil {
+			_ = deletePreparedWorkingSet(ctx, doltDB, prepared)
+		}
+	}
 	return nil
 }
 
@@ -182,4 +268,226 @@ func ListPreparedTransactions(database string) []PreparedTransaction {
 		return transactions[i].GID < transactions[j].GID
 	})
 	return transactions
+}
+
+// ResetPreparedTransactionsForTests clears in-process prepared transaction state.
+func ResetPreparedTransactionsForTests() {
+	preparedTransactions.Lock()
+	defer preparedTransactions.Unlock()
+	preparedTransactions.nextTransactionID = 1
+	preparedTransactions.byGID = make(map[string]PreparedTransaction)
+	preparedTransactions.storageFS = nil
+	preparedTransactions.storagePath = ""
+}
+
+func restorePreparedTransaction(prepared PreparedTransaction) {
+	preparedTransactions.Lock()
+	defer preparedTransactions.Unlock()
+	preparedTransactions.byGID[prepared.GID] = prepared
+}
+
+func forgetPreparedTransaction(prepared PreparedTransaction) error {
+	preparedTransactions.Lock()
+	defer preparedTransactions.Unlock()
+	delete(preparedTransactions.byGID, prepared.GID)
+	return persistPreparedTransactionsLocked()
+}
+
+func doltDBForPreparedTransaction(ctx *sql.Context, sess *dsess.DoltSession, dbName string) (*doltdb.DoltDB, error) {
+	sqlDB, ok, err := sess.Provider().SessionDatabase(ctx, dbName)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, sql.ErrDatabaseNotFound.New(dbName)
+	}
+	doltDB := sqlDB.DbData().Ddb
+	if doltDB == nil {
+		return nil, errors.Errorf("database %s is not backed by a Dolt database", dbName)
+	}
+	return doltDB, nil
+}
+
+func baseWorkingSetHashForTransaction(
+	ctx *sql.Context,
+	doltDB *doltdb.DoltDB,
+	tx *dsess.DoltTransaction,
+	dbName string,
+	workingSetRef ref.WorkingSetRef,
+) (hash.Hash, error) {
+	initialRoot, ok := tx.GetInitialRoot(dbName)
+	if !ok {
+		return hash.Hash{}, errors.Errorf("database %s is unknown to the transaction", dbName)
+	}
+	baseWorkingSet, err := doltDB.ResolveWorkingSetAtRoot(ctx, workingSetRef, initialRoot)
+	if err != nil {
+		return hash.Hash{}, err
+	}
+	return baseWorkingSet.HashOf()
+}
+
+func preparedWorkingSetName(gid string) string {
+	return path.Join("preparedTransactions", hex.EncodeToString([]byte(gid)))
+}
+
+func writePreparedWorkingSet(ctx *sql.Context, doltDB *doltdb.DoltDB, prepared PreparedTransaction, workingSet *doltdb.WorkingSet) error {
+	preparedRef := ref.NewWorkingSetRef(prepared.preparedWorkingSetName)
+	var currentHash hash.Hash
+	if existing, err := doltDB.ResolveWorkingSet(ctx, preparedRef); err == nil {
+		var hashErr error
+		currentHash, hashErr = existing.HashOf()
+		if hashErr != nil {
+			return hashErr
+		}
+	} else if err != doltdb.ErrWorkingSetNotFound {
+		return err
+	}
+	return doltDB.UpdateWorkingSet(ctx, preparedRef, workingSet, currentHash, doltdb.TodoWorkingSetMeta(), nil)
+}
+
+func deletePreparedWorkingSet(ctx *sql.Context, doltDB *doltdb.DoltDB, prepared PreparedTransaction) error {
+	if prepared.preparedWorkingSetName == "" {
+		return nil
+	}
+	return doltDB.DeleteWorkingSet(ctx, ref.NewWorkingSetRef(prepared.preparedWorkingSetName))
+}
+
+func commitRecoveredPreparedTransaction(ctx *sql.Context, prepared PreparedTransaction) error {
+	sess := dsess.DSessFromSess(ctx.Session)
+	doltDB, err := doltDBForPreparedTransaction(ctx, sess, prepared.Database)
+	if err != nil {
+		return err
+	}
+	state, ok, err := sess.LookupDbState(ctx, prepared.Database)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrDatabaseNotFound.New(prepared.Database)
+	}
+	currentWorkingSet := state.WorkingSet()
+	if currentWorkingSet == nil {
+		return errors.Errorf("cannot commit prepared transaction %q on detached head", prepared.GID)
+	}
+	storedCurrentWorkingSet, err := doltDB.ResolveWorkingSet(ctx, currentWorkingSet.Ref())
+	if err != nil {
+		return err
+	}
+	currentHash, err := storedCurrentWorkingSet.HashOf()
+	if err != nil {
+		return err
+	}
+	if currentHash != prepared.baseWorkingSetHash {
+		return errors.Errorf("prepared transaction %q cannot be committed because the working set changed since PREPARE TRANSACTION", prepared.GID)
+	}
+	sidecar, err := doltDB.ResolveWorkingSet(ctx, ref.NewWorkingSetRef(prepared.preparedWorkingSetName))
+	if err != nil {
+		return err
+	}
+	workingSet := doltdb.EmptyWorkingSet(ref.NewWorkingSetRef(prepared.workingSetName)).
+		WithWorkingRoot(sidecar.WorkingRoot()).
+		WithStagedRoot(sidecar.StagedRoot())
+
+	tx, err := sess.StartTransaction(ctx, sql.ReadWrite)
+	if err != nil {
+		return err
+	}
+	if err = sess.SetWorkingSet(ctx, prepared.Database, workingSet); err != nil {
+		return err
+	}
+	return sess.CommitWorkingSet(ctx, prepared.Database, tx)
+}
+
+func loadPreparedTransactionsLocked() error {
+	exists, isDir := preparedTransactions.storageFS.Exists(preparedTransactions.storagePath)
+	if !exists {
+		return nil
+	}
+	if isDir {
+		return errors.Errorf("prepared transaction state path %q is a directory", preparedTransactions.storagePath)
+	}
+	data, err := preparedTransactions.storageFS.ReadFile(preparedTransactions.storagePath)
+	if err != nil {
+		return err
+	}
+	var state persistentPreparedTransactionState
+	if err = json.Unmarshal(data, &state); err != nil {
+		return err
+	}
+	maxID := uint32(0)
+	for _, stored := range state.Transactions {
+		baseHash, ok := hash.MaybeParse(stored.BaseWorkingSetHash)
+		if !ok {
+			return errors.Errorf("invalid base working set hash for prepared transaction %q", stored.GID)
+		}
+		prepared := PreparedTransaction{
+			TransactionID:          stored.TransactionID,
+			GID:                    stored.GID,
+			Prepared:               stored.Prepared,
+			Owner:                  stored.Owner,
+			Database:               stored.Database,
+			workingSetName:         stored.WorkingSetName,
+			preparedWorkingSetName: stored.PreparedWorkingSetName,
+			baseWorkingSetHash:     baseHash,
+		}
+		preparedTransactions.byGID[prepared.GID] = prepared
+		if prepared.TransactionID > maxID {
+			maxID = prepared.TransactionID
+		}
+	}
+	preparedTransactions.nextTransactionID = state.NextTransactionID
+	if preparedTransactions.nextTransactionID <= maxID {
+		preparedTransactions.nextTransactionID = maxID + 1
+	}
+	if preparedTransactions.nextTransactionID == 0 {
+		preparedTransactions.nextTransactionID = 1
+	}
+	return nil
+}
+
+func persistPreparedTransactionsLocked() error {
+	if preparedTransactions.storageFS == nil || preparedTransactions.storagePath == "" {
+		return nil
+	}
+	if len(preparedTransactions.byGID) == 0 {
+		if exists, isDir := preparedTransactions.storageFS.Exists(preparedTransactions.storagePath); exists && !isDir {
+			return preparedTransactions.storageFS.DeleteFile(preparedTransactions.storagePath)
+		}
+		return nil
+	}
+	dir := filepath.Dir(preparedTransactions.storagePath)
+	if dir != "." && dir != "" {
+		if err := preparedTransactions.storageFS.MkDirs(dir); err != nil {
+			return err
+		}
+	}
+	data, err := json.MarshalIndent(toPersistentPreparedTransactionStateLocked(), "", "  ")
+	if err != nil {
+		return err
+	}
+	return preparedTransactions.storageFS.WriteFile(preparedTransactions.storagePath, data, os.ModePerm)
+}
+
+func toPersistentPreparedTransactionStateLocked() persistentPreparedTransactionState {
+	state := persistentPreparedTransactionState{
+		Version:           preparedTransactionStateVersion,
+		NextTransactionID: preparedTransactions.nextTransactionID,
+		Transactions:      make([]persistentPreparedTransaction, 0, len(preparedTransactions.byGID)),
+	}
+	for _, prepared := range preparedTransactions.byGID {
+		state.Transactions = append(state.Transactions, persistentPreparedTransaction{
+			TransactionID:          prepared.TransactionID,
+			GID:                    prepared.GID,
+			Prepared:               prepared.Prepared,
+			Owner:                  prepared.Owner,
+			Database:               prepared.Database,
+			WorkingSetName:         prepared.workingSetName,
+			PreparedWorkingSetName: prepared.preparedWorkingSetName,
+			BaseWorkingSetHash:     prepared.baseWorkingSetHash.String(),
+		})
+	}
+	sort.Slice(state.Transactions, func(i, j int) bool {
+		return state.Transactions[i].GID < state.Transactions[j].GID
+	})
+	return state
 }
