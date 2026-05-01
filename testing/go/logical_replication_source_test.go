@@ -329,6 +329,11 @@ func TestLogicalReplicationSourceTerminateBackendDeactivatesSlot(t *testing.T) {
 		WHERE slot_name = $1`, slotName).Scan(&activePID))
 	require.Greater(t, activePID, int32(0))
 
+	dropConn := connectReplicationConn(t, ctx, port)
+	err = pglogrepl.DropReplicationSlot(ctx, dropConn, slotName, pglogrepl.DropReplicationSlotOptions{})
+	require.ErrorContains(t, err, `replication slot "dg_terminate_backend_slot" is active`)
+	require.NoError(t, dropConn.Close(ctx))
+
 	var terminated bool
 	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_terminate_backend($1::int4);", activePID).Scan(&terminated))
 	require.True(t, terminated)
@@ -337,6 +342,36 @@ func TestLogicalReplicationSourceTerminateBackendDeactivatesSlot(t *testing.T) {
 	var missing bool
 	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_terminate_backend(2147483647::int4);").Scan(&missing))
 	require.False(t, missing)
+}
+
+func TestLogicalReplicationSourceRejectsUnsupportedSlotModesAndPlugins(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, "dg_physical_slot", "", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.PhysicalReplication,
+	})
+	require.ErrorContains(t, err, "invalid CREATE_REPLICATION_SLOT command")
+
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, "dg_test_decoding_slot", "test_decoding", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.ErrorContains(t, err, `logical decoding output plugin "test_decoding" is not supported`)
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM pg_catalog.pg_replication_slots;").Scan(&slotCount))
+	require.Equal(t, 0, slotCount)
 }
 
 func TestLogicalReplicationSourceFiltersPublicationAndIgnoresClientLSNFeedback(t *testing.T) {
