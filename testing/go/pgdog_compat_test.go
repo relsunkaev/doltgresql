@@ -1,0 +1,142 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package _go
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/require"
+)
+
+func TestPgDogCompatibilityBoundary(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PgDog supported primary shard boundary",
+			SetUpScript: []string{
+				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+				"INSERT INTO pgdog_items VALUES (1, 'one'), (2, 'two');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    "SELECT label FROM pgdog_items WHERE tenant_id = 1;",
+					Expected: []sql.Row{{"one"}},
+				},
+				{
+					Query:    "SELECT count(*) FROM pg_replication_slots;",
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:    "SELECT count(*) FROM pg_stat_replication;",
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:    "SELECT count(*) FROM pg_publication;",
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:    "SELECT pg_is_in_recovery();",
+					Expected: []sql.Row{{"f"}},
+				},
+			},
+		},
+		{
+			Name: "PgDog unsupported feature probes",
+			SetUpScript: []string{
+				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "PREPARE TRANSACTION 'dg_pgdog';",
+					ExpectedErr: "syntax error",
+				},
+				{
+					Query:       "COMMIT PREPARED 'dg_pgdog';",
+					ExpectedErr: "syntax error",
+				},
+				{
+					Query:       "ROLLBACK PREPARED 'dg_pgdog';",
+					ExpectedErr: "syntax error",
+				},
+				{
+					Query:       "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;",
+					ExpectedErr: "unimplemented: this syntax",
+				},
+				{
+					Query:       "CREATE SUBSCRIPTION dg_pgdog_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;",
+					ExpectedErr: "unimplemented: this syntax",
+				},
+				{
+					Query:       "COPY pgdog_items TO STDOUT;",
+					ExpectedErr: "syntax error",
+				},
+				{
+					Query:       "COPY pgdog_items FROM STDIN WITH (FORMAT binary);",
+					ExpectedErr: "COPY FROM does not support format BINARY",
+				},
+				{
+					Query:       "PREPARE dg_pgdog_stmt AS SELECT 1;",
+					ExpectedErr: "PREPARE is not yet supported",
+				},
+				{
+					Query:       "EXECUTE dg_pgdog_stmt;",
+					ExpectedErr: "EXECUTE is not yet supported",
+				},
+				{
+					Query:       "CREATE TABLE pgdog_vectors (tenant_id vector);",
+					ExpectedErr: "type \"vector\" does not exist",
+				},
+				{
+					Query:       "SELECT pg_current_wal_lsn();",
+					ExpectedErr: "pg_current_wal_lsn",
+				},
+				{
+					Query:       "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
+					ExpectedErr: "pg_wal_lsn_diff",
+				},
+			},
+		},
+	})
+}
+
+func TestPgDogStartupRuntimeParameters(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		err := controller.WaitForStop()
+		require.NoError(t, err)
+	}()
+	defer conn.Close(ctx)
+
+	config, err := pgx.ParseConfig(fmt.Sprintf("postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	config.RuntimeParams["timezone"] = "UTC"
+
+	pgxConn, err := pgx.ConnectConfig(ctx, config)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, pgxConn.Close(context.Background()))
+	}()
+
+	var timezone string
+	require.NoError(t, pgxConn.QueryRow(ctx, "SHOW TimeZone;").Scan(&timezone))
+	require.Equal(t, "UTC", timezone)
+}
