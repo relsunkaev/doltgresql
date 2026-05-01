@@ -300,6 +300,199 @@ func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *test
 	require.Equal(t, "right-customer", string(insert.Tuple.Columns[1].Data))
 }
 
+func TestLogicalReplicationSourceHonorsPublicationUpdateDeleteFiltersAndColumnLists(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_publication_update_delete_filter_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_customer_update_delete_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT,
+			internal_note TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		INSERT INTO dg_customer_update_delete_items VALUES
+			(1, 7, 'wrong-customer', 'hidden-7'),
+			(2, 42, 'right-customer', 'hidden-42');`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_customer_update_delete_pub
+		FOR TABLE dg_customer_update_delete_items (customer_id, label)
+		WHERE (customer_id = 42)
+		WITH (publish = 'update, delete');`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_customer_update_delete_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_customer_update_delete_items SET label = 'wrong-updated' WHERE customer_id = 7;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_customer_update_delete_items SET label = 'right-updated' WHERE customer_id = 42;")
+	require.NoError(t, err)
+	relation, update, _ := receiveUpdateChange(t, replConn)
+	require.Equal(t, "dg_customer_update_delete_items", relation.RelationName)
+	require.Equal(t, uint16(2), relation.ColumnNum)
+	require.Equal(t, "customer_id", relation.Columns[0].Name)
+	require.Equal(t, "label", relation.Columns[1].Name)
+	require.Len(t, update.NewTuple.Columns, 2)
+	require.Equal(t, "42", string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, "right-updated", string(update.NewTuple.Columns[1].Data))
+
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_customer_update_delete_items WHERE customer_id = 7;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_customer_update_delete_items WHERE customer_id = 42;")
+	require.NoError(t, err)
+	relation, deleteMessage, _ := receiveDeleteChange(t, replConn)
+	require.Equal(t, "dg_customer_update_delete_items", relation.RelationName)
+	require.Equal(t, uint16(2), relation.ColumnNum)
+	require.Equal(t, "customer_id", relation.Columns[0].Name)
+	require.Equal(t, "label", relation.Columns[1].Name)
+	require.NotNil(t, deleteMessage.OldTuple)
+	require.Len(t, deleteMessage.OldTuple.Columns, 2)
+	require.Equal(t, "42", string(deleteMessage.OldTuple.Columns[0].Data))
+	require.Equal(t, "right-updated", string(deleteMessage.OldTuple.Columns[1].Data))
+}
+
+func TestLogicalReplicationSourceHonorsPublicationActionFlags(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_publication_action_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_publication_action_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_publication_action_pub FOR TABLE dg_publication_action_items WITH (publish = 'insert');")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_publication_action_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_publication_action_items VALUES (1, 'one');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_publication_action_items", "1", "one")
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_publication_action_items SET label = 'one-updated' WHERE tenant_id = 1;")
+	require.NoError(t, err)
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_publication_action_items WHERE tenant_id = 1;")
+	require.NoError(t, err)
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+}
+
+func TestLogicalReplicationSourcePublishesAllTablesAndSchemaPublications(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_all_pub_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_all_pub FOR ALL TABLES;")
+	require.NoError(t, err)
+
+	allConn := connectReplicationConn(t, ctx, port)
+	defer allConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, allConn, "dg_all_pub_slot", "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, allConn, "dg_all_pub_slot", 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_all_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, allConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_all_pub_items VALUES (1, 'all-tables');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, allConn)
+	requireInsertChange(t, relation, insert, "dg_all_pub_items", "1", "all-tables")
+
+	_, err = conn.Current.Exec(ctx, "CREATE SCHEMA dg_schema_pub;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_schema_pub.dg_schema_pub_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_schema_pub_public_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_schema_only_pub FOR TABLES IN SCHEMA dg_schema_pub;")
+	require.NoError(t, err)
+
+	schemaConn := connectReplicationConn(t, ctx, port)
+	defer schemaConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, schemaConn, "dg_schema_pub_slot", "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, schemaConn, "dg_schema_pub_slot", 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_schema_only_pub'`,
+		},
+	}))
+	keepalive = receiveReplicationCopyData(t, schemaConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_schema_pub_public_items VALUES (1, 'public');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_schema_pub.dg_schema_pub_items VALUES (2, 'schema');")
+	require.NoError(t, err)
+	relation, insert, _ = receiveInsertChange(t, schemaConn)
+	requireInsertChangeInSchema(t, relation, insert, "dg_schema_pub", "dg_schema_pub_items", "2", "schema")
+}
+
 func TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransaction(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -890,6 +1083,15 @@ func receiveReplicationCopyData(t *testing.T, conn *pgconn.PgConn) *pgproto3.Cop
 	return copyData
 }
 
+func requireNoReplicationCopyData(t *testing.T, conn *pgconn.PgConn, wait time.Duration) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+	msg, err := conn.ReceiveMessage(ctx)
+	require.Error(t, err, "unexpected replication message: %T %[1]v", msg)
+	require.Contains(t, err.Error(), "timeout")
+}
+
 func receiveInsertChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.InsertMessageV2, *pglogrepl.CommitMessage) {
 	t.Helper()
 	var relation *pglogrepl.RelationMessageV2
@@ -1019,7 +1221,12 @@ func receiveLogicalTransaction(t *testing.T, conn *pgconn.PgConn) logicalTransac
 
 func requireInsertChange(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, table string, tenantID string, label string) {
 	t.Helper()
-	require.Equal(t, "public", relation.Namespace)
+	requireInsertChangeInSchema(t, relation, insert, "public", table, tenantID, label)
+}
+
+func requireInsertChangeInSchema(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, schema string, table string, tenantID string, label string) {
+	t.Helper()
+	require.Equal(t, schema, relation.Namespace)
 	require.Equal(t, table, relation.RelationName)
 	require.Equal(t, uint16(2), relation.ColumnNum)
 	require.Equal(t, "tenant_id", relation.Columns[0].Name)
