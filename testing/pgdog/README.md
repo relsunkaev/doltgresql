@@ -6,7 +6,7 @@ PgDog support is currently scoped to a primary-only customer-shard smoke path: c
 
 The shared-data topology decision is checked in at [migration-topology.md](./migration-topology.md). Shared, non-customer tables stay on the main Aurora/PostgreSQL endpoint and are not accessed through PgDog. The Aurora-to-Doltgres apply-path decision is checked in at [apply-path.md](./apply-path.md): PgDog owns production migration apply for this lane.
 
-The one-endpoint schema-split topology for `shared.*` on Aurora and `customer.*` on Doltgres is tracked separately in [schema-split-topology.md](./schema-split-topology.md). That topology requires its own harness before it supersedes the two-endpoint support boundary.
+The one-endpoint schema-split topology for `shared.*` on Aurora and `customer.*` on Doltgres is tracked separately in [schema-split-topology.md](./schema-split-topology.md). The operator procedure and support matrix are in [schema-split-runbook.md](./schema-split-runbook.md).
 
 Rollback proof and operator limits are checked in at [rollback.md](./rollback.md).
 

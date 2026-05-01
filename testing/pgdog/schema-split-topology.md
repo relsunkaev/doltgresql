@@ -2,7 +2,7 @@
 
 This is the target topology for running shared and customer-owned data behind one PgDog endpoint.
 
-The older [migration-topology.md](./migration-topology.md) remains the proven two-endpoint boundary from `dg-jri`: applications use Aurora/PostgreSQL directly for shared tables and PgDog for Doltgres customer shards. This document defines the stricter one-endpoint topology tracked by `dg-u1h`.
+The older [migration-topology.md](./migration-topology.md) remains the proven two-endpoint boundary from `dg-jri`: applications use Aurora/PostgreSQL directly for shared tables and PgDog for Doltgres customer shards. This document defines the stricter one-endpoint topology tracked by `dg-u1h`; the executable operator procedure is in [schema-split-runbook.md](./schema-split-runbook.md).
 
 ## Supported Shape
 
