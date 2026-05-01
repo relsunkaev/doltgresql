@@ -176,6 +176,26 @@ func TestReplicaIdentityDDLAndCatalogs(t *testing.T) {
 	})
 }
 
+func TestElectricInspectorArrayAlias(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "electric inspector array alias",
+			SetUpScript: []string{
+				"CREATE TABLE electric_alias_items (id INT PRIMARY KEY);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items';",
+					Expected: []sql.Row{
+						{"{public,electric_alias_items}"},
+					},
+					ExpectedColNames: []string{"parent"},
+				},
+			},
+		},
+	})
+}
+
 func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

@@ -14516,6 +14516,10 @@ target_elem:
   {
     $$.val = tree.SelectExpr{Expr: $1.expr(), As: tree.UnrestrictedName($2)}
   }
+| a_expr PARENT
+  {
+    $$.val = tree.SelectExpr{Expr: $1.expr(), As: tree.UnrestrictedName($2)}
+  }
 | a_expr
   {
     $$.val = tree.SelectExpr{Expr: $1.expr()}
