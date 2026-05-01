@@ -23,6 +23,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/replicaidentity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -41,9 +43,11 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 	// We don't implement sequence addition/modification as a DDL since it's not in GMS, so we only support one of these
 	// at a time. If there are more than one, then we'll return an error in the command loop.
 	if len(node.Cmds) == 1 {
-		cmd, ok := node.Cmds[0].(*tree.AlterTableComputed)
-		if ok {
+		switch cmd := node.Cmds[0].(type) {
+		case *tree.AlterTableComputed:
 			return nodeAlterTableComputed(ctx, treeTableName, cmd)
+		case *tree.AlterTableReplicaIdentity:
+			return nodeAlterTableReplicaIdentity(treeTableName, cmd, node.IfExists)
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -171,6 +175,38 @@ func nodeAlterTableCmds(
 	}
 
 	return vitessDdlCmds, unsupportedWarnings, nil
+}
+
+func nodeAlterTableReplicaIdentity(
+	tableName tree.TableName,
+	cmd *tree.AlterTableReplicaIdentity,
+	ifExists bool,
+) (vitess.Statement, error) {
+	identity := replicaidentity.IdentityDefault
+	indexName := ""
+	switch cmd.Type {
+	case tree.ReplicaIdentityDefault:
+		identity = replicaidentity.IdentityDefault
+	case tree.ReplicaIdentityUsingIndex:
+		identity = replicaidentity.IdentityUsingIndex
+		indexName = bareIdentifier(cmd.Index)
+	case tree.ReplicaIdentityFull:
+		identity = replicaidentity.IdentityFull
+	case tree.ReplicaIdentityNothing:
+		identity = replicaidentity.IdentityNothing
+	default:
+		return nil, errors.Errorf("unknown replica identity type %d", cmd.Type)
+	}
+
+	return vitess.InjectedStatement{
+		Statement: &pgnodes.AlterTableReplicaIdentity{
+			SchemaName: tableName.Schema(),
+			Table:      tableName.Table(),
+			Identity:   identity,
+			IndexName:  indexName,
+			IfExists:   ifExists,
+		},
+	}, nil
 }
 
 // nodeAlterTableAddConstraint converts a tree.AlterTableAddConstraint instance

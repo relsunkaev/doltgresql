@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -217,6 +218,7 @@ type pgIndex struct {
 	indnatts       int16
 	indisunique    bool
 	indisprimary   bool
+	indisreplident bool
 	indkey         []any
 }
 
@@ -271,7 +273,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		false,                  // indcheckxmin
 		true,                   // indisready
 		true,                   // indislive
-		false,                  // indisreplident
+		index.indisreplident,   // indisreplident
 		index.indkey,           // indkey
 		[]any{},                // indcollation
 		[]any{},                // indclass
@@ -318,6 +320,9 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indisunique:    index.Item.IsUnique(),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
 			}
+			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
+			pgIdx.indisreplident = replicaIdent.Identity == replicaidentity.IdentityUsingIndex &&
+				strings.EqualFold(replicaIdent.IndexName, formatIndexName(index.Item))
 
 			indexOidIdx.Add(pgIdx)
 			indrelidIdx.Add(pgIdx)

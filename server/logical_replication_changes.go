@@ -16,6 +16,7 @@ package server
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/publications"
+	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
 )
 
@@ -292,7 +294,12 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 				messagesByPublication[target.name] = pubMessages
 				publicationOrder = append(publicationOrder, target.name)
 			}
-			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields)
+			replIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema, table.Name())
+			keyColumns, err := relationReplicaIdentityColumns(ctx, table, replIdent)
+			if err != nil {
+				return err
+			}
+			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields, replIdent.Identity.Byte(), keyColumns)
 			pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 				WALStart:     commitLSN,
 				ServerWALEnd: commitLSN,
@@ -584,22 +591,27 @@ func encodeCommitMessage(commitLSN pglogrepl.LSN) []byte {
 	return data
 }
 
-func encodeRelationMessage(relationID uint32, schema string, table string, tableSchema sql.Schema, fields []pgproto3.FieldDescription) []byte {
+func encodeRelationMessage(relationID uint32, schema string, table string, tableSchema sql.Schema, fields []pgproto3.FieldDescription, replicaIdentity byte, keyColumns map[string]struct{}) []byte {
 	data := []byte{byte(pglogrepl.MessageTypeRelation)}
 	data = binary.BigEndian.AppendUint32(data, relationID)
 	data = appendCString(data, schema)
 	data = appendCString(data, table)
-	data = append(data, 'd')
+	if replicaIdentity == 0 {
+		replicaIdentity = replicaidentity.IdentityDefault.Byte()
+	}
+	data = append(data, replicaIdentity)
 	data = binary.BigEndian.AppendUint16(data, uint16(len(fields)))
-	primaryKeys := make(map[string]struct{})
-	for _, column := range tableSchema {
-		if column.PrimaryKey {
-			primaryKeys[strings.ToLower(column.Name)] = struct{}{}
+	if keyColumns == nil {
+		keyColumns = make(map[string]struct{})
+		for _, column := range tableSchema {
+			if column.PrimaryKey {
+				keyColumns[strings.ToLower(column.Name)] = struct{}{}
+			}
 		}
 	}
 	for _, field := range fields {
 		flag := byte(0)
-		if _, ok := primaryKeys[strings.ToLower(string(field.Name))]; ok {
+		if _, ok := keyColumns[strings.ToLower(string(field.Name))]; ok {
 			flag = 1
 		}
 		data = append(data, flag)
@@ -608,6 +620,53 @@ func encodeRelationMessage(relationID uint32, schema string, table string, table
 		data = binary.BigEndian.AppendUint32(data, uint32(field.TypeModifier))
 	}
 	return data
+}
+
+func relationReplicaIdentityColumns(ctx *sql.Context, table sql.Table, setting replicaidentity.Setting) (map[string]struct{}, error) {
+	switch setting.Identity {
+	case replicaidentity.IdentityNothing:
+		return map[string]struct{}{}, nil
+	case replicaidentity.IdentityFull:
+		columns := make(map[string]struct{}, len(table.Schema()))
+		for _, column := range table.Schema() {
+			columns[strings.ToLower(column.Name)] = struct{}{}
+		}
+		return columns, nil
+	case replicaidentity.IdentityUsingIndex:
+		indexedTable, ok := table.(sql.IndexAddressable)
+		if !ok {
+			return map[string]struct{}{}, nil
+		}
+		indexes, err := indexedTable.GetIndexes(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, index := range indexes {
+			if !strings.EqualFold(logicalReplicationIndexName(index), setting.IndexName) && !strings.EqualFold(index.ID(), setting.IndexName) {
+				continue
+			}
+			columns := make(map[string]struct{}, len(index.Expressions()))
+			for _, expr := range index.Expressions() {
+				columns[strings.ToLower(logicalReplicationIndexColumnName(expr))] = struct{}{}
+			}
+			return columns, nil
+		}
+		return map[string]struct{}{}, nil
+	default:
+		return nil, nil
+	}
+}
+
+func logicalReplicationIndexName(index sql.Index) string {
+	if strings.EqualFold(index.ID(), "PRIMARY") {
+		return fmt.Sprintf("%s_pkey", index.Table())
+	}
+	return index.ID()
+}
+
+func logicalReplicationIndexColumnName(expr string) string {
+	lastDot := strings.LastIndex(expr, ".")
+	return expr[lastDot+1:]
 }
 
 func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row Row) []byte {

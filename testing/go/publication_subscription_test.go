@@ -116,6 +116,66 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 	})
 }
 
+func TestReplicaIdentityDDLAndCatalogs(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "replica identity ddl and catalogs",
+			SetUpScript: []string{
+				"CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+				"CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+					Expected: []sql.Row{
+						{"d"},
+					},
+				},
+				{
+					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
+				},
+				{
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+					Expected: []sql.Row{
+						{"f"},
+					},
+				},
+				{
+					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;",
+				},
+				{
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+					Expected: []sql.Row{
+						{"n"},
+					},
+				},
+				{
+					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_label_idx;",
+				},
+				{
+					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+					Expected: []sql.Row{
+						{"i", "t"},
+					},
+				},
+				{
+					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY DEFAULT;",
+				},
+				{
+					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+					Expected: []sql.Row{
+						{"d", "f"},
+					},
+				},
+				{
+					Query:       "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;",
+					ExpectedErr: `index "repl_ident_missing_idx" does not exist`,
+				},
+			},
+		},
+	})
+}
+
 func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
