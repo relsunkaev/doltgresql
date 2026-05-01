@@ -1,0 +1,27 @@
+name: Electric Compatibility
+on: [pull_request]
+
+concurrency:
+  group: electric-compatibility-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  electric-compatibility:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Build SQL Syntax
+        run: ./build.sh
+        working-directory: ./postgres/parser
+        shell: bash
+      - name: Run Electric compatibility suite
+        env:
+          DOLTGRES_ELECTRIC_SMOKE: "1"
+          DOLTGRES_ELECTRIC_IMAGES: electricsql/electric:1.6.2
+        run: go test ./testing/go -run 'TestElectric(SyncSmoke|MultiShapeCatchupAndSchemaChange|QualifiedSchemaTablePublication|DropColumnShapeRefetch|CompatibilitySoak)$' -count=1 -v -timeout=20m

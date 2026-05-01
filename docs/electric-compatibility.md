@@ -17,13 +17,18 @@ Run the supported-version suite with:
 ```bash
 DOLTGRES_ELECTRIC_SMOKE=1 \
 DOLTGRES_ELECTRIC_IMAGES=electricsql/electric:1.6.2 \
-go test ./testing/go -run 'TestElectric(SyncSmoke|MultiShapeCatchupAndSchemaChange|CompatibilitySoak)$' -count=1 -v
+go test ./testing/go -run 'TestElectric(SyncSmoke|MultiShapeCatchupAndSchemaChange|QualifiedSchemaTablePublication|DropColumnShapeRefetch|CompatibilitySoak)$' -count=1 -v -timeout=20m
 ```
 
 `DOLTGRES_ELECTRIC_IMAGES` is comma-separated so CI can run a matrix without
 changing test code. `DOLTGRES_ELECTRIC_IMAGE` remains as a single-image fallback
 for local runs. `latest` may be tested opportunistically, but it is not a support
 claim unless it is added to the pinned image list.
+
+The GitHub Actions lane in
+`.github/workflows/electric-compatibility.yaml` runs the pinned Docker-backed
+suite on pull requests. Ordinary non-Docker `go test` runs still skip the
+Electric container tests unless `DOLTGRES_ELECTRIC_SMOKE=1` is set.
 
 ## Electric-backed coverage
 
@@ -33,10 +38,12 @@ claim unless it is added to the pinned image list.
 | Initial sync plus insert/update/delete | Supported for published tables with `REPLICA IDENTITY FULL` | `TestElectricSyncSmoke` verifies all three operations through the shape API. |
 | Doltgres restart while Electric is running | Supported for the pinned smoke path | `TestElectricSyncSmoke` restarts Doltgres with the same database directory and continues streaming. |
 | Multiple tables and multiple shapes | Supported for independent full-table shapes | `TestElectricMultiShapeCatchupAndSchemaChange` verifies two concurrent table shapes with interleaved changes. |
-| Electric restart and durable slot catch-up | Supported with persistent Electric shape storage and Doltgres durable slots | `TestElectricMultiShapeCatchupAndSchemaChange` stops Electric, writes backlog while the slot is inactive, restarts Electric, and verifies catch-up. |
+| Electric-down and Doltgres-restart backlog recovery | Supported with persistent Electric shape storage and Doltgres durable slots | `TestElectricMultiShapeCatchupAndSchemaChange` stops Electric, writes backlog while the slot is inactive, restarts Doltgres from the same database directory, restarts Electric, verifies slot LSN advancement, and verifies final shape state. |
 | Concurrent backlog writers | Supported for distinct-row DML | `TestElectricMultiShapeCatchupAndSchemaChange` writes backlog through multiple SQL connections while Electric is offline. |
 | Add-column metadata refresh | Supported for additive columns with defaults | `TestElectricMultiShapeCatchupAndSchemaChange` handles Electric's `must-refetch` response, updates the new column, and verifies the refreshed shape contains it. |
-| Bounded throughput guardrail | Supported as a smoke-level guard, not a benchmark | `TestElectricCompatibilitySoak` applies 115 mutations and verifies final shape state within a fixed local timeout. |
+| Drop-column metadata refresh | Supported for active shapes when Electric can refetch | `TestElectricDropColumnShapeRefetch` drops a column, updates a remaining column, and verifies the refreshed shape no longer exposes the dropped column. |
+| Schema-qualified table shapes | Supported when the schema table is explicitly added to the publication | `TestElectricQualifiedSchemaTablePublication` publishes `electric_schema_pub.electric_schema_items`, requests the qualified table shape, and verifies insert/update delivery. |
+| Bounded throughput guardrail | Supported as a smoke-level guard, not a benchmark | `TestElectricCompatibilitySoak` applies 340 mutations with concurrent shape reads, records mutations/sec, and verifies final shape state within a fixed local timeout. |
 
 ## Direct pgoutput coverage
 
@@ -67,11 +74,21 @@ These are not claimed as Electric-supported:
 - Emitting pgoutput stream-start/stream-commit messages for in-progress
   transaction streaming. Clients may request `streaming 'true'`, but Doltgres
   publishes complete transactions only.
+- Publication row filters and publication column lists through Electric. These
+  remain direct pgoutput claims. Electric has separate shape `where` and
+  `columns` parameters, but this suite does not claim PostgreSQL publication
+  filters or column lists as an Electric-supported configuration.
+- Publication action subsets through Electric. Electric 1.6.2 requires the
+  configured manual publication to publish `INSERT`, `UPDATE`, `DELETE`, and
+  `TRUNCATE`, so `WITH (publish = ...)` subsets remain direct pgoutput claims.
+- `FOR ALL TABLES` publications through Electric. Electric 1.6.2 validates
+  explicit `pg_publication_rel` membership and treats all-table publications as
+  missing when manual table publishing is enabled.
+- `FOR TABLES IN SCHEMA` schema publications through Electric. Use explicit
+  table membership for schema-qualified Electric shapes unless a future Electric
+  version proves schema-publication support in the compatibility suite.
 - Logical decoding plugins other than `pgoutput`.
 - Physical replication slots.
-- Drop-column behavior while Electric has live shapes. Additive schema changes
-  are covered; destructive schema changes need an explicit design before they
-  become supported.
 - Live add-table publication refresh while Electric is already running. Doltgres
   catalog membership is covered elsewhere, but this Electric-backed support
   boundary only claims tables that are in the publication before the shape is

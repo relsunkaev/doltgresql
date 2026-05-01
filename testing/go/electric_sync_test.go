@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -165,6 +166,14 @@ func TestElectricMultiShapeCatchupAndSchemaChange(t *testing.T) {
 
 		writeElectricBacklogConcurrently(t, serverCtx, port)
 
+		conn.Close(serverCtx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+
+		serverCtx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+		waitForReplicationSlot(t, serverCtx, conn)
+		waitForReplicationSlotActive(t, serverCtx, conn, false)
+
 		startElectricContainer(t, ctx, electricContainerConfig{
 			name:            containerName,
 			image:           image,
@@ -206,9 +215,122 @@ func TestElectricMultiShapeCatchupAndSchemaChange(t *testing.T) {
 	})
 }
 
+func TestElectricQualifiedSchemaTablePublication(t *testing.T) {
+	runForEachElectricImage(t, func(t *testing.T, image string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+
+		dbDir := t.TempDir()
+		port, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		electricPort, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		baseURL := fmt.Sprintf("http://127.0.0.1:%d", electricPort)
+
+		serverCtx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+		defer func() {
+			conn.Close(serverCtx)
+			controller.Stop()
+			require.NoError(t, controller.WaitForStop())
+		}()
+
+		const qualifiedTable = "electric_schema_pub.electric_schema_items"
+		_, err = conn.Current.Exec(serverCtx, `
+			CREATE SCHEMA electric_schema_pub;
+			CREATE TABLE electric_schema_pub.electric_schema_items (id INT PRIMARY KEY, label TEXT NOT NULL);
+			CREATE TABLE electric_schema_outside_items (id INT PRIMARY KEY, label TEXT NOT NULL);
+			CREATE PUBLICATION electric_publication_default;
+			ALTER PUBLICATION electric_publication_default ADD TABLE electric_schema_pub.electric_schema_items;
+			ALTER TABLE electric_schema_pub.electric_schema_items REPLICA IDENTITY FULL;`)
+		require.NoError(t, err)
+
+		containerName := fmt.Sprintf("dg-electric-schema-pub-%d", time.Now().UnixNano())
+		startElectricContainer(t, ctx, electricContainerConfig{
+			name:         containerName,
+			image:        image,
+			doltgresPort: port,
+			electricPort: electricPort,
+		})
+
+		shape := waitForElectricShapeUpToDate(t, ctx, baseURL, qualifiedTable)
+		waitForReplicationSlot(t, serverCtx, conn)
+		waitForReplicationSlotActive(t, serverCtx, conn, true)
+
+		_, err = conn.Current.Exec(serverCtx, "INSERT INTO electric_schema_outside_items VALUES (1, 'outside');")
+		require.NoError(t, err)
+		_, err = conn.Current.Exec(serverCtx, "INSERT INTO electric_schema_pub.electric_schema_items VALUES (2, 'schema');")
+		require.NoError(t, err)
+		shape = waitForElectricOperations(t, ctx, baseURL, qualifiedTable, shape, electricExpectedOperation{operation: "insert", id: "2"})
+		_, err = conn.Current.Exec(serverCtx, "UPDATE electric_schema_pub.electric_schema_items SET label = 'schema-updated' WHERE id = 2;")
+		require.NoError(t, err)
+		_ = waitForElectricOperations(t, ctx, baseURL, qualifiedTable, shape, electricExpectedOperation{operation: "update", id: "2"})
+	})
+}
+
+func TestElectricDropColumnShapeRefetch(t *testing.T) {
+	runForEachElectricImage(t, func(t *testing.T, image string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+
+		dbDir := t.TempDir()
+		port, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		electricPort, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		baseURL := fmt.Sprintf("http://127.0.0.1:%d", electricPort)
+
+		serverCtx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+		defer func() {
+			conn.Close(serverCtx)
+			controller.Stop()
+			require.NoError(t, controller.WaitForStop())
+		}()
+
+		const tableName = "electric_drop_column_items"
+		_, err = conn.Current.Exec(serverCtx, `
+			CREATE TABLE electric_drop_column_items (id INT PRIMARY KEY, label TEXT NOT NULL, obsolete TEXT NOT NULL);
+			CREATE PUBLICATION electric_publication_default;
+			ALTER PUBLICATION electric_publication_default ADD TABLE electric_drop_column_items;
+			ALTER TABLE electric_drop_column_items REPLICA IDENTITY FULL;`)
+		require.NoError(t, err)
+
+		containerName := fmt.Sprintf("dg-electric-drop-column-%d", time.Now().UnixNano())
+		startElectricContainer(t, ctx, electricContainerConfig{
+			name:         containerName,
+			image:        image,
+			doltgresPort: port,
+			electricPort: electricPort,
+		})
+
+		shape := waitForElectricShapeUpToDate(t, ctx, baseURL, tableName)
+		waitForReplicationSlot(t, serverCtx, conn)
+		waitForReplicationSlotActive(t, serverCtx, conn, true)
+
+		_, err = conn.Current.Exec(serverCtx, "INSERT INTO electric_drop_column_items VALUES (1, 'one', 'legacy');")
+		require.NoError(t, err)
+		_ = waitForElectricOperations(t, ctx, baseURL, tableName, shape, electricExpectedOperation{operation: "insert", id: "1"})
+
+		_, err = conn.Current.Exec(serverCtx, "ALTER TABLE electric_drop_column_items DROP COLUMN obsolete;")
+		require.NoError(t, err)
+		_, err = conn.Current.Exec(serverCtx, "UPDATE electric_drop_column_items SET label = 'after-drop' WHERE id = 1;")
+		require.NoError(t, err)
+
+		rows := waitForElectricRows(t, ctx, baseURL, tableName, func(rows map[string]map[string]string) bool {
+			row := rows["1"]
+			if row["label"] != "after-drop" {
+				return false
+			}
+			_, hasObsolete := row["obsolete"]
+			return !hasObsolete
+		})
+		require.Equal(t, "after-drop", rows["1"]["label"])
+		require.NotContains(t, rows["1"], "obsolete")
+	})
+}
+
 func TestElectricCompatibilitySoak(t *testing.T) {
 	runForEachElectricImage(t, func(t *testing.T, image string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
 		dbDir := t.TempDir()
@@ -244,33 +366,59 @@ func TestElectricCompatibilitySoak(t *testing.T) {
 		waitForReplicationSlot(t, serverCtx, conn)
 		waitForReplicationSlotActive(t, serverCtx, conn, true)
 
+		readerCtx, stopReader := context.WithCancel(ctx)
+		var shapeReads atomic.Int64
+		go func() {
+			readerState := shape
+			for {
+				select {
+				case <-readerCtx.Done():
+					return
+				default:
+				}
+				next, messages, status, body, err := requestElectricShape(readerCtx, baseURL, "electric_soak_items", readerState, true)
+				if err == nil && (status == http.StatusOK || status == http.StatusNoContent) {
+					readerState = next
+					shapeReads.Add(1)
+				}
+				if err == nil && status == http.StatusConflict && electricResponseMustRefetch(messages, body) {
+					readerState = electricShapeState{Offset: "-1"}
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
+		}()
+
 		start := time.Now()
-		for i := 1; i <= 75; i++ {
+		for i := 1; i <= 200; i++ {
 			_, err = conn.Current.Exec(serverCtx, "INSERT INTO electric_soak_items VALUES ($1, $2);", int32(i), fmt.Sprintf("item-%03d", i))
 			require.NoError(t, err)
 		}
-		for i := 1; i <= 75; i += 3 {
+		for i := 1; i <= 200; i += 2 {
 			_, err = conn.Current.Exec(serverCtx, "UPDATE electric_soak_items SET label = $2 WHERE id = $1;", int32(i), fmt.Sprintf("updated-%03d", i))
 			require.NoError(t, err)
 		}
-		for i := 2; i <= 75; i += 5 {
+		for i := 2; i <= 200; i += 5 {
 			_, err = conn.Current.Exec(serverCtx, "DELETE FROM electric_soak_items WHERE id = $1;", int32(i))
 			require.NoError(t, err)
 		}
 
-		shape = waitForElectricOperations(t, ctx, baseURL, "electric_soak_items", shape,
-			electricExpectedOperation{operation: "insert", id: "75"},
-			electricExpectedOperation{operation: "update", id: "73"},
-			electricExpectedOperation{operation: "delete", id: "72"})
+		shape = waitForElectricOperationsWithin(t, ctx, baseURL, "electric_soak_items", shape, 3*time.Minute,
+			electricExpectedOperation{operation: "insert", id: "200"},
+			electricExpectedOperation{operation: "update", id: "199"},
+			electricExpectedOperation{operation: "delete", id: "197"})
 		elapsed := time.Since(start)
-		require.Less(t, elapsed, 90*time.Second)
+		stopReader()
+		require.Less(t, elapsed, 180*time.Second)
+		require.Greater(t, shapeReads.Load(), int64(0))
 
 		rows := readElectricShapeRows(t, ctx, baseURL, "electric_soak_items")
-		require.Len(t, rows, 60)
+		require.Len(t, rows, 160)
 		require.Equal(t, "updated-001", rows["1"]["label"])
-		require.Equal(t, "item-075", rows["75"]["label"])
-		require.NotContains(t, rows, "72")
-		t.Logf("Electric soak applied 115 mutations through shape %s in %s", shape.Handle, elapsed)
+		require.Equal(t, "item-200", rows["200"]["label"])
+		require.NotContains(t, rows, "197")
+		mutationsPerSecond := float64(340) / elapsed.Seconds()
+		t.Logf("Electric soak applied 340 mutations through shape %s in %s (%.2f mutations/s, %d concurrent shape reads)",
+			shape.Handle, elapsed, mutationsPerSecond, shapeReads.Load())
 	})
 }
 
@@ -301,6 +449,11 @@ type electricContainerConfig struct {
 func runForEachElectricImage(t *testing.T, fn func(t *testing.T, image string)) {
 	t.Helper()
 	requireElectricSmokeEnabled(t)
+	originalServerHost := serverHost
+	serverHost = "0.0.0.0"
+	t.Cleanup(func() {
+		serverHost = originalServerHost
+	})
 	for _, image := range electricImagesFromEnv() {
 		t.Run(sanitizeElectricImageForTestName(image), func(t *testing.T) {
 			fn(t, image)
@@ -335,6 +488,18 @@ func electricImagesFromEnv() []string {
 		}
 	}
 	return images
+}
+
+func TestElectricImagesFromEnv(t *testing.T) {
+	t.Setenv("DOLTGRES_ELECTRIC_IMAGES", "")
+	t.Setenv("DOLTGRES_ELECTRIC_IMAGE", "")
+	require.Equal(t, []string{defaultSupportedElectric}, electricImagesFromEnv())
+
+	t.Setenv("DOLTGRES_ELECTRIC_IMAGE", "electricsql/electric:1.6.1")
+	require.Equal(t, []string{"electricsql/electric:1.6.1"}, electricImagesFromEnv())
+
+	t.Setenv("DOLTGRES_ELECTRIC_IMAGES", " electricsql/electric:1.6.2 , , electricsql/electric:latest ")
+	require.Equal(t, []string{"electricsql/electric:1.6.2", "electricsql/electric:latest"}, electricImagesFromEnv())
 }
 
 func sanitizeElectricImageForTestName(image string) string {
@@ -426,11 +591,16 @@ func waitForElectricShapeUpToDate(t *testing.T, ctx context.Context, baseURL str
 
 func waitForElectricOperations(t *testing.T, ctx context.Context, baseURL string, table string, state electricShapeState, expected ...electricExpectedOperation) electricShapeState {
 	t.Helper()
+	return waitForElectricOperationsWithin(t, ctx, baseURL, table, state, 60*time.Second, expected...)
+}
+
+func waitForElectricOperationsWithin(t *testing.T, ctx context.Context, baseURL string, table string, state electricShapeState, wait time.Duration, expected ...electricExpectedOperation) electricShapeState {
+	t.Helper()
 	pending := make(map[electricExpectedOperation]struct{}, len(expected))
 	for _, op := range expected {
 		pending[op] = struct{}{}
 	}
-	deadline := time.Now().Add(60 * time.Second)
+	deadline := time.Now().Add(wait)
 	var lastBody string
 	for time.Now().Before(deadline) {
 		next, messages, status, body, err := requestElectricShape(ctx, baseURL, table, state, true)
