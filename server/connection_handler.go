@@ -306,6 +306,14 @@ func (h *ConnectionHandler) chooseInitialParameters(startupMessage *pgproto3.Sta
 			if err != nil {
 				return err
 			}
+		case "timezone":
+			sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+			if err != nil {
+				return err
+			}
+			if err = sqlCtx.SetSessionVariable(sqlCtx, "TimeZone", value); err != nil {
+				return err
+			}
 		}
 	}
 	// set initial database
