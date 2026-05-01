@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"fmt"
 	"strings"
 	"unsafe"
 
@@ -37,6 +38,7 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_build_array)
 	framework.RegisterFunction(jsonb_build_object_empty)
 	framework.RegisterFunction(jsonb_build_object)
+	framework.RegisterFunction(to_jsonb_anyelement)
 	framework.RegisterFunction(jsonb_array_length)
 	framework.RegisterFunction(jsonb_array_elements)
 	framework.RegisterFunction(jsonb_array_elements_text)
@@ -196,6 +198,58 @@ var jsonb_build_object = framework.Function1N{
 		}
 		return pgtypes.JsonDocument{Value: value}, nil
 	},
+}
+
+// to_jsonb_anyelement represents the PostgreSQL function to_jsonb(anyelement).
+var to_jsonb_anyelement = framework.Function1{
+	Name:       "to_jsonb",
+	Return:     pgtypes.JsonB,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
+		value, err := jsonValueFromAnyElement(ctx, t[0], val)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
+	},
+}
+
+func jsonValueFromAnyElement(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (pgtypes.JsonValue, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return pgtypes.JsonValueNull(0), nil
+	}
+	if record, ok := res.([]pgtypes.RecordValue); ok {
+		return jsonValueFromRecord(ctx, typ, record)
+	}
+	return pgtypes.JsonValueFromSQLValue(ctx, typ, res)
+}
+
+func jsonValueFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, record []pgtypes.RecordValue) (pgtypes.JsonValue, error) {
+	items := make([]pgtypes.JsonValueObjectItem, len(record))
+	for i, field := range record {
+		fieldType, _ := field.Type.(*pgtypes.DoltgresType)
+		value, err := pgtypes.JsonValueFromSQLValue(ctx, fieldType, field.Value)
+		if err != nil {
+			return nil, err
+		}
+		items[i] = pgtypes.JsonValueObjectItem{
+			Key:   jsonRecordFieldName(typ, i),
+			Value: value,
+		}
+	}
+	return jsonObjectFromItems(items, true), nil
+}
+
+func jsonRecordFieldName(typ *pgtypes.DoltgresType, idx int) string {
+	if typ != nil && idx < len(typ.CompositeAttrs) && typ.CompositeAttrs[idx].Name != "" {
+		return typ.CompositeAttrs[idx].Name
+	}
+	return fmt.Sprintf("f%d", idx+1)
 }
 
 // jsonb_array_length represents the PostgreSQL function jsonb_array_length.

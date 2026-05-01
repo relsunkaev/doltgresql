@@ -17,7 +17,6 @@ package expression
 import (
 	"fmt"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -45,12 +44,38 @@ func NewTableToComposite(ctx *sql.Context, tableName string, fields []sql.Expres
 		return nil, err
 	}
 	if typ == nil {
-		return nil, errors.New(fmt.Sprintf(`could not create a composite type for table "%s"`, tableName))
+		typ, err = compositeTypeFromFields(ctx, tableName, fields)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &TableToComposite{
 		fields: fields,
 		typ:    typ,
 	}, nil
+}
+
+func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Expression) (*pgtypes.DoltgresType, error) {
+	typeID := id.NewType("", tableName)
+	relID := id.NewTable("", tableName).AsId()
+	arrayID := id.NewType("", "_"+tableName)
+	attrs := make([]pgtypes.CompositeAttribute, len(fields))
+	for i, field := range fields {
+		colType, ok := field.Type().(*pgtypes.DoltgresType)
+		if !ok {
+			var err error
+			colType, err = pgtypes.FromGmsTypeToDoltgresType(field.Type())
+			if err != nil {
+				return nil, err
+			}
+		}
+		fieldName := fmt.Sprintf("f%d", i+1)
+		if nameable, ok := field.(sql.Nameable); ok && nameable.Name() != "" {
+			fieldName = nameable.Name()
+		}
+		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, fieldName, colType.ID, int16(i+1), "")
+	}
+	return pgtypes.NewCompositeType(ctx, relID, arrayID, typeID, attrs), nil
 }
 
 // Resolved implements the sql.Expression interface.

@@ -41,6 +41,19 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 					},
 				},
 				{
+					Query: `SELECT
+						  pg_get_userbyid(p.pubowner) = current_role AS can_alter_publication,
+						  pubinsert AND pubupdate AND pubdelete AND pubtruncate AS publishes_all_operations,
+						  CASE WHEN current_setting('server_version_num')::int >= 180000
+						      THEN (to_jsonb(p) ->> 'pubgencols') = 's'
+						      ELSE FALSE
+						  END AS publishes_generated_columns
+						FROM pg_publication AS p WHERE pubname = 'dg_pub';`,
+					Expected: []sql.Row{
+						{"t", "f", "f"},
+					},
+				},
+				{
 					Query: "SELECT pubname, schemaname, tablename, array_to_string(attnames, ','), rowfilter IS NOT NULL FROM pg_catalog.pg_publication_tables WHERE pubname = 'dg_pub';",
 					Expected: []sql.Row{
 						{"dg_pub", "public", "pub_items", "tenant_id,label", "t"},

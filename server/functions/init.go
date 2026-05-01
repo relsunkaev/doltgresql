@@ -109,6 +109,7 @@ func Init() {
 	initCurrentSchema()
 	initCurrentSetting()
 	initCurrentSchemas()
+	initCurrentUser()
 	initDegrees()
 	initDiv()
 	initDoltProcedures()

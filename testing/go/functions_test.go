@@ -887,6 +887,23 @@ func TestSystemInformationFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "current user sql value functions",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT current_user, current_role, session_user;`,
+					Expected: []sql.Row{
+						{"postgres", "postgres", "postgres"},
+					},
+				},
+				{
+					Query: `SELECT pg_get_userbyid(10) = current_role;`,
+					Expected: []sql.Row{
+						{"t"},
+					},
+				},
+			},
+		},
+		{
 			Name:     "current_catalog",
 			Database: "test",
 			Assertions: []ScriptTestAssertion{
@@ -1651,10 +1668,18 @@ func TestJsonFunctions(t *testing.T) {
 		},
 		{
 			Name: "jsonb helper functions",
+			SetUpScript: []string{
+				`CREATE TABLE jsonb_record_items (id INT PRIMARY KEY, label TEXT);`,
+				`INSERT INTO jsonb_record_items VALUES (1, 'one');`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query:    `SELECT jsonb_typeof('{"a":1}'::jsonb), jsonb_typeof('[1]'::jsonb), jsonb_typeof('null'::jsonb), jsonb_array_length('[1,2,3]'::jsonb);`,
 					Expected: []sql.Row{{"object", "array", "null", 3}},
+				},
+				{
+					Query:    `SELECT to_jsonb(r)->>'id', to_jsonb(r)->>'label' FROM jsonb_record_items AS r;`,
+					Expected: []sql.Row{{"1", "one"}},
 				},
 				{
 					Query:    `SELECT jsonb_object_keys('{"a":1,"b":2}'::jsonb);`,
