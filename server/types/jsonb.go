@@ -62,12 +62,12 @@ var JsonB = &DoltgresType{
 // serializeTypeJsonB handles serialization from the standard representation to our serialized representation that is
 // written in Dolt.
 func serializeTypeJsonB(ctx *sql.Context, t *DoltgresType, val any) ([]byte, error) {
-	res, err := sql.UnwrapAny(ctx, val)
+	res, err := JsonDocumentFromSQLValue(ctx, t, val)
 	if err != nil {
 		return nil, err
 	}
 	writer := utils.NewWriter(256)
-	JsonValueSerialize(writer, res.(JsonDocument).Value)
+	JsonValueSerialize(writer, res.Value)
 	return writer.Data(), nil
 }
 

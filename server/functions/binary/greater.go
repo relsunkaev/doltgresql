@@ -349,7 +349,15 @@ var jsonb_gt = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.JsonB},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		res, err := pgtypes.JsonB.Compare(ctx, val1.(pgtypes.JsonDocument), val2.(pgtypes.JsonDocument))
+		doc1, err := jsonbDocument(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		doc2, err := jsonbDocument(ctx, val2)
+		if err != nil {
+			return nil, err
+		}
+		res, err := pgtypes.JsonB.Compare(ctx, doc1, doc2)
 		return res == 1, err
 	},
 }

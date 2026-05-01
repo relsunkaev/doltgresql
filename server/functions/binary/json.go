@@ -83,7 +83,11 @@ var jsonb_array_element = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		array, ok := val1.(pgtypes.JsonDocument).Value.(pgtypes.JsonValueArray)
+		value, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		array, ok := value.(pgtypes.JsonValueArray)
 		if !ok {
 			return nil, nil
 		}
@@ -91,7 +95,7 @@ var jsonb_array_element = framework.Function2{
 		if idx < 0 {
 			idx += int32(len(array))
 		}
-		if int(idx) >= len(array) {
+		if idx < 0 || int(idx) >= len(array) {
 			return nil, nil
 		}
 		return pgtypes.JsonDocument{Value: array[idx]}, nil
@@ -129,7 +133,11 @@ var jsonb_object_field = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		object, ok := val1.(pgtypes.JsonDocument).Value.(pgtypes.JsonValueObject)
+		value, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		object, ok := value.(pgtypes.JsonValueObject)
 		if !ok {
 			return nil, nil
 		}
@@ -169,12 +177,7 @@ var jsonb_array_element_text = framework.Function2{
 		if err != nil || doc == nil {
 			return nil, err
 		}
-		switch value := doc.(pgtypes.JsonDocument).Value.(type) {
-		case pgtypes.JsonValueString:
-			return string(value), nil
-		default:
-			return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
-		}
+		return jsonbExtractTextOutput(ctx, doc)
 	},
 }
 
@@ -206,12 +209,7 @@ var jsonb_object_field_text = framework.Function2{
 		if err != nil || doc == nil {
 			return nil, err
 		}
-		switch value := doc.(pgtypes.JsonDocument).Value.(type) {
-		case pgtypes.JsonValueString:
-			return string(value), nil
-		default:
-			return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
-		}
+		return jsonbExtractTextOutput(ctx, doc)
 	},
 }
 
@@ -246,7 +244,10 @@ var jsonb_extract_path = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		value := val1.(pgtypes.JsonDocument).Value
+		value, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
 		paths := val2.([]interface{})
 		for _, path := range paths {
 			textPath, ok := path.(string)
@@ -264,6 +265,9 @@ var jsonb_extract_path = framework.Function2{
 				idx, err := strconv.Atoi(textPath)
 				if err != nil {
 					// We don't return the error here, a bad parse is treated as an object key which isn't valid
+					return nil, nil
+				}
+				if idx < 0 || idx >= len(currentValue) {
 					return nil, nil
 				}
 				value = currentValue[idx]
@@ -303,12 +307,7 @@ var jsonb_extract_path_text = framework.Function2{
 		if err != nil || doc == nil {
 			return nil, err
 		}
-		switch value := doc.(pgtypes.JsonDocument).Value.(type) {
-		case pgtypes.JsonValueString:
-			return string(value), nil
-		default:
-			return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
-		}
+		return jsonbExtractTextOutput(ctx, doc)
 	},
 }
 
@@ -319,7 +318,15 @@ var jsonb_contains = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.JsonB},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, errors.Errorf("JSON contains is not yet supported")
+		container, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		contained, err := jsonbValue(ctx, val2)
+		if err != nil {
+			return nil, err
+		}
+		return jsonbContainsValue(container, contained), nil
 	},
 }
 
@@ -341,7 +348,11 @@ var jsonb_exists = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		switch value := val1.(pgtypes.JsonDocument).Value.(type) {
+		jsonValue, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		switch value := jsonValue.(type) {
 		case pgtypes.JsonValueObject:
 			_, ok := value.Index[val2.(string)]
 			return ok, nil
@@ -370,7 +381,11 @@ var jsonb_exists_any = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		keys := val2.([]interface{})
-		switch value := val1.(pgtypes.JsonDocument).Value.(type) {
+		jsonValue, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		switch value := jsonValue.(type) {
 		case pgtypes.JsonValueObject:
 			for _, key := range keys {
 				if _, ok := value.Index[key.(string)]; ok {
@@ -410,7 +425,11 @@ var jsonb_exists_all = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		keys := val2.([]interface{})
-		switch value := val1.(pgtypes.JsonDocument).Value.(type) {
+		jsonValue, err := jsonbValue(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		switch value := jsonValue.(type) {
 		case pgtypes.JsonValueObject:
 			for _, key := range keys {
 				if _, ok := value.Index[key.(string)]; !ok {
@@ -478,4 +497,33 @@ var jsonb_delete_int32 = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		return nil, errors.Errorf("JSON deletions are not yet supported")
 	},
+}
+
+func jsonbContainsValue(container pgtypes.JsonValue, contained pgtypes.JsonValue) bool {
+	return pgtypes.JsonBContainsValue(container, contained)
+}
+
+func jsonbDocument(ctx *sql.Context, val any) (pgtypes.JsonDocument, error) {
+	return pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, val)
+}
+
+func jsonbValue(ctx *sql.Context, val any) (pgtypes.JsonValue, error) {
+	doc, err := jsonbDocument(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	return doc.Value, nil
+}
+
+func jsonbExtractTextOutput(ctx *sql.Context, val any) (any, error) {
+	doc, err := jsonbDocument(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	switch value := doc.Value.(type) {
+	case pgtypes.JsonValueString:
+		return string(value), nil
+	default:
+		return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
+	}
 }

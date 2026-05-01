@@ -15,8 +15,6 @@
 package binary
 
 import (
-	"sort"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -76,36 +74,22 @@ var byteacat = framework.Function2{
 
 // jsonb_concat_callable is the callable logic for the jsonb_concat function.
 func jsonb_concat_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1Interface any, val2Interface any) (any, error) {
-	val1 := val1Interface.(pgtypes.JsonDocument).Value
-	val2 := val2Interface.(pgtypes.JsonDocument).Value
+	val1, err := jsonbValue(ctx, val1Interface)
+	if err != nil {
+		return nil, err
+	}
+	val2, err := jsonbValue(ctx, val2Interface)
+	if err != nil {
+		return nil, err
+	}
 	// First we'll merge objects if they're both objects
 	val1Obj, isVal1Obj := val1.(pgtypes.JsonValueObject)
 	val2Obj, isVal2Obj := val2.(pgtypes.JsonValueObject)
 	if isVal1Obj && isVal2Obj {
-		newObj := pgtypes.JsonValueCopy(val1Obj).(pgtypes.JsonValueObject)
-		for _, item := range val2Obj.Items {
-			if existingIdx, ok := newObj.Index[item.Key]; ok {
-				newObj.Items[existingIdx].Value = pgtypes.JsonValueCopy(item.Value)
-			} else {
-				newObj.Items = append(newObj.Items, pgtypes.JsonValueObjectItem{
-					Key:   item.Key,
-					Value: pgtypes.JsonValueCopy(item.Value),
-				})
-			}
-		}
-		sort.Slice(newObj.Items, func(i, j int) bool {
-			if len(newObj.Items[i].Key) < len(newObj.Items[j].Key) {
-				return true
-			} else if len(newObj.Items[i].Key) > len(newObj.Items[j].Key) {
-				return false
-			} else {
-				return newObj.Items[i].Key < newObj.Items[j].Key
-			}
-		})
-		for i, item := range newObj.Items {
-			newObj.Index[item.Key] = i
-		}
-		return pgtypes.JsonDocument{Value: newObj}, nil
+		items := make([]pgtypes.JsonValueObjectItem, 0, len(val1Obj.Items)+len(val2Obj.Items))
+		items = append(items, val1Obj.Items...)
+		items = append(items, val2Obj.Items...)
+		return pgtypes.JsonDocument{Value: pgtypes.JsonObjectFromItems(items, true)}, nil
 	}
 	// They're not both objects, so we'll make them both arrays if they're not already arrays
 	if _, ok := val1.(pgtypes.JsonValueArray); !ok {

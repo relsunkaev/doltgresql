@@ -15,11 +15,14 @@
 package types
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/goccy/go-json"
 	"github.com/shopspring/decimal"
 
@@ -131,6 +134,40 @@ func JsonValueCopy(value JsonValue) JsonValue {
 	}
 }
 
+// JsonObjectFromItems constructs a JSON object from its item list.
+func JsonObjectFromItems(items []JsonValueObjectItem, sortKeys bool) JsonValueObject {
+	copied := make([]JsonValueObjectItem, len(items))
+	for i, item := range items {
+		copied[i] = JsonValueObjectItem{
+			Key:   item.Key,
+			Value: JsonValueCopy(item.Value),
+		}
+	}
+	if sortKeys {
+		seen := make(map[string]JsonValue, len(copied))
+		for _, item := range copied {
+			seen[item.Key] = item.Value
+		}
+		copied = copied[:0]
+		for key, value := range seen {
+			copied = append(copied, JsonValueObjectItem{Key: key, Value: value})
+		}
+		sort.Slice(copied, func(i, j int) bool {
+			if len(copied[i].Key) < len(copied[j].Key) {
+				return true
+			} else if len(copied[i].Key) > len(copied[j].Key) {
+				return false
+			}
+			return copied[i].Key < copied[j].Key
+		})
+	}
+	index := make(map[string]int, len(copied))
+	for i, item := range copied {
+		index[item.Key] = i
+	}
+	return JsonValueObject{Items: copied, Index: index}
+}
+
 // JsonValueCompare compares two values.
 func JsonValueCompare(v1 JsonValue, v2 JsonValue) int {
 	// Some types sort before others, so we'll check those first
@@ -203,6 +240,65 @@ func JsonValueCompare(v1 JsonValue, v2 JsonValue) int {
 		return 0
 	default:
 		return 0
+	}
+}
+
+// JsonBContainsValue returns whether the container JSONB value contains the contained JSONB value.
+func JsonBContainsValue(container JsonValue, contained JsonValue) bool {
+	return jsonBContainsValue(container, contained, true)
+}
+
+func jsonBContainsValue(container JsonValue, contained JsonValue, allowArrayScalar bool) bool {
+	switch contained := contained.(type) {
+	case JsonValueObject:
+		object, ok := container.(JsonValueObject)
+		if !ok {
+			return false
+		}
+		for _, containedItem := range contained.Items {
+			idx, ok := object.Index[containedItem.Key]
+			if !ok || !jsonBContainsValue(object.Items[idx].Value, containedItem.Value, false) {
+				return false
+			}
+		}
+		return true
+	case JsonValueArray:
+		array, ok := container.(JsonValueArray)
+		if !ok {
+			return false
+		}
+		for _, containedItem := range contained {
+			found := false
+			for _, containerItem := range array {
+				if jsonBContainsArrayElement(containerItem, containedItem) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		return true
+	default:
+		if array, ok := container.(JsonValueArray); ok && allowArrayScalar {
+			for _, item := range array {
+				if JsonValueCompare(item, contained) == 0 {
+					return true
+				}
+			}
+			return false
+		}
+		return JsonValueCompare(container, contained) == 0
+	}
+}
+
+func jsonBContainsArrayElement(containerItem JsonValue, containedItem JsonValue) bool {
+	switch containedItem.(type) {
+	case JsonValueArray, JsonValueObject:
+		return jsonBContainsValue(containerItem, containedItem, true)
+	default:
+		return JsonValueCompare(containerItem, containedItem) == 0
 	}
 }
 
@@ -310,9 +406,8 @@ func JsonValueFormatter(sb *strings.Builder, value JsonValue) {
 			if i > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteRune('"')
-			sb.WriteString(strings.ReplaceAll(item.Key, `"`, `\"`))
-			sb.WriteString(`": `)
+			writeJsonKeyString(sb, item.Key)
+			sb.WriteString(`: `)
 			JsonValueFormatter(sb, item.Value)
 		}
 		sb.WriteRune('}')
@@ -326,9 +421,7 @@ func JsonValueFormatter(sb *strings.Builder, value JsonValue) {
 		}
 		sb.WriteRune(']')
 	case JsonValueString:
-		sb.WriteRune('"')
-		sb.WriteString(strings.ReplaceAll(string(value), `"`, `\"`))
-		sb.WriteRune('"')
+		writeJsonStoredString(sb, string(value))
 	case JsonValueNumber:
 		sb.WriteString(decimal.Decimal(value).String())
 	case JsonValueBoolean:
@@ -339,6 +432,269 @@ func JsonValueFormatter(sb *strings.Builder, value JsonValue) {
 		}
 	case JsonValueNull:
 		sb.WriteString(`null`)
+	}
+}
+
+// JsonValueFormatterCompact is the recursive compact formatter for JSON values.
+func JsonValueFormatterCompact(sb *strings.Builder, value JsonValue) {
+	switch value := value.(type) {
+	case JsonValueObject:
+		sb.WriteRune('{')
+		for i, item := range value.Items {
+			if i > 0 {
+				sb.WriteRune(',')
+			}
+			writeJsonKeyString(sb, item.Key)
+			sb.WriteRune(':')
+			JsonValueFormatterCompact(sb, item.Value)
+		}
+		sb.WriteRune('}')
+	case JsonValueArray:
+		sb.WriteRune('[')
+		for i, item := range value {
+			if i > 0 {
+				sb.WriteRune(',')
+			}
+			JsonValueFormatterCompact(sb, item)
+		}
+		sb.WriteRune(']')
+	case JsonValueString:
+		writeJsonStoredString(sb, string(value))
+	case JsonValueNumber:
+		sb.WriteString(decimal.Decimal(value).String())
+	case JsonValueBoolean:
+		if value {
+			sb.WriteString("true")
+		} else {
+			sb.WriteString("false")
+		}
+	case JsonValueNull:
+		sb.WriteString("null")
+	}
+}
+
+func writeJsonKeyString(sb *strings.Builder, value string) {
+	bytes, _ := json.MarshalWithOption(value, json.DisableHTMLEscape())
+	sb.Write(bytes)
+}
+
+func writeJsonStoredString(sb *strings.Builder, value string) {
+	sb.WriteRune('"')
+	sb.WriteString(strings.ReplaceAll(value, `"`, `\"`))
+	sb.WriteRune('"')
+}
+
+// JsonStringUnescape returns the decoded text represented by a stored JSON string.
+func JsonStringUnescape(value JsonValueString) (string, error) {
+	sb := strings.Builder{}
+	writeJsonStoredString(&sb, string(value))
+	var decoded string
+	if err := json.Unmarshal([]byte(sb.String()), &decoded); err != nil {
+		return "", err
+	}
+	return decoded, nil
+}
+
+func jsonStringEscape(value string) string {
+	sb := strings.Builder{}
+	for _, r := range value {
+		switch r {
+		case '\\':
+			sb.WriteString(`\\`)
+		case '\b':
+			sb.WriteString(`\b`)
+		case '\f':
+			sb.WriteString(`\f`)
+		case '\n':
+			sb.WriteString(`\n`)
+		case '\r':
+			sb.WriteString(`\r`)
+		case '\t':
+			sb.WriteString(`\t`)
+		default:
+			if r < 0x20 {
+				sb.WriteString(fmt.Sprintf(`\u%04x`, r))
+			} else {
+				sb.WriteRune(r)
+			}
+		}
+	}
+	return sb.String()
+}
+
+func jsonParsedStringEscape(value string) string {
+	value = jsonStringEscape(value)
+	return jsonDocumentStringUnicodeRegex.ReplaceAllString(value, `\u$1`)
+}
+
+// JsonValueTypeName returns the PostgreSQL json/jsonb type name for the given JSON value.
+func JsonValueTypeName(value JsonValue) string {
+	switch value.(type) {
+	case JsonValueObject:
+		return "object"
+	case JsonValueArray:
+		return "array"
+	case JsonValueString:
+		return "string"
+	case JsonValueNumber:
+		return "number"
+	case JsonValueBoolean:
+		return "boolean"
+	case JsonValueNull:
+		return "null"
+	default:
+		return ""
+	}
+}
+
+// JsonValueFromSQLValue converts a Doltgres SQL value to the logical JSON value used by json/jsonb functions.
+func JsonValueFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonValue, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return JsonValueNull(0), nil
+	}
+	if doc, ok := res.(JsonDocument); ok {
+		return JsonValueCopy(doc.Value), nil
+	}
+	if typ != nil {
+		switch typ.ID.TypeName() {
+		case "json", "jsonb":
+			str, ok := res.(string)
+			if ok {
+				doc, err := UnmarshalToJsonDocument([]byte(str))
+				if err != nil {
+					return nil, err
+				}
+				return doc.Value, nil
+			}
+		}
+		if typ.IsArrayType() {
+			values, ok := res.([]any)
+			if !ok {
+				values, ok = res.([]interface{})
+			}
+			if ok {
+				baseType := typ.ArrayBaseType()
+				array := make(JsonValueArray, len(values))
+				for i, value := range values {
+					array[i], err = JsonValueFromSQLValue(ctx, baseType, value)
+					if err != nil {
+						return nil, err
+					}
+				}
+				return array, nil
+			}
+		}
+	}
+	switch v := res.(type) {
+	case string:
+		return JsonValueString(jsonStringEscape(v)), nil
+	case bool:
+		return JsonValueBoolean(v), nil
+	case int:
+		return JsonValueNumber(decimal.NewFromInt(int64(v))), nil
+	case int8:
+		return JsonValueNumber(decimal.NewFromInt(int64(v))), nil
+	case int16:
+		return JsonValueNumber(decimal.NewFromInt(int64(v))), nil
+	case int32:
+		return JsonValueNumber(decimal.NewFromInt(int64(v))), nil
+	case int64:
+		return JsonValueNumber(decimal.NewFromInt(v)), nil
+	case uint:
+		return JsonValueNumber(decimal.NewFromUint64(uint64(v))), nil
+	case uint8:
+		return JsonValueNumber(decimal.NewFromUint64(uint64(v))), nil
+	case uint16:
+		return JsonValueNumber(decimal.NewFromUint64(uint64(v))), nil
+	case uint32:
+		return JsonValueNumber(decimal.NewFromUint64(uint64(v))), nil
+	case uint64:
+		return JsonValueNumber(decimal.NewFromUint64(v)), nil
+	case float32:
+		return JsonValueNumber(decimal.NewFromFloat32(v)), nil
+	case float64:
+		return JsonValueNumber(decimal.NewFromFloat(v)), nil
+	case decimal.Decimal:
+		return JsonValueNumber(v), nil
+	case []any:
+		array := make(JsonValueArray, len(v))
+		for i, value := range v {
+			array[i], err = JsonValueFromSQLValue(ctx, nil, value)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return array, nil
+	case time.Time:
+		return JsonValueString(v.Format("2006-01-02T15:04:05.999999Z07:00")), nil
+	}
+	if typ != nil {
+		output, err := typ.IoOutput(ctx, res)
+		if err != nil {
+			return nil, err
+		}
+		return JsonValueString(jsonStringEscape(output)), nil
+	}
+	return JsonValueString(jsonStringEscape(fmt.Sprint(res))), nil
+}
+
+// JsonDocumentFromSQLValue converts a Doltgres SQL value to a JsonDocument.
+func JsonDocumentFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonDocument, error) {
+	value, err := JsonValueFromSQLValue(ctx, typ, val)
+	if err != nil {
+		return JsonDocument{}, err
+	}
+	return JsonDocument{Value: value}, nil
+}
+
+// JsonValueFormatPretty formats a JSON value with PostgreSQL-style indentation used by jsonb_pretty.
+func JsonValueFormatPretty(sb *strings.Builder, value JsonValue, indent int) {
+	indentString := func(n int) {
+		for i := 0; i < n; i++ {
+			sb.WriteByte(' ')
+		}
+	}
+	switch value := value.(type) {
+	case JsonValueObject:
+		if len(value.Items) == 0 {
+			sb.WriteString("{}")
+			return
+		}
+		sb.WriteString("{\n")
+		for i, item := range value.Items {
+			if i > 0 {
+				sb.WriteString(",\n")
+			}
+			indentString(indent + 4)
+			writeJsonKeyString(sb, item.Key)
+			sb.WriteString(`: `)
+			JsonValueFormatPretty(sb, item.Value, indent+4)
+		}
+		sb.WriteByte('\n')
+		indentString(indent)
+		sb.WriteByte('}')
+	case JsonValueArray:
+		if len(value) == 0 {
+			sb.WriteString("[]")
+			return
+		}
+		sb.WriteString("[\n")
+		for i, item := range value {
+			if i > 0 {
+				sb.WriteString(",\n")
+			}
+			indentString(indent + 4)
+			JsonValueFormatPretty(sb, item, indent+4)
+		}
+		sb.WriteByte('\n')
+		indentString(indent)
+		sb.WriteByte(']')
+	default:
+		JsonValueFormatter(sb, value)
 	}
 }
 
@@ -395,16 +751,7 @@ func ConvertToJsonDocument(val interface{}) (JsonValue, error) {
 		}
 		return values, nil
 	case string:
-		// JSON parsing will convert some escaped whitespace characters to their actual characters, which is incorrect.
-		// We must retain their escaped form to be considered valid JSON.
-		val = strings.ReplaceAll(val, "\\", `\\`)
-		val = strings.ReplaceAll(val, "\n", `\n`)
-		val = strings.ReplaceAll(val, "\t", `\t`)
-		val = strings.ReplaceAll(val, "\r", `\r`)
-		// We specifically don't want Unicode escape sequences to be replaced, so we revert those.
-		// This is safe as we double backslashes before this step, so this will return it to its original input.
-		val = jsonDocumentStringUnicodeRegex.ReplaceAllString(val, `\u$1`)
-		return JsonValueString(val), nil
+		return JsonValueString(jsonParsedStringEscape(val)), nil
 	case float64:
 		// TODO: handle this as a proper numeric as float64 is not precise enough
 		return JsonValueNumber(decimal.NewFromFloat(val)), nil
