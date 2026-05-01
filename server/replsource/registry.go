@@ -43,6 +43,7 @@ type Slot struct {
 type Sender struct {
 	ID              uint64
 	SlotName        string
+	Publications    []string
 	PID             int32
 	User            string
 	ApplicationName string
@@ -61,6 +62,7 @@ type Sender struct {
 // SenderInfo contains caller-provided metadata for a replication sender.
 type SenderInfo struct {
 	SlotName        string
+	Publications    []string
 	PID             int32
 	User            string
 	ApplicationName string
@@ -73,13 +75,22 @@ type registry struct {
 	nextID   uint64
 	slots    map[string]*Slot
 	senders  map[uint64]*Sender
+	queues   map[uint64]chan WALMessage
 	current  pglogrepl.LSN
 	systemID string
+}
+
+// WALMessage is one CopyData XLogData payload destined for a logical replication sender.
+type WALMessage struct {
+	WALStart     pglogrepl.LSN
+	ServerWALEnd pglogrepl.LSN
+	WALData      []byte
 }
 
 var defaultRegistry = &registry{
 	slots:    make(map[string]*Slot),
 	senders:  make(map[uint64]*Sender),
+	queues:   make(map[uint64]chan WALMessage),
 	systemID: "7500000000000000001",
 }
 
@@ -97,6 +108,21 @@ func CurrentLSN() pglogrepl.LSN {
 	return defaultRegistry.current
 }
 
+// HasActiveSenders returns whether any logical replication sender is active.
+func HasActiveSenders() bool {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	return len(defaultRegistry.senders) > 0
+}
+
+// AdvanceLSN records a local WAL-producing change and returns the new source LSN.
+func AdvanceLSN() pglogrepl.LSN {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	defaultRegistry.current += 0x10
+	return defaultRegistry.current
+}
+
 // ResetForTests clears all in-memory logical replication state.
 func ResetForTests() {
 	defaultRegistry.mu.Lock()
@@ -104,6 +130,7 @@ func ResetForTests() {
 	defaultRegistry.nextID = 0
 	defaultRegistry.slots = make(map[string]*Slot)
 	defaultRegistry.senders = make(map[uint64]*Sender)
+	defaultRegistry.queues = make(map[uint64]chan WALMessage)
 	defaultRegistry.current = 0
 }
 
@@ -166,21 +193,22 @@ func ListSlots() []Slot {
 }
 
 // RegisterSender marks a slot as active and records a new replication sender.
-func RegisterSender(info SenderInfo) (Sender, error) {
+func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
 	slot, ok := defaultRegistry.slots[info.SlotName]
 	if !ok {
-		return Sender{}, errors.Errorf(`replication slot "%s" does not exist`, info.SlotName)
+		return Sender{}, nil, errors.Errorf(`replication slot "%s" does not exist`, info.SlotName)
 	}
 	if slot.Active {
-		return Sender{}, errors.Errorf(`replication slot "%s" is active`, info.SlotName)
+		return Sender{}, nil, errors.Errorf(`replication slot "%s" is active`, info.SlotName)
 	}
 	defaultRegistry.nextID++
 	host, port := splitAddr(info.RemoteAddr)
 	sender := Sender{
 		ID:              defaultRegistry.nextID,
 		SlotName:        info.SlotName,
+		Publications:    compactLowerStrings(info.Publications),
 		PID:             info.PID,
 		User:            info.User,
 		ApplicationName: info.ApplicationName,
@@ -196,7 +224,9 @@ func RegisterSender(info SenderInfo) (Sender, error) {
 	slot.Active = true
 	slot.ActivePID = info.PID
 	defaultRegistry.senders[sender.ID] = &sender
-	return sender, nil
+	queue := make(chan WALMessage, 256)
+	defaultRegistry.queues[sender.ID] = queue
+	return sender, queue, nil
 }
 
 // UpdateStandbyStatus records a standby status update from the replication client.
@@ -216,11 +246,9 @@ func UpdateStandbyStatus(senderID uint64, writeLSN pglogrepl.LSN, flushLSN pglog
 	sender.WriteLSN = writeLSN
 	sender.FlushLSN = flushLSN
 	sender.ReplayLSN = replayLSN
-	sender.SentLSN = maxLSN(sender.SentLSN, writeLSN)
 	sender.ReplyTime = replyTime
-	defaultRegistry.current = maxLSN(defaultRegistry.current, flushLSN)
 	if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
-		slot.ConfirmedFlushLSN = maxLSN(slot.ConfirmedFlushLSN, flushLSN)
+		slot.ConfirmedFlushLSN = maxLSN(slot.ConfirmedFlushLSN, minLSN(flushLSN, sender.SentLSN))
 	}
 }
 
@@ -233,12 +261,43 @@ func UnregisterSender(senderID uint64) {
 		return
 	}
 	delete(defaultRegistry.senders, senderID)
+	if queue, ok := defaultRegistry.queues[senderID]; ok {
+		close(queue)
+		delete(defaultRegistry.queues, senderID)
+	}
 	if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
 		if slot.Temporary {
 			delete(defaultRegistry.slots, sender.SlotName)
 		} else {
 			slot.Active = false
 			slot.ActivePID = 0
+		}
+	}
+}
+
+// Broadcast sends logical WAL messages to matching active senders.
+func Broadcast(publications []string, messages []WALMessage) {
+	if len(messages) == 0 {
+		return
+	}
+	publications = compactLowerStrings(publications)
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	for senderID, sender := range defaultRegistry.senders {
+		if !publicationSetsOverlap(sender.Publications, publications) {
+			continue
+		}
+		queue, ok := defaultRegistry.queues[senderID]
+		if !ok {
+			continue
+		}
+		for _, message := range messages {
+			sender.SentLSN = maxLSN(sender.SentLSN, message.ServerWALEnd)
+			select {
+			case queue <- message:
+			default:
+				sender.State = "catchup"
+			}
 		}
 	}
 }
@@ -277,4 +336,38 @@ func maxLSN(a pglogrepl.LSN, b pglogrepl.LSN) pglogrepl.LSN {
 		return a
 	}
 	return b
+}
+
+func minLSN(a pglogrepl.LSN, b pglogrepl.LSN) pglogrepl.LSN {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func compactLowerStrings(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	ret := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value != "" {
+			ret = append(ret, value)
+		}
+	}
+	slices.Sort(ret)
+	return slices.Compact(ret)
+}
+
+func publicationSetsOverlap(senderPublications []string, changePublications []string) bool {
+	if len(senderPublications) == 0 || len(changePublications) == 0 {
+		return true
+	}
+	for _, senderPublication := range senderPublications {
+		if _, ok := slices.BinarySearch(changePublications, senderPublication); ok {
+			return true
+		}
+	}
+	return false
 }

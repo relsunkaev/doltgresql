@@ -118,8 +118,9 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 	if err != nil {
 		return err
 	}
-	sender, err := replsource.RegisterSender(replsource.SenderInfo{
+	sender, queue, err := replsource.RegisterSender(replsource.SenderInfo{
 		SlotName:        slotName,
+		Publications:    replicationPublicationNames(statement),
 		PID:             int32(processID),
 		User:            h.mysqlConn.User,
 		ApplicationName: h.startupParams["application_name"],
@@ -130,6 +131,7 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 		return err
 	}
 	h.replicationSenderID = sender.ID
+	go h.runReplicationSender(queue)
 	if err = h.send(&pgproto3.CopyBothResponse{}); err != nil {
 		h.closeReplicationSender()
 		return err
@@ -139,6 +141,15 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 		return err
 	}
 	return nil
+}
+
+func (h *ConnectionHandler) runReplicationSender(queue <-chan replsource.WALMessage) {
+	for message := range queue {
+		if err := h.sendXLogData(message); err != nil {
+			h.closeReplicationSender()
+			return
+		}
+	}
 }
 
 func (h *ConnectionHandler) handleReplicationCopyData(message *pgproto3.CopyData) (stop bool, endOfMessages bool, err error) {
@@ -217,6 +228,16 @@ func (h *ConnectionHandler) sendPrimaryKeepalive(replyRequested bool) error {
 	return h.send(&pgproto3.CopyData{Data: data})
 }
 
+func (h *ConnectionHandler) sendXLogData(message replsource.WALMessage) error {
+	data := make([]byte, 0, 25+len(message.WALData))
+	data = append(data, pglogrepl.XLogDataByteID)
+	data = binary.BigEndian.AppendUint64(data, uint64(message.WALStart))
+	data = binary.BigEndian.AppendUint64(data, uint64(message.ServerWALEnd))
+	data = binary.BigEndian.AppendUint64(data, uint64(timeToPgTime(time.Now())))
+	data = append(data, message.WALData...)
+	return h.send(&pgproto3.CopyData{Data: data})
+}
+
 type standbyStatusUpdate struct {
 	writeLSN       pglogrepl.LSN
 	flushLSN       pglogrepl.LSN
@@ -244,6 +265,52 @@ func normalizeReplicationIdentifier(value string) string {
 		return strings.ReplaceAll(value[1:len(value)-1], `""`, `"`)
 	}
 	return value
+}
+
+func replicationPublicationNames(statement string) []string {
+	lower := strings.ToLower(statement)
+	idx := strings.Index(lower, "publication_names")
+	if idx < 0 {
+		return nil
+	}
+	tail := statement[idx+len("publication_names"):]
+	tail = strings.TrimSpace(tail)
+	if strings.HasPrefix(tail, `"`) {
+		tail = strings.TrimSpace(tail[1:])
+	}
+	if len(tail) == 0 {
+		return nil
+	}
+	quote := tail[0]
+	if quote != '\'' && quote != '"' {
+		return nil
+	}
+	raw, ok := readReplicationOptionString(tail[1:], quote)
+	if !ok {
+		return nil
+	}
+	values := strings.Split(raw, ",")
+	for i := range values {
+		values[i] = normalizeReplicationIdentifier(strings.TrimSpace(values[i]))
+	}
+	return values
+}
+
+func readReplicationOptionString(value string, quote byte) (string, bool) {
+	var builder strings.Builder
+	for i := 0; i < len(value); i++ {
+		if value[i] != quote {
+			builder.WriteByte(value[i])
+			continue
+		}
+		if i+1 < len(value) && value[i+1] == quote {
+			builder.WriteByte(quote)
+			i++
+			continue
+		}
+		return builder.String(), true
+	}
+	return "", false
 }
 
 func formatReplicationLSN(lsn pglogrepl.LSN) string {

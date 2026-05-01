@@ -48,6 +48,7 @@ import (
 	dserver "github.com/dolthub/doltgresql/server"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/servercfg"
 	"github.com/dolthub/doltgresql/servercfg/cfgdetails"
@@ -410,6 +411,7 @@ func CreateServer(t *testing.T, database string) (context.Context, *Connection, 
 // to wait until the server has closed.
 func CreateServerWithPort(t *testing.T, database string, port int) (context.Context, *Connection, *svcs.Controller) {
 	require.NotEmpty(t, database)
+	replsource.ResetForTests()
 	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
@@ -432,6 +434,7 @@ func CreateServerWithPort(t *testing.T, database string, port int) (context.Cont
 // |database| at 127.0.0.1:|port|. The server will close when the connection is closed or lost. The returned
 // [svcs.Controller] may be used to wait for the server to stop.
 func CreateServerLocalWithPort(t *testing.T, database string, port int) (context.Context, *Connection, *svcs.Controller) {
+	replsource.ResetForTests()
 	// We avoid using [T.TempDir] because it results in a file lock conflict on Windows. [T.TempDir] registers a
 	// [T.Cleanup] function that runs without checking the [svcs.Controller] and it cannot be overwritten.
 	// TODO(elianddb): Setup an optional [T.Cleanup] function for the temporary directory. Our default setup for now is

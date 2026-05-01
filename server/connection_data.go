@@ -90,11 +90,15 @@ type copyFromStdinState struct {
 }
 
 type PortalData struct {
-	Query        ConvertedQuery
-	IsEmptyQuery bool
-	Fields       []pgproto3.FieldDescription
-	BoundPlan    sql.Node
-	FormatCodes  []int16
+	Query                  ConvertedQuery
+	IsEmptyQuery           bool
+	Fields                 []pgproto3.FieldDescription
+	BoundPlan              sql.Node
+	FormatCodes            []int16
+	ReplicationQuery       ConvertedQuery
+	ReplicationCapture     *replicationChangeCapture
+	ReplicationBoundPlan   sql.Node
+	ReplicationFormatCodes []int16
 }
 
 type PreparedStatementData struct {

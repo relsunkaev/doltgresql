@@ -22,6 +22,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -116,14 +117,14 @@ var pg_wal_lsn_diff = framework.Function2{
 	},
 }
 
-// pg_current_wal_lsn reports a stable synthetic primary LSN until Doltgres has a WAL producer.
+// pg_current_wal_lsn reports the highest local logical replication source LSN.
 var pg_current_wal_lsn = framework.Function0{
 	Name:               "pg_current_wal_lsn",
 	Return:             pgtypes.PgLsn,
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context) (any, error) {
-		return uint64(0), nil
+		return uint64(replsource.CurrentLSN()), nil
 	},
 }
 

@@ -42,6 +42,11 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	defer conn.Close(ctx)
 
 	slotName := "dg_logical_source_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_rep_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_logical_source_pub FOR TABLE dg_rep_items;")
+	require.NoError(t, err)
+
 	replConn := connectReplicationConn(t, ctx, port)
 	defer replConn.Close(context.Background())
 
@@ -90,16 +95,72 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, pglogrepl.LSN(0), parsedKeepalive.ServerWALEnd)
 
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_rep_items VALUES (42, 'forty-two');")
+	require.NoError(t, err)
+	relation, insert, commit := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_rep_items", "42", "forty-two")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	var currentLSN string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&currentLSN))
+	require.Equal(t, commit.CommitLSN.String(), currentLSN)
+
+	_, err = conn.Current.Exec(ctx, "PREPARE dg_rep_insert(bigint, text) AS INSERT INTO dg_rep_items VALUES ($1, $2);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "EXECUTE dg_rep_insert(43, 'forty-three');")
+	require.NoError(t, err)
+	relation, insert, commit = receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_rep_items", "43", "forty-three")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_rep_items VALUES ($1, $2);", int64(44), "forty-four")
+	require.NoError(t, err)
+	relation, insert, commit = receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_rep_items", "44", "forty-four")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	var returnedID int64
+	require.NoError(t, conn.Current.QueryRow(ctx,
+		"INSERT INTO dg_rep_items VALUES (45, 'forty-five') RETURNING tenant_id;").Scan(&returnedID))
+	require.Equal(t, int64(45), returnedID)
+	relation, insert, commit = receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_rep_items", "45", "forty-five")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_rep_items SET label = 'forty-five-updated' WHERE tenant_id = 45;")
+	require.NoError(t, err)
+	relation, update, commit := receiveUpdateChange(t, replConn)
+	requireUpdateChange(t, relation, update, "dg_rep_items", "45", "forty-five-updated")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_rep_items WHERE tenant_id = 45;")
+	require.NoError(t, err)
+	relation, deleteMessage, commit := receiveDeleteChange(t, replConn)
+	requireDeleteChange(t, relation, deleteMessage, "dg_rep_items", "45", "forty-five-updated")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_rep_items VALUES (46, 'rolled-back');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_rep_items VALUES (47, 'after-rollback');")
+	require.NoError(t, err)
+	relation, insert, commit = receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_rep_items", "47", "after-rollback")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
 	require.NoError(t, pglogrepl.SendStandbyStatusUpdate(ctx, replConn, pglogrepl.StandbyStatusUpdate{
-		WALWritePosition: pglogrepl.LSN(0x16),
-		WALFlushPosition: pglogrepl.LSN(0x16),
-		WALApplyPosition: pglogrepl.LSN(0x16),
+		WALWritePosition: commit.CommitLSN,
+		WALFlushPosition: commit.CommitLSN,
+		WALApplyPosition: commit.CommitLSN,
 		ReplyRequested:   true,
 	}))
 	reply := receiveReplicationCopyData(t, replConn)
 	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
 
-	waitForReplicationState(t, ctx, conn, slotName)
+	waitForReplicationState(t, ctx, conn, slotName, commit.CommitLSN.String())
 
 	_, err = pglogrepl.SendStandbyCopyDone(ctx, replConn)
 	require.NoError(t, err)
@@ -116,6 +177,117 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.NoError(t, conn.Current.QueryRow(ctx, `
 		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
 	require.Equal(t, 0, slotCount)
+}
+
+func TestLogicalReplicationSourceFiltersPublicationAndIgnoresClientLSNFeedback(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_logical_filter_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_pub_a_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_pub_b_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_pub_a FOR TABLE dg_pub_a_items;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_pub_b FOR TABLE dg_pub_b_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_pub_a'`,
+		},
+	}))
+
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+	require.NoError(t, pglogrepl.SendStandbyStatusUpdate(ctx, replConn, pglogrepl.StandbyStatusUpdate{
+		WALWritePosition: pglogrepl.LSN(0x70000000),
+		WALFlushPosition: pglogrepl.LSN(0x70000000),
+		WALApplyPosition: pglogrepl.LSN(0x70000000),
+		ReplyRequested:   true,
+	}))
+	reply := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
+
+	var currentLSN string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&currentLSN))
+	require.Equal(t, "0/0", currentLSN)
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_pub_b_items VALUES (1, 'wrong-publication');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_pub_a_items VALUES (2, 'right-publication');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_pub_a_items", "2", "right-publication")
+}
+
+func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_lsn_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	var before string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&before))
+	require.Equal(t, "0/0", before)
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_lsn_items VALUES (1, 'one');")
+	require.NoError(t, err)
+	var after string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&after))
+	require.NotEqual(t, before, after)
+	require.Equal(t, "0/10", after)
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_lsn_items SET label = 'missing' WHERE tenant_id = 999;")
+	require.NoError(t, err)
+	var afterNoop string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&afterNoop))
+	require.Equal(t, after, afterNoop)
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_lsn_items VALUES (2, 'rolled-back');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK;")
+	require.NoError(t, err)
+	var afterRollback string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&afterRollback))
+	require.Equal(t, after, afterRollback)
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_lsn_items VALUES (2, 'committed');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+	var afterCommit string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&afterCommit))
+	require.Equal(t, "0/20", afterCommit)
 }
 
 func connectReplicationConn(t *testing.T, ctx context.Context, port int) *pgconn.PgConn {
@@ -137,7 +309,137 @@ func receiveReplicationCopyData(t *testing.T, conn *pgconn.PgConn) *pgproto3.Cop
 	return copyData
 }
 
-func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection, slotName string) {
+func receiveInsertChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.InsertMessageV2, *pglogrepl.CommitMessage) {
+	t.Helper()
+	var relation *pglogrepl.RelationMessageV2
+	var insert *pglogrepl.InsertMessageV2
+	var commit *pglogrepl.CommitMessage
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.RelationMessageV2:
+			relation = typed
+		case *pglogrepl.InsertMessageV2:
+			insert = typed
+		case *pglogrepl.CommitMessage:
+			commit = typed
+		}
+		if relation != nil && insert != nil && commit != nil {
+			return relation, insert, commit
+		}
+	}
+	require.FailNow(t, "timed out waiting for relation, insert, and commit logical replication messages")
+	return nil, nil, nil
+}
+
+func receiveUpdateChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.UpdateMessageV2, *pglogrepl.CommitMessage) {
+	t.Helper()
+	var relation *pglogrepl.RelationMessageV2
+	var update *pglogrepl.UpdateMessageV2
+	var commit *pglogrepl.CommitMessage
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.RelationMessageV2:
+			relation = typed
+		case *pglogrepl.UpdateMessageV2:
+			update = typed
+		case *pglogrepl.CommitMessage:
+			commit = typed
+		}
+		if relation != nil && update != nil && commit != nil {
+			return relation, update, commit
+		}
+	}
+	require.FailNow(t, "timed out waiting for relation, update, and commit logical replication messages")
+	return nil, nil, nil
+}
+
+func receiveDeleteChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.DeleteMessageV2, *pglogrepl.CommitMessage) {
+	t.Helper()
+	var relation *pglogrepl.RelationMessageV2
+	var deleteMessage *pglogrepl.DeleteMessageV2
+	var commit *pglogrepl.CommitMessage
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.RelationMessageV2:
+			relation = typed
+		case *pglogrepl.DeleteMessageV2:
+			deleteMessage = typed
+		case *pglogrepl.CommitMessage:
+			commit = typed
+		}
+		if relation != nil && deleteMessage != nil && commit != nil {
+			return relation, deleteMessage, commit
+		}
+	}
+	require.FailNow(t, "timed out waiting for relation, delete, and commit logical replication messages")
+	return nil, nil, nil
+}
+
+func requireInsertChange(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, table string, tenantID string, label string) {
+	t.Helper()
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, table, relation.RelationName)
+	require.Equal(t, uint16(2), relation.ColumnNum)
+	require.Equal(t, "tenant_id", relation.Columns[0].Name)
+	require.Equal(t, uint8(1), relation.Columns[0].Flags)
+	require.Equal(t, "label", relation.Columns[1].Name)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 2)
+	require.Equal(t, tenantID, string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, label, string(insert.Tuple.Columns[1].Data))
+}
+
+func requireUpdateChange(t *testing.T, relation *pglogrepl.RelationMessageV2, update *pglogrepl.UpdateMessageV2, table string, tenantID string, label string) {
+	t.Helper()
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, table, relation.RelationName)
+	require.Equal(t, relation.RelationID, update.RelationID)
+	require.NotNil(t, update.NewTuple)
+	require.Len(t, update.NewTuple.Columns, 2)
+	require.Equal(t, tenantID, string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, label, string(update.NewTuple.Columns[1].Data))
+}
+
+func requireDeleteChange(t *testing.T, relation *pglogrepl.RelationMessageV2, deleteMessage *pglogrepl.DeleteMessageV2, table string, tenantID string, label string) {
+	t.Helper()
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, table, relation.RelationName)
+	require.Equal(t, relation.RelationID, deleteMessage.RelationID)
+	require.Equal(t, uint8(pglogrepl.DeleteMessageTupleTypeOld), deleteMessage.OldTupleType)
+	require.NotNil(t, deleteMessage.OldTuple)
+	require.Len(t, deleteMessage.OldTuple.Columns, 2)
+	require.Equal(t, tenantID, string(deleteMessage.OldTuple.Columns[0].Data))
+	require.Equal(t, label, string(deleteMessage.OldTuple.Columns[1].Data))
+}
+
+func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection, slotName string, expectedLSN string) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	var lastErr error
@@ -150,8 +452,8 @@ func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection
 			FROM pg_catalog.pg_stat_replication
 			WHERE application_name = 'dg-logical-source-test'`).Scan(
 			&state, &sentLSN, &writeLSN, &flushLSN, &replayLSN, &syncState, &replyTimeSet, &lag)
-		if lastErr == nil && state == "streaming" && sentLSN == "0/16" && writeLSN == "0/16" &&
-			flushLSN == "0/16" && replayLSN == "0/16" && syncState == "async" && replyTimeSet && lag == "0" {
+		if lastErr == nil && state == "streaming" && sentLSN == expectedLSN && writeLSN == expectedLSN &&
+			flushLSN == expectedLSN && replayLSN == expectedLSN && syncState == "async" && replyTimeSet && lag == "0" {
 			var active bool
 			var activePIDSet bool
 			var confirmedFlush string
@@ -161,7 +463,7 @@ func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection
 				WHERE slot_name = $1`, slotName).Scan(&active, &activePIDSet, &confirmedFlush))
 			require.True(t, active)
 			require.True(t, activePIDSet)
-			require.Equal(t, "0/16", confirmedFlush)
+			require.Equal(t, expectedLSN, confirmedFlush)
 			return
 		}
 		time.Sleep(25 * time.Millisecond)

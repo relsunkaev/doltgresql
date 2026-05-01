@@ -28,6 +28,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -53,6 +54,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -65,6 +67,7 @@ type ConnectionHandler struct {
 	portals            map[string]PortalData
 	doltgresHandler    *DoltgresHandler
 	backend            *pgproto3.Backend
+	sendMu             sync.Mutex
 
 	waitForSync bool
 	// copyFromStdinState is set when this connection is in the COPY FROM STDIN mode, meaning it is waiting on
@@ -72,6 +75,10 @@ type ConnectionHandler struct {
 	copyFromStdinState *copyFromStdinState
 	// inTransaction is set to true with BEGIN query and false with COMMIT query.
 	inTransaction bool
+	// pendingReplicationCaptures stores row changes produced inside an explicit transaction until COMMIT.
+	pendingReplicationCaptures []*replicationChangeCapture
+	// pendingReplicationAdvance records a row-producing transaction without an active logical sender.
+	pendingReplicationAdvance bool
 	// replicationMode is true when the client connected with replication=database.
 	replicationMode bool
 	// startupParams stores startup parameters that are needed after authentication, such as application_name.
@@ -549,6 +556,8 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 		h.inTransaction = true
 	case *sqlparser.Commit:
 		h.inTransaction = false
+	case *sqlparser.Rollback:
+		h.inTransaction = false
 	case *sqlparser.Deallocate:
 		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
 	case sqlparser.InjectedStatement:
@@ -772,8 +781,47 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	query := preparedData.Query
 	query.StatementTag = preparedData.Query.StatementTag
 	rowsAffected := int32(0)
-	callback := h.spoolRowsCallback(query, &rowsAffected, false)
-	if err = h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, query.String, boundPlan, nil, callback); err != nil {
+	executionQuery := query
+	executionPlan := boundPlan
+	var replicationCapture *replicationChangeCapture
+	var replicationQuery ConvertedQuery
+	var hasReplicationCapture bool
+	var executionFormatCodes []int16
+	advanceLSN := false
+	if replsource.HasActiveSenders() {
+		replicationCapture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(preparedData.Query)
+		if err != nil {
+			return err
+		}
+		if !hasReplicationCapture {
+			replicationCapture = nil
+		} else {
+			replicationPlan, replicationFields, err := h.doltgresHandler.ComBind(
+				context.Background(),
+				h.mysqlConn,
+				replicationQuery.String,
+				replicationQuery.AST,
+				BindVariables{
+					varTypes:   preparedData.BindVarTypes,
+					parameters: params,
+				},
+				nil,
+			)
+			if err != nil {
+				return err
+			}
+			var ok bool
+			executionPlan, ok = replicationPlan.(sql.Node)
+			if !ok {
+				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
+			}
+			executionQuery = replicationQuery
+			executionFormatCodes = make([]int16, len(replicationFields))
+		}
+	} else if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
+		advanceLSN = true
+	}
+	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, replicationCapture, advanceLSN, &rowsAffected, false); err != nil {
 		return err
 	}
 
@@ -962,11 +1010,53 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 	if err != nil {
 		return err
 	}
+	var replicationCapture *replicationChangeCapture
+	var replicationBoundPlan sql.Node
+	var replicationFormatCodes []int16
+	var replicationQuery ConvertedQuery
+	if replsource.HasActiveSenders() {
+		var hasReplicationCapture bool
+		replicationCapture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(preparedData.Query)
+		if err != nil {
+			return err
+		}
+		if hasReplicationCapture {
+			replicationPlan, replicationFields, err := h.doltgresHandler.ComBind(
+				context.Background(),
+				h.mysqlConn,
+				replicationQuery.String,
+				replicationQuery.AST,
+				BindVariables{
+					varTypes:    preparedData.BindVarTypes,
+					formatCodes: message.ParameterFormatCodes,
+					parameters:  message.Parameters,
+				},
+				nil)
+			if err != nil {
+				return err
+			}
+			var ok bool
+			replicationBoundPlan, ok = replicationPlan.(sql.Node)
+			if !ok {
+				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
+			}
+			replicationFormatCodes = make([]int16, len(replicationFields))
+			if replicationCapture != nil && replicationCapture.clientReturnsRows && len(fields) > 0 {
+				copy(replicationFormatCodes, resultFormatCodes)
+			}
+		} else {
+			replicationCapture = nil
+		}
+	}
 	h.portals[message.DestinationPortal] = PortalData{
-		Query:       preparedData.Query,
-		Fields:      fields,
-		BoundPlan:   boundPlan,
-		FormatCodes: resultFormatCodes,
+		Query:                  preparedData.Query,
+		Fields:                 fields,
+		BoundPlan:              boundPlan,
+		FormatCodes:            resultFormatCodes,
+		ReplicationQuery:       replicationQuery,
+		ReplicationCapture:     replicationCapture,
+		ReplicationBoundPlan:   replicationBoundPlan,
+		ReplicationFormatCodes: replicationFormatCodes,
 	}
 	return h.send(&pgproto3.BindComplete{})
 }
@@ -997,13 +1087,90 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	// |rowsAffected| gets altered by the callback below
 	rowsAffected := int32(0)
 
-	callback := h.spoolRowsCallback(query, &rowsAffected, true)
-	err = h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, query.String, portalData.BoundPlan, portalData.FormatCodes, callback)
-	if err != nil {
+	executionQuery := query
+	executionPlan := portalData.BoundPlan
+	executionFormatCodes := portalData.FormatCodes
+	advanceLSN := false
+	replicationCapture := portalData.ReplicationCapture
+	if replicationCapture != nil && replsource.HasActiveSenders() {
+		executionQuery = portalData.ReplicationQuery
+		executionPlan = portalData.ReplicationBoundPlan
+		executionFormatCodes = portalData.ReplicationFormatCodes
+	} else {
+		replicationCapture = nil
+		if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
+			advanceLSN = true
+		}
+	}
+	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, replicationCapture, advanceLSN, &rowsAffected, true); err != nil {
 		return err
 	}
 
 	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+}
+
+func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQuery, executionQuery ConvertedQuery, boundPlan sql.Node, formatCodes []int16, capture *replicationChangeCapture, advanceLSN bool, rowsAffected *int32, isExecute bool) error {
+	suppressRows := capture != nil && !capture.clientReturnsRows
+	var captureCtx *sql.Context
+	callback := h.spoolRowsCallbackWithRowSuppression(clientQuery, rowsAffected, isExecute, suppressRows)
+	if capture != nil {
+		clientCallback := callback
+		callback = func(ctx *sql.Context, res *Result) error {
+			captureCtx = ctx
+			clientResult, err := capture.appendResultAndTrimClient(ctx, res)
+			if err != nil {
+				return err
+			}
+			return clientCallback(ctx, clientResult)
+		}
+	}
+	if err := h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, executionQuery.String, boundPlan, formatCodes, callback); err != nil {
+		return err
+	}
+	if capture != nil {
+		return h.publishOrBufferReplicationCapture(captureCtx, capture)
+	}
+	if advanceLSN && *rowsAffected > 0 {
+		h.advanceOrBufferReplicationLSN()
+	}
+	return nil
+}
+
+func (h *ConnectionHandler) publishOrBufferReplicationCapture(ctx *sql.Context, capture *replicationChangeCapture) error {
+	if capture == nil {
+		return nil
+	}
+	if h.inTransaction {
+		h.pendingReplicationCaptures = append(h.pendingReplicationCaptures, capture)
+		return nil
+	}
+	return capture.publish(ctx)
+}
+
+func (h *ConnectionHandler) advanceOrBufferReplicationLSN() {
+	if h.inTransaction {
+		h.pendingReplicationAdvance = true
+		return
+	}
+	replsource.AdvanceLSN()
+}
+
+func (h *ConnectionHandler) flushPendingReplication(ctx *sql.Context) error {
+	for _, capture := range h.pendingReplicationCaptures {
+		if err := capture.publish(ctx); err != nil {
+			return err
+		}
+	}
+	if len(h.pendingReplicationCaptures) == 0 && h.pendingReplicationAdvance {
+		replsource.AdvanceLSN()
+	}
+	h.clearPendingReplication()
+	return nil
+}
+
+func (h *ConnectionHandler) clearPendingReplication() {
+	h.pendingReplicationCaptures = nil
+	h.pendingReplicationAdvance = false
 }
 
 func makeCommandComplete(tag string, rows int32) *pgproto3.CommandComplete {
@@ -1567,21 +1734,114 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	// |rowsAffected| gets altered by the callback below
 	rowsAffected := int32(0)
 
-	callback := h.spoolRowsCallback(query, &rowsAffected, false)
-	err := h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, query.String, query.AST, callback)
+	clientQuery := query
+	var capture *replicationChangeCapture
+	var replicationQuery ConvertedQuery
+	var hasReplicationCapture bool
+	advanceLSN := false
+	var err error
+	if replsource.HasActiveSenders() {
+		capture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(query)
+		if err != nil {
+			return err
+		}
+	} else if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
+		advanceLSN = true
+	}
+	queryToExecute := clientQuery
+	if hasReplicationCapture {
+		queryToExecute = replicationQuery
+	}
+	suppressRows := capture != nil && !capture.clientReturnsRows
+	var captureCtx *sql.Context
+	var queryCtx *sql.Context
+	callback := h.spoolRowsCallbackWithRowSuppression(clientQuery, &rowsAffected, false, suppressRows)
+	clientCallback := callback
+	callback = func(ctx *sql.Context, res *Result) error {
+		queryCtx = ctx
+		if capture != nil {
+			captureCtx = ctx
+			clientResult, err := capture.appendResultAndTrimClient(ctx, res)
+			if err != nil {
+				return err
+			}
+			return clientCallback(ctx, clientResult)
+		}
+		return clientCallback(ctx, res)
+	}
+	err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, queryToExecute.String, queryToExecute.AST, callback)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "syntax error at position") {
 			return errors.Errorf("This statement is not yet supported")
 		}
 		return err
 	}
+	if capture != nil {
+		if err = h.publishOrBufferReplicationCapture(captureCtx, capture); err != nil {
+			return err
+		}
+	} else if advanceLSN && rowsAffected > 0 {
+		h.advanceOrBufferReplicationLSN()
+	}
+	if isCommitQuery(query) {
+		if err = h.flushPendingReplication(queryCtx); err != nil {
+			return err
+		}
+	} else if isRollbackQuery(query) {
+		h.clearPendingReplication()
+	}
 
 	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+}
+
+func isCommitQuery(query ConvertedQuery) bool {
+	_, ok := query.AST.(*sqlparser.Commit)
+	return ok
+}
+
+func isRollbackQuery(query ConvertedQuery) bool {
+	_, ok := query.AST.(*sqlparser.Rollback)
+	return ok
+}
+
+func (h *ConnectionHandler) prepareReplicationChangeQuery(query ConvertedQuery) (*replicationChangeCapture, ConvertedQuery, bool, error) {
+	if query.AST == nil {
+		return nil, ConvertedQuery{}, false, nil
+	}
+	if _, ok := replicationChangeCaptureFromStatement(query.AST); !ok {
+		return nil, ConvertedQuery{}, false, nil
+	}
+	queries, err := h.convertQuery(query.String)
+	if err != nil {
+		return nil, ConvertedQuery{}, false, err
+	}
+	if len(queries) != 1 {
+		return nil, ConvertedQuery{}, false, nil
+	}
+	replicationQuery := queries[0]
+	capture, ok := replicationChangeCaptureFromStatement(replicationQuery.AST)
+	if !ok {
+		return nil, ConvertedQuery{}, false, nil
+	}
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return nil, ConvertedQuery{}, false, err
+	}
+	fullRowColumns, err := capture.fullRowColumnNames(sqlCtx)
+	if err != nil {
+		return nil, ConvertedQuery{}, false, err
+	}
+	capture, ok = prepareReplicationChangeCapture(replicationQuery, fullRowColumns)
+	return capture, replicationQuery, ok, nil
 }
 
 // spoolRowsCallback returns a callback function that will send RowDescription message,
 // then a DataRow message for each row in the result set.
 func (h *ConnectionHandler) spoolRowsCallback(query ConvertedQuery, rows *int32, isExecute bool) func(ctx *sql.Context, res *Result) error {
+	return h.spoolRowsCallbackWithRowSuppression(query, rows, isExecute, false)
+}
+
+func (h *ConnectionHandler) spoolRowsCallbackWithRowSuppression(query ConvertedQuery, rows *int32, isExecute bool, suppressRows bool) func(ctx *sql.Context, res *Result) error {
 	// IsIUD returns whether the query is either an INSERT, UPDATE, or DELETE query.
 	isIUD := query.StatementTag == "INSERT" || query.StatementTag == "UPDATE" || query.StatementTag == "DELETE"
 
@@ -1602,7 +1862,7 @@ func (h *ConnectionHandler) spoolRowsCallback(query ConvertedQuery, rows *int32,
 		}
 		sess.ClearNotices()
 
-		if returnsRow(query) {
+		if returnsRow(query) && !suppressRows {
 			// EXECUTE does not send RowDescription; instead it should be sent from DESCRIBE prior to it
 			if !isExecute && !hasSentRowDescription {
 				hasSentRowDescription = true
@@ -1810,6 +2070,8 @@ func (h *ConnectionHandler) discardToSync() error {
 
 // Send sends the given message over the connection.
 func (h *ConnectionHandler) send(message pgproto3.BackendMessage) error {
+	h.sendMu.Lock()
+	defer h.sendMu.Unlock()
 	h.backend.Send(message)
 	return h.backend.Flush()
 }

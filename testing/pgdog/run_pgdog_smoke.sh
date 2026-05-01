@@ -276,8 +276,14 @@ if [[ "$vector_result" != "vector-1" ]]; then
   exit 1
 fi
 wal_lsn_result="$(psql_pgdog -At -c "SELECT pg_current_wal_lsn(), pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);")"
-if [[ "$wal_lsn_result" != "0/0|1" ]]; then
-  echo "wal-lsn: expected 0/0|1, got: $wal_lsn_result" >&2
+wal_lsn_current="${wal_lsn_result%%|*}"
+wal_lsn_diff="${wal_lsn_result##*|}"
+if [[ "$wal_lsn_diff" != "1" ]]; then
+  echo "wal-lsn: expected pg_wal_lsn_diff result 1, got: $wal_lsn_result" >&2
+  exit 1
+fi
+if [[ "$wal_lsn_current" == "0/0" ]]; then
+  echo "wal-lsn: expected pg_current_wal_lsn to advance after smoke writes, got: $wal_lsn_result" >&2
   exit 1
 fi
 
