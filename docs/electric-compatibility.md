@@ -47,7 +47,7 @@ without the Electric container:
 | Area | Status | Evidence |
 | --- | --- | --- |
 | Replication handshake | Supported | `IDENTIFY_SYSTEM`, logical `CREATE_REPLICATION_SLOT`, `START_REPLICATION`, keepalive, standby status, and `CopyDone` are covered by `TestLogicalReplicationSourceProtocolAndCatalogs`. |
-| pgoutput row messages | Supported for `Relation`, `Begin`, `Commit`, `Insert`, `Update`, and `Delete` | Covered by protocol, transaction, and update/delete tests. |
+| pgoutput row messages | Supported for `Relation`, `Begin`, `Commit`, `Insert`, `Update`, `Delete`, and `Truncate` | Covered by protocol, transaction, update/delete, and truncate tests. |
 | `REPLICA IDENTITY FULL` old update tuples | Supported | `TestLogicalReplicationSourceUpdateIncludesOldTupleForReplicaIdentityFull`. |
 | Publication filters and column lists | Supported in source-mode pgoutput | `TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList` and `TestLogicalReplicationSourceHonorsPublicationUpdateDeleteFiltersAndColumnLists`. |
 | Publication action flags | Supported for row-level DML | `TestLogicalReplicationSourceHonorsPublicationActionFlags`. |
@@ -63,7 +63,6 @@ without the Electric container:
 
 These are not claimed as Electric-supported:
 
-- `TRUNCATE` pgoutput messages.
 - Streaming in-progress transactions using pgoutput stream-start/stream-commit
   messages.
 - Logical decoding plugins other than `pgoutput`.

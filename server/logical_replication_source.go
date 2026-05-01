@@ -61,7 +61,7 @@ func (h *ConnectionHandler) sendIdentifySystem() error {
 
 func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 	fields := strings.Fields(statement)
-	if len(fields) < 4 {
+	if len(fields) < 3 {
 		return errors.Errorf("invalid CREATE_REPLICATION_SLOT command")
 	}
 	slotName := normalizeReplicationIdentifier(fields[1])

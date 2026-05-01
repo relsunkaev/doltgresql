@@ -39,9 +39,10 @@ import (
 type replicationChangeAction byte
 
 const (
-	replicationChangeInsert replicationChangeAction = 'I'
-	replicationChangeUpdate replicationChangeAction = 'U'
-	replicationChangeDelete replicationChangeAction = 'D'
+	replicationChangeInsert   replicationChangeAction = 'I'
+	replicationChangeUpdate   replicationChangeAction = 'U'
+	replicationChangeDelete   replicationChangeAction = 'D'
+	replicationChangeTruncate replicationChangeAction = 'T'
 )
 
 type replicationChangeCapture struct {
@@ -112,6 +113,15 @@ func replicationChangeCaptureFromStatement(statement vitess.Statement) (*replica
 			table:             table,
 			clientReturnsRows: len(stmt.Returning) > 0,
 		}, true
+	case *vitess.DDL:
+		if stmt.Action != vitess.TruncateStr {
+			return nil, false
+		}
+		return &replicationChangeCapture{
+			action: replicationChangeTruncate,
+			schema: stmt.Table.SchemaQualifier.String(),
+			table:  stmt.Table.Name.String(),
+		}, true
 	default:
 		return nil, false
 	}
@@ -170,6 +180,13 @@ func (capture *replicationChangeCapture) appendResultAndTrimClient(ctx *sql.Cont
 		return resultSlice(result, 0, start), nil
 	}
 	return result, nil
+}
+
+func (capture *replicationChangeCapture) requiresFullRows() bool {
+	if capture == nil {
+		return false
+	}
+	return capture.action == replicationChangeInsert || capture.action == replicationChangeUpdate || capture.action == replicationChangeDelete
 }
 
 func (capture *replicationChangeCapture) appendResultSlice(result *Result, start int, end int) {
@@ -257,6 +274,63 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 	advanceOnly := false
 	for _, capture := range captures {
 		if capture == nil {
+			continue
+		}
+		if capture.action == replicationChangeTruncate {
+			if ctx == nil {
+				continue
+			}
+			table, schema, err := capture.resolveTable(ctx)
+			if err != nil {
+				return err
+			}
+			targets, err := capture.publicationTargets(ctx, schema)
+			if err != nil {
+				return err
+			}
+			if len(targets) == 0 {
+				continue
+			}
+			if commitLSN == 0 {
+				commitLSN = replsource.AdvanceLSN()
+			}
+			relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
+			fields, err := schemaToFieldDescriptions(ctx, table.Schema(), nil)
+			if err != nil {
+				return err
+			}
+			replIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema, table.Name())
+			keyColumns, err := relationReplicaIdentityColumns(ctx, table, replIdent)
+			if err != nil {
+				return err
+			}
+			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields, replIdent.Identity.Byte(), keyColumns)
+			truncate := encodeTruncateMessage([]uint32{relationID}, 0)
+			for _, target := range targets {
+				pubMessages := messagesByPublication[target.name]
+				if pubMessages == nil {
+					pubMessages = &publicationMessages{
+						name: target.name,
+						messages: []replsource.WALMessage{
+							{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
+						},
+					}
+					messagesByPublication[target.name] = pubMessages
+					publicationOrder = append(publicationOrder, target.name)
+				}
+				pubMessages.messages = append(pubMessages.messages,
+					replsource.WALMessage{
+						WALStart:     commitLSN,
+						ServerWALEnd: commitLSN,
+						WALData:      relation,
+					},
+					replsource.WALMessage{
+						WALStart:     commitLSN,
+						ServerWALEnd: commitLSN,
+						WALData:      truncate,
+					},
+				)
+			}
 			continue
 		}
 		if len(capture.rows) == 0 {
@@ -588,6 +662,8 @@ func publicationPublishesAction(pub publications.Publication, action replication
 		return pub.PublishUpdate
 	case replicationChangeDelete:
 		return pub.PublishDelete
+	case replicationChangeTruncate:
+		return pub.PublishTruncate
 	default:
 		return false
 	}
@@ -606,6 +682,16 @@ func encodeCommitMessage(commitLSN pglogrepl.LSN) []byte {
 	data = binary.BigEndian.AppendUint64(data, uint64(commitLSN))
 	data = binary.BigEndian.AppendUint64(data, uint64(commitLSN))
 	data = binary.BigEndian.AppendUint64(data, uint64(timeToPgTime(time.Now())))
+	return data
+}
+
+func encodeTruncateMessage(relationIDs []uint32, option uint8) []byte {
+	data := []byte{byte(pglogrepl.MessageTypeTruncate)}
+	data = binary.BigEndian.AppendUint32(data, uint32(len(relationIDs)))
+	data = append(data, option)
+	for _, relationID := range relationIDs {
+		data = binary.BigEndian.AppendUint32(data, relationID)
+	}
 	return data
 }
 

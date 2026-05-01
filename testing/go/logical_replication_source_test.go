@@ -362,14 +362,17 @@ func TestLogicalReplicationSourceRejectsUnsupportedSlotModesAndPlugins(t *testin
 	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, "dg_physical_slot", "", pglogrepl.CreateReplicationSlotOptions{
 		Mode: pglogrepl.PhysicalReplication,
 	})
-	require.ErrorContains(t, err, "invalid CREATE_REPLICATION_SLOT command")
+	require.ErrorContains(t, err, "only logical replication slots are supported")
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM pg_catalog.pg_replication_slots;").Scan(&slotCount))
+	require.Equal(t, 0, slotCount)
 
 	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, "dg_test_decoding_slot", "test_decoding", pglogrepl.CreateReplicationSlotOptions{
 		Mode: pglogrepl.LogicalReplication,
 	})
 	require.ErrorContains(t, err, `logical decoding output plugin "test_decoding" is not supported`)
 
-	var slotCount int
 	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM pg_catalog.pg_replication_slots;").Scan(&slotCount))
 	require.Equal(t, 0, slotCount)
 }
@@ -615,6 +618,61 @@ func TestLogicalReplicationSourceHonorsPublicationActionFlags(t *testing.T) {
 	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_publication_action_items WHERE tenant_id = 1;")
 	require.NoError(t, err)
 	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+
+	_, err = conn.Current.Exec(ctx, "TRUNCATE dg_publication_action_items;")
+	require.NoError(t, err)
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+}
+
+func TestLogicalReplicationSourcePublishesTruncate(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_truncate_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_truncate_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_truncate_items VALUES (1, 'one'), (2, 'two');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_truncate_pub FOR TABLE dg_truncate_items WITH (publish = 'truncate');")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_truncate_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "TRUNCATE dg_truncate_items;")
+	require.NoError(t, err)
+	relation, truncate, commit := receiveTruncateChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_truncate_items", relation.RelationName)
+	require.Equal(t, uint32(1), truncate.RelationNum)
+	require.Equal(t, uint8(0), truncate.Option)
+	require.Equal(t, []uint32{relation.RelationID}, truncate.RelationIDs)
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+
+	var rowCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_truncate_items;").Scan(&rowCount))
+	require.Equal(t, 0, rowCount)
 }
 
 func TestLogicalReplicationSourcePublishesAllTablesAndSchemaPublications(t *testing.T) {
@@ -1396,6 +1454,37 @@ func receiveDeleteChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.Relation
 		}
 	}
 	require.FailNow(t, "timed out waiting for relation, delete, and commit logical replication messages")
+	return nil, nil, nil
+}
+
+func receiveTruncateChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.TruncateMessageV2, *pglogrepl.CommitMessage) {
+	t.Helper()
+	var relation *pglogrepl.RelationMessageV2
+	var truncate *pglogrepl.TruncateMessageV2
+	var commit *pglogrepl.CommitMessage
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.RelationMessageV2:
+			relation = typed
+		case *pglogrepl.TruncateMessageV2:
+			truncate = typed
+		case *pglogrepl.CommitMessage:
+			commit = typed
+		}
+		if relation != nil && truncate != nil && commit != nil {
+			return relation, truncate, commit
+		}
+	}
+	require.FailNow(t, "timed out waiting for relation, truncate, and commit logical replication messages")
 	return nil, nil, nil
 }
 

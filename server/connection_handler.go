@@ -1963,6 +1963,9 @@ func (h *ConnectionHandler) prepareReplicationChangeQuery(query ConvertedQuery) 
 	if !ok {
 		return nil, ConvertedQuery{}, false, nil
 	}
+	if !capture.requiresFullRows() {
+		return capture, replicationQuery, true, nil
+	}
 	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
 	if err != nil {
 		return nil, ConvertedQuery{}, false, err
