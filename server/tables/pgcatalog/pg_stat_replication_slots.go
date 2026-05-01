@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,7 @@ func (p PgStatReplicationSlotsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatReplicationSlotsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_replication_slots row iter
-	return emptyRowIter()
+	return &pgStatReplicationSlotsRowIter{slots: replsource.ListSlots()}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -71,13 +71,31 @@ var pgStatReplicationSlotsSchema = sql.Schema{
 
 // pgStatReplicationSlotsRowIter is the sql.RowIter for the pg_stat_replication_slots table.
 type pgStatReplicationSlotsRowIter struct {
+	slots []replsource.Slot
+	idx   int
 }
 
 var _ sql.RowIter = (*pgStatReplicationSlotsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgStatReplicationSlotsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.slots) {
+		return nil, io.EOF
+	}
+	slot := iter.slots[iter.idx]
+	iter.idx++
+	return sql.Row{
+		slot.Name,
+		int64(0),
+		int64(0),
+		int64(0),
+		int64(0),
+		int64(0),
+		int64(0),
+		int64(0),
+		int64(0),
+		nil,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

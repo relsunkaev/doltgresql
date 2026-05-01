@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,7 @@ func (p PgStatReplicationHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatReplicationHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_replication row iter
-	return emptyRowIter()
+	return &pgStatReplicationRowIter{senders: replsource.ListSenders()}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -67,10 +68,10 @@ var pgStatReplicationSchema = sql.Schema{
 	{Name: "backend_start", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatReplicationName},
 	{Name: "backend_xmin", Type: pgtypes.Xid, Default: nil, Nullable: true, Source: PgStatReplicationName},
 	{Name: "state", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},
-	{Name: "sent_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},   // TODO: pg_lsn type
-	{Name: "write_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},  // TODO: pg_lsn type
-	{Name: "flush_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},  // TODO: pg_lsn type
-	{Name: "replay_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName}, // TODO: pg_lsn type
+	{Name: "sent_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatReplicationName},
+	{Name: "write_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatReplicationName},
+	{Name: "flush_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatReplicationName},
+	{Name: "replay_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatReplicationName},
 	{Name: "write_lag", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},  // TODO: interval type
 	{Name: "flush_lag", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName},  // TODO: interval type
 	{Name: "replay_lag", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatReplicationName}, // TODO: interval type
@@ -81,13 +82,45 @@ var pgStatReplicationSchema = sql.Schema{
 
 // pgStatReplicationRowIter is the sql.RowIter for the pg_stat_replication table.
 type pgStatReplicationRowIter struct {
+	senders []replsource.Sender
+	idx     int
 }
 
 var _ sql.RowIter = (*pgStatReplicationRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgStatReplicationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.senders) {
+		return nil, io.EOF
+	}
+	sender := iter.senders[iter.idx]
+	iter.idx++
+	var replyTime any
+	if !sender.ReplyTime.IsZero() {
+		replyTime = sender.ReplyTime
+	}
+	return sql.Row{
+		sender.PID,
+		id.NewOID(10).AsId(),
+		sender.User,
+		sender.ApplicationName,
+		sender.ClientAddr,
+		nil,
+		sender.ClientPort,
+		sender.BackendStart,
+		nil,
+		sender.State,
+		uint64(sender.SentLSN),
+		uint64(sender.WriteLSN),
+		uint64(sender.FlushLSN),
+		uint64(sender.ReplayLSN),
+		nil,
+		nil,
+		nil,
+		int32(0),
+		"async",
+		replyTime,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

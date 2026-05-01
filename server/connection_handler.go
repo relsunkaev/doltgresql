@@ -72,6 +72,14 @@ type ConnectionHandler struct {
 	copyFromStdinState *copyFromStdinState
 	// inTransaction is set to true with BEGIN query and false with COMMIT query.
 	inTransaction bool
+	// replicationMode is true when the client connected with replication=database.
+	replicationMode bool
+	// startupParams stores startup parameters that are needed after authentication, such as application_name.
+	startupParams map[string]string
+	// database is the selected database for this connection.
+	database string
+	// replicationSenderID is set while this connection is in START_REPLICATION copy-both mode.
+	replicationSenderID uint64
 }
 
 // Set this env var to disable panic handling in the connection, which is useful when debugging a panic
@@ -178,6 +186,7 @@ func (h *ConnectionHandler) HandleConnection() {
 	}()
 	h.doltgresHandler.NewConnection(h.mysqlConn)
 	defer func() {
+		h.closeReplicationSender()
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
 	}()
@@ -226,6 +235,12 @@ func (h *ConnectionHandler) handleStartup() (bool, error) {
 
 	switch sm := startupMessage.(type) {
 	case *pgproto3.StartupMessage:
+		h.startupParams = make(map[string]string, len(sm.Parameters))
+		for name, value := range sm.Parameters {
+			h.startupParams[strings.ToLower(name)] = value
+		}
+		replicationParam := strings.ToLower(sm.Parameters["replication"])
+		h.replicationMode = replicationParam == "database" || replicationParam == "true" || replicationParam == "on" || replicationParam == "1"
 		if err = h.handleAuthentication(sm); err != nil {
 			return false, err
 		}
@@ -328,6 +343,7 @@ func (h *ConnectionHandler) chooseInitialParameters(startupMessage *pgproto3.Sta
 	if !dbSpecified {
 		db = h.mysqlConn.User
 	}
+	h.database = db
 	useStmt := fmt.Sprintf("SET database TO '%s';", db)
 	postgresParser := psql.PostgresParser{}
 	parsed, err := postgresParser.ParseSimple(useStmt)
@@ -418,6 +434,17 @@ func (h *ConnectionHandler) receiveMessage() (bool, error) {
 // |endOfMessages| response parameter is true, it indicates that no more messages are expected for the current operation
 // and a READY FOR QUERY message should be sent back to the client, so it can send the next query.
 func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMessages bool, err error) {
+	if h.replicationSenderID != 0 {
+		switch message := msg.(type) {
+		case *pgproto3.CopyData:
+			return h.handleReplicationCopyData(message)
+		case *pgproto3.CopyDone:
+			return h.handleReplicationCopyDone(message)
+		case *pgproto3.CopyFail:
+			return h.handleReplicationCopyFail(message)
+		}
+	}
+
 	switch message := msg.(type) {
 	case *pgproto3.Terminate:
 		return true, false, nil
@@ -460,6 +487,13 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 // expected as part of this query, in which case the server will send a READY FOR QUERY message back to the client so
 // that it can send its next query.
 func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages bool, err error) {
+	if h.replicationMode {
+		handled, endOfMessages, err := h.handleReplicationQuery(message.String)
+		if handled || err != nil {
+			return endOfMessages, err
+		}
+	}
+
 	handled, err := h.handledPSQLCommands(message.String)
 	if handled || err != nil {
 		return true, err
