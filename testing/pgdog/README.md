@@ -14,7 +14,15 @@ From the repository root:
 testing/pgdog/run_pgdog_smoke.sh
 ```
 
+For the customer migration contract:
+
+```bash
+testing/pgdog/run_customer_migration_harness.sh
+```
+
 The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts a temporary main database plus two temporary Doltgres customer shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
+
+The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, copies one customer's rows through PgDog, applies post-copy insert/update/delete traffic through the PgDog customer route, validates source-to-destination row/checksum equality before cutover, proves a post-cutover write routes to Doltgres, and verifies shared tables remain source-only.
 
 On Homebrew-based macOS setups, the script automatically uses `icu4c@78` for the local Go build when `CGO_CPPFLAGS` is not already set.
 
@@ -30,6 +38,8 @@ DOLTGRES_SHARD0_PORT=15432 \
 DOLTGRES_SHARD1_PORT=15433 \
 testing/pgdog/run_pgdog_smoke.sh
 ```
+
+The customer migration harness also accepts `POSTGRES_IMAGE`, `SOURCE_POSTGRES_PORT`, and `CUSTOMER_ID`.
 
 For CI, prefer pinning `PGDOG_IMAGE` to a digest rather than using `latest`.
 
