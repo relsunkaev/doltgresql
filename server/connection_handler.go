@@ -95,18 +95,6 @@ const disablePanicHandlingEnvVar = "DOLT_PGSQL_PANIC"
 // HandlePanics determines whether panics should be handled in the connection handler. See |disablePanicHandlingEnvVar|.
 var HandlePanics = true
 
-type preparedReplicationState struct {
-	captures []*replicationChangeCapture
-	advance  bool
-}
-
-var preparedReplication = struct {
-	sync.Mutex
-	byGID map[string]preparedReplicationState
-}{
-	byGID: make(map[string]preparedReplicationState),
-}
-
 func init() {
 	if _, ok := os.LookupEnv(disablePanicHandlingEnvVar); ok {
 		HandlePanics = false
@@ -622,10 +610,11 @@ func (h *ConnectionHandler) prepareTransaction(stmt node.PrepareTransaction, que
 	if err != nil {
 		return err
 	}
-	if err = sessionstate.PrepareTransaction(sqlCtx, stmt.GID); err != nil {
+	replication := h.preparedReplicationState()
+	if err = sessionstate.PrepareTransaction(sqlCtx, stmt.GID, replication); err != nil {
 		return err
 	}
-	h.storePreparedReplication(stmt.GID)
+	h.clearPendingReplication()
 	h.inTransaction = false
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
@@ -640,10 +629,11 @@ func (h *ConnectionHandler) commitPrepared(stmt node.CommitPrepared, query Conve
 	if err != nil {
 		return err
 	}
+	replication, _ := sessionstate.GetPreparedReplication(stmt.GID)
 	if err = sessionstate.CommitPreparedTransaction(sqlCtx, stmt.GID); err != nil {
 		return err
 	}
-	if err = takePreparedReplication(stmt.GID).publish(sqlCtx); err != nil {
+	if err = publishPreparedReplicationState(sqlCtx, replication); err != nil {
 		return err
 	}
 	return h.send(&pgproto3.CommandComplete{
@@ -662,47 +652,90 @@ func (h *ConnectionHandler) rollbackPrepared(stmt node.RollbackPrepared, query C
 	if err := sessionstate.RollbackPreparedTransaction(sqlCtx, stmt.GID); err != nil {
 		return err
 	}
-	dropPreparedReplication(stmt.GID)
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
 	})
 }
 
-func (h *ConnectionHandler) storePreparedReplication(gid string) {
+func (h *ConnectionHandler) preparedReplicationState() *sessionstate.PreparedReplicationState {
 	if len(h.pendingReplicationCaptures) == 0 && !h.pendingReplicationAdvance {
-		return
+		return nil
 	}
-	preparedReplication.Lock()
-	preparedReplication.byGID[gid] = preparedReplicationState{
-		captures: append([]*replicationChangeCapture(nil), h.pendingReplicationCaptures...),
-		advance:  h.pendingReplicationAdvance,
+	state := &sessionstate.PreparedReplicationState{
+		Advance: h.pendingReplicationAdvance,
 	}
-	preparedReplication.Unlock()
-	h.clearPendingReplication()
-}
-
-func takePreparedReplication(gid string) preparedReplicationState {
-	preparedReplication.Lock()
-	defer preparedReplication.Unlock()
-	state := preparedReplication.byGID[gid]
-	delete(preparedReplication.byGID, gid)
+	for _, capture := range h.pendingReplicationCaptures {
+		if capture == nil {
+			continue
+		}
+		state.Captures = append(state.Captures, capture.toPreparedReplicationCapture())
+	}
 	return state
 }
 
-func dropPreparedReplication(gid string) {
-	preparedReplication.Lock()
-	delete(preparedReplication.byGID, gid)
-	preparedReplication.Unlock()
+func (capture *replicationChangeCapture) toPreparedReplicationCapture() sessionstate.PreparedReplicationCapture {
+	prepared := sessionstate.PreparedReplicationCapture{
+		Action:       byte(capture.action),
+		Schema:       capture.schema,
+		Table:        capture.table,
+		RowsAffected: capture.rowsAffected,
+	}
+	for _, field := range capture.fields {
+		prepared.Fields = append(prepared.Fields, sessionstate.PreparedReplicationField{
+			Name:         string(field.Name),
+			DataTypeOID:  field.DataTypeOID,
+			TypeModifier: field.TypeModifier,
+		})
+	}
+	for _, row := range capture.rows {
+		preparedRow := make([][]byte, len(row.val))
+		for i, value := range row.val {
+			preparedRow[i] = append([]byte(nil), value...)
+		}
+		prepared.Rows = append(prepared.Rows, preparedRow)
+	}
+	return prepared
 }
 
-func (state preparedReplicationState) publish(ctx *sql.Context) error {
-	if len(state.captures) > 0 {
-		return publishReplicationCaptures(ctx, state.captures)
+func publishPreparedReplicationState(ctx *sql.Context, state *sessionstate.PreparedReplicationState) error {
+	if state == nil {
+		return nil
 	}
-	if state.advance {
+	if len(state.Captures) > 0 {
+		captures := make([]*replicationChangeCapture, 0, len(state.Captures))
+		for _, prepared := range state.Captures {
+			captures = append(captures, replicationChangeCaptureFromPrepared(prepared))
+		}
+		return publishReplicationCaptures(ctx, captures)
+	}
+	if state.Advance {
 		replsource.AdvanceLSN()
 	}
 	return nil
+}
+
+func replicationChangeCaptureFromPrepared(prepared sessionstate.PreparedReplicationCapture) *replicationChangeCapture {
+	capture := &replicationChangeCapture{
+		action:       replicationChangeAction(prepared.Action),
+		schema:       prepared.Schema,
+		table:        prepared.Table,
+		rowsAffected: prepared.RowsAffected,
+	}
+	for _, field := range prepared.Fields {
+		capture.fields = append(capture.fields, pgproto3.FieldDescription{
+			Name:         []byte(field.Name),
+			DataTypeOID:  field.DataTypeOID,
+			TypeModifier: field.TypeModifier,
+		})
+	}
+	for _, row := range prepared.Rows {
+		captureRow := Row{val: make([][]byte, len(row))}
+		for i, value := range row {
+			captureRow.val[i] = append([]byte(nil), value...)
+		}
+		capture.rows = append(capture.rows, captureRow)
+	}
+	return capture
 }
 
 func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, query ConvertedQuery) error {

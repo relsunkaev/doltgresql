@@ -48,6 +48,27 @@ type PreparedTransaction struct {
 	preparedWorkingSetName string
 	transactionRootHash    hash.Hash
 	baseWorkingSetHash     hash.Hash
+	replication            *PreparedReplicationState
+}
+
+type PreparedReplicationState struct {
+	Captures []PreparedReplicationCapture
+	Advance  bool
+}
+
+type PreparedReplicationCapture struct {
+	Action       byte
+	Schema       string
+	Table        string
+	Fields       []PreparedReplicationField
+	Rows         [][][]byte
+	RowsAffected uint64
+}
+
+type PreparedReplicationField struct {
+	Name         string
+	DataTypeOID  uint32
+	TypeModifier int32
 }
 
 var preparedTransactions = struct {
@@ -68,15 +89,16 @@ type persistentPreparedTransactionState struct {
 }
 
 type persistentPreparedTransaction struct {
-	TransactionID          uint32    `json:"transaction_id"`
-	GID                    string    `json:"gid"`
-	Prepared               time.Time `json:"prepared"`
-	Owner                  string    `json:"owner"`
-	Database               string    `json:"database"`
-	WorkingSetName         string    `json:"working_set_name"`
-	PreparedWorkingSetName string    `json:"prepared_working_set_name"`
-	TransactionRootHash    string    `json:"transaction_root_hash"`
-	BaseWorkingSetHash     string    `json:"base_working_set_hash"`
+	TransactionID          uint32                    `json:"transaction_id"`
+	GID                    string                    `json:"gid"`
+	Prepared               time.Time                 `json:"prepared"`
+	Owner                  string                    `json:"owner"`
+	Database               string                    `json:"database"`
+	WorkingSetName         string                    `json:"working_set_name"`
+	PreparedWorkingSetName string                    `json:"prepared_working_set_name"`
+	TransactionRootHash    string                    `json:"transaction_root_hash"`
+	BaseWorkingSetHash     string                    `json:"base_working_set_hash"`
+	Replication            *PreparedReplicationState `json:"replication,omitempty"`
 }
 
 const preparedTransactionStateVersion = 1
@@ -97,7 +119,7 @@ func ConfigurePreparedTransactionStorage(fs filesys.Filesys, storagePath string)
 
 // PrepareTransaction records the active transaction under gid and rolls the current session back. The stored working
 // set remains invisible until CommitPreparedTransaction applies it.
-func PrepareTransaction(ctx *sql.Context, gid string) error {
+func PrepareTransaction(ctx *sql.Context, gid string, replication *PreparedReplicationState) error {
 	if gid == "" {
 		return errors.Errorf("transaction identifier must not be empty")
 	}
@@ -150,6 +172,7 @@ func PrepareTransaction(ctx *sql.Context, gid string) error {
 		preparedWorkingSetName: preparedWorkingSetName(gid),
 		transactionRootHash:    transactionRootHash,
 		baseWorkingSetHash:     baseWorkingSetHash,
+		replication:            clonePreparedReplicationState(replication),
 	}
 
 	preparedTransactions.Lock()
@@ -274,6 +297,16 @@ func ListPreparedTransactions(database string) []PreparedTransaction {
 	return transactions
 }
 
+func GetPreparedReplication(gid string) (*PreparedReplicationState, bool) {
+	preparedTransactions.RLock()
+	defer preparedTransactions.RUnlock()
+	prepared, ok := preparedTransactions.byGID[gid]
+	if !ok || prepared.replication == nil {
+		return nil, false
+	}
+	return clonePreparedReplicationState(prepared.replication), true
+}
+
 // ResetPreparedTransactionsForTests clears in-process prepared transaction state.
 func ResetPreparedTransactionsForTests() {
 	preparedTransactions.Lock()
@@ -282,6 +315,44 @@ func ResetPreparedTransactionsForTests() {
 	preparedTransactions.byGID = make(map[string]PreparedTransaction)
 	preparedTransactions.storageFS = nil
 	preparedTransactions.storagePath = ""
+}
+
+func clonePreparedReplicationState(state *PreparedReplicationState) *PreparedReplicationState {
+	if state == nil {
+		return nil
+	}
+	ret := &PreparedReplicationState{
+		Advance: state.Advance,
+	}
+	if len(state.Captures) > 0 {
+		ret.Captures = make([]PreparedReplicationCapture, len(state.Captures))
+		for i, capture := range state.Captures {
+			ret.Captures[i] = clonePreparedReplicationCapture(capture)
+		}
+	}
+	return ret
+}
+
+func clonePreparedReplicationCapture(capture PreparedReplicationCapture) PreparedReplicationCapture {
+	ret := PreparedReplicationCapture{
+		Action:       capture.Action,
+		Schema:       capture.Schema,
+		Table:        capture.Table,
+		RowsAffected: capture.RowsAffected,
+	}
+	if len(capture.Fields) > 0 {
+		ret.Fields = append([]PreparedReplicationField(nil), capture.Fields...)
+	}
+	if len(capture.Rows) > 0 {
+		ret.Rows = make([][][]byte, len(capture.Rows))
+		for i, row := range capture.Rows {
+			ret.Rows[i] = make([][]byte, len(row))
+			for j, value := range row {
+				ret.Rows[i][j] = append([]byte(nil), value...)
+			}
+		}
+	}
+	return ret
 }
 
 func restorePreparedTransaction(prepared PreparedTransaction) {
@@ -484,6 +555,7 @@ func loadPreparedTransactionsLocked() error {
 			preparedWorkingSetName: stored.PreparedWorkingSetName,
 			transactionRootHash:    transactionRootHash,
 			baseWorkingSetHash:     baseHash,
+			replication:            clonePreparedReplicationState(stored.Replication),
 		}
 		preparedTransactions.byGID[prepared.GID] = prepared
 		if prepared.TransactionID > maxID {
@@ -540,6 +612,7 @@ func toPersistentPreparedTransactionStateLocked() persistentPreparedTransactionS
 			PreparedWorkingSetName: prepared.preparedWorkingSetName,
 			TransactionRootHash:    prepared.transactionRootHash.String(),
 			BaseWorkingSetHash:     prepared.baseWorkingSetHash.String(),
+			Replication:            clonePreparedReplicationState(prepared.replication),
 		})
 	}
 	sort.Slice(state.Transactions, func(i, j int) bool {

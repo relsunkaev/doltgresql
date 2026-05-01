@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/server/replsource"
+	"github.com/dolthub/doltgresql/server/sessionstate"
 )
 
 func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
@@ -454,6 +455,73 @@ func TestLogicalReplicationSourcePublishesCommitPreparedAsOnePgoutputTransaction
 	require.Equal(t, "seventy", string(txn.inserts[0].Tuple.Columns[1].Data))
 	require.Equal(t, "71", string(txn.inserts[1].Tuple.Columns[0].Data))
 	require.Equal(t, "seventy-one", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
+func TestLogicalReplicationSourcePublishesRecoveredCommitPrepared(t *testing.T) {
+	replsource.ResetForTests()
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	slotName := "dg_recovered_commit_prepared_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_recovered_commit_prepared_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_recovered_commit_prepared_pub FOR TABLE dg_recovered_commit_prepared_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_recovered_commit_prepared_items VALUES (80, 'eighty');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_recovered_commit_prepared_items VALUES (81, 'eighty-one');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "PREPARE TRANSACTION 'dg_recovered_commit_prepared_tx';")
+	require.NoError(t, err)
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	sessionstate.ResetPreparedTransactionsForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	replConn = connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_recovered_commit_prepared_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_recovered_commit_prepared_tx';")
+	require.NoError(t, err)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	require.Len(t, txn.inserts, 2)
+	require.Equal(t, "80", string(txn.inserts[0].Tuple.Columns[0].Data))
+	require.Equal(t, "eighty", string(txn.inserts[0].Tuple.Columns[1].Data))
+	require.Equal(t, "81", string(txn.inserts[1].Tuple.Columns[0].Data))
+	require.Equal(t, "eighty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
 }
 
 func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.T) {
