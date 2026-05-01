@@ -1156,8 +1156,8 @@ func (h *ConnectionHandler) advanceOrBufferReplicationLSN() {
 }
 
 func (h *ConnectionHandler) flushPendingReplication(ctx *sql.Context) error {
-	for _, capture := range h.pendingReplicationCaptures {
-		if err := capture.publish(ctx); err != nil {
+	if len(h.pendingReplicationCaptures) > 0 {
+		if err := publishReplicationCaptures(ctx, h.pendingReplicationCaptures); err != nil {
 			return err
 		}
 	}

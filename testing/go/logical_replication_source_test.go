@@ -299,6 +299,57 @@ func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *test
 	require.Equal(t, "right-customer", string(insert.Tuple.Columns[1].Data))
 }
 
+func TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransaction(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_transaction_source_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_tx_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_tx_pub FOR TABLE dg_tx_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_tx_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_tx_items VALUES (50, 'fifty');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_tx_items VALUES (51, 'fifty-one');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	require.Len(t, txn.inserts, 2)
+	require.Equal(t, "50", string(txn.inserts[0].Tuple.Columns[0].Data))
+	require.Equal(t, "fifty", string(txn.inserts[0].Tuple.Columns[1].Data))
+	require.Equal(t, "51", string(txn.inserts[1].Tuple.Columns[0].Data))
+	require.Equal(t, "fifty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
 func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -560,6 +611,40 @@ func receiveDeleteChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.Relation
 	}
 	require.FailNow(t, "timed out waiting for relation, delete, and commit logical replication messages")
 	return nil, nil, nil
+}
+
+type logicalTransaction struct {
+	inserts []*pglogrepl.InsertMessageV2
+}
+
+func receiveLogicalTransaction(t *testing.T, conn *pgconn.PgConn) logicalTransaction {
+	t.Helper()
+	var txn logicalTransaction
+	deadline := time.Now().Add(5 * time.Second)
+	beginSeen := false
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.BeginMessage:
+			require.False(t, beginSeen, "received a second Begin before Commit")
+			beginSeen = true
+		case *pglogrepl.InsertMessageV2:
+			require.True(t, beginSeen, "received Insert before Begin")
+			txn.inserts = append(txn.inserts, typed)
+		case *pglogrepl.CommitMessage:
+			require.True(t, beginSeen, "received Commit before Begin")
+			return txn
+		}
+	}
+	require.FailNow(t, "timed out waiting for logical replication transaction")
+	return txn
 }
 
 func requireInsertChange(t *testing.T, relation *pglogrepl.RelationMessageV2, insert *pglogrepl.InsertMessageV2, table string, tenantID string, label string) {

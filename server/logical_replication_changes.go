@@ -230,58 +230,97 @@ func (capture *replicationChangeCapture) resolveTable(ctx *sql.Context) (sql.Tab
 }
 
 func (capture *replicationChangeCapture) publish(ctx *sql.Context) error {
-	if capture == nil {
+	return publishReplicationCaptures(ctx, []*replicationChangeCapture{capture})
+}
+
+func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeCapture) error {
+	if len(captures) == 0 {
 		return nil
 	}
-	if len(capture.rows) == 0 {
-		if capture.rowsAffected > 0 {
+	type publicationMessages struct {
+		name     string
+		messages []replsource.WALMessage
+	}
+	messagesByPublication := make(map[string]*publicationMessages)
+	var publicationOrder []string
+	var commitLSN pglogrepl.LSN
+	advanceOnly := false
+	for _, capture := range captures {
+		if capture == nil {
+			continue
+		}
+		if len(capture.rows) == 0 {
+			if capture.rowsAffected > 0 {
+				advanceOnly = true
+			}
+			continue
+		}
+		if ctx == nil {
+			continue
+		}
+		table, schema, err := capture.resolveTable(ctx)
+		if err != nil {
+			return err
+		}
+		targets, err := capture.publicationTargets(ctx, schema)
+		if err != nil {
+			return err
+		}
+		if len(targets) == 0 {
+			continue
+		}
+		relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
+		for _, target := range targets {
+			fields, rows, err := capture.projectRowsForPublication(target)
+			if err != nil {
+				return err
+			}
+			if len(rows) == 0 {
+				continue
+			}
+			if commitLSN == 0 {
+				commitLSN = replsource.AdvanceLSN()
+			}
+			pubMessages := messagesByPublication[target.name]
+			if pubMessages == nil {
+				pubMessages = &publicationMessages{
+					name: target.name,
+					messages: []replsource.WALMessage{
+						{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
+					},
+				}
+				messagesByPublication[target.name] = pubMessages
+				publicationOrder = append(publicationOrder, target.name)
+			}
+			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields)
+			pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
+				WALStart:     commitLSN,
+				ServerWALEnd: commitLSN,
+				WALData:      relation,
+			})
+			for _, row := range rows {
+				pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
+					WALStart:     commitLSN,
+					ServerWALEnd: commitLSN,
+					WALData:      capture.encodeRowMessage(relationID, row),
+				})
+			}
+		}
+	}
+	if commitLSN == 0 {
+		if advanceOnly {
 			replsource.AdvanceLSN()
 		}
 		return nil
 	}
-	if ctx == nil {
-		return nil
-	}
-	table, schema, err := capture.resolveTable(ctx)
-	if err != nil {
-		return err
-	}
-	targets, err := capture.publicationTargets(ctx, schema)
-	if err != nil || len(targets) == 0 {
-		return err
-	}
-
-	relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
-	var commitLSN pglogrepl.LSN
-	for _, target := range targets {
-		fields, rows, err := capture.projectRowsForPublication(target)
-		if err != nil {
-			return err
-		}
-		if len(rows) == 0 {
-			continue
-		}
-		if commitLSN == 0 {
-			commitLSN = replsource.AdvanceLSN()
-		}
-		relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields)
-		messages := []replsource.WALMessage{
-			{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
-			{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: relation},
-		}
-		for _, row := range rows {
-			messages = append(messages, replsource.WALMessage{
-				WALStart:     commitLSN,
-				ServerWALEnd: commitLSN,
-				WALData:      capture.encodeRowMessage(relationID, row),
-			})
-		}
-		messages = append(messages, replsource.WALMessage{
+	for _, publication := range publicationOrder {
+		pubMessages := messagesByPublication[publication]
+		pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 			WALStart:     commitLSN,
 			ServerWALEnd: commitLSN,
 			WALData:      encodeCommitMessage(commitLSN),
 		})
-		if err = replsource.Broadcast([]string{target.name}, messages); err != nil {
+		if err := replsource.Broadcast([]string{pubMessages.name}, pubMessages.messages); err != nil {
 			return err
 		}
 	}
