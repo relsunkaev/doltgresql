@@ -698,6 +698,13 @@ func (capture *replicationChangeCapture) toPreparedReplicationCapture() sessions
 		}
 		prepared.Rows = append(prepared.Rows, preparedRow)
 	}
+	for _, row := range capture.oldRows {
+		preparedRow := make([][]byte, len(row.val))
+		for i, value := range row.val {
+			preparedRow[i] = append([]byte(nil), value...)
+		}
+		prepared.OldRows = append(prepared.OldRows, preparedRow)
+	}
 	return prepared
 }
 
@@ -738,6 +745,13 @@ func replicationChangeCaptureFromPrepared(prepared sessionstate.PreparedReplicat
 			captureRow.val[i] = append([]byte(nil), value...)
 		}
 		capture.rows = append(capture.rows, captureRow)
+	}
+	for _, row := range prepared.OldRows {
+		captureRow := Row{val: make([][]byte, len(row))}
+		for i, value := range row {
+			captureRow.val[i] = append([]byte(nil), value...)
+		}
+		capture.oldRows = append(capture.oldRows, captureRow)
 	}
 	return capture
 }
@@ -909,6 +923,10 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 			executionPlan, ok = replicationPlan.(sql.Node)
 			if !ok {
 				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
+			}
+			executionPlan, err = wrapReplicationCapturePlan(executionPlan, replicationCapture)
+			if err != nil {
+				return err
 			}
 			executionQuery = replicationQuery
 			executionFormatCodes = make([]int16, len(replicationFields))
@@ -1134,6 +1152,10 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			replicationBoundPlan, ok = replicationPlan.(sql.Node)
 			if !ok {
 				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
+			}
+			replicationBoundPlan, err = wrapReplicationCapturePlan(replicationBoundPlan, replicationCapture)
+			if err != nil {
+				return err
 			}
 			replicationFormatCodes = make([]int16, len(replicationFields))
 			if replicationCapture != nil && replicationCapture.clientReturnsRows && len(fields) > 0 {
@@ -1843,10 +1865,33 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	} else if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
 		advanceLSN = true
 	}
-	queryToExecute := clientQuery
 	if hasReplicationCapture {
-		queryToExecute = replicationQuery
+		replicationPlan, replicationFields, err := h.doltgresHandler.ComBind(
+			context.Background(),
+			h.mysqlConn,
+			replicationQuery.String,
+			replicationQuery.AST,
+			BindVariables{},
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+		executionPlan, ok := replicationPlan.(sql.Node)
+		if !ok {
+			return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
+		}
+		executionPlan, err = wrapReplicationCapturePlan(executionPlan, capture)
+		if err != nil {
+			return err
+		}
+		executionFormatCodes := make([]int16, len(replicationFields))
+		if err = h.executeBoundWithReplication(clientQuery, replicationQuery, executionPlan, executionFormatCodes, capture, false, &rowsAffected, false); err != nil {
+			return err
+		}
+		return h.send(makeCommandComplete(clientQuery.StatementTag, rowsAffected))
 	}
+	queryToExecute := clientQuery
 	suppressRows := capture != nil && !capture.clientReturnsRows
 	var captureCtx *sql.Context
 	var queryCtx *sql.Context

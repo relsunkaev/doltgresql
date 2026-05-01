@@ -23,6 +23,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/transform"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgproto3"
@@ -50,6 +52,7 @@ type replicationChangeCapture struct {
 	fullRowFieldCount int
 	fields            []pgproto3.FieldDescription
 	rows              []Row
+	oldRows           []Row
 	rowsAffected      uint64
 }
 
@@ -62,6 +65,11 @@ type publicationChangeTarget struct {
 type rowFilterValue struct {
 	data []byte
 	null bool
+}
+
+type replicationProjectedRow struct {
+	newRow Row
+	oldRow Row
 }
 
 func prepareReplicationChangeCapture(query ConvertedQuery, fullRowColumns []string) (*replicationChangeCapture, bool) {
@@ -309,7 +317,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 				pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 					WALStart:     commitLSN,
 					ServerWALEnd: commitLSN,
-					WALData:      capture.encodeRowMessage(relationID, row),
+					WALData:      capture.encodeRowMessage(relationID, row, replIdent.Identity == replicaidentity.IdentityFull),
 				})
 			}
 		}
@@ -370,7 +378,7 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 	return targets, err
 }
 
-func (capture *replicationChangeCapture) projectRowsForPublication(target publicationChangeTarget) ([]pgproto3.FieldDescription, []Row, error) {
+func (capture *replicationChangeCapture) projectRowsForPublication(target publicationChangeTarget) ([]pgproto3.FieldDescription, []replicationProjectedRow, error) {
 	indexes, err := capture.publicationColumnIndexes(target.columns)
 	if err != nil {
 		return nil, nil, err
@@ -383,8 +391,8 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 	if err != nil {
 		return nil, nil, err
 	}
-	rows := make([]Row, 0, len(capture.rows))
-	for _, row := range capture.rows {
+	rows := make([]replicationProjectedRow, 0, len(capture.rows))
+	for rowIdx, row := range capture.rows {
 		matches, err := capture.rowMatchesPublicationFilter(row, filterExpr)
 		if err != nil {
 			return nil, nil, err
@@ -396,7 +404,17 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 		for i, idx := range indexes {
 			projected.val[i] = append([]byte(nil), row.val[idx]...)
 		}
-		rows = append(rows, projected)
+		projectedRow := replicationProjectedRow{newRow: projected}
+		if rowIdx < len(capture.oldRows) {
+			projectedOld := Row{val: make([][]byte, len(indexes))}
+			for i, idx := range indexes {
+				if idx < len(capture.oldRows[rowIdx].val) {
+					projectedOld.val[i] = append([]byte(nil), capture.oldRows[rowIdx].val[idx]...)
+				}
+			}
+			projectedRow.oldRow = projectedOld
+		}
+		rows = append(rows, projectedRow)
 	}
 	return fields, rows, nil
 }
@@ -669,23 +687,27 @@ func logicalReplicationIndexColumnName(expr string) string {
 	return expr[lastDot+1:]
 }
 
-func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row Row) []byte {
+func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row replicationProjectedRow, includeFullOldTuple bool) []byte {
 	switch capture.action {
 	case replicationChangeInsert:
 		data := []byte{byte(pglogrepl.MessageTypeInsert)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
 		data = append(data, 'N')
-		return appendTupleData(data, row.val)
+		return appendTupleData(data, row.newRow.val)
 	case replicationChangeUpdate:
 		data := []byte{byte(pglogrepl.MessageTypeUpdate)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
+		if includeFullOldTuple && len(row.oldRow.val) > 0 {
+			data = append(data, 'O')
+			data = appendTupleData(data, row.oldRow.val)
+		}
 		data = append(data, 'N')
-		return appendTupleData(data, row.val)
+		return appendTupleData(data, row.newRow.val)
 	case replicationChangeDelete:
 		data := []byte{byte(pglogrepl.MessageTypeDelete)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
 		data = append(data, 'O')
-		return appendTupleData(data, row.val)
+		return appendTupleData(data, row.newRow.val)
 	default:
 		return nil
 	}
@@ -708,4 +730,105 @@ func appendTupleData(data []byte, values [][]byte) []byte {
 func appendCString(data []byte, value string) []byte {
 	data = append(data, value...)
 	return append(data, 0)
+}
+
+func wrapReplicationCapturePlan(boundPlan sql.Node, capture *replicationChangeCapture) (sql.Node, error) {
+	if capture == nil || capture.action != replicationChangeUpdate {
+		return boundPlan, nil
+	}
+	wrappedPlan, _, err := transform.NodeWithOpaque(boundPlan, func(node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		updateNode, ok := node.(*plan.Update)
+		if !ok {
+			return node, transform.SameTree, nil
+		}
+		if _, ok = updateNode.Child.(*replicationUpdateCaptureNode); ok {
+			return node, transform.SameTree, nil
+		}
+		newNode, err := updateNode.WithChildren(&replicationUpdateCaptureNode{
+			Source:  updateNode.Child,
+			Capture: capture,
+		})
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		return newNode, transform.NewTree, nil
+	})
+	return wrappedPlan, err
+}
+
+type replicationUpdateCaptureNode struct {
+	Source  sql.Node
+	Capture *replicationChangeCapture
+}
+
+var _ sql.ExecBuilderNode = (*replicationUpdateCaptureNode)(nil)
+
+func (r *replicationUpdateCaptureNode) Children() []sql.Node {
+	return []sql.Node{r.Source}
+}
+
+func (r *replicationUpdateCaptureNode) IsReadOnly() bool {
+	return r.Source.IsReadOnly()
+}
+
+func (r *replicationUpdateCaptureNode) Resolved() bool {
+	return r.Source.Resolved()
+}
+
+func (r *replicationUpdateCaptureNode) Schema() sql.Schema {
+	return r.Source.Schema()
+}
+
+func (r *replicationUpdateCaptureNode) String() string {
+	return "REPLICATION UPDATE CAPTURE"
+}
+
+func (r *replicationUpdateCaptureNode) WithChildren(children ...sql.Node) (sql.Node, error) {
+	if len(children) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(r, len(children), 1)
+	}
+	ret := *r
+	ret.Source = children[0]
+	return &ret, nil
+}
+
+func (r *replicationUpdateCaptureNode) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, row sql.Row) (sql.RowIter, error) {
+	iter, err := b.Build(ctx, r.Source, row)
+	if err != nil {
+		return nil, err
+	}
+	schema := r.Source.Schema()
+	return &replicationUpdateCaptureIter{
+		source:  iter,
+		capture: r.Capture,
+		schema:  schema[:len(schema)/2],
+	}, nil
+}
+
+type replicationUpdateCaptureIter struct {
+	source  sql.RowIter
+	capture *replicationChangeCapture
+	schema  sql.Schema
+}
+
+var _ sql.RowIter = (*replicationUpdateCaptureIter)(nil)
+
+func (r *replicationUpdateCaptureIter) Next(ctx *sql.Context) (sql.Row, error) {
+	row, err := r.source.Next(ctx)
+	if err != nil {
+		return row, err
+	}
+	if r.capture != nil && len(row) >= len(r.schema) {
+		oldRow := row[:len(r.schema)]
+		outputRow, err := rowToBytes(ctx, r.schema, oldRow, nil)
+		if err != nil {
+			return nil, err
+		}
+		r.capture.oldRows = append(r.capture.oldRows, Row{val: outputRow})
+	}
+	return row, nil
+}
+
+func (r *replicationUpdateCaptureIter) Close(ctx *sql.Context) error {
+	return r.source.Close(ctx)
 }

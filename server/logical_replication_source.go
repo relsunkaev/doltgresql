@@ -80,7 +80,11 @@ func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 	plugin := normalizeReplicationIdentifier(fields[idx+1])
 	slot, err := replsource.CreateSlot(slotName, plugin, h.database, temporary)
 	if err != nil {
-		return err
+		existing, ok := replsource.GetSlot(slotName)
+		if !ok || existing.Active || existing.Temporary || temporary || !strings.EqualFold(existing.Plugin, plugin) || existing.Database != h.database {
+			return err
+		}
+		slot = existing
 	}
 	return h.sendReplicationRows(
 		[]string{"slot_name", "consistent_point", "snapshot_name", "output_plugin"},
@@ -121,7 +125,7 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 	sender, queue, err := replsource.RegisterSender(replsource.SenderInfo{
 		SlotName:        slotName,
 		Publications:    replicationPublicationNames(statement),
-		PID:             int32(processID),
+		PID:             int32(h.mysqlConn.ConnectionID),
 		User:            h.mysqlConn.User,
 		ApplicationName: h.startupParams["application_name"],
 		RemoteAddr:      h.Conn().RemoteAddr(),

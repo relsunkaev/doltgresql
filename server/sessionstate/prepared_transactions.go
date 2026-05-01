@@ -62,6 +62,7 @@ type PreparedReplicationCapture struct {
 	Table        string
 	Fields       []PreparedReplicationField
 	Rows         [][][]byte
+	OldRows      [][][]byte
 	RowsAffected uint64
 }
 
@@ -349,6 +350,15 @@ func clonePreparedReplicationCapture(capture PreparedReplicationCapture) Prepare
 			ret.Rows[i] = make([][]byte, len(row))
 			for j, value := range row {
 				ret.Rows[i][j] = append([]byte(nil), value...)
+			}
+		}
+	}
+	if len(capture.OldRows) > 0 {
+		ret.OldRows = make([][][]byte, len(capture.OldRows))
+		for i, row := range capture.OldRows {
+			ret.OldRows[i] = make([][]byte, len(row))
+			for j, value := range row {
+				ret.OldRows[i][j] = append([]byte(nil), value...)
 			}
 		}
 	}

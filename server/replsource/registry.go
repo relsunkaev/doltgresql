@@ -281,6 +281,17 @@ func ListSlots() []Slot {
 	return slots
 }
 
+// GetSlot returns a snapshot of a logical replication slot.
+func GetSlot(name string) (Slot, bool) {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	slot, ok := defaultRegistry.slots[name]
+	if !ok {
+		return Slot{}, false
+	}
+	return *slot, true
+}
+
 // RegisterSender marks a slot as active and records a new replication sender.
 func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 	defaultRegistry.mu.Lock()
@@ -385,6 +396,36 @@ func UnregisterSender(senderID uint64) {
 		}
 	}
 	defaultRegistry.persistBestEffortLocked()
+}
+
+// TerminateSenderByPID clears an active replication sender by backend PID.
+func TerminateSenderByPID(pid int32) bool {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	terminated := false
+	for senderID, sender := range defaultRegistry.senders {
+		if sender.PID != pid {
+			continue
+		}
+		delete(defaultRegistry.senders, senderID)
+		if queue, ok := defaultRegistry.queues[senderID]; ok {
+			close(queue)
+			delete(defaultRegistry.queues, senderID)
+		}
+		if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
+			if slot.Temporary {
+				delete(defaultRegistry.slots, sender.SlotName)
+			} else {
+				slot.Active = false
+				slot.ActivePID = 0
+			}
+		}
+		terminated = true
+	}
+	if terminated {
+		defaultRegistry.persistBestEffortLocked()
+	}
+	return terminated
 }
 
 // Broadcast records logical WAL messages and sends them to matching active senders.
