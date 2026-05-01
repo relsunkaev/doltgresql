@@ -229,7 +229,11 @@ fi
 expect_pgdog_failure "2pc" "PREPARE TRANSACTION 'dg_pgdog';" "syntax error"
 expect_pgdog_failure "publication" "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;" "unimplemented"
 expect_pgdog_failure "copy-to" "COPY pgdog_items TO STDOUT;" "syntax error"
-expect_pgdog_failure "sql-prepare" "PREPARE dg_pgdog_stmt AS SELECT 1;" "not yet supported"
+sql_prepare_result="$(psql_pgdog -At -c "PREPARE dg_pgdog_stmt(int) AS SELECT \$1::int + 1;" -c "EXECUTE dg_pgdog_stmt(41);")"
+if ! grep -q "42" <<< "$sql_prepare_result"; then
+  echo "sql-prepare: expected EXECUTE result 42, got: $sql_prepare_result" >&2
+  exit 1
+fi
 expect_pgdog_failure "vector" "CREATE TABLE pgdog_vectors (tenant_id vector);" "vector"
 expect_pgdog_failure "wal-lsn" "SELECT pg_current_wal_lsn();" "pg_current_wal_lsn"
 

@@ -31,6 +31,114 @@ func TestPreparedPgCatalog(t *testing.T) {
 	RunScripts(t, pgCatalogTests)
 }
 
+func TestSQLPreparedStatements(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SQL PREPARE and EXECUTE",
+			SetUpScript: []string{
+				"CREATE TABLE sql_prepare_items (pk int primary key, v text);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "PREPARE sql_add(int, int) AS SELECT $1::int + $2::int AS sum;",
+				},
+				{
+					Query: "EXECUTE sql_add(2, 5);",
+					Expected: []sql.Row{
+						{7},
+					},
+				},
+				{
+					Query: "SELECT name, from_sql, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
+					Expected: []sql.Row{
+						{"sql_add", "t", 0, 1},
+					},
+				},
+				{
+					Query: "PREPARE sql_concat(text, text) AS SELECT concat($1, $2);",
+				},
+				{
+					Query: "EXECUTE sql_concat('ab' || 'c', upper('d'));",
+					Expected: []sql.Row{
+						{"abcD"},
+					},
+				},
+				{
+					Query: "PREPARE sql_insert(int, text) AS INSERT INTO sql_prepare_items VALUES ($1, $2);",
+				},
+				{
+					Query: "EXECUTE sql_insert(1, 'one');",
+				},
+				{
+					Query: "EXECUTE sql_insert(2, 'two');",
+				},
+				{
+					Query: "SELECT * FROM sql_prepare_items ORDER BY pk;",
+					Expected: []sql.Row{
+						{1, "one"},
+						{2, "two"},
+					},
+				},
+				{
+					Query: "PREPARE sql_no_params AS SELECT count(*) FROM sql_prepare_items;",
+				},
+				{
+					Query: "EXECUTE sql_no_params;",
+					Expected: []sql.Row{
+						{2},
+					},
+				},
+				{
+					Query: "EXECUTE sql_no_params;",
+					Expected: []sql.Row{
+						{2},
+					},
+				},
+				{
+					Query: "SELECT name, generic_plans, custom_plans FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_no_params';",
+					Expected: []sql.Row{
+						{"sql_no_params", 2, 0},
+					},
+				},
+				{
+					Query: "DEALLOCATE sql_add;",
+				},
+				{
+					Query:    "SELECT name FROM pg_catalog.pg_prepared_statements WHERE name = 'sql_add';",
+					Expected: []sql.Row{},
+				},
+				{
+					Query: "DEALLOCATE ALL;",
+				},
+				{
+					Query:    "SELECT name FROM pg_catalog.pg_prepared_statements;",
+					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
+			Name: "SQL PREPARE errors",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "PREPARE sql_dup AS SELECT 1;",
+				},
+				{
+					Query:       "PREPARE sql_dup AS SELECT 2;",
+					ExpectedErr: "already exists",
+				},
+				{
+					Query:       "EXECUTE sql_missing;",
+					ExpectedErr: "does not exist",
+				},
+				{
+					Query:       "EXECUTE sql_dup(1);",
+					ExpectedErr: "expected 0 parameters but got 1",
+				},
+			},
+		},
+	})
+}
+
 var preparedStatementTests = []ScriptTest{
 	{
 		Name: "Expressions without tables",

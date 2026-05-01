@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeExecute handles *tree.Execute nodes.
@@ -26,5 +27,16 @@ func nodeExecute(ctx *Context, node *tree.Execute) (vitess.Statement, error) {
 		return nil, nil
 	}
 
-	return NotYetSupportedError("EXECUTE is not yet supported")
+	params := make([]string, len(node.Params))
+	for i, param := range node.Params {
+		params[i] = tree.AsString(param)
+	}
+
+	return vitess.InjectedStatement{
+		Statement: pgnodes.ExecuteStatement{
+			Name:        string(node.Name),
+			Params:      params,
+			DiscardRows: node.DiscardRows,
+		},
+	}, nil
 }

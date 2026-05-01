@@ -90,12 +90,19 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					ExpectedErr: "COPY FROM does not support format BINARY",
 				},
 				{
-					Query:       "PREPARE dg_pgdog_stmt AS SELECT 1;",
-					ExpectedErr: "PREPARE is not yet supported",
+					Query: "PREPARE dg_pgdog_stmt(int) AS SELECT $1::int + 1;",
 				},
 				{
-					Query:       "EXECUTE dg_pgdog_stmt;",
-					ExpectedErr: "EXECUTE is not yet supported",
+					Query: "EXECUTE dg_pgdog_stmt(41);",
+					Expected: []sql.Row{
+						{42},
+					},
+				},
+				{
+					Query: "SELECT name, from_sql FROM pg_catalog.pg_prepared_statements WHERE name = 'dg_pgdog_stmt';",
+					Expected: []sql.Row{
+						{"dg_pgdog_stmt", "t"},
+					},
 				},
 				{
 					Query:       "CREATE TABLE pgdog_vectors (tenant_id vector);",

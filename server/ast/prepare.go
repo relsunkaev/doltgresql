@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodePrepare handles *tree.Prepare nodes.
@@ -26,5 +27,16 @@ func nodePrepare(ctx *Context, node *tree.Prepare) (vitess.Statement, error) {
 		return nil, nil
 	}
 
-	return NotYetSupportedError("PREPARE is not yet supported")
+	parameterTypes := make([]string, len(node.Types))
+	for i, typ := range node.Types {
+		parameterTypes[i] = typ.SQLString()
+	}
+
+	return vitess.InjectedStatement{
+		Statement: pgnodes.PrepareStatement{
+			Name:           string(node.Name),
+			Statement:      tree.AsString(node.Statement),
+			ParameterTypes: parameterTypes,
+		},
+	}, nil
 }

@@ -101,6 +101,7 @@ type PreparedStatementData struct {
 	Query        ConvertedQuery
 	ReturnFields []pgproto3.FieldDescription
 	BindVarTypes []uint32
+	FromSQL      bool
 }
 
 // extractBindVarTypes returns types based on the given query plan.

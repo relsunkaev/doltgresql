@@ -28,6 +28,7 @@ import (
 	"slices"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
@@ -45,11 +46,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/core/dataloader"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	psql "github.com/dolthub/doltgresql/postgres/parser/parser/sql"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/sessionstate"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // ConnectionHandler is responsible for the entire lifecycle of a user connection: receiving messages they send,
@@ -173,6 +177,7 @@ func (h *ConnectionHandler) HandleConnection() {
 	}()
 	h.doltgresHandler.NewConnection(h.mysqlConn)
 	defer func() {
+		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
 	}()
 
@@ -432,6 +437,9 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 	case *pgproto3.Close:
 		if message.ObjectType == 'S' {
 			delete(h.preparedStatements, message.Name)
+			if message.Name != "" {
+				sessionstate.DeletePreparedStatement(h.mysqlConn.ConnectionID, message.Name)
+			}
 		} else {
 			delete(h.portals, message.Name)
 		}
@@ -507,11 +515,15 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 	case *sqlparser.Commit:
 		h.inTransaction = false
 	case *sqlparser.Deallocate:
-		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query, h.Conn())
+		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
 	case sqlparser.InjectedStatement:
 		switch injectedStmt := stmt.Statement.(type) {
 		case node.DiscardStatement:
 			return true, true, h.discardAll(query)
+		case node.PrepareStatement:
+			return true, true, h.prepareSQLStatement(injectedStmt, query)
+		case node.ExecuteStatement:
+			return true, true, h.executeSQLStatement(injectedStmt)
 		case *node.CopyFrom:
 			// When copying data from STDIN, the data is sent to the server as CopyData messages
 			// We send endOfMessages=false since the server will be in COPY DATA mode and won't
@@ -525,6 +537,199 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 		}
 	}
 	return false, true, nil
+}
+
+func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool {
+	switch stmt := query.AST.(type) {
+	case *sqlparser.Deallocate:
+		return true
+	case sqlparser.InjectedStatement:
+		switch stmt.Statement.(type) {
+		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, *node.CopyFrom:
+			return true
+		}
+	}
+	return false
+}
+
+func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, query ConvertedQuery) error {
+	if _, ok := h.preparedStatements[stmt.Name]; ok {
+		return errors.Errorf("prepared statement %s already exists", stmt.Name)
+	}
+
+	queries, err := h.convertQuery(stmt.Statement)
+	if err != nil {
+		return err
+	}
+	if len(queries) != 1 {
+		return errors.Errorf("cannot insert multiple commands into a prepared statement")
+	}
+	preparedQuery := queries[0]
+	if preparedQuery.AST == nil {
+		return errors.Errorf("cannot prepare an empty query")
+	}
+
+	parsedQuery, fields, err := h.doltgresHandler.ComPrepareParsed(context.Background(), h.mysqlConn, preparedQuery.String, preparedQuery.AST)
+	if err != nil {
+		return err
+	}
+	analyzedPlan, ok := parsedQuery.(sql.Node)
+	if !ok {
+		return errors.Errorf("expected a sql.Node, got %T", parsedQuery)
+	}
+
+	bindVarTypes, err := h.resolvePreparedStatementTypes(stmt.ParameterTypes, analyzedPlan)
+	if err != nil {
+		return err
+	}
+
+	h.preparedStatements[stmt.Name] = PreparedStatementData{
+		Query:        preparedQuery,
+		ReturnFields: fields,
+		BindVarTypes: bindVarTypes,
+		FromSQL:      true,
+	}
+	h.recordPreparedStatement(stmt.Name, query.String, fields, bindVarTypes, true)
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(query.StatementTag),
+	})
+}
+
+func (h *ConnectionHandler) resolvePreparedStatementTypes(typeNames []string, analyzedPlan sql.Node) ([]uint32, error) {
+	if len(typeNames) == 0 {
+		return extractBindVarTypes(analyzedPlan)
+	}
+
+	typeOIDs := make([]uint32, len(typeNames))
+	for i, typeName := range typeNames {
+		typeOID, err := resolvePreparedStatementTypeOID(typeName)
+		if err != nil {
+			return nil, err
+		}
+		typeOIDs[i] = typeOID
+	}
+	return typeOIDs, nil
+}
+
+func resolvePreparedStatementTypeOID(typeName string) (uint32, error) {
+	normalized := strings.ToLower(strings.TrimSpace(typeName))
+	normalized = strings.Trim(normalized, `"`)
+	normalized = strings.TrimPrefix(normalized, "pg_catalog.")
+	switch normalized {
+	case "int", "integer":
+		normalized = "int4"
+	case "smallint":
+		normalized = "int2"
+	case "bigint":
+		normalized = "int8"
+	case "double precision":
+		normalized = "float8"
+	case "real":
+		normalized = "float4"
+	case "boolean":
+		normalized = "bool"
+	case "character varying":
+		normalized = "varchar"
+	}
+
+	internalID, ok := pgtypes.NameToInternalID[normalized]
+	if !ok {
+		return 0, errors.Errorf("type %s does not exist", typeName)
+	}
+	dgType := pgtypes.GetTypeByID(internalID)
+	if dgType == nil {
+		return 0, errors.Errorf("type %s does not exist", typeName)
+	}
+	return id.Cache().ToOID(dgType.ID.AsId()), nil
+}
+
+func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) error {
+	preparedData, ok := h.preparedStatements[stmt.Name]
+	if !ok {
+		return errors.Errorf("prepared statement %s does not exist", stmt.Name)
+	}
+	if stmt.DiscardRows {
+		return errors.Errorf("EXECUTE DISCARD ROWS is not supported")
+	}
+	if len(stmt.Params) != len(preparedData.BindVarTypes) {
+		return errors.Errorf("prepared statement %s expected %d parameters but got %d", stmt.Name, len(preparedData.BindVarTypes), len(stmt.Params))
+	}
+
+	params := make([][]byte, len(stmt.Params))
+	for i, param := range stmt.Params {
+		value, err := h.evaluateExecuteParameter(param)
+		if err != nil {
+			return err
+		}
+		params[i] = value
+	}
+
+	analyzedPlan, fields, err := h.doltgresHandler.ComBind(
+		context.Background(),
+		h.mysqlConn,
+		preparedData.Query.String,
+		preparedData.Query.AST,
+		BindVariables{
+			varTypes:   preparedData.BindVarTypes,
+			parameters: params,
+		},
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	boundPlan, ok := analyzedPlan.(sql.Node)
+	if !ok {
+		return errors.Errorf("expected a sql.Node, got %T", analyzedPlan)
+	}
+
+	query := preparedData.Query
+	query.StatementTag = preparedData.Query.StatementTag
+	rowsAffected := int32(0)
+	callback := h.spoolRowsCallback(query, &rowsAffected, false)
+	if err = h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, query.String, boundPlan, nil, callback); err != nil {
+		return err
+	}
+
+	sessionstate.IncrementPreparedStatementPlanCount(h.mysqlConn.ConnectionID, stmt.Name, len(stmt.Params) == 0)
+	preparedData.ReturnFields = fields
+	h.preparedStatements[stmt.Name] = preparedData
+	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+}
+
+func (h *ConnectionHandler) evaluateExecuteParameter(param string) ([]byte, error) {
+	queries, err := h.convertQuery("SELECT " + param)
+	if err != nil {
+		return nil, err
+	}
+	if len(queries) != 1 || queries[0].AST == nil {
+		return nil, errors.Errorf("EXECUTE parameter must be a single expression")
+	}
+
+	var value []byte
+	seen := false
+	callback := func(ctx *sql.Context, res *Result) error {
+		for _, row := range res.Rows {
+			if len(row.val) != 1 {
+				return errors.Errorf("EXECUTE parameter expression returned %d columns", len(row.val))
+			}
+			if seen {
+				return errors.Errorf("EXECUTE parameter expression returned multiple rows")
+			}
+			if row.val[0] != nil {
+				value = append([]byte(nil), row.val[0]...)
+			}
+			seen = true
+		}
+		return nil
+	}
+	if err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, queries[0].String, queries[0].AST, callback); err != nil {
+		return nil, err
+	}
+	if !seen {
+		return nil, errors.Errorf("EXECUTE parameter expression returned no rows")
+	}
+	return value, nil
 }
 
 // handleParse handles a parse message, returning any error that occurs
@@ -550,6 +755,13 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 			Query: query,
 		}
 		return nil
+	}
+
+	if h.queryHandledOutsideEngine(query) {
+		h.preparedStatements[message.Name] = PreparedStatementData{
+			Query: query,
+		}
+		return h.send(&pgproto3.ParseComplete{})
 	}
 
 	parsedQuery, fields, err := h.doltgresHandler.ComPrepareParsed(context.Background(), h.mysqlConn, query.String, query.AST)
@@ -629,6 +841,13 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		h.portals[message.DestinationPortal] = PortalData{
 			Query:        preparedData.Query,
 			IsEmptyQuery: true,
+		}
+		return h.send(&pgproto3.BindComplete{})
+	}
+
+	if h.queryHandledOutsideEngine(preparedData.Query) {
+		h.portals[message.DestinationPortal] = PortalData{
+			Query: preparedData.Query,
 		}
 		return h.send(&pgproto3.BindComplete{})
 	}
@@ -979,22 +1198,43 @@ func startTransactionIfNecessary(ctx *sql.Context) error {
 // deallocatePreparedStatement handles a DEALLOCATE statement by deleting the corresponding prepared statement from the
 // handler's prepared statement map, and sending a CommandComplete message back to the client. Pass an empty |name|
 // for `ALL`. This matches the behavior in the parser, which doesn't include a separate field for ALL.
-func (h *ConnectionHandler) deallocatePreparedStatement(name string, preparedStatements map[string]PreparedStatementData, query ConvertedQuery, conn net.Conn) error {
+func (h *ConnectionHandler) deallocatePreparedStatement(name string, preparedStatements map[string]PreparedStatementData, query ConvertedQuery) error {
 	if name == "" {
 		for name := range preparedStatements {
 			delete(preparedStatements, name)
 		}
+		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
 	} else {
 		_, ok := preparedStatements[name]
 		if !ok {
 			return errors.Errorf("prepared statement %s does not exist", name)
 		}
 		delete(preparedStatements, name)
+		sessionstate.DeletePreparedStatement(h.mysqlConn.ConnectionID, name)
 	}
 
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
 	})
+}
+
+func (h *ConnectionHandler) recordPreparedStatement(name string, statement string, fields []pgproto3.FieldDescription, parameterOIDs []uint32, fromSQL bool) {
+	sessionstate.UpsertPreparedStatement(h.mysqlConn.ConnectionID, sessionstate.PreparedStatement{
+		Name:          name,
+		Statement:     statement,
+		PrepareTime:   time.Now(),
+		ParameterOIDs: append([]uint32(nil), parameterOIDs...),
+		ResultOIDs:    fieldDataTypeOIDs(fields),
+		FromSQL:       fromSQL,
+	})
+}
+
+func fieldDataTypeOIDs(fields []pgproto3.FieldDescription) []uint32 {
+	oids := make([]uint32, len(fields))
+	for i, field := range fields {
+		oids[i] = field.DataTypeOID
+	}
+	return oids
 }
 
 // query runs the given query and sends a CommandComplete message to the client
@@ -1177,6 +1417,11 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 
 // discardAll handles the DISCARD ALL command
 func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
+	for name := range h.preparedStatements {
+		delete(h.preparedStatements, name)
+	}
+	sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+
 	err := h.doltgresHandler.ComResetConnection(h.mysqlConn)
 	if err != nil {
 		return err

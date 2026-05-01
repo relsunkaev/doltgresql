@@ -81,9 +81,10 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 | Publication and subscription DDL | Publication/subscription commands and local publication catalogs are not implemented enough for PgDog setup. | Treat PgDog logical replication setup as unsupported. |
 | Replication slots and replication stats | `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots` are placeholders without local producer state. | Do not use PgDog replica or replication-health workflows against Doltgres. |
 | COPY movement | Text/CSV `COPY FROM` exists, but `COPY TO STDOUT` and binary `COPY FROM` are unsupported. | Do not use PgDog sharded COPY or resharding COPY against Doltgres. |
-| SQL-level prepared statements | PgDog `prepared_statements = "full"` rewrites SQL `PREPARE` / `EXECUTE`; Doltgres does not support those SQL commands. | Keep PgDog on extended-protocol prepared statements, or disable prepared statements for smoke testing. |
 | Vector shard keys | PgDog can route `vector` keys, but Doltgres has no native `vector` type. | Use `bigint`, `varchar` / `text`, or `uuid` shard keys. |
 | Replica routing and WAL/LSN health | `pg_is_in_recovery()` is hard-coded false and WAL/LSN functions/types are not real. | Configure only primary Doltgres entries. Do not use PgDog replica routing or lag checks. |
+
+SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for PgDog's full prepared-statement mode smoke coverage.
 
 The smoke config sets `load_schema = "off"` because PgDog's schema loader currently trips a Doltgres catalog ambiguity while introspecting `information_schema`. The harness still configures the sharded table explicitly and verifies routing with live rows on both shards.
 

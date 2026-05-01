@@ -16,9 +16,12 @@ package pgcatalog
 
 import (
 	"io"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/sessionstate"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,12 @@ func (p PgPreparedStatementsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPreparedStatementsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_prepared_statements row iter
-	return emptyRowIter()
+	if ctx.Session == nil {
+		return emptyRowIter()
+	}
+	return &pgPreparedStatementsRowIter{
+		statements: sessionstate.ListPreparedStatements(ctx.Session.ID()),
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -69,16 +76,48 @@ var pgPreparedStatementsSchema = sql.Schema{
 
 // pgPreparedStatementsRowIter is the sql.RowIter for the pg_prepared_statements table.
 type pgPreparedStatementsRowIter struct {
+	statements []sessionstate.PreparedStatement
+	idx        int
 }
 
 var _ sql.RowIter = (*pgPreparedStatementsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPreparedStatementsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.statements) {
+		return nil, io.EOF
+	}
+	statement := iter.statements[iter.idx]
+	iter.idx++
+	return sql.Row{
+		statement.Name,
+		statement.Statement,
+		statement.PrepareTime,
+		formatOIDArray(statement.ParameterOIDs),
+		formatOIDArray(statement.ResultOIDs),
+		statement.FromSQL,
+		statement.GenericPlans,
+		statement.CustomPlans,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgPreparedStatementsRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+func formatOIDArray(oids []uint32) string {
+	if len(oids) == 0 {
+		return "{}"
+	}
+	names := make([]string, len(oids))
+	for i, oid := range oids {
+		internalID := id.Type(id.Cache().ToInternal(oid))
+		if typ := pgtypes.GetTypeByID(internalID); typ != nil {
+			names[i] = typ.Name()
+		} else {
+			names[i] = "unknown"
+		}
+	}
+	return "{" + strings.Join(names, ",") + "}"
 }
