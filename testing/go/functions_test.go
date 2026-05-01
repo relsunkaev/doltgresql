@@ -1875,6 +1875,18 @@ func TestArrayFunctions(t *testing.T) {
 					Expected: []sql.Row{{5}},
 				},
 				{
+					Query:    `SELECT array_position(int2vectorin('1 3 5'), 3::int2);`,
+					Expected: []sql.Row{{2}},
+				},
+				{
+					Query:    `SELECT array_position(int2vectorin('1 3 5'), 2::int2);`,
+					Expected: []sql.Row{{nil}},
+				},
+				{
+					Query:    `SELECT array_position(NULL::int2vector, 1::int2);`,
+					Expected: []sql.Row{{nil}},
+				},
+				{
 					Query:    `select array_position(NULL, 1);`,
 					Expected: []sql.Row{{nil}},
 				},

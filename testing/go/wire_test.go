@@ -114,6 +114,32 @@ func TestWireParameterTypeInference(t *testing.T) {
 	})
 }
 
+func TestWirePublicationDuplicateSQLState(t *testing.T) {
+	RunWireScripts(t, []WireScriptTest{
+		{
+			Name: "Existing publication reports duplicate_object SQLSTATE",
+			SetUpScript: []string{
+				"CREATE PUBLICATION electric_publication_default;",
+			},
+			Assertions: []WireScriptTestAssertion{
+				{
+					Send: []pgproto3.FrontendMessage{
+						&pgproto3.Query{String: "CREATE PUBLICATION electric_publication_default;"},
+					},
+					Receive: []pgproto3.BackendMessage{
+						&pgproto3.ErrorResponse{
+							Severity: "ERROR",
+							Code:     "42710",
+							Message:  `publication "electric_publication_default" already exists`,
+						},
+						&pgproto3.ReadyForQuery{TxStatus: 'I'},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestWireTypesSending allows us to directly test what is sent on the wire regarding types, ensuring that the wire
 // protocol is correctly implemented. ANY changes made to ANY test must be validated against an external Postgres server
 // using the `ExternalServerPort` field.

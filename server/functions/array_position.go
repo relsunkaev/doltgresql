@@ -25,6 +25,7 @@ import (
 func initArrayPosition() {
 	framework.RegisterFunction(array_position_anyarray_anyelement)
 	framework.RegisterFunction(array_position_anyarray_anyelement_int32)
+	framework.RegisterFunction(array_position_int2vector_int2)
 	framework.RegisterFunction(array_positions_anyarray_anyelement)
 }
 
@@ -98,6 +99,32 @@ var array_position_anyarray_anyelement_int32 = framework.Function3{
 		}
 
 		// Element not found
+		return nil, nil
+	},
+}
+
+// array_position_int2vector_int2 represents the PostgreSQL function of the same name for the int2vector catalog type.
+var array_position_int2vector_int2 = framework.Function2{
+	Name:       "array_position",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Int16vector, pgtypes.Int16},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		if val1 == nil || val2 == nil {
+			return nil, nil
+		}
+
+		searchElement := val2.(int16)
+		for i, element := range val1.([]any) {
+			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
+			if err != nil {
+				return nil, err
+			}
+			if cmp == 0 {
+				return int32(i + 1), nil
+			}
+		}
+
 		return nil, nil
 	},
 }

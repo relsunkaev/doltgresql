@@ -28,6 +28,8 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/core/subscriptions"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -70,6 +72,9 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	pub.AllTables = c.AllTables
 	if err = applyPublicationOptions(&pub, c.Options); err != nil {
 		return nil, err
+	}
+	if collection.HasPublication(ctx, pub.ID) {
+		return nil, pgerror.Newf(pgcode.DuplicateObject, `publication "%s" already exists`, c.Name)
 	}
 	pub.Tables, err = resolvePublicationTables(ctx, c.Tables)
 	if err != nil {
@@ -216,7 +221,7 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		}
 		newID := id.NewPublication(a.NewName)
 		if collection.HasPublication(ctx, newID) {
-			return nil, errors.Errorf(`publication "%s" already exists`, a.NewName)
+			return nil, pgerror.Newf(pgcode.DuplicateObject, `publication "%s" already exists`, a.NewName)
 		}
 		if err = collection.DropPublication(ctx, pubID); err != nil {
 			return nil, err

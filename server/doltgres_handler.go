@@ -43,6 +43,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
@@ -151,7 +153,7 @@ func (h *DoltgresHandler) ComExecuteBound(ctx context.Context, conn *mysql.Conn,
 
 	err := h.doQuery(ctx, conn, query, nil, analyzedPlan, h.executeBoundPlan, callback, formatCodes)
 	if err != nil {
-		err = sql.CastSQLError(err)
+		err = castSQLError(err)
 	}
 
 	if h.sel != nil {
@@ -174,7 +176,7 @@ func (h *DoltgresHandler) ComPrepareParsed(ctx context.Context, c *mysql.Conn, q
 			fmt.Printf("unable to prepare query: %+v\n", err)
 		}
 		logrus.WithField("query", query).Errorf("unable to prepare query: %s", err.Error())
-		return nil, nil, sql.CastSQLError(err)
+		return nil, nil, castSQLError(err)
 	}
 	analyzed := node
 	// We do not analyze expressions with bind variables, since that step comes later and analysis will return invalid results
@@ -193,7 +195,7 @@ func (h *DoltgresHandler) ComPrepareParsed(ctx context.Context, c *mysql.Conn, q
 				fmt.Printf("unable to prepare query: %+v\n", err)
 			}
 			logrus.WithField("query", query).Errorf("unable to prepare query: %s", err.Error())
-			return nil, nil, sql.CastSQLError(err)
+			return nil, nil, castSQLError(err)
 		}
 	}
 
@@ -226,7 +228,7 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 
 	err := h.doQuery(ctx, c, query, parsed, nil, h.executeQuery, callback, nil)
 	if err != nil {
-		err = sql.CastSQLError(err)
+		err = castSQLError(err)
 	}
 
 	if h.sel != nil {
@@ -234,6 +236,15 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 	}
 
 	return err
+}
+
+func castSQLError(err error) error {
+	switch pgerror.GetPGCode(err) {
+	case pgcode.DuplicateObject:
+		return err
+	default:
+		return sql.CastSQLError(err)
+	}
 }
 
 // ComResetConnection implements the Handler interface.

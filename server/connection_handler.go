@@ -51,6 +51,8 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	psql "github.com/dolthub/doltgresql/postgres/parser/parser/sql"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/node"
@@ -2051,12 +2053,21 @@ func (h *ConnectionHandler) sendError(err error) {
 	fmt.Println(err.Error())
 	if sendErr := h.send(&pgproto3.ErrorResponse{
 		Severity: string(ErrorResponseSeverity_Error),
-		Code:     "XX000", // internal_error for now
+		Code:     errorResponseCode(err),
 		Message:  err.Error(),
 	}); sendErr != nil {
 		// If we're unable to send anything to the connection, then there's something wrong with the connection and
 		// we should terminate it. This will be caught in HandleConnection's defer block.
 		panic(sendErr)
+	}
+}
+
+func errorResponseCode(err error) string {
+	switch pgerror.GetPGCode(err) {
+	case pgcode.DuplicateObject:
+		return pgcode.DuplicateObject.String()
+	default:
+		return "XX000"
 	}
 }
 

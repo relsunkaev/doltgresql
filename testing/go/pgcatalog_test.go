@@ -1552,6 +1552,18 @@ func TestPgIndex(t *testing.T) {
 					Query:    "SELECT unnest(indoption) FROM pg_index LIMIT 1;",
 					Expected: []sql.Row{{0}},
 				},
+				{
+					Query: `SELECT c.relname, a.attname, array_position(i.indkey, a.attnum::int2)
+						FROM pg_catalog.pg_class c
+						JOIN pg_catalog.pg_index i ON i.indrelid = c.oid
+						JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+						WHERE c.relname = 'testing2' AND i.indisprimary AND a.attname IN ('pk', 'v1')
+						ORDER BY a.attnum;`,
+					Expected: []sql.Row{
+						{"testing2", "pk", 1},
+						{"testing2", "v1", 2},
+					},
+				},
 			},
 		},
 	})
