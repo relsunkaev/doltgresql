@@ -1,0 +1,297 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+TMP_DIR="$(mktemp -d)"
+
+POSTGRES_IMAGE="${POSTGRES_IMAGE:-postgres:16-alpine}"
+PGDOG_IMAGE="${PGDOG_IMAGE:-ghcr.io/pgdogdev/pgdog:latest}"
+PGDOG_PORT="${PGDOG_PORT:-16434}"
+SOURCE_POSTGRES_PORT="${SOURCE_POSTGRES_PORT:-15437}"
+DOLTGRES_SHARD1_PORT="${DOLTGRES_SHARD1_PORT:-15438}"
+DOLTGRES_DATABASE="${DOLTGRES_DATABASE:-postgres}"
+PGDOG_BACKEND_HOST="${PGDOG_BACKEND_HOST:-host.docker.internal}"
+SOURCE_CONTAINER="doltgres-pgdog-schema-source-$$"
+PGDOG_CONTAINER="doltgres-pgdog-schema-$$"
+CUSTOMER_ID="${CUSTOMER_ID:-42}"
+UNMIGRATED_CUSTOMER_ID="${UNMIGRATED_CUSTOMER_ID:-7}"
+
+shard1_pid=""
+
+cleanup() {
+  docker rm -f "$PGDOG_CONTAINER" "$SOURCE_CONTAINER" >/dev/null 2>&1 || true
+  if [[ -n "$shard1_pid" ]]; then
+    kill "$shard1_pid" >/dev/null 2>&1 || true
+  fi
+  wait >/dev/null 2>&1 || true
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+psql_source() {
+  PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$SOURCE_POSTGRES_PORT" -U postgres -d pgdog "$@"
+}
+
+psql_doltgres() {
+  PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$DOLTGRES_SHARD1_PORT" -U postgres -d "$DOLTGRES_DATABASE" "$@"
+}
+
+psql_pgdog() {
+  PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$PGDOG_PORT" -U postgres -d pgdog "$@"
+}
+
+write_doltgres_config() {
+  local port="$1"
+  local data_dir="$2"
+  local config_file="$3"
+
+  cat > "$config_file" <<EOF
+log_level: warning
+behavior:
+  read_only: false
+  dolt_transaction_commit: true
+listener:
+  host: 0.0.0.0
+  port: $port
+  read_timeout_millis: 28800000
+  write_timeout_millis: 28800000
+data_dir: $data_dir
+cfg_dir: $data_dir/.doltcfg
+auth_file: $data_dir/.doltcfg/auth.db
+EOF
+}
+
+start_doltgres() {
+  local data_dir="$TMP_DIR/doltgres-data"
+  local config_file="$TMP_DIR/doltgres-config.yaml"
+  local log_file="$TMP_DIR/doltgres.log"
+
+  mkdir -p "$data_dir"
+  write_doltgres_config "$DOLTGRES_SHARD1_PORT" "$data_dir" "$config_file"
+
+  DOLTGRES_USER=postgres \
+    DOLTGRES_PASSWORD=password \
+    DOLTGRES_DB="$DOLTGRES_DATABASE" \
+    "$DOLTGRES_BIN" --config "$config_file" >"$log_file" 2>&1 &
+  echo "$!"
+}
+
+wait_for_source() {
+  for _ in $(seq 1 60); do
+    if psql_source -c "SELECT 1;" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "source Postgres did not become ready" >&2
+  docker logs "$SOURCE_CONTAINER" >&2 || true
+  return 1
+}
+
+wait_for_doltgres() {
+  for _ in $(seq 1 60); do
+    if psql_doltgres -c "SELECT 1;" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Doltgres shard did not become ready" >&2
+  sed -n '1,160p' "$TMP_DIR/doltgres.log" >&2 || true
+  return 1
+}
+
+write_pgdog_config() {
+  mkdir -p "$TMP_DIR/pgdog"
+  cat > "$TMP_DIR/pgdog/pgdog.toml" <<EOF
+[general]
+host = "0.0.0.0"
+port = 6432
+prepared_statements = "extended"
+read_write_split = "include_primary"
+load_schema = "on"
+
+[[databases]]
+name = "pgdog"
+host = "$PGDOG_BACKEND_HOST"
+port = $SOURCE_POSTGRES_PORT
+database_name = "pgdog"
+user = "postgres"
+password = "password"
+role = "primary"
+shard = 0
+
+[[databases]]
+name = "pgdog"
+host = "$PGDOG_BACKEND_HOST"
+port = $DOLTGRES_SHARD1_PORT
+database_name = "$DOLTGRES_DATABASE"
+user = "postgres"
+password = "password"
+role = "primary"
+shard = 1
+
+[[sharded_schemas]]
+database = "pgdog"
+name = "shared"
+shard = 0
+
+[[sharded_schemas]]
+database = "pgdog"
+shard = 0
+
+[[sharded_tables]]
+database = "pgdog"
+schema = "customer"
+name = "orders"
+column = "customer_id"
+data_type = "bigint"
+
+[[sharded_mappings]]
+database = "pgdog"
+schema = "customer"
+table = "orders"
+column = "customer_id"
+kind = "default"
+shard = 0
+EOF
+
+  cat > "$TMP_DIR/pgdog/users.toml" <<EOF
+[[users]]
+name = "postgres"
+password = "password"
+database = "pgdog"
+server_user = "postgres"
+server_password = "password"
+EOF
+}
+
+start_pgdog() {
+  docker rm -f "$PGDOG_CONTAINER" >/dev/null 2>&1 || true
+  docker run -d \
+    --name "$PGDOG_CONTAINER" \
+    --add-host=host.docker.internal:host-gateway \
+    -p "127.0.0.1:$PGDOG_PORT:6432" \
+    -v "$TMP_DIR/pgdog:/config:ro" \
+    "$PGDOG_IMAGE" \
+    pgdog --config /config/pgdog.toml --users /config/users.toml >/dev/null
+}
+
+wait_for_pgdog() {
+  for _ in $(seq 1 60); do
+    if psql_pgdog -c "SELECT 1;" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "PgDog did not become ready" >&2
+  docker logs "$PGDOG_CONTAINER" >&2 || true
+  return 1
+}
+
+shared_table_count_on_doltgres() {
+  psql_doltgres -At -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'shared' AND table_name = 'accounts';"
+}
+
+customer_rows() {
+  local runner="$1"
+  local customer_id="$2"
+  "$runner" -At -F '|' -c "SELECT customer_id, order_id, status, amount, COALESCE(note, '') FROM customer.orders WHERE customer_id = $customer_id ORDER BY order_id;"
+}
+
+assert_rows_equal() {
+  local name="$1"
+  local expected="$2"
+  local actual="$3"
+  if [[ "$expected" != "$actual" ]]; then
+    echo "$name: expected:" >&2
+    echo "$expected" >&2
+    echo "$name: actual:" >&2
+    echo "$actual" >&2
+    exit 1
+  fi
+}
+
+if [[ -z "${DOLTGRES_BIN:-}" ]]; then
+  if [[ -z "${CGO_CPPFLAGS:-}" ]] && command -v brew >/dev/null && brew --prefix icu4c@78 >/dev/null 2>&1; then
+    icu_prefix="$(brew --prefix icu4c@78)"
+    export CGO_CPPFLAGS="-I$icu_prefix/include"
+    export CGO_LDFLAGS="-L$icu_prefix/lib"
+    export PKG_CONFIG_PATH="$icu_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+  fi
+
+  DOLTGRES_BIN="$TMP_DIR/doltgres"
+  (cd "$ROOT_DIR" && go build -o "$DOLTGRES_BIN" ./cmd/doltgres)
+fi
+
+command -v docker >/dev/null
+command -v psql >/dev/null
+
+docker run -d \
+  --name "$SOURCE_CONTAINER" \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=pgdog \
+  -p "127.0.0.1:$SOURCE_POSTGRES_PORT:5432" \
+  "$POSTGRES_IMAGE" >/dev/null
+
+shard1_pid="$(start_doltgres)"
+
+wait_for_source
+wait_for_doltgres
+
+psql_source -c "CREATE SCHEMA shared;"
+psql_source -c "CREATE SCHEMA customer;"
+psql_source -c "CREATE TABLE shared.accounts (id INT PRIMARY KEY, label TEXT NOT NULL);"
+psql_source -c "CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
+psql_source -c "INSERT INTO shared.accounts VALUES (1, 'aurora-shared');"
+psql_source -c "INSERT INTO customer.orders VALUES ($UNMIGRATED_CUSTOMER_ID, 1, 'source-open', 70, 'unmigrated'), ($CUSTOMER_ID, 1, 'source-open', 420, 'candidate');"
+
+psql_doltgres -c "CREATE SCHEMA customer;"
+psql_doltgres -c "CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
+
+write_pgdog_config
+start_pgdog
+wait_for_pgdog
+
+shared_label="$(psql_pgdog -At -c "SELECT label FROM shared.accounts WHERE id = 1;")"
+if [[ "$shared_label" != "aurora-shared" ]]; then
+  echo "shared-routing: expected PgDog shared read from shard 0, got: $shared_label" >&2
+  exit 1
+fi
+
+psql_pgdog -c "INSERT INTO shared.accounts VALUES (2, 'pgdog-shared-write');"
+psql_pgdog -c "UPDATE shared.accounts SET label = 'pgdog-shared-updated' WHERE id = 2;"
+shared_write="$(psql_source -At -c "SELECT label FROM shared.accounts WHERE id = 2;")"
+if [[ "$shared_write" != "pgdog-shared-updated" ]]; then
+  echo "shared-routing: expected shared write on source shard 0, got: $shared_write" >&2
+  exit 1
+fi
+
+if [[ "$(shared_table_count_on_doltgres)" != "0" ]]; then
+  echo "shared-routing: shared.accounts should not exist on Doltgres shard" >&2
+  exit 1
+fi
+
+psql_pgdog -c "INSERT INTO customer.orders (customer_id, order_id, status, amount, note) VALUES ($UNMIGRATED_CUSTOMER_ID, 2, 'pgdog-unmigrated', 71, 'default mapping');"
+psql_pgdog -c "UPDATE customer.orders SET status = 'pgdog-unmigrated-updated' WHERE customer_id = $UNMIGRATED_CUSTOMER_ID AND order_id = 2;"
+
+source_rows="$(customer_rows psql_source "$UNMIGRATED_CUSTOMER_ID")"
+pgdog_rows="$(customer_rows psql_pgdog "$UNMIGRATED_CUSTOMER_ID")"
+doltgres_rows="$(customer_rows psql_doltgres "$UNMIGRATED_CUSTOMER_ID")"
+assert_rows_equal "unmigrated-customer-source-pgdog" "$source_rows" "$pgdog_rows"
+if [[ -n "$doltgres_rows" ]]; then
+  echo "unmigrated-routing: expected no rows on Doltgres shard, got:" >&2
+  echo "$doltgres_rows" >&2
+  exit 1
+fi
+
+schema_cache_probe="$(psql_pgdog -At -F '|' -c "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema IN ('shared', 'customer') ORDER BY table_schema, table_name;")"
+if ! grep -q "shared|accounts" <<< "$schema_cache_probe" || ! grep -q "customer|orders" <<< "$schema_cache_probe"; then
+  echo "schema-cache: expected PgDog-visible shared.accounts and customer.orders, got:" >&2
+  echo "$schema_cache_probe" >&2
+  exit 1
+fi
+
+echo "PgDog schema-split topology harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"
