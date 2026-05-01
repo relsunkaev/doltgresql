@@ -15,6 +15,9 @@
 package _go
 
 import (
+	"bytes"
+	"context"
+	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -400,4 +403,119 @@ bar`, "baz"},
 			},
 		},
 	})
+}
+
+func TestCopyToStdout(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, "CREATE TABLE copy_out (id int primary key, name text, note text);")
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, "INSERT INTO copy_out VALUES (1, 'alice', 'one'), (2, 'bob', NULL);")
+	require.NoError(t, err)
+
+	var textOut bytes.Buffer
+	tag, err := connection.Default.PgConn().CopyTo(ctx, &textOut, "COPY copy_out (id, name, note) TO STDOUT;")
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+	require.Equal(t, "1\talice\tone\n2\tbob\t\\N\n", textOut.String())
+
+	var csvOut bytes.Buffer
+	tag, err = connection.Default.PgConn().CopyTo(ctx, &csvOut, "COPY copy_out (id, name, note) TO STDOUT WITH (FORMAT CSV, HEADER TRUE);")
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+	require.Equal(t, "id,name,note\n1,alice,one\n2,bob,\n", csvOut.String())
+}
+
+func TestBinaryCopyFromAndToStdout(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, "CREATE TABLE copy_binary (id int primary key, name text, amount bigint, note text);")
+	require.NoError(t, err)
+
+	binaryInput := buildBinaryCopyData([][][]byte{
+		{
+			int32Binary(1),
+			[]byte("alice"),
+			int64Binary(100),
+			[]byte("loaded"),
+		},
+		{
+			int32Binary(2),
+			[]byte("bob"),
+			int64Binary(200),
+			nil,
+		},
+	})
+	tag, err := connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryInput), "COPY copy_binary (id, name, amount, note) FROM STDIN WITH (FORMAT BINARY);")
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+
+	rows, err := connection.Query(ctx, "SELECT * FROM copy_binary ORDER BY id;")
+	require.NoError(t, err)
+	readRows, _, err := ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []sql.Row{
+		{int64(1), "alice", int64(100), "loaded"},
+		{int64(2), "bob", int64(200), nil},
+	}, readRows)
+
+	var binaryOut bytes.Buffer
+	tag, err = connection.Default.PgConn().CopyTo(ctx, &binaryOut, "COPY copy_binary (id, name, amount, note) TO STDOUT WITH (FORMAT BINARY);")
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+
+	_, err = connection.Exec(ctx, "CREATE TABLE copy_binary_roundtrip (id int primary key, name text, amount bigint, note text);")
+	require.NoError(t, err)
+	tag, err = connection.Default.PgConn().CopyFrom(context.Background(), bytes.NewReader(binaryOut.Bytes()), "COPY copy_binary_roundtrip (id, name, amount, note) FROM STDIN WITH (FORMAT BINARY);")
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+
+	rows, err = connection.Query(ctx, "SELECT * FROM copy_binary_roundtrip ORDER BY id;")
+	require.NoError(t, err)
+	readRows, _, err = ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []sql.Row{
+		{int64(1), "alice", int64(100), "loaded"},
+		{int64(2), "bob", int64(200), nil},
+	}, readRows)
+}
+
+func buildBinaryCopyData(rows [][][]byte) []byte {
+	data := []byte{'P', 'G', 'C', 'O', 'P', 'Y', '\n', 0xff, '\r', '\n', 0}
+	data = binary.BigEndian.AppendUint32(data, 0)
+	data = binary.BigEndian.AppendUint32(data, 0)
+	for _, row := range rows {
+		data = binary.BigEndian.AppendUint16(data, uint16(len(row)))
+		for _, value := range row {
+			if value == nil {
+				data = binary.BigEndian.AppendUint32(data, uint32(0xffffffff))
+				continue
+			}
+			data = binary.BigEndian.AppendUint32(data, uint32(len(value)))
+			data = append(data, value...)
+		}
+	}
+	return append(data, 0xff, 0xff)
+}
+
+func int32Binary(value int32) []byte {
+	data := make([]byte, 4)
+	binary.BigEndian.PutUint32(data, uint32(value))
+	return data
+}
+
+func int64Binary(value int64) []byte {
+	data := make([]byte, 8)
+	binary.BigEndian.PutUint64(data, uint64(value))
+	return data
 }

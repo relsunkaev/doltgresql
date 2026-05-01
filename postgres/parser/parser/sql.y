@@ -793,7 +793,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> SERIALFUNC SERIALIZABLE SERVER SESSION SESSIONS SESSION_USER SET SETOF SETTING SETTINGS SEQUENCE SEQUENCES SFUNC
 %token <str> SHARE SHAREABLE SHOW SIMILAR SIMPLE SKIP SKIP_LOCKED SKIP_DATABASE_STATS SKIP_MISSING_FOREIGN_KEYS
 %token <str> SKIP_MISSING_SEQUENCES SKIP_MISSING_SEQUENCE_OWNERS SKIP_MISSING_VIEWS SMALLINT SMALLSERIAL SNAPSHOT SOME
-%token <str> SORTOP SPLIT SQL SQRT SSPACE STABLE START STATEMENT STATISTICS STATUS STDIN STRATEGY STRICT STRING
+%token <str> SORTOP SPLIT SQL SQRT SSPACE STABLE START STATEMENT STATISTICS STATUS STDIN STDOUT STRATEGY STRICT STRING
 %token <str> STORAGE STORE STORED STYPE SUBSCRIPT SUBSCRIPTION SUBSTRING SUBTYPE SUBTYPE_DIFF SUBTYPE_OPCLASS
 %token <str> SUPERUSER SUPPORT SYMMETRIC SYNTAX SYSID SYSTEM
 
@@ -913,6 +913,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> comment_stmt
 %type <tree.Statement> commit_stmt
 %type <tree.Statement> copy_from_stmt
+%type <tree.Statement> copy_to_stmt
 
 %type <tree.Statement> create_stmt
 %type <tree.Statement> create_changefeed_stmt
@@ -1479,6 +1480,7 @@ non_transaction_stmt:
 | analyze_stmt      // EXTEND WITH HELP: ANALYZE
 | call_stmt
 | copy_from_stmt
+| copy_to_stmt
 | comment_stmt
 | execute_stmt      // EXTEND WITH HELP: EXECUTE
 | deallocate_stmt   // EXTEND WITH HELP: DEALLOCATE
@@ -3627,6 +3629,27 @@ copy_from_stmt:
     }
   }
 
+copy_to_stmt:
+ COPY table_name opt_column_list TO STDOUT opt_with '(' copy_options_list ')'
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       Columns: $3.nameList(),
+       Stdout: true,
+       Options: *$8.copyOptions(),
+    }
+  }
+| COPY table_name opt_column_list TO STDOUT opt_legacy_copy_options
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       Columns: $3.nameList(),
+       Stdout: true,
+       Options: *$6.copyOptions(),
+    }
+  }
 
 // legacy_copy_options represent the previous format that PostgreSQL supported for
 // specifying COPY FROM options. They do not use the WITH keyword and do not use parens.
@@ -15121,6 +15144,7 @@ unreserved_keyword:
 | STATISTICS
 | STATUS
 | STDIN
+| STDOUT
 | STORAGE
 | STORE
 | STORED

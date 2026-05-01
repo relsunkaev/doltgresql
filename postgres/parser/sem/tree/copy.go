@@ -37,6 +37,14 @@ type CopyFrom struct {
 	Options CopyOptions
 }
 
+// CopyTo represents a COPY TO statement.
+type CopyTo struct {
+	Table   TableName
+	Columns NameList
+	Stdout  bool
+	Options CopyOptions
+}
+
 // CopyOptions describes options for COPY execution.
 type CopyOptions struct {
 	CopyFormat CopyFormat
@@ -58,6 +66,27 @@ func (node *CopyFrom) Format(ctx *FmtCtx) {
 	ctx.WriteString(" FROM ")
 	if node.Stdin {
 		ctx.WriteString("STDIN")
+	}
+	if !node.Options.IsDefault() {
+		ctx.WriteString(" WITH ")
+		ctx.FormatNode(&node.Options)
+	}
+	if node.Options.Delimiter != "" {
+		ctx.WriteString(" DELIMITER '" + node.Options.Delimiter + "'")
+	}
+}
+
+func (node *CopyTo) Format(ctx *FmtCtx) {
+	ctx.WriteString("COPY ")
+	ctx.FormatNode(&node.Table)
+	if len(node.Columns) > 0 {
+		ctx.WriteString(" (")
+		ctx.FormatNode(&node.Columns)
+		ctx.WriteString(")")
+	}
+	ctx.WriteString(" TO ")
+	if node.Stdout {
+		ctx.WriteString("STDOUT")
 	}
 	if !node.Options.IsDefault() {
 		ctx.WriteString(" WITH ")

@@ -82,14 +82,6 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					ExpectedErr: "unimplemented: this syntax",
 				},
 				{
-					Query:       "COPY pgdog_items TO STDOUT;",
-					ExpectedErr: "syntax error",
-				},
-				{
-					Query:       "COPY pgdog_items FROM STDIN WITH (FORMAT binary);",
-					ExpectedErr: "COPY FROM does not support format BINARY",
-				},
-				{
 					Query: "PREPARE dg_pgdog_stmt(int) AS SELECT $1::int + 1;",
 				},
 				{

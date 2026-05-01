@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -534,6 +535,8 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 				// copying from a file is handled in a single message
 				return true, true, h.copyFromFileQuery(injectedStmt)
 			}
+		case *node.CopyTo:
+			return true, true, h.handleCopyToStdoutQuery(injectedStmt)
 		}
 	}
 	return false, true, nil
@@ -545,7 +548,7 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		return true
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
-		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, *node.CopyFrom:
+		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, *node.CopyFrom, *node.CopyTo:
 			return true
 		}
 	}
@@ -1011,59 +1014,10 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 
 	dataLoader := copyState.dataLoader
 	if dataLoader == nil {
-		copyFromStdinNode := copyState.copyFromStdinNode
-		if copyFromStdinNode == nil {
-			return false, false, errors.Errorf("no COPY FROM STDIN node found")
-		}
-
-		// we build an insert node to use for the full insert plan, for which the copy from node will be the row source
-		builder := planbuilder.New(sqlCtx, h.doltgresHandler.e.Analyzer.Catalog, nil)
-		node, flags, err := builder.BindOnly(copyFromStdinNode.InsertStub, "", nil)
-		if err != nil {
+		if err = h.initializeCopyFromState(sqlCtx, copyState); err != nil {
 			return false, false, err
 		}
-
-		insertNode, ok := node.(*plan.InsertInto)
-		if !ok {
-			return false, false, errors.Errorf("expected plan.InsertInto, got %T", node)
-		}
-
-		// now that we have our insert node, we can build the data loader
-		tbl := getInsertableTable(insertNode.Destination)
-		if tbl == nil {
-			// this should be impossible, enforced by analyzer above
-			return false, false, errors.Errorf("no insertable table found in %v", insertNode.Destination)
-		}
-
-		switch copyFromStdinNode.CopyOptions.CopyFormat {
-		case tree.CopyFormatText:
-			dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header)
-		case tree.CopyFormatCsv:
-			dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header)
-		case tree.CopyFormatBinary:
-			err = errors.Errorf("BINARY format is not supported for COPY FROM")
-		default:
-			err = errors.Errorf("unknown format specified for COPY FROM: %v",
-				copyFromStdinNode.CopyOptions.CopyFormat)
-		}
-
-		if err != nil {
-			return false, false, err
-		}
-
-		// we have to set the data loader on the copyFrom node before we analyze it, because we need the loader's
-		// schema to analyze
-		copyState.copyFromStdinNode.DataLoader = dataLoader
-
-		// After building out stub insert node, swap out the source node with the COPY node, then analyze the entire thing
-		node = insertNode.WithSource(copyFromStdinNode)
-		analyzedNode, err := h.doltgresHandler.e.Analyzer.Analyze(sqlCtx, node, nil, flags)
-		if err != nil {
-			return false, false, err
-		}
-
-		copyState.insertNode = analyzedNode
-		copyState.dataLoader = dataLoader
+		dataLoader = copyState.dataLoader
 	}
 
 	reader := bufio.NewReader(copyFromData)
@@ -1080,6 +1034,71 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 	// We expect to see more CopyData messages until we see either a CopyDone or CopyFail message, so
 	// return false for endOfMessages
 	return false, false, nil
+}
+
+func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copyState *copyFromStdinState) error {
+	if copyState == nil {
+		return errors.Errorf("COPY DATA message received without a COPY FROM operation in progress")
+	}
+	if copyState.dataLoader != nil {
+		return nil
+	}
+
+	copyFromStdinNode := copyState.copyFromStdinNode
+	if copyFromStdinNode == nil {
+		return errors.Errorf("no COPY FROM STDIN node found")
+	}
+
+	// we build an insert node to use for the full insert plan, for which the copy from node will be the row source
+	builder := planbuilder.New(sqlCtx, h.doltgresHandler.e.Analyzer.Catalog, nil)
+	planNode, flags, err := builder.BindOnly(copyFromStdinNode.InsertStub, "", nil)
+	if err != nil {
+		return err
+	}
+
+	insertNode, ok := planNode.(*plan.InsertInto)
+	if !ok {
+		return errors.Errorf("expected plan.InsertInto, got %T", planNode)
+	}
+
+	// now that we have our insert node, we can build the data loader
+	tbl := getInsertableTable(insertNode.Destination)
+	if tbl == nil {
+		// this should be impossible, enforced by analyzer above
+		return errors.Errorf("no insertable table found in %v", insertNode.Destination)
+	}
+
+	var dataLoader dataloader.DataLoader
+	switch copyFromStdinNode.CopyOptions.CopyFormat {
+	case tree.CopyFormatText:
+		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header)
+	case tree.CopyFormatCsv:
+		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header)
+	case tree.CopyFormatBinary:
+		dataLoader, err = dataloader.NewBinaryDataLoader(insertNode.ColumnNames, tbl.Schema())
+	default:
+		err = errors.Errorf("unknown format specified for COPY FROM: %v",
+			copyFromStdinNode.CopyOptions.CopyFormat)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// we have to set the data loader on the copyFrom node before we analyze it, because we need the loader's
+	// schema to analyze
+	copyState.copyFromStdinNode.DataLoader = dataLoader
+
+	// After building out stub insert node, swap out the source node with the COPY node, then analyze the entire thing
+	planNode = insertNode.WithSource(copyFromStdinNode)
+	analyzedNode, err := h.doltgresHandler.e.Analyzer.Analyze(sqlCtx, planNode, nil, flags)
+	if err != nil {
+		return err
+	}
+
+	copyState.insertNode = analyzedNode
+	copyState.dataLoader = dataLoader
+	return nil
 }
 
 // Returns the first sql.InsertableTable node found in the tree provided, or nil if none is found.
@@ -1173,6 +1192,229 @@ func (h *ConnectionHandler) handleCopyFail(_ *pgproto3.CopyFail) (stop bool, end
 	// We send back endOfMessage=true, since the COPY FAIL message ends the COPY DATA flow and the server is ready
 	// to accept the next query now.
 	return false, true, nil
+}
+
+func (h *ConnectionHandler) handleCopyToStdoutQuery(copyTo *node.CopyTo) error {
+	if copyTo == nil {
+		return nil
+	}
+	if !copyTo.Stdout {
+		return errors.Errorf("COPY TO only supports STDOUT")
+	}
+	if copyTo.CopyOptions.CopyFormat == tree.CopyFormatBinary && copyTo.CopyOptions.Header {
+		return errors.Errorf("COPY TO cannot use HEADER with BINARY format")
+	}
+
+	selectQuery := copyToSelectQuery(copyTo)
+	queries, err := h.convertQuery(selectQuery)
+	if err != nil {
+		return err
+	}
+	if len(queries) != 1 {
+		return errors.Errorf("COPY TO generated multiple queries")
+	}
+	query := queries[0]
+
+	parsedQuery, fields, err := h.doltgresHandler.ComPrepareParsed(context.Background(), h.mysqlConn, query.String, query.AST)
+	if err != nil {
+		return err
+	}
+	boundPlan, ok := parsedQuery.(sql.Node)
+	if !ok {
+		return errors.Errorf("expected a sql.Node, got %T", parsedQuery)
+	}
+
+	formatCodes := make([]int16, len(fields))
+	overallFormat := byte(0)
+	if copyTo.CopyOptions.CopyFormat == tree.CopyFormatBinary {
+		overallFormat = 1
+		for i := range formatCodes {
+			formatCodes[i] = 1
+		}
+	}
+	columnFormatCodes := make([]uint16, len(fields))
+	if overallFormat == 1 {
+		for i := range columnFormatCodes {
+			columnFormatCodes[i] = 1
+		}
+	}
+
+	if err = h.send(&pgproto3.CopyOutResponse{
+		OverallFormat:     overallFormat,
+		ColumnFormatCodes: columnFormatCodes,
+	}); err != nil {
+		return err
+	}
+
+	rowsCopied := int32(0)
+	if overallFormat == 1 {
+		if err = h.send(&pgproto3.CopyData{Data: binaryCopyHeader()}); err != nil {
+			return err
+		}
+	} else if copyTo.CopyOptions.Header {
+		header := make([][]byte, len(fields))
+		for i := range fields {
+			header[i] = fields[i].Name
+		}
+		data, err := encodeCopyTextLikeRow(header, copyTo.CopyOptions, false)
+		if err != nil {
+			return err
+		}
+		if err = h.send(&pgproto3.CopyData{Data: data}); err != nil {
+			return err
+		}
+	}
+
+	callback := func(ctx *sql.Context, res *Result) error {
+		for _, row := range res.Rows {
+			var data []byte
+			var err error
+			if overallFormat == 1 {
+				data = encodeCopyBinaryRow(row.val)
+			} else {
+				data, err = encodeCopyTextLikeRow(row.val, copyTo.CopyOptions, true)
+				if err != nil {
+					return err
+				}
+			}
+			if err = h.send(&pgproto3.CopyData{Data: data}); err != nil {
+				return err
+			}
+			rowsCopied++
+		}
+		return nil
+	}
+
+	if err = h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, query.String, boundPlan, formatCodes, callback); err != nil {
+		return err
+	}
+
+	if overallFormat == 1 {
+		if err = h.send(&pgproto3.CopyData{Data: binaryCopyTrailer()}); err != nil {
+			return err
+		}
+	}
+	if err = h.send(&pgproto3.CopyDone{}); err != nil {
+		return err
+	}
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(fmt.Sprintf("COPY %d", rowsCopied)),
+	})
+}
+
+func copyToSelectQuery(copyTo *node.CopyTo) string {
+	var columns string
+	if len(copyTo.Columns) == 0 {
+		columns = "*"
+	} else {
+		quotedColumns := make([]string, len(copyTo.Columns))
+		for i := range copyTo.Columns {
+			quotedColumns[i] = quoteCopyIdentifier(string(copyTo.Columns[i]))
+		}
+		columns = strings.Join(quotedColumns, ", ")
+	}
+
+	tableName := quoteCopyIdentifier(copyTo.TableName.Name)
+	if copyTo.TableName.Schema != "" {
+		tableName = quoteCopyIdentifier(copyTo.TableName.Schema) + "." + tableName
+	}
+	return fmt.Sprintf("SELECT %s FROM %s", columns, tableName)
+}
+
+func quoteCopyIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
+}
+
+func encodeCopyTextLikeRow(row [][]byte, options tree.CopyOptions, nullsAllowed bool) ([]byte, error) {
+	switch options.CopyFormat {
+	case tree.CopyFormatText, tree.CopyFormatBinary:
+		return encodeCopyTextRow(row, options.Delimiter, nullsAllowed), nil
+	case tree.CopyFormatCsv:
+		return encodeCopyCsvRow(row, options.Delimiter, nullsAllowed)
+	default:
+		return nil, errors.Errorf("unknown format specified for COPY TO: %v", options.CopyFormat)
+	}
+}
+
+func encodeCopyTextRow(row [][]byte, delimiter string, nullsAllowed bool) []byte {
+	if delimiter == "" {
+		delimiter = "\t"
+	}
+	values := make([]string, len(row))
+	for i, value := range row {
+		if value == nil && nullsAllowed {
+			values[i] = `\N`
+			continue
+		}
+		values[i] = escapeCopyTextValue(string(value), delimiter)
+	}
+	return []byte(strings.Join(values, delimiter) + "\n")
+}
+
+func escapeCopyTextValue(value string, delimiter string) string {
+	value = strings.ReplaceAll(value, `\`, `\\`)
+	value = strings.ReplaceAll(value, "\n", `\n`)
+	value = strings.ReplaceAll(value, "\r", `\r`)
+	value = strings.ReplaceAll(value, "\t", `\t`)
+	if delimiter != "" && delimiter != "\t" {
+		value = strings.ReplaceAll(value, delimiter, `\`+delimiter)
+	}
+	return value
+}
+
+func encodeCopyCsvRow(row [][]byte, delimiter string, nullsAllowed bool) ([]byte, error) {
+	if delimiter == "" {
+		delimiter = ","
+	}
+	if len([]rune(delimiter)) != 1 {
+		return nil, errors.Errorf("COPY CSV delimiter must be a single character")
+	}
+	values := make([]string, len(row))
+	for i, value := range row {
+		if value == nil && nullsAllowed {
+			continue
+		}
+		values[i] = escapeCopyCsvValue(string(value), delimiter)
+	}
+	return []byte(strings.Join(values, delimiter) + "\n"), nil
+}
+
+func escapeCopyCsvValue(value string, delimiter string) string {
+	needsQuotes := value == "" ||
+		strings.Contains(value, delimiter) ||
+		strings.Contains(value, `"`) ||
+		strings.Contains(value, "\n") ||
+		strings.Contains(value, "\r")
+	if !needsQuotes {
+		return value
+	}
+	return `"` + strings.ReplaceAll(value, `"`, `""`) + `"`
+}
+
+func binaryCopyHeader() []byte {
+	data := make([]byte, 0, len(dataloader.BinaryCopySignature())+8)
+	data = append(data, dataloader.BinaryCopySignature()...)
+	data = binary.BigEndian.AppendUint32(data, 0)
+	data = binary.BigEndian.AppendUint32(data, 0)
+	return data
+}
+
+func encodeCopyBinaryRow(row [][]byte) []byte {
+	data := make([]byte, 0)
+	data = binary.BigEndian.AppendUint16(data, uint16(len(row)))
+	for _, value := range row {
+		if value == nil {
+			data = binary.BigEndian.AppendUint32(data, uint32(0xffffffff))
+			continue
+		}
+		data = binary.BigEndian.AppendUint32(data, uint32(len(value)))
+		data = append(data, value...)
+	}
+	return data
+}
+
+func binaryCopyTrailer() []byte {
+	return []byte{0xff, 0xff}
 }
 
 // startTransactionIfNecessary checks to see if the current session has a transaction started yet or not, and if not,
@@ -1440,8 +1682,31 @@ func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, co
 		copyFromStdinNode: copyFrom,
 	}
 
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "COPY FROM STDIN")
+	if err != nil {
+		return err
+	}
+	if err = startTransactionIfNecessary(sqlCtx); err != nil {
+		return err
+	}
+	if err = h.initializeCopyFromState(sqlCtx, h.copyFromStdinState); err != nil {
+		return err
+	}
+
+	overallFormat := byte(0)
+	if copyFrom.CopyOptions.CopyFormat == tree.CopyFormatBinary {
+		overallFormat = 1
+	}
+	columnFormatCodes := make([]uint16, len(h.copyFromStdinState.dataLoader.Schema()))
+	if overallFormat == 1 {
+		for i := range columnFormatCodes {
+			columnFormatCodes[i] = 1
+		}
+	}
+
 	return h.send(&pgproto3.CopyInResponse{
-		OverallFormat: 0,
+		OverallFormat:     overallFormat,
+		ColumnFormatCodes: columnFormatCodes,
 	})
 }
 

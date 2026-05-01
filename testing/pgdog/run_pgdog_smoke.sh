@@ -228,7 +228,11 @@ fi
 
 expect_pgdog_failure "2pc" "PREPARE TRANSACTION 'dg_pgdog';" "syntax error"
 expect_pgdog_failure "publication" "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;" "unimplemented"
-expect_pgdog_failure "copy-to" "COPY pgdog_items TO STDOUT;" "syntax error"
+copy_to_result="$(psql_pgdog -At -c "COPY pgdog_items TO STDOUT;")"
+if ! grep -q $'3\ttenant-3' <<< "$copy_to_result"; then
+  echo "copy-to: expected copied row for tenant 3, got: $copy_to_result" >&2
+  exit 1
+fi
 sql_prepare_result="$(psql_pgdog -At -c "PREPARE dg_pgdog_stmt(int) AS SELECT \$1::int + 1;" -c "EXECUTE dg_pgdog_stmt(41);")"
 if ! grep -q "42" <<< "$sql_prepare_result"; then
   echo "sql-prepare: expected EXECUTE result 42, got: $sql_prepare_result" >&2

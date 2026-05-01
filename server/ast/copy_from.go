@@ -15,8 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
@@ -28,9 +26,6 @@ import (
 func nodeCopyFrom(ctx *Context, node *tree.CopyFrom) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
-	}
-	if node.Options.CopyFormat == tree.CopyFormatBinary {
-		return nil, errors.Errorf("COPY FROM does not support format BINARY")
 	}
 
 	// We start by creating a stub insert statement for the COPY FROM statement, which we will use to build a basic
