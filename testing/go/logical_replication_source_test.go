@@ -501,6 +501,202 @@ func TestLogicalReplicationSourceReplaysInactiveSlotChangesAfterRestart(t *testi
 	require.Equal(t, commit.CommitLSN.String(), confirmedFlush)
 }
 
+func TestLogicalReplicationSourceReplaysUpdateAndDeleteAfterRestart(t *testing.T) {
+	replsource.ResetForTests()
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	slotName := "dg_replay_update_delete_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_replay_ud_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_replay_ud_items VALUES (1, 'one'), (2, 'two');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_replay_ud_pub FOR TABLE dg_replay_ud_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_replay_ud_items SET label = 'one-updated' WHERE tenant_id = 1;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_replay_ud_items WHERE tenant_id = 2;")
+	require.NoError(t, err)
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	replConn = connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_replay_ud_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	relation, update, updateCommit := receiveUpdateChange(t, replConn)
+	requireUpdateChange(t, relation, update, "dg_replay_ud_items", "1", "one-updated")
+	relation, deleteMessage, deleteCommit := receiveDeleteChange(t, replConn)
+	requireDeleteChange(t, relation, deleteMessage, "dg_replay_ud_items", "2", "two")
+	require.Greater(t, deleteCommit.CommitLSN, updateCommit.CommitLSN)
+}
+
+func TestLogicalReplicationSourceDoesNotReplayAcknowledgedBacklogAfterRestart(t *testing.T) {
+	replsource.ResetForTests()
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	slotName := "dg_ack_prune_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_ack_prune_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_ack_prune_pub FOR TABLE dg_ack_prune_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_ack_prune_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_ack_prune_items VALUES (1, 'acked');")
+	require.NoError(t, err)
+	relation, insert, commit := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_ack_prune_items", "1", "acked")
+	require.NoError(t, pglogrepl.SendStandbyStatusUpdate(ctx, replConn, pglogrepl.StandbyStatusUpdate{
+		WALWritePosition: commit.CommitLSN,
+		WALFlushPosition: commit.CommitLSN,
+		WALApplyPosition: commit.CommitLSN,
+		ReplyRequested:   true,
+	}))
+	reply := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
+	_, err = pglogrepl.SendStandbyCopyDone(ctx, replConn)
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	replConn = connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_ack_prune_pub'`,
+		},
+	}))
+	keepalive = receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_ack_prune_items VALUES (2, 'after-restart');")
+	require.NoError(t, err)
+	relation, insert, _ = receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_ack_prune_items", "2", "after-restart")
+}
+
+func TestLogicalReplicationSourceDropSlotRemovesDurableStateAfterRestart(t *testing.T) {
+	replsource.ResetForTests()
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	slotName := "dg_drop_restart_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_drop_restart_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_drop_restart_pub FOR TABLE dg_drop_restart_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_drop_restart_items VALUES (1, 'queued');")
+	require.NoError(t, err)
+
+	dropConn := connectReplicationConn(t, ctx, port)
+	require.NoError(t, pglogrepl.DropReplicationSlot(ctx, dropConn, slotName, pglogrepl.DropReplicationSlotOptions{}))
+	require.NoError(t, dropConn.Close(ctx))
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	var slotCount int64
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*)
+		FROM pg_catalog.pg_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.EqualValues(t, 0, slotCount)
+
+	replConn = connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_drop_restart_pub'`,
+		},
+	})
+	require.ErrorContains(t, err, `replication slot "dg_drop_restart_slot" does not exist`)
+}
+
 func connectReplicationConn(t *testing.T, ctx context.Context, port int) *pgconn.PgConn {
 	t.Helper()
 	conn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable&replication=database&application_name=dg-logical-source-test", port))
