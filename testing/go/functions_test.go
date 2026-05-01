@@ -870,6 +870,23 @@ func TestSystemInformationFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "backend pid and text hash",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_backend_pid() > 0, pg_backend_pid() = pg_backend_pid();`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+				{
+					Query: `SELECT hashtext(''), hashtext('electric_slot_default'), hashtext('abc'), hashtext('ümlaut'), hashtext(NULL::text);`,
+					Expected: []sql.Row{
+						{int32(-1477818771), int32(-1768572819), int32(-785388649), int32(1425101999), nil},
+					},
+				},
+			},
+		},
+		{
 			Name:     "current_catalog",
 			Database: "test",
 			Assertions: []ScriptTestAssertion{
