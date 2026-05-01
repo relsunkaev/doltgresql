@@ -232,7 +232,18 @@ if [[ $((shard0_count + shard1_count)) -ne 16 ]]; then
   exit 1
 fi
 
-expect_pgdog_failure "2pc" "PREPARE TRANSACTION 'dg_pgdog';" "syntax error"
+psql_pgdog -c "BEGIN;" -c "INSERT INTO pgdog_items VALUES (100, 'tenant-100');" -c "PREPARE TRANSACTION 'dg_pgdog';"
+prepared_gid="$(psql_pgdog -At -c "SELECT gid FROM pg_catalog.pg_prepared_xacts WHERE gid = 'dg_pgdog';")"
+if [[ "$prepared_gid" != "dg_pgdog" ]]; then
+  echo "2pc: expected prepared transaction catalog row, got: $prepared_gid" >&2
+  exit 1
+fi
+psql_pgdog -c "COMMIT PREPARED 'dg_pgdog';"
+prepared_result="$(psql_pgdog -At -c "SELECT label FROM pgdog_items WHERE tenant_id = 100;")"
+if [[ "$prepared_result" != "tenant-100" ]]; then
+  echo "2pc: expected COMMIT PREPARED row tenant-100, got: $prepared_result" >&2
+  exit 1
+fi
 expect_pgdog_failure "publication" "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;" "unimplemented"
 copy_to_result="$(psql_pgdog -At -c "COPY pgdog_items TO STDOUT;")"
 if ! grep -q $'3\ttenant-3' <<< "$copy_to_result"; then

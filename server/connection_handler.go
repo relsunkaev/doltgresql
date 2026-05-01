@@ -525,6 +525,12 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 			return true, true, h.prepareSQLStatement(injectedStmt, query)
 		case node.ExecuteStatement:
 			return true, true, h.executeSQLStatement(injectedStmt)
+		case node.PrepareTransaction:
+			return true, true, h.prepareTransaction(injectedStmt, query)
+		case node.CommitPrepared:
+			return true, true, h.commitPrepared(injectedStmt, query)
+		case node.RollbackPrepared:
+			return true, true, h.rollbackPrepared(injectedStmt, query)
 		case *node.CopyFrom:
 			// When copying data from STDIN, the data is sent to the server as CopyData messages
 			// We send endOfMessages=false since the server will be in COPY DATA mode and won't
@@ -548,11 +554,54 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		return true
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
-		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, *node.CopyFrom, *node.CopyTo:
+		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.PrepareTransaction,
+			node.CommitPrepared, node.RollbackPrepared, *node.CopyFrom, *node.CopyTo:
 			return true
 		}
 	}
 	return false
+}
+
+func (h *ConnectionHandler) prepareTransaction(stmt node.PrepareTransaction, query ConvertedQuery) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	if err = sessionstate.PrepareTransaction(sqlCtx, stmt.GID); err != nil {
+		return err
+	}
+	h.inTransaction = false
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(query.StatementTag),
+	})
+}
+
+func (h *ConnectionHandler) commitPrepared(stmt node.CommitPrepared, query ConvertedQuery) error {
+	if h.inTransaction {
+		return errors.Errorf("COMMIT PREPARED cannot run inside a transaction block")
+	}
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	if err = sessionstate.CommitPreparedTransaction(sqlCtx, stmt.GID); err != nil {
+		return err
+	}
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(query.StatementTag),
+	})
+}
+
+func (h *ConnectionHandler) rollbackPrepared(stmt node.RollbackPrepared, query ConvertedQuery) error {
+	if h.inTransaction {
+		return errors.Errorf("ROLLBACK PREPARED cannot run inside a transaction block")
+	}
+	if err := sessionstate.RollbackPreparedTransaction(stmt.GID); err != nil {
+		return err
+	}
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(query.StatementTag),
+	})
 }
 
 func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, query ConvertedQuery) error {

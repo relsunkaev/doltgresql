@@ -64,23 +64,43 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 			},
 		},
 		{
-			Name: "PgDog unsupported feature probes",
+			Name: "PgDog prepared transaction lifecycle",
 			SetUpScript: []string{
 				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "PREPARE TRANSACTION 'dg_pgdog';",
-					ExpectedErr: "syntax error",
+					Query: "BEGIN;",
 				},
 				{
-					Query:       "COMMIT PREPARED 'dg_pgdog';",
-					ExpectedErr: "syntax error",
+					Query: "INSERT INTO pgdog_items VALUES (10, 'ten');",
 				},
 				{
-					Query:       "ROLLBACK PREPARED 'dg_pgdog';",
-					ExpectedErr: "syntax error",
+					Query: "PREPARE TRANSACTION 'dg_pgdog';",
 				},
+				{
+					Query: "SELECT gid FROM pg_catalog.pg_prepared_xacts WHERE gid = 'dg_pgdog';",
+					Expected: []sql.Row{
+						{"dg_pgdog"},
+					},
+				},
+				{
+					Query: "COMMIT PREPARED 'dg_pgdog';",
+				},
+				{
+					Query: "SELECT label FROM pgdog_items WHERE tenant_id = 10;",
+					Expected: []sql.Row{
+						{"ten"},
+					},
+				},
+			},
+		},
+		{
+			Name: "PgDog unsupported feature probes",
+			SetUpScript: []string{
+				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+			},
+			Assertions: []ScriptTestAssertion{
 				{
 					Query:       "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;",
 					ExpectedErr: "unimplemented: this syntax",

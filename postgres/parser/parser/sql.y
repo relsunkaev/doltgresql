@@ -777,7 +777,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PAUSE PAUSED PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
-%token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PRESERVE PRIMARY PRIORITY PRIVILEGES
+%token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PREPARED PRESERVE PRIMARY PRIORITY PRIVILEGES
 %token <str> PROCEDURAL PROCEDURE PROCEDURES PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
 
 %token <str> QUERIES QUERY
@@ -972,6 +972,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> explain_stmt
 %type <tree.Statement> describe_table_stmt
 %type <tree.Statement> prepare_stmt
+%type <tree.Statement> prepare_transaction_stmt
 %type <tree.Statement> preparable_stmt
 %type <tree.Statement> row_source_extension_stmt
 %type <tree.Statement> export_stmt
@@ -9908,6 +9909,7 @@ transaction_stmt:
   begin_stmt    // EXTEND WITH HELP: BEGIN
 | commit_stmt   // EXTEND WITH HELP: COMMIT
 | rollback_stmt // EXTEND WITH HELP: ROLLBACK
+| prepare_transaction_stmt
 | abort_stmt    /* SKIP DOC */
 
 // %Help: BEGIN - start a transaction
@@ -9940,7 +9942,15 @@ begin_stmt:
 // END [TRANSACTION]
 // %SeeAlso: BEGIN, ROLLBACK, WEBDOCS/commit-transaction.html
 commit_stmt:
-  COMMIT opt_transaction_chain
+  COMMIT PREPARED SCONST
+  {
+    $$.val = &tree.CommitPrepared{GID: $3}
+  }
+| COMMIT PREPARED error
+  {
+    return unimplemented(sqllex, "commit prepared")
+  }
+| COMMIT opt_transaction_chain
   {
     $$.val = &tree.CommitTransaction{}
   }
@@ -9972,7 +9982,15 @@ opt_chain:
 // ROLLBACK [TRANSACTION] TO [SAVEPOINT] <savepoint name>
 // %SeeAlso: BEGIN, COMMIT, SAVEPOINT, WEBDOCS/rollback-transaction.html
 rollback_stmt:
-  ROLLBACK opt_transaction_chain
+  ROLLBACK PREPARED SCONST
+  {
+     $$.val = &tree.RollbackPrepared{GID: $3}
+  }
+| ROLLBACK PREPARED error
+  {
+    return unimplemented(sqllex, "rollback prepared")
+  }
+| ROLLBACK opt_transaction_chain
   {
      $$.val = &tree.RollbackTransaction{}
   }
@@ -10005,6 +10023,16 @@ begin_transaction:
 | /* EMPTY */
   {
     $$.val = &tree.BeginTransaction{}
+  }
+
+prepare_transaction_stmt:
+  PREPARE TRANSACTION SCONST
+  {
+    $$.val = &tree.PrepareTransaction{GID: $3}
+  }
+| PREPARE TRANSACTION error
+  {
+    return unimplemented(sqllex, "prepare transaction")
   }
 
 transaction_mode_list:
@@ -15063,6 +15091,7 @@ unreserved_keyword:
 | PRECEDING
 | PREFERRED
 | PREPARE
+| PREPARED
 | PRESERVE
 | PRIORITY
 | PRIVILEGES

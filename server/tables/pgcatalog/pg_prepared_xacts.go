@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/sessionstate"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,9 @@ func (p PgPreparedXactsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPreparedXactsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_prepared_xacts row iter
-	return emptyRowIter()
+	return &pgPreparedXactsRowIter{
+		transactions: sessionstate.ListPreparedTransactions(ctx.GetCurrentDatabase()),
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,13 +68,26 @@ var pgPreparedXactsSchema = sql.Schema{
 
 // pgPreparedXactsRowIter is the sql.RowIter for the pg_prepared_xacts table.
 type pgPreparedXactsRowIter struct {
+	transactions []sessionstate.PreparedTransaction
+	idx          int
 }
 
 var _ sql.RowIter = (*pgPreparedXactsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPreparedXactsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.transactions) {
+		return nil, io.EOF
+	}
+	transaction := iter.transactions[iter.idx]
+	iter.idx++
+	return sql.Row{
+		transaction.TransactionID,
+		transaction.GID,
+		transaction.Prepared,
+		transaction.Owner,
+		transaction.Database,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

@@ -76,7 +76,7 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 
 | PgDog lane | Doltgres status | Required configuration or behavior |
 | --- | --- | --- |
-| 2PC / prepared transactions | `PREPARE TRANSACTION`, `COMMIT PREPARED`, and `ROLLBACK PREPARED` are unsupported. | Set `two_phase_commit = false` and `two_phase_commit_auto = false`. Cross-shard writes are not atomic. |
+| 2PC / prepared transactions | `PREPARE TRANSACTION`, `COMMIT PREPARED`, `ROLLBACK PREPARED`, and `pg_prepared_xacts` are supported for the current Doltgres process. Prepared transactions are not durable across a Doltgres restart yet. | PgDog 2PC can be smoke-tested during a single server lifetime. Do not rely on restart recovery for prepared transactions yet. |
 | Resharding and cutover | Doltgres consumes upstream logical replication, but it does not expose PostgreSQL logical replication as a server. | Do not run PgDog resharding or cutover against Doltgres shards. |
 | Publication and subscription DDL | Publication/subscription commands and local publication catalogs are not implemented enough for PgDog setup. | Treat PgDog logical replication setup as unsupported. |
 | Replication slots and replication stats | `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots` are placeholders without local producer state. | Do not use PgDog replica or replication-health workflows against Doltgres. |

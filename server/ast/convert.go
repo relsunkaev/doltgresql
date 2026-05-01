@@ -77,6 +77,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeComment(ctx, stmt)
 	case *tree.CommitTransaction:
 		return nodeCommitTransaction(ctx, stmt)
+	case *tree.CommitPrepared:
+		return nodeCommitPrepared(ctx, stmt)
 	case *tree.ControlJobs:
 		return nodeControlJobs(ctx, stmt)
 	case *tree.ControlJobsForSchedules:
@@ -175,6 +177,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeParenSelect(ctx, stmt)
 	case *tree.Prepare:
 		return nodePrepare(ctx, stmt)
+	case *tree.PrepareTransaction:
+		return nodePrepareTransaction(ctx, stmt)
 	case *tree.RefreshMaterializedView:
 		return nodeRefreshMaterializedView(ctx, stmt)
 	case *tree.ReleaseSavepoint:
@@ -201,6 +205,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeRevokeRole(ctx, stmt)
 	case *tree.RollbackToSavepoint:
 		return nodeRollbackToSavepoint(ctx, stmt)
+	case *tree.RollbackPrepared:
+		return nodeRollbackPrepared(ctx, stmt)
 	case *tree.RollbackTransaction:
 		return nodeRollbackTransaction(ctx, stmt)
 	case *tree.Savepoint:

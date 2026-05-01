@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
@@ -250,6 +251,39 @@ type CommitTransaction struct{}
 // Format implements the NodeFormatter interface.
 func (node *CommitTransaction) Format(ctx *FmtCtx) {
 	ctx.WriteString("COMMIT TRANSACTION")
+}
+
+// PrepareTransaction represents a PREPARE TRANSACTION statement.
+type PrepareTransaction struct {
+	GID string
+}
+
+// Format implements the NodeFormatter interface.
+func (node *PrepareTransaction) Format(ctx *FmtCtx) {
+	ctx.WriteString("PREPARE TRANSACTION ")
+	lex.EncodeSQLStringWithFlags(&ctx.Buffer, node.GID, ctx.flags.EncodeFlags())
+}
+
+// CommitPrepared represents a COMMIT PREPARED statement.
+type CommitPrepared struct {
+	GID string
+}
+
+// Format implements the NodeFormatter interface.
+func (node *CommitPrepared) Format(ctx *FmtCtx) {
+	ctx.WriteString("COMMIT PREPARED ")
+	lex.EncodeSQLStringWithFlags(&ctx.Buffer, node.GID, ctx.flags.EncodeFlags())
+}
+
+// RollbackPrepared represents a ROLLBACK PREPARED statement.
+type RollbackPrepared struct {
+	GID string
+}
+
+// Format implements the NodeFormatter interface.
+func (node *RollbackPrepared) Format(ctx *FmtCtx) {
+	ctx.WriteString("ROLLBACK PREPARED ")
+	lex.EncodeSQLStringWithFlags(&ctx.Buffer, node.GID, ctx.flags.EncodeFlags())
 }
 
 // RollbackTransaction represents a ROLLBACK statement.

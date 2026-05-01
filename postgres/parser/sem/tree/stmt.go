@@ -455,6 +455,24 @@ func (*CommitTransaction) StatementType() StatementType { return Ack }
 func (*CommitTransaction) StatementTag() string { return "COMMIT" }
 
 // StatementType implements the Statement interface.
+func (*PrepareTransaction) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*PrepareTransaction) StatementTag() string { return "PREPARE TRANSACTION" }
+
+// StatementType implements the Statement interface.
+func (*CommitPrepared) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CommitPrepared) StatementTag() string { return "COMMIT PREPARED" }
+
+// StatementType implements the Statement interface.
+func (*RollbackPrepared) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*RollbackPrepared) StatementTag() string { return "ROLLBACK PREPARED" }
+
+// StatementType implements the Statement interface.
 func (*CopyFrom) StatementType() StatementType { return CopyIn }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1223,6 +1241,9 @@ func (n *CancelSessions) String() string            { return AsString(n) }
 func (n *CannedOptPlan) String() string             { return AsString(n) }
 func (n *Comment) String() string                   { return AsString(n) }
 func (n *CommitTransaction) String() string         { return AsString(n) }
+func (n *PrepareTransaction) String() string        { return AsString(n) }
+func (n *CommitPrepared) String() string            { return AsString(n) }
+func (n *RollbackPrepared) String() string          { return AsString(n) }
 func (n *CopyFrom) String() string                  { return AsString(n) }
 func (n *CopyTo) String() string                    { return AsString(n) }
 func (n *CreateAggregate) String() string           { return AsString(n) }
