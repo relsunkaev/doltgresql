@@ -795,6 +795,59 @@ func TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransa
 	require.Equal(t, "fifty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
 }
 
+func TestLogicalReplicationSourceToleratesStreamingOptionWithoutStreamMessages(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_streaming_option_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_streaming_option_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_streaming_option_pub FOR TABLE dg_streaming_option_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '2'`,
+			`"publication_names" 'dg_streaming_option_pub'`,
+			`"streaming" 'true'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_streaming_option_items VALUES (1, 'one');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_streaming_option_items VALUES (2, 'two');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	require.Len(t, txn.inserts, 2)
+	require.False(t, txn.streamMessageSeen)
+	require.Equal(t, "1", string(txn.inserts[0].Tuple.Columns[0].Data))
+	require.Equal(t, "one", string(txn.inserts[0].Tuple.Columns[1].Data))
+	require.Equal(t, "2", string(txn.inserts[1].Tuple.Columns[0].Data))
+	require.Equal(t, "two", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
 func TestLogicalReplicationSourcePublishesPreparedStatementDMLInExplicitTransaction(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -1489,7 +1542,8 @@ func receiveTruncateChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.Relati
 }
 
 type logicalTransaction struct {
-	inserts []*pglogrepl.InsertMessageV2
+	inserts           []*pglogrepl.InsertMessageV2
+	streamMessageSeen bool
 }
 
 func receiveLogicalTransaction(t *testing.T, conn *pgconn.PgConn) logicalTransaction {
@@ -1513,6 +1567,8 @@ func receiveLogicalTransaction(t *testing.T, conn *pgconn.PgConn) logicalTransac
 		case *pglogrepl.InsertMessageV2:
 			require.True(t, beginSeen, "received Insert before Begin")
 			txn.inserts = append(txn.inserts, typed)
+		case *pglogrepl.StreamStartMessageV2, *pglogrepl.StreamStopMessageV2, *pglogrepl.StreamCommitMessageV2, *pglogrepl.StreamAbortMessageV2:
+			txn.streamMessageSeen = true
 		case *pglogrepl.CommitMessage:
 			require.True(t, beginSeen, "received Commit before Begin")
 			return txn

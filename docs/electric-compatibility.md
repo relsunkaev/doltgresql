@@ -53,6 +53,7 @@ without the Electric container:
 | Publication action flags | Supported for row-level DML | `TestLogicalReplicationSourceHonorsPublicationActionFlags`. |
 | `FOR ALL TABLES` and schema publications | Supported | `TestLogicalReplicationSourcePublishesAllTablesAndSchemaPublications`. |
 | Explicit transactions and prepared transactions | Supported for row messages | `TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransaction`, `TestLogicalReplicationSourcePublishesPreparedStatementDMLInExplicitTransaction`, `TestLogicalReplicationSourcePublishesCommitPreparedAsOnePgoutputTransaction`, and `TestLogicalReplicationSourcePublishesRecoveredCommitPrepared`. |
+| In-progress transaction streaming option | Accepted without stream messages | `TestLogicalReplicationSourceToleratesStreamingOptionWithoutStreamMessages` requests `proto_version '2'` and `streaming 'true'`, then verifies Doltgres still sends whole-transaction `Begin` / row / `Commit` messages. |
 | Durable inactive-slot replay | Supported | Restart replay and acknowledged-backlog pruning tests cover insert, update, delete, and LSN advancement. |
 | Slot catalogs and sender stats | Supported | Protocol and restart tests assert `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots`. |
 | Active slot drop rejection | Supported | `TestLogicalReplicationSourceTerminateBackendDeactivatesSlot` rejects drop while active, then terminates the sender and observes inactive state. |
@@ -63,8 +64,9 @@ without the Electric container:
 
 These are not claimed as Electric-supported:
 
-- Streaming in-progress transactions using pgoutput stream-start/stream-commit
-  messages.
+- Emitting pgoutput stream-start/stream-commit messages for in-progress
+  transaction streaming. Clients may request `streaming 'true'`, but Doltgres
+  publishes complete transactions only.
 - Logical decoding plugins other than `pgoutput`.
 - Physical replication slots.
 - Drop-column behavior while Electric has live shapes. Additive schema changes
