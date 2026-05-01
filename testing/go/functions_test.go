@@ -887,6 +887,23 @@ func TestSystemInformationFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "type introspection",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_typeof(1), pg_typeof('x'::text), pg_typeof(NULL::integer);`,
+					Expected: []sql.Row{
+						{"integer", "text", "integer"},
+					},
+				},
+				{
+					Query: `SELECT pg_typeof('x'::char(3)) = 'character'::regtype, pg_typeof('x'::text) = 'character'::regtype;`,
+					Expected: []sql.Row{
+						{"t", "f"},
+					},
+				},
+			},
+		},
+		{
 			Name: "current user sql value functions",
 			Assertions: []ScriptTestAssertion{
 				{
@@ -899,6 +916,42 @@ func TestSystemInformationFunctions(t *testing.T) {
 					Query: `SELECT pg_get_userbyid(10) = current_role;`,
 					Expected: []sql.Row{
 						{"t"},
+					},
+				},
+			},
+		},
+		{
+			Name: "current snapshot",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_current_snapshot();`,
+					Expected: []sql.Row{
+						{"1:1:"},
+					},
+				},
+				{
+					Query: `SELECT pg_snapshot_xmin('1:4:2,3'::pg_snapshot)::text, pg_snapshot_xmax('1:4:2,3'::pg_snapshot)::text;`,
+					Expected: []sql.Row{
+						{"1", "4"},
+					},
+				},
+				{
+					Query: `SELECT pg_snapshot_xip('1:4:2,3'::pg_snapshot)::text;`,
+					Expected: []sql.Row{
+						{"2"},
+						{"3"},
+					},
+				},
+				{
+					Query: `SELECT pg_snapshot_send(pg_current_snapshot())::text;`,
+					Expected: []sql.Row{
+						{`\x0000000000000000000000010000000000000001`},
+					},
+				},
+				{
+					Query: `SELECT pg_visible_in_snapshot('1'::xid8, '1:4:2,3'::pg_snapshot), pg_visible_in_snapshot('2'::xid8, '1:4:2,3'::pg_snapshot), pg_visible_in_snapshot('4'::xid8, '1:4:2,3'::pg_snapshot);`,
+					Expected: []sql.Row{
+						{"t", "f", "f"},
 					},
 				},
 			},
@@ -1663,6 +1716,14 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT json_array_elements_text('["a\nb","c\\d"]'::json);`,
 					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
+				},
+				{
+					Query:    `SELECT to_json('plain'::text)::text, to_json(42)::text, to_json(true)::text, to_json(NULL::int)::text;`,
+					Expected: []sql.Row{{`"plain"`, "42", "true", "null"}},
+				},
+				{
+					Query:    `SELECT to_json('"public"."electric_smoke_items"/"1"'::text)::text;`,
+					Expected: []sql.Row{{`"\"public\".\"electric_smoke_items\"/\"1\""`}},
 				},
 			},
 		},

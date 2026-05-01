@@ -16,6 +16,13 @@ package id
 
 import "github.com/lib/pq/oid"
 
+const (
+	oidPgSnapshot      = uint32(5038)
+	oidPgSnapshotArray = uint32(5039)
+	oidXid8            = uint32(5069)
+	oidXid8Array       = uint32(271)
+)
+
 // This adds all of the built-in type IDs to the cache.
 func init() {
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_abstime"), uint32(oid.T__abstime))
@@ -56,6 +63,7 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_oidvector"), uint32(oid.T__oidvector))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_path"), uint32(oid.T__path))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_pg_lsn"), uint32(oid.T__pg_lsn))
+	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_pg_snapshot"), oidPgSnapshotArray)
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_point"), uint32(oid.T__point))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_polygon"), uint32(oid.T__polygon))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_record"), uint32(oid.T__record))
@@ -87,6 +95,7 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_varbit"), uint32(oid.T__varbit))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_varchar"), uint32(oid.T__varchar))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_xid"), uint32(oid.T__xid))
+	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_xid8"), oidXid8Array)
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "_xml"), uint32(oid.T__xml))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "abstime"), uint32(oid.T_abstime))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "aclitem"), uint32(oid.T_aclitem))
@@ -146,6 +155,7 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_lsn"), uint32(oid.T_pg_lsn))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_node_tree"), uint32(oid.T_pg_node_tree))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_proc"), uint32(oid.T_pg_proc))
+	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_snapshot"), oidPgSnapshot)
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_shseclabel"), uint32(oid.T_pg_shseclabel))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "pg_type"), uint32(oid.T_pg_type))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "point"), uint32(oid.T_point))
@@ -184,5 +194,6 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "varchar"), uint32(oid.T_varchar))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "void"), uint32(oid.T_void))
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "xid"), uint32(oid.T_xid))
+	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "xid8"), oidXid8)
 	globalCache.setBuiltIn(NewId(Section_Type, "pg_catalog", "xml"), uint32(oid.T_xml))
 }

@@ -49,6 +49,7 @@ func initTypeFunctions() {
 	initOid()
 	initOidvector()
 	initPgLsn()
+	initPgSnapshot()
 	initRecord()
 	initRegclass()
 	initRegproc()
@@ -66,6 +67,7 @@ func initTypeFunctions() {
 	initVector()
 	initVoid()
 	initXid()
+	initXid8()
 }
 
 // Init initializes all functions in this package.
@@ -144,6 +146,7 @@ func Init() {
 	initOctetLength()
 	initPgEncodingToChar()
 	initPgBackendPid()
+	initPgDropReplicationSlot()
 	initPgFunctionIsVisible()
 	initPgGetConstraintdef()
 	initPgGetExpr()
@@ -168,7 +171,9 @@ func Init() {
 	initPgTableIsVisible()
 	initPgTableSize()
 	initPgTablespaceLocation()
+	initPgTerminateBackend()
 	initPgTotalRelationSize()
+	initPgTypeof()
 	initPgTypeIsVisible()
 	initPi()
 	initPower()

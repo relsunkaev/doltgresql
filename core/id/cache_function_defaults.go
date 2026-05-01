@@ -3118,7 +3118,7 @@ func init() {
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_snapshot_xmin", string(NewId(Section_Type, "pg_catalog", "pg_snapshot"))), 5062)
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_snapshot_xmax", string(NewId(Section_Type, "pg_catalog", "pg_snapshot"))), 5063)
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_snapshot_xip", string(NewId(Section_Type, "pg_catalog", "pg_snapshot"))), 5064)
-	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_visible_in_snapshot", string(NewId(Section_Type, "pg_catalog", "pg_snapshot")), string(NewId(Section_Type, "pg_catalog", "xid8"))), 5065)
+	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_visible_in_snapshot", string(NewId(Section_Type, "pg_catalog", "xid8")), string(NewId(Section_Type, "pg_catalog", "pg_snapshot"))), 5065)
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "pg_xact_status", string(NewId(Section_Type, "pg_catalog", "xid8"))), 5066)
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "xid8in", string(NewId(Section_Type, "pg_catalog", "cstring"))), 5070)
 	globalCache.setBuiltIn(NewId(Section_Function, "pg_catalog", "xid", string(NewId(Section_Type, "pg_catalog", "xid8"))), 5071)

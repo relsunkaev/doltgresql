@@ -166,6 +166,7 @@ func init() {
 		toInternal("_oidvector"):       OidvectorArray,
 		toInternal("_path"):            Unknown,
 		toInternal("_pg_lsn"):          PgLsnArray,
+		toInternal("_pg_snapshot"):     PgSnapshotArray,
 		toInternal("_point"):           Unknown,
 		toInternal("_polygon"):         Unknown,
 		toInternal("_record"):          RecordArray,
@@ -198,6 +199,7 @@ func init() {
 		toInternal("_varchar"):         VarCharArray,
 		toInternal("_vector"):          VectorArray,
 		toInternal("_xid"):             XidArray,
+		toInternal("_xid8"):            Xid8Array,
 		toInternal("_xml"):             Unknown,
 		toInternal("abstime"):          Unknown,
 		toInternal("aclitem"):          Unknown,
@@ -257,6 +259,7 @@ func init() {
 		toInternal("pg_lsn"):           PgLsn,
 		toInternal("pg_node_tree"):     Unknown,
 		toInternal("pg_proc"):          Unknown,
+		toInternal("pg_snapshot"):      PgSnapshot,
 		toInternal("pg_shseclabel"):    Unknown,
 		toInternal("pg_type"):          Unknown,
 		toInternal("point"):            Unknown,
@@ -296,6 +299,7 @@ func init() {
 		toInternal("vector"):           Vector,
 		toInternal("void"):             Void,
 		toInternal("xid"):              Xid,
+		toInternal("xid8"):             Xid8,
 		toInternal("xml"):              Unknown,
 	}
 	for _, t := range GetAllBuitInTypes() {

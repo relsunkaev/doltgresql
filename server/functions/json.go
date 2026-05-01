@@ -38,6 +38,7 @@ func initJson() {
 	framework.RegisterFunction(json_build_array)
 	framework.RegisterFunction(json_build_object_empty)
 	framework.RegisterFunction(json_build_object)
+	framework.RegisterFunction(to_json_anyelement)
 	framework.RegisterFunction(json_array_length)
 	framework.RegisterFunction(json_array_elements)
 	framework.RegisterFunction(json_array_elements_text)
@@ -150,6 +151,21 @@ var json_build_object = framework.Function1N{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
 	Callable: func(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, val1 any, vals []any) (any, error) {
 		value, err := buildJsonObjectValue(ctx, "json_build_object", argTypes, append([]any{val1}, vals...), false)
+		if err != nil {
+			return nil, err
+		}
+		return jsonValueOutput(ctx, value)
+	},
+}
+
+// to_json_anyelement represents the PostgreSQL function to_json(anyelement).
+var to_json_anyelement = framework.Function1{
+	Name:       "to_json",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
+		value, err := jsonValueFromAnyElement(ctx, t[0], val)
 		if err != nil {
 			return nil, err
 		}

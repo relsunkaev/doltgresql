@@ -73,6 +73,49 @@ func TestWireFlushMessage(t *testing.T) {
 	})
 }
 
+func TestWirePgSnapshotBinaryFormat(t *testing.T) {
+	RunWireScripts(t, []WireScriptTest{
+		{
+			Name: "pg_snapshot returns Electric-compatible binary format",
+			Assertions: []WireScriptTestAssertion{
+				{
+					Send: []pgproto3.FrontendMessage{
+						&pgproto3.Parse{
+							Name:  "snapshot_stmt",
+							Query: "SELECT pg_current_snapshot(), pg_current_wal_lsn();",
+						},
+						&pgproto3.Bind{
+							DestinationPortal:    "",
+							PreparedStatement:    "snapshot_stmt",
+							ParameterFormatCodes: nil,
+							Parameters:           nil,
+							ResultFormatCodes:    []int16{1},
+						},
+						&pgproto3.Execute{},
+						&pgproto3.Close{
+							ObjectType: 'P',
+						},
+						&pgproto3.Sync{},
+					},
+					Receive: []pgproto3.BackendMessage{
+						&pgproto3.ParseComplete{},
+						&pgproto3.BindComplete{},
+						&pgproto3.DataRow{
+							Values: [][]byte{
+								{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+								{0, 0, 0, 0, 0, 0, 0, 0},
+							},
+						},
+						&pgproto3.CommandComplete{CommandTag: []byte("SELECT 1")},
+						&pgproto3.CloseComplete{},
+						&pgproto3.ReadyForQuery{TxStatus: 'I'},
+					},
+				},
+			},
+		},
+	})
+}
+
 func TestWireParameterTypeInference(t *testing.T) {
 	RunWireScripts(t, []WireScriptTest{
 		{
