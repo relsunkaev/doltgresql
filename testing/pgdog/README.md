@@ -30,6 +30,13 @@ For the one-endpoint schema-split topology:
 testing/pgdog/run_schema_split_harness.sh
 ```
 
+For schema-split config-generation coverage:
+
+```bash
+go test ./testing/pgdog/schema_config
+PGDOG_SCHEMA_CONFIG_STRESS=1 go test ./testing/pgdog/schema_config -run TestGenerateStressShape
+```
+
 The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts a temporary main database plus two temporary Doltgres customer shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
 
 The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, broadcasts a post-start `ALTER TABLE` through PgDog, copies one customer's rows through PgDog, restarts PgDog before post-copy traffic, applies transaction-scoped insert/update/delete traffic through the PgDog customer route, validates SQL prepared statements and pgx extended-protocol prepared statements, rejects missing-shard-key writes, validates source-to-destination row/checksum equality before cutover, proves post-cutover writes route to Doltgres, reverse-applies insert/update/delete changes back to the source rollback database across a Doltgres restart, and verifies shared tables remain source-only.
@@ -54,6 +61,8 @@ testing/pgdog/run_pgdog_smoke.sh
 The customer migration and schema-split harnesses also accept `POSTGRES_IMAGE`, `SOURCE_POSTGRES_PORT`, `DOLTGRES_DATABASE`, and `CUSTOMER_ID`. The schema-split harness additionally accepts `UNMIGRATED_CUSTOMER_ID`.
 
 For CI, prefer pinning `PGDOG_IMAGE` to a digest rather than using `latest`.
+
+The `schema_config` tests generate the same schema-split PgDog config shape at larger customer counts without starting Docker. The default test groups customer IDs into list mappings per Doltgres shard, and the opt-in stress mode raises the generated customer and shard counts to catch obvious config-size and mapping-distribution problems. This is intentionally separate from the runtime harness: use the runtime harness for PgDog startup/routing proof and the generator tests for large mapping shape proof.
 
 ## Supported Boundary
 

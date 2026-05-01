@@ -73,6 +73,8 @@ shard = 0
 
 The `schema`, `table`, and `column` fields in mappings must match the corresponding `[[sharded_tables]]` entry.
 
+For larger fleets, generate mappings in batches per Doltgres shard instead of one TOML block per customer. The repo-native `testing/pgdog/schema_config` tests generate shard-grouped list mappings and sample the customer-to-shard map. One database per customer is supported as a config shape when each customer maps to its own Doltgres shard entry, but the practical operating model should batch customers per Doltgres process until PgDog startup time, schema load, pool count, and operational limits are measured for the target fleet size.
+
 ## Migration Flow
 
 For one customer:
