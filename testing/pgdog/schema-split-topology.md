@@ -21,13 +21,16 @@ SELECT * FROM shared.accounts WHERE id = $1;
 SELECT * FROM customer.orders WHERE customer_id = $1 AND order_id = $2;
 ```
 
-Unqualified table names and `search_path`-only routing are not part of the supported production contract until a harness proves a narrower safe subset.
+Unqualified table names and `search_path`-only routing are not part of the supported production contract.
 
 ## PgDog Configuration Contract
 
 Use `[[sharded_schemas]]` to route shared schema traffic to shard 0:
 
 ```toml
+[general]
+cross_shard_disabled = true
+
 [[sharded_schemas]]
 database = "prod"
 name = "shared"
@@ -90,10 +93,12 @@ PgDog documents configuration hot reload and an admin `RELOAD` command, but this
 ## Guardrails
 
 - Customer DML must include the configured shard key in a PgDog-supported query shape.
+- Application SQL must qualify customer and shared tables with their schemas. Unqualified `orders`, `SET search_path TO customer; SELECT ... FROM orders`, and unqualified DDL are unsupported.
 - Default customer-ID mapping must route unmigrated customer IDs to shard 0. Do not use default schema routing as a production fallback for mutable application SQL.
-- Use driver extended-protocol prepared statements for sharded customer DML. SQL `PREPARE` / `EXECUTE` for sharded DML is not supported by upstream PgDog and can fan out.
-- Do not rely on mutable cross-schema joins between `shared.*` on Aurora and `customer.*` on Doltgres until explicitly proven.
-- Do not rely on transactions that must atomically span shard 0 and Doltgres shards unless a dedicated test proves the exact shape.
+- Use driver extended-protocol prepared statements for schema-qualified sharded customer DML. SQL `PREPARE` / `EXECUTE` for sharded DML is not supported by upstream PgDog and can fan out; in this topology it is treated as unsupported application SQL.
+- Do not use shared/customer joins through PgDog. The harness proves separate `shared.*` and `customer.*` reads work, but a join can miss Doltgres-only migrated rows.
+- Do not put `shared.*` and migrated `customer.*` writes in one application transaction. The harness proves PgDog currently accepts such a transaction and applies each side on its backend, which is not a supported atomicity guarantee for this migration.
+- Do not rely on cross-schema `PREPARE TRANSACTION` or 2PC-like workflows across shard 0 and Doltgres shards.
 - Keep `TRUNCATE` out of logical migration movement; use row-level DML.
 - Keep Doltgres entries primary-only. Replica routing and standby replay lag are not part of this topology.
 - Immutable reference data may be copied to all Doltgres shards only as a deliberate read-only pattern, not as the source-of-truth model for shared tables.
@@ -110,7 +115,8 @@ This topology is not considered supported until the schema-split harness proves:
 - Post-cutover insert/update/delete changes for the migrated customer reverse-apply back to shard 0 through a durable Doltgres logical slot, including after a Doltgres restart.
 - Another customer remains on shard 0 after the migrated customer cuts over.
 - PgDog reload or restart semantics for the mapping change are known and documented.
-- Unsafe unqualified, cross-schema, and cross-shard shapes are either rejected or documented with tests.
+- Unsafe unqualified, search-path, SQL-prepared, cross-schema join, and cross-backend transaction shapes are either rejected or documented with tests.
+- Schema-qualified driver extended-protocol prepared statements route migrated and unmigrated customer IDs to the expected backends.
 
 ## References
 

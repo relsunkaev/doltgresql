@@ -108,6 +108,7 @@ wait_for_doltgres() {
 
 write_pgdog_config() {
   local migrated_customer_enabled="${1:-false}"
+  local cross_shard_disabled="${2:-true}"
 
   mkdir -p "$TMP_DIR/pgdog"
   cat > "$TMP_DIR/pgdog/pgdog.toml" <<EOF
@@ -117,6 +118,7 @@ port = 6432
 prepared_statements = "extended"
 read_write_split = "include_primary"
 load_schema = "on"
+cross_shard_disabled = $cross_shard_disabled
 
 [[databases]]
 name = "pgdog"
@@ -220,6 +222,44 @@ wait_for_pgdog() {
   echo "PgDog did not become ready" >&2
   docker logs "$PGDOG_CONTAINER" >&2 || true
   return 1
+}
+
+expect_pgdog_failure() {
+  local name="$1"
+  local query="$2"
+  local expected="$3"
+  local log_file="$TMP_DIR/failure-$name.log"
+
+  if psql_pgdog -c "$query" >"$log_file" 2>&1; then
+    echo "expected PgDog query to fail: $name" >&2
+    cat "$log_file" >&2
+    return 1
+  fi
+
+  if ! grep -Eiq "$expected" "$log_file"; then
+    echo "PgDog query failed with unexpected output: $name" >&2
+    cat "$log_file" >&2
+    return 1
+  fi
+}
+
+expect_pgdog_command_failure() {
+  local name="$1"
+  local expected="$2"
+  local log_file="$TMP_DIR/failure-$name.log"
+  shift 2
+
+  if psql_pgdog "$@" >"$log_file" 2>&1; then
+    echo "expected PgDog command sequence to fail: $name" >&2
+    cat "$log_file" >&2
+    return 1
+  fi
+
+  if ! grep -Eiq "$expected" "$log_file"; then
+    echo "PgDog command sequence failed with unexpected output: $name" >&2
+    cat "$log_file" >&2
+    return 1
+  fi
 }
 
 wait_for_pgdog_customer_route() {
@@ -383,7 +423,7 @@ psql_source -c "INSERT INTO customer.orders VALUES ($UNMIGRATED_CUSTOMER_ID, 1, 
 psql_doltgres -c "CREATE SCHEMA customer;"
 psql_doltgres -c "CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
 
-write_pgdog_config
+write_pgdog_config false true
 start_pgdog
 wait_for_pgdog
 
@@ -425,6 +465,31 @@ if [[ "$schema_cache_probe" != "customer|orders" ]]; then
   echo "$schema_cache_probe" >&2
   exit 1
 fi
+
+expect_pgdog_failure "qualified-missing-shard-key-insert" \
+  "INSERT INTO customer.orders (order_id, status, amount, note) VALUES (900, 'missing-shard', 1, 'missing customer_id');" \
+  "customer_id|shard|route"
+expect_pgdog_failure "unqualified-customer-select" \
+  "SELECT count(*) FROM orders WHERE customer_id = $CUSTOMER_ID;" \
+  "orders|relation|shard|cross-shard|disabled"
+expect_pgdog_failure "unqualified-customer-insert" \
+  "INSERT INTO orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 901, 'unsafe', 1, 'unqualified insert');" \
+  "orders|relation|shard|cross-shard|disabled"
+expect_pgdog_failure "unqualified-customer-update" \
+  "UPDATE orders SET status = 'unsafe' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  "orders|relation|shard|cross-shard|disabled"
+expect_pgdog_failure "unqualified-customer-delete" \
+  "DELETE FROM orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  "orders|relation|shard|cross-shard|disabled"
+expect_pgdog_failure "search-path-customer-select" \
+  "SET search_path TO customer; SELECT count(*) FROM orders WHERE customer_id = $CUSTOMER_ID;" \
+  "orders|relation|shard|cross-shard|disabled"
+expect_pgdog_failure "unqualified-customer-ddl" \
+  "CREATE TABLE orders_guardrail (customer_id BIGINT NOT NULL);" \
+  "cross-shard|disabled|schema|shard"
+expect_pgdog_failure "sql-prepare-sharded-select" \
+  "PREPARE dg_schema_sharded_probe(bigint, bigint) AS SELECT status FROM customer.orders WHERE customer_id = \$1 AND order_id = \$2; EXECUTE dg_schema_sharded_probe($CUSTOMER_ID, 1);" \
+  "cross-shard|prepared|EXECUTE|disabled|shard"
 
 pre_cutover_source_rows="$(customer_rows psql_source "$CUSTOMER_ID")"
 assert_customer_rows_on_runner "pre-cutover-customer-source-pgdog" psql_pgdog "$CUSTOMER_ID" "$pre_cutover_source_rows"
@@ -473,12 +538,57 @@ if [[ "$(shared_table_count_on_doltgres)" != "0" ]]; then
   exit 1
 fi
 
-write_pgdog_config true
+write_pgdog_config true true
 restart_pgdog
 
 post_cutover_pgdog_rows="$(customer_rows psql_pgdog "$CUSTOMER_ID")"
 post_cutover_doltgres_rows="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
 assert_rows_equal "post-cutover-customer-doltgres-pgdog" "$post_cutover_doltgres_rows" "$post_cutover_pgdog_rows"
+
+join_shared_label="$(psql_pgdog -At -c "SELECT label FROM shared.accounts WHERE id = 1;")"
+if [[ "$join_shared_label" != "aurora-shared-after-copy" ]]; then
+  echo "cross-boundary: expected separate shared read to succeed, got: $join_shared_label" >&2
+  exit 1
+fi
+join_customer_status="$(psql_pgdog -At -c "SELECT status FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;")"
+if [[ "$join_customer_status" != "source-after-copy-update" ]]; then
+  echo "cross-boundary: expected separate customer read to succeed, got: $join_customer_status" >&2
+  exit 1
+fi
+
+single_shard_rollback_before="$(psql_doltgres -At -F '|' -c "SELECT status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;")"
+psql_pgdog -c "BEGIN;" \
+  -c "UPDATE customer.orders SET status = 'rolled-back', amount = 999, note = 'single shard rollback' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "ROLLBACK;"
+single_shard_rollback_after="$(psql_doltgres -At -F '|' -c "SELECT status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;")"
+assert_rows_equal "single-shard-transaction-rollback" "$single_shard_rollback_before" "$single_shard_rollback_after"
+
+cross_shared_before="$(psql_source -At -F '|' -c "SELECT id, label FROM shared.accounts ORDER BY id;")"
+cross_customer_before="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
+psql_pgdog \
+  -c "BEGIN;" \
+  -c "UPDATE shared.accounts SET label = 'unsafe-cross-txn' WHERE id = 1;" \
+  -c "UPDATE customer.orders SET status = 'unsafe-cross-txn' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "COMMIT;"
+unsafe_cross_source_status="$(psql_source -At -c "SELECT status FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;")"
+unsafe_cross_doltgres_status="$(psql_doltgres -At -c "SELECT status FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;")"
+unsafe_cross_shared_label="$(psql_source -At -c "SELECT label FROM shared.accounts WHERE id = 1;")"
+if [[ "$unsafe_cross_shared_label" != "unsafe-cross-txn" || "$unsafe_cross_source_status" == "unsafe-cross-txn" || "$unsafe_cross_doltgres_status" != "unsafe-cross-txn" ]]; then
+  echo "cross-boundary: expected committed cross-schema transaction to demonstrate unsafe cross-backend behavior, shared=$unsafe_cross_shared_label source_customer=$unsafe_cross_source_status doltgres_customer=$unsafe_cross_doltgres_status" >&2
+  exit 1
+fi
+psql_source -c "UPDATE shared.accounts SET label = 'aurora-shared-after-copy' WHERE id = 1;"
+psql_doltgres -c "UPDATE customer.orders SET status = 'source-after-copy-update', amount = 425, note = 'updated after copy' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;"
+expect_pgdog_command_failure "cross-schema-prepared-transaction" \
+  "cross-shard|disabled|transaction|prepared|route" \
+  -c "BEGIN;" \
+  -c "UPDATE shared.accounts SET label = 'unsafe-cross-2pc' WHERE id = 1;" \
+  -c "UPDATE customer.orders SET status = 'unsafe-cross-2pc' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "PREPARE TRANSACTION 'dg_schema_cross';"
+cross_shared_after="$(psql_source -At -F '|' -c "SELECT id, label FROM shared.accounts ORDER BY id;")"
+cross_customer_after="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
+assert_rows_equal "cross-schema-transaction-shared-unchanged" "$cross_shared_before" "$cross_shared_after"
+assert_rows_equal "cross-schema-transaction-customer-unchanged" "$cross_customer_before" "$cross_customer_after"
 
 reverse_source_url="postgres://postgres:password@127.0.0.1:$DOLTGRES_SHARD1_PORT/$DOLTGRES_DATABASE?sslmode=disable"
 reverse_target_url="postgres://postgres:password@127.0.0.1:$SOURCE_POSTGRES_PORT/pgdog?sslmode=disable"
@@ -501,6 +611,11 @@ fi
 post_write_doltgres_result="$(psql_doltgres -At -F '|' -c "SELECT status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;")"
 if [[ "$post_write_doltgres_result" != "post-cutover-updated|431|written after mapping cutover" ]]; then
   echo "cutover-routing: expected post-cutover write on Doltgres, got: $post_write_doltgres_result" >&2
+  exit 1
+fi
+cross_join_after_cutover="$(psql_pgdog -At -F '|' -c "SELECT a.label, o.status FROM shared.accounts AS a JOIN customer.orders AS o ON o.customer_id = $CUSTOMER_ID WHERE a.id = 1 AND o.order_id = 2;")"
+if [[ -n "$cross_join_after_cutover" ]]; then
+  echo "cross-boundary: shared/customer join should not be used for migrated customer rows, got: $cross_join_after_cutover" >&2
   exit 1
 fi
 
@@ -531,5 +646,37 @@ if [[ "$shared_after_cutover" != "pgdog-shared-updated" ]]; then
 fi
 reverse_shared_after="$(psql_source -At -F '|' -c "SELECT id, label FROM shared.accounts ORDER BY id;")"
 assert_rows_equal "reverse-apply-shared-source-unchanged" "$reverse_shared_before" "$reverse_shared_after"
+
+orm_alias_result="$(psql_pgdog -At -F '|' -c "SELECT o.\"status\", o.\"amount\" FROM \"customer\".\"orders\" AS o WHERE o.\"customer_id\" = $CUSTOMER_ID AND o.\"order_id\" = 2;")"
+if [[ "$orm_alias_result" != "reverse-updated|450" ]]; then
+  echo "orm-query: expected quoted schema-qualified alias read to route to Doltgres, got: $orm_alias_result" >&2
+  exit 1
+fi
+
+(cd "$ROOT_DIR" && go run ./testing/pgdog/protocol_probe \
+  -database-url "postgres://postgres:password@127.0.0.1:$PGDOG_PORT/pgdog?sslmode=disable" \
+  -schema customer \
+  -table orders \
+  -customer-id "$CUSTOMER_ID" \
+  -base-order-id 40)
+migrated_protocol_source_count="$(psql_source -At -c "SELECT count(*) FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id IN (40, 41, 42);")"
+migrated_protocol_doltgres_count="$(psql_doltgres -At -c "SELECT count(*) FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id IN (40, 41, 42);")"
+if [[ "$migrated_protocol_source_count" != "0" || "$migrated_protocol_doltgres_count" != "2" ]]; then
+  echo "protocol-probe: expected migrated prepared rows only on Doltgres, source=$migrated_protocol_source_count doltgres=$migrated_protocol_doltgres_count" >&2
+  exit 1
+fi
+
+(cd "$ROOT_DIR" && go run ./testing/pgdog/protocol_probe \
+  -database-url "postgres://postgres:password@127.0.0.1:$PGDOG_PORT/pgdog?sslmode=disable" \
+  -schema customer \
+  -table orders \
+  -customer-id "$UNMIGRATED_CUSTOMER_ID" \
+  -base-order-id 80)
+unmigrated_protocol_source_count="$(psql_source -At -c "SELECT count(*) FROM customer.orders WHERE customer_id = $UNMIGRATED_CUSTOMER_ID AND order_id IN (80, 81, 82);")"
+unmigrated_protocol_doltgres_count="$(psql_doltgres -At -c "SELECT count(*) FROM customer.orders WHERE customer_id = $UNMIGRATED_CUSTOMER_ID AND order_id IN (80, 81, 82);")"
+if [[ "$unmigrated_protocol_source_count" != "2" || "$unmigrated_protocol_doltgres_count" != "0" ]]; then
+  echo "protocol-probe: expected unmigrated prepared rows only on source, source=$unmigrated_protocol_source_count doltgres=$unmigrated_protocol_doltgres_count" >&2
+  exit 1
+fi
 
 echo "PgDog schema-split topology, mapping cutover, and reverse apply harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"
