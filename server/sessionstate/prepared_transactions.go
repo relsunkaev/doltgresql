@@ -26,6 +26,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/merge"
 	"github.com/dolthub/dolt/go/libraries/doltcore/ref"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/dolt/go/libraries/utils/filesys"
@@ -45,6 +46,7 @@ type PreparedTransaction struct {
 	workingSet             *doltdb.WorkingSet
 	workingSetName         string
 	preparedWorkingSetName string
+	transactionRootHash    hash.Hash
 	baseWorkingSetHash     hash.Hash
 }
 
@@ -73,6 +75,7 @@ type persistentPreparedTransaction struct {
 	Database               string    `json:"database"`
 	WorkingSetName         string    `json:"working_set_name"`
 	PreparedWorkingSetName string    `json:"prepared_working_set_name"`
+	TransactionRootHash    string    `json:"transaction_root_hash"`
 	BaseWorkingSetHash     string    `json:"base_working_set_hash"`
 }
 
@@ -127,7 +130,7 @@ func PrepareTransaction(ctx *sql.Context, gid string) error {
 	if err != nil {
 		return err
 	}
-	baseWorkingSetHash, err := baseWorkingSetHashForTransaction(ctx, doltDB, doltTx, dbName, workingSet.Ref())
+	transactionRootHash, baseWorkingSetHash, err := baseWorkingSetHashForTransaction(ctx, doltDB, doltTx, dbName, workingSet.Ref())
 	if err != nil {
 		return err
 	}
@@ -145,6 +148,7 @@ func PrepareTransaction(ctx *sql.Context, gid string) error {
 		workingSet:             workingSet,
 		workingSetName:         workingSet.Ref().GetPath(),
 		preparedWorkingSetName: preparedWorkingSetName(gid),
+		transactionRootHash:    transactionRootHash,
 		baseWorkingSetHash:     baseWorkingSetHash,
 	}
 
@@ -314,16 +318,20 @@ func baseWorkingSetHashForTransaction(
 	tx *dsess.DoltTransaction,
 	dbName string,
 	workingSetRef ref.WorkingSetRef,
-) (hash.Hash, error) {
+) (hash.Hash, hash.Hash, error) {
 	initialRoot, ok := tx.GetInitialRoot(dbName)
 	if !ok {
-		return hash.Hash{}, errors.Errorf("database %s is unknown to the transaction", dbName)
+		return hash.Hash{}, hash.Hash{}, errors.Errorf("database %s is unknown to the transaction", dbName)
 	}
 	baseWorkingSet, err := doltDB.ResolveWorkingSetAtRoot(ctx, workingSetRef, initialRoot)
 	if err != nil {
-		return hash.Hash{}, err
+		return hash.Hash{}, hash.Hash{}, err
 	}
-	return baseWorkingSet.HashOf()
+	baseWorkingSetHash, err := baseWorkingSet.HashOf()
+	if err != nil {
+		return hash.Hash{}, hash.Hash{}, err
+	}
+	return initialRoot, baseWorkingSetHash, nil
 }
 
 func preparedWorkingSetName(gid string) string {
@@ -373,12 +381,13 @@ func commitRecoveredPreparedTransaction(ctx *sql.Context, prepared PreparedTrans
 	if err != nil {
 		return err
 	}
-	currentHash, err := storedCurrentWorkingSet.HashOf()
+	existingHash, err := storedCurrentWorkingSet.HashOf()
 	if err != nil {
 		return err
 	}
-	if currentHash != prepared.baseWorkingSetHash {
-		return errors.Errorf("prepared transaction %q cannot be committed because the working set changed since PREPARE TRANSACTION", prepared.GID)
+	startState, err := doltDB.ResolveWorkingSetAtRoot(ctx, currentWorkingSet.Ref(), prepared.transactionRootHash)
+	if err != nil {
+		return err
 	}
 	sidecar, err := doltDB.ResolveWorkingSet(ctx, ref.NewWorkingSetRef(prepared.preparedWorkingSetName))
 	if err != nil {
@@ -388,14 +397,55 @@ func commitRecoveredPreparedTransaction(ctx *sql.Context, prepared PreparedTrans
 		WithWorkingRoot(sidecar.WorkingRoot()).
 		WithStagedRoot(sidecar.StagedRoot())
 
-	tx, err := sess.StartTransaction(ctx, sql.ReadWrite)
+	if !workingAndStagedEqual(storedCurrentWorkingSet, startState) {
+		workingSet, err = mergePreparedWorkingSets(ctx, prepared.Database, state, startState, storedCurrentWorkingSet, workingSet)
+		if err != nil {
+			return err
+		}
+	}
+	if err = doltDB.UpdateWorkingSet(ctx, workingSet.Ref(), workingSet, existingHash, doltdb.TodoWorkingSetMeta(), nil); err != nil {
+		return err
+	}
+	return sess.SetWorkingSet(ctx, prepared.Database, workingSet)
+}
+
+func mergePreparedWorkingSets(
+	ctx *sql.Context,
+	dbName string,
+	state dsess.SessionState,
+	startState *doltdb.WorkingSet,
+	existingWorkingSet *doltdb.WorkingSet,
+	workingSet *doltdb.WorkingSet,
+) (*doltdb.WorkingSet, error) {
+	tableResolver, err := dsess.GetTableResolver(ctx, dbName)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err = sess.SetWorkingSet(ctx, prepared.Database, workingSet); err != nil {
-		return err
+	if !rootsEqual(existingWorkingSet.WorkingRoot(), workingSet.WorkingRoot()) {
+		result, err := merge.MergeRoots(ctx, tableResolver, existingWorkingSet.WorkingRoot(), workingSet.WorkingRoot(), startState.WorkingRoot(), workingSet, startState, state.EditOpts(), merge.MergeOpts{})
+		if err != nil {
+			return nil, err
+		}
+		workingSet = workingSet.WithWorkingRoot(result.Root)
 	}
-	return sess.CommitWorkingSet(ctx, prepared.Database, tx)
+	if !rootsEqual(existingWorkingSet.StagedRoot(), workingSet.StagedRoot()) {
+		result, err := merge.MergeRoots(ctx, tableResolver, existingWorkingSet.StagedRoot(), workingSet.StagedRoot(), startState.StagedRoot(), workingSet, startState, state.EditOpts(), merge.MergeOpts{})
+		if err != nil {
+			return nil, err
+		}
+		workingSet = workingSet.WithStagedRoot(result.Root)
+	}
+	return workingSet, nil
+}
+
+func workingAndStagedEqual(left *doltdb.WorkingSet, right *doltdb.WorkingSet) bool {
+	return rootsEqual(left.WorkingRoot(), right.WorkingRoot()) && rootsEqual(left.StagedRoot(), right.StagedRoot())
+}
+
+func rootsEqual(left doltdb.RootValue, right doltdb.RootValue) bool {
+	leftHash, leftErr := left.HashOf()
+	rightHash, rightErr := right.HashOf()
+	return leftErr == nil && rightErr == nil && leftHash == rightHash
 }
 
 func loadPreparedTransactionsLocked() error {
@@ -416,6 +466,10 @@ func loadPreparedTransactionsLocked() error {
 	}
 	maxID := uint32(0)
 	for _, stored := range state.Transactions {
+		transactionRootHash, ok := hash.MaybeParse(stored.TransactionRootHash)
+		if !ok {
+			return errors.Errorf("invalid transaction root hash for prepared transaction %q", stored.GID)
+		}
 		baseHash, ok := hash.MaybeParse(stored.BaseWorkingSetHash)
 		if !ok {
 			return errors.Errorf("invalid base working set hash for prepared transaction %q", stored.GID)
@@ -428,6 +482,7 @@ func loadPreparedTransactionsLocked() error {
 			Database:               stored.Database,
 			workingSetName:         stored.WorkingSetName,
 			preparedWorkingSetName: stored.PreparedWorkingSetName,
+			transactionRootHash:    transactionRootHash,
 			baseWorkingSetHash:     baseHash,
 		}
 		preparedTransactions.byGID[prepared.GID] = prepared
@@ -483,6 +538,7 @@ func toPersistentPreparedTransactionStateLocked() persistentPreparedTransactionS
 			Database:               prepared.Database,
 			WorkingSetName:         prepared.workingSetName,
 			PreparedWorkingSetName: prepared.preparedWorkingSetName,
+			TransactionRootHash:    prepared.transactionRootHash.String(),
 			BaseWorkingSetHash:     prepared.baseWorkingSetHash.String(),
 		})
 	}

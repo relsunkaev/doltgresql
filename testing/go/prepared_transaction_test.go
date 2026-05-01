@@ -16,6 +16,7 @@ package _go
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -232,7 +233,7 @@ func TestPreparedTransactionRollbackSurvivesRestart(t *testing.T) {
 	require.EqualValues(t, 0, count)
 }
 
-func TestRecoveredPreparedTransactionRejectsChangedWorkingSet(t *testing.T) {
+func TestRecoveredPreparedTransactionMergesChangedWorkingSet(t *testing.T) {
 	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
 	require.NoError(t, err)
 
@@ -265,17 +266,135 @@ func TestRecoveredPreparedTransactionRejectsChangedWorkingSet(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_prepared_restart_conflict';")
-	require.ErrorContains(t, err, "working set changed since PREPARE TRANSACTION")
+	require.NoError(t, err)
 
 	var count int64
 	require.NoError(t, conn.Current.QueryRow(ctx, `
 		SELECT count(*)
 		FROM pg_catalog.pg_prepared_xacts
 		WHERE gid = 'dg_prepared_restart_conflict';`).Scan(&count))
-	require.EqualValues(t, 1, count)
-	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM prepared_restart_conflict_items WHERE id = 1;").Scan(&count))
 	require.EqualValues(t, 0, count)
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM prepared_restart_conflict_items WHERE id = 1;").Scan(&count))
+	require.EqualValues(t, 1, count)
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM prepared_restart_conflict_items WHERE id = 2;").Scan(&count))
+	require.EqualValues(t, 1, count)
+}
 
-	_, err = conn.Current.Exec(ctx, "ROLLBACK PREPARED 'dg_prepared_restart_conflict';")
+func TestPreparedTransactionRejectsDuplicateGID(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := conn.Current.Exec(ctx, "CREATE TABLE prepared_duplicate_items (id INT PRIMARY KEY);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO prepared_duplicate_items VALUES (1);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "PREPARE TRANSACTION 'dg_prepared_duplicate';")
+	require.NoError(t, err)
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO prepared_duplicate_items VALUES (2);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "PREPARE TRANSACTION 'dg_prepared_duplicate';")
+	require.ErrorContains(t, err, "already exists")
+	_, err = conn.Current.Exec(ctx, "ROLLBACK;")
+	require.NoError(t, err)
+
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_prepared_duplicate';")
+	require.NoError(t, err)
+
+	var count int64
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM prepared_duplicate_items;").Scan(&count))
+	require.EqualValues(t, 1, count)
+}
+
+func TestMultiplePreparedTransactionsSurviveRestart(t *testing.T) {
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE prepared_multiple_items (id INT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	for _, query := range []string{
+		"BEGIN;",
+		"INSERT INTO prepared_multiple_items VALUES (1, 'one');",
+		"PREPARE TRANSACTION 'dg_prepared_multiple_one';",
+		"BEGIN;",
+		"INSERT INTO prepared_multiple_items VALUES (2, 'two');",
+		"PREPARE TRANSACTION 'dg_prepared_multiple_two';",
+	} {
+		_, err = conn.Current.Exec(ctx, query)
+		require.NoError(t, err, query)
+	}
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+	sessionstate.ResetPreparedTransactionsForTests()
+
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	var count int64
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*)
+		FROM pg_catalog.pg_prepared_xacts
+		WHERE gid LIKE 'dg_prepared_multiple_%';`).Scan(&count))
+	require.EqualValues(t, 2, count)
+
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_prepared_multiple_two';")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_prepared_multiple_one';")
+	require.NoError(t, err)
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM prepared_multiple_items;").Scan(&count))
+	require.EqualValues(t, 2, count)
+}
+
+func TestRecoveredPreparedTransactionErrorsWhenDatabaseMissing(t *testing.T) {
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "prepared_missing_db", dbDir, port)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE prepared_missing_items (id INT PRIMARY KEY);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO prepared_missing_items VALUES (1);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "PREPARE TRANSACTION 'dg_prepared_missing_database';")
+	require.NoError(t, err)
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+	sessionstate.ResetPreparedTransactionsForTests()
+	require.NoError(t, os.RemoveAll(filepath.Join(dbDir, "prepared_missing_db")))
+
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_prepared_missing_database';")
+	require.ErrorContains(t, err, "database not found")
+	_, err = conn.Current.Exec(ctx, "ROLLBACK PREPARED 'dg_prepared_missing_database';")
 	require.NoError(t, err)
 }
