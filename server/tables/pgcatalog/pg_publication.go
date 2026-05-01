@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,11 @@ func (p PgPublicationHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPublicationHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_publication row iter
-	return emptyRowIter()
+	pubs, err := allPublications(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &pgPublicationRowIter{publications: pubs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -70,13 +74,30 @@ var pgPublicationSchema = sql.Schema{
 
 // pgPublicationRowIter is the sql.RowIter for the pg_publication table.
 type pgPublicationRowIter struct {
+	publications []publications.Publication
+	idx          int
 }
 
 var _ sql.RowIter = (*pgPublicationRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPublicationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.publications) {
+		return nil, io.EOF
+	}
+	pub := iter.publications[iter.idx]
+	iter.idx++
+	return sql.Row{
+		pub.ID.AsId(),
+		pub.ID.PublicationName(),
+		catalogOwnerOID(),
+		pub.AllTables,
+		pub.PublishInsert,
+		pub.PublishUpdate,
+		pub.PublishDelete,
+		pub.PublishTruncate,
+		pub.PublishViaPartition,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

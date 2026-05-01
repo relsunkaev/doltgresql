@@ -353,6 +353,18 @@ func (*AlterSequence) StatementType() StatementType { return DDL }
 func (*AlterSequence) StatementTag() string { return "ALTER SEQUENCE" }
 
 // StatementType implements the Statement interface.
+func (*AlterPublication) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterPublication) StatementTag() string { return "ALTER PUBLICATION" }
+
+// StatementType implements the Statement interface.
+func (*AlterSubscription) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterSubscription) StatementTag() string { return "ALTER SUBSCRIPTION" }
+
+// StatementType implements the Statement interface.
 func (*AlterRole) StatementType() StatementType { return Ack }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -607,10 +619,22 @@ func (*CreateView) StatementType() StatementType { return DDL }
 func (*CreateView) StatementTag() string { return "CREATE VIEW" }
 
 // StatementType implements the Statement interface.
+func (*CreatePublication) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreatePublication) StatementTag() string { return "CREATE PUBLICATION" }
+
+// StatementType implements the Statement interface.
 func (*CreateSequence) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
 func (*CreateSequence) StatementTag() string { return "CREATE SEQUENCE" }
+
+// StatementType implements the Statement interface.
+func (*CreateSubscription) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreateSubscription) StatementTag() string { return "CREATE SUBSCRIPTION" }
 
 // StatementType implements the Statement interface.
 func (*CreateStats) StatementType() StatementType { return DDL }
@@ -713,6 +737,18 @@ func (*DropSequence) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
 func (*DropSequence) StatementTag() string { return "DROP SEQUENCE" }
+
+// StatementType implements the Statement interface.
+func (*DropPublication) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropPublication) StatementTag() string { return "DROP PUBLICATION" }
+
+// StatementType implements the Statement interface.
+func (*DropSubscription) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropSubscription) StatementTag() string { return "DROP SUBSCRIPTION" }
 
 // StatementType implements the Statement interface.
 func (*DropRole) StatementType() StatementType { return Ack }
@@ -1219,6 +1255,7 @@ func (n *AlterIndexAllInTablespace) String() string { return AsString(n) }
 func (n *AlterLanguage) String() string             { return AsString(n) }
 func (n *AlterMaterializedView) String() string     { return AsString(n) }
 func (n *AlterProcedure) String() string            { return AsString(n) }
+func (n *AlterPublication) String() string          { return AsString(n) }
 func (n *AlterSchema) String() string               { return AsString(n) }
 func (n *AlterTable) String() string                { return AsString(n) }
 func (n *AlterTableAllInTablespace) String() string { return AsString(n) }
@@ -1226,6 +1263,7 @@ func (n *AlterTableSetSchema) String() string       { return AsString(n) }
 func (n *AlterTablePartition) String() string       { return AsString(n) }
 func (n *AlterTrigger) String() string              { return AsString(n) }
 func (n *AlterType) String() string                 { return AsString(n) }
+func (n *AlterSubscription) String() string         { return AsString(n) }
 func (n *AlterView) String() string                 { return AsString(n) }
 func (n *AlterRole) String() string                 { return AsString(n) }
 func (n *AlterSequence) String() string             { return AsString(n) }
@@ -1256,6 +1294,7 @@ func (n *CreateIndex) String() string               { return AsString(n) }
 func (n *CreateLanguage) String() string            { return AsString(n) }
 func (n *CreateMaterializedView) String() string    { return AsString(n) }
 func (n *CreateProcedure) String() string           { return AsString(n) }
+func (n *CreatePublication) String() string         { return AsString(n) }
 func (n *CreateRole) String() string                { return AsString(n) }
 func (n *CreateTable) String() string               { return AsString(n) }
 func (n *CreateTrigger) String() string             { return AsString(n) }
@@ -1263,6 +1302,7 @@ func (n *CreateType) String() string                { return AsString(n) }
 func (n *CreateSchema) String() string              { return AsString(n) }
 func (n *CreateSequence) String() string            { return AsString(n) }
 func (n *CreateStats) String() string               { return AsString(n) }
+func (n *CreateSubscription) String() string        { return AsString(n) }
 func (n *CreateView) String() string                { return AsString(n) }
 func (n *Deallocate) String() string                { return AsString(n) }
 func (n *Delete) String() string                    { return AsString(n) }
@@ -1274,12 +1314,14 @@ func (n *DropFunction) String() string              { return AsString(n) }
 func (n *DropIndex) String() string                 { return AsString(n) }
 func (n *DropLanguage) String() string              { return AsString(n) }
 func (n *DropProcedure) String() string             { return AsString(n) }
+func (n *DropPublication) String() string           { return AsString(n) }
 func (n *DropSchema) String() string                { return AsString(n) }
 func (n *DropTable) String() string                 { return AsString(n) }
 func (n *DropTrigger) String() string               { return AsString(n) }
 func (n *DropType) String() string                  { return AsString(n) }
 func (n *DropView) String() string                  { return AsString(n) }
 func (n *DropSequence) String() string              { return AsString(n) }
+func (n *DropSubscription) String() string          { return AsString(n) }
 func (n *DropRole) String() string                  { return AsString(n) }
 func (n *Execute) String() string                   { return AsString(n) }
 func (n *Explain) String() string                   { return AsString(n) }

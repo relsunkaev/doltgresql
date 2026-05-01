@@ -96,18 +96,32 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 			},
 		},
 		{
-			Name: "PgDog unsupported feature probes",
+			Name: "PgDog logical replication metadata probes",
 			SetUpScript: []string{
 				"CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;",
-					ExpectedErr: "unimplemented: this syntax",
+					Query: "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;",
 				},
 				{
-					Query:       "CREATE SUBSCRIPTION dg_pgdog_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;",
-					ExpectedErr: "unimplemented: this syntax",
+					Query: "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pgdog_pub';",
+					Expected: []sql.Row{
+						{"dg_pgdog_pub"},
+					},
+				},
+				{
+					Query: "CREATE SUBSCRIPTION dg_pgdog_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub WITH (connect=false, enabled=false, create_slot=false, slot_name=NONE);",
+				},
+				{
+					Query: "SELECT subname, subenabled, subslotname IS NULL, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_pgdog_sub';",
+					Expected: []sql.Row{
+						{"dg_pgdog_sub", "f", "t", "dg_pgdog_pub"},
+					},
+				},
+				{
+					Query:       "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;",
+					ExpectedErr: "connect=false",
 				},
 				{
 					Query: "PREPARE dg_pgdog_stmt(int) AS SELECT $1::int + 1;",

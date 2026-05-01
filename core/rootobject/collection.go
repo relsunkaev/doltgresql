@@ -28,8 +28,10 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/core/rootobject/objinterface"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/core/subscriptions"
 	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/core/typecollection"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -46,6 +48,8 @@ var (
 		&extensions.Collection{},
 		&conflicts.Collection{},
 		&procedures.Collection{},
+		&publications.Collection{},
+		&subscriptions.Collection{},
 	}
 )
 

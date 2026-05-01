@@ -18,20 +18,20 @@ import "testing"
 
 func TestCreateSubscription(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter , subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter , subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value , subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value , subscription_parameter )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter , subscription_parameter = value )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter , subscription_parameter = value )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value , subscription_parameter = value )"),
-		Unimplemented("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value , subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter , subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter , subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value , subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value , subscription_parameter )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter , subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter , subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name WITH ( subscription_parameter = value , subscription_parameter = value )"),
+		Converts("CREATE SUBSCRIPTION subscription_name CONNECTION ' conninfo ' PUBLICATION publication_name , publication_name WITH ( subscription_parameter = value , subscription_parameter = value )"),
 	}
 	RunTests(t, tests)
 }

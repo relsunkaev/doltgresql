@@ -71,8 +71,12 @@ const (
 	NullNamespace Namespace = ""
 	// NullProcedure is an empty, invalid ID. This is exactly equivalent to Null.
 	NullProcedure Procedure = ""
+	// NullPublication is an empty, invalid ID. This is exactly equivalent to Null.
+	NullPublication Publication = ""
 	// NullSequence is an empty, invalid ID. This is exactly equivalent to Null.
 	NullSequence Sequence = ""
+	// NullSubscription is an empty, invalid ID. This is exactly equivalent to Null.
+	NullSubscription Subscription = ""
 	// NullTable is an empty, invalid ID. This is exactly equivalent to Null.
 	NullTable Table = ""
 	// NullTrigger is an empty, invalid ID. This is exactly equivalent to Null.

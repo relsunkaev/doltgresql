@@ -19,6 +19,9 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/subscriptions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,19 @@ func (p PgSubscriptionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgSubscriptionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_subscription row iter
-	return emptyRowIter()
+	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var subs []subscriptions.Subscription
+	err = collection.IterateSubscriptions(ctx, func(sub subscriptions.Subscription) (stop bool, err error) {
+		subs = append(subs, sub)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &pgSubscriptionRowIter{subscriptions: subs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -59,7 +73,7 @@ func (p PgSubscriptionHandler) PkSchema() sql.PrimaryKeySchema {
 var pgSubscriptionSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgSubscriptionName},
 	{Name: "subdbid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgSubscriptionName},
-	{Name: "subskiplsn", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgSubscriptionName}, // TODO: pg_lsn type
+	{Name: "subskiplsn", Type: pgtypes.PgLsn, Default: nil, Nullable: false, Source: PgSubscriptionName},
 	{Name: "subname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgSubscriptionName},
 	{Name: "subowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgSubscriptionName},
 	{Name: "subenabled", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgSubscriptionName},
@@ -75,13 +89,39 @@ var pgSubscriptionSchema = sql.Schema{
 
 // pgSubscriptionRowIter is the sql.RowIter for the pg_subscription table.
 type pgSubscriptionRowIter struct {
+	subscriptions []subscriptions.Subscription
+	idx           int
 }
 
 var _ sql.RowIter = (*pgSubscriptionRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgSubscriptionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.subscriptions) {
+		return nil, io.EOF
+	}
+	sub := iter.subscriptions[iter.idx]
+	iter.idx++
+	skipLSN, err := pgtypes.ParsePgLsn(sub.SkipLSN)
+	if err != nil {
+		return nil, err
+	}
+	return sql.Row{
+		sub.ID.AsId(),
+		id.NewDatabase(ctx.GetCurrentDatabase()).AsId(),
+		skipLSN,
+		sub.ID.SubscriptionName(),
+		catalogOwnerOID(),
+		sub.Enabled,
+		sub.Binary,
+		sub.Stream,
+		sub.TwoPhaseState,
+		sub.DisableOnError,
+		sub.ConnInfo,
+		nullableString(sub.SlotName),
+		sub.SyncCommit,
+		stringSliceToAny(sub.Publications),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

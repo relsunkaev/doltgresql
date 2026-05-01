@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/subscriptions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,19 @@ func (p PgStatSubscriptionStatsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatSubscriptionStatsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_subscription_stats row iter
-	return emptyRowIter()
+	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var subs []subscriptions.Subscription
+	err = collection.IterateSubscriptions(ctx, func(sub subscriptions.Subscription) (stop bool, err error) {
+		subs = append(subs, sub)
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &pgStatSubscriptionStatsRowIter{subscriptions: subs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,13 +79,26 @@ var pgStatSubscriptionStatsSchema = sql.Schema{
 
 // pgStatSubscriptionStatsRowIter is the sql.RowIter for the pg_stat_subscription_stats table.
 type pgStatSubscriptionStatsRowIter struct {
+	subscriptions []subscriptions.Subscription
+	idx           int
 }
 
 var _ sql.RowIter = (*pgStatSubscriptionStatsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgStatSubscriptionStatsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.subscriptions) {
+		return nil, io.EOF
+	}
+	sub := iter.subscriptions[iter.idx]
+	iter.idx++
+	return sql.Row{
+		sub.ID.AsId(),
+		sub.ID.SubscriptionName(),
+		int32(0),
+		int32(0),
+		nil,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

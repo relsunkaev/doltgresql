@@ -18,12 +18,12 @@ import "testing"
 
 func TestDropSubscription(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("DROP SUBSCRIPTION name"),
-		Unimplemented("DROP SUBSCRIPTION IF EXISTS name"),
-		Unimplemented("DROP SUBSCRIPTION name CASCADE"),
-		Unimplemented("DROP SUBSCRIPTION IF EXISTS name CASCADE"),
-		Unimplemented("DROP SUBSCRIPTION name RESTRICT"),
-		Unimplemented("DROP SUBSCRIPTION IF EXISTS name RESTRICT"),
+		Converts("DROP SUBSCRIPTION name"),
+		Converts("DROP SUBSCRIPTION IF EXISTS name"),
+		Converts("DROP SUBSCRIPTION name CASCADE"),
+		Converts("DROP SUBSCRIPTION IF EXISTS name CASCADE"),
+		Converts("DROP SUBSCRIPTION name RESTRICT"),
+		Converts("DROP SUBSCRIPTION IF EXISTS name RESTRICT"),
 	}
 	RunTests(t, tests)
 }

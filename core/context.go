@@ -27,8 +27,10 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/core/rootobject/objinterface"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/core/subscriptions"
 	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/core/typecollection"
 )
@@ -42,6 +44,8 @@ type contextValues struct {
 	types          *typecollection.TypeCollection
 	funcs          *functions.Collection
 	procs          *procedures.Collection
+	pubs           *publications.Collection
+	subs           *subscriptions.Collection
 	trigs          *triggers.Collection
 	exts           *extensions.Collection
 	pgCatalogCache any
@@ -327,6 +331,31 @@ func GetProceduresCollectionFromContext(ctx *sql.Context) (*procedures.Collectio
 	return cv.procs, nil
 }
 
+// GetPublicationsCollectionFromContext returns the publications collection from the given context.
+// Will always return a collection if no error is returned.
+func GetPublicationsCollectionFromContext(ctx *sql.Context) (*publications.Collection, error) {
+	cv, err := getContextValues(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, root, err := GetRootFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if cv.pubs == nil {
+		cv.pubs, err = publications.LoadPublications(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+	} else if cv.pubs.DiffersFrom(ctx, root) {
+		cv.pubs, err = publications.LoadPublications(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return cv.pubs, nil
+}
+
 // GetSequencesCollectionFromContext returns the given sequence collection from the context for the database
 // named. If no database is provided, the context's current database is used.
 // Will always return a collection if no error is returned.
@@ -347,6 +376,31 @@ func GetSequencesCollectionFromContext(ctx *sql.Context, database string) (*sequ
 		}
 	}
 	return cv.seqs[database], nil
+}
+
+// GetSubscriptionsCollectionFromContext returns the subscriptions collection from the given context.
+// Will always return a collection if no error is returned.
+func GetSubscriptionsCollectionFromContext(ctx *sql.Context) (*subscriptions.Collection, error) {
+	cv, err := getContextValues(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, root, err := GetRootFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if cv.subs == nil {
+		cv.subs, err = subscriptions.LoadSubscriptions(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+	} else if cv.subs.DiffersFrom(ctx, root) {
+		cv.subs, err = subscriptions.LoadSubscriptions(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return cv.subs, nil
 }
 
 // GetTriggersCollectionFromContext returns the triggers collection from the given context. Will always return a
@@ -451,6 +505,24 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		cv.procs = nil
 	}
 
+	if cv.pubs != nil && cv.pubs.DiffersFrom(ctx, root) {
+		retRoot, err := cv.pubs.UpdateRoot(ctx, newRoot)
+		if err != nil {
+			return err
+		}
+		newRoot = retRoot.(*RootValue)
+		cv.pubs = nil
+	}
+
+	if cv.subs != nil && cv.subs.DiffersFrom(ctx, root) {
+		retRoot, err := cv.subs.UpdateRoot(ctx, newRoot)
+		if err != nil {
+			return err
+		}
+		newRoot = retRoot.(*RootValue)
+		cv.subs = nil
+	}
+
 	if cv.trigs != nil && cv.trigs.DiffersFrom(ctx, root) {
 		retRoot, err := cv.trigs.UpdateRoot(ctx, newRoot)
 		if err != nil {
@@ -551,6 +623,10 @@ func (cv *contextValues) clear(objID objinterface.RootObjectID) {
 		// We don't cache these
 	case objinterface.RootObjectID_Procedures:
 		cv.procs = nil
+	case objinterface.RootObjectID_Publications:
+		cv.pubs = nil
+	case objinterface.RootObjectID_Subscriptions:
+		cv.subs = nil
 	default:
 		panic("unhandled context clear object ID")
 	}

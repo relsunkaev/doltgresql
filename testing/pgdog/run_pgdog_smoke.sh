@@ -244,7 +244,19 @@ if [[ "$prepared_result" != "tenant-100" ]]; then
   echo "2pc: expected COMMIT PREPARED row tenant-100, got: $prepared_result" >&2
   exit 1
 fi
-expect_pgdog_failure "publication" "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;" "unimplemented"
+psql_pgdog -c "CREATE PUBLICATION dg_pgdog_pub FOR TABLE pgdog_items;"
+publication_result="$(psql_pgdog -At -c "SELECT pubname FROM pg_catalog.pg_publication WHERE pubname = 'dg_pgdog_pub';")"
+if [[ "$publication_result" != "dg_pgdog_pub" ]]; then
+  echo "publication: expected dg_pgdog_pub catalog row, got: $publication_result" >&2
+  exit 1
+fi
+psql_pgdog -c "CREATE SUBSCRIPTION dg_pgdog_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub WITH (connect=false, enabled=false, create_slot=false, slot_name=NONE);"
+subscription_result="$(psql_pgdog -At -c "SELECT subname, subenabled, subslotname IS NULL, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_pgdog_sub';")"
+if [[ "$subscription_result" != "dg_pgdog_sub|f|t|dg_pgdog_pub" ]]; then
+  echo "subscription: expected metadata-only subscription row, got: $subscription_result" >&2
+  exit 1
+fi
+expect_pgdog_failure "subscription-connect" "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;" "connect=false"
 copy_to_result="$(psql_pgdog -At -c "COPY pgdog_items TO STDOUT;")"
 if ! grep -q $'3\ttenant-3' <<< "$copy_to_result"; then
   echo "copy-to: expected copied row for tenant 3, got: $copy_to_result" >&2

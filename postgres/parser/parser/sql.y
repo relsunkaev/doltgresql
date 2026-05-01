@@ -459,6 +459,15 @@ func (u *sqlSymUnion) kvOptions() []tree.KVOption {
     }
     return nil
 }
+func (u *sqlSymUnion) publicationTable() tree.PublicationTable {
+    return u.val.(tree.PublicationTable)
+}
+func (u *sqlSymUnion) publicationTables() tree.PublicationTables {
+    return u.val.(tree.PublicationTables)
+}
+func (u *sqlSymUnion) publicationTargets() tree.PublicationTargets {
+    return u.val.(tree.PublicationTargets)
+}
 func (u *sqlSymUnion) backupOptions() *tree.BackupOptions {
   return u.val.(*tree.BackupOptions)
 }
@@ -850,6 +859,8 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> alter_procedure_stmt
 %type <tree.Statement> alter_view_stmt
 %type <tree.Statement> alter_sequence_stmt
+%type <tree.Statement> alter_publication_stmt
+%type <tree.Statement> alter_subscription_stmt
 %type <tree.Statement> alter_database_stmt
 %type <tree.Statement> alter_role_stmt
 %type <tree.Statement> alter_type_stmt
@@ -932,7 +943,9 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> create_table_as_stmt
 %type <tree.Statement> create_view_stmt
 %type <tree.Statement> create_materialized_view_stmt
+%type <tree.Statement> create_publication_stmt
 %type <tree.Statement> create_sequence_stmt
+%type <tree.Statement> create_subscription_stmt
 %type <tree.Statement> create_trigger_stmt
 %type <tree.Statement> create_domain_stmt
 %type <tree.Statement> create_aggregate_stmt
@@ -961,7 +974,9 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> drop_type_stmt
 %type <tree.Statement> drop_view_stmt
 %type <tree.Statement> drop_domain_stmt
+%type <tree.Statement> drop_publication_stmt
 %type <tree.Statement> drop_sequence_stmt
+%type <tree.Statement> drop_subscription_stmt
 %type <tree.Statement> drop_extension_stmt
 %type <tree.Statement> drop_language_stmt
 %type <tree.Statement> drop_function_stmt
@@ -1226,11 +1241,17 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]tree.SequenceOption> alter_seq_option_list opt_alter_seq_option_list
 %type <tree.SequenceOption> create_seq_option_elem alter_seq_option_elem seq_as_type seq_increment seq_logged seq_unlogged
 %type <tree.SequenceOption> seq_minvalue seq_maxvalue seq_start seq_cache seq_cycle seq_owned_by seq_restart seq_name
+%type <tree.PublicationTable> publication_table
+%type <tree.PublicationTargets> opt_publication_for publication_member publication_member_list
+%type <str> publication_schema_name
+%type <tree.Expr> opt_publication_where
+%type <[]tree.KVOption> opt_publication_options publication_option_list opt_subscription_options subscription_option_list
+%type <tree.KVOption> replication_option skip_option
 
 %type <bool> all_or_distinct opt_cascade opt_if_exists opt_restrict opt_trusted opt_procedural
 %type <bool> with_comment opt_with_force opt_create_as_with_data
 %type <bool> boolean_value boolean_value_for_vacuum_opt
-%type <empty> join_outer
+%type <empty> join_outer opt_publication_star
 %type <tree.JoinCond> join_qual
 %type <str> join_type
 %type <str> opt_join_hint
@@ -1527,6 +1548,8 @@ alter_ddl_stmt:
 | alter_view_stmt               // EXTEND WITH HELP: ALTER VIEW
 | alter_materialized_view_stmt  // EXTEND WITH HELP: ALTER MATERIALIZED VIEW
 | alter_sequence_stmt           // EXTEND WITH HELP: ALTER SEQUENCE
+| alter_publication_stmt        // EXTEND WITH HELP: ALTER PUBLICATION
+| alter_subscription_stmt       // EXTEND WITH HELP: ALTER SUBSCRIPTION
 | alter_database_stmt           // EXTEND WITH HELP: ALTER DATABASE
 | alter_default_privileges_stmt // EXTEND WITH HELP: ALTER DEFAULT PRIVILEGES
 | alter_schema_stmt             // EXTEND WITH HELP: ALTER SCHEMA
@@ -1662,6 +1685,88 @@ alter_sequence_owner_to_stmt:
   {
     $$.val = &tree.AlterSequence{Name: $3.unresolvedObjectName(), IfExists: true, Owner: $4}
   }
+
+// %Help: ALTER PUBLICATION - change a publication
+// %Category: DDL
+// %Text:
+// ALTER PUBLICATION <name> { ADD | SET | DROP } TABLE <tablename> [, ...]
+// ALTER PUBLICATION <name> { ADD | SET | DROP } TABLES IN SCHEMA <schema> [, ...]
+// ALTER PUBLICATION <name> SET ( <option> [= <value>] [, ...] )
+alter_publication_stmt:
+  ALTER PUBLICATION name ADD publication_member_list
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterAddTables, Targets: $5.publicationTargets()}
+  }
+| ALTER PUBLICATION name SET publication_member_list
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterSetTables, Targets: $5.publicationTargets()}
+  }
+| ALTER PUBLICATION name DROP publication_member_list
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterDropTables, Targets: $5.publicationTargets()}
+  }
+| ALTER PUBLICATION name SET '(' publication_option_list ')'
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterSetOptions, Options: $6.kvOptions()}
+  }
+| ALTER PUBLICATION name RENAME TO name
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterRename, NewName: tree.Name($6)}
+  }
+| ALTER PUBLICATION error // SHOW HELP: ALTER PUBLICATION
+
+// %Help: ALTER SUBSCRIPTION - change a subscription
+// %Category: DDL
+// %Text:
+// ALTER SUBSCRIPTION <name> CONNECTION '<conninfo>'
+// ALTER SUBSCRIPTION <name> { SET | ADD | DROP } PUBLICATION <publication> [, ...]
+// ALTER SUBSCRIPTION <name> { ENABLE | DISABLE }
+alter_subscription_stmt:
+  ALTER SUBSCRIPTION name CONNECTION SCONST
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterConnection, ConnInfo: $5}
+  }
+| ALTER SUBSCRIPTION name SET PUBLICATION name_list opt_subscription_options
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterSetPublication, Publications: $6.nameList(), Options: $7.kvOptions()}
+  }
+| ALTER SUBSCRIPTION name ADD PUBLICATION name_list opt_subscription_options
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterAddPublication, Publications: $6.nameList(), Options: $7.kvOptions()}
+  }
+| ALTER SUBSCRIPTION name DROP PUBLICATION name_list opt_subscription_options
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterDropPublication, Publications: $6.nameList(), Options: $7.kvOptions()}
+  }
+| ALTER SUBSCRIPTION name REFRESH PUBLICATION opt_subscription_options
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterRefresh, Options: $6.kvOptions()}
+  }
+| ALTER SUBSCRIPTION name ENABLE
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterEnable}
+  }
+| ALTER SUBSCRIPTION name DISABLE
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterDisable}
+  }
+| ALTER SUBSCRIPTION name SET '(' subscription_option_list ')'
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterSetOptions, Options: $6.kvOptions()}
+  }
+| ALTER SUBSCRIPTION name SKIP '(' skip_option ')'
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterSkip, Options: []tree.KVOption{$6.kvOption()}}
+  }
+| ALTER SUBSCRIPTION name RENAME TO name
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterRename, NewName: tree.Name($6)}
+  }
+| ALTER SUBSCRIPTION name owner_to
+  {
+    $$.val = &tree.AlterSubscription{Name: tree.Name($3), Action: tree.SubscriptionAlterOwner, Owner: $4}
+  }
+| ALTER SUBSCRIPTION error // SHOW HELP: ALTER SUBSCRIPTION
 
 // %Help: ALTER DATABASE - change the definition of a database
 // %Category: DDL
@@ -4070,6 +4175,8 @@ create_stmt:
 | create_schedule_for_backup_stmt   // EXTEND WITH HELP: CREATE SCHEDULE FOR BACKUP
 | create_function_stmt // EXTEND WITH HELP: CREATE FUNCTION
 | create_procedure_stmt // EXTEND WITH HELP: CREATE PROCEDURE
+| create_publication_stmt // EXTEND WITH HELP: CREATE PUBLICATION
+| create_subscription_stmt // EXTEND WITH HELP: CREATE SUBSCRIPTION
 | create_extension_stmt // EXTEND WITH HELP: CREATE EXTENSION
 | create_language_stmt  // EXTEND WITH HELP: CREATE LANGUAGE
 | create_aggregate_stmt // EXTEND WITH HELP: CREATE AGGREGATE
@@ -4082,11 +4189,175 @@ create_unsupported:
 | CREATE DEFAULT CONVERSION error { return unimplemented(sqllex, "create def conv") }
 | CREATE FOREIGN TABLE error { return unimplemented(sqllex, "create foreign table") }
 | CREATE OPERATOR error { return unimplemented(sqllex, "create operator") }
-| CREATE PUBLICATION error { return unimplemented(sqllex, "create publication") }
 | CREATE opt_or_replace RULE error { return unimplemented(sqllex, "create rule") }
 | CREATE SERVER error { return unimplemented(sqllex, "create server") }
-| CREATE SUBSCRIPTION error { return unimplemented(sqllex, "create subscription") }
 | CREATE TEXT error { return unimplementedWithIssueDetail(sqllex, 7821, "create text") }
+
+// %Help: CREATE PUBLICATION - create a publication
+// %Category: DDL
+// %Text:
+// CREATE PUBLICATION <name> [FOR ALL TABLES | FOR TABLE <tablename> [, ...] | FOR TABLES IN SCHEMA <schema> [, ...]]
+//   [ WITH ( <option> [= <value>] [, ...] ) ]
+create_publication_stmt:
+  CREATE PUBLICATION name opt_publication_for opt_publication_options
+  {
+    $$.val = &tree.CreatePublication{Name: tree.Name($3), Targets: $4.publicationTargets(), Options: $5.kvOptions()}
+  }
+| CREATE PUBLICATION error // SHOW HELP: CREATE PUBLICATION
+
+opt_publication_for:
+  /* EMPTY */
+  {
+    $$.val = tree.PublicationTargets{}
+  }
+| FOR ALL TABLES
+  {
+    $$.val = tree.PublicationTargets{AllTables: true}
+  }
+| FOR publication_member_list
+  {
+    $$.val = $2.publicationTargets()
+  }
+
+publication_member_list:
+  publication_member
+  {
+    $$.val = $1.publicationTargets()
+  }
+| publication_member_list ',' publication_member
+  {
+    targets := $1.publicationTargets()
+    member := $3.publicationTargets()
+    targets.Tables = append(targets.Tables, member.Tables...)
+    targets.Schemas = append(targets.Schemas, member.Schemas...)
+    $$.val = targets
+  }
+| publication_member_list ',' publication_schema_name
+  {
+    targets := $1.publicationTargets()
+    targets.Schemas = append(targets.Schemas, $3)
+    $$.val = targets
+  }
+
+publication_member:
+  TABLES IN SCHEMA publication_schema_name
+  {
+    $$.val = tree.PublicationTargets{Schemas: []string{$4}}
+  }
+| TABLE publication_table
+  {
+    $$.val = tree.PublicationTargets{Tables: tree.PublicationTables{$2.publicationTable()}}
+  }
+
+publication_schema_name:
+  IDENT
+| PUBLIC
+| CURRENT_SCHEMA
+
+publication_table:
+  opt_only table_name opt_publication_star opt_column_list opt_publication_where
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = tree.PublicationTable{Name: name, Columns: $4.nameList(), RowFilter: $5.expr()}
+  }
+
+opt_publication_star:
+  '*'
+  {
+  }
+| /* EMPTY */
+  {
+  }
+
+opt_publication_where:
+  WHERE a_expr
+  {
+    $$.val = $2.expr()
+  }
+| /* EMPTY */
+  {
+    $$.val = tree.Expr(nil)
+  }
+
+opt_publication_options:
+  WITH '(' publication_option_list ')'
+  {
+    $$.val = $3.kvOptions()
+  }
+| /* EMPTY */
+  {
+    $$.val = []tree.KVOption(nil)
+  }
+
+publication_option_list:
+  replication_option
+  {
+    $$.val = []tree.KVOption{$1.kvOption()}
+  }
+| publication_option_list ',' replication_option
+  {
+    $$.val = append($1.kvOptions(), $3.kvOption())
+  }
+
+// %Help: CREATE SUBSCRIPTION - create a subscription
+// %Category: DDL
+// %Text:
+// CREATE SUBSCRIPTION <name> CONNECTION '<conninfo>' PUBLICATION <publication> [, ...]
+//   [ WITH ( <option> [= <value>] [, ...] ) ]
+create_subscription_stmt:
+  CREATE SUBSCRIPTION name CONNECTION SCONST PUBLICATION name_list opt_subscription_options
+  {
+    $$.val = &tree.CreateSubscription{Name: tree.Name($3), ConnInfo: $5, Publications: $7.nameList(), Options: $8.kvOptions()}
+  }
+| CREATE SUBSCRIPTION error // SHOW HELP: CREATE SUBSCRIPTION
+
+opt_subscription_options:
+  WITH '(' subscription_option_list ')'
+  {
+    $$.val = $3.kvOptions()
+  }
+| /* EMPTY */
+  {
+    $$.val = []tree.KVOption(nil)
+  }
+
+subscription_option_list:
+  replication_option
+  {
+    $$.val = []tree.KVOption{$1.kvOption()}
+  }
+| subscription_option_list ',' replication_option
+  {
+    $$.val = append($1.kvOptions(), $3.kvOption())
+  }
+
+replication_option:
+  unrestricted_name '=' a_expr
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: $3.expr()}
+  }
+| unrestricted_name '=' NONE
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: tree.NewStrVal($3)}
+  }
+| unrestricted_name
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1)}
+  }
+| SCONST '=' a_expr
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: $3.expr()}
+  }
+| SCONST
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1)}
+  }
+
+skip_option:
+  unrestricted_name '=' a_expr
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: $3.expr()}
+  }
 
 create_aggregate_stmt:
   create_aggregate_args_only_stmt
@@ -4701,10 +4972,8 @@ drop_unsupported:
 | DROP FOREIGN TABLE error { return unimplemented(sqllex, "drop foreign table") }
 | DROP FOREIGN DATA error { return unimplemented(sqllex, "drop fdw") }
 | DROP OPERATOR error { return unimplemented(sqllex, "drop operator") }
-| DROP PUBLICATION error { return unimplemented(sqllex, "drop publication") }
 | DROP RULE error { return unimplemented(sqllex, "drop rule") }
 | DROP SERVER error { return unimplemented(sqllex, "drop server") }
-| DROP SUBSCRIPTION error { return unimplemented(sqllex, "drop subscription") }
 | DROP TEXT error { return unimplementedWithIssueDetail(sqllex, 7821, "drop text") }
 
 drop_aggregate_stmt:
@@ -5015,6 +5284,8 @@ drop_ddl_stmt:
 | drop_trigger_stmt  // EXTEND WITH HELP: DROP TRIGGER
 | drop_view_stmt     // EXTEND WITH HELP: DROP VIEW
 | drop_sequence_stmt // EXTEND WITH HELP: DROP SEQUENCE
+| drop_publication_stmt // EXTEND WITH HELP: DROP PUBLICATION
+| drop_subscription_stmt // EXTEND WITH HELP: DROP SUBSCRIPTION
 | drop_schema_stmt   // EXTEND WITH HELP: DROP SCHEMA
 | drop_type_stmt     // EXTEND WITH HELP: DROP TYPE
 
@@ -5065,6 +5336,34 @@ drop_sequence_stmt:
     $$.val = &tree.DropSequence{Names: $5.tableNames(), IfExists: true, DropBehavior: $6.dropBehavior()}
   }
 | DROP SEQUENCE error // SHOW HELP: DROP VIEW
+
+// %Help: DROP PUBLICATION - remove a publication
+// %Category: DDL
+// %Text: DROP PUBLICATION [IF EXISTS] <publication> [, ...] [CASCADE | RESTRICT]
+drop_publication_stmt:
+  DROP PUBLICATION name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropPublication{Names: $3.nameList(), IfExists: false, DropBehavior: $4.dropBehavior()}
+  }
+| DROP PUBLICATION IF EXISTS name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropPublication{Names: $5.nameList(), IfExists: true, DropBehavior: $6.dropBehavior()}
+  }
+| DROP PUBLICATION error // SHOW HELP: DROP PUBLICATION
+
+// %Help: DROP SUBSCRIPTION - remove a subscription
+// %Category: DDL
+// %Text: DROP SUBSCRIPTION [IF EXISTS] <subscription> [CASCADE | RESTRICT]
+drop_subscription_stmt:
+  DROP SUBSCRIPTION name opt_drop_behavior
+  {
+    $$.val = &tree.DropSubscription{Name: tree.Name($3), IfExists: false, DropBehavior: $4.dropBehavior()}
+  }
+| DROP SUBSCRIPTION IF EXISTS name opt_drop_behavior
+  {
+    $$.val = &tree.DropSubscription{Name: tree.Name($5), IfExists: true, DropBehavior: $6.dropBehavior()}
+  }
+| DROP SUBSCRIPTION error // SHOW HELP: DROP SUBSCRIPTION
 
 // %Help: DROP TABLE - remove a table
 // %Category: DDL

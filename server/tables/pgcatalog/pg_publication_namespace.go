@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,11 @@ func (p PgPublicationNamespaceHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPublicationNamespaceHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_publication_namespace row iter
-	return emptyRowIter()
+	pubs, err := allPublications(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &pgPublicationNamespaceRowIter{publications: pubs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -64,12 +69,30 @@ var pgPublicationNamespaceSchema = sql.Schema{
 
 // pgPublicationNamespaceRowIter is the sql.RowIter for the pg_publication_namespace table.
 type pgPublicationNamespaceRowIter struct {
+	publications []publications.Publication
+	pubIdx       int
+	schemaIdx    int
 }
 
 var _ sql.RowIter = (*pgPublicationNamespaceRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPublicationNamespaceRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	for iter.pubIdx < len(iter.publications) {
+		pub := iter.publications[iter.pubIdx]
+		if iter.schemaIdx >= len(pub.Schemas) {
+			iter.pubIdx++
+			iter.schemaIdx = 0
+			continue
+		}
+		schema := pub.Schemas[iter.schemaIdx]
+		iter.schemaIdx++
+		return sql.Row{
+			id.NewId(id.Section_Publication, pub.ID.PublicationName(), "schema", schema),
+			pub.ID.AsId(),
+			id.NewNamespace(schema).AsId(),
+		}, nil
+	}
 	return nil, io.EOF
 }
 

@@ -43,8 +43,19 @@ func (p PgPublicationTablesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPublicationTablesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_publication_tables row iter
-	return emptyRowIter()
+	pubs, err := allPublications(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var rows []pgPublicationTableRow
+	for _, pub := range pubs {
+		pubRows, err := publicationTableRows(ctx, pub)
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, pubRows...)
+	}
+	return &pgPublicationTablesRowIter{rows: rows}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,13 +77,26 @@ var pgPublicationTablesSchema = sql.Schema{
 
 // pgPublicationTablesRowIter is the sql.RowIter for the pg_publication_tables table.
 type pgPublicationTablesRowIter struct {
+	rows []pgPublicationTableRow
+	idx  int
 }
 
 var _ sql.RowIter = (*pgPublicationTablesRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPublicationTablesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.rows) {
+		return nil, io.EOF
+	}
+	row := iter.rows[iter.idx]
+	iter.idx++
+	return sql.Row{
+		row.pubName,
+		row.schema,
+		row.table,
+		stringSliceToAny(row.attNames),
+		nullableString(row.rowFilter),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

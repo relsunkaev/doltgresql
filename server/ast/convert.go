@@ -43,12 +43,16 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeAlterMaterializedView(ctx, stmt)
 	case *tree.AlterProcedure:
 		return nodeAlterProcedure(ctx, stmt)
+	case *tree.AlterPublication:
+		return nodeAlterPublication(ctx, stmt)
 	case *tree.AlterRole:
 		return nodeAlterRole(ctx, stmt)
 	case *tree.AlterSchema:
 		return nodeAlterSchema(ctx, stmt)
 	case *tree.AlterSequence:
 		return nodeAlterSequence(ctx, stmt)
+	case *tree.AlterSubscription:
+		return nodeAlterSubscription(ctx, stmt)
 	case *tree.AlterTable:
 		return nodeAlterTable(ctx, stmt)
 	case *tree.AlterTablePartition:
@@ -107,6 +111,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeCreateMaterializedView(ctx, stmt)
 	case *tree.CreateProcedure:
 		return nodeCreateProcedure(ctx, stmt)
+	case *tree.CreatePublication:
+		return nodeCreatePublication(ctx, stmt)
 	case *tree.CreateRole:
 		return nodeCreateRole(ctx, stmt)
 	case *tree.CreateSchema:
@@ -115,6 +121,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeCreateSequence(ctx, stmt)
 	case *tree.CreateStats:
 		return nodeCreateStats(ctx, stmt)
+	case *tree.CreateSubscription:
+		return nodeCreateSubscription(ctx, stmt)
 	case *tree.CreateTable:
 		return nodeCreateTable(ctx, stmt)
 	case *tree.CreateTrigger:
@@ -143,12 +151,16 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeDropIndex(ctx, stmt)
 	case *tree.DropProcedure:
 		return nodeDropProcedure(ctx, stmt)
+	case *tree.DropPublication:
+		return nodeDropPublication(ctx, stmt)
 	case *tree.DropRole:
 		return nodeDropRole(ctx, stmt)
 	case *tree.DropSchema:
 		return nodeDropSchema(ctx, stmt)
 	case *tree.DropSequence:
 		return nodeDropSequence(ctx, stmt)
+	case *tree.DropSubscription:
+		return nodeDropSubscription(ctx, stmt)
 	case *tree.DropTable:
 		return nodeDropTable(ctx, stmt)
 	case *tree.DropTrigger:

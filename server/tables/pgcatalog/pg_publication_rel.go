@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,11 @@ func (p PgPublicationRelHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgPublicationRelHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_publication_rel row iter
-	return emptyRowIter()
+	pubs, err := allPublications(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &pgPublicationRelRowIter{publications: pubs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,12 +71,36 @@ var pgPublicationRelSchema = sql.Schema{
 
 // pgPublicationRelRowIter is the sql.RowIter for the pg_publication_rel table.
 type pgPublicationRelRowIter struct {
+	publications []publications.Publication
+	pubIdx       int
+	relIdx       int
 }
 
 var _ sql.RowIter = (*pgPublicationRelRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgPublicationRelRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	for iter.pubIdx < len(iter.publications) {
+		pub := iter.publications[iter.pubIdx]
+		if iter.relIdx >= len(pub.Tables) {
+			iter.pubIdx++
+			iter.relIdx = 0
+			continue
+		}
+		relation := pub.Tables[iter.relIdx]
+		iter.relIdx++
+		attNums, err := publicationAttNums(ctx, relation)
+		if err != nil {
+			return nil, err
+		}
+		return sql.Row{
+			id.NewId(id.Section_Publication, pub.ID.PublicationName(), relation.Table.SchemaName(), relation.Table.TableName()),
+			pub.ID.AsId(),
+			relation.Table.AsId(),
+			nullableString(relation.RowFilter),
+			attNums,
+		}, nil
+	}
 	return nil, io.EOF
 }
 

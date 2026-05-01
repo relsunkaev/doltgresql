@@ -12,7 +12,7 @@ From the repository root:
 testing/pgdog/run_pgdog_smoke.sh
 ```
 
-The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts two temporary Doltgres shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks that unsupported PgDog feature paths fail explicitly.
+The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts two temporary Doltgres shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
 
 On Homebrew-based macOS setups, the script automatically uses `icu4c@78` for the local Go build when `CGO_CPPFLAGS` is not already set.
 
@@ -78,7 +78,7 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 | --- | --- | --- |
 | 2PC / prepared transactions | `PREPARE TRANSACTION`, `COMMIT PREPARED`, `ROLLBACK PREPARED`, and `pg_prepared_xacts` are supported for the current Doltgres process. Prepared transactions are not durable across a Doltgres restart yet. | PgDog 2PC can be smoke-tested during a single server lifetime. Do not rely on restart recovery for prepared transactions yet. |
 | Resharding and cutover | Doltgres consumes upstream logical replication, but it does not expose PostgreSQL logical replication as a server. | Do not run PgDog resharding or cutover against Doltgres shards. |
-| Publication and subscription DDL | Publication/subscription commands and local publication catalogs are not implemented enough for PgDog setup. | Treat PgDog logical replication setup as unsupported. |
+| Publication and subscription DDL | `CREATE` / `ALTER` / `DROP PUBLICATION`, metadata-only `CREATE` / `ALTER` / `DROP SUBSCRIPTION`, and local publication/subscription catalogs are supported. Subscriptions do not start remote apply workers; remote publisher connections are rejected unless `connect=false`. | PgDog setup can create local logical-replication metadata. Use `WITH (connect=false, enabled=false, create_slot=false, slot_name=NONE)` for subscriptions. |
 | Replication slots and replication stats | `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots` are placeholders without local producer state. | Do not use PgDog replica or replication-health workflows against Doltgres. |
 | COPY movement | Text, CSV, and binary `COPY FROM` plus table `COPY TO STDOUT` are supported for PgDog data movement smoke coverage. Query-form `COPY (SELECT ...) TO STDOUT` is not implemented yet. | Use table-based COPY movement only. |
 | Vector shard keys | Doltgres provides a pgvector-compatible `vector` scalar with text/binary IO and equality for PgDog shard-key routing. Distance operators and ANN indexes are not implemented. | Use `vector` for equality-routed shard keys only. |

@@ -55,8 +55,14 @@ type Oid Id
 // Procedure is an Id wrapper for procedures. This wrapper must not be returned to the client.
 type Procedure Id
 
+// Publication is an Id wrapper for publications. This wrapper must not be returned to the client.
+type Publication Id
+
 // Sequence is an Id wrapper for sequences. This wrapper must not be returned to the client.
 type Sequence Id
+
+// Subscription is an Id wrapper for subscriptions. This wrapper must not be returned to the client.
+type Subscription Id
 
 // Table is an Id wrapper for tables. This wrapper must not be returned to the client.
 type Table Id
@@ -183,12 +189,28 @@ func NewProcedure(schemaName string, procName string, params ...Type) Procedure 
 	return Procedure(NewId(Section_Procedure, data...))
 }
 
+// NewPublication returns a new Publication. This wrapper must not be returned to the client.
+func NewPublication(publicationName string) Publication {
+	if len(publicationName) == 0 {
+		return NullPublication
+	}
+	return Publication(NewId(Section_Publication, publicationName))
+}
+
 // NewSequence returns a new Sequence. This wrapper must not be returned to the client.
 func NewSequence(schemaName string, sequenceName string) Sequence {
 	if len(schemaName) == 0 && len(sequenceName) == 0 {
 		return NullSequence
 	}
 	return Sequence(NewId(Section_Sequence, schemaName, sequenceName))
+}
+
+// NewSubscription returns a new Subscription. This wrapper must not be returned to the client.
+func NewSubscription(subscriptionName string) Subscription {
+	if len(subscriptionName) == 0 {
+		return NullSubscription
+	}
+	return Subscription(NewId(Section_Subscription, subscriptionName))
 }
 
 // NewTable returns a new Table. This wrapper must not be returned to the client.
@@ -379,6 +401,11 @@ func (id Procedure) SchemaName() string {
 	return Id(id).Segment(0)
 }
 
+// PublicationName returns the publication's name.
+func (id Publication) PublicationName() string {
+	return Id(id).Segment(0)
+}
+
 // SchemaName returns the schema name of the sequence.
 func (id Sequence) SchemaName() string {
 	return Id(id).Segment(0)
@@ -387,6 +414,11 @@ func (id Sequence) SchemaName() string {
 // SequenceName returns the name of the sequence.
 func (id Sequence) SequenceName() string {
 	return Id(id).Segment(1)
+}
+
+// SubscriptionName returns the subscription's name.
+func (id Subscription) SubscriptionName() string {
+	return Id(id).Segment(0)
 }
 
 // SchemaName returns the schema name of the table.
@@ -474,7 +506,13 @@ func (id Oid) IsValid() bool { return Id(id).IsValid() }
 func (id Procedure) IsValid() bool { return Id(id).IsValid() }
 
 // IsValid returns whether the ID is valid.
+func (id Publication) IsValid() bool { return Id(id).IsValid() }
+
+// IsValid returns whether the ID is valid.
 func (id Sequence) IsValid() bool { return Id(id).IsValid() }
+
+// IsValid returns whether the ID is valid.
+func (id Subscription) IsValid() bool { return Id(id).IsValid() }
 
 // IsValid returns whether the ID is valid.
 func (id Table) IsValid() bool { return Id(id).IsValid() }
@@ -528,7 +566,13 @@ func (id Oid) AsId() Id { return Id(id) }
 func (id Procedure) AsId() Id { return Id(id) }
 
 // AsId returns the unwrapped ID.
+func (id Publication) AsId() Id { return Id(id) }
+
+// AsId returns the unwrapped ID.
 func (id Sequence) AsId() Id { return Id(id) }
+
+// AsId returns the unwrapped ID.
+func (id Subscription) AsId() Id { return Id(id) }
 
 // AsId returns the unwrapped ID.
 func (id Table) AsId() Id { return Id(id) }
