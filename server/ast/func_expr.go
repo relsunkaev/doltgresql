@@ -121,6 +121,30 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			},
 			OrderBy: orderBy,
 		}, nil
+	case "json_agg", "jsonb_agg", "json_object_agg", "jsonb_object_agg":
+		fnName := strings.ToLower(name.String())
+		isObjectAgg := strings.Contains(fnName, "object")
+		if isObjectAgg && len(node.Exprs) != 2 {
+			return nil, errors.Errorf("%s requires two arguments", fnName)
+		}
+		if !isObjectAgg && len(node.Exprs) != 1 {
+			return nil, errors.Errorf("%s requires one argument", fnName)
+		}
+		var orderBy vitess.OrderBy
+		if len(node.OrderBy) > 0 {
+			orderBy, err = nodeOrderBy(ctx, node.OrderBy)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return &vitess.OrderedInjectedExpr{
+			InjectedExpr: vitess.InjectedExpr{
+				Expression:         pgexprs.NewJsonAgg(fnName, isObjectAgg, strings.HasPrefix(fnName, "jsonb"), distinct),
+				SelectExprChildren: exprs,
+				Auth:               vitess.AuthInformation{},
+			},
+			OrderBy: orderBy,
+		}, nil
 	}
 
 	if len(node.OrderBy) > 0 {
