@@ -2832,8 +2832,12 @@ func TestPgSettings(t *testing.T) {
 			Name: "pg_settings",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_settings";`,
-					Expected: []sql.Row{},
+					Query: `SELECT name, setting FROM "pg_catalog"."pg_settings"
+						WHERE name IN ('server_version_num', 'wal_sender_timeout') ORDER BY name;`,
+					Expected: []sql.Row{
+						{"server_version_num", "150017"},
+						{"wal_sender_timeout", "60000"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_settings";`,
@@ -2844,8 +2848,11 @@ func TestPgSettings(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_SETTINGS ORDER BY name;",
-					Expected: []sql.Row{},
+					Query: "SELECT name FROM PG_catalog.pg_SETTINGS ORDER BY name;",
+					Expected: []sql.Row{
+						{"server_version_num"},
+						{"wal_sender_timeout"},
+					},
 				},
 			},
 		},

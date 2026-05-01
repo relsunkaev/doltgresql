@@ -458,6 +458,8 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 	case *pgproto3.Sync:
 		h.waitForSync = false
 		return false, true, nil
+	case *pgproto3.Flush:
+		return false, false, nil
 	case *pgproto3.Query:
 		endOfMessages, err = h.handleQuery(message)
 		return false, endOfMessages, err
@@ -486,7 +488,7 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 	case *pgproto3.CopyFail:
 		return h.handleCopyFail(message)
 	default:
-		return false, true, errors.Errorf(`unhandled message "%t"`, message)
+		return false, true, errors.Errorf(`unhandled message "%T"`, message)
 	}
 }
 

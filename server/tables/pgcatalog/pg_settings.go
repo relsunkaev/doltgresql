@@ -15,10 +15,12 @@
 package pgcatalog
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/config"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,17 @@ func (p PgSettingsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgSettingsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_settings row iter
-	return emptyRowIter()
+	rows := make([]sql.Row, 0, len(pgSettingsSupportedParameters))
+	for _, name := range pgSettingsSupportedParameters {
+		row, err := pgSettingsRow(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		if row != nil {
+			rows = append(rows, row)
+		}
+	}
+	return &pgSettingsRowIter{rows: rows}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -78,16 +89,82 @@ var pgSettingsSchema = sql.Schema{
 
 // pgSettingsRowIter is the sql.RowIter for the pg_settings table.
 type pgSettingsRowIter struct {
+	rows []sql.Row
+	idx  int
 }
 
 var _ sql.RowIter = (*pgSettingsRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgSettingsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.rows) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	return iter.rows[iter.idx-1], nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgSettingsRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+var pgSettingsSupportedParameters = []string{
+	"server_version_num",
+	"wal_sender_timeout",
+}
+
+func pgSettingsRow(ctx *sql.Context, name string) (sql.Row, error) {
+	sysVar, globalValue, ok := sql.SystemVariables.GetGlobal(name)
+	if !ok {
+		return nil, nil
+	}
+	parameter, ok := sysVar.(*config.Parameter)
+	if !ok {
+		return nil, nil
+	}
+	value, err := ctx.GetSessionVariable(ctx, name)
+	if err != nil || value == nil {
+		value = globalValue
+	}
+
+	return sql.Row{
+		parameter.Name,                 // name
+		fmt.Sprint(value),              // setting
+		pgSettingsUnit(parameter.Name), // unit
+		parameter.Category,             // category
+		parameter.ShortDesc,            // short_desc
+		nil,                            // extra_desc
+		string(parameter.Context),      // context
+		pgSettingsVarType(parameter),   // vartype
+		string(parameter.Source),       // source
+		nil,                            // min_val
+		nil,                            // max_val
+		nil,                            // enumvals
+		fmt.Sprint(parameter.Default),  // boot_val
+		fmt.Sprint(parameter.ResetVal), // reset_val
+		nil,                            // sourcefile
+		nil,                            // sourceline
+		false,                          // pending_restart
+	}, nil
+}
+
+func pgSettingsUnit(name string) any {
+	switch name {
+	case "wal_sender_timeout":
+		return "ms"
+	default:
+		return nil
+	}
+}
+
+func pgSettingsVarType(parameter *config.Parameter) string {
+	switch parameter.GetDefault().(type) {
+	case bool:
+		return "bool"
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return "integer"
+	default:
+		return "string"
+	}
 }

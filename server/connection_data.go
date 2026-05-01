@@ -158,16 +158,12 @@ func extractBindVarTypes(queryPlan sql.Node) ([]uint32, error) {
 			}
 			types[e.Name] = typOid
 		case *pgexprs.ExplicitCast:
-			if bindVar, ok := e.Child().(*expression.BindVar); ok {
+			if bindVar, ok := bindVarFromCastedExpression(e.Child()); ok {
 				var typOid uint32
-				if doltgresType, ok := bindVar.Type().(*pgtypes.DoltgresType); ok {
-					typOid = id.Cache().ToOID(doltgresType.ID.AsId())
-				} else {
-					typOid, err = VitessTypeToObjectID(e.Type())
-					if err != nil {
-						err = errors.Errorf("could not determine OID for placeholder %s: %e", bindVar.Name, err)
-						return false
-					}
+				typOid, err = TypeToObjectID(e.Type())
+				if err != nil {
+					err = errors.Errorf("could not determine OID for placeholder %s: %e", bindVar.Name, err)
+					return false
 				}
 				if existingOid, ok := types[bindVar.Name]; ok {
 					err = checkCompatibleTypes(existingOid, typOid, bindVar.Name)
@@ -177,9 +173,9 @@ func extractBindVarTypes(queryPlan sql.Node) ([]uint32, error) {
 			}
 		// $1::text and similar get converted to a Convert expression wrapping the bindvar
 		case *expression.Convert:
-			if bindVar, ok := e.Child.(*expression.BindVar); ok {
+			if bindVar, ok := bindVarFromCastedExpression(e.Child); ok {
 				var typOid uint32
-				typOid, err = VitessTypeToObjectID(e.Type())
+				typOid, err = TypeToObjectID(e.Type())
 				if err != nil {
 					err = errors.Errorf("could not determine OID for placeholder %s: %e", bindVar.Name, err)
 					return false
@@ -219,6 +215,18 @@ func extractBindVarTypes(queryPlan sql.Node) ([]uint32, error) {
 	return typesArr, err
 }
 
+func bindVarFromCastedExpression(expr sql.Expression) (*expression.BindVar, bool) {
+	switch expr := expr.(type) {
+	case *expression.BindVar:
+		return expr, true
+	case *pgexprs.GMSCast:
+		bindVar, ok := expr.Child().(*expression.BindVar)
+		return bindVar, ok
+	default:
+		return nil, false
+	}
+}
+
 // VitessTypeToObjectID returns a type, as defined by Vitess, into a type as defined by Postgres.
 // OIDs can be obtained with the following query: `SELECT oid, typname FROM pg_type ORDER BY 1;`
 func VitessTypeToObjectID(typ sql.Type) (uint32, error) {
@@ -227,6 +235,13 @@ func VitessTypeToObjectID(typ sql.Type) (uint32, error) {
 		return 0, err
 	}
 	return id.Cache().ToOID(doltgresType.ID.AsId()), nil
+}
+
+func TypeToObjectID(typ sql.Type) (uint32, error) {
+	if doltgresType, ok := typ.(*pgtypes.DoltgresType); ok {
+		return id.Cache().ToOID(doltgresType.ID.AsId()), nil
+	}
+	return VitessTypeToObjectID(typ)
 }
 
 // checkCompatibleTypes checks if multiple types for which a parameter are used are compatible.

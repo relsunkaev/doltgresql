@@ -31,6 +31,89 @@ import (
 	"github.com/xdg-go/scram"
 )
 
+func TestWireFlushMessage(t *testing.T) {
+	RunWireScripts(t, []WireScriptTest{
+		{
+			Name: "Flush does not end extended query message flow",
+			Assertions: []WireScriptTestAssertion{
+				{
+					Send: []pgproto3.FrontendMessage{
+						&pgproto3.Parse{
+							Name:  "flush_stmt",
+							Query: "SELECT 1;",
+						},
+						&pgproto3.Flush{},
+						&pgproto3.Describe{
+							ObjectType: 'S',
+							Name:       "flush_stmt",
+						},
+						&pgproto3.Sync{},
+					},
+					Receive: []pgproto3.BackendMessage{
+						&pgproto3.ParseComplete{},
+						&pgproto3.ParameterDescription{ParameterOIDs: []uint32{}},
+						&pgproto3.RowDescription{
+							Fields: []pgproto3.FieldDescription{
+								{
+									Name:                 []byte("1"),
+									TableOID:             0,
+									TableAttributeNumber: 1,
+									DataTypeOID:          23,
+									DataTypeSize:         4,
+									TypeModifier:         -1,
+									Format:               0,
+								},
+							},
+						},
+						&pgproto3.ReadyForQuery{TxStatus: 'I'},
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestWireParameterTypeInference(t *testing.T) {
+	RunWireScripts(t, []WireScriptTest{
+		{
+			Name: "Infers oid parameter from explicit cast",
+			Assertions: []WireScriptTestAssertion{
+				{
+					Send: []pgproto3.FrontendMessage{
+						&pgproto3.Parse{
+							Name:  "oid_param_stmt",
+							Query: "SELECT $1::oid;",
+						},
+						&pgproto3.Describe{
+							ObjectType: 'S',
+							Name:       "oid_param_stmt",
+						},
+						&pgproto3.Sync{},
+					},
+					Receive: []pgproto3.BackendMessage{
+						&pgproto3.ParseComplete{},
+						&pgproto3.ParameterDescription{ParameterOIDs: []uint32{26}},
+						&pgproto3.RowDescription{
+							Fields: []pgproto3.FieldDescription{
+								{
+									Name:                 []byte("$1"),
+									TableOID:             0,
+									TableAttributeNumber: 1,
+									DataTypeOID:          26,
+									DataTypeSize:         4,
+									TypeModifier:         -1,
+									Format:               0,
+								},
+							},
+						},
+						&pgproto3.ReadyForQuery{TxStatus: 'I'},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestWireTypesSending allows us to directly test what is sent on the wire regarding types, ensuring that the wire
 // protocol is correctly implemented. ANY changes made to ANY test must be validated against an external Postgres server
 // using the `ExternalServerPort` field.

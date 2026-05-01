@@ -24,7 +24,7 @@ testing/pgdog/run_customer_migration_harness.sh
 
 The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts a temporary main database plus two temporary Doltgres customer shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
 
-The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, copies one customer's rows through PgDog, applies post-copy insert/update/delete traffic through the PgDog customer route, validates source-to-destination row/checksum equality before cutover, proves post-cutover writes route to Doltgres, reverse-applies insert/update/delete changes back to the source rollback database across a Doltgres restart, and verifies shared tables remain source-only.
+The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, broadcasts a post-start `ALTER TABLE` through PgDog, copies one customer's rows through PgDog, restarts PgDog before post-copy traffic, applies transaction-scoped insert/update/delete traffic through the PgDog customer route, validates SQL prepared statements and pgx extended-protocol prepared statements, rejects missing-shard-key writes, validates source-to-destination row/checksum equality before cutover, proves post-cutover writes route to Doltgres, reverse-applies insert/update/delete changes back to the source rollback database across a Doltgres restart, and verifies shared tables remain source-only.
 
 On Homebrew-based macOS setups, the script automatically uses `icu4c@78` for the local Go build when `CGO_CPPFLAGS` is not already set.
 
@@ -41,7 +41,7 @@ DOLTGRES_SHARD1_PORT=15433 \
 testing/pgdog/run_pgdog_smoke.sh
 ```
 
-The customer migration harness also accepts `POSTGRES_IMAGE`, `SOURCE_POSTGRES_PORT`, and `CUSTOMER_ID`.
+The customer migration harness also accepts `POSTGRES_IMAGE`, `SOURCE_POSTGRES_PORT`, `DOLTGRES_DATABASE`, and `CUSTOMER_ID`.
 
 For CI, prefer pinning `PGDOG_IMAGE` to a digest rather than using `latest`.
 
@@ -100,9 +100,11 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 | Vector shard keys | Doltgres provides a pgvector-compatible `vector` scalar with text/binary IO and equality for PgDog shard-key routing. Distance operators and ANN indexes are not implemented. | Use `vector` for equality-routed shard keys only. |
 | Replica routing | `pg_is_in_recovery()` reports primary mode, `pg_current_wal_lsn()` reflects the local logical-replication source LSN after row-producing writes, and replay/receive LSNs are `NULL` because Doltgres still has no standby replay stream. | Configure only primary Doltgres entries. Use primary-side LSN and sender stats for health probes, not PgDog replica routing or standby lag checks. |
 
-SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for PgDog's full prepared-statement mode smoke coverage.
+SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for non-sharded smoke coverage. Do not use SQL `PREPARE` / `EXECUTE` for sharded PgDog DML: upstream PgDog documents that `EXECUTE` for prepared statements requiring sharding is not supported and is sent to all shards. Use driver/client extended-protocol prepared statements for sharded customer DML.
 
-PgDog schema loading is supported for the startup schema-cache queries used by the open-source PgDog image, including column, relation, and foreign-key introspection. The harness still configures sharded tables explicitly so shard-key type coverage remains deterministic.
+PgDog schema loading is supported for the startup schema-cache queries used by the open-source PgDog image, including column, relation, and foreign-key introspection. The harness still configures sharded tables explicitly so shard-key type coverage remains deterministic. The customer migration harness also covers post-start customer-table DDL broadcast and subsequent routed DML through the refreshed PgDog schema state.
+
+The customer migration harness runs `testing/pgdog/protocol_probe` through PgDog to exercise pgx extended-protocol `Parse` / `Bind` / `Execute` prepared statements and transaction boundaries in the same topology.
 
 Relevant PgDog docs:
 

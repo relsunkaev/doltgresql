@@ -177,6 +177,22 @@ wait_for_pgdog() {
   return 1
 }
 
+start_pgdog_container() {
+  docker rm -f "$PGDOG_CONTAINER" >/dev/null 2>&1 || true
+  docker run -d \
+    --name "$PGDOG_CONTAINER" \
+    --add-host=host.docker.internal:host-gateway \
+    -p "127.0.0.1:$PGDOG_PORT:6432" \
+    -v "$TMP_DIR/pgdog:/config:ro" \
+    "$PGDOG_IMAGE" \
+    pgdog --config /config/pgdog.toml --users /config/users.toml >/dev/null
+}
+
+restart_pgdog() {
+  start_pgdog_container
+  wait_for_pgdog
+}
+
 expect_pgdog_failure() {
   local name="$1"
   local query="$2"
@@ -189,7 +205,7 @@ expect_pgdog_failure() {
     return 1
   fi
 
-  if ! grep -qi "$expected" "$log_file"; then
+  if ! grep -Eqi "$expected" "$log_file"; then
     echo "PgDog query failed with unexpected output: $name" >&2
     cat "$log_file" >&2
     return 1
@@ -238,6 +254,8 @@ find_customer_shard_port() {
     if [[ "$count" != "0" ]]; then
       if [[ -n "$found" ]]; then
         echo "reverse-routing: customer $CUSTOMER_ID found on multiple shards: $found and $shard_port" >&2
+        psql_shard "$found" -At -F '|' -c "SELECT order_id, status FROM customer_orders WHERE customer_id = $CUSTOMER_ID ORDER BY order_id;" >&2 || true
+        psql_shard "$shard_port" -At -F '|' -c "SELECT order_id, status FROM customer_orders WHERE customer_id = $CUSTOMER_ID ORDER BY order_id;" >&2 || true
         exit 1
       fi
       found="$shard_port"
@@ -351,14 +369,7 @@ wait_for_shard "$DOLTGRES_SHARD1_PORT" "$TMP_DIR/shard1.log"
 
 write_pgdog_config
 
-docker run -d \
-  --name "$PGDOG_CONTAINER" \
-  --add-host=host.docker.internal:host-gateway \
-  -p "127.0.0.1:$PGDOG_PORT:6432" \
-  -v "$TMP_DIR/pgdog:/config:ro" \
-  "$PGDOG_IMAGE" \
-  pgdog --config /config/pgdog.toml --users /config/users.toml >/dev/null
-
+start_pgdog_container
 wait_for_pgdog
 
 psql_source -c "CREATE TABLE shared_accounts (id INT PRIMARY KEY, label TEXT NOT NULL);"
@@ -367,10 +378,16 @@ psql_source -c "INSERT INTO shared_accounts VALUES (1, 'source-shared');"
 psql_source -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 1, 'open', 100, 'copied-one'), ($CUSTOMER_ID, 2, 'open', 200, 'copied-two'), (7, 1, 'other', 700, 'not-migrated');"
 
 psql_pgdog -c "CREATE TABLE customer_orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
+psql_pgdog -c "ALTER TABLE customer_orders ADD COLUMN migration_batch TEXT NOT NULL DEFAULT 'initial';"
 for shard_port in "$DOLTGRES_SHARD0_PORT" "$DOLTGRES_SHARD1_PORT"; do
   table_count="$(psql_shard "$shard_port" -At -c "SELECT count(*) FROM information_schema.tables WHERE table_name = 'customer_orders';")"
   if [[ "$table_count" != "1" ]]; then
     echo "schema-sync: expected customer_orders on shard $shard_port, got count=$table_count" >&2
+    exit 1
+  fi
+  batch_column_count="$(psql_shard "$shard_port" -At -c "SELECT count(*) FROM information_schema.columns WHERE table_name = 'customer_orders' AND column_name = 'migration_batch';")"
+  if [[ "$batch_column_count" != "1" ]]; then
+    echo "schema-sync: expected migration_batch column on shard $shard_port, got count=$batch_column_count" >&2
     exit 1
   fi
 done
@@ -396,14 +413,34 @@ if [[ "$other_count" != "0" ]]; then
   exit 1
 fi
 
-psql_source -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 3, 'streamed-insert', 300, 'stream insert');"
-psql_source -c "UPDATE customer_orders SET status = 'streamed-update', amount = 125, note = 'stream update' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;"
-psql_source -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"
+restart_pgdog
+wait_for_pgdog_customer_route
+expect_pgdog_failure "customer-missing-shard-key-insert" "INSERT INTO customer_orders (order_id, status, amount, note) VALUES (900, 'missing-shard', 1, 'missing customer_id');" "customer_id|shard|route"
+
+psql_source -c "BEGIN;" \
+  -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 3, 'streamed-insert', 300, 'stream insert');" \
+  -c "UPDATE customer_orders SET status = 'streamed-update', amount = 125, note = 'stream update' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;" \
+  -c "COMMIT;"
 psql_source -c "INSERT INTO customer_orders VALUES (7, 2, 'other-stream', 701, 'not migrated either');"
 
-psql_pgdog -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 3, 'streamed-insert', 300, 'stream insert');"
-psql_pgdog -c "UPDATE customer_orders SET status = 'streamed-update', amount = 125, note = 'stream update' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;"
-psql_pgdog -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"
+psql_pgdog -c "BEGIN;" \
+  -c "INSERT INTO customer_orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 3, 'streamed-insert', 300, 'stream insert');" \
+  -c "UPDATE customer_orders SET status = 'streamed-update', amount = 125, note = 'stream update' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;" \
+  -c "COMMIT;"
+
+sql_prepare_result="$(psql_pgdog -At -c "PREPARE dg_sql_migration_probe(int) AS SELECT \$1::int + 1;" -c "EXECUTE dg_sql_migration_probe(41);" -c "DEALLOCATE dg_sql_migration_probe;")"
+if ! grep -q "42" <<< "$sql_prepare_result"; then
+  echo "sql-prepare: expected non-sharded EXECUTE result 42, got: $sql_prepare_result" >&2
+  exit 1
+fi
+
+psql_source -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 31, 'extended-updated', 311, 'extended protocol update'), ($CUSTOMER_ID, 32, 'extended-transaction', 320, 'extended protocol transaction');"
+(cd "$ROOT_DIR" && go run ./testing/pgdog/protocol_probe \
+  -database-url "postgres://postgres:password@127.0.0.1:$PGDOG_PORT/pgdog?sslmode=disable" \
+  -customer-id "$CUSTOMER_ID" \
+  -base-order-id 31)
 
 assert_customer_matches_source
 
@@ -419,7 +456,7 @@ psql_shard "$reverse_shard_port" -c "CREATE PUBLICATION dg_reverse_pub FOR TABLE
   -create-slot-only)
 
 start_reverse_apply "$reverse_source_url" "$reverse_target_url" 1 "$reverse_shard_port"
-psql_pgdog -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 4, 'cutover-write', 400, 'written through pgdog after cutover');"
+psql_pgdog -c "INSERT INTO customer_orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 4, 'cutover-write', 400, 'written through pgdog after cutover');"
 cutover_result="$(psql_pgdog -At -F '|' -c "SELECT status, amount, note FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 4;")"
 if [[ "$cutover_result" != "cutover-write|400|written through pgdog after cutover" ]]; then
   echo "cutover-routing: expected PgDog cutover write, got: $cutover_result" >&2
