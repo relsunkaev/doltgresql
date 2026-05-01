@@ -371,6 +371,47 @@ func TestAggregateFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "json aggregates",
+			SetUpScript: []string{
+				`CREATE TABLE json_items (pk INT primary key, k text, v int, j jsonb);`,
+				`INSERT INTO json_items VALUES (1, 'b', 2, '{"x":2}'::jsonb), (2, 'a', 1, '{"x":1}'::jsonb), (3, 'b', NULL, 'null'::jsonb);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT json_agg(v ORDER BY v DESC) FROM json_items WHERE v IS NOT NULL;`,
+					Expected: []sql.Row{{`[2,1]`}},
+				},
+				{
+					Query:    `SELECT json_agg(DISTINCT v) FROM (VALUES (1), (1), (2)) AS vals(v);`,
+					Expected: []sql.Row{{`[1,2]`}},
+				},
+				{
+					Query:    `SELECT jsonb_agg(j ORDER BY pk) FROM json_items;`,
+					Expected: []sql.Row{{`[{"x": 2}, {"x": 1}, null]`}},
+				},
+				{
+					Query:    `SELECT jsonb_agg(DISTINCT v) FROM (VALUES (1), (1), (2)) AS vals(v);`,
+					Expected: []sql.Row{{`[1, 2]`}},
+				},
+				{
+					Query:    `SELECT json_object_agg(k, v ORDER BY pk) FROM json_items WHERE v IS NOT NULL;`,
+					Expected: []sql.Row{{`{"b":2,"a":1}`}},
+				},
+				{
+					Query:    `SELECT jsonb_object_agg(k, v ORDER BY pk) FROM json_items;`,
+					Expected: []sql.Row{{`{"a": 1, "b": null}`}},
+				},
+				{
+					Query:    `SELECT json_agg(v) FROM json_items WHERE false;`,
+					Expected: []sql.Row{{nil}},
+				},
+				{
+					Query:       `SELECT json_object_agg(NULL::text, v) FROM json_items;`,
+					ExpectedErr: "field name must not be null",
+				},
+			},
+		},
 	})
 }
 
@@ -1465,9 +1506,18 @@ func TestJsonFunctions(t *testing.T) {
 				},
 				{
 					Query:            `SELECT json_build_array();`,
-					Skip:             true, // variadic functions can't handle 0 arguments right now
 					ExpectedColNames: []string{"json_build_array"},
 					Expected:         []sql.Row{{`[]`}},
+				},
+				{
+					Query:            `SELECT json_build_array('a', '{"x": 3}'::json, true);`,
+					ExpectedColNames: []string{"json_build_array"},
+					Expected:         []sql.Row{{`["a",{"x":3},true]`}},
+				},
+				{
+					Query:            `SELECT json_build_array('a' || chr(10) || 'b', 'c' || chr(92) || 'd', 'e' || chr(9) || 'f');`,
+					ExpectedColNames: []string{"json_build_array"},
+					Expected:         []sql.Row{{`["a\nb","c\\d","e\tf"]`}},
 				},
 			},
 		},
@@ -1488,6 +1538,16 @@ func TestJsonFunctions(t *testing.T) {
 					ExpectedColNames: []string{"json_build_object"},
 					Expected:         []sql.Row{{`{"1":2,"b":3}`}},
 				},
+				{
+					Query:            `SELECT json_build_object('payload', '{"x": 3}'::json);`,
+					ExpectedColNames: []string{"json_build_object"},
+					Expected:         []sql.Row{{`{"payload":{"x":3}}`}},
+				},
+				{
+					Query:            `SELECT json_build_object(k, v) FROM (SELECT 'a' || chr(10) || 'b' AS k, 'c' || chr(92) || 'd' AS v) q;`,
+					ExpectedColNames: []string{"json_build_object"},
+					Expected:         []sql.Row{{`{"a\nb":"c\\d"}`}},
+				},
 			},
 		},
 		{
@@ -1505,9 +1565,13 @@ func TestJsonFunctions(t *testing.T) {
 				},
 				{
 					Query:            `SELECT jsonb_build_array();`,
-					Skip:             true, // variadic functions can't handle 0 arguments right now
 					ExpectedColNames: []string{"jsonb_build_array"},
 					Expected:         []sql.Row{{`[]`}},
+				},
+				{
+					Query:            `SELECT jsonb_build_array('a', '{"x": 3}'::jsonb, true);`,
+					ExpectedColNames: []string{"jsonb_build_array"},
+					Expected:         []sql.Row{{`["a", {"x": 3}, true]`}},
 				},
 			},
 		},
@@ -1527,6 +1591,158 @@ func TestJsonFunctions(t *testing.T) {
 					Query:            `SELECT jsonb_build_object(1, 2, 'b', 3);`,
 					ExpectedColNames: []string{"jsonb_build_object"},
 					Expected:         []sql.Row{{`{"1": 2, "b": 3}`}},
+				},
+				{
+					Query:            `SELECT jsonb_build_object('payload', '{"x": 3}'::jsonb);`,
+					ExpectedColNames: []string{"jsonb_build_object"},
+					Expected:         []sql.Row{{`{"payload": {"x": 3}}`}},
+				},
+			},
+		},
+		{
+			Name: "json helper functions",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT json_typeof('{"a":1}'::json), json_typeof('[1]'::json), json_typeof('null'::json), json_array_length('[1,2,3]'::json);`,
+					Expected: []sql.Row{{"object", "array", "null", 3}},
+				},
+				{
+					Query:    `SELECT json_object_keys('{"a":1,"b":2}'::json);`,
+					Expected: []sql.Row{{"a"}, {"b"}},
+				},
+				{
+					Query:    `SELECT * FROM json_each('{"a":1,"b":"x"}'::json) ORDER BY 1;`,
+					Expected: []sql.Row{{"a", "1"}, {"b", `"x"`}},
+				},
+				{
+					Query:    `SELECT json_each('{"a":1}'::json);`,
+					Expected: []sql.Row{{[]any{"a", float64(1)}}},
+				},
+				{
+					Query:    `SELECT * FROM json_each_text('{"a":1,"b":"x","c":null}'::json) ORDER BY 1;`,
+					Expected: []sql.Row{{"a", "1"}, {"b", "x"}, {"c", nil}},
+				},
+				{
+					Query:    `SELECT json_each_text('{"a":"x\ny"}'::json);`,
+					Expected: []sql.Row{{[]any{"a", "x\ny"}}},
+				},
+				{
+					Query:    `SELECT json_array_elements_text('["a\nb","c\\d"]'::json);`,
+					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
+				},
+			},
+		},
+		{
+			Name: "jsonb helper functions",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT jsonb_typeof('{"a":1}'::jsonb), jsonb_typeof('[1]'::jsonb), jsonb_typeof('null'::jsonb), jsonb_array_length('[1,2,3]'::jsonb);`,
+					Expected: []sql.Row{{"object", "array", "null", 3}},
+				},
+				{
+					Query:    `SELECT jsonb_object_keys('{"a":1,"b":2}'::jsonb);`,
+					Expected: []sql.Row{{"a"}, {"b"}},
+				},
+				{
+					Query:    `SELECT * FROM jsonb_each('{"a":1,"b":"x"}'::jsonb) ORDER BY 1;`,
+					Expected: []sql.Row{{"a", "1"}, {"b", `"x"`}},
+				},
+				{
+					Query:    `SELECT jsonb_each('{"a":1}'::jsonb);`,
+					Expected: []sql.Row{{[]any{"a", float64(1)}}},
+				},
+				{
+					Query:    `SELECT * FROM jsonb_each_text('{"a":1,"b":"x","c":null}'::jsonb) ORDER BY 1;`,
+					Expected: []sql.Row{{"a", "1"}, {"b", "x"}, {"c", nil}},
+				},
+				{
+					Query:    `SELECT jsonb_each_text('{"a":"x\ny"}'::jsonb);`,
+					Expected: []sql.Row{{[]any{"a", "x\ny"}}},
+				},
+				{
+					Query:    `SELECT jsonb_array_elements_text('["a\nb","c\\d"]'::jsonb);`,
+					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
+				},
+				{
+					Query:    `SELECT '{"a":1,"b":[2,3]}'::jsonb @> '{"b":[2]}'::jsonb, '{"a":1}'::jsonb <@ '{"a":1,"b":2}'::jsonb;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT '[[1,2]]'::jsonb @> '[1]'::jsonb, '[[1,2]]'::jsonb @> '[[1]]'::jsonb;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT '{"a":[1,2]}'::jsonb @> '{"a":1}'::jsonb, '{"a":[1,2]}'::jsonb @> '{"a":[1]}'::jsonb;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT jsonb_set('{"a":1,"b":[1,2]}'::jsonb, '{a}', '2'::jsonb);`,
+					Expected: []sql.Row{{`{"a": 2, "b": [1, 2]}`}},
+				},
+				{
+					Query:    `SELECT jsonb_set('{"a":1}'::jsonb, '{}', '2'::jsonb);`,
+					Expected: []sql.Row{{`{"a": 1}`}},
+				},
+				{
+					Query:    `SELECT jsonb_set('{"a":1}'::jsonb, '{b,c}', '2'::jsonb);`,
+					Expected: []sql.Row{{`{"a": 1}`}},
+				},
+				{
+					Query:       `SELECT jsonb_set('{"a":1}'::jsonb, ARRAY[NULL]::text[], '2'::jsonb);`,
+					ExpectedErr: "path element at position 1 is null",
+				},
+				{
+					Query:    `SELECT jsonb_pretty('{"a":1,"b":[2]}'::jsonb);`,
+					Expected: []sql.Row{{"{\n    \"a\": 1,\n    \"b\": [\n        2\n    ]\n}"}},
+				},
+			},
+		},
+		{
+			Name: "json mixed representation coverage",
+			SetUpScript: []string{
+				`CREATE TABLE json_shapes (pk INT primary key, doc jsonb, raw json);`,
+				`INSERT INTO json_shapes VALUES (1, '{"a":1,"items":[1,2]}'::jsonb, '{"a":1,"items":[1,2]}'::json), (2, jsonb_build_object('a', 2, 'items', jsonb_build_array(2, 3), 'payload', repeat('x', 512)), json_build_object('a', 2, 'items', json_build_array(2, 3), 'payload', repeat('x', 512)));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT pk, jsonb_array_length(doc->'items'), json_array_length(raw->'items') FROM json_shapes ORDER BY pk;`,
+					Expected: []sql.Row{{1, 2, 2}, {2, 2, 2}},
+				},
+				{
+					Query:    `SELECT s.pk, e.value FROM json_shapes s JOIN LATERAL (SELECT * FROM jsonb_each(s.doc)) AS e ON true WHERE e.key = 'a' ORDER BY s.pk;`,
+					Expected: []sql.Row{{1, "1"}, {2, "2"}},
+				},
+				{
+					Query:    `SELECT s.pk, e.value FROM json_shapes s JOIN LATERAL jsonb_each(s.doc) AS e ON true WHERE e.key = 'a' ORDER BY s.pk;`,
+					Expected: []sql.Row{{1, "1"}, {2, "2"}},
+				},
+				{
+					Query:    `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM jsonb_array_elements(s.doc->'items')) AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`,
+					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+				},
+				{
+					Query:    `SELECT s.pk, e.jsonb_array_elements FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS e ON true ORDER BY s.pk, e.jsonb_array_elements;`,
+					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+				},
+				{
+					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;`,
+					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+				},
+				{
+					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL json_array_elements(s.raw->'items') AS e ON true ORDER BY s.pk, e.json_array_elements;`,
+					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+				},
+				{
+					Query:    `SELECT length(doc->>'payload') FROM json_shapes WHERE pk = 2;`,
+					Expected: []sql.Row{{512}},
+				},
+				{
+					Query:    `UPDATE json_shapes SET doc = jsonb_set(doc, '{items,1}', '9'::jsonb) WHERE pk = 1;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT doc->'items' FROM json_shapes WHERE pk = 1;`,
+					Expected: []sql.Row{{`[1, 9]`}},
 				},
 			},
 		},

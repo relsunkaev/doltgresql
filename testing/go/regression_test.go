@@ -246,6 +246,28 @@ func TestRegressions(t *testing.T) {
 			},
 		},
 		{
+			Name:        "json array elements edge cases",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "select jsonb_array_elements('1'::jsonb);",
+					ExpectedErr: "cannot extract elements from a scalar",
+				},
+				{
+					Query:       "select json_array_elements('1'::json);",
+					ExpectedErr: "cannot extract elements from a scalar",
+				},
+				{
+					Query:    "select count(*) from jsonb_array_elements('[]'::jsonb);",
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:    "select count(*) from json_array_elements('[]'::json);",
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+		{
 			Skip: true, // https://github.com/dolthub/doltgresql/issues/1043
 			Name: "use column in function when creating view",
 			SetUpScript: []string{
