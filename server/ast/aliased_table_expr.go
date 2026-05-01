@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -26,7 +28,7 @@ import (
 // nodeAliasedTableExpr handles *tree.AliasedTableExpr nodes.
 func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.AliasedTableExpr, error) {
 	if node.Ordinality {
-		return nil, errors.Errorf("ordinality is not yet supported")
+		return nodeAliasedTableExprWithOrdinality(ctx, node)
 	}
 	if node.IndexFlags != nil {
 		return nil, errors.Errorf("index flags are not yet supported")
@@ -145,6 +147,74 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 		Lateral: node.Lateral,
 		Auth:    authInfo,
 	}, nil
+}
+
+func nodeAliasedTableExprWithOrdinality(ctx *Context, node *tree.AliasedTableExpr) (*vitess.AliasedTableExpr, error) {
+	rowsFromExpr, ok := node.Expr.(*tree.RowsFromExpr)
+	if !ok || len(rowsFromExpr.Items) != 1 {
+		return nil, errors.Errorf("WITH ORDINALITY is only supported for a single table function")
+	}
+	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
+	if !ok || !strings.EqualFold(funcExpr.Func.String(), "unnest") {
+		return nil, errors.Errorf("WITH ORDINALITY is only supported for unnest")
+	}
+
+	args, err := nodeExprs(ctx, funcExpr.Exprs)
+	if err != nil {
+		return nil, err
+	}
+	tableFuncArgs := make(vitess.SelectExprs, len(args))
+	for i, arg := range args {
+		tableFuncArgs[i] = &vitess.AliasedExpr{Expr: arg}
+	}
+
+	internalAlias := "__doltgres_unnest_with_ordinality"
+	valueName := "unnest"
+	ordinalityName := "ordinality"
+	if len(node.As.Cols) > 0 {
+		if len(node.As.Cols) != 2 {
+			return nil, errors.Errorf("WITH ORDINALITY alias must provide value and ordinality column names")
+		}
+		valueName = string(node.As.Cols[0])
+		ordinalityName = string(node.As.Cols[1])
+	}
+
+	aliasExpr := &vitess.Subquery{
+		Select: &vitess.Select{
+			SelectExprs: vitess.SelectExprs{
+				&vitess.AliasedExpr{
+					Expr: tableFuncColumn(internalAlias, "value"),
+					As:   vitess.NewColIdent(valueName),
+				},
+				&vitess.AliasedExpr{
+					Expr: tableFuncColumn(internalAlias, "ordinality"),
+					As:   vitess.NewColIdent(ordinalityName),
+				},
+			},
+			From: vitess.TableExprs{
+				&vitess.TableFuncExpr{
+					Name:  "doltgres_unnest_with_ordinality",
+					Exprs: tableFuncArgs,
+					Alias: vitess.NewTableIdent(internalAlias),
+				},
+			},
+		},
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr:    aliasExpr,
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: node.Lateral,
+	}, nil
+}
+
+func tableFuncColumn(table string, column string) *vitess.ColName {
+	return &vitess.ColName{
+		Name: vitess.NewColIdent(column),
+		Qualifier: vitess.TableName{
+			Name: vitess.NewTableIdent(table),
+		},
+	}
 }
 
 // isTrivialSelectStar returns true when the Select is just "SELECT * FROM <single table>"

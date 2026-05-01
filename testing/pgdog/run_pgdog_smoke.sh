@@ -6,6 +6,7 @@ TMP_DIR="$(mktemp -d)"
 
 PGDOG_IMAGE="${PGDOG_IMAGE:-ghcr.io/pgdogdev/pgdog:latest}"
 PGDOG_PORT="${PGDOG_PORT:-16432}"
+PGDOG_LOAD_SCHEMA="${PGDOG_LOAD_SCHEMA:-on}"
 DOLTGRES_SHARD0_PORT="${DOLTGRES_SHARD0_PORT:-15432}"
 DOLTGRES_SHARD1_PORT="${DOLTGRES_SHARD1_PORT:-15433}"
 PGDOG_DOLTGRES_HOST="${PGDOG_DOLTGRES_HOST:-host.docker.internal}"
@@ -101,7 +102,7 @@ two_phase_commit = false
 two_phase_commit_auto = false
 prepared_statements = "extended"
 read_write_split = "include_primary"
-load_schema = "off"
+load_schema = "$PGDOG_LOAD_SCHEMA"
 
 [[databases]]
 name = "pgdog"

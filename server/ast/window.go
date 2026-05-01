@@ -47,7 +47,7 @@ func nodeWindowDef(ctx *Context, node *tree.WindowDef) (*vitess.WindowDef, error
 	if err != nil {
 		return nil, err
 	}
-	orderBy, err := nodeOrderBy(ctx, node.OrderBy)
+	orderBy, err := nodeOrderBy(ctx, node.OrderBy, nil)
 	if err != nil {
 		return nil, err
 	}

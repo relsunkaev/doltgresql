@@ -74,7 +74,7 @@ func nodeUpdate(ctx *Context, node *tree.Update) (update *vitess.Update, err err
 	if err != nil {
 		return nil, err
 	}
-	orderBy, err := nodeOrderBy(ctx, node.OrderBy)
+	orderBy, err := nodeOrderBy(ctx, node.OrderBy, nil)
 	if err != nil {
 		return nil, err
 	}

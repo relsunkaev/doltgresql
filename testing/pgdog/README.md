@@ -21,6 +21,7 @@ Useful overrides:
 ```bash
 DOLTGRES_BIN=/path/to/doltgres \
 PGDOG_IMAGE=ghcr.io/pgdogdev/pgdog:latest \
+PGDOG_LOAD_SCHEMA=on \
 PGDOG_PORT=16432 \
 DOLTGRES_SHARD0_PORT=15432 \
 DOLTGRES_SHARD1_PORT=15433 \
@@ -39,7 +40,7 @@ two_phase_commit = false
 two_phase_commit_auto = false
 prepared_statements = "extended"
 read_write_split = "include_primary"
-load_schema = "off"
+load_schema = "on"
 
 [[databases]]
 name = "pgdog"
@@ -68,7 +69,7 @@ column = "tenant_id"
 data_type = "bigint"
 ```
 
-PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, `uuid`, and `vector`. This smoke path keeps `bigint` as the distribution check and adds a routed `vector` lookup to cover pgvector-style shard keys.
+PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, loads schema at startup, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, `uuid`, and `vector`. This smoke path keeps `bigint` as the distribution check and adds a routed `vector` lookup to cover pgvector-style shard keys.
 
 ## Unsupported Paths
 
@@ -86,7 +87,7 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 
 SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for PgDog's full prepared-statement mode smoke coverage.
 
-The smoke config sets `load_schema = "off"` because PgDog's schema loader currently trips a Doltgres catalog ambiguity while introspecting `information_schema`. The harness still configures the sharded table explicitly and verifies routing with live rows on both shards.
+PgDog schema loading is supported for the startup schema-cache queries used by the open-source PgDog image, including column, relation, and foreign-key introspection. The harness still configures sharded tables explicitly so shard-key type coverage remains deterministic.
 
 Relevant PgDog docs:
 

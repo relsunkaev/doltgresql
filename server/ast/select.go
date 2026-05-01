@@ -38,7 +38,7 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	if err != nil {
 		return nil, err
 	}
-	orderBy, err := nodeOrderBy(ctx, node.OrderBy)
+	orderBy, err := nodeOrderBy(ctx, node.OrderBy, selectStmt)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			} else {
 				// cast type is not part of column name
 				// e.g. `id::INT2` should create column name as `id`.
-				node.As = tree.UnrestrictedName(tree.AsString(ce.Expr))
+				node.As = defaultCastColumnName(ce.Expr)
 			}
 		}
 
@@ -165,6 +165,13 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			InputExpression: inputExpressionForSelectExpr(node),
 		}, nil
 	}
+}
+
+func defaultCastColumnName(expr tree.Expr) tree.UnrestrictedName {
+	if name, ok := expr.(*tree.UnresolvedName); ok && !name.Star && name.NumParts > 0 {
+		return tree.UnrestrictedName(name.Parts[0])
+	}
+	return tree.UnrestrictedName(tree.AsString(expr))
 }
 
 // inputExpressionForSelectExpr returns the input expression for a tree.SelectExpr.
