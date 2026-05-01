@@ -7,16 +7,21 @@ TMP_DIR="$(mktemp -d)"
 PGDOG_IMAGE="${PGDOG_IMAGE:-ghcr.io/pgdogdev/pgdog:latest}"
 PGDOG_PORT="${PGDOG_PORT:-16432}"
 PGDOG_LOAD_SCHEMA="${PGDOG_LOAD_SCHEMA:-on}"
+DOLTGRES_MAIN_PORT="${DOLTGRES_MAIN_PORT:-15434}"
 DOLTGRES_SHARD0_PORT="${DOLTGRES_SHARD0_PORT:-15432}"
 DOLTGRES_SHARD1_PORT="${DOLTGRES_SHARD1_PORT:-15433}"
 PGDOG_DOLTGRES_HOST="${PGDOG_DOLTGRES_HOST:-host.docker.internal}"
 PGDOG_CONTAINER="doltgres-pgdog-smoke-$$"
 
+main_pid=""
 shard0_pid=""
 shard1_pid=""
 
 cleanup() {
   docker rm -f "$PGDOG_CONTAINER" >/dev/null 2>&1 || true
+  if [[ -n "$main_pid" ]]; then
+    kill "$main_pid" >/dev/null 2>&1 || true
+  fi
   if [[ -n "$shard0_pid" ]]; then
     kill "$shard0_pid" >/dev/null 2>&1 || true
   fi
@@ -36,6 +41,10 @@ psql_shard() {
 
 psql_pgdog() {
   PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$PGDOG_PORT" -U postgres -d pgdog "$@"
+}
+
+psql_main() {
+  psql_shard "$DOLTGRES_MAIN_PORT" "$@"
 }
 
 write_doltgres_config() {
@@ -200,9 +209,11 @@ fi
 command -v docker >/dev/null
 command -v psql >/dev/null
 
+main_pid="$(start_doltgres_shard "$DOLTGRES_MAIN_PORT" main)"
 shard0_pid="$(start_doltgres_shard "$DOLTGRES_SHARD0_PORT" shard0)"
 shard1_pid="$(start_doltgres_shard "$DOLTGRES_SHARD1_PORT" shard1)"
 
+wait_for_shard "$DOLTGRES_MAIN_PORT" "$TMP_DIR/main.log"
 wait_for_shard "$DOLTGRES_SHARD0_PORT" "$TMP_DIR/shard0.log"
 wait_for_shard "$DOLTGRES_SHARD1_PORT" "$TMP_DIR/shard1.log"
 
@@ -217,6 +228,17 @@ docker run -d \
   pgdog --config /config/pgdog.toml --users /config/users.toml >/dev/null
 
 wait_for_pgdog
+
+psql_main -c "CREATE TABLE shared_accounts (id INT PRIMARY KEY, label TEXT NOT NULL);"
+psql_main -c "INSERT INTO shared_accounts VALUES (1, 'main-shared');"
+psql_main -c "UPDATE shared_accounts SET label = 'main-shared-updated' WHERE id = 1;"
+shared_result="$(psql_main -At -c "SELECT label FROM shared_accounts WHERE id = 1;")"
+if [[ "$shared_result" != "main-shared-updated" ]]; then
+  echo "shared-routing: expected shared table to be readable on main endpoint, got: $shared_result" >&2
+  exit 1
+fi
+expect_pgdog_failure "shared-table-read" "SELECT label FROM shared_accounts WHERE id = 1;" "shared_accounts"
+expect_pgdog_failure "shared-table-write" "INSERT INTO shared_accounts VALUES (2, 'wrong-endpoint');" "shared_accounts"
 
 psql_pgdog -c "CREATE TABLE pgdog_items (tenant_id BIGINT PRIMARY KEY, label TEXT);"
 for tenant_id in $(seq 1 16); do

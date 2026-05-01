@@ -2,7 +2,9 @@
 
 This directory contains the Doltgres compatibility boundary for PgDog.
 
-PgDog support is currently scoped to a primary-only shard smoke path: clients can connect to PgDog, PgDog can connect to two Doltgres primary shards, DDL can be broadcast to the shards, and ordinary sharded `INSERT` / `SELECT` statements can be routed by a supported shard key type.
+PgDog support is currently scoped to a primary-only customer-shard smoke path: clients can connect to PgDog, PgDog can connect to two Doltgres primary shards, DDL can be broadcast to the shards, and ordinary sharded `INSERT` / `SELECT` statements can be routed by a supported shard key type.
+
+The shared-data topology decision is checked in at [migration-topology.md](./migration-topology.md). Shared, non-customer tables stay on the main Aurora/PostgreSQL endpoint and are not accessed through PgDog.
 
 ## Run
 
@@ -12,7 +14,7 @@ From the repository root:
 testing/pgdog/run_pgdog_smoke.sh
 ```
 
-The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts two temporary Doltgres shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
+The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts a temporary main database plus two temporary Doltgres customer shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
 
 On Homebrew-based macOS setups, the script automatically uses `icu4c@78` for the local Go build when `CGO_CPPFLAGS` is not already set.
 
@@ -23,6 +25,7 @@ DOLTGRES_BIN=/path/to/doltgres \
 PGDOG_IMAGE=ghcr.io/pgdogdev/pgdog:latest \
 PGDOG_LOAD_SCHEMA=on \
 PGDOG_PORT=16432 \
+DOLTGRES_MAIN_PORT=15434 \
 DOLTGRES_SHARD0_PORT=15432 \
 DOLTGRES_SHARD1_PORT=15433 \
 testing/pgdog/run_pgdog_smoke.sh
@@ -69,7 +72,7 @@ column = "tenant_id"
 data_type = "bigint"
 ```
 
-PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, loads schema at startup, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, `uuid`, and `vector`. This smoke path keeps `bigint` as the distribution check and adds a routed `vector` lookup to cover pgvector-style shard keys.
+PgDog requires `pgdog.toml` and `users.toml`, uses `[[databases]]` entries for backend primaries, loads schema at startup, and routes configured sharded-table columns such as `bigint`, `varchar` / `text`, `uuid`, and `vector`. This smoke path keeps `bigint` as the distribution check and adds a routed `vector` lookup to cover pgvector-style shard keys. The separate main database in the harness stands in for Aurora shared data; it is deliberately not configured as a PgDog shard.
 
 ## Unsupported Paths
 
