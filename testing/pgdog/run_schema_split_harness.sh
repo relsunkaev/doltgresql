@@ -103,6 +103,8 @@ wait_for_doltgres() {
 }
 
 write_pgdog_config() {
+  local migrated_customer_enabled="${1:-false}"
+
   mkdir -p "$TMP_DIR/pgdog"
   cat > "$TMP_DIR/pgdog/pgdog.toml" <<EOF
 [general]
@@ -137,10 +139,6 @@ database = "pgdog"
 name = "shared"
 shard = 0
 
-[[sharded_schemas]]
-database = "pgdog"
-shard = 0
-
 [[sharded_tables]]
 database = "pgdog"
 schema = "customer"
@@ -148,6 +146,23 @@ name = "orders"
 column = "customer_id"
 data_type = "bigint"
 
+EOF
+
+  if [[ "$migrated_customer_enabled" == "true" ]]; then
+    cat >> "$TMP_DIR/pgdog/pgdog.toml" <<EOF
+[[sharded_mappings]]
+database = "pgdog"
+schema = "customer"
+table = "orders"
+column = "customer_id"
+kind = "list"
+values = [$CUSTOMER_ID]
+shard = 1
+
+EOF
+  fi
+
+  cat >> "$TMP_DIR/pgdog/pgdog.toml" <<EOF
 [[sharded_mappings]]
 database = "pgdog"
 schema = "customer"
@@ -176,6 +191,11 @@ start_pgdog() {
     -v "$TMP_DIR/pgdog:/config:ro" \
     "$PGDOG_IMAGE" \
     pgdog --config /config/pgdog.toml --users /config/users.toml >/dev/null
+}
+
+restart_pgdog() {
+  start_pgdog
+  wait_for_pgdog
 }
 
 wait_for_pgdog() {
@@ -212,6 +232,17 @@ assert_rows_equal() {
     echo "$actual" >&2
     exit 1
   fi
+}
+
+assert_customer_rows_on_runner() {
+  local name="$1"
+  local runner="$2"
+  local customer_id="$3"
+  local expected="$4"
+  local actual
+
+  actual="$(customer_rows "$runner" "$customer_id")"
+  assert_rows_equal "$name" "$expected" "$actual"
 }
 
 if [[ -z "${DOLTGRES_BIN:-}" ]]; then
@@ -287,11 +318,49 @@ if [[ -n "$doltgres_rows" ]]; then
   exit 1
 fi
 
-schema_cache_probe="$(psql_pgdog -At -F '|' -c "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema IN ('shared', 'customer') ORDER BY table_schema, table_name;")"
-if ! grep -q "shared|accounts" <<< "$schema_cache_probe" || ! grep -q "customer|orders" <<< "$schema_cache_probe"; then
-  echo "schema-cache: expected PgDog-visible shared.accounts and customer.orders, got:" >&2
+schema_cache_probe="$(psql_pgdog -At -F '|' -c "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema = 'customer' AND table_name = 'orders';")"
+if [[ "$schema_cache_probe" != "customer|orders" ]]; then
+  echo "schema-cache: expected PgDog-visible customer.orders, got:" >&2
   echo "$schema_cache_probe" >&2
   exit 1
 fi
 
-echo "PgDog schema-split topology harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"
+pre_cutover_source_rows="$(customer_rows psql_source "$CUSTOMER_ID")"
+assert_customer_rows_on_runner "pre-cutover-customer-source-pgdog" psql_pgdog "$CUSTOMER_ID" "$pre_cutover_source_rows"
+
+psql_doltgres -c "INSERT INTO customer.orders VALUES ($CUSTOMER_ID, 1, 'copied-open', 420, 'copied to doltgres');"
+write_pgdog_config true
+restart_pgdog
+
+post_cutover_pgdog_rows="$(customer_rows psql_pgdog "$CUSTOMER_ID")"
+post_cutover_doltgres_rows="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
+assert_rows_equal "post-cutover-customer-doltgres-pgdog" "$post_cutover_doltgres_rows" "$post_cutover_pgdog_rows"
+if [[ "$post_cutover_pgdog_rows" == "$pre_cutover_source_rows" ]]; then
+  echo "cutover-routing: PgDog still returned source rows after migrated customer mapping changed" >&2
+  exit 1
+fi
+
+psql_pgdog -c "INSERT INTO customer.orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 2, 'post-cutover-insert', 430, 'written after mapping cutover');"
+psql_pgdog -c "UPDATE customer.orders SET status = 'post-cutover-updated', amount = 431 WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"
+
+post_write_source_count="$(psql_source -At -c "SELECT count(*) FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;")"
+if [[ "$post_write_source_count" != "0" ]]; then
+  echo "cutover-routing: post-cutover write reached source shard 0" >&2
+  exit 1
+fi
+post_write_doltgres_result="$(psql_doltgres -At -F '|' -c "SELECT status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;")"
+if [[ "$post_write_doltgres_result" != "post-cutover-updated|431|written after mapping cutover" ]]; then
+  echo "cutover-routing: expected post-cutover write on Doltgres, got: $post_write_doltgres_result" >&2
+  exit 1
+fi
+
+source_rows_after_cutover="$(customer_rows psql_source "$UNMIGRATED_CUSTOMER_ID")"
+assert_customer_rows_on_runner "unmigrated-after-cutover-source-pgdog" psql_pgdog "$UNMIGRATED_CUSTOMER_ID" "$source_rows_after_cutover"
+
+shared_after_cutover="$(psql_pgdog -At -c "SELECT label FROM shared.accounts WHERE id = 2;")"
+if [[ "$shared_after_cutover" != "pgdog-shared-updated" ]]; then
+  echo "shared-routing: expected shared row to remain routed to source after cutover, got: $shared_after_cutover" >&2
+  exit 1
+fi
+
+echo "PgDog schema-split topology and mapping cutover harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"

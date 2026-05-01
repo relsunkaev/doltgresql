@@ -25,18 +25,16 @@ Unqualified table names and `search_path`-only routing are not part of the suppo
 
 ## PgDog Configuration Contract
 
-Use `[[sharded_schemas]]` to route shared schema traffic to shard 0 and to choose a safe default for unmapped schemas:
+Use `[[sharded_schemas]]` to route shared schema traffic to shard 0:
 
 ```toml
 [[sharded_schemas]]
 database = "prod"
 name = "shared"
 shard = 0
-
-[[sharded_schemas]]
-database = "prod"
-shard = 0
 ```
+
+Do not add an unnamed default `[[sharded_schemas]]` entry while `customer.*` tables are expected to route by `customer_id`. PgDog resolves schema mappings before table/key mappings, so an unnamed default schema mapping would send the `customer` schema to shard 0 and prevent customer cutover mappings from taking effect.
 
 Use `[[sharded_tables]]` for every customer-owned table, including the schema name and shard-key type:
 
@@ -87,12 +85,12 @@ For one customer:
 9. Resume customer traffic through PgDog and verify post-cutover writes land only on Doltgres.
 10. If rollback safety is required, create a Doltgres publication and durable logical slot before accepting rollback-sensitive writes.
 
-PgDog documents configuration hot reload and an admin `RELOAD` command, but this topology treats **PgDog restart** as the baseline supported mapping-cutover primitive until `dg-u1h.9` proves reload behavior for `[[sharded_mappings]]` in the schema-split harness. If reload is proven safe, this document should be updated to make reload the preferred low-disruption primitive.
+PgDog documents configuration hot reload and an admin `RELOAD` command, but this topology treats **PgDog restart** as the baseline supported mapping-cutover primitive. A restart recycles PgDog client and server connections, so operators must drain or pause the selected customer's writes and let clients reconnect before resuming traffic. If `RELOAD` is later proven safe for `[[sharded_mappings]]`, this document should be updated to make reload the preferred low-disruption primitive.
 
 ## Guardrails
 
 - Customer DML must include the configured shard key in a PgDog-supported query shape.
-- Default shard behavior must route unmapped schemas and unmigrated customer IDs to shard 0. Cross-shard fanout is not a production fallback for mutable application SQL.
+- Default customer-ID mapping must route unmigrated customer IDs to shard 0. Do not use default schema routing as a production fallback for mutable application SQL.
 - Use driver extended-protocol prepared statements for sharded customer DML. SQL `PREPARE` / `EXECUTE` for sharded DML is not supported by upstream PgDog and can fan out.
 - Do not rely on mutable cross-schema joins between `shared.*` on Aurora and `customer.*` on Doltgres until explicitly proven.
 - Do not rely on transactions that must atomically span shard 0 and Doltgres shards unless a dedicated test proves the exact shape.
