@@ -43,6 +43,7 @@ func initTypeFunctions() {
 	initInterval()
 	initJson()
 	initJsonB()
+	initJsonTableFunctions()
 	initName()
 	initNumeric()
 	initOid()

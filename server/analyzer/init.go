@@ -138,7 +138,7 @@ func IsAggregateFunc(name string) bool {
 	}
 
 	switch name {
-	case "array_agg", "bool_and", "bool_or":
+	case "array_agg", "bool_and", "bool_or", "json_agg", "jsonb_agg", "json_object_agg", "jsonb_object_agg":
 		return true
 	}
 

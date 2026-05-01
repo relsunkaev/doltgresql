@@ -117,47 +117,7 @@ PostJoinRewrite:
 	// that we have to situationally support, as inner nodes do not have the proper context to output a TableFuncExpr,
 	// since TableFuncExprs pertain only to SELECT statements.
 	for i, fromExpr := range from {
-		// Nodes are very liberal in wrapping themselves within other nodes, which gives them a technically correct
-		// tree, however GMS makes assumptions about the makeup of the trees that it receives. We'll eventually
-		// generalize this on the GMS side, but for now we need to transform our tree in case we need to use a TableFuncExpr.
-		if aliasedTableExpr, ok := fromExpr.(*vitess.AliasedTableExpr); ok {
-			subquery, ok := aliasedTableExpr.Expr.(*vitess.Subquery)
-			// If all of these are true, then the AliasedTableExpr is probably a wrapper around a subquery, but we have
-			// to confirm that the subquery contains a *Select with a single child in its From expressions.
-			if !aliasedTableExpr.Lateral &&
-				aliasedTableExpr.Hints == nil &&
-				len(aliasedTableExpr.Partitions) == 0 &&
-				ok && len(subquery.Columns) == 0 {
-				// If this is true, then we can confirm that it's just a wrapper (and not an explicit AliasedTableExpr).
-				// This may seem like a lot of fragile checks, but AliasedTableExpr explicitly sets its state to this in
-				// this circumstance. We do not want to create a TableFuncExpr except under very specific circumstances.
-				if subquerySelect, ok := subquery.Select.(*vitess.Select); ok && len(subquerySelect.From) == 1 {
-					if valuesStatement, ok := subquerySelect.From[0].(*vitess.ValuesStatement); ok {
-						if len(valuesStatement.Columns) == 0 && len(valuesStatement.Rows) == 1 && len(valuesStatement.Rows[0]) == 1 {
-							if funcExpr, ok := valuesStatement.Rows[0][0].(*vitess.FuncExpr); ok {
-								// It appears that GMS hardcodes the expectation of vitess literals here, so we have to
-								// convert from Doltgres literals to GMS literals. Eventually we need to remove this
-								// hardcoded behavior.
-								for _, fExpr := range funcExpr.Exprs {
-									if aliasedExpr, ok := fExpr.(*vitess.AliasedExpr); ok {
-										if injectedExpr, ok := aliasedExpr.Expr.(vitess.InjectedExpr); ok {
-											if literal, ok := injectedExpr.Expression.(*expression.Literal); ok {
-												aliasedExpr.Expr = pgexprs.ToVitessLiteral(literal)
-											}
-										}
-									}
-								}
-								from[i] = &vitess.TableFuncExpr{
-									Name:  funcExpr.Name.String(),
-									Exprs: funcExpr.Exprs,
-									Alias: aliasedTableExpr.As,
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		from[i] = rewriteTableFunctionExpr(fromExpr)
 	}
 	distinct := node.Distinct
 	var distinctOn vitess.Exprs
@@ -200,4 +160,75 @@ PostJoinRewrite:
 		Window:      window,
 		Comments:    vitess.Comments{[]byte(node.BlockComment)},
 	}, nil
+}
+
+func rewriteTableFunctionExpr(fromExpr vitess.TableExpr) vitess.TableExpr {
+	switch expr := fromExpr.(type) {
+	case *vitess.AliasedTableExpr:
+		tableFunc, subquery, ok := tableFunctionFromAliasedValuesWrapper(expr)
+		if !ok {
+			return expr
+		}
+		if expr.Lateral {
+			if subquery.SelectExprs == nil {
+				subquery.SelectExprs = vitess.SelectExprs{&vitess.StarExpr{}}
+			}
+			subquery.From = vitess.TableExprs{tableFunc}
+			if expr.As.IsEmpty() {
+				expr.As = vitess.NewTableIdent(tableFunc.Name)
+			}
+			return expr
+		}
+		return tableFunc
+	case *vitess.JoinTableExpr:
+		expr.LeftExpr = rewriteTableFunctionExpr(expr.LeftExpr)
+		expr.RightExpr = rewriteTableFunctionExpr(expr.RightExpr)
+		return expr
+	case *vitess.ParenTableExpr:
+		for i, child := range expr.Exprs {
+			expr.Exprs[i] = rewriteTableFunctionExpr(child)
+		}
+		return expr
+	default:
+		return fromExpr
+	}
+}
+
+func tableFunctionFromAliasedValuesWrapper(aliasedTableExpr *vitess.AliasedTableExpr) (*vitess.TableFuncExpr, *vitess.Select, bool) {
+	if aliasedTableExpr.Hints != nil || len(aliasedTableExpr.Partitions) != 0 {
+		return nil, nil, false
+	}
+	subquery, ok := aliasedTableExpr.Expr.(*vitess.Subquery)
+	if !ok || len(subquery.Columns) != 0 {
+		return nil, nil, false
+	}
+	subquerySelect, ok := subquery.Select.(*vitess.Select)
+	if !ok || len(subquerySelect.From) != 1 {
+		return nil, nil, false
+	}
+	valuesStatement, ok := subquerySelect.From[0].(*vitess.ValuesStatement)
+	if !ok || len(valuesStatement.Columns) != 0 || len(valuesStatement.Rows) != 1 || len(valuesStatement.Rows[0]) != 1 {
+		return nil, nil, false
+	}
+	funcExpr, ok := valuesStatement.Rows[0][0].(*vitess.FuncExpr)
+	if !ok {
+		return nil, nil, false
+	}
+	// It appears that GMS hardcodes the expectation of vitess literals here, so we have to
+	// convert from Doltgres literals to GMS literals. Eventually we need to remove this
+	// hardcoded behavior.
+	for _, fExpr := range funcExpr.Exprs {
+		if aliasedExpr, ok := fExpr.(*vitess.AliasedExpr); ok {
+			if injectedExpr, ok := aliasedExpr.Expr.(vitess.InjectedExpr); ok {
+				if literal, ok := injectedExpr.Expression.(*expression.Literal); ok {
+					aliasedExpr.Expr = pgexprs.ToVitessLiteral(literal)
+				}
+			}
+		}
+	}
+	return &vitess.TableFuncExpr{
+		Name:  funcExpr.Name.String(),
+		Exprs: funcExpr.Exprs,
+		Alias: aliasedTableExpr.As,
+	}, subquerySelect, true
 }
