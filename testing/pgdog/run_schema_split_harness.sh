@@ -221,6 +221,12 @@ customer_rows() {
   "$runner" -At -F '|' -c "SELECT customer_id, order_id, status, amount, COALESCE(note, '') FROM customer.orders WHERE customer_id = $customer_id ORDER BY order_id;"
 }
 
+customer_checksum() {
+  local runner="$1"
+  local customer_id="$2"
+  "$runner" -At -F '|' -c "SELECT count(*), COALESCE(sum(amount), 0), COALESCE(sum(length(COALESCE(note, ''))), 0) FROM customer.orders WHERE customer_id = $customer_id;"
+}
+
 assert_rows_equal() {
   local name="$1"
   local expected="$2"
@@ -243,6 +249,24 @@ assert_customer_rows_on_runner() {
 
   actual="$(customer_rows "$runner" "$customer_id")"
   assert_rows_equal "$name" "$expected" "$actual"
+}
+
+assert_customer_snapshot_matches_source() {
+  local name="$1"
+  local target_runner="$2"
+  local customer_id="$3"
+  local source_rows
+  local target_rows
+  local source_checksum
+  local target_checksum
+
+  source_rows="$(customer_rows psql_source "$customer_id")"
+  target_rows="$(customer_rows "$target_runner" "$customer_id")"
+  assert_rows_equal "$name-rows" "$source_rows" "$target_rows"
+
+  source_checksum="$(customer_checksum psql_source "$customer_id")"
+  target_checksum="$(customer_checksum "$target_runner" "$customer_id")"
+  assert_rows_equal "$name-checksum" "$source_checksum" "$target_checksum"
 }
 
 if [[ -z "${DOLTGRES_BIN:-}" ]]; then
@@ -277,7 +301,7 @@ psql_source -c "CREATE SCHEMA customer;"
 psql_source -c "CREATE TABLE shared.accounts (id INT PRIMARY KEY, label TEXT NOT NULL);"
 psql_source -c "CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
 psql_source -c "INSERT INTO shared.accounts VALUES (1, 'aurora-shared');"
-psql_source -c "INSERT INTO customer.orders VALUES ($UNMIGRATED_CUSTOMER_ID, 1, 'source-open', 70, 'unmigrated'), ($CUSTOMER_ID, 1, 'source-open', 420, 'candidate');"
+psql_source -c "INSERT INTO customer.orders VALUES ($UNMIGRATED_CUSTOMER_ID, 1, 'source-open', 70, 'unmigrated'), ($CUSTOMER_ID, 1, 'source-open', 420, 'candidate-one'), ($CUSTOMER_ID, 2, 'source-open', 421, 'candidate-two');"
 
 psql_doltgres -c "CREATE SCHEMA customer;"
 psql_doltgres -c "CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));"
@@ -328,17 +352,56 @@ fi
 pre_cutover_source_rows="$(customer_rows psql_source "$CUSTOMER_ID")"
 assert_customer_rows_on_runner "pre-cutover-customer-source-pgdog" psql_pgdog "$CUSTOMER_ID" "$pre_cutover_source_rows"
 
-psql_doltgres -c "INSERT INTO customer.orders VALUES ($CUSTOMER_ID, 1, 'copied-open', 420, 'copied to doltgres');"
+if [[ -n "$(customer_rows psql_doltgres "$CUSTOMER_ID")" ]]; then
+  echo "initial-copy: expected Doltgres customer target to start empty" >&2
+  exit 1
+fi
+
+psql_source -q \
+  -c "CREATE TEMP TABLE dg_customer_orders_copy AS SELECT customer_id, order_id, status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID ORDER BY order_id;" \
+  -c "COPY dg_customer_orders_copy (customer_id, order_id, status, amount, note) TO STDOUT;" |
+  psql_doltgres -c "COPY customer.orders (customer_id, order_id, status, amount, note) FROM STDIN;"
+
+assert_customer_snapshot_matches_source "initial-copy-doltgres-source" psql_doltgres "$CUSTOMER_ID"
+if [[ -n "$(customer_rows psql_doltgres "$UNMIGRATED_CUSTOMER_ID")" ]]; then
+  echo "initial-copy: unmigrated customer rows should not be copied to Doltgres" >&2
+  exit 1
+fi
+if [[ "$(shared_table_count_on_doltgres)" != "0" ]]; then
+  echo "initial-copy: shared.accounts should not be copied to Doltgres" >&2
+  exit 1
+fi
+
+psql_source -c "BEGIN;" \
+  -c "INSERT INTO customer.orders VALUES ($CUSTOMER_ID, 3, 'source-after-copy-insert', 422, 'inserted after copy');" \
+  -c "UPDATE customer.orders SET status = 'source-after-copy-update', amount = 425, note = 'updated after copy' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "DELETE FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;" \
+  -c "COMMIT;"
+psql_source -c "INSERT INTO customer.orders VALUES ($UNMIGRATED_CUSTOMER_ID, 3, 'unmigrated-after-copy', 73, 'should stay source');"
+psql_source -c "UPDATE shared.accounts SET label = 'aurora-shared-after-copy' WHERE id = 1;"
+
+psql_doltgres -c "BEGIN;" \
+  -c "INSERT INTO customer.orders VALUES ($CUSTOMER_ID, 3, 'source-after-copy-insert', 422, 'inserted after copy');" \
+  -c "UPDATE customer.orders SET status = 'source-after-copy-update', amount = 425, note = 'updated after copy' WHERE customer_id = $CUSTOMER_ID AND order_id = 1;" \
+  -c "DELETE FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;" \
+  -c "COMMIT;"
+
+assert_customer_snapshot_matches_source "change-apply-doltgres-source" psql_doltgres "$CUSTOMER_ID"
+if [[ -n "$(customer_rows psql_doltgres "$UNMIGRATED_CUSTOMER_ID")" ]]; then
+  echo "change-apply: unmigrated customer rows should remain only on source" >&2
+  exit 1
+fi
+if [[ "$(shared_table_count_on_doltgres)" != "0" ]]; then
+  echo "change-apply: shared.accounts should remain only on source" >&2
+  exit 1
+fi
+
 write_pgdog_config true
 restart_pgdog
 
 post_cutover_pgdog_rows="$(customer_rows psql_pgdog "$CUSTOMER_ID")"
 post_cutover_doltgres_rows="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
 assert_rows_equal "post-cutover-customer-doltgres-pgdog" "$post_cutover_doltgres_rows" "$post_cutover_pgdog_rows"
-if [[ "$post_cutover_pgdog_rows" == "$pre_cutover_source_rows" ]]; then
-  echo "cutover-routing: PgDog still returned source rows after migrated customer mapping changed" >&2
-  exit 1
-fi
 
 psql_pgdog -c "INSERT INTO customer.orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 2, 'post-cutover-insert', 430, 'written after mapping cutover');"
 psql_pgdog -c "UPDATE customer.orders SET status = 'post-cutover-updated', amount = 431 WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"

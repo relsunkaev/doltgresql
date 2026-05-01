@@ -77,8 +77,8 @@ For one customer:
 1. Create `shared` and `customer` schemas on shard 0.
 2. Create matching `customer.*` schema on the target Doltgres shard.
 3. Keep the default customer mapping on shard 0 while the customer is unmigrated.
-4. Copy that customer's `customer.*` rows from shard 0 to the target Doltgres shard.
-5. Apply source-side row changes to the Doltgres shard until validation reaches zero divergence.
+4. Copy that customer's `customer.*` rows from shard 0 to the target Doltgres shard. Use table `COPY ... FROM STDIN` into the Doltgres shard; when a source filter is required, stage only the selected customer's rows in a source-side temporary table and copy that table instead of copying all customers.
+5. Apply source-side row changes to the Doltgres shard with row-level `INSERT`, `UPDATE`, and `DELETE` until validation reaches zero divergence.
 6. Drain or pause that customer's writes.
 7. Add or update list mappings for the migrated customer ID to point to the Doltgres shard.
 8. Restart PgDog with the updated configuration, then wait for readiness and schema cache load.
@@ -105,6 +105,7 @@ This topology is not considered supported until the schema-split harness proves:
 - `shared.*` reads and writes route only to shard 0.
 - Unmigrated `customer.*` rows route to shard 0 through the default mapping.
 - A selected customer ID can be copied to Doltgres and cut over through list mapping.
+- Post-copy source changes for the selected customer converge on Doltgres before cutover.
 - Post-cutover writes for the migrated customer route only to Doltgres.
 - Another customer remains on shard 0 after the migrated customer cuts over.
 - PgDog reload or restart semantics for the mapping change are known and documented.
