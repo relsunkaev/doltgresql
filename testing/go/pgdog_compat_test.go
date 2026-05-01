@@ -269,6 +269,61 @@ SELECT DISTINCT
 				},
 			},
 		},
+		{
+			Name: "PgDog schema split catalog and qualified DML",
+			SetUpScript: []string{
+				"CREATE SCHEMA shared;",
+				"CREATE SCHEMA customer;",
+				"CREATE TABLE shared.accounts (id INT PRIMARY KEY, label TEXT NOT NULL);",
+				"CREATE TABLE customer.orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, status TEXT NOT NULL, amount INT NOT NULL, note TEXT, PRIMARY KEY (customer_id, order_id));",
+				"INSERT INTO shared.accounts VALUES (1, 'shared-one');",
+				"INSERT INTO customer.orders VALUES (42, 1, 'open', 420, 'customer-one');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "SELECT label FROM shared.accounts WHERE id = 1;",
+					Expected: []sql.Row{
+						{"shared-one"},
+					},
+				},
+				{
+					Query: "UPDATE customer.orders SET status = 'updated', amount = amount + 1 WHERE customer_id = 42 AND order_id = 1;",
+				},
+				{
+					Query: "SELECT status, amount FROM customer.orders WHERE customer_id = 42 AND order_id = 1;",
+					Expected: []sql.Row{
+						{"updated", 421},
+					},
+				},
+				{
+					Query: `SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema IN ('shared', 'customer')
+ORDER BY table_schema, table_name;`,
+					Expected: []sql.Row{
+						{"customer", "orders"},
+						{"shared", "accounts"},
+					},
+				},
+				{
+					Query: `SELECT n.nspname, c.relname
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname IN ('shared', 'customer') AND c.relkind = 'r' AND c.relname NOT LIKE 'dolt_%'
+ORDER BY n.nspname, c.relname;`,
+					Expected: []sql.Row{
+						{"customer", "orders"},
+						{"shared", "accounts"},
+					},
+				},
+				{
+					Query: "SELECT 'customer.orders'::regclass::text, 'shared.accounts'::regclass::text;",
+					Expected: []sql.Row{
+						{"customer.orders", "shared.accounts"},
+					},
+				},
+			},
+		},
 	})
 }
 
