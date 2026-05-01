@@ -432,6 +432,88 @@ func TestCopyToStdout(t *testing.T) {
 	require.Equal(t, "id,name,note\n1,alice,one\n2,bob,\n", csvOut.String())
 }
 
+func TestCopyCustomerSyncTypeMatrix(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_customer_sync (
+		customer_id bigint NOT NULL,
+		item_id uuid NOT NULL,
+		flag boolean NOT NULL DEFAULT false,
+		amount numeric(12,2),
+		payload json,
+		payloadb jsonb,
+		raw bytea,
+		tags text[],
+		created_at timestamp,
+		updated_at timestamptz,
+		embedding vector,
+		note text DEFAULT 'default-note',
+		note_len int generated always as (length(note)) stored,
+		PRIMARY KEY (customer_id, item_id)
+	);`)
+	require.NoError(t, err)
+
+	longNote := string(bytes.Repeat([]byte("customer-note-"), 260))
+	textRows := fmt.Sprintf("42\t11111111-1111-1111-1111-111111111111\tt\t123.45\t{\"plan\":\"pro\"}\t{\"state\":\"active\"}\t\\\\x0102ff\t{\"alpha\",\"beta\"}\t2026-01-02 03:04:05\t2026-01-02 03:04:05+00\t[1,2,3]\t%s\n43\t22222222-2222-2222-2222-222222222222\tf\t\\N\t\\N\t\\N\t\\N\t\\N\t\\N\t\\N\t\\N\tnullable-copy\n", longNote)
+	tag, err := connection.Default.PgConn().CopyFrom(ctx, bytes.NewBufferString(textRows), `COPY copy_customer_sync (
+		customer_id, item_id, flag, amount, payload, payloadb, raw, tags,
+		created_at, updated_at, embedding, note
+	) FROM STDIN;`)
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+
+	csvRows := "customer_id,item_id,flag,amount,payload,payloadb,raw,tags,created_at,updated_at,embedding,note\n" +
+		"45,33333333-3333-3333-3333-333333333333,t,9999.99,\"{\"\"plan\"\":\"\"csv\"\"}\",\"{\"\"state\"\":\"\"csv\"\"}\",\\x0a0b,\"{\"\"quoted,tag\"\",\"\"plain\"\"}\",\"2026-02-03 04:05:06\",\"2026-02-03 04:05:06+00\",\"[4,5,6]\",\"csv note, with comma\"\n"
+	tag, err = connection.Default.PgConn().CopyFrom(ctx, bytes.NewBufferString(csvRows), `COPY copy_customer_sync (
+		customer_id, item_id, flag, amount, payload, payloadb, raw, tags,
+		created_at, updated_at, embedding, note
+	) FROM STDIN WITH (FORMAT CSV, HEADER TRUE);`)
+	require.NoError(t, err)
+	require.Equal(t, "COPY 1", tag.String())
+
+	_, err = connection.Exec(ctx, `UPDATE copy_customer_sync
+		SET amount = amount + 1,
+			payloadb = jsonb_set(payloadb, '{state}', '"updated"'::jsonb),
+			tags = ARRAY['gamma', 'delta'],
+			note = 'patched'
+		WHERE customer_id = 42 AND item_id = '11111111-1111-1111-1111-111111111111';`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `DELETE FROM copy_customer_sync WHERE customer_id = 43;`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `INSERT INTO copy_customer_sync (customer_id, item_id, flag) VALUES (46, '44444444-4444-4444-4444-444444444444', true);`)
+	require.NoError(t, err)
+
+	rows, err := connection.Query(ctx, `SELECT
+			customer_id::text,
+			item_id::text,
+			flag::text,
+			amount::text,
+			payload->>'plan',
+			payloadb->>'state',
+			raw,
+			array_to_string(tags, ','),
+			created_at::text,
+			(updated_at IS NOT NULL)::text,
+			embedding::text,
+			length(note)::text,
+			note_len::text
+		FROM copy_customer_sync
+		ORDER BY customer_id, item_id;`)
+	require.NoError(t, err)
+	readRows, _, err := ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []sql.Row{
+		{"42", "11111111-1111-1111-1111-111111111111", "true", "124.45", "pro", "updated", []byte{0x01, 0x02, 0xff}, "gamma,delta", "2026-01-02 03:04:05", "true", "[1,2,3]", "7", "7"},
+		{"45", "33333333-3333-3333-3333-333333333333", "true", "9999.99", "csv", "csv", []byte{0x0a, 0x0b}, "quoted,tag,plain", "2026-02-03 04:05:06", "true", "[4,5,6]", "20", "20"},
+		{"46", "44444444-4444-4444-4444-444444444444", "true", nil, nil, nil, nil, nil, nil, "false", nil, "12", "12"},
+	}, readRows)
+}
+
 func TestBinaryCopyFromAndToStdout(t *testing.T) {
 	ctx, connection, controller := CreateServer(t, "postgres")
 	defer func() {

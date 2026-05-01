@@ -132,6 +132,12 @@ data_type = "bigint"
 
 [[sharded_tables]]
 database = "pgdog"
+name = "pgdog_customer_sync"
+column = "customer_id"
+data_type = "bigint"
+
+[[sharded_tables]]
+database = "pgdog"
 name = "pgdog_vectors"
 column = "tenant_id"
 data_type = "vector"
@@ -258,9 +264,39 @@ if [[ "$subscription_result" != "dg_pgdog_sub|f|t|dg_pgdog_pub" ]]; then
   exit 1
 fi
 expect_pgdog_failure "subscription-connect" "CREATE SUBSCRIPTION dg_pgdog_bad_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pgdog_pub;" "connect=false"
+printf '200\tcopy-from-200\n201\tcopy-from-201\n' | psql_pgdog -c "COPY pgdog_items (tenant_id, label) FROM STDIN;"
+copy_from_result="$(psql_pgdog -At -c "SELECT label FROM pgdog_items WHERE tenant_id = 200;")"
+if [[ "$copy_from_result" != "copy-from-200" ]]; then
+  echo "copy-from: expected routed COPY FROM row copy-from-200, got: $copy_from_result" >&2
+  exit 1
+fi
 copy_to_result="$(psql_pgdog -At -c "COPY pgdog_items TO STDOUT;")"
 if ! grep -q $'3\ttenant-3' <<< "$copy_to_result"; then
   echo "copy-to: expected copied row for tenant 3, got: $copy_to_result" >&2
+  exit 1
+fi
+psql_pgdog -c "CREATE TABLE pgdog_customer_sync (customer_id BIGINT NOT NULL, item_id UUID NOT NULL, flag BOOLEAN NOT NULL DEFAULT false, amount NUMERIC(12,2), payload JSON, payloadb JSONB, raw BYTEA, tags TEXT[], created_at TIMESTAMP, updated_at TIMESTAMPTZ, embedding VECTOR, note TEXT DEFAULT 'default-note', note_len INT GENERATED ALWAYS AS (length(note)) STORED, PRIMARY KEY (customer_id, item_id));"
+cat > "$TMP_DIR/customer-sync.copy" <<'EOF'
+10	11111111-1111-1111-1111-111111111111	t	123.45	{"plan":"pro"}	{"state":"active"}	\\x0102ff	{"alpha","beta"}	2026-01-02 03:04:05	2026-01-02 03:04:05+00	[1,2,3]	pgdog-copy
+11	22222222-2222-2222-2222-222222222222	f	\N	\N	\N	\N	\N	\N	\N	\N	nullable-copy
+EOF
+psql_pgdog -c "COPY pgdog_customer_sync (customer_id, item_id, flag, amount, payload, payloadb, raw, tags, created_at, updated_at, embedding, note) FROM STDIN;" < "$TMP_DIR/customer-sync.copy"
+psql_pgdog -c "UPDATE pgdog_customer_sync SET amount = amount + 1, payloadb = jsonb_set(payloadb, '{state}', '\"updated\"'::jsonb), tags = ARRAY['gamma', 'delta'], note = 'pgdog-updated' WHERE customer_id = 10;"
+psql_pgdog -c "DELETE FROM pgdog_customer_sync WHERE customer_id = 11;"
+psql_pgdog -c "INSERT INTO pgdog_customer_sync (customer_id, item_id, flag) VALUES (12, '33333333-3333-3333-3333-333333333333', true);"
+customer_sync_result="$(psql_pgdog -At -F '|' -c "SELECT customer_id, amount::text, payload->>'plan', payloadb->>'state', array_to_string(tags, ','), embedding::text, length(note), note_len FROM pgdog_customer_sync WHERE customer_id = 10;")"
+if [[ "$customer_sync_result" != "10|124.45|pro|updated|gamma,delta|[1,2,3]|13|13" ]]; then
+  echo "customer-sync: expected copied and updated row, got: $customer_sync_result" >&2
+  exit 1
+fi
+customer_sync_deleted="$(psql_pgdog -At -c "SELECT count(*) FROM pgdog_customer_sync WHERE customer_id = 11;")"
+if [[ "$customer_sync_deleted" != "0" ]]; then
+  echo "customer-sync: expected customer_id 11 to be deleted, got count: $customer_sync_deleted" >&2
+  exit 1
+fi
+customer_sync_default="$(psql_pgdog -At -F '|' -c "SELECT customer_id, flag::text, note, note_len FROM pgdog_customer_sync WHERE customer_id = 12;")"
+if [[ "$customer_sync_default" != "12|true|default-note|12" ]]; then
+  echo "customer-sync: expected inserted default/generated row, got: $customer_sync_default" >&2
   exit 1
 fi
 sql_prepare_result="$(psql_pgdog -At -c "PREPARE dg_pgdog_stmt(int) AS SELECT \$1::int + 1;" -c "EXECUTE dg_pgdog_stmt(41);")"
