@@ -92,8 +92,8 @@ func (iter *pgStatReplicationSlotsRowIter) Next(ctx *sql.Context) (sql.Row, erro
 		int64(0),
 		int64(0),
 		int64(0),
-		int64(0),
-		int64(0),
+		slot.TotalTxns,
+		slot.TotalBytes,
 		nil,
 	}, nil
 }

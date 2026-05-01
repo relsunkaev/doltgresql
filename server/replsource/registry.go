@@ -41,6 +41,8 @@ type Slot struct {
 	RestartLSN        pglogrepl.LSN
 	ConfirmedFlushLSN pglogrepl.LSN
 	TwoPhase          bool
+	TotalTxns         int64
+	TotalBytes        int64
 }
 
 // Sender is the local state for one active START_REPLICATION stream.
@@ -115,6 +117,8 @@ type persistentSlot struct {
 	RestartLSN        uint64 `json:"restart_lsn"`
 	ConfirmedFlushLSN uint64 `json:"confirmed_flush_lsn"`
 	TwoPhase          bool   `json:"two_phase"`
+	TotalTxns         int64  `json:"total_txns"`
+	TotalBytes        int64  `json:"total_bytes"`
 }
 
 type persistentJournalEntry struct {
@@ -290,10 +294,12 @@ func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 	}
 	defaultRegistry.nextID++
 	host, port := splitAddr(info.RemoteAddr)
+	publications := compactLowerStrings(info.Publications)
+	replay, replayTxns, replayBytes := defaultRegistry.replayMessagesLocked(publications, info.StartLSN)
 	sender := Sender{
 		ID:              defaultRegistry.nextID,
 		SlotName:        info.SlotName,
-		Publications:    compactLowerStrings(info.Publications),
+		Publications:    publications,
 		PID:             info.PID,
 		User:            info.User,
 		ApplicationName: info.ApplicationName,
@@ -306,10 +312,18 @@ func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 		FlushLSN:        info.StartLSN,
 		ReplayLSN:       info.StartLSN,
 	}
+	if replayTxns > 0 {
+		slot.TotalTxns += replayTxns
+		slot.TotalBytes += replayBytes
+		if err := defaultRegistry.persistLocked(); err != nil {
+			slot.TotalTxns -= replayTxns
+			slot.TotalBytes -= replayBytes
+			return Sender{}, nil, err
+		}
+	}
 	slot.Active = true
 	slot.ActivePID = info.PID
 	defaultRegistry.senders[sender.ID] = &sender
-	replay := defaultRegistry.replayMessagesLocked(sender.Publications, info.StartLSN)
 	queueSize := 256
 	if len(replay) > queueSize {
 		queueSize = len(replay) + 256
@@ -379,6 +393,7 @@ func Broadcast(publications []string, messages []WALMessage) error {
 		return nil
 	}
 	publications = compactLowerStrings(publications)
+	totalBytes := replicationMessageBytes(messages)
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
 	if len(defaultRegistry.slots) > 0 {
@@ -386,8 +401,30 @@ func Broadcast(publications []string, messages []WALMessage) error {
 			Publications: append([]string(nil), publications...),
 			Messages:     cloneWALMessages(messages),
 		})
+	}
+	countedSlots := make(map[string]struct{})
+	for senderID, sender := range defaultRegistry.senders {
+		if !publicationSetsOverlap(sender.Publications, publications) {
+			continue
+		}
+		if _, ok := defaultRegistry.queues[senderID]; !ok {
+			continue
+		}
+		if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
+			slot.TotalTxns++
+			slot.TotalBytes += totalBytes
+			countedSlots[sender.SlotName] = struct{}{}
+		}
+	}
+	if len(defaultRegistry.slots) > 0 {
 		if err := defaultRegistry.persistLocked(); err != nil {
 			defaultRegistry.journal = defaultRegistry.journal[:len(defaultRegistry.journal)-1]
+			for slotName := range countedSlots {
+				if slot, ok := defaultRegistry.slots[slotName]; ok {
+					slot.TotalTxns--
+					slot.TotalBytes -= totalBytes
+				}
+			}
 			return err
 		}
 	}
@@ -493,11 +530,21 @@ func cloneWALMessages(messages []WALMessage) []WALMessage {
 	return ret
 }
 
-func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrepl.LSN) []WALMessage {
+func replicationMessageBytes(messages []WALMessage) int64 {
+	var total int64
+	for _, message := range messages {
+		total += int64(len(message.WALData))
+	}
+	return total
+}
+
+func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrepl.LSN) ([]WALMessage, int64, int64) {
 	if len(r.journal) == 0 {
-		return nil
+		return nil, 0, 0
 	}
 	var replay []WALMessage
+	var txns int64
+	var bytes int64
 	for _, entry := range r.journal {
 		if !publicationSetsOverlap(publications, entry.Publications) {
 			continue
@@ -505,9 +552,11 @@ func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrep
 		if entryEndLSN(entry) <= startLSN {
 			continue
 		}
+		txns++
+		bytes += replicationMessageBytes(entry.Messages)
 		replay = append(replay, cloneWALMessages(entry.Messages)...)
 	}
-	return replay
+	return replay, txns, bytes
 }
 
 func (r *registry) pruneJournalLocked() {
@@ -569,6 +618,8 @@ func (r *registry) loadLocked() error {
 			RestartLSN:        pglogrepl.LSN(storedSlot.RestartLSN),
 			ConfirmedFlushLSN: pglogrepl.LSN(storedSlot.ConfirmedFlushLSN),
 			TwoPhase:          storedSlot.TwoPhase,
+			TotalTxns:         storedSlot.TotalTxns,
+			TotalBytes:        storedSlot.TotalBytes,
 		}
 		if slot.Plugin == "" {
 			slot.Plugin = "pgoutput"
@@ -641,6 +692,8 @@ func (r *registry) toPersistentStateLocked() persistentState {
 			RestartLSN:        uint64(slot.RestartLSN),
 			ConfirmedFlushLSN: uint64(slot.ConfirmedFlushLSN),
 			TwoPhase:          slot.TwoPhase,
+			TotalTxns:         slot.TotalTxns,
+			TotalBytes:        slot.TotalBytes,
 		})
 	}
 	slices.SortFunc(state.Slots, func(a, b persistentSlot) int {

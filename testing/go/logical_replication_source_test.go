@@ -65,15 +65,16 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.Equal(t, slotName, slot.SlotName)
 	require.Equal(t, "pgoutput", slot.OutputPlugin)
 
-	var plugin, slotType, confirmedFlush string
+	var plugin, slotType, restartLSN, confirmedFlush string
 	var active bool
 	require.NoError(t, conn.Current.QueryRow(ctx, `
-		SELECT plugin, slot_type, active, confirmed_flush_lsn::text
+		SELECT plugin, slot_type, active, restart_lsn::text, confirmed_flush_lsn::text
 		FROM pg_catalog.pg_replication_slots
-		WHERE slot_name = $1`, slotName).Scan(&plugin, &slotType, &active, &confirmedFlush))
+		WHERE slot_name = $1`, slotName).Scan(&plugin, &slotType, &active, &restartLSN, &confirmedFlush))
 	require.Equal(t, "pgoutput", plugin)
 	require.Equal(t, "logical", slotType)
 	require.False(t, active)
+	require.Equal(t, "0/0", restartLSN)
 	require.Equal(t, "0/0", confirmedFlush)
 
 	var totalTxns int64
@@ -163,6 +164,14 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
 
 	waitForReplicationState(t, ctx, conn, slotName, commit.CommitLSN.String())
+
+	var totalBytes int64
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT total_txns, total_bytes
+		FROM pg_catalog.pg_stat_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&totalTxns, &totalBytes))
+	require.Equal(t, int64(7), totalTxns)
+	require.Greater(t, totalBytes, int64(0))
 
 	_, err = pglogrepl.SendStandbyCopyDone(ctx, replConn)
 	require.NoError(t, err)
@@ -811,13 +820,21 @@ func TestLogicalReplicationSourceReplaysInactiveSlotChangesAfterRestart(t *testi
 	}()
 
 	var active bool
-	var confirmedFlush string
+	var restartLSN, confirmedFlush string
 	require.NoError(t, conn.Current.QueryRow(ctx, `
-		SELECT active, confirmed_flush_lsn::text
+		SELECT active, restart_lsn::text, confirmed_flush_lsn::text
 		FROM pg_catalog.pg_replication_slots
-		WHERE slot_name = $1`, slotName).Scan(&active, &confirmedFlush))
+		WHERE slot_name = $1`, slotName).Scan(&active, &restartLSN, &confirmedFlush))
 	require.False(t, active)
+	require.Equal(t, "0/0", restartLSN)
 	require.Equal(t, "0/0", confirmedFlush)
+	var totalTxns, totalBytes int64
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT total_txns, total_bytes
+		FROM pg_catalog.pg_stat_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&totalTxns, &totalBytes))
+	require.Equal(t, int64(0), totalTxns)
+	require.Equal(t, int64(0), totalBytes)
 
 	replConn = connectReplicationConn(t, ctx, port)
 	defer func() {
@@ -848,6 +865,12 @@ func TestLogicalReplicationSourceReplaysInactiveSlotChangesAfterRestart(t *testi
 	reply := receiveReplicationCopyData(t, replConn)
 	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
 	waitForReplicationState(t, ctx, conn, slotName, commit.CommitLSN.String())
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT total_txns, total_bytes
+		FROM pg_catalog.pg_stat_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&totalTxns, &totalBytes))
+	require.Equal(t, int64(1), totalTxns)
+	require.Greater(t, totalBytes, int64(0))
 
 	_, err = pglogrepl.SendStandbyCopyDone(ctx, replConn)
 	require.NoError(t, err)
@@ -861,11 +884,18 @@ func TestLogicalReplicationSourceReplaysInactiveSlotChangesAfterRestart(t *testi
 	replsource.ResetForTests()
 	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
 	require.NoError(t, conn.Current.QueryRow(ctx, `
-		SELECT active, confirmed_flush_lsn::text
+		SELECT active, restart_lsn::text, confirmed_flush_lsn::text
 		FROM pg_catalog.pg_replication_slots
-		WHERE slot_name = $1`, slotName).Scan(&active, &confirmedFlush))
+		WHERE slot_name = $1`, slotName).Scan(&active, &restartLSN, &confirmedFlush))
 	require.False(t, active)
+	require.Equal(t, commit.CommitLSN.String(), restartLSN)
 	require.Equal(t, commit.CommitLSN.String(), confirmedFlush)
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT total_txns, total_bytes
+		FROM pg_catalog.pg_stat_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&totalTxns, &totalBytes))
+	require.Equal(t, int64(1), totalTxns)
+	require.Greater(t, totalBytes, int64(0))
 }
 
 func TestLogicalReplicationSourceReplaysUpdateAndDeleteAfterRestart(t *testing.T) {
@@ -1278,13 +1308,14 @@ func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection
 			flushLSN == expectedLSN && replayLSN == expectedLSN && syncState == "async" && replyTimeSet && lag == "0" {
 			var active bool
 			var activePIDSet bool
-			var confirmedFlush string
+			var restartLSN, confirmedFlush string
 			require.NoError(t, conn.Current.QueryRow(ctx, `
-				SELECT active, active_pid IS NOT NULL, confirmed_flush_lsn::text
+				SELECT active, active_pid IS NOT NULL, restart_lsn::text, confirmed_flush_lsn::text
 				FROM pg_catalog.pg_replication_slots
-				WHERE slot_name = $1`, slotName).Scan(&active, &activePIDSet, &confirmedFlush))
+				WHERE slot_name = $1`, slotName).Scan(&active, &activePIDSet, &restartLSN, &confirmedFlush))
 			require.True(t, active)
 			require.True(t, activePIDSet)
+			require.Equal(t, expectedLSN, restartLSN)
 			require.Equal(t, expectedLSN, confirmedFlush)
 			return
 		}
