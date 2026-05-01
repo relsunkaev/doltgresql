@@ -6,6 +6,8 @@ PgDog support is currently scoped to a primary-only customer-shard smoke path: c
 
 The shared-data topology decision is checked in at [migration-topology.md](./migration-topology.md). Shared, non-customer tables stay on the main Aurora/PostgreSQL endpoint and are not accessed through PgDog. The Aurora-to-Doltgres apply-path decision is checked in at [apply-path.md](./apply-path.md): PgDog owns production migration apply for this lane.
 
+Rollback proof and operator limits are checked in at [rollback.md](./rollback.md).
+
 ## Run
 
 From the repository root:
@@ -22,7 +24,7 @@ testing/pgdog/run_customer_migration_harness.sh
 
 The script builds a local `doltgres` binary unless `DOLTGRES_BIN` is set, starts a temporary main database plus two temporary Doltgres customer shards on the host, starts `ghcr.io/pgdogdev/pgdog:latest` in Docker, runs a shard-routing smoke test through PgDog, then checks supported compatibility lanes and explicit unsupported boundaries.
 
-The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, copies one customer's rows through PgDog, applies post-copy insert/update/delete traffic through the PgDog customer route, validates source-to-destination row/checksum equality before cutover, proves a post-cutover write routes to Doltgres, and verifies shared tables remain source-only.
+The customer migration harness starts a real `postgres:16-alpine` source container, two Doltgres customer shards, and PgDog. It creates matching customer schema, copies one customer's rows through PgDog, applies post-copy insert/update/delete traffic through the PgDog customer route, validates source-to-destination row/checksum equality before cutover, proves post-cutover writes route to Doltgres, reverse-applies insert/update/delete changes back to the source rollback database across a Doltgres restart, and verifies shared tables remain source-only.
 
 On Homebrew-based macOS setups, the script automatically uses `icu4c@78` for the local Go build when `CGO_CPPFLAGS` is not already set.
 

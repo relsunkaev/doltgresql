@@ -10,6 +10,7 @@ PGDOG_PORT="${PGDOG_PORT:-16433}"
 SOURCE_POSTGRES_PORT="${SOURCE_POSTGRES_PORT:-15431}"
 DOLTGRES_SHARD0_PORT="${DOLTGRES_SHARD0_PORT:-15435}"
 DOLTGRES_SHARD1_PORT="${DOLTGRES_SHARD1_PORT:-15436}"
+DOLTGRES_DATABASE="${DOLTGRES_DATABASE:-postgres}"
 PGDOG_DOLTGRES_HOST="${PGDOG_DOLTGRES_HOST:-host.docker.internal}"
 SOURCE_CONTAINER="doltgres-pgdog-source-$$"
 PGDOG_CONTAINER="doltgres-pgdog-migration-$$"
@@ -17,9 +18,13 @@ CUSTOMER_ID="${CUSTOMER_ID:-42}"
 
 shard0_pid=""
 shard1_pid=""
+reverse_apply_pid=""
 
 cleanup() {
   docker rm -f "$PGDOG_CONTAINER" "$SOURCE_CONTAINER" >/dev/null 2>&1 || true
+  if [[ -n "$reverse_apply_pid" ]]; then
+    kill "$reverse_apply_pid" >/dev/null 2>&1 || true
+  fi
   if [[ -n "$shard0_pid" ]]; then
     kill "$shard0_pid" >/dev/null 2>&1 || true
   fi
@@ -38,7 +43,7 @@ psql_source() {
 psql_shard() {
   local port="$1"
   shift
-  PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$port" -U postgres -d pgdog "$@"
+  PGCONNECT_TIMEOUT=2 PGPASSWORD=password psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$port" -U postgres -d "$DOLTGRES_DATABASE" "$@"
 }
 
 psql_pgdog() {
@@ -54,7 +59,7 @@ write_doltgres_config() {
 log_level: warning
 behavior:
   read_only: false
-  dolt_transaction_commit: false
+  dolt_transaction_commit: true
 listener:
   host: 0.0.0.0
   port: $port
@@ -78,7 +83,7 @@ start_doltgres_shard() {
 
   DOLTGRES_USER=postgres \
     DOLTGRES_PASSWORD=password \
-    DOLTGRES_DB=pgdog \
+    DOLTGRES_DB="$DOLTGRES_DATABASE" \
     "$DOLTGRES_BIN" --config "$config_file" >"$log_file" 2>&1 &
   echo "$!"
 }
@@ -126,7 +131,7 @@ load_schema = "on"
 name = "pgdog"
 host = "$PGDOG_DOLTGRES_HOST"
 port = $DOLTGRES_SHARD0_PORT
-database_name = "pgdog"
+database_name = "$DOLTGRES_DATABASE"
 user = "postgres"
 password = "password"
 role = "primary"
@@ -136,7 +141,7 @@ shard = 0
 name = "pgdog"
 host = "$PGDOG_DOLTGRES_HOST"
 port = $DOLTGRES_SHARD1_PORT
-database_name = "pgdog"
+database_name = "$DOLTGRES_DATABASE"
 user = "postgres"
 password = "password"
 role = "primary"
@@ -224,6 +229,92 @@ assert_customer_matches_source() {
     echo "customer validation: checksum mismatch source=$source_checksum destination=$destination_checksum" >&2
     exit 1
   fi
+}
+
+find_customer_shard_port() {
+  local found=""
+  for shard_port in "$DOLTGRES_SHARD0_PORT" "$DOLTGRES_SHARD1_PORT"; do
+    count="$(psql_shard "$shard_port" -At -c "SELECT count(*) FROM customer_orders WHERE customer_id = $CUSTOMER_ID;")"
+    if [[ "$count" != "0" ]]; then
+      if [[ -n "$found" ]]; then
+        echo "reverse-routing: customer $CUSTOMER_ID found on multiple shards: $found and $shard_port" >&2
+        exit 1
+      fi
+      found="$shard_port"
+    fi
+  done
+  if [[ -z "$found" ]]; then
+    echo "reverse-routing: customer $CUSTOMER_ID was not found on any Doltgres shard" >&2
+    exit 1
+  fi
+  echo "$found"
+}
+
+restart_doltgres_shard() {
+  local shard_port="$1"
+  if [[ "$shard_port" == "$DOLTGRES_SHARD0_PORT" ]]; then
+    kill "$shard0_pid" >/dev/null 2>&1 || true
+    wait "$shard0_pid" >/dev/null 2>&1 || true
+    shard0_pid="$(start_doltgres_shard "$DOLTGRES_SHARD0_PORT" shard0)"
+    wait_for_shard "$DOLTGRES_SHARD0_PORT" "$TMP_DIR/shard0.log"
+  elif [[ "$shard_port" == "$DOLTGRES_SHARD1_PORT" ]]; then
+    kill "$shard1_pid" >/dev/null 2>&1 || true
+    wait "$shard1_pid" >/dev/null 2>&1 || true
+    shard1_pid="$(start_doltgres_shard "$DOLTGRES_SHARD1_PORT" shard1)"
+    wait_for_shard "$DOLTGRES_SHARD1_PORT" "$TMP_DIR/shard1.log"
+  else
+    echo "restart: unknown Doltgres shard port $shard_port" >&2
+    exit 1
+  fi
+}
+
+wait_for_pgdog_customer_route() {
+  for _ in $(seq 1 30); do
+    if psql_pgdog -c "SELECT count(*) FROM customer_orders WHERE customer_id = $CUSTOMER_ID;" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "PgDog did not reconnect to restarted Doltgres shard" >&2
+  docker logs "$PGDOG_CONTAINER" >&2 || true
+  return 1
+}
+
+wait_for_reverse_slot_active() {
+  local shard_port="$1"
+  for _ in $(seq 1 30); do
+    active="$(psql_shard "$shard_port" -At -c "SELECT active::text FROM pg_catalog.pg_replication_slots WHERE slot_name = 'dg_reverse_slot';")"
+    if [[ "$active" == "true" ]]; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "reverse-apply: slot did not become active" >&2
+  exit 1
+}
+
+start_reverse_apply() {
+  local source_url="$1"
+  local target_url="$2"
+  local commits="$3"
+  local shard_port="$4"
+
+  (cd "$ROOT_DIR" && go run ./testing/pgdog/reverse_apply \
+    -source-url "$source_url" \
+    -target-url "$target_url" \
+    -slot dg_reverse_slot \
+    -publication dg_reverse_pub \
+    -commits "$commits" \
+    -timeout 45s) &
+  reverse_apply_pid="$!"
+  wait_for_reverse_slot_active "$shard_port"
+}
+
+wait_for_reverse_apply() {
+  wait "$reverse_apply_pid"
+  reverse_apply_pid=""
 }
 
 if [[ -z "${DOLTGRES_BIN:-}" ]]; then
@@ -316,17 +407,39 @@ psql_pgdog -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND 
 
 assert_customer_matches_source
 
+reverse_shard_port="$(find_customer_shard_port)"
+reverse_source_url="postgres://postgres:password@127.0.0.1:$reverse_shard_port/$DOLTGRES_DATABASE?sslmode=disable"
+reverse_target_url="postgres://postgres:password@127.0.0.1:$SOURCE_POSTGRES_PORT/pgdog?sslmode=disable"
+psql_shard "$reverse_shard_port" -c "CREATE PUBLICATION dg_reverse_pub FOR TABLE customer_orders;"
+(cd "$ROOT_DIR" && go run ./testing/pgdog/reverse_apply \
+  -source-url "$reverse_source_url" \
+  -target-url "$reverse_target_url" \
+  -slot dg_reverse_slot \
+  -publication dg_reverse_pub \
+  -create-slot-only)
+
+start_reverse_apply "$reverse_source_url" "$reverse_target_url" 1 "$reverse_shard_port"
 psql_pgdog -c "INSERT INTO customer_orders VALUES ($CUSTOMER_ID, 4, 'cutover-write', 400, 'written through pgdog after cutover');"
 cutover_result="$(psql_pgdog -At -F '|' -c "SELECT status, amount, note FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 4;")"
 if [[ "$cutover_result" != "cutover-write|400|written through pgdog after cutover" ]]; then
   echo "cutover-routing: expected PgDog cutover write, got: $cutover_result" >&2
   exit 1
 fi
-source_cutover_count="$(psql_source -At -c "SELECT count(*) FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 4;")"
-if [[ "$source_cutover_count" != "0" ]]; then
-  echo "cutover-routing: source should not receive post-cutover PgDog write without reverse replication, got count: $source_cutover_count" >&2
+
+wait_for_reverse_apply
+source_cutover_result="$(psql_source -At -F '|' -c "SELECT status, amount, note FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 4;")"
+if [[ "$source_cutover_result" != "cutover-write|400|written through pgdog after cutover" ]]; then
+  echo "reverse-apply: expected first cutover write on rollback source, got: $source_cutover_result" >&2
   exit 1
 fi
 
-echo "PgDog customer migration harness passed for customer_id=$CUSTOMER_ID"
+restart_doltgres_shard "$reverse_shard_port"
+wait_for_pgdog_customer_route
 
+start_reverse_apply "$reverse_source_url" "$reverse_target_url" 2 "$reverse_shard_port"
+psql_pgdog -c "UPDATE customer_orders SET status = 'reverse-updated', amount = 450, note = 'reverse update after restart' WHERE customer_id = $CUSTOMER_ID AND order_id = 4;"
+psql_pgdog -c "DELETE FROM customer_orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;"
+wait_for_reverse_apply
+assert_customer_matches_source
+
+echo "PgDog customer migration harness passed for customer_id=$CUSTOMER_ID"
