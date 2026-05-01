@@ -51,6 +51,17 @@ type replicationChangeCapture struct {
 	rowsAffected      uint64
 }
 
+type publicationChangeTarget struct {
+	name      string
+	columns   []string
+	rowFilter string
+}
+
+type rowFilterValue struct {
+	data []byte
+	null bool
+}
+
 func prepareReplicationChangeCapture(query ConvertedQuery, fullRowColumns []string) (*replicationChangeCapture, bool) {
 	capture, ok := replicationChangeCaptureFromStatement(query.AST)
 	if !ok {
@@ -235,63 +246,274 @@ func (capture *replicationChangeCapture) publish(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
-	publicationNames, err := capture.publicationNames(ctx, schema)
-	if err != nil || len(publicationNames) == 0 {
+	targets, err := capture.publicationTargets(ctx, schema)
+	if err != nil || len(targets) == 0 {
 		return err
 	}
 
-	commitLSN := replsource.AdvanceLSN()
 	relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
-	relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), capture.fields)
-	messages := []replsource.WALMessage{
-		{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
-		{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: relation},
-	}
-	for _, row := range capture.rows {
+	var commitLSN pglogrepl.LSN
+	for _, target := range targets {
+		fields, rows, err := capture.projectRowsForPublication(target)
+		if err != nil {
+			return err
+		}
+		if len(rows) == 0 {
+			continue
+		}
+		if commitLSN == 0 {
+			commitLSN = replsource.AdvanceLSN()
+		}
+		relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields)
+		messages := []replsource.WALMessage{
+			{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
+			{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: relation},
+		}
+		for _, row := range rows {
+			messages = append(messages, replsource.WALMessage{
+				WALStart:     commitLSN,
+				ServerWALEnd: commitLSN,
+				WALData:      capture.encodeRowMessage(relationID, row),
+			})
+		}
 		messages = append(messages, replsource.WALMessage{
 			WALStart:     commitLSN,
 			ServerWALEnd: commitLSN,
-			WALData:      capture.encodeRowMessage(relationID, row),
+			WALData:      encodeCommitMessage(commitLSN),
 		})
+		if err = replsource.Broadcast([]string{target.name}, messages); err != nil {
+			return err
+		}
 	}
-	messages = append(messages, replsource.WALMessage{
-		WALStart:     commitLSN,
-		ServerWALEnd: commitLSN,
-		WALData:      encodeCommitMessage(commitLSN),
-	})
-	return replsource.Broadcast(publicationNames, messages)
+	return nil
 }
 
-func (capture *replicationChangeCapture) publicationNames(ctx *sql.Context, schema string) ([]string, error) {
+func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, schema string) ([]publicationChangeTarget, error) {
 	collection, err := core.GetPublicationsCollectionFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var names []string
+	var targets []publicationChangeTarget
 	tableID := id.NewTable(schema, capture.table)
 	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
 		if !publicationPublishesAction(pub, capture.action) {
 			return false, nil
 		}
+		for _, relation := range pub.Tables {
+			if relation.Table == tableID {
+				targets = append(targets, publicationChangeTarget{
+					name:      pub.ID.PublicationName(),
+					columns:   relation.Columns,
+					rowFilter: relation.RowFilter,
+				})
+				return false, nil
+			}
+		}
 		if pub.AllTables {
-			names = append(names, pub.ID.PublicationName())
+			targets = append(targets, publicationChangeTarget{name: pub.ID.PublicationName()})
 			return false, nil
 		}
 		for _, pubSchema := range pub.Schemas {
 			if strings.EqualFold(pubSchema, schema) {
-				names = append(names, pub.ID.PublicationName())
-				return false, nil
-			}
-		}
-		for _, relation := range pub.Tables {
-			if relation.Table == tableID {
-				names = append(names, pub.ID.PublicationName())
+				targets = append(targets, publicationChangeTarget{name: pub.ID.PublicationName()})
 				return false, nil
 			}
 		}
 		return false, nil
 	})
-	return names, err
+	return targets, err
+}
+
+func (capture *replicationChangeCapture) projectRowsForPublication(target publicationChangeTarget) ([]pgproto3.FieldDescription, []Row, error) {
+	indexes, err := capture.publicationColumnIndexes(target.columns)
+	if err != nil {
+		return nil, nil, err
+	}
+	fields := make([]pgproto3.FieldDescription, len(indexes))
+	for i, idx := range indexes {
+		fields[i] = capture.fields[idx]
+	}
+	filterExpr, err := parsePublicationRowFilter(target.rowFilter)
+	if err != nil {
+		return nil, nil, err
+	}
+	rows := make([]Row, 0, len(capture.rows))
+	for _, row := range capture.rows {
+		matches, err := capture.rowMatchesPublicationFilter(row, filterExpr)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !matches {
+			continue
+		}
+		projected := Row{val: make([][]byte, len(indexes))}
+		for i, idx := range indexes {
+			projected.val[i] = append([]byte(nil), row.val[idx]...)
+		}
+		rows = append(rows, projected)
+	}
+	return fields, rows, nil
+}
+
+func (capture *replicationChangeCapture) publicationColumnIndexes(columns []string) ([]int, error) {
+	if len(columns) == 0 {
+		indexes := make([]int, len(capture.fields))
+		for i := range capture.fields {
+			indexes[i] = i
+		}
+		return indexes, nil
+	}
+	indexByName := make(map[string]int, len(capture.fields))
+	for i, field := range capture.fields {
+		indexByName[strings.ToLower(string(field.Name))] = i
+	}
+	indexes := make([]int, len(columns))
+	for i, column := range columns {
+		idx, ok := indexByName[strings.ToLower(column)]
+		if !ok {
+			return nil, errors.Errorf(`publication column "%s" was not captured for table "%s"`, column, capture.table)
+		}
+		indexes[i] = idx
+	}
+	return indexes, nil
+}
+
+func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
+	rowFilter = strings.TrimSpace(rowFilter)
+	if rowFilter == "" {
+		return nil, nil
+	}
+	statement, err := vitess.Parse("SELECT 1 WHERE " + rowFilter)
+	if err != nil {
+		return nil, err
+	}
+	selectStatement, ok := statement.(*vitess.Select)
+	if !ok || selectStatement.Where == nil {
+		return nil, errors.Errorf("publication row filter did not parse as a WHERE expression")
+	}
+	return selectStatement.Where.Expr, nil
+}
+
+func (capture *replicationChangeCapture) rowMatchesPublicationFilter(row Row, expr vitess.Expr) (bool, error) {
+	if expr == nil {
+		return true, nil
+	}
+	values := make(map[string]rowFilterValue, len(capture.fields))
+	for i, field := range capture.fields {
+		value := rowFilterValue{}
+		if i >= len(row.val) || row.val[i] == nil {
+			value.null = true
+		} else {
+			value.data = row.val[i]
+		}
+		values[strings.ToLower(string(field.Name))] = value
+	}
+	return evalPublicationFilterBool(expr, values)
+}
+
+func evalPublicationFilterBool(expr vitess.Expr, values map[string]rowFilterValue) (bool, error) {
+	switch typed := expr.(type) {
+	case *vitess.AndExpr:
+		left, err := evalPublicationFilterBool(typed.Left, values)
+		if err != nil || !left {
+			return left, err
+		}
+		return evalPublicationFilterBool(typed.Right, values)
+	case *vitess.OrExpr:
+		left, err := evalPublicationFilterBool(typed.Left, values)
+		if err != nil || left {
+			return left, err
+		}
+		return evalPublicationFilterBool(typed.Right, values)
+	case *vitess.NotExpr:
+		value, err := evalPublicationFilterBool(typed.Expr, values)
+		return !value, err
+	case *vitess.ParenExpr:
+		return evalPublicationFilterBool(typed.Expr, values)
+	case *vitess.ComparisonExpr:
+		return evalPublicationFilterComparison(typed, values)
+	case *vitess.IsExpr:
+		value, err := evalPublicationFilterScalar(typed.Expr, values)
+		if err != nil {
+			return false, err
+		}
+		switch strings.ToLower(typed.Operator) {
+		case vitess.IsNullStr:
+			return value.null, nil
+		case vitess.IsNotNullStr:
+			return !value.null, nil
+		default:
+			return false, errors.Errorf("publication row filter operator %q is not supported", typed.Operator)
+		}
+	default:
+		return false, errors.Errorf("publication row filter expression %T is not supported", expr)
+	}
+}
+
+func evalPublicationFilterComparison(expr *vitess.ComparisonExpr, values map[string]rowFilterValue) (bool, error) {
+	left, err := evalPublicationFilterScalar(expr.Left, values)
+	if err != nil {
+		return false, err
+	}
+	if strings.EqualFold(expr.Operator, vitess.InStr) || strings.EqualFold(expr.Operator, vitess.NotInStr) {
+		tuple, ok := expr.Right.(vitess.ValTuple)
+		if !ok {
+			return false, errors.Errorf("publication row filter IN requires a literal tuple")
+		}
+		matches := false
+		for _, tupleExpr := range tuple {
+			right, err := evalPublicationFilterScalar(tupleExpr, values)
+			if err != nil {
+				return false, err
+			}
+			if rowFilterValuesEqual(left, right) {
+				matches = true
+				break
+			}
+		}
+		if strings.EqualFold(expr.Operator, vitess.NotInStr) {
+			return !matches, nil
+		}
+		return matches, nil
+	}
+	right, err := evalPublicationFilterScalar(expr.Right, values)
+	if err != nil {
+		return false, err
+	}
+	switch strings.ToLower(expr.Operator) {
+	case vitess.EqualStr:
+		return rowFilterValuesEqual(left, right), nil
+	case vitess.NotEqualStr, "<>":
+		return !rowFilterValuesEqual(left, right), nil
+	default:
+		return false, errors.Errorf("publication row filter comparison operator %q is not supported", expr.Operator)
+	}
+}
+
+func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterValue) (rowFilterValue, error) {
+	switch typed := expr.(type) {
+	case *vitess.ColName:
+		value, ok := values[strings.ToLower(typed.Name.String())]
+		if !ok {
+			return rowFilterValue{}, errors.Errorf(`publication row filter references unknown column "%s"`, typed.Name.String())
+		}
+		return value, nil
+	case *vitess.SQLVal:
+		return rowFilterValue{data: append([]byte(nil), typed.Val...)}, nil
+	case *vitess.NullVal:
+		return rowFilterValue{null: true}, nil
+	case *vitess.ParenExpr:
+		return evalPublicationFilterScalar(typed.Expr, values)
+	default:
+		return rowFilterValue{}, errors.Errorf("publication row filter scalar expression %T is not supported", expr)
+	}
+}
+
+func rowFilterValuesEqual(left rowFilterValue, right rowFilterValue) bool {
+	if left.null || right.null {
+		return false
+	}
+	return string(left.data) == string(right.data)
 }
 
 func publicationPublishesAction(pub publications.Publication, action replicationChangeAction) bool {

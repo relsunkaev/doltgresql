@@ -239,6 +239,66 @@ func TestLogicalReplicationSourceFiltersPublicationAndIgnoresClientLSNFeedback(t
 	requireInsertChange(t, relation, insert, "dg_pub_a_items", "2", "right-publication")
 }
 
+func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_publication_filter_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_customer_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT,
+			internal_note TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_customer_pub
+		FOR TABLE dg_customer_items (customer_id, label)
+		WHERE (customer_id = 42);`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_customer_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_customer_items VALUES (1, 7, 'wrong-customer', 'hidden-7');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_customer_items VALUES (2, 42, 'right-customer', 'hidden-42');")
+	require.NoError(t, err)
+
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_customer_items", relation.RelationName)
+	require.Equal(t, uint16(2), relation.ColumnNum)
+	require.Equal(t, "customer_id", relation.Columns[0].Name)
+	require.Equal(t, "label", relation.Columns[1].Name)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 2)
+	require.Equal(t, "42", string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, "right-customer", string(insert.Tuple.Columns[1].Data))
+}
+
 func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
