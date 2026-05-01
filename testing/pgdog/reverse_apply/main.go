@@ -43,6 +43,8 @@ func main() {
 	targetURL := flag.String("target-url", "", "Postgres rollback target URL")
 	slot := flag.String("slot", "dg_reverse_slot", "logical replication slot")
 	publication := flag.String("publication", "dg_reverse_pub", "publication name")
+	schema := flag.String("schema", "public", "replicated table schema")
+	table := flag.String("table", "customer_orders", "replicated table name")
 	commits := flag.Int("commits", 1, "number of commits to apply before exiting")
 	timeout := flag.Duration("timeout", 20*time.Second, "overall apply timeout")
 	createSlotOnly := flag.Bool("create-slot-only", false, "create the slot and exit")
@@ -53,6 +55,11 @@ func main() {
 	}
 	if *commits < 1 && !*createSlotOnly {
 		exitf("commits must be positive")
+	}
+	cfg := applyConfig{
+		schema:      *schema,
+		table:       *table,
+		targetTable: pgx.Identifier{*schema, *table}.Sanitize(),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
@@ -120,15 +127,15 @@ func main() {
 		case *pglogrepl.RelationMessageV2:
 			relations[typed.RelationID] = relationFromMessage(typed)
 		case *pglogrepl.InsertMessageV2:
-			if err := applyInsert(ctx, targetConn, relations, typed.RelationID, typed.Tuple); err != nil {
+			if err := applyInsert(ctx, targetConn, cfg, relations, typed.RelationID, typed.Tuple); err != nil {
 				exitf("apply insert: %v", err)
 			}
 		case *pglogrepl.UpdateMessageV2:
-			if err := applyUpdate(ctx, targetConn, relations, typed.RelationID, typed.NewTuple); err != nil {
+			if err := applyUpdate(ctx, targetConn, cfg, relations, typed.RelationID, typed.NewTuple); err != nil {
 				exitf("apply update: %v", err)
 			}
 		case *pglogrepl.DeleteMessageV2:
-			if err := applyDelete(ctx, targetConn, relations, typed.RelationID, typed.OldTuple); err != nil {
+			if err := applyDelete(ctx, targetConn, cfg, relations, typed.RelationID, typed.OldTuple); err != nil {
 				exitf("apply delete: %v", err)
 			}
 		case *pglogrepl.CommitMessage:
@@ -143,6 +150,12 @@ func main() {
 			appliedCommits++
 		}
 	}
+}
+
+type applyConfig struct {
+	schema      string
+	table       string
+	targetTable string
 }
 
 func replicationURL(url string) string {
@@ -226,46 +239,46 @@ func valuesFor(rel relation, tuple *pglogrepl.TupleData) (rowValues, error) {
 	return values, nil
 }
 
-func applyInsert(ctx context.Context, conn *pgx.Conn, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
+func applyInsert(ctx context.Context, conn *pgx.Conn, cfg applyConfig, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
 	rel, values, err := loadCustomerOrderValues(relations, relationID, tuple)
 	if err != nil {
 		return err
 	}
-	if rel.table != "customer_orders" || rel.schema != "public" {
+	if rel.table != cfg.table || rel.schema != cfg.schema {
 		return fmt.Errorf("unexpected relation %s.%s", rel.schema, rel.table)
 	}
-	_, err = conn.Exec(ctx, `INSERT INTO customer_orders (customer_id, order_id, status, amount, note)
+	_, err = conn.Exec(ctx, fmt.Sprintf(`INSERT INTO %s (customer_id, order_id, status, amount, note)
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (customer_id, order_id) DO UPDATE
-		SET status = EXCLUDED.status, amount = EXCLUDED.amount, note = EXCLUDED.note`,
+		SET status = EXCLUDED.status, amount = EXCLUDED.amount, note = EXCLUDED.note`, cfg.targetTable),
 		values.customerID, values.orderID, values.status, values.amount, values.note)
 	return err
 }
 
-func applyUpdate(ctx context.Context, conn *pgx.Conn, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
+func applyUpdate(ctx context.Context, conn *pgx.Conn, cfg applyConfig, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
 	rel, values, err := loadCustomerOrderValues(relations, relationID, tuple)
 	if err != nil {
 		return err
 	}
-	if rel.table != "customer_orders" || rel.schema != "public" {
+	if rel.table != cfg.table || rel.schema != cfg.schema {
 		return fmt.Errorf("unexpected relation %s.%s", rel.schema, rel.table)
 	}
-	_, err = conn.Exec(ctx, `UPDATE customer_orders
+	_, err = conn.Exec(ctx, fmt.Sprintf(`UPDATE %s
 		SET status = $3, amount = $4, note = $5
-		WHERE customer_id = $1 AND order_id = $2`,
+		WHERE customer_id = $1 AND order_id = $2`, cfg.targetTable),
 		values.customerID, values.orderID, values.status, values.amount, values.note)
 	return err
 }
 
-func applyDelete(ctx context.Context, conn *pgx.Conn, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
+func applyDelete(ctx context.Context, conn *pgx.Conn, cfg applyConfig, relations map[uint32]relation, relationID uint32, tuple *pglogrepl.TupleData) error {
 	rel, values, err := loadCustomerOrderKeyValues(relations, relationID, tuple)
 	if err != nil {
 		return err
 	}
-	if rel.table != "customer_orders" || rel.schema != "public" {
+	if rel.table != cfg.table || rel.schema != cfg.schema {
 		return fmt.Errorf("unexpected relation %s.%s", rel.schema, rel.table)
 	}
-	_, err = conn.Exec(ctx, `DELETE FROM customer_orders WHERE customer_id = $1 AND order_id = $2`, values.customerID, values.orderID)
+	_, err = conn.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE customer_id = $1 AND order_id = $2`, cfg.targetTable), values.customerID, values.orderID)
 	return err
 }
 

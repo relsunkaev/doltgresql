@@ -83,7 +83,7 @@ For one customer:
 7. Add or update list mappings for the migrated customer ID to point to the Doltgres shard.
 8. Restart PgDog with the updated configuration, then wait for readiness and schema cache load.
 9. Resume customer traffic through PgDog and verify post-cutover writes land only on Doltgres.
-10. If rollback safety is required, create a Doltgres publication and durable logical slot before accepting rollback-sensitive writes.
+10. If rollback safety is required, create a Doltgres publication and durable logical slot before accepting rollback-sensitive writes, then stream the migrated customer's `customer.*` row changes back to shard 0 until rollback validation matches.
 
 PgDog documents configuration hot reload and an admin `RELOAD` command, but this topology treats **PgDog restart** as the baseline supported mapping-cutover primitive. A restart recycles PgDog client and server connections, so operators must drain or pause the selected customer's writes and let clients reconnect before resuming traffic. If `RELOAD` is later proven safe for `[[sharded_mappings]]`, this document should be updated to make reload the preferred low-disruption primitive.
 
@@ -107,6 +107,7 @@ This topology is not considered supported until the schema-split harness proves:
 - A selected customer ID can be copied to Doltgres and cut over through list mapping.
 - Post-copy source changes for the selected customer converge on Doltgres before cutover.
 - Post-cutover writes for the migrated customer route only to Doltgres.
+- Post-cutover insert/update/delete changes for the migrated customer reverse-apply back to shard 0 through a durable Doltgres logical slot, including after a Doltgres restart.
 - Another customer remains on shard 0 after the migrated customer cuts over.
 - PgDog reload or restart semantics for the mapping change are known and documented.
 - Unsafe unqualified, cross-schema, and cross-shard shapes are either rejected or documented with tests.

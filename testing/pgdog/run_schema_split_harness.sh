@@ -17,9 +17,13 @@ CUSTOMER_ID="${CUSTOMER_ID:-42}"
 UNMIGRATED_CUSTOMER_ID="${UNMIGRATED_CUSTOMER_ID:-7}"
 
 shard1_pid=""
+reverse_apply_pid=""
 
 cleanup() {
   docker rm -f "$PGDOG_CONTAINER" "$SOURCE_CONTAINER" >/dev/null 2>&1 || true
+  if [[ -n "$reverse_apply_pid" ]]; then
+    kill "$reverse_apply_pid" >/dev/null 2>&1 || true
+  fi
   if [[ -n "$shard1_pid" ]]; then
     kill "$shard1_pid" >/dev/null 2>&1 || true
   fi
@@ -198,6 +202,13 @@ restart_pgdog() {
   wait_for_pgdog
 }
 
+restart_doltgres() {
+  kill "$shard1_pid" >/dev/null 2>&1 || true
+  wait "$shard1_pid" >/dev/null 2>&1 || true
+  shard1_pid="$(start_doltgres)"
+  wait_for_doltgres
+}
+
 wait_for_pgdog() {
   for _ in $(seq 1 60); do
     if psql_pgdog -c "SELECT 1;" >/dev/null 2>&1; then
@@ -209,6 +220,72 @@ wait_for_pgdog() {
   echo "PgDog did not become ready" >&2
   docker logs "$PGDOG_CONTAINER" >&2 || true
   return 1
+}
+
+wait_for_pgdog_customer_route() {
+  for _ in $(seq 1 30); do
+    if psql_pgdog -c "SELECT count(*) FROM customer.orders WHERE customer_id = $CUSTOMER_ID;" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "PgDog did not reconnect to restarted Doltgres shard" >&2
+  docker logs "$PGDOG_CONTAINER" >&2 || true
+  return 1
+}
+
+wait_for_reverse_slot_active() {
+  local slot="$1"
+  local active
+
+  for _ in $(seq 1 30); do
+    active="$(psql_doltgres -At -c "SELECT active::text FROM pg_catalog.pg_replication_slots WHERE slot_name = '$slot';")"
+    if [[ "$active" == "true" ]]; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "reverse-apply: slot $slot did not become active" >&2
+  exit 1
+}
+
+run_reverse_apply() {
+  local source_url="$1"
+  local target_url="$2"
+  local slot="$3"
+  local publication="$4"
+  local commits="$5"
+  shift 5
+
+  (cd "$ROOT_DIR" && go run ./testing/pgdog/reverse_apply \
+    -source-url "$source_url" \
+    -target-url "$target_url" \
+    -slot "$slot" \
+    -publication "$publication" \
+    -schema customer \
+    -table orders \
+    -commits "$commits" \
+    -timeout 45s \
+    "$@")
+}
+
+start_reverse_apply() {
+  local source_url="$1"
+  local target_url="$2"
+  local slot="$3"
+  local publication="$4"
+  local commits="$5"
+
+  run_reverse_apply "$source_url" "$target_url" "$slot" "$publication" "$commits" &
+  reverse_apply_pid="$!"
+  wait_for_reverse_slot_active "$slot"
+}
+
+wait_for_reverse_apply() {
+  wait "$reverse_apply_pid"
+  reverse_apply_pid=""
 }
 
 shared_table_count_on_doltgres() {
@@ -403,6 +480,16 @@ post_cutover_pgdog_rows="$(customer_rows psql_pgdog "$CUSTOMER_ID")"
 post_cutover_doltgres_rows="$(customer_rows psql_doltgres "$CUSTOMER_ID")"
 assert_rows_equal "post-cutover-customer-doltgres-pgdog" "$post_cutover_doltgres_rows" "$post_cutover_pgdog_rows"
 
+reverse_source_url="postgres://postgres:password@127.0.0.1:$DOLTGRES_SHARD1_PORT/$DOLTGRES_DATABASE?sslmode=disable"
+reverse_target_url="postgres://postgres:password@127.0.0.1:$SOURCE_POSTGRES_PORT/pgdog?sslmode=disable"
+reverse_slot="dg_schema_reverse_slot"
+reverse_publication="dg_schema_reverse_pub"
+reverse_shared_before="$(psql_source -At -F '|' -c "SELECT id, label FROM shared.accounts ORDER BY id;")"
+reverse_unmigrated_before="$(customer_rows psql_source "$UNMIGRATED_CUSTOMER_ID")"
+
+psql_doltgres -c "CREATE PUBLICATION $reverse_publication FOR TABLE customer.orders;"
+run_reverse_apply "$reverse_source_url" "$reverse_target_url" "$reverse_slot" "$reverse_publication" 1 -create-slot-only
+
 psql_pgdog -c "INSERT INTO customer.orders (customer_id, order_id, status, amount, note) VALUES ($CUSTOMER_ID, 2, 'post-cutover-insert', 430, 'written after mapping cutover');"
 psql_pgdog -c "UPDATE customer.orders SET status = 'post-cutover-updated', amount = 431 WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"
 
@@ -417,13 +504,32 @@ if [[ "$post_write_doltgres_result" != "post-cutover-updated|431|written after m
   exit 1
 fi
 
+run_reverse_apply "$reverse_source_url" "$reverse_target_url" "$reverse_slot" "$reverse_publication" 2
+source_reverse_insert_result="$(psql_source -At -F '|' -c "SELECT status, amount, note FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 2;")"
+if [[ "$source_reverse_insert_result" != "post-cutover-updated|431|written after mapping cutover" ]]; then
+  echo "reverse-apply: expected post-cutover write on source rollback target, got: $source_reverse_insert_result" >&2
+  exit 1
+fi
+
+restart_doltgres
+wait_for_pgdog_customer_route
+
+start_reverse_apply "$reverse_source_url" "$reverse_target_url" "$reverse_slot" "$reverse_publication" 2
+psql_pgdog -c "UPDATE customer.orders SET status = 'reverse-updated', amount = 450, note = 'reverse update after restart' WHERE customer_id = $CUSTOMER_ID AND order_id = 2;"
+psql_pgdog -c "DELETE FROM customer.orders WHERE customer_id = $CUSTOMER_ID AND order_id = 1;"
+wait_for_reverse_apply
+assert_customer_snapshot_matches_source "reverse-apply-doltgres-source" psql_doltgres "$CUSTOMER_ID"
+
 source_rows_after_cutover="$(customer_rows psql_source "$UNMIGRATED_CUSTOMER_ID")"
 assert_customer_rows_on_runner "unmigrated-after-cutover-source-pgdog" psql_pgdog "$UNMIGRATED_CUSTOMER_ID" "$source_rows_after_cutover"
+assert_rows_equal "reverse-apply-unmigrated-source-unchanged" "$reverse_unmigrated_before" "$source_rows_after_cutover"
 
 shared_after_cutover="$(psql_pgdog -At -c "SELECT label FROM shared.accounts WHERE id = 2;")"
 if [[ "$shared_after_cutover" != "pgdog-shared-updated" ]]; then
   echo "shared-routing: expected shared row to remain routed to source after cutover, got: $shared_after_cutover" >&2
   exit 1
 fi
+reverse_shared_after="$(psql_source -At -F '|' -c "SELECT id, label FROM shared.accounts ORDER BY id;")"
+assert_rows_equal "reverse-apply-shared-source-unchanged" "$reverse_shared_before" "$reverse_shared_after"
 
-echo "PgDog schema-split topology and mapping cutover harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"
+echo "PgDog schema-split topology, mapping cutover, and reverse apply harness passed for customer_id=$CUSTOMER_ID unmigrated_customer_id=$UNMIGRATED_CUSTOMER_ID"
