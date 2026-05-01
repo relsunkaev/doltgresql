@@ -131,7 +131,6 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 		return err
 	}
 	h.replicationSenderID = sender.ID
-	go h.runReplicationSender(queue)
 	if err = h.send(&pgproto3.CopyBothResponse{}); err != nil {
 		h.closeReplicationSender()
 		return err
@@ -140,6 +139,7 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 		h.closeReplicationSender()
 		return err
 	}
+	go h.runReplicationSender(queue)
 	return nil
 }
 

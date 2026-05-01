@@ -42,7 +42,9 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/initialization"
 	"github.com/dolthub/doltgresql/server/logrepl"
+	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/servercfg"
+	"github.com/dolthub/doltgresql/servercfg/cfgdetails"
 )
 
 // Version should have a new line that follows, else the formatter will fail the PR created by the release GH action
@@ -133,6 +135,13 @@ func runServer(ctx context.Context, cfg *servercfg.DoltgresConfig, dEnv *env.Dol
 	// This initial dEnv instance is loaded for the current working directory.
 	dataDirFs, err := dEnv.FS.WithWorkingDir(ssCfg.DataDir())
 	if err != nil {
+		return nil, err
+	}
+	cfgDir := ssCfg.CfgDir()
+	if cfgDir == "" {
+		cfgDir = cfgdetails.DefaultCfgDir
+	}
+	if err = replsource.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "logical_replication_source.json")); err != nil {
 		return nil, err
 	}
 	dEnv = env.Load(ctx, dEnv.GetUserHomeDir, dataDirFs, doltdb.LocalDirDoltDB, dEnv.Version)

@@ -444,6 +444,18 @@ func CreateServerLocalWithPort(t *testing.T, database string, port int) (context
 	fileSys, err := filesys.LocalFilesysWithWorkingDir(dbDir)
 	require.NoError(t, err)
 
+	return createServerLocalWithFileSystemAndPort(t, database, port, fileSys)
+}
+
+func CreateServerLocalInDirWithPort(t *testing.T, database string, dbDir string, port int) (context.Context, *Connection, *svcs.Controller) {
+	replsource.ResetForTests()
+	fileSys, err := filesys.LocalFilesysWithWorkingDir(dbDir)
+	require.NoError(t, err)
+
+	return createServerLocalWithFileSystemAndPort(t, database, port, fileSys)
+}
+
+func createServerLocalWithFileSystemAndPort(t *testing.T, database string, port int, fileSys filesys.Filesys) (context.Context, *Connection, *svcs.Controller) {
 	ctx := context.Background()
 	doltEnv := env.Load(ctx, env.GetCurrentUserHomeDir, fileSys, doltdb.LocalDirDoltDB, dserver.Version)
 

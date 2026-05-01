@@ -788,7 +788,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	var hasReplicationCapture bool
 	var executionFormatCodes []int16
 	advanceLSN := false
-	if replsource.HasActiveSenders() {
+	if replsource.HasSlots() {
 		replicationCapture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(preparedData.Query)
 		if err != nil {
 			return err
@@ -1014,7 +1014,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 	var replicationBoundPlan sql.Node
 	var replicationFormatCodes []int16
 	var replicationQuery ConvertedQuery
-	if replsource.HasActiveSenders() {
+	if replsource.HasSlots() {
 		var hasReplicationCapture bool
 		replicationCapture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(preparedData.Query)
 		if err != nil {
@@ -1092,7 +1092,7 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	executionFormatCodes := portalData.FormatCodes
 	advanceLSN := false
 	replicationCapture := portalData.ReplicationCapture
-	if replicationCapture != nil && replsource.HasActiveSenders() {
+	if replicationCapture != nil && replsource.HasSlots() {
 		executionQuery = portalData.ReplicationQuery
 		executionPlan = portalData.ReplicationBoundPlan
 		executionFormatCodes = portalData.ReplicationFormatCodes
@@ -1740,7 +1740,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	var hasReplicationCapture bool
 	advanceLSN := false
 	var err error
-	if replsource.HasActiveSenders() {
+	if replsource.HasSlots() {
 		capture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(query)
 		if err != nil {
 			return err

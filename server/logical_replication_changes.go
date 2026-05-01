@@ -259,8 +259,7 @@ func (capture *replicationChangeCapture) publish(ctx *sql.Context) error {
 		ServerWALEnd: commitLSN,
 		WALData:      encodeCommitMessage(commitLSN),
 	})
-	replsource.Broadcast(publicationNames, messages)
-	return nil
+	return replsource.Broadcast(publicationNames, messages)
 }
 
 func (capture *replicationChangeCapture) publicationNames(ctx *sql.Context, schema string) ([]string, error) {

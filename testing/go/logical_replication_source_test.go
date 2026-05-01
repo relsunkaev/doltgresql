@@ -17,6 +17,7 @@ package _go
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -288,6 +289,105 @@ func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.
 	var afterCommit string
 	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&afterCommit))
 	require.Equal(t, "0/20", afterCommit)
+}
+
+func TestLogicalReplicationSourceReplaysInactiveSlotChangesAfterRestart(t *testing.T) {
+	replsource.ResetForTests()
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	slotName := "dg_replay_restart_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_replay_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_replay_pub FOR TABLE dg_replay_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_replay_items VALUES (1, 'one');")
+	require.NoError(t, err)
+
+	var beforeRestartLSN string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT pg_current_wal_lsn()::text;").Scan(&beforeRestartLSN))
+	require.NotEqual(t, "0/0", beforeRestartLSN)
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	var active bool
+	var confirmedFlush string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT active, confirmed_flush_lsn::text
+		FROM pg_catalog.pg_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&active, &confirmedFlush))
+	require.False(t, active)
+	require.Equal(t, "0/0", confirmedFlush)
+
+	replConn = connectReplicationConn(t, ctx, port)
+	defer func() {
+		if replConn != nil {
+			replConn.Close(context.Background())
+		}
+	}()
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_replay_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	relation, insert, commit := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_replay_items", "1", "one")
+	require.Equal(t, beforeRestartLSN, commit.CommitLSN.String())
+
+	require.NoError(t, pglogrepl.SendStandbyStatusUpdate(ctx, replConn, pglogrepl.StandbyStatusUpdate{
+		WALWritePosition: commit.CommitLSN,
+		WALFlushPosition: commit.CommitLSN,
+		WALApplyPosition: commit.CommitLSN,
+		ReplyRequested:   true,
+	}))
+	reply := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), reply.Data[0])
+	waitForReplicationState(t, ctx, conn, slotName, commit.CommitLSN.String())
+
+	_, err = pglogrepl.SendStandbyCopyDone(ctx, replConn)
+	require.NoError(t, err)
+	require.NoError(t, replConn.Close(ctx))
+	replConn = nil
+
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	replsource.ResetForTests()
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT active, confirmed_flush_lsn::text
+		FROM pg_catalog.pg_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&active, &confirmedFlush))
+	require.False(t, active)
+	require.Equal(t, commit.CommitLSN.String(), confirmedFlush)
 }
 
 func connectReplicationConn(t *testing.T, ctx context.Context, port int) *pgconn.PgConn {

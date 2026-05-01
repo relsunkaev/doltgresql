@@ -15,7 +15,10 @@
 package replsource
 
 import (
+	"encoding/json"
 	"net"
+	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -23,6 +26,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/utils/filesys"
 	"github.com/jackc/pglogrepl"
 )
 
@@ -71,13 +75,16 @@ type SenderInfo struct {
 }
 
 type registry struct {
-	mu       sync.Mutex
-	nextID   uint64
-	slots    map[string]*Slot
-	senders  map[uint64]*Sender
-	queues   map[uint64]chan WALMessage
-	current  pglogrepl.LSN
-	systemID string
+	mu          sync.Mutex
+	nextID      uint64
+	slots       map[string]*Slot
+	senders     map[uint64]*Sender
+	queues      map[uint64]chan WALMessage
+	current     pglogrepl.LSN
+	systemID    string
+	journal     []journalEntry
+	storageFS   filesys.Filesys
+	storagePath string
 }
 
 // WALMessage is one CopyData XLogData payload destined for a logical replication sender.
@@ -85,6 +92,40 @@ type WALMessage struct {
 	WALStart     pglogrepl.LSN
 	ServerWALEnd pglogrepl.LSN
 	WALData      []byte
+}
+
+type journalEntry struct {
+	Publications []string
+	Messages     []WALMessage
+}
+
+type persistentState struct {
+	Version  int                      `json:"version"`
+	NextID   uint64                   `json:"next_id"`
+	Current  uint64                   `json:"current"`
+	SystemID string                   `json:"system_id"`
+	Slots    []persistentSlot         `json:"slots"`
+	Journal  []persistentJournalEntry `json:"journal"`
+}
+
+type persistentSlot struct {
+	Name              string `json:"name"`
+	Plugin            string `json:"plugin"`
+	Database          string `json:"database"`
+	RestartLSN        uint64 `json:"restart_lsn"`
+	ConfirmedFlushLSN uint64 `json:"confirmed_flush_lsn"`
+	TwoPhase          bool   `json:"two_phase"`
+}
+
+type persistentJournalEntry struct {
+	Publications []string               `json:"publications"`
+	Messages     []persistentWALMessage `json:"messages"`
+}
+
+type persistentWALMessage struct {
+	WALStart     uint64 `json:"wal_start"`
+	ServerWALEnd uint64 `json:"server_wal_end"`
+	WALData      []byte `json:"wal_data"`
 }
 
 var defaultRegistry = &registry{
@@ -115,12 +156,41 @@ func HasActiveSenders() bool {
 	return len(defaultRegistry.senders) > 0
 }
 
+// HasSlots returns whether any logical replication slot exists.
+func HasSlots() bool {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	return len(defaultRegistry.slots) > 0
+}
+
 // AdvanceLSN records a local WAL-producing change and returns the new source LSN.
 func AdvanceLSN() pglogrepl.LSN {
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
 	defaultRegistry.current += 0x10
+	if len(defaultRegistry.slots) > 0 || len(defaultRegistry.journal) > 0 {
+		defaultRegistry.persistBestEffortLocked()
+	}
 	return defaultRegistry.current
+}
+
+// ConfigureStorage loads and persists logical replication source state in the supplied filesystem.
+func ConfigureStorage(fs filesys.Filesys, storagePath string) error {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	defaultRegistry.storageFS = fs
+	defaultRegistry.storagePath = storagePath
+	defaultRegistry.nextID = 0
+	defaultRegistry.slots = make(map[string]*Slot)
+	defaultRegistry.senders = make(map[uint64]*Sender)
+	defaultRegistry.queues = make(map[uint64]chan WALMessage)
+	defaultRegistry.current = 0
+	defaultRegistry.journal = nil
+	defaultRegistry.systemID = "7500000000000000001"
+	if fs == nil || storagePath == "" {
+		return nil
+	}
+	return defaultRegistry.loadLocked()
 }
 
 // ResetForTests clears all in-memory logical replication state.
@@ -132,6 +202,10 @@ func ResetForTests() {
 	defaultRegistry.senders = make(map[uint64]*Sender)
 	defaultRegistry.queues = make(map[uint64]chan WALMessage)
 	defaultRegistry.current = 0
+	defaultRegistry.journal = nil
+	defaultRegistry.storageFS = nil
+	defaultRegistry.storagePath = ""
+	defaultRegistry.systemID = "7500000000000000001"
 }
 
 // CreateSlot creates a logical replication slot in the local registry.
@@ -160,6 +234,12 @@ func CreateSlot(name string, plugin string, database string, temporary bool) (Sl
 		ConfirmedFlushLSN: defaultRegistry.current,
 	}
 	defaultRegistry.slots[name] = &slot
+	if !temporary {
+		if err := defaultRegistry.persistLocked(); err != nil {
+			delete(defaultRegistry.slots, name)
+			return Slot{}, err
+		}
+	}
 	return slot, nil
 }
 
@@ -175,6 +255,11 @@ func DropSlot(name string) error {
 		return errors.Errorf(`replication slot "%s" is active`, name)
 	}
 	delete(defaultRegistry.slots, name)
+	defaultRegistry.pruneJournalLocked()
+	if err := defaultRegistry.persistLocked(); err != nil {
+		defaultRegistry.slots[name] = slot
+		return err
+	}
 	return nil
 }
 
@@ -224,7 +309,16 @@ func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 	slot.Active = true
 	slot.ActivePID = info.PID
 	defaultRegistry.senders[sender.ID] = &sender
-	queue := make(chan WALMessage, 256)
+	replay := defaultRegistry.replayMessagesLocked(sender.Publications, info.StartLSN)
+	queueSize := 256
+	if len(replay) > queueSize {
+		queueSize = len(replay) + 256
+	}
+	queue := make(chan WALMessage, queueSize)
+	for _, message := range replay {
+		sender.SentLSN = maxLSN(sender.SentLSN, message.ServerWALEnd)
+		queue <- message
+	}
 	defaultRegistry.queues[sender.ID] = queue
 	return sender, queue, nil
 }
@@ -249,7 +343,10 @@ func UpdateStandbyStatus(senderID uint64, writeLSN pglogrepl.LSN, flushLSN pglog
 	sender.ReplyTime = replyTime
 	if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
 		slot.ConfirmedFlushLSN = maxLSN(slot.ConfirmedFlushLSN, minLSN(flushLSN, sender.SentLSN))
+		slot.RestartLSN = slot.ConfirmedFlushLSN
 	}
+	defaultRegistry.pruneJournalLocked()
+	defaultRegistry.persistBestEffortLocked()
 }
 
 // UnregisterSender clears active state for the sender's slot.
@@ -273,16 +370,27 @@ func UnregisterSender(senderID uint64) {
 			slot.ActivePID = 0
 		}
 	}
+	defaultRegistry.persistBestEffortLocked()
 }
 
-// Broadcast sends logical WAL messages to matching active senders.
-func Broadcast(publications []string, messages []WALMessage) {
+// Broadcast records logical WAL messages and sends them to matching active senders.
+func Broadcast(publications []string, messages []WALMessage) error {
 	if len(messages) == 0 {
-		return
+		return nil
 	}
 	publications = compactLowerStrings(publications)
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
+	if len(defaultRegistry.slots) > 0 {
+		defaultRegistry.journal = append(defaultRegistry.journal, journalEntry{
+			Publications: append([]string(nil), publications...),
+			Messages:     cloneWALMessages(messages),
+		})
+		if err := defaultRegistry.persistLocked(); err != nil {
+			defaultRegistry.journal = defaultRegistry.journal[:len(defaultRegistry.journal)-1]
+			return err
+		}
+	}
 	for senderID, sender := range defaultRegistry.senders {
 		if !publicationSetsOverlap(sender.Publications, publications) {
 			continue
@@ -300,6 +408,7 @@ func Broadcast(publications []string, messages []WALMessage) {
 			}
 		}
 	}
+	return nil
 }
 
 // ListSenders returns a stable snapshot of active logical replication senders.
@@ -370,4 +479,186 @@ func publicationSetsOverlap(senderPublications []string, changePublications []st
 		}
 	}
 	return false
+}
+
+func cloneWALMessages(messages []WALMessage) []WALMessage {
+	ret := make([]WALMessage, len(messages))
+	for i, message := range messages {
+		ret[i] = WALMessage{
+			WALStart:     message.WALStart,
+			ServerWALEnd: message.ServerWALEnd,
+			WALData:      append([]byte(nil), message.WALData...),
+		}
+	}
+	return ret
+}
+
+func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrepl.LSN) []WALMessage {
+	if len(r.journal) == 0 {
+		return nil
+	}
+	var replay []WALMessage
+	for _, entry := range r.journal {
+		if !publicationSetsOverlap(publications, entry.Publications) {
+			continue
+		}
+		if entryEndLSN(entry) <= startLSN {
+			continue
+		}
+		replay = append(replay, cloneWALMessages(entry.Messages)...)
+	}
+	return replay
+}
+
+func (r *registry) pruneJournalLocked() {
+	if len(r.slots) == 0 {
+		r.journal = nil
+		return
+	}
+	minConfirmed := pglogrepl.LSN(0)
+	first := true
+	for _, slot := range r.slots {
+		if first || slot.ConfirmedFlushLSN < minConfirmed {
+			minConfirmed = slot.ConfirmedFlushLSN
+			first = false
+		}
+	}
+	keep := r.journal[:0]
+	for _, entry := range r.journal {
+		if entryEndLSN(entry) > minConfirmed {
+			keep = append(keep, entry)
+		}
+	}
+	r.journal = keep
+}
+
+func entryEndLSN(entry journalEntry) pglogrepl.LSN {
+	var end pglogrepl.LSN
+	for _, message := range entry.Messages {
+		end = maxLSN(end, message.ServerWALEnd)
+	}
+	return end
+}
+
+func (r *registry) loadLocked() error {
+	exists, isDir := r.storageFS.Exists(r.storagePath)
+	if !exists {
+		return nil
+	}
+	if isDir {
+		return errors.Errorf("logical replication source state path %q is a directory", r.storagePath)
+	}
+	data, err := r.storageFS.ReadFile(r.storagePath)
+	if err != nil {
+		return err
+	}
+	var state persistentState
+	if err = json.Unmarshal(data, &state); err != nil {
+		return err
+	}
+	if state.SystemID != "" {
+		r.systemID = state.SystemID
+	}
+	r.nextID = state.NextID
+	r.current = pglogrepl.LSN(state.Current)
+	for _, storedSlot := range state.Slots {
+		slot := Slot{
+			Name:              storedSlot.Name,
+			Plugin:            storedSlot.Plugin,
+			Database:          storedSlot.Database,
+			RestartLSN:        pglogrepl.LSN(storedSlot.RestartLSN),
+			ConfirmedFlushLSN: pglogrepl.LSN(storedSlot.ConfirmedFlushLSN),
+			TwoPhase:          storedSlot.TwoPhase,
+		}
+		if slot.Plugin == "" {
+			slot.Plugin = "pgoutput"
+		}
+		r.slots[slot.Name] = &slot
+	}
+	r.journal = make([]journalEntry, 0, len(state.Journal))
+	for _, storedEntry := range state.Journal {
+		entry := journalEntry{
+			Publications: compactLowerStrings(storedEntry.Publications),
+			Messages:     make([]WALMessage, len(storedEntry.Messages)),
+		}
+		for i, storedMessage := range storedEntry.Messages {
+			entry.Messages[i] = WALMessage{
+				WALStart:     pglogrepl.LSN(storedMessage.WALStart),
+				ServerWALEnd: pglogrepl.LSN(storedMessage.ServerWALEnd),
+				WALData:      append([]byte(nil), storedMessage.WALData...),
+			}
+		}
+		r.journal = append(r.journal, entry)
+	}
+	r.pruneJournalLocked()
+	return nil
+}
+
+func (r *registry) persistBestEffortLocked() {
+	_ = r.persistLocked()
+}
+
+func (r *registry) persistLocked() error {
+	if r.storageFS == nil || r.storagePath == "" {
+		return nil
+	}
+	if len(r.slots) == 0 && len(r.journal) == 0 {
+		if exists, isDir := r.storageFS.Exists(r.storagePath); exists && !isDir {
+			return r.storageFS.DeleteFile(r.storagePath)
+		}
+		return nil
+	}
+	dir := filepath.Dir(r.storagePath)
+	if dir != "." && dir != "" {
+		if err := r.storageFS.MkDirs(dir); err != nil {
+			return err
+		}
+	}
+	data, err := json.MarshalIndent(r.toPersistentStateLocked(), "", "  ")
+	if err != nil {
+		return err
+	}
+	return r.storageFS.WriteFile(r.storagePath, data, os.ModePerm)
+}
+
+func (r *registry) toPersistentStateLocked() persistentState {
+	state := persistentState{
+		Version:  1,
+		NextID:   r.nextID,
+		Current:  uint64(r.current),
+		SystemID: r.systemID,
+		Slots:    make([]persistentSlot, 0, len(r.slots)),
+		Journal:  make([]persistentJournalEntry, 0, len(r.journal)),
+	}
+	for _, slot := range r.slots {
+		if slot.Temporary {
+			continue
+		}
+		state.Slots = append(state.Slots, persistentSlot{
+			Name:              slot.Name,
+			Plugin:            slot.Plugin,
+			Database:          slot.Database,
+			RestartLSN:        uint64(slot.RestartLSN),
+			ConfirmedFlushLSN: uint64(slot.ConfirmedFlushLSN),
+			TwoPhase:          slot.TwoPhase,
+		})
+	}
+	slices.SortFunc(state.Slots, func(a, b persistentSlot) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	for _, entry := range r.journal {
+		storedEntry := persistentJournalEntry{
+			Publications: append([]string(nil), entry.Publications...),
+			Messages:     make([]persistentWALMessage, len(entry.Messages)),
+		}
+		for i, message := range entry.Messages {
+			storedEntry.Messages[i] = persistentWALMessage{
+				WALStart:     uint64(message.WALStart),
+				ServerWALEnd: uint64(message.ServerWALEnd),
+				WALData:      append([]byte(nil), message.WALData...),
+			}
+		}
+		state.Journal = append(state.Journal, storedEntry)
+	}
+	return state
 }
