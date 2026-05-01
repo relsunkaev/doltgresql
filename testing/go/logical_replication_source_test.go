@@ -350,6 +350,112 @@ func TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransa
 	require.Equal(t, "fifty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
 }
 
+func TestLogicalReplicationSourcePublishesPreparedStatementDMLInExplicitTransaction(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_prepared_stmt_tx_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_prepared_stmt_tx_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_prepared_stmt_tx_pub FOR TABLE dg_prepared_stmt_tx_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_prepared_stmt_tx_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "PREPARE dg_prepared_stmt_tx(bigint, text) AS INSERT INTO dg_prepared_stmt_tx_items VALUES ($1, $2);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "EXECUTE dg_prepared_stmt_tx(60, 'sixty');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_prepared_stmt_tx_items VALUES ($1, $2);", int64(61), "sixty-one")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	require.Len(t, txn.inserts, 2)
+	require.Equal(t, "60", string(txn.inserts[0].Tuple.Columns[0].Data))
+	require.Equal(t, "sixty", string(txn.inserts[0].Tuple.Columns[1].Data))
+	require.Equal(t, "61", string(txn.inserts[1].Tuple.Columns[0].Data))
+	require.Equal(t, "sixty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
+func TestLogicalReplicationSourcePublishesCommitPreparedAsOnePgoutputTransaction(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_commit_prepared_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_commit_prepared_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_commit_prepared_pub FOR TABLE dg_commit_prepared_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_commit_prepared_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_commit_prepared_items VALUES (70, 'seventy');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_commit_prepared_items VALUES (71, 'seventy-one');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "PREPARE TRANSACTION 'dg_commit_prepared_tx';")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT PREPARED 'dg_commit_prepared_tx';")
+	require.NoError(t, err)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	require.Len(t, txn.inserts, 2)
+	require.Equal(t, "70", string(txn.inserts[0].Tuple.Columns[0].Data))
+	require.Equal(t, "seventy", string(txn.inserts[0].Tuple.Columns[1].Data))
+	require.Equal(t, "71", string(txn.inserts[1].Tuple.Columns[0].Data))
+	require.Equal(t, "seventy-one", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
 func TestLogicalReplicationSourceAdvancesLocalLSNWithoutActiveSender(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()

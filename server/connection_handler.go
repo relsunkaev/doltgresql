@@ -95,6 +95,18 @@ const disablePanicHandlingEnvVar = "DOLT_PGSQL_PANIC"
 // HandlePanics determines whether panics should be handled in the connection handler. See |disablePanicHandlingEnvVar|.
 var HandlePanics = true
 
+type preparedReplicationState struct {
+	captures []*replicationChangeCapture
+	advance  bool
+}
+
+var preparedReplication = struct {
+	sync.Mutex
+	byGID map[string]preparedReplicationState
+}{
+	byGID: make(map[string]preparedReplicationState),
+}
+
 func init() {
 	if _, ok := os.LookupEnv(disablePanicHandlingEnvVar); ok {
 		HandlePanics = false
@@ -613,6 +625,7 @@ func (h *ConnectionHandler) prepareTransaction(stmt node.PrepareTransaction, que
 	if err = sessionstate.PrepareTransaction(sqlCtx, stmt.GID); err != nil {
 		return err
 	}
+	h.storePreparedReplication(stmt.GID)
 	h.inTransaction = false
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
@@ -628,6 +641,9 @@ func (h *ConnectionHandler) commitPrepared(stmt node.CommitPrepared, query Conve
 		return err
 	}
 	if err = sessionstate.CommitPreparedTransaction(sqlCtx, stmt.GID); err != nil {
+		return err
+	}
+	if err = takePreparedReplication(stmt.GID).publish(sqlCtx); err != nil {
 		return err
 	}
 	return h.send(&pgproto3.CommandComplete{
@@ -646,9 +662,47 @@ func (h *ConnectionHandler) rollbackPrepared(stmt node.RollbackPrepared, query C
 	if err := sessionstate.RollbackPreparedTransaction(sqlCtx, stmt.GID); err != nil {
 		return err
 	}
+	dropPreparedReplication(stmt.GID)
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
 	})
+}
+
+func (h *ConnectionHandler) storePreparedReplication(gid string) {
+	if len(h.pendingReplicationCaptures) == 0 && !h.pendingReplicationAdvance {
+		return
+	}
+	preparedReplication.Lock()
+	preparedReplication.byGID[gid] = preparedReplicationState{
+		captures: append([]*replicationChangeCapture(nil), h.pendingReplicationCaptures...),
+		advance:  h.pendingReplicationAdvance,
+	}
+	preparedReplication.Unlock()
+	h.clearPendingReplication()
+}
+
+func takePreparedReplication(gid string) preparedReplicationState {
+	preparedReplication.Lock()
+	defer preparedReplication.Unlock()
+	state := preparedReplication.byGID[gid]
+	delete(preparedReplication.byGID, gid)
+	return state
+}
+
+func dropPreparedReplication(gid string) {
+	preparedReplication.Lock()
+	delete(preparedReplication.byGID, gid)
+	preparedReplication.Unlock()
+}
+
+func (state preparedReplicationState) publish(ctx *sql.Context) error {
+	if len(state.captures) > 0 {
+		return publishReplicationCaptures(ctx, state.captures)
+	}
+	if state.advance {
+		replsource.AdvanceLSN()
+	}
+	return nil
 }
 
 func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, query ConvertedQuery) error {
