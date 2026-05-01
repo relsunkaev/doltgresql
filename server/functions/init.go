@@ -48,6 +48,7 @@ func initTypeFunctions() {
 	initNumeric()
 	initOid()
 	initOidvector()
+	initPgLsn()
 	initRecord()
 	initRegclass()
 	initRegproc()

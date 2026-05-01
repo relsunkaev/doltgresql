@@ -295,6 +295,15 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		} else {
 			return 1, nil
 		}
+	case uint64:
+		bb := v2.(uint64)
+		if ab == bb {
+			return 0, nil
+		} else if ab < bb {
+			return -1, nil
+		} else {
+			return 1, nil
+		}
 	case string:
 		bb := v2.(string)
 		if ab == bb {

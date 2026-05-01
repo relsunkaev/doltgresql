@@ -2236,7 +2236,6 @@ var typesTests = []ScriptTest{
 	},
 	{
 		Name: "Pg_lsn type",
-		Skip: true,
 		SetUpScript: []string{
 			"CREATE TABLE t_pg_lsn (id INTEGER primary key, v1 PG_LSN);",
 			"INSERT INTO t_pg_lsn VALUES (1, '16/B8E36C60'), (2, '16/B8E36C70');",
@@ -2248,6 +2247,79 @@ var typesTests = []ScriptTest{
 					{1, "16/B8E36C60"},
 					{2, "16/B8E36C70"},
 				},
+			},
+		},
+	},
+	{
+		Name: "Pg_lsn functions and operators",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "SELECT '0/16AE7F8'::pg_lsn = '0/16AE7F8'::pg_lsn;",
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: "SELECT '0/16AE7F8'::pg_lsn != '0/16AE7F7'::pg_lsn;",
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: "SELECT '0/16AE7F7'::pg_lsn < '0/16AE7F8'::pg_lsn;",
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: "SELECT '0/16AE7F8'::pg_lsn > '0/16AE7F7'::pg_lsn;",
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: "SELECT pg_wal_lsn_diff('0/16AE7F8'::pg_lsn, '0/16AE7F7'::pg_lsn);",
+				Expected: []sql.Row{
+					{Numeric("1")},
+				},
+			},
+			{
+				Query: "SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;",
+				Expected: []sql.Row{
+					{Numeric("1")},
+				},
+			},
+			{
+				Query: "SELECT '0/10'::pg_lsn + 16::numeric, 16::numeric + '0/10'::pg_lsn, '0/10'::pg_lsn - 16::numeric;",
+				Expected: []sql.Row{
+					{"0/20", "0/20", "0/0"},
+				},
+			},
+			{
+				Query: "SELECT pg_lsn_larger('0/1'::pg_lsn, '0/2'::pg_lsn), pg_lsn_smaller('0/1'::pg_lsn, '0/2'::pg_lsn);",
+				Expected: []sql.Row{
+					{"0/2", "0/1"},
+				},
+			},
+			{
+				Query: "SELECT pg_wal_lsn_diff('0/0'::pg_lsn, '0/1'::pg_lsn);",
+				Expected: []sql.Row{
+					{Numeric("-1")},
+				},
+			},
+			{
+				Query: "SELECT pg_current_wal_lsn(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn();",
+				Expected: []sql.Row{
+					{"0/0", nil, nil},
+				},
+			},
+			{
+				Query:       "SELECT 'G/0'::pg_lsn;",
+				ExpectedErr: "invalid input syntax for type pg_lsn",
+			},
+			{
+				Query:       "SELECT ' 0/12345678'::pg_lsn;",
+				ExpectedErr: "invalid input syntax for type pg_lsn",
 			},
 		},
 	},

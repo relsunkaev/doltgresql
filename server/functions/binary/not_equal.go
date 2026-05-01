@@ -62,6 +62,7 @@ func initBinaryNotEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, namenetext)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, numeric_ne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, oidne)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, pg_lsn_ne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, oidvectorne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, textnename)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, text_ne)
@@ -419,6 +420,18 @@ var oidvectorne = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		res, err := pgtypes.Oidvector.Compare(ctx, val1.([]any), val2.([]any))
+		return res != 0, err
+	},
+}
+
+// pg_lsn_ne represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_ne = framework.Function2{
+	Name:       "pg_lsn_ne",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		res, err := pgtypes.PgLsn.Compare(ctx, val1.(uint64), val2.(uint64))
 		return res != 0, err
 	},
 }

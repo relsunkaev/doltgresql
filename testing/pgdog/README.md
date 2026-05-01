@@ -82,7 +82,7 @@ Keep these PgDog features disabled or out of scope for Doltgres until the corres
 | Replication slots and replication stats | `pg_replication_slots`, `pg_stat_replication`, and `pg_stat_replication_slots` are placeholders without local producer state. | Do not use PgDog replica or replication-health workflows against Doltgres. |
 | COPY movement | Text/CSV `COPY FROM` exists, but `COPY TO STDOUT` and binary `COPY FROM` are unsupported. | Do not use PgDog sharded COPY or resharding COPY against Doltgres. |
 | Vector shard keys | PgDog can route `vector` keys, but Doltgres has no native `vector` type. | Use `bigint`, `varchar` / `text`, or `uuid` shard keys. |
-| Replica routing and WAL/LSN health | `pg_is_in_recovery()` is hard-coded false and WAL/LSN functions/types are not real. | Configure only primary Doltgres entries. Do not use PgDog replica routing or lag checks. |
+| Replica routing | `pg_is_in_recovery()` reports primary mode, `pg_current_wal_lsn()` returns the synthetic primary compatibility LSN `0/0`, and replay/receive LSNs are `NULL`. There is no standby or lag stream. | Configure only primary Doltgres entries. Do not use PgDog replica routing or lag checks. |
 
 SQL-level `PREPARE`, `EXECUTE`, `DEALLOCATE`, and `pg_prepared_statements` are supported for PgDog's full prepared-statement mode smoke coverage.
 

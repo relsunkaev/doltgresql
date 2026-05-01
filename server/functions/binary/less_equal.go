@@ -63,6 +63,7 @@ func initBinaryLessOrEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, nameletext)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, numeric_le)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, oidle)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, pg_lsn_le)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, oidvectorle)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, textlename)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, text_le)
@@ -418,6 +419,18 @@ var oidvectorle = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		res, err := pgtypes.Oidvector.Compare(ctx, val1.([]any), val2.([]any))
+		return res <= 0, err
+	},
+}
+
+// pg_lsn_le represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_le = framework.Function2{
+	Name:       "pg_lsn_le",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		res, err := pgtypes.PgLsn.Compare(ctx, val1.(uint64), val2.(uint64))
 		return res <= 0, err
 	},
 }

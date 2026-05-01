@@ -60,6 +60,8 @@ func initBinaryPlus() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, interval_pl_timestamp)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, interval_pl_timestamptz)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, numeric_add)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, numeric_pl_pg_lsn)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, pg_lsn_pli)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, time_pl_interval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timedate_pl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timetz_pl_interval)
@@ -386,6 +388,28 @@ var numeric_add = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Numeric, pgtypes.Numeric},
 	Strict:     true,
 	Callable:   numeric_add_callable,
+}
+
+// numeric_pl_pg_lsn represents the PostgreSQL function of the same name, taking the same parameters.
+var numeric_pl_pg_lsn = framework.Function2{
+	Name:       "numeric_pl_pg_lsn",
+	Return:     pgtypes.PgLsn,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Numeric, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgLsnApplyNumericOffset(val2.(uint64), val1.(decimal.Decimal))
+	},
+}
+
+// pg_lsn_pli represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_pli = framework.Function2{
+	Name:       "pg_lsn_pli",
+	Return:     pgtypes.PgLsn,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.Numeric},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgLsnApplyNumericOffset(val1.(uint64), val2.(decimal.Decimal))
+	},
 }
 
 // plusOverflow is a convenience function that checks for overflow for int64 addition.

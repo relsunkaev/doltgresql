@@ -63,6 +63,7 @@ func initBinaryEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, nameeqtext)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, numeric_eq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, oideq)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, pg_lsn_eq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, oidvectoreq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, texteqname)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, text_eq)
@@ -502,6 +503,18 @@ var oidvectoreq = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		res, err := pgtypes.Oidvector.Compare(ctx, val1.([]any), val2.([]any))
+		return res == 0, err
+	},
+}
+
+// pg_lsn_eq represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_eq = framework.Function2{
+	Name:       "pg_lsn_eq",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		res, err := pgtypes.PgLsn.Compare(ctx, val1.(uint64), val2.(uint64))
 		return res == 0, err
 	},
 }

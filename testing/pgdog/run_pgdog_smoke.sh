@@ -235,6 +235,10 @@ if ! grep -q "42" <<< "$sql_prepare_result"; then
   exit 1
 fi
 expect_pgdog_failure "vector" "CREATE TABLE pgdog_vectors (tenant_id vector);" "vector"
-expect_pgdog_failure "wal-lsn" "SELECT pg_current_wal_lsn();" "pg_current_wal_lsn"
+wal_lsn_result="$(psql_pgdog -At -c "SELECT pg_current_wal_lsn(), pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);")"
+if [[ "$wal_lsn_result" != "0/0|1" ]]; then
+  echo "wal-lsn: expected 0/0|1, got: $wal_lsn_result" >&2
+  exit 1
+fi
 
 echo "PgDog compatibility smoke passed: shard0=$shard0_count shard1=$shard1_count"

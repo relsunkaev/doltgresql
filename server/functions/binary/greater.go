@@ -63,6 +63,7 @@ func initBinaryGreaterThan() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, namegttext)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, numeric_gt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, oidgt)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, pg_lsn_gt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, oidvectorgt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, textgtname)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, text_gt)
@@ -419,6 +420,18 @@ var oidvectorgt = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		res, err := pgtypes.Oidvector.Compare(ctx, val1.([]any), val2.([]any))
 		return res == 1, err
+	},
+}
+
+// pg_lsn_gt represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_gt = framework.Function2{
+	Name:       "pg_lsn_gt",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		res, err := pgtypes.PgLsn.Compare(ctx, val1.(uint64), val2.(uint64))
+		return res > 0, err
 	},
 }
 

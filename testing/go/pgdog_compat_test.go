@@ -109,12 +109,16 @@ func TestPgDogCompatibilityBoundary(t *testing.T) {
 					ExpectedErr: "type \"vector\" does not exist",
 				},
 				{
-					Query:       "SELECT pg_current_wal_lsn();",
-					ExpectedErr: "pg_current_wal_lsn",
+					Query: "SELECT pg_current_wal_lsn();",
+					Expected: []sql.Row{
+						{"0/0"},
+					},
 				},
 				{
-					Query:       "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
-					ExpectedErr: "pg_wal_lsn_diff",
+					Query: "SELECT pg_wal_lsn_diff('0/1'::pg_lsn, '0/0'::pg_lsn);",
+					Expected: []sql.Row{
+						{Numeric("1")},
+					},
 				},
 			},
 		},

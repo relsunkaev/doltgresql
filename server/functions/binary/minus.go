@@ -52,6 +52,8 @@ func initBinaryMinus() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, int84mi)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, interval_mi)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, numeric_sub)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, pg_lsn_mi)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, pg_lsn_mii)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, time_mi_interval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, time_mi_time)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, timetz_mi_interval)
@@ -241,6 +243,28 @@ var numeric_sub = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		return val1.(decimal.Decimal).Sub(val2.(decimal.Decimal)), nil
+	},
+}
+
+// pg_lsn_mi represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_mi = framework.Function2{
+	Name:       "pg_lsn_mi",
+	Return:     pgtypes.Numeric,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.PgLsn},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgLsnDiffDecimal(val1.(uint64), val2.(uint64)), nil
+	},
+}
+
+// pg_lsn_mii represents the PostgreSQL function of the same name, taking the same parameters.
+var pg_lsn_mii = framework.Function2{
+	Name:       "pg_lsn_mii",
+	Return:     pgtypes.PgLsn,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.PgLsn, pgtypes.Numeric},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgLsnSubtractNumericOffset(val1.(uint64), val2.(decimal.Decimal))
 	},
 }
 
