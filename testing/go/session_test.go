@@ -102,3 +102,31 @@ func TestRollback(t *testing.T) {
 		},
 	})
 }
+
+func TestSetTransaction(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "Electric snapshot transaction setup",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    "BEGIN",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY",
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT pg_current_snapshot(), pg_current_wal_lsn();`,
+					Expected: []sql.Row{
+						{"1:1:", "0/0"},
+					},
+				},
+				{
+					Query:    "COMMIT",
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}

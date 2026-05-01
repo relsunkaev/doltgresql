@@ -26,5 +26,5 @@ func nodeSetTransaction(ctx *Context, node *tree.SetTransaction) (vitess.Stateme
 		return nil, nil
 	}
 
-	return NotYetSupportedError("SET TRANSACTION is not yet supported")
+	return NewNoOp(), nil
 }

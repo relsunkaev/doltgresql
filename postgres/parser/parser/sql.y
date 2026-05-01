@@ -10347,6 +10347,14 @@ transaction_mode_list:
     if err != nil { return setErr(sqllex, err) }
     $$.val = a
   }
+| transaction_mode_list transaction_mode
+  {
+    a := $1.transactionModes()
+    b := $2.transactionModes()
+    err := a.Merge(b)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = a
+  }
 
 transaction_mode:
   transaction_iso_level
