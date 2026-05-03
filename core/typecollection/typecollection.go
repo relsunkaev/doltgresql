@@ -424,10 +424,13 @@ func (pgs *TypeCollection) writeCache(ctx context.Context) (err error) {
 			return err
 		}
 	}
-	pgs.underlyingMap, err = mapEditor.Flush(ctx)
+	// Assign underlyingMap only after the error check. Flush returns a
+	// zero AddressMap on failure, which would corrupt the TypeCollection.
+	flushed, err := mapEditor.Flush(ctx)
 	if err != nil {
 		return err
 	}
+	pgs.underlyingMap = flushed
 	clear(pgs.accessedMap)
 	return nil
 }
@@ -456,7 +459,7 @@ func (*TypeCollection) getTable(ctx *sql.Context, schema string, tblName string)
 // https://www.postgresql.org/docs/15/sql-createtable.html
 func (*TypeCollection) tableToType(ctx *sql.Context, tbl sql.Table, schema string) (*pgtypes.DoltgresType, error) {
 	tblName := tbl.Name()
-	tblSch := tbl.Schema()
+	tblSch := tbl.Schema(ctx)
 	typeID := id.NewType(schema, tblName)
 	relID := id.NewTable(schema, tblName).AsId()
 	arrayID := id.NewType(schema, "_"+tblName)

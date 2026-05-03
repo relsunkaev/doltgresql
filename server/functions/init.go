@@ -79,8 +79,6 @@ func Init() {
 	initAcosh()
 	initAdvisoryLockFunctions()
 	initAge()
-	initArrayAppend()
-	initArrayCat()
 	initArrayLength()
 	initArrayPosition()
 	initArrayToString()

@@ -2002,6 +2002,27 @@ func TestArrayFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "array_prepend",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT array_prepend(NULL, NULL);`,
+					Expected: []sql.Row{{"{NULL}"}},
+				},
+				{
+					Query:    `SELECT array_prepend(NULL, ARRAY[6]);`,
+					Expected: []sql.Row{{"{NULL,6}"}},
+				},
+				{
+					Query:    `SELECT array_prepend(5, NULL);`,
+					Expected: []sql.Row{{"{5}"}},
+				},
+				{
+					Query:    `SELECT array_prepend(5, ARRAY[6]);`,
+					Expected: []sql.Row{{"{5,6}"}},
+				},
+			},
+		},
 	})
 }
 
@@ -3438,6 +3459,19 @@ func TestDateAndTimeFunction(t *testing.T) {
 					Skip:     true, // TODO: support precision
 					Query:    `SELECT now()::timetz(4)::text = current_time(5)::text;`,
 					Expected: []sql.Row{{false}},
+				},
+				{
+					Query:    `SELECT length(to_char(current_date + 'now'::timetz, 'HH24:MI:SS.USTZH:TZM'));`,
+					Expected: []sql.Row{{int32(21)}},
+				},
+				{
+					Query: `SELECT length('now'::timetz::text) > length('now'::time::text);`,
+					// Direct ::text casts trim trailing zeros from microseconds, making the length variable.
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT length(to_char('now'::time, 'HH24:MI:SS.US'));`,
+					Expected: []sql.Row{{int32(15)}},
 				},
 			},
 		},

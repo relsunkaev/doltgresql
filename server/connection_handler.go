@@ -163,15 +163,14 @@ func (h *ConnectionHandler) HandleConnection() {
 		defer func() {
 			if r := recover(); r != nil {
 				// debug.Stack() here prints the stack trace of the original panic, not the lexical stack of this defer function
-				logrus.Errorf("Listener recovered panic: %v: %s", r, string(debug.Stack()))
+				stackTrace := string(debug.Stack())
+				logrus.Errorf("Listener recovered panic: %v: %s", r, stackTrace)
 
 				var eomErr error
 				if returnErr != nil {
 					eomErr = returnErr
-				} else if rErr, ok := r.(error); ok {
-					eomErr = rErr
 				} else {
-					eomErr = errors.Errorf("panic: %v", r)
+					eomErr = errors.Errorf("Listener recovered panic: %v: %s", r, stackTrace)
 				}
 
 				// Sending eom can panic, which means we must recover again
@@ -388,15 +387,10 @@ func (h *ConnectionHandler) receiveMessage() (bool, error) {
 	if HandlePanics {
 		defer func() {
 			if r := recover(); r != nil {
-				logrus.Errorf("Listener recovered panic: %v: %s", r, string(debug.Stack()))
+				stackTrace := string(debug.Stack())
+				logrus.Errorf("Listener recovered panic: %v: %s", r, stackTrace)
 
-				var eomErr error
-				if rErr, ok := r.(error); ok {
-					eomErr = rErr
-				} else {
-					eomErr = errors.Errorf("panic: %v", r)
-				}
-
+				eomErr := errors.Errorf("receiveMessage recovered panic: %v: %s", r, stackTrace)
 				if !endOfMessages && h.waitForSync {
 					if syncErr := h.discardToSync(); syncErr != nil {
 						fmt.Println(syncErr.Error())
@@ -1011,7 +1005,11 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 		return h.send(&pgproto3.ParseComplete{})
 	}
 
-	parsedQuery, fields, err := h.doltgresHandler.ComPrepareParsed(context.Background(), h.mysqlConn, query.String, query.AST)
+	ctx, err := h.doltgresHandler.sm.NewContextWithQuery(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	parsedQuery, fields, err := h.doltgresHandler.ComPrepareParsed(ctx, h.mysqlConn, query.String, query.AST)
 	if err != nil {
 		return err
 	}
@@ -1028,7 +1026,7 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 	// see any zero OIDs, we fall back to extracting the bind var types from the plan.
 	if len(bindVarTypes) == 0 || slices.Contains(bindVarTypes, 0) {
 		// NOTE: This is used for Prepared Statement Tests only.
-		bindVarTypes, err = extractBindVarTypes(analyzedPlan)
+		bindVarTypes, err = extractBindVarTypes(ctx, analyzedPlan)
 		if err != nil {
 			return err
 		}
@@ -1438,11 +1436,11 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	var dataLoader dataloader.DataLoader
 	switch copyFromStdinNode.CopyOptions.CopyFormat {
 	case tree.CopyFormatText:
-		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header)
+		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header)
 	case tree.CopyFormatCsv:
-		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header)
+		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header)
 	case tree.CopyFormatBinary:
-		dataLoader, err = dataloader.NewBinaryDataLoader(insertNode.ColumnNames, tbl.Schema())
+		dataLoader, err = dataloader.NewBinaryDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx))
 	default:
 		err = errors.Errorf("unknown format specified for COPY FROM: %v",
 			copyFromStdinNode.CopyOptions.CopyFormat)

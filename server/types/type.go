@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/schema/typeinfo"
 	"github.com/dolthub/dolt/go/store/val"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
@@ -105,6 +106,7 @@ var _ sql.NullType = &DoltgresType{}
 var _ sql.StringType = &DoltgresType{}
 var _ sql.NumberType = &DoltgresType{}
 var _ val.TupleTypeHandler = &DoltgresType{}
+var _ typeinfo.ExtendedType = &DoltgresType{}
 
 // NewUnresolvedDoltgresType returns a DoltgresType that is not resolved.
 // The type will have the schema and name defined with given values, with IsUnresolved == true.
@@ -216,7 +218,7 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 
 	if t.TypType == TypeType_Enum {
 		// TODO: temporary solution to getting the enum type (which has label info) into the 'enum_cmp' function
-		qf := globalFunctionRegistry.GetFunction(t.CompareFunc)
+		qf := globalFunctionRegistry.GetFunction(ctx.(*sql.Context), t.CompareFunc)
 		resTypes := qf.ResolvedTypes()
 		newFunc := qf.WithResolvedTypes([]*DoltgresType{t, t, resTypes[len(resTypes)-1]})
 		i, err := newFunc.(QuickFunction).CallVariadic(nil, v1, v2)
@@ -225,7 +227,7 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		}
 		return int(i.(int32)), nil
 	} else if t == Oidvector {
-		i, err := globalFunctionRegistry.GetFunction(t.CompareFunc).CallVariadic(nil, v1, v2)
+		i, err := globalFunctionRegistry.GetFunction(ctx.(*sql.Context), t.CompareFunc).CallVariadic(nil, v1, v2)
 		if err != nil {
 			return 0, err
 		}
@@ -558,14 +560,22 @@ func (t *DoltgresType) Equals(otherType sql.Type) bool {
 	return false
 }
 
-// FormatValue implements the types.ExtendedType interface.
+// FormatValue implements the types.ExtendedType interface. Callers with
+// a session context should use FormatValueWithContext instead, since
+// types whose output reads session state cannot resolve through a nil
+// context.
 func (t *DoltgresType) FormatValue(val any) (string, error) {
+	return t.FormatValueWithContext(nil, val)
+}
+
+// FormatValueWithContext returns the postgres output representation of
+// |val|, using |ctx| for any session-scoped state the type's output
+// function needs.
+func (t *DoltgresType) FormatValueWithContext(ctx *sql.Context, val any) (string, error) {
 	if val == nil {
 		return "", nil
 	}
-	// TODO: need valid sql.Context. This panics on certain types, regclass
-	//  https://github.com/dolthub/doltgresql/issues/1142
-	return t.IoOutput(nil, val)
+	return t.IoOutput(ctx, val)
 }
 
 // GetAttTypMod returns the attTypMod field of the type.
@@ -581,17 +591,17 @@ func (t *DoltgresType) InputFuncName() string {
 // IoInput converts input string value to given type value.
 func (t *DoltgresType) IoInput(ctx *sql.Context, input string) (any, error) {
 	if t.TypType == TypeType_Domain {
-		return globalFunctionRegistry.GetFunction(t.InputFunc).CallVariadic(ctx, input, t.BaseTypeID.AsId(), t.attTypMod)
+		return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.BaseTypeID.AsId(), t.attTypMod)
 	} else if t.ModInFunc != 0 || t.IsArrayType() {
 		if t.Elem != id.NullType {
-			return globalFunctionRegistry.GetFunction(t.InputFunc).CallVariadic(ctx, input, t.Elem.AsId(), t.attTypMod)
+			return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.Elem.AsId(), t.attTypMod)
 		} else {
-			return globalFunctionRegistry.GetFunction(t.InputFunc).CallVariadic(ctx, input, t.ID.AsId(), t.attTypMod)
+			return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.ID.AsId(), t.attTypMod)
 		}
 	} else if t.TypType == TypeType_Enum {
-		return globalFunctionRegistry.GetFunction(t.InputFunc).CallVariadic(ctx, input, t.ID.AsId())
+		return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.ID.AsId())
 	} else {
-		return globalFunctionRegistry.GetFunction(t.InputFunc).CallVariadic(ctx, input)
+		return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input)
 	}
 }
 
@@ -600,12 +610,12 @@ func (t *DoltgresType) IoOutput(ctx *sql.Context, val any) (string, error) {
 	var o any
 	var err error
 	if t.ModInFunc != 0 || t.IsArrayType() || t.IsCompositeType() {
-		send := globalFunctionRegistry.GetFunction(t.OutputFunc)
+		send := globalFunctionRegistry.GetFunction(ctx, t.OutputFunc)
 		resolvedTypes := send.ResolvedTypes()
 		resolvedTypes[0] = t
 		o, err = send.WithResolvedTypes(resolvedTypes).(QuickFunction).CallVariadic(ctx, val)
 	} else {
-		o, err = globalFunctionRegistry.GetFunction(t.OutputFunc).CallVariadic(ctx, val)
+		o, err = globalFunctionRegistry.GetFunction(ctx, t.OutputFunc).CallVariadic(ctx, val)
 	}
 	if err != nil {
 		return "", err
@@ -984,7 +994,7 @@ func (t *DoltgresType) TypModIn(ctx *sql.Context, val []any) (int32, error) {
 	if t.ModInFunc == 0 {
 		return 0, errors.Errorf("typmodin function for type '%s' doesn't exist", t.Name())
 	}
-	o, err := globalFunctionRegistry.GetFunction(t.ModInFunc).CallVariadic(ctx, val)
+	o, err := globalFunctionRegistry.GetFunction(ctx, t.ModInFunc).CallVariadic(ctx, val)
 	if err != nil {
 		return 0, err
 	}
@@ -1000,7 +1010,7 @@ func (t *DoltgresType) TypModOut(ctx *sql.Context, val int32) (string, error) {
 	if t.ModOutFunc == 0 {
 		return "", errors.Errorf("typmodout function for type '%s' doesn't exist", t.Name())
 	}
-	o, err := globalFunctionRegistry.GetFunction(t.ModOutFunc).CallVariadic(ctx, val)
+	o, err := globalFunctionRegistry.GetFunction(ctx, t.ModOutFunc).CallVariadic(ctx, val)
 	if err != nil {
 		return "", err
 	}
@@ -1107,12 +1117,12 @@ func (t *DoltgresType) CallSend(ctx *sql.Context, val any) ([]byte, error) {
 	var o any
 	var err error
 	if t.ModInFunc != 0 || t.IsArrayType() {
-		send := globalFunctionRegistry.GetFunction(t.SendFunc)
+		send := globalFunctionRegistry.GetFunction(ctx, t.SendFunc)
 		resolvedTypes := send.ResolvedTypes()
 		resolvedTypes[0] = t
 		o, err = send.WithResolvedTypes(resolvedTypes).(QuickFunction).CallVariadic(ctx, val)
 	} else {
-		o, err = globalFunctionRegistry.GetFunction(t.SendFunc).CallVariadic(ctx, val)
+		o, err = globalFunctionRegistry.GetFunction(ctx, t.SendFunc).CallVariadic(ctx, val)
 	}
 	if err != nil || o == nil {
 		return nil, err
@@ -1123,19 +1133,19 @@ func (t *DoltgresType) CallSend(ctx *sql.Context, val any) ([]byte, error) {
 // CallReceive is a way to call the `receive` function for this type.
 func (t *DoltgresType) CallReceive(ctx *sql.Context, val []byte) (any, error) {
 	if t.TypType == TypeType_Domain {
-		return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val, t.BaseTypeID.AsId(), t.attTypMod)
+		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.BaseTypeID.AsId(), t.attTypMod)
 	} else if t.ModInFunc != 0 || t.IsArrayType() {
 		if t.Elem != id.NullType {
-			return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val, t.Elem.AsId(), t.attTypMod)
+			return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.Elem.AsId(), t.attTypMod)
 		} else {
-			return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId(), t.attTypMod)
+			return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId(), t.attTypMod)
 		}
 	} else if t.TypType == TypeType_Enum {
-		return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId())
+		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId())
 	} else if t.IsCompositeType() {
-		return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId(), t.attTypMod)
+		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.ID.AsId(), t.attTypMod)
 	} else {
-		return globalFunctionRegistry.GetFunction(t.ReceiveFunc).CallVariadic(ctx, val)
+		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val)
 	}
 }
 
@@ -1157,6 +1167,13 @@ func (t *DoltgresType) ConvertSerialized(ctx context.Context, other val.TupleTyp
 	}
 
 	return t.SerializeValue(ctx, toValue)
+}
+
+// TypeInfo implements the typeinfo.ExtendedType interface.
+func (t *DoltgresType) TypeInfo() typeinfo.TypeInfo {
+	return typeInfo{
+		Type: t,
+	}
 }
 
 // TypeCastFunction is a function that takes a value of a particular kind of type, and returns it as another kind of type.

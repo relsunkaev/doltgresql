@@ -19,10 +19,9 @@ import (
 	"io"
 	"math"
 
-	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/resolve"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
 
-	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -98,6 +97,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				kind:            "i",
 				schemaOid:       schemaOid.AsId(),
 				schemaOidNative: id.Cache().ToOID(schemaOid.AsId()),
+				relType:         id.Null,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -115,6 +115,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name()).Identity.String(),
+				relType:         id.NewType(table.OID.SchemaName(), table.OID.SchemaName()).AsId(),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -130,6 +131,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				kind:            "v",
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
+				relType:         id.NewType(view.OID.SchemaName(), view.OID.SchemaName()).AsId(),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -145,6 +147,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				kind:            "S",
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
+				relType:         id.Null,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -154,30 +157,6 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	})
 	if err != nil {
 		return err
-	}
-
-	if includeSystemTables {
-		_, root, err := core.GetRootFromContext(ctx)
-		if err != nil {
-			return err
-		}
-
-		systemTables, err := resolve.GetGeneratedSystemTables(ctx, root)
-		if err != nil {
-			return err
-		}
-
-		for _, tblName := range systemTables {
-			class := &pgClass{
-				oid:       id.NewTable(tblName.Schema, tblName.Name).AsId(),
-				name:      tblName.Name,
-				schemaOid: id.NewNamespace(tblName.Schema).AsId(),
-				kind:      "r",
-			}
-			nameIdx.Add(class)
-			oidIdx.Add(class)
-			classes = append(classes, class)
-		}
 	}
 
 	pgCatalogCache.pgClasses = &pgClassCache{
@@ -194,6 +173,12 @@ func formatIndexName(idx sql.Index) string {
 	if idx.ID() == "PRIMARY" {
 		return fmt.Sprintf("%s_pkey", idx.Table())
 	}
+
+	switch idx.(type) {
+	case *index.BranchNameIndex, *index.CommitIndex:
+		return fmt.Sprintf("%s_%s_key", idx.Table(), idx.ID())
+	}
+
 	return idx.ID()
 	// TODO: Unnamed indexes should have below format
 	// return fmt.Sprintf("%s_%s_key", idx.Table(), idx.ID())
@@ -397,6 +382,7 @@ type pgClass struct {
 	hasIndexes      bool
 	replicaIdentity string
 	kind            string // r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+	relType         id.Id
 }
 
 // lessOid is a sort function for pgClass based on oid.
@@ -450,7 +436,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		class.oid,        // oid
 		class.name,       // relname
 		class.schemaOid,  // relnamespace
-		id.Null,          // reltype
+		class.relType,    // reltype
 		id.Null,          // reloftype
 		id.Null,          // relowner
 		relam,            // relam
