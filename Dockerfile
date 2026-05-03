@@ -8,7 +8,7 @@ RUN apt-get update -y && \
     curl tini ca-certificates postgresql-client && \
     rm -rf /var/lib/apt/lists/*
 
-FROM golang:1.25-trixie AS build-from-source
+FROM golang:1.26.2-trixie AS build-from-source
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
