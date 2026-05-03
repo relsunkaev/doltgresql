@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -55,7 +56,7 @@ func (ct *CopyTo) String() string {
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.
-func (ct *CopyTo) WithResolvedChildren(children []any) (any, error) {
+func (ct *CopyTo) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}

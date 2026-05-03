@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -53,7 +54,7 @@ func (e ExecuteStatement) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 }
 
 // Schema implements the interface sql.ExecSourceRel.
-func (e ExecuteStatement) Schema() sql.Schema {
+func (e ExecuteStatement) Schema(ctx *sql.Context) sql.Schema {
 	return nil
 }
 
@@ -66,7 +67,7 @@ func (e ExecuteStatement) String() string {
 }
 
 // WithChildren implements the interface sql.ExecSourceRel.
-func (e ExecuteStatement) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (e ExecuteStatement) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(e, len(children), 0)
 	}
@@ -74,7 +75,7 @@ func (e ExecuteStatement) WithChildren(children ...sql.Node) (sql.Node, error) {
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.
-func (e ExecuteStatement) WithResolvedChildren(children []any) (any, error) {
+func (e ExecuteStatement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}

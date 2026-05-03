@@ -225,7 +225,7 @@ func (capture *replicationChangeCapture) getFullRowFieldCount(ctx *sql.Context) 
 	if err != nil {
 		return 0, err
 	}
-	capture.fullRowFieldCount = len(table.Schema())
+	capture.fullRowFieldCount = len(table.Schema(ctx))
 	return capture.fullRowFieldCount, nil
 }
 
@@ -234,8 +234,8 @@ func (capture *replicationChangeCapture) fullRowColumnNames(ctx *sql.Context) ([
 	if err != nil {
 		return nil, err
 	}
-	columns := make([]string, len(table.Schema()))
-	for i, column := range table.Schema() {
+	columns := make([]string, len(table.Schema(ctx)))
+	for i, column := range table.Schema(ctx) {
 		columns[i] = column.Name
 	}
 	capture.fullRowFieldCount = len(columns)
@@ -295,7 +295,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 				commitLSN = replsource.AdvanceLSN()
 			}
 			relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
-			fields, err := schemaToFieldDescriptions(ctx, table.Schema(), nil)
+			fields, err := schemaToFieldDescriptions(ctx, table.Schema(ctx), nil)
 			if err != nil {
 				return err
 			}
@@ -304,7 +304,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 			if err != nil {
 				return err
 			}
-			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields, replIdent.Identity.Byte(), keyColumns)
+			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(ctx), fields, replIdent.Identity.Byte(), keyColumns)
 			truncate := encodeTruncateMessage([]uint32{relationID}, 0)
 			for _, target := range targets {
 				pubMessages := messagesByPublication[target.name]
@@ -381,7 +381,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 			if err != nil {
 				return err
 			}
-			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(), fields, replIdent.Identity.Byte(), keyColumns)
+			relation := encodeRelationMessage(relationID, schema, capture.table, table.Schema(ctx), fields, replIdent.Identity.Byte(), keyColumns)
 			pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 				WALStart:     commitLSN,
 				ServerWALEnd: commitLSN,
@@ -731,8 +731,8 @@ func relationReplicaIdentityColumns(ctx *sql.Context, table sql.Table, setting r
 	case replicaidentity.IdentityNothing:
 		return map[string]struct{}{}, nil
 	case replicaidentity.IdentityFull:
-		columns := make(map[string]struct{}, len(table.Schema()))
-		for _, column := range table.Schema() {
+		columns := make(map[string]struct{}, len(table.Schema(ctx)))
+		for _, column := range table.Schema(ctx) {
 			columns[strings.ToLower(column.Name)] = struct{}{}
 		}
 		return columns, nil
@@ -818,11 +818,11 @@ func appendCString(data []byte, value string) []byte {
 	return append(data, 0)
 }
 
-func wrapReplicationCapturePlan(boundPlan sql.Node, capture *replicationChangeCapture) (sql.Node, error) {
+func wrapReplicationCapturePlan(ctx *sql.Context, boundPlan sql.Node, capture *replicationChangeCapture) (sql.Node, error) {
 	if capture == nil || capture.action != replicationChangeUpdate {
 		return boundPlan, nil
 	}
-	wrappedPlan, _, err := transform.NodeWithOpaque(boundPlan, func(node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+	wrappedPlan, _, err := transform.NodeWithOpaque(ctx, boundPlan, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		updateNode, ok := node.(*plan.Update)
 		if !ok {
 			return node, transform.SameTree, nil
@@ -830,7 +830,7 @@ func wrapReplicationCapturePlan(boundPlan sql.Node, capture *replicationChangeCa
 		if _, ok = updateNode.Child.(*replicationUpdateCaptureNode); ok {
 			return node, transform.SameTree, nil
 		}
-		newNode, err := updateNode.WithChildren(&replicationUpdateCaptureNode{
+		newNode, err := updateNode.WithChildren(ctx, &replicationUpdateCaptureNode{
 			Source:  updateNode.Child,
 			Capture: capture,
 		})
@@ -861,15 +861,15 @@ func (r *replicationUpdateCaptureNode) Resolved() bool {
 	return r.Source.Resolved()
 }
 
-func (r *replicationUpdateCaptureNode) Schema() sql.Schema {
-	return r.Source.Schema()
+func (r *replicationUpdateCaptureNode) Schema(ctx *sql.Context) sql.Schema {
+	return r.Source.Schema(ctx)
 }
 
 func (r *replicationUpdateCaptureNode) String() string {
 	return "REPLICATION UPDATE CAPTURE"
 }
 
-func (r *replicationUpdateCaptureNode) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (r *replicationUpdateCaptureNode) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(r, len(children), 1)
 	}
@@ -883,7 +883,7 @@ func (r *replicationUpdateCaptureNode) BuildRowIter(ctx *sql.Context, b sql.Node
 	if err != nil {
 		return nil, err
 	}
-	schema := r.Source.Schema()
+	schema := r.Source.Schema(ctx)
 	return &replicationUpdateCaptureIter{
 		source:  iter,
 		capture: r.Capture,

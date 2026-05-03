@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -41,11 +42,11 @@ type AlterTableReplicaIdentity struct {
 var _ sql.ExecSourceRel = (*AlterTableReplicaIdentity)(nil)
 var _ vitess.Injectable = (*AlterTableReplicaIdentity)(nil)
 
-func (a *AlterTableReplicaIdentity) Children() []sql.Node { return nil }
-func (a *AlterTableReplicaIdentity) IsReadOnly() bool     { return false }
-func (a *AlterTableReplicaIdentity) Resolved() bool       { return true }
-func (a *AlterTableReplicaIdentity) Schema() sql.Schema   { return nil }
-func (a *AlterTableReplicaIdentity) String() string       { return "ALTER TABLE REPLICA IDENTITY" }
+func (a *AlterTableReplicaIdentity) Children() []sql.Node               { return nil }
+func (a *AlterTableReplicaIdentity) IsReadOnly() bool                   { return false }
+func (a *AlterTableReplicaIdentity) Resolved() bool                     { return true }
+func (a *AlterTableReplicaIdentity) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (a *AlterTableReplicaIdentity) String() string                     { return "ALTER TABLE REPLICA IDENTITY" }
 
 func (a *AlterTableReplicaIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	schema, tableName, sqlTable, err := a.resolveTable(ctx)
@@ -73,11 +74,11 @@ func (a *AlterTableReplicaIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.Ro
 	return sql.RowsToRowIter(), nil
 }
 
-func (a *AlterTableReplicaIdentity) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (a *AlterTableReplicaIdentity) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(a, children...)
 }
 
-func (a *AlterTableReplicaIdentity) WithResolvedChildren(children []any) (any, error) {
+func (a *AlterTableReplicaIdentity) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -127,7 +128,7 @@ func (a *AlterTableReplicaIdentity) resolveIndex(ctx *sql.Context, schema string
 				nonUnique = true
 				return false, nil
 			}
-			if !replicaIdentityIndexColumnsAreNotNull(sqlTable, index.Item) {
+			if !replicaIdentityIndexColumnsAreNotNull(ctx, sqlTable, index.Item) {
 				nullableColumn = true
 				return false, nil
 			}
@@ -157,8 +158,8 @@ func replicaIdentityIndexName(index sql.Index) string {
 	return index.ID()
 }
 
-func replicaIdentityIndexColumnsAreNotNull(table sql.Table, index sql.Index) bool {
-	schema := table.Schema()
+func replicaIdentityIndexColumnsAreNotNull(ctx *sql.Context, table sql.Table, index sql.Index) bool {
+	schema := table.Schema(ctx)
 	for _, expr := range index.Expressions() {
 		colName := replicaIdentityIndexColumnName(expr)
 		colIdx := schema.IndexOfColName(colName)

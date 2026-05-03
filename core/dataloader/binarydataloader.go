@@ -163,7 +163,7 @@ func (bdl *BinaryDataLoader) String() string {
 	return "BinaryDataLoader"
 }
 
-func (bdl *BinaryDataLoader) Schema() sql.Schema {
+func (bdl *BinaryDataLoader) Schema(ctx *sql.Context) sql.Schema {
 	return bdl.sch
 }
 
@@ -171,7 +171,7 @@ func (bdl *BinaryDataLoader) Children() []sql.Node {
 	return nil
 }
 
-func (bdl *BinaryDataLoader) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (bdl *BinaryDataLoader) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(bdl, len(children), 0)
 	}

@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -52,7 +53,7 @@ func (p PrepareStatement) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 }
 
 // Schema implements the interface sql.ExecSourceRel.
-func (p PrepareStatement) Schema() sql.Schema {
+func (p PrepareStatement) Schema(ctx *sql.Context) sql.Schema {
 	return nil
 }
 
@@ -62,7 +63,7 @@ func (p PrepareStatement) String() string {
 }
 
 // WithChildren implements the interface sql.ExecSourceRel.
-func (p PrepareStatement) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (p PrepareStatement) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(p, len(children), 0)
 	}
@@ -70,7 +71,7 @@ func (p PrepareStatement) WithChildren(children ...sql.Node) (sql.Node, error) {
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.
-func (p PrepareStatement) WithResolvedChildren(children []any) (any, error) {
+func (p PrepareStatement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}

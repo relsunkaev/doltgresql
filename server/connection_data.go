@@ -160,7 +160,7 @@ func extractBindVarTypes(ctx *sql.Context, queryPlan sql.Node) ([]uint32, error)
 		case *pgexprs.ExplicitCast:
 			if bindVar, ok := bindVarFromCastedExpression(e.Child()); ok {
 				var typOid uint32
-				typOid, err = TypeToObjectID(e.Type())
+				typOid, err = TypeToObjectID(e.Type(ctx))
 				if err != nil {
 					err = errors.Errorf("could not determine OID for placeholder %s: %e", bindVar.Name, err)
 					return false
@@ -175,7 +175,7 @@ func extractBindVarTypes(ctx *sql.Context, queryPlan sql.Node) ([]uint32, error)
 		case *expression.Convert:
 			if bindVar, ok := bindVarFromCastedExpression(e.Child); ok {
 				var typOid uint32
-				typOid, err = TypeToObjectID(e.Type())
+				typOid, err = TypeToObjectID(e.Type(ctx))
 				if err != nil {
 					err = errors.Errorf("could not determine OID for placeholder %s: %e", bindVar.Name, err)
 					return false

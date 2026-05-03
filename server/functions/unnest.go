@@ -68,7 +68,7 @@ func (u *unnestWithOrdinalityTableFunction) NewInstance(ctx *sql.Context, db sql
 		return nil, sql.ErrInvalidArgumentNumber.New(u.Name(), 1, len(args))
 	}
 	valueType := sql.Type(pgtypes.AnyElement)
-	if doltgresType, ok := args[0].Type().(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+	if doltgresType, ok := args[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
 		valueType = doltgresType.ArrayBaseType()
 	}
 	return &unnestWithOrdinalityTableFunction{
@@ -103,13 +103,13 @@ func (u *unnestWithOrdinalityTableFunction) Expressions() []sql.Expression {
 	return u.exprs
 }
 
-func (u *unnestWithOrdinalityTableFunction) WithExpressions(exprs ...sql.Expression) (sql.Node, error) {
+func (u *unnestWithOrdinalityTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
 	if len(exprs) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(u, len(exprs), 1)
 	}
 	nu := *u
 	nu.exprs = exprs
-	if doltgresType, ok := exprs[0].Type().(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+	if doltgresType, ok := exprs[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
 		nu.valueType = doltgresType.ArrayBaseType()
 	}
 	return &nu, nil
@@ -129,7 +129,7 @@ func (u *unnestWithOrdinalityTableFunction) IsReadOnly() bool {
 	return true
 }
 
-func (u *unnestWithOrdinalityTableFunction) Schema() sql.Schema {
+func (u *unnestWithOrdinalityTableFunction) Schema(ctx *sql.Context) sql.Schema {
 	var dbName string
 	if u.db != nil {
 		dbName = u.db.Name()
@@ -160,7 +160,7 @@ func (u *unnestWithOrdinalityTableFunction) Children() []sql.Node {
 	return nil
 }
 
-func (u *unnestWithOrdinalityTableFunction) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (u *unnestWithOrdinalityTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(u, len(children), 0)
 	}

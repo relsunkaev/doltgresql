@@ -202,8 +202,6 @@ func TestElectricMultiShapeCatchupAndSchemaChange(t *testing.T) {
 
 		_, err = conn.Current.Exec(serverCtx, "ALTER TABLE electric_accounts ADD COLUMN tier TEXT NOT NULL DEFAULT 'standard';")
 		require.NoError(t, err)
-		_, err = conn.Current.Exec(serverCtx, "ALTER TABLE electric_accounts REPLICA IDENTITY DEFAULT;")
-		require.NoError(t, err)
 		_, err = conn.Current.Exec(serverCtx, "UPDATE electric_accounts SET tier = 'vip' WHERE id = 1;")
 		require.NoError(t, err)
 

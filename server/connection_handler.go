@@ -795,7 +795,11 @@ func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, quer
 
 func (h *ConnectionHandler) resolvePreparedStatementTypes(typeNames []string, analyzedPlan sql.Node) ([]uint32, error) {
 	if len(typeNames) == 0 {
-		return extractBindVarTypes(analyzedPlan)
+		ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "PREPARE")
+		if err != nil {
+			return nil, err
+		}
+		return extractBindVarTypes(ctx, analyzedPlan)
 	}
 
 	typeOIDs := make([]uint32, len(typeNames))
@@ -918,7 +922,11 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 			if !ok {
 				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
 			}
-			executionPlan, err = wrapReplicationCapturePlan(executionPlan, replicationCapture)
+			replicationCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, replicationQuery.String)
+			if err != nil {
+				return err
+			}
+			executionPlan, err = wrapReplicationCapturePlan(replicationCtx, executionPlan, replicationCapture)
 			if err != nil {
 				return err
 			}
@@ -1151,7 +1159,11 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			if !ok {
 				return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
 			}
-			replicationBoundPlan, err = wrapReplicationCapturePlan(replicationBoundPlan, replicationCapture)
+			replicationCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, replicationQuery.String)
+			if err != nil {
+				return err
+			}
+			replicationBoundPlan, err = wrapReplicationCapturePlan(replicationCtx, replicationBoundPlan, replicationCapture)
 			if err != nil {
 				return err
 			}
@@ -1879,7 +1891,11 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 		if !ok {
 			return errors.Errorf("expected a sql.Node, got %T", replicationPlan)
 		}
-		executionPlan, err = wrapReplicationCapturePlan(executionPlan, capture)
+		replicationCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, replicationQuery.String)
+		if err != nil {
+			return err
+		}
+		executionPlan, err = wrapReplicationCapturePlan(replicationCtx, executionPlan, capture)
 		if err != nil {
 			return err
 		}
@@ -2190,7 +2206,7 @@ func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, co
 	if copyFrom.CopyOptions.CopyFormat == tree.CopyFormatBinary {
 		overallFormat = 1
 	}
-	columnFormatCodes := make([]uint16, len(h.copyFromStdinState.dataLoader.Schema()))
+	columnFormatCodes := make([]uint16, len(h.copyFromStdinState.dataLoader.Schema(sqlCtx)))
 	if overallFormat == 1 {
 		for i := range columnFormatCodes {
 			columnFormatCodes[i] = 1

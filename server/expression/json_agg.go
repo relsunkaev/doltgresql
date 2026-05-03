@@ -15,6 +15,7 @@
 package expression
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -51,7 +52,7 @@ func NewJsonAgg(name string, object bool, jsonb bool, distinct bool) *JsonAgg {
 }
 
 // WithResolvedChildren returns a new JsonAgg with the provided select expressions and sort fields.
-func (j *JsonAgg) WithResolvedChildren(children []any) (any, error) {
+func (j *JsonAgg) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	j.selectExprs = make([]sql.Expression, len(children)-1)
 	for i := 0; i < len(children)-1; i++ {
 		j.selectExprs[i] = children[i].(sql.Expression)
@@ -94,7 +95,7 @@ func (j *JsonAgg) String() string {
 }
 
 // Type implements sql.Expression.
-func (j *JsonAgg) Type() sql.Type {
+func (j *JsonAgg) Type(ctx *sql.Context) sql.Type {
 	if j.jsonb {
 		return pgtypes.JsonB
 	}
@@ -102,7 +103,7 @@ func (j *JsonAgg) Type() sql.Type {
 }
 
 // IsNullable implements sql.Expression.
-func (j *JsonAgg) IsNullable() bool {
+func (j *JsonAgg) IsNullable(ctx *sql.Context) bool {
 	return true
 }
 
@@ -121,12 +122,12 @@ func (j *JsonAgg) OutputExpressions() []sql.Expression {
 }
 
 // WithChildren implements sql.Expression.
-func (j JsonAgg) WithChildren(children ...sql.Expression) (sql.Expression, error) {
+func (j JsonAgg) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
 	if len(children) != len(j.selectExprs)+len(j.orderBy) {
 		return nil, sql.ErrInvalidChildrenNumber.New(j, len(children), len(j.selectExprs)+len(j.orderBy))
 	}
 	j.selectExprs = children[:len(j.selectExprs)]
-	j.orderBy = j.orderBy.FromExpressions(children[len(j.selectExprs):]...)
+	j.orderBy = j.orderBy.FromExpressions(ctx, children[len(j.selectExprs):]...)
 	return &j, nil
 }
 
@@ -142,12 +143,12 @@ func (j JsonAgg) WithId(id sql.ColumnId) sql.IdExpression {
 }
 
 // NewWindowFunction implements sql.WindowAdaptableExpression.
-func (j *JsonAgg) NewWindowFunction() (sql.WindowFunction, error) {
+func (j *JsonAgg) NewWindowFunction(ctx *sql.Context) (sql.WindowFunction, error) {
 	panic("window functions not yet supported for JSON aggregates")
 }
 
 // WithWindow implements sql.WindowAdaptableExpression.
-func (j *JsonAgg) WithWindow(window *sql.WindowDefinition) sql.WindowAdaptableExpression {
+func (j *JsonAgg) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
 	panic("window functions not yet supported for JSON aggregates")
 }
 
@@ -157,7 +158,7 @@ func (j *JsonAgg) Window() *sql.WindowDefinition {
 }
 
 // NewBuffer implements sql.Aggregation.
-func (j *JsonAgg) NewBuffer() (sql.AggregationBuffer, error) {
+func (j *JsonAgg) NewBuffer(ctx *sql.Context) (sql.AggregationBuffer, error) {
 	return &jsonAggBuffer{
 		elements: make([]sql.Row, 0),
 		seen:     make(map[string]struct{}),
@@ -172,7 +173,7 @@ type jsonAggBuffer struct {
 }
 
 // Dispose implements sql.AggregationBuffer.
-func (j *jsonAggBuffer) Dispose() {}
+func (j *jsonAggBuffer) Dispose(ctx *sql.Context) {}
 
 // Eval implements sql.AggregationBuffer.
 func (j *jsonAggBuffer) Eval(ctx *sql.Context) (interface{}, error) {
@@ -197,7 +198,7 @@ func (j *jsonAggBuffer) Eval(ctx *sql.Context) (interface{}, error) {
 }
 
 func (j *jsonAggBuffer) evalArray(ctx *sql.Context) (interface{}, error) {
-	valueType := jsonAggDoltgresType(j.j.selectExprs[0])
+	valueType := jsonAggDoltgresType(ctx, j.j.selectExprs[0])
 	array := make(pgtypes.JsonValueArray, len(j.elements))
 	for i, row := range j.elements {
 		value, err := pgtypes.JsonValueFromSQLValue(ctx, valueType, row[len(row)-1])
@@ -210,8 +211,8 @@ func (j *jsonAggBuffer) evalArray(ctx *sql.Context) (interface{}, error) {
 }
 
 func (j *jsonAggBuffer) evalObject(ctx *sql.Context) (interface{}, error) {
-	keyType := jsonAggDoltgresType(j.j.selectExprs[0])
-	valueType := jsonAggDoltgresType(j.j.selectExprs[1])
+	keyType := jsonAggDoltgresType(ctx, j.j.selectExprs[0])
+	valueType := jsonAggDoltgresType(ctx, j.j.selectExprs[1])
 	items := make([]pgtypes.JsonValueObjectItem, 0, len(j.elements))
 	for _, row := range j.elements {
 		key, err := jsonAggObjectKey(ctx, keyType, row[len(row)-2])
@@ -265,11 +266,11 @@ func jsonAggDistinctKey(ctx *sql.Context, row sql.Row) (string, error) {
 	return sb.String(), nil
 }
 
-func jsonAggDoltgresType(expr sql.Expression) *pgtypes.DoltgresType {
+func jsonAggDoltgresType(ctx *sql.Context, expr sql.Expression) *pgtypes.DoltgresType {
 	if expr == nil {
 		return nil
 	}
-	dt, _ := expr.Type().(*pgtypes.DoltgresType)
+	dt, _ := expr.Type(ctx).(*pgtypes.DoltgresType)
 	return dt
 }
 

@@ -61,10 +61,10 @@ func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Ex
 	arrayID := id.NewType("", "_"+tableName)
 	attrs := make([]pgtypes.CompositeAttribute, len(fields))
 	for i, field := range fields {
-		colType, ok := field.Type().(*pgtypes.DoltgresType)
+		colType, ok := field.Type(ctx).(*pgtypes.DoltgresType)
 		if !ok {
 			var err error
-			colType, err = pgtypes.FromGmsTypeToDoltgresType(field.Type())
+			colType, err = pgtypes.FromGmsTypeToDoltgresType(field.Type(ctx))
 			if err != nil {
 				return nil, err
 			}

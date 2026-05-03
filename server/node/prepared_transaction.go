@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -29,24 +30,24 @@ type PrepareTransaction struct {
 var _ vitess.Injectable = PrepareTransaction{}
 var _ sql.ExecSourceRel = PrepareTransaction{}
 
-func (p PrepareTransaction) Children() []sql.Node { return nil }
-func (p PrepareTransaction) IsReadOnly() bool     { return false }
-func (p PrepareTransaction) Resolved() bool       { return true }
-func (p PrepareTransaction) Schema() sql.Schema   { return nil }
-func (p PrepareTransaction) String() string       { return fmt.Sprintf("PREPARE TRANSACTION %q", p.GID) }
+func (p PrepareTransaction) Children() []sql.Node               { return nil }
+func (p PrepareTransaction) IsReadOnly() bool                   { return false }
+func (p PrepareTransaction) Resolved() bool                     { return true }
+func (p PrepareTransaction) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (p PrepareTransaction) String() string                     { return fmt.Sprintf("PREPARE TRANSACTION %q", p.GID) }
 
 func (p PrepareTransaction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	panic("PREPARE TRANSACTION should be handled by the connection handler")
 }
 
-func (p PrepareTransaction) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (p PrepareTransaction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(p, len(children), 0)
 	}
 	return p, nil
 }
 
-func (p PrepareTransaction) WithResolvedChildren(children []any) (any, error) {
+func (p PrepareTransaction) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -61,24 +62,24 @@ type CommitPrepared struct {
 var _ vitess.Injectable = CommitPrepared{}
 var _ sql.ExecSourceRel = CommitPrepared{}
 
-func (c CommitPrepared) Children() []sql.Node { return nil }
-func (c CommitPrepared) IsReadOnly() bool     { return false }
-func (c CommitPrepared) Resolved() bool       { return true }
-func (c CommitPrepared) Schema() sql.Schema   { return nil }
-func (c CommitPrepared) String() string       { return fmt.Sprintf("COMMIT PREPARED %q", c.GID) }
+func (c CommitPrepared) Children() []sql.Node               { return nil }
+func (c CommitPrepared) IsReadOnly() bool                   { return false }
+func (c CommitPrepared) Resolved() bool                     { return true }
+func (c CommitPrepared) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (c CommitPrepared) String() string                     { return fmt.Sprintf("COMMIT PREPARED %q", c.GID) }
 
 func (c CommitPrepared) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	panic("COMMIT PREPARED should be handled by the connection handler")
 }
 
-func (c CommitPrepared) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (c CommitPrepared) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(c, len(children), 0)
 	}
 	return c, nil
 }
 
-func (c CommitPrepared) WithResolvedChildren(children []any) (any, error) {
+func (c CommitPrepared) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -93,24 +94,24 @@ type RollbackPrepared struct {
 var _ vitess.Injectable = RollbackPrepared{}
 var _ sql.ExecSourceRel = RollbackPrepared{}
 
-func (r RollbackPrepared) Children() []sql.Node { return nil }
-func (r RollbackPrepared) IsReadOnly() bool     { return false }
-func (r RollbackPrepared) Resolved() bool       { return true }
-func (r RollbackPrepared) Schema() sql.Schema   { return nil }
-func (r RollbackPrepared) String() string       { return fmt.Sprintf("ROLLBACK PREPARED %q", r.GID) }
+func (r RollbackPrepared) Children() []sql.Node               { return nil }
+func (r RollbackPrepared) IsReadOnly() bool                   { return false }
+func (r RollbackPrepared) Resolved() bool                     { return true }
+func (r RollbackPrepared) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (r RollbackPrepared) String() string                     { return fmt.Sprintf("ROLLBACK PREPARED %q", r.GID) }
 
 func (r RollbackPrepared) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
 	panic("ROLLBACK PREPARED should be handled by the connection handler")
 }
 
-func (r RollbackPrepared) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (r RollbackPrepared) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(r, len(children), 0)
 	}
 	return r, nil
 }
 
-func (r RollbackPrepared) WithResolvedChildren(children []any) (any, error) {
+func (r RollbackPrepared) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}

@@ -116,8 +116,8 @@ func publicationAttNames(ctx *sql.Context, schema string, table string, columns 
 	if err != nil || sqlTable == nil {
 		return nil, err
 	}
-	attNames := make([]string, 0, len(sqlTable.Schema()))
-	for _, column := range sqlTable.Schema() {
+	attNames := make([]string, 0, len(sqlTable.Schema(ctx)))
+	for _, column := range sqlTable.Schema(ctx) {
 		attNames = append(attNames, column.Name)
 	}
 	return attNames, nil
@@ -134,7 +134,7 @@ func publicationAttNums(ctx *sql.Context, relation publications.PublicationRelat
 	attNums := make([]any, 0, len(relation.Columns))
 	for _, wanted := range relation.Columns {
 		found := false
-		for i, column := range table.Schema() {
+		for i, column := range table.Schema(ctx) {
 			if column.Name == wanted || strings.EqualFold(column.Name, wanted) {
 				attNums = append(attNums, int16(i+1))
 				found = true

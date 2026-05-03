@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"slices"
 	"strings"
 
@@ -54,11 +55,11 @@ type CreatePublication struct {
 var _ sql.ExecSourceRel = (*CreatePublication)(nil)
 var _ vitess.Injectable = (*CreatePublication)(nil)
 
-func (c *CreatePublication) Children() []sql.Node { return nil }
-func (c *CreatePublication) IsReadOnly() bool     { return false }
-func (c *CreatePublication) Resolved() bool       { return true }
-func (c *CreatePublication) Schema() sql.Schema   { return nil }
-func (c *CreatePublication) String() string       { return "CREATE PUBLICATION" }
+func (c *CreatePublication) Children() []sql.Node               { return nil }
+func (c *CreatePublication) IsReadOnly() bool                   { return false }
+func (c *CreatePublication) Resolved() bool                     { return true }
+func (c *CreatePublication) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (c *CreatePublication) String() string                     { return "CREATE PUBLICATION" }
 
 func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if strings.HasPrefix(strings.ToLower(c.Name), "dolt") {
@@ -90,11 +91,11 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreatePublication) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (c *CreatePublication) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(c, children...)
 }
 
-func (c *CreatePublication) WithResolvedChildren(children []any) (any, error) {
+func (c *CreatePublication) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -129,11 +130,11 @@ type AlterPublication struct {
 var _ sql.ExecSourceRel = (*AlterPublication)(nil)
 var _ vitess.Injectable = (*AlterPublication)(nil)
 
-func (a *AlterPublication) Children() []sql.Node { return nil }
-func (a *AlterPublication) IsReadOnly() bool     { return false }
-func (a *AlterPublication) Resolved() bool       { return true }
-func (a *AlterPublication) Schema() sql.Schema   { return nil }
-func (a *AlterPublication) String() string       { return "ALTER PUBLICATION" }
+func (a *AlterPublication) Children() []sql.Node               { return nil }
+func (a *AlterPublication) IsReadOnly() bool                   { return false }
+func (a *AlterPublication) Resolved() bool                     { return true }
+func (a *AlterPublication) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (a *AlterPublication) String() string                     { return "ALTER PUBLICATION" }
 
 func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	collection, err := core.GetPublicationsCollectionFromContext(ctx)
@@ -237,11 +238,11 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	return sql.RowsToRowIter(), nil
 }
 
-func (a *AlterPublication) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (a *AlterPublication) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(a, children...)
 }
 
-func (a *AlterPublication) WithResolvedChildren(children []any) (any, error) {
+func (a *AlterPublication) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -258,11 +259,11 @@ type DropPublication struct {
 var _ sql.ExecSourceRel = (*DropPublication)(nil)
 var _ vitess.Injectable = (*DropPublication)(nil)
 
-func (d *DropPublication) Children() []sql.Node { return nil }
-func (d *DropPublication) IsReadOnly() bool     { return false }
-func (d *DropPublication) Resolved() bool       { return true }
-func (d *DropPublication) Schema() sql.Schema   { return nil }
-func (d *DropPublication) String() string       { return "DROP PUBLICATION" }
+func (d *DropPublication) Children() []sql.Node               { return nil }
+func (d *DropPublication) IsReadOnly() bool                   { return false }
+func (d *DropPublication) Resolved() bool                     { return true }
+func (d *DropPublication) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (d *DropPublication) String() string                     { return "DROP PUBLICATION" }
 
 func (d *DropPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	collection, err := core.GetPublicationsCollectionFromContext(ctx)
@@ -284,11 +285,11 @@ func (d *DropPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	return sql.RowsToRowIter(), nil
 }
 
-func (d *DropPublication) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (d *DropPublication) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(d, children...)
 }
 
-func (d *DropPublication) WithResolvedChildren(children []any) (any, error) {
+func (d *DropPublication) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -306,11 +307,11 @@ type CreateSubscription struct {
 var _ sql.ExecSourceRel = (*CreateSubscription)(nil)
 var _ vitess.Injectable = (*CreateSubscription)(nil)
 
-func (c *CreateSubscription) Children() []sql.Node { return nil }
-func (c *CreateSubscription) IsReadOnly() bool     { return false }
-func (c *CreateSubscription) Resolved() bool       { return true }
-func (c *CreateSubscription) Schema() sql.Schema   { return nil }
-func (c *CreateSubscription) String() string       { return "CREATE SUBSCRIPTION" }
+func (c *CreateSubscription) Children() []sql.Node               { return nil }
+func (c *CreateSubscription) IsReadOnly() bool                   { return false }
+func (c *CreateSubscription) Resolved() bool                     { return true }
+func (c *CreateSubscription) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (c *CreateSubscription) String() string                     { return "CREATE SUBSCRIPTION" }
 
 func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if strings.HasPrefix(strings.ToLower(c.Name), "dolt") {
@@ -339,11 +340,11 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreateSubscription) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (c *CreateSubscription) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(c, children...)
 }
 
-func (c *CreateSubscription) WithResolvedChildren(children []any) (any, error) {
+func (c *CreateSubscription) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -381,11 +382,11 @@ type AlterSubscription struct {
 var _ sql.ExecSourceRel = (*AlterSubscription)(nil)
 var _ vitess.Injectable = (*AlterSubscription)(nil)
 
-func (a *AlterSubscription) Children() []sql.Node { return nil }
-func (a *AlterSubscription) IsReadOnly() bool     { return false }
-func (a *AlterSubscription) Resolved() bool       { return true }
-func (a *AlterSubscription) Schema() sql.Schema   { return nil }
-func (a *AlterSubscription) String() string       { return "ALTER SUBSCRIPTION" }
+func (a *AlterSubscription) Children() []sql.Node               { return nil }
+func (a *AlterSubscription) IsReadOnly() bool                   { return false }
+func (a *AlterSubscription) Resolved() bool                     { return true }
+func (a *AlterSubscription) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (a *AlterSubscription) String() string                     { return "ALTER SUBSCRIPTION" }
 
 func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
@@ -479,11 +480,11 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	return sql.RowsToRowIter(), nil
 }
 
-func (a *AlterSubscription) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (a *AlterSubscription) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(a, children...)
 }
 
-func (a *AlterSubscription) WithResolvedChildren(children []any) (any, error) {
+func (a *AlterSubscription) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -500,11 +501,11 @@ type DropSubscription struct {
 var _ sql.ExecSourceRel = (*DropSubscription)(nil)
 var _ vitess.Injectable = (*DropSubscription)(nil)
 
-func (d *DropSubscription) Children() []sql.Node { return nil }
-func (d *DropSubscription) IsReadOnly() bool     { return false }
-func (d *DropSubscription) Resolved() bool       { return true }
-func (d *DropSubscription) Schema() sql.Schema   { return nil }
-func (d *DropSubscription) String() string       { return "DROP SUBSCRIPTION" }
+func (d *DropSubscription) Children() []sql.Node               { return nil }
+func (d *DropSubscription) IsReadOnly() bool                   { return false }
+func (d *DropSubscription) Resolved() bool                     { return true }
+func (d *DropSubscription) Schema(ctx *sql.Context) sql.Schema { return nil }
+func (d *DropSubscription) String() string                     { return "DROP SUBSCRIPTION" }
 
 func (d *DropSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
@@ -524,11 +525,11 @@ func (d *DropSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	return sql.RowsToRowIter(), nil
 }
 
-func (d *DropSubscription) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (d *DropSubscription) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(d, children...)
 }
 
-func (d *DropSubscription) WithResolvedChildren(children []any) (any, error) {
+func (d *DropSubscription) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -558,7 +559,7 @@ func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([
 			return nil, errors.Errorf(`table "%s" is specified more than once`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
 		}
 		seen[relationID] = struct{}{}
-		columns, err := validatePublicationColumns(table.Schema(), spec.Columns)
+		columns, err := validatePublicationColumns(table.Schema(ctx), spec.Columns)
 		if err != nil {
 			return nil, err
 		}

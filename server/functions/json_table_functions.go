@@ -96,7 +96,7 @@ func (j *jsonEachTableFunction) Expressions() []sql.Expression {
 }
 
 // WithExpressions implements sql.Expressioner.
-func (j *jsonEachTableFunction) WithExpressions(exprs ...sql.Expression) (sql.Node, error) {
+func (j *jsonEachTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
 	if len(exprs) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(j, len(exprs), 1)
 	}
@@ -123,7 +123,7 @@ func (j *jsonEachTableFunction) IsReadOnly() bool {
 }
 
 // Schema implements sql.Node.
-func (j *jsonEachTableFunction) Schema() sql.Schema {
+func (j *jsonEachTableFunction) Schema(ctx *sql.Context) sql.Schema {
 	var dbName string
 	if j.db != nil {
 		dbName = j.db.Name()
@@ -152,7 +152,7 @@ func (j *jsonEachTableFunction) Children() []sql.Node {
 }
 
 // WithChildren implements sql.Node.
-func (j *jsonEachTableFunction) WithChildren(children ...sql.Node) (sql.Node, error) {
+func (j *jsonEachTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	if len(children) != 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(j, len(children), 0)
 	}
