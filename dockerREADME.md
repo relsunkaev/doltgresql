@@ -34,7 +34,7 @@ $ docker run dolthub/doltgresql:latest --help
 ## Building the image
 
 To build this image, use the `Dockerfile` in the root of the [Doltgres
-repository](https://github.com/dolthub/doltgresql/) with an optional build argument:
+repository](https://github.com/dolthub/doltgresql/) with optional build arguments:
 
 ```shell
 # Build the latest Doltgres version (automatically fetches the latest release)
@@ -47,7 +47,19 @@ $ docker build --build-arg DOLTGRES_VERSION=latest -t doltgres:latest .
 $ docker build --build-arg DOLTGRES_VERSION=0.55.1 -t doltgres:0.55.1 .
 
 # Build from local source code
-$ docker build --build-arg DOLTGRES_VERSION=source -t doltgres:source .
+$ docker build --target runtime-source -t doltgres:source .
+
+# Build from a different release repository
+$ docker build \
+    --build-arg DOLTGRES_RELEASE_REPO=uplinqai/doltgres \
+    --build-arg DOLTGRES_VERSION=0.56.1-uplinq.1 \
+    -t doltgres:0.56.1-uplinq.1 .
+```
+
+To smoke test a locally built image:
+
+```shell
+$ scripts/smoke_docker_image.sh doltgres:source
 ```
 
 ## Connect to the server in the container from the host system
