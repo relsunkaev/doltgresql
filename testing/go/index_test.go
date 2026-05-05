@@ -2057,6 +2057,19 @@ WHERE c.relname = 'idx_items_title_lower';`,
 					},
 				},
 				{
+					Query: `SELECT a.attname, a.attnum
+FROM pg_catalog.pg_attribute a
+JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+WHERE c.relname = 'items' AND a.attnum > 0
+ORDER BY a.attnum;`,
+					Expected: []sql.Row{
+						{"id", 1},
+						{"title", 2},
+						{"metadata", 3},
+						{"updated_at", 4},
+					},
+				},
+				{
 					Query:    "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');",
 					Expected: []sql.Row{},
 				},

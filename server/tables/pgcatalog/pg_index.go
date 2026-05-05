@@ -319,7 +319,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					indKey[i] = int16(0)
 					continue
 				}
-				indKey[i] = int16(s.IndexOfColName(col.StorageName)) + 1
+				indKey[i] = visibleAttributeNumber(s, col.StorageName)
 			}
 			indexExpressions := indexmetadata.ExpressionDefinitions(index.Item, s)
 			var indexprs any
@@ -367,6 +367,20 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	return nil
+}
+
+func visibleAttributeNumber(schema sql.Schema, colName string) int16 {
+	attnum := int16(0)
+	for _, col := range schema {
+		if col.HiddenSystem {
+			continue
+		}
+		attnum++
+		if strings.EqualFold(col.Name, colName) {
+			return attnum
+		}
+	}
+	return 0
 }
 
 func opClassIds(opClasses []string) []any {

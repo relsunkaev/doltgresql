@@ -83,7 +83,12 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, _ functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
-			for i, col := range table.Item.Schema(ctx) {
+			attnum := int16(0)
+			for _, col := range table.Item.Schema(ctx) {
+				if col.HiddenSystem {
+					continue
+				}
+				attnum++
 				typeOid := id.Null
 				attcollation := id.Null
 				doltgresType, ok := doltgresType(col.Type)
@@ -113,7 +118,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					attrelidNative: id.Cache().ToOID(table.OID.AsId()),
 					attname:        col.Name,
 					atttypid:       typeOid,
-					attnum:         int16(i + 1),
+					attnum:         attnum,
 					attndims:       dimensions,
 					attnotnull:     !col.Nullable,
 					atthasdef:      hasDefault,
