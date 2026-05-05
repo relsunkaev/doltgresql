@@ -2954,7 +2954,6 @@ var typesTests = []ScriptTest{
 			},
 			{
 				Query: "SELECT * FROM t_text WHERE v1 = 'World';",
-				Skip:  true, // text indexes are broken
 				Expected: []sql.Row{
 					{2, "World"},
 				},
@@ -3025,14 +3024,12 @@ var typesTests = []ScriptTest{
 			},
 			{
 				Query:    `SELECT c1 from t2 order by c1;`,
-				Skip:     true, // ordering is broken due to text indexes being broken
 				Expected: []sql.Row{{"one"}, {"two"}},
 			},
 		},
 	},
 	{
 		Name: "Text key",
-		Skip: true, // text indexes are broken
 		SetUpScript: []string{
 			"CREATE TABLE t_text (id TEXT primary key, v1 TEXT);",
 			"INSERT INTO t_text VALUES ('Hello', 'World'), ('goodbye', 'cruel world');",
