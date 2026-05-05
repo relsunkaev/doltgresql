@@ -178,6 +178,27 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
+			Name: "check constraint with JSONB cast expression",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CREATE TABLE json_checks (payload jsonb CHECK (((payload->>'amount')::int) > 0));`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO json_checks VALUES ('{"amount": 3}'::jsonb);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:       `INSERT INTO json_checks VALUES ('{"amount": -1}'::jsonb);`,
+					ExpectedErr: `Check constraint "json_checks_chk_`,
+				},
+				{
+					Query:    `SELECT payload FROM json_checks;`,
+					Expected: []sql.Row{{`{"amount": 3}`}},
+				},
+			},
+		},
+		{
 			Skip: true, // TODO: vitess does not support multiple check constraint on a single column
 			Name: "Create table with multiple check constraints on a single column",
 			Assertions: []ScriptTestAssertion{

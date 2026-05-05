@@ -157,6 +157,10 @@ func (c *ExplicitCast) String() string {
 		sqlChild = "unresolved"
 	} else {
 		sqlChild = c.sqlChild.String()
+		switch c.sqlChild.(type) {
+		case *BinaryOperator:
+			sqlChild = fmt.Sprintf("(%s)", sqlChild)
+		}
 	}
 	// type needs to be upper-case to match InputExpression in AliasExpr
 	return fmt.Sprintf("%s::%s", sqlChild, strings.ToUpper(c.castToType.String()))
