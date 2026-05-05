@@ -641,8 +641,16 @@ func TestPgCollation(t *testing.T) {
 			Name: "pg_collation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_collation";`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid, collname, collnamespace, collprovider, collisdeterministic, collencoding
+FROM "pg_catalog"."pg_collation"
+ORDER BY oid;`,
+					Expected: []sql.Row{
+						{100, "default", 11, "d", "t", -1},
+						{950, "C", 11, "c", "t", -1},
+						{951, "POSIX", 11, "c", "t", -1},
+						{12340, "ucs_basic", 11, "c", "t", -1},
+						{12341, "und-x-icu", 11, "i", "t", -1},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_collation";`,
@@ -654,7 +662,7 @@ func TestPgCollation(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT collname FROM PG_catalog.pg_COLLATION ORDER BY collname;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"C"}, {"POSIX"}, {"default"}, {"ucs_basic"}, {"und-x-icu"}},
 				},
 			},
 		},

@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,7 @@ func (p PgCollationHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgCollationHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_collation row iter
-	return emptyRowIter()
+	return &pgCollationRowIter{idx: 0}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -72,16 +73,84 @@ var PgCollationSchema = sql.Schema{
 
 // pgCollationRowIter is the sql.RowIter for the pg_collation table.
 type pgCollationRowIter struct {
+	idx int
 }
 
 var _ sql.RowIter = (*pgCollationRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgCollationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(pgCollationRows) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	collation := pgCollationRows[iter.idx-1]
+	return collation.toRow(), nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgCollationRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type pgCollation struct {
+	oid       id.Id
+	name      string
+	provider  string
+	collate   any
+	ctype     any
+	icuLocale any
+	version   any
+}
+
+var pgCollationRows = []pgCollation{
+	{
+		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationDefault).AsId(),
+		name:     indexmetadata.CollationDefault,
+		provider: "d",
+	},
+	{
+		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationC).AsId(),
+		name:     indexmetadata.CollationC,
+		provider: "c",
+		collate:  indexmetadata.CollationC,
+		ctype:    indexmetadata.CollationC,
+	},
+	{
+		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationPOSIX).AsId(),
+		name:     indexmetadata.CollationPOSIX,
+		provider: "c",
+		collate:  indexmetadata.CollationPOSIX,
+		ctype:    indexmetadata.CollationPOSIX,
+	},
+	{
+		oid:      id.NewCollation("pg_catalog", indexmetadata.CollationUcsBasic).AsId(),
+		name:     indexmetadata.CollationUcsBasic,
+		provider: "c",
+		collate:  indexmetadata.CollationC,
+		ctype:    indexmetadata.CollationC,
+	},
+	{
+		oid:       id.NewCollation("pg_catalog", indexmetadata.CollationUndIcu).AsId(),
+		name:      indexmetadata.CollationUndIcu,
+		provider:  "i",
+		icuLocale: "und",
+	},
+}
+
+func (collation pgCollation) toRow() sql.Row {
+	return sql.Row{
+		collation.oid,                        // oid
+		collation.name,                       // collname
+		id.NewNamespace("pg_catalog").AsId(), // collnamespace
+		id.Null,                              // collowner
+		collation.provider,                   // collprovider
+		true,                                 // collisdeterministic
+		int32(-1),                            // collencoding
+		collation.collate,                    // collcollate
+		collation.ctype,                      // collctype
+		collation.icuLocale,                  // colliculocale
+		nil,                                  // collicurules
+		collation.version,                    // collversion
+	}
 }
