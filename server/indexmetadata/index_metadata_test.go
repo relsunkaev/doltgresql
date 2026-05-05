@@ -25,6 +25,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
 			{NullsOrder: " FIRST "},
+			{NullsOrder: " LAST "},
 		},
 		Constraint: " NONE ",
 		Gin: &GinMetadata{
@@ -51,14 +52,17 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.OpClasses[0] != OpClassJsonbOps || metadata.OpClasses[1] != OpClassJsonbPathOps {
 		t.Fatalf("unexpected opclasses: %#v", metadata.OpClasses)
 	}
-	if len(metadata.SortOptions) != 2 {
-		t.Fatalf("expected 2 sort options, got %d", len(metadata.SortOptions))
+	if len(metadata.SortOptions) != 3 {
+		t.Fatalf("expected 3 sort options, got %d", len(metadata.SortOptions))
 	}
 	if metadata.SortOptions[0].Direction != SortDirectionDesc {
 		t.Fatalf("unexpected first sort option: %#v", metadata.SortOptions[0])
 	}
 	if metadata.SortOptions[1].NullsOrder != NullsOrderFirst {
 		t.Fatalf("unexpected second sort option: %#v", metadata.SortOptions[1])
+	}
+	if metadata.SortOptions[2].NullsOrder != NullsOrderLast {
+		t.Fatalf("unexpected third sort option: %#v", metadata.SortOptions[2])
 	}
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
@@ -141,6 +145,11 @@ func TestIndOptionValue(t *testing.T) {
 			name:   "asc_nulls_first",
 			option: IndexColumnOption{NullsOrder: NullsOrderFirst},
 			want:   IndOptionNullsFirst,
+		},
+		{
+			name:   "desc_nulls_last",
+			option: IndexColumnOption{Direction: SortDirectionDesc, NullsOrder: NullsOrderLast},
+			want:   IndOptionDesc,
 		},
 	}
 	for _, tt := range tests {

@@ -274,6 +274,9 @@ func columnOptionDefinition(option IndexColumnOption) string {
 	if option.NullsOrder == NullsOrderFirst && option.Direction != SortDirectionDesc {
 		parts = append(parts, "NULLS FIRST")
 	}
+	if option.NullsOrder == NullsOrderLast && option.Direction == SortDirectionDesc {
+		parts = append(parts, "NULLS LAST")
+	}
 	return strings.Join(parts, " ")
 }
 

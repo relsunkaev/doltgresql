@@ -49,7 +49,7 @@ func nodeIndexElemList(ctx *Context, node tree.IndexElemList) ([]*vitess.IndexFi
 		case tree.NullsFirst:
 			// The only form supported in GMS for now
 		case tree.NullsLast:
-			return nil, errors.Errorf("NULLS LAST for indexes is not yet supported")
+			logrus.Warn("NULLS LAST index ordering is not yet supported, preserving metadata only")
 		default:
 			return nil, errors.Errorf("unknown NULL ordering for index")
 		}

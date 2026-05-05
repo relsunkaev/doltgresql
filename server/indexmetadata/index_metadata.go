@@ -34,6 +34,7 @@ const (
 
 	SortDirectionDesc = "desc"
 	NullsOrderFirst   = "first"
+	NullsOrderLast    = "last"
 
 	ConstraintNone = "none"
 

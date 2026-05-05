@@ -1431,6 +1431,7 @@ WHERE tablename = 'primary_key_constraint_alter_named';`,
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",
 				"CREATE INDEX index_sort_meta_idx ON index_sort_meta (a DESC, b ASC NULLS FIRST);",
+				"CREATE INDEX index_sort_nulls_last_idx ON index_sort_meta (a ASC NULLS LAST, b DESC NULLS FIRST, id DESC NULLS LAST);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1445,6 +1446,18 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 					},
 				},
 				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false),
+	pg_catalog.pg_get_indexdef(c.oid, 3, false)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'index_sort_nulls_last_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX index_sort_nulls_last_idx ON public.index_sort_meta USING btree (a, b DESC, id DESC NULLS LAST)", "a", "b DESC", "id DESC NULLS LAST"},
+					},
+				},
+				{
 					Query: `SELECT unnest(i.indoption)
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
@@ -1455,14 +1468,26 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 					},
 				},
 				{
+					Query: `SELECT unnest(i.indoption)
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'index_sort_nulls_last_idx';`,
+					Expected: []sql.Row{
+						{0},
+						{3},
+						{1},
+					},
+				},
+				{
 					Query: `SELECT c.relname, i.indclass
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname IN ('index_sort_meta_idx', 'index_sort_meta_pkey')
+WHERE c.relname IN ('index_sort_meta_idx', 'index_sort_meta_pkey', 'index_sort_nulls_last_idx')
 ORDER BY c.relname;`,
 					Expected: []sql.Row{
 						{"index_sort_meta_idx", opClassOidVector("int4_ops", "int4_ops")},
 						{"index_sort_meta_pkey", opClassOidVector("int4_ops")},
+						{"index_sort_nulls_last_idx", opClassOidVector("int4_ops", "int4_ops", "int4_ops")},
 					},
 				},
 				{
@@ -1501,6 +1526,7 @@ ORDER BY indexrelname;`,
 					Expected: []sql.Row{
 						{"index_sort_meta_idx", 0, nil, 0, 0},
 						{"index_sort_meta_pkey", 0, nil, 0, 0},
+						{"index_sort_nulls_last_idx", 0, nil, 0, 0},
 					},
 				},
 				{
@@ -1511,6 +1537,7 @@ ORDER BY indexrelname;`,
 					Expected: []sql.Row{
 						{"index_sort_meta_idx", 0, 0},
 						{"index_sort_meta_pkey", 0, 0},
+						{"index_sort_nulls_last_idx", 0, 0},
 					},
 				},
 			},
