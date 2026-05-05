@@ -1092,6 +1092,14 @@ func TestBasicIndexing(t *testing.T) {
 					Query:       "CREATE INDEX v1_idx2 ON test(v1) INCLUDE (pk);",
 					ExpectedErr: "not yet supported",
 				},
+				{
+					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (fillfactor = 70);",
+					ExpectedErr: "storage parameters are not yet supported for indexes",
+				},
+				{
+					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE pg_default;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+				},
 			},
 		},
 		{
