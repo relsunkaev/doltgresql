@@ -51,6 +51,13 @@ type JsonDocument struct {
 	Value JsonValue
 }
 
+// String returns the canonical JSONB-style formatting for this document.
+func (doc JsonDocument) String() string {
+	var sb strings.Builder
+	JsonValueFormatter(&sb, doc.Value)
+	return sb.String()
+}
+
 // JsonValue is a value that represents some kind of data in JSON.
 type JsonValue interface {
 	// enforceJsonInterfaceInheritance is a special function that ensures only the expected types inherit this interface.

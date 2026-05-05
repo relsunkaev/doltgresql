@@ -15,6 +15,7 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,4 +68,16 @@ func TestJsonValueType(t *testing.T) {
 			allValues[typ.Value] = typ.Name
 		}
 	}
+}
+
+func TestJsonDocumentString(t *testing.T) {
+	doc, err := UnmarshalToJsonDocument([]byte(`{"b":2,"a":[true,null,"x"]}`))
+	require.NoError(t, err)
+	require.Equal(t, `{"a": [true, null, "x"], "b": 2}`, doc.String())
+	require.Equal(t, doc.String(), fmt.Sprint(doc))
+
+	scalar, err := UnmarshalToJsonDocument([]byte(`2`))
+	require.NoError(t, err)
+	require.Equal(t, `2`, scalar.String())
+	require.Equal(t, scalar.String(), fmt.Sprint(scalar))
 }
