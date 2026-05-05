@@ -516,6 +516,34 @@ func (c *CompiledFunction) resolveOperator(argTypes []*pgtypes.DoltgresType, ove
 					casts: casts,
 				}, nil
 			}
+
+			var matches []overloadMatch
+			for _, overload := range overloads.AllOverloads {
+				params := overload.GetParameters()
+				if len(params) != 2 {
+					continue
+				}
+				casts := []pgtypes.TypeCastFunction{IdentityCast, IdentityCast}
+				if leftUnknownType && params[1].ID == argTypes[1].ID {
+					casts[0] = UnknownLiteralCast
+				} else if rightUnknownType && params[0].ID == argTypes[0].ID {
+					casts[1] = UnknownLiteralCast
+				} else {
+					continue
+				}
+				matches = append(matches, overloadMatch{
+					params: Overload{
+						function:   overload,
+						paramTypes: params,
+						argTypes:   params,
+						variadic:   -1,
+					},
+					casts: casts,
+				})
+			}
+			if len(matches) == 1 {
+				return matches[0], nil
+			}
 		}
 	}
 	// From this point, the steps appear to be the same for functions and operators
