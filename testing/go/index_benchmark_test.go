@@ -107,6 +107,36 @@ func BenchmarkJsonbGinSQLLookup(b *testing.B) {
 	}
 }
 
+func TestJsonbGinJsonPathBoundary(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_jsonpath_boundary (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_jsonpath_boundary VALUES
+		(1, '{"a":2,"items":[{"v":1},{"v":2}]}'::jsonb),
+		(2, '{"a":3,"items":[]}'::jsonb),
+		(3, '{"b":1}'::jsonb)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_jsonpath_boundary_idx ON jsonb_gin_jsonpath_boundary USING gin (doc)")
+
+	for _, query := range []string{
+		`SELECT count(id) FROM jsonb_gin_jsonpath_boundary WHERE doc @? '$.items[*].v'`,
+		`SELECT count(id) FROM jsonb_gin_jsonpath_boundary WHERE doc @@ '$.a == 2'`,
+		`SELECT count(id) FROM jsonb_gin_jsonpath_boundary WHERE jsonb_path_exists(doc, '$.items[*].v')`,
+	} {
+		plan := explainBenchmarkQuery(t, ctx, conn, query)
+		if strings.Contains(plan, "IndexedTableAccess") {
+			t.Fatalf("JSONPath boundary query unexpectedly used JSONB GIN index\nquery: %s\nplan:\n%s", query, plan)
+		}
+		assertCountResult(t, ctx, conn, query, 1)
+	}
+}
+
 func BenchmarkJsonbGinIndexBuild(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	createJsonbGinBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_build")
@@ -265,26 +295,31 @@ func benchmarkCountQuery(b *testing.B, ctx context.Context, conn *Connection, qu
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		rows, err := conn.Query(ctx, query)
-		if err != nil {
-			b.Fatalf("benchmark query failed: %v\nquery: %s", err, query)
-		}
-		var got int64
-		if !rows.Next() {
-			rows.Close()
-			b.Fatalf("benchmark query returned no rows: %s", query)
-		}
-		if err = rows.Scan(&got); err != nil {
-			rows.Close()
-			b.Fatalf("benchmark query scan failed: %v\nquery: %s", err, query)
-		}
+		assertCountResult(b, ctx, conn, query, want)
+	}
+}
+
+func assertCountResult(tb testing.TB, ctx context.Context, conn *Connection, query string, want int64) {
+	tb.Helper()
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		tb.Fatalf("count query failed: %v\nquery: %s", err, query)
+	}
+	var got int64
+	if !rows.Next() {
 		rows.Close()
-		if err = rows.Err(); err != nil {
-			b.Fatalf("benchmark query rows failed: %v\nquery: %s", err, query)
-		}
-		if got != want {
-			b.Fatalf("benchmark query returned %d, expected %d\nquery: %s", got, want, query)
-		}
+		tb.Fatalf("count query returned no rows: %s", query)
+	}
+	if err = rows.Scan(&got); err != nil {
+		rows.Close()
+		tb.Fatalf("count query scan failed: %v\nquery: %s", err, query)
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		tb.Fatalf("count query rows failed: %v\nquery: %s", err, query)
+	}
+	if got != want {
+		tb.Fatalf("count query returned %d, expected %d\nquery: %s", got, want, query)
 	}
 }
 

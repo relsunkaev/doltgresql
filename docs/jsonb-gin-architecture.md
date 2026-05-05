@@ -20,11 +20,11 @@ The first supported JSONB GIN lane is:
 
 The current implementation covers this first lane with Doltgres-managed sidecar
 posting tables, opclass-aware token extraction, `EXPLAIN`-visible indexed lookup
-plans, sidecar primary-key lookup by encoded token, and original-predicate
-rechecks. It is not full parity yet: indexed execution still derives candidate
-row identities from the sidecar and scans base rows to emit matching identities
-rather than performing a direct primary-key fetch, JSONPath GIN operators are
-not claimed, and performance gates remain open.
+plans, sidecar primary-key lookup by encoded token, original-predicate rechecks,
+and SQL benchmark gates for lookup, build, and DML maintenance. It is not full
+parity yet: indexed execution still derives candidate row identities from the
+sidecar and scans base rows to emit matching identities rather than performing a
+direct primary-key fetch, and JSONPath GIN operators are not claimed.
 
 ## DDL flow
 
@@ -40,9 +40,9 @@ DDL must keep the PostgreSQL declaration intact:
    index DDL.
 
 The implemented first pass now handles GIN metadata preservation, sidecar
-posting creation, DML maintenance, rename/drop lifecycle, and planner lookup for
-the supported operators. `pg_get_indexdef` and broader PostgreSQL DDL lifecycle
-features remain outside this first pass.
+posting creation, DML maintenance, rename/drop lifecycle, `pg_get_indexdef`
+round-tripping, and planner lookup for the supported operators. Broader
+PostgreSQL DDL lifecycle features remain outside this first pass.
 
 ## Opclass semantics
 
@@ -62,6 +62,13 @@ table scan.
 JSONPath operators and functions are a separate boundary decision. They should
 not be claimed until their indexable subset, recheck semantics, and fallback
 behavior are tested.
+
+The current boundary is explicit non-support for JSONPath GIN acceleration.
+`@?`, `@@`, `jsonb_path_exists`, `jsonb_path_query`,
+`jsonb_path_query_array`, and `jsonb_path_match` may be implemented as JSONPath
+evaluation functions/operators, but JSONB GIN indexes must not be selected for
+them until a separate planner/executor implementation defines an indexable
+subset and recheck semantics.
 
 ## Key extraction
 
@@ -143,10 +150,10 @@ The following catalog surfaces must agree for a JSONB GIN index:
   support functions before planner support is claimed
 - `pg_get_indexdef` returns the same definition as `pg_indexes.indexdef`
 
-The current catalog bridge covers the selected access method, opclass, and GIN
-operator-family rows for the supported JSONB operators. `pg_get_indexdef`,
-statistics/progress views, and broader PostgreSQL catalog parity are still
-required for full GIN parity.
+The current catalog bridge covers the selected access method, opclass, GIN
+operator-family rows for the supported JSONB operators, and `pg_get_indexdef`
+for supported JSONB GIN definitions. Statistics/progress views and broader
+PostgreSQL catalog parity are still required for full GIN parity.
 
 ## Performance gates
 
