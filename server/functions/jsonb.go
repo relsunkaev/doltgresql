@@ -19,6 +19,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/goccy/go-json"
 
@@ -49,6 +50,9 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_strip_nulls)
 	framework.RegisterFunction(jsonb_set)
 	framework.RegisterFunction(jsonb_set_create)
+	framework.RegisterFunction(jsonb_set_lax)
+	framework.RegisterFunction(jsonb_set_lax_create)
+	framework.RegisterFunction(jsonb_set_lax_treatment)
 	framework.RegisterFunction(jsonb_insert)
 	framework.RegisterFunction(jsonb_insert_after)
 	framework.RegisterFunction(jsonb_delete_path)
@@ -442,6 +446,117 @@ func jsonbSetCallable(ctx *sql.Context, target any, path any, newValue any, crea
 		return nil, err
 	}
 	return pgtypes.JsonDocument{Value: jsonbSetValue(targetDoc.Value, jsonPath, newDoc.Value, createMissing)}, nil
+}
+
+// jsonb_set_lax represents the PostgreSQL function jsonb_set_lax with default create_if_missing and null treatment.
+var jsonb_set_lax = framework.Function3{
+	Name:       "jsonb_set_lax",
+	Return:     pgtypes.JsonB,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray, pgtypes.JsonB},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1 any, val2 any, val3 any) (any, error) {
+		return jsonbSetLaxCallable(ctx, val1, val2, val3, true, "use_json_null")
+	},
+}
+
+// jsonb_set_lax_create represents the PostgreSQL function jsonb_set_lax with explicit create_if_missing.
+var jsonb_set_lax_create = framework.Function4{
+	Name:       "jsonb_set_lax",
+	Return:     pgtypes.JsonB,
+	Parameters: [4]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray, pgtypes.JsonB, pgtypes.Bool},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, val1 any, val2 any, val3 any, val4 any) (any, error) {
+		createMissing, ok, err := nullableBoolArg(ctx, val4)
+		if err != nil || !ok {
+			return nil, err
+		}
+		return jsonbSetLaxCallable(ctx, val1, val2, val3, createMissing, "use_json_null")
+	},
+}
+
+// jsonb_set_lax_treatment represents the PostgreSQL function jsonb_set_lax with explicit null treatment.
+var jsonb_set_lax_treatment = framework.Function5{
+	Name:       "jsonb_set_lax",
+	Return:     pgtypes.JsonB,
+	Parameters: [5]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray, pgtypes.JsonB, pgtypes.Bool, pgtypes.Text},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, _ [6]*pgtypes.DoltgresType, val1 any, val2 any, val3 any, val4 any, val5 any) (any, error) {
+		createMissing, ok, err := nullableBoolArg(ctx, val4)
+		if err != nil || !ok {
+			return nil, err
+		}
+		nullValueTreatment, err := nonNullTextArg(ctx, val5)
+		if err != nil {
+			return nil, err
+		}
+		return jsonbSetLaxCallable(ctx, val1, val2, val3, createMissing, nullValueTreatment)
+	},
+}
+
+func jsonbSetLaxCallable(ctx *sql.Context, target any, path any, newValue any, createMissing bool, nullValueTreatment string) (any, error) {
+	targetNull, err := sqlValueIsNull(ctx, target)
+	if err != nil || targetNull {
+		return nil, err
+	}
+	pathNull, err := sqlValueIsNull(ctx, path)
+	if err != nil || pathNull {
+		return nil, err
+	}
+	newValueNull, err := sqlValueIsNull(ctx, newValue)
+	if err != nil {
+		return nil, err
+	}
+	if !newValueNull {
+		return jsonbSetCallable(ctx, target, path, newValue, createMissing)
+	}
+
+	switch nullValueTreatment {
+	case "raise_exception":
+		return nil, errors.New("JSON value must not be null")
+	case "use_json_null":
+		return jsonbSetCallable(ctx, target, path, pgtypes.JsonDocument{Value: pgtypes.JsonValueNull(0)}, createMissing)
+	case "delete_key":
+		return jsonbDeletePathCallable(ctx, target, path)
+	case "return_target":
+		targetDoc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: pgtypes.JsonValueCopy(targetDoc.Value)}, nil
+	default:
+		return nil, invalidJsonbSetLaxTreatment()
+	}
+}
+
+func sqlValueIsNull(ctx *sql.Context, val any) (bool, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return false, err
+	}
+	return res == nil, nil
+}
+
+func nullableBoolArg(ctx *sql.Context, val any) (bool, bool, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil || res == nil {
+		return false, false, err
+	}
+	return res.(bool), true, nil
+}
+
+func nonNullTextArg(ctx *sql.Context, val any) (string, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return "", err
+	}
+	if res == nil {
+		return "", invalidJsonbSetLaxTreatment()
+	}
+	return res.(string), nil
+}
+
+func invalidJsonbSetLaxTreatment() error {
+	return errors.New(`null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"`)
 }
 
 // jsonb_insert represents the PostgreSQL function jsonb_insert with insert_after defaulting to false.

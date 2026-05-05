@@ -1879,6 +1879,34 @@ func TestJsonFunctions(t *testing.T) {
 					ExpectedErr: "path element at position 1 is null",
 				},
 				{
+					Query:    `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', '5'::jsonb), jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{d}', '6'::jsonb, true);`,
+					Expected: []sql.Row{{`{"a": 1, "b": 5}`, `{"a": 1, "b": 2, "d": 6}`}},
+				},
+				{
+					Query:    `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb), jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{d}', NULL::jsonb, true);`,
+					Expected: []sql.Row{{`{"a": 1, "b": null}`, `{"a": 1, "b": 2, "d": null}`}},
+				},
+				{
+					Query:    `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, 'return_target'), jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, 'delete_key'), jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, 'use_json_null');`,
+					Expected: []sql.Row{{`{"a": 1, "b": 2}`, `{"a": 1}`, `{"a": 1, "b": null}`}},
+				},
+				{
+					Query:    `SELECT jsonb_set_lax(NULL::jsonb, '{b}', NULL::jsonb) IS NULL, jsonb_set_lax('{"a":1}'::jsonb, NULL::text[], NULL::jsonb) IS NULL, jsonb_set_lax('{"a":1}'::jsonb, '{a}', NULL::jsonb, NULL::boolean) IS NULL;`,
+					Expected: []sql.Row{{"t", "t", "t"}},
+				},
+				{
+					Query:       `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, 'raise_exception');`,
+					ExpectedErr: "JSON value must not be null",
+				},
+				{
+					Query:       `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, NULL::text);`,
+					ExpectedErr: `null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"`,
+				},
+				{
+					Query:       `SELECT jsonb_set_lax('{"a":1,"b":2}'::jsonb, '{b}', NULL::jsonb, true, 'no_such_treatment');`,
+					ExpectedErr: `null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"`,
+				},
+				{
 					Query:    `SELECT jsonb_delete('{"a":1, "b":2, "c":3}'::jsonb, 'a');`,
 					Expected: []sql.Row{{`{"b": 2, "c": 3}`}},
 				},
