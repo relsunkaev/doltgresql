@@ -1122,6 +1122,18 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:       "DROP INDEX CONCURRENTLY drop_index_restrict_idx;",
+					ExpectedErr: "concurrent indexes are not yet supported",
+				},
+				{
+					Query:       "REINDEX INDEX drop_index_restrict_idx;",
+					ExpectedErr: "unimplemented: this syntax",
+				},
+				{
+					Query:       "REINDEX TABLE drop_index_restrict;",
+					ExpectedErr: "unimplemented: this syntax",
+				},
+				{
 					Query: "DROP INDEX drop_index_restrict_idx RESTRICT;",
 				},
 				{
