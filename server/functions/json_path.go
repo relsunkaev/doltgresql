@@ -34,12 +34,32 @@ var jsonb_path_exists = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, target any, path any) (any, error) {
-		matches, err := jsonPathQuery(ctx, target, path)
-		if err != nil {
-			return nil, err
-		}
-		return len(matches) > 0, nil
+		return JsonPathExists(ctx, target, path)
 	},
+}
+
+// JsonPathExists implements the shared JSON path exists behavior used by the
+// jsonb_path_exists function and @? operator.
+func JsonPathExists(ctx *sql.Context, target any, path any) (bool, error) {
+	matches, err := jsonPathQuery(ctx, target, path)
+	if err != nil {
+		return false, err
+	}
+	return len(matches) > 0, nil
+}
+
+// JsonPathMatch implements the shared JSON path match behavior used by the
+// jsonb_path_match function and @@ operator.
+func JsonPathMatch(ctx *sql.Context, target any, path any) (bool, error) {
+	doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
+	if err != nil {
+		return false, err
+	}
+	pathText, err := jsonPathText(ctx, path)
+	if err != nil {
+		return false, err
+	}
+	return jsonPathMatch(doc.Value, pathText)
 }
 
 // jsonb_path_query represents the PostgreSQL function jsonb_path_query(jsonb, jsonpath).
@@ -92,15 +112,7 @@ var jsonb_path_match = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, target any, path any) (any, error) {
-		doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
-		if err != nil {
-			return nil, err
-		}
-		pathText, err := jsonPathText(ctx, path)
-		if err != nil {
-			return nil, err
-		}
-		return jsonPathMatch(doc.Value, pathText)
+		return JsonPathMatch(ctx, target, path)
 	},
 }
 

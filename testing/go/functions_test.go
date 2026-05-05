@@ -1878,6 +1878,10 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{"t", "f"}},
 				},
 				{
+					Query:    `SELECT '{"items":[{"v":1},{"v":2}]}'::jsonb @? '$.items[*].v', '{"items":[{"v":1},{"v":2}]}'::jsonb @? '$.missing';`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+				{
 					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'a', 'b');`,
 					Expected: []sql.Row{{`"x"`}},
 				},

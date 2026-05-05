@@ -20,6 +20,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	pgfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -47,6 +48,7 @@ func initJSON() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, jsonb_exists)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAny, jsonb_exists_any)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAll, jsonb_exists_all)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONPathExists, jsonb_path_exists_opr)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_text)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_text_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, jsonb_delete_int32)
@@ -377,6 +379,17 @@ var jsonb_exists = framework.Function2{
 		default:
 			return false, nil
 		}
+	},
+}
+
+// jsonb_path_exists_opr represents the PostgreSQL @? jsonpath operator.
+var jsonb_path_exists_opr = framework.Function2{
+	Name:       "jsonb_path_exists_opr",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgfunctions.JsonPathExists(ctx, val1, val2)
 	},
 }
 
