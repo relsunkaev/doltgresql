@@ -1138,6 +1138,26 @@ WHERE c.relname = 'index_sort_meta_pkey';`,
 						{"t", "t"},
 					},
 				},
+				{
+					Query: `SELECT indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
+FROM pg_catalog.pg_stat_user_indexes
+WHERE relname = 'index_sort_meta'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"index_sort_meta_idx", 0, nil, 0, 0},
+						{"index_sort_meta_pkey", 0, nil, 0, 0},
+					},
+				},
+				{
+					Query: `SELECT indexrelname, idx_blks_read, idx_blks_hit
+FROM pg_catalog.pg_statio_user_indexes
+WHERE relname = 'index_sort_meta'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"index_sort_meta_idx", 0, 0},
+						{"index_sort_meta_pkey", 0, 0},
+					},
+				},
 			},
 		},
 		{

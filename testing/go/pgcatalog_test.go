@@ -3091,8 +3091,14 @@ func TestPgStatAllIndexes(t *testing.T) {
 			Name: "pg_stat_all_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_all_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
+FROM "pg_catalog"."pg_stat_all_indexes"
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), nil, int64(0), int64(0)},
+						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), nil, int64(0), int64(0)},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_stat_all_indexes";`,
@@ -3103,8 +3109,13 @@ func TestPgStatAllIndexes(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relname FROM PG_catalog.pg_STAT_ALL_INDEXES ORDER BY relname;",
-					Expected: []sql.Row{},
+					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_ALL_INDEXES
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_class_oid_index"},
+						{"pg_class_relname_nsp_index"},
+					},
 				},
 			},
 		},
@@ -3611,8 +3622,14 @@ func TestPgStatSysIndexes(t *testing.T) {
 			Name: "pg_stat_sys_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_sys_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT schemaname, relname, indexrelname, idx_scan, last_idx_scan, idx_tup_read, idx_tup_fetch
+FROM "pg_catalog"."pg_stat_sys_indexes"
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), nil, int64(0), int64(0)},
+						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), nil, int64(0), int64(0)},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_stat_sys_indexes";`,
@@ -3623,8 +3640,13 @@ func TestPgStatSysIndexes(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STAT_SYS_INDEXES ORDER BY relid;",
-					Expected: []sql.Row{},
+					Query: `SELECT indexrelname FROM PG_catalog.pg_STAT_SYS_INDEXES
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_class_oid_index"},
+						{"pg_class_relname_nsp_index"},
+					},
 				},
 			},
 		},
@@ -3897,8 +3919,14 @@ func TestPgStatioAllIndexes(t *testing.T) {
 			Name: "pg_statio_all_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_all_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
+FROM "pg_catalog"."pg_statio_all_indexes"
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), int64(0)},
+						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), int64(0)},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_statio_all_indexes";`,
@@ -3909,8 +3937,13 @@ func TestPgStatioAllIndexes(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_ALL_INDEXES ORDER BY relid;",
-					Expected: []sql.Row{},
+					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_ALL_INDEXES
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_class_oid_index"},
+						{"pg_class_relname_nsp_index"},
+					},
 				},
 			},
 		},
@@ -3975,8 +4008,14 @@ func TestPgStatioSysIndexes(t *testing.T) {
 			Name: "pg_statio_sys_indexes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_statio_sys_indexes";`,
-					Expected: []sql.Row{},
+					Query: `SELECT schemaname, relname, indexrelname, idx_blks_read, idx_blks_hit
+FROM "pg_catalog"."pg_statio_sys_indexes"
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_catalog", "pg_class", "pg_class_oid_index", int64(0), int64(0)},
+						{"pg_catalog", "pg_class", "pg_class_relname_nsp_index", int64(0), int64(0)},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_statio_sys_indexes";`,
@@ -3987,8 +4026,13 @@ func TestPgStatioSysIndexes(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT relid FROM PG_catalog.pg_STATIO_SYS_INDEXES ORDER BY relid;",
-					Expected: []sql.Row{},
+					Query: `SELECT indexrelname FROM PG_catalog.pg_STATIO_SYS_INDEXES
+WHERE schemaname = 'pg_catalog' AND relname = 'pg_class'
+ORDER BY indexrelname;`,
+					Expected: []sql.Row{
+						{"pg_class_oid_index"},
+						{"pg_class_relname_nsp_index"},
+					},
 				},
 			},
 		},

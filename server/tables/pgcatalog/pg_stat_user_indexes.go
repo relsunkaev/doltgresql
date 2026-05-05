@@ -43,8 +43,7 @@ func (p PgStatUserIndexesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatUserIndexesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_user_indexes row iter
-	return emptyRowIter()
+	return pgStatIndexRows(ctx, pgIndexStatsScopeUser)
 }
 
 // Schema implements the interface tables.Handler.
