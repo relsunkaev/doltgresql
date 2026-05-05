@@ -34,19 +34,23 @@ func nodeDropIndex(ctx *Context, node *tree.DropIndex) (vitess.Statement, error)
 	case tree.DropCascade:
 		return nil, errors.Errorf("CASCADE is not yet supported")
 	}
-	if len(node.IndexList) > 1 {
-		return nil, errors.Errorf("multi-index dropping is not yet supported")
-	}
 	if node.Concurrently {
 		return nil, errors.Errorf("concurrent indexes are not yet supported")
 	}
-	index := node.IndexList[0]
-	schemaName, tableName, indexName, err := tableIndexNameParts(ctx, index)
-	if err != nil {
-		return nil, err
+	targets := make([]pgnodes.DropIndexTarget, len(node.IndexList))
+	for i, index := range node.IndexList {
+		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, index)
+		if err != nil {
+			return nil, err
+		}
+		targets[i] = pgnodes.DropIndexTarget{
+			Schema: schemaName,
+			Table:  tableName,
+			Index:  indexName,
+		}
 	}
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewDropIndex(node.IfExists, schemaName, tableName, indexName),
+		Statement: pgnodes.NewDropIndexes(node.IfExists, targets),
 	}, nil
 }
 

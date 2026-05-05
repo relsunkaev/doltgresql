@@ -1121,6 +1121,42 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL multi drop index lifecycle",
+			SetUpScript: []string{
+				"CREATE TABLE drop_index_multi (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER, c INTEGER);",
+				"CREATE INDEX drop_index_multi_a_idx ON drop_index_multi (a);",
+				"CREATE INDEX drop_index_multi_b_idx ON drop_index_multi (b);",
+				"CREATE INDEX drop_index_multi_c_idx ON drop_index_multi (c);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "DROP INDEX drop_index_multi_a_idx, drop_index_multi_b_idx;",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'drop_index_multi'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"drop_index_multi_c_idx"},
+						{"drop_index_multi_pkey"},
+					},
+				},
+				{
+					Query: "DROP INDEX IF EXISTS drop_index_multi_missing_idx, drop_index_multi_c_idx;",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'drop_index_multi'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"drop_index_multi_pkey"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree sort option metadata",
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

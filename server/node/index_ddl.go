@@ -33,12 +33,17 @@ type locatedIndex struct {
 	index     sql.Index
 }
 
+// DropIndexTarget identifies one index named in a PostgreSQL DROP INDEX statement.
+type DropIndexTarget struct {
+	Schema string
+	Table  string
+	Index  string
+}
+
 // DropIndex handles PostgreSQL DROP INDEX, including table-less index names.
 type DropIndex struct {
 	ifExists bool
-	schema   string
-	table    string
-	index    string
+	targets  []DropIndexTarget
 }
 
 var _ sql.ExecSourceRel = (*DropIndex)(nil)
@@ -46,11 +51,19 @@ var _ vitess.Injectable = (*DropIndex)(nil)
 
 // NewDropIndex returns a new *DropIndex.
 func NewDropIndex(ifExists bool, schema string, table string, index string) *DropIndex {
+	return NewDropIndexes(ifExists, []DropIndexTarget{{
+		Schema: schema,
+		Table:  table,
+		Index:  index,
+	}})
+}
+
+// NewDropIndexes returns a new *DropIndex for one or more indexes.
+func NewDropIndexes(ifExists bool, targets []DropIndexTarget) *DropIndex {
+	targets = append([]DropIndexTarget(nil), targets...)
 	return &DropIndex{
 		ifExists: ifExists,
-		schema:   schema,
-		table:    table,
-		index:    index,
+		targets:  targets,
 	}
 }
 
@@ -71,27 +84,43 @@ func (d *DropIndex) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	located, ok, err := locateIndex(ctx, d.schema, d.table, d.index, d.ifExists)
-	if err != nil {
-		return nil, err
+	type targetIndex struct {
+		located     *locatedIndex
+		metadata    indexmetadata.Metadata
+		hasMetadata bool
 	}
-	if !ok {
-		if d.ifExists {
-			return sql.RowsToRowIter(), nil
+	locatedIndexes := make([]targetIndex, 0, len(d.targets))
+	for _, target := range d.targets {
+		located, ok, err := locateIndex(ctx, target.Schema, target.Table, target.Index, d.ifExists)
+		if err != nil {
+			return nil, err
 		}
-		return nil, sql.ErrIndexNotFound.New(d.index)
+		if !ok {
+			if d.ifExists {
+				continue
+			}
+			return nil, sql.ErrIndexNotFound.New(target.Index)
+		}
+
+		metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
+		locatedIndexes = append(locatedIndexes, targetIndex{
+			located:     located,
+			metadata:    metadata,
+			hasMetadata: hasMetadata,
+		})
 	}
 
-	metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
-	if err = located.alterable.DropIndex(ctx, located.index.ID()); err != nil {
-		if sql.ErrIndexNotFound.Is(err) && d.ifExists {
-			return sql.RowsToRowIter(), nil
-		}
-		return nil, err
-	}
-	if hasMetadata && metadata.Gin != nil && metadata.Gin.PostingTable != "" {
-		if err = dropTable(ctx, located.db, metadata.Gin.PostingTable); err != nil && !sql.ErrTableNotFound.Is(err) {
+	for _, target := range locatedIndexes {
+		if err := target.located.alterable.DropIndex(ctx, target.located.index.ID()); err != nil {
+			if sql.ErrIndexNotFound.Is(err) && d.ifExists {
+				continue
+			}
 			return nil, err
+		}
+		if target.hasMetadata && target.metadata.Gin != nil && target.metadata.Gin.PostingTable != "" {
+			if err := dropTable(ctx, target.located.db, target.metadata.Gin.PostingTable); err != nil && !sql.ErrTableNotFound.Is(err) {
+				return nil, err
+			}
 		}
 	}
 	return sql.RowsToRowIter(), nil
