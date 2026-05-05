@@ -153,6 +153,13 @@ metadata. It makes `CREATE INDEX USING gin` preserve `jsonb_ops` and
 `jsonb_path_ops` and exposes that metadata in `pg_class`, `pg_indexes`,
 `pg_index`, and `pg_opclass`.
 
-That bridge intentionally does not claim physical GIN storage, GIN planner use,
-posting-list operations, lossy rechecks, or write-maintenance performance. Those
-remain downstream implementation requirements.
+The follow-on JSONB GIN commits add opclass-aware token extraction, sidecar
+posting storage, create-time backfill, DML/DDL maintenance, planner lookup,
+candidate posting union/intersection, executor recheck, and catalog rows for the
+supported JSONB GIN operator families.
+
+This is still a first-pass bridge, not full PostgreSQL index parity. Remaining
+requirements include direct indexed row retrieval or equivalent performance
+evidence, full `pg_get_indexdef` support, statistics/progress catalog surfaces,
+broader DDL lifecycle coverage, and benchmarks proving indexed JSONB GIN plans
+beat table scans on representative workloads.

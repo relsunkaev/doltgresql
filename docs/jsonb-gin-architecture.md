@@ -13,13 +13,18 @@ The first supported JSONB GIN lane is:
 - `CREATE INDEX ... USING gin (jsonb_column jsonb_ops)`
 - `CREATE INDEX ... USING gin (jsonb_column jsonb_path_ops)`
 - catalog introspection for the selected access method and opclass
-- indexed execution for PostgreSQL-compatible JSONB containment/existence
-  operators once physical GIN storage exists
+- physical posting-list sidecar storage with create-time backfill, DML
+  maintenance, and DDL cleanup
+- indexed execution with candidate posting lookup and recheck for the first
+  PostgreSQL-compatible JSONB containment/existence operators
 
-The current implementation only provides the metadata part of that boundary. It
-stores the selected access method and opclass durably enough for catalogs and
-downstream code to branch on the selected opclass, but it still uses Dolt's
-existing scalar secondary-index path as a temporary storage bridge.
+The current implementation covers this first lane with Doltgres-managed sidecar
+posting tables, opclass-aware token extraction, `EXPLAIN`-visible indexed lookup
+plans, and original-predicate rechecks. It is not full parity yet: indexed
+execution still derives candidate row identities from the sidecar and scans base
+rows to emit matching identities rather than performing a direct primary-key
+fetch, JSONPath GIN operators are not claimed, and performance gates remain
+open.
 
 ## DDL flow
 
@@ -31,11 +36,13 @@ DDL must keep the PostgreSQL declaration intact:
 4. Reject unsupported opclasses and opclass options explicitly.
 5. Persist access-method and opclass metadata with the index definition.
 6. Expose the same metadata through catalogs and index-definition functions.
-7. Build physical GIN postings when GIN storage is implemented.
+7. Build physical GIN postings and keep them synchronized with table writes and
+   index DDL.
 
-The metadata bridge introduced in `5c185f75` handles steps 1, 3, 4, 5, and the
-catalog parts of step 6 for `jsonb_ops` and `jsonb_path_ops`. It is not the final
-step 7 implementation.
+The implemented first pass now handles GIN metadata preservation, sidecar
+posting creation, DML maintenance, rename/drop lifecycle, and planner lookup for
+the supported operators. `pg_get_indexdef` and broader PostgreSQL DDL lifecycle
+features remain outside this first pass.
 
 ## Opclass semantics
 
@@ -94,6 +101,11 @@ Physical GIN storage should be separate from scalar btree storage:
 Posting lists should reference the table primary key or stable row identity. For
 keyless tables, the design must define the row identity before claiming support.
 
+The current sidecar stores encoded GIN tokens and stable row-identity hashes.
+That gives correct lookup candidates and write maintenance, but it is still a
+bridge until execution can fetch rows directly from indexed identities and the
+layout has benchmark evidence for large posting lists.
+
 ## Planning and execution
 
 The planner should only choose a JSONB GIN index when the operator is supported
@@ -112,7 +124,9 @@ original JSONB predicate against every candidate row. Recheck is required for
 correctness even when a lookup is expected to be selective.
 
 `EXPLAIN` must show an indexed JSONB GIN path before planner support is claimed.
-Until then, accepted `USING gin` DDL remains metadata support only.
+The current plan shape does this for `@>` on `jsonb_ops`/`jsonb_path_ops` and
+for `?`, `?|`, and `?&` on `jsonb_ops`. Unsupported operators must fall back to
+a table scan or another compatible index.
 
 ## Catalogs
 
@@ -126,8 +140,10 @@ The following catalog surfaces must agree for a JSONB GIN index:
   support functions before planner support is claimed
 - `pg_get_indexdef` returns the same definition as `pg_indexes.indexdef`
 
-The metadata bridge covers the first four bullets. The remaining catalog rows
-are still required for full GIN parity.
+The current catalog bridge covers the selected access method, opclass, and GIN
+operator-family rows for the supported JSONB operators. `pg_get_indexdef`,
+statistics/progress views, and broader PostgreSQL catalog parity are still
+required for full GIN parity.
 
 ## Performance gates
 
