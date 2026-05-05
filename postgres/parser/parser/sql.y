@@ -65,6 +65,21 @@ func unimplementedWithIssueDetail(sqllex sqlLexer, issue int, detail string) int
     sqllex.(*lexer).UnimplementedWithIssueDetail(issue, detail)
     return 1
 }
+
+func makeIsJSONPredicateExpr(expr tree.Expr, kind string, requireUniqueKeys bool, not bool) tree.Expr {
+    predicate := &tree.FuncExpr{
+        Func: tree.WrapFunction("doltgres_json_predicate"),
+        Exprs: tree.Exprs{
+            expr,
+            tree.NewStrVal(kind),
+            tree.MakeDBool(tree.DBool(requireUniqueKeys)),
+        },
+    }
+    if not {
+        return &tree.NotExpr{Expr: predicate}
+    }
+    return predicate
+}
 %}
 
 %{
@@ -797,7 +812,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> RETRY RETURN RETURNING RETURNS REVISION_HISTORY REVOKE RIGHT
 %token <str> ROLE ROLES ROUTINE ROUTINES ROLLBACK ROLLUP ROW ROWS RSHIFT RULE RUNNING
 
-%token <str> SAFE SAVEPOINT SCATTER SCHEDULE SCHEDULES SCHEMA SCHEMAS SCRUB SEARCH SECOND SECURITY
+%token <str> SAFE SAVEPOINT SCALAR SCATTER SCHEDULE SCHEDULES SCHEMA SCHEMAS SCRUB SEARCH SECOND SECURITY
 %token <str> SECURITY_BARRIER SECURITY_INVOKER SEED SELECT SEND
 %token <str> SERIALFUNC SERIALIZABLE SERVER SESSION SESSIONS SESSION_USER SET SETOF SETTING SETTINGS SEQUENCE SEQUENCES SFUNC
 %token <str> SHARE SHAREABLE SHOW SIMILAR SIMPLE SKIP SKIP_LOCKED SKIP_DATABASE_STATS SKIP_MISSING_FOREIGN_KEYS
@@ -1422,6 +1437,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %left      AND
 %right     NOT
 %nonassoc  IS ISNULL NOTNULL   // IS sets precedence for IS NULL, etc
+%nonassoc  VALUE SCALAR ARRAY OBJECT WITH WITHOUT
 %nonassoc  '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %nonassoc  '~' BETWEEN DEFERRABLE IN LIKE ILIKE SIMILAR NOT_REGMATCH REGIMATCH NOT_REGIMATCH NOT_LA TEXTSEARCHMATCH
 %nonassoc  ESCAPE              // ESCAPE must be just above LIKE/ILIKE/SIMILAR
@@ -13042,6 +13058,126 @@ a_expr:
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.NE, Left: $1.expr(), Right: tree.NewStrVal("NaN")}
   }
+| a_expr IS JSON %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, false)
+  }
+| a_expr IS JSON WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", true, false)
+  }
+| a_expr IS JSON WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, false)
+  }
+| a_expr IS JSON VALUE %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, false)
+  }
+| a_expr IS JSON VALUE WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", true, false)
+  }
+| a_expr IS JSON VALUE WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, false)
+  }
+| a_expr IS JSON SCALAR %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", false, false)
+  }
+| a_expr IS JSON SCALAR WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", true, false)
+  }
+| a_expr IS JSON SCALAR WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", false, false)
+  }
+| a_expr IS JSON ARRAY %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", false, false)
+  }
+| a_expr IS JSON ARRAY WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", true, false)
+  }
+| a_expr IS JSON ARRAY WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", false, false)
+  }
+| a_expr IS JSON OBJECT %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", false, false)
+  }
+| a_expr IS JSON OBJECT WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", true, false)
+  }
+| a_expr IS JSON OBJECT WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", false, false)
+  }
+| a_expr IS NOT JSON %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, true)
+  }
+| a_expr IS NOT JSON WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", true, true)
+  }
+| a_expr IS NOT JSON WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, true)
+  }
+| a_expr IS NOT JSON VALUE %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, true)
+  }
+| a_expr IS NOT JSON VALUE WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", true, true)
+  }
+| a_expr IS NOT JSON VALUE WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "value", false, true)
+  }
+| a_expr IS NOT JSON SCALAR %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", false, true)
+  }
+| a_expr IS NOT JSON SCALAR WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", true, true)
+  }
+| a_expr IS NOT JSON SCALAR WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "scalar", false, true)
+  }
+| a_expr IS NOT JSON ARRAY %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", false, true)
+  }
+| a_expr IS NOT JSON ARRAY WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", true, true)
+  }
+| a_expr IS NOT JSON ARRAY WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "array", false, true)
+  }
+| a_expr IS NOT JSON OBJECT %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", false, true)
+  }
+| a_expr IS NOT JSON OBJECT WITH UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", true, true)
+  }
+| a_expr IS NOT JSON OBJECT WITHOUT UNIQUE KEYS %prec IS
+  {
+    $$.val = makeIsJSONPredicateExpr($1.expr(), "object", false, true)
+  }
 | a_expr IS NULL %prec IS
   {
     $$.val = &tree.IsNullExpr{Expr: $1.expr()}
@@ -15483,6 +15619,7 @@ unreserved_keyword:
 | RUNNING
 | SAFE
 | SAVEPOINT
+| SCALAR
 | SCATTER
 | SCHEDULE
 | SCHEDULES

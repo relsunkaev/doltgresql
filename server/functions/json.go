@@ -49,6 +49,7 @@ func initJson() {
 	framework.RegisterFunction(json_each_text)
 	framework.RegisterFunction(json_typeof)
 	framework.RegisterFunction(json_strip_nulls)
+	framework.RegisterFunction(doltgres_json_predicate)
 	framework.RegisterFunction(row_to_json_record)
 	framework.RegisterFunction(row_to_json_record_pretty)
 }

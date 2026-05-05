@@ -1796,6 +1796,43 @@ func TestJsonFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "IS JSON predicate",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT '123' IS JSON, '"abc"' IS JSON SCALAR, '{"a":"b"}' IS JSON OBJECT, '[1,2]' IS JSON ARRAY, 'abc' IS JSON;`,
+					Expected: []sql.Row{{"t", "t", "t", "t", "f"}},
+				},
+				{
+					Query:    `SELECT '123' IS JSON VALUE, '"abc"' IS JSON VALUE, '{"a":1}' IS JSON VALUE, '[1]' IS JSON VALUE;`,
+					Expected: []sql.Row{{"t", "t", "t", "t"}},
+				},
+				{
+					Query:    `SELECT '{}' IS NOT JSON ARRAY, '[]' IS NOT JSON OBJECT, 'abc' IS NOT JSON, NULL::text IS JSON, NULL::text IS NOT JSON;`,
+					Expected: []sql.Row{{"t", "t", "t", nil, nil}},
+				},
+				{
+					Query:    `SELECT '{"a":1,"a":2}' IS JSON WITH UNIQUE KEYS, '{"a":1,"a":2}' IS JSON WITHOUT UNIQUE KEYS;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT '[{"a":"1"},{"b":"2","b":"3"}]' IS JSON ARRAY WITH UNIQUE KEYS, '[{"a":"1"},{"b":"2","b":"3"}]' IS JSON ARRAY WITHOUT UNIQUE KEYS;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT '{"a":1,"a":2}'::json IS JSON WITH UNIQUE KEYS, '{"a":1,"a":2}'::jsonb IS JSON WITH UNIQUE KEYS;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT '{}{}' IS JSON, '{"a":1' IS JSON;`,
+					Expected: []sql.Row{{"f", "f"}},
+				},
+				{
+					Query:       `SELECT 123 IS JSON;`,
+					ExpectedErr: `cannot use type`,
+				},
+			},
+		},
+		{
 			Name: "jsonb helper functions",
 			SetUpScript: []string{
 				`CREATE TABLE jsonb_record_items (id INT PRIMARY KEY, label TEXT);`,
