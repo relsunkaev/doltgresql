@@ -1754,6 +1754,22 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{`{"a":{},"d":{}}`}},
 				},
 				{
+					Query:    `SELECT json_object('{a,1,b,"two words",c,NULL}'::text[]);`,
+					Expected: []sql.Row{{`{"a":"1","b":"two words","c":null}`}},
+				},
+				{
+					Query:    `SELECT json_object('{a,b,c}'::text[], '{1,"two words",NULL}'::text[]);`,
+					Expected: []sql.Row{{`{"a":"1","b":"two words","c":null}`}},
+				},
+				{
+					Query:       `SELECT json_object('{a,b,c}'::text[]);`,
+					ExpectedErr: "array must have even number of elements",
+				},
+				{
+					Query:       `SELECT json_object(ARRAY['a', NULL]::text[], ARRAY['1', '2']::text[]);`,
+					ExpectedErr: "null value not allowed for object key",
+				},
+				{
 					Query:    `SELECT row_to_json(row(1,'foo'));`,
 					Expected: []sql.Row{{`{"f1":1,"f2":"foo"}`}},
 				},
@@ -1849,6 +1865,22 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT jsonb_strip_nulls('{"a":{"b":null,"c":null},"d":{}}');`,
 					Expected: []sql.Row{{`{"a": {}, "d": {}}`}},
+				},
+				{
+					Query:    `SELECT jsonb_object('{a,1,b,"two words",c,NULL}'::text[]);`,
+					Expected: []sql.Row{{`{"a": "1", "b": "two words", "c": null}`}},
+				},
+				{
+					Query:    `SELECT jsonb_object('{a,b,c}'::text[], '{1,"two words",NULL}'::text[]);`,
+					Expected: []sql.Row{{`{"a": "1", "b": "two words", "c": null}`}},
+				},
+				{
+					Query:       `SELECT jsonb_object('{a,b,c}'::text[]);`,
+					ExpectedErr: "array must have even number of elements",
+				},
+				{
+					Query:       `SELECT jsonb_object(ARRAY['a', NULL]::text[], ARRAY['1', '2']::text[]);`,
+					ExpectedErr: "null value not allowed for object key",
 				},
 				{
 					Query:    `SELECT '{"a":1,"b":[2,3]}'::jsonb @> '{"b":[2]}'::jsonb, '{"a":1}'::jsonb <@ '{"a":1,"b":2}'::jsonb;`,

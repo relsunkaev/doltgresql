@@ -39,6 +39,8 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_build_array)
 	framework.RegisterFunction(jsonb_build_object_empty)
 	framework.RegisterFunction(jsonb_build_object)
+	framework.RegisterFunction(jsonb_object_text_array)
+	framework.RegisterFunction(jsonb_object_text_arrays)
 	framework.RegisterFunction(to_jsonb_anyelement)
 	framework.RegisterFunction(jsonb_array_length)
 	framework.RegisterFunction(jsonb_array_elements)
@@ -202,6 +204,36 @@ var jsonb_build_object = framework.Function1N{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
 	Callable: func(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, val1 any, vals []any) (any, error) {
 		value, err := buildJsonObjectValue(ctx, "jsonb_build_object", argTypes, append([]any{val1}, vals...), true)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
+	},
+}
+
+// jsonb_object_text_array represents the PostgreSQL function jsonb_object(text[]).
+var jsonb_object_text_array = framework.Function1{
+	Name:       "jsonb_object",
+	Return:     pgtypes.JsonB,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		value, err := buildJsonObjectFromTextArray(ctx, val, true)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
+	},
+}
+
+// jsonb_object_text_arrays represents the PostgreSQL function jsonb_object(text[], text[]).
+var jsonb_object_text_arrays = framework.Function2{
+	Name:       "jsonb_object",
+	Return:     pgtypes.JsonB,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TextArray, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		value, err := buildJsonObjectFromTextArrays(ctx, val1, val2, true)
 		if err != nil {
 			return nil, err
 		}

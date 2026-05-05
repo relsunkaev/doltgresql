@@ -38,6 +38,8 @@ func initJson() {
 	framework.RegisterFunction(json_build_array)
 	framework.RegisterFunction(json_build_object_empty)
 	framework.RegisterFunction(json_build_object)
+	framework.RegisterFunction(json_object_text_array)
+	framework.RegisterFunction(json_object_text_arrays)
 	framework.RegisterFunction(to_json_anyelement)
 	framework.RegisterFunction(json_array_length)
 	framework.RegisterFunction(json_array_elements)
@@ -154,6 +156,36 @@ var json_build_object = framework.Function1N{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
 	Callable: func(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, val1 any, vals []any) (any, error) {
 		value, err := buildJsonObjectValue(ctx, "json_build_object", argTypes, append([]any{val1}, vals...), false)
+		if err != nil {
+			return nil, err
+		}
+		return jsonValueOutput(ctx, value)
+	},
+}
+
+// json_object_text_array represents the PostgreSQL function json_object(text[]).
+var json_object_text_array = framework.Function1{
+	Name:       "json_object",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		value, err := buildJsonObjectFromTextArray(ctx, val, false)
+		if err != nil {
+			return nil, err
+		}
+		return jsonValueOutput(ctx, value)
+	},
+}
+
+// json_object_text_arrays represents the PostgreSQL function json_object(text[], text[]).
+var json_object_text_arrays = framework.Function2{
+	Name:       "json_object",
+	Return:     pgtypes.Json,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TextArray, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		value, err := buildJsonObjectFromTextArrays(ctx, val1, val2, false)
 		if err != nil {
 			return nil, err
 		}
@@ -395,6 +427,97 @@ func buildJsonObjectValue(ctx *sql.Context, fnName string, argTypes []*pgtypes.D
 		items = append(items, pgtypes.JsonValueObjectItem{Key: key, Value: value})
 	}
 	return jsonObjectFromItems(items, sortKeys), nil
+}
+
+func buildJsonObjectFromTextArray(ctx *sql.Context, val any, sortKeys bool) (pgtypes.JsonValueObject, error) {
+	values, err := textArrayArg(ctx, val)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	if len(values)%2 != 0 {
+		return pgtypes.JsonValueObject{}, errors.New("array must have even number of elements")
+	}
+	items := make([]pgtypes.JsonValueObjectItem, 0, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		item, err := jsonObjectItemFromTextValues(ctx, values[i], values[i+1])
+		if err != nil {
+			return pgtypes.JsonValueObject{}, err
+		}
+		items = append(items, item)
+	}
+	return jsonObjectFromItems(items, sortKeys), nil
+}
+
+func buildJsonObjectFromTextArrays(ctx *sql.Context, keys any, values any, sortKeys bool) (pgtypes.JsonValueObject, error) {
+	keyValues, err := textArrayArg(ctx, keys)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	valueValues, err := textArrayArg(ctx, values)
+	if err != nil {
+		return pgtypes.JsonValueObject{}, err
+	}
+	if len(keyValues) != len(valueValues) {
+		return pgtypes.JsonValueObject{}, errors.New("mismatched array dimensions")
+	}
+	items := make([]pgtypes.JsonValueObjectItem, 0, len(keyValues))
+	for i := range keyValues {
+		item, err := jsonObjectItemFromTextValues(ctx, keyValues[i], valueValues[i])
+		if err != nil {
+			return pgtypes.JsonValueObject{}, err
+		}
+		items = append(items, item)
+	}
+	return jsonObjectFromItems(items, sortKeys), nil
+}
+
+func textArrayArg(ctx *sql.Context, val any) ([]any, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	values, ok := res.([]any)
+	if !ok {
+		return nil, errors.Errorf("expected text array, but got %T", res)
+	}
+	return values, nil
+}
+
+func jsonObjectItemFromTextValues(ctx *sql.Context, keyValue any, itemValue any) (pgtypes.JsonValueObjectItem, error) {
+	key, err := jsonObjectTextKey(ctx, keyValue)
+	if err != nil {
+		return pgtypes.JsonValueObjectItem{}, err
+	}
+	value, err := jsonObjectTextValue(ctx, itemValue)
+	if err != nil {
+		return pgtypes.JsonValueObjectItem{}, err
+	}
+	return pgtypes.JsonValueObjectItem{Key: key, Value: value}, nil
+}
+
+func jsonObjectTextKey(ctx *sql.Context, val any) (string, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return "", err
+	}
+	if res == nil {
+		return "", errors.New("null value not allowed for object key")
+	}
+	return res.(string), nil
+}
+
+func jsonObjectTextValue(ctx *sql.Context, val any) (pgtypes.JsonValue, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return pgtypes.JsonValueNull(0), nil
+	}
+	return pgtypes.JsonValueFromSQLValue(ctx, pgtypes.Text, res)
 }
 
 func jsonBuildArgType(argTypes []*pgtypes.DoltgresType, idx int) *pgtypes.DoltgresType {
