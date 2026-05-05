@@ -1093,6 +1093,34 @@ func TestBasicIndexing(t *testing.T) {
 			},
 		},
 		{
+			Name: "PostgreSQL drop index restrict lifecycle",
+			SetUpScript: []string{
+				"CREATE TABLE drop_index_restrict (id INTEGER PRIMARY KEY, v INTEGER);",
+				"CREATE INDEX drop_index_restrict_idx ON drop_index_restrict (v);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "DROP INDEX drop_index_restrict_idx RESTRICT;",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'drop_index_restrict'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"drop_index_restrict_pkey"},
+					},
+				},
+				{
+					Query: "DROP INDEX IF EXISTS drop_index_restrict_missing_idx RESTRICT;",
+				},
+				{
+					Query:       "DROP INDEX drop_index_restrict_pkey CASCADE;",
+					ExpectedErr: "CASCADE is not yet supported",
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree sort option metadata",
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

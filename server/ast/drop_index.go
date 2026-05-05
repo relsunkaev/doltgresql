@@ -29,10 +29,8 @@ func nodeDropIndex(ctx *Context, node *tree.DropIndex) (vitess.Statement, error)
 		return nil, nil
 	}
 	switch node.DropBehavior {
-	case tree.DropDefault:
+	case tree.DropDefault, tree.DropRestrict:
 		// Default behavior, nothing to do
-	case tree.DropRestrict:
-		return nil, errors.Errorf("RESTRICT is not yet supported")
 	case tree.DropCascade:
 		return nil, errors.Errorf("CASCADE is not yet supported")
 	}
