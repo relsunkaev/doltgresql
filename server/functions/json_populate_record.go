@@ -16,6 +16,7 @@ package functions
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -29,6 +30,8 @@ import (
 
 var _ sql.TableFunction = (*jsonbPopulateRecordTableFunction)(nil)
 var _ sql.ExecSourceRel = (*jsonbPopulateRecordTableFunction)(nil)
+var _ sql.TableFunction = (*jsonToRecordTableFunction)(nil)
+var _ sql.ExecSourceRel = (*jsonToRecordTableFunction)(nil)
 
 // jsonb_populate_record represents the PostgreSQL function jsonb_populate_record(anyelement, jsonb).
 var jsonb_populate_record = framework.Function2{
@@ -44,6 +47,26 @@ var jsonb_populate_record = framework.Function2{
 type jsonbPopulateRecordTableFunction struct {
 	db    sql.Database
 	exprs []sql.Expression
+}
+
+type jsonRecordColumn struct {
+	name string
+	typ  *pgtypes.DoltgresType
+}
+
+type jsonToRecordTableFunction struct {
+	db        sql.Database
+	name      string
+	inputType *pgtypes.DoltgresType
+	exprs     []sql.Expression
+	columns   []jsonRecordColumn
+}
+
+func newJsonToRecordTableFunction(name string, inputType *pgtypes.DoltgresType) *jsonToRecordTableFunction {
+	return &jsonToRecordTableFunction{
+		name:      name,
+		inputType: inputType,
+	}
 }
 
 // NewInstance creates a new instance of the JSONB populate record table function.
@@ -189,6 +212,208 @@ func (j *jsonbPopulateRecordTableFunction) CollationCoercibility(ctx *sql.Contex
 // Collation implements sql.Table.
 func (j *jsonbPopulateRecordTableFunction) Collation() sql.CollationID {
 	return sql.Collation_Default
+}
+
+// NewInstance creates a new instance of the JSON to record table function.
+func (j *jsonToRecordTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
+	if len(args) < 5 || (len(args)-1)%4 != 0 {
+		return nil, sql.ErrInvalidArgumentNumber.New(j.Name(), "1 + 4n", len(args))
+	}
+	columns, err := jsonRecordColumnsFromArgs(ctx, args[1:])
+	if err != nil {
+		return nil, err
+	}
+	nt := *j
+	nt.db = db
+	nt.exprs = args
+	nt.columns = columns
+	return &nt, nil
+}
+
+// Name implements the sql.Nameable interface.
+func (j *jsonToRecordTableFunction) Name() string {
+	return j.name
+}
+
+// String implements fmt.Stringer.
+func (j *jsonToRecordTableFunction) String() string {
+	args := make([]string, len(j.exprs))
+	for i, expr := range j.exprs {
+		args[i] = expr.String()
+	}
+	return fmt.Sprintf("%s(%s)", j.Name(), strings.Join(args, ", "))
+}
+
+// Resolved implements the sql.Resolvable interface.
+func (j *jsonToRecordTableFunction) Resolved() bool {
+	for _, expr := range j.exprs {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+// Expressions implements sql.Expressioner.
+func (j *jsonToRecordTableFunction) Expressions() []sql.Expression {
+	return j.exprs
+}
+
+// WithExpressions implements sql.Expressioner.
+func (j *jsonToRecordTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
+	if len(exprs) < 5 || (len(exprs)-1)%4 != 0 {
+		return nil, errors.Errorf("%s expected 1 + 4n expressions, got %d", j.Name(), len(exprs))
+	}
+	columns, err := jsonRecordColumnsFromArgs(ctx, exprs[1:])
+	if err != nil {
+		return nil, err
+	}
+	nt := *j
+	nt.exprs = exprs
+	nt.columns = columns
+	return &nt, nil
+}
+
+// Database implements sql.Databaser.
+func (j *jsonToRecordTableFunction) Database() sql.Database {
+	return j.db
+}
+
+// WithDatabase implements sql.Databaser.
+func (j *jsonToRecordTableFunction) WithDatabase(db sql.Database) (sql.Node, error) {
+	nt := *j
+	nt.db = db
+	return &nt, nil
+}
+
+// IsReadOnly implements sql.Node.
+func (j *jsonToRecordTableFunction) IsReadOnly() bool {
+	return true
+}
+
+// Schema implements sql.Node.
+func (j *jsonToRecordTableFunction) Schema(ctx *sql.Context) sql.Schema {
+	var dbName string
+	if j.db != nil {
+		dbName = j.db.Name()
+	}
+	schema := make(sql.Schema, len(j.columns))
+	for i, col := range j.columns {
+		schema[i] = &sql.Column{
+			DatabaseSource: dbName,
+			Source:         j.Name(),
+			Name:           col.name,
+			Type:           col.typ,
+			Nullable:       true,
+		}
+	}
+	return schema
+}
+
+// Children implements sql.Node.
+func (j *jsonToRecordTableFunction) Children() []sql.Node {
+	return nil
+}
+
+// WithChildren implements sql.Node.
+func (j *jsonToRecordTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if len(children) != 0 {
+		return nil, sql.ErrInvalidChildrenNumber.New(j, len(children), 0)
+	}
+	return j, nil
+}
+
+// RowIter implements sql.Node.
+func (j *jsonToRecordTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	value, err := j.exprs[0].Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		return sql.RowsToRowIter(make(sql.Row, len(j.columns))), nil
+	}
+	doc, err := jsonDocumentFromFunctionValue(ctx, j.inputType, value)
+	if err != nil {
+		return nil, err
+	}
+	object, ok := doc.Value.(pgtypes.JsonValueObject)
+	if !ok {
+		return nil, errors.Errorf("cannot call %s on a non-object", j.Name())
+	}
+	output := make(sql.Row, len(j.columns))
+	for i, col := range j.columns {
+		if objectIdx, ok := object.Index[col.name]; ok {
+			output[i], err = jsonPopulateValue(ctx, col.typ, nil, object.Items[objectIdx].Value)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return sql.RowsToRowIter(output), nil
+}
+
+// CollationCoercibility implements sql.CollationCoercible.
+func (j *jsonToRecordTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
+	return sql.Collation_binary, 5
+}
+
+// Collation implements sql.Table.
+func (j *jsonToRecordTableFunction) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
+
+func jsonRecordColumnsFromArgs(ctx *sql.Context, args []sql.Expression) ([]jsonRecordColumn, error) {
+	if len(args)%4 != 0 {
+		return nil, errors.Errorf("record column metadata must be name, schema, type, and typmod tuples")
+	}
+	columns := make([]jsonRecordColumn, len(args)/4)
+	for i := range columns {
+		name, err := jsonRecordStringArg(ctx, args[i*4])
+		if err != nil {
+			return nil, err
+		}
+		schemaName, err := jsonRecordStringArg(ctx, args[i*4+1])
+		if err != nil {
+			return nil, err
+		}
+		typeName, err := jsonRecordStringArg(ctx, args[i*4+2])
+		if err != nil {
+			return nil, err
+		}
+		typmodText, err := jsonRecordStringArg(ctx, args[i*4+3])
+		if err != nil {
+			return nil, err
+		}
+		typmod, err := strconv.ParseInt(typmodText, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		colType := pgtypes.NewUnresolvedDoltgresType(schemaName, typeName)
+		if typmod != -1 {
+			colType = colType.WithAttTypMod(int32(typmod))
+		}
+		colType, err = jsonPopulateResolveType(ctx, colType)
+		if err != nil {
+			return nil, err
+		}
+		columns[i] = jsonRecordColumn{
+			name: name,
+			typ:  colType,
+		}
+	}
+	return columns, nil
+}
+
+func jsonRecordStringArg(ctx *sql.Context, expr sql.Expression) (string, error) {
+	value, err := expr.Eval(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	str, ok := value.(string)
+	if !ok {
+		return "", errors.Errorf("expected record column metadata to be a string, but got %T", value)
+	}
+	return str, nil
 }
 
 func jsonbPopulateRecordCompositeType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, error) {

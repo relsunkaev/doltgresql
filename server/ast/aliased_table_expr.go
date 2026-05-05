@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // nodeAliasedTableExpr handles *tree.AliasedTableExpr nodes.
@@ -103,6 +105,13 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 		}
 		aliasExpr = subquery
 	case *tree.RowsFromExpr:
+		if len(node.As.ColDefs) > 0 {
+			aliasedExpr, ok, err := nodeJsonToRecordAliasedTableExpr(ctx, node, expr)
+			if err != nil || ok {
+				return aliasedExpr, err
+			}
+		}
+
 		tableExpr, err := nodeTableExpr(ctx, expr)
 		if err != nil {
 			return nil, err
@@ -147,6 +156,86 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 		Lateral: node.Lateral,
 		Auth:    authInfo,
 	}, nil
+}
+
+func nodeJsonToRecordAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {
+	if len(rowsFromExpr.Items) != 1 {
+		return nil, true, errors.Errorf("column definition list is only supported for a single table function")
+	}
+	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
+	if !ok {
+		return nil, true, errors.Errorf("column definition list is only supported for table functions")
+	}
+
+	convertedFuncExpr, err := nodeFuncExpr(ctx, funcExpr)
+	if err != nil {
+		return nil, true, err
+	}
+	vitessFuncExpr, ok := convertedFuncExpr.(*vitess.FuncExpr)
+	if !ok {
+		return nil, true, errors.Errorf("column definition list is only supported for table functions returning record")
+	}
+
+	var internalName string
+	switch strings.ToLower(vitessFuncExpr.Name.String()) {
+	case "json_to_record":
+		internalName = "doltgres_json_to_record"
+	case "jsonb_to_record":
+		internalName = "doltgres_jsonb_to_record"
+	default:
+		return nil, false, nil
+	}
+
+	internalAlias := "__doltgres_json_to_record"
+	tableFuncArgs := make(vitess.SelectExprs, 0, len(vitessFuncExpr.Exprs)+len(node.As.ColDefs)*4)
+	tableFuncArgs = append(tableFuncArgs, vitessFuncExpr.Exprs...)
+	selectExprs := make(vitess.SelectExprs, len(node.As.ColDefs))
+	for i, colDef := range node.As.ColDefs {
+		_, colType, err := nodeResolvableTypeReference(ctx, colDef.Type, false)
+		if err != nil {
+			return nil, true, err
+		}
+		if colType == nil {
+			return nil, true, errors.Errorf("column definition requires a type")
+		}
+		colName := string(colDef.Name)
+		tableFuncArgs = append(
+			tableFuncArgs,
+			tableFuncTextArg(colName),
+			tableFuncTextArg(colType.ID.SchemaName()),
+			tableFuncTextArg(colType.ID.TypeName()),
+			tableFuncTextArg(strconv.FormatInt(int64(colType.GetAttTypMod()), 10)),
+		)
+		selectExprs[i] = &vitess.AliasedExpr{
+			Expr: tableFuncColumn(internalAlias, colName),
+			As:   vitess.NewColIdent(colName),
+		}
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: selectExprs,
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  internalName,
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: node.Lateral,
+	}, true, nil
+}
+
+func tableFuncTextArg(value string) *vitess.AliasedExpr {
+	return &vitess.AliasedExpr{
+		Expr: vitess.InjectedExpr{
+			Expression: pgexprs.NewTextLiteral(value),
+		},
+	}
 }
 
 func nodeAliasedTableExprWithOrdinality(ctx *Context, node *tree.AliasedTableExpr) (*vitess.AliasedTableExpr, error) {

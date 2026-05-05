@@ -192,10 +192,11 @@ func (node *SelectExpr) Format(ctx *FmtCtx) {
 }
 
 // AliasClause represents an alias, optionally with a column list:
-// "AS name" or "AS name(col1, col2)".
+// "AS name", "AS name(col1, col2)", or "AS name(col1 type1, col2 type2)".
 type AliasClause struct {
-	Alias Name
-	Cols  NameList
+	Alias   Name
+	Cols    NameList
+	ColDefs []SimpleColumnDef
 }
 
 // Format implements the NodeFormatter interface.
@@ -205,6 +206,17 @@ func (a *AliasClause) Format(ctx *FmtCtx) {
 		// Format as "alias (col1, col2, ...)".
 		ctx.WriteString(" (")
 		ctx.FormatNode(&a.Cols)
+		ctx.WriteByte(')')
+	} else if len(a.ColDefs) != 0 {
+		ctx.WriteString(" (")
+		for i, colDef := range a.ColDefs {
+			if i > 0 {
+				ctx.WriteString(", ")
+			}
+			ctx.FormatNode(&colDef.Name)
+			ctx.WriteByte(' ')
+			ctx.WriteString(colDef.Type.SQLString())
+		}
 		ctx.WriteByte(')')
 	}
 }

@@ -35,6 +35,8 @@ func initJsonTableFunctions() {
 		newJsonEachTableFunction("jsonb_each", pgtypes.JsonB, pgtypes.JsonB, false),
 		newJsonEachTableFunction("jsonb_each_text", pgtypes.JsonB, pgtypes.Text, true),
 		&jsonbPopulateRecordTableFunction{},
+		newJsonToRecordTableFunction("doltgres_json_to_record", pgtypes.Json),
+		newJsonToRecordTableFunction("doltgres_jsonb_to_record", pgtypes.JsonB),
 	)
 }
 

@@ -898,6 +898,12 @@ func (node *AliasClause) doc(p *PrettyCfg) pretty.Doc {
 	d := pretty.Text(node.Alias.String())
 	if len(node.Cols) != 0 {
 		d = p.nestUnder(d, p.bracket("(", p.Doc(&node.Cols), ")"))
+	} else if len(node.ColDefs) != 0 {
+		colDefDocs := make([]pretty.Doc, len(node.ColDefs))
+		for i, colDef := range node.ColDefs {
+			colDefDocs[i] = pretty.Text(colDef.Name.String() + " " + colDef.Type.SQLString())
+		}
+		d = p.nestUnder(d, p.bracket("(", pretty.Join(",", colDefDocs...), ")"))
 	}
 	return d
 }

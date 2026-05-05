@@ -1770,6 +1770,10 @@ func TestJsonFunctions(t *testing.T) {
 					ExpectedErr: "null value not allowed for object key",
 				},
 				{
+					Query:    `SELECT * FROM json_to_record('{"a":1,"b":"foo","j":{"x":2}}'::json) AS r(a int, b text, j json);`,
+					Expected: []sql.Row{{1, "foo", `{"x":2}`}},
+				},
+				{
 					Query:    `SELECT row_to_json(row(1,'foo'));`,
 					Expected: []sql.Row{{`{"f1":1,"f2":"foo"}`}},
 				},
@@ -1820,6 +1824,14 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT (jsonb_populate_record(NULL::jsonb_populate_base, '{"a":7,"b":"scalar","c":false}'::jsonb)).b;`,
 					Expected: []sql.Row{{"scalar"}},
+				},
+				{
+					Query:    `SELECT * FROM jsonb_to_record('{"a":1,"b":"foo","c":null,"j":{"x":2}}'::jsonb) AS r(a int, b text, c bool, j jsonb);`,
+					Expected: []sql.Row{{1, "foo", nil, `{"x": 2}`}},
+				},
+				{
+					Query:    `SELECT r.b FROM jsonb_to_record('{"a":1,"b":"foo"}'::jsonb) AS r(a int, b text);`,
+					Expected: []sql.Row{{"foo"}},
 				},
 				{
 					Query:    `SELECT jsonb_object_keys('{"a":1,"b":2}'::jsonb);`,

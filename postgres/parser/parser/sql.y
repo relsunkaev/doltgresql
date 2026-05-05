@@ -1306,7 +1306,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]*tree.When> when_clause_list
 %type <tree.ComparisonOperator> sub_type
 %type <tree.Expr> numeric_only opt_allow_connections opt_connection_limit opt_is_template opt_oid
-%type <tree.AliasClause> alias_clause opt_alias_clause
+%type <tree.AliasClause> alias_clause opt_alias_clause func_table_alias_clause opt_func_table_alias_clause
 %type <bool> opt_ordinality opt_compact
 %type <*tree.Order> sortby
 %type <tree.IndexElem> index_elem index_elem_name_only partition_index_elem
@@ -11671,7 +11671,7 @@ numeric_table_ref table_ref_options
   {
     $$.val = &tree.AliasedTableExpr{Expr: &tree.ParenTableExpr{Expr: $2.tblExpr()}, Ordinality: $4.bool(), As: $5.aliasClause()}
   }
-| func_table opt_ordinality opt_alias_clause
+| func_table opt_ordinality opt_func_table_alias_clause
   {
     f := $1.tblExpr()
     $$.val = &tree.AliasedTableExpr{
@@ -11682,7 +11682,7 @@ numeric_table_ref table_ref_options
       As: $3.aliasClause(),
     }
   }
-| LATERAL func_table opt_ordinality opt_alias_clause
+| LATERAL func_table opt_ordinality opt_func_table_alias_clause
   {
     f := $2.tblExpr()
     $$.val = &tree.AliasedTableExpr{
@@ -11882,6 +11882,24 @@ alias_clause:
 
 opt_alias_clause:
   alias_clause
+| /* EMPTY */
+  {
+    $$.val = tree.AliasClause{}
+  }
+
+func_table_alias_clause:
+  alias_clause
+| AS table_alias_name '(' opt_returns_table_col_def_list ')'
+  {
+    $$.val = tree.AliasClause{Alias: tree.Name($2), ColDefs: $4.simpleColumnDefs()}
+  }
+| table_alias_name '(' opt_returns_table_col_def_list ')'
+  {
+    $$.val = tree.AliasClause{Alias: tree.Name($1), ColDefs: $3.simpleColumnDefs()}
+  }
+
+opt_func_table_alias_clause:
+  func_table_alias_clause
 | /* EMPTY */
   {
     $$.val = tree.AliasClause{}
