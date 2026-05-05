@@ -33,6 +33,7 @@ const (
 // does not currently expose.
 type Metadata struct {
 	AccessMethod string       `json:"accessMethod,omitempty"`
+	Columns      []string     `json:"columns,omitempty"`
 	OpClasses    []string     `json:"opClasses,omitempty"`
 	Gin          *GinMetadata `json:"gin,omitempty"`
 }
@@ -45,6 +46,9 @@ type GinMetadata struct {
 // EncodeComment returns a durable index comment containing PostgreSQL metadata.
 func EncodeComment(metadata Metadata) string {
 	metadata.AccessMethod = NormalizeAccessMethod(metadata.AccessMethod)
+	for i := range metadata.Columns {
+		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
+	}
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
@@ -62,6 +66,9 @@ func DecodeComment(comment string) (Metadata, bool) {
 		return Metadata{}, false
 	}
 	metadata.AccessMethod = NormalizeAccessMethod(metadata.AccessMethod)
+	for i := range metadata.Columns {
+		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
+	}
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
@@ -99,6 +106,15 @@ func OpClasses(comment string) []string {
 		return nil
 	}
 	return metadata.OpClasses
+}
+
+// Columns returns the PostgreSQL logical columns encoded for an index.
+func Columns(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.Columns
 }
 
 // IsSupportedGinJsonbOpClass returns whether opClass is a supported JSONB GIN

@@ -118,14 +118,19 @@ func getIndexDef(index sql.Index, schema string) string {
 	}
 
 	opClasses := indexmetadata.OpClasses(index.Comment())
-	cols := make([]string, len(index.Expressions()))
-	for i, expr := range index.Expressions() {
-		split := strings.Split(expr, ".")
-		if len(split) > 1 {
-			cols[i] = split[1]
-		} else {
-			cols[i] = expr
+	cols := indexmetadata.Columns(index.Comment())
+	if len(cols) == 0 {
+		cols = make([]string, len(index.Expressions()))
+		for i, expr := range index.Expressions() {
+			split := strings.Split(expr, ".")
+			if len(split) > 1 {
+				cols[i] = split[1]
+			} else {
+				cols[i] = expr
+			}
 		}
+	}
+	for i := range cols {
 		if i < len(opClasses) && opClasses[i] != "" {
 			cols[i] += " " + opClasses[i]
 		}

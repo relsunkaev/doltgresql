@@ -308,9 +308,15 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			}
 
 			s := tableSchemas[table.OID.AsId()]
-			indKey := make([]any, len(index.Item.Expressions()))
-			for i, expr := range index.Item.Expressions() {
-				colName := extractColName(expr)
+			indexColumns := indexmetadata.Columns(index.Item.Comment())
+			if len(indexColumns) == 0 {
+				indexColumns = make([]string, len(index.Item.Expressions()))
+				for i, expr := range index.Item.Expressions() {
+					indexColumns[i] = extractColName(expr)
+				}
+			}
+			indKey := make([]any, len(indexColumns))
+			for i, colName := range indexColumns {
 				indKey[i] = int16(s.IndexOfColName(colName)) + 1
 			}
 			indClass := opClassIds(indexmetadata.OpClasses(index.Item.Comment()))
@@ -323,7 +329,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				tableOid:       table.OID.AsId(),
 				tableOidNative: id.Cache().ToOID(table.OID.AsId()),
 				indkey:         indKey,
-				indnatts:       int16(len(index.Item.Expressions())),
+				indnatts:       int16(len(indexColumns)),
 				indisunique:    index.Item.IsUnique(),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
 				indclass:       indClass,

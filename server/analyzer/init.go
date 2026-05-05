@@ -33,6 +33,7 @@ const (
 	ruleId_AddDomainConstraintsToCasts                                   // addDomainConstraintsToCasts
 	ruleId_ApplyTablesForAnalyzeAllTables                                // applyTablesForAnalyzeAllTables
 	ruleId_AssignInsertCasts                                             // assignInsertCasts
+	ruleId_AssignJsonbGinMaintainers                                     // assignJsonbGinMaintainers
 	ruleId_AssignTriggers                                                // assignTriggers
 	ruleId_AssignUpdateCasts                                             // assignUpdateCasts
 	ruleId_ConvertDropPrimaryKeyConstraint                               // convertDropPrimaryKeyConstraint
@@ -73,6 +74,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ValidateColumnDefaults, Apply: ValidateColumnDefaults},
 		analyzer.Rule{Id: ruleId_AssignInsertCasts, Apply: AssignInsertCasts},
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
+		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
 		analyzer.Rule{Id: ruleId_ValidateCreateFunction, Apply: ValidateCreateFunction},
 		analyzer.Rule{Id: ruleId_ValidateCreateSchema, Apply: ValidateCreateSchema},

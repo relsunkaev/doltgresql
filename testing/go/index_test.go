@@ -1170,6 +1170,49 @@ ORDER BY token;`,
 			},
 		},
 		{
+			Name: "PostgreSQL jsonb gin sidecar DML maintenance",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_dml (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_dml VALUES
+					(1, '{"a":1,"tags":["x","x"]}');`,
+				"CREATE INDEX jsonb_gin_dml_idx ON jsonb_gin_dml USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO jsonb_gin_dml VALUES
+						(2, '{"a":2,"tags":["y","y"]}');`,
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
+					Expected: []sql.Row{{8, 2}},
+				},
+				{
+					Query: `UPDATE jsonb_gin_dml
+SET doc = '{"a":3,"tags":["z"]}'
+WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT token, COUNT(*)
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings
+WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
+GROUP BY token
+ORDER BY token;`,
+					Expected: []sql.Row{
+						{"9:jsonb_ops3:key1:01:z", 1},
+					},
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_dml WHERE id = 2;",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
+					Expected: []sql.Row{{4, 1}},
+				},
+			},
+		},
+		{
 			Name: "JSONB expression indexes",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",

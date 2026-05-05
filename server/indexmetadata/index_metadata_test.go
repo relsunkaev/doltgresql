@@ -19,6 +19,7 @@ import "testing"
 func TestEncodeDecodeComment(t *testing.T) {
 	comment := EncodeComment(Metadata{
 		AccessMethod: "GIN",
+		Columns:      []string{" doc "},
 		OpClasses:    []string{" JSONB_OPS ", "jsonb_path_ops"},
 		Gin: &GinMetadata{
 			PostingTable: "dg_gin_docs_doc_idx_postings",
@@ -31,6 +32,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if metadata.AccessMethod != AccessMethodGin {
 		t.Fatalf("expected access method %q, got %q", AccessMethodGin, metadata.AccessMethod)
+	}
+	if len(metadata.Columns) != 1 || metadata.Columns[0] != "doc" {
+		t.Fatalf("unexpected columns: %#v", metadata.Columns)
 	}
 	if len(metadata.OpClasses) != 2 {
 		t.Fatalf("expected 2 opclasses, got %d", len(metadata.OpClasses))

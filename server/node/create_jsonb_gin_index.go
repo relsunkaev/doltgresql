@@ -105,7 +105,7 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 		}
 	}
 
-	columnIndex, err := c.validateTable(ctx, table)
+	columnIndex, anchorColumn, err := c.validateTable(ctx, table)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +120,7 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 
 	metadata := indexmetadata.Metadata{
 		AccessMethod: indexmetadata.AccessMethodGin,
+		Columns:      []string{c.columnName},
 		OpClasses:    []string{c.opClass},
 		Gin: &indexmetadata.GinMetadata{
 			PostingTable: c.postingName,
@@ -128,7 +129,7 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	if err = alterable.CreateIndex(ctx, sql.IndexDef{
 		Name:       c.indexName,
 		Comment:    indexmetadata.EncodeComment(metadata),
-		Columns:    []sql.IndexColumn{{Name: c.columnName}},
+		Columns:    []sql.IndexColumn{{Name: anchorColumn}},
 		Constraint: sql.IndexConstraint_None,
 		Storage:    sql.IndexUsing_BTree,
 	}); err != nil {
@@ -185,20 +186,25 @@ func indexExists(ctx *sql.Context, table sql.Table, indexName string) (bool, err
 	return false, nil
 }
 
-func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (int, error) {
+func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (int, string, error) {
 	if !indexmetadata.IsSupportedGinJsonbOpClass(c.opClass) {
-		return -1, errors.Errorf("operator class %s is not yet supported for gin indexes", c.opClass)
+		return -1, "", errors.Errorf("operator class %s is not yet supported for gin indexes", c.opClass)
 	}
 	sch := table.Schema(ctx)
 	columnIndex := sch.IndexOfColName(c.columnName)
 	if columnIndex < 0 {
-		return -1, errors.Errorf(`column "%s" of relation "%s" does not exist`, c.columnName, c.tableName)
+		return -1, "", errors.Errorf(`column "%s" of relation "%s" does not exist`, c.columnName, c.tableName)
 	}
 	dgType, ok := sch[columnIndex].Type.(*pgtypes.DoltgresType)
 	if !ok || dgType.ID != pgtypes.JsonB.ID {
-		return -1, errors.Errorf(`gin indexes are only supported on jsonb columns`)
+		return -1, "", errors.Errorf(`gin indexes are only supported on jsonb columns`)
 	}
-	return columnIndex, nil
+	for _, column := range sch {
+		if column.PrimaryKey {
+			return columnIndex, column.Name, nil
+		}
+	}
+	return -1, "", errors.Errorf(`jsonb gin indexes currently require a primary key`)
 }
 
 func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator sql.TableCreator) error {
