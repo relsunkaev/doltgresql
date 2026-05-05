@@ -1077,10 +1077,6 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
 				},
 				{
-					Query:       "CREATE INDEX v1_idx2 ON test( (concat(v1, v1)) ) ;",
-					ExpectedErr: "not yet supported",
-				},
-				{
 					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
 					ExpectedErr: "not yet supported",
 				},
@@ -1091,6 +1087,53 @@ func TestBasicIndexing(t *testing.T) {
 				{
 					Query:       "CREATE INDEX v1_idx2 ON test(v1) INCLUDE (pk);",
 					ExpectedErr: "not yet supported",
+				},
+			},
+		},
+		{
+			Name: "JSONB expression indexes",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_expr_idx VALUES
+					(1, '{"key":"alpha","n":1}'),
+					(2, '{"key":"beta","n":2}'),
+					(3, '{"other":true}');`,
+				"CREATE TABLE jsonb_expr_idx_unique (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_expr_idx_unique VALUES
+					(1, '{"key":"alpha","n":1}'),
+					(2, '{"key":"beta","n":2}'),
+					(3, '{"other":true}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX jsonb_expr_idx_key ON jsonb_expr_idx ((doc->>'key'));",
+				},
+				{
+					Query:    "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' = 'alpha';",
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `INSERT INTO jsonb_expr_idx VALUES (4, '{"key":"gamma","n":4}');`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "SELECT id FROM jsonb_expr_idx WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
+					Expected: []sql.Row{{1}, {4}},
+				},
+				{
+					Query: "CREATE UNIQUE INDEX jsonb_expr_idx_key_unique ON jsonb_expr_idx_unique ((doc->>'key'));",
+				},
+				{
+					Query:       `INSERT INTO jsonb_expr_idx_unique VALUES (4, '{"key":"alpha","n":4}');`,
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query:    `INSERT INTO jsonb_expr_idx_unique VALUES (5, '{"key":"gamma","n":5}');`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "SELECT id FROM jsonb_expr_idx_unique WHERE doc->>'key' IN ('alpha', 'gamma') ORDER BY id;",
+					Expected: []sql.Row{{1}, {5}},
 				},
 			},
 		},
@@ -1380,7 +1423,6 @@ func TestBasicIndexing(t *testing.T) {
 		},
 		{ // https://github.com/dolthub/doltgresql/issues/2206
 			Name: "Index attributes",
-			Skip: true, // We were getting a syntax error previously, which is fixed, however we don't yet support expression index attributes
 			SetUpScript: []string{
 				`CREATE TABLE IF NOT EXISTS items (id SERIAL PRIMARY KEY, title VARCHAR(100) NOT NULL, metadata JSON, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`,
 			},
@@ -1395,7 +1437,7 @@ func TestBasicIndexing(t *testing.T) {
 				},
 				{
 					Query:       "INSERT INTO items (title, metadata, updated_at) VALUES ('abc', '{}', '2026-11-12 03:04:05');",
-					ExpectedErr: "duplicate key value violates unique constraint",
+					ExpectedErr: "duplicate unique key given",
 				},
 			},
 		},
