@@ -1,0 +1,330 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package _go
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"testing"
+)
+
+const jsonbGinBenchmarkRows = 1024
+
+func BenchmarkJsonbGinSQLLookup(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	setupJsonbGinLookupBenchmark(b, ctx, conn)
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:  "table_scan/selective_containment",
+			query: `SELECT count(*) FROM jsonb_gin_bench_scan WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			want:  32,
+		},
+		{
+			name:  "table_scan/broad_containment",
+			query: `SELECT count(*) FROM jsonb_gin_bench_scan WHERE doc @> '{"status":"open"}'`,
+			want:  256,
+		},
+		{
+			name:  "table_scan/key_exists",
+			query: `SELECT count(*) FROM jsonb_gin_bench_scan WHERE doc ? 'vip'`,
+			want:  102,
+		},
+		{
+			name:  "table_scan/key_exists_any",
+			query: `SELECT count(*) FROM jsonb_gin_bench_scan WHERE doc ?| ARRAY['vip','archived']`,
+			want:  136,
+		},
+		{
+			name:  "table_scan/key_exists_all",
+			query: `SELECT count(*) FROM jsonb_gin_bench_scan WHERE doc ?& ARRAY['tenant','vip']`,
+			want:  102,
+		},
+		{
+			name:        "jsonb_ops/selective_containment",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			want:        32,
+			indexedPlan: true,
+		},
+		{
+			name:        "jsonb_ops/broad_containment",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc @> '{"status":"open"}'`,
+			want:        256,
+			indexedPlan: true,
+		},
+		{
+			name:        "jsonb_ops/key_exists",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc ? 'vip'`,
+			want:        102,
+			indexedPlan: true,
+		},
+		{
+			name:        "jsonb_ops/key_exists_any",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc ?| ARRAY['vip','archived']`,
+			want:        136,
+			indexedPlan: true,
+		},
+		{
+			name:        "jsonb_ops/key_exists_all",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc ?& ARRAY['tenant','vip']`,
+			want:        102,
+			indexedPlan: true,
+		},
+		{
+			name:        "jsonb_path_ops/path_containment",
+			query:       `SELECT count(id) FROM jsonb_gin_bench_path WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
+			want:        64,
+			indexedPlan: true,
+		},
+	}
+
+	for _, query := range queries {
+		assertBenchmarkPlanShape(b, ctx, conn, query.query, query.indexedPlan)
+	}
+	for _, query := range queries {
+		query := query
+		b.Run(query.name, func(b *testing.B) {
+			benchmarkCountQuery(b, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
+func BenchmarkJsonbGinIndexBuild(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	createJsonbGinBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_build")
+	insertJsonbGinBenchmarkRows(b, ctx, conn, "jsonb_gin_bench_build", 1, jsonbGinBenchmarkRows)
+
+	b.Run("jsonb_ops_backfill", func(b *testing.B) {
+		benchmarkCreateDropJsonbGinIndex(b, ctx, conn, "jsonb_gin_bench_build", "jsonb_gin_bench_build_idx", "doc")
+	})
+	b.Run("jsonb_path_ops_backfill", func(b *testing.B) {
+		benchmarkCreateDropJsonbGinIndex(b, ctx, conn, "jsonb_gin_bench_build", "jsonb_gin_bench_build_idx", "doc jsonb_path_ops")
+	})
+}
+
+func BenchmarkJsonbGinDMLMaintenance(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+
+	b.Run("insert", func(b *testing.B) {
+		createJsonbGinDMLBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_dml_insert")
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			execBenchmarkSQL(b, ctx, conn,
+				"INSERT INTO jsonb_gin_bench_dml_insert VALUES ($1, $2::jsonb)",
+				i+1, benchmarkJsonbDocument(i+1))
+		}
+	})
+
+	b.Run("update", func(b *testing.B) {
+		createJsonbGinDMLBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_dml_update")
+		execBenchmarkSQL(b, ctx, conn,
+			"INSERT INTO jsonb_gin_bench_dml_update VALUES ($1, $2::jsonb)",
+			1, benchmarkJsonbDocument(1))
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			execBenchmarkSQL(b, ctx, conn,
+				"UPDATE jsonb_gin_bench_dml_update SET doc = $1::jsonb WHERE id = 1",
+				benchmarkJsonbDocument(i+2))
+		}
+	})
+
+	b.Run("delete", func(b *testing.B) {
+		createJsonbGinDMLBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_dml_delete")
+		execBenchmarkSQL(b, ctx, conn,
+			"INSERT INTO jsonb_gin_bench_dml_delete VALUES ($1, $2::jsonb)",
+			1, benchmarkJsonbDocument(1))
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			execBenchmarkSQL(b, ctx, conn, "DELETE FROM jsonb_gin_bench_dml_delete WHERE id = 1")
+			b.StopTimer()
+			execBenchmarkSQL(b, ctx, conn,
+				"INSERT INTO jsonb_gin_bench_dml_delete VALUES ($1, $2::jsonb)",
+				1, benchmarkJsonbDocument(i+2))
+			b.StartTimer()
+		}
+	})
+}
+
+func newBenchmarkServer(b *testing.B) (context.Context, *Connection) {
+	b.Helper()
+	ctx, conn, controller := CreateServer(b, "postgres")
+	b.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			b.Fatalf("error stopping benchmark server: %v", err)
+		}
+	})
+	return ctx, conn
+}
+
+func setupJsonbGinLookupBenchmark(b *testing.B, ctx context.Context, conn *Connection) {
+	b.Helper()
+	for _, table := range []string{"jsonb_gin_bench_scan", "jsonb_gin_bench_ops", "jsonb_gin_bench_path"} {
+		createJsonbGinBenchmarkTable(b, ctx, conn, table)
+		insertJsonbGinBenchmarkRows(b, ctx, conn, table, 1, jsonbGinBenchmarkRows)
+	}
+	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX jsonb_gin_bench_ops_idx ON jsonb_gin_bench_ops USING gin (doc)")
+	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX jsonb_gin_bench_path_idx ON jsonb_gin_bench_path USING gin (doc jsonb_path_ops)")
+}
+
+func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
+	b.Helper()
+	createJsonbGinBenchmarkTable(b, ctx, conn, table)
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s USING gin (doc)", table, table))
+}
+
+func createJsonbGinBenchmarkTable(tb testing.TB, ctx context.Context, conn *Connection, table string) {
+	tb.Helper()
+	execBenchmarkSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+}
+
+func insertJsonbGinBenchmarkRows(tb testing.TB, ctx context.Context, conn *Connection, table string, firstID int, rowCount int) {
+	tb.Helper()
+	const chunkSize = 128
+	for chunkStart := firstID; chunkStart < firstID+rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > firstID+rowCount {
+			chunkEnd = firstID + rowCount
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, '%s'::jsonb)", id, benchmarkJsonbDocument(id))
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func benchmarkJsonbDocument(id int) string {
+	status := "closed"
+	if id%4 == 0 {
+		status = "open"
+	}
+
+	var optionalKeys strings.Builder
+	if id%10 == 0 {
+		optionalKeys.WriteString(`,"vip":true`)
+	}
+	if id%15 == 0 {
+		optionalKeys.WriteString(`,"archived":true`)
+	}
+
+	return fmt.Sprintf(
+		`{"tenant":%d,"status":"%s","payload":{"category":"cat-%d","region":"r-%d","score":%d},"tags":["tag-%d","group-%d"]%s}`,
+		id%32,
+		status,
+		id%16,
+		id%8,
+		id%100,
+		id%64,
+		id%7,
+		optionalKeys.String(),
+	)
+}
+
+func benchmarkCreateDropJsonbGinIndex(b *testing.B, ctx context.Context, conn *Connection, table string, indexName string, columnDef string) {
+	b.Helper()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s ON %s USING gin (%s)", indexName, table, columnDef))
+		b.StopTimer()
+		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP INDEX %s", indexName))
+		b.StartTimer()
+	}
+}
+
+func benchmarkCountQuery(b *testing.B, ctx context.Context, conn *Connection, query string, want int64) {
+	b.Helper()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rows, err := conn.Query(ctx, query)
+		if err != nil {
+			b.Fatalf("benchmark query failed: %v\nquery: %s", err, query)
+		}
+		var got int64
+		if !rows.Next() {
+			rows.Close()
+			b.Fatalf("benchmark query returned no rows: %s", query)
+		}
+		if err = rows.Scan(&got); err != nil {
+			rows.Close()
+			b.Fatalf("benchmark query scan failed: %v\nquery: %s", err, query)
+		}
+		rows.Close()
+		if err = rows.Err(); err != nil {
+			b.Fatalf("benchmark query rows failed: %v\nquery: %s", err, query)
+		}
+		if got != want {
+			b.Fatalf("benchmark query returned %d, expected %d\nquery: %s", got, want, query)
+		}
+	}
+}
+
+func assertBenchmarkPlanShape(tb testing.TB, ctx context.Context, conn *Connection, query string, indexedPlan bool) {
+	tb.Helper()
+	plan := explainBenchmarkQuery(tb, ctx, conn, query)
+	hasIndexedAccess := strings.Contains(plan, "IndexedTableAccess")
+	if indexedPlan && !hasIndexedAccess {
+		tb.Fatalf("expected benchmark query to use IndexedTableAccess\nplan:\n%s", plan)
+	}
+	if !indexedPlan && hasIndexedAccess {
+		tb.Fatalf("expected benchmark query to use table-scan fallback\nplan:\n%s", plan)
+	}
+}
+
+func explainBenchmarkQuery(tb testing.TB, ctx context.Context, conn *Connection, query string) string {
+	tb.Helper()
+	rows, err := conn.Query(ctx, "EXPLAIN "+query)
+	if err != nil {
+		tb.Fatalf("EXPLAIN failed: %v\nquery: %s", err, query)
+	}
+	defer rows.Close()
+
+	var lines []string
+	for rows.Next() {
+		var line string
+		if err = rows.Scan(&line); err != nil {
+			tb.Fatalf("EXPLAIN scan failed: %v\nquery: %s", err, query)
+		}
+		lines = append(lines, line)
+	}
+	if err = rows.Err(); err != nil {
+		tb.Fatalf("EXPLAIN rows failed: %v\nquery: %s", err, query)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func execBenchmarkSQL(tb testing.TB, ctx context.Context, conn *Connection, query string, args ...any) {
+	tb.Helper()
+	if _, err := conn.Exec(ctx, query, args...); err != nil {
+		tb.Fatalf("benchmark SQL failed: %v\nquery: %s", err, query)
+	}
+}

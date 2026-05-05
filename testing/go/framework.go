@@ -401,7 +401,7 @@ func init() {
 // CreateServer creates a server with the given database, returning a connection to the server. The server will close
 // when the connection is closed (or loses its connection to the server). The accompanying [svcs.Controller] may be used
 // to wait until the server has closed.
-func CreateServer(t *testing.T, database string) (context.Context, *Connection, *svcs.Controller) {
+func CreateServer(t testing.TB, database string) (context.Context, *Connection, *svcs.Controller) {
 	port, err := sql.GetEmptyPort()
 	require.NoError(t, err)
 	return CreateServerWithPort(t, database, port)
@@ -410,7 +410,7 @@ func CreateServer(t *testing.T, database string) (context.Context, *Connection, 
 // CreateServerWithPort creates a server with the given database and port, returning a connection to the server. The server will close
 // when the connection is closed (or loses its connection to the server). The accompanying [svcs.Controller] may be used
 // to wait until the server has closed.
-func CreateServerWithPort(t *testing.T, database string, port int) (context.Context, *Connection, *svcs.Controller) {
+func CreateServerWithPort(t testing.TB, database string, port int) (context.Context, *Connection, *svcs.Controller) {
 	require.NotEmpty(t, database)
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
@@ -435,7 +435,7 @@ func CreateServerWithPort(t *testing.T, database string, port int) (context.Cont
 // CreateServerLocalWithPort creates a server using the local file system at [os.TempDir]. A Connection is returned to
 // |database| at 127.0.0.1:|port|. The server will close when the connection is closed or lost. The returned
 // [svcs.Controller] may be used to wait for the server to stop.
-func CreateServerLocalWithPort(t *testing.T, database string, port int) (context.Context, *Connection, *svcs.Controller) {
+func CreateServerLocalWithPort(t testing.TB, database string, port int) (context.Context, *Connection, *svcs.Controller) {
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	// We avoid using [T.TempDir] because it results in a file lock conflict on Windows. [T.TempDir] registers a
@@ -450,7 +450,7 @@ func CreateServerLocalWithPort(t *testing.T, database string, port int) (context
 	return createServerLocalWithFileSystemAndPort(t, database, port, fileSys)
 }
 
-func CreateServerLocalInDirWithPort(t *testing.T, database string, dbDir string, port int) (context.Context, *Connection, *svcs.Controller) {
+func CreateServerLocalInDirWithPort(t testing.TB, database string, dbDir string, port int) (context.Context, *Connection, *svcs.Controller) {
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	fileSys, err := filesys.LocalFilesysWithWorkingDir(dbDir)
@@ -459,7 +459,7 @@ func CreateServerLocalInDirWithPort(t *testing.T, database string, dbDir string,
 	return createServerLocalWithFileSystemAndPort(t, database, port, fileSys)
 }
 
-func createServerLocalWithFileSystemAndPort(t *testing.T, database string, port int, fileSys filesys.Filesys) (context.Context, *Connection, *svcs.Controller) {
+func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port int, fileSys filesys.Filesys) (context.Context, *Connection, *svcs.Controller) {
 	ctx := context.Background()
 	doltEnv := env.Load(ctx, env.GetCurrentUserHomeDir, fileSys, doltdb.LocalDirDoltDB, dserver.Version)
 
@@ -482,7 +482,7 @@ func createServerLocalWithFileSystemAndPort(t *testing.T, database string, port 
 
 // newTestDatabaseConnection returns a Connection to the test |database| at |host|:|port|. If the |database| provided
 // does not exist, it will be automatically created.
-func newTestDatabaseConnection(t *testing.T, ctx context.Context, database, host string, port int) *Connection {
+func newTestDatabaseConnection(t testing.TB, ctx context.Context, database, host string, port int) *Connection {
 	const connectionUrlFmt = "postgres://postgres:password@%s:%d/%s?DateStyle=ISO%%2C%%20MDY"
 	func() {
 		var conn *pgx.Conn
