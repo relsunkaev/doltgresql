@@ -1754,6 +1754,18 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{`{"a":{},"d":{}}`}},
 				},
 				{
+					Query:    `SELECT row_to_json(row(1,'foo'));`,
+					Expected: []sql.Row{{`{"f1":1,"f2":"foo"}`}},
+				},
+				{
+					Query:    `SELECT row_to_json(r) FROM (SELECT 1 AS id, 'foo' AS label, NULL::text AS note) AS r;`,
+					Expected: []sql.Row{{`{"id":1,"label":"foo","note":null}`}},
+				},
+				{
+					Query:    `SELECT row_to_json(row(1,NULL), false);`,
+					Expected: []sql.Row{{`{"f1":1,"f2":null}`}},
+				},
+				{
 					Query:    `SELECT to_json('plain'::text)::text, to_json(42)::text, to_json(true)::text, to_json(NULL::int)::text;`,
 					Expected: []sql.Row{{`"plain"`, "42", "true", "null"}},
 				},

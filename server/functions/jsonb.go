@@ -227,12 +227,12 @@ func jsonValueFromAnyElement(ctx *sql.Context, typ *pgtypes.DoltgresType, val an
 		return pgtypes.JsonValueNull(0), nil
 	}
 	if record, ok := res.([]pgtypes.RecordValue); ok {
-		return jsonValueFromRecord(ctx, typ, record)
+		return jsonValueFromRecord(ctx, typ, record, true)
 	}
 	return pgtypes.JsonValueFromSQLValue(ctx, typ, res)
 }
 
-func jsonValueFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, record []pgtypes.RecordValue) (pgtypes.JsonValue, error) {
+func jsonValueFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, record []pgtypes.RecordValue, sortKeys bool) (pgtypes.JsonValue, error) {
 	items := make([]pgtypes.JsonValueObjectItem, len(record))
 	for i, field := range record {
 		fieldType, _ := field.Type.(*pgtypes.DoltgresType)
@@ -245,7 +245,7 @@ func jsonValueFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, record []p
 			Value: value,
 		}
 	}
-	return jsonObjectFromItems(items, true), nil
+	return jsonObjectFromItems(items, sortKeys), nil
 }
 
 func jsonRecordFieldName(typ *pgtypes.DoltgresType, idx int) string {

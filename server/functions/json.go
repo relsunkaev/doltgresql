@@ -47,6 +47,8 @@ func initJson() {
 	framework.RegisterFunction(json_each_text)
 	framework.RegisterFunction(json_typeof)
 	framework.RegisterFunction(json_strip_nulls)
+	framework.RegisterFunction(row_to_json_record)
+	framework.RegisterFunction(row_to_json_record_pretty)
 }
 
 // json_in represents the PostgreSQL function of json type IO input.
@@ -323,6 +325,47 @@ var json_strip_nulls = framework.Function1{
 	},
 }
 
+// row_to_json_record represents the PostgreSQL function row_to_json(record).
+var row_to_json_record = framework.Function1{
+	Name:       "row_to_json",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return rowToJson(ctx, t[0], val, false)
+	},
+}
+
+// row_to_json_record_pretty represents the PostgreSQL function row_to_json(record, boolean).
+var row_to_json_record_pretty = framework.Function2{
+	Name:       "row_to_json",
+	Return:     pgtypes.Json,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyElement, pgtypes.Bool},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return rowToJson(ctx, t[0], val1, val2.(bool))
+	},
+}
+
+func rowToJson(ctx *sql.Context, typ *pgtypes.DoltgresType, val any, pretty bool) (string, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return "", err
+	}
+	record, ok := res.([]pgtypes.RecordValue)
+	if !ok {
+		return "", errors.Errorf("expected []RecordValue, but got %T", res)
+	}
+	value, err := jsonValueFromRecord(ctx, typ, record, false)
+	if err != nil {
+		return "", err
+	}
+	if pretty {
+		return jsonValueOutputPretty(ctx, value)
+	}
+	return jsonValueOutput(ctx, value)
+}
+
 func buildJsonArrayValue(ctx *sql.Context, argTypes []*pgtypes.DoltgresType, values []any) (pgtypes.JsonValueArray, error) {
 	array := make(pgtypes.JsonValueArray, len(values))
 	for i, value := range values {
@@ -381,5 +424,11 @@ func jsonBuildObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (s
 func jsonValueOutput(ctx *sql.Context, value pgtypes.JsonValue) (string, error) {
 	sb := strings.Builder{}
 	pgtypes.JsonValueFormatterCompact(&sb, value)
+	return sb.String(), nil
+}
+
+func jsonValueOutputPretty(ctx *sql.Context, value pgtypes.JsonValue) (string, error) {
+	sb := strings.Builder{}
+	pgtypes.JsonValueFormatPretty(&sb, value, 0)
 	return sb.String(), nil
 }
