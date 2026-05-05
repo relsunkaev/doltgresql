@@ -1213,6 +1213,44 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 			},
 		},
 		{
+			Name: "PostgreSQL jsonb gin sidecar DDL lifecycle",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_lifecycle (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_lifecycle VALUES
+					(1, '{"a":1,"tags":["x","x"]}');`,
+				"CREATE INDEX jsonb_gin_lifecycle_idx ON jsonb_gin_lifecycle USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "ALTER INDEX jsonb_gin_lifecycle_idx RENAME TO jsonb_gin_lifecycle_renamed_idx;",
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_lifecycle VALUES
+						(2, '{"a":2,"tags":["y","y"]}');`,
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
+					Expected: []sql.Row{{8, 2}},
+				},
+				{
+					Query: "DROP INDEX jsonb_gin_lifecycle_renamed_idx;",
+				},
+				{
+					Query:       "SELECT COUNT(*) FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;",
+					ExpectedErr: "table not found",
+				},
+				{
+					Query: "CREATE INDEX jsonb_gin_lifecycle_idx ON jsonb_gin_lifecycle USING gin (doc);",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
+					Expected: []sql.Row{{8, 2}},
+				},
+			},
+		},
+		{
 			Name: "JSONB expression indexes",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",

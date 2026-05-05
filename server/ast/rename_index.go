@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeRenameIndex handles *tree.RenameIndex nodes.
@@ -26,5 +27,11 @@ func nodeRenameIndex(ctx *Context, node *tree.RenameIndex) (vitess.Statement, er
 		return nil, nil
 	}
 
-	return NotYetSupportedError("RENAME INDEX is not yet supported")
+	schemaName, tableName, indexName, err := tableIndexNameParts(ctx, node.Index)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewRenameIndex(node.IfExists, schemaName, tableName, indexName, string(node.NewName)),
+	}, nil
 }

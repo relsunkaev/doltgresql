@@ -20,10 +20,11 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeDropIndex handles *tree.DropIndex nodes.
-func nodeDropIndex(ctx *Context, node *tree.DropIndex) (*vitess.AlterTable, error) {
+func nodeDropIndex(ctx *Context, node *tree.DropIndex) (vitess.Statement, error) {
 	if node == nil || len(node.IndexList) == 0 {
 		return nil, nil
 	}
@@ -41,30 +42,23 @@ func nodeDropIndex(ctx *Context, node *tree.DropIndex) (*vitess.AlterTable, erro
 	if node.Concurrently {
 		return nil, errors.Errorf("concurrent indexes are not yet supported")
 	}
-	var tableName vitess.TableName
-	ddls := make([]*vitess.DDL, len(node.IndexList))
-	for i, index := range node.IndexList {
-		newTableName, err := nodeTableName(ctx, &index.Table)
-		if err != nil {
-			return nil, err
-		}
-		if !tableName.Name.IsEmpty() && tableName.String() != newTableName.String() {
-			return nil, errors.Errorf("only dropping indexes from the same table is currently supported")
-		}
-		tableName = newTableName
-		ddls[i] = &vitess.DDL{
-			Action:   vitess.AlterStr,
-			Table:    tableName,
-			IfExists: node.IfExists,
-			IndexSpec: &vitess.IndexSpec{
-				Action:   vitess.DropStr,
-				FromName: vitess.NewColIdent(string(index.Index)),
-				ToName:   vitess.NewColIdent(string(index.Index)),
-			},
-		}
+	index := node.IndexList[0]
+	schemaName, tableName, indexName, err := tableIndexNameParts(ctx, index)
+	if err != nil {
+		return nil, err
 	}
-	return &vitess.AlterTable{
-		Table:      tableName,
-		Statements: ddls,
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewDropIndex(node.IfExists, schemaName, tableName, indexName),
 	}, nil
+}
+
+func tableIndexNameParts(ctx *Context, index *tree.TableIndexName) (schemaName string, tableName string, indexName string, err error) {
+	if index == nil {
+		return "", "", "", nil
+	}
+	vitessTableName, err := nodeTableName(ctx, &index.Table)
+	if err != nil {
+		return "", "", "", err
+	}
+	return vitessTableName.SchemaQualifier.String(), vitessTableName.Name.String(), string(index.Index), nil
 }
