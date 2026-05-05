@@ -5275,8 +5275,8 @@ func TestPgIndexIndexes(t *testing.T) {
 					Query: `SELECT * FROM pg_catalog.pg_index i 
 WHERE i.indrelid = 1496157034 order by 1`,
 					Expected: []sql.Row{
-						{3674955271, 1496157034, 1, 0, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "", "", "0", nil, nil},
-						{3992679530, 1496157034, 1, 0, "t", "f", "t", "f", "f", "f", "t", "f", "t", "t", "f", "1", "", "", "0", nil, nil},
+						{3674955271, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "", "", "0", nil, nil},
+						{3992679530, 1496157034, 1, 1, "t", "f", "t", "f", "f", "f", "t", "f", "t", "t", "f", "1", "", "", "0", nil, nil},
 					},
 				},
 				{
@@ -5730,7 +5730,7 @@ WHERE pg_catalog.pg_index.indrelid IN (3491847678)
   AND NOT pg_catalog.pg_index.indisprimary
 ORDER BY pg_catalog.pg_index.indrelid, cls_idx.relname`,
 					Expected: []sql.Row{
-						{3491847678, "dolt_log_commit_hash_key", "t", "t", "0", interface{}(nil), "btree", interface{}(nil), 0, "f", "{commit_hash}", "{f}"},
+						{3491847678, "dolt_log_commit_hash_key", "t", "t", "0", interface{}(nil), "btree", interface{}(nil), 1, "f", "{commit_hash}", "{f}"},
 					},
 				},
 			},
@@ -5870,7 +5870,7 @@ FROM pg_catalog.pg_index
 WHERE pg_catalog.pg_index.indrelid IN (select oid from pg_class where relname='t2')
   AND NOT pg_catalog.pg_index.indisprimary ORDER BY pg_catalog.pg_index.indrelid, cls_idx.relname`,
 					Expected: []sql.Row{
-						{1496157034, "b", "f", "f", "0", nil, "btree", nil, 0, "f", "{b}", "{f}"},
+						{1496157034, "b", "f", "f", "0", nil, "btree", nil, 1, "f", "{b}", "{f}"},
 					},
 				},
 			},

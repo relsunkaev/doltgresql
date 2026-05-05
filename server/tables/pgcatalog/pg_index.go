@@ -269,7 +269,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		index.indexOid,         // indexrelid
 		index.tableOid,         // indrelid
 		index.indnatts,         // indnatts
-		int16(0),               // indnkeyatts
+		index.indnatts,         // indnkeyatts
 		index.index.IsUnique(), // indisunique
 		false,                  // indnullsnotdistinct
 		index.indisprimary,     // indisprimary

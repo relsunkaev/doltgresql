@@ -1120,6 +1120,15 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 						{2},
 					},
 				},
+				{
+					Query: `SELECT i.indnatts, i.indnkeyatts
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'index_sort_meta_idx';`,
+					Expected: []sql.Row{
+						{2, 2},
+					},
+				},
 			},
 		},
 		{
