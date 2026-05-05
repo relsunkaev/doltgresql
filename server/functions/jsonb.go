@@ -42,6 +42,7 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_object_text_array)
 	framework.RegisterFunction(jsonb_object_text_arrays)
 	framework.RegisterFunction(to_jsonb_anyelement)
+	framework.RegisterFunction(jsonb_populate_record)
 	framework.RegisterFunction(jsonb_array_length)
 	framework.RegisterFunction(jsonb_array_elements)
 	framework.RegisterFunction(jsonb_array_elements_text)

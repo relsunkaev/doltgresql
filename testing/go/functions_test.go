@@ -1796,6 +1796,9 @@ func TestJsonFunctions(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE TABLE jsonb_record_items (id INT PRIMARY KEY, label TEXT);`,
 				`INSERT INTO jsonb_record_items VALUES (1, 'one');`,
+				`CREATE TYPE jsonb_populate_subrow AS (d INT, e TEXT);`,
+				`CREATE TYPE jsonb_populate_row AS (a INT, b TEXT[], c jsonb_populate_subrow, j JSONB);`,
+				`CREATE TYPE jsonb_populate_base AS (a INT, b TEXT, c BOOL);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1805,6 +1808,18 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT to_jsonb(r)->>'id', to_jsonb(r)->>'label' FROM jsonb_record_items AS r;`,
 					Expected: []sql.Row{{"1", "one"}},
+				},
+				{
+					Query:    `SELECT * FROM jsonb_populate_record(NULL::jsonb_populate_row, '{"a":1,"b":["2","a b"],"c":{"d":4,"e":"a b c"},"j":{"x":2},"ignored":"field"}'::jsonb);`,
+					Expected: []sql.Row{{1, `{2,"a b"}`, `(4,"a b c")`, `{"x": 2}`}},
+				},
+				{
+					Query:    `SELECT * FROM jsonb_populate_record(ROW(10, 'base', true)::jsonb_populate_base, '{"a":5,"b":null,"ignored":"field"}'::jsonb);`,
+					Expected: []sql.Row{{5, nil, "t"}},
+				},
+				{
+					Query:    `SELECT (jsonb_populate_record(NULL::jsonb_populate_base, '{"a":7,"b":"scalar","c":false}'::jsonb)).b;`,
+					Expected: []sql.Row{{"scalar"}},
 				},
 				{
 					Query:    `SELECT jsonb_object_keys('{"a":1,"b":2}'::jsonb);`,

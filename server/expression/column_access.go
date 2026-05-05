@@ -22,6 +22,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -112,9 +114,30 @@ func (expr *ColumnAccess) Type(ctx *sql.Context) sql.Type {
 	if expr.child == nil {
 		return nil
 	}
+	childType, ok := expr.child.Type(ctx).(*pgtypes.DoltgresType)
+	if !ok {
+		return pgtypes.Unknown
+	}
+	if !childType.IsResolvedType() {
+		if resolvedType, err := resolveColumnAccessType(ctx, childType); err == nil {
+			childType = resolvedType
+		}
+	}
+	idx := expr.colNameIdx
+	if idx < 0 && expr.colName != "" {
+		for _, attr := range childType.CompositeAttrs {
+			if attr.Name == expr.colName {
+				idx = int(attr.Num - 1)
+				break
+			}
+		}
+	}
+	if idx < 0 || idx >= len(childType.CompositeAttrs) {
+		return pgtypes.Unknown
+	}
 	// We're technically returning a different type here since an unresolved type is not the same as a resolved one.
 	// However, for many early analyzer steps, we only check the ID, so this at least lets us get past those cases.
-	return pgtypes.NewUnresolvedDoltgresTypeFromID(expr.child.Type(ctx).(*pgtypes.DoltgresType).CompositeAttrs[expr.colNameIdx].TypeID)
+	return pgtypes.NewUnresolvedDoltgresTypeFromID(childType.CompositeAttrs[idx].TypeID)
 }
 
 // WithChildren implements the sql.Expression interface.
@@ -126,6 +149,13 @@ func (expr *ColumnAccess) WithChildren(ctx *sql.Context, children ...sql.Express
 	doltgresType, ok := childType.(*pgtypes.DoltgresType)
 	if !ok {
 		return nil, errors.New("column access is only valid for Doltgres types")
+	}
+	if !doltgresType.IsResolvedType() {
+		var err error
+		doltgresType, err = resolveColumnAccessType(ctx, doltgresType)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if !doltgresType.IsCompositeType() {
 		if len(expr.colName) > 0 {
@@ -182,4 +212,35 @@ func (expr *ColumnAccess) WithType(typ *pgtypes.DoltgresType) sql.Expression {
 	ne := *expr
 	ne.colTyp = typ
 	return &ne
+}
+
+func resolveColumnAccessType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ == nil || typ.IsResolvedType() {
+		return typ, nil
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	schema, err := core.GetSchemaName(ctx, nil, typ.ID.SchemaName())
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := typeCollection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+	if err != nil {
+		return nil, err
+	}
+	if resolved == nil && typ.ID.SchemaName() == "" {
+		resolved, err = typeCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+	}
+	if resolved == nil {
+		return nil, pgtypes.ErrTypeDoesNotExist.New(typ.Name())
+	}
+	if typ.GetAttTypMod() != -1 {
+		return resolved.WithAttTypMod(typ.GetAttTypMod()), nil
+	}
+	return resolved, nil
 }
