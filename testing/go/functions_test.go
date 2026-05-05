@@ -1862,6 +1862,22 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
 				},
 				{
+					Query:    `SELECT jsonb_path_exists('{"a":{"b":2},"items":[{"v":1},{"v":2}]}'::jsonb, '$.a.b'), jsonb_path_exists('{"a":{"b":2},"items":[{"v":1},{"v":2}]}'::jsonb, '$.missing');`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+				{
+					Query:    `SELECT jsonb_path_query('{"items":[{"v":1},{"v":2}]}'::jsonb, '$.items[*].v');`,
+					Expected: []sql.Row{{"1"}, {"2"}},
+				},
+				{
+					Query:    `SELECT jsonb_path_query_array('{"items":[{"v":1},{"v":2}]}'::jsonb, '$.items[*].v');`,
+					Expected: []sql.Row{{`[1, 2]`}},
+				},
+				{
+					Query:    `SELECT jsonb_path_match('{"a":2}'::jsonb, '$.a == 2'), jsonb_path_match('{"a":2}'::jsonb, '$.a > 3');`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+				{
 					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'a', 'b');`,
 					Expected: []sql.Row{{`"x"`}},
 				},
