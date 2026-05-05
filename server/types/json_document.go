@@ -300,6 +300,32 @@ func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
 	}
 }
 
+// JsonValueStripNulls returns a copy of value with all object fields containing JSON null removed recursively.
+func JsonValueStripNulls(value JsonValue) JsonValue {
+	switch value := value.(type) {
+	case JsonValueObject:
+		items := make([]JsonValueObjectItem, 0, len(value.Items))
+		for _, item := range value.Items {
+			if _, ok := item.Value.(JsonValueNull); ok {
+				continue
+			}
+			items = append(items, JsonValueObjectItem{
+				Key:   item.Key,
+				Value: JsonValueStripNulls(item.Value),
+			})
+		}
+		return JsonObjectFromItems(items, false)
+	case JsonValueArray:
+		items := make(JsonValueArray, len(value))
+		for i, item := range value {
+			items[i] = JsonValueStripNulls(item)
+		}
+		return items
+	default:
+		return JsonValueCopy(value)
+	}
+}
+
 func jsonValueObjectDeleteKeys(value JsonValueObject, keys map[string]struct{}) JsonValueObject {
 	items := make([]JsonValueObjectItem, 0, len(value.Items))
 	for _, item := range value.Items {

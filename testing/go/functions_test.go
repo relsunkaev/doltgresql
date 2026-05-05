@@ -1742,6 +1742,18 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{`"x"`, "x"}},
 				},
 				{
+					Query:    `SELECT json_strip_nulls('{"a":1,"b":null,"c":[2,null,{"d":null,"e":3}],"f":{"g":null,"h":4}}');`,
+					Expected: []sql.Row{{`{"a":1,"c":[2,null,{"e":3}],"f":{"h":4}}`}},
+				},
+				{
+					Query:    `SELECT json_strip_nulls('[1,null,{"a":null,"b":2}]');`,
+					Expected: []sql.Row{{`[1,null,{"b":2}]`}},
+				},
+				{
+					Query:    `SELECT json_strip_nulls('{"a":{"b":null,"c":null},"d":{}}');`,
+					Expected: []sql.Row{{`{"a":{},"d":{}}`}},
+				},
+				{
 					Query:    `SELECT to_json('plain'::text)::text, to_json(42)::text, to_json(true)::text, to_json(NULL::int)::text;`,
 					Expected: []sql.Row{{`"plain"`, "42", "true", "null"}},
 				},
@@ -1813,6 +1825,18 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT '{"a":{"b":"x"},"arr":[10,null]}'::jsonb #> ARRAY['a','b'], '{"a":{"b":"x"},"arr":[10,null]}'::jsonb #>> ARRAY['a','b'];`,
 					Expected: []sql.Row{{`"x"`, "x"}},
+				},
+				{
+					Query:    `SELECT jsonb_strip_nulls('{"a":1,"b":null,"c":[2,null,{"d":null,"e":3}],"f":{"g":null,"h":4}}');`,
+					Expected: []sql.Row{{`{"a": 1, "c": [2, null, {"e": 3}], "f": {"h": 4}}`}},
+				},
+				{
+					Query:    `SELECT jsonb_strip_nulls('[1,null,{"a":null,"b":2}]');`,
+					Expected: []sql.Row{{`[1, null, {"b": 2}]`}},
+				},
+				{
+					Query:    `SELECT jsonb_strip_nulls('{"a":{"b":null,"c":null},"d":{}}');`,
+					Expected: []sql.Row{{`{"a": {}, "d": {}}`}},
 				},
 				{
 					Query:    `SELECT '{"a":1,"b":[2,3]}'::jsonb @> '{"b":[2]}'::jsonb, '{"a":1}'::jsonb <@ '{"a":1,"b":2}'::jsonb;`,

@@ -46,6 +46,7 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_each)
 	framework.RegisterFunction(jsonb_each_text)
 	framework.RegisterFunction(jsonb_typeof)
+	framework.RegisterFunction(jsonb_strip_nulls)
 	framework.RegisterFunction(jsonb_set)
 	framework.RegisterFunction(jsonb_set_create)
 	framework.RegisterFunction(jsonb_delete_path)
@@ -385,6 +386,21 @@ var jsonb_typeof = framework.Function1{
 			return nil, err
 		}
 		return pgtypes.JsonValueTypeName(doc.Value), nil
+	},
+}
+
+// jsonb_strip_nulls represents the PostgreSQL function jsonb_strip_nulls.
+var jsonb_strip_nulls = framework.Function1{
+	Name:       "jsonb_strip_nulls",
+	Return:     pgtypes.JsonB,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.JsonB},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, val)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: pgtypes.JsonValueStripNulls(doc.Value)}, nil
 	},
 }
 

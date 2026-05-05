@@ -46,6 +46,7 @@ func initJson() {
 	framework.RegisterFunction(json_each)
 	framework.RegisterFunction(json_each_text)
 	framework.RegisterFunction(json_typeof)
+	framework.RegisterFunction(json_strip_nulls)
 }
 
 // json_in represents the PostgreSQL function of json type IO input.
@@ -304,6 +305,21 @@ var json_typeof = framework.Function1{
 			return nil, err
 		}
 		return pgtypes.JsonValueTypeName(doc.Value), nil
+	},
+}
+
+// json_strip_nulls represents the PostgreSQL function json_strip_nulls.
+var json_strip_nulls = framework.Function1{
+	Name:       "json_strip_nulls",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Json},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.Json, val)
+		if err != nil {
+			return nil, err
+		}
+		return jsonValueOutput(ctx, pgtypes.JsonValueStripNulls(doc.Value))
 	},
 }
 
