@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -98,6 +99,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOid:       schemaOid.AsId(),
 				schemaOidNative: id.Cache().ToOID(schemaOid.AsId()),
 				relType:         id.Null,
+				relam:           id.NewAccessMethod(indexmetadata.AccessMethod(index.Item.IndexType(), index.Item.Comment())).AsId(),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -383,6 +385,7 @@ type pgClass struct {
 	replicaIdentity string
 	kind            string // r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
 	relType         id.Id
+	relam           id.Id
 }
 
 // lessOid is a sort function for pgClass based on oid.
@@ -426,7 +429,11 @@ func pgClassToRow(class *pgClass) sql.Row {
 	// TODO: this is temporary definition of 'relam' field
 	var relam = id.Null
 	if class.kind == "i" {
-		relam = id.NewAccessMethod("btree").AsId()
+		if class.relam.IsValid() {
+			relam = class.relam
+		} else {
+			relam = id.NewAccessMethod("btree").AsId()
+		}
 	} else if class.kind == "r" || class.kind == "t" {
 		relam = id.NewAccessMethod("heap").AsId()
 	}

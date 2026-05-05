@@ -21,6 +21,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -110,12 +111,13 @@ func (iter *pgIndexesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 // formatIndexName returns the definition of the index.
 func getIndexDef(index sql.Index, schema string) string {
 	name := formatIndexName(index)
-	using := strings.ToLower(index.IndexType())
+	using := indexmetadata.AccessMethod(index.IndexType(), index.Comment())
 	unique := ""
 	if index.IsUnique() {
 		unique = " UNIQUE"
 	}
 
+	opClasses := indexmetadata.OpClasses(index.Comment())
 	cols := make([]string, len(index.Expressions()))
 	for i, expr := range index.Expressions() {
 		split := strings.Split(expr, ".")
@@ -123,6 +125,9 @@ func getIndexDef(index sql.Index, schema string) string {
 			cols[i] = split[1]
 		} else {
 			cols[i] = expr
+		}
+		if i < len(opClasses) && opClasses[i] != "" {
+			cols[i] += " " + opClasses[i]
 		}
 	}
 	colsStr := strings.Join(cols, ", ")

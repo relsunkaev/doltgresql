@@ -15,12 +15,13 @@
 package ast
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // nodeCreateIndex handles *tree.CreateIndex nodes.
@@ -31,11 +32,16 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (*vitess.AlterTable, 
 	if node.Concurrently {
 		return nil, errors.Errorf("concurrent index creation is not yet supported")
 	}
-	if node.Using != "" && strings.ToLower(node.Using) != "btree" {
+	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
+	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
 	}
 	if node.Predicate != nil {
 		return nil, errors.Errorf("WHERE is not yet supported")
+	}
+	metadata, err := nodeIndexMetadata(node, accessMethod)
+	if err != nil {
+		return nil, err
 	}
 	indexDef, err := nodeIndexTableDef(ctx, &tree.IndexTableDef{
 		Name:        node.Name,
@@ -53,6 +59,15 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (*vitess.AlterTable, 
 	if node.Unique {
 		indexType = vitess.UniqueStr
 	}
+	options := indexDef.Options
+	var using vitess.ColIdent
+	if metadata != nil {
+		options = append(options, &vitess.IndexOption{
+			Name:  vitess.KeywordString(vitess.COMMENT_KEYWORD),
+			Value: vitess.NewStrVal([]byte(indexmetadata.EncodeComment(*metadata))),
+		})
+		using = vitess.NewColIdent(indexmetadata.AccessMethodBtree)
+	}
 	return &vitess.AlterTable{
 		Table: tableName,
 		Statements: []*vitess.DDL{
@@ -65,10 +80,39 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (*vitess.AlterTable, 
 					FromName: indexDef.Info.Name,
 					ToName:   indexDef.Info.Name,
 					Type:     indexType,
+					Using:    using,
 					Fields:   indexDef.Fields,
-					Options:  indexDef.Options,
+					Options:  options,
 				},
 			},
 		},
 	}, nil
+}
+
+func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetadata.Metadata, error) {
+	switch accessMethod {
+	case indexmetadata.AccessMethodBtree:
+		return nil, nil
+	case indexmetadata.AccessMethodGin:
+		opClasses := make([]string, len(node.Columns))
+		for i, column := range node.Columns {
+			opClass := indexmetadata.OpClassJsonbOps
+			if column.OpClass != nil {
+				if len(column.OpClass.Options) > 0 {
+					return nil, errors.Errorf("index operator class options are not yet supported")
+				}
+				opClass = indexmetadata.NormalizeOpClass(column.OpClass.Name)
+			}
+			if !indexmetadata.IsSupportedGinJsonbOpClass(opClass) {
+				return nil, errors.Errorf("operator class %s is not yet supported for gin indexes", opClass)
+			}
+			opClasses[i] = opClass
+		}
+		return &indexmetadata.Metadata{
+			AccessMethod: accessMethod,
+			OpClasses:    opClasses,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown index access method %s", accessMethod)
+	}
 }

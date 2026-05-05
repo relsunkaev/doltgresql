@@ -2220,8 +2220,15 @@ func TestPgOpclass(t *testing.T) {
 			Name: "pg_opclass",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_opclass";`,
-					Expected: []sql.Row{},
+					Query: `SELECT opc.opcname, am.amname, opc.opcdefault
+FROM "pg_catalog"."pg_opclass" opc
+JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
+WHERE opc.opcname LIKE 'jsonb_%'
+ORDER BY opc.opcname;`,
+					Expected: []sql.Row{
+						{"jsonb_ops", "gin", "t"},
+						{"jsonb_path_ops", "gin", "f"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_opclass";`,
@@ -2232,8 +2239,11 @@ func TestPgOpclass(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;",
-					Expected: []sql.Row{},
+					Query: "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;",
+					Expected: []sql.Row{
+						{"jsonb_ops"},
+						{"jsonb_path_ops"},
+					},
 				},
 			},
 		},

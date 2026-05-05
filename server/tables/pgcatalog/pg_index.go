@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -220,6 +221,7 @@ type pgIndex struct {
 	indisprimary   bool
 	indisreplident bool
 	indkey         []any
+	indclass       []any
 }
 
 // lessIndexOid is a sort function for pgIndex based on indexrelid.
@@ -258,6 +260,10 @@ func (iter *pgIndexTableScanIter) Close(ctx *sql.Context) error {
 
 // pgIndexToRow converts a pgIndex to a sql.Row.
 func pgIndexToRow(index *pgIndex) sql.Row {
+	indclass := index.indclass
+	if indclass == nil {
+		indclass = []any{}
+	}
 	return sql.Row{
 		index.indexOid,         // indexrelid
 		index.tableOid,         // indrelid
@@ -276,7 +282,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		index.indisreplident,   // indisreplident
 		index.indkey,           // indkey
 		[]any{},                // indcollation
-		[]any{},                // indclass
+		indclass,               // indclass
 		[]any{int16(0)},        // indoption
 		nil,                    // indexprs
 		nil,                    // indpred
@@ -307,6 +313,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				colName := extractColName(expr)
 				indKey[i] = int16(s.IndexOfColName(colName)) + 1
 			}
+			indClass := opClassIds(indexmetadata.OpClasses(index.Item.Comment()))
 
 			pgIdx := &pgIndex{
 				index:          index.Item,
@@ -319,6 +326,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indnatts:       int16(len(index.Item.Expressions())),
 				indisunique:    index.Item.IsUnique(),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
+				indclass:       indClass,
 			}
 			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
 			pgIdx.indisreplident = replicaIdent.Identity == replicaidentity.IdentityUsingIndex &&
@@ -342,4 +350,12 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	return nil
+}
+
+func opClassIds(opClasses []string) []any {
+	ids := make([]any, len(opClasses))
+	for i, opClass := range opClasses {
+		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+	}
+	return ids
 }

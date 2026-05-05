@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,10 @@ func (p PgOpclassHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOpclassHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_opclass row iter
-	return emptyRowIter()
+	return &pgOpclassRowIter{
+		opclasses: defaultPostgresOpclasses,
+		idx:       0,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -70,16 +74,61 @@ var pgOpclassSchema = sql.Schema{
 
 // pgOpclassRowIter is the sql.RowIter for the pg_opclass table.
 type pgOpclassRowIter struct {
+	opclasses []opclass
+	idx       int
 }
 
 var _ sql.RowIter = (*pgOpclassRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgOpclassRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.opclasses) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	opclass := iter.opclasses[iter.idx-1]
+
+	return sql.Row{
+		opclass.oid,       // oid
+		opclass.opcmethod, // opcmethod
+		opclass.opcname,   // opcname
+		opclass.namespace, // opcnamespace
+		id.Null,           // opcowner
+		opclass.family,    // opcfamily
+		opclass.intype,    // opcintype
+		opclass.isDefault, // opcdefault
+		id.Null,           // opckeytype
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgOpclassRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type opclass struct {
+	oid       id.Id
+	opcmethod id.Id
+	opcname   string
+	namespace id.Id
+	family    id.Id
+	intype    id.Id
+	isDefault bool
+}
+
+var defaultPostgresOpclasses = []opclass{
+	newJsonbGinOpclass(indexmetadata.OpClassJsonbOps, true),
+	newJsonbGinOpclass(indexmetadata.OpClassJsonbPathOps, false),
+}
+
+func newJsonbGinOpclass(name string, isDefault bool) opclass {
+	return opclass{
+		oid:       id.NewId(id.Section_OperatorClass, name),
+		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
+		opcname:   name,
+		namespace: id.NewNamespace("pg_catalog").AsId(),
+		family:    id.NewId(id.Section_OperatorFamily, name),
+		intype:    id.NewType("pg_catalog", "jsonb").AsId(),
+		isDefault: isDefault,
+	}
 }

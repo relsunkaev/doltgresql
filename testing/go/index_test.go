@@ -15,8 +15,10 @@
 package _go
 
 import (
+	"strconv"
 	"testing"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/testing/go/testdata"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -1091,6 +1093,53 @@ func TestBasicIndexing(t *testing.T) {
 			},
 		},
 		{
+			Name: "PostgreSQL index access method and opclass metadata",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX jsonb_gin_ops_idx ON jsonb_gin_idx USING gin (doc);",
+				},
+				{
+					Query: "CREATE INDEX jsonb_gin_path_idx ON jsonb_gin_idx USING gin (doc jsonb_path_ops);",
+				},
+				{
+					Query: `SELECT c.relname, am.amname
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_am am ON am.oid = c.relam
+WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"jsonb_gin_ops_idx", "gin"},
+						{"jsonb_gin_path_idx", "gin"},
+					},
+				},
+				{
+					Query: `SELECT indexname, indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'jsonb_gin_idx'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"jsonb_gin_idx_pkey", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)"},
+						{"jsonb_gin_ops_idx", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)"},
+						{"jsonb_gin_path_idx", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)"},
+					},
+				},
+				{
+					Query: `SELECT c.relname, i.indclass
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"jsonb_gin_ops_idx", opClassOidVector("jsonb_ops")},
+						{"jsonb_gin_path_idx", opClassOidVector("jsonb_path_ops")},
+					},
+				},
+			},
+		},
+		{
 			Name: "JSONB expression indexes",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
@@ -1442,4 +1491,9 @@ func TestBasicIndexing(t *testing.T) {
 			},
 		},
 	})
+}
+
+func opClassOidVector(name string) string {
+	oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, name))
+	return strconv.FormatUint(uint64(oid), 10)
 }
