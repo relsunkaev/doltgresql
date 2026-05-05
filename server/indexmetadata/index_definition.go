@@ -65,9 +65,15 @@ func ColumnDefinitions(index sql.Index) []string {
 	}
 
 	opClasses := OpClasses(index.Comment())
+	sortOptions := SortOptions(index.Comment())
 	for i := range cols {
 		if i < len(opClasses) && opClasses[i] != "" {
 			cols[i] += " " + opClasses[i]
+		}
+		if i < len(sortOptions) {
+			if optionDef := columnOptionDefinition(sortOptions[i]); optionDef != "" {
+				cols[i] += " " + optionDef
+			}
 		}
 	}
 	return cols
@@ -78,4 +84,15 @@ func unqualifiedIndexExpression(expr string) string {
 		expr = expr[lastDot+1:]
 	}
 	return strings.Trim(expr, "`\"")
+}
+
+func columnOptionDefinition(option IndexColumnOption) string {
+	var parts []string
+	if option.Direction == SortDirectionDesc {
+		parts = append(parts, "DESC")
+	}
+	if option.NullsOrder == NullsOrderFirst && option.Direction != SortDirectionDesc {
+		parts = append(parts, "NULLS FIRST")
+	}
+	return strings.Join(parts, " ")
 }

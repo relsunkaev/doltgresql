@@ -1093,6 +1093,36 @@ func TestBasicIndexing(t *testing.T) {
 			},
 		},
 		{
+			Name: "PostgreSQL btree sort option metadata",
+			SetUpScript: []string{
+				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",
+				"CREATE INDEX index_sort_meta_idx ON index_sort_meta (a DESC, b ASC NULLS FIRST);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'index_sort_meta_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX index_sort_meta_idx ON public.index_sort_meta USING btree (a DESC, b NULLS FIRST)", "a DESC", "b NULLS FIRST"},
+					},
+				},
+				{
+					Query: `SELECT unnest(i.indoption)
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'index_sort_meta_idx';`,
+					Expected: []sql.Row{
+						{3},
+						{2},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL index access method and opclass metadata",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_gin_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",

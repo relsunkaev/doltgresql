@@ -264,6 +264,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 	if indclass == nil {
 		indclass = []any{}
 	}
+	indoption := indexmetadata.IndOptionValues(index.index.Comment(), len(index.indkey))
 	return sql.Row{
 		index.indexOid,         // indexrelid
 		index.tableOid,         // indrelid
@@ -283,7 +284,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		index.indkey,           // indkey
 		[]any{},                // indcollation
 		indclass,               // indclass
-		[]any{int16(0)},        // indoption
+		indoption,              // indoption
 		nil,                    // indexprs
 		nil,                    // indpred
 	}

@@ -114,7 +114,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetadata.Metadata, error) {
 	switch accessMethod {
 	case indexmetadata.AccessMethodBtree:
-		return nil, nil
+		return nodeBtreeIndexMetadata(node)
 	case indexmetadata.AccessMethodGin:
 		opClasses := make([]string, len(node.Columns))
 		for i, column := range node.Columns {
@@ -137,4 +137,37 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	default:
 		return nil, fmt.Errorf("unknown index access method %s", accessMethod)
 	}
+}
+
+func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, error) {
+	sortOptions := make([]indexmetadata.IndexColumnOption, len(node.Columns))
+	hasMetadata := false
+	for i, column := range node.Columns {
+		switch column.Direction {
+		case tree.DefaultDirection, tree.Ascending:
+		case tree.Descending:
+			sortOptions[i].Direction = indexmetadata.SortDirectionDesc
+			hasMetadata = true
+		default:
+			return nil, errors.Errorf("unknown index sorting direction encountered")
+		}
+
+		switch column.NullsOrder {
+		case tree.DefaultNullsOrder:
+		case tree.NullsFirst:
+			sortOptions[i].NullsOrder = indexmetadata.NullsOrderFirst
+			hasMetadata = true
+		case tree.NullsLast:
+			return nil, errors.Errorf("NULLS LAST for indexes is not yet supported")
+		default:
+			return nil, errors.Errorf("unknown NULL ordering for index")
+		}
+	}
+	if !hasMetadata {
+		return nil, nil
+	}
+	return &indexmetadata.Metadata{
+		AccessMethod: indexmetadata.AccessMethodBtree,
+		SortOptions:  sortOptions,
+	}, nil
 }

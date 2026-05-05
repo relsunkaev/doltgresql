@@ -26,16 +26,29 @@ const (
 	OpClassJsonbOps     = "jsonb_ops"
 	OpClassJsonbPathOps = "jsonb_path_ops"
 
+	SortDirectionDesc = "desc"
+	NullsOrderFirst   = "first"
+
+	IndOptionDesc       int16 = 1
+	IndOptionNullsFirst int16 = 2
+
 	commentPrefix = "doltgres:index-metadata:v1:"
 )
 
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
 // does not currently expose.
 type Metadata struct {
-	AccessMethod string       `json:"accessMethod,omitempty"`
-	Columns      []string     `json:"columns,omitempty"`
-	OpClasses    []string     `json:"opClasses,omitempty"`
-	Gin          *GinMetadata `json:"gin,omitempty"`
+	AccessMethod string              `json:"accessMethod,omitempty"`
+	Columns      []string            `json:"columns,omitempty"`
+	OpClasses    []string            `json:"opClasses,omitempty"`
+	SortOptions  []IndexColumnOption `json:"sortOptions,omitempty"`
+	Gin          *GinMetadata        `json:"gin,omitempty"`
+}
+
+// IndexColumnOption stores PostgreSQL per-column index options.
+type IndexColumnOption struct {
+	Direction  string `json:"direction,omitempty"`
+	NullsOrder string `json:"nullsOrder,omitempty"`
 }
 
 // GinMetadata stores durable metadata for PostgreSQL GIN indexes.
@@ -52,6 +65,7 @@ func EncodeComment(metadata Metadata) string {
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
+	normalizeSortOptions(metadata.SortOptions)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -72,6 +86,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
+	normalizeSortOptions(metadata.SortOptions)
 	return metadata, true
 }
 
@@ -88,6 +103,13 @@ func NormalizeAccessMethod(method string) string {
 // NormalizeOpClass lower-cases PostgreSQL opclass names.
 func NormalizeOpClass(opClass string) string {
 	return strings.ToLower(strings.TrimSpace(opClass))
+}
+
+func normalizeSortOptions(sortOptions []IndexColumnOption) {
+	for i := range sortOptions {
+		sortOptions[i].Direction = strings.ToLower(strings.TrimSpace(sortOptions[i].Direction))
+		sortOptions[i].NullsOrder = strings.ToLower(strings.TrimSpace(sortOptions[i].NullsOrder))
+	}
 }
 
 // AccessMethod returns the PostgreSQL access method for an index. If no
@@ -115,6 +137,42 @@ func Columns(comment string) []string {
 		return nil
 	}
 	return metadata.Columns
+}
+
+// SortOptions returns the PostgreSQL sort/null options encoded for an index.
+func SortOptions(comment string) []IndexColumnOption {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.SortOptions
+}
+
+// IndOptionValues returns pg_index.indoption-compatible bit values.
+func IndOptionValues(comment string, columnCount int) []any {
+	values := make([]any, columnCount)
+	for i := range values {
+		values[i] = int16(0)
+	}
+	sortOptions := SortOptions(comment)
+	for i := 0; i < len(sortOptions) && i < len(values); i++ {
+		values[i] = IndOptionValue(sortOptions[i])
+	}
+	return values
+}
+
+// IndOptionValue returns PostgreSQL's pg_index.indoption bit flags for a column.
+func IndOptionValue(option IndexColumnOption) int16 {
+	option.Direction = strings.ToLower(strings.TrimSpace(option.Direction))
+	option.NullsOrder = strings.ToLower(strings.TrimSpace(option.NullsOrder))
+	var value int16
+	if option.Direction == SortDirectionDesc {
+		value |= IndOptionDesc
+	}
+	if option.NullsOrder == NullsOrderFirst || (option.NullsOrder == "" && option.Direction == SortDirectionDesc) {
+		value |= IndOptionNullsFirst
+	}
+	return value
 }
 
 // IsSupportedGinJsonbOpClass returns whether opClass is a supported JSONB GIN

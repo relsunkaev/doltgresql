@@ -21,6 +21,10 @@ func TestEncodeDecodeComment(t *testing.T) {
 		AccessMethod: "GIN",
 		Columns:      []string{" doc "},
 		OpClasses:    []string{" JSONB_OPS ", "jsonb_path_ops"},
+		SortOptions: []IndexColumnOption{
+			{Direction: " DESC "},
+			{NullsOrder: " FIRST "},
+		},
 		Gin: &GinMetadata{
 			PostingTable: "dg_gin_docs_doc_idx_postings",
 		},
@@ -41,6 +45,15 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if metadata.OpClasses[0] != OpClassJsonbOps || metadata.OpClasses[1] != OpClassJsonbPathOps {
 		t.Fatalf("unexpected opclasses: %#v", metadata.OpClasses)
+	}
+	if len(metadata.SortOptions) != 2 {
+		t.Fatalf("expected 2 sort options, got %d", len(metadata.SortOptions))
+	}
+	if metadata.SortOptions[0].Direction != SortDirectionDesc {
+		t.Fatalf("unexpected first sort option: %#v", metadata.SortOptions[0])
+	}
+	if metadata.SortOptions[1].NullsOrder != NullsOrderFirst {
+		t.Fatalf("unexpected second sort option: %#v", metadata.SortOptions[1])
 	}
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
@@ -70,5 +83,35 @@ func TestIsSupportedGinJsonbOpClass(t *testing.T) {
 	}
 	if IsSupportedGinJsonbOpClass("text_ops") {
 		t.Fatal("expected text_ops to be unsupported")
+	}
+}
+
+func TestIndOptionValue(t *testing.T) {
+	tests := []struct {
+		name   string
+		option IndexColumnOption
+		want   int16
+	}{
+		{
+			name: "default",
+			want: 0,
+		},
+		{
+			name:   "desc_defaults_to_nulls_first",
+			option: IndexColumnOption{Direction: SortDirectionDesc},
+			want:   IndOptionDesc | IndOptionNullsFirst,
+		},
+		{
+			name:   "asc_nulls_first",
+			option: IndexColumnOption{NullsOrder: NullsOrderFirst},
+			want:   IndOptionNullsFirst,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IndOptionValue(tt.option); got != tt.want {
+				t.Fatalf("expected indoption %d, got %d", tt.want, got)
+			}
+		})
 	}
 }

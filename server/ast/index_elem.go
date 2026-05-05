@@ -40,7 +40,7 @@ func nodeIndexElemList(ctx *Context, node tree.IndexElemList) ([]*vitess.IndexFi
 		case tree.Ascending:
 			// The only default supported in GMS for now
 		case tree.Descending:
-			logrus.Warn("descending indexes are not yet supported, ignoring sort order")
+			logrus.Warn("descending index scan order is not yet supported, preserving metadata only")
 		default:
 			return nil, errors.Errorf("unknown index sorting direction encountered")
 		}
@@ -66,9 +66,14 @@ func nodeIndexElemList(ctx *Context, node tree.IndexElemList) ([]*vitess.IndexFi
 			}
 		}
 
+		order := vitess.AscScr
+		if inputColumn.Direction == tree.Descending {
+			order = vitess.DescScr
+		}
+
 		vitessIndexColumns = append(vitessIndexColumns, &vitess.IndexField{
 			Column:     vitess.NewColIdent(string(inputColumn.Column)),
-			Order:      vitess.AscScr,
+			Order:      order,
 			Expression: expr,
 		})
 	}
