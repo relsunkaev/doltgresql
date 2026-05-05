@@ -1157,6 +1157,27 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL unique nulls not distinct unsupported boundary",
+			SetUpScript: []string{
+				"CREATE TABLE unique_nulls_not_distinct (id INTEGER PRIMARY KEY, v INTEGER);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE UNIQUE INDEX unique_nulls_not_distinct_idx ON unique_nulls_not_distinct (v) NULLS NOT DISTINCT;",
+					ExpectedErr: "NULLS NOT DISTINCT is not yet supported",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_nulls_not_distinct'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_nulls_not_distinct_pkey"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree sort option metadata",
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

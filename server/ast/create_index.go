@@ -40,6 +40,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node.Predicate != nil {
 		return nil, errors.Errorf("WHERE is not yet supported")
 	}
+	if node.Unique && !node.NullsDistinct {
+		return nil, errors.Errorf("NULLS NOT DISTINCT is not yet supported")
+	}
 	metadata, err := nodeIndexMetadata(node, accessMethod)
 	if err != nil {
 		return nil, err
