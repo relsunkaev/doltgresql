@@ -591,6 +591,12 @@ func (u *sqlSymUnion) simpleColumnDef() tree.SimpleColumnDef {
 func (u *sqlSymUnion) simpleColumnDefs() []tree.SimpleColumnDef {
   return u.val.([]tree.SimpleColumnDef)
 }
+func (u *sqlSymUnion) jsonTableColumn() tree.JSONTableColumn {
+  return u.val.(tree.JSONTableColumn)
+}
+func (u *sqlSymUnion) jsonTableColumns() []tree.JSONTableColumn {
+  return u.val.([]tree.JSONTableColumn)
+}
 func (u *sqlSymUnion) routineOption() tree.RoutineOption {
   return u.val.(tree.RoutineOption)
 }
@@ -778,7 +784,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> INNER INOUT INSERT INSTEAD INT INTEGER INTERNALLENGTH
 %token <str> INTERSECT INTERVAL INTO INTO_DB INVERTED INVOKER IS ISERROR ISNULL ISOLATION IS_TEMPLATE
 
-%token <str> JOB JOBS JOIN JSON JSONB JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
+%token <str> JOB JOBS JOIN JSON JSONB JSON_TABLE JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
 
 %token <str> KEY KEYS KMS KV
 
@@ -799,7 +805,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> OBJECT OF OFF OFFSET OID OIDS OIDVECTOR OLD ON ONLY ONLY_DATABASE_STATS OPT OPTION OPTIONS OR
 %token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OWNED OWNER OPERATOR
 
-%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PAUSE PAUSED PHYSICAL
+%token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
 %token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PREPARED PRESERVE PRIMARY PRIORITY PRIVILEGES
 %token <str> PROCEDURAL PROCEDURE PROCEDURES PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
@@ -1328,6 +1334,10 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.TableExpr> table_ref numeric_table_ref func_table table_ref_options
 %type <tree.Exprs> rowsfrom_list
 %type <tree.Expr> rowsfrom_item
+%type <tree.TableExpr> json_table
+%type <tree.JSONTableColumn> json_table_column
+%type <[]tree.JSONTableColumn> json_table_column_list
+%type <tree.Expr> opt_json_table_column_path
 %type <tree.TableExpr> joined_table
 %type <*tree.UnresolvedObjectName> relation_expr
 %type <tree.TableExpr> table_expr_opt_alias_idx table_name_opt_idx
@@ -11802,6 +11812,46 @@ func_table:
   {
     $$.val = &tree.RowsFromExpr{Items: $4.exprs()}
   }
+| json_table
+  {
+    $$.val = $1.tblExpr()
+  }
+
+json_table:
+  JSON_TABLE '(' a_expr ',' string_or_placeholder COLUMNS '(' json_table_column_list ')' ')'
+  {
+    $$.val = &tree.JSONTableExpr{Expr: $3.expr(), Path: $5.expr(), Columns: $8.jsonTableColumns()}
+  }
+
+json_table_column_list:
+  json_table_column
+  {
+    $$.val = []tree.JSONTableColumn{$1.jsonTableColumn()}
+  }
+| json_table_column_list ',' json_table_column
+  {
+    $$.val = append($1.jsonTableColumns(), $3.jsonTableColumn())
+  }
+
+json_table_column:
+  column_name FOR ORDINALITY
+  {
+    $$.val = tree.JSONTableColumn{Name: tree.Name($1), Ordinality: true}
+  }
+| column_name typename opt_json_table_column_path
+  {
+    $$.val = tree.JSONTableColumn{Name: tree.Name($1), Type: $2.typeReference(), Path: $3.expr()}
+  }
+
+opt_json_table_column_path:
+  PATH string_or_placeholder
+  {
+    $$.val = $2.expr()
+  }
+| /* EMPTY */
+  {
+    $$.val = tree.Expr(nil)
+  }
 
 rowsfrom_list:
   rowsfrom_item
@@ -15549,6 +15599,7 @@ unreserved_keyword:
 | PARTITIONS
 | PASSEDBYVALUE
 | PASSWORD
+| PATH
 | PAUSE
 | PAUSED
 | PHYSICAL
@@ -15898,6 +15949,7 @@ reserved_keyword:
 | INITIALLY
 | INTERSECT
 | INTO
+| JSON_TABLE
 | LATERAL
 | LEADING
 | LIMIT

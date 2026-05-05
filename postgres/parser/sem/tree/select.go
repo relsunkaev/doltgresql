@@ -266,6 +266,7 @@ func (*AliasedTableExpr) tableExpr() {}
 func (*ParenTableExpr) tableExpr()   {}
 func (*JoinTableExpr) tableExpr()    {}
 func (*RowsFromExpr) tableExpr()     {}
+func (*JSONTableExpr) tableExpr()    {}
 func (*Subquery) tableExpr()         {}
 func (*StatementSource) tableExpr()  {}
 
@@ -739,6 +740,47 @@ func (node *RowsFromExpr) Format(ctx *FmtCtx) {
 	ctx.WriteString("ROWS FROM (")
 	ctx.FormatNode(&node.Items)
 	ctx.WriteByte(')')
+}
+
+// JSONTableColumn represents a single column in a JSON_TABLE expression.
+type JSONTableColumn struct {
+	Name       Name
+	Type       ResolvableTypeReference
+	Path       Expr
+	Ordinality bool
+}
+
+// JSONTableExpr represents a SQL/JSON JSON_TABLE expression.
+type JSONTableExpr struct {
+	Expr    Expr
+	Path    Expr
+	Columns []JSONTableColumn
+}
+
+// Format implements the NodeFormatter interface.
+func (node *JSONTableExpr) Format(ctx *FmtCtx) {
+	ctx.WriteString("JSON_TABLE(")
+	ctx.FormatNode(node.Expr)
+	ctx.WriteString(", ")
+	ctx.FormatNode(node.Path)
+	ctx.WriteString(" COLUMNS (")
+	for i, col := range node.Columns {
+		if i > 0 {
+			ctx.WriteString(", ")
+		}
+		ctx.FormatNode(&col.Name)
+		if col.Ordinality {
+			ctx.WriteString(" FOR ORDINALITY")
+			continue
+		}
+		ctx.WriteByte(' ')
+		ctx.WriteString(col.Type.SQLString())
+		if col.Path != nil {
+			ctx.WriteString(" PATH ")
+			ctx.FormatNode(col.Path)
+		}
+	}
+	ctx.WriteString("))")
 }
 
 // Window represents a WINDOW clause.

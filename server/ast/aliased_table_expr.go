@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // nodeAliasedTableExpr handles *tree.AliasedTableExpr nodes.
@@ -132,6 +133,8 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 			subquery.Columns = columns
 		}
 		aliasExpr = subquery
+	case *tree.JSONTableExpr:
+		return nodeJSONTableAliasedTableExpr(ctx, node, expr)
 	default:
 		return nil, errors.Errorf("unhandled table expression: `%T`", expr)
 	}
@@ -156,6 +159,89 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 		Lateral: node.Lateral,
 		Auth:    authInfo,
 	}, nil
+}
+
+func nodeJSONTableAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr, jsonTableExpr *tree.JSONTableExpr) (*vitess.AliasedTableExpr, error) {
+	if len(jsonTableExpr.Columns) == 0 {
+		return nil, errors.Errorf("JSON_TABLE requires at least one column")
+	}
+	sourceExpr, err := nodeExpr(ctx, jsonTableExpr.Expr)
+	if err != nil {
+		return nil, err
+	}
+	pathExpr, err := nodeExpr(ctx, jsonTableExpr.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	internalAlias := "__doltgres_json_table"
+	tableFuncArgs := make(vitess.SelectExprs, 0, 2+len(jsonTableExpr.Columns)*6)
+	tableFuncArgs = append(
+		tableFuncArgs,
+		&vitess.AliasedExpr{Expr: sourceExpr},
+		&vitess.AliasedExpr{Expr: pathExpr},
+	)
+	selectExprs := make(vitess.SelectExprs, len(jsonTableExpr.Columns))
+	for i, col := range jsonTableExpr.Columns {
+		colName := string(col.Name)
+		var colType *pgtypes.DoltgresType
+		if col.Ordinality {
+			colType = pgtypes.Int32
+		} else {
+			_, colType, err = nodeResolvableTypeReference(ctx, col.Type, false)
+			if err != nil {
+				return nil, err
+			}
+			if colType == nil {
+				return nil, errors.Errorf("JSON_TABLE column requires a type")
+			}
+		}
+		colPath, err := nodeJSONTableColumnPath(ctx, col)
+		if err != nil {
+			return nil, err
+		}
+		tableFuncArgs = append(
+			tableFuncArgs,
+			tableFuncTextArg(colName),
+			tableFuncTextArg(colType.ID.SchemaName()),
+			tableFuncTextArg(colType.ID.TypeName()),
+			tableFuncTextArg(strconv.FormatInt(int64(colType.GetAttTypMod()), 10)),
+			colPath,
+			tableFuncTextArg(strconv.FormatBool(col.Ordinality)),
+		)
+		selectExprs[i] = &vitess.AliasedExpr{
+			Expr: tableFuncColumn(internalAlias, colName),
+			As:   vitess.NewColIdent(colName),
+		}
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: selectExprs,
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  "doltgres_json_table",
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: node.Lateral,
+	}, nil
+}
+
+func nodeJSONTableColumnPath(ctx *Context, col tree.JSONTableColumn) (*vitess.AliasedExpr, error) {
+	if col.Ordinality || col.Path == nil {
+		return tableFuncTextArg(""), nil
+	}
+	expr, err := nodeExpr(ctx, col.Path)
+	if err != nil {
+		return nil, err
+	}
+	return &vitess.AliasedExpr{Expr: expr}, nil
 }
 
 func nodeJsonToRecordAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {

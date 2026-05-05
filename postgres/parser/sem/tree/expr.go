@@ -1708,6 +1708,7 @@ func (node *ColumnAccessExpr) Format(ctx *FmtCtx) {
 func (node *AliasedTableExpr) String() string { return AsString(node) }
 func (node *ParenTableExpr) String() string   { return AsString(node) }
 func (node *JoinTableExpr) String() string    { return AsString(node) }
+func (node *JSONTableExpr) String() string    { return AsString(node) }
 func (node *AndExpr) String() string          { return AsString(node) }
 func (node *Array) String() string            { return AsString(node) }
 func (node *BinaryExpr) String() string       { return AsString(node) }

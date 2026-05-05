@@ -1095,6 +1095,30 @@ func (node *RowsFromExpr) doc(p *PrettyCfg) pretty.Doc {
 	return p.bracketKeyword("ROWS FROM", " (", p.Doc(&node.Items), ")", "")
 }
 
+func (node *JSONTableExpr) doc(p *PrettyCfg) pretty.Doc {
+	colDocs := make([]pretty.Doc, len(node.Columns))
+	for i, col := range node.Columns {
+		colDoc := pretty.Text(col.Name.String())
+		if col.Ordinality {
+			colDocs[i] = pretty.Concat(colDoc, pretty.Text(" FOR ORDINALITY"))
+			continue
+		}
+		colDoc = pretty.Concat(colDoc, pretty.Text(" "+col.Type.SQLString()))
+		if col.Path != nil {
+			colDoc = pretty.Concat(pretty.Concat(colDoc, pretty.Text(" PATH ")), p.Doc(col.Path))
+		}
+		colDocs[i] = colDoc
+	}
+	columnsDoc := pretty.Concat(pretty.Concat(pretty.Text("COLUMNS ("), pretty.Join(", ", colDocs...)), pretty.Text(")"))
+	return p.bracketKeyword(
+		"JSON_TABLE",
+		"(",
+		pretty.Join(", ", p.Doc(node.Expr), p.Doc(node.Path), columnsDoc),
+		")",
+		"",
+	)
+}
+
 func (node *Array) doc(p *PrettyCfg) pretty.Doc {
 	return p.bracketKeyword("ARRAY", "[", p.Doc(&node.Exprs), "]", "")
 }

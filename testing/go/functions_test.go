@@ -1833,6 +1833,35 @@ func TestJsonFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "JSON_TABLE",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT * FROM JSON_TABLE('[{"a":1,"b":"x"},{"a":2}]'::jsonb, '$[*]' COLUMNS (a int PATH '$.a', b text PATH '$.b')) AS jt ORDER BY a;`,
+					Expected: []sql.Row{{1, "x"}, {2, nil}},
+				},
+				{
+					Query:    `SELECT * FROM JSON_TABLE('{"items":[{"a":1},{"a":2}]}'::jsonb, '$.items[*]' COLUMNS (n FOR ORDINALITY, a int PATH '$.a')) AS jt;`,
+					Expected: []sql.Row{{1, 1}, {2, 2}},
+				},
+				{
+					Query:    `SELECT * FROM JSON_TABLE('[{"a":"3"},{"b":2}]'::jsonb, '$[*]' COLUMNS (a int)) AS jt;`,
+					Expected: []sql.Row{{3}, {nil}},
+				},
+				{
+					Query:    `SELECT * FROM JSON_TABLE('[1,2]'::jsonb, '$[*]' COLUMNS (v int PATH '$')) AS jt;`,
+					Expected: []sql.Row{{1}, {2}},
+				},
+				{
+					Query:    `SELECT count(*) FROM JSON_TABLE(NULL::jsonb, '$[*]' COLUMNS (a int PATH '$.a')) AS jt;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       `SELECT * FROM JSON_TABLE('[{"a":"bad"}]'::jsonb, '$[*]' COLUMNS (a int PATH '$.a')) AS jt;`,
+					ExpectedErr: `invalid input syntax for type int4`,
+				},
+			},
+		},
+		{
 			Name: "jsonb helper functions",
 			SetUpScript: []string{
 				`CREATE TABLE jsonb_record_items (id INT PRIMARY KEY, label TEXT);`,
