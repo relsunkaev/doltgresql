@@ -1305,6 +1305,40 @@ ORDER BY indexrelname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL standalone unique indexes are not constraints",
+			SetUpScript: []string{
+				"CREATE TABLE unique_index_constraint_boundary (id INTEGER PRIMARY KEY, email TEXT, code TEXT);",
+				"CREATE UNIQUE INDEX unique_index_constraint_boundary_email_idx ON unique_index_constraint_boundary (email);",
+				"ALTER TABLE unique_index_constraint_boundary ADD CONSTRAINT unique_index_constraint_boundary_code_key UNIQUE (code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'unique_index_constraint_boundary'
+ORDER BY con.conname;`,
+					Expected: []sql.Row{
+						{"unique_index_constraint_boundary_code_key", "u"},
+						{"unique_index_constraint_boundary_pkey", "p"},
+					},
+				},
+				{
+					Query: `SELECT idx.relname, i.indisunique
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class idx ON idx.oid = i.indexrelid
+JOIN pg_catalog.pg_class tbl ON tbl.oid = i.indrelid
+WHERE tbl.relname = 'unique_index_constraint_boundary'
+ORDER BY idx.relname;`,
+					Expected: []sql.Row{
+						{"unique_index_constraint_boundary_code_key", "t"},
+						{"unique_index_constraint_boundary_email_idx", "t"},
+						{"unique_index_constraint_boundary_pkey", "t"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree opclass metadata",
 			SetUpScript: []string{
 				"CREATE TABLE btree_opclass_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

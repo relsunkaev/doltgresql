@@ -35,6 +35,8 @@ const (
 	SortDirectionDesc = "desc"
 	NullsOrderFirst   = "first"
 
+	ConstraintNone = "none"
+
 	IndOptionDesc       int16 = 1
 	IndOptionNullsFirst int16 = 2
 
@@ -74,6 +76,7 @@ type Metadata struct {
 	Collations   []string            `json:"collations,omitempty"`
 	OpClasses    []string            `json:"opClasses,omitempty"`
 	SortOptions  []IndexColumnOption `json:"sortOptions,omitempty"`
+	Constraint   string              `json:"constraint,omitempty"`
 	Gin          *GinMetadata        `json:"gin,omitempty"`
 }
 
@@ -101,6 +104,7 @@ func EncodeComment(metadata Metadata) string {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
 	normalizeSortOptions(metadata.SortOptions)
+	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -125,7 +129,15 @@ func DecodeComment(comment string) (Metadata, bool) {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
 	normalizeSortOptions(metadata.SortOptions)
+	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
 	return metadata, true
+}
+
+// IsStandaloneIndex returns whether the comment marks the index as not owned by
+// a PostgreSQL constraint.
+func IsStandaloneIndex(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.Constraint == ConstraintNone
 }
 
 // NormalizeAccessMethod lower-cases PostgreSQL access method names and applies
@@ -136,6 +148,11 @@ func NormalizeAccessMethod(method string) string {
 		return AccessMethodBtree
 	}
 	return method
+}
+
+// NormalizeConstraint normalizes the PostgreSQL constraint ownership marker.
+func NormalizeConstraint(constraint string) string {
+	return strings.ToLower(strings.TrimSpace(constraint))
 }
 
 // NormalizeOpClass lower-cases PostgreSQL opclass names.

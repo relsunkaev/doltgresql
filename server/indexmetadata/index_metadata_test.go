@@ -26,6 +26,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 			{Direction: " DESC "},
 			{NullsOrder: " FIRST "},
 		},
+		Constraint: " NONE ",
 		Gin: &GinMetadata{
 			PostingTable: "dg_gin_docs_doc_idx_postings",
 		},
@@ -62,11 +63,20 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
 	}
+	if metadata.Constraint != ConstraintNone {
+		t.Fatalf("unexpected constraint marker: %q", metadata.Constraint)
+	}
+	if !IsStandaloneIndex(comment) {
+		t.Fatal("expected standalone index marker")
+	}
 }
 
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("ordinary user comment"); ok {
 		t.Fatal("expected ordinary comments to be ignored")
+	}
+	if IsStandaloneIndex("ordinary user comment") {
+		t.Fatal("expected ordinary comments to not mark standalone indexes")
 	}
 }
 

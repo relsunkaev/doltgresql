@@ -86,6 +86,12 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 			),
 		}, nil
 	}
+	if node.Unique {
+		if metadata == nil {
+			metadata = &indexmetadata.Metadata{}
+		}
+		metadata.Constraint = indexmetadata.ConstraintNone
+	}
 	var indexType string
 	if node.Unique {
 		indexType = vitess.UniqueStr

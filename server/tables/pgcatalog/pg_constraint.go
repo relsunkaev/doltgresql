@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -475,7 +476,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
 			conType := "p"
 			if index.Item.ID() != "PRIMARY" {
-				if index.Item.IsUnique() {
+				if index.Item.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Item.Comment()) {
 					conType = "u"
 				} else {
 					// If this isn't a primary key or a unique index, then it's a regular index, and not
