@@ -493,7 +493,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			constraint := &pgConstraint{
 				oid:             index.OID.AsId(),
 				oidNative:       id.Cache().ToOID(index.OID.AsId()),
-				name:            formatIndexName(index.Item),
+				name:            formatIndexNameForTable(index.Item, table.Item),
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				conType:         conType,

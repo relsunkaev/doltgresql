@@ -22,6 +22,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // nodeCheckConstraintTableDef converts a tree.CheckConstraintTableDef instance
@@ -126,7 +127,7 @@ func nodeUniqueConstraintTableDef(
 		indexName = defaultUniqueConstraintName(tableName.Name.String(), node.Columns)
 	}
 
-	return &vitess.DDL{
+	ddl := &vitess.DDL{
 		Action:   "alter",
 		Table:    tableName,
 		IfExists: ifExists,
@@ -136,7 +137,36 @@ func nodeUniqueConstraintTableDef(
 			Type:   indexType,
 			Fields: indexFields,
 		},
-	}, nil
+	}
+	return ddl, nil
+}
+
+func primaryKeyConstraintMetadataDDL(tableName vitess.TableName, ifExists bool, name string) *vitess.DDL {
+	return &vitess.DDL{
+		Action:   "alter",
+		Table:    tableName,
+		IfExists: ifExists,
+		AlterCommentSpec: &vitess.AlterCommentSpec{
+			Comment: tablemetadata.SetPrimaryKeyConstraintName("", name),
+		},
+	}
+}
+
+func setPrimaryKeyConstraintTableOption(tableSpec *vitess.TableSpec, name string) {
+	if tableSpec == nil || name == "" {
+		return
+	}
+	comment := tablemetadata.SetPrimaryKeyConstraintName("", name)
+	for _, option := range tableSpec.TableOpts {
+		if strings.EqualFold(option.Name, "comment") {
+			option.Value = comment
+			return
+		}
+	}
+	tableSpec.TableOpts = append(tableSpec.TableOpts, &vitess.TableOption{
+		Name:  "comment",
+		Value: comment,
+	})
 }
 
 func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) string {

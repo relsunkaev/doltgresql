@@ -38,6 +38,7 @@ const (
 	ruleId_AssignTriggers                                                // assignTriggers
 	ruleId_AssignUpdateCasts                                             // assignUpdateCasts
 	ruleId_ConvertDropPrimaryKeyConstraint                               // convertDropPrimaryKeyConstraint
+	ruleId_WrapPrimaryKeyMetadata                                        // wrapPrimaryKeyMetadata
 	ruleId_GenerateForeignKeyName                                        // generateForeignKeyName
 	ruleId_ReplaceIndexedTables                                          // replaceIndexedTables
 	ruleId_ReplaceNode                                                   // replaceNode
@@ -106,6 +107,7 @@ func Init() {
 	)
 
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
+		analyzer.Rule{Id: ruleId_WrapPrimaryKeyMetadata, Apply: wrapPrimaryKeyMetadata},
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
 		analyzer.Rule{Id: ruleId_ValidateOnConflictArbiter, Apply: ValidateOnConflictArbiter},

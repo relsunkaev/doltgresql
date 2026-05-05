@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // CreateTable is a node that implements functionality specifically relevant to Doltgres' table creation needs.
@@ -76,9 +77,27 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		return nil, fmt.Errorf("table name `%s` cannot contain a parenthesized portion", c.gmsCreateTable.Name())
 	}
 
+	tableAlreadyExisted := false
+	if c.gmsCreateTable.IfNotExists() {
+		_, alreadyExisted, err := c.gmsCreateTable.Db.GetTableInsensitive(ctx, c.gmsCreateTable.Name())
+		if err != nil {
+			return nil, err
+		}
+		tableAlreadyExisted = alreadyExisted
+	}
+
 	createTableIter, err := b.Build(ctx, c.gmsCreateTable, r)
 	if err != nil {
 		return nil, err
+	}
+
+	if !tableAlreadyExisted {
+		if comment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
+			if err = modifyTableComment(ctx, c.gmsCreateTable.Db, c.gmsCreateTable.Name(), comment); err != nil {
+				_ = createTableIter.Close(ctx)
+				return nil, err
+			}
+		}
 	}
 
 	schemaName, err := core.GetSchemaName(ctx, c.gmsCreateTable.Db, "")
@@ -145,4 +164,60 @@ func (c CreateTable) WithTargetSchema(schema sql.Schema) (sql.Node, error) {
 	c.gmsCreateTable = n.(*plan.CreateTable)
 
 	return &c, nil
+}
+
+func doltgresTableMetadataComment(tableOpts map[string]any) (string, bool) {
+	if tableOpts == nil {
+		return "", false
+	}
+	comment, ok := tableOpts["comment"].(string)
+	if !ok {
+		return "", false
+	}
+	if _, ok = tablemetadata.DecodeComment(comment); !ok {
+		return "", false
+	}
+	return comment, true
+}
+
+func modifyTableComment(ctx *sql.Context, db sql.Database, tableName string, comment string) error {
+	db, err := freshDatabase(ctx, db)
+	if err != nil {
+		return err
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, tableName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(tableName)
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	return alterable.ModifyComment(ctx, comment)
+}
+
+func freshDatabase(ctx *sql.Context, db sql.Database) (sql.Database, error) {
+	currentDb, err := core.GetSqlDatabaseFromContext(ctx, "")
+	if err != nil || currentDb == nil {
+		return db, err
+	}
+	databaseSchema, ok := db.(sql.DatabaseSchema)
+	if !ok {
+		return currentDb, nil
+	}
+	schemaDb, ok := currentDb.(sql.SchemaDatabase)
+	if !ok {
+		return db, nil
+	}
+	freshSchema, ok, err := schemaDb.GetSchema(ctx, databaseSchema.SchemaName())
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return db, nil
+	}
+	return freshSchema, nil
 }

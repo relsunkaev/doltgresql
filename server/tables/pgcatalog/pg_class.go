@@ -19,7 +19,6 @@ import (
 	"io"
 	"math"
 
-	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -93,7 +92,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			class := &pgClass{
 				oid:             index.OID.AsId(),
 				oidNative:       id.Cache().ToOID(index.OID.AsId()),
-				name:            formatIndexName(index.Item),
+				name:            formatIndexNameForTable(index.Item, table.Item),
 				hasIndexes:      false,
 				kind:            "i",
 				schemaOid:       schemaOid.AsId(),
@@ -172,18 +171,15 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 
 // formatIndexName returns the name of an index for display
 func formatIndexName(idx sql.Index) string {
-	if idx.ID() == "PRIMARY" {
-		return fmt.Sprintf("%s_pkey", idx.Table())
-	}
-
-	switch idx.(type) {
-	case *index.BranchNameIndex, *index.CommitIndex:
-		return fmt.Sprintf("%s_%s_key", idx.Table(), idx.ID())
-	}
-
-	return idx.ID()
+	return indexmetadata.DisplayName(idx)
 	// TODO: Unnamed indexes should have below format
 	// return fmt.Sprintf("%s_%s_key", idx.Table(), idx.ID())
+}
+
+// formatIndexNameForTable returns the name of an index for display using
+// table-level Doltgres metadata when the native index cannot carry it.
+func formatIndexNameForTable(idx sql.Index, table sql.Table) string {
+	return indexmetadata.DisplayNameForTable(idx, table)
 }
 
 // getIndexScanRange implements the interface RangeConverter.

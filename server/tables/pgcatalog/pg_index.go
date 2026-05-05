@@ -205,6 +205,7 @@ var pgIndexSchema = sql.Schema{
 // We store oids in their native format as well so that we can do range scans on them.
 type pgIndex struct {
 	index          sql.Index
+	indexName      string
 	schemaName     string
 	indexOid       id.Id
 	indexOidNative uint32
@@ -331,6 +332,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 
 			pgIdx := &pgIndex{
 				index:          index.Item,
+				indexName:      formatIndexNameForTable(index.Item, table.Item),
 				schemaName:     schema.Item.SchemaName(),
 				indexOid:       index.OID.AsId(),
 				indexOidNative: id.Cache().ToOID(index.OID.AsId()),
@@ -343,11 +345,11 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indcollation:   indCollation,
 				indclass:       indClass,
 				indexprs:       indexprs,
-				indexdef:       indexmetadata.DefinitionForSchema(index.Item, schema.Item.SchemaName(), s),
+				indexdef:       indexmetadata.DefinitionForTable(index.Item, schema.Item.SchemaName(), table.Item, s),
 			}
 			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
 			pgIdx.indisreplident = replicaIdent.Identity == replicaidentity.IdentityUsingIndex &&
-				strings.EqualFold(replicaIdent.IndexName, formatIndexName(index.Item))
+				strings.EqualFold(replicaIdent.IndexName, pgIdx.indexName)
 
 			indexOidIdx.Add(pgIdx)
 			indrelidIdx.Add(pgIdx)

@@ -21,6 +21,8 @@ import (
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // DisplayName returns the PostgreSQL-facing name for index.
@@ -37,6 +39,19 @@ func DisplayName(idx sql.Index) string {
 	return idx.ID()
 }
 
+// DisplayNameForTable returns the PostgreSQL-facing name for index using
+// table-level Doltgres metadata when the native index cannot carry it.
+func DisplayNameForTable(idx sql.Index, table sql.Table) string {
+	if strings.EqualFold(idx.ID(), "PRIMARY") {
+		if commentedTable, ok := table.(sql.CommentedTable); ok {
+			if name := tablemetadata.PrimaryKeyConstraintName(commentedTable.Comment()); name != "" {
+				return name
+			}
+		}
+	}
+	return DisplayName(idx)
+}
+
 // Definition returns a PostgreSQL CREATE INDEX definition for index.
 func Definition(index sql.Index, schema string) string {
 	return DefinitionForSchema(index, schema, nil)
@@ -45,13 +60,23 @@ func Definition(index sql.Index, schema string) string {
 // DefinitionForSchema returns a PostgreSQL CREATE INDEX definition for index,
 // using tableSchema to deparse hidden functional-index columns when available.
 func DefinitionForSchema(index sql.Index, schema string, tableSchema sql.Schema) string {
+	return definitionForSchema(index, schema, tableSchema, DisplayName(index))
+}
+
+// DefinitionForTable returns a PostgreSQL CREATE INDEX definition for index,
+// using table-level metadata for PostgreSQL-facing names when needed.
+func DefinitionForTable(index sql.Index, schema string, table sql.Table, tableSchema sql.Schema) string {
+	return definitionForSchema(index, schema, tableSchema, DisplayNameForTable(index, table))
+}
+
+func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema, displayName string) string {
 	unique := ""
 	if index.IsUnique() {
 		unique = " UNIQUE"
 	}
 	return fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",
 		unique,
-		DisplayName(index),
+		displayName,
 		schema,
 		index.Table(),
 		AccessMethod(index.IndexType(), index.Comment()),

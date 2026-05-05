@@ -1269,6 +1269,164 @@ WHERE cls.relname = 'rename_primary_key_index';`,
 			},
 		},
 		{
+			Name: "PostgreSQL custom primary key constraint names",
+			SetUpScript: []string{
+				`CREATE TABLE primary_key_constraint_table_named (
+					id INTEGER,
+					name TEXT,
+					CONSTRAINT primary_key_constraint_table_custom PRIMARY KEY (id)
+				);`,
+				`CREATE TABLE primary_key_constraint_column_named (
+					id INTEGER CONSTRAINT primary_key_constraint_column_custom PRIMARY KEY,
+					name TEXT
+				);`,
+				"CREATE TABLE primary_key_constraint_alter_named (id INTEGER NOT NULL, name TEXT);",
+				"ALTER TABLE primary_key_constraint_alter_named ADD CONSTRAINT primary_key_constraint_alter_custom PRIMARY KEY (id);",
+				"CREATE TABLE primary_key_constraint_default (id INTEGER PRIMARY KEY, name TEXT);",
+				"CREATE TABLE primary_key_constraint_add_column_named (name TEXT);",
+				`ALTER TABLE primary_key_constraint_add_column_named
+					ADD COLUMN id INTEGER NOT NULL,
+					ADD CONSTRAINT primary_key_constraint_add_column_custom PRIMARY KEY (id);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT cls.relname, con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname IN (
+	'primary_key_constraint_table_named',
+	'primary_key_constraint_column_named',
+	'primary_key_constraint_alter_named',
+	'primary_key_constraint_add_column_named',
+	'primary_key_constraint_default'
+)
+ORDER BY cls.relname;`,
+					Expected: []sql.Row{
+						{"primary_key_constraint_add_column_named", "primary_key_constraint_add_column_custom", "p"},
+						{"primary_key_constraint_alter_named", "primary_key_constraint_alter_custom", "p"},
+						{"primary_key_constraint_column_named", "primary_key_constraint_column_custom", "p"},
+						{"primary_key_constraint_default", "primary_key_constraint_default_pkey", "p"},
+						{"primary_key_constraint_table_named", "primary_key_constraint_table_custom", "p"},
+					},
+				},
+				{
+					Query: `SELECT tablename, indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename IN (
+	'primary_key_constraint_table_named',
+	'primary_key_constraint_column_named',
+	'primary_key_constraint_alter_named',
+	'primary_key_constraint_add_column_named',
+	'primary_key_constraint_default'
+)
+ORDER BY tablename;`,
+					Expected: []sql.Row{
+						{"primary_key_constraint_add_column_named", "primary_key_constraint_add_column_custom"},
+						{"primary_key_constraint_alter_named", "primary_key_constraint_alter_custom"},
+						{"primary_key_constraint_column_named", "primary_key_constraint_column_custom"},
+						{"primary_key_constraint_default", "primary_key_constraint_default_pkey"},
+						{"primary_key_constraint_table_named", "primary_key_constraint_table_custom"},
+					},
+				},
+				{
+					Query: `SELECT cls.relname, idx.indisunique, idx.indisprimary
+FROM pg_catalog.pg_class cls
+JOIN pg_catalog.pg_index idx ON idx.indexrelid = cls.oid
+WHERE cls.relname IN (
+	'primary_key_constraint_table_custom',
+	'primary_key_constraint_column_custom',
+	'primary_key_constraint_alter_custom',
+	'primary_key_constraint_add_column_custom'
+)
+ORDER BY cls.relname;`,
+					Expected: []sql.Row{
+						{"primary_key_constraint_add_column_custom", "t", "t"},
+						{"primary_key_constraint_alter_custom", "t", "t"},
+						{"primary_key_constraint_column_custom", "t", "t"},
+						{"primary_key_constraint_table_custom", "t", "t"},
+					},
+				},
+				{
+					Query: `SELECT c.relname, pg_catalog.pg_get_indexdef(c.oid)
+FROM pg_catalog.pg_class c
+WHERE c.relname IN (
+	'primary_key_constraint_table_custom',
+	'primary_key_constraint_column_custom',
+	'primary_key_constraint_alter_custom',
+	'primary_key_constraint_add_column_custom'
+)
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"primary_key_constraint_add_column_custom", "CREATE UNIQUE INDEX primary_key_constraint_add_column_custom ON public.primary_key_constraint_add_column_named USING btree (id)"},
+						{"primary_key_constraint_alter_custom", "CREATE UNIQUE INDEX primary_key_constraint_alter_custom ON public.primary_key_constraint_alter_named USING btree (id)"},
+						{"primary_key_constraint_column_custom", "CREATE UNIQUE INDEX primary_key_constraint_column_custom ON public.primary_key_constraint_column_named USING btree (id)"},
+						{"primary_key_constraint_table_custom", "CREATE UNIQUE INDEX primary_key_constraint_table_custom ON public.primary_key_constraint_table_named USING btree (id)"},
+					},
+				},
+				{
+					Query: `SELECT
+	'primary_key_constraint_table_custom'::regclass::text,
+	'primary_key_constraint_column_custom'::regclass::text,
+	'primary_key_constraint_alter_custom'::regclass::text,
+	'primary_key_constraint_add_column_custom'::regclass::text;`,
+					Expected: []sql.Row{{
+						"primary_key_constraint_table_custom",
+						"primary_key_constraint_column_custom",
+						"primary_key_constraint_alter_custom",
+						"primary_key_constraint_add_column_custom",
+					}},
+				},
+				{
+					Query:       "ALTER INDEX primary_key_constraint_table_custom RENAME TO primary_key_constraint_table_other;",
+					ExpectedErr: "renaming primary key indexes is not yet supported",
+				},
+				{
+					Query:       "DROP INDEX primary_key_constraint_column_custom;",
+					ExpectedErr: `because constraint "primary_key_constraint_column_custom" on table "primary_key_constraint_column_named" requires it`,
+				},
+				{
+					Query:       "ALTER INDEX primary_key_constraint_default_pkey RENAME TO primary_key_constraint_default_other;",
+					ExpectedErr: "renaming primary key indexes is not yet supported",
+				},
+				{
+					Query: "ALTER TABLE primary_key_constraint_table_named DROP CONSTRAINT primary_key_constraint_table_custom;",
+				},
+				{
+					Query: "ALTER TABLE primary_key_constraint_column_named DROP CONSTRAINT primary_key_constraint_column_custom;",
+				},
+				{
+					Query: "ALTER TABLE primary_key_constraint_alter_named DROP CONSTRAINT primary_key_constraint_alter_custom;",
+				},
+				{
+					Query: "ALTER TABLE primary_key_constraint_add_column_named DROP CONSTRAINT primary_key_constraint_add_column_custom;",
+				},
+				{
+					Query: `SELECT cls.relname, con.conname
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname IN (
+	'primary_key_constraint_table_named',
+	'primary_key_constraint_column_named',
+	'primary_key_constraint_alter_named',
+	'primary_key_constraint_add_column_named'
+)
+ORDER BY cls.relname;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: "ALTER TABLE primary_key_constraint_alter_named ADD PRIMARY KEY (id);",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'primary_key_constraint_alter_named';`,
+					Expected: []sql.Row{
+						{"primary_key_constraint_alter_named_pkey"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree sort option metadata",
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

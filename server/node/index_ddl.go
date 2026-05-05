@@ -29,6 +29,7 @@ import (
 
 type locatedIndex struct {
 	db        sql.Database
+	table     sql.Table
 	alterable sql.IndexAlterableTable
 	index     sql.Index
 }
@@ -102,7 +103,7 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			return nil, sql.ErrIndexNotFound.New(target.Index)
 		}
 		if isConstraintBackedIndex(located.index) {
-			indexName := indexmetadata.DisplayName(located.index)
+			indexName := indexmetadata.DisplayNameForTable(located.index, located.table)
 			return nil, errors.Errorf(`cannot drop index "%s" because constraint "%s" on table "%s" requires it`,
 				indexName, indexName, located.index.Table())
 		}
@@ -334,7 +335,7 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 		return nil, false, err
 	}
 	for _, index := range indexes {
-		if !indexNameMatches(index, indexName) {
+		if !indexNameMatches(index, table, indexName) {
 			continue
 		}
 		alterable, ok := table.(sql.IndexAlterableTable)
@@ -343,6 +344,7 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 		}
 		return &locatedIndex{
 			db:        db,
+			table:     table,
 			alterable: alterable,
 			index:     index,
 		}, true, nil
@@ -350,8 +352,8 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 	return nil, false, nil
 }
 
-func indexNameMatches(index sql.Index, name string) bool {
-	return strings.EqualFold(index.ID(), name) || strings.EqualFold(indexmetadata.DisplayName(index), name)
+func indexNameMatches(index sql.Index, table sql.Table, name string) bool {
+	return strings.EqualFold(index.ID(), name) || strings.EqualFold(indexmetadata.DisplayNameForTable(index, table), name)
 }
 
 func isPrimaryKeyIndex(index sql.Index) bool {

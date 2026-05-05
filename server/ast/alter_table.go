@@ -106,6 +106,13 @@ func nodeAlterTableCmds(
 				return nil, nil, err
 			}
 			vitessDdlCmds = append(vitessDdlCmds, statement)
+			if constraintDef, ok := cmd.ConstraintDef.(*tree.UniqueConstraintTableDef); ok && constraintDef.PrimaryKey {
+				vitessDdlCmds = append(vitessDdlCmds, primaryKeyConstraintMetadataDDL(
+					tableName,
+					ifExists,
+					bareIdentifier(constraintDef.Name),
+				))
+			}
 		case *tree.AlterTableAddColumn:
 			statement, err = nodeAlterTableAddColumn(ctx, cmd, tableName, ifExists)
 			if err != nil {

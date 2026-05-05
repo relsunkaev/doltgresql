@@ -99,7 +99,7 @@ func (iter *pgIndexesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	return sql.Row{
 		index.schemaName,                        // schemaname
 		iter.indexes.tableNames[index.tableOid], // tablename
-		formatIndexName(index.index),            // indexname
+		index.indexName,                         // indexname
 		nil,                                     // tablespace
 		index.indexdef,                          // indexdef
 	}, nil

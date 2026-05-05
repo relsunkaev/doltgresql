@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/settings"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
@@ -90,10 +91,7 @@ var regclassin = framework.Function1{
 		var resultOid id.Id
 		err = IterateDatabase(ctx, database, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				idxName := index.Item.ID()
-				if idxName == "PRIMARY" {
-					idxName = fmt.Sprintf("%s_pkey", index.Item.Table())
-				}
+				idxName := indexmetadata.DisplayNameForTable(index.Item, table.Item)
 				if relationName == idxName {
 					resultOid = index.OID.AsId()
 					return false, nil
@@ -155,14 +153,12 @@ var regclassout = framework.Function1{
 		var output string
 		err = RunCallback(ctx, input, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				output = index.Item.ID()
-				if output == "PRIMARY" {
-					schemaName := schema.Item.SchemaName()
-					if _, ok := schemasMap[schemaName]; ok {
-						output = fmt.Sprintf("%s_pkey", index.Item.Table())
-					} else {
-						output = fmt.Sprintf("%s.%s_pkey", schemaName, index.Item.Table())
-					}
+				schemaName := schema.Item.SchemaName()
+				indexName := indexmetadata.DisplayNameForTable(index.Item, table.Item)
+				if _, ok := schemasMap[schemaName]; ok {
+					output = indexName
+				} else {
+					output = fmt.Sprintf("%s.%s", schemaName, indexName)
 				}
 				return false, nil
 			},

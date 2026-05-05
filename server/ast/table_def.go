@@ -65,6 +65,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			}
 			target.TableSpec.Indexes = append(target.TableSpec.Indexes, indexDef)
 		}
+		if node.PrimaryKey.IsPrimaryKey {
+			setPrimaryKeyConstraintTableOption(target.TableSpec, bareIdentifier(node.UniqueConstraintName))
+		}
 		if node.References.Table != nil {
 			fkDef, err := nodeForeignKeyDefinitionFromColumnTableDef(ctx, node.Name, node)
 			if err != nil {
@@ -117,6 +120,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		indexTableDef := node.IndexTableDef
 		if !node.PrimaryKey && bareIdentifier(indexTableDef.Name) == "" {
 			indexTableDef.Name = tree.Name(defaultUniqueConstraintName(target.Table.Name.String(), node.Columns))
+		}
+		if node.PrimaryKey {
+			setPrimaryKeyConstraintTableOption(target.TableSpec, bareIdentifier(indexTableDef.Name))
 		}
 		indexDef, err := nodeIndexTableDef(ctx, &indexTableDef)
 		if err != nil {

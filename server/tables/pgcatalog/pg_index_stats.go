@@ -37,16 +37,17 @@ func pgStatIndexRows(ctx *sql.Context, scope pgIndexStatsScope) (sql.RowIter, er
 			if !includeIndexStatsSchema(schema.Item.SchemaName(), scope) {
 				return true, nil
 			}
+			indexName := formatIndexNameForTable(index.Item, table.Item)
 			rows = append(rows, sql.Row{
-				table.OID.AsId(),            // relid
-				index.OID.AsId(),            // indexrelid
-				schema.Item.SchemaName(),    // schemaname
-				table.Item.Name(),           // relname
-				formatIndexName(index.Item), // indexrelname
-				int64(0),                    // idx_scan
-				nil,                         // last_idx_scan
-				int64(0),                    // idx_tup_read
-				int64(0),                    // idx_tup_fetch
+				table.OID.AsId(),         // relid
+				index.OID.AsId(),         // indexrelid
+				schema.Item.SchemaName(), // schemaname
+				table.Item.Name(),        // relname
+				indexName,                // indexrelname
+				int64(0),                 // idx_scan
+				nil,                      // last_idx_scan
+				int64(0),                 // idx_tup_read
+				int64(0),                 // idx_tup_fetch
 			})
 			return true, nil
 		},
@@ -64,14 +65,15 @@ func pgStatioIndexRows(ctx *sql.Context, scope pgIndexStatsScope) (sql.RowIter, 
 			if !includeIndexStatsSchema(schema.Item.SchemaName(), scope) {
 				return true, nil
 			}
+			indexName := formatIndexNameForTable(index.Item, table.Item)
 			rows = append(rows, sql.Row{
-				table.OID.AsId(),            // relid
-				index.OID.AsId(),            // indexrelid
-				schema.Item.SchemaName(),    // schemaname
-				table.Item.Name(),           // relname
-				formatIndexName(index.Item), // indexrelname
-				int64(0),                    // idx_blks_read
-				int64(0),                    // idx_blks_hit
+				table.OID.AsId(),         // relid
+				index.OID.AsId(),         // indexrelid
+				schema.Item.SchemaName(), // schemaname
+				table.Item.Name(),        // relname
+				indexName,                // indexrelname
+				int64(0),                 // idx_blks_read
+				int64(0),                 // idx_blks_hit
 			})
 			return true, nil
 		},
