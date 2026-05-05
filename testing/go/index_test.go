@@ -1251,6 +1251,59 @@ FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
 			},
 		},
 		{
+			Name: "PostgreSQL jsonb gin indexed lookup and recheck",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_lookup VALUES
+					(1, '{"a":1,"b":2,"tags":["x"],"nested":{"a":9}}'),
+					(2, '{"a":1,"b":3,"tags":["y"]}'),
+					(3, '{"a":2,"b":2,"tags":["x"]}'),
+					(4, '{"nested":{"a":1},"tags":["z"]}');`,
+				"CREATE INDEX jsonb_gin_lookup_idx ON jsonb_gin_lookup USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
+WHERE doc @> '{"a":1}'
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_lookup.id]"},
+						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             └─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
+					},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_lookup
+WHERE doc @> '{"a":1}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_lookup
+WHERE doc ? 'a'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_lookup
+WHERE doc ?| ARRAY['missing','a']
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_lookup
+WHERE doc ?& ARRAY['a','tags']
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+			},
+		},
+		{
 			Name: "JSONB expression indexes",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",

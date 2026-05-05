@@ -16,14 +16,18 @@ package node
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/sqlutil"
 	"github.com/dolthub/go-mysql-server/sql"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 
 	"github.com/dolthub/doltgresql/core"
+	pgexpression "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/jsonbgin"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -51,6 +55,21 @@ var _ sql.UpdatableTable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.DeletableTable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.IndexAddressable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.IndexedTable = (*JsonbGinMaintainedTable)(nil)
+var _ sql.IndexSearchableTable = (*JsonbGinMaintainedTable)(nil)
+
+type jsonbGinLookupMode string
+
+const (
+	jsonbGinLookupIntersect jsonbGinLookupMode = "intersect"
+	jsonbGinLookupUnion     jsonbGinLookupMode = "union"
+)
+
+type jsonbGinLookupSpec struct {
+	index  JsonbGinMaintainedIndex
+	tokens []jsonbgin.Token
+	mode   jsonbGinLookupMode
+	debug  string
+}
 
 func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*JsonbGinMaintainedTable); ok {
@@ -103,6 +122,84 @@ func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.
 		schemaName: schemaName,
 		indexes:    ginIndexes,
 	}, true, nil
+}
+
+type JsonbGinSearchableTable struct {
+	maintained *JsonbGinMaintainedTable
+}
+
+var _ sql.Table = (*JsonbGinSearchableTable)(nil)
+var _ sql.DatabaseSchemaTable = (*JsonbGinSearchableTable)(nil)
+var _ sql.IndexAddressableTable = (*JsonbGinSearchableTable)(nil)
+var _ sql.IndexedTable = (*JsonbGinSearchableTable)(nil)
+var _ sql.IndexSearchableTable = (*JsonbGinSearchableTable)(nil)
+
+func WrapJsonbGinSearchableTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
+	if _, ok := table.(*JsonbGinSearchableTable); ok {
+		return table, false, nil
+	}
+	if _, ok := table.(*JsonbGinMaintainedTable); ok {
+		return table, false, nil
+	}
+	maintainedTable, wrapped, err := WrapJsonbGinMaintainedTable(ctx, schemaName, table)
+	if err != nil || !wrapped {
+		return table, wrapped, err
+	}
+	return &JsonbGinSearchableTable{
+		maintained: maintainedTable.(*JsonbGinMaintainedTable),
+	}, true, nil
+}
+
+func (t *JsonbGinSearchableTable) Name() string {
+	return t.maintained.Name()
+}
+
+func (t *JsonbGinSearchableTable) String() string {
+	return t.maintained.String()
+}
+
+func (t *JsonbGinSearchableTable) Schema(ctx *sql.Context) sql.Schema {
+	return t.maintained.Schema(ctx)
+}
+
+func (t *JsonbGinSearchableTable) Collation() sql.CollationID {
+	return t.maintained.Collation()
+}
+
+func (t *JsonbGinSearchableTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
+	return t.maintained.Partitions(ctx)
+}
+
+func (t *JsonbGinSearchableTable) PartitionRows(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	return t.maintained.PartitionRows(ctx, partition)
+}
+
+func (t *JsonbGinSearchableTable) DatabaseSchema() sql.DatabaseSchema {
+	return t.maintained.DatabaseSchema()
+}
+
+func (t *JsonbGinSearchableTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
+	return t.maintained.IndexedAccess(ctx, lookup)
+}
+
+func (t *JsonbGinSearchableTable) GetIndexes(ctx *sql.Context) ([]sql.Index, error) {
+	return t.maintained.GetIndexes(ctx)
+}
+
+func (t *JsonbGinSearchableTable) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
+	return t.maintained.LookupPartitions(ctx, lookup)
+}
+
+func (t *JsonbGinSearchableTable) PreciseMatch() bool {
+	return t.maintained.PreciseMatch()
+}
+
+func (t *JsonbGinSearchableTable) SkipIndexCosting() bool {
+	return false
+}
+
+func (t *JsonbGinSearchableTable) LookupForExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, *sql.FuncDepSet, sql.Expression, bool, error) {
+	return t.maintained.LookupForExpressions(ctx, exprs...)
 }
 
 func columnsFromIndexExpressions(expressions []string) []string {
@@ -158,6 +255,12 @@ func (t *JsonbGinMaintainedTable) DatabaseSchema() sql.DatabaseSchema {
 }
 
 func (t *JsonbGinMaintainedTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
+	if index, ok := lookup.Index.(*jsonbGinLookupIndex); ok {
+		return &jsonbGinIndexedTable{
+			JsonbGinMaintainedTable: t,
+			lookup:                  index.lookup,
+		}
+	}
 	if indexAddressable, ok := t.underlying.(sql.IndexAddressable); ok {
 		return indexAddressable.IndexedAccess(ctx, lookup)
 	}
@@ -183,6 +286,125 @@ func (t *JsonbGinMaintainedTable) PreciseMatch() bool {
 		return indexAddressable.PreciseMatch()
 	}
 	return false
+}
+
+func (t *JsonbGinMaintainedTable) SkipIndexCosting() bool {
+	return false
+}
+
+func (t *JsonbGinMaintainedTable) LookupForExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, *sql.FuncDepSet, sql.Expression, bool, error) {
+	for _, expr := range exprs {
+		lookupSpec, ok, err := t.lookupSpecForExpression(ctx, expr)
+		if err != nil || !ok {
+			if err != nil {
+				return sql.IndexLookup{}, nil, nil, false, err
+			}
+			continue
+		}
+		lookupIndex := &jsonbGinLookupIndex{
+			tableName: t.Name(),
+			lookup:    lookupSpec,
+		}
+		debugRange := sql.MySQLRangeCollection{{
+			sql.ClosedRangeColumnExpr(lookupSpec.debug, lookupSpec.debug, pgtypes.Text),
+		}}
+		lookup := sql.NewIndexLookup(lookupIndex, debugRange, false, false, false, false)
+		return lookup, nil, gmsexpression.JoinAnd(exprs...), true, nil
+	}
+	return sql.IndexLookup{}, nil, nil, false, nil
+}
+
+func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr sql.Expression) (jsonbGinLookupSpec, bool, error) {
+	binary, ok := expr.(*pgexpression.BinaryOperator)
+	if !ok {
+		return jsonbGinLookupSpec{}, false, nil
+	}
+	field, ok := binary.Left().(*gmsexpression.GetField)
+	if !ok {
+		return jsonbGinLookupSpec{}, false, nil
+	}
+	for _, index := range t.indexes {
+		if !strings.EqualFold(field.Name(), index.ColumnName) {
+			continue
+		}
+		tokens, mode, ok, err := jsonbGinLookupTokens(ctx, index.OpClass, binary.Operator(), binary.Right())
+		if err != nil || !ok {
+			return jsonbGinLookupSpec{}, ok, err
+		}
+		return jsonbGinLookupSpec{
+			index:  index,
+			tokens: tokens,
+			mode:   mode,
+			debug:  fmt.Sprintf("%s %s %d token(s)", index.Name, mode, len(tokens)),
+		}, true, nil
+	}
+	return jsonbGinLookupSpec{}, false, nil
+}
+
+func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.Operator, right sql.Expression) ([]jsonbgin.Token, jsonbGinLookupMode, bool, error) {
+	value, err := right.Eval(ctx, nil)
+	if err != nil {
+		return nil, "", false, nil
+	}
+	opClass = indexmetadata.NormalizeOpClass(opClass)
+	switch operator {
+	case framework.Operator_BinaryJSONContainsRight:
+		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, value)
+		if err != nil {
+			return nil, "", false, err
+		}
+		tokens, err := jsonbgin.Extract(doc, opClass)
+		if err != nil || len(tokens) == 0 {
+			return nil, "", false, err
+		}
+		return tokens, jsonbGinLookupIntersect, true, nil
+	case framework.Operator_BinaryJSONTopLevel:
+		if opClass != indexmetadata.OpClassJsonbOps {
+			return nil, "", false, nil
+		}
+		key, ok := value.(string)
+		if !ok {
+			return nil, "", false, nil
+		}
+		return []jsonbgin.Token{{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key}}, jsonbGinLookupIntersect, true, nil
+	case framework.Operator_BinaryJSONTopLevelAny, framework.Operator_BinaryJSONTopLevelAll:
+		if opClass != indexmetadata.OpClassJsonbOps {
+			return nil, "", false, nil
+		}
+		keys, ok := textArrayStrings(value)
+		if !ok || len(keys) == 0 {
+			return nil, "", false, nil
+		}
+		tokens := make([]jsonbgin.Token, len(keys))
+		for i, key := range keys {
+			tokens[i] = jsonbgin.Token{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key}
+		}
+		if operator == framework.Operator_BinaryJSONTopLevelAny {
+			return tokens, jsonbGinLookupUnion, true, nil
+		}
+		return tokens, jsonbGinLookupIntersect, true, nil
+	default:
+		return nil, "", false, nil
+	}
+}
+
+func textArrayStrings(value any) ([]string, bool) {
+	switch value := value.(type) {
+	case []string:
+		return value, true
+	case []any:
+		keys := make([]string, len(value))
+		for i, item := range value {
+			key, ok := item.(string)
+			if !ok {
+				return nil, false
+			}
+			keys[i] = key
+		}
+		return keys, true
+	default:
+		return nil, false
+	}
 }
 
 func (t *JsonbGinMaintainedTable) Inserter(ctx *sql.Context) sql.RowInserter {
@@ -415,4 +637,267 @@ func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGin
 
 func (e *jsonbGinMaintainingEditor) String() string {
 	return fmt.Sprintf("jsonbGinMaintainingEditor(%d)", len(e.postings))
+}
+
+type jsonbGinLookupIndex struct {
+	tableName string
+	lookup    jsonbGinLookupSpec
+}
+
+var _ sql.Index = (*jsonbGinLookupIndex)(nil)
+
+func (i *jsonbGinLookupIndex) ID() string {
+	return i.lookup.index.Name
+}
+
+func (i *jsonbGinLookupIndex) Database() string {
+	return ""
+}
+
+func (i *jsonbGinLookupIndex) Table() string {
+	return i.tableName
+}
+
+func (i *jsonbGinLookupIndex) Expressions() []string {
+	return []string{fmt.Sprintf("jsonb_gin(%s)", i.lookup.index.ColumnName)}
+}
+
+func (i *jsonbGinLookupIndex) IsUnique() bool {
+	return false
+}
+
+func (i *jsonbGinLookupIndex) IsSpatial() bool {
+	return false
+}
+
+func (i *jsonbGinLookupIndex) IsFullText() bool {
+	return false
+}
+
+func (i *jsonbGinLookupIndex) IsVector() bool {
+	return false
+}
+
+func (i *jsonbGinLookupIndex) Comment() string {
+	return ""
+}
+
+func (i *jsonbGinLookupIndex) IndexType() string {
+	return "GIN"
+}
+
+func (i *jsonbGinLookupIndex) IsGenerated() bool {
+	return true
+}
+
+func (i *jsonbGinLookupIndex) ColumnExpressionTypes(ctx *sql.Context) []sql.ColumnExpressionType {
+	return []sql.ColumnExpressionType{{
+		Type:       pgtypes.Text,
+		Expression: i.Expressions()[0],
+	}}
+}
+
+func (i *jsonbGinLookupIndex) CanSupport(ctx *sql.Context, ranges ...sql.Range) bool {
+	return true
+}
+
+func (i *jsonbGinLookupIndex) CanSupportOrderBy(expr sql.Expression) bool {
+	return false
+}
+
+func (i *jsonbGinLookupIndex) PrefixLengths() []uint16 {
+	return nil
+}
+
+type jsonbGinIndexedTable struct {
+	*JsonbGinMaintainedTable
+	lookup jsonbGinLookupSpec
+}
+
+var _ sql.IndexedTable = (*jsonbGinIndexedTable)(nil)
+
+func (t *jsonbGinIndexedTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
+	return t.LookupPartitions(ctx, sql.IndexLookup{})
+}
+
+func (t *jsonbGinIndexedTable) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
+	rowIDs, err := t.lookupPostingRowIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return sql.PartitionsToPartitionIter(jsonbGinLookupPartition{rowIDs: rowIDs}), nil
+}
+
+func (t *jsonbGinIndexedTable) PartitionRows(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	ginPartition, ok := partition.(jsonbGinLookupPartition)
+	if !ok {
+		return nil, errors.Errorf("unexpected JSONB GIN lookup partition %T", partition)
+	}
+	if len(ginPartition.rowIDs) == 0 {
+		return sql.RowsToRowIter(), nil
+	}
+	partitions, err := t.underlying.Partitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &jsonbGinCandidateRowIter{
+		table:       t.underlying,
+		tableParts:  partitions,
+		tableSchema: t.underlying.Schema(ctx),
+		rowIDs:      ginPartition.rowIDs,
+	}, nil
+}
+
+func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string]struct{}, error) {
+	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: t.lookup.index.PostingTable, Schema: t.schemaName})
+	if err != nil {
+		return nil, err
+	}
+	if postingTable == nil {
+		return nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, t.lookup.index.PostingTable, t.lookup.index.Name)
+	}
+	postingStore, err := t.readPostingStore(ctx, postingTable)
+	if err != nil {
+		return nil, err
+	}
+	var rows []string
+	switch t.lookup.mode {
+	case jsonbGinLookupUnion:
+		rows = postingStore.Union(t.lookup.tokens...)
+	case jsonbGinLookupIntersect:
+		rows = postingStore.Intersect(t.lookup.tokens...)
+	default:
+		return nil, errors.Errorf("unknown JSONB GIN lookup mode %q", t.lookup.mode)
+	}
+	rowIDs := make(map[string]struct{}, len(rows))
+	for _, rowID := range rows {
+		rowIDs[rowID] = struct{}{}
+	}
+	return rowIDs, nil
+}
+
+func (t *jsonbGinIndexedTable) readPostingStore(ctx *sql.Context, postingTable sql.Table) (*jsonbgin.PostingStore, error) {
+	store := jsonbgin.NewPostingStore()
+	partitions, err := postingTable.Partitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		rows, err := postingTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return nil, err
+		}
+		if err = readPostingRows(ctx, rows, store); err != nil {
+			_ = rows.Close(ctx)
+			return nil, err
+		}
+		if err = rows.Close(ctx); err != nil {
+			return nil, err
+		}
+	}
+	return store, nil
+}
+
+func readPostingRows(ctx *sql.Context, rows sql.RowIter, store *jsonbgin.PostingStore) error {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if len(row) < 2 || row[0] == nil || row[1] == nil {
+			continue
+		}
+		tokenText, ok := row[0].(string)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting token type %T", row[0])
+		}
+		rowID, ok := row[1].(string)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting row identity type %T", row[1])
+		}
+		token, err := jsonbgin.DecodeToken(tokenText)
+		if err != nil {
+			return err
+		}
+		if err = store.Add(rowID, []jsonbgin.Token{token}); err != nil {
+			return err
+		}
+	}
+}
+
+type jsonbGinLookupPartition struct {
+	rowIDs map[string]struct{}
+}
+
+func (p jsonbGinLookupPartition) Key() []byte {
+	return []byte("jsonb-gin-lookup")
+}
+
+type jsonbGinCandidateRowIter struct {
+	table       sql.Table
+	tableParts  sql.PartitionIter
+	currentRows sql.RowIter
+	tableSchema sql.Schema
+	rowIDs      map[string]struct{}
+}
+
+var _ sql.RowIter = (*jsonbGinCandidateRowIter)(nil)
+
+func (i *jsonbGinCandidateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	for {
+		if i.currentRows == nil {
+			partition, err := i.tableParts.Next(ctx)
+			if err == io.EOF {
+				_ = i.Close(ctx)
+				return nil, io.EOF
+			}
+			if err != nil {
+				return nil, err
+			}
+			i.currentRows, err = i.table.PartitionRows(ctx, partition)
+			if err != nil {
+				return nil, err
+			}
+		}
+		row, err := i.currentRows.Next(ctx)
+		if err == io.EOF {
+			if closeErr := i.currentRows.Close(ctx); closeErr != nil {
+				return nil, closeErr
+			}
+			i.currentRows = nil
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := i.rowIDs[rowIdentity(i.tableSchema, row)]; ok {
+			return row, nil
+		}
+	}
+}
+
+func (i *jsonbGinCandidateRowIter) Close(ctx *sql.Context) error {
+	var ret error
+	if i.currentRows != nil {
+		ret = i.currentRows.Close(ctx)
+		i.currentRows = nil
+	}
+	if i.tableParts != nil {
+		if err := i.tableParts.Close(ctx); ret == nil {
+			ret = err
+		}
+		i.tableParts = nil
+	}
+	return ret
 }

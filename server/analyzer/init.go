@@ -33,6 +33,7 @@ const (
 	ruleId_AddDomainConstraintsToCasts                                   // addDomainConstraintsToCasts
 	ruleId_ApplyTablesForAnalyzeAllTables                                // applyTablesForAnalyzeAllTables
 	ruleId_AssignInsertCasts                                             // assignInsertCasts
+	ruleId_AssignJsonbGinLookups                                         // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                     // assignJsonbGinMaintainers
 	ruleId_AssignTriggers                                                // assignTriggers
 	ruleId_AssignUpdateCasts                                             // assignUpdateCasts
@@ -97,6 +98,10 @@ func Init() {
 	// Remove all other validation rules that do not apply to Postgres
 	analyzer.DefaultValidationRules = removeAnalyzerRules(analyzer.DefaultValidationRules, analyzer.ValidateOperandsId)
 
+	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "optimizeJoins", true,
+		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
+	)
+
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
@@ -153,6 +158,34 @@ func insertAnalyzerRules(rules []analyzer.Rule, id analyzer.RuleId, before bool,
 	newRules := make([]analyzer.Rule, len(rules)+len(additionalRules))
 	for i, rule := range rules {
 		if rule.Id == id {
+			inserted = true
+			if before {
+				copy(newRules, rules[:i])
+				copy(newRules[i:], additionalRules)
+				copy(newRules[i+len(additionalRules):], rules[i:])
+			} else {
+				copy(newRules, rules[:i+1])
+				copy(newRules[i+1:], additionalRules)
+				copy(newRules[i+1+len(additionalRules):], rules[i+1:])
+			}
+			break
+		}
+	}
+
+	if !inserted {
+		panic("no rules were inserted")
+	}
+
+	return newRules
+}
+
+// insertAnalyzerRulesByName inserts rules relative to a GMS analyzer rule whose
+// ID is not exported by the dependency.
+func insertAnalyzerRulesByName(rules []analyzer.Rule, name string, before bool, additionalRules ...analyzer.Rule) []analyzer.Rule {
+	inserted := false
+	newRules := make([]analyzer.Rule, len(rules)+len(additionalRules))
+	for i, rule := range rules {
+		if rule.Id.String() == name {
 			inserted = true
 			if before {
 				copy(newRules, rules[:i])

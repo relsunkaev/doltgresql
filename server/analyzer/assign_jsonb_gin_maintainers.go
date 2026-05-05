@@ -82,6 +82,12 @@ func AssignJsonbGinMaintainers(ctx *sql.Context, a *analyzer.Analyzer, node sql.
 	})
 }
 
+// AssignJsonbGinLookups wraps resolved tables so SELECT planning can ask JSONB
+// GIN indexes for operator-specific posting-list lookups.
+func AssignJsonbGinLookups(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
+	return wrapJsonbGinSearchableTables(ctx, node)
+}
+
 func wrapJsonbGinMaintainedTables(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		resolvedTable, ok := node.(*plan.ResolvedTable)
@@ -93,6 +99,28 @@ func wrapJsonbGinMaintainedTables(ctx *sql.Context, node sql.Node) (sql.Node, tr
 			return nil, transform.NewTree, err
 		}
 		wrappedTable, wrapped, err := pgnodes.WrapJsonbGinMaintainedTable(ctx, schemaName, resolvedTable.Table)
+		if err != nil || !wrapped {
+			return node, transform.SameTree, err
+		}
+		newNode, err := resolvedTable.ReplaceTable(ctx, wrappedTable)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		return newNode.(sql.Node), transform.NewTree, nil
+	})
+}
+
+func wrapJsonbGinSearchableTables(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		resolvedTable, ok := node.(*plan.ResolvedTable)
+		if !ok {
+			return node, transform.SameTree, nil
+		}
+		schemaName, err := schemaNameForTable(ctx, resolvedTable.Table)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		wrappedTable, wrapped, err := pgnodes.WrapJsonbGinSearchableTable(ctx, schemaName, resolvedTable.Table)
 		if err != nil || !wrapped {
 			return node, transform.SameTree, err
 		}
