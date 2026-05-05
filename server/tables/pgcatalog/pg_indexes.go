@@ -15,9 +15,7 @@
 package pgcatalog
 
 import (
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -104,40 +102,8 @@ func (iter *pgIndexesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		iter.indexes.tableNames[index.tableOid], // tablename
 		formatIndexName(index.index),            // indexname
 		"",                                      // tablespace
-		getIndexDef(index.index, index.schemaName), // indexdef
+		indexmetadata.Definition(index.index, index.schemaName), // indexdef
 	}, nil
-}
-
-// formatIndexName returns the definition of the index.
-func getIndexDef(index sql.Index, schema string) string {
-	name := formatIndexName(index)
-	using := indexmetadata.AccessMethod(index.IndexType(), index.Comment())
-	unique := ""
-	if index.IsUnique() {
-		unique = " UNIQUE"
-	}
-
-	opClasses := indexmetadata.OpClasses(index.Comment())
-	cols := indexmetadata.Columns(index.Comment())
-	if len(cols) == 0 {
-		cols = make([]string, len(index.Expressions()))
-		for i, expr := range index.Expressions() {
-			split := strings.Split(expr, ".")
-			if len(split) > 1 {
-				cols[i] = split[1]
-			} else {
-				cols[i] = expr
-			}
-		}
-	}
-	for i := range cols {
-		if i < len(opClasses) && opClasses[i] != "" {
-			cols[i] += " " + opClasses[i]
-		}
-	}
-	colsStr := strings.Join(cols, ", ")
-
-	return fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)", unique, name, schema, index.Table(), using, colsStr)
 }
 
 // Close implements the interface sql.RowIter.

@@ -15,12 +15,11 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -39,16 +38,17 @@ var pg_get_indexdef_oid = framework.Function1{
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		oidVal := val.(id.Id)
+		var indexDef any
 		err := RunCallback(ctx, oidVal, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				// TODO: make `create index` statement
+				indexDef = indexmetadata.Definition(index.Item, schema.Item.SchemaName())
 				return false, nil
 			},
 		})
 		if err != nil {
 			return "", err
 		}
-		return "", nil
+		return indexDef, nil
 	},
 }
 
@@ -62,23 +62,26 @@ var pg_get_indexdef_oid_integer_bool = framework.Function3{
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		oidVal := val1.(id.Id)
 		colNo := val2.(int32)
-		pretty := val3.(bool)
-		if pretty {
-			return "", errors.Errorf("pretty printing is not yet supported")
-		}
+		_ = val3.(bool)
+		var indexDef any
 		err := RunCallback(ctx, oidVal, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				exprs := index.Item.Expressions()
-				if int(colNo) >= len(exprs) {
-					return false, errors.Errorf("column not found")
+				if colNo == 0 {
+					indexDef = indexmetadata.Definition(index.Item, schema.Item.SchemaName())
+					return false, nil
 				}
-				// TODO: make `create index` statement
+				cols := indexmetadata.ColumnDefinitions(index.Item)
+				if colNo < 1 || int(colNo) > len(cols) {
+					indexDef = nil
+					return false, nil
+				}
+				indexDef = cols[colNo-1]
 				return false, nil
 			},
 		})
 		if err != nil {
 			return "", err
 		}
-		return "", nil
+		return indexDef, nil
 	},
 }

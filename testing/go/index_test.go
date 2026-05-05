@@ -1131,6 +1131,20 @@ ORDER BY indexname;`,
 					},
 				},
 				{
+					Query: `SELECT c.relname,
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 0, true),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false)
+FROM pg_catalog.pg_class c
+WHERE c.relname IN ('jsonb_gin_idx_pkey', 'jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"jsonb_gin_idx_pkey", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)", "CREATE UNIQUE INDEX jsonb_gin_idx_pkey ON public.jsonb_gin_idx USING btree (id)", "id"},
+						{"jsonb_gin_ops_idx", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)", "CREATE INDEX jsonb_gin_ops_idx ON public.jsonb_gin_idx USING gin (doc jsonb_ops)", "doc jsonb_ops"},
+						{"jsonb_gin_path_idx", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)", "CREATE INDEX jsonb_gin_path_idx ON public.jsonb_gin_idx USING gin (doc jsonb_path_ops)", "doc jsonb_path_ops"},
+					},
+				},
+				{
 					Query: `SELECT c.relname, i.indclass
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
