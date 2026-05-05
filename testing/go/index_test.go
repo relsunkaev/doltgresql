@@ -1100,6 +1100,18 @@ func TestBasicIndexing(t *testing.T) {
 					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE pg_default;",
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
+				{
+					Query:       "ALTER INDEX v1_idx_storage SET (fillfactor = 80);",
+					ExpectedErr: "ALTER INDEX is not yet supported",
+				},
+				{
+					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE pg_default;",
+					ExpectedErr: "ALTER INDEX is not yet supported",
+				},
+				{
+					Query:       "ALTER INDEX v1_idx_storage ALTER COLUMN 1 SET STATISTICS 100;",
+					ExpectedErr: "ALTER INDEX is not yet supported",
+				},
 			},
 		},
 		{

@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -26,6 +27,5 @@ func nodeAlterIndex(ctx *Context, node *tree.AlterIndex) (vitess.Statement, erro
 		return nil, nil
 	}
 
-	// Only PARTITION alterations are supported by the parser, so there's nothing to convert to yet
-	return NotYetSupportedError("ALTER INDEX is not yet supported")
+	return nil, errors.Errorf("ALTER INDEX is not yet supported")
 }
