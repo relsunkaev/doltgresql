@@ -1363,6 +1363,21 @@ ORDER BY idx.relname;`,
 						{"unique_index_constraint_boundary_pkey", "t"},
 					},
 				},
+				{
+					Query:       "ALTER TABLE unique_index_constraint_boundary DROP CONSTRAINT unique_index_constraint_boundary_email_idx;",
+					ExpectedErr: `Constraint "unique_index_constraint_boundary_email_idx" does not exist`,
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_index_constraint_boundary'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_index_constraint_boundary_code_key"},
+						{"unique_index_constraint_boundary_email_idx"},
+						{"unique_index_constraint_boundary_pkey"},
+					},
+				},
 			},
 		},
 		{

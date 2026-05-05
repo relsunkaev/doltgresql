@@ -53,6 +53,7 @@ const (
 	ruleId_ValidateCreateFunction                                        // validateCreateFunction
 	ruleId_ResolveValuesTypes                                            // resolveValuesTypes
 	ruleId_ResolveProcedureDefaults                                      // resolveProcedureDefaults
+	ruleId_ValidateDropConstraintOwnership                               // validateDropConstraintOwnership
 	ruleId_ValidateOnConflictArbiter                                     // validateOnConflictArbiter
 )
 
@@ -62,6 +63,7 @@ func Init() {
 	analyzer.OnceBeforeDefault = append([]analyzer.Rule{
 		{Id: ruleId_ResolveType, Apply: ResolveType}, // ResolveType rule must run before simplifyFilters rule in GMS
 		{Id: ruleId_ApplyTablesForAnalyzeAllTables, Apply: applyTablesForAnalyzeAllTables},
+		{Id: ruleId_ValidateDropConstraintOwnership, Apply: validateDropConstraintOwnership},
 		{Id: ruleId_ConvertDropPrimaryKeyConstraint, Apply: convertDropPrimaryKeyConstraint}},
 		analyzer.OnceBeforeDefault...)
 
