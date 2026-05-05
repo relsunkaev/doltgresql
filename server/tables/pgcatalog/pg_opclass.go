@@ -97,7 +97,7 @@ func (iter *pgOpclassRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		opclass.family,    // opcfamily
 		opclass.intype,    // opcintype
 		opclass.isDefault, // opcdefault
-		id.Null,           // opckeytype
+		opclass.keytype,   // opckeytype
 	}, nil
 }
 
@@ -113,22 +113,24 @@ type opclass struct {
 	namespace id.Id
 	family    id.Id
 	intype    id.Id
+	keytype   id.Id
 	isDefault bool
 }
 
 var defaultPostgresOpclasses = []opclass{
-	newJsonbGinOpclass(indexmetadata.OpClassJsonbOps, true),
-	newJsonbGinOpclass(indexmetadata.OpClassJsonbPathOps, false),
+	newJsonbGinOpclass(indexmetadata.OpClassJsonbOps, pgCatalogTypeID("text"), true),
+	newJsonbGinOpclass(indexmetadata.OpClassJsonbPathOps, pgCatalogTypeID("int4"), false),
 }
 
-func newJsonbGinOpclass(name string, isDefault bool) opclass {
+func newJsonbGinOpclass(name string, keytype id.Id, isDefault bool) opclass {
 	return opclass{
 		oid:       id.NewId(id.Section_OperatorClass, name),
 		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
 		opcname:   name,
-		namespace: id.NewNamespace("pg_catalog").AsId(),
-		family:    id.NewId(id.Section_OperatorFamily, name),
-		intype:    id.NewType("pg_catalog", "jsonb").AsId(),
+		namespace: pgCatalogNamespaceID(),
+		family:    jsonbGinOpfamilyID(name),
+		intype:    pgCatalogTypeID("jsonb"),
+		keytype:   keytype,
 		isDefault: isDefault,
 	}
 }

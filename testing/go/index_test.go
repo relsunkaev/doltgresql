@@ -1213,6 +1213,87 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 			},
 		},
 		{
+			Name: "PostgreSQL jsonb gin sidecar transaction rollback",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_txn (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_txn VALUES
+						(1, '{"a":1,"tags":["x","x"]}');`,
+				"CREATE INDEX jsonb_gin_txn_idx ON jsonb_gin_txn USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "BEGIN;",
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_txn VALUES
+							(2, '{"a":2,"tags":["y","y"]}');`,
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
+					Expected: []sql.Row{{8, 2}},
+				},
+				{
+					Query: "ROLLBACK;",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
+					Expected: []sql.Row{{4, 1}},
+				},
+				{
+					Query: "BEGIN;",
+				},
+				{
+					Query: `UPDATE jsonb_gin_txn
+	SET doc = '{"a":3,"tags":["z"]}'
+	WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT token, COUNT(*)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings
+	WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
+	GROUP BY token
+	ORDER BY token;`,
+					Expected: []sql.Row{
+						{"9:jsonb_ops3:key1:01:z", 1},
+					},
+				},
+				{
+					Query: "ROLLBACK;",
+				},
+				{
+					Query: `SELECT token, COUNT(*)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings
+	WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
+	GROUP BY token
+	ORDER BY token;`,
+					Expected: []sql.Row{
+						{"9:jsonb_ops3:key1:01:x", 1},
+					},
+				},
+				{
+					Query: "BEGIN;",
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_txn WHERE id = 1;",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
+					Expected: []sql.Row{{0, 0}},
+				},
+				{
+					Query: "ROLLBACK;",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
+					Expected: []sql.Row{{4, 1}},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL jsonb gin sidecar DDL lifecycle",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_gin_lifecycle (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
@@ -1255,10 +1336,11 @@ FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_gin_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
 				`INSERT INTO jsonb_gin_lookup VALUES
-					(1, '{"a":1,"b":2,"tags":["x"],"nested":{"a":9}}'),
-					(2, '{"a":1,"b":3,"tags":["y"]}'),
-					(3, '{"a":2,"b":2,"tags":["x"]}'),
-					(4, '{"nested":{"a":1},"tags":["z"]}');`,
+						(1, '{"a":1,"b":2,"tags":["x"],"nested":{"a":9}}'),
+						(2, '{"a":1,"b":3,"tags":["y"]}'),
+						(3, '{"a":2,"b":2,"tags":["x"]}'),
+						(4, '{"nested":{"a":1},"tags":["z"]}'),
+						(5, '{"a":null,"tags":["x"]}');`,
 				"CREATE INDEX jsonb_gin_lookup_idx ON jsonb_gin_lookup USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
@@ -1285,21 +1367,27 @@ ORDER BY id;`,
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
-WHERE doc ? 'a'
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+	WHERE doc @> '{"a":null}'
+	ORDER BY id;`,
+					Expected: []sql.Row{{5}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
-WHERE doc ?| ARRAY['missing','a']
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+	WHERE doc ? 'a'
+	ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
 				},
 				{
 					Query: `SELECT id FROM jsonb_gin_lookup
-WHERE doc ?& ARRAY['a','tags']
-ORDER BY id;`,
-					Expected: []sql.Row{{1}, {2}, {3}},
+	WHERE doc ?| ARRAY['missing','a']
+	ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_lookup
+	WHERE doc ?& ARRAY['a','tags']
+	ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
 				},
 			},
 		},

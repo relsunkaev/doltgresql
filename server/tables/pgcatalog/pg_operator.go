@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,10 @@ func (p PgOperatorHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOperatorHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_operator row iter
-	return emptyRowIter()
+	return &pgOperatorRowIter{
+		operators: defaultPostgresOperators,
+		idx:       0,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -76,16 +79,76 @@ var pgOperatorSchema = sql.Schema{
 
 // pgOperatorRowIter is the sql.RowIter for the pg_operator table.
 type pgOperatorRowIter struct {
+	operators []pgOperator
+	idx       int
 }
 
 var _ sql.RowIter = (*pgOperatorRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgOperatorRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.operators) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	operator := iter.operators[iter.idx-1]
+
+	return sql.Row{
+		operator.oid,        // oid
+		operator.name,       // oprname
+		operator.namespace,  // oprnamespace
+		id.Null,             // oprowner
+		"b",                 // oprkind
+		false,               // oprcanmerge
+		false,               // oprcanhash
+		operator.leftType,   // oprleft
+		operator.rightType,  // oprright
+		operator.result,     // oprresult
+		operator.commutator, // oprcom
+		zeroOID(),           // oprnegate
+		operator.code,       // oprcode
+		operator.restrict,   // oprrest
+		operator.join,       // oprjoin
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgOperatorRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type pgOperator struct {
+	oid        id.Id
+	name       string
+	namespace  id.Id
+	leftType   id.Id
+	rightType  id.Id
+	result     id.Id
+	commutator id.Id
+	code       id.Id
+	restrict   id.Id
+	join       id.Id
+}
+
+var defaultPostgresOperators = []pgOperator{
+	newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
+	newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
+	newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
+	newJsonbOperator("?|", "jsonb", "_text", "jsonb_exists_any", zeroOID()),
+	newJsonbOperator("?&", "jsonb", "_text", "jsonb_exists_all", zeroOID()),
+}
+
+func newJsonbOperator(name string, leftType string, rightType string, function string, commutator id.Id) pgOperator {
+	return pgOperator{
+		oid:        jsonbOperatorID(name, leftType, rightType),
+		name:       name,
+		namespace:  pgCatalogNamespaceID(),
+		leftType:   pgCatalogTypeID(leftType),
+		rightType:  pgCatalogTypeID(rightType),
+		result:     pgCatalogTypeID("bool"),
+		commutator: commutator,
+		code:       pgCatalogFunctionID(function, pgCatalogType(leftType), pgCatalogType(rightType)),
+		restrict:   pgCatalogFunctionID("matchingsel"),
+		join:       pgCatalogFunctionID("matchingjoinsel"),
+	}
 }

@@ -72,8 +72,18 @@ func TestPgAmop(t *testing.T) {
 			Name: "pg_amop",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_amop";`,
-					Expected: []sql.Row{},
+					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
+FROM "pg_catalog"."pg_amop" amop
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
+ORDER BY opf.opfname, amop.amopstrategy;`,
+					Expected: []sql.Row{
+						{"jsonb_ops", 7, "@>"},
+						{"jsonb_ops", 9, "?"},
+						{"jsonb_ops", 10, "?|"},
+						{"jsonb_ops", 11, "?&"},
+						{"jsonb_path_ops", 7, "@>"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_amop";`,
@@ -84,8 +94,8 @@ func TestPgAmop(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_AMOP ORDER BY oid;",
-					Expected: []sql.Row{},
+					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
+					Expected: []sql.Row{{5}},
 				},
 			},
 		},
@@ -98,8 +108,22 @@ func TestPgAmproc(t *testing.T) {
 			Name: "pg_amproc",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_amproc";`,
-					Expected: []sql.Row{},
+					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+ORDER BY opf.opfname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"jsonb_ops", 1, "gin_compare_jsonb"},
+						{"jsonb_ops", 2, "gin_extract_jsonb"},
+						{"jsonb_ops", 3, "gin_extract_jsonb_query"},
+						{"jsonb_ops", 4, "gin_consistent_jsonb"},
+						{"jsonb_ops", 6, "gin_triconsistent_jsonb"},
+						{"jsonb_path_ops", 1, "btint4cmp"},
+						{"jsonb_path_ops", 2, "gin_extract_jsonb_path"},
+						{"jsonb_path_ops", 3, "gin_extract_jsonb_query_path"},
+						{"jsonb_path_ops", 4, "gin_consistent_jsonb_path"},
+						{"jsonb_path_ops", 6, "gin_triconsistent_jsonb_path"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_amproc";`,
@@ -110,8 +134,8 @@ func TestPgAmproc(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oid FROM PG_catalog.pg_AMPROC ORDER BY oid;",
-					Expected: []sql.Row{},
+					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
+					Expected: []sql.Row{{10}},
 				},
 			},
 		},
@@ -2220,14 +2244,15 @@ func TestPgOpclass(t *testing.T) {
 			Name: "pg_opclass",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT opc.opcname, am.amname, opc.opcdefault
+					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, typ.typname
 FROM "pg_catalog"."pg_opclass" opc
 JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
+JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opckeytype
 WHERE opc.opcname LIKE 'jsonb_%'
 ORDER BY opc.opcname;`,
 					Expected: []sql.Row{
-						{"jsonb_ops", "gin", "t"},
-						{"jsonb_path_ops", "gin", "f"},
+						{"jsonb_ops", "gin", "t", "text"},
+						{"jsonb_path_ops", "gin", "f", "int4"},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -2256,8 +2281,25 @@ func TestPgOperator(t *testing.T) {
 			Name: "pg_operator",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_operator";`,
-					Expected: []sql.Row{},
+					Query: `SELECT o.oprname, lt.typname, rt.typname
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE o.oprname IN ('@>', '<@', '?', '?|', '?&')
+ORDER BY CASE o.oprname
+	WHEN '@>' THEN 1
+	WHEN '<@' THEN 2
+	WHEN '?' THEN 3
+	WHEN '?|' THEN 4
+	WHEN '?&' THEN 5
+END;`,
+					Expected: []sql.Row{
+						{"@>", "jsonb", "jsonb"},
+						{"<@", "jsonb", "jsonb"},
+						{"?", "jsonb", "text"},
+						{"?|", "jsonb", "_text"},
+						{"?&", "jsonb", "_text"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_operator";`,
@@ -2268,8 +2310,8 @@ func TestPgOperator(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT oprname FROM PG_catalog.pg_OPERATOR ORDER BY oprname;",
-					Expected: []sql.Row{},
+					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
+					Expected: []sql.Row{{5}},
 				},
 			},
 		},
@@ -2282,8 +2324,14 @@ func TestPgOpfamily(t *testing.T) {
 			Name: "pg_opfamily",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_opfamily";`,
-					Expected: []sql.Row{},
+					Query: `SELECT opf.opfname, am.amname
+FROM "pg_catalog"."pg_opfamily" opf
+JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
+ORDER BY opf.opfname;`,
+					Expected: []sql.Row{
+						{"jsonb_ops", "gin"},
+						{"jsonb_path_ops", "gin"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_opfamily";`,
@@ -2295,7 +2343,7 @@ func TestPgOpfamily(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT opfname FROM PG_catalog.pg_OPFAMILY ORDER BY opfname;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"jsonb_ops"}, {"jsonb_path_ops"}},
 				},
 			},
 		},

@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,10 @@ func (p PgAmopHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAmopHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_amop row iter
-	return emptyRowIter()
+	return &pgAmopRowIter{
+		amops: defaultPostgresAmops,
+		idx:   0,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -70,16 +74,64 @@ var pgAmopSchema = sql.Schema{
 
 // pgAmopRowIter is the sql.RowIter for the pg_amop table.
 type pgAmopRowIter struct {
+	amops []amop
+	idx   int
 }
 
 var _ sql.RowIter = (*pgAmopRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgAmopRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.amops) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	amop := iter.amops[iter.idx-1]
+
+	return sql.Row{
+		amop.oid,       // oid
+		amop.family,    // amopfamily
+		amop.leftType,  // amoplefttype
+		amop.rightType, // amoprighttype
+		amop.strategy,  // amopstrategy
+		"s",            // amoppurpose
+		amop.operator,  // amopopr
+		amop.method,    // amopmethod
+		zeroOID(),      // amopsortfamily
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgAmopRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type amop struct {
+	oid       id.Id
+	family    id.Id
+	leftType  id.Id
+	rightType id.Id
+	strategy  int16
+	operator  id.Id
+	method    id.Id
+}
+
+var defaultPostgresAmops = []amop{
+	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@>", "jsonb", int16(7)),
+	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
+	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?|", "_text", int16(10)),
+	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?&", "_text", int16(11)),
+	newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
+}
+
+func newJsonbGinAmop(opclass string, operator string, rightType string, strategy int16) amop {
+	return amop{
+		oid:       jsonbGinAmopID(opclass, strategy),
+		family:    jsonbGinOpfamilyID(opclass),
+		leftType:  pgCatalogTypeID("jsonb"),
+		rightType: pgCatalogTypeID(rightType),
+		strategy:  strategy,
+		operator:  jsonbOperatorID(operator, "jsonb", rightType),
+		method:    id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
+	}
 }

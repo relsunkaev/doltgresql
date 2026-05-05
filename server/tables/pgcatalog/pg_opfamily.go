@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,10 @@ func (p PgOpfamilyHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOpfamilyHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_opfamily row iter
-	return emptyRowIter()
+	return &pgOpfamilyRowIter{
+		opfamilies: defaultPostgresOpfamilies,
+		idx:        0,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,16 +70,51 @@ var pgOpfamilySchema = sql.Schema{
 
 // pgOpfamilyRowIter is the sql.RowIter for the pg_opfamily table.
 type pgOpfamilyRowIter struct {
+	opfamilies []opfamily
+	idx        int
 }
 
 var _ sql.RowIter = (*pgOpfamilyRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgOpfamilyRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.opfamilies) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	opfamily := iter.opfamilies[iter.idx-1]
+
+	return sql.Row{
+		opfamily.oid,       // oid
+		opfamily.opfmethod, // opfmethod
+		opfamily.opfname,   // opfname
+		opfamily.namespace, // opfnamespace
+		id.Null,            // opfowner
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgOpfamilyRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type opfamily struct {
+	oid       id.Id
+	opfmethod id.Id
+	opfname   string
+	namespace id.Id
+}
+
+var defaultPostgresOpfamilies = []opfamily{
+	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),
+	newJsonbGinOpfamily(indexmetadata.OpClassJsonbPathOps),
+}
+
+func newJsonbGinOpfamily(name string) opfamily {
+	return opfamily{
+		oid:       jsonbGinOpfamilyID(name),
+		opfmethod: id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
+		opfname:   name,
+		namespace: pgCatalogNamespaceID(),
+	}
 }

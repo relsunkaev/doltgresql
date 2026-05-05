@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,10 @@ func (p PgAmprocHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAmprocHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_amproc row iter
-	return emptyRowIter()
+	return &pgAmprocRowIter{
+		amprocs: defaultPostgresAmprocs,
+		idx:     0,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -67,16 +71,64 @@ var pgAmprocSchema = sql.Schema{
 
 // pgAmprocRowIter is the sql.RowIter for the pg_amproc table.
 type pgAmprocRowIter struct {
+	amprocs []amproc
+	idx     int
 }
 
 var _ sql.RowIter = (*pgAmprocRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgAmprocRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.amprocs) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	amproc := iter.amprocs[iter.idx-1]
+
+	return sql.Row{
+		amproc.oid,       // oid
+		amproc.family,    // amprocfamily
+		amproc.leftType,  // amproclefttype
+		amproc.rightType, // amprocrighttype
+		amproc.procNum,   // amprocnum
+		amproc.proc,      // amproc
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgAmprocRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type amproc struct {
+	oid       id.Id
+	family    id.Id
+	leftType  id.Id
+	rightType id.Id
+	procNum   int16
+	proc      string
+}
+
+var defaultPostgresAmprocs = []amproc{
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(1), "gin_compare_jsonb"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(2), "gin_extract_jsonb"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(3), "gin_extract_jsonb_query"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(4), "gin_consistent_jsonb"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(6), "gin_triconsistent_jsonb"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(1), "btint4cmp"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(2), "gin_extract_jsonb_path"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(3), "gin_extract_jsonb_query_path"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(4), "gin_consistent_jsonb_path"),
+	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(6), "gin_triconsistent_jsonb_path"),
+}
+
+func newJsonbGinAmproc(opclass string, procNum int16, proc string) amproc {
+	return amproc{
+		oid:       jsonbGinAmprocID(opclass, procNum),
+		family:    jsonbGinOpfamilyID(opclass),
+		leftType:  pgCatalogTypeID("jsonb"),
+		rightType: pgCatalogTypeID("jsonb"),
+		procNum:   procNum,
+		proc:      proc,
+	}
 }
