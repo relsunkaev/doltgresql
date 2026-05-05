@@ -201,13 +201,6 @@ var pgIndexSchema = sql.Schema{
 	{Name: "indpred", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgIndexName},  // TODO: type pg_node_tree, collation C
 }
 
-func extractColName(expr string) string {
-	// TODO: this breaks for column names that contain a `.`, but this is a problem that happens
-	//  throughout index analysis in the engine
-	lastDot := strings.LastIndex(expr, ".")
-	return expr[lastDot+1:]
-}
-
 // pgIndex represents a row in the pg_index table.
 // We store oids in their native format as well so that we can do range scans on them.
 type pgIndex struct {
@@ -224,6 +217,8 @@ type pgIndex struct {
 	indkey         []any
 	indcollation   []any
 	indclass       []any
+	indexprs       any
+	indexdef       string
 }
 
 // lessIndexOid is a sort function for pgIndex based on indexrelid.
@@ -291,7 +286,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		indcollation,           // indcollation
 		indclass,               // indclass
 		indoption,              // indoption
-		nil,                    // indexprs
+		index.indexprs,         // indexprs
 		nil,                    // indpred
 	}
 }
@@ -315,16 +310,21 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			}
 
 			s := tableSchemas[table.OID.AsId()]
-			indexColumns := indexmetadata.Columns(index.Item.Comment())
-			if len(indexColumns) == 0 {
-				indexColumns = make([]string, len(index.Item.Expressions()))
-				for i, expr := range index.Item.Expressions() {
-					indexColumns[i] = extractColName(expr)
+			logicalColumns := indexmetadata.LogicalColumns(index.Item, s)
+			indexColumns := make([]string, len(logicalColumns))
+			indKey := make([]any, len(logicalColumns))
+			for i, col := range logicalColumns {
+				indexColumns[i] = col.StorageName
+				if col.Expression {
+					indKey[i] = int16(0)
+					continue
 				}
+				indKey[i] = int16(s.IndexOfColName(col.StorageName)) + 1
 			}
-			indKey := make([]any, len(indexColumns))
-			for i, colName := range indexColumns {
-				indKey[i] = int16(s.IndexOfColName(colName)) + 1
+			indexExpressions := indexmetadata.ExpressionDefinitions(index.Item, s)
+			var indexprs any
+			if len(indexExpressions) > 0 {
+				indexprs = strings.Join(indexExpressions, ", ")
 			}
 			indClass := indexOpClassIds(index.Item, s, indexColumns)
 			indCollation := indexCollationIds(index.Item, s, indexColumns)
@@ -342,6 +342,8 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
 				indcollation:   indCollation,
 				indclass:       indClass,
+				indexprs:       indexprs,
+				indexdef:       indexmetadata.DefinitionForSchema(index.Item, schema.Item.SchemaName(), s),
 			}
 			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
 			pgIdx.indisreplident = replicaIdent.Identity == replicaidentity.IdentityUsingIndex &&

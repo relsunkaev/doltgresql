@@ -2044,6 +2044,19 @@ ORDER BY id;`,
 					Expected: []sql.Row{},
 				},
 				{
+					Query: `SELECT i.indkey,
+	i.indexprs,
+	pg_catalog.pg_get_expr(i.indexprs, i.indrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 1, true)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'idx_items_title_lower';`,
+					Expected: []sql.Row{
+						{"0", "lower(title)", "lower(title)", "CREATE UNIQUE INDEX idx_items_title_lower ON public.items USING btree (lower(title))", "lower(title)"},
+					},
+				},
+				{
 					Query:    "INSERT INTO items (title, metadata, updated_at) VALUES ('ABC', '{}', '2026-10-10 01:02:03');",
 					Expected: []sql.Row{},
 				},

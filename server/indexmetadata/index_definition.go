@@ -17,6 +17,7 @@ package indexmetadata
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -38,6 +39,12 @@ func DisplayName(idx sql.Index) string {
 
 // Definition returns a PostgreSQL CREATE INDEX definition for index.
 func Definition(index sql.Index, schema string) string {
+	return DefinitionForSchema(index, schema, nil)
+}
+
+// DefinitionForSchema returns a PostgreSQL CREATE INDEX definition for index,
+// using tableSchema to deparse hidden functional-index columns when available.
+func DefinitionForSchema(index sql.Index, schema string, tableSchema sql.Schema) string {
 	unique := ""
 	if index.IsUnique() {
 		unique = " UNIQUE"
@@ -48,20 +55,71 @@ func Definition(index sql.Index, schema string) string {
 		schema,
 		index.Table(),
 		AccessMethod(index.IndexType(), index.Comment()),
-		strings.Join(ColumnDefinitions(index), ", "),
+		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
+}
+
+// LogicalColumn describes the PostgreSQL-facing indexed column or expression
+// alongside the physical schema column that backs it, when one exists.
+type LogicalColumn struct {
+	Definition  string
+	StorageName string
+	Expression  bool
+}
+
+// LogicalColumns returns PostgreSQL-facing indexed columns or expressions.
+func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
+	cols := Columns(index.Comment())
+	if len(cols) > 0 {
+		logical := make([]LogicalColumn, len(cols))
+		for i, col := range cols {
+			logical[i] = LogicalColumn{
+				Definition:  col,
+				StorageName: col,
+			}
+		}
+		return logical
+	}
+
+	exprs := index.Expressions()
+	logical := make([]LogicalColumn, len(exprs))
+	for i, expr := range exprs {
+		definition := unqualifiedIndexExpression(expr)
+		storageName := definition
+		if col, ok := schemaColumn(tableSchema, definition); ok {
+			storageName = col.Name
+			if col.HiddenSystem && col.Generated != nil && col.Generated.Expr != nil {
+				definition = unqualifiedIndexExpression(col.Generated.Expr.String())
+				logical[i] = LogicalColumn{
+					Definition:  definition,
+					StorageName: storageName,
+					Expression:  true,
+				}
+				continue
+			}
+		}
+		logical[i] = LogicalColumn{
+			Definition:  definition,
+			StorageName: storageName,
+			Expression:  schemaIndexOfColName(tableSchema, definition) < 0,
+		}
+	}
+	return logical
 }
 
 // ColumnDefinitions returns PostgreSQL-facing indexed column definitions,
 // including any opclass metadata preserved by Doltgres.
 func ColumnDefinitions(index sql.Index) []string {
-	cols := Columns(index.Comment())
-	if len(cols) == 0 {
-		exprs := index.Expressions()
-		cols = make([]string, len(exprs))
-		for i, expr := range exprs {
-			cols[i] = unqualifiedIndexExpression(expr)
-		}
+	return ColumnDefinitionsForSchema(index, nil)
+}
+
+// ColumnDefinitionsForSchema returns PostgreSQL-facing indexed column
+// definitions, including any opclass metadata preserved by Doltgres.
+func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []string {
+	logicalColumns := LogicalColumns(index, tableSchema)
+	cols := make([]string, len(logicalColumns))
+	for i, col := range logicalColumns {
+		cols[i] = col.Definition
 	}
 
 	collations := Collations(index.Comment())
@@ -83,11 +141,104 @@ func ColumnDefinitions(index sql.Index) []string {
 	return cols
 }
 
-func unqualifiedIndexExpression(expr string) string {
-	if lastDot := strings.LastIndex(expr, "."); lastDot >= 0 {
-		expr = expr[lastDot+1:]
+// ExpressionDefinitions returns the expressions stored in pg_index.indexprs.
+func ExpressionDefinitions(index sql.Index, tableSchema sql.Schema) []string {
+	logicalColumns := LogicalColumns(index, tableSchema)
+	exprs := make([]string, 0, len(logicalColumns))
+	for _, col := range logicalColumns {
+		if col.Expression {
+			exprs = append(exprs, col.Definition)
+		}
 	}
-	return strings.Trim(expr, "`\"")
+	return exprs
+}
+
+func unqualifiedIndexExpression(expr string) string {
+	expr = strings.TrimSpace(expr)
+	expr = strings.ReplaceAll(expr, "`", "")
+	expr = strings.ReplaceAll(expr, `"`, "")
+
+	var builder strings.Builder
+	for i := 0; i < len(expr); {
+		if !isIdentifierStart(rune(expr[i])) {
+			builder.WriteByte(expr[i])
+			i++
+			continue
+		}
+
+		start := i
+		i = scanIdentifier(expr, i)
+		lastStart := start
+		lastEnd := i
+		for i < len(expr) && expr[i] == '.' {
+			nextStart := i + 1
+			if nextStart >= len(expr) || !isIdentifierStart(rune(expr[nextStart])) {
+				break
+			}
+			i = scanIdentifier(expr, nextStart)
+			lastStart = nextStart
+			lastEnd = i
+		}
+		builder.WriteString(expr[lastStart:lastEnd])
+	}
+	return trimEnclosingParens(builder.String())
+}
+
+func schemaColumn(schema sql.Schema, name string) (*sql.Column, bool) {
+	idx := schemaIndexOfColName(schema, name)
+	if idx < 0 {
+		return nil, false
+	}
+	return schema[idx], true
+}
+
+func schemaIndexOfColName(schema sql.Schema, name string) int {
+	if schema == nil {
+		return -1
+	}
+	return schema.IndexOfColName(name)
+}
+
+func scanIdentifier(expr string, start int) int {
+	i := start
+	for i < len(expr) && isIdentifierPart(rune(expr[i])) {
+		i++
+	}
+	return i
+}
+
+func isIdentifierStart(ch rune) bool {
+	return ch == '_' || ch == '!' || unicode.IsLetter(ch)
+}
+
+func isIdentifierPart(ch rune) bool {
+	return isIdentifierStart(ch) || unicode.IsDigit(ch)
+}
+
+func trimEnclosingParens(expr string) string {
+	expr = strings.TrimSpace(expr)
+	if len(expr) < 2 || expr[0] != '(' || expr[len(expr)-1] != ')' {
+		return expr
+	}
+	depth := 0
+	for i, ch := range expr {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth < 0 {
+				return expr
+			}
+			if depth == 0 && i < len(expr)-1 {
+				return expr
+			}
+		}
+	}
+	if depth != 0 {
+		return expr
+	}
+	return strings.TrimSpace(expr[1 : len(expr)-1])
 }
 
 func columnOptionDefinition(option IndexColumnOption) string {

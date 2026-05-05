@@ -15,8 +15,6 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -36,8 +34,9 @@ var pg_get_expr_pgnodetree_oid = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Oid}, // TODO: First parameter should be pg_node_tree
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		// TODO: Implement this when the pg_node_tree type exists
-		return nil, errors.Errorf("pg_get_expr is not yet supported")
+		// Until pg_node_tree exists, catalogs that can preserve expression text
+		// store that text directly in their pg_node_tree-shaped columns.
+		return val1, nil
 	},
 }
 
@@ -48,7 +47,8 @@ var pg_get_expr_pgnodetree_oid_bool = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Oid, pgtypes.Bool}, // TODO: First parameter should be pg_node_tree
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
-		// TODO: Implement this when the pg_node_tree type exists
-		return nil, errors.Errorf("pg_get_expr is not yet supported")
+		// Until pg_node_tree exists, catalogs that can preserve expression text
+		// store that text directly in their pg_node_tree-shaped columns.
+		return val1, nil
 	},
 }

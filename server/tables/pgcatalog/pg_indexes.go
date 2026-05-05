@@ -19,7 +19,6 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
-	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -102,7 +101,7 @@ func (iter *pgIndexesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		iter.indexes.tableNames[index.tableOid], // tablename
 		formatIndexName(index.index),            // indexname
 		"",                                      // tablespace
-		indexmetadata.Definition(index.index, index.schemaName), // indexdef
+		index.indexdef,                          // indexdef
 	}, nil
 }
 

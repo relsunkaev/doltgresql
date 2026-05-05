@@ -41,7 +41,7 @@ var pg_get_indexdef_oid = framework.Function1{
 		var indexDef any
 		err := RunCallback(ctx, oidVal, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				indexDef = indexmetadata.Definition(index.Item, schema.Item.SchemaName())
+				indexDef = indexmetadata.DefinitionForSchema(index.Item, schema.Item.SchemaName(), table.Item.Schema(ctx))
 				return false, nil
 			},
 		})
@@ -67,10 +67,10 @@ var pg_get_indexdef_oid_integer_bool = framework.Function3{
 		err := RunCallback(ctx, oidVal, Callbacks{
 			Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
 				if colNo == 0 {
-					indexDef = indexmetadata.Definition(index.Item, schema.Item.SchemaName())
+					indexDef = indexmetadata.DefinitionForSchema(index.Item, schema.Item.SchemaName(), table.Item.Schema(ctx))
 					return false, nil
 				}
-				cols := indexmetadata.ColumnDefinitions(index.Item)
+				cols := indexmetadata.ColumnDefinitionsForSchema(index.Item, table.Item.Schema(ctx))
 				if colNo < 1 || int(colNo) > len(cols) {
 					indexDef = nil
 					return false, nil
