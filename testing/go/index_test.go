@@ -1140,6 +1140,36 @@ ORDER BY c.relname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL jsonb gin sidecar backfill",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_backfill (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_backfill VALUES
+					(1, '{"a":1,"tags":["x","x"],"empty":{}}'),
+					(2, '{"a":2,"tags":["y"],"ok":true}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX jsonb_gin_backfill_idx ON jsonb_gin_backfill USING gin (doc);",
+				},
+				{
+					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_postings;`,
+					Expected: []sql.Row{{12, 2}},
+				},
+				{
+					Query: `SELECT token, COUNT(*)
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_postings
+WHERE token IN ('9:jsonb_ops3:key1:01:a', '9:jsonb_ops3:key1:01:x')
+GROUP BY token
+ORDER BY token;`,
+					Expected: []sql.Row{
+						{"9:jsonb_ops3:key1:01:a", 2},
+						{"9:jsonb_ops3:key1:01:x", 1},
+					},
+				},
+			},
+		},
+		{
 			Name: "JSONB expression indexes",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_expr_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",

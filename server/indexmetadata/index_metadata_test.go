@@ -20,6 +20,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	comment := EncodeComment(Metadata{
 		AccessMethod: "GIN",
 		OpClasses:    []string{" JSONB_OPS ", "jsonb_path_ops"},
+		Gin: &GinMetadata{
+			PostingTable: "dg_gin_docs_doc_idx_postings",
+		},
 	})
 
 	metadata, ok := DecodeComment(comment)
@@ -34,6 +37,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if metadata.OpClasses[0] != OpClassJsonbOps || metadata.OpClasses[1] != OpClassJsonbPathOps {
 		t.Fatalf("unexpected opclasses: %#v", metadata.OpClasses)
+	}
+	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
+		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
 	}
 }
 

@@ -91,6 +91,29 @@ func decodeLengthPrefixedParts(encoded string) ([]string, error) {
 	return parts, nil
 }
 
+// PostingTableName returns the deterministic sidecar table name for a JSONB
+// GIN index's persisted posting rows.
+func PostingTableName(tableName string, indexName string) string {
+	return "dg_gin_" + sanitizePostingNamePart(tableName) + "_" + sanitizePostingNamePart(indexName) + "_postings"
+}
+
+func sanitizePostingNamePart(name string) string {
+	name = strings.ToLower(strings.TrimSpace(name))
+	var sb strings.Builder
+	for i := 0; i < len(name); i++ {
+		ch := name[i]
+		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' {
+			sb.WriteByte(ch)
+		} else {
+			sb.WriteByte('_')
+		}
+	}
+	if sb.Len() == 0 {
+		return "unnamed"
+	}
+	return sb.String()
+}
+
 // PostingStore is the access-method-neutral posting-list model used by JSONB
 // GIN storage. The current implementation is in-memory; the same token and row
 // identity contract is used when the postings are persisted to sidecar tables.

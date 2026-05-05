@@ -32,8 +32,14 @@ const (
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
 // does not currently expose.
 type Metadata struct {
-	AccessMethod string   `json:"accessMethod,omitempty"`
-	OpClasses    []string `json:"opClasses,omitempty"`
+	AccessMethod string       `json:"accessMethod,omitempty"`
+	OpClasses    []string     `json:"opClasses,omitempty"`
+	Gin          *GinMetadata `json:"gin,omitempty"`
+}
+
+// GinMetadata stores durable metadata for PostgreSQL GIN indexes.
+type GinMetadata struct {
+	PostingTable string `json:"postingTable,omitempty"`
 }
 
 // EncodeComment returns a durable index comment containing PostgreSQL metadata.

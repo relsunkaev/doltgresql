@@ -22,10 +22,11 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeCreateIndex handles *tree.CreateIndex nodes.
-func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (*vitess.AlterTable, error) {
+func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -54,6 +55,27 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (*vitess.AlterTable, 
 	tableName, err := nodeTableName(ctx, &node.Table)
 	if err != nil {
 		return nil, err
+	}
+	if accessMethod == indexmetadata.AccessMethodGin {
+		if node.Unique {
+			return nil, errors.Errorf("unique gin indexes are not yet supported")
+		}
+		if len(indexDef.Fields) != 1 {
+			return nil, errors.Errorf("multi-column gin indexes are not yet supported")
+		}
+		if indexDef.Fields[0].Expression != nil || indexDef.Fields[0].Column.IsEmpty() {
+			return nil, errors.Errorf("expression gin indexes are not yet supported")
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreateJsonbGinIndex(
+				node.IfNotExists,
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				indexDef.Info.Name.String(),
+				indexDef.Fields[0].Column.String(),
+				metadata.OpClasses[0],
+			),
+		}, nil
 	}
 	var indexType string
 	if node.Unique {
