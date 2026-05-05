@@ -1366,6 +1366,39 @@ ORDER BY idx.relname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL unnamed unique constraints use generated names",
+			SetUpScript: []string{
+				"CREATE TABLE unique_constraint_default_name (id INTEGER PRIMARY KEY, email TEXT, account_id INTEGER, code TEXT);",
+				"ALTER TABLE unique_constraint_default_name ADD UNIQUE (email);",
+				"ALTER TABLE unique_constraint_default_name ADD UNIQUE (account_id, code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'unique_constraint_default_name'
+ORDER BY con.conname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_default_name_account_id_code_key", "u"},
+						{"unique_constraint_default_name_email_key", "u"},
+						{"unique_constraint_default_name_pkey", "p"},
+					},
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_default_name'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_default_name_account_id_code_key"},
+						{"unique_constraint_default_name_email_key"},
+						{"unique_constraint_default_name_pkey"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree opclass metadata",
 			SetUpScript: []string{
 				"CREATE TABLE btree_opclass_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",

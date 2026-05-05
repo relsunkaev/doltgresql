@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -119,16 +121,36 @@ func nodeUniqueConstraintTableDef(
 	if node.PrimaryKey {
 		indexType = "primary"
 	}
+	indexName := bareIdentifier(node.Name)
+	if indexName == "" && !node.PrimaryKey {
+		indexName = defaultUniqueConstraintName(tableName.Name.String(), node.Columns)
+	}
 
 	return &vitess.DDL{
 		Action:   "alter",
 		Table:    tableName,
 		IfExists: ifExists,
 		IndexSpec: &vitess.IndexSpec{
-			ToName: vitess.NewColIdent(bareIdentifier(node.Name)),
+			ToName: vitess.NewColIdent(indexName),
 			Action: "create",
 			Type:   indexType,
 			Fields: indexFields,
 		},
 	}, nil
+}
+
+func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) string {
+	parts := make([]string, 0, len(columns)+2)
+	parts = append(parts, sanitizeIndexNamePart(tableName, "table"))
+	for _, column := range columns {
+		part := ""
+		if column.Column != "" {
+			part = string(column.Column)
+		} else if column.Expr != nil {
+			part = tree.AsString(column.Expr)
+		}
+		parts = append(parts, sanitizeIndexNamePart(part, "expr"))
+	}
+	parts = append(parts, "key")
+	return strings.Join(parts, "_")
 }
