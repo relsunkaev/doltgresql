@@ -555,8 +555,8 @@ func TestPgClass(t *testing.T) {
 					Expected: []sql.Row{
 						{"testing"},
 						{"testing_pkey"},
+						{"testing_v1_key"},
 						{"testview"},
-						{"v1"},
 					},
 				},
 				{
@@ -710,7 +710,7 @@ func TestPgConstraint(t *testing.T) {
 					Expected: []sql.Row{
 						{1719906648, "testing2_pktesting_fkey", 2200, "f", "f", "f", "t", 2694106299, 0, 1719906648, 0, 2147906242, "a", "a", "s", "t", 0, "t", "{2}", "{1}", nil, nil, nil, nil, nil, nil},
 						{2068729390, "testing2_pkey", 2200, "p", "f", "f", "t", 2694106299, 0, 2068729390, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil},
-						{3050361446, "v1", 2200, "u", "f", "f", "t", 2147906242, 0, 3050361446, 0, 0, "", "", "", "t", 0, "t", "{2}", nil, nil, nil, nil, nil, nil, nil},
+						{2652383090, "testing_v1_key", 2200, "u", "f", "f", "t", 2147906242, 0, 2652383090, 0, 0, "", "", "", "t", 0, "t", "{2}", nil, nil, nil, nil, nil, nil, nil},
 						{3259318326, "v1_check", 2200, "c", "f", "f", "t", 2694106299, 0, 0, 0, 0, "", "", "", "t", 0, "t", nil, nil, nil, nil, nil, nil, nil, nil},
 						{3757635986, "testing_pkey", 2200, "p", "f", "f", "t", 2147906242, 0, 3757635986, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil},
 					},
@@ -729,7 +729,7 @@ func TestPgConstraint(t *testing.T) {
 						{"testing2_pkey"},
 						{"testing2_pktesting_fkey"},
 						{"testing_pkey"},
-						{"v1"},
+						{"testing_v1_key"},
 						{"v1_check"},
 					},
 				},
@@ -795,6 +795,7 @@ func TestPgConstraintIndexes(t *testing.T) {
 						{2068729390, "testing2_pkey"},
 						{1719906648, "testing2_pktesting_fkey"},
 						{3757635986, "testing_pkey"},
+						{2652383090, "testing_v1_key"},
 					},
 				},
 			},
@@ -864,7 +865,7 @@ func TestPgConstraintIndexes(t *testing.T) {
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 AND contypid = 0 ORDER BY conname;",
 					Expected: []sql.Row{
 						{"test_table1_pkey"},
-						{"val1"}, // TODO: postgres names this "test_table1_val1_key"
+						{"test_table1_val1_key"},
 						{"val2_check"},
 					},
 				},
@@ -885,19 +886,19 @@ func TestPgConstraintIndexes(t *testing.T) {
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') AND contypid = 0 ORDER BY conname;",
 					Expected: []sql.Row{
 						{"test_table1_pkey"},
-						{"val1"}, // TODO: postgres names this "test_table1_val1_key"
+						{"test_table1_val1_key"},
 						{"val2_check"},
 					},
 				},
 				{
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid IN (SELECT oid FROM pg_catalog.pg_class WHERE relname IN ('test_table1', 'test_table2')) AND contypid = 0 ORDER BY conname;",
 					Expected: []sql.Row{
-						{"name"}, // should be test_table2_name_key
 						{"name_check"},
 						{"test_table1_pkey"},
+						{"test_table1_val1_key"},
 						{"test_table2_fk_col_fkey"},
+						{"test_table2_name_key"},
 						{"test_table2_pkey"},
-						{"val1"}, // should be test_table1_val1_key
 						{"val2_check"},
 					},
 				},
@@ -951,13 +952,13 @@ func TestPgConstraintIndexes(t *testing.T) {
 				{
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid >= (SELECT MIN(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND conrelid <= (SELECT MAX(oid) FROM pg_catalog.pg_class WHERE relname LIKE 'test_%') AND contypid = 0 ORDER BY conname;",
 					Expected: []sql.Row{
-						{"name"}, // should be test_table2_name_key
 						{"name_check"},
 						{"test_table1_pkey"},
+						{"test_table1_val1_key"},
 						{"test_table2_fk_col_fkey"},
+						{"test_table2_name_key"},
 						{"test_table2_pkey"},
 						{"test_table3_pkey"},
-						{"val1"}, // should be test_table1_val1_key
 						{"val2_check"},
 					},
 				},
@@ -979,7 +980,7 @@ func TestPgConstraintIndexes(t *testing.T) {
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname = 'test_table1') ORDER BY conname;",
 					Expected: []sql.Row{
 						{"test_table1_pkey"},
-						{"val1"}, // should be test_table1_val1_key
+						{"test_table1_val1_key"},
 						{"val2_check"},
 					},
 				},
@@ -987,7 +988,7 @@ func TestPgConstraintIndexes(t *testing.T) {
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE conrelid = 3645786842 ORDER BY conname;",
 					Expected: []sql.Row{
 						{"test_table1_pkey"},
-						{"val1"}, // should be test_table1_val1_key
+						{"test_table1_val1_key"},
 						{"val2_check"},
 					},
 				},
@@ -1008,7 +1009,9 @@ func TestPgConstraintIndexes(t *testing.T) {
 					Query: "SELECT conname FROM pg_catalog.pg_constraint WHERE (conname LIKE '%_pkey' OR conname LIKE '%_key') AND connamespace = 2200 ORDER BY conname;",
 					Expected: []sql.Row{
 						{"test_table1_pkey"},
+						{"test_table1_val1_key"},
 						{"test_table2_fk_col_fkey"},
+						{"test_table2_name_key"},
 						{"test_table2_pkey"},
 						{"test_table3_pkey"},
 					},
@@ -1548,7 +1551,7 @@ func TestPgIndex(t *testing.T) {
 						ORDER BY 1;`,
 					Expected: []sql.Row{
 						{1067629180, 3120782595, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
-						{1322775662, 3120782595, 1, 1, "t", "f", "f", "f", "t", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
+						{2070175302, 3120782595, 1, 1, "t", "f", "f", "f", "t", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
 						{3185790121, 1784425749, 2, 2, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1 2", "0 0", opClassOidVector("int4_ops", "int4_ops"), "0 0", nil, nil},
 					},
 				},
@@ -1566,7 +1569,7 @@ func TestPgIndex(t *testing.T) {
 						"JOIN pg_namespace n ON c.relnamespace = n.oid " +
 						"WHERE n.nspname = 'testschema' and left(c.relname, 5) <> 'dolt_' " +
 						"ORDER BY 1;",
-					Expected: []sql.Row{{1067629180}, {1322775662}, {3185790121}},
+					Expected: []sql.Row{{1067629180}, {2070175302}, {3185790121}},
 				},
 				{
 					Query: "SELECT i.indexrelid, i.indrelid, c.relname, t.relname  FROM pg_catalog.pg_index i " +
@@ -1576,7 +1579,7 @@ func TestPgIndex(t *testing.T) {
 						"WHERE n.nspname = 'testschema' and left(c.relname, 5) <> 'dolt_'",
 					Expected: []sql.Row{
 						{1067629180, 3120782595, "testing_pkey", "testing"},
-						{1322775662, 3120782595, "v1", "testing"},
+						{2070175302, 3120782595, "testing_v1_key", "testing"},
 						{3185790121, 1784425749, "testing2_pkey", "testing2"},
 					},
 				},
@@ -1617,7 +1620,7 @@ func TestPgIndexes(t *testing.T) {
 					Query: `SELECT * FROM "pg_catalog"."pg_indexes" where schemaname = 'testschema';`,
 					Expected: []sql.Row{
 						{"testschema", "testing", "testing_pkey", nil, "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
-						{"testschema", "testing", "v1", nil, "CREATE UNIQUE INDEX v1 ON testschema.testing USING btree (v1)"},
+						{"testschema", "testing", "testing_v1_key", nil, "CREATE UNIQUE INDEX testing_v1_key ON testschema.testing USING btree (v1)"},
 						{"testschema", "testing2", "testing2_pkey", nil, "CREATE UNIQUE INDEX testing2_pkey ON testschema.testing2 USING btree (pk, v1)"},
 						{"testschema", "testing2", "my_index", nil, "CREATE INDEX my_index ON testschema.testing2 USING btree (v1)"},
 					},
@@ -1632,7 +1635,7 @@ func TestPgIndexes(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT indexname FROM PG_catalog.pg_INDEXES where schemaname='testschema' ORDER BY indexname;",
-					Expected: []sql.Row{{"my_index"}, {"testing2_pkey"}, {"testing_pkey"}, {"v1"}},
+					Expected: []sql.Row{{"my_index"}, {"testing2_pkey"}, {"testing_pkey"}, {"testing_v1_key"}},
 				},
 			},
 		},

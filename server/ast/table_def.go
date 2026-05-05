@@ -54,7 +54,17 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if err != nil {
 			return err
 		}
+		if node.Unique {
+			columnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
+		}
 		target.TableSpec.AddColumn(columnDef)
+		if node.Unique {
+			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name)
+			if err != nil {
+				return err
+			}
+			target.TableSpec.Indexes = append(target.TableSpec.Indexes, indexDef)
+		}
 		if node.References.Table != nil {
 			fkDef, err := nodeForeignKeyDefinitionFromColumnTableDef(ctx, node.Name, node)
 			if err != nil {

@@ -1420,6 +1420,10 @@ ORDER BY indexname;`,
 					UNIQUE (email),
 					UNIQUE (account_id, code)
 				);`,
+				`CREATE TABLE unique_constraint_column_default_name (
+					id INTEGER PRIMARY KEY,
+					email TEXT UNIQUE
+				);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1466,6 +1470,49 @@ ORDER BY indexname;`,
 						{"unique_constraint_create_default_name_account_id_code_key"},
 						{"unique_constraint_create_default_name_email_key"},
 						{"unique_constraint_create_default_name_pkey"},
+					},
+				},
+				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'unique_constraint_column_default_name'
+ORDER BY con.conname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_column_default_name_email_key", "u"},
+						{"unique_constraint_column_default_name_pkey", "p"},
+					},
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_column_default_name'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_column_default_name_email_key"},
+						{"unique_constraint_column_default_name_pkey"},
+					},
+				},
+				{
+					Query: "INSERT INTO unique_constraint_column_default_name VALUES (1, 'hello');",
+				},
+				{
+					Query:       "INSERT INTO unique_constraint_column_default_name VALUES (2, 'hello');",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "ALTER TABLE unique_constraint_column_default_name DROP CONSTRAINT unique_constraint_column_default_name_email_key;",
+				},
+				{
+					Query: "INSERT INTO unique_constraint_column_default_name VALUES (2, 'hello');",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_column_default_name'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_column_default_name_pkey"},
 					},
 				},
 			},
