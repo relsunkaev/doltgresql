@@ -53,6 +53,7 @@ const (
 	ruleId_ValidateCreateFunction                                        // validateCreateFunction
 	ruleId_ResolveValuesTypes                                            // resolveValuesTypes
 	ruleId_ResolveProcedureDefaults                                      // resolveProcedureDefaults
+	ruleId_ValidateOnConflictArbiter                                     // validateOnConflictArbiter
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -105,6 +106,7 @@ func Init() {
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
+		analyzer.Rule{Id: ruleId_ValidateOnConflictArbiter, Apply: ValidateOnConflictArbiter},
 	)
 
 	// The auto-commit rule writes the contents of the context, so we need to insert our finalizer before that.

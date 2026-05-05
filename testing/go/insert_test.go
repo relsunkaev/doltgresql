@@ -73,6 +73,8 @@ func TestInsert(t *testing.T) {
 			SetUpScript: []string{
 				"CREATE TABLE mytable (id INT primary key, name TEXT)",
 				"create table t2 (id int primary key, c1 text, c2 text)",
+				"CREATE TABLE conflict_arbiters (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT)",
+				"INSERT INTO conflict_arbiters VALUES (1, 'a@example.com', 'first'), (2, 'b@example.com', 'second')",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -135,6 +137,25 @@ func TestInsert(t *testing.T) {
 VALUES ($1, $2, $3)
 ON CONFLICT (id) do update set c1 = $4`,
 					BindVars: []any{1, "x", "y", "no conflict expected"},
+				},
+				{
+					Query:       "INSERT INTO mytable (id, name) VALUES (3, 'bad target') ON CONFLICT (name) DO UPDATE SET name = 'not applied'",
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong update') ON CONFLICT (id) DO UPDATE SET name = 'wrong update'",
+					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+				},
+				{
+					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong ignore') ON CONFLICT (id) DO NOTHING",
+					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+				},
+				{
+					Query: "SELECT * FROM conflict_arbiters ORDER BY id",
+					Expected: []sql.Row{
+						{1, "a@example.com", "first"},
+						{2, "b@example.com", "second"},
+					},
 				},
 			},
 		},
