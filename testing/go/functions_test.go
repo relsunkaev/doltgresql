@@ -1718,6 +1718,30 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
 				},
 				{
+					Query:    `SELECT json_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::json, 'a', 'b');`,
+					Expected: []sql.Row{{`"x"`}},
+				},
+				{
+					Query:    `SELECT json_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::json, 'a', 'b');`,
+					Expected: []sql.Row{{"x"}},
+				},
+				{
+					Query:    `SELECT json_extract_path_text('{"a":{"b":"x\ny"}}'::json, 'a', 'b');`,
+					Expected: []sql.Row{{"x\ny"}},
+				},
+				{
+					Query:    `SELECT json_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::json, 'arr', '1') IS NULL, json_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::json, 'arr', '1') IS NULL;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT json_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::json, 'missing') IS NULL, json_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::json, 'missing') IS NULL;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT '{"a":{"b":"x"},"arr":[10,null]}'::json #> ARRAY['a','b'], '{"a":{"b":"x"},"arr":[10,null]}'::json #>> ARRAY['a','b'];`,
+					Expected: []sql.Row{{`"x"`, "x"}},
+				},
+				{
 					Query:    `SELECT to_json('plain'::text)::text, to_json(42)::text, to_json(true)::text, to_json(NULL::int)::text;`,
 					Expected: []sql.Row{{`"plain"`, "42", "true", "null"}},
 				},
@@ -1765,6 +1789,30 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT jsonb_array_elements_text('["a\nb","c\\d"]'::jsonb);`,
 					Expected: []sql.Row{{"a\nb"}, {"c\\d"}},
+				},
+				{
+					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'a', 'b');`,
+					Expected: []sql.Row{{`"x"`}},
+				},
+				{
+					Query:    `SELECT jsonb_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'a', 'b');`,
+					Expected: []sql.Row{{"x"}},
+				},
+				{
+					Query:    `SELECT jsonb_extract_path_text('{"a":{"b":"x\ny"}}'::jsonb, 'a', 'b');`,
+					Expected: []sql.Row{{"x\ny"}},
+				},
+				{
+					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'arr', '1') IS NULL, jsonb_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'arr', '1') IS NULL;`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+				{
+					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'missing') IS NULL, jsonb_extract_path_text('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'missing') IS NULL;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT '{"a":{"b":"x"},"arr":[10,null]}'::jsonb #> ARRAY['a','b'], '{"a":{"b":"x"},"arr":[10,null]}'::jsonb #>> ARRAY['a','b'];`,
+					Expected: []sql.Row{{`"x"`, "x"}},
 				},
 				{
 					Query:    `SELECT '{"a":1,"b":[2,3]}'::jsonb @> '{"b":[2]}'::jsonb, '{"a":1}'::jsonb <@ '{"a":1,"b":2}'::jsonb;`,

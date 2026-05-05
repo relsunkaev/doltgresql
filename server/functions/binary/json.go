@@ -218,6 +218,7 @@ var json_extract_path = framework.Function2{
 	Name:       "json_extract_path",
 	Return:     pgtypes.Json,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.TextArray},
+	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		// TODO: make a bespoke implementation that preserves whitespace
@@ -231,7 +232,7 @@ var json_extract_path = framework.Function2{
 			return nil, err
 		}
 		if retVal == nil {
-			return "", nil
+			return nil, nil
 		}
 		return pgtypes.JsonB.IoOutput(ctx, retVal)
 	},
@@ -242,6 +243,7 @@ var jsonb_extract_path = framework.Function2{
 	Name:       "jsonb_extract_path",
 	Return:     pgtypes.JsonB,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
+	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		value, err := jsonbValue(ctx, val1)
@@ -267,6 +269,9 @@ var jsonb_extract_path = framework.Function2{
 					// We don't return the error here, a bad parse is treated as an object key which isn't valid
 					return nil, nil
 				}
+				if idx < 0 {
+					idx += len(currentValue)
+				}
 				if idx < 0 || idx >= len(currentValue) {
 					return nil, nil
 				}
@@ -284,6 +289,7 @@ var json_extract_path_text = framework.Function2{
 	Name:       "json_extract_path_text",
 	Return:     pgtypes.Text,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.TextArray},
+	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		// TODO: make a bespoke implementation that preserves whitespace
@@ -301,6 +307,7 @@ var jsonb_extract_path_text = framework.Function2{
 	Name:       "jsonb_extract_path_text",
 	Return:     pgtypes.Text,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
+	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, dt [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		doc, err := jsonb_extract_path.Callable(ctx, dt, val1, val2)
@@ -522,7 +529,9 @@ func jsonbExtractTextOutput(ctx *sql.Context, val any) (any, error) {
 	}
 	switch value := doc.Value.(type) {
 	case pgtypes.JsonValueString:
-		return string(value), nil
+		return pgtypes.JsonStringUnescape(value)
+	case pgtypes.JsonValueNull:
+		return nil, nil
 	default:
 		return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
 	}
