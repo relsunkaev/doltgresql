@@ -16,6 +16,8 @@ package ast
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -43,19 +45,23 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node.Unique && !node.NullsDistinct {
 		return nil, errors.Errorf("NULLS NOT DISTINCT is not yet supported")
 	}
+	tableName, err := nodeTableName(ctx, &node.Table)
+	if err != nil {
+		return nil, err
+	}
 	metadata, err := nodeIndexMetadata(node, accessMethod)
 	if err != nil {
 		return nil, err
 	}
+	indexName := string(node.Name)
+	if indexName == "" {
+		indexName = defaultCreateIndexName(tableName.Name.String(), node.Columns)
+	}
 	indexDef, err := nodeIndexTableDef(ctx, &tree.IndexTableDef{
-		Name:        node.Name,
+		Name:        tree.Name(indexName),
 		Columns:     node.Columns,
 		IndexParams: node.IndexParams,
 	})
-	if err != nil {
-		return nil, err
-	}
-	tableName, err := nodeTableName(ctx, &node.Table)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +118,44 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 			},
 		},
 	}, nil
+}
+
+func defaultCreateIndexName(tableName string, columns tree.IndexElemList) string {
+	parts := make([]string, 0, len(columns)+2)
+	parts = append(parts, sanitizeIndexNamePart(tableName, "index"))
+	for _, column := range columns {
+		part := ""
+		if column.Column != "" {
+			part = string(column.Column)
+		} else if column.Expr != nil {
+			part = tree.AsString(column.Expr)
+		}
+		parts = append(parts, sanitizeIndexNamePart(part, "expr"))
+	}
+	parts = append(parts, "idx")
+	return strings.Join(parts, "_")
+}
+
+func sanitizeIndexNamePart(part string, fallback string) string {
+	part = strings.TrimSpace(part)
+	var builder strings.Builder
+	lastWasUnderscore := false
+	for _, r := range part {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			builder.WriteRune(unicode.ToLower(r))
+			lastWasUnderscore = false
+			continue
+		}
+		if builder.Len() > 0 && !lastWasUnderscore {
+			builder.WriteByte('_')
+			lastWasUnderscore = true
+		}
+	}
+	sanitized := strings.Trim(builder.String(), "_")
+	if sanitized == "" {
+		return fallback
+	}
+	return sanitized
 }
 
 func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetadata.Metadata, error) {

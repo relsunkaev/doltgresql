@@ -628,7 +628,7 @@ JOIN pg_class t ON t.oid = i.indrelid
 JOIN pg_class ix ON ix.oid = i.indexrelid 
 JOIN pg_namespace n ON t.relnamespace = n.oid 
 JOIN pg_am AS am ON ix.relam = am.oid WHERE t.relname = 'foo' AND n.nspname = 'public';`,
-					Expected: []sql.Row{{"foo_pkey", "BTREE"}, {"b", "BTREE"}, {"b_2", "BTREE"}}, // TODO: should follow Postgres index naming convention: "foo_pkey", "foo_b_idx", "foo_b_a_idx"
+					Expected: []sql.Row{{"foo_pkey", "BTREE"}, {"foo_b_idx", "BTREE"}, {"foo_b_a_idx", "BTREE"}},
 				},
 			},
 		},
@@ -5360,8 +5360,8 @@ func TestPgIndexIndexes(t *testing.T) {
 					Query: `SELECT * FROM pg_catalog.pg_index i 
 WHERE i.indrelid = 1496157034 order by 1`,
 					Expected: []sql.Row{
-						{3674955271, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
 						{3992679530, 1496157034, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
+						{4052612617, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
 					},
 				},
 				{
@@ -5370,7 +5370,7 @@ WHERE i.indrelid = 1496157034 order by 1`,
          join pg_class c2 on i.indexrelid = c2.oid
 WHERE c.relname = 't2' order by 1,2`,
 					Expected: []sql.Row{
-						{"t2", "d"},
+						{"t2", "t2_d_idx"},
 						{"t2", "t2_pkey"},
 					},
 				},
@@ -5955,7 +5955,7 @@ FROM pg_catalog.pg_index
 WHERE pg_catalog.pg_index.indrelid IN (select oid from pg_class where relname='t2')
   AND NOT pg_catalog.pg_index.indisprimary ORDER BY pg_catalog.pg_index.indrelid, cls_idx.relname`,
 					Expected: []sql.Row{
-						{1496157034, "b", "f", "f", "0", nil, "btree", nil, 1, "f", "{b}", "{f}"},
+						{1496157034, "t2_b_idx", "f", "f", "0", nil, "btree", nil, 1, "f", "{b}", "{f}"},
 					},
 				},
 			},
