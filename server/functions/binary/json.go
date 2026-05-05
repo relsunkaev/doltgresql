@@ -480,7 +480,15 @@ var jsonb_delete_text = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, errors.Errorf("JSON deletions are not yet supported")
+		doc, err := jsonbDocument(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		value, err := pgtypes.JsonValueDeleteKey(doc.Value, val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
 	},
 }
 
@@ -491,7 +499,19 @@ var jsonb_delete_text_array = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, errors.Errorf("JSON deletions are not yet supported")
+		doc, err := jsonbDocument(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		keys, err := textArrayValueToStrings(val2)
+		if err != nil {
+			return nil, err
+		}
+		value, err := pgtypes.JsonValueDeleteKeys(doc.Value, keys)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
 	},
 }
 
@@ -502,8 +522,28 @@ var jsonb_delete_int32 = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return nil, errors.Errorf("JSON deletions are not yet supported")
+		doc, err := jsonbDocument(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		value, err := pgtypes.JsonValueDeleteIndex(doc.Value, int(val2.(int32)))
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: value}, nil
 	},
+}
+
+func textArrayValueToStrings(val any) ([]string, error) {
+	values := val.([]any)
+	path := make([]string, len(values))
+	for i, value := range values {
+		if value == nil {
+			return nil, errors.Errorf("path element at position %d is null", i+1)
+		}
+		path[i] = value.(string)
+	}
+	return path, nil
 }
 
 func jsonbContainsValue(container pgtypes.JsonValue, contained pgtypes.JsonValue) bool {

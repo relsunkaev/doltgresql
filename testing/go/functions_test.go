@@ -1843,6 +1843,34 @@ func TestJsonFunctions(t *testing.T) {
 					ExpectedErr: "path element at position 1 is null",
 				},
 				{
+					Query:    `SELECT jsonb_delete('{"a":1, "b":2, "c":3}'::jsonb, 'a');`,
+					Expected: []sql.Row{{`{"b": 2, "c": 3}`}},
+				},
+				{
+					Query:    `SELECT jsonb_delete('{"a":1, "b":2, "c":3}'::jsonb, ARRAY['a','c']::text[]);`,
+					Expected: []sql.Row{{`{"b": 2}`}},
+				},
+				{
+					Query:    `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{n}');`,
+					Expected: []sql.Row{{`{"a": 1, "b": [1, 2], "d": {"1": [2, 3]}}`}},
+				},
+				{
+					Query:    `SELECT jsonb_delete_path('{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}', '{b,-1}');`,
+					Expected: []sql.Row{{`{"a": 1, "b": [1], "d": {"1": [2, 3]}, "n": null}`}},
+				},
+				{
+					Query:    `SELECT jsonb_delete_path('{"a":1}'::jsonb, '{}'::text[]);`,
+					Expected: []sql.Row{{`{"a": 1}`}},
+				},
+				{
+					Query:       `SELECT jsonb_delete_path('{"a":1}'::jsonb, ARRAY[NULL]::text[]);`,
+					ExpectedErr: "path element at position 1 is null",
+				},
+				{
+					Query:       `SELECT jsonb_delete_path('"a"'::jsonb, '{a}'::text[]);`,
+					ExpectedErr: "cannot delete path in scalar",
+				},
+				{
 					Query:    `SELECT jsonb_pretty('{"a":1,"b":[2]}'::jsonb);`,
 					Expected: []sql.Row{{"{\n    \"a\": 1,\n    \"b\": [\n        2\n    ]\n}"}},
 				},

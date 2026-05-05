@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -246,6 +247,158 @@ func JsonValueCompare(v1 JsonValue, v2 JsonValue) int {
 // JsonBContainsValue returns whether the container JSONB value contains the contained JSONB value.
 func JsonBContainsValue(container JsonValue, contained JsonValue) bool {
 	return jsonBContainsValue(container, contained, true)
+}
+
+// JsonValueDeleteKey returns a copy of value with the given object key or array string element removed.
+func JsonValueDeleteKey(value JsonValue, key string) (JsonValue, error) {
+	switch value := value.(type) {
+	case JsonValueObject:
+		return jsonValueObjectDeleteKeys(value, map[string]struct{}{key: {}}), nil
+	case JsonValueArray:
+		return jsonValueArrayDeleteStrings(value, map[string]struct{}{key: {}})
+	default:
+		return nil, errors.Errorf("cannot delete from scalar")
+	}
+}
+
+// JsonValueDeleteKeys returns a copy of value with all matching object keys or array string elements removed.
+func JsonValueDeleteKeys(value JsonValue, keys []string) (JsonValue, error) {
+	keySet := make(map[string]struct{}, len(keys))
+	for _, key := range keys {
+		keySet[key] = struct{}{}
+	}
+	switch value := value.(type) {
+	case JsonValueObject:
+		return jsonValueObjectDeleteKeys(value, keySet), nil
+	case JsonValueArray:
+		return jsonValueArrayDeleteStrings(value, keySet)
+	default:
+		return nil, errors.Errorf("cannot delete from scalar")
+	}
+}
+
+// JsonValueDeleteIndex returns a copy of value with the array element at idx removed.
+func JsonValueDeleteIndex(value JsonValue, idx int) (JsonValue, error) {
+	switch value := value.(type) {
+	case JsonValueArray:
+		return jsonValueArrayDeleteIndex(value, idx), nil
+	case JsonValueObject:
+		return nil, errors.Errorf("cannot delete from object using integer index")
+	default:
+		return nil, errors.Errorf("cannot delete from scalar")
+	}
+}
+
+// JsonValueDeletePath returns a copy of value with the item at path removed.
+func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
+	switch value.(type) {
+	case JsonValueObject, JsonValueArray:
+		newValue, _, err := jsonValueDeletePath(value, path, 1)
+		return newValue, err
+	default:
+		return nil, errors.Errorf("cannot delete path in scalar")
+	}
+}
+
+func jsonValueObjectDeleteKeys(value JsonValueObject, keys map[string]struct{}) JsonValueObject {
+	items := make([]JsonValueObjectItem, 0, len(value.Items))
+	for _, item := range value.Items {
+		if _, ok := keys[item.Key]; ok {
+			continue
+		}
+		items = append(items, JsonValueObjectItem{
+			Key:   item.Key,
+			Value: JsonValueCopy(item.Value),
+		})
+	}
+	return JsonObjectFromItems(items, false)
+}
+
+func jsonValueArrayDeleteStrings(value JsonValueArray, keys map[string]struct{}) (JsonValueArray, error) {
+	items := make(JsonValueArray, 0, len(value))
+	for _, item := range value {
+		if str, ok := item.(JsonValueString); ok {
+			decoded, err := JsonStringUnescape(str)
+			if err != nil {
+				return nil, err
+			}
+			if _, ok = keys[decoded]; ok {
+				continue
+			}
+		}
+		items = append(items, JsonValueCopy(item))
+	}
+	return items, nil
+}
+
+func jsonValueArrayDeleteIndex(value JsonValueArray, idx int) JsonValueArray {
+	if idx < 0 {
+		idx += len(value)
+	}
+	if idx < 0 || idx >= len(value) {
+		return JsonValueCopy(value).(JsonValueArray)
+	}
+	items := make(JsonValueArray, 0, len(value)-1)
+	for i, item := range value {
+		if i == idx {
+			continue
+		}
+		items = append(items, JsonValueCopy(item))
+	}
+	return items
+}
+
+func jsonValueDeletePath(value JsonValue, path []string, position int) (JsonValue, bool, error) {
+	if len(path) == 0 {
+		return JsonValueCopy(value), false, nil
+	}
+	switch value := value.(type) {
+	case JsonValueObject:
+		key := path[0]
+		idx, ok := value.Index[key]
+		if !ok {
+			return JsonValueCopy(value), false, nil
+		}
+		if len(path) == 1 {
+			return jsonValueObjectDeleteKeys(value, map[string]struct{}{key: {}}), true, nil
+		}
+		newChild, changed, err := jsonValueDeletePath(value.Items[idx].Value, path[1:], position+1)
+		if err != nil {
+			return nil, false, err
+		}
+		if !changed {
+			return JsonValueCopy(value), false, nil
+		}
+		newObject := JsonValueCopy(value).(JsonValueObject)
+		newObject.Items[idx].Value = newChild
+		return newObject, true, nil
+	case JsonValueArray:
+		idx, err := strconv.Atoi(path[0])
+		if err != nil {
+			return nil, false, errors.Errorf("path element at position %d is not an integer: %s", position, path[0])
+		}
+		if len(path) == 1 {
+			return jsonValueArrayDeleteIndex(value, idx), true, nil
+		}
+		if idx < 0 {
+			idx += len(value)
+		}
+		if idx < 0 || idx >= len(value) {
+			return JsonValueCopy(value), false, nil
+		}
+		newChild, changed, err := jsonValueDeletePath(value[idx], path[1:], position+1)
+		if err != nil {
+			return nil, false, err
+		}
+		if !changed {
+			return JsonValueCopy(value), false, nil
+		}
+		newArray := JsonValueCopy(value).(JsonValueArray)
+		newArray[idx] = newChild
+		return newArray, true, nil
+	default:
+		return JsonValueCopy(value), false, nil
+	}
 }
 
 func jsonBContainsValue(container JsonValue, contained JsonValue, allowArrayScalar bool) bool {

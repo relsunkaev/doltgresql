@@ -3451,6 +3451,50 @@ func TestOperators(t *testing.T) {
 					Expected: []sql.Row{{"f"}},
 				},
 				{
+					Query:    `SELECT '{"a":1, "b":2, "c":3}'::jsonb - 'b';`,
+					Expected: []sql.Row{{`{"a": 1, "c": 3}`}},
+				},
+				{
+					Query:    `SELECT '{"a":1, "b":2, "c":3}'::jsonb - ARRAY['c','a']::text[];`,
+					Expected: []sql.Row{{`{"b": 2}`}},
+				},
+				{
+					Query:    `SELECT '["a", "b", "c"]'::jsonb - 'b';`,
+					Expected: []sql.Row{{`["a", "c"]`}},
+				},
+				{
+					Query:    `SELECT '["a", "b", "c"]'::jsonb - 1;`,
+					Expected: []sql.Row{{`["a", "c"]`}},
+				},
+				{
+					Query:    `SELECT '["a", "b", "c"]'::jsonb - -1;`,
+					Expected: []sql.Row{{`["a", "b"]`}},
+				},
+				{
+					Query:    `SELECT '["a", "b", "c"]'::jsonb - 3;`,
+					Expected: []sql.Row{{`["a", "b", "c"]`}},
+				},
+				{
+					Query:    `SELECT '{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}'::jsonb #- '{d,1,0}';`,
+					Expected: []sql.Row{{`{"a": 1, "b": [1, 2], "d": {"1": [3]}, "n": null}`}},
+				},
+				{
+					Query:    `SELECT '{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}'::jsonb #- '{b,-1}';`,
+					Expected: []sql.Row{{`{"a": 1, "b": [1], "d": {"1": [2, 3]}, "n": null}`}},
+				},
+				{
+					Query:       `SELECT '{"n":null, "a":1, "b":[1,2], "d":{"1":[2,3]}}'::jsonb #- '{b,not_an_int}';`,
+					ExpectedErr: "path element at position 2 is not an integer",
+				},
+				{
+					Query:       `SELECT '"a"'::jsonb - 'a';`,
+					ExpectedErr: "cannot delete from scalar",
+				},
+				{
+					Query:       `SELECT '{"a":1}'::jsonb - 0;`,
+					ExpectedErr: "cannot delete from object using integer index",
+				},
+				{
 					Query:    `SELECT '["a", "b"]'::jsonb || '["a", "d"]'::jsonb;`,
 					Expected: []sql.Row{{`["a", "b", "a", "d"]`}},
 				},

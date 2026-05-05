@@ -48,6 +48,8 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_typeof)
 	framework.RegisterFunction(jsonb_set)
 	framework.RegisterFunction(jsonb_set_create)
+	framework.RegisterFunction(jsonb_delete_path)
+	framework.RegisterFunction(json_remove_path)
 	framework.RegisterFunction(jsonb_pretty)
 }
 
@@ -422,6 +424,44 @@ func jsonbSetCallable(ctx *sql.Context, target any, path any, newValue any, crea
 		return nil, err
 	}
 	return pgtypes.JsonDocument{Value: jsonbSetValue(targetDoc.Value, jsonPath, newDoc.Value, createMissing)}, nil
+}
+
+// jsonb_delete_path represents the PostgreSQL function jsonb_delete_path.
+var jsonb_delete_path = framework.Function2{
+	Name:       "jsonb_delete_path",
+	Return:     pgtypes.JsonB,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return jsonbDeletePathCallable(ctx, val1, val2)
+	},
+}
+
+// json_remove_path backs Cockroach's parser rewrite for PostgreSQL's #- JSONB operator.
+var json_remove_path = framework.Function2{
+	Name:       "json_remove_path",
+	Return:     pgtypes.JsonB,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return jsonbDeletePathCallable(ctx, val1, val2)
+	},
+}
+
+func jsonbDeletePathCallable(ctx *sql.Context, target any, path any) (any, error) {
+	targetDoc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
+	if err != nil {
+		return nil, err
+	}
+	jsonPath, err := textArrayToStringSlice(path)
+	if err != nil {
+		return nil, err
+	}
+	value, err := pgtypes.JsonValueDeletePath(targetDoc.Value, jsonPath)
+	if err != nil {
+		return nil, err
+	}
+	return pgtypes.JsonDocument{Value: value}, nil
 }
 
 // jsonb_pretty represents the PostgreSQL function jsonb_pretty.
