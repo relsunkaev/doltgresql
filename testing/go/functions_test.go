@@ -1907,6 +1907,38 @@ func TestJsonFunctions(t *testing.T) {
 					ExpectedErr: "cannot delete path in scalar",
 				},
 				{
+					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"');`,
+					Expected: []sql.Row{{`{"a": [0, "new_value", 1, 2]}`}},
+				},
+				{
+					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,1}', '"new_value"', true);`,
+					Expected: []sql.Row{{`{"a": [0, 1, "new_value", 2]}`}},
+				},
+				{
+					Query:    `SELECT jsonb_insert('{"a":{"b":{"c":[0,1,"test1","test2"]}}}', '{a,b,c,2}', '"new_value"');`,
+					Expected: []sql.Row{{`{"a": {"b": {"c": [0, 1, "new_value", "test1", "test2"]}}}`}},
+				},
+				{
+					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,10}', '"new_value"'), jsonb_insert('{"a":[0,1,2]}', '{a,-10}', '"new_value"');`,
+					Expected: []sql.Row{{`{"a": [0, 1, 2, "new_value"]}`, `{"a": ["new_value", 0, 1, 2]}`}},
+				},
+				{
+					Query:    `SELECT jsonb_insert('{"a":{"b":"value"}}', '{a,c}', '"new_value"'), jsonb_insert('{"a":{"b":"value"}}', '{a,b}', '"new_value"');`,
+					Expected: []sql.Row{{`{"a": {"b": "value", "c": "new_value"}}`, `{"a": {"b": "value"}}`}},
+				},
+				{
+					Query:    `SELECT jsonb_insert('{"a":[0,1,2]}', '{missing,0}', '"new_value"');`,
+					Expected: []sql.Row{{`{"a": [0, 1, 2]}`}},
+				},
+				{
+					Query:       `SELECT jsonb_insert('{"a":[0,1,2]}', '{a,not_an_int}', '"new_value"');`,
+					ExpectedErr: "path element at position 2 is not an integer",
+				},
+				{
+					Query:       `SELECT jsonb_insert('{"a":[0,1,2]}', ARRAY['a',NULL]::text[], '"new_value"');`,
+					ExpectedErr: "path element at position 2 is null",
+				},
+				{
 					Query:    `SELECT jsonb_pretty('{"a":1,"b":[2]}'::jsonb);`,
 					Expected: []sql.Row{{"{\n    \"a\": 1,\n    \"b\": [\n        2\n    ]\n}"}},
 				},

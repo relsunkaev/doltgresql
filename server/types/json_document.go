@@ -326,6 +326,12 @@ func JsonValueStripNulls(value JsonValue) JsonValue {
 	}
 }
 
+// JsonValueInsertPath returns a copy of value with newValue inserted at path.
+func JsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, insertAfter bool) (JsonValue, error) {
+	newValue, _, err := jsonValueInsertPath(value, path, newValue, insertAfter, 1)
+	return newValue, err
+}
+
 func jsonValueObjectDeleteKeys(value JsonValueObject, keys map[string]struct{}) JsonValueObject {
 	items := make([]JsonValueObjectItem, 0, len(value.Items))
 	for _, item := range value.Items {
@@ -372,6 +378,92 @@ func jsonValueArrayDeleteIndex(value JsonValueArray, idx int) JsonValueArray {
 		items = append(items, JsonValueCopy(item))
 	}
 	return items
+}
+
+func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, insertAfter bool, position int) (JsonValue, bool, error) {
+	if len(path) == 0 {
+		return JsonValueCopy(value), false, nil
+	}
+	switch value := value.(type) {
+	case JsonValueObject:
+		key := path[0]
+		if len(path) == 1 {
+			if _, ok := value.Index[key]; ok {
+				return JsonValueCopy(value), false, nil
+			}
+			items := make([]JsonValueObjectItem, 0, len(value.Items)+1)
+			for _, item := range value.Items {
+				items = append(items, JsonValueObjectItem{
+					Key:   item.Key,
+					Value: JsonValueCopy(item.Value),
+				})
+			}
+			items = append(items, JsonValueObjectItem{
+				Key:   key,
+				Value: JsonValueCopy(newValue),
+			})
+			return JsonObjectFromItems(items, true), true, nil
+		}
+		idx, ok := value.Index[key]
+		if !ok {
+			return JsonValueCopy(value), false, nil
+		}
+		newChild, changed, err := jsonValueInsertPath(value.Items[idx].Value, path[1:], newValue, insertAfter, position+1)
+		if err != nil {
+			return nil, false, err
+		}
+		if !changed {
+			return JsonValueCopy(value), false, nil
+		}
+		newObject := JsonValueCopy(value).(JsonValueObject)
+		newObject.Items[idx].Value = newChild
+		return newObject, true, nil
+	case JsonValueArray:
+		idx, err := strconv.Atoi(path[0])
+		if err != nil {
+			return nil, false, errors.Errorf("path element at position %d is not an integer: %s", position, path[0])
+		}
+		if len(path) == 1 {
+			return jsonValueArrayInsertIndex(value, idx, newValue, insertAfter), true, nil
+		}
+		if idx < 0 {
+			idx += len(value)
+		}
+		if idx < 0 || idx >= len(value) {
+			return JsonValueCopy(value), false, nil
+		}
+		newChild, changed, err := jsonValueInsertPath(value[idx], path[1:], newValue, insertAfter, position+1)
+		if err != nil {
+			return nil, false, err
+		}
+		if !changed {
+			return JsonValueCopy(value), false, nil
+		}
+		newArray := JsonValueCopy(value).(JsonValueArray)
+		newArray[idx] = newChild
+		return newArray, true, nil
+	default:
+		return JsonValueCopy(value), false, nil
+	}
+}
+
+func jsonValueArrayInsertIndex(value JsonValueArray, idx int, newValue JsonValue, insertAfter bool) JsonValueArray {
+	if idx < 0 {
+		idx += len(value)
+	}
+	insertAt := idx
+	if insertAt < 0 {
+		insertAt = 0
+	} else if insertAt >= len(value) {
+		insertAt = len(value)
+	} else if insertAfter {
+		insertAt++
+	}
+	items := make(JsonValueArray, 0, len(value)+1)
+	items = append(items, value[:insertAt]...)
+	items = append(items, JsonValueCopy(newValue))
+	items = append(items, value[insertAt:]...)
+	return JsonValueCopy(items).(JsonValueArray)
 }
 
 func jsonValueDeletePath(value JsonValue, path []string, position int) (JsonValue, bool, error) {

@@ -49,6 +49,8 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_strip_nulls)
 	framework.RegisterFunction(jsonb_set)
 	framework.RegisterFunction(jsonb_set_create)
+	framework.RegisterFunction(jsonb_insert)
+	framework.RegisterFunction(jsonb_insert_after)
 	framework.RegisterFunction(jsonb_delete_path)
 	framework.RegisterFunction(json_remove_path)
 	framework.RegisterFunction(jsonb_pretty)
@@ -440,6 +442,48 @@ func jsonbSetCallable(ctx *sql.Context, target any, path any, newValue any, crea
 		return nil, err
 	}
 	return pgtypes.JsonDocument{Value: jsonbSetValue(targetDoc.Value, jsonPath, newDoc.Value, createMissing)}, nil
+}
+
+// jsonb_insert represents the PostgreSQL function jsonb_insert with insert_after defaulting to false.
+var jsonb_insert = framework.Function3{
+	Name:       "jsonb_insert",
+	Return:     pgtypes.JsonB,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray, pgtypes.JsonB},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1 any, val2 any, val3 any) (any, error) {
+		return jsonbInsertCallable(ctx, val1, val2, val3, false)
+	},
+}
+
+// jsonb_insert_after represents the PostgreSQL function jsonb_insert with an explicit insert_after argument.
+var jsonb_insert_after = framework.Function4{
+	Name:       "jsonb_insert",
+	Return:     pgtypes.JsonB,
+	Parameters: [4]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.TextArray, pgtypes.JsonB, pgtypes.Bool},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, val1 any, val2 any, val3 any, val4 any) (any, error) {
+		return jsonbInsertCallable(ctx, val1, val2, val3, val4.(bool))
+	},
+}
+
+func jsonbInsertCallable(ctx *sql.Context, target any, path any, newValue any, insertAfter bool) (any, error) {
+	targetDoc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
+	if err != nil {
+		return nil, err
+	}
+	newDoc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, newValue)
+	if err != nil {
+		return nil, err
+	}
+	jsonPath, err := textArrayToStringSlice(path)
+	if err != nil {
+		return nil, err
+	}
+	value, err := pgtypes.JsonValueInsertPath(targetDoc.Value, jsonPath, newDoc.Value, insertAfter)
+	if err != nil {
+		return nil, err
+	}
+	return pgtypes.JsonDocument{Value: value}, nil
 }
 
 // jsonb_delete_path represents the PostgreSQL function jsonb_delete_path.
