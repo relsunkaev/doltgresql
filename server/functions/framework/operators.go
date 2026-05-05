@@ -51,6 +51,7 @@ const (
 	Operator_BinaryJSONTopLevelAny                     // ?|
 	Operator_BinaryJSONTopLevelAll                     // ?&
 	Operator_BinaryJSONPathExists                      // @?
+	Operator_BinaryJSONPathMatch                       // @@
 	Operator_UnaryPlus                                 // +
 	Operator_UnaryMinus                                // -
 	// NOTE: Any new operator should also be added to Operator.String() and GetOperatorFromString() functions.
@@ -202,6 +203,8 @@ func (o Operator) String() string {
 		return "?&"
 	case Operator_BinaryJSONPathExists:
 		return "@?"
+	case Operator_BinaryJSONPathMatch:
+		return "@@"
 	default:
 		return "unknown operator"
 	}
@@ -281,6 +284,8 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryJSONTopLevelAll, nil
 	case "@?":
 		return Operator_BinaryJSONPathExists, nil
+	case "@@":
+		return Operator_BinaryJSONPathMatch, nil
 	default:
 		return 0, errors.Errorf("unhandled Operator `%s`", op)
 	}

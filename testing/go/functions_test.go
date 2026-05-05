@@ -1882,6 +1882,10 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{"t", "f"}},
 				},
 				{
+					Query:    `SELECT '{"a":2}'::jsonb @@ '$.a == 2', '{"a":2}'::jsonb @@ '$.a > 3';`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+				{
 					Query:    `SELECT jsonb_extract_path('{"a":{"b":"x"},"arr":[10,null]}'::jsonb, 'a', 'b');`,
 					Expected: []sql.Row{{`"x"`}},
 				},
