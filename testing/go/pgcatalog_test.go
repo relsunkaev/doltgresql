@@ -1539,9 +1539,9 @@ func TestPgIndex(t *testing.T) {
 						WHERE n.nspname = 'testschema' and left(c.relname, 5) <> 'dolt_'
 						ORDER BY 1;`,
 					Expected: []sql.Row{
-						{1067629180, 3120782595, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "", opClassOidVector("int4_ops"), "0", nil, nil},
-						{1322775662, 3120782595, 1, 1, "t", "f", "f", "f", "t", "f", "t", "f", "t", "t", "f", "2", "", opClassOidVector("int4_ops"), "0", nil, nil},
-						{3185790121, 1784425749, 2, 2, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1 2", "", opClassOidVector("int4_ops", "int4_ops"), "0 0", nil, nil},
+						{1067629180, 3120782595, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
+						{1322775662, 3120782595, 1, 1, "t", "f", "f", "f", "t", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
+						{3185790121, 1784425749, 2, 2, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1 2", "0 0", opClassOidVector("int4_ops", "int4_ops"), "0 0", nil, nil},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -5352,8 +5352,8 @@ func TestPgIndexIndexes(t *testing.T) {
 					Query: `SELECT * FROM pg_catalog.pg_index i 
 WHERE i.indrelid = 1496157034 order by 1`,
 					Expected: []sql.Row{
-						{3674955271, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "", opClassOidVector("int4_ops"), "0", nil, nil},
-						{3992679530, 1496157034, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "", opClassOidVector("int4_ops"), "0", nil, nil},
+						{3674955271, 1496157034, 1, 1, "f", "f", "f", "f", "f", "f", "t", "f", "t", "t", "f", "2", "0", opClassOidVector("int4_ops"), "0", nil, nil},
+						{3992679530, 1496157034, 1, 1, "t", "f", "t", "f", "t", "f", "t", "f", "t", "t", "f", "1", "0", opClassOidVector("int4_ops"), "0", nil, nil},
 					},
 				},
 				{

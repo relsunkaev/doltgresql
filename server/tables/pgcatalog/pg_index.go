@@ -222,6 +222,7 @@ type pgIndex struct {
 	indisprimary   bool
 	indisreplident bool
 	indkey         []any
+	indcollation   []any
 	indclass       []any
 }
 
@@ -261,6 +262,10 @@ func (iter *pgIndexTableScanIter) Close(ctx *sql.Context) error {
 
 // pgIndexToRow converts a pgIndex to a sql.Row.
 func pgIndexToRow(index *pgIndex) sql.Row {
+	indcollation := index.indcollation
+	if indcollation == nil {
+		indcollation = []any{}
+	}
 	indclass := index.indclass
 	if indclass == nil {
 		indclass = []any{}
@@ -283,7 +288,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		true,                   // indislive
 		index.indisreplident,   // indisreplident
 		index.indkey,           // indkey
-		[]any{},                // indcollation
+		indcollation,           // indcollation
 		indclass,               // indclass
 		indoption,              // indoption
 		nil,                    // indexprs
@@ -322,6 +327,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indKey[i] = int16(s.IndexOfColName(colName)) + 1
 			}
 			indClass := indexOpClassIds(index.Item, s, indexColumns)
+			indCollation := indexCollationIds(s, indexColumns)
 
 			pgIdx := &pgIndex{
 				index:          index.Item,
@@ -334,6 +340,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indnatts:       int16(len(indexColumns)),
 				indisunique:    index.Item.IsUnique(),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
+				indcollation:   indCollation,
 				indclass:       indClass,
 			}
 			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
@@ -415,6 +422,26 @@ func indexOpClassIdsWithDefaults(index sql.Index, schema sql.Schema, indexColumn
 	return ids
 }
 
+func indexCollationIds(schema sql.Schema, indexColumns []string) []any {
+	ids := make([]any, len(indexColumns))
+	for i, colName := range indexColumns {
+		colIdx := schema.IndexOfColName(colName)
+		if colIdx < 0 {
+			return nil
+		}
+		ids[i] = collationIDForType(schema[colIdx].Type)
+	}
+	return ids
+}
+
+func collationIDForType(typ sql.Type) id.Id {
+	doltgresType, ok := doltgresType(typ)
+	if !ok || doltgresType.TypCollation == id.NullCollation {
+		return id.Null
+	}
+	return doltgresType.TypCollation.AsId()
+}
+
 func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 	typeName, ok := doltgresTypeName(typ)
 	if !ok {
@@ -456,18 +483,26 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 }
 
 func doltgresTypeName(typ sql.Type) (string, bool) {
-	if typ == nil || isNilType(typ) {
-		return "", false
-	}
-	if typ, ok := typ.(*pgtypes.DoltgresType); ok {
-		return typ.ID.TypeName(), true
-	}
-
-	doltgresType, ok := doltgresTypeFromGmsType(typ)
+	doltgresType, ok := doltgresType(typ)
 	if !ok {
 		return "", false
 	}
 	return doltgresType.ID.TypeName(), true
+}
+
+func doltgresType(typ sql.Type) (*pgtypes.DoltgresType, bool) {
+	if typ == nil || isNilType(typ) {
+		return nil, false
+	}
+	if typ, ok := typ.(*pgtypes.DoltgresType); ok {
+		return typ, true
+	}
+
+	doltgresType, ok := doltgresTypeFromGmsType(typ)
+	if !ok {
+		return nil, false
+	}
+	return doltgresType, true
 }
 
 func doltgresTypeFromGmsType(typ sql.Type) (doltgresType *pgtypes.DoltgresType, ok bool) {

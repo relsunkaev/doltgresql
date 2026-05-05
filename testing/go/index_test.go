@@ -1302,6 +1302,26 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 			},
 		},
 		{
+			Name: "PostgreSQL btree collation metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_collation_meta (id INTEGER PRIMARY KEY, name TEXT, code VARCHAR);",
+				"CREATE INDEX btree_collation_meta_idx ON btree_collation_meta (id, name, code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT c.relname, i.indkey, i.indcollation
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname IN ('btree_collation_meta_idx', 'btree_collation_meta_pkey')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"btree_collation_meta_idx", "1 2 3", collationOidVector("", "default", "default")},
+						{"btree_collation_meta_pkey", "1", collationOidVector("")},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL index access method and opclass metadata",
 			SetUpScript: []string{
 				"CREATE TABLE jsonb_gin_idx (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
@@ -2010,6 +2030,19 @@ func opClassOidVector(names ...string) string {
 	oids := make([]string, len(names))
 	for i, name := range names {
 		oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, name))
+		oids[i] = strconv.FormatUint(uint64(oid), 10)
+	}
+	return strings.Join(oids, " ")
+}
+
+func collationOidVector(names ...string) string {
+	oids := make([]string, len(names))
+	for i, name := range names {
+		if name == "" {
+			oids[i] = "0"
+			continue
+		}
+		oid := id.Cache().ToOID(id.NewCollation("pg_catalog", name).AsId())
 		oids[i] = strconv.FormatUint(uint64(oid), 10)
 	}
 	return strings.Join(oids, " ")
