@@ -1105,8 +1105,12 @@ func TestBasicIndexing(t *testing.T) {
 					Query: "CREATE INDEX jsonb_gin_path_idx ON jsonb_gin_idx USING gin (doc jsonb_path_ops);",
 				},
 				{
+					Query:       "CREATE INDEX jsonb_gin_bad_idx ON jsonb_gin_idx USING gin (doc jsonb_hash_ops);",
+					ExpectedErr: "operator class jsonb_hash_ops is not yet supported for gin indexes",
+				},
+				{
 					Query: `SELECT c.relname, am.amname
-FROM pg_catalog.pg_class c
+	FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_am am ON am.oid = c.relam
 WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
 ORDER BY c.relname;`,
@@ -1388,6 +1392,40 @@ ORDER BY id;`,
 	WHERE doc ?& ARRAY['a','tags']
 	ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin path ops indexed lookup",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_path_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_path_lookup VALUES
+						(1, '{"a":{"b":1},"tags":["x"]}'),
+						(2, '{"a":{"b":2},"tags":["x"]}'),
+						(3, '{"a":{"c":1},"tags":["y"]}');`,
+				"CREATE INDEX jsonb_gin_path_lookup_idx ON jsonb_gin_path_lookup USING gin (doc jsonb_path_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `EXPLAIN SELECT id FROM jsonb_gin_path_lookup
+	WHERE doc @> '{"a":{"b":1}}'
+	ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_path_lookup.id]"},
+						{" └─ Sort(jsonb_gin_path_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_path_lookup.doc @> '{"a":{"b":1}}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_path_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             └─ filters: [{[jsonb_gin_path_lookup_idx intersect 1 token(s), jsonb_gin_path_lookup_idx intersect 1 token(s)]}]"},
+					},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_path_lookup
+	WHERE doc @> '{"a":{"b":1}}'
+	ORDER BY id;`,
+					Expected: []sql.Row{{1}},
 				},
 			},
 		},
