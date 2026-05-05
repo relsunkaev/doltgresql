@@ -104,7 +104,11 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if target.TableSpec == nil {
 			target.TableSpec = &vitess.TableSpec{}
 		}
-		indexDef, err := nodeIndexTableDef(ctx, &node.IndexTableDef)
+		indexTableDef := node.IndexTableDef
+		if !node.PrimaryKey && bareIdentifier(indexTableDef.Name) == "" {
+			indexTableDef.Name = tree.Name(defaultUniqueConstraintName(target.Table.Name.String(), node.Columns))
+		}
+		indexDef, err := nodeIndexTableDef(ctx, &indexTableDef)
 		if err != nil {
 			return err
 		}
