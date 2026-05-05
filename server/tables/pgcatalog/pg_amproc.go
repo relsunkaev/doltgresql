@@ -110,6 +110,7 @@ type amproc struct {
 }
 
 var defaultPostgresAmprocs = []amproc{
+	newBtreeInt4Amproc(int16(1), "btint4cmp"),
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(1), "gin_compare_jsonb"),
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(2), "gin_extract_jsonb"),
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(3), "gin_extract_jsonb_query"),
@@ -120,6 +121,17 @@ var defaultPostgresAmprocs = []amproc{
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(3), "gin_extract_jsonb_query_path"),
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(4), "gin_consistent_jsonb_path"),
 	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(6), "gin_triconsistent_jsonb_path"),
+}
+
+func newBtreeInt4Amproc(procNum int16, proc string) amproc {
+	return amproc{
+		oid:       btreeAmprocID("integer_ops", "int4", procNum),
+		family:    btreeOpfamilyID("integer_ops"),
+		leftType:  pgCatalogTypeID("int4"),
+		rightType: pgCatalogTypeID("int4"),
+		procNum:   procNum,
+		proc:      proc,
+	}
 }
 
 func newJsonbGinAmproc(opclass string, procNum int16, proc string) amproc {

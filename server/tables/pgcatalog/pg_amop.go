@@ -117,11 +117,28 @@ type amop struct {
 }
 
 var defaultPostgresAmops = []amop{
+	newBtreeInt4Amop("<", int16(1)),
+	newBtreeInt4Amop("<=", int16(2)),
+	newBtreeInt4Amop("=", int16(3)),
+	newBtreeInt4Amop(">=", int16(4)),
+	newBtreeInt4Amop(">", int16(5)),
 	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@>", "jsonb", int16(7)),
 	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
 	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?|", "_text", int16(10)),
 	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?&", "_text", int16(11)),
 	newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
+}
+
+func newBtreeInt4Amop(operator string, strategy int16) amop {
+	return amop{
+		oid:       btreeAmopID("integer_ops", "int4", strategy),
+		family:    btreeOpfamilyID("integer_ops"),
+		leftType:  pgCatalogTypeID("int4"),
+		rightType: pgCatalogTypeID("int4"),
+		strategy:  strategy,
+		operator:  pgCatalogOperatorID(operator, "int4", "int4"),
+		method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+	}
 }
 
 func newJsonbGinAmop(opclass string, operator string, rightType string, strategy int16) amop {

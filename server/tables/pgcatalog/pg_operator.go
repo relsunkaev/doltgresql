@@ -131,11 +131,53 @@ type pgOperator struct {
 }
 
 var defaultPostgresOperators = []pgOperator{
+	newBtreeInt4Operator("<", "int4lt", ">"),
+	newBtreeInt4Operator("<=", "int4le", ">="),
+	newBtreeInt4Operator("=", "int4eq", "="),
+	newBtreeInt4Operator(">=", "int4ge", "<="),
+	newBtreeInt4Operator(">", "int4gt", "<"),
 	newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
 	newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
 	newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
 	newJsonbOperator("?|", "jsonb", "_text", "jsonb_exists_any", zeroOID()),
 	newJsonbOperator("?&", "jsonb", "_text", "jsonb_exists_all", zeroOID()),
+}
+
+func newBtreeInt4Operator(name string, function string, commutator string) pgOperator {
+	return pgOperator{
+		oid:        pgCatalogOperatorID(name, "int4", "int4"),
+		name:       name,
+		namespace:  pgCatalogNamespaceID(),
+		leftType:   pgCatalogTypeID("int4"),
+		rightType:  pgCatalogTypeID("int4"),
+		result:     pgCatalogTypeID("bool"),
+		commutator: pgCatalogOperatorID(commutator, "int4", "int4"),
+		code:       pgCatalogFunctionID(function, pgCatalogType("int4"), pgCatalogType("int4")),
+		restrict:   btreeInt4OperatorRestrictFunctionID(name),
+		join:       btreeInt4OperatorJoinFunctionID(name),
+	}
+}
+
+func btreeInt4OperatorRestrictFunctionID(name string) id.Id {
+	switch name {
+	case "=":
+		return pgCatalogFunctionID("eqsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<", "<=":
+		return pgCatalogFunctionID("scalarltsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
+}
+
+func btreeInt4OperatorJoinFunctionID(name string) id.Id {
+	switch name {
+	case "=":
+		return pgCatalogFunctionID("eqjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<", "<=":
+		return pgCatalogFunctionID("scalarltjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
 }
 
 func newJsonbOperator(name string, leftType string, rightType string, function string, commutator id.Id) pgOperator {

@@ -78,6 +78,11 @@ JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 ORDER BY opf.opfname, amop.amopstrategy;`,
 					Expected: []sql.Row{
+						{"integer_ops", 1, "<"},
+						{"integer_ops", 2, "<="},
+						{"integer_ops", 3, "="},
+						{"integer_ops", 4, ">="},
+						{"integer_ops", 5, ">"},
 						{"jsonb_ops", 7, "@>"},
 						{"jsonb_ops", 9, "?"},
 						{"jsonb_ops", 10, "?|"},
@@ -95,7 +100,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{5}},
+					Expected: []sql.Row{{10}},
 				},
 			},
 		},
@@ -113,6 +118,7 @@ FROM "pg_catalog"."pg_amproc" amproc
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
 ORDER BY opf.opfname, amproc.amprocnum;`,
 					Expected: []sql.Row{
+						{"integer_ops", 1, "btint4cmp"},
 						{"jsonb_ops", 1, "gin_compare_jsonb"},
 						{"jsonb_ops", 2, "gin_extract_jsonb"},
 						{"jsonb_ops", 3, "gin_extract_jsonb_query"},
@@ -135,7 +141,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{10}},
+					Expected: []sql.Row{{11}},
 				},
 			},
 		},
@@ -2310,6 +2316,29 @@ func TestPgOperator(t *testing.T) {
 FROM "pg_catalog"."pg_operator" o
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE lt.typname = 'int4'
+	AND rt.typname = 'int4'
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+ORDER BY CASE o.oprname
+	WHEN '<' THEN 1
+	WHEN '<=' THEN 2
+	WHEN '=' THEN 3
+	WHEN '>=' THEN 4
+	WHEN '>' THEN 5
+END;`,
+					Expected: []sql.Row{
+						{"<", "int4", "int4"},
+						{"<=", "int4", "int4"},
+						{"=", "int4", "int4"},
+						{">=", "int4", "int4"},
+						{">", "int4", "int4"},
+					},
+				},
+				{
+					Query: `SELECT o.oprname, lt.typname, rt.typname
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
 WHERE o.oprname IN ('@>', '<@', '?', '?|', '?&')
 ORDER BY CASE o.oprname
 	WHEN '@>' THEN 1
@@ -2336,7 +2365,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{5}},
+					Expected: []sql.Row{{10}},
 				},
 			},
 		},

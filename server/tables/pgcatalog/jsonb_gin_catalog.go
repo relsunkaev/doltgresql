@@ -37,6 +37,15 @@ func pgCatalogFunctionID(name string, params ...id.Type) id.Id {
 	return id.NewFunction("pg_catalog", name, params...).AsId()
 }
 
+func pgCatalogOperatorID(name string, leftType string, rightType string) id.Id {
+	return id.NewId(
+		id.Section_Operator,
+		name,
+		string(pgCatalogType(leftType)),
+		string(pgCatalogType(rightType)),
+	)
+}
+
 func zeroOID() id.Id {
 	return id.NewOID(0).AsId()
 }
@@ -46,12 +55,7 @@ func jsonbGinOpfamilyID(opclass string) id.Id {
 }
 
 func jsonbOperatorID(name string, leftType string, rightType string) id.Id {
-	return id.NewId(
-		id.Section_Operator,
-		name,
-		string(pgCatalogType(leftType)),
-		string(pgCatalogType(rightType)),
-	)
+	return pgCatalogOperatorID(name, leftType, rightType)
 }
 
 func jsonbGinAmopID(opclass string, strategy int16) id.Id {
@@ -68,6 +72,26 @@ func jsonbGinAmprocID(opclass string, procNum int16) id.Id {
 		id.Section_OperatorFamily,
 		"gin_amproc",
 		opclass,
+		strconv.FormatInt(int64(procNum), 10),
+	)
+}
+
+func btreeAmopID(opfamily string, typeName string, strategy int16) id.Id {
+	return id.NewId(
+		id.Section_Operator,
+		"btree_amop",
+		opfamily,
+		typeName,
+		strconv.FormatInt(int64(strategy), 10),
+	)
+}
+
+func btreeAmprocID(opfamily string, typeName string, procNum int16) id.Id {
+	return id.NewId(
+		id.Section_OperatorFamily,
+		"btree_amproc",
+		opfamily,
+		typeName,
 		strconv.FormatInt(int64(procNum), 10),
 	)
 }
