@@ -1616,10 +1616,10 @@ func TestPgIndexes(t *testing.T) {
 				{
 					Query: `SELECT * FROM "pg_catalog"."pg_indexes" where schemaname = 'testschema';`,
 					Expected: []sql.Row{
-						{"testschema", "testing", "testing_pkey", "", "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
-						{"testschema", "testing", "v1", "", "CREATE UNIQUE INDEX v1 ON testschema.testing USING btree (v1)"},
-						{"testschema", "testing2", "testing2_pkey", "", "CREATE UNIQUE INDEX testing2_pkey ON testschema.testing2 USING btree (pk, v1)"},
-						{"testschema", "testing2", "my_index", "", "CREATE INDEX my_index ON testschema.testing2 USING btree (v1)"},
+						{"testschema", "testing", "testing_pkey", nil, "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
+						{"testschema", "testing", "v1", nil, "CREATE UNIQUE INDEX v1 ON testschema.testing USING btree (v1)"},
+						{"testschema", "testing2", "testing2_pkey", nil, "CREATE UNIQUE INDEX testing2_pkey ON testschema.testing2 USING btree (pk, v1)"},
+						{"testschema", "testing2", "my_index", nil, "CREATE INDEX my_index ON testschema.testing2 USING btree (v1)"},
 					},
 				},
 				{ // Different cases and quoted, so it fails
