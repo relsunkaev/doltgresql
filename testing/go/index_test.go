@@ -1129,6 +1129,15 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 						{2, 2},
 					},
 				},
+				{
+					Query: `SELECT i.indisunique, i.indimmediate
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'index_sort_meta_pkey';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
 			},
 		},
 		{
