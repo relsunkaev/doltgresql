@@ -204,6 +204,9 @@ func (r *RenameIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error
 		}
 		return nil, sql.ErrIndexNotFound.New(r.from)
 	}
+	if isPrimaryKeyIndex(located.index) {
+		return nil, errors.Errorf("renaming primary key indexes is not yet supported")
+	}
 	if err = located.alterable.RenameIndex(ctx, located.index.ID(), r.to); err != nil {
 		if sql.ErrIndexNotFound.Is(err) && r.ifExists {
 			return sql.RowsToRowIter(), nil

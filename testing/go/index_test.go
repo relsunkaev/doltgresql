@@ -1243,6 +1243,32 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL primary key index rename unsupported boundary",
+			SetUpScript: []string{
+				"CREATE TABLE rename_primary_key_index (id INTEGER PRIMARY KEY, v INTEGER);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "ALTER INDEX rename_primary_key_index_pkey RENAME TO rename_primary_key_index_id_key;",
+					ExpectedErr: "renaming primary key indexes is not yet supported",
+				},
+				{
+					Query:       "DROP INDEX rename_primary_key_index_pkey;",
+					ExpectedErr: `because constraint "rename_primary_key_index_pkey" on table "rename_primary_key_index" requires it`,
+				},
+				{
+					Query: "ALTER TABLE rename_primary_key_index DROP CONSTRAINT rename_primary_key_index_pkey;",
+				},
+				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'rename_primary_key_index';`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree sort option metadata",
 			SetUpScript: []string{
 				"CREATE TABLE index_sort_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",
