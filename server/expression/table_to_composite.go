@@ -44,6 +44,9 @@ func NewTableToComposite(ctx *sql.Context, tableName string, fields []sql.Expres
 		return nil, err
 	}
 	if typ == nil {
+		if len(fields) == 1 {
+			return fields[0], nil
+		}
 		typ, err = compositeTypeFromFields(ctx, tableName, fields)
 		if err != nil {
 			return nil, err

@@ -2032,6 +2032,10 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
 				},
 				{
+					Query:    `SELECT s.pk, elem FROM json_shapes s JOIN LATERAL jsonb_array_elements(s.doc->'items') AS elem ON true ORDER BY s.pk, elem;`,
+					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
+				},
+				{
 					Query:    `SELECT s.pk, e.json_array_elements FROM json_shapes s JOIN LATERAL (SELECT * FROM json_array_elements(s.raw->'items')) AS e ON true ORDER BY s.pk, e.json_array_elements;`,
 					Expected: []sql.Row{{1, "1"}, {1, "2"}, {2, "2"}, {2, "3"}},
 				},
