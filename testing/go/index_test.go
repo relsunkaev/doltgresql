@@ -1428,6 +1428,9 @@ ORDER BY indexname;`,
 					id INTEGER PRIMARY KEY,
 					email TEXT CONSTRAINT unique_constraint_column_named_email_custom UNIQUE
 				);`,
+				"CREATE TABLE unique_constraint_alter_add_column (id INTEGER PRIMARY KEY);",
+				"ALTER TABLE unique_constraint_alter_add_column ADD COLUMN email TEXT UNIQUE;",
+				"ALTER TABLE unique_constraint_alter_add_column ADD COLUMN code TEXT CONSTRAINT unique_constraint_alter_add_column_code_custom UNIQUE;",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1519,6 +1522,43 @@ ORDER BY indexname;`,
 					},
 				},
 				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'unique_constraint_alter_add_column'
+ORDER BY con.conname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_alter_add_column_code_custom", "u"},
+						{"unique_constraint_alter_add_column_email_key", "u"},
+						{"unique_constraint_alter_add_column_pkey", "p"},
+					},
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_alter_add_column'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_alter_add_column_code_custom"},
+						{"unique_constraint_alter_add_column_email_key"},
+						{"unique_constraint_alter_add_column_pkey"},
+					},
+				},
+				{
+					Query: `SELECT cls.relname, idx.indisunique, idx.indisprimary
+FROM pg_catalog.pg_class cls
+JOIN pg_catalog.pg_index idx ON idx.indexrelid = cls.oid
+WHERE cls.relname IN (
+	'unique_constraint_alter_add_column_code_custom',
+	'unique_constraint_alter_add_column_email_key'
+)
+ORDER BY cls.relname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_alter_add_column_code_custom", "t", "f"},
+						{"unique_constraint_alter_add_column_email_key", "t", "f"},
+					},
+				},
+				{
 					Query: "INSERT INTO unique_constraint_column_default_name VALUES (1, 'hello');",
 				},
 				{
@@ -1538,6 +1578,33 @@ WHERE tablename = 'unique_constraint_column_default_name'
 ORDER BY indexname;`,
 					Expected: []sql.Row{
 						{"unique_constraint_column_default_name_pkey"},
+					},
+				},
+				{
+					Query: "INSERT INTO unique_constraint_alter_add_column VALUES (1, 'hello', 'code-1');",
+				},
+				{
+					Query:       "INSERT INTO unique_constraint_alter_add_column VALUES (2, 'hello', 'code-2');",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       "INSERT INTO unique_constraint_alter_add_column VALUES (3, 'goodbye', 'code-1');",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "ALTER TABLE unique_constraint_alter_add_column DROP CONSTRAINT unique_constraint_alter_add_column_email_key;",
+				},
+				{
+					Query: "INSERT INTO unique_constraint_alter_add_column VALUES (2, 'hello', 'code-2');",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_alter_add_column'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_alter_add_column_code_custom"},
+						{"unique_constraint_alter_add_column_pkey"},
 					},
 				},
 			},

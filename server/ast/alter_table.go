@@ -117,6 +117,18 @@ func nodeAlterTableCmds(
 			if len(statement.TableSpec.Constraints) > 0 {
 				statement.ConstraintAction = vitess.AddStr
 			}
+			if cmd.ColumnDef.Unique {
+				statement, err = nodeUniqueConstraintTableDef(ctx, &tree.UniqueConstraintTableDef{
+					IndexTableDef: tree.IndexTableDef{
+						Name:    cmd.ColumnDef.UniqueConstraintName,
+						Columns: tree.IndexElemList{{Column: cmd.ColumnDef.Name}},
+					},
+				}, tableName, ifExists)
+				if err != nil {
+					return nil, nil, err
+				}
+				vitessDdlCmds = append(vitessDdlCmds, statement)
+			}
 
 		case *tree.AlterTableDropColumn:
 			statement, err = nodeAlterTableDropColumn(ctx, cmd, tableName, ifExists)
@@ -271,6 +283,9 @@ func nodeAlterTableAddColumn(ctx *Context, node *tree.AlterTableAddColumn, table
 	vitessColumnDef, err := nodeColumnTableDef(ctx, node.ColumnDef)
 	if err != nil {
 		return nil, err
+	}
+	if node.ColumnDef.Unique {
+		vitessColumnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
 	}
 
 	tableSpec := &vitess.TableSpec{}
