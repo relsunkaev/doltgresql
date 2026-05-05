@@ -324,6 +324,14 @@ func rowIdentity(sch sql.Schema, row sql.Row) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+func primaryKeyRowIdentity(sch sql.Schema, row sql.Row) (string, bool) {
+	hash := sha256.New()
+	if !writeRowIdentityColumns(hash, sch, row, true) {
+		return "", false
+	}
+	return hex.EncodeToString(hash.Sum(nil)), true
+}
+
 func writeRowIdentityColumns(hash interface{ Write([]byte) (int, error) }, sch sql.Schema, row sql.Row, primaryOnly bool) bool {
 	wrote := false
 	for i, value := range row {

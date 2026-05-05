@@ -717,6 +717,14 @@ type jsonbGinIndexedTable struct {
 
 var _ sql.IndexedTable = (*jsonbGinIndexedTable)(nil)
 
+func (t *jsonbGinIndexedTable) WithUnderlying(table sql.Table) sql.Table {
+	maintained := t.JsonbGinMaintainedTable.WithUnderlying(table).(*JsonbGinMaintainedTable)
+	return &jsonbGinIndexedTable{
+		JsonbGinMaintainedTable: maintained,
+		lookup:                  t.lookup,
+	}
+}
+
 func (t *jsonbGinIndexedTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
 	return t.LookupPartitions(ctx, sql.IndexLookup{})
 }
@@ -999,7 +1007,13 @@ func (i *jsonbGinCandidateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, ok := i.rowIDs[rowIdentity(i.tableSchema, row)]; ok {
+		rowID, ok := primaryKeyRowIdentity(i.tableSchema, row)
+		if !ok {
+			// Aggregate plans such as count(*) may prune the primary key while keeping
+			// the JSONB column needed by the retained recheck filter.
+			return row, nil
+		}
+		if _, ok := i.rowIDs[rowID]; ok {
 			return row, nil
 		}
 	}

@@ -1643,6 +1643,16 @@ ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}},
 				},
 				{
+					Query: `SELECT count(*) FROM jsonb_gin_lookup
+WHERE doc @> '{"a":1}';`,
+					Expected: []sql.Row{{2}},
+				},
+				{
+					Query: `SELECT count(id) FROM jsonb_gin_lookup
+WHERE doc @> '{"a":1}';`,
+					Expected: []sql.Row{{2}},
+				},
+				{
 					Query: `SELECT id FROM jsonb_gin_lookup
 	WHERE doc @> '{"a":null}'
 	ORDER BY id;`,
