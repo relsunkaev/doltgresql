@@ -15,16 +15,16 @@ The first supported JSONB GIN lane is:
 - catalog introspection for the selected access method and opclass
 - physical posting-list sidecar storage with create-time backfill, DML
   maintenance, and DDL cleanup
-- indexed execution with candidate posting lookup and recheck for the first
+- indexed execution with sidecar token posting lookup and recheck for the first
   PostgreSQL-compatible JSONB containment/existence operators
 
 The current implementation covers this first lane with Doltgres-managed sidecar
 posting tables, opclass-aware token extraction, `EXPLAIN`-visible indexed lookup
-plans, and original-predicate rechecks. It is not full parity yet: indexed
-execution still derives candidate row identities from the sidecar and scans base
-rows to emit matching identities rather than performing a direct primary-key
-fetch, JSONPath GIN operators are not claimed, and performance gates remain
-open.
+plans, sidecar primary-key lookup by encoded token, and original-predicate
+rechecks. It is not full parity yet: indexed execution still derives candidate
+row identities from the sidecar and scans base rows to emit matching identities
+rather than performing a direct primary-key fetch, JSONPath GIN operators are
+not claimed, and performance gates remain open.
 
 ## DDL flow
 
@@ -101,10 +101,13 @@ Physical GIN storage should be separate from scalar btree storage:
 Posting lists should reference the table primary key or stable row identity. For
 keyless tables, the design must define the row identity before claiming support.
 
-The current sidecar stores encoded GIN tokens and stable row-identity hashes.
-That gives correct lookup candidates and write maintenance, but it is still a
-bridge until execution can fetch rows directly from indexed identities and the
-layout has benchmark evidence for large posting lists.
+The current sidecar stores encoded GIN tokens and stable row-identity hashes as
+the `(token, row_id)` primary key. Token lookup uses that sidecar primary key
+when the table exposes indexed access, with a full sidecar scan only as a
+fallback. That gives correct lookup candidates and avoids reading unrelated
+posting lists, but it is still a bridge until execution can fetch rows directly
+from indexed identities and the layout has benchmark evidence for large posting
+lists.
 
 ## Planning and execution
 
@@ -119,9 +122,9 @@ Initial operator targets:
 - `?&` all-keys existence where supported
 
 Execution should derive lookup tokens from the query predicate, fetch candidate
-posting lists, combine them with union/intersection as required, and recheck the
-original JSONB predicate against every candidate row. Recheck is required for
-correctness even when a lookup is expected to be selective.
+posting lists by token, combine them with union/intersection as required, and
+recheck the original JSONB predicate against every candidate row. Recheck is
+required for correctness even when a lookup is expected to be selective.
 
 `EXPLAIN` must show an indexed JSONB GIN path before planner support is claimed.
 The current plan shape does this for `@>` on `jsonb_ops`/`jsonb_path_ops` and

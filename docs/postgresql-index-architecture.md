@@ -155,8 +155,8 @@ metadata. It makes `CREATE INDEX USING gin` preserve `jsonb_ops` and
 
 The follow-on JSONB GIN commits add opclass-aware token extraction, sidecar
 posting storage, create-time backfill, DML/DDL maintenance, planner lookup,
-candidate posting union/intersection, executor recheck, and catalog rows for the
-supported JSONB GIN operator families.
+sidecar token seeks, candidate posting union/intersection, executor recheck, and
+catalog rows for the supported JSONB GIN operator families.
 
 This is still a first-pass bridge, not full PostgreSQL index parity. Remaining
 requirements include direct indexed row retrieval or equivalent performance
