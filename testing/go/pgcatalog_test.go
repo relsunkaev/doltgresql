@@ -163,7 +163,7 @@ func TestPgAttribute(t *testing.T) {
 				},
 				{
 					Query:    `SELECT * FROM "pg_catalog"."pg_attribute" WHERE attname='v1' AND attrelid='testschema.test'::regclass;`,
-					Expected: []sql.Row{{2502341994, "v1", 25, 0, 2, -1, -1, 0, "f", "i", "p", "", "f", "t", "f", "", "", "f", "t", 0, -1, 0, nil, nil, nil, nil}},
+					Expected: []sql.Row{{2502341994, "v1", 25, 0, 2, -1, -1, 0, "f", "i", "p", "", "f", "t", "f", "", "", "f", "t", 0, -1, 100, nil, nil, nil, nil}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_attribute";`,

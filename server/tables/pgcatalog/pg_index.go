@@ -441,7 +441,14 @@ func indexCollationIds(index sql.Index, schema sql.Schema, indexColumns []string
 
 func collationIDForType(typ sql.Type) id.Id {
 	doltgresType, ok := doltgresType(typ)
-	if !ok || doltgresType.TypCollation == id.NullCollation {
+	if !ok {
+		return id.Null
+	}
+	return collationIDForDoltgresType(doltgresType)
+}
+
+func collationIDForDoltgresType(doltgresType *pgtypes.DoltgresType) id.Id {
+	if doltgresType == nil || doltgresType.TypCollation == id.NullCollation {
 		return id.Null
 	}
 	return doltgresType.TypCollation.AsId()

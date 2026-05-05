@@ -85,12 +85,15 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 		Table: func(ctx *sql.Context, _ functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			for i, col := range table.Item.Schema(ctx) {
 				typeOid := id.Null
-				if doltgresType, ok := col.Type.(*pgtypes.DoltgresType); ok {
-					typeOid = doltgresType.ID.AsId()
-				} else {
+				attcollation := id.Null
+				doltgresType, ok := doltgresType(col.Type)
+				if !ok {
 					// TODO: Remove once all information_schema tables are converted to use DoltgresType
-					dt := pgtypes.FromGmsType(col.Type)
-					typeOid = dt.ID.AsId()
+					doltgresType = pgtypes.FromGmsType(col.Type)
+				}
+				if doltgresType != nil {
+					typeOid = doltgresType.ID.AsId()
+					attcollation = collationIDForDoltgresType(doltgresType)
 				}
 
 				generated := ""
@@ -115,6 +118,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					attnotnull:     !col.Nullable,
 					atthasdef:      hasDefault,
 					attgenerated:   generated,
+					attcollation:   attcollation,
 				}
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
@@ -354,6 +358,7 @@ type pgAttribute struct {
 	attnotnull     bool
 	atthasdef      bool
 	attgenerated   string
+	attcollation   id.Id
 }
 
 // lessAttNum is a sort function for pgAttribute based on attrelid.
@@ -420,7 +425,7 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		true,              // attislocal
 		int16(0),          // attinhcount
 		int16(-1),         // attstattarget
-		id.Null,           // attcollation
+		attr.attcollation, // attcollation
 		nil,               // attacl
 		nil,               // attoptions
 		nil,               // attfdwoptions

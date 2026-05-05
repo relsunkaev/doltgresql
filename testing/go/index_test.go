@@ -1337,6 +1337,18 @@ WHERE c.relname = 'btree_collation_meta_c_idx';`,
 					Query:       `CREATE INDEX btree_collation_meta_bad_idx ON btree_collation_meta (name COLLATE "definitely-not-a-collation");`,
 					ExpectedErr: "index collation definitely-not-a-collation is not yet supported",
 				},
+				{
+					Query: `SELECT a.attname, a.attcollation
+FROM pg_catalog.pg_attribute a
+JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+WHERE c.relname = 'btree_collation_meta' AND a.attname IN ('id', 'name', 'code')
+ORDER BY a.attnum;`,
+					Expected: []sql.Row{
+						{"id", 0},
+						{"name", id.Cache().ToOID(id.NewCollation("pg_catalog", "default").AsId())},
+						{"code", id.Cache().ToOID(id.NewCollation("pg_catalog", "default").AsId())},
+					},
+				},
 			},
 		},
 		{
