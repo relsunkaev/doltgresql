@@ -1424,6 +1424,10 @@ ORDER BY indexname;`,
 					id INTEGER PRIMARY KEY,
 					email TEXT UNIQUE
 				);`,
+				`CREATE TABLE unique_constraint_column_named (
+					id INTEGER PRIMARY KEY,
+					email TEXT CONSTRAINT unique_constraint_column_named_email_custom UNIQUE
+				);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1491,6 +1495,27 @@ ORDER BY indexname;`,
 					Expected: []sql.Row{
 						{"unique_constraint_column_default_name_email_key"},
 						{"unique_constraint_column_default_name_pkey"},
+					},
+				},
+				{
+					Query: `SELECT con.conname, con.contype
+FROM pg_catalog.pg_constraint con
+JOIN pg_catalog.pg_class cls ON cls.oid = con.conrelid
+WHERE cls.relname = 'unique_constraint_column_named'
+ORDER BY con.conname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_column_named_email_custom", "u"},
+						{"unique_constraint_column_named_pkey", "p"},
+					},
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'unique_constraint_column_named'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"unique_constraint_column_named_email_custom"},
+						{"unique_constraint_column_named_pkey"},
 					},
 				},
 				{

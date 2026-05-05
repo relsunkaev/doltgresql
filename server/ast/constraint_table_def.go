@@ -155,16 +155,20 @@ func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) s
 	return strings.Join(parts, "_")
 }
 
-func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name) (*vitess.IndexDefinition, error) {
+func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name) (*vitess.IndexDefinition, error) {
 	columns := tree.IndexElemList{{Column: column}}
 	fields, err := nodeIndexElemList(ctx, columns)
 	if err != nil {
 		return nil, err
 	}
+	indexName := bareIdentifier(constraintName)
+	if indexName == "" {
+		indexName = defaultUniqueConstraintName(tableName, columns)
+	}
 	return &vitess.IndexDefinition{
 		Info: &vitess.IndexInfo{
 			Type:   "unique",
-			Name:   vitess.NewColIdent(defaultUniqueConstraintName(tableName, columns)),
+			Name:   vitess.NewColIdent(indexName),
 			Unique: true,
 		},
 		Fields: fields,

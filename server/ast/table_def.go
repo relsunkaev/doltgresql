@@ -59,7 +59,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		}
 		target.TableSpec.AddColumn(columnDef)
 		if node.Unique {
-			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name)
+			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName)
 			if err != nil {
 				return err
 			}
