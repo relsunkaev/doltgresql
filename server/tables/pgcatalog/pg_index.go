@@ -327,7 +327,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indKey[i] = int16(s.IndexOfColName(colName)) + 1
 			}
 			indClass := indexOpClassIds(index.Item, s, indexColumns)
-			indCollation := indexCollationIds(s, indexColumns)
+			indCollation := indexCollationIds(index.Item, s, indexColumns)
 
 			pgIdx := &pgIndex{
 				index:          index.Item,
@@ -422,9 +422,14 @@ func indexOpClassIdsWithDefaults(index sql.Index, schema sql.Schema, indexColumn
 	return ids
 }
 
-func indexCollationIds(schema sql.Schema, indexColumns []string) []any {
+func indexCollationIds(index sql.Index, schema sql.Schema, indexColumns []string) []any {
+	collations := indexmetadata.Collations(index.Comment())
 	ids := make([]any, len(indexColumns))
 	for i, colName := range indexColumns {
+		if i < len(collations) && collations[i] != "" {
+			ids[i] = id.NewCollation("pg_catalog", collations[i]).AsId()
+			continue
+		}
 		colIdx := schema.IndexOfColName(colName)
 		if colIdx < 0 {
 			return nil

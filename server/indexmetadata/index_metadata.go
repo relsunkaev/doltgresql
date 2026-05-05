@@ -26,6 +26,12 @@ const (
 	OpClassJsonbOps     = "jsonb_ops"
 	OpClassJsonbPathOps = "jsonb_path_ops"
 
+	CollationDefault  = "default"
+	CollationC        = "C"
+	CollationPOSIX    = "POSIX"
+	CollationUcsBasic = "ucs_basic"
+	CollationUndIcu   = "und-x-icu"
+
 	SortDirectionDesc = "desc"
 	NullsOrderFirst   = "first"
 
@@ -52,11 +58,20 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"uuid_ops":        {},
 }
 
+var supportedCollations = map[string]struct{}{
+	CollationDefault:  {},
+	CollationC:        {},
+	CollationPOSIX:    {},
+	CollationUcsBasic: {},
+	CollationUndIcu:   {},
+}
+
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
 // does not currently expose.
 type Metadata struct {
 	AccessMethod string              `json:"accessMethod,omitempty"`
 	Columns      []string            `json:"columns,omitempty"`
+	Collations   []string            `json:"collations,omitempty"`
 	OpClasses    []string            `json:"opClasses,omitempty"`
 	SortOptions  []IndexColumnOption `json:"sortOptions,omitempty"`
 	Gin          *GinMetadata        `json:"gin,omitempty"`
@@ -79,6 +94,9 @@ func EncodeComment(metadata Metadata) string {
 	for i := range metadata.Columns {
 		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
 	}
+	for i := range metadata.Collations {
+		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
+	}
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
@@ -100,6 +118,9 @@ func DecodeComment(comment string) (Metadata, bool) {
 	for i := range metadata.Columns {
 		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
 	}
+	for i := range metadata.Collations {
+		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
+	}
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
@@ -120,6 +141,28 @@ func NormalizeAccessMethod(method string) string {
 // NormalizeOpClass lower-cases PostgreSQL opclass names.
 func NormalizeOpClass(opClass string) string {
 	return strings.ToLower(strings.TrimSpace(opClass))
+}
+
+// NormalizeCollation trims PostgreSQL collation names and preserves the
+// canonical spelling for built-in names whose OIDs are case-sensitive.
+func NormalizeCollation(collation string) string {
+	collation = strings.Trim(strings.TrimSpace(collation), `"`)
+	switch strings.ToLower(collation) {
+	case "":
+		return ""
+	case "default":
+		return CollationDefault
+	case "c":
+		return CollationC
+	case "posix":
+		return CollationPOSIX
+	case "ucs_basic":
+		return CollationUcsBasic
+	case "und-x-icu":
+		return CollationUndIcu
+	default:
+		return strings.TrimSpace(collation)
+	}
 }
 
 func normalizeSortOptions(sortOptions []IndexColumnOption) {
@@ -145,6 +188,15 @@ func OpClasses(comment string) []string {
 		return nil
 	}
 	return metadata.OpClasses
+}
+
+// Collations returns the PostgreSQL collations encoded for an index.
+func Collations(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.Collations
 }
 
 // Columns returns the PostgreSQL logical columns encoded for an index.
@@ -207,5 +259,12 @@ func IsSupportedGinJsonbOpClass(opClass string) bool {
 // opclass whose metadata Doltgres can preserve for ordinary btree indexes.
 func IsSupportedBtreeOpClass(opClass string) bool {
 	_, ok := supportedBtreeOpClasses[NormalizeOpClass(opClass)]
+	return ok
+}
+
+// IsSupportedCollation returns whether Doltgres can preserve this built-in
+// PostgreSQL collation in index metadata.
+func IsSupportedCollation(collation string) bool {
+	_, ok := supportedCollations[NormalizeCollation(collation)]
 	return ok
 }

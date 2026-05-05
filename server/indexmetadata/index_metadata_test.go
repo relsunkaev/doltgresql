@@ -20,6 +20,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 	comment := EncodeComment(Metadata{
 		AccessMethod: "GIN",
 		Columns:      []string{" doc "},
+		Collations:   []string{` "C" `, "und-x-icu"},
 		OpClasses:    []string{" JSONB_OPS ", "jsonb_path_ops"},
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
@@ -39,6 +40,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if len(metadata.Columns) != 1 || metadata.Columns[0] != "doc" {
 		t.Fatalf("unexpected columns: %#v", metadata.Columns)
+	}
+	if len(metadata.Collations) != 2 || metadata.Collations[0] != CollationC || metadata.Collations[1] != CollationUndIcu {
+		t.Fatalf("unexpected collations: %#v", metadata.Collations)
 	}
 	if len(metadata.OpClasses) != 2 {
 		t.Fatalf("expected 2 opclasses, got %d", len(metadata.OpClasses))
@@ -94,6 +98,17 @@ func TestIsSupportedBtreeOpClass(t *testing.T) {
 	}
 	if IsSupportedBtreeOpClass(OpClassJsonbOps) {
 		t.Fatal("expected jsonb_ops to be unsupported for btree")
+	}
+}
+
+func TestIsSupportedCollation(t *testing.T) {
+	for _, collation := range []string{"default", `"C"`, "und-x-icu"} {
+		if !IsSupportedCollation(collation) {
+			t.Fatalf("expected %q to be supported", collation)
+		}
+	}
+	if IsSupportedCollation("definitely-not-a-collation") {
+		t.Fatal("expected unknown collation to be unsupported")
 	}
 }
 

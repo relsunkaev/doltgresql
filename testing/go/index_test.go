@@ -1306,6 +1306,7 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 			SetUpScript: []string{
 				"CREATE TABLE btree_collation_meta (id INTEGER PRIMARY KEY, name TEXT, code VARCHAR);",
 				"CREATE INDEX btree_collation_meta_idx ON btree_collation_meta (id, name, code);",
+				`CREATE INDEX btree_collation_meta_c_idx ON btree_collation_meta (name COLLATE "C", code);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1318,6 +1319,23 @@ ORDER BY c.relname;`,
 						{"btree_collation_meta_idx", "1 2 3", collationOidVector("", "default", "default")},
 						{"btree_collation_meta_pkey", "1", collationOidVector("")},
 					},
+				},
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false),
+	i.indcollation
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'btree_collation_meta_c_idx';`,
+					Expected: []sql.Row{
+						{`CREATE INDEX btree_collation_meta_c_idx ON public.btree_collation_meta USING btree (name COLLATE "C", code)`, `name COLLATE "C"`, "code", collationOidVector("C", "default")},
+					},
+				},
+				{
+					Query:       `CREATE INDEX btree_collation_meta_bad_idx ON btree_collation_meta (name COLLATE "definitely-not-a-collation");`,
+					ExpectedErr: "index collation definitely-not-a-collation is not yet supported",
 				},
 			},
 		},

@@ -64,9 +64,13 @@ func ColumnDefinitions(index sql.Index) []string {
 		}
 	}
 
+	collations := Collations(index.Comment())
 	opClasses := OpClasses(index.Comment())
 	sortOptions := SortOptions(index.Comment())
 	for i := range cols {
+		if i < len(collations) && collations[i] != "" {
+			cols[i] += " " + columnCollationDefinition(collations[i])
+		}
 		if i < len(opClasses) && opClasses[i] != "" {
 			cols[i] += " " + opClasses[i]
 		}
@@ -95,4 +99,12 @@ func columnOptionDefinition(option IndexColumnOption) string {
 		parts = append(parts, "NULLS FIRST")
 	}
 	return strings.Join(parts, " ")
+}
+
+func columnCollationDefinition(collation string) string {
+	collation = NormalizeCollation(collation)
+	if collation == "" {
+		return ""
+	}
+	return `COLLATE "` + strings.ReplaceAll(collation, `"`, `""`) + `"`
 }

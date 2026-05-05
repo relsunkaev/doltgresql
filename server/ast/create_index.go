@@ -121,6 +121,9 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	case indexmetadata.AccessMethodGin:
 		opClasses := make([]string, len(node.Columns))
 		for i, column := range node.Columns {
+			if column.Collation != "" {
+				return nil, errors.Errorf("index collation %s is not yet supported for gin indexes", column.Collation)
+			}
 			opClass := indexmetadata.OpClassJsonbOps
 			if column.OpClass != nil {
 				if len(column.OpClass.Options) > 0 {
@@ -143,10 +146,20 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 }
 
 func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, error) {
+	collations := make([]string, len(node.Columns))
 	opClasses := make([]string, len(node.Columns))
 	sortOptions := make([]indexmetadata.IndexColumnOption, len(node.Columns))
 	hasMetadata := false
 	for i, column := range node.Columns {
+		if column.Collation != "" {
+			collation := indexmetadata.NormalizeCollation(column.Collation)
+			if !indexmetadata.IsSupportedCollation(collation) {
+				return nil, errors.Errorf("index collation %s is not yet supported", column.Collation)
+			}
+			collations[i] = collation
+			hasMetadata = true
+		}
+
 		if column.OpClass != nil {
 			if len(column.OpClass.Options) > 0 {
 				return nil, errors.Errorf("index operator class options are not yet supported")
@@ -184,6 +197,7 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 	}
 	return &indexmetadata.Metadata{
 		AccessMethod: indexmetadata.AccessMethodBtree,
+		Collations:   collations,
 		OpClasses:    opClasses,
 		SortOptions:  sortOptions,
 	}, nil
