@@ -1242,6 +1242,10 @@ var typesTests = []ScriptTest{
 		SetUpScript: []string{
 			"CREATE TABLE t_jsonb (id INTEGER primary key, v1 JSONB);",
 			"INSERT INTO t_jsonb VALUES (1, '{\"key\": \"value\"}'), (2, '{\"num\": 42}');",
+			"CREATE TABLE t_jsonb_unique (id INTEGER primary key, v1 JSONB UNIQUE);",
+			"INSERT INTO t_jsonb_unique VALUES (1, '{\"key\": \"value\"}');",
+			"CREATE TABLE t_jsonb_unique_build (id INTEGER primary key, v1 JSONB);",
+			"INSERT INTO t_jsonb_unique_build VALUES (1, '{\"key\": \"value\"}'), (2, '{\"key\": \"value\"}');",
 		},
 		Assertions: []ScriptTestAssertion{
 			{
@@ -1287,6 +1291,14 @@ var typesTests = []ScriptTest{
 				Expected: []sql.Row{
 					{"t"},
 				},
+			},
+			{
+				Query:       `INSERT INTO t_jsonb_unique VALUES (2, '{"key": "value"}');`,
+				ExpectedErr: `"key": "value"`,
+			},
+			{
+				Query:       `ALTER TABLE t_jsonb_unique_build ADD CONSTRAINT t_jsonb_unique_build_v1_key UNIQUE (v1);`,
+				ExpectedErr: `"key": "value"`,
 			},
 		},
 	},

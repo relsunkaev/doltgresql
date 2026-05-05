@@ -2112,11 +2112,12 @@ func (h *ConnectionHandler) endOfMessages(err error) {
 
 // sendError sends the given error to the client. This should generally never be called directly.
 func (h *ConnectionHandler) sendError(err error) {
-	fmt.Println(err.Error())
+	message := sanitizeErrorMessage(err.Error())
+	fmt.Println(message)
 	if sendErr := h.send(&pgproto3.ErrorResponse{
 		Severity: string(ErrorResponseSeverity_Error),
 		Code:     errorResponseCode(err),
-		Message:  err.Error(),
+		Message:  message,
 	}); sendErr != nil {
 		// If we're unable to send anything to the connection, then there's something wrong with the connection and
 		// we should terminate it. This will be caught in HandleConnection's defer block.
