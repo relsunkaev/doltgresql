@@ -101,6 +101,11 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 			return nil, sql.ErrIndexNotFound.New(target.Index)
 		}
+		if isPrimaryKeyIndex(located.index) {
+			indexName := indexmetadata.DisplayName(located.index)
+			return nil, errors.Errorf(`cannot drop index "%s" because constraint "%s" on table "%s" requires it`,
+				indexName, indexName, located.index.Table())
+		}
 
 		metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
 		locatedIndexes = append(locatedIndexes, targetIndex{
@@ -326,7 +331,7 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 		return nil, false, err
 	}
 	for _, index := range indexes {
-		if !strings.EqualFold(index.ID(), indexName) {
+		if !indexNameMatches(index, indexName) {
 			continue
 		}
 		alterable, ok := table.(sql.IndexAlterableTable)
@@ -340,4 +345,18 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 		}, true, nil
 	}
 	return nil, false, nil
+}
+
+func indexNameMatches(index sql.Index, name string) bool {
+	return strings.EqualFold(index.ID(), name) || strings.EqualFold(indexmetadata.DisplayName(index), name)
+}
+
+func isPrimaryKeyIndex(index sql.Index) bool {
+	if strings.EqualFold(index.ID(), "PRIMARY") {
+		return true
+	}
+	primaryKeyIndex, ok := index.(interface {
+		IsPrimaryKey() bool
+	})
+	return ok && primaryKeyIndex.IsPrimaryKey()
 }

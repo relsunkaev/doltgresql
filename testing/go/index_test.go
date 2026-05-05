@@ -1149,6 +1149,10 @@ ORDER BY indexname;`,
 					Query: "DROP INDEX IF EXISTS drop_index_restrict_missing_idx RESTRICT;",
 				},
 				{
+					Query:       "DROP INDEX drop_index_restrict_pkey RESTRICT;",
+					ExpectedErr: `because constraint "drop_index_restrict_pkey" on table "drop_index_restrict" requires it`,
+				},
+				{
 					Query:       "DROP INDEX drop_index_restrict_pkey CASCADE;",
 					ExpectedErr: "CASCADE is not yet supported",
 				},
