@@ -16,6 +16,7 @@ package pgcatalog
 
 import (
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -320,7 +321,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			for i, colName := range indexColumns {
 				indKey[i] = int16(s.IndexOfColName(colName)) + 1
 			}
-			indClass := opClassIds(indexmetadata.OpClasses(index.Item.Comment()))
+			indClass := indexOpClassIds(index.Item, s, indexColumns)
 
 			pgIdx := &pgIndex{
 				index:          index.Item,
@@ -365,4 +366,106 @@ func opClassIds(opClasses []string) []any {
 		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
 	}
 	return ids
+}
+
+func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) []any {
+	opClasses := indexmetadata.OpClasses(index.Comment())
+	if len(opClasses) > 0 {
+		return opClassIds(opClasses)
+	}
+	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+		return nil
+	}
+
+	ids := make([]any, len(indexColumns))
+	for i, colName := range indexColumns {
+		colIdx := schema.IndexOfColName(colName)
+		if colIdx < 0 {
+			return nil
+		}
+		opClass, ok := defaultBtreeOpClassForType(schema[colIdx].Type)
+		if !ok {
+			return nil
+		}
+		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+	}
+	return ids
+}
+
+func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
+	typeName, ok := doltgresTypeName(typ)
+	if !ok {
+		return "", false
+	}
+
+	switch typeName {
+	case "bool":
+		return "bool_ops", true
+	case "int2":
+		return "int2_ops", true
+	case "int4":
+		return "int4_ops", true
+	case "int8":
+		return "int8_ops", true
+	case "float4":
+		return "float4_ops", true
+	case "float8":
+		return "float8_ops", true
+	case "numeric":
+		return "numeric_ops", true
+	case "text":
+		return "text_ops", true
+	case "varchar":
+		return "varchar_ops", true
+	case "bpchar":
+		return "bpchar_ops", true
+	case "date":
+		return "date_ops", true
+	case "timestamp":
+		return "timestamp_ops", true
+	case "timestamptz":
+		return "timestamptz_ops", true
+	case "uuid":
+		return "uuid_ops", true
+	default:
+		return "", false
+	}
+}
+
+func doltgresTypeName(typ sql.Type) (string, bool) {
+	if typ == nil || isNilType(typ) {
+		return "", false
+	}
+	if typ, ok := typ.(*pgtypes.DoltgresType); ok {
+		return typ.ID.TypeName(), true
+	}
+
+	doltgresType, ok := doltgresTypeFromGmsType(typ)
+	if !ok {
+		return "", false
+	}
+	return doltgresType.ID.TypeName(), true
+}
+
+func doltgresTypeFromGmsType(typ sql.Type) (doltgresType *pgtypes.DoltgresType, ok bool) {
+	defer func() {
+		if recover() != nil {
+			doltgresType = nil
+			ok = false
+		}
+	}()
+	// Some compatibility schemas still expose wrapper sql.Type values with unresolved inner types.
+	// For indclass derivation, a failed conversion only means no default opclass is known.
+	doltgresType, err := pgtypes.FromGmsTypeToDoltgresType(typ)
+	return doltgresType, err == nil && doltgresType != nil
+}
+
+func isNilType(typ sql.Type) bool {
+	value := reflect.ValueOf(typ)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }

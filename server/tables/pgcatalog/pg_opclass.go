@@ -118,8 +118,35 @@ type opclass struct {
 }
 
 var defaultPostgresOpclasses = []opclass{
+	newBtreeOpclass("bool_ops", "bool", "bool_ops"),
+	newBtreeOpclass("int2_ops", "int2", "integer_ops"),
+	newBtreeOpclass("int4_ops", "int4", "integer_ops"),
+	newBtreeOpclass("int8_ops", "int8", "integer_ops"),
+	newBtreeOpclass("float4_ops", "float4", "float_ops"),
+	newBtreeOpclass("float8_ops", "float8", "float_ops"),
+	newBtreeOpclass("numeric_ops", "numeric", "numeric_ops"),
+	newBtreeOpclass("text_ops", "text", "text_ops"),
+	newBtreeOpclass("varchar_ops", "varchar", "text_ops"),
+	newBtreeOpclass("bpchar_ops", "bpchar", "bpchar_ops"),
+	newBtreeOpclass("date_ops", "date", "datetime_ops"),
+	newBtreeOpclass("timestamp_ops", "timestamp", "datetime_ops"),
+	newBtreeOpclass("timestamptz_ops", "timestamptz", "datetime_ops"),
+	newBtreeOpclass("uuid_ops", "uuid", "uuid_ops"),
 	newJsonbGinOpclass(indexmetadata.OpClassJsonbOps, pgCatalogTypeID("text"), true),
 	newJsonbGinOpclass(indexmetadata.OpClassJsonbPathOps, pgCatalogTypeID("int4"), false),
+}
+
+func newBtreeOpclass(name string, typeName string, family string) opclass {
+	return opclass{
+		oid:       id.NewId(id.Section_OperatorClass, name),
+		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+		opcname:   name,
+		namespace: pgCatalogNamespaceID(),
+		family:    btreeOpfamilyID(family),
+		intype:    pgCatalogTypeID(typeName),
+		keytype:   zeroOID(),
+		isDefault: true,
+	}
 }
 
 func newJsonbGinOpclass(name string, keytype id.Id, isDefault bool) opclass {

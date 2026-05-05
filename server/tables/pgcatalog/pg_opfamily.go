@@ -106,8 +106,29 @@ type opfamily struct {
 }
 
 var defaultPostgresOpfamilies = []opfamily{
+	newBtreeOpfamily("bool_ops"),
+	newBtreeOpfamily("integer_ops"),
+	newBtreeOpfamily("float_ops"),
+	newBtreeOpfamily("numeric_ops"),
+	newBtreeOpfamily("text_ops"),
+	newBtreeOpfamily("bpchar_ops"),
+	newBtreeOpfamily("datetime_ops"),
+	newBtreeOpfamily("uuid_ops"),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbPathOps),
+}
+
+func btreeOpfamilyID(name string) id.Id {
+	return id.NewId(id.Section_OperatorFamily, indexmetadata.AccessMethodBtree, name)
+}
+
+func newBtreeOpfamily(name string) opfamily {
+	return opfamily{
+		oid:       btreeOpfamilyID(name),
+		opfmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+		opfname:   name,
+		namespace: pgCatalogNamespaceID(),
+	}
 }
 
 func newJsonbGinOpfamily(name string) opfamily {

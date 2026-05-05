@@ -16,6 +16,7 @@ package _go
 
 import (
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -1206,6 +1207,27 @@ WHERE c.relname = 'index_sort_meta_idx';`,
 					},
 				},
 				{
+					Query: `SELECT c.relname, i.indclass
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname IN ('index_sort_meta_idx', 'index_sort_meta_pkey')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"index_sort_meta_idx", opClassOidVector("int4_ops", "int4_ops")},
+						{"index_sort_meta_pkey", opClassOidVector("int4_ops")},
+					},
+				},
+				{
+					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+WHERE opc.opcname = 'int4_ops';`,
+					Expected: []sql.Row{
+						{"int4_ops", "btree", "int4", "t"},
+					},
+				},
+				{
 					Query: `SELECT i.indnatts, i.indnkeyatts
 FROM pg_catalog.pg_class c
 JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
@@ -1950,7 +1972,11 @@ ORDER BY id;`,
 	})
 }
 
-func opClassOidVector(name string) string {
-	oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, name))
-	return strconv.FormatUint(uint64(oid), 10)
+func opClassOidVector(names ...string) string {
+	oids := make([]string, len(names))
+	for i, name := range names {
+		oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, name))
+		oids[i] = strconv.FormatUint(uint64(oid), 10)
+	}
+	return strings.Join(oids, " ")
 }
