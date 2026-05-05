@@ -101,7 +101,7 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 			return nil, sql.ErrIndexNotFound.New(target.Index)
 		}
-		if isPrimaryKeyIndex(located.index) {
+		if isConstraintBackedIndex(located.index) {
 			indexName := indexmetadata.DisplayName(located.index)
 			return nil, errors.Errorf(`cannot drop index "%s" because constraint "%s" on table "%s" requires it`,
 				indexName, indexName, located.index.Table())
@@ -359,4 +359,8 @@ func isPrimaryKeyIndex(index sql.Index) bool {
 		IsPrimaryKey() bool
 	})
 	return ok && primaryKeyIndex.IsPrimaryKey()
+}
+
+func isConstraintBackedIndex(index sql.Index) bool {
+	return isPrimaryKeyIndex(index) || (index.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Comment()))
 }

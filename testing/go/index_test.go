@@ -1195,6 +1195,33 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL drop index respects unique constraint ownership",
+			SetUpScript: []string{
+				"CREATE TABLE drop_index_unique_constraint (id INTEGER PRIMARY KEY, email TEXT, code TEXT);",
+				"CREATE UNIQUE INDEX drop_index_unique_constraint_email_idx ON drop_index_unique_constraint (email);",
+				"ALTER TABLE drop_index_unique_constraint ADD CONSTRAINT drop_index_unique_constraint_code_key UNIQUE (code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "DROP INDEX drop_index_unique_constraint_code_key RESTRICT;",
+					ExpectedErr: `because constraint "drop_index_unique_constraint_code_key" on table "drop_index_unique_constraint" requires it`,
+				},
+				{
+					Query: "DROP INDEX drop_index_unique_constraint_email_idx RESTRICT;",
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'drop_index_unique_constraint'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"drop_index_unique_constraint_code_key"},
+						{"drop_index_unique_constraint_pkey"},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL unique nulls not distinct unsupported boundary",
 			SetUpScript: []string{
 				"CREATE TABLE unique_nulls_not_distinct (id INTEGER PRIMARY KEY, v INTEGER);",
