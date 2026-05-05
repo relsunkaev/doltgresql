@@ -116,27 +116,31 @@ type amop struct {
 	method    id.Id
 }
 
-var defaultPostgresAmops = []amop{
-	newBtreeInt4Amop("<", int16(1)),
-	newBtreeInt4Amop("<=", int16(2)),
-	newBtreeInt4Amop("=", int16(3)),
-	newBtreeInt4Amop(">=", int16(4)),
-	newBtreeInt4Amop(">", int16(5)),
-	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@>", "jsonb", int16(7)),
-	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
-	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?|", "_text", int16(10)),
-	newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?&", "_text", int16(11)),
-	newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
-}
+var defaultPostgresAmops = func() []amop {
+	amops := make([]amop, 0, len(btreeCatalogTypes)*len(btreeComparisonOperators)+5)
+	for _, typ := range btreeCatalogTypes {
+		for _, operator := range btreeComparisonOperators {
+			amops = append(amops, newBtreeAmop(typ, operator))
+		}
+	}
+	amops = append(amops,
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@>", "jsonb", int16(7)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?|", "_text", int16(10)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?&", "_text", int16(11)),
+		newJsonbGinAmop(indexmetadata.OpClassJsonbPathOps, "@>", "jsonb", int16(7)),
+	)
+	return amops
+}()
 
-func newBtreeInt4Amop(operator string, strategy int16) amop {
+func newBtreeAmop(typ btreeCatalogType, operator btreeComparisonOperator) amop {
 	return amop{
-		oid:       btreeAmopID("integer_ops", "int4", strategy),
-		family:    btreeOpfamilyID("integer_ops"),
-		leftType:  pgCatalogTypeID("int4"),
-		rightType: pgCatalogTypeID("int4"),
-		strategy:  strategy,
-		operator:  pgCatalogOperatorID(operator, "int4", "int4"),
+		oid:       btreeAmopID(typ.opfamily, typ.typeName, operator.strategy),
+		family:    btreeOpfamilyID(typ.opfamily),
+		leftType:  pgCatalogTypeID(typ.typeName),
+		rightType: pgCatalogTypeID(typ.typeName),
+		strategy:  operator.strategy,
+		operator:  pgCatalogOperatorID(operator.name, typ.typeName, typ.typeName),
 		method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
 	}
 }

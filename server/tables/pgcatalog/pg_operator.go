@@ -130,35 +130,40 @@ type pgOperator struct {
 	join       id.Id
 }
 
-var defaultPostgresOperators = []pgOperator{
-	newBtreeInt4Operator("<", "int4lt", ">"),
-	newBtreeInt4Operator("<=", "int4le", ">="),
-	newBtreeInt4Operator("=", "int4eq", "="),
-	newBtreeInt4Operator(">=", "int4ge", "<="),
-	newBtreeInt4Operator(">", "int4gt", "<"),
-	newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
-	newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
-	newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
-	newJsonbOperator("?|", "jsonb", "_text", "jsonb_exists_any", zeroOID()),
-	newJsonbOperator("?&", "jsonb", "_text", "jsonb_exists_all", zeroOID()),
-}
+var defaultPostgresOperators = func() []pgOperator {
+	operators := make([]pgOperator, 0, len(btreeCatalogTypes)*len(btreeComparisonOperators)+5)
+	for _, typ := range btreeCatalogTypes {
+		for idx, operator := range btreeComparisonOperators {
+			operators = append(operators, newBtreeOperator(typ, operator, typ.comparisonFuncs[idx]))
+		}
+	}
+	operators = append(operators,
+		newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
+		newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
+		newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
+		newJsonbOperator("?|", "jsonb", "_text", "jsonb_exists_any", zeroOID()),
+		newJsonbOperator("?&", "jsonb", "_text", "jsonb_exists_all", zeroOID()),
+	)
+	return operators
+}()
 
-func newBtreeInt4Operator(name string, function string, commutator string) pgOperator {
+func newBtreeOperator(typ btreeCatalogType, operator btreeComparisonOperator, function string) pgOperator {
+	functionType := typ.operatorFunctionType()
 	return pgOperator{
-		oid:        pgCatalogOperatorID(name, "int4", "int4"),
-		name:       name,
+		oid:        pgCatalogOperatorID(operator.name, typ.typeName, typ.typeName),
+		name:       operator.name,
 		namespace:  pgCatalogNamespaceID(),
-		leftType:   pgCatalogTypeID("int4"),
-		rightType:  pgCatalogTypeID("int4"),
+		leftType:   pgCatalogTypeID(typ.typeName),
+		rightType:  pgCatalogTypeID(typ.typeName),
 		result:     pgCatalogTypeID("bool"),
-		commutator: pgCatalogOperatorID(commutator, "int4", "int4"),
-		code:       pgCatalogFunctionID(function, pgCatalogType("int4"), pgCatalogType("int4")),
-		restrict:   btreeInt4OperatorRestrictFunctionID(name),
-		join:       btreeInt4OperatorJoinFunctionID(name),
+		commutator: pgCatalogOperatorID(operator.commutator, typ.typeName, typ.typeName),
+		code:       pgCatalogFunctionID(function, pgCatalogType(functionType), pgCatalogType(functionType)),
+		restrict:   btreeOperatorRestrictFunctionID(operator.name),
+		join:       btreeOperatorJoinFunctionID(operator.name),
 	}
 }
 
-func btreeInt4OperatorRestrictFunctionID(name string) id.Id {
+func btreeOperatorRestrictFunctionID(name string) id.Id {
 	switch name {
 	case "=":
 		return pgCatalogFunctionID("eqsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
@@ -169,7 +174,7 @@ func btreeInt4OperatorRestrictFunctionID(name string) id.Id {
 	}
 }
 
-func btreeInt4OperatorJoinFunctionID(name string) id.Id {
+func btreeOperatorJoinFunctionID(name string) id.Id {
 	switch name {
 	case "=":
 		return pgCatalogFunctionID("eqjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))

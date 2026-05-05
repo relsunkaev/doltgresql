@@ -72,17 +72,32 @@ func TestPgAmop(t *testing.T) {
 			Name: "pg_amop",
 			Assertions: []ScriptTestAssertion{
 				{
+					Query: `SELECT opf.opfname, COUNT(*)
+FROM "pg_catalog"."pg_amop" amop
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = amop.amopmethod
+WHERE am.amname = 'btree'
+GROUP BY opf.opfname
+ORDER BY opf.opfname;`,
+					Expected: []sql.Row{
+						{"bool_ops", 5},
+						{"bpchar_ops", 5},
+						{"datetime_ops", 15},
+						{"float_ops", 10},
+						{"integer_ops", 15},
+						{"numeric_ops", 5},
+						{"text_ops", 10},
+						{"uuid_ops", 5},
+					},
+				},
+				{
 					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
 FROM "pg_catalog"."pg_amop" amop
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
+WHERE opf.opfname LIKE 'jsonb%'
 ORDER BY opf.opfname, amop.amopstrategy;`,
 					Expected: []sql.Row{
-						{"integer_ops", 1, "<"},
-						{"integer_ops", 2, "<="},
-						{"integer_ops", 3, "="},
-						{"integer_ops", 4, ">="},
-						{"integer_ops", 5, ">"},
 						{"jsonb_ops", 7, "@>"},
 						{"jsonb_ops", 9, "?"},
 						{"jsonb_ops", 10, "?|"},
@@ -100,7 +115,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{10}},
+					Expected: []sql.Row{{75}},
 				},
 			},
 		},
@@ -113,12 +128,31 @@ func TestPgAmproc(t *testing.T) {
 			Name: "pg_amproc",
 			Assertions: []ScriptTestAssertion{
 				{
+					Query: `SELECT opf.opfname, COUNT(*)
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
+WHERE am.amname = 'btree'
+GROUP BY opf.opfname
+ORDER BY opf.opfname;`,
+					Expected: []sql.Row{
+						{"bool_ops", 1},
+						{"bpchar_ops", 1},
+						{"datetime_ops", 3},
+						{"float_ops", 2},
+						{"integer_ops", 3},
+						{"numeric_ops", 1},
+						{"text_ops", 2},
+						{"uuid_ops", 1},
+					},
+				},
+				{
 					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
 FROM "pg_catalog"."pg_amproc" amproc
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+WHERE opf.opfname LIKE 'jsonb%'
 ORDER BY opf.opfname, amproc.amprocnum;`,
 					Expected: []sql.Row{
-						{"integer_ops", 1, "btint4cmp"},
 						{"jsonb_ops", 1, "gin_compare_jsonb"},
 						{"jsonb_ops", 2, "gin_extract_jsonb"},
 						{"jsonb_ops", 3, "gin_extract_jsonb_query"},
@@ -141,7 +175,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{11}},
+					Expected: []sql.Row{{24}},
 				},
 			},
 		},
@@ -2355,6 +2389,33 @@ END;`,
 						{"?&", "jsonb", "_text"},
 					},
 				},
+				{
+					Query: `SELECT lt.typname, COUNT(*)
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE lt.oid = rt.oid
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+	AND lt.typname IN ('bool', 'bpchar', 'date', 'float4', 'float8', 'int2', 'int4', 'int8', 'numeric', 'text', 'timestamp', 'timestamptz', 'uuid', 'varchar')
+GROUP BY lt.typname
+ORDER BY lt.typname;`,
+					Expected: []sql.Row{
+						{"bool", 5},
+						{"bpchar", 5},
+						{"date", 5},
+						{"float4", 5},
+						{"float8", 5},
+						{"int2", 5},
+						{"int4", 5},
+						{"int8", 5},
+						{"numeric", 5},
+						{"text", 5},
+						{"timestamp", 5},
+						{"timestamptz", 5},
+						{"uuid", 5},
+						{"varchar", 5},
+					},
+				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_operator";`,
 					ExpectedErr: "not",
@@ -2365,7 +2426,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{10}},
+					Expected: []sql.Row{{75}},
 				},
 			},
 		},

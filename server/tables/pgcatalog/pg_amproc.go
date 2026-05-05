@@ -109,26 +109,32 @@ type amproc struct {
 	proc      string
 }
 
-var defaultPostgresAmprocs = []amproc{
-	newBtreeInt4Amproc(int16(1), "btint4cmp"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(1), "gin_compare_jsonb"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(2), "gin_extract_jsonb"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(3), "gin_extract_jsonb_query"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(4), "gin_consistent_jsonb"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(6), "gin_triconsistent_jsonb"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(1), "btint4cmp"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(2), "gin_extract_jsonb_path"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(3), "gin_extract_jsonb_query_path"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(4), "gin_consistent_jsonb_path"),
-	newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(6), "gin_triconsistent_jsonb_path"),
-}
+var defaultPostgresAmprocs = func() []amproc {
+	amprocs := make([]amproc, 0, len(btreeCatalogTypes)+10)
+	for _, typ := range btreeCatalogTypes {
+		amprocs = append(amprocs, newBtreeAmproc(typ, int16(1), typ.compareProc))
+	}
+	amprocs = append(amprocs,
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(1), "gin_compare_jsonb"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(2), "gin_extract_jsonb"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(3), "gin_extract_jsonb_query"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(4), "gin_consistent_jsonb"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(6), "gin_triconsistent_jsonb"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(1), "btint4cmp"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(2), "gin_extract_jsonb_path"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(3), "gin_extract_jsonb_query_path"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(4), "gin_consistent_jsonb_path"),
+		newJsonbGinAmproc(indexmetadata.OpClassJsonbPathOps, int16(6), "gin_triconsistent_jsonb_path"),
+	)
+	return amprocs
+}()
 
-func newBtreeInt4Amproc(procNum int16, proc string) amproc {
+func newBtreeAmproc(typ btreeCatalogType, procNum int16, proc string) amproc {
 	return amproc{
-		oid:       btreeAmprocID("integer_ops", "int4", procNum),
-		family:    btreeOpfamilyID("integer_ops"),
-		leftType:  pgCatalogTypeID("int4"),
-		rightType: pgCatalogTypeID("int4"),
+		oid:       btreeAmprocID(typ.opfamily, typ.typeName, procNum),
+		family:    btreeOpfamilyID(typ.opfamily),
+		leftType:  pgCatalogTypeID(typ.typeName),
+		rightType: pgCatalogTypeID(typ.typeName),
 		procNum:   procNum,
 		proc:      proc,
 	}
