@@ -35,6 +35,23 @@ const (
 	commentPrefix = "doltgres:index-metadata:v1:"
 )
 
+var supportedBtreeOpClasses = map[string]struct{}{
+	"bool_ops":        {},
+	"int2_ops":        {},
+	"int4_ops":        {},
+	"int8_ops":        {},
+	"float4_ops":      {},
+	"float8_ops":      {},
+	"numeric_ops":     {},
+	"text_ops":        {},
+	"varchar_ops":     {},
+	"bpchar_ops":      {},
+	"date_ops":        {},
+	"timestamp_ops":   {},
+	"timestamptz_ops": {},
+	"uuid_ops":        {},
+}
+
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
 // does not currently expose.
 type Metadata struct {
@@ -184,4 +201,11 @@ func IsSupportedGinJsonbOpClass(opClass string) bool {
 	default:
 		return false
 	}
+}
+
+// IsSupportedBtreeOpClass returns whether opClass is a catalog-visible btree
+// opclass whose metadata Doltgres can preserve for ordinary btree indexes.
+func IsSupportedBtreeOpClass(opClass string) bool {
+	_, ok := supportedBtreeOpClasses[NormalizeOpClass(opClass)]
+	return ok
 }

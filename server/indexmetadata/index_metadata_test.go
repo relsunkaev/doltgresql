@@ -86,6 +86,17 @@ func TestIsSupportedGinJsonbOpClass(t *testing.T) {
 	}
 }
 
+func TestIsSupportedBtreeOpClass(t *testing.T) {
+	for _, opClass := range []string{"int4_ops", "TEXT_OPS", " uuid_ops "} {
+		if !IsSupportedBtreeOpClass(opClass) {
+			t.Fatalf("expected %q to be supported", opClass)
+		}
+	}
+	if IsSupportedBtreeOpClass(OpClassJsonbOps) {
+		t.Fatal("expected jsonb_ops to be unsupported for btree")
+	}
+}
+
 func TestIndOptionValue(t *testing.T) {
 	tests := []struct {
 		name   string

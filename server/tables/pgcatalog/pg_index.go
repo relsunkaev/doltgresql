@@ -371,7 +371,7 @@ func opClassIds(opClasses []string) []any {
 func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) []any {
 	opClasses := indexmetadata.OpClasses(index.Comment())
 	if len(opClasses) > 0 {
-		return opClassIds(opClasses)
+		return indexOpClassIdsWithDefaults(index, schema, indexColumns, opClasses)
 	}
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return nil
@@ -379,6 +379,29 @@ func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) 
 
 	ids := make([]any, len(indexColumns))
 	for i, colName := range indexColumns {
+		colIdx := schema.IndexOfColName(colName)
+		if colIdx < 0 {
+			return nil
+		}
+		opClass, ok := defaultBtreeOpClassForType(schema[colIdx].Type)
+		if !ok {
+			return nil
+		}
+		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+	}
+	return ids
+}
+
+func indexOpClassIdsWithDefaults(index sql.Index, schema sql.Schema, indexColumns []string, opClasses []string) []any {
+	ids := make([]any, len(indexColumns))
+	for i, colName := range indexColumns {
+		if i < len(opClasses) && opClasses[i] != "" {
+			ids[i] = id.NewId(id.Section_OperatorClass, opClasses[i])
+			continue
+		}
+		if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+			return nil
+		}
 		colIdx := schema.IndexOfColName(colName)
 		if colIdx < 0 {
 			return nil

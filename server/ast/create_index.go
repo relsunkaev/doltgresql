@@ -143,9 +143,22 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 }
 
 func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, error) {
+	opClasses := make([]string, len(node.Columns))
 	sortOptions := make([]indexmetadata.IndexColumnOption, len(node.Columns))
 	hasMetadata := false
 	for i, column := range node.Columns {
+		if column.OpClass != nil {
+			if len(column.OpClass.Options) > 0 {
+				return nil, errors.Errorf("index operator class options are not yet supported")
+			}
+			opClass := indexmetadata.NormalizeOpClass(column.OpClass.Name)
+			if !indexmetadata.IsSupportedBtreeOpClass(opClass) {
+				return nil, errors.Errorf("operator class %s is not yet supported for btree indexes", opClass)
+			}
+			opClasses[i] = opClass
+			hasMetadata = true
+		}
+
 		switch column.Direction {
 		case tree.DefaultDirection, tree.Ascending:
 		case tree.Descending:
@@ -171,6 +184,7 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 	}
 	return &indexmetadata.Metadata{
 		AccessMethod: indexmetadata.AccessMethodBtree,
+		OpClasses:    opClasses,
 		SortOptions:  sortOptions,
 	}, nil
 }

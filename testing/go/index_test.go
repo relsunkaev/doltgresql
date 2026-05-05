@@ -1076,8 +1076,9 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// ignored warning-generating unsupported options
-					Query: "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
+					// Unsupported btree opclasses are rejected instead of being hidden by other ignored options.
+					Query:       "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
+					ExpectedErr: "operator class varchar_pattern_ops is not yet supported for btree indexes",
 				},
 				{
 					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
@@ -1264,6 +1265,39 @@ ORDER BY indexrelname;`,
 						{"index_sort_meta_idx", 0, 0},
 						{"index_sort_meta_pkey", 0, 0},
 					},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL btree opclass metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_opclass_meta (id INTEGER PRIMARY KEY, a INTEGER, b INTEGER);",
+				"CREATE INDEX btree_opclass_meta_idx ON btree_opclass_meta (a int4_ops, b);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'btree_opclass_meta_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX btree_opclass_meta_idx ON public.btree_opclass_meta USING btree (a int4_ops, b)", "a int4_ops", "b"},
+					},
+				},
+				{
+					Query: `SELECT i.indclass
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'btree_opclass_meta_idx';`,
+					Expected: []sql.Row{
+						{opClassOidVector("int4_ops", "int4_ops")},
+					},
+				},
+				{
+					Query:       "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_ops);",
+					ExpectedErr: "operator class jsonb_ops is not yet supported for btree indexes",
 				},
 			},
 		},
