@@ -169,17 +169,15 @@ func rewriteTableFunctionExpr(fromExpr vitess.TableExpr) vitess.TableExpr {
 		if !ok {
 			return expr
 		}
-		if expr.Lateral {
-			if subquery.SelectExprs == nil {
-				subquery.SelectExprs = vitess.SelectExprs{&vitess.StarExpr{}}
-			}
-			subquery.From = vitess.TableExprs{tableFunc}
-			if expr.As.IsEmpty() {
-				expr.As = vitess.NewTableIdent(tableFunc.Name)
-			}
-			return expr
+		if subquery.SelectExprs == nil {
+			subquery.SelectExprs = vitess.SelectExprs{&vitess.StarExpr{}}
 		}
-		return tableFunc
+		subquery.From = vitess.TableExprs{tableFunc}
+		if expr.As.IsEmpty() {
+			expr.As = vitess.NewTableIdent(tableFunc.Name)
+		}
+		expr.Lateral = true
+		return expr
 	case *vitess.JoinTableExpr:
 		expr.LeftExpr = rewriteTableFunctionExpr(expr.LeftExpr)
 		expr.RightExpr = rewriteTableFunctionExpr(expr.RightExpr)
