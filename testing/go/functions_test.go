@@ -1834,6 +1834,10 @@ func TestJsonFunctions(t *testing.T) {
 					Expected: []sql.Row{{"foo"}},
 				},
 				{
+					Query:    `SELECT * FROM jsonb_to_recordset('[{"a":1,"b":"foo","c":true},{"a":2,"b":"bar"}]'::jsonb) AS r(a int, b text, c bool) ORDER BY a;`,
+					Expected: []sql.Row{{1, "foo", "t"}, {2, "bar", nil}},
+				},
+				{
 					Query:    `SELECT jsonb_object_keys('{"a":1,"b":2}'::jsonb);`,
 					Expected: []sql.Row{{"a"}, {"b"}},
 				},

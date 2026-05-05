@@ -180,8 +180,12 @@ func nodeJsonToRecordAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr,
 	switch strings.ToLower(vitessFuncExpr.Name.String()) {
 	case "json_to_record":
 		internalName = "doltgres_json_to_record"
+	case "json_to_recordset":
+		internalName = "doltgres_json_to_recordset"
 	case "jsonb_to_record":
 		internalName = "doltgres_jsonb_to_record"
+	case "jsonb_to_recordset":
+		internalName = "doltgres_jsonb_to_recordset"
 	default:
 		return nil, false, nil
 	}

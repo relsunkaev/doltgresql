@@ -58,14 +58,16 @@ type jsonToRecordTableFunction struct {
 	db        sql.Database
 	name      string
 	inputType *pgtypes.DoltgresType
+	recordSet bool
 	exprs     []sql.Expression
 	columns   []jsonRecordColumn
 }
 
-func newJsonToRecordTableFunction(name string, inputType *pgtypes.DoltgresType) *jsonToRecordTableFunction {
+func newJsonToRecordTableFunction(name string, inputType *pgtypes.DoltgresType, recordSet bool) *jsonToRecordTableFunction {
 	return &jsonToRecordTableFunction{
 		name:      name,
 		inputType: inputType,
+		recordSet: recordSet,
 	}
 }
 
@@ -330,26 +332,56 @@ func (j *jsonToRecordTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.
 		return nil, err
 	}
 	if value == nil {
+		if j.recordSet {
+			return sql.RowsToRowIter(), nil
+		}
 		return sql.RowsToRowIter(make(sql.Row, len(j.columns))), nil
 	}
 	doc, err := jsonDocumentFromFunctionValue(ctx, j.inputType, value)
 	if err != nil {
 		return nil, err
 	}
-	object, ok := doc.Value.(pgtypes.JsonValueObject)
-	if !ok {
-		return nil, errors.Errorf("cannot call %s on a non-object", j.Name())
-	}
-	output := make(sql.Row, len(j.columns))
-	for i, col := range j.columns {
-		if objectIdx, ok := object.Index[col.name]; ok {
-			output[i], err = jsonPopulateValue(ctx, col.typ, nil, object.Items[objectIdx].Value)
+	if j.recordSet {
+		array, ok := doc.Value.(pgtypes.JsonValueArray)
+		if !ok {
+			return nil, errors.Errorf("cannot call %s on a non-array", j.Name())
+		}
+		rows := make([]sql.Row, len(array))
+		for i, item := range array {
+			object, ok := item.(pgtypes.JsonValueObject)
+			if !ok {
+				return nil, errors.Errorf("cannot call %s on an array containing a non-object", j.Name())
+			}
+			rows[i], err = j.rowFromObject(ctx, object)
 			if err != nil {
 				return nil, err
 			}
 		}
+		return sql.RowsToRowIter(rows...), nil
+	}
+	object, ok := doc.Value.(pgtypes.JsonValueObject)
+	if !ok {
+		return nil, errors.Errorf("cannot call %s on a non-object", j.Name())
+	}
+	output, err := j.rowFromObject(ctx, object)
+	if err != nil {
+		return nil, err
 	}
 	return sql.RowsToRowIter(output), nil
+}
+
+func (j *jsonToRecordTableFunction) rowFromObject(ctx *sql.Context, object pgtypes.JsonValueObject) (sql.Row, error) {
+	output := make(sql.Row, len(j.columns))
+	for i, col := range j.columns {
+		if objectIdx, ok := object.Index[col.name]; ok {
+			value, err := jsonPopulateValue(ctx, col.typ, nil, object.Items[objectIdx].Value)
+			if err != nil {
+				return nil, err
+			}
+			output[i] = value
+		}
+	}
+	return output, nil
 }
 
 // CollationCoercibility implements sql.CollationCoercible.
