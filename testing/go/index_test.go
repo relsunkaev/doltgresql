@@ -1467,6 +1467,16 @@ ORDER BY id;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:       "CREATE INDEX CONCURRENTLY drop_index_restrict_concurrent_idx ON drop_index_restrict (v);",
+					ExpectedErr: "concurrent index creation is not yet supported",
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_class
+WHERE relname = 'drop_index_restrict_concurrent_idx';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
 					Query:       "DROP INDEX CONCURRENTLY drop_index_restrict_idx;",
 					ExpectedErr: "concurrent indexes are not yet supported",
 				},
