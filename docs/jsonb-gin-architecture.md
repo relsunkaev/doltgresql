@@ -111,10 +111,18 @@ keyless tables, the design must define the row identity before claiming support.
 The current sidecar stores encoded GIN tokens and stable row-identity hashes as
 the `(token, row_id)` primary key. Token lookup uses that sidecar primary key
 when the table exposes indexed access, with a full sidecar scan only as a
-fallback. That gives correct lookup candidates and avoids reading unrelated
-posting lists, but it is still a bridge until execution can fetch rows directly
-from indexed identities and the layout has benchmark evidence for large posting
-lists.
+fallback. Posting rows also carry base primary-key values when available, so
+execution can fetch candidates directly through the base table's primary-key
+index and only falls back to a base scan when that direct lookup is unavailable.
+That gives correct lookup candidates and avoids reading unrelated posting
+lists, but the one-row-per-token-row layout is still a bridge until chunked
+posting lists have benchmark evidence for large and skewed posting lists.
+
+The next storage target is defined in
+`docs/jsonb-gin-posting-list-storage.md`. It keeps the current v1 sidecar as a
+compatibility format and designs a v2 chunked posting-list layout with
+copy-on-write DML maintenance, rollback/merge semantics, and a measurement plan
+before any default storage switch.
 
 ## Planning and execution
 
