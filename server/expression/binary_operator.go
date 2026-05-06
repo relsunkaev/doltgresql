@@ -116,10 +116,7 @@ func (b *BinaryOperator) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		if err != nil {
 			return nil, err
 		}
-		return &BinaryOperator{
-			operator:     b.operator,
-			compiledFunc: compiledFunc.(framework.Function),
-		}, nil
+		return newResolvedBinaryOperator(b.operator, compiledFunc.(framework.Function)), nil
 	} else {
 		binOp, err := b.WithResolvedChildren(ctx, []any{children[0], children[1]})
 		if err != nil {
@@ -149,10 +146,19 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 		return nil, errors.Errorf("operator does not exist: %s %s %s",
 			left.Type(sqlCtx).String(), b.operator.String(), right.Type(sqlCtx).String())
 	}
+	return newResolvedBinaryOperator(b.operator, compiledFunc), nil
+}
+
+func newResolvedBinaryOperator(operator framework.Operator, compiledFunc framework.Function) *BinaryOperator {
+	if compiled, ok := compiledFunc.(*framework.CompiledFunction); ok {
+		if quickFunction := compiled.GetQuickFunction(); quickFunction != nil {
+			compiledFunc = quickFunction
+		}
+	}
 	return &BinaryOperator{
-		operator:     b.operator,
+		operator:     operator,
 		compiledFunc: compiledFunc,
-	}, nil
+	}
 }
 
 // Operator returns the operator that is used.
