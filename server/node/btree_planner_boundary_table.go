@@ -27,7 +27,15 @@ import (
 )
 
 type BtreePlannerBoundaryTable struct {
-	underlying sql.Table
+	underlying      sql.Table
+	patternOpLookup []btreePatternOpLookup
+}
+
+type btreePatternOpLookup struct {
+	index      sql.Index
+	columnName string
+	expression string
+	typ        sql.Type
 }
 
 var _ sql.Table = (*BtreePlannerBoundaryTable)(nil)
@@ -49,12 +57,24 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	if err != nil {
 		return table, false, err
 	}
+	hasUnsafeIndex := false
+	patternOpLookups := make([]btreePatternOpLookup, 0)
 	for _, index := range indexes {
 		if unsafeBtreePlannerIndex(index) {
-			return &BtreePlannerBoundaryTable{underlying: table}, true, nil
+			hasUnsafeIndex = true
+			if lookup, ok := patternOpClassLookup(ctx, index, table.Schema(ctx)); ok {
+				patternOpLookups = append(patternOpLookups, lookup)
+			}
+			continue
 		}
 	}
-	return table, false, nil
+	if !hasUnsafeIndex {
+		return table, false, nil
+	}
+	if len(patternOpLookups) == 0 {
+		return &BtreePlannerBoundaryTable{underlying: table}, true, nil
+	}
+	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: patternOpLookups}, true, nil
 }
 
 func (t *BtreePlannerBoundaryTable) Name() string {
@@ -82,7 +102,7 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 	if err != nil {
 		return nil, err
 	}
-	return &BtreePlannerBoundaryTable{underlying: table}, nil
+	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: t.patternOpLookup}, nil
 }
 
 func (t *BtreePlannerBoundaryTable) Projections() []string {
@@ -195,18 +215,13 @@ func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr 
 		return sql.IndexLookup{}, false, nil
 	}
 
-	indexes, err := t.underlyingIndexes(ctx)
-	if err != nil {
-		return sql.IndexLookup{}, false, err
-	}
-	for _, index := range indexes {
-		indexExpr, indexType, ok := t.patternOpClassIndexExpression(ctx, index, field.Name())
-		if !ok {
+	for _, cached := range t.patternOpLookup {
+		if !strings.EqualFold(cached.columnName, field.Name()) {
 			continue
 		}
-		builder := sql.NewMySQLIndexBuilder(ctx, index)
-		builder.GreaterOrEqual(ctx, indexExpr, indexType, prefix)
-		builder.LessThan(ctx, indexExpr, indexType, upper)
+		builder := sql.NewMySQLIndexBuilder(ctx, cached.index)
+		builder.GreaterOrEqual(ctx, cached.expression, cached.typ, prefix)
+		builder.LessThan(ctx, cached.expression, cached.typ, upper)
 		lookup, err := builder.Build(ctx)
 		if err != nil {
 			return sql.IndexLookup{}, false, err
@@ -219,35 +234,32 @@ func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr 
 	return sql.IndexLookup{}, false, nil
 }
 
-func (t *BtreePlannerBoundaryTable) patternOpClassIndexExpression(ctx *sql.Context, index sql.Index, columnName string) (string, sql.Type, bool) {
+func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (btreePatternOpLookup, bool) {
 	metadata, ok := indexmetadata.DecodeComment(index.Comment())
 	if !ok {
-		return "", nil, false
+		return btreePatternOpLookup{}, false
 	}
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
-		return "", nil, false
+		return btreePatternOpLookup{}, false
 	}
-	logicalColumns := indexmetadata.LogicalColumns(index, t.Schema(ctx))
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
 	columnTypes := index.ColumnExpressionTypes(ctx)
 	for i, opClass := range metadata.OpClasses {
 		if i != 0 || !isBtreePatternOpClass(opClass) || i >= len(logicalColumns) || i >= len(columnTypes) {
 			continue
 		}
 		logicalColumn := logicalColumns[i]
-		if logicalColumn.Expression || !strings.EqualFold(logicalColumn.StorageName, columnName) {
+		if logicalColumn.Expression {
 			continue
 		}
-		return columnTypes[i].Expression, columnTypes[i].Type, true
+		return btreePatternOpLookup{
+			index:      index,
+			columnName: logicalColumn.StorageName,
+			expression: columnTypes[i].Expression,
+			typ:        columnTypes[i].Type,
+		}, true
 	}
-	return "", nil, false
-}
-
-func (t *BtreePlannerBoundaryTable) underlyingIndexes(ctx *sql.Context) ([]sql.Index, error) {
-	indexAddressable, ok := t.underlying.(sql.IndexAddressable)
-	if !ok {
-		return nil, nil
-	}
-	return indexAddressable.GetIndexes(ctx)
+	return btreePatternOpLookup{}, false
 }
 
 func unsafeBtreePlannerIndex(index sql.Index) bool {

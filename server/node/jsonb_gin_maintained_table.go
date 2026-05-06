@@ -15,10 +15,12 @@
 package node
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -82,6 +84,13 @@ const (
 	jsonbGinMaxBroadKeyPostingRowsForIndexedLookup = 128
 	jsonbGinMaxCandidateRowsForIndexedLookup       = 512
 )
+
+var jsonbGinLiteralTokenCache sync.Map
+
+type jsonbGinCachedLookupTokens struct {
+	tokens []jsonbgin.Token
+	mode   jsonbGinLookupMode
+}
 
 func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*JsonbGinMaintainedTable); ok {
@@ -475,6 +484,25 @@ func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.O
 	if err != nil {
 		return nil, "", false, nil
 	}
+	if key, ok := jsonbGinLookupTokenCacheKey(opClass, operator, value); ok {
+		if cached, ok := jsonbGinLiteralTokenCache.Load(key); ok {
+			tokens := cached.(jsonbGinCachedLookupTokens)
+			return cloneJsonbGinTokens(tokens.tokens), tokens.mode, true, nil
+		}
+		tokens, mode, ok, err := jsonbGinLookupTokensFromValue(ctx, opClass, operator, value)
+		if err != nil || !ok {
+			return tokens, mode, ok, err
+		}
+		jsonbGinLiteralTokenCache.Store(key, jsonbGinCachedLookupTokens{
+			tokens: cloneJsonbGinTokens(tokens),
+			mode:   mode,
+		})
+		return tokens, mode, true, nil
+	}
+	return jsonbGinLookupTokensFromValue(ctx, opClass, operator, value)
+}
+
+func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator framework.Operator, value any) ([]jsonbgin.Token, jsonbGinLookupMode, bool, error) {
 	opClass = indexmetadata.NormalizeOpClass(opClass)
 	switch operator {
 	case framework.Operator_BinaryJSONContainsRight:
@@ -515,6 +543,36 @@ func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.O
 	default:
 		return nil, "", false, nil
 	}
+}
+
+func jsonbGinLookupTokenCacheKey(opClass string, operator framework.Operator, value any) (string, bool) {
+	switch value.(type) {
+	case string, []string, []any, bool, nil:
+	default:
+		// JSON/JSONB literals generally arrive as strings in this planner path.
+		// Avoid caching arbitrary runtime values unless their representation is
+		// explicitly stable here.
+		return "", false
+	}
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return "", false
+	}
+	return fmt.Sprintf("%s\x00%s\x00%s", indexmetadata.NormalizeOpClass(opClass), operator, encoded), true
+}
+
+func cloneJsonbGinTokens(tokens []jsonbgin.Token) []jsonbgin.Token {
+	if len(tokens) == 0 {
+		return nil
+	}
+	cloned := make([]jsonbgin.Token, len(tokens))
+	for i, token := range tokens {
+		cloned[i] = token
+		if token.Path != nil {
+			cloned[i].Path = append([]string(nil), token.Path...)
+		}
+	}
+	return cloned
 }
 
 func textArrayStrings(value any) ([]string, bool) {

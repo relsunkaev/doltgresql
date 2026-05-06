@@ -19,10 +19,12 @@ import (
 	"fmt"
 	"testing"
 
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/jsonbgin"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -72,6 +74,24 @@ func TestJsonbGinPostingRowCompaction(t *testing.T) {
 	require.Equal(t, []sql.Row{{"token/d", "row/1", int32(1)}}, compactPostingRowsToInsert(oldRows, newRows))
 	require.Empty(t, compactPostingRowsToDelete(oldRows, oldRows))
 	require.Empty(t, compactPostingRowsToInsert(oldRows, oldRows))
+}
+
+func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	literal := gmsexpression.NewLiteral(`{"tenant":8,"status":"open"}`, pgtypes.JsonB)
+
+	tokens, mode, ok, err := jsonbGinLookupTokens(ctx, indexmetadata.OpClassJsonbOps, framework.Operator_BinaryJSONContainsRight, literal)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, jsonbGinLookupIntersect, mode)
+	require.NotEmpty(t, tokens)
+
+	tokens[0].Value = "mutated"
+	tokensAgain, modeAgain, ok, err := jsonbGinLookupTokens(ctx, indexmetadata.OpClassJsonbOps, framework.Operator_BinaryJSONContainsRight, literal)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, jsonbGinLookupIntersect, modeAgain)
+	require.NotEqual(t, "mutated", tokensAgain[0].Value)
 }
 
 type fakePostingTable struct {

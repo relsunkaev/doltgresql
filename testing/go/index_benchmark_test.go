@@ -227,6 +227,31 @@ func TestBtreePatternOpclassPlannerBoundary(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 1)
 }
 
+func TestBtreePatternOpclassCacheDoesNotLeakAcrossIndexRecreate(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_pattern_cache_recreate (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_pattern_cache_recreate VALUES (1, 'alpha'), (2, 'alphabet'), (3, 'beta'), (4, 'alpaca')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_pattern_cache_recreate_name_idx ON btree_pattern_cache_recreate (name text_pattern_ops)")
+
+	query := `SELECT count(id) FROM btree_pattern_cache_recreate WHERE name LIKE 'alph%'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 2)
+
+	execBenchmarkSQL(t, ctx, conn, "DROP INDEX btree_pattern_cache_recreate_name_idx")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_pattern_cache_recreate_name_idx ON btree_pattern_cache_recreate (name)")
+
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 2)
+}
+
 func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -637,6 +662,31 @@ func TestJsonbGinDirectFetchPreservesRecheck(t *testing.T) {
 	query := `SELECT count(id) FROM jsonb_gin_recheck_plan WHERE doc @> '{"status":"open"}'`
 	assertBenchmarkPlanShape(t, ctx, conn, query, true)
 	assertCountResult(t, ctx, conn, query, 1)
+}
+
+func TestJsonbGinLiteralCacheDoesNotLeakAcrossIndexRecreate(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_literal_cache_recreate")
+	insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_literal_cache_recreate", 1, jsonbGinBenchmarkRows)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_literal_cache_recreate_idx ON jsonb_gin_literal_cache_recreate USING gin (doc)")
+
+	query := `SELECT count(id) FROM jsonb_gin_literal_cache_recreate WHERE doc @> '{"payload":{"category":"cat-3"}}'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 64)
+
+	execBenchmarkSQL(t, ctx, conn, "DROP INDEX jsonb_gin_literal_cache_recreate_idx")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_literal_cache_recreate_idx ON jsonb_gin_literal_cache_recreate USING gin (doc jsonb_path_ops)")
+
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 64)
 }
 
 func BenchmarkJsonbGinIndexBuild(b *testing.B) {
