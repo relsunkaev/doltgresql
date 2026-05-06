@@ -253,6 +253,54 @@ WHERE btree_join_left_idx.tenant = 4`,
 	}
 }
 
+func BenchmarkBtreeIndexBuild(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	execBenchmarkSQL(b, ctx, conn, "CREATE TABLE btree_bench_build (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(b, ctx, conn, "btree_bench_build", btreeBenchmarkRows)
+
+	b.Run("composite_backfill", func(b *testing.B) {
+		benchmarkCreateDropBtreeIndex(b, ctx, conn, "btree_bench_build", "btree_bench_build_idx", "tenant, score")
+	})
+}
+
+func BenchmarkBtreeDMLMaintenance(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+
+	b.Run("insert", func(b *testing.B) {
+		createBtreeDMLBenchmarkTable(b, ctx, conn, "btree_bench_dml_insert")
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			insertBtreeDMLBenchmarkRow(b, ctx, conn, "btree_bench_dml_insert", i+1)
+		}
+	})
+
+	b.Run("update", func(b *testing.B) {
+		createBtreeDMLBenchmarkTable(b, ctx, conn, "btree_bench_dml_update")
+		insertBtreeDMLBenchmarkRow(b, ctx, conn, "btree_bench_dml_update", 1)
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			execBenchmarkSQL(b, ctx, conn,
+				"UPDATE btree_bench_dml_update SET tenant = $1, score = $2 WHERE id = 1",
+				(i+2)%8, (i+2)%64)
+		}
+	})
+
+	b.Run("delete", func(b *testing.B) {
+		createBtreeDMLBenchmarkTable(b, ctx, conn, "btree_bench_dml_delete")
+		insertBtreeDMLBenchmarkRow(b, ctx, conn, "btree_bench_dml_delete", 1)
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			execBenchmarkSQL(b, ctx, conn, "DELETE FROM btree_bench_dml_delete WHERE id = 1")
+			b.StopTimer()
+			insertBtreeDMLBenchmarkRow(b, ctx, conn, "btree_bench_dml_delete", i+2)
+			b.StartTimer()
+		}
+	})
+}
+
 func BenchmarkJsonbGinSQLLookup(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupJsonbGinLookupBenchmark(b, ctx, conn)
@@ -471,6 +519,19 @@ func setupBtreeJoinBenchmark(tb testing.TB, ctx context.Context, conn *Connectio
 	execBenchmarkSQL(tb, ctx, conn, "CREATE INDEX btree_join_right_idx_tenant_score_idx ON btree_join_right_idx (tenant, score)")
 }
 
+func createBtreeDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
+	b.Helper()
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", table))
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s (tenant, score)", table, table))
+}
+
+func insertBtreeDMLBenchmarkRow(b *testing.B, ctx context.Context, conn *Connection, table string, id int) {
+	b.Helper()
+	execBenchmarkSQL(b, ctx, conn,
+		fmt.Sprintf("INSERT INTO %s VALUES ($1, $2, $3, $4)", table),
+		id, id%8, id%64, fmt.Sprintf("label-%d", id%16))
+}
+
 func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
 	b.Helper()
 	createJsonbGinBenchmarkTable(b, ctx, conn, table)
@@ -578,6 +639,18 @@ func benchmarkCreateDropJsonbGinIndex(b *testing.B, ctx context.Context, conn *C
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s ON %s USING gin (%s)", indexName, table, columnDef))
+		b.StopTimer()
+		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP INDEX %s", indexName))
+		b.StartTimer()
+	}
+}
+
+func benchmarkCreateDropBtreeIndex(b *testing.B, ctx context.Context, conn *Connection, table string, indexName string, columnDef string) {
+	b.Helper()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s ON %s (%s)", indexName, table, columnDef))
 		b.StopTimer()
 		execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP INDEX %s", indexName))
 		b.StartTimer()
