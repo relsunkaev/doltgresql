@@ -373,6 +373,12 @@ var btreeCatalogTypes = []btreeCatalogType{
 		comparisonFuncs: [5]string{"interval_lt", "interval_le", "interval_eq", "interval_ge", "interval_gt"},
 	},
 	{
+		typeName:        "jsonb",
+		opfamily:        "jsonb_ops",
+		compareProc:     "jsonb_cmp",
+		comparisonFuncs: [5]string{"jsonb_lt", "jsonb_le", "jsonb_eq", "jsonb_ge", "jsonb_gt"},
+	},
+	{
 		typeName:        "oid",
 		opfamily:        "oid_ops",
 		compareProc:     "btoidcmp",

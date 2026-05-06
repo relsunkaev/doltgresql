@@ -129,13 +129,13 @@ func TestIsSupportedGinJsonbOpClass(t *testing.T) {
 }
 
 func TestIsSupportedBtreeOpClass(t *testing.T) {
-	for _, opClass := range []string{"int4_ops", "TEXT_OPS", " uuid_ops ", "time_ops", "pg_lsn_ops"} {
+	for _, opClass := range []string{"int4_ops", "TEXT_OPS", " uuid_ops ", "time_ops", "pg_lsn_ops", OpClassJsonbOps} {
 		if !IsSupportedBtreeOpClass(opClass) {
 			t.Fatalf("expected %q to be supported", opClass)
 		}
 	}
-	if IsSupportedBtreeOpClass(OpClassJsonbOps) {
-		t.Fatal("expected jsonb_ops to be unsupported for btree")
+	if IsSupportedBtreeOpClass(OpClassJsonbPathOps) {
+		t.Fatal("expected jsonb_path_ops to be unsupported for btree")
 	}
 }
 

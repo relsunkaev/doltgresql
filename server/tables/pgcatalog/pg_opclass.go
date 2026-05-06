@@ -137,6 +137,7 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclassWithDefault(indexmetadata.OpClassBpcharPatternOps, "bpchar", "bpchar_pattern_ops", false),
 	newBtreeOpclass("date_ops", "date", "datetime_ops"),
 	newBtreeOpclass("interval_ops", "interval", "interval_ops"),
+	newBtreeOpclass(indexmetadata.OpClassJsonbOps, "jsonb", "jsonb_ops"),
 	newBtreeOpclass("oid_ops", "oid", "oid_ops"),
 	newBtreeOpclass("oidvector_ops", "oidvector", "oidvector_ops"),
 	newBtreeOpclass("pg_lsn_ops", "pg_lsn", "pg_lsn_ops"),
@@ -168,7 +169,7 @@ func newBtreeOpclassWithKeyTypeAndDefault(name string, typeName string, family s
 		keyTypeID = pgCatalogTypeID(keyType)
 	}
 	return opclass{
-		oid:       id.NewId(id.Section_OperatorClass, name),
+		oid:       pgCatalogOpclassID(indexmetadata.AccessMethodBtree, name),
 		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
 		opcname:   name,
 		namespace: pgCatalogNamespaceID(),
@@ -181,7 +182,7 @@ func newBtreeOpclassWithKeyTypeAndDefault(name string, typeName string, family s
 
 func newJsonbGinOpclass(name string, keytype id.Id, isDefault bool) opclass {
 	return opclass{
-		oid:       id.NewId(id.Section_OperatorClass, name),
+		oid:       pgCatalogOpclassID(indexmetadata.AccessMethodGin, name),
 		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodGin).AsId(),
 		opcname:   name,
 		namespace: pgCatalogNamespaceID(),

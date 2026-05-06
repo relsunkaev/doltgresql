@@ -68,6 +68,7 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	OpClassBpcharPatternOps:  {},
 	"date_ops":               {},
 	"interval_ops":           {},
+	OpClassJsonbOps:          {},
 	"oid_ops":                {},
 	"oidvector_ops":          {},
 	"pg_lsn_ops":             {},

@@ -90,6 +90,7 @@ ORDER BY opf.opfname;`,
 						{"float_ops", 20},
 						{"integer_ops", 45},
 						{"interval_ops", 5},
+						{"jsonb_ops", 5},
 						{"numeric_ops", 5},
 						{"oid_ops", 5},
 						{"oidvector_ops", 5},
@@ -251,18 +252,24 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 					},
 				},
 				{
-					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
+					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, opr.oprname
 FROM "pg_catalog"."pg_amop" amop
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = amop.amopmethod
 JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
 WHERE opf.opfname LIKE 'jsonb%'
-ORDER BY opf.opfname, amop.amopstrategy;`,
+ORDER BY am.amname, opf.opfname, amop.amopstrategy;`,
 					Expected: []sql.Row{
-						{"jsonb_ops", 7, "@>"},
-						{"jsonb_ops", 9, "?"},
-						{"jsonb_ops", 10, "?|"},
-						{"jsonb_ops", 11, "?&"},
-						{"jsonb_path_ops", 7, "@>"},
+						{"btree", "jsonb_ops", 1, "<"},
+						{"btree", "jsonb_ops", 2, "<="},
+						{"btree", "jsonb_ops", 3, "="},
+						{"btree", "jsonb_ops", 4, ">="},
+						{"btree", "jsonb_ops", 5, ">"},
+						{"gin", "jsonb_ops", 7, "@>"},
+						{"gin", "jsonb_ops", 9, "?"},
+						{"gin", "jsonb_ops", 10, "?|"},
+						{"gin", "jsonb_ops", 11, "?&"},
+						{"gin", "jsonb_path_ops", 7, "@>"},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -275,7 +282,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{215}},
+					Expected: []sql.Row{{220}},
 				},
 			},
 		},
@@ -306,6 +313,7 @@ ORDER BY opf.opfname;`,
 						{"float_ops", 8},
 						{"integer_ops", 22},
 						{"interval_ops", 2},
+						{"jsonb_ops", 1},
 						{"numeric_ops", 3},
 						{"oid_ops", 3},
 						{"oidvector_ops", 2},
@@ -487,22 +495,24 @@ ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
 					},
 				},
 				{
-					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
+					Query: `SELECT am.amname, opf.opfname, amproc.amprocnum, amproc.amproc
 FROM "pg_catalog"."pg_amproc" amproc
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
 WHERE opf.opfname LIKE 'jsonb%'
-ORDER BY opf.opfname, amproc.amprocnum;`,
+ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
 					Expected: []sql.Row{
-						{"jsonb_ops", 1, "gin_compare_jsonb"},
-						{"jsonb_ops", 2, "gin_extract_jsonb"},
-						{"jsonb_ops", 3, "gin_extract_jsonb_query"},
-						{"jsonb_ops", 4, "gin_consistent_jsonb"},
-						{"jsonb_ops", 6, "gin_triconsistent_jsonb"},
-						{"jsonb_path_ops", 1, "btint4cmp"},
-						{"jsonb_path_ops", 2, "gin_extract_jsonb_path"},
-						{"jsonb_path_ops", 3, "gin_extract_jsonb_query_path"},
-						{"jsonb_path_ops", 4, "gin_consistent_jsonb_path"},
-						{"jsonb_path_ops", 6, "gin_triconsistent_jsonb_path"},
+						{"btree", "jsonb_ops", 1, "jsonb_cmp"},
+						{"gin", "jsonb_ops", 1, "gin_compare_jsonb"},
+						{"gin", "jsonb_ops", 2, "gin_extract_jsonb"},
+						{"gin", "jsonb_ops", 3, "gin_extract_jsonb_query"},
+						{"gin", "jsonb_ops", 4, "gin_consistent_jsonb"},
+						{"gin", "jsonb_ops", 6, "gin_triconsistent_jsonb"},
+						{"gin", "jsonb_path_ops", 1, "btint4cmp"},
+						{"gin", "jsonb_path_ops", 2, "gin_extract_jsonb_path"},
+						{"gin", "jsonb_path_ops", 3, "gin_extract_jsonb_query_path"},
+						{"gin", "jsonb_path_ops", 4, "gin_consistent_jsonb_path"},
+						{"gin", "jsonb_path_ops", 6, "gin_triconsistent_jsonb_path"},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -515,7 +525,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{107}},
+					Expected: []sql.Row{{108}},
 				},
 			},
 		},
@@ -2699,15 +2709,17 @@ ORDER BY opc.opcname;`,
 					},
 				},
 				{
-					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, typ.typname
+					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, inputtyp.typname, COALESCE(keytyp.typname, ''), opc.opckeytype
 FROM "pg_catalog"."pg_opclass" opc
 JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
-JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opckeytype
+JOIN "pg_catalog"."pg_type" inputtyp ON inputtyp.oid = opc.opcintype
+LEFT JOIN "pg_catalog"."pg_type" keytyp ON keytyp.oid = opc.opckeytype
 WHERE opc.opcname LIKE 'jsonb_%'
-ORDER BY opc.opcname;`,
+ORDER BY opc.opcname, am.amname;`,
 					Expected: []sql.Row{
-						{"jsonb_ops", "gin", "t", "text"},
-						{"jsonb_path_ops", "gin", "f", "int4"},
+						{"jsonb_ops", "btree", "t", "jsonb", "", 0},
+						{"jsonb_ops", "gin", "t", "jsonb", "text", typeOid("text")},
+						{"jsonb_path_ops", "gin", "f", "jsonb", "int4", typeOid("int4")},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -2734,6 +2746,7 @@ ORDER BY opc.opcname;`,
 						{"int4_ops"},
 						{"int8_ops"},
 						{"interval_ops"},
+						{"jsonb_ops"},
 						{"jsonb_ops"},
 						{"jsonb_path_ops"},
 						{"name_ops"},
@@ -3029,7 +3042,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{213}},
+					Expected: []sql.Row{{218}},
 				},
 			},
 		},
@@ -3045,7 +3058,7 @@ func TestPgOpfamily(t *testing.T) {
 					Query: `SELECT opf.opfname, am.amname
 FROM "pg_catalog"."pg_opfamily" opf
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
-ORDER BY opf.opfname;`,
+ORDER BY opf.opfname, am.amname;`,
 					Expected: []sql.Row{
 						{"bit_ops", "btree"},
 						{"bool_ops", "btree"},
@@ -3057,6 +3070,7 @@ ORDER BY opf.opfname;`,
 						{"float_ops", "btree"},
 						{"integer_ops", "btree"},
 						{"interval_ops", "btree"},
+						{"jsonb_ops", "btree"},
 						{"jsonb_ops", "gin"},
 						{"jsonb_path_ops", "gin"},
 						{"numeric_ops", "btree"},
@@ -3092,6 +3106,7 @@ ORDER BY opf.opfname;`,
 						{"float_ops"},
 						{"integer_ops"},
 						{"interval_ops"},
+						{"jsonb_ops"},
 						{"jsonb_ops"},
 						{"jsonb_path_ops"},
 						{"numeric_ops"},

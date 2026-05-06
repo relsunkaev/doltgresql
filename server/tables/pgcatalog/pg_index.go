@@ -400,17 +400,18 @@ func visibleAttributeNumber(schema sql.Schema, colName string) int16 {
 func opClassIds(opClasses []string) []any {
 	ids := make([]any, len(opClasses))
 	for i, opClass := range opClasses {
-		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+		ids[i] = pgCatalogOpclassID(indexmetadata.AccessMethodBtree, opClass)
 	}
 	return ids
 }
 
 func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) []any {
+	accessMethod := indexmetadata.AccessMethod(index.IndexType(), index.Comment())
 	opClasses := indexmetadata.OpClasses(index.Comment())
 	if len(opClasses) > 0 {
-		return indexOpClassIdsWithDefaults(index, schema, indexColumns, opClasses)
+		return indexOpClassIdsWithDefaults(accessMethod, schema, indexColumns, opClasses)
 	}
-	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+	if accessMethod != indexmetadata.AccessMethodBtree {
 		return nil
 	}
 
@@ -424,19 +425,19 @@ func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) 
 		if !ok {
 			return nil
 		}
-		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+		ids[i] = pgCatalogOpclassID(indexmetadata.AccessMethodBtree, opClass)
 	}
 	return ids
 }
 
-func indexOpClassIdsWithDefaults(index sql.Index, schema sql.Schema, indexColumns []string, opClasses []string) []any {
+func indexOpClassIdsWithDefaults(accessMethod string, schema sql.Schema, indexColumns []string, opClasses []string) []any {
 	ids := make([]any, len(indexColumns))
 	for i, colName := range indexColumns {
 		if i < len(opClasses) && opClasses[i] != "" {
-			ids[i] = id.NewId(id.Section_OperatorClass, opClasses[i])
+			ids[i] = pgCatalogOpclassID(accessMethod, opClasses[i])
 			continue
 		}
-		if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+		if accessMethod != indexmetadata.AccessMethodBtree {
 			return nil
 		}
 		colIdx := schema.IndexOfColName(colName)
@@ -447,7 +448,7 @@ func indexOpClassIdsWithDefaults(index sql.Index, schema sql.Schema, indexColumn
 		if !ok {
 			return nil
 		}
-		ids[i] = id.NewId(id.Section_OperatorClass, opClass)
+		ids[i] = pgCatalogOpclassID(indexmetadata.AccessMethodBtree, opClass)
 	}
 	return ids
 }
@@ -523,6 +524,8 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "date_ops", true
 	case "interval":
 		return "interval_ops", true
+	case "jsonb":
+		return "jsonb_ops", true
 	case "oid":
 		return "oid_ops", true
 	case "oidvector":

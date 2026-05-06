@@ -2000,8 +2000,58 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 					},
 				},
 				{
-					Query:       "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_ops);",
-					ExpectedErr: "operator class jsonb_ops is not yet supported for btree indexes",
+					Query:       "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_path_ops);",
+					ExpectedErr: "operator class jsonb_path_ops is not yet supported for btree indexes",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb btree opclass metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_jsonb_opclass_meta (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				"CREATE INDEX btree_jsonb_default_idx ON btree_jsonb_opclass_meta USING btree (doc);",
+				"CREATE INDEX btree_jsonb_explicit_idx ON btree_jsonb_opclass_meta USING btree (doc jsonb_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	c.relname,
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	i.indclass,
+	i.indcollation,
+	i.indoption
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname IN ('btree_jsonb_default_idx', 'btree_jsonb_explicit_idx')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"btree_jsonb_default_idx", "CREATE INDEX btree_jsonb_default_idx ON public.btree_jsonb_opclass_meta USING btree (doc)", "doc", opClassOidVector("jsonb_ops"), collationOidVector(""), "0"},
+						{"btree_jsonb_explicit_idx", "CREATE INDEX btree_jsonb_explicit_idx ON public.btree_jsonb_opclass_meta USING btree (doc jsonb_ops)", "doc jsonb_ops", opClassOidVector("jsonb_ops"), collationOidVector(""), "0"},
+					},
+				},
+				{
+					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault, opc.opckeytype
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+WHERE opc.opcname = 'jsonb_ops'
+ORDER BY am.amname;`,
+					Expected: []sql.Row{
+						{"jsonb_ops", "btree", "jsonb", "t", 0},
+						{"jsonb_ops", "gin", "jsonb", "t", typeOid("text")},
+					},
+				},
+				{
+					Query: `SELECT btree_opc.oid <> gin_opc.oid
+FROM pg_catalog.pg_opclass btree_opc
+JOIN pg_catalog.pg_am btree_am ON btree_am.oid = btree_opc.opcmethod
+JOIN pg_catalog.pg_opclass gin_opc ON gin_opc.opcname = btree_opc.opcname
+JOIN pg_catalog.pg_am gin_am ON gin_am.oid = gin_opc.opcmethod
+WHERE btree_opc.opcname = 'jsonb_ops'
+	AND btree_am.amname = 'btree'
+	AND gin_am.amname = 'gin';`,
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},
@@ -2232,8 +2282,8 @@ JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
 WHERE c.relname IN ('jsonb_gin_ops_idx', 'jsonb_gin_path_idx')
 ORDER BY c.relname;`,
 					Expected: []sql.Row{
-						{"jsonb_gin_ops_idx", opClassOidVector("jsonb_ops")},
-						{"jsonb_gin_path_idx", opClassOidVector("jsonb_path_ops")},
+						{"jsonb_gin_ops_idx", ginOpClassOidVector("jsonb_ops")},
+						{"jsonb_gin_path_idx", ginOpClassOidVector("jsonb_path_ops")},
 					},
 				},
 			},
@@ -2963,9 +3013,17 @@ ORDER BY id;`,
 }
 
 func opClassOidVector(names ...string) string {
+	return opClassOidVectorForMethod("btree", names...)
+}
+
+func ginOpClassOidVector(names ...string) string {
+	return opClassOidVectorForMethod("gin", names...)
+}
+
+func opClassOidVectorForMethod(method string, names ...string) string {
 	oids := make([]string, len(names))
 	for i, name := range names {
-		oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, name))
+		oid := id.Cache().ToOID(id.NewId(id.Section_OperatorClass, method, name))
 		oids[i] = strconv.FormatUint(uint64(oid), 10)
 	}
 	return strings.Join(oids, " ")

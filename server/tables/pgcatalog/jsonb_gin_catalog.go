@@ -50,6 +50,10 @@ func zeroOID() id.Id {
 	return id.NewOID(0).AsId()
 }
 
+func pgCatalogOpclassID(method string, opclass string) id.Id {
+	return id.NewId(id.Section_OperatorClass, method, opclass)
+}
+
 func jsonbGinOpfamilyID(opclass string) id.Id {
 	return id.NewId(id.Section_OperatorFamily, indexmetadata.AccessMethodGin, opclass)
 }

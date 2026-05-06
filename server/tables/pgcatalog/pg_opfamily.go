@@ -119,6 +119,7 @@ var defaultPostgresOpfamilies = []opfamily{
 	newBtreeOpfamily(indexmetadata.OpClassBpcharPatternOps),
 	newBtreeOpfamily("datetime_ops"),
 	newBtreeOpfamily("interval_ops"),
+	newBtreeOpfamily(indexmetadata.OpClassJsonbOps),
 	newBtreeOpfamily("oid_ops"),
 	newBtreeOpfamily("oidvector_ops"),
 	newBtreeOpfamily("pg_lsn_ops"),
