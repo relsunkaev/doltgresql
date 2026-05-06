@@ -115,6 +115,7 @@ const (
 	jsonbGinPostingChunkDMLChunkNoBase             = int64(1 << 62)
 	jsonbGinPostingChunkDMLChunkNoMax              = int64(1<<63 - 1)
 	jsonbGinPostingChunkDMLChunkNoMask             = uint64(1<<62 - 1)
+	jsonbGinPostingChunkDMLCompactMinRowRefs       = 4
 )
 
 var jsonbGinLiteralTokenCache sync.Map
@@ -1266,12 +1267,11 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		}
 		deleteRowRefs, insertRowRefs := pendingPostingChunkMutations(pendingByRowRef)
 		if len(deleteRowRefs) == 0 {
-			for _, rowRef := range insertRowRefs {
-				chunkNo := postingChunkDMLChunkNo(encodedToken, rowRef, nil)
-				row, err := materializePostingChunkRow(encodedToken, chunkNo, [][]byte{rowRef})
-				if err != nil {
-					return err
-				}
+			rows, err := materializePostingChunkRowsForAppendedDML(encodedToken, insertRowRefs, nil, 0)
+			if err != nil {
+				return err
+			}
+			for _, row := range rows {
 				if err = p.editor.Insert(ctx, row); err != nil {
 					return err
 				}
@@ -1308,15 +1308,11 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 				occupiedChunkNos[chunkNo] = struct{}{}
 			}
 		}
-		for _, rowRef := range insertRowRefs {
-			chunkNo := postingChunkDMLChunkNo(encodedToken, rowRef, occupiedChunkNos)
-			occupiedChunkNos[chunkNo] = struct{}{}
-			row, err := materializePostingChunkRow(encodedToken, chunkNo, [][]byte{rowRef})
-			if err != nil {
-				return err
-			}
-			rowsToInsert = append(rowsToInsert, row)
+		appendedRows, err := materializePostingChunkRowsForAppendedDML(encodedToken, insertRowRefs, occupiedChunkNos, 0)
+		if err != nil {
+			return err
 		}
+		rowsToInsert = append(rowsToInsert, appendedRows...)
 		for _, row := range rowsToDelete {
 			if err := p.editor.Delete(ctx, row); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
 				return err
@@ -1495,11 +1491,52 @@ func postingChunkRowChunkNo(row sql.Row) (int64, bool, error) {
 	return chunkNo, true, nil
 }
 
+func materializePostingChunkRowsForAppendedDML(encodedToken string, rowRefs [][]byte, occupied map[int64]struct{}, rowsPerChunk int) ([]sql.Row, error) {
+	rowRefs = rowRefMapValues(rowRefSliceMap(rowRefs))
+	if len(rowRefs) == 0 {
+		return nil, nil
+	}
+	if occupied == nil {
+		occupied = make(map[int64]struct{})
+	}
+	if rowsPerChunk <= 0 {
+		rowsPerChunk = jsonbGinPostingChunkRowsPerChunk
+	}
+	if len(rowRefs) < jsonbGinPostingChunkDMLCompactMinRowRefs {
+		rowsPerChunk = 1
+	}
+	rows := make([]sql.Row, 0, (len(rowRefs)+rowsPerChunk-1)/rowsPerChunk)
+	for start := 0; start < len(rowRefs); start += rowsPerChunk {
+		end := start + rowsPerChunk
+		if end > len(rowRefs) {
+			end = len(rowRefs)
+		}
+		chunkRowRefs := rowRefs[start:end]
+		chunkNo := postingChunkDMLChunkNoForRowRefs(encodedToken, chunkRowRefs, occupied)
+		occupied[chunkNo] = struct{}{}
+		row, err := materializePostingChunkRow(encodedToken, chunkNo, chunkRowRefs)
+		if err != nil {
+			return nil, err
+		}
+		rows = append(rows, row)
+	}
+	return rows, nil
+}
+
 func postingChunkDMLChunkNo(encodedToken string, rowRef []byte, occupied map[int64]struct{}) int64 {
+	return postingChunkDMLChunkNoForRowRefs(encodedToken, [][]byte{rowRef}, occupied)
+}
+
+func postingChunkDMLChunkNoForRowRefs(encodedToken string, rowRefs [][]byte, occupied map[int64]struct{}) int64 {
 	hash := sha256.New()
 	_, _ = hash.Write([]byte(encodedToken))
 	_, _ = hash.Write([]byte{0})
-	_, _ = hash.Write(rowRef)
+	var length [8]byte
+	for _, rowRef := range rowRefs {
+		binary.BigEndian.PutUint64(length[:], uint64(len(rowRef)))
+		_, _ = hash.Write(length[:])
+		_, _ = hash.Write(rowRef)
+	}
 	sum := hash.Sum(nil)
 	chunkNo := jsonbGinPostingChunkDMLChunkNoBase | int64(binary.BigEndian.Uint64(sum[:8])&jsonbGinPostingChunkDMLChunkNoMask)
 	for {

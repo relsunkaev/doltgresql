@@ -371,6 +371,56 @@ func TestJsonbGinPostingChunkEditorSkipsDeleteChunksOutsideRowRefRange(t *testin
 	require.Empty(t, posting.pending)
 }
 
+func TestJsonbGinPostingChunkEditorCompactsMultiRowDMLInserts(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	token := "token/shared"
+	_, insertedRefs := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{1, 2, 3, 4, 5})
+	table := &fakePostingTable{}
+	editor := &recordingPostingEditor{}
+	posting := jsonbGinPostingChunkEditor{
+		table:   table,
+		editor:  editor,
+		pending: make(map[string]map[string]jsonbGinPendingPostingChunk),
+	}
+
+	for _, rowRef := range insertedRefs {
+		posting.stageInsert(rowRef, []string{token})
+	}
+
+	require.NoError(t, posting.flush(ctx))
+	require.Zero(t, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
+	require.Empty(t, editor.deleted)
+	require.Len(t, editor.inserted, 1)
+	chunkNo, ok, err := postingChunkRowChunkNo(editor.inserted[0])
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.GreaterOrEqual(t, chunkNo, jsonbGinPostingChunkDMLChunkNoBase)
+	requirePostingChunkRow(t, ctx, editor.inserted[0], chunkNo, []int32{1, 2, 3, 4, 5})
+	require.Empty(t, posting.pending)
+}
+
+func TestMaterializePostingChunkRowsForAppendedDMLSplitsAndDeduplicates(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	token := "token/shared"
+	_, rowRefs := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{1, 2, 3, 4, 5})
+	rowRefs = append(rowRefs, rowRefs[1])
+
+	rows, err := materializePostingChunkRowsForAppendedDML(token, rowRefs, nil, 2)
+
+	require.NoError(t, err)
+	require.Len(t, rows, 3)
+	for _, row := range rows {
+		chunkNo, ok, err := postingChunkRowChunkNo(row)
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.GreaterOrEqual(t, chunkNo, jsonbGinPostingChunkDMLChunkNoBase)
+	}
+	requirePostingChunkRow(t, ctx, rows[0], rows[0][1].(int64), []int32{1, 2})
+	requirePostingChunkRow(t, ctx, rows[1], rows[1][1].(int64), []int32{3, 4})
+	requirePostingChunkRow(t, ctx, rows[2], rows[2][1].(int64), []int32{5})
+}
+
 func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tableSchema := jsonbGinPostingStorageBaseSchema()
