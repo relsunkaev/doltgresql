@@ -21,7 +21,10 @@ import (
 	"testing"
 )
 
-const jsonbGinBenchmarkRows = 1024
+const (
+	jsonbGinBenchmarkRows = 1024
+	btreeBenchmarkRows    = 4096
+)
 
 func TestBtreeIndexPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
@@ -79,6 +82,63 @@ func TestBtreeIndexPlannerShape(t *testing.T) {
 		t.Run(query.name, func(t *testing.T) {
 			assertBenchmarkPlanShape(t, ctx, conn, query.query, query.indexedPlan)
 			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
+func BenchmarkBtreeSQLLookup(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	setupBtreeLookupBenchmark(b, ctx, conn)
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:  "table_scan/leading_column_equality",
+			query: `SELECT count(id) FROM btree_bench_scan WHERE tenant = 4`,
+			want:  btreeBenchmarkRows / 8,
+		},
+		{
+			name:        "indexed/leading_column_equality",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant = 4`,
+			want:        btreeBenchmarkRows / 8,
+			indexedPlan: true,
+		},
+		{
+			name:        "indexed/leading_column_range",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant >= 2 AND tenant <= 5`,
+			want:        btreeBenchmarkRows / 2,
+			indexedPlan: true,
+		},
+		{
+			name:        "indexed/multi_column_prefix_equality",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant = 4 AND score = 36`,
+			want:        btreeBenchmarkRows / 64,
+			indexedPlan: true,
+		},
+		{
+			name:        "indexed/multi_column_prefix_range",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant = 4 AND score >= 32`,
+			want:        btreeBenchmarkRows / 16,
+			indexedPlan: true,
+		},
+		{
+			name:  "table_scan/suffix_without_prefix",
+			query: `SELECT count(id) FROM btree_bench_idx WHERE score = 36`,
+			want:  btreeBenchmarkRows / 64,
+		},
+	}
+
+	for _, query := range queries {
+		assertBenchmarkPlanShape(b, ctx, conn, query.query, query.indexedPlan)
+	}
+	for _, query := range queries {
+		query := query
+		b.Run(query.name, func(b *testing.B) {
+			benchmarkCountQuery(b, ctx, conn, query.query, query.want)
 		})
 	}
 }
@@ -277,6 +337,15 @@ func setupJsonbGinLookupBenchmark(b *testing.B, ctx context.Context, conn *Conne
 	}
 	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX jsonb_gin_bench_ops_idx ON jsonb_gin_bench_ops USING gin (doc)")
 	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX jsonb_gin_bench_path_idx ON jsonb_gin_bench_path USING gin (doc jsonb_path_ops)")
+}
+
+func setupBtreeLookupBenchmark(tb testing.TB, ctx context.Context, conn *Connection) {
+	tb.Helper()
+	for _, table := range []string{"btree_bench_scan", "btree_bench_idx"} {
+		execBenchmarkSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", table))
+		insertBtreePlanRows(tb, ctx, conn, table, btreeBenchmarkRows)
+	}
+	execBenchmarkSQL(tb, ctx, conn, "CREATE INDEX btree_bench_idx_tenant_score_idx ON btree_bench_idx (tenant, score)")
 }
 
 func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
