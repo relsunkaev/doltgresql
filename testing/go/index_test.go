@@ -2087,6 +2087,43 @@ WHERE c.relname = 'btree_scalar_opclass_idx';`,
 			},
 		},
 		{
+			Name: "PostgreSQL system and bitstring btree opclass metadata",
+			SetUpScript: []string{
+				`CREATE TABLE btree_system_opclass_meta (id INTEGER PRIMARY KEY, b BIT(4), v VARBIT, c "char", ov OIDVECTOR, l PG_LSN);`,
+				"CREATE INDEX btree_system_opclass_idx ON btree_system_opclass_meta (b bit_ops, v varbit_ops, c char_ops, ov oidvector_ops, l pg_lsn_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false),
+	pg_catalog.pg_get_indexdef(c.oid, 3, false),
+	pg_catalog.pg_get_indexdef(c.oid, 4, false),
+	pg_catalog.pg_get_indexdef(c.oid, 5, false),
+	i.indclass,
+	i.indcollation,
+	i.indoption
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'btree_system_opclass_idx';`,
+					Expected: []sql.Row{
+						{
+							`CREATE INDEX btree_system_opclass_idx ON public.btree_system_opclass_meta USING btree (b bit_ops, v varbit_ops, c char_ops, ov oidvector_ops, l pg_lsn_ops)`,
+							"b bit_ops",
+							"v varbit_ops",
+							"c char_ops",
+							"ov oidvector_ops",
+							"l pg_lsn_ops",
+							opClassOidVector("bit_ops", "varbit_ops", "char_ops", "oidvector_ops", "pg_lsn_ops"),
+							collationOidVector("", "", "", "", ""),
+							"0 0 0 0 0",
+						},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree collation metadata",
 			SetUpScript: []string{
 				"CREATE TABLE btree_collation_meta (id INTEGER PRIMARY KEY, name TEXT, code VARCHAR);",

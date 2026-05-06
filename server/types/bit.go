@@ -53,7 +53,7 @@ var Bit = &DoltgresType{
 	BaseTypeID:          id.NullType,
 	TypMod:              -1,
 	NDims:               0,
-	TypCollation:        id.NewCollation("pg_catalog", "default"),
+	TypCollation:        id.NullCollation,
 	DefaulBin:           "",
 	Default:             "",
 	Acl:                 nil,

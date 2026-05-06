@@ -80,21 +80,26 @@ WHERE am.amname = 'btree'
 GROUP BY opf.opfname
 ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
+						{"bit_ops", 5},
 						{"bool_ops", 5},
 						{"bpchar_ops", 5},
 						{"bpchar_pattern_ops", 5},
 						{"bytea_ops", 5},
+						{"char_ops", 5},
 						{"datetime_ops", 45},
 						{"float_ops", 20},
 						{"integer_ops", 45},
 						{"interval_ops", 5},
 						{"numeric_ops", 5},
 						{"oid_ops", 5},
+						{"oidvector_ops", 5},
+						{"pg_lsn_ops", 5},
 						{"text_ops", 20},
 						{"text_pattern_ops", 5},
 						{"time_ops", 5},
 						{"timetz_ops", 5},
 						{"uuid_ops", 5},
+						{"varbit_ops", 5},
 					},
 				},
 				{
@@ -209,6 +214,43 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 					},
 				},
 				{
+					Query: `SELECT opf.opfname, lt.typname, rt.typname, amop.amopstrategy, opr.oprname, opr.oprcode
+FROM "pg_catalog"."pg_amop" amop
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
+JOIN "pg_catalog"."pg_operator" opr ON opr.oid = amop.amopopr
+WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
+ORDER BY opf.opfname, amop.amopstrategy;`,
+					Expected: []sql.Row{
+						{"bit_ops", "bit", "bit", 1, "<", "bitlt"},
+						{"bit_ops", "bit", "bit", 2, "<=", "bitle"},
+						{"bit_ops", "bit", "bit", 3, "=", "biteq"},
+						{"bit_ops", "bit", "bit", 4, ">=", "bitge"},
+						{"bit_ops", "bit", "bit", 5, ">", "bitgt"},
+						{"char_ops", "char", "char", 1, "<", "charlt"},
+						{"char_ops", "char", "char", 2, "<=", "charle"},
+						{"char_ops", "char", "char", 3, "=", "chareq"},
+						{"char_ops", "char", "char", 4, ">=", "charge"},
+						{"char_ops", "char", "char", 5, ">", "chargt"},
+						{"oidvector_ops", "oidvector", "oidvector", 1, "<", "oidvectorlt"},
+						{"oidvector_ops", "oidvector", "oidvector", 2, "<=", "oidvectorle"},
+						{"oidvector_ops", "oidvector", "oidvector", 3, "=", "oidvectoreq"},
+						{"oidvector_ops", "oidvector", "oidvector", 4, ">=", "oidvectorge"},
+						{"oidvector_ops", "oidvector", "oidvector", 5, ">", "oidvectorgt"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 1, "<", "pg_lsn_lt"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 2, "<=", "pg_lsn_le"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 3, "=", "pg_lsn_eq"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 4, ">=", "pg_lsn_ge"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 5, ">", "pg_lsn_gt"},
+						{"varbit_ops", "varbit", "varbit", 1, "<", "varbitlt"},
+						{"varbit_ops", "varbit", "varbit", 2, "<=", "varbitle"},
+						{"varbit_ops", "varbit", "varbit", 3, "=", "varbiteq"},
+						{"varbit_ops", "varbit", "varbit", 4, ">=", "varbitge"},
+						{"varbit_ops", "varbit", "varbit", 5, ">", "varbitgt"},
+					},
+				},
+				{
 					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
 FROM "pg_catalog"."pg_amop" amop
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
@@ -233,7 +275,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{190}},
+					Expected: []sql.Row{{215}},
 				},
 			},
 		},
@@ -254,21 +296,26 @@ WHERE am.amname = 'btree'
 GROUP BY opf.opfname
 ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
+						{"bit_ops", 2},
 						{"bool_ops", 2},
 						{"bpchar_ops", 3},
 						{"bpchar_pattern_ops", 3},
 						{"bytea_ops", 3},
+						{"char_ops", 2},
 						{"datetime_ops", 18},
 						{"float_ops", 8},
 						{"integer_ops", 22},
 						{"interval_ops", 2},
 						{"numeric_ops", 3},
 						{"oid_ops", 3},
+						{"oidvector_ops", 2},
+						{"pg_lsn_ops", 2},
 						{"text_ops", 8},
 						{"text_pattern_ops", 3},
 						{"time_ops", 3},
 						{"timetz_ops", 3},
 						{"uuid_ops", 3},
+						{"varbit_ops", 2},
 					},
 				},
 				{
@@ -419,6 +466,27 @@ ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
 					},
 				},
 				{
+					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
+WHERE opf.opfname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"bit_ops", "bit", "bit", 1, "bitcmp"},
+						{"bit_ops", "bit", "bit", 4, "btequalimage"},
+						{"char_ops", "char", "char", 1, "btcharcmp"},
+						{"char_ops", "char", "char", 4, "btequalimage"},
+						{"oidvector_ops", "oidvector", "oidvector", 1, "btoidvectorcmp"},
+						{"oidvector_ops", "oidvector", "oidvector", 4, "btequalimage"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 1, "pg_lsn_cmp"},
+						{"pg_lsn_ops", "pg_lsn", "pg_lsn", 4, "btequalimage"},
+						{"varbit_ops", "varbit", "varbit", 1, "varbitcmp"},
+						{"varbit_ops", "varbit", "varbit", 4, "btequalimage"},
+					},
+				},
+				{
 					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
 FROM "pg_catalog"."pg_amproc" amproc
 JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
@@ -447,7 +515,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{97}},
+					Expected: []sql.Row{{107}},
 				},
 			},
 		},
@@ -2614,6 +2682,23 @@ ORDER BY opc.opcname;`,
 					},
 				},
 				{
+					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
+FROM "pg_catalog"."pg_opclass" opc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = opc.opcfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
+JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
+WHERE am.amname = 'btree'
+	AND opc.opcname IN ('bit_ops', 'char_ops', 'oidvector_ops', 'pg_lsn_ops', 'varbit_ops')
+ORDER BY opc.opcname;`,
+					Expected: []sql.Row{
+						{"bit_ops", "bit_ops", "bit", "t", 0},
+						{"char_ops", "char_ops", "char", "t", 0},
+						{"oidvector_ops", "oidvector_ops", "oidvector", "t", 0},
+						{"pg_lsn_ops", "pg_lsn_ops", "pg_lsn", "t", 0},
+						{"varbit_ops", "varbit_ops", "varbit", "t", 0},
+					},
+				},
+				{
 					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, typ.typname
 FROM "pg_catalog"."pg_opclass" opc
 JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
@@ -2636,10 +2721,12 @@ ORDER BY opc.opcname;`,
 				{ // Different cases but non-quoted, so it works
 					Query: "SELECT opcname FROM PG_catalog.pg_OPCLASS ORDER BY opcname;",
 					Expected: []sql.Row{
+						{"bit_ops"},
 						{"bool_ops"},
 						{"bpchar_ops"},
 						{"bpchar_pattern_ops"},
 						{"bytea_ops"},
+						{"char_ops"},
 						{"date_ops"},
 						{"float4_ops"},
 						{"float8_ops"},
@@ -2652,6 +2739,8 @@ ORDER BY opc.opcname;`,
 						{"name_ops"},
 						{"numeric_ops"},
 						{"oid_ops"},
+						{"oidvector_ops"},
+						{"pg_lsn_ops"},
 						{"text_ops"},
 						{"text_pattern_ops"},
 						{"time_ops"},
@@ -2659,6 +2748,7 @@ ORDER BY opc.opcname;`,
 						{"timestamptz_ops"},
 						{"timetz_ops"},
 						{"uuid_ops"},
+						{"varbit_ops"},
 						{"varchar_ops"},
 						{"varchar_pattern_ops"},
 					},
@@ -2724,13 +2814,15 @@ JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
 WHERE lt.oid = rt.oid
 	AND o.oprname IN ('<', '<=', '=', '>=', '>')
-	AND lt.typname IN ('bool', 'bpchar', 'bytea', 'date', 'float4', 'float8', 'int2', 'int4', 'int8', 'interval', 'name', 'numeric', 'oid', 'text', 'time', 'timestamp', 'timestamptz', 'timetz', 'uuid')
+	AND lt.typname IN ('bit', 'bool', 'bpchar', 'bytea', 'char', 'date', 'float4', 'float8', 'int2', 'int4', 'int8', 'interval', 'name', 'numeric', 'oid', 'oidvector', 'pg_lsn', 'text', 'time', 'timestamp', 'timestamptz', 'timetz', 'uuid', 'varbit')
 GROUP BY lt.typname
 ORDER BY lt.typname;`,
 					Expected: []sql.Row{
+						{"bit", 5},
 						{"bool", 5},
 						{"bpchar", 5},
 						{"bytea", 5},
+						{"char", 5},
 						{"date", 5},
 						{"float4", 5},
 						{"float8", 5},
@@ -2741,12 +2833,15 @@ ORDER BY lt.typname;`,
 						{"name", 5},
 						{"numeric", 5},
 						{"oid", 5},
+						{"oidvector", 5},
+						{"pg_lsn", 5},
 						{"text", 5},
 						{"time", 5},
 						{"timestamp", 5},
 						{"timestamptz", 5},
 						{"timetz", 5},
 						{"uuid", 5},
+						{"varbit", 5},
 					},
 				},
 				{
@@ -2934,7 +3029,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{188}},
+					Expected: []sql.Row{{213}},
 				},
 			},
 		},
@@ -2952,10 +3047,12 @@ FROM "pg_catalog"."pg_opfamily" opf
 JOIN "pg_catalog"."pg_am" am ON am.oid = opf.opfmethod
 ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
+						{"bit_ops", "btree"},
 						{"bool_ops", "btree"},
 						{"bpchar_ops", "btree"},
 						{"bpchar_pattern_ops", "btree"},
 						{"bytea_ops", "btree"},
+						{"char_ops", "btree"},
 						{"datetime_ops", "btree"},
 						{"float_ops", "btree"},
 						{"integer_ops", "btree"},
@@ -2964,11 +3061,14 @@ ORDER BY opf.opfname;`,
 						{"jsonb_path_ops", "gin"},
 						{"numeric_ops", "btree"},
 						{"oid_ops", "btree"},
+						{"oidvector_ops", "btree"},
+						{"pg_lsn_ops", "btree"},
 						{"text_ops", "btree"},
 						{"text_pattern_ops", "btree"},
 						{"time_ops", "btree"},
 						{"timetz_ops", "btree"},
 						{"uuid_ops", "btree"},
+						{"varbit_ops", "btree"},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -2982,10 +3082,12 @@ ORDER BY opf.opfname;`,
 				{ // Different cases but non-quoted, so it works
 					Query: "SELECT opfname FROM PG_catalog.pg_OPFAMILY ORDER BY opfname;",
 					Expected: []sql.Row{
+						{"bit_ops"},
 						{"bool_ops"},
 						{"bpchar_ops"},
 						{"bpchar_pattern_ops"},
 						{"bytea_ops"},
+						{"char_ops"},
 						{"datetime_ops"},
 						{"float_ops"},
 						{"integer_ops"},
@@ -2994,11 +3096,14 @@ ORDER BY opf.opfname;`,
 						{"jsonb_path_ops"},
 						{"numeric_ops"},
 						{"oid_ops"},
+						{"oidvector_ops"},
+						{"pg_lsn_ops"},
 						{"text_ops"},
 						{"text_pattern_ops"},
 						{"time_ops"},
 						{"timetz_ops"},
 						{"uuid_ops"},
+						{"varbit_ops"},
 					},
 				},
 			},

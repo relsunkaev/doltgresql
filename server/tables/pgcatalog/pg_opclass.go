@@ -118,6 +118,7 @@ type opclass struct {
 }
 
 var defaultPostgresOpclasses = []opclass{
+	newBtreeOpclass("bit_ops", "bit", "bit_ops"),
 	newBtreeOpclass("bool_ops", "bool", "bool_ops"),
 	newBtreeOpclass("int2_ops", "int2", "integer_ops"),
 	newBtreeOpclass("int4_ops", "int4", "integer_ops"),
@@ -125,6 +126,7 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("float4_ops", "float4", "float_ops"),
 	newBtreeOpclass("float8_ops", "float8", "float_ops"),
 	newBtreeOpclass("numeric_ops", "numeric", "numeric_ops"),
+	newBtreeOpclass("char_ops", "char", "char_ops"),
 	newBtreeOpclass("name_ops", "name", "text_ops"),
 	newBtreeOpclass("text_ops", "text", "text_ops"),
 	newBtreeOpclass("varchar_ops", "text", "text_ops"),
@@ -136,11 +138,14 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("date_ops", "date", "datetime_ops"),
 	newBtreeOpclass("interval_ops", "interval", "interval_ops"),
 	newBtreeOpclass("oid_ops", "oid", "oid_ops"),
+	newBtreeOpclass("oidvector_ops", "oidvector", "oidvector_ops"),
+	newBtreeOpclass("pg_lsn_ops", "pg_lsn", "pg_lsn_ops"),
 	newBtreeOpclass("time_ops", "time", "time_ops"),
 	newBtreeOpclass("timestamp_ops", "timestamp", "datetime_ops"),
 	newBtreeOpclass("timestamptz_ops", "timestamptz", "datetime_ops"),
 	newBtreeOpclass("timetz_ops", "timetz", "timetz_ops"),
 	newBtreeOpclass("uuid_ops", "uuid", "uuid_ops"),
+	newBtreeOpclass("varbit_ops", "varbit", "varbit_ops"),
 	newJsonbGinOpclass(indexmetadata.OpClassJsonbOps, pgCatalogTypeID("text"), true),
 	newJsonbGinOpclass(indexmetadata.OpClassJsonbPathOps, pgCatalogTypeID("int4"), false),
 }

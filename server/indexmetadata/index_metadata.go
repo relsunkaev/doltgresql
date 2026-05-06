@@ -49,6 +49,7 @@ const (
 )
 
 var supportedBtreeOpClasses = map[string]struct{}{
+	"bit_ops":                {},
 	"bool_ops":               {},
 	"int2_ops":               {},
 	"int4_ops":               {},
@@ -56,6 +57,7 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"float4_ops":             {},
 	"float8_ops":             {},
 	"numeric_ops":            {},
+	"char_ops":               {},
 	"name_ops":               {},
 	"text_ops":               {},
 	"varchar_ops":            {},
@@ -67,11 +69,14 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"date_ops":               {},
 	"interval_ops":           {},
 	"oid_ops":                {},
+	"oidvector_ops":          {},
+	"pg_lsn_ops":             {},
 	"time_ops":               {},
 	"timestamp_ops":          {},
 	"timestamptz_ops":        {},
 	"timetz_ops":             {},
 	"uuid_ops":               {},
+	"varbit_ops":             {},
 }
 
 var supportedCollations = map[string]struct{}{

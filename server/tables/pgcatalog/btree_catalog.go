@@ -201,22 +201,27 @@ var btreeTextSupportProcs = []btreeSupportProc{
 }
 
 var btreeScalarSupportProcs = []btreeSupportProc{
+	{leftType: "bit", rightType: "bit", opfamily: "bit_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "bool", rightType: "bool", opfamily: "bool_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "bpchar", rightType: "bpchar", opfamily: "bpchar_ops", procNum: 2, proc: "bpchar_sortsupport"},
 	{leftType: "bpchar", rightType: "bpchar", opfamily: "bpchar_ops", procNum: 4, proc: "btvarstrequalimage"},
 	{leftType: "bytea", rightType: "bytea", opfamily: "bytea_ops", procNum: 2, proc: "bytea_sortsupport"},
 	{leftType: "bytea", rightType: "bytea", opfamily: "bytea_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "char", rightType: "char", opfamily: "char_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "interval", rightType: "interval", opfamily: "interval_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 2, proc: "numeric_sortsupport"},
 	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "oid", rightType: "oid", opfamily: "oid_ops", procNum: 2, proc: "btoidsortsupport"},
 	{leftType: "oid", rightType: "oid", opfamily: "oid_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "oidvector", rightType: "oidvector", opfamily: "oidvector_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "pg_lsn", rightType: "pg_lsn", opfamily: "pg_lsn_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "time", rightType: "interval", opfamily: "time_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "time", rightType: "time", opfamily: "time_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "timetz", rightType: "interval", opfamily: "timetz_ops", procNum: 3, proc: "pg_catalog.in_range"},
 	{leftType: "timetz", rightType: "timetz", opfamily: "timetz_ops", procNum: 4, proc: "btequalimage"},
 	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 2, proc: "uuid_sortsupport"},
 	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "varbit", rightType: "varbit", opfamily: "varbit_ops", procNum: 4, proc: "btequalimage"},
 }
 
 var btreeDatetimeCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
@@ -277,6 +282,12 @@ var btreeDatetimeSupportProcs = []btreeSupportProc{
 }
 
 var btreeCatalogTypes = []btreeCatalogType{
+	{
+		typeName:        "bit",
+		opfamily:        "bit_ops",
+		compareProc:     "bitcmp",
+		comparisonFuncs: [5]string{"bitlt", "bitle", "biteq", "bitge", "bitgt"},
+	},
 	{
 		typeName:        "bool",
 		opfamily:        "bool_ops",
@@ -344,6 +355,12 @@ var btreeCatalogTypes = []btreeCatalogType{
 		comparisonFuncs: [5]string{"bytealt", "byteale", "byteaeq", "byteage", "byteagt"},
 	},
 	{
+		typeName:        "char",
+		opfamily:        "char_ops",
+		compareProc:     "btcharcmp",
+		comparisonFuncs: [5]string{"charlt", "charle", "chareq", "charge", "chargt"},
+	},
+	{
 		typeName:        "date",
 		opfamily:        "datetime_ops",
 		compareProc:     "date_cmp",
@@ -360,6 +377,18 @@ var btreeCatalogTypes = []btreeCatalogType{
 		opfamily:        "oid_ops",
 		compareProc:     "btoidcmp",
 		comparisonFuncs: [5]string{"oidlt", "oidle", "oideq", "oidge", "oidgt"},
+	},
+	{
+		typeName:        "oidvector",
+		opfamily:        "oidvector_ops",
+		compareProc:     "btoidvectorcmp",
+		comparisonFuncs: [5]string{"oidvectorlt", "oidvectorle", "oidvectoreq", "oidvectorge", "oidvectorgt"},
+	},
+	{
+		typeName:        "pg_lsn",
+		opfamily:        "pg_lsn_ops",
+		compareProc:     "pg_lsn_cmp",
+		comparisonFuncs: [5]string{"pg_lsn_lt", "pg_lsn_le", "pg_lsn_eq", "pg_lsn_ge", "pg_lsn_gt"},
 	},
 	{
 		typeName:        "time",
@@ -390,5 +419,11 @@ var btreeCatalogTypes = []btreeCatalogType{
 		opfamily:        "uuid_ops",
 		compareProc:     "uuid_cmp",
 		comparisonFuncs: [5]string{"uuid_lt", "uuid_le", "uuid_eq", "uuid_ge", "uuid_gt"},
+	},
+	{
+		typeName:        "varbit",
+		opfamily:        "varbit_ops",
+		compareProc:     "varbitcmp",
+		comparisonFuncs: [5]string{"varbitlt", "varbitle", "varbiteq", "varbitge", "varbitgt"},
 	},
 }

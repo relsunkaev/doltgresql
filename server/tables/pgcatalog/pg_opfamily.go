@@ -106,10 +106,12 @@ type opfamily struct {
 }
 
 var defaultPostgresOpfamilies = []opfamily{
+	newBtreeOpfamily("bit_ops"),
 	newBtreeOpfamily("bool_ops"),
 	newBtreeOpfamily("integer_ops"),
 	newBtreeOpfamily("float_ops"),
 	newBtreeOpfamily("numeric_ops"),
+	newBtreeOpfamily("char_ops"),
 	newBtreeOpfamily("text_ops"),
 	newBtreeOpfamily("bpchar_ops"),
 	newBtreeOpfamily("bytea_ops"),
@@ -118,9 +120,12 @@ var defaultPostgresOpfamilies = []opfamily{
 	newBtreeOpfamily("datetime_ops"),
 	newBtreeOpfamily("interval_ops"),
 	newBtreeOpfamily("oid_ops"),
+	newBtreeOpfamily("oidvector_ops"),
+	newBtreeOpfamily("pg_lsn_ops"),
 	newBtreeOpfamily("time_ops"),
 	newBtreeOpfamily("timetz_ops"),
 	newBtreeOpfamily("uuid_ops"),
+	newBtreeOpfamily("varbit_ops"),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbPathOps),
 }

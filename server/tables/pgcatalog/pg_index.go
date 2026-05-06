@@ -491,6 +491,8 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 	}
 
 	switch typeName {
+	case "bit":
+		return "bit_ops", true
 	case "bool":
 		return "bool_ops", true
 	case "int2":
@@ -505,6 +507,8 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "float8_ops", true
 	case "numeric":
 		return "numeric_ops", true
+	case "char":
+		return "char_ops", true
 	case "name":
 		return "name_ops", true
 	case "text":
@@ -521,6 +525,10 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "interval_ops", true
 	case "oid":
 		return "oid_ops", true
+	case "oidvector":
+		return "oidvector_ops", true
+	case "pg_lsn":
+		return "pg_lsn_ops", true
 	case "time":
 		return "time_ops", true
 	case "timestamp":
@@ -531,6 +539,8 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "timetz_ops", true
 	case "uuid":
 		return "uuid_ops", true
+	case "varbit":
+		return "varbit_ops", true
 	default:
 		return "", false
 	}
