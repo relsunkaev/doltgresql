@@ -103,6 +103,28 @@ func TestChunkedPostingStoreMutationsMatchPostingStore(t *testing.T) {
 	require.Empty(t, chunked.Lookup(newToken))
 }
 
+func TestChunkedPostingStoreChunkEntriesAreDeterministic(t *testing.T) {
+	chunked := NewChunkedPostingStore(2)
+	vip := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "vip"}
+	archived := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "archived"}
+
+	require.NoError(t, chunked.Add([]byte("row/0003"), []Token{vip, archived}))
+	require.NoError(t, chunked.Add([]byte("row/0001"), []Token{vip}))
+	require.NoError(t, chunked.Add([]byte("row/0002"), []Token{vip, archived}))
+
+	entries, err := chunked.ChunkEntries()
+	require.NoError(t, err)
+	require.Len(t, entries, 3)
+	require.Equal(t, entries[0].Token, entries[1].Token)
+	require.Less(t, entries[1].Token, entries[2].Token)
+	require.Equal(t, int64(0), entries[0].ChunkNo)
+	require.Equal(t, int64(1), entries[1].ChunkNo)
+	require.Equal(t, int64(0), entries[2].ChunkNo)
+	require.Equal(t, []byte("row/0001"), entries[0].Chunk.FirstRowRef)
+	require.Equal(t, []byte("row/0002"), entries[0].Chunk.LastRowRef)
+	require.Equal(t, []byte("row/0003"), entries[1].Chunk.FirstRowRef)
+}
+
 func BenchmarkPostingChunkEncodeDecode(b *testing.B) {
 	rowRefs := benchmarkChunkedRowRefs(512)
 	b.ReportAllocs()

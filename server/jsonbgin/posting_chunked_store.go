@@ -32,6 +32,13 @@ type ChunkedPostingStore struct {
 	dirty        map[string]struct{}
 }
 
+// PostingChunkEntry is one materialized chunk row for an encoded token.
+type PostingChunkEntry struct {
+	Token   string
+	ChunkNo int64
+	Chunk   PostingChunk
+}
+
 // NewChunkedPostingStore returns an empty chunked posting store. rowsPerChunk
 // controls the test/model chunk boundary; non-positive values use the default.
 func NewChunkedPostingStore(rowsPerChunk int) *ChunkedPostingStore {
@@ -173,6 +180,31 @@ func (s *ChunkedPostingStore) Chunks(token Token) ([]PostingChunk, error) {
 	return clonePostingChunks(s.chunks[tokenKey]), nil
 }
 
+// ChunkEntries returns all materialized chunks in deterministic token/chunk
+// order.
+func (s *ChunkedPostingStore) ChunkEntries() ([]PostingChunkEntry, error) {
+	tokens := make([]string, 0, len(s.postings))
+	for token := range s.postings {
+		tokens = append(tokens, token)
+	}
+	sort.Strings(tokens)
+
+	var entries []PostingChunkEntry
+	for _, token := range tokens {
+		if err := s.ensureChunks(token); err != nil {
+			return nil, err
+		}
+		for i, chunk := range s.chunks[token] {
+			entries = append(entries, PostingChunkEntry{
+				Token:   token,
+				ChunkNo: int64(i),
+				Chunk:   clonePostingChunk(chunk),
+			})
+		}
+	}
+	return entries, nil
+}
+
 func (s *ChunkedPostingStore) ensureChunks(tokenKey string) error {
 	if _, ok := s.dirty[tokenKey]; !ok {
 		return nil
@@ -244,15 +276,19 @@ func clonePostingChunks(chunks []PostingChunk) []PostingChunk {
 	}
 	copied := make([]PostingChunk, len(chunks))
 	for i, chunk := range chunks {
-		copied[i] = PostingChunk{
-			FormatVersion: chunk.FormatVersion,
-			RowCount:      chunk.RowCount,
-			FirstRowRef:   append([]byte(nil), chunk.FirstRowRef...),
-			LastRowRef:    append([]byte(nil), chunk.LastRowRef...),
-			RowRefs:       cloneChunkedRowRefs(chunk.RowRefs),
-			Payload:       append([]byte(nil), chunk.Payload...),
-			Checksum:      chunk.Checksum,
-		}
+		copied[i] = clonePostingChunk(chunk)
 	}
 	return copied
+}
+
+func clonePostingChunk(chunk PostingChunk) PostingChunk {
+	return PostingChunk{
+		FormatVersion: chunk.FormatVersion,
+		RowCount:      chunk.RowCount,
+		FirstRowRef:   append([]byte(nil), chunk.FirstRowRef...),
+		LastRowRef:    append([]byte(nil), chunk.LastRowRef...),
+		RowRefs:       cloneChunkedRowRefs(chunk.RowRefs),
+		Payload:       append([]byte(nil), chunk.Payload...),
+		Checksum:      chunk.Checksum,
+	}
 }

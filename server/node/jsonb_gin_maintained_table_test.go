@@ -286,6 +286,17 @@ func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
 	require.Empty(t, metadata.Gin.PostingChunkTable)
 }
 
+func TestCreateJsonbGinIndexV2PostingStorageFeatureGate(t *testing.T) {
+	t.Setenv(jsonbGinPostingStorageVersionEnv, "2")
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+
+	metadata := create.indexMetadata()
+	require.NotNil(t, metadata.Gin)
+	require.Equal(t, indexmetadata.GinPostingStorageVersionV2, metadata.Gin.PostingStorageVersion)
+	require.Empty(t, metadata.Gin.PostingTable)
+	require.Equal(t, jsonbgin.PostingChunkTableName("docs", "docs_doc_idx"), metadata.Gin.PostingChunkTable)
+}
+
 func TestCreateJsonbGinIndexCreatesV1PostingStorageByDefault(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
@@ -314,6 +325,51 @@ func TestCreateJsonbGinIndexCreatesV2PostingChunkStorageWhenSelected(t *testing.
 		require.NotEqual(t, -1, creator.created[0].schema.Schema.IndexOfColName(columnName), columnName)
 	}
 	require.Equal(t, -1, creator.created[0].schema.Schema.IndexOfColName("row_id"))
+}
+
+func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbOps(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkRowsPerChunk = 2
+	baseSchema := jsonbGinPostingStorageBaseSchema()
+	rows := sql.RowsToRowIter(
+		sql.Row{int32(1), `{"tags":["vip"],"status":"open"}`},
+		sql.Row{int32(2), `{"tags":["vip","archived"],"status":"open"}`},
+		sql.Row{int32(3), `{"tags":["standard"],"status":"closed"}`},
+		sql.Row{int32(4), `{"tags":["vip"],"status":"closed"}`},
+	)
+
+	chunkRows, err := create.buildPostingChunkRows(ctx, baseSchema, rows, 1)
+	require.NoError(t, err)
+
+	vipRows := postingChunkRowsForToken(t, chunkRows, jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	}))
+	require.Len(t, vipRows, 2)
+	requirePostingChunkRow(t, ctx, vipRows[0], 0, []int32{1, 2})
+	requirePostingChunkRow(t, ctx, vipRows[1], 1, []int32{4})
+}
+
+func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbPathOps(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbPathOps)
+	create.postingChunkRowsPerChunk = 2
+	baseSchema := jsonbGinPostingStorageBaseSchema()
+	rows := sql.RowsToRowIter(
+		sql.Row{int32(1), `{"payload":{"category":"cat-1"}}`},
+		sql.Row{int32(2), `{"payload":{"category":"cat-1"}}`},
+		sql.Row{int32(3), `{"payload":{"category":"cat-2"}}`},
+	)
+
+	chunkRows, err := create.buildPostingChunkRows(ctx, baseSchema, rows, 1)
+	require.NoError(t, err)
+	require.NotEmpty(t, chunkRows)
+	token, err := jsonbgin.DecodeToken(chunkRows[0][0].(string))
+	require.NoError(t, err)
+	require.Equal(t, indexmetadata.OpClassJsonbPathOps, token.OpClass)
+	require.Equal(t, jsonbgin.TokenKindPathValue, token.Kind)
 }
 
 func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
@@ -708,6 +764,44 @@ func (c *recordingTableCreator) CreateTable(_ *sql.Context, name string, schema 
 		comment:   comment,
 	})
 	return nil
+}
+
+func postingChunkRowsForToken(t *testing.T, rows []sql.Row, token string) []sql.Row {
+	t.Helper()
+	var tokenRows []sql.Row
+	for _, row := range rows {
+		require.Len(t, row, 8)
+		if row[0] == token {
+			tokenRows = append(tokenRows, row)
+		}
+	}
+	return tokenRows
+}
+
+func requirePostingChunkRow(t *testing.T, ctx *sql.Context, row sql.Row, chunkNo int64, ids []int32) {
+	t.Helper()
+	require.Equal(t, chunkNo, row[1])
+	require.Equal(t, int16(jsonbgin.PostingChunkFormatVersionV1), row[2])
+	require.Equal(t, int32(len(ids)), row[3])
+	require.NotEmpty(t, row[4])
+	require.NotEmpty(t, row[5])
+	payload, ok := row[6].([]byte)
+	require.True(t, ok)
+	checksum, ok := row[7].([]byte)
+	require.True(t, ok)
+	require.Len(t, checksum, 4)
+
+	chunk, err := jsonbgin.DecodePostingChunk(payload)
+	require.NoError(t, err)
+	require.Equal(t, uint32(len(ids)), chunk.RowCount)
+	require.Equal(t, row[4], chunk.FirstRowRef)
+	require.Equal(t, row[5], chunk.LastRowRef)
+	require.Len(t, chunk.RowRefs, len(ids))
+	for i, rowRef := range chunk.RowRefs {
+		decoded, err := jsonbgin.DecodeRowReference(ctx, []sql.Type{pgtypes.Int32}, rowRef)
+		require.NoError(t, err)
+		require.Equal(t, sql.Row{ids[i]}, decoded.Values)
+	}
 }
 
 type fakePostingTable struct {

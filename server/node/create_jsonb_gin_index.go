@@ -17,9 +17,11 @@ package node
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -39,18 +41,21 @@ import (
 const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
 const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
+const jsonbGinPostingChunkRowsPerChunk = 256
+const jsonbGinPostingStorageVersionEnv = "DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION"
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
-	ifNotExists           bool
-	schema                string
-	tableName             string
-	indexName             string
-	columnName            string
-	opClass               string
-	postingName           string
-	postingChunkName      string
-	postingStorageVersion int
+	ifNotExists              bool
+	schema                   string
+	tableName                string
+	indexName                string
+	columnName               string
+	opClass                  string
+	postingName              string
+	postingChunkName         string
+	postingStorageVersion    int
+	postingChunkRowsPerChunk int
 }
 
 var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
@@ -67,8 +72,15 @@ func NewCreateJsonbGinIndex(ifNotExists bool, schema string, tableName string, i
 		opClass:               indexmetadata.NormalizeOpClass(opClass),
 		postingName:           jsonbgin.PostingTableName(tableName, indexName),
 		postingChunkName:      jsonbgin.PostingChunkTableName(tableName, indexName),
-		postingStorageVersion: indexmetadata.GinPostingStorageVersionV1,
+		postingStorageVersion: defaultJsonbGinPostingStorageVersion(),
 	}
+}
+
+func defaultJsonbGinPostingStorageVersion() int {
+	if strings.TrimSpace(os.Getenv(jsonbGinPostingStorageVersionEnv)) == "2" {
+		return indexmetadata.GinPostingStorageVersionV2
+	}
+	return indexmetadata.GinPostingStorageVersionV1
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -141,13 +153,17 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 		return nil, err
 	}
 	postingStorageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
-	if postingStorageVersion != indexmetadata.GinPostingStorageVersionV1 {
-		_ = dropTable(ctx, db, c.postingChunkName)
-		_ = alterable.DropIndex(ctx, c.indexName)
-		return nil, errors.Errorf("JSONB GIN posting storage version %d is not yet executable", postingStorageVersion)
+	switch postingStorageVersion {
+	case indexmetadata.GinPostingStorageVersionV1:
+		err = c.backfillPostingTable(ctx, db, schemaName, table, columnIndex)
+	case indexmetadata.GinPostingStorageVersionV2:
+		err = c.backfillPostingChunkTable(ctx, db, schemaName, table, columnIndex)
+	default:
+		err = errors.Errorf("unsupported JSONB GIN posting storage version %d", postingStorageVersion)
 	}
-	if err = c.backfillPostingTable(ctx, db, schemaName, table, columnIndex); err != nil {
+	if err != nil {
 		_ = dropTable(ctx, db, c.postingName)
+		_ = dropTable(ctx, db, c.postingChunkName)
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
 	}
@@ -386,6 +402,149 @@ func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, db sql.Data
 	completed = true
 	closed = true
 	return postingRows.Close(ctx)
+}
+
+func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql.Database, schemaName string, table sql.Table, columnIndex int) error {
+	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: c.postingChunkName, Schema: schemaName})
+	if err != nil {
+		return err
+	}
+	if postingTable == nil {
+		return errors.Errorf(`posting chunk table "%s" was not created`, c.postingChunkName)
+	}
+	insertable, ok := postingTable.(sql.InsertableTable)
+	if !ok {
+		return errors.Errorf(`posting chunk table "%s" does not support inserts`, c.postingChunkName)
+	}
+	chunkRows, err := c.buildPostingChunkRowsFromTable(ctx, table, columnIndex)
+	if err != nil {
+		return err
+	}
+	inserter := insertable.Inserter(ctx)
+	inserter.StatementBegin(ctx)
+	completed := false
+	defer func() {
+		if !completed {
+			_ = inserter.DiscardChanges(ctx, errors.New("JSONB GIN posting chunk backfill failed"))
+		}
+		_ = inserter.Close(ctx)
+	}()
+	for _, row := range chunkRows {
+		if err = inserter.Insert(ctx, row); err != nil {
+			return err
+		}
+	}
+	if err = inserter.StatementComplete(ctx); err != nil {
+		return err
+	}
+	completed = true
+	return nil
+}
+
+func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, table sql.Table, columnIndex int) ([]sql.Row, error) {
+	store := jsonbgin.NewChunkedPostingStore(c.postingChunkRowsPerChunkLimit())
+	partitions, err := table.Partitions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		rows, err := table.PartitionRows(ctx, partition)
+		if err != nil {
+			return nil, err
+		}
+		if err = c.addPostingChunkRows(ctx, table.Schema(ctx), rows, columnIndex, store); err != nil {
+			_ = rows.Close(ctx)
+			return nil, err
+		}
+		if err = rows.Close(ctx); err != nil {
+			return nil, err
+		}
+	}
+	return c.materializePostingChunkRows(store)
+}
+
+func (c *CreateJsonbGinIndex) buildPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) ([]sql.Row, error) {
+	store := jsonbgin.NewChunkedPostingStore(c.postingChunkRowsPerChunkLimit())
+	if err := c.addPostingChunkRows(ctx, sch, rows, columnIndex, store); err != nil {
+		return nil, err
+	}
+	return c.materializePostingChunkRows(store)
+}
+
+func (c *CreateJsonbGinIndex) addPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, store *jsonbgin.ChunkedPostingStore) error {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if row[columnIndex] == nil {
+			continue
+		}
+		rowRef, ok, err := jsonbgin.EncodePrimaryKeyRowReference(ctx, sch, row)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errors.Errorf(`jsonb gin indexes currently require a primary key`)
+		}
+		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[columnIndex])
+		if err != nil {
+			return err
+		}
+		tokens, err := jsonbgin.Extract(doc, c.opClass)
+		if err != nil {
+			return err
+		}
+		if err = store.Add(rowRef.Bytes, tokens); err != nil {
+			return err
+		}
+	}
+}
+
+func (c *CreateJsonbGinIndex) materializePostingChunkRows(store *jsonbgin.ChunkedPostingStore) ([]sql.Row, error) {
+	entries, err := store.ChunkEntries()
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]sql.Row, len(entries))
+	for i, entry := range entries {
+		chunk := entry.Chunk
+		rows[i] = sql.Row{
+			entry.Token,
+			entry.ChunkNo,
+			int16(chunk.FormatVersion),
+			int32(chunk.RowCount),
+			chunk.FirstRowRef,
+			chunk.LastRowRef,
+			chunk.Payload,
+			postingChunkChecksumBytes(chunk.Checksum),
+		}
+	}
+	return rows, nil
+}
+
+func (c *CreateJsonbGinIndex) postingChunkRowsPerChunkLimit() int {
+	if c.postingChunkRowsPerChunk > 0 {
+		return c.postingChunkRowsPerChunk
+	}
+	return jsonbGinPostingChunkRowsPerChunk
+}
+
+func postingChunkChecksumBytes(checksum uint32) []byte {
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, checksum)
+	return buf
 }
 
 type jsonbGinPostingRowAppender interface {
