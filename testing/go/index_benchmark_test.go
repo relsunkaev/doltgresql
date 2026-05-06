@@ -24,6 +24,7 @@ import (
 const (
 	jsonbGinBenchmarkRows = 1024
 	btreeBenchmarkRows    = 4096
+	btreeJoinProbeRows    = 512
 )
 
 func TestBtreeIndexPlannerShape(t *testing.T) {
@@ -197,6 +198,52 @@ func BenchmarkBtreeSQLLookup(b *testing.B) {
 
 	for _, query := range queries {
 		assertBenchmarkPlanShape(b, ctx, conn, query.query, query.indexedPlan)
+	}
+	for _, query := range queries {
+		query := query
+		b.Run(query.name, func(b *testing.B) {
+			benchmarkCountQuery(b, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
+func BenchmarkBtreeSQLJoin(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	setupBtreeJoinBenchmark(b, ctx, conn)
+
+	queries := []struct {
+		name         string
+		query        string
+		want         int64
+		planContains []string
+	}{
+		{
+			name: "table_scan/composite_join",
+			query: `SELECT count(*)
+FROM btree_join_left_scan
+JOIN btree_join_right_scan
+  ON btree_join_right_scan.tenant = btree_join_left_scan.tenant
+ AND btree_join_right_scan.score = btree_join_left_scan.score
+WHERE btree_join_left_scan.tenant = 4`,
+			want: btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+		},
+		{
+			name: "indexed/composite_lookup_join",
+			query: `SELECT /*+ lookup_join(btree_join_left_idx, btree_join_right_idx) */ HINT count(*)
+FROM btree_join_left_idx
+JOIN btree_join_right_idx
+  ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
+ AND btree_join_right_idx.score = btree_join_left_idx.score
+WHERE btree_join_left_idx.tenant = 4`,
+			want:         btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+			planContains: []string{"LookupJoin", "IndexedTableAccess(btree_join_right_idx)"},
+		},
+	}
+
+	for _, query := range queries {
+		for _, expected := range query.planContains {
+			assertBenchmarkPlanContains(b, ctx, conn, query.query, expected)
+		}
 	}
 	for _, query := range queries {
 		query := query
@@ -411,6 +458,19 @@ func setupBtreeLookupBenchmark(tb testing.TB, ctx context.Context, conn *Connect
 	execBenchmarkSQL(tb, ctx, conn, "CREATE INDEX btree_bench_idx_tenant_score_idx ON btree_bench_idx (tenant, score)")
 }
 
+func setupBtreeJoinBenchmark(tb testing.TB, ctx context.Context, conn *Connection) {
+	tb.Helper()
+	for _, suffix := range []string{"scan", "idx"} {
+		leftTable := "btree_join_left_" + suffix
+		rightTable := "btree_join_right_" + suffix
+		execBenchmarkSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", leftTable))
+		execBenchmarkSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", rightTable))
+		insertBtreePlanRows(tb, ctx, conn, leftTable, btreeJoinProbeRows)
+		insertBtreePlanRows(tb, ctx, conn, rightTable, btreeBenchmarkRows)
+	}
+	execBenchmarkSQL(tb, ctx, conn, "CREATE INDEX btree_join_right_idx_tenant_score_idx ON btree_join_right_idx (tenant, score)")
+}
+
 func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
 	b.Helper()
 	createJsonbGinBenchmarkTable(b, ctx, conn, table)
@@ -566,6 +626,14 @@ func assertBenchmarkPlanShape(tb testing.TB, ctx context.Context, conn *Connecti
 	}
 	if !indexedPlan && hasIndexedAccess {
 		tb.Fatalf("expected benchmark query to use table-scan fallback\nplan:\n%s", plan)
+	}
+}
+
+func assertBenchmarkPlanContains(tb testing.TB, ctx context.Context, conn *Connection, query string, expected string) {
+	tb.Helper()
+	plan := explainBenchmarkQuery(tb, ctx, conn, query)
+	if !strings.Contains(plan, expected) {
+		tb.Fatalf("expected benchmark query plan to contain %q\nplan:\n%s", expected, plan)
 	}
 }
 
