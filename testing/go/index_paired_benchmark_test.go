@@ -179,6 +179,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ?& ARRAY['tenant','vip']`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ?& ARRAY['tenant','vip']`,
 			want:             102,
+			planBoundary:     true,
 		},
 		{
 			name:             "jsonb_gin/path_containment",

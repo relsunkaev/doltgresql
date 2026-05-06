@@ -467,10 +467,9 @@ func BenchmarkJsonbGinSQLLookup(b *testing.B) {
 			indexedPlan: true,
 		},
 		{
-			name:        "jsonb_ops/key_exists_all",
-			query:       `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc ?& ARRAY['tenant','vip']`,
-			want:        102,
-			indexedPlan: true,
+			name:  "jsonb_ops/key_exists_all",
+			query: `SELECT count(id) FROM jsonb_gin_bench_ops WHERE doc ?& ARRAY['tenant','vip']`,
+			want:  102,
 		},
 		{
 			name:        "jsonb_path_ops/path_containment",
@@ -518,6 +517,65 @@ func TestJsonbGinJsonPathBoundary(t *testing.T) {
 			t.Fatalf("JSONPath boundary query unexpectedly used JSONB GIN index\nquery: %s\nplan:\n%s", query, plan)
 		}
 		assertCountResult(t, ctx, conn, query, 1)
+	}
+}
+
+func TestJsonbGinSelectivityPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_selectivity_plan")
+	insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_selectivity_plan", 1, jsonbGinBenchmarkRows)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_selectivity_plan_idx ON jsonb_gin_selectivity_plan USING gin (doc)")
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:        "selective_containment_uses_gin",
+			query:       `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			want:        32,
+			indexedPlan: true,
+		},
+		{
+			name:        "broad_containment_uses_gin_when_combined_candidate_set_is_bounded",
+			query:       `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc @> '{"status":"open"}'`,
+			want:        256,
+			indexedPlan: true,
+		},
+		{
+			name:        "selective_key_exists_uses_gin",
+			query:       `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc ? 'vip'`,
+			want:        102,
+			indexedPlan: true,
+		},
+		{
+			name:  "broad_key_exists_scans",
+			query: `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc ? 'tenant'`,
+			want:  jsonbGinBenchmarkRows,
+		},
+		{
+			name:  "broad_key_exists_all_scans",
+			query: `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc ?& ARRAY['tenant','vip']`,
+			want:  102,
+		},
+	}
+
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, query.indexedPlan)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
 	}
 }
 

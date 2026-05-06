@@ -66,11 +66,17 @@ const (
 )
 
 type jsonbGinLookupSpec struct {
-	index  JsonbGinMaintainedIndex
-	tokens []jsonbgin.Token
-	mode   jsonbGinLookupMode
-	debug  string
+	index               JsonbGinMaintainedIndex
+	tokens              []jsonbgin.Token
+	mode                jsonbGinLookupMode
+	broadTokenSensitive bool
+	debug               string
 }
+
+const (
+	jsonbGinMaxBroadKeyPostingRowsForIndexedLookup = 128
+	jsonbGinMaxCandidateRowsForIndexedLookup       = 512
+)
 
 func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*JsonbGinMaintainedTable); ok {
@@ -302,6 +308,12 @@ func (t *JsonbGinMaintainedTable) LookupForExpressions(ctx *sql.Context, exprs .
 			}
 			continue
 		}
+		if tooBroad, err := t.lookupSpecTooBroadForIndex(ctx, lookupSpec); err != nil || tooBroad {
+			if err != nil {
+				return sql.IndexLookup{}, nil, nil, false, err
+			}
+			continue
+		}
 		lookupIndex := &jsonbGinLookupIndex{
 			tableName: t.Name(),
 			lookup:    lookupSpec,
@@ -333,13 +345,124 @@ func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr
 			return jsonbGinLookupSpec{}, ok, err
 		}
 		return jsonbGinLookupSpec{
-			index:  index,
-			tokens: tokens,
-			mode:   mode,
-			debug:  fmt.Sprintf("%s %s %d token(s)", index.Name, mode, len(tokens)),
+			index:               index,
+			tokens:              tokens,
+			mode:                mode,
+			broadTokenSensitive: jsonbGinBroadTokenSensitiveOperator(binary.Operator()),
+			debug:               fmt.Sprintf("%s %s %d token(s)", index.Name, mode, len(tokens)),
 		}, true, nil
 	}
 	return jsonbGinLookupSpec{}, false, nil
+}
+
+func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForIndex(ctx *sql.Context, lookupSpec jsonbGinLookupSpec) (bool, error) {
+	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: lookupSpec.index.PostingTable, Schema: t.schemaName})
+	if err != nil {
+		return false, err
+	}
+	if postingTable == nil {
+		return false, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, lookupSpec.index.PostingTable, lookupSpec.index.Name)
+	}
+	tokenRows := make([]map[string]struct{}, len(lookupSpec.tokens))
+	for i, token := range lookupSpec.tokens {
+		encodedToken := jsonbgin.EncodeToken(token)
+		if lookupSpec.broadTokenSensitive {
+			exceeds, err := postingTokenRowIDCountExceeds(ctx, postingTable, encodedToken, jsonbGinMaxBroadKeyPostingRowsForIndexedLookup)
+			if err != nil || exceeds {
+				return exceeds, err
+			}
+		}
+		rowIDs, err := lookupPostingTokenRowIDs(ctx, postingTable, encodedToken)
+		if err != nil {
+			return false, err
+		}
+		tokenRows[i] = rowIDs
+	}
+	var candidateRows map[string]struct{}
+	switch lookupSpec.mode {
+	case jsonbGinLookupUnion:
+		candidateRows = unionPostingRowIDs(tokenRows)
+	case jsonbGinLookupIntersect:
+		candidateRows = intersectPostingRowIDs(tokenRows)
+	default:
+		return false, errors.Errorf("unknown JSONB GIN lookup mode %q", lookupSpec.mode)
+	}
+	if len(candidateRows) > jsonbGinMaxCandidateRowsForIndexedLookup {
+		return true, nil
+	}
+	return false, nil
+}
+
+func jsonbGinBroadTokenSensitiveOperator(operator framework.Operator) bool {
+	switch operator {
+	case framework.Operator_BinaryJSONTopLevel, framework.Operator_BinaryJSONTopLevelAny, framework.Operator_BinaryJSONTopLevelAll:
+		return true
+	default:
+		return false
+	}
+}
+
+func postingTokenRowIDCountExceeds(ctx *sql.Context, postingTable sql.Table, encodedToken string, limit int) (bool, error) {
+	if indexAddressable, ok := postingTable.(sql.IndexAddressable); ok {
+		exceeds, indexed, err := postingTokenRowIDIndexCountExceeds(ctx, indexAddressable, encodedToken, limit)
+		if err != nil || indexed {
+			return exceeds, err
+		}
+	}
+	rowIDs := make(map[string]struct{})
+	partitions, err := postingTable.Partitions(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		rows, err := postingTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, err
+		}
+		exceeds, err := readPostingTokenRowsUntilLimit(ctx, rows, encodedToken, rowIDs, limit)
+		closeErr := rows.Close(ctx)
+		if err != nil {
+			return false, err
+		}
+		if closeErr != nil {
+			return false, closeErr
+		}
+		if exceeds {
+			return true, nil
+		}
+	}
+}
+
+func postingTokenRowIDIndexCountExceeds(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedToken string, limit int) (bool, bool, error) {
+	indexes, err := indexAddressable.GetIndexes(ctx)
+	if err != nil {
+		return false, false, err
+	}
+	postingIndex := jsonbGinPostingTokenIndex(ctx, indexes)
+	if postingIndex == nil {
+		return false, false, nil
+	}
+	columnTypes := postingIndex.ColumnExpressionTypes(ctx)
+	if len(columnTypes) == 0 {
+		return false, false, nil
+	}
+	lookup := sql.NewIndexLookup(postingIndex, sql.MySQLRangeCollection{{
+		sql.ClosedRangeColumnExpr(encodedToken, encodedToken, columnTypes[0].Type),
+	}}, false, false, false, false)
+	indexedTable := indexAddressable.IndexedAccess(ctx, lookup)
+	if indexedTable == nil {
+		return false, false, nil
+	}
+	exceeds, err := readPostingIndexedRowsUntilLimit(ctx, indexedTable, lookup, encodedToken, limit)
+	return exceeds, true, err
 }
 
 func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.Operator, right sql.Expression) ([]jsonbgin.Token, jsonbGinLookupMode, bool, error) {
@@ -869,6 +992,39 @@ func readPostingIndexedRows(ctx *sql.Context, indexedTable sql.IndexedTable, loo
 	return rowIDs, nil
 }
 
+func readPostingIndexedRowsUntilLimit(ctx *sql.Context, indexedTable sql.IndexedTable, lookup sql.IndexLookup, encodedToken string, limit int) (bool, error) {
+	rowIDs := make(map[string]struct{})
+	partitions, err := indexedTable.LookupPartitions(ctx, lookup)
+	if err != nil {
+		return false, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		rows, err := indexedTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, err
+		}
+		exceeds, err := readPostingTokenRowsUntilLimit(ctx, rows, encodedToken, rowIDs, limit)
+		closeErr := rows.Close(ctx)
+		if err != nil {
+			return false, err
+		}
+		if closeErr != nil {
+			return false, closeErr
+		}
+		if exceeds {
+			return true, nil
+		}
+	}
+}
+
 func scanPostingTokenRowIDs(ctx *sql.Context, postingTable sql.Table, encodedToken string) (map[string]struct{}, error) {
 	rowIDs := make(map[string]struct{})
 	partitions, err := postingTable.Partitions(ctx)
@@ -923,6 +1079,36 @@ func readPostingTokenRows(ctx *sql.Context, rows sql.RowIter, encodedToken strin
 			return errors.Errorf("unexpected JSONB GIN posting row identity type %T", row[1])
 		}
 		rowIDs[rowID] = struct{}{}
+	}
+}
+
+func readPostingTokenRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedToken string, rowIDs map[string]struct{}, limit int) (bool, error) {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		if len(row) < 2 || row[0] == nil || row[1] == nil {
+			continue
+		}
+		tokenText, ok := row[0].(string)
+		if !ok {
+			return false, errors.Errorf("unexpected JSONB GIN posting token type %T", row[0])
+		}
+		if tokenText != encodedToken {
+			continue
+		}
+		rowID, ok := row[1].(string)
+		if !ok {
+			return false, errors.Errorf("unexpected JSONB GIN posting row identity type %T", row[1])
+		}
+		rowIDs[rowID] = struct{}{}
+		if len(rowIDs) > limit {
+			return true, nil
+		}
 	}
 }
 
