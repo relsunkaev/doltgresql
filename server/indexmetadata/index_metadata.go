@@ -60,12 +60,17 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"text_ops":               {},
 	"varchar_ops":            {},
 	"bpchar_ops":             {},
+	"bytea_ops":              {},
 	OpClassTextPatternOps:    {},
 	OpClassVarcharPatternOps: {},
 	OpClassBpcharPatternOps:  {},
 	"date_ops":               {},
+	"interval_ops":           {},
+	"oid_ops":                {},
+	"time_ops":               {},
 	"timestamp_ops":          {},
 	"timestamptz_ops":        {},
+	"timetz_ops":             {},
 	"uuid_ops":               {},
 }
 

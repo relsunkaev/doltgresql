@@ -2050,6 +2050,43 @@ ORDER BY opc.opcname;`,
 			},
 		},
 		{
+			Name: "PostgreSQL scalar btree opclass metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_scalar_opclass_meta (id INTEGER PRIMARY KEY, b BYTEA, o OID, t TIME, tz TIMETZ, i INTERVAL);",
+				"CREATE INDEX btree_scalar_opclass_idx ON btree_scalar_opclass_meta (b bytea_ops, o oid_ops, t time_ops, tz timetz_ops, i interval_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	pg_catalog.pg_get_indexdef(c.oid, 2, false),
+	pg_catalog.pg_get_indexdef(c.oid, 3, false),
+	pg_catalog.pg_get_indexdef(c.oid, 4, false),
+	pg_catalog.pg_get_indexdef(c.oid, 5, false),
+	i.indclass,
+	i.indcollation,
+	i.indoption
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname = 'btree_scalar_opclass_idx';`,
+					Expected: []sql.Row{
+						{
+							"CREATE INDEX btree_scalar_opclass_idx ON public.btree_scalar_opclass_meta USING btree (b bytea_ops, o oid_ops, t time_ops, tz timetz_ops, i interval_ops)",
+							"b bytea_ops",
+							"o oid_ops",
+							"t time_ops",
+							"tz timetz_ops",
+							"i interval_ops",
+							opClassOidVector("bytea_ops", "oid_ops", "time_ops", "timetz_ops", "interval_ops"),
+							collationOidVector("", "", "", "", ""),
+							"0 0 0 0 0",
+						},
+					},
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL btree collation metadata",
 			SetUpScript: []string{
 				"CREATE TABLE btree_collation_meta (id INTEGER PRIMARY KEY, name TEXT, code VARCHAR);",

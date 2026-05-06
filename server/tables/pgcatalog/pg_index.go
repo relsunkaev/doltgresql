@@ -513,12 +513,22 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "varchar_ops", true
 	case "bpchar":
 		return "bpchar_ops", true
+	case "bytea":
+		return "bytea_ops", true
 	case "date":
 		return "date_ops", true
+	case "interval":
+		return "interval_ops", true
+	case "oid":
+		return "oid_ops", true
+	case "time":
+		return "time_ops", true
 	case "timestamp":
 		return "timestamp_ops", true
 	case "timestamptz":
 		return "timestamptz_ops", true
+	case "timetz":
+		return "timetz_ops", true
 	case "uuid":
 		return "uuid_ops", true
 	default:
