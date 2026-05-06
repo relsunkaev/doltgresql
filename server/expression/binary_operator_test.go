@@ -26,13 +26,16 @@ import (
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/binary"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/functions/unary"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 var binaryOperatorBenchSink any
+var unaryOperatorBenchSink any
 
 func TestMain(m *testing.M) {
 	binary.Init()
+	unary.Init()
 	framework.Initialize()
 	os.Exit(m.Run())
 }
@@ -44,7 +47,7 @@ func TestBinaryOperatorUsesQuickFunctionForExactOverload(t *testing.T) {
 
 	expr, err := pgexpression.NewBinaryOperator(framework.Operator_BinaryEqual).WithChildren(ctx, left, right)
 	require.NoError(t, err)
-	requireCompiledFunctionType(t, expr, "*framework.QuickFunction2")
+	requireOperatorFunctionType(t, expr, "*framework.QuickFunction2")
 
 	matches, err := expr.Eval(ctx, sql.NewRow(int32(42)))
 	require.NoError(t, err)
@@ -66,13 +69,30 @@ func TestBinaryOperatorKeepsCompiledFunctionWhenCastsAreNeeded(t *testing.T) {
 
 	expr, err := pgexpression.NewBinaryOperator(framework.Operator_BinaryEqual).WithChildren(ctx, left, right)
 	require.NoError(t, err)
-	requireCompiledFunctionType(t, expr, "*framework.CompiledFunction")
+	requireOperatorFunctionType(t, expr, "*framework.CompiledFunction")
 }
 
-func requireCompiledFunctionType(t *testing.T, expr sql.Expression, expected string) {
+func TestUnaryOperatorUsesQuickFunctionForExactOverload(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	child := gmsexpression.NewGetField(0, pgtypes.Int32, "i", true)
+
+	exprAny, err := pgexpression.NewUnaryOperator(framework.Operator_UnaryMinus).WithResolvedChildren(ctx, []any{child})
+	require.NoError(t, err)
+	expr := exprAny.(sql.Expression)
+	requireOperatorFunctionType(t, expr, "*framework.QuickFunction1")
+
+	result, err := expr.Eval(ctx, sql.NewRow(int32(42)))
+	require.NoError(t, err)
+	require.Equal(t, int32(-42), result)
+
+	result, err = expr.Eval(ctx, sql.NewRow(nil))
+	require.NoError(t, err)
+	require.Nil(t, result)
+}
+
+func requireOperatorFunctionType(t *testing.T, expr sql.Expression, expected string) {
 	t.Helper()
-	op := expr.(*pgexpression.BinaryOperator)
-	compiledFunc := reflect.ValueOf(op).Elem().FieldByName("compiledFunc")
+	compiledFunc := reflect.ValueOf(expr).Elem().FieldByName("compiledFunc")
 	require.False(t, compiledFunc.IsNil())
 	require.Equal(t, expected, compiledFunc.Elem().Type().String())
 }
@@ -89,6 +109,24 @@ func BenchmarkBinaryOperatorInt32Equality(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		binaryOperatorBenchSink, err = expr.Eval(ctx, row)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkUnaryOperatorInt32Minus(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	child := gmsexpression.NewGetField(0, pgtypes.Int32, "i", false)
+	exprAny, err := pgexpression.NewUnaryOperator(framework.Operator_UnaryMinus).WithResolvedChildren(ctx, []any{child})
+	require.NoError(b, err)
+	expr := exprAny.(sql.Expression)
+	row := sql.NewRow(int32(42))
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		unaryOperatorBenchSink, err = expr.Eval(ctx, row)
 		if err != nil {
 			b.Fatal(err)
 		}

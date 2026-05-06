@@ -85,14 +85,19 @@ func (b *UnaryOperator) WithChildren(ctx *sql.Context, children ...sql.Expressio
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(b, len(children), 1)
 	}
-	compiledFunc, err := b.compiledFunc.WithChildren(ctx, children...)
-	if err != nil {
-		return nil, err
+	if b.compiledFunc != nil {
+		compiledFunc, err := b.compiledFunc.WithChildren(ctx, children...)
+		if err != nil {
+			return nil, err
+		}
+		return newResolvedUnaryOperator(b.operator, compiledFunc.(framework.Function)), nil
+	} else {
+		unaryOp, err := b.WithResolvedChildren(ctx, []any{children[0]})
+		if err != nil {
+			return nil, err
+		}
+		return unaryOp.(sql.Expression), nil
 	}
-	return &UnaryOperator{
-		operator:     b.operator,
-		compiledFunc: compiledFunc.(framework.Function),
-	}, nil
 }
 
 // WithResolvedChildren implements the vitess.InjectableExpression interface.
@@ -110,8 +115,17 @@ func (b *UnaryOperator) WithResolvedChildren(ctx context.Context, children []any
 	if compiledFunc == nil {
 		return nil, errors.Errorf("operator does not exist: %s%s", b.operator.String(), child.Type(sqlCtx).String())
 	}
+	return newResolvedUnaryOperator(b.operator, compiledFunc), nil
+}
+
+func newResolvedUnaryOperator(operator framework.Operator, compiledFunc framework.Function) *UnaryOperator {
+	if compiled, ok := compiledFunc.(*framework.CompiledFunction); ok {
+		if quickFunction := compiled.GetQuickFunction(); quickFunction != nil {
+			compiledFunc = quickFunction
+		}
+	}
 	return &UnaryOperator{
-		operator:     b.operator,
+		operator:     operator,
 		compiledFunc: compiledFunc,
-	}, nil
+	}
 }
