@@ -147,6 +147,10 @@ func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.
 		return errors.Errorf("spatial indexes are not supported")
 	}
 
+	if err := validateBtreeOpClassTypes(colMap, idxDef); err != nil {
+		return err
+	}
+
 	for _, includeColumn := range indexmetadata.IncludeColumns(idxDef.Comment) {
 		schCol, exists := colMap[strings.ToLower(includeColumn)]
 		if !exists || schCol.HiddenSystem {
@@ -161,6 +165,29 @@ func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.
 		}
 	}
 
+	return nil
+}
+
+func validateBtreeOpClassTypes(colMap map[string]*sql.Column, idxDef *sql.IndexDef) error {
+	metadata, ok := indexmetadata.DecodeComment(idxDef.Comment)
+	if !ok || indexmetadata.NormalizeAccessMethod(metadata.AccessMethod) != indexmetadata.AccessMethodBtree {
+		return nil
+	}
+
+	for i, opClass := range metadata.OpClasses {
+		opClass = indexmetadata.NormalizeOpClass(opClass)
+		if opClass == "" || i >= len(idxDef.Columns) || idxDef.Columns[i].Expression != nil {
+			continue
+		}
+		schCol, exists := colMap[strings.ToLower(idxDef.Columns[i].Name)]
+		if !exists {
+			continue
+		}
+		typeName, ok := indexmetadata.BtreeOpClassAcceptsType(opClass, schCol.Type)
+		if !ok {
+			return errors.Errorf(`operator class "%s" does not accept data type %s`, opClass, typeName)
+		}
+	}
 	return nil
 }
 

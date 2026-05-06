@@ -14,7 +14,11 @@
 
 package indexmetadata
 
-import "testing"
+import (
+	"testing"
+
+	pgtypes "github.com/dolthub/doltgresql/server/types"
+)
 
 func TestEncodeDecodeComment(t *testing.T) {
 	comment := EncodeComment(Metadata{
@@ -136,6 +140,109 @@ func TestIsSupportedBtreeOpClass(t *testing.T) {
 	}
 	if IsSupportedBtreeOpClass(OpClassJsonbPathOps) {
 		t.Fatal("expected jsonb_path_ops to be unsupported for btree")
+	}
+}
+
+func TestBtreeOpClassAcceptsType(t *testing.T) {
+	tests := []struct {
+		name        string
+		opClass     string
+		typ         *pgtypes.DoltgresType
+		displayName string
+		accepted    bool
+	}{
+		{
+			name:        "int4_ops_accepts_int4",
+			opClass:     "int4_ops",
+			typ:         pgtypes.Int32,
+			displayName: "integer",
+			accepted:    true,
+		},
+		{
+			name:        "text_ops_rejects_int4",
+			opClass:     "text_ops",
+			typ:         pgtypes.Int32,
+			displayName: "integer",
+		},
+		{
+			name:        "int4_ops_rejects_text",
+			opClass:     "int4_ops",
+			typ:         pgtypes.Text,
+			displayName: "text",
+		},
+		{
+			name:        "jsonb_ops_accepts_jsonb",
+			opClass:     OpClassJsonbOps,
+			typ:         pgtypes.JsonB,
+			displayName: "jsonb",
+			accepted:    true,
+		},
+		{
+			name:        "text_ops_accepts_varchar",
+			opClass:     "text_ops",
+			typ:         pgtypes.VarChar,
+			displayName: "character varying",
+			accepted:    true,
+		},
+		{
+			name:        "bpchar_pattern_ops_accepts_varchar",
+			opClass:     OpClassBpcharPatternOps,
+			typ:         pgtypes.VarChar,
+			displayName: "character varying",
+			accepted:    true,
+		},
+		{
+			name:        "varchar_pattern_ops_rejects_bpchar",
+			opClass:     OpClassVarcharPatternOps,
+			typ:         pgtypes.BpChar,
+			displayName: "character",
+		},
+		{
+			name:        "bit_ops_accepts_varbit",
+			opClass:     "bit_ops",
+			typ:         pgtypes.VarBit,
+			displayName: "varbit",
+			accepted:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			displayName, accepted := BtreeOpClassAcceptsType(tt.opClass, tt.typ)
+			if displayName != tt.displayName {
+				t.Fatalf("expected display name %q, got %q", tt.displayName, displayName)
+			}
+			if accepted != tt.accepted {
+				t.Fatalf("expected accepted=%v, got %v", tt.accepted, accepted)
+			}
+		})
+	}
+}
+
+func TestDefaultBtreeOpClassForType(t *testing.T) {
+	tests := []struct {
+		name    string
+		typ     *pgtypes.DoltgresType
+		opClass string
+	}{
+		{name: "int4", typ: pgtypes.Int32, opClass: "int4_ops"},
+		{name: "text", typ: pgtypes.Text, opClass: "text_ops"},
+		{name: "varchar", typ: pgtypes.VarChar, opClass: "varchar_ops"},
+		{name: "bpchar", typ: pgtypes.BpChar, opClass: "bpchar_ops"},
+		{name: "jsonb", typ: pgtypes.JsonB, opClass: OpClassJsonbOps},
+		{name: "varbit", typ: pgtypes.VarBit, opClass: "varbit_ops"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opClass, ok := DefaultBtreeOpClassForType(tt.typ)
+			if !ok {
+				t.Fatal("expected default opclass")
+			}
+			if opClass != tt.opClass {
+				t.Fatalf("expected default opclass %q, got %q", tt.opClass, opClass)
+			}
+		})
 	}
 }
 

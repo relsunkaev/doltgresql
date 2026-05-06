@@ -16,7 +16,12 @@ package indexmetadata
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
+
+	"github.com/dolthub/go-mysql-server/sql"
+
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 const (
@@ -80,12 +85,52 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"varbit_ops":             {},
 }
 
+var btreeOpClassInputTypes = map[string]map[string]struct{}{
+	"bit_ops":                set("bit", "varbit"),
+	"bool_ops":               set("bool"),
+	"int2_ops":               set("int2"),
+	"int4_ops":               set("int4"),
+	"int8_ops":               set("int8"),
+	"float4_ops":             set("float4"),
+	"float8_ops":             set("float8"),
+	"numeric_ops":            set("numeric"),
+	"char_ops":               set("char"),
+	"name_ops":               set("name"),
+	"text_ops":               set("text", "varchar"),
+	"varchar_ops":            set("text", "varchar"),
+	"bpchar_ops":             set("text", "varchar", "bpchar"),
+	"bytea_ops":              set("bytea"),
+	OpClassTextPatternOps:    set("text", "varchar"),
+	OpClassVarcharPatternOps: set("text", "varchar"),
+	OpClassBpcharPatternOps:  set("text", "varchar", "bpchar"),
+	"date_ops":               set("date"),
+	"interval_ops":           set("interval"),
+	OpClassJsonbOps:          set("jsonb"),
+	"oid_ops":                set("oid", "int4"),
+	"oidvector_ops":          set("oidvector"),
+	"pg_lsn_ops":             set("pg_lsn"),
+	"time_ops":               set("time"),
+	"timestamp_ops":          set("timestamp"),
+	"timestamptz_ops":        set("timestamptz"),
+	"timetz_ops":             set("timetz"),
+	"uuid_ops":               set("uuid"),
+	"varbit_ops":             set("bit", "varbit"),
+}
+
 var supportedCollations = map[string]struct{}{
 	CollationDefault:  {},
 	CollationC:        {},
 	CollationPOSIX:    {},
 	CollationUcsBasic: {},
 	CollationUndIcu:   {},
+}
+
+func set(values ...string) map[string]struct{} {
+	ret := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		ret[value] = struct{}{}
+	}
+	return ret
 }
 
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
@@ -393,6 +438,160 @@ func IsSupportedGinJsonbOpClass(opClass string) bool {
 func IsSupportedBtreeOpClass(opClass string) bool {
 	_, ok := supportedBtreeOpClasses[NormalizeOpClass(opClass)]
 	return ok
+}
+
+// BtreeOpClassAcceptsType returns PostgreSQL's built-in btree opclass/type
+// compatibility for opclasses whose metadata Doltgres currently preserves.
+func BtreeOpClassAcceptsType(opClass string, typ sql.Type) (string, bool) {
+	typeName, displayName, ok := doltgresTypeNames(typ)
+	if !ok {
+		return typeDisplayName(typ), false
+	}
+	acceptedTypes, ok := btreeOpClassInputTypes[NormalizeOpClass(opClass)]
+	if !ok {
+		return displayName, false
+	}
+	_, ok = acceptedTypes[typeName]
+	return displayName, ok
+}
+
+// DefaultBtreeOpClassForType returns PostgreSQL's built-in default btree
+// opclass for the given Doltgres column type.
+func DefaultBtreeOpClassForType(typ sql.Type) (string, bool) {
+	typeName, _, ok := doltgresTypeNames(typ)
+	if !ok {
+		return "", false
+	}
+
+	switch typeName {
+	case "bit":
+		return "bit_ops", true
+	case "bool":
+		return "bool_ops", true
+	case "int2":
+		return "int2_ops", true
+	case "int4":
+		return "int4_ops", true
+	case "int8":
+		return "int8_ops", true
+	case "float4":
+		return "float4_ops", true
+	case "float8":
+		return "float8_ops", true
+	case "numeric":
+		return "numeric_ops", true
+	case "char":
+		return "char_ops", true
+	case "name":
+		return "name_ops", true
+	case "text":
+		return "text_ops", true
+	case "varchar":
+		return "varchar_ops", true
+	case "bpchar":
+		return "bpchar_ops", true
+	case "bytea":
+		return "bytea_ops", true
+	case "date":
+		return "date_ops", true
+	case "interval":
+		return "interval_ops", true
+	case "jsonb":
+		return "jsonb_ops", true
+	case "oid":
+		return "oid_ops", true
+	case "oidvector":
+		return "oidvector_ops", true
+	case "pg_lsn":
+		return "pg_lsn_ops", true
+	case "time":
+		return "time_ops", true
+	case "timestamp":
+		return "timestamp_ops", true
+	case "timestamptz":
+		return "timestamptz_ops", true
+	case "timetz":
+		return "timetz_ops", true
+	case "uuid":
+		return "uuid_ops", true
+	case "varbit":
+		return "varbit_ops", true
+	default:
+		return "", false
+	}
+}
+
+func doltgresTypeNames(typ sql.Type) (string, string, bool) {
+	doltgresType, ok := doltgresType(typ)
+	if !ok {
+		return "", "", false
+	}
+	typeName := doltgresType.ID.TypeName()
+	return typeName, postgresTypeDisplayName(typeName, doltgresType), true
+}
+
+func doltgresType(typ sql.Type) (*pgtypes.DoltgresType, bool) {
+	if typ == nil || isNilType(typ) {
+		return nil, false
+	}
+	if typ, ok := typ.(*pgtypes.DoltgresType); ok {
+		return typ, true
+	}
+	doltgresType, ok := doltgresTypeFromGmsType(typ)
+	if !ok {
+		return nil, false
+	}
+	return doltgresType, true
+}
+
+func doltgresTypeFromGmsType(typ sql.Type) (doltgresType *pgtypes.DoltgresType, ok bool) {
+	defer func() {
+		if recover() != nil {
+			doltgresType = nil
+			ok = false
+		}
+	}()
+	doltgresType, err := pgtypes.FromGmsTypeToDoltgresType(typ)
+	return doltgresType, err == nil && doltgresType != nil
+}
+
+func isNilType(typ sql.Type) bool {
+	value := reflect.ValueOf(typ)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
+}
+
+func postgresTypeDisplayName(typeName string, typ *pgtypes.DoltgresType) string {
+	switch typeName {
+	case "bool":
+		return "boolean"
+	case "int2":
+		return "smallint"
+	case "int4":
+		return "integer"
+	case "int8":
+		return "bigint"
+	case "float4":
+		return "real"
+	case "float8":
+		return "double precision"
+	case "varchar":
+		return "character varying"
+	case "bpchar":
+		return "character"
+	}
+	return strings.TrimSpace(typ.String())
+}
+
+func typeDisplayName(typ sql.Type) string {
+	if typ == nil || isNilType(typ) {
+		return "unknown"
+	}
+	return strings.TrimSpace(typ.String())
 }
 
 // IsSupportedCollation returns whether Doltgres can preserve this built-in

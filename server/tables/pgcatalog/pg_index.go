@@ -421,7 +421,7 @@ func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) 
 		if colIdx < 0 {
 			return nil
 		}
-		opClass, ok := defaultBtreeOpClassForType(schema[colIdx].Type)
+		opClass, ok := indexmetadata.DefaultBtreeOpClassForType(schema[colIdx].Type)
 		if !ok {
 			return nil
 		}
@@ -444,7 +444,7 @@ func indexOpClassIdsWithDefaults(accessMethod string, schema sql.Schema, indexCo
 		if colIdx < 0 {
 			return nil
 		}
-		opClass, ok := defaultBtreeOpClassForType(schema[colIdx].Type)
+		opClass, ok := indexmetadata.DefaultBtreeOpClassForType(schema[colIdx].Type)
 		if !ok {
 			return nil
 		}
@@ -483,78 +483,6 @@ func collationIDForDoltgresType(doltgresType *pgtypes.DoltgresType) id.Id {
 		return id.Null
 	}
 	return doltgresType.TypCollation.AsId()
-}
-
-func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
-	typeName, ok := doltgresTypeName(typ)
-	if !ok {
-		return "", false
-	}
-
-	switch typeName {
-	case "bit":
-		return "bit_ops", true
-	case "bool":
-		return "bool_ops", true
-	case "int2":
-		return "int2_ops", true
-	case "int4":
-		return "int4_ops", true
-	case "int8":
-		return "int8_ops", true
-	case "float4":
-		return "float4_ops", true
-	case "float8":
-		return "float8_ops", true
-	case "numeric":
-		return "numeric_ops", true
-	case "char":
-		return "char_ops", true
-	case "name":
-		return "name_ops", true
-	case "text":
-		return "text_ops", true
-	case "varchar":
-		return "varchar_ops", true
-	case "bpchar":
-		return "bpchar_ops", true
-	case "bytea":
-		return "bytea_ops", true
-	case "date":
-		return "date_ops", true
-	case "interval":
-		return "interval_ops", true
-	case "jsonb":
-		return "jsonb_ops", true
-	case "oid":
-		return "oid_ops", true
-	case "oidvector":
-		return "oidvector_ops", true
-	case "pg_lsn":
-		return "pg_lsn_ops", true
-	case "time":
-		return "time_ops", true
-	case "timestamp":
-		return "timestamp_ops", true
-	case "timestamptz":
-		return "timestamptz_ops", true
-	case "timetz":
-		return "timetz_ops", true
-	case "uuid":
-		return "uuid_ops", true
-	case "varbit":
-		return "varbit_ops", true
-	default:
-		return "", false
-	}
-}
-
-func doltgresTypeName(typ sql.Type) (string, bool) {
-	doltgresType, ok := doltgresType(typ)
-	if !ok {
-		return "", false
-	}
-	return doltgresType.ID.TypeName(), true
 }
 
 func doltgresType(typ sql.Type) (*pgtypes.DoltgresType, bool) {

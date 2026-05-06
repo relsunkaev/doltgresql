@@ -2006,6 +2006,48 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 			},
 		},
 		{
+			Name: "PostgreSQL btree opclass type validation",
+			SetUpScript: []string{
+				"CREATE TABLE btree_opclass_type_validation (id INTEGER PRIMARY KEY, i INTEGER, t TEXT, v VARCHAR, c CHARACTER(12), doc JSONB);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_int_idx ON btree_opclass_type_validation (i int4_ops);",
+				},
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_text_idx ON btree_opclass_type_validation (t text_ops);",
+				},
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_jsonb_idx ON btree_opclass_type_validation (doc jsonb_ops);",
+				},
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_varchar_pattern_idx ON btree_opclass_type_validation (v varchar_pattern_ops);",
+				},
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_bpchar_pattern_idx ON btree_opclass_type_validation (c bpchar_pattern_ops);",
+				},
+				{
+					Query: "CREATE INDEX btree_opclass_type_validation_varchar_bpchar_pattern_idx ON btree_opclass_type_validation (v bpchar_pattern_ops);",
+				},
+				{
+					Query:       "CREATE INDEX btree_opclass_type_validation_text_on_int_bad_idx ON btree_opclass_type_validation (i text_ops);",
+					ExpectedErr: `operator class "text_ops" does not accept data type integer`,
+				},
+				{
+					Query:       "CREATE INDEX btree_opclass_type_validation_int_on_text_bad_idx ON btree_opclass_type_validation (t int4_ops);",
+					ExpectedErr: `operator class "int4_ops" does not accept data type text`,
+				},
+				{
+					Query:       "CREATE INDEX btree_opclass_type_validation_int_on_jsonb_bad_idx ON btree_opclass_type_validation (doc int4_ops);",
+					ExpectedErr: `operator class "int4_ops" does not accept data type jsonb`,
+				},
+				{
+					Query:       "CREATE INDEX btree_opclass_type_validation_varchar_pattern_on_bpchar_bad_idx ON btree_opclass_type_validation (c varchar_pattern_ops);",
+					ExpectedErr: `operator class "varchar_pattern_ops" does not accept data type character`,
+				},
+			},
+		},
+		{
 			Name: "PostgreSQL jsonb btree opclass metadata",
 			SetUpScript: []string{
 				"CREATE TABLE btree_jsonb_opclass_meta (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
