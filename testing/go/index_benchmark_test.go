@@ -867,6 +867,29 @@ func TestJsonbGinDirectFetchPreservesRecheck(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 1)
 }
 
+func TestJsonbGinIndexedProjectionPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_projection_plan (id INTEGER PRIMARY KEY, label TEXT NOT NULL, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_projection_plan VALUES
+		(1, 'keep', '{"vip":true,"tenant":1}'::jsonb),
+		(2, 'drop', '{"tenant":2}'::jsonb)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_projection_plan_idx ON jsonb_gin_projection_plan USING gin (doc)")
+
+	query := `SELECT id FROM jsonb_gin_projection_plan WHERE doc ? 'vip'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertBenchmarkPlanContains(t, ctx, conn, query, "columns: [id doc]")
+	assertBenchmarkPlanNotContains(t, ctx, conn, query, "columns: [id label doc]")
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM (`+query+`) AS projected`, 1)
+}
+
 func TestJsonbGinLiteralCacheDoesNotLeakAcrossIndexRecreate(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {

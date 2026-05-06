@@ -138,6 +138,36 @@ func TestJsonbGinLookupTokensDeduplicatesTopLevelKeys(t *testing.T) {
 	require.Equal(t, expected, tokens)
 }
 
+func TestJsonbGinMaintainedTableProjectionRemapsColumnIndex(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	underlying := &fakeProjectedTable{
+		schema: sql.Schema{
+			{Name: "id", Type: pgtypes.Int32, PrimaryKey: true, Nullable: false},
+			{Name: "label", Type: pgtypes.Text, Nullable: false},
+			{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
+		},
+	}
+	table := &JsonbGinMaintainedTable{
+		underlying: underlying,
+		indexes: []JsonbGinMaintainedIndex{{
+			ColumnName:  "doc",
+			ColumnIndex: 2,
+			OpClass:     indexmetadata.OpClassJsonbOps,
+		}},
+	}
+
+	projected, err := table.WithProjections(ctx, []string{"id", "doc"})
+	require.NoError(t, err)
+
+	maintained := projected.(*JsonbGinMaintainedTable)
+	require.Equal(t, []string{"id", "doc"}, maintained.Projections())
+	require.Equal(t, 1, maintained.indexes[0].ColumnIndex)
+	require.Equal(t, sql.Schema{
+		{Name: "id", Type: pgtypes.Int32, PrimaryKey: true, Nullable: false},
+		{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
+	}, maintained.Schema(ctx))
+}
+
 func TestJsonbGinPostingRowBufferSortsRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	editor := &recordingPostingEditor{}
@@ -353,6 +383,56 @@ func (i *benchmarkRowIter) Next(*sql.Context) (sql.Row, error) {
 
 func (i *benchmarkRowIter) Close(*sql.Context) error {
 	return nil
+}
+
+type fakeProjectedTable struct {
+	schema      sql.Schema
+	projections []string
+}
+
+var _ sql.ProjectedTable = (*fakeProjectedTable)(nil)
+
+func (t *fakeProjectedTable) Name() string {
+	return "projected"
+}
+
+func (t *fakeProjectedTable) String() string {
+	return "projected"
+}
+
+func (t *fakeProjectedTable) Schema(*sql.Context) sql.Schema {
+	return t.schema
+}
+
+func (t *fakeProjectedTable) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
+
+func (t *fakeProjectedTable) Partitions(*sql.Context) (sql.PartitionIter, error) {
+	return nil, errors.New("unexpected partitions")
+}
+
+func (t *fakeProjectedTable) PartitionRows(*sql.Context, sql.Partition) (sql.RowIter, error) {
+	return nil, errors.New("unexpected partition rows")
+}
+
+func (t *fakeProjectedTable) WithProjections(_ *sql.Context, colNames []string) (sql.Table, error) {
+	projectedSchema := make(sql.Schema, 0, len(colNames))
+	for _, colName := range colNames {
+		idx := t.schema.IndexOfColName(colName)
+		if idx < 0 {
+			return nil, errors.New("unknown projection column")
+		}
+		projectedSchema = append(projectedSchema, t.schema[idx])
+	}
+	return &fakeProjectedTable{
+		schema:      projectedSchema,
+		projections: append([]string(nil), colNames...),
+	}, nil
+}
+
+func (t *fakeProjectedTable) Projections() []string {
+	return append([]string(nil), t.projections...)
 }
 
 func benchmarkJsonbGinSchema() sql.Schema {

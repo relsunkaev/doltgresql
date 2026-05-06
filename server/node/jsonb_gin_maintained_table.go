@@ -61,6 +61,7 @@ var _ sql.DeletableTable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.IndexAddressable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.IndexedTable = (*JsonbGinMaintainedTable)(nil)
 var _ sql.IndexSearchableTable = (*JsonbGinMaintainedTable)(nil)
+var _ sql.ProjectedTable = (*JsonbGinMaintainedTable)(nil)
 
 type jsonbGinLookupMode string
 
@@ -156,6 +157,7 @@ var _ sql.DatabaseSchemaTable = (*JsonbGinSearchableTable)(nil)
 var _ sql.IndexAddressableTable = (*JsonbGinSearchableTable)(nil)
 var _ sql.IndexedTable = (*JsonbGinSearchableTable)(nil)
 var _ sql.IndexSearchableTable = (*JsonbGinSearchableTable)(nil)
+var _ sql.ProjectedTable = (*JsonbGinSearchableTable)(nil)
 
 func WrapJsonbGinSearchableTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*JsonbGinSearchableTable); ok {
@@ -187,6 +189,20 @@ func (t *JsonbGinSearchableTable) Schema(ctx *sql.Context) sql.Schema {
 
 func (t *JsonbGinSearchableTable) Collation() sql.CollationID {
 	return t.maintained.Collation()
+}
+
+func (t *JsonbGinSearchableTable) WithProjections(ctx *sql.Context, colNames []string) (sql.Table, error) {
+	table, err := t.maintained.WithProjections(ctx, colNames)
+	if err != nil {
+		return nil, err
+	}
+	return &JsonbGinSearchableTable{
+		maintained: table.(*JsonbGinMaintainedTable),
+	}, nil
+}
+
+func (t *JsonbGinSearchableTable) Projections() []string {
+	return t.maintained.Projections()
 }
 
 func (t *JsonbGinSearchableTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
@@ -262,6 +278,29 @@ func (t *JsonbGinMaintainedTable) Collation() sql.CollationID {
 	return t.underlying.Collation()
 }
 
+func (t *JsonbGinMaintainedTable) WithProjections(ctx *sql.Context, colNames []string) (sql.Table, error) {
+	projected, ok := t.underlying.(sql.ProjectedTable)
+	if !ok {
+		return nil, errors.Errorf("table %s does not support projections", t.Name())
+	}
+	table, err := projected.WithProjections(ctx, colNames)
+	if err != nil {
+		return nil, err
+	}
+	return &JsonbGinMaintainedTable{
+		underlying: table,
+		schemaName: t.schemaName,
+		indexes:    remapJsonbGinMaintainedIndexes(ctx, table, t.indexes),
+	}, nil
+}
+
+func (t *JsonbGinMaintainedTable) Projections() []string {
+	if projected, ok := t.underlying.(sql.ProjectedTable); ok {
+		return projected.Projections()
+	}
+	return nil
+}
+
 func (t *JsonbGinMaintainedTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
 	return t.underlying.Partitions(ctx)
 }
@@ -313,6 +352,16 @@ func (t *JsonbGinMaintainedTable) PreciseMatch() bool {
 
 func (t *JsonbGinMaintainedTable) SkipIndexCosting() bool {
 	return false
+}
+
+func remapJsonbGinMaintainedIndexes(ctx *sql.Context, table sql.Table, indexes []JsonbGinMaintainedIndex) []JsonbGinMaintainedIndex {
+	schema := table.Schema(ctx)
+	remapped := make([]JsonbGinMaintainedIndex, len(indexes))
+	for i, index := range indexes {
+		remapped[i] = index
+		remapped[i].ColumnIndex = schema.IndexOfColName(index.ColumnName)
+	}
+	return remapped
 }
 
 func (t *JsonbGinMaintainedTable) LookupForExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, *sql.FuncDepSet, sql.Expression, bool, error) {
