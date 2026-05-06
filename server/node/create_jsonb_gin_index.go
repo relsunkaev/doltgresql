@@ -47,6 +47,7 @@ const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk stora
 const jsonbGinPostingBackfillChunkRows = 8192
 const jsonbGinPostingChunkRowsPerChunk = 256
 const jsonbGinPostingChunkBuildSpillEntries = 65536
+const jsonbGinPostingBuildContextCheckInterval = 1024
 const jsonbGinPostingStorageVersionEnv = "DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION"
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
@@ -63,6 +64,7 @@ type CreateJsonbGinIndex struct {
 	postingChunkRowsPerChunk      int
 	postingChunkBuildSpillEntries int
 	postingChunkBuildWorkers      int
+	postingChunkBuildTempDir      string
 }
 
 var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
@@ -432,6 +434,9 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 		return err
 	}
 	defer sorter.Close()
+	if err = jsonbGinPostingBuildContextErr(ctx); err != nil {
+		return err
+	}
 	sink, err := newJsonbGinPostingChunkRowSink(ctx, db, postingTable)
 	if err != nil {
 		return err
@@ -444,6 +449,9 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 		_ = sink.Close(ctx)
 	}()
 	if err = c.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
+		return err
+	}
+	if err = jsonbGinPostingBuildContextErr(ctx); err != nil {
 		return err
 	}
 	if err = sink.Complete(ctx); err != nil {
@@ -463,8 +471,11 @@ func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, t
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Context, table sql.Table, columnIndex int) (*jsonbGinPostingChunkEntrySorter, error) {
+	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+		return nil, err
+	}
 	if c.postingChunkBuildWorkerLimit() <= 1 {
-		sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+		sorter := c.newPostingChunkEntrySorter()
 		partitions, err := table.Partitions(ctx)
 		if err != nil {
 			return nil, err
@@ -476,6 +487,10 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Con
 				break
 			}
 			if err != nil {
+				_ = sorter.Close()
+				return nil, err
+			}
+			if err = jsonbGinPostingBuildContextErr(ctx); err != nil {
 				_ = sorter.Close()
 				return nil, err
 			}
@@ -497,7 +512,7 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Con
 		return sorter, nil
 	}
 
-	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	sorter := c.newPostingChunkEntrySorter()
 	partitions, err := table.Partitions(ctx)
 	if err != nil {
 		return nil, err
@@ -505,6 +520,10 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Con
 	defer partitions.Close(ctx)
 	sch := table.Schema(ctx)
 	for {
+		if err = jsonbGinPostingBuildContextErr(ctx); err != nil {
+			_ = sorter.Close()
+			return nil, err
+		}
 		partition, err := partitions.Next(ctx)
 		if err == io.EOF {
 			break
@@ -553,7 +572,7 @@ func (c *CreateJsonbGinIndex) buildPostingChunkRows(ctx *sql.Context, sch sql.Sc
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) (*jsonbGinPostingChunkEntrySorter, error) {
-	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	sorter := c.newPostingChunkEntrySorter()
 	if c.postingChunkBuildWorkerLimit() <= 1 {
 		if err := c.addPostingChunkEntries(ctx, sch, rows, columnIndex, sorter); err != nil {
 			_ = sorter.Close()
@@ -570,6 +589,9 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromRows(ctx *sql.Cont
 
 func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
 	for {
+		if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+			return err
+		}
 		row, err := rows.Next(ctx)
 		if err == io.EOF {
 			return nil
@@ -586,6 +608,9 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.S
 func (c *CreateJsonbGinIndex) addPostingChunkEntriesParallel(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
 	// The base row scan stays serial; workers turn rows into sorted spill runs
 	// that the existing chunk writer can merge deterministically.
+	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+		return err
+	}
 	workerCount := c.postingChunkBuildWorkerLimit()
 	jobs := make(chan sql.Row, workerCount*2)
 	results := make(chan jsonbGinPostingChunkBuildWorkerResult, workerCount)
@@ -595,6 +620,10 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntriesParallel(ctx *sql.Context, s
 
 	var scanErr error
 	for scanErr == nil {
+		if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+			scanErr = err
+			break
+		}
 		row, err := rows.Next(ctx)
 		if err == io.EOF {
 			break
@@ -603,7 +632,12 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntriesParallel(ctx *sql.Context, s
 			scanErr = err
 			break
 		}
-		jobs <- append(sql.Row(nil), row...)
+		rowCopy := append(sql.Row(nil), row...)
+		select {
+		case jobs <- rowCopy:
+		case <-ctx.Done():
+			scanErr = ctx.Err()
+		}
 	}
 	close(jobs)
 
@@ -637,9 +671,20 @@ type jsonbGinPostingChunkBuildWorkerResult struct {
 }
 
 func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch sql.Schema, jobs <-chan sql.Row, columnIndex int, results chan<- jsonbGinPostingChunkBuildWorkerResult) {
-	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	sorter := c.newPostingChunkEntrySorter()
 	var retErr error
-	for row := range jobs {
+	for {
+		var row sql.Row
+		var ok bool
+		select {
+		case <-ctx.Done():
+			retErr = ctx.Err()
+			ok = false
+		case row, ok = <-jobs:
+		}
+		if !ok {
+			break
+		}
 		if retErr != nil {
 			continue
 		}
@@ -648,17 +693,26 @@ func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch s
 		}
 	}
 	if retErr == nil {
+		retErr = jsonbGinPostingBuildContextErr(ctx)
+	}
+	if retErr == nil {
 		retErr = sorter.flushRun()
 	}
 	results <- jsonbGinPostingChunkBuildWorkerResult{sorter: sorter, err: retErr}
 }
 
 func (c *CreateJsonbGinIndex) addPostingChunkEntriesForRow(ctx *sql.Context, sch sql.Schema, row sql.Row, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
+	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+		return err
+	}
 	if row[columnIndex] == nil {
 		return nil
 	}
 	rowRef, err := jsonbGinPostingRowReference(ctx, sch, row)
 	if err != nil {
+		return err
+	}
+	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
 		return err
 	}
 	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
@@ -677,6 +731,9 @@ func (c *CreateJsonbGinIndex) materializePostingChunkRowsFromEntries(ctx *sql.Co
 }
 
 func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context, sorter *jsonbGinPostingChunkEntrySorter, sink jsonbGinPostingRowAppender) error {
+	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+		return err
+	}
 	iter, err := sorter.Iterator()
 	if err != nil {
 		return err
@@ -689,6 +746,9 @@ func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context,
 	var previous jsonbGinPostingChunkBuildEntry
 	havePrevious := false
 	flushChunk := func() error {
+		if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+			return err
+		}
 		if len(rowRefs) == 0 {
 			return nil
 		}
@@ -708,7 +768,14 @@ func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context,
 		rowRefs = rowRefs[:0]
 		return nil
 	}
+	entriesUntilContextCheck := 0
 	for {
+		if entriesUntilContextCheck <= 0 {
+			if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
+				return err
+			}
+			entriesUntilContextCheck = jsonbGinPostingBuildContextCheckInterval
+		}
 		entry, err := iter.Next()
 		if err == io.EOF {
 			break
@@ -716,6 +783,7 @@ func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context,
 		if err != nil {
 			return err
 		}
+		entriesUntilContextCheck--
 		if havePrevious && previous.token == entry.token && bytes.Equal(previous.rowRef, entry.rowRef) {
 			continue
 		}
@@ -785,6 +853,17 @@ func (c *CreateJsonbGinIndex) postingChunkBuildWorkerLimit() int {
 	return 1
 }
 
+func (c *CreateJsonbGinIndex) newPostingChunkEntrySorter() *jsonbGinPostingChunkEntrySorter {
+	return newJsonbGinPostingChunkEntrySorterInDir(c.postingChunkBuildSpillEntryLimit(), c.postingChunkBuildTempDir)
+}
+
+func jsonbGinPostingBuildContextErr(ctx *sql.Context) error {
+	if ctx == nil {
+		return nil
+	}
+	return ctx.Err()
+}
+
 func postingChunkChecksumBytes(checksum uint32) []byte {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, checksum)
@@ -805,14 +884,20 @@ type jsonbGinPostingChunkEntrySorter struct {
 	maxEntries int
 	entries    []jsonbGinPostingChunkBuildEntry
 	runs       []string
+	tempDir    string
 }
 
 func newJsonbGinPostingChunkEntrySorter(maxEntries int) *jsonbGinPostingChunkEntrySorter {
+	return newJsonbGinPostingChunkEntrySorterInDir(maxEntries, "")
+}
+
+func newJsonbGinPostingChunkEntrySorterInDir(maxEntries int, tempDir string) *jsonbGinPostingChunkEntrySorter {
 	if maxEntries <= 0 {
 		maxEntries = jsonbGinPostingChunkBuildSpillEntries
 	}
 	return &jsonbGinPostingChunkEntrySorter{
 		maxEntries: maxEntries,
+		tempDir:    tempDir,
 	}
 }
 
@@ -889,7 +974,7 @@ func (s *jsonbGinPostingChunkEntrySorter) flushRun() error {
 		return nil
 	}
 	sortPostingChunkBuildEntries(s.entries)
-	file, err := os.CreateTemp("", "doltgres-jsonb-gin-posting-chunks-*.run")
+	file, err := os.CreateTemp(s.tempDir, "doltgres-jsonb-gin-posting-chunks-*.run")
 	if err != nil {
 		return err
 	}

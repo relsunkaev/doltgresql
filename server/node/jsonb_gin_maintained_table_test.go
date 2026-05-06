@@ -618,6 +618,109 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithParallelWorkers(t *testing
 	}
 }
 
+func TestCreateJsonbGinIndexParallelBuildHonorsCanceledContext(t *testing.T) {
+	baseCtx, cancel := context.WithCancel(context.Background())
+	ctx := sql.NewContext(baseCtx)
+	cancel()
+	tempDir := t.TempDir()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkBuildSpillEntries = 1
+	create.postingChunkBuildWorkers = 2
+	create.postingChunkBuildTempDir = tempDir
+
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+		{int32(1), `{"tags":["vip"],"status":"open"}`},
+		{int32(2), `{"tags":["vip"],"status":"closed"}`},
+	}}, 1)
+	require.ErrorIs(t, err, context.Canceled)
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
+func TestCreateJsonbGinIndexParallelBuildCleansRunsOnScanError(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	tempDir := t.TempDir()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkBuildSpillEntries = 1
+	create.postingChunkBuildWorkers = 2
+	create.postingChunkBuildTempDir = tempDir
+
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &errorAfterRowsIter{
+		rows: []sql.Row{
+			{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
+			{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
+		},
+		err: errors.New("scan failed"),
+	}, 1)
+	require.ErrorContains(t, err, "scan failed")
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
+func TestCreateJsonbGinIndexParallelBuildCleansRunsOnWorkerError(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	tempDir := t.TempDir()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkBuildSpillEntries = 1
+	create.postingChunkBuildWorkers = 2
+	create.postingChunkBuildTempDir = tempDir
+
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
+		{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
+		{int32(3), `{"tags":[`},
+	}}, 1)
+	require.Error(t, err)
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
+func TestCreateJsonbGinIndexParallelBuildCleansRunsOnSuccess(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	tempDir := t.TempDir()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkBuildSpillEntries = 1
+	create.postingChunkBuildWorkers = 2
+	create.postingChunkBuildTempDir = tempDir
+
+	chunkRows, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
+		{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
+	}}, 1)
+	require.NoError(t, err)
+	require.NotEmpty(t, chunkRows)
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
+func TestCreateJsonbGinIndexWritePostingChunkRowsHonorsCanceledContextAndCleansRuns(t *testing.T) {
+	baseCtx, cancel := context.WithCancel(context.Background())
+	ctx := sql.NewContext(baseCtx)
+	tempDir := t.TempDir()
+	sorter := newJsonbGinPostingChunkEntrySorterInDir(1, tempDir)
+	require.NoError(t, sorter.Add("token/a", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/b", []byte("row/2")))
+	require.NotEmpty(t, sorter.runs)
+	cancel()
+
+	create := &CreateJsonbGinIndex{postingChunkRowsPerChunk: 10}
+	err := create.writePostingChunkRowsFromEntries(ctx, sorter, &jsonbGinPostingChunkRowCollector{})
+	require.ErrorIs(t, err, context.Canceled)
+	require.NoError(t, sorter.Close())
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
+func TestCreateJsonbGinIndexWritePostingChunkRowsCleansRunsOnSinkError(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	tempDir := t.TempDir()
+	sorter := newJsonbGinPostingChunkEntrySorterInDir(1, tempDir)
+	require.NoError(t, sorter.Add("token/a", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/b", []byte("row/2")))
+	require.NotEmpty(t, sorter.runs)
+
+	create := &CreateJsonbGinIndex{postingChunkRowsPerChunk: 1}
+	err := create.writePostingChunkRowsFromEntries(ctx, sorter, &failingPostingRowAppender{err: errors.New("sidecar write failed")})
+	require.ErrorContains(t, err, "sidecar write failed")
+	require.NoError(t, sorter.Close())
+	requireJsonbGinPostingRunDirEmpty(t, tempDir)
+}
+
 func TestJsonbGinPostingChunkSpillDeduplicatesEntries(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	sorter := newJsonbGinPostingChunkEntrySorter(1)
@@ -1255,6 +1358,16 @@ func (s *countingPostingRowSink) Close(*sql.Context) error {
 	return nil
 }
 
+type failingPostingRowAppender struct {
+	err error
+}
+
+var _ jsonbGinPostingRowAppender = (*failingPostingRowAppender)(nil)
+
+func (s *failingPostingRowAppender) Add(*sql.Context, sql.Row) error {
+	return s.err
+}
+
 type benchmarkRowIter struct {
 	rows []sql.Row
 	pos  int
@@ -1273,6 +1386,37 @@ func (i *benchmarkRowIter) Next(*sql.Context) (sql.Row, error) {
 
 func (i *benchmarkRowIter) Close(*sql.Context) error {
 	return nil
+}
+
+type errorAfterRowsIter struct {
+	rows []sql.Row
+	pos  int
+	err  error
+}
+
+var _ sql.RowIter = (*errorAfterRowsIter)(nil)
+
+func (i *errorAfterRowsIter) Next(*sql.Context) (sql.Row, error) {
+	if i.pos >= len(i.rows) {
+		if i.err != nil {
+			return nil, i.err
+		}
+		return nil, io.EOF
+	}
+	row := i.rows[i.pos]
+	i.pos++
+	return row, nil
+}
+
+func (i *errorAfterRowsIter) Close(*sql.Context) error {
+	return nil
+}
+
+func requireJsonbGinPostingRunDirEmpty(t *testing.T, dir string) {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	require.Empty(t, entries)
 }
 
 type fakeProjectedTable struct {
