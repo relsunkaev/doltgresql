@@ -688,10 +688,7 @@ func (e *jsonbGinMaintainingEditor) Delete(ctx *sql.Context, row sql.Row) error 
 }
 
 func (e *jsonbGinMaintainingEditor) Update(ctx *sql.Context, oldRow sql.Row, newRow sql.Row) error {
-	if err := e.deletePostings(ctx, oldRow); err != nil {
-		return err
-	}
-	if err := e.insertPostings(ctx, newRow); err != nil {
+	if err := e.updatePostings(ctx, oldRow, newRow); err != nil {
 		return err
 	}
 	updater, ok := e.primary.(sql.RowUpdater)
@@ -744,6 +741,30 @@ func (e *jsonbGinMaintainingEditor) deletePostings(ctx *sql.Context, row sql.Row
 	return nil
 }
 
+func (e *jsonbGinMaintainingEditor) updatePostings(ctx *sql.Context, oldRow sql.Row, newRow sql.Row) error {
+	for _, posting := range e.postings {
+		oldPostingRows, err := e.postingRows(ctx, posting.index, oldRow)
+		if err != nil {
+			return err
+		}
+		newPostingRows, err := e.postingRows(ctx, posting.index, newRow)
+		if err != nil {
+			return err
+		}
+		for _, postingRow := range compactPostingRowsToDelete(oldPostingRows, newPostingRows) {
+			if err = posting.editor.Delete(ctx, postingRow); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
+				return err
+			}
+		}
+		for _, postingRow := range compactPostingRowsToInsert(oldPostingRows, newPostingRows) {
+			if err = posting.editor.Insert(ctx, postingRow); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGinMaintainedIndex, row sql.Row) ([]sql.Row, error) {
 	if index.ColumnIndex >= len(row) || row[index.ColumnIndex] == nil {
 		return nil, nil
@@ -765,6 +786,43 @@ func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGin
 		postingRows[i] = postingRow
 	}
 	return postingRows, nil
+}
+
+func compactPostingRowsToDelete(oldRows []sql.Row, newRows []sql.Row) []sql.Row {
+	newKeys := postingRowKeySet(newRows)
+	rows := make([]sql.Row, 0)
+	for _, row := range oldRows {
+		if _, ok := newKeys[postingRowKey(row)]; !ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
+}
+
+func compactPostingRowsToInsert(oldRows []sql.Row, newRows []sql.Row) []sql.Row {
+	oldKeys := postingRowKeySet(oldRows)
+	rows := make([]sql.Row, 0)
+	for _, row := range newRows {
+		if _, ok := oldKeys[postingRowKey(row)]; !ok {
+			rows = append(rows, row)
+		}
+	}
+	return rows
+}
+
+func postingRowKeySet(rows []sql.Row) map[string]struct{} {
+	keys := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		keys[postingRowKey(row)] = struct{}{}
+	}
+	return keys
+}
+
+func postingRowKey(row sql.Row) string {
+	if len(row) < 2 {
+		return ""
+	}
+	return fmt.Sprintf("%s\x00%s", row[0], row[1])
 }
 
 func primaryKeyRowValues(sch sql.Schema, row sql.Row) sql.Row {

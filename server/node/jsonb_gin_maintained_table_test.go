@@ -56,6 +56,24 @@ func TestJsonbGinPostingTokenLookupUsesIndex(t *testing.T) {
 	require.Zero(t, table.fullScans)
 }
 
+func TestJsonbGinPostingRowCompaction(t *testing.T) {
+	oldRows := []sql.Row{
+		{"token/a", "row/1", int32(1)},
+		{"token/b", "row/1", int32(1)},
+		{"token/c", "row/1", int32(1)},
+	}
+	newRows := []sql.Row{
+		{"token/b", "row/1", int32(1)},
+		{"token/c", "row/1", int32(1)},
+		{"token/d", "row/1", int32(1)},
+	}
+
+	require.Equal(t, []sql.Row{{"token/a", "row/1", int32(1)}}, compactPostingRowsToDelete(oldRows, newRows))
+	require.Equal(t, []sql.Row{{"token/d", "row/1", int32(1)}}, compactPostingRowsToInsert(oldRows, newRows))
+	require.Empty(t, compactPostingRowsToDelete(oldRows, oldRows))
+	require.Empty(t, compactPostingRowsToInsert(oldRows, oldRows))
+}
+
 type fakePostingTable struct {
 	rows            []sql.Row
 	indexedAccesses int
