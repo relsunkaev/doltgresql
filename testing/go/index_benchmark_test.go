@@ -380,6 +380,17 @@ JOIN btree_join_right_idx AS r
 WHERE l.tenant = NULL`
 	assertBenchmarkPlanNotContains(t, ctx, conn, nullConstant, "r.tenant = NULL")
 	assertCountResult(t, ctx, conn, nullConstant, 0)
+
+	explicitLookupHint := `SELECT /*+ lookup_join(l, r) */ HINT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4`
+	assertBenchmarkPlanContains(t, ctx, conn, explicitLookupHint, "LookupJoin")
+	assertBenchmarkPlanContains(t, ctx, conn, explicitLookupHint, "IndexedTableAccess(btree_join_right_idx)")
+	assertBenchmarkPlanNotContains(t, ctx, conn, explicitLookupHint, "HashJoin")
+	assertCountResult(t, ctx, conn, explicitLookupHint, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
 }
 
 func TestBtreeJoinInfersRangePredicateForIndexedSide(t *testing.T) {
@@ -556,10 +567,11 @@ func BenchmarkBtreeSQLJoin(b *testing.B) {
 	setupBtreeJoinBenchmark(b, ctx, conn)
 
 	queries := []struct {
-		name         string
-		query        string
-		want         int64
-		planContains []string
+		name            string
+		query           string
+		want            int64
+		planContains    []string
+		planNotContains []string
 	}{
 		{
 			name: "table_scan/composite_join",
@@ -572,32 +584,37 @@ WHERE btree_join_left_scan.tenant = 4`,
 			want: btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
 		},
 		{
-			name: "indexed/unhinted_composite_lookup_join",
+			name: "indexed/inferred_composite_hash_join",
 			query: `SELECT count(*)
 FROM btree_join_left_idx
 JOIN btree_join_right_idx
   ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
  AND btree_join_right_idx.score = btree_join_left_idx.score
 WHERE btree_join_left_idx.tenant = 4`,
-			want:         btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
-			planContains: []string{"LookupJoin", "IndexedTableAccess(btree_join_right_idx)"},
+			want:            btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+			planContains:    []string{"HashJoin", "IndexedTableAccess(btree_join_right_idx)"},
+			planNotContains: []string{"LookupJoin"},
 		},
 		{
-			name: "indexed/hinted_composite_lookup_join",
+			name: "indexed/explicit_composite_lookup_join",
 			query: `SELECT /*+ lookup_join(btree_join_left_idx, btree_join_right_idx) */ HINT count(*)
 FROM btree_join_left_idx
 JOIN btree_join_right_idx
   ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
  AND btree_join_right_idx.score = btree_join_left_idx.score
 WHERE btree_join_left_idx.tenant = 4`,
-			want:         btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
-			planContains: []string{"LookupJoin", "IndexedTableAccess(btree_join_right_idx)"},
+			want:            btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+			planContains:    []string{"LookupJoin", "IndexedTableAccess(btree_join_right_idx)"},
+			planNotContains: []string{"HashJoin"},
 		},
 	}
 
 	for _, query := range queries {
 		for _, expected := range query.planContains {
 			assertBenchmarkPlanContains(b, ctx, conn, query.query, expected)
+		}
+		for _, unexpected := range query.planNotContains {
+			assertBenchmarkPlanNotContains(b, ctx, conn, query.query, unexpected)
 		}
 	}
 	for _, query := range queries {

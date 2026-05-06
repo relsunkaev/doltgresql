@@ -393,5 +393,5 @@ func inferredHashJoinComment(left sql.Node, right sql.Node) string {
 }
 
 func shouldAssignInferredHashJoinHint(comment string) bool {
-	return comment == "" || strings.Contains(strings.ToLower(comment), "lookup_join(")
+	return comment == ""
 }
