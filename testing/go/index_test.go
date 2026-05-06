@@ -1073,6 +1073,7 @@ func TestBasicIndexing(t *testing.T) {
 			Name: "Unsupported options",
 			SetUpScript: []string{
 				"CREATE TABLE test (pk BIGINT PRIMARY KEY, v1 varchar);",
+				"CREATE INDEX v1_idx_existing ON test(v1);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1100,8 +1101,8 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_storage ALTER COLUMN 1 SET STATISTICS 100;",
-					ExpectedErr: "ALTER INDEX is not yet supported",
+					Query:       "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;",
+					ExpectedErr: `cannot alter statistics on non-expression column "v1" of index "v1_idx_existing"`,
 				},
 			},
 		},
@@ -3129,6 +3130,86 @@ ORDER BY c.relname, a.attnum;`,
 				{
 					Query:       "INSERT INTO items (title, metadata, updated_at) VALUES ('abc', '{}', '2026-11-12 03:04:05');",
 					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL alter expression index statistics target",
+			SetUpScript: []string{
+				`CREATE TABLE alter_index_stats_meta (
+					id INTEGER PRIMARY KEY,
+					title TEXT NOT NULL,
+					code INTEGER NOT NULL
+				);`,
+				"CREATE INDEX alter_index_stats_lower_idx ON alter_index_stats_meta (lower(title));",
+				"CREATE INDEX alter_index_stats_mixed_idx ON alter_index_stats_meta (lower(title), code);",
+				"CREATE INDEX alter_index_stats_code_idx ON alter_index_stats_meta (code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 1 SET STATISTICS 100;",
+				},
+				{
+					Query: "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 1 SET STATISTICS 200;",
+				},
+				{
+					Query: `SELECT pg_catalog.pg_get_indexdef(c.oid)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'alter_index_stats_mixed_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX alter_index_stats_mixed_idx ON public.alter_index_stats_meta USING btree (lower(title), code)"},
+					},
+				},
+				{
+					Query: `SELECT
+	c.relname,
+	a.attname,
+	a.attnum,
+	a.attstattarget
+FROM pg_catalog.pg_attribute a
+JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+WHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')
+  AND a.attnum > 0
+ORDER BY c.relname, a.attnum;`,
+					Expected: []sql.Row{
+						{"alter_index_stats_lower_idx", "lower", int16(1), int16(100)},
+						{"alter_index_stats_mixed_idx", "lower", int16(1), int16(200)},
+						{"alter_index_stats_mixed_idx", "code", int16(2), int16(-1)},
+					},
+				},
+				{
+					Query: "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 1 SET STATISTICS 0;",
+				},
+				{
+					Query: "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 1 SET STATISTICS 10001;",
+				},
+				{
+					Query: `SELECT c.relname, a.attname, a.attstattarget
+FROM pg_catalog.pg_attribute a
+JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+WHERE c.relname IN ('alter_index_stats_lower_idx', 'alter_index_stats_mixed_idx')
+  AND a.attnum = 1
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"alter_index_stats_lower_idx", "lower", int16(0)},
+						{"alter_index_stats_mixed_idx", "lower", int16(10000)},
+					},
+				},
+				{
+					Query:       "ALTER INDEX alter_index_stats_code_idx ALTER COLUMN 1 SET STATISTICS 100;",
+					ExpectedErr: `cannot alter statistics on non-expression column "code" of index "alter_index_stats_code_idx"`,
+				},
+				{
+					Query:       "ALTER INDEX alter_index_stats_mixed_idx ALTER COLUMN 2 SET STATISTICS 100;",
+					ExpectedErr: `cannot alter statistics on non-expression column "code" of index "alter_index_stats_mixed_idx"`,
+				},
+				{
+					Query:       "ALTER INDEX alter_index_stats_lower_idx ALTER COLUMN 2 SET STATISTICS 100;",
+					ExpectedErr: `column number 2 of relation "alter_index_stats_lower_idx" does not exist`,
+				},
+				{
+					Query:       "ALTER INDEX alter_index_stats_meta_pkey ALTER COLUMN 1 SET STATISTICS 100;",
+					ExpectedErr: "ALTER INDEX statistics targets for constraint-backed indexes are not yet supported",
 				},
 			},
 		},

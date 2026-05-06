@@ -32,6 +32,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 		Collations:        []string{` "C" `, "und-x-icu"},
 		OpClasses:         []string{" JSONB_OPS ", "jsonb_path_ops"},
 		RelOptions:        []string{" FILLFACTOR = 70 "},
+		StatisticsTargets: []int16{100, -1},
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
 			{NullsOrder: " FIRST "},
@@ -79,6 +80,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if len(metadata.RelOptions) != 1 || metadata.RelOptions[0] != "fillfactor=70" {
 		t.Fatalf("unexpected reloptions: %#v", metadata.RelOptions)
+	}
+	if len(metadata.StatisticsTargets) != 2 || metadata.StatisticsTargets[0] != 100 || metadata.StatisticsTargets[1] != -1 {
+		t.Fatalf("unexpected statistics targets: %#v", metadata.StatisticsTargets)
 	}
 	if len(metadata.SortOptions) != 3 {
 		t.Fatalf("expected 3 sort options, got %d", len(metadata.SortOptions))

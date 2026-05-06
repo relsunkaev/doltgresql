@@ -146,6 +146,7 @@ type Metadata struct {
 	Collations        []string            `json:"collations,omitempty"`
 	OpClasses         []string            `json:"opClasses,omitempty"`
 	RelOptions        []string            `json:"relOptions,omitempty"`
+	StatisticsTargets []int16             `json:"statisticsTargets,omitempty"`
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
@@ -327,6 +328,15 @@ func RelOptions(comment string) []string {
 		return nil
 	}
 	return metadata.RelOptions
+}
+
+// StatisticsTargets returns the PostgreSQL per-attribute statistics targets encoded for an index.
+func StatisticsTargets(comment string) []int16 {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.StatisticsTargets
 }
 
 // Columns returns the PostgreSQL logical columns encoded for an index.

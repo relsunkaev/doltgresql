@@ -2651,7 +2651,7 @@ alter_index_cmd:
   }
 | ALTER opt_column iconst32 SET STATISTICS iconst32
   {
-    $$.val = &tree.AlterIndexSetStatistics{ColumnIdx: $3.expr(), Stats: $6.expr()}
+    $$.val = &tree.AlterIndexSetStatistics{ColumnIdx: tree.NewDInt(tree.DInt($3.int32())), Stats: tree.NewDInt(tree.DInt($6.int32()))}
   }
 
 alter_column_default:

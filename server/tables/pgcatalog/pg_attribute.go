@@ -136,6 +136,7 @@ func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAt
 		attnotnull:     !col.Nullable,
 		atthasdef:      col.Default != nil,
 		attgenerated:   generated,
+		attstattarget:  -1,
 		attcollation:   attcollation,
 	}
 }
@@ -147,6 +148,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 	attrs := make([]*pgAttribute, 0, len(logicalColumns)+len(includeColumns))
 
 	collations := indexmetadata.Collations(idx.Comment())
+	statisticsTargets := indexmetadata.StatisticsTargets(idx.Comment())
 	for i, logicalColumn := range logicalColumns {
 		col, ok := columnForIndexAttribute(tableSchema, logicalColumn.StorageName)
 		if !ok {
@@ -163,6 +165,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 			atttypid:       typeOid,
 			attnum:         int16(len(attrs) + 1),
 			attndims:       dimensions,
+			attstattarget:  statisticsTargetForAttribute(statisticsTargets, i),
 			attcollation:   attcollation,
 		})
 	}
@@ -180,11 +183,19 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 			atttypid:       typeOid,
 			attnum:         int16(len(attrs) + 1),
 			attndims:       dimensions,
+			attstattarget:  -1,
 			attcollation:   attcollation,
 		})
 	}
 
 	return attrs
+}
+
+func statisticsTargetForAttribute(targets []int16, idx int) int16 {
+	if idx >= 0 && idx < len(targets) {
+		return targets[idx]
+	}
+	return -1
 }
 
 func columnForIndexAttribute(schema sql.Schema, name string) (*sql.Column, bool) {
@@ -442,6 +453,7 @@ type pgAttribute struct {
 	attnotnull     bool
 	atthasdef      bool
 	attgenerated   string
+	attstattarget  int16
 	attcollation   id.Id
 }
 
@@ -488,31 +500,31 @@ func (iter *pgAttributeTableScanIter) Close(ctx *sql.Context) error {
 func pgAttributeToRow(attr *pgAttribute) sql.Row {
 	// TODO: Fill in the rest of the pg_attribute columns
 	return sql.Row{
-		attr.attrelid,     // attrelid
-		attr.attname,      // attname
-		attr.atttypid,     // atttypid
-		int16(0),          // attlen
-		attr.attnum,       // attnum
-		int32(-1),         // attcacheoff
-		int32(-1),         // atttypmod
-		attr.attndims,     // attndims
-		false,             // attbyval
-		"i",               // attalign
-		"p",               // attstorage
-		"",                // attcompression
-		attr.attnotnull,   // attnotnull
-		attr.atthasdef,    // atthasdef
-		false,             // atthasmissing
-		"",                // attidentity
-		attr.attgenerated, // attgenerated
-		false,             // attisdropped
-		true,              // attislocal
-		int16(0),          // attinhcount
-		int16(-1),         // attstattarget
-		attr.attcollation, // attcollation
-		nil,               // attacl
-		nil,               // attoptions
-		nil,               // attfdwoptions
-		nil,               // attmissingval
+		attr.attrelid,      // attrelid
+		attr.attname,       // attname
+		attr.atttypid,      // atttypid
+		int16(0),           // attlen
+		attr.attnum,        // attnum
+		int32(-1),          // attcacheoff
+		int32(-1),          // atttypmod
+		attr.attndims,      // attndims
+		false,              // attbyval
+		"i",                // attalign
+		"p",                // attstorage
+		"",                 // attcompression
+		attr.attnotnull,    // attnotnull
+		attr.atthasdef,     // atthasdef
+		false,              // atthasmissing
+		"",                 // attidentity
+		attr.attgenerated,  // attgenerated
+		false,              // attisdropped
+		true,               // attislocal
+		int16(0),           // attinhcount
+		attr.attstattarget, // attstattarget
+		attr.attcollation,  // attcollation
+		nil,                // attacl
+		nil,                // attoptions
+		nil,                // attfdwoptions
+		nil,                // attmissingval
 	}
 }

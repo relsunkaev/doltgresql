@@ -389,28 +389,7 @@ func (a *AlterIndexSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIt
 		metadata.RelOptions = mergeRelOptions(metadata.RelOptions, a.relOptions)
 	}
 
-	columns, err := indexColumnsForRebuild(ctx, located.index, located.table)
-	if err != nil {
-		return nil, err
-	}
-	constraint := sql.IndexConstraint_None
-	if located.index.IsUnique() {
-		constraint = sql.IndexConstraint_Unique
-		metadata.Constraint = indexmetadata.ConstraintNone
-	}
-
-	comment := alteredIndexComment(metadata)
-	indexDef := sql.IndexDef{
-		Name:       located.index.ID(),
-		Columns:    columns,
-		Constraint: constraint,
-		Storage:    sql.IndexUsing_BTree,
-		Comment:    comment,
-	}
-	if err = located.alterable.DropIndex(ctx, located.index.ID()); err != nil {
-		return nil, err
-	}
-	if err = located.alterable.CreateIndex(ctx, indexDef); err != nil {
+	if err = rebuildIndexWithMetadata(ctx, located, metadata); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
@@ -433,6 +412,121 @@ func (a *AlterIndexSetStorage) WithChildren(ctx *sql.Context, children ...sql.No
 
 // WithResolvedChildren implements the interface vitess.Injectable.
 func (a *AlterIndexSetStorage) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
+// AlterIndexSetStatistics handles ALTER INDEX ... ALTER COLUMN ... SET STATISTICS.
+type AlterIndexSetStatistics struct {
+	ifExists     bool
+	schema       string
+	table        string
+	index        string
+	columnNumber int16
+	statsTarget  int16
+}
+
+var _ sql.ExecSourceRel = (*AlterIndexSetStatistics)(nil)
+var _ vitess.Injectable = (*AlterIndexSetStatistics)(nil)
+
+// NewAlterIndexSetStatistics returns a new *AlterIndexSetStatistics.
+func NewAlterIndexSetStatistics(ifExists bool, schema string, table string, index string, columnNumber int16, statsTarget int16) *AlterIndexSetStatistics {
+	return &AlterIndexSetStatistics{
+		ifExists:     ifExists,
+		schema:       schema,
+		table:        table,
+		index:        index,
+		columnNumber: columnNumber,
+		statsTarget:  statsTarget,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	located, ok, err := locateIndex(ctx, a.schema, a.table, a.index, a.ifExists)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		if a.ifExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, sql.ErrIndexNotFound.New(a.index)
+	}
+	if isConstraintBackedIndex(located.index) {
+		return nil, errors.Errorf("ALTER INDEX statistics targets for constraint-backed indexes are not yet supported")
+	}
+
+	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
+	if accessMethod != indexmetadata.AccessMethodBtree {
+		return nil, errors.Errorf("ALTER INDEX statistics targets for %s indexes are not yet supported", accessMethod)
+	}
+
+	logicalColumns := indexmetadata.LogicalColumns(located.index, located.table.Schema(ctx))
+	indexName := indexmetadata.DisplayNameForTable(located.index, located.table)
+	columnIdx := int(a.columnNumber) - 1
+	if columnIdx < 0 || columnIdx >= len(logicalColumns) {
+		return nil, errors.Errorf(`column number %d of relation "%s" does not exist`, a.columnNumber, indexName)
+	}
+	logicalColumn := logicalColumns[columnIdx]
+	if !logicalColumn.Expression {
+		return nil, errors.Errorf(`cannot alter statistics on non-expression column "%s" of index "%s"`, logicalColumn.Definition, indexName)
+	}
+
+	metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
+	if !hasMetadata {
+		metadata = indexmetadata.Metadata{AccessMethod: indexmetadata.AccessMethodBtree}
+	}
+	if len(metadata.StatisticsTargets) < len(logicalColumns) {
+		targets := make([]int16, len(logicalColumns))
+		for i := range targets {
+			targets[i] = -1
+		}
+		copy(targets, metadata.StatisticsTargets)
+		metadata.StatisticsTargets = targets
+	}
+	metadata.StatisticsTargets[columnIdx] = a.statsTarget
+
+	if err = rebuildIndexWithMetadata(ctx, located, metadata); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) String() string {
+	return "ALTER INDEX SET STATISTICS"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStatistics) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterIndexSetStatistics) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	if len(children) != 0 {
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
@@ -596,6 +690,34 @@ func indexColumnsForRebuild(ctx *sql.Context, index sql.Index, table sql.Table) 
 	return columns, nil
 }
 
+func rebuildIndexWithMetadata(ctx *sql.Context, located *locatedIndex, metadata indexmetadata.Metadata) error {
+	columns, err := indexColumnsForRebuild(ctx, located.index, located.table)
+	if err != nil {
+		return err
+	}
+	constraint := sql.IndexConstraint_None
+	if located.index.IsUnique() {
+		constraint = sql.IndexConstraint_Unique
+		metadata.Constraint = indexmetadata.ConstraintNone
+	}
+
+	comment := alteredIndexComment(metadata)
+	indexDef := sql.IndexDef{
+		Name:       located.index.ID(),
+		Columns:    columns,
+		Constraint: constraint,
+		Storage:    sql.IndexUsing_BTree,
+		Comment:    comment,
+	}
+	if err = located.alterable.DropIndex(ctx, located.index.ID()); err != nil {
+		return err
+	}
+	if err = located.alterable.CreateIndex(ctx, indexDef); err != nil {
+		return err
+	}
+	return nil
+}
+
 func mergeRelOptions(existing []string, updates []string) []string {
 	values := make(map[string]string, len(existing)+len(updates))
 	order := make([]string, 0, len(existing)+len(updates))
@@ -676,10 +798,20 @@ func hasAlteredIndexMetadata(metadata indexmetadata.Metadata) bool {
 		hasNonEmptyString(metadata.Collations) ||
 		hasNonEmptyString(metadata.OpClasses) ||
 		hasNonEmptyString(metadata.RelOptions) ||
+		hasNonDefaultStatisticsTarget(metadata.StatisticsTargets) ||
 		hasNonEmptyIndexColumnOption(metadata.SortOptions) ||
 		strings.TrimSpace(metadata.Constraint) != "" ||
 		metadata.Gin != nil {
 		return true
+	}
+	return false
+}
+
+func hasNonDefaultStatisticsTarget(values []int16) bool {
+	for _, value := range values {
+		if value != -1 {
+			return true
+		}
 	}
 	return false
 }

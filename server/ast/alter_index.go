@@ -59,6 +59,31 @@ func nodeAlterIndex(ctx *Context, node *tree.AlterIndex) (vitess.Statement, erro
 		return vitess.InjectedStatement{
 			Statement: pgnodes.NewAlterIndexSetStorage(node.IfExists, schemaName, tableName, indexName, relOptions, resetKeys),
 		}, nil
+	case *tree.AlterIndexSetStatistics:
+		columnNumber, err := nodeIndexStorageParamInt(cmd.ColumnIdx)
+		if err != nil {
+			return nil, errors.Errorf("column number must be an integer")
+		}
+		if columnNumber < 1 || columnNumber > 32767 {
+			return nil, errors.Errorf("column number must be in range from 1 to 32767")
+		}
+		statsTarget, err := nodeIndexStorageParamInt(cmd.Stats)
+		if err != nil {
+			return nil, errors.Errorf("statistics target must be an integer")
+		}
+		if statsTarget < -1 {
+			return nil, errors.Errorf("statistics target %d is too low", statsTarget)
+		}
+		if statsTarget > 10000 {
+			statsTarget = 10000
+		}
+		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, &node.Index)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterIndexSetStatistics(node.IfExists, schemaName, tableName, indexName, int16(columnNumber), int16(statsTarget)),
+		}, nil
 	default:
 		return nil, errors.Errorf("ALTER INDEX is not yet supported")
 	}
