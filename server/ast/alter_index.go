@@ -40,7 +40,34 @@ func nodeAlterIndex(ctx *Context, node *tree.AlterIndex) (vitess.Statement, erro
 		return vitess.InjectedStatement{
 			Statement: pgnodes.NewAlterIndexSetDefaultTablespace(node.IfExists, schemaName, tableName, indexName),
 		}, nil
+	case *tree.AlterIndexSetStorage:
+		var relOptions []string
+		var resetKeys []string
+		var err error
+		if cmd.IsReset {
+			resetKeys = nodeIndexRelOptionResetKeys(cmd.Params)
+		} else {
+			relOptions, err = nodeIndexRelOptions(cmd.Params)
+			if err != nil {
+				return nil, err
+			}
+		}
+		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, &node.Index)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterIndexSetStorage(node.IfExists, schemaName, tableName, indexName, relOptions, resetKeys),
+		}, nil
 	default:
 		return nil, errors.Errorf("ALTER INDEX is not yet supported")
 	}
+}
+
+func nodeIndexRelOptionResetKeys(params tree.StorageParams) []string {
+	resetKeys := make([]string, len(params))
+	for i, param := range params {
+		resetKeys[i] = string(param.Key)
+	}
+	return resetKeys
 }

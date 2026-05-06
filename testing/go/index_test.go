@@ -1092,8 +1092,8 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_storage SET (fillfactor = 80);",
-					ExpectedErr: "ALTER INDEX is not yet supported",
+					Query:       "ALTER INDEX v1_idx_storage SET (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
 				{
 					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;",
@@ -1138,6 +1138,69 @@ WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta
 				{
 					Query:       "CREATE INDEX btree_reloptions_bad_fillfactor_idx ON btree_reloptions_meta (v) WITH (fillfactor = 9);",
 					ExpectedErr: "fillfactor must be between 10 and 100",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL alter index fillfactor metadata",
+			SetUpScript: []string{
+				"CREATE TABLE alter_index_fillfactor (id INTEGER PRIMARY KEY, v TEXT, code INTEGER, owned INTEGER UNIQUE);",
+				"INSERT INTO alter_index_fillfactor VALUES (1, 'a', 10, 100), (2, 'b', 20, 200), (3, 'c', 30, 300);",
+				"CREATE INDEX alter_index_fillfactor_v_idx ON alter_index_fillfactor (v);",
+				"CREATE UNIQUE INDEX alter_index_fillfactor_code_idx ON alter_index_fillfactor (code);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "ALTER INDEX alter_index_fillfactor_v_idx SET (fillfactor = 80);",
+				},
+				{
+					Query: "ALTER INDEX alter_index_fillfactor_code_idx SET (fillfactor = 75);",
+				},
+				{
+					Query: `SELECT
+	c.relname,
+	pg_catalog.pg_get_indexdef(c.oid),
+	CAST(c.reloptions AS TEXT)
+FROM pg_catalog.pg_class c
+WHERE c.relname IN ('alter_index_fillfactor_v_idx', 'alter_index_fillfactor_code_idx')
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"alter_index_fillfactor_code_idx", "CREATE UNIQUE INDEX alter_index_fillfactor_code_idx ON public.alter_index_fillfactor USING btree (code) WITH (fillfactor='75')", "{fillfactor=75}"},
+						{"alter_index_fillfactor_v_idx", "CREATE INDEX alter_index_fillfactor_v_idx ON public.alter_index_fillfactor USING btree (v) WITH (fillfactor='80')", "{fillfactor=80}"},
+					},
+				},
+				{
+					Query: "ALTER INDEX alter_index_fillfactor_v_idx RESET (fillfactor);",
+				},
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	c.reloptions IS NULL
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'alter_index_fillfactor_v_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX alter_index_fillfactor_v_idx ON public.alter_index_fillfactor USING btree (v)", "t"},
+					},
+				},
+				{
+					Query:    "SELECT id, v, code, owned FROM alter_index_fillfactor ORDER BY code;",
+					Expected: []sql.Row{{1, "a", 10, 100}, {2, "b", 20, 200}, {3, "c", 30, 300}},
+				},
+				{
+					Query:       "ALTER INDEX alter_index_fillfactor_v_idx SET (fillfactor = 9);",
+					ExpectedErr: "fillfactor must be between 10 and 100",
+				},
+				{
+					Query:       "ALTER INDEX alter_index_fillfactor_v_idx SET (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+				},
+				{
+					Query:       "ALTER INDEX alter_index_fillfactor_pkey SET (fillfactor = 80);",
+					ExpectedErr: "ALTER INDEX storage parameters for constraint-backed indexes are not yet supported",
+				},
+				{
+					Query:       "ALTER INDEX alter_index_fillfactor_owned_key SET (fillfactor = 80);",
+					ExpectedErr: "ALTER INDEX storage parameters for constraint-backed indexes are not yet supported",
 				},
 			},
 		},

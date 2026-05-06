@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -317,6 +318,127 @@ func (a *AlterIndexSetDefaultTablespace) WithResolvedChildren(ctx context.Contex
 	return a, nil
 }
 
+// AlterIndexSetStorage handles ALTER INDEX ... SET/RESET storage parameters.
+type AlterIndexSetStorage struct {
+	ifExists   bool
+	schema     string
+	table      string
+	index      string
+	relOptions []string
+	resetKeys  []string
+}
+
+var _ sql.ExecSourceRel = (*AlterIndexSetStorage)(nil)
+var _ vitess.Injectable = (*AlterIndexSetStorage)(nil)
+
+// NewAlterIndexSetStorage returns a new *AlterIndexSetStorage.
+func NewAlterIndexSetStorage(ifExists bool, schema string, table string, index string, relOptions []string, resetKeys []string) *AlterIndexSetStorage {
+	return &AlterIndexSetStorage{
+		ifExists:   ifExists,
+		schema:     schema,
+		table:      table,
+		index:      index,
+		relOptions: append([]string(nil), relOptions...),
+		resetKeys:  append([]string(nil), resetKeys...),
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	located, ok, err := locateIndex(ctx, a.schema, a.table, a.index, a.ifExists)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		if a.ifExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, sql.ErrIndexNotFound.New(a.index)
+	}
+	if isConstraintBackedIndex(located.index) {
+		return nil, errors.Errorf("ALTER INDEX storage parameters for constraint-backed indexes are not yet supported")
+	}
+
+	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
+	if accessMethod != indexmetadata.AccessMethodBtree {
+		return nil, errors.Errorf("ALTER INDEX storage parameters for %s indexes are not yet supported", accessMethod)
+	}
+
+	metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
+	if !hasMetadata {
+		metadata = indexmetadata.Metadata{AccessMethod: indexmetadata.AccessMethodBtree}
+	}
+	if len(a.resetKeys) > 0 {
+		metadata.RelOptions = resetRelOptions(metadata.RelOptions, a.resetKeys)
+	} else {
+		metadata.RelOptions = mergeRelOptions(metadata.RelOptions, a.relOptions)
+	}
+
+	columns, err := indexColumnsForRebuild(ctx, located.index, located.table)
+	if err != nil {
+		return nil, err
+	}
+	constraint := sql.IndexConstraint_None
+	if located.index.IsUnique() {
+		constraint = sql.IndexConstraint_Unique
+		metadata.Constraint = indexmetadata.ConstraintNone
+	}
+
+	comment := alteredIndexComment(metadata)
+	indexDef := sql.IndexDef{
+		Name:       located.index.ID(),
+		Columns:    columns,
+		Constraint: constraint,
+		Storage:    sql.IndexUsing_BTree,
+		Comment:    comment,
+	}
+	if err = located.alterable.DropIndex(ctx, located.index.ID()); err != nil {
+		return nil, err
+	}
+	if err = located.alterable.CreateIndex(ctx, indexDef); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) String() string {
+	return "ALTER INDEX SET STORAGE"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetStorage) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterIndexSetStorage) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
 func locateIndex(ctx *sql.Context, schemaName string, tableName string, indexName string, missingOK bool) (*locatedIndex, bool, error) {
 	schemaName, err := core.GetSchemaName(ctx, nil, schemaName)
 	if err != nil {
@@ -445,4 +567,146 @@ func isPrimaryKeyIndex(index sql.Index) bool {
 
 func isConstraintBackedIndex(index sql.Index) bool {
 	return isPrimaryKeyIndex(index) || (index.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Comment()))
+}
+
+func indexColumnsForRebuild(ctx *sql.Context, index sql.Index, table sql.Table) ([]sql.IndexColumn, error) {
+	logicalColumns := indexmetadata.LogicalColumns(index, table.Schema(ctx))
+	prefixLengths := index.PrefixLengths()
+	columns := make([]sql.IndexColumn, 0, len(logicalColumns))
+	seen := make(map[string]struct{}, len(logicalColumns))
+	for i, logicalColumn := range logicalColumns {
+		columnName := strings.TrimSpace(logicalColumn.StorageName)
+		if columnName == "" {
+			return nil, errors.Errorf("ALTER INDEX storage parameters for expression indexes are not yet supported")
+		}
+		key := strings.ToLower(columnName)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		column := sql.IndexColumn{Name: columnName}
+		if i < len(prefixLengths) {
+			column.Length = int64(prefixLengths[i])
+		}
+		columns = append(columns, column)
+	}
+	if len(columns) == 0 {
+		return nil, errors.Errorf("ALTER INDEX storage parameters require at least one index column")
+	}
+	return columns, nil
+}
+
+func mergeRelOptions(existing []string, updates []string) []string {
+	values := make(map[string]string, len(existing)+len(updates))
+	order := make([]string, 0, len(existing)+len(updates))
+	for _, option := range existing {
+		key, value, ok := splitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, exists := values[key]; !exists {
+			order = append(order, key)
+		}
+		values[key] = value
+	}
+	for _, option := range updates {
+		key, value, ok := splitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, exists := values[key]; !exists {
+			order = append(order, key)
+		}
+		values[key] = value
+	}
+	ret := make([]string, 0, len(order))
+	for _, key := range order {
+		ret = append(ret, fmt.Sprintf("%s=%s", key, values[key]))
+	}
+	return ret
+}
+
+func resetRelOptions(existing []string, resetKeys []string) []string {
+	reset := make(map[string]struct{}, len(resetKeys))
+	for _, key := range resetKeys {
+		reset[strings.ToLower(strings.TrimSpace(key))] = struct{}{}
+	}
+	ret := make([]string, 0, len(existing))
+	for _, option := range existing {
+		key, _, ok := splitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, remove := reset[key]; remove {
+			continue
+		}
+		ret = append(ret, option)
+	}
+	return ret
+}
+
+func splitRelOption(option string) (key string, value string, ok bool) {
+	key, value, ok = strings.Cut(strings.TrimSpace(option), "=")
+	if !ok {
+		return "", "", false
+	}
+	return strings.ToLower(strings.TrimSpace(key)), strings.TrimSpace(value), true
+}
+
+func alteredIndexComment(metadata indexmetadata.Metadata) string {
+	if !hasAlteredIndexMetadata(metadata) {
+		return ""
+	}
+	if metadata.AccessMethod == "" {
+		metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	}
+	return indexmetadata.EncodeComment(metadata)
+}
+
+func hasAlteredIndexMetadata(metadata indexmetadata.Metadata) bool {
+	if metadata.AccessMethod != "" && metadata.AccessMethod != indexmetadata.AccessMethodBtree {
+		return true
+	}
+	if hasNonEmptyString(metadata.Columns) ||
+		hasNonEmptyString(metadata.StorageColumns) ||
+		hasTrueBool(metadata.ExpressionColumns) ||
+		hasNonEmptyString(metadata.IncludeColumns) ||
+		strings.TrimSpace(metadata.Predicate) != "" ||
+		hasNonEmptyString(metadata.PredicateColumns) ||
+		hasNonEmptyString(metadata.Collations) ||
+		hasNonEmptyString(metadata.OpClasses) ||
+		hasNonEmptyString(metadata.RelOptions) ||
+		hasNonEmptyIndexColumnOption(metadata.SortOptions) ||
+		strings.TrimSpace(metadata.Constraint) != "" ||
+		metadata.Gin != nil {
+		return true
+	}
+	return false
+}
+
+func hasNonEmptyString(values []string) bool {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func hasTrueBool(values []bool) bool {
+	for _, value := range values {
+		if value {
+			return true
+		}
+	}
+	return false
+}
+
+func hasNonEmptyIndexColumnOption(values []indexmetadata.IndexColumnOption) bool {
+	for _, value := range values {
+		if strings.TrimSpace(value.Direction) != "" || strings.TrimSpace(value.NullsOrder) != "" {
+			return true
+		}
+	}
+	return false
 }
