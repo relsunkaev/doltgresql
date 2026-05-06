@@ -25,18 +25,36 @@ import (
 
 // EncodeToken returns the deterministic storage key for token.
 func EncodeToken(token Token) string {
-	parts := make([]string, 0, 4+len(token.Path))
-	parts = append(parts, indexmetadata.NormalizeOpClass(token.OpClass), string(token.Kind), strconv.Itoa(len(token.Path)))
-	parts = append(parts, token.Path...)
-	parts = append(parts, token.Value)
+	return encodeTokenParts(indexmetadata.NormalizeOpClass(token.OpClass), token.Kind, token.Path, token.Value)
+}
+
+func encodeTokenParts(opClass string, kind TokenKind, path []string, value string) string {
+	pathCount := strconv.Itoa(len(path))
+	size := encodedPartSize(opClass) + encodedPartSize(string(kind)) + encodedPartSize(pathCount) + encodedPartSize(value)
+	for _, part := range path {
+		size += encodedPartSize(part)
+	}
 
 	var sb strings.Builder
-	for _, part := range parts {
-		sb.WriteString(strconv.Itoa(len(part)))
-		sb.WriteByte(':')
-		sb.WriteString(part)
+	sb.Grow(size)
+	writeEncodedPart(&sb, opClass)
+	writeEncodedPart(&sb, string(kind))
+	writeEncodedPart(&sb, pathCount)
+	for _, part := range path {
+		writeEncodedPart(&sb, part)
 	}
+	writeEncodedPart(&sb, value)
 	return sb.String()
+}
+
+func encodedPartSize(part string) int {
+	return len(strconv.Itoa(len(part))) + 1 + len(part)
+}
+
+func writeEncodedPart(sb *strings.Builder, part string) {
+	sb.WriteString(strconv.Itoa(len(part)))
+	sb.WriteByte(':')
+	sb.WriteString(part)
 }
 
 // DecodeToken decodes a storage key emitted by EncodeToken.

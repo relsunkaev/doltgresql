@@ -105,12 +105,12 @@ func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	require.Equal(t, jsonbGinLookupIntersect, mode)
 	require.NotEmpty(t, tokens)
 
-	tokens[0].Value = "mutated"
+	tokens[0] = "mutated"
 	tokensAgain, modeAgain, ok, err := jsonbGinLookupTokens(ctx, indexmetadata.OpClassJsonbOps, framework.Operator_BinaryJSONContainsRight, literal)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, jsonbGinLookupIntersect, modeAgain)
-	require.NotEqual(t, "mutated", tokensAgain[0].Value)
+	require.NotEqual(t, "mutated", tokensAgain[0])
 }
 
 type recordingPostingEditor struct {

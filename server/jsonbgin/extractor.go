@@ -59,6 +59,12 @@ func Extract(doc pgtypes.JsonDocument, opClass string) ([]Token, error) {
 	return ExtractValue(doc.Value, opClass)
 }
 
+// ExtractEncoded returns the normalized encoded GIN token storage keys for doc
+// using opClass.
+func ExtractEncoded(doc pgtypes.JsonDocument, opClass string) ([]string, error) {
+	return ExtractValueEncoded(doc.Value, opClass)
+}
+
 // ExtractValue returns the normalized GIN tokens for value using opClass.
 func ExtractValue(value pgtypes.JsonValue, opClass string) ([]Token, error) {
 	extractor := extractor{
@@ -81,10 +87,42 @@ func ExtractValue(value pgtypes.JsonValue, opClass string) ([]Token, error) {
 	return normalizeTokens(extractor.tokens), nil
 }
 
+// ExtractValueEncoded returns the normalized encoded GIN token storage keys for
+// value using opClass.
+func ExtractValueEncoded(value pgtypes.JsonValue, opClass string) ([]string, error) {
+	extractor := extractor{
+		opClass: indexmetadata.NormalizeOpClass(opClass),
+		encoded: true,
+	}
+
+	switch extractor.opClass {
+	case indexmetadata.OpClassJsonbOps:
+		if err := extractor.extractJsonbOps(value, false); err != nil {
+			return nil, err
+		}
+	case indexmetadata.OpClassJsonbPathOps:
+		if err := extractor.extractJsonbPathOps(value); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported JSONB GIN opclass %q", opClass)
+	}
+
+	return normalizeEncodedTokens(extractor.encodedTokens), nil
+}
+
 type extractor struct {
-	opClass string
-	path    []string
-	tokens  []Token
+	opClass                string
+	path                   []string
+	tokens                 []Token
+	encodedTokens          []string
+	encodedIndependentSeen map[encodedIndependentToken]struct{}
+	encoded                bool
+}
+
+type encodedIndependentToken struct {
+	kind  TokenKind
+	value string
 }
 
 func (e *extractor) extractJsonbOps(value pgtypes.JsonValue, arrayElement bool) error {
@@ -175,6 +213,18 @@ func (e *extractor) extractJsonbPathOps(value pgtypes.JsonValue) error {
 }
 
 func (e *extractor) addIndependent(kind TokenKind, value string) {
+	if e.encoded {
+		seenKey := encodedIndependentToken{kind: kind, value: value}
+		if _, ok := e.encodedIndependentSeen[seenKey]; ok {
+			return
+		}
+		if e.encodedIndependentSeen == nil {
+			e.encodedIndependentSeen = make(map[encodedIndependentToken]struct{})
+		}
+		e.encodedIndependentSeen[seenKey] = struct{}{}
+		e.encodedTokens = append(e.encodedTokens, encodeTokenParts(e.opClass, kind, nil, value))
+		return
+	}
 	e.tokens = append(e.tokens, Token{
 		OpClass: e.opClass,
 		Kind:    kind,
@@ -183,6 +233,10 @@ func (e *extractor) addIndependent(kind TokenKind, value string) {
 }
 
 func (e *extractor) addPathValue(value string) {
+	if e.encoded {
+		e.encodedTokens = append(e.encodedTokens, encodeTokenParts(e.opClass, TokenKindPathValue, e.path, value))
+		return
+	}
 	e.tokens = append(e.tokens, Token{
 		OpClass: e.opClass,
 		Kind:    TokenKindPathValue,
@@ -216,6 +270,19 @@ func normalizeTokens(tokens []Token) []Token {
 	writeIdx := 0
 	for _, token := range tokens {
 		if writeIdx == 0 || compareTokens(tokens[writeIdx-1], token) != 0 {
+			tokens[writeIdx] = token
+			writeIdx++
+		}
+	}
+	return tokens[:writeIdx]
+}
+
+func normalizeEncodedTokens(tokens []string) []string {
+	sort.Strings(tokens)
+
+	writeIdx := 0
+	for _, token := range tokens {
+		if writeIdx == 0 || tokens[writeIdx-1] != token {
 			tokens[writeIdx] = token
 			writeIdx++
 		}

@@ -71,7 +71,7 @@ const (
 
 type jsonbGinLookupSpec struct {
 	index               JsonbGinMaintainedIndex
-	tokens              []jsonbgin.Token
+	encodedTokens       []string
 	mode                jsonbGinLookupMode
 	broadTokenSensitive bool
 	debug               string
@@ -90,8 +90,8 @@ const (
 var jsonbGinLiteralTokenCache sync.Map
 
 type jsonbGinCachedLookupTokens struct {
-	tokens []jsonbgin.Token
-	mode   jsonbGinLookupMode
+	encodedTokens []string
+	mode          jsonbGinLookupMode
 }
 
 func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.Table) (sql.Table, bool, error) {
@@ -356,16 +356,16 @@ func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr
 		if !strings.EqualFold(field.Name(), index.ColumnName) {
 			continue
 		}
-		tokens, mode, ok, err := jsonbGinLookupTokens(ctx, index.OpClass, binary.Operator(), binary.Right())
+		encodedTokens, mode, ok, err := jsonbGinLookupTokens(ctx, index.OpClass, binary.Operator(), binary.Right())
 		if err != nil || !ok {
 			return jsonbGinLookupSpec{}, ok, err
 		}
 		return jsonbGinLookupSpec{
 			index:               index,
-			tokens:              tokens,
+			encodedTokens:       encodedTokens,
 			mode:                mode,
 			broadTokenSensitive: jsonbGinBroadTokenSensitiveOperator(binary.Operator()),
-			debug:               fmt.Sprintf("%s %s %d token(s)", index.Name, mode, len(tokens)),
+			debug:               fmt.Sprintf("%s %s %d token(s)", index.Name, mode, len(encodedTokens)),
 		}, true, nil
 	}
 	return jsonbGinLookupSpec{}, false, nil
@@ -379,9 +379,8 @@ func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForIndex(ctx *sql.Context, l
 	if postingTable == nil {
 		return false, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, lookupSpec.index.PostingTable, lookupSpec.index.Name)
 	}
-	tokenRows := make([]map[string]struct{}, len(lookupSpec.tokens))
-	for i, token := range lookupSpec.tokens {
-		encodedToken := jsonbgin.EncodeToken(token)
+	tokenRows := make([]map[string]struct{}, len(lookupSpec.encodedTokens))
+	for i, encodedToken := range lookupSpec.encodedTokens {
 		if lookupSpec.broadTokenSensitive {
 			exceeds, err := postingTokenRowIDCountExceeds(ctx, postingTable, encodedToken, jsonbGinMaxBroadKeyPostingRowsForIndexedLookup)
 			if err != nil || exceeds {
@@ -481,7 +480,7 @@ func postingTokenRowIDIndexCountExceeds(ctx *sql.Context, indexAddressable sql.I
 	return exceeds, true, err
 }
 
-func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.Operator, right sql.Expression) ([]jsonbgin.Token, jsonbGinLookupMode, bool, error) {
+func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.Operator, right sql.Expression) ([]string, jsonbGinLookupMode, bool, error) {
 	value, err := right.Eval(ctx, nil)
 	if err != nil {
 		return nil, "", false, nil
@@ -489,22 +488,22 @@ func jsonbGinLookupTokens(ctx *sql.Context, opClass string, operator framework.O
 	if key, ok := jsonbGinLookupTokenCacheKey(opClass, operator, value); ok {
 		if cached, ok := jsonbGinLiteralTokenCache.Load(key); ok {
 			tokens := cached.(jsonbGinCachedLookupTokens)
-			return cloneJsonbGinTokens(tokens.tokens), tokens.mode, true, nil
+			return cloneStrings(tokens.encodedTokens), tokens.mode, true, nil
 		}
 		tokens, mode, ok, err := jsonbGinLookupTokensFromValue(ctx, opClass, operator, value)
 		if err != nil || !ok {
 			return tokens, mode, ok, err
 		}
 		jsonbGinLiteralTokenCache.Store(key, jsonbGinCachedLookupTokens{
-			tokens: cloneJsonbGinTokens(tokens),
-			mode:   mode,
+			encodedTokens: cloneStrings(tokens),
+			mode:          mode,
 		})
 		return tokens, mode, true, nil
 	}
 	return jsonbGinLookupTokensFromValue(ctx, opClass, operator, value)
 }
 
-func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator framework.Operator, value any) ([]jsonbgin.Token, jsonbGinLookupMode, bool, error) {
+func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator framework.Operator, value any) ([]string, jsonbGinLookupMode, bool, error) {
 	opClass = indexmetadata.NormalizeOpClass(opClass)
 	switch operator {
 	case framework.Operator_BinaryJSONContainsRight:
@@ -512,7 +511,7 @@ func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator fr
 		if err != nil {
 			return nil, "", false, err
 		}
-		tokens, err := jsonbgin.Extract(doc, opClass)
+		tokens, err := jsonbgin.ExtractEncoded(doc, opClass)
 		if err != nil || len(tokens) == 0 {
 			return nil, "", false, err
 		}
@@ -525,7 +524,7 @@ func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator fr
 		if !ok {
 			return nil, "", false, nil
 		}
-		return []jsonbgin.Token{{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key}}, jsonbGinLookupIntersect, true, nil
+		return []string{jsonbgin.EncodeToken(jsonbgin.Token{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key})}, jsonbGinLookupIntersect, true, nil
 	case framework.Operator_BinaryJSONTopLevelAny, framework.Operator_BinaryJSONTopLevelAll:
 		if opClass != indexmetadata.OpClassJsonbOps {
 			return nil, "", false, nil
@@ -534,9 +533,9 @@ func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator fr
 		if !ok || len(keys) == 0 {
 			return nil, "", false, nil
 		}
-		tokens := make([]jsonbgin.Token, len(keys))
+		tokens := make([]string, len(keys))
 		for i, key := range keys {
-			tokens[i] = jsonbgin.Token{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key}
+			tokens[i] = jsonbgin.EncodeToken(jsonbgin.Token{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key})
 		}
 		if operator == framework.Operator_BinaryJSONTopLevelAny {
 			return tokens, jsonbGinLookupUnion, true, nil
@@ -563,17 +562,12 @@ func jsonbGinLookupTokenCacheKey(opClass string, operator framework.Operator, va
 	return fmt.Sprintf("%s\x00%s\x00%s", indexmetadata.NormalizeOpClass(opClass), operator, encoded), true
 }
 
-func cloneJsonbGinTokens(tokens []jsonbgin.Token) []jsonbgin.Token {
+func cloneStrings(tokens []string) []string {
 	if len(tokens) == 0 {
 		return nil
 	}
-	cloned := make([]jsonbgin.Token, len(tokens))
-	for i, token := range tokens {
-		cloned[i] = token
-		if token.Path != nil {
-			cloned[i].Path = append([]string(nil), token.Path...)
-		}
-	}
+	cloned := make([]string, len(tokens))
+	copy(cloned, tokens)
 	return cloned
 }
 
@@ -924,15 +918,15 @@ func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGin
 	if err != nil {
 		return nil, err
 	}
-	tokens, err := jsonbgin.Extract(doc, index.OpClass)
+	encodedTokens, err := jsonbgin.ExtractEncoded(doc, index.OpClass)
 	if err != nil {
 		return nil, err
 	}
 	rowID := e.rowIdentity(row)
-	postingRows := make([]sql.Row, len(tokens))
+	postingRows := make([]sql.Row, len(encodedTokens))
 	keyValues := e.primaryKeyRowValues(row)
-	for i, token := range tokens {
-		postingRow := sql.Row{jsonbgin.EncodeToken(token), rowID}
+	for i, encodedToken := range encodedTokens {
+		postingRow := sql.Row{encodedToken, rowID}
 		postingRow = append(postingRow, keyValues...)
 		postingRows[i] = postingRow
 	}
@@ -1181,10 +1175,10 @@ func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string
 		return nil, nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, t.lookup.index.PostingTable, t.lookup.index.Name)
 	}
 
-	tokenRows := make([]map[string]struct{}, len(t.lookup.tokens))
-	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, len(t.lookup.tokens))
-	for i, token := range t.lookup.tokens {
-		tokenRows[i], tokenCandidates[i], err = lookupPostingTokenRowIDsAndCandidates(ctx, postingTable, jsonbgin.EncodeToken(token))
+	tokenRows := make([]map[string]struct{}, len(t.lookup.encodedTokens))
+	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, len(t.lookup.encodedTokens))
+	for i, encodedToken := range t.lookup.encodedTokens {
+		tokenRows[i], tokenCandidates[i], err = lookupPostingTokenRowIDsAndCandidates(ctx, postingTable, encodedToken)
 		if err != nil {
 			return nil, nil, err
 		}

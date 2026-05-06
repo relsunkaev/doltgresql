@@ -317,12 +317,12 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 		if err != nil {
 			return err
 		}
-		tokens, err := jsonbgin.Extract(doc, c.opClass)
+		encodedTokens, err := jsonbgin.ExtractEncoded(doc, c.opClass)
 		if err != nil {
 			return err
 		}
-		for _, token := range tokens {
-			postingRow := sql.Row{jsonbgin.EncodeToken(token), rowID}
+		for _, encodedToken := range encodedTokens {
+			postingRow := sql.Row{encodedToken, rowID}
 			postingRow = append(postingRow, keyValues...)
 			if err = inserter.Insert(ctx, postingRow); err != nil {
 				return err

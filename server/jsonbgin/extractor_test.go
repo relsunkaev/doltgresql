@@ -182,6 +182,56 @@ func TestExtractEmptyContainers(t *testing.T) {
 	}
 }
 
+func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "nested_objects_arrays_scalars",
+			input: `{"a":{"b":"text","n":7,"empty":{}},"tags":["vip","vip",null,false,3,""],"z":[]}`,
+		},
+		{
+			name:  "scalar_string",
+			input: `"text"`,
+		},
+		{
+			name:  "scalar_number",
+			input: `42`,
+		},
+		{
+			name:  "empty_object",
+			input: `{}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			doc := mustJsonDocument(t, test.input)
+			for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+				t.Run(opClass, func(t *testing.T) {
+					tokens, err := Extract(doc, opClass)
+					require.NoError(t, err)
+					want := make([]string, len(tokens))
+					for i, token := range tokens {
+						want[i] = EncodeToken(token)
+					}
+
+					encoded, err := ExtractEncoded(doc, opClass)
+					require.NoError(t, err)
+					require.ElementsMatch(t, want, encoded)
+				})
+			}
+		})
+	}
+}
+
+func TestExtractEncodedRejectsUnsupportedOpClass(t *testing.T) {
+	doc := mustJsonDocument(t, `{"a": 1}`)
+	_, err := ExtractEncoded(doc, "text_ops")
+	require.Error(t, err)
+}
+
 func BenchmarkExtractLargeDocument(b *testing.B) {
 	doc := mustJsonDocument(b, largeJsonDocument())
 
@@ -190,6 +240,48 @@ func BenchmarkExtractLargeDocument(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				tokens, err := Extract(doc, opClass)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if len(tokens) == 0 {
+					b.Fatal("expected extracted tokens")
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkExtractAndEncodeLargeDocument(b *testing.B) {
+	doc := mustJsonDocument(b, largeJsonDocument())
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				tokens, err := Extract(doc, opClass)
+				if err != nil {
+					b.Fatal(err)
+				}
+				encoded := make([]string, len(tokens))
+				for i, token := range tokens {
+					encoded[i] = EncodeToken(token)
+				}
+				if len(encoded) == 0 {
+					b.Fatal("expected encoded tokens")
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkExtractEncodedLargeDocument(b *testing.B) {
+	doc := mustJsonDocument(b, largeJsonDocument())
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass, func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				tokens, err := ExtractEncoded(doc, opClass)
 				if err != nil {
 					b.Fatal(err)
 				}
