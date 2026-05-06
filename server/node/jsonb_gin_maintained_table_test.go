@@ -22,6 +22,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb/durable"
+	doltschema "github.com/dolthub/dolt/go/libraries/doltcore/schema"
+	doltindex "github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
+	"github.com/dolthub/dolt/go/store/prolly/tree"
+	dolttypes "github.com/dolthub/dolt/go/store/types"
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/stretchr/testify/require"
 
@@ -253,6 +258,50 @@ func TestJsonbGinPostingRowBufferFlushesChunks(t *testing.T) {
 	}, editor.inserted)
 }
 
+func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	ns := tree.NewTestNodeStore()
+	sqlSch := sql.Schema{
+		{Name: "token", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
+		{Name: "row_id", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
+		{Name: "pk_2", Source: "postings", Type: pgtypes.Text, Nullable: true},
+	}
+	doltSch := doltschema.MustSchemaFromCols(doltschema.NewColCollection(
+		doltschema.NewColumn("token", 1, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("row_id", 2, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("pk_2", 3, dolttypes.StringKind, false),
+	))
+	rows := []sql.Row{
+		{"token/c", "row/2", "pk-2"},
+		{"token/a", "row/3", nil},
+		{"token/a", "row/1", "pk-1"},
+	}
+
+	rowData, err := buildSortedPrimaryRowIndex(ctx, ns, doltSch, sqlSch, rows, jsonbGinPostingRowLess)
+	require.NoError(t, err)
+	rowMap, err := durable.ProllyMapFromIndex(rowData)
+	require.NoError(t, err)
+	iter, err := rowMap.IterAll(ctx)
+	require.NoError(t, err)
+	rowIter := doltindex.NewProllyRowIterForSchema(doltSch, iter, doltSch.GetKeyDescriptor(ns), doltSch.GetValueDescriptor(ns), doltSch.GetAllCols().Tags, ns)
+	defer rowIter.Close(ctx)
+
+	var got []sql.Row
+	for {
+		row, err := rowIter.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(t, err)
+		got = append(got, row)
+	}
+	require.Equal(t, []sql.Row{
+		{"token/a", "row/1", "pk-1"},
+		{"token/a", "row/3", nil},
+		{"token/c", "row/2", "pk-2"},
+	}, got)
+}
+
 func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 	ctx := sql.NewEmptyContext()
 	sch := benchmarkJsonbGinSchema()
@@ -304,6 +353,28 @@ func BenchmarkJsonbGinPostingRowsEncodedTokens(b *testing.B) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkBuildSortedPrimaryRowIndexPostingRows(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	ns := tree.NewTestNodeStore()
+	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
+	rows := benchmarkJsonbGinPostingStorageRows(4096)
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		rowData, err := buildSortedPrimaryRowIndex(ctx, ns, doltSch, sqlSch, rows, jsonbGinPostingRowLess)
+		if err != nil {
+			b.Fatal(err)
+		}
+		count, err := rowData.Count()
+		if err != nil {
+			b.Fatal(err)
+		}
+		if count != uint64(len(rows)) {
+			b.Fatalf("expected %d rows, found %d", len(rows), count)
+		}
 	}
 }
 
@@ -507,6 +578,32 @@ func benchmarkJsonbGinDocument() string {
 	}
 	sb.WriteString(`],"summary":{"count":100,"empty":[]}}`)
 	return sb.String()
+}
+
+func benchmarkJsonbGinPostingStorageSchemas() (sql.Schema, doltschema.Schema) {
+	sqlSch := sql.Schema{
+		{Name: "token", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
+		{Name: "row_id", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
+		{Name: "pk_2", Source: "postings", Type: pgtypes.Text, Nullable: true},
+	}
+	doltSch := doltschema.MustSchemaFromCols(doltschema.NewColCollection(
+		doltschema.NewColumn("token", 1, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("row_id", 2, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("pk_2", 3, dolttypes.StringKind, false),
+	))
+	return sqlSch, doltSch
+}
+
+func benchmarkJsonbGinPostingStorageRows(rowCount int) []sql.Row {
+	rows := make([]sql.Row, rowCount)
+	for i := range rows {
+		rows[i] = sql.Row{
+			fmt.Sprintf("token/%04d", rowCount-i),
+			fmt.Sprintf("row/%04d", i),
+			fmt.Sprintf("pk/%04d", i),
+		}
+	}
+	return rows
 }
 
 type fakePostingTable struct {
