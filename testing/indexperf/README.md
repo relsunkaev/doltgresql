@@ -17,8 +17,9 @@ The harness covers:
   timings where v2 is supported
 - JSONB GIN v2 fallback row-reference reads, currently including a numeric
   primary-key shape that logs `dg_v2_direct_fetch=false`
-- JSONB GIN index build for `jsonb_ops` and `jsonb_path_ops`, reporting
-  Doltgres v1, Doltgres v2, and PostgreSQL timings
+- JSONB GIN index build for representative and skewed `jsonb_ops` and
+  `jsonb_path_ops` documents, reporting Doltgres v1, Doltgres v2, PostgreSQL
+  timings, and Doltgres sidecar row counts
 - JSONB GIN indexed DML maintenance, including separate INSERT, UPDATE, and
   DELETE buckets for Doltgres v1, Doltgres v2, and PostgreSQL
 - representative scan-boundary cases such as a suffix-only btree predicate
@@ -26,9 +27,10 @@ The harness covers:
 Each benchmark logs a `paired-index-baseline` line and emits Go benchmark
 metrics for `dg_scan_us/op`, `dg_index_us/op`, `dg_v1_index_us/op`,
 `dg_v2_index_us/op`, `pg_us/op`, `dg_index_vs_scan`, `dg_index_vs_pg`,
-`dg_v1_index_vs_pg`, `dg_v2_index_vs_pg`, and `dg_v2_vs_v1` where those fields
-apply. PostgreSQL plans are included for read benchmarks so Doltgres changes can
-be compared to the baseline plan shape as well as elapsed time.
+`dg_v1_index_vs_pg`, `dg_v2_index_vs_pg`, `dg_v2_vs_v1`,
+`dg_v1_sidecar_rows/op`, and `dg_v2_sidecar_rows/op` where those fields apply.
+PostgreSQL plans are included for read benchmarks so Doltgres changes can be
+compared to the baseline plan shape as well as elapsed time.
 JSONB GIN v2 read benchmarks also log `dg_v2_direct_fetch=true|false`; false
 marks an opaque row-reference fallback where Doltgres must scan and recheck
 candidate rows instead of fetching directly by decoded primary-key values.
@@ -53,6 +55,20 @@ DOLTGRES_PAIRED_INDEX_BENCH_ITERS=100 testing/indexperf/run_paired_benchmarks.sh
 POSTGRES_PORT=15439 testing/indexperf/run_paired_benchmarks.sh
 POSTGRES_IMAGE=postgres:18-alpine testing/indexperf/run_paired_benchmarks.sh
 ```
+
+To capture the local JSONB GIN v2 build-stage benchmarks plus CPU and memory
+pprof artifacts, use:
+
+```sh
+testing/indexperf/profile_jsonb_gin_build.sh
+```
+
+The profile script writes a timestamped report and raw artifacts under
+`.local_benchmarks/jsonb-gin-build-profile-*`. It also runs the paired
+PostgreSQL 18 index benchmark so the report includes v1/v2/PostgreSQL build
+ratios and sidecar row counts.
+The latest checked-in findings are summarized in
+`testing/indexperf/jsonb_gin_build_profile.md`.
 
 To use an already-running PostgreSQL instead of the script-managed container,
 run the Go benchmark directly:

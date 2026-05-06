@@ -416,6 +416,30 @@ func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg paire
 				insertPairedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
 			},
 		},
+		{
+			name:      "jsonb_gin/build_jsonb_ops_skewed",
+			table:     "pair_build_jsonb_skew",
+			createSQL: "CREATE INDEX %s_idx ON %s USING gin (doc)",
+			dropSQL:   "DROP INDEX %s_idx",
+			jsonbGin:  true,
+			setupTable: func(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string) {
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+				insertPairedSkewedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+			},
+		},
+		{
+			name:      "jsonb_gin/build_jsonb_path_ops_skewed",
+			table:     "pair_build_jsonb_skew_path",
+			createSQL: "CREATE INDEX %s_idx ON %s USING gin (doc jsonb_path_ops)",
+			dropSQL:   "DROP INDEX %s_idx",
+			jsonbGin:  true,
+			setupTable: func(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string) {
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+				insertPairedSkewedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+			},
+		},
 	} {
 		target := target
 		b.Run(target.name, func(b *testing.B) {
