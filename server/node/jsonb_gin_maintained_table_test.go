@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -523,6 +524,26 @@ func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 	}, got)
 }
 
+func TestJsonbGinPostingChunkRowLessSortsRows(t *testing.T) {
+	rows := []sql.Row{
+		{"token/b", int64(1)},
+		{"token/a", int64(2)},
+		{"token/a", int64(0)},
+		{"token/b", int64(0)},
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return jsonbGinPostingChunkRowLess(rows[i], rows[j])
+	})
+
+	require.Equal(t, []sql.Row{
+		{"token/a", int64(0)},
+		{"token/a", int64(2)},
+		{"token/b", int64(0)},
+		{"token/b", int64(1)},
+	}, rows)
+}
+
 func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 	ctx := sql.NewEmptyContext()
 	sch := benchmarkJsonbGinSchema()
@@ -548,6 +569,30 @@ func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	sch := benchmarkJsonbGinSchema()
+	rows := benchmarkJsonbGinRows(512)
+	create := &CreateJsonbGinIndex{
+		opClass:                  indexmetadata.OpClassJsonbOps,
+		postingChunkRowsPerChunk: 128,
+	}
+	store := jsonbgin.NewChunkedPostingStore(create.postingChunkRowsPerChunkLimit())
+	require.NoError(b, create.addPostingChunkRows(ctx, sch, &benchmarkRowIter{rows: rows}, 1, store))
+	sink := &countingPostingRowSink{}
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		sink.count = 0
+		if err := create.writePostingChunkRows(ctx, store, sink); err != nil {
+			b.Fatal(err)
+		}
+		if sink.count == 0 {
+			b.Fatal("expected chunk rows")
+		}
 	}
 }
 
@@ -698,6 +743,30 @@ func (i *countingRowInserter) Insert(*sql.Context, sql.Row) error {
 }
 
 func (i *countingRowInserter) Close(*sql.Context) error {
+	return nil
+}
+
+type countingPostingRowSink struct {
+	count int
+}
+
+var _ jsonbGinPostingRowSink = (*countingPostingRowSink)(nil)
+
+func (s *countingPostingRowSink) Add(*sql.Context, sql.Row) error {
+	s.count++
+	return nil
+}
+
+func (s *countingPostingRowSink) Complete(*sql.Context) error {
+	return nil
+}
+
+func (s *countingPostingRowSink) Discard(*sql.Context, error) error {
+	s.count = 0
+	return nil
+}
+
+func (s *countingPostingRowSink) Close(*sql.Context) error {
 	return nil
 }
 

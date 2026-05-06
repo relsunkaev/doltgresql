@@ -412,29 +412,28 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 	if postingTable == nil {
 		return errors.Errorf(`posting chunk table "%s" was not created`, c.postingChunkName)
 	}
-	insertable, ok := postingTable.(sql.InsertableTable)
-	if !ok {
+	if _, ok := postingTable.(sql.InsertableTable); !ok {
 		return errors.Errorf(`posting chunk table "%s" does not support inserts`, c.postingChunkName)
 	}
-	chunkRows, err := c.buildPostingChunkRowsFromTable(ctx, table, columnIndex)
+	store, err := c.buildPostingChunkStoreFromTable(ctx, table, columnIndex)
 	if err != nil {
 		return err
 	}
-	inserter := insertable.Inserter(ctx)
-	inserter.StatementBegin(ctx)
+	sink, err := newJsonbGinPostingChunkRowSink(ctx, db, postingTable)
+	if err != nil {
+		return err
+	}
 	completed := false
 	defer func() {
 		if !completed {
-			_ = inserter.DiscardChanges(ctx, errors.New("JSONB GIN posting chunk backfill failed"))
+			_ = sink.Discard(ctx, errors.New("JSONB GIN posting chunk backfill failed"))
 		}
-		_ = inserter.Close(ctx)
+		_ = sink.Close(ctx)
 	}()
-	for _, row := range chunkRows {
-		if err = inserter.Insert(ctx, row); err != nil {
-			return err
-		}
+	if err = c.writePostingChunkRows(ctx, store, sink); err != nil {
+		return err
 	}
-	if err = inserter.StatementComplete(ctx); err != nil {
+	if err = sink.Complete(ctx); err != nil {
 		return err
 	}
 	completed = true
@@ -442,6 +441,14 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, table sql.Table, columnIndex int) ([]sql.Row, error) {
+	store, err := c.buildPostingChunkStoreFromTable(ctx, table, columnIndex)
+	if err != nil {
+		return nil, err
+	}
+	return c.materializePostingChunkRows(store)
+}
+
+func (c *CreateJsonbGinIndex) buildPostingChunkStoreFromTable(ctx *sql.Context, table sql.Table, columnIndex int) (*jsonbgin.ChunkedPostingStore, error) {
 	store := jsonbgin.NewChunkedPostingStore(c.postingChunkRowsPerChunkLimit())
 	partitions, err := table.Partitions(ctx)
 	if err != nil {
@@ -468,7 +475,7 @@ func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, t
 			return nil, err
 		}
 	}
-	return c.materializePostingChunkRows(store)
+	return store, nil
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) ([]sql.Row, error) {
@@ -519,19 +526,36 @@ func (c *CreateJsonbGinIndex) materializePostingChunkRows(store *jsonbgin.Chunke
 	}
 	rows := make([]sql.Row, len(entries))
 	for i, entry := range entries {
-		chunk := entry.Chunk
-		rows[i] = sql.Row{
-			entry.Token,
-			entry.ChunkNo,
-			int16(chunk.FormatVersion),
-			int32(chunk.RowCount),
-			chunk.FirstRowRef,
-			chunk.LastRowRef,
-			chunk.Payload,
-			postingChunkChecksumBytes(chunk.Checksum),
-		}
+		rows[i] = postingChunkEntryRow(entry)
 	}
 	return rows, nil
+}
+
+func (c *CreateJsonbGinIndex) writePostingChunkRows(ctx *sql.Context, store *jsonbgin.ChunkedPostingStore, sink jsonbGinPostingRowSink) error {
+	entries, err := store.ChunkEntries()
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err = sink.Add(ctx, postingChunkEntryRow(entry)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func postingChunkEntryRow(entry jsonbgin.PostingChunkEntry) sql.Row {
+	chunk := entry.Chunk
+	return sql.Row{
+		entry.Token,
+		entry.ChunkNo,
+		int16(chunk.FormatVersion),
+		int32(chunk.RowCount),
+		chunk.FirstRowRef,
+		chunk.LastRowRef,
+		chunk.Payload,
+		postingChunkChecksumBytes(chunk.Checksum),
+	}
 }
 
 func (c *CreateJsonbGinIndex) postingChunkRowsPerChunkLimit() int {
@@ -591,7 +615,7 @@ type jsonbGinPostingRowSink interface {
 }
 
 func newJsonbGinPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table, maxRows int) (jsonbGinPostingRowSink, error) {
-	if sink, ok, err := newJsonbGinBulkPostingRowSink(ctx, db, postingTable); ok || err != nil {
+	if sink, ok, err := newJsonbGinBulkPostingRowSink(ctx, db, postingTable, jsonbGinPostingRowLess); ok || err != nil {
 		return sink, err
 	}
 	insertable, ok := postingTable.(sql.InsertableTable)
@@ -603,6 +627,22 @@ func newJsonbGinPostingRowSink(ctx *sql.Context, db sql.Database, postingTable s
 	return &jsonbGinInserterPostingRowSink{
 		inserter: inserter,
 		buffer:   newJsonbGinPostingRowBuffer(inserter, maxRows),
+	}, nil
+}
+
+func newJsonbGinPostingChunkRowSink(ctx *sql.Context, db sql.Database, postingChunkTable sql.Table) (jsonbGinPostingRowSink, error) {
+	if sink, ok, err := newJsonbGinBulkPostingRowSink(ctx, db, postingChunkTable, jsonbGinPostingChunkRowLess); ok || err != nil {
+		return sink, err
+	}
+	insertable, ok := postingChunkTable.(sql.InsertableTable)
+	if !ok {
+		return nil, errors.Errorf(`posting chunk table "%s" does not support inserts`, postingChunkTable.Name())
+	}
+	inserter := insertable.Inserter(ctx)
+	inserter.StatementBegin(ctx)
+	return &jsonbGinInserterPostingRowSink{
+		inserter: inserter,
+		buffer:   newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows),
 	}, nil
 }
 
@@ -649,11 +689,12 @@ type jsonbGinBulkPostingRowSink struct {
 	doltSch   doltschema.Schema
 	sqlSch    sql.Schema
 	rows      []sql.Row
+	less      func(left sql.Row, right sql.Row) bool
 }
 
 var _ jsonbGinPostingRowSink = (*jsonbGinBulkPostingRowSink)(nil)
 
-func newJsonbGinBulkPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table) (*jsonbGinBulkPostingRowSink, bool, error) {
+func newJsonbGinBulkPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table, less func(left sql.Row, right sql.Row) bool) (*jsonbGinBulkPostingRowSink, bool, error) {
 	rootDb, ok := db.(doltRootDatabase)
 	if !ok {
 		return nil, false, nil
@@ -676,6 +717,7 @@ func newJsonbGinBulkPostingRowSink(ctx *sql.Context, db sql.Database, postingTab
 		table:     table,
 		doltSch:   doltSch,
 		sqlSch:    postingTable.Schema(ctx),
+		less:      less,
 	}, true, nil
 }
 
@@ -685,7 +727,7 @@ func (s *jsonbGinBulkPostingRowSink) Add(_ *sql.Context, row sql.Row) error {
 }
 
 func (s *jsonbGinBulkPostingRowSink) Complete(ctx *sql.Context) error {
-	rowData, err := buildSortedPrimaryRowIndex(ctx, s.table.NodeStore(), s.doltSch, s.sqlSch, s.rows, jsonbGinPostingRowLess)
+	rowData, err := buildSortedPrimaryRowIndex(ctx, s.table.NodeStore(), s.doltSch, s.sqlSch, s.rows, s.less)
 	if err != nil {
 		return err
 	}
@@ -768,11 +810,36 @@ func jsonbGinPostingRowLess(left sql.Row, right sql.Row) bool {
 	return fmt.Sprint(left) < fmt.Sprint(right)
 }
 
+func jsonbGinPostingChunkRowLess(left sql.Row, right sql.Row) bool {
+	leftToken := jsonbGinPostingSortString(left, 0)
+	rightToken := jsonbGinPostingSortString(right, 0)
+	if leftToken != rightToken {
+		return leftToken < rightToken
+	}
+	leftChunkNo := jsonbGinPostingSortInt(left, 1)
+	rightChunkNo := jsonbGinPostingSortInt(right, 1)
+	if leftChunkNo != rightChunkNo {
+		return leftChunkNo < rightChunkNo
+	}
+	return fmt.Sprint(left) < fmt.Sprint(right)
+}
+
 func jsonbGinPostingSortString(row sql.Row, index int) string {
 	if index >= len(row) {
 		return ""
 	}
 	value, _ := row[index].(string)
+	return value
+}
+
+func jsonbGinPostingSortInt(row sql.Row, index int) int64 {
+	if index >= len(row) {
+		return 0
+	}
+	value, ok := integralInt64(row[index])
+	if !ok {
+		return 0
+	}
 	return value
 }
 
