@@ -110,6 +110,24 @@ func TestJsonbGinPostingTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
 	require.Zero(t, table.fullScans)
 }
 
+func TestJsonbGinPostingCandidateFromRowReference(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	keyTypes := []sql.ColumnExpressionType{
+		{Expression: "docs.tenant", Type: pgtypes.Text},
+		{Expression: "docs.id", Type: pgtypes.Int32},
+	}
+	rowRef, err := jsonbgin.EncodeRowReference(ctx, []sql.Type{pgtypes.Text, pgtypes.Int32}, sql.Row{"east", int32(42)})
+	require.NoError(t, err)
+
+	candidate, err := jsonbGinPostingCandidateFromRowReference(ctx, "row/ref", keyTypes, rowRef.Bytes)
+	require.NoError(t, err)
+	require.Equal(t, "row/ref", candidate.rowID)
+	require.Equal(t, sql.Row{"east", int32(42)}, candidate.key)
+
+	ranges := primaryKeyRanges(candidate.key, keyTypes)
+	require.Len(t, ranges, 2)
+}
+
 func TestJsonbGinPostingRowCompaction(t *testing.T) {
 	oldRows := []sql.Row{
 		{"token/a", "row/1", int32(1)},

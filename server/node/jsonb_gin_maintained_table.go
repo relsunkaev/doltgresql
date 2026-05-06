@@ -1604,6 +1604,21 @@ func postingCandidatesForRowIDs(rowIDs map[string]struct{}, tokenCandidates []ma
 	return candidates
 }
 
+func jsonbGinPostingCandidateFromRowReference(ctx *sql.Context, rowID string, keyTypes []sql.ColumnExpressionType, rowRef []byte) (jsonbGinPostingCandidate, error) {
+	columnTypes := make([]sql.Type, len(keyTypes))
+	for i, keyType := range keyTypes {
+		columnTypes[i] = keyType.Type
+	}
+	decoded, err := jsonbgin.DecodeRowReference(ctx, columnTypes, rowRef)
+	if err != nil {
+		return jsonbGinPostingCandidate{}, err
+	}
+	return jsonbGinPostingCandidate{
+		rowID: rowID,
+		key:   decoded.Values,
+	}, nil
+}
+
 type jsonbGinLookupPartition struct {
 	rowIDs     map[string]struct{}
 	candidates []jsonbGinPostingCandidate
