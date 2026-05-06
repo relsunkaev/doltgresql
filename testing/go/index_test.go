@@ -235,6 +235,86 @@ ORDER BY id;`,
 	})
 }
 
+func TestJsonbGinV2PostingChunkDMLGate(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PostgreSQL jsonb gin v2 posting chunk DML maintenance",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_dml (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_dml VALUES
+					(1, '{"tags":["vip"],"status":"open"}'),
+					(2, '{"tags":["standard"],"status":"open"}');`,
+				"CREATE INDEX jsonb_gin_v2_dml_idx ON jsonb_gin_v2_dml USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO jsonb_gin_v2_dml VALUES
+						(3, '{"tags":["vip","archived"],"status":"closed"}');`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {3}},
+				},
+				{
+					Query: `UPDATE jsonb_gin_v2_dml
+SET doc = '{"tags":["vip"],"status":"open"}'
+WHERE id = 2;`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_v2_dml WHERE id = 1;",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{2}, {3}},
+				},
+				{
+					Query:       `INSERT INTO jsonb_gin_v2_dml VALUES (2, '{"tags":["vip"],"status":"duplicate"}');`,
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"status":"duplicate"}'
+ORDER BY id;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: "BEGIN;",
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_v2_dml VALUES
+						(4, '{"tags":["vip"],"status":"rolled-back"}');`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"status":"rolled-back"}'
+ORDER BY id;`,
+					Expected: []sql.Row{{4}},
+				},
+				{
+					Query: "ROLLBACK;",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_dml
+WHERE doc @> '{"status":"rolled-back"}'
+ORDER BY id;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
 func TestBasicIndexing(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

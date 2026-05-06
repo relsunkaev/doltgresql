@@ -227,6 +227,51 @@ func TestJsonbGinPostingEditorBatchesAndCancelsStatementRows(t *testing.T) {
 	require.Empty(t, posting.pending)
 }
 
+func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	tableSchema := jsonbGinPostingStorageBaseSchema()
+	primary := &countingRowInserter{}
+	v1Editor := &recordingPostingEditor{}
+	v2Editor := &recordingPostingEditor{}
+	editor := &jsonbGinMaintainingEditor{
+		tableSchema:        tableSchema,
+		primaryKeyOrdinals: primaryKeyOrdinals(tableSchema),
+		primary:            primary,
+		postings: []jsonbGinPostingEditor{{
+			index: JsonbGinMaintainedIndex{
+				Name:                  "docs_doc_v1_idx",
+				ColumnName:            "doc",
+				ColumnIndex:           1,
+				OpClass:               indexmetadata.OpClassJsonbOps,
+				PostingTable:          "docs_doc_v1_postings",
+				PostingStorageVersion: indexmetadata.GinPostingStorageVersionV1,
+			},
+			editor: v1Editor,
+		}},
+		postingChunks: []jsonbGinPostingChunkEditor{{
+			index: JsonbGinMaintainedIndex{
+				Name:                  "docs_doc_v2_idx",
+				ColumnName:            "doc",
+				ColumnIndex:           1,
+				OpClass:               indexmetadata.OpClassJsonbOps,
+				PostingChunkTable:     "docs_doc_v2_posting_chunks",
+				PostingStorageVersion: indexmetadata.GinPostingStorageVersionV2,
+			},
+			table:  &fakePostingTable{},
+			editor: v2Editor,
+		}},
+	}
+
+	editor.StatementBegin(ctx)
+	require.NoError(t, editor.Insert(ctx, sql.Row{int32(1), `{"tags":["vip"],"status":"open"}`}))
+	require.NoError(t, editor.StatementComplete(ctx))
+
+	require.Equal(t, 1, primary.count)
+	require.NotEmpty(t, v1Editor.inserted)
+	require.NotEmpty(t, v2Editor.inserted)
+	require.Len(t, v2Editor.inserted[0], 8)
+}
+
 func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	literal := gmsexpression.NewLiteral(`{"tenant":8,"status":"open"}`, pgtypes.JsonB)
