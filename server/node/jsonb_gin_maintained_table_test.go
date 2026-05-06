@@ -116,6 +116,47 @@ func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	require.NotEqual(t, "mutated", tokensAgain[0])
 }
 
+func TestJsonbGinPostingRowBufferSortsRows(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	editor := &recordingPostingEditor{}
+	buffer := newJsonbGinPostingRowBuffer(editor, 0)
+
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/c", "row/2", int32(2)}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/3", int32(3)}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/1", int32(1)}))
+	require.NoError(t, buffer.Flush(ctx))
+
+	require.Equal(t, []sql.Row{
+		{"token/a", "row/1", int32(1)},
+		{"token/a", "row/3", int32(3)},
+		{"token/c", "row/2", int32(2)},
+	}, editor.inserted)
+	require.Empty(t, buffer.rows)
+}
+
+func TestJsonbGinPostingRowBufferFlushesChunks(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	editor := &recordingPostingEditor{}
+	buffer := newJsonbGinPostingRowBuffer(editor, 2)
+
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/b", "row/2"}))
+	require.Empty(t, editor.inserted)
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/1"}))
+	require.Equal(t, []sql.Row{
+		{"token/a", "row/1"},
+		{"token/b", "row/2"},
+	}, editor.inserted)
+	require.Empty(t, buffer.rows)
+
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/d", "row/4"}))
+	require.NoError(t, buffer.Flush(ctx))
+	require.Equal(t, []sql.Row{
+		{"token/a", "row/1"},
+		{"token/b", "row/2"},
+		{"token/d", "row/4"},
+	}, editor.inserted)
+}
+
 func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 	ctx := sql.NewEmptyContext()
 	sch := benchmarkJsonbGinSchema()
@@ -129,7 +170,11 @@ func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				inserter.count = 0
 				iter := &benchmarkRowIter{rows: rows}
-				if err := create.backfillPartition(ctx, sch, iter, inserter, 1); err != nil {
+				buffer := newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows)
+				if err := create.backfillPartition(ctx, sch, iter, buffer, 1); err != nil {
+					b.Fatal(err)
+				}
+				if err := buffer.Flush(ctx); err != nil {
 					b.Fatal(err)
 				}
 				if inserter.count == 0 {

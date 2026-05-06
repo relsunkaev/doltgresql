@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -35,6 +36,7 @@ import (
 )
 
 const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
+const jsonbGinPostingBackfillChunkRows = 8192
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
@@ -271,6 +273,7 @@ func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, schemaName 
 		return err
 	}
 	defer partitions.Close(ctx)
+	postingBuffer := newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows)
 	for {
 		partition, err := partitions.Next(ctx)
 		if err == io.EOF {
@@ -283,13 +286,16 @@ func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, schemaName 
 		if err != nil {
 			return err
 		}
-		if err = c.backfillPartition(ctx, table.Schema(ctx), rows, inserter, columnIndex); err != nil {
+		if err = c.backfillPartition(ctx, table.Schema(ctx), rows, postingBuffer, columnIndex); err != nil {
 			_ = rows.Close(ctx)
 			return err
 		}
 		if err = rows.Close(ctx); err != nil {
 			return err
 		}
+	}
+	if err = postingBuffer.Flush(ctx); err != nil {
+		return err
 	}
 	if err = inserter.StatementComplete(ctx); err != nil {
 		return err
@@ -299,7 +305,7 @@ func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, schemaName 
 	return inserter.Close(ctx)
 }
 
-func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, inserter sql.RowInserter, columnIndex int) error {
+func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, postingRows *jsonbGinPostingRowBuffer, columnIndex int) error {
 	for {
 		row, err := rows.Next(ctx)
 		if err == io.EOF {
@@ -324,11 +330,71 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 		for _, encodedToken := range encodedTokens {
 			postingRow := sql.Row{encodedToken, rowID}
 			postingRow = append(postingRow, keyValues...)
-			if err = inserter.Insert(ctx, postingRow); err != nil {
+			if err = postingRows.Add(ctx, postingRow); err != nil {
 				return err
 			}
 		}
 	}
+}
+
+type jsonbGinPostingRowBuffer struct {
+	inserter sql.RowInserter
+	maxRows  int
+	rows     []sql.Row
+}
+
+func newJsonbGinPostingRowBuffer(inserter sql.RowInserter, maxRows int) *jsonbGinPostingRowBuffer {
+	return &jsonbGinPostingRowBuffer{
+		inserter: inserter,
+		maxRows:  maxRows,
+	}
+}
+
+func (b *jsonbGinPostingRowBuffer) Add(ctx *sql.Context, row sql.Row) error {
+	b.rows = append(b.rows, row)
+	if b.maxRows > 0 && len(b.rows) >= b.maxRows {
+		return b.Flush(ctx)
+	}
+	return nil
+}
+
+func (b *jsonbGinPostingRowBuffer) Flush(ctx *sql.Context) error {
+	if len(b.rows) == 0 {
+		return nil
+	}
+	sort.Slice(b.rows, func(i, j int) bool {
+		return jsonbGinPostingRowLess(b.rows[i], b.rows[j])
+	})
+	for _, row := range b.rows {
+		if err := b.inserter.Insert(ctx, row); err != nil {
+			return err
+		}
+	}
+	clear(b.rows)
+	b.rows = b.rows[:0]
+	return nil
+}
+
+func jsonbGinPostingRowLess(left sql.Row, right sql.Row) bool {
+	leftToken := jsonbGinPostingSortString(left, 0)
+	rightToken := jsonbGinPostingSortString(right, 0)
+	if leftToken != rightToken {
+		return leftToken < rightToken
+	}
+	leftRowID := jsonbGinPostingSortString(left, 1)
+	rightRowID := jsonbGinPostingSortString(right, 1)
+	if leftRowID != rightRowID {
+		return leftRowID < rightRowID
+	}
+	return fmt.Sprint(left) < fmt.Sprint(right)
+}
+
+func jsonbGinPostingSortString(row sql.Row, index int) string {
+	if index >= len(row) {
+		return ""
+	}
+	value, _ := row[index].(string)
+	return value
 }
 
 func rowIdentity(sch sql.Schema, row sql.Row) string {
