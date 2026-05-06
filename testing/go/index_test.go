@@ -2971,6 +2971,10 @@ func opClassOidVector(names ...string) string {
 	return strings.Join(oids, " ")
 }
 
+func typeOid(name string) uint32 {
+	return id.Cache().ToOID(id.NewType("pg_catalog", name).AsId())
+}
+
 func collationOidVector(names ...string) string {
 	oids := make([]string, len(names))
 	for i, name := range names {

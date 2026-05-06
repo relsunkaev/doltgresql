@@ -2644,7 +2644,7 @@ WHERE am.amname = 'btree'
 	AND opc.opcname IN ('name_ops', 'text_ops', 'varchar_ops')
 ORDER BY opc.opcname;`,
 					Expected: []sql.Row{
-						{"name_ops", "text_ops", "name", "t", 0},
+						{"name_ops", "text_ops", "name", "t", typeOid("cstring")},
 						{"text_ops", "text_ops", "text", "t", 0},
 						{"varchar_ops", "text_ops", "text", "t", 0},
 					},

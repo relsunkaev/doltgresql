@@ -127,7 +127,7 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("float8_ops", "float8", "float_ops"),
 	newBtreeOpclass("numeric_ops", "numeric", "numeric_ops"),
 	newBtreeOpclass("char_ops", "char", "char_ops"),
-	newBtreeOpclass("name_ops", "name", "text_ops"),
+	newBtreeOpclassWithKeyType("name_ops", "name", "text_ops", "cstring"),
 	newBtreeOpclass("text_ops", "text", "text_ops"),
 	newBtreeOpclass("varchar_ops", "text", "text_ops"),
 	newBtreeOpclass("bpchar_ops", "bpchar", "bpchar_ops"),
@@ -155,6 +155,18 @@ func newBtreeOpclass(name string, typeName string, family string) opclass {
 }
 
 func newBtreeOpclassWithDefault(name string, typeName string, family string, isDefault bool) opclass {
+	return newBtreeOpclassWithKeyTypeAndDefault(name, typeName, family, "", isDefault)
+}
+
+func newBtreeOpclassWithKeyType(name string, typeName string, family string, keyType string) opclass {
+	return newBtreeOpclassWithKeyTypeAndDefault(name, typeName, family, keyType, true)
+}
+
+func newBtreeOpclassWithKeyTypeAndDefault(name string, typeName string, family string, keyType string, isDefault bool) opclass {
+	keyTypeID := zeroOID()
+	if keyType != "" {
+		keyTypeID = pgCatalogTypeID(keyType)
+	}
 	return opclass{
 		oid:       id.NewId(id.Section_OperatorClass, name),
 		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
@@ -162,7 +174,7 @@ func newBtreeOpclassWithDefault(name string, typeName string, family string, isD
 		namespace: pgCatalogNamespaceID(),
 		family:    btreeOpfamilyID(family),
 		intype:    pgCatalogTypeID(typeName),
-		keytype:   zeroOID(),
+		keytype:   keyTypeID,
 		isDefault: isDefault,
 	}
 }
