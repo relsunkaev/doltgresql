@@ -123,6 +123,32 @@ func TestExpressionBtreeIndexPlannerShape(t *testing.T) {
 	}
 }
 
+func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE mixed_expression_btree_plan (id INTEGER PRIMARY KEY, title TEXT NOT NULL, code TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO mixed_expression_btree_plan VALUES
+		(1, 'Alpha', 'a1'),
+		(2, 'ALPHA', 'a1'),
+		(3, 'alpha', 'a2'),
+		(4, 'Beta', 'b1')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX mixed_expression_btree_plan_idx ON mixed_expression_btree_plan (lower(title), code)")
+
+	// Mixed expression btree indexes are currently metadata-backed by ordinary
+	// storage columns. Keep expression predicates on the safe scan path until
+	// the executor can seek by the PostgreSQL-facing logical key.
+	query := `SELECT count(id) FROM mixed_expression_btree_plan WHERE lower(title) = 'alpha' AND code = 'a1'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 2)
+}
+
 func BenchmarkBtreeSQLLookup(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupBtreeLookupBenchmark(b, ctx, conn)
