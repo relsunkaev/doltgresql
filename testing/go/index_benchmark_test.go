@@ -87,6 +87,45 @@ func TestBtreeIndexPlannerShape(t *testing.T) {
 	}
 }
 
+func TestBtreeStatsBackedIndexChoice(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_stats_choice (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreeStatsChoiceRows(t, ctx, conn, "btree_stats_choice", 1024)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_choice_tenant_idx ON btree_stats_choice (tenant)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_choice_score_idx ON btree_stats_choice (score)")
+	execBenchmarkSQL(t, ctx, conn, "ANALYZE btree_stats_choice")
+
+	selectiveScore := `SELECT count(id) FROM btree_stats_choice WHERE tenant = 1 AND score = 777`
+	assertBenchmarkPlanContains(t, ctx, conn, selectiveScore, "index: [btree_stats_choice.score]")
+	assertCountResult(t, ctx, conn, selectiveScore, 1)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_stats_composite_choice (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreeStatsChoiceRows(t, ctx, conn, "btree_stats_composite_choice", 1024)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_composite_choice_tenant_idx ON btree_stats_composite_choice (tenant)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_composite_choice_tenant_score_idx ON btree_stats_composite_choice (tenant, score)")
+	execBenchmarkSQL(t, ctx, conn, "ANALYZE btree_stats_composite_choice")
+
+	compositePrefix := `SELECT count(id) FROM btree_stats_composite_choice WHERE tenant = 1 AND score = 777`
+	assertBenchmarkPlanContains(t, ctx, conn, compositePrefix, "index: [btree_stats_composite_choice.tenant,btree_stats_composite_choice.score]")
+	assertCountResult(t, ctx, conn, compositePrefix, 1)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_stats_missing_choice (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreeStatsChoiceRows(t, ctx, conn, "btree_stats_missing_choice", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_missing_choice_tenant_score_idx ON btree_stats_missing_choice (tenant, score)")
+
+	missingStats := `SELECT count(id) FROM btree_stats_missing_choice WHERE tenant = 1 AND score = 77`
+	assertBenchmarkPlanShape(t, ctx, conn, missingStats, true)
+	assertCountResult(t, ctx, conn, missingStats, 1)
+}
+
 func TestExpressionBtreeIndexPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -605,6 +644,21 @@ func BenchmarkBtreeSQLLookup(b *testing.B) {
 			benchmarkCountQuery(b, ctx, conn, query.query, query.want)
 		})
 	}
+}
+
+func BenchmarkBtreeStatsBackedIndexChoice(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	execBenchmarkSQL(b, ctx, conn, "CREATE TABLE btree_stats_choice_bench (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreeStatsChoiceRows(b, ctx, conn, "btree_stats_choice_bench", btreeBenchmarkRows)
+	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX btree_stats_choice_bench_tenant_idx ON btree_stats_choice_bench (tenant)")
+	execBenchmarkSQL(b, ctx, conn, "CREATE INDEX btree_stats_choice_bench_score_idx ON btree_stats_choice_bench (score)")
+	execBenchmarkSQL(b, ctx, conn, "ANALYZE btree_stats_choice_bench")
+
+	query := `SELECT count(id) FROM btree_stats_choice_bench WHERE tenant = 1 AND score = 777`
+	assertBenchmarkPlanContains(b, ctx, conn, query, "index: [btree_stats_choice_bench.score]")
+	b.Run("selective_secondary_index", func(b *testing.B) {
+		benchmarkCountQuery(b, ctx, conn, query, 1)
+	})
 }
 
 func BenchmarkBtreeProjectionPushdown(b *testing.B) {
@@ -1218,6 +1272,27 @@ func insertBtreePlanRows(tb testing.TB, ctx context.Context, conn *Connection, t
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%8, id%64, id%16)
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertBtreeStatsChoiceRows(tb testing.TB, ctx context.Context, conn *Connection, table string, rowCount int) {
+	tb.Helper()
+	const chunkSize = 64
+	for chunkStart := 1; chunkStart <= rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > rowCount+1 {
+			chunkEnd = rowCount + 1
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%4, id, id%16)
 		}
 		execBenchmarkSQL(tb, ctx, conn, query.String())
 	}
