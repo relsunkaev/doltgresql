@@ -152,6 +152,30 @@ var btreeIntegerSupportProcs = []btreeSupportProc{
 	{leftType: "int8", rightType: "int8", opfamily: "integer_ops", procNum: 4, proc: "btequalimage"},
 }
 
+var btreeFloatCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
+	{
+		leftType:        "float4",
+		rightType:       "float8",
+		opfamily:        "float_ops",
+		comparisonFuncs: [5]string{"float48lt", "float48le", "float48eq", "float48ge", "float48gt"},
+	},
+	{
+		leftType:        "float8",
+		rightType:       "float4",
+		opfamily:        "float_ops",
+		comparisonFuncs: [5]string{"float84lt", "float84le", "float84eq", "float84ge", "float84gt"},
+	},
+}
+
+var btreeFloatSupportProcs = []btreeSupportProc{
+	{leftType: "float4", rightType: "float4", opfamily: "float_ops", procNum: 2, proc: "btfloat4sortsupport"},
+	{leftType: "float4", rightType: "float8", opfamily: "float_ops", procNum: 1, proc: "btfloat48cmp"},
+	{leftType: "float4", rightType: "float8", opfamily: "float_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "float8", rightType: "float4", opfamily: "float_ops", procNum: 1, proc: "btfloat84cmp"},
+	{leftType: "float8", rightType: "float8", opfamily: "float_ops", procNum: 2, proc: "btfloat8sortsupport"},
+	{leftType: "float8", rightType: "float8", opfamily: "float_ops", procNum: 3, proc: "pg_catalog.in_range"},
+}
+
 var btreeCatalogTypes = []btreeCatalogType{
 	{
 		typeName:        "bool",
