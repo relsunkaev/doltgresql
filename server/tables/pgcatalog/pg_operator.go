@@ -137,6 +137,11 @@ var defaultPostgresOperators = func() []pgOperator {
 			operators = append(operators, newBtreeOperator(typ, operator, typ.comparisonFuncs[idx]))
 		}
 	}
+	for _, typ := range btreeIntegerCrossTypeCatalogTypes {
+		for idx, operator := range btreeComparisonOperators {
+			operators = append(operators, newBtreeCrossTypeOperator(typ, operator, typ.comparisonFuncs[idx]))
+		}
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		for idx, operator := range btreePatternComparisonOperators {
 			if operator.name == "=" {
@@ -186,12 +191,42 @@ func newBtreePatternOperator(typ btreePatternCatalogType, operator btreeComparis
 	}
 }
 
+func newBtreeCrossTypeOperator(typ btreeCrossTypeCatalogType, operator btreeComparisonOperator, function string) pgOperator {
+	return pgOperator{
+		oid:        pgCatalogOperatorID(operator.name, typ.leftType, typ.rightType),
+		name:       operator.name,
+		namespace:  pgCatalogNamespaceID(),
+		leftType:   pgCatalogTypeID(typ.leftType),
+		rightType:  pgCatalogTypeID(typ.rightType),
+		result:     pgCatalogTypeID("bool"),
+		commutator: pgCatalogOperatorID(operator.commutator, typ.rightType, typ.leftType),
+		code:       pgCatalogFunctionID(function, pgCatalogType(typ.leftType), pgCatalogType(typ.rightType)),
+		restrict:   btreeExactOperatorRestrictFunctionID(operator.name),
+		join:       btreeExactOperatorJoinFunctionID(operator.name),
+	}
+}
+
 func btreeOperatorRestrictFunctionID(name string) id.Id {
 	switch name {
 	case "=":
 		return pgCatalogFunctionID("eqsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
 	case "<", "<=":
 		return pgCatalogFunctionID("scalarltsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
+}
+
+func btreeExactOperatorRestrictFunctionID(name string) id.Id {
+	switch name {
+	case "=":
+		return pgCatalogFunctionID("eqsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<":
+		return pgCatalogFunctionID("scalarltsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<=":
+		return pgCatalogFunctionID("scalarlesel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case ">=":
+		return pgCatalogFunctionID("scalargesel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
 	default:
 		return pgCatalogFunctionID("scalargtsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
 	}
@@ -216,6 +251,21 @@ func btreeOperatorJoinFunctionID(name string) id.Id {
 		return pgCatalogFunctionID("eqjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	case "<", "<=":
 		return pgCatalogFunctionID("scalarltjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
+}
+
+func btreeExactOperatorJoinFunctionID(name string) id.Id {
+	switch name {
+	case "=":
+		return pgCatalogFunctionID("eqjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<":
+		return pgCatalogFunctionID("scalarltjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "<=":
+		return pgCatalogFunctionID("scalarlejoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case ">=":
+		return pgCatalogFunctionID("scalargejoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	default:
 		return pgCatalogFunctionID("scalargtjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	}

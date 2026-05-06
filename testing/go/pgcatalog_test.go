@@ -85,11 +85,32 @@ ORDER BY opf.opfname;`,
 						{"bpchar_pattern_ops", 5},
 						{"datetime_ops", 15},
 						{"float_ops", 10},
-						{"integer_ops", 15},
+						{"integer_ops", 45},
 						{"numeric_ops", 5},
 						{"text_ops", 10},
 						{"text_pattern_ops", 5},
 						{"uuid_ops", 5},
+					},
+				},
+				{
+					Query: `SELECT lt.typname, rt.typname, COUNT(*)
+FROM "pg_catalog"."pg_amop" amop
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
+WHERE opf.opfname = 'integer_ops'
+GROUP BY lt.typname, rt.typname
+ORDER BY lt.typname, rt.typname;`,
+					Expected: []sql.Row{
+						{"int2", "int2", 5},
+						{"int2", "int4", 5},
+						{"int2", "int8", 5},
+						{"int4", "int2", 5},
+						{"int4", "int4", 5},
+						{"int4", "int8", 5},
+						{"int8", "int2", 5},
+						{"int8", "int4", 5},
+						{"int8", "int8", 5},
 					},
 				},
 				{
@@ -117,7 +138,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{85}},
+					Expected: []sql.Row{{115}},
 				},
 			},
 		},
@@ -143,11 +164,44 @@ ORDER BY opf.opfname;`,
 						{"bpchar_pattern_ops", 3},
 						{"datetime_ops", 3},
 						{"float_ops", 2},
-						{"integer_ops", 3},
+						{"integer_ops", 22},
 						{"numeric_ops", 1},
 						{"text_ops", 2},
 						{"text_pattern_ops", 3},
 						{"uuid_ops", 1},
+					},
+				},
+				{
+					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
+WHERE opf.opfname = 'integer_ops'
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"int2", "int2", 1, "btint2cmp"},
+						{"int2", "int2", 2, "btint2sortsupport"},
+						{"int2", "int2", 3, "pg_catalog.in_range"},
+						{"int2", "int2", 4, "btequalimage"},
+						{"int2", "int4", 1, "btint24cmp"},
+						{"int2", "int4", 3, "pg_catalog.in_range"},
+						{"int2", "int8", 1, "btint28cmp"},
+						{"int2", "int8", 3, "pg_catalog.in_range"},
+						{"int4", "int2", 1, "btint42cmp"},
+						{"int4", "int2", 3, "pg_catalog.in_range"},
+						{"int4", "int4", 1, "btint4cmp"},
+						{"int4", "int4", 2, "btint4sortsupport"},
+						{"int4", "int4", 3, "pg_catalog.in_range"},
+						{"int4", "int4", 4, "btequalimage"},
+						{"int4", "int8", 1, "btint48cmp"},
+						{"int4", "int8", 3, "pg_catalog.in_range"},
+						{"int8", "int2", 1, "btint82cmp"},
+						{"int8", "int4", 1, "btint84cmp"},
+						{"int8", "int8", 1, "btint8cmp"},
+						{"int8", "int8", 2, "btint8sortsupport"},
+						{"int8", "int8", 3, "pg_catalog.in_range"},
+						{"int8", "int8", 4, "btequalimage"},
 					},
 				},
 				{
@@ -179,7 +233,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{30}},
+					Expected: []sql.Row{{49}},
 				},
 			},
 		},
@@ -2439,6 +2493,52 @@ ORDER BY lt.typname;`,
 					},
 				},
 				{
+					Query: `SELECT lt.typname, rt.typname, COUNT(*)
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE lt.typname IN ('int2', 'int4', 'int8')
+	AND rt.typname IN ('int2', 'int4', 'int8')
+	AND lt.oid <> rt.oid
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+GROUP BY lt.typname, rt.typname
+ORDER BY lt.typname, rt.typname;`,
+					Expected: []sql.Row{
+						{"int2", "int4", 5},
+						{"int2", "int8", 5},
+						{"int4", "int2", 5},
+						{"int4", "int8", 5},
+						{"int8", "int2", 5},
+						{"int8", "int4", 5},
+					},
+				},
+				{
+					Query: `SELECT o.oprname, com.oprname, clt.typname, crt.typname
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+JOIN "pg_catalog"."pg_operator" com ON com.oid = o.oprcom
+JOIN "pg_catalog"."pg_type" clt ON clt.oid = com.oprleft
+JOIN "pg_catalog"."pg_type" crt ON crt.oid = com.oprright
+WHERE lt.typname = 'int2'
+	AND rt.typname = 'int8'
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+ORDER BY CASE o.oprname
+	WHEN '<' THEN 1
+	WHEN '<=' THEN 2
+	WHEN '=' THEN 3
+	WHEN '>=' THEN 4
+	WHEN '>' THEN 5
+END;`,
+					Expected: []sql.Row{
+						{"<", ">", "int8", "int2"},
+						{"<=", ">=", "int8", "int2"},
+						{"=", "=", "int8", "int2"},
+						{">=", "<=", "int8", "int2"},
+						{">", "<", "int8", "int2"},
+					},
+				},
+				{
 					Query: `SELECT o.oprname, lt.typname, rt.typname
 FROM "pg_catalog"."pg_operator" o
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
@@ -2472,7 +2572,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{83}},
+					Expected: []sql.Row{{113}},
 				},
 			},
 		},

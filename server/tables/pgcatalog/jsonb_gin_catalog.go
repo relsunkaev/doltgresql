@@ -86,12 +86,34 @@ func btreeAmopID(opfamily string, typeName string, strategy int16) id.Id {
 	)
 }
 
+func btreeCrossTypeAmopID(opfamily string, leftType string, rightType string, strategy int16) id.Id {
+	return id.NewId(
+		id.Section_Operator,
+		"btree_amop",
+		opfamily,
+		leftType,
+		rightType,
+		strconv.FormatInt(int64(strategy), 10),
+	)
+}
+
 func btreeAmprocID(opfamily string, typeName string, procNum int16) id.Id {
 	return id.NewId(
 		id.Section_OperatorFamily,
 		"btree_amproc",
 		opfamily,
 		typeName,
+		strconv.FormatInt(int64(procNum), 10),
+	)
+}
+
+func btreeCrossTypeAmprocID(opfamily string, leftType string, rightType string, procNum int16) id.Id {
+	return id.NewId(
+		id.Section_OperatorFamily,
+		"btree_amproc",
+		opfamily,
+		leftType,
+		rightType,
 		strconv.FormatInt(int64(procNum), 10),
 	)
 }

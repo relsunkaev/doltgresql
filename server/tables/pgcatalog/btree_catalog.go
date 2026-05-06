@@ -43,6 +43,21 @@ type btreePatternCatalogType struct {
 	comparisonFuncs [5]string
 }
 
+type btreeCrossTypeCatalogType struct {
+	leftType        string
+	rightType       string
+	opfamily        string
+	comparisonFuncs [5]string
+}
+
+type btreeSupportProc struct {
+	leftType  string
+	rightType string
+	opfamily  string
+	procNum   int16
+	proc      string
+}
+
 var btreeComparisonOperators = []btreeComparisonOperator{
 	{name: "<", strategy: 1, commutator: ">"},
 	{name: "<=", strategy: 2, commutator: ">="},
@@ -74,6 +89,67 @@ var btreePatternCatalogTypes = []btreePatternCatalogType{
 		sortSupportProc: "btbpchar_pattern_sortsupport",
 		comparisonFuncs: [5]string{"bpchar_pattern_lt", "bpchar_pattern_le", "bpchareq", "bpchar_pattern_ge", "bpchar_pattern_gt"},
 	},
+}
+
+var btreeIntegerCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
+	{
+		leftType:        "int2",
+		rightType:       "int4",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int24lt", "int24le", "int24eq", "int24ge", "int24gt"},
+	},
+	{
+		leftType:        "int2",
+		rightType:       "int8",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int28lt", "int28le", "int28eq", "int28ge", "int28gt"},
+	},
+	{
+		leftType:        "int4",
+		rightType:       "int2",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int42lt", "int42le", "int42eq", "int42ge", "int42gt"},
+	},
+	{
+		leftType:        "int4",
+		rightType:       "int8",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int48lt", "int48le", "int48eq", "int48ge", "int48gt"},
+	},
+	{
+		leftType:        "int8",
+		rightType:       "int2",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int82lt", "int82le", "int82eq", "int82ge", "int82gt"},
+	},
+	{
+		leftType:        "int8",
+		rightType:       "int4",
+		opfamily:        "integer_ops",
+		comparisonFuncs: [5]string{"int84lt", "int84le", "int84eq", "int84ge", "int84gt"},
+	},
+}
+
+var btreeIntegerSupportProcs = []btreeSupportProc{
+	{leftType: "int2", rightType: "int2", opfamily: "integer_ops", procNum: 2, proc: "btint2sortsupport"},
+	{leftType: "int2", rightType: "int2", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int2", rightType: "int2", opfamily: "integer_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "int2", rightType: "int4", opfamily: "integer_ops", procNum: 1, proc: "btint24cmp"},
+	{leftType: "int2", rightType: "int4", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int2", rightType: "int8", opfamily: "integer_ops", procNum: 1, proc: "btint28cmp"},
+	{leftType: "int2", rightType: "int8", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int4", rightType: "int2", opfamily: "integer_ops", procNum: 1, proc: "btint42cmp"},
+	{leftType: "int4", rightType: "int2", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int4", rightType: "int4", opfamily: "integer_ops", procNum: 2, proc: "btint4sortsupport"},
+	{leftType: "int4", rightType: "int4", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int4", rightType: "int4", opfamily: "integer_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "int4", rightType: "int8", opfamily: "integer_ops", procNum: 1, proc: "btint48cmp"},
+	{leftType: "int4", rightType: "int8", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int8", rightType: "int2", opfamily: "integer_ops", procNum: 1, proc: "btint82cmp"},
+	{leftType: "int8", rightType: "int4", opfamily: "integer_ops", procNum: 1, proc: "btint84cmp"},
+	{leftType: "int8", rightType: "int8", opfamily: "integer_ops", procNum: 2, proc: "btint8sortsupport"},
+	{leftType: "int8", rightType: "int8", opfamily: "integer_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "int8", rightType: "int8", opfamily: "integer_ops", procNum: 4, proc: "btequalimage"},
 }
 
 var btreeCatalogTypes = []btreeCatalogType{

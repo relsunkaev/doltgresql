@@ -114,6 +114,9 @@ var defaultPostgresAmprocs = func() []amproc {
 	for _, typ := range btreeCatalogTypes {
 		amprocs = append(amprocs, newBtreeAmproc(typ, int16(1), typ.compareProc))
 	}
+	for _, proc := range btreeIntegerSupportProcs {
+		amprocs = append(amprocs, newBtreeSupportAmproc(proc))
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		amprocs = append(amprocs,
 			newBtreePatternAmproc(typ, int16(1), typ.compareProc),
@@ -155,6 +158,21 @@ func newBtreePatternAmproc(typ btreePatternCatalogType, procNum int16, proc stri
 		rightType: pgCatalogTypeID(typ.typeName),
 		procNum:   procNum,
 		proc:      proc,
+	}
+}
+
+func newBtreeSupportAmproc(proc btreeSupportProc) amproc {
+	oid := btreeCrossTypeAmprocID(proc.opfamily, proc.leftType, proc.rightType, proc.procNum)
+	if proc.leftType == proc.rightType {
+		oid = btreeAmprocID(proc.opfamily, proc.leftType, proc.procNum)
+	}
+	return amproc{
+		oid:       oid,
+		family:    btreeOpfamilyID(proc.opfamily),
+		leftType:  pgCatalogTypeID(proc.leftType),
+		rightType: pgCatalogTypeID(proc.rightType),
+		procNum:   proc.procNum,
+		proc:      proc.proc,
 	}
 }
 

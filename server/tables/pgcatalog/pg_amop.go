@@ -123,6 +123,11 @@ var defaultPostgresAmops = func() []amop {
 			amops = append(amops, newBtreeAmop(typ, operator))
 		}
 	}
+	for _, typ := range btreeIntegerCrossTypeCatalogTypes {
+		for _, operator := range btreeComparisonOperators {
+			amops = append(amops, newBtreeCrossTypeAmop(typ, operator))
+		}
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		for _, operator := range btreePatternComparisonOperators {
 			amops = append(amops, newBtreePatternAmop(typ, operator))
@@ -158,6 +163,18 @@ func newBtreePatternAmop(typ btreePatternCatalogType, operator btreeComparisonOp
 		rightType: pgCatalogTypeID(typ.typeName),
 		strategy:  operator.strategy,
 		operator:  pgCatalogOperatorID(operator.name, typ.typeName, typ.typeName),
+		method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+	}
+}
+
+func newBtreeCrossTypeAmop(typ btreeCrossTypeCatalogType, operator btreeComparisonOperator) amop {
+	return amop{
+		oid:       btreeCrossTypeAmopID(typ.opfamily, typ.leftType, typ.rightType, operator.strategy),
+		family:    btreeOpfamilyID(typ.opfamily),
+		leftType:  pgCatalogTypeID(typ.leftType),
+		rightType: pgCatalogTypeID(typ.rightType),
+		strategy:  operator.strategy,
+		operator:  pgCatalogOperatorID(operator.name, typ.leftType, typ.rightType),
 		method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
 	}
 }
