@@ -17,6 +17,9 @@ package node
 import (
 	"errors"
 	"fmt"
+	"io"
+	"strings"
+	"sync"
 	"testing"
 
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
@@ -113,6 +116,99 @@ func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	require.NotEqual(t, "mutated", tokensAgain[0])
 }
 
+func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	sch := benchmarkJsonbGinSchema()
+	rows := benchmarkJsonbGinRows(128)
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass, func(b *testing.B) {
+			create := &CreateJsonbGinIndex{opClass: opClass}
+			inserter := &countingRowInserter{}
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				inserter.count = 0
+				iter := &benchmarkRowIter{rows: rows}
+				if err := create.backfillPartition(ctx, sch, iter, inserter, 1); err != nil {
+					b.Fatal(err)
+				}
+				if inserter.count == 0 {
+					b.Fatal("expected posting rows")
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkJsonbGinPostingRowsEncodedTokens(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	sch := benchmarkJsonbGinSchema()
+	row := sql.Row{int32(1), benchmarkJsonbGinDocument()}
+	editor := jsonbGinMaintainingEditor{
+		tableSchema:        sch,
+		primaryKeyOrdinals: primaryKeyOrdinals(sch),
+	}
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass, func(b *testing.B) {
+			index := JsonbGinMaintainedIndex{ColumnName: "doc", ColumnIndex: 1, OpClass: opClass}
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				rows, err := editor.postingRows(ctx, index, row)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if len(rows) == 0 {
+					b.Fatal("expected posting rows")
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkJsonbGinLookupTokensEncoded(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	literal := gmsexpression.NewLiteral(benchmarkJsonbGinDocument(), pgtypes.JsonB)
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass+"/contains_uncached", func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				jsonbGinLiteralTokenCache = sync.Map{}
+				tokens, mode, ok, err := jsonbGinLookupTokens(ctx, opClass, framework.Operator_BinaryJSONContainsRight, literal)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if !ok || mode != jsonbGinLookupIntersect || len(tokens) == 0 {
+					b.Fatalf("unexpected lookup tokens: ok=%v mode=%s count=%d", ok, mode, len(tokens))
+				}
+			}
+		})
+
+		b.Run(opClass+"/contains_cached", func(b *testing.B) {
+			jsonbGinLiteralTokenCache = sync.Map{}
+			tokens, mode, ok, err := jsonbGinLookupTokens(ctx, opClass, framework.Operator_BinaryJSONContainsRight, literal)
+			if err != nil {
+				b.Fatal(err)
+			}
+			if !ok || mode != jsonbGinLookupIntersect || len(tokens) == 0 {
+				b.Fatalf("unexpected lookup tokens: ok=%v mode=%s count=%d", ok, mode, len(tokens))
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				tokens, mode, ok, err := jsonbGinLookupTokens(ctx, opClass, framework.Operator_BinaryJSONContainsRight, literal)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if !ok || mode != jsonbGinLookupIntersect || len(tokens) == 0 {
+					b.Fatalf("unexpected lookup tokens: ok=%v mode=%s count=%d", ok, mode, len(tokens))
+				}
+			}
+		})
+	}
+}
+
 type recordingPostingEditor struct {
 	inserted []sql.Row
 	deleted  []sql.Row
@@ -144,6 +240,82 @@ func (e *recordingPostingEditor) Delete(_ *sql.Context, row sql.Row) error {
 
 func (e *recordingPostingEditor) Close(*sql.Context) error {
 	return nil
+}
+
+type countingRowInserter struct {
+	count int
+}
+
+var _ sql.RowInserter = (*countingRowInserter)(nil)
+
+func (i *countingRowInserter) StatementBegin(*sql.Context) {}
+
+func (i *countingRowInserter) DiscardChanges(*sql.Context, error) error {
+	i.count = 0
+	return nil
+}
+
+func (i *countingRowInserter) StatementComplete(*sql.Context) error {
+	return nil
+}
+
+func (i *countingRowInserter) Insert(*sql.Context, sql.Row) error {
+	i.count++
+	return nil
+}
+
+func (i *countingRowInserter) Close(*sql.Context) error {
+	return nil
+}
+
+type benchmarkRowIter struct {
+	rows []sql.Row
+	pos  int
+}
+
+var _ sql.RowIter = (*benchmarkRowIter)(nil)
+
+func (i *benchmarkRowIter) Next(*sql.Context) (sql.Row, error) {
+	if i.pos >= len(i.rows) {
+		return nil, io.EOF
+	}
+	row := i.rows[i.pos]
+	i.pos++
+	return row, nil
+}
+
+func (i *benchmarkRowIter) Close(*sql.Context) error {
+	return nil
+}
+
+func benchmarkJsonbGinSchema() sql.Schema {
+	return sql.Schema{
+		{Name: "id", Type: pgtypes.Int32, PrimaryKey: true, Nullable: false},
+		{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
+	}
+}
+
+func benchmarkJsonbGinRows(rowCount int) []sql.Row {
+	doc := benchmarkJsonbGinDocument()
+	rows := make([]sql.Row, rowCount)
+	for i := range rows {
+		rows[i] = sql.Row{int32(i), doc}
+	}
+	return rows
+}
+
+func benchmarkJsonbGinDocument() string {
+	var sb strings.Builder
+	sb.WriteString(`{"accounts":[`)
+	for i := 0; i < 100; i++ {
+		if i > 0 {
+			sb.WriteByte(',')
+		}
+		fmt.Fprintf(&sb, `{"id":%d,"name":"account-%d","active":%t,"tags":["vip","region-%d","vip"],"metadata":{"score":%d,"empty":{}}}`,
+			i, i, i%2 == 0, i%10, i*7)
+	}
+	sb.WriteString(`],"summary":{"count":100,"empty":[]}}`)
+	return sb.String()
 }
 
 type fakePostingTable struct {
