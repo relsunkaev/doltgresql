@@ -56,6 +56,7 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"float4_ops":             {},
 	"float8_ops":             {},
 	"numeric_ops":            {},
+	"name_ops":               {},
 	"text_ops":               {},
 	"varchar_ops":            {},
 	"bpchar_ops":             {},

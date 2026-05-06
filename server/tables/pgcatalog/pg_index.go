@@ -505,6 +505,8 @@ func defaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "float8_ops", true
 	case "numeric":
 		return "numeric_ops", true
+	case "name":
+		return "name_ops", true
 	case "text":
 		return "text_ops", true
 	case "varchar":

@@ -176,6 +176,30 @@ var btreeFloatSupportProcs = []btreeSupportProc{
 	{leftType: "float8", rightType: "float8", opfamily: "float_ops", procNum: 3, proc: "pg_catalog.in_range"},
 }
 
+var btreeTextCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
+	{
+		leftType:        "name",
+		rightType:       "text",
+		opfamily:        "text_ops",
+		comparisonFuncs: [5]string{"namelttext", "nameletext", "nameeqtext", "namegetext", "namegttext"},
+	},
+	{
+		leftType:        "text",
+		rightType:       "name",
+		opfamily:        "text_ops",
+		comparisonFuncs: [5]string{"textltname", "textlename", "texteqname", "textgename", "textgtname"},
+	},
+}
+
+var btreeTextSupportProcs = []btreeSupportProc{
+	{leftType: "name", rightType: "name", opfamily: "text_ops", procNum: 2, proc: "btnamesortsupport"},
+	{leftType: "name", rightType: "name", opfamily: "text_ops", procNum: 4, proc: "btvarstrequalimage"},
+	{leftType: "name", rightType: "text", opfamily: "text_ops", procNum: 1, proc: "btnametextcmp"},
+	{leftType: "text", rightType: "name", opfamily: "text_ops", procNum: 1, proc: "bttextnamecmp"},
+	{leftType: "text", rightType: "text", opfamily: "text_ops", procNum: 2, proc: "bttextsortsupport"},
+	{leftType: "text", rightType: "text", opfamily: "text_ops", procNum: 4, proc: "btvarstrequalimage"},
+}
+
 var btreeCatalogTypes = []btreeCatalogType{
 	{
 		typeName:        "bool",
@@ -226,11 +250,10 @@ var btreeCatalogTypes = []btreeCatalogType{
 		comparisonFuncs: [5]string{"text_lt", "text_le", "text_eq", "text_ge", "text_gt"},
 	},
 	{
-		typeName:        "varchar",
-		functionType:    "text",
+		typeName:        "name",
 		opfamily:        "text_ops",
-		compareProc:     "bttextcmp",
-		comparisonFuncs: [5]string{"text_lt", "text_le", "text_eq", "text_ge", "text_gt"},
+		compareProc:     "btnamecmp",
+		comparisonFuncs: [5]string{"namelt", "namele", "nameeq", "namege", "namegt"},
 	},
 	{
 		typeName:        "bpchar",

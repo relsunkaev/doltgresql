@@ -133,6 +133,11 @@ var defaultPostgresAmops = func() []amop {
 			amops = append(amops, newBtreeCrossTypeAmop(typ, operator))
 		}
 	}
+	for _, typ := range btreeTextCrossTypeCatalogTypes {
+		for _, operator := range btreeComparisonOperators {
+			amops = append(amops, newBtreeCrossTypeAmop(typ, operator))
+		}
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		for _, operator := range btreePatternComparisonOperators {
 			amops = append(amops, newBtreePatternAmop(typ, operator))

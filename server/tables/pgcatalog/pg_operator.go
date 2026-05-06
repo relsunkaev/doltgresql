@@ -147,6 +147,11 @@ var defaultPostgresOperators = func() []pgOperator {
 			operators = append(operators, newBtreeCrossTypeOperator(typ, operator, typ.comparisonFuncs[idx]))
 		}
 	}
+	for _, typ := range btreeTextCrossTypeCatalogTypes {
+		for idx, operator := range btreeComparisonOperators {
+			operators = append(operators, newBtreeCrossTypeOperator(typ, operator, typ.comparisonFuncs[idx]))
+		}
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		for idx, operator := range btreePatternComparisonOperators {
 			if operator.name == "=" {
