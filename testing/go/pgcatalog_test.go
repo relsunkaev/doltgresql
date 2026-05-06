@@ -83,13 +83,34 @@ ORDER BY opf.opfname;`,
 						{"bool_ops", 5},
 						{"bpchar_ops", 5},
 						{"bpchar_pattern_ops", 5},
-						{"datetime_ops", 15},
+						{"datetime_ops", 45},
 						{"float_ops", 20},
 						{"integer_ops", 45},
 						{"numeric_ops", 5},
 						{"text_ops", 20},
 						{"text_pattern_ops", 5},
 						{"uuid_ops", 5},
+					},
+				},
+				{
+					Query: `SELECT lt.typname, rt.typname, COUNT(*)
+FROM "pg_catalog"."pg_amop" amop
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amop.amopfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amop.amoplefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amop.amoprighttype
+WHERE opf.opfname = 'datetime_ops'
+GROUP BY lt.typname, rt.typname
+ORDER BY lt.typname, rt.typname;`,
+					Expected: []sql.Row{
+						{"date", "date", 5},
+						{"date", "timestamp", 5},
+						{"date", "timestamptz", 5},
+						{"timestamp", "date", 5},
+						{"timestamp", "timestamp", 5},
+						{"timestamp", "timestamptz", 5},
+						{"timestamptz", "date", 5},
+						{"timestamptz", "timestamp", 5},
+						{"timestamptz", "timestamptz", 5},
 					},
 				},
 				{
@@ -170,7 +191,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{135}},
+					Expected: []sql.Row{{165}},
 				},
 			},
 		},
@@ -194,13 +215,42 @@ ORDER BY opf.opfname;`,
 						{"bool_ops", 2},
 						{"bpchar_ops", 3},
 						{"bpchar_pattern_ops", 3},
-						{"datetime_ops", 3},
+						{"datetime_ops", 18},
 						{"float_ops", 8},
 						{"integer_ops", 22},
 						{"numeric_ops", 3},
 						{"text_ops", 8},
 						{"text_pattern_ops", 3},
 						{"uuid_ops", 3},
+					},
+				},
+				{
+					Query: `SELECT lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
+WHERE opf.opfname = 'datetime_ops'
+ORDER BY lt.typname, rt.typname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"date", "date", 1, "date_cmp"},
+						{"date", "date", 2, "date_sortsupport"},
+						{"date", "date", 4, "btequalimage"},
+						{"date", "interval", 3, "pg_catalog.in_range"},
+						{"date", "timestamp", 1, "date_cmp_timestamp"},
+						{"date", "timestamptz", 1, "date_cmp_timestamptz"},
+						{"timestamp", "date", 1, "timestamp_cmp_date"},
+						{"timestamp", "interval", 3, "pg_catalog.in_range"},
+						{"timestamp", "timestamp", 1, "timestamp_cmp"},
+						{"timestamp", "timestamp", 2, "timestamp_sortsupport"},
+						{"timestamp", "timestamp", 4, "btequalimage"},
+						{"timestamp", "timestamptz", 1, "timestamp_cmp_timestamptz"},
+						{"timestamptz", "date", 1, "timestamptz_cmp_date"},
+						{"timestamptz", "interval", 3, "pg_catalog.in_range"},
+						{"timestamptz", "timestamp", 1, "timestamptz_cmp_timestamp"},
+						{"timestamptz", "timestamptz", 1, "timestamptz_cmp"},
+						{"timestamptz", "timestamptz", 2, "timestamp_sortsupport"},
+						{"timestamptz", "timestamptz", 4, "btequalimage"},
 					},
 				},
 				{
@@ -325,7 +375,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{68}},
+					Expected: []sql.Row{{83}},
 				},
 			},
 		},
@@ -2622,6 +2672,52 @@ ORDER BY lt.typname, rt.typname;`,
 FROM "pg_catalog"."pg_operator" o
 JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
 JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE lt.typname IN ('date', 'timestamp', 'timestamptz')
+	AND rt.typname IN ('date', 'timestamp', 'timestamptz')
+	AND lt.oid <> rt.oid
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+GROUP BY lt.typname, rt.typname
+ORDER BY lt.typname, rt.typname;`,
+					Expected: []sql.Row{
+						{"date", "timestamp", 5},
+						{"date", "timestamptz", 5},
+						{"timestamp", "date", 5},
+						{"timestamp", "timestamptz", 5},
+						{"timestamptz", "date", 5},
+						{"timestamptz", "timestamp", 5},
+					},
+				},
+				{
+					Query: `SELECT o.oprname, com.oprname, clt.typname, crt.typname
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+JOIN "pg_catalog"."pg_operator" com ON com.oid = o.oprcom
+JOIN "pg_catalog"."pg_type" clt ON clt.oid = com.oprleft
+JOIN "pg_catalog"."pg_type" crt ON crt.oid = com.oprright
+WHERE lt.typname = 'date'
+	AND rt.typname = 'timestamptz'
+	AND o.oprname IN ('<', '<=', '=', '>=', '>')
+ORDER BY CASE o.oprname
+	WHEN '<' THEN 1
+	WHEN '<=' THEN 2
+	WHEN '=' THEN 3
+	WHEN '>=' THEN 4
+	WHEN '>' THEN 5
+END;`,
+					Expected: []sql.Row{
+						{"<", ">", "timestamptz", "date"},
+						{"<=", ">=", "timestamptz", "date"},
+						{"=", "=", "timestamptz", "date"},
+						{">=", "<=", "timestamptz", "date"},
+						{">", "<", "timestamptz", "date"},
+					},
+				},
+				{
+					Query: `SELECT lt.typname, rt.typname, COUNT(*)
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
 WHERE lt.typname IN ('int2', 'int4', 'int8')
 	AND rt.typname IN ('int2', 'int4', 'int8')
 	AND lt.oid <> rt.oid
@@ -2739,7 +2835,7 @@ END;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{133}},
+					Expected: []sql.Row{{163}},
 				},
 			},
 		},

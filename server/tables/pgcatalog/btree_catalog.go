@@ -210,6 +210,63 @@ var btreeScalarSupportProcs = []btreeSupportProc{
 	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 4, proc: "btequalimage"},
 }
 
+var btreeDatetimeCrossTypeCatalogTypes = []btreeCrossTypeCatalogType{
+	{
+		leftType:        "date",
+		rightType:       "timestamp",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"date_lt_timestamp", "date_le_timestamp", "date_eq_timestamp", "date_ge_timestamp", "date_gt_timestamp"},
+	},
+	{
+		leftType:        "date",
+		rightType:       "timestamptz",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"date_lt_timestamptz", "date_le_timestamptz", "date_eq_timestamptz", "date_ge_timestamptz", "date_gt_timestamptz"},
+	},
+	{
+		leftType:        "timestamp",
+		rightType:       "date",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"timestamp_lt_date", "timestamp_le_date", "timestamp_eq_date", "timestamp_ge_date", "timestamp_gt_date"},
+	},
+	{
+		leftType:        "timestamp",
+		rightType:       "timestamptz",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"timestamp_lt_timestamptz", "timestamp_le_timestamptz", "timestamp_eq_timestamptz", "timestamp_ge_timestamptz", "timestamp_gt_timestamptz"},
+	},
+	{
+		leftType:        "timestamptz",
+		rightType:       "date",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"timestamptz_lt_date", "timestamptz_le_date", "timestamptz_eq_date", "timestamptz_ge_date", "timestamptz_gt_date"},
+	},
+	{
+		leftType:        "timestamptz",
+		rightType:       "timestamp",
+		opfamily:        "datetime_ops",
+		comparisonFuncs: [5]string{"timestamptz_lt_timestamp", "timestamptz_le_timestamp", "timestamptz_eq_timestamp", "timestamptz_ge_timestamp", "timestamptz_gt_timestamp"},
+	},
+}
+
+var btreeDatetimeSupportProcs = []btreeSupportProc{
+	{leftType: "date", rightType: "date", opfamily: "datetime_ops", procNum: 2, proc: "date_sortsupport"},
+	{leftType: "date", rightType: "date", opfamily: "datetime_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "date", rightType: "interval", opfamily: "datetime_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "date", rightType: "timestamp", opfamily: "datetime_ops", procNum: 1, proc: "date_cmp_timestamp"},
+	{leftType: "date", rightType: "timestamptz", opfamily: "datetime_ops", procNum: 1, proc: "date_cmp_timestamptz"},
+	{leftType: "timestamp", rightType: "date", opfamily: "datetime_ops", procNum: 1, proc: "timestamp_cmp_date"},
+	{leftType: "timestamp", rightType: "interval", opfamily: "datetime_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "timestamp", rightType: "timestamp", opfamily: "datetime_ops", procNum: 2, proc: "timestamp_sortsupport"},
+	{leftType: "timestamp", rightType: "timestamp", opfamily: "datetime_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "timestamp", rightType: "timestamptz", opfamily: "datetime_ops", procNum: 1, proc: "timestamp_cmp_timestamptz"},
+	{leftType: "timestamptz", rightType: "date", opfamily: "datetime_ops", procNum: 1, proc: "timestamptz_cmp_date"},
+	{leftType: "timestamptz", rightType: "interval", opfamily: "datetime_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "timestamptz", rightType: "timestamp", opfamily: "datetime_ops", procNum: 1, proc: "timestamptz_cmp_timestamp"},
+	{leftType: "timestamptz", rightType: "timestamptz", opfamily: "datetime_ops", procNum: 2, proc: "timestamp_sortsupport"},
+	{leftType: "timestamptz", rightType: "timestamptz", opfamily: "datetime_ops", procNum: 4, proc: "btequalimage"},
+}
+
 var btreeCatalogTypes = []btreeCatalogType{
 	{
 		typeName:        "bool",
