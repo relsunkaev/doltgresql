@@ -25,6 +25,66 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
+func unsupportedAccessMethodBoundaryScript(displayName string, accessMethod string, handler string) ScriptTest {
+	tableName := "access_method_boundary_" + accessMethod
+	indexName := tableName + "_idx"
+	return ScriptTest{
+		Name: "PostgreSQL " + displayName + " access method boundary",
+		SetUpScript: []string{
+			"CREATE TABLE " + tableName + " (id INTEGER PRIMARY KEY, v TEXT NOT NULL);",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: `SELECT amname, amhandler, amtype
+FROM pg_catalog.pg_am
+WHERE amname = '` + accessMethod + `';`,
+				Expected: []sql.Row{
+					{accessMethod, handler, "i"},
+				},
+			},
+			{
+				Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+WHERE am.amname = '` + accessMethod + `';`,
+				Expected: []sql.Row{{0}},
+			},
+			{
+				Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_opfamily opf
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE am.amname = '` + accessMethod + `';`,
+				Expected: []sql.Row{{0}},
+			},
+			{
+				Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+WHERE am.amname = '` + accessMethod + `';`,
+				Expected: []sql.Row{{0}},
+			},
+			{
+				Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_amproc amproc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE am.amname = '` + accessMethod + `';`,
+				Expected: []sql.Row{{0}},
+			},
+			{
+				Query:       "CREATE INDEX " + indexName + " ON " + tableName + " USING " + accessMethod + " (v);",
+				ExpectedErr: "index method " + accessMethod + " is not yet supported",
+			},
+			{
+				Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_class
+WHERE relname = '` + indexName + `';`,
+				Expected: []sql.Row{{0}},
+			},
+		},
+	}
+}
+
 func TestBasicIndexing(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -1106,61 +1166,8 @@ func TestBasicIndexing(t *testing.T) {
 				},
 			},
 		},
-		{
-			Name: "PostgreSQL hash access method boundary",
-			SetUpScript: []string{
-				"CREATE TABLE hash_access_method_boundary (id INTEGER PRIMARY KEY, v TEXT NOT NULL);",
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `SELECT amname, amhandler, amtype
-FROM pg_catalog.pg_am
-WHERE amname = 'hash';`,
-					Expected: []sql.Row{
-						{"hash", "hashhandler", "i"},
-					},
-				},
-				{
-					Query: `SELECT COUNT(*)
-FROM pg_catalog.pg_opclass opc
-JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
-WHERE am.amname = 'hash';`,
-					Expected: []sql.Row{{0}},
-				},
-				{
-					Query: `SELECT COUNT(*)
-FROM pg_catalog.pg_opfamily opf
-JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
-WHERE am.amname = 'hash';`,
-					Expected: []sql.Row{{0}},
-				},
-				{
-					Query: `SELECT COUNT(*)
-FROM pg_catalog.pg_amop amop
-JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
-WHERE am.amname = 'hash';`,
-					Expected: []sql.Row{{0}},
-				},
-				{
-					Query: `SELECT COUNT(*)
-FROM pg_catalog.pg_amproc amproc
-JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
-JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
-WHERE am.amname = 'hash';`,
-					Expected: []sql.Row{{0}},
-				},
-				{
-					Query:       "CREATE INDEX hash_access_method_boundary_v_hash_idx ON hash_access_method_boundary USING hash (v);",
-					ExpectedErr: "index method hash is not yet supported",
-				},
-				{
-					Query: `SELECT COUNT(*)
-FROM pg_catalog.pg_class
-WHERE relname = 'hash_access_method_boundary_v_hash_idx';`,
-					Expected: []sql.Row{{0}},
-				},
-			},
-		},
+		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler"),
+		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler"),
 		{
 			Name: "PostgreSQL btree reloptions metadata",
 			SetUpScript: []string{
