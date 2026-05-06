@@ -15,12 +15,16 @@
 package node
 
 import (
+	"bufio"
+	"bytes"
+	"container/heap"
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -42,20 +46,22 @@ const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
 const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
 const jsonbGinPostingChunkRowsPerChunk = 256
+const jsonbGinPostingChunkBuildSpillEntries = 65536
 const jsonbGinPostingStorageVersionEnv = "DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION"
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
-	ifNotExists              bool
-	schema                   string
-	tableName                string
-	indexName                string
-	columnName               string
-	opClass                  string
-	postingName              string
-	postingChunkName         string
-	postingStorageVersion    int
-	postingChunkRowsPerChunk int
+	ifNotExists                   bool
+	schema                        string
+	tableName                     string
+	indexName                     string
+	columnName                    string
+	opClass                       string
+	postingName                   string
+	postingChunkName              string
+	postingStorageVersion         int
+	postingChunkRowsPerChunk      int
+	postingChunkBuildSpillEntries int
 }
 
 var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
@@ -420,10 +426,11 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 	if _, ok := postingTable.(sql.InsertableTable); !ok {
 		return errors.Errorf(`posting chunk table "%s" does not support inserts`, c.postingChunkName)
 	}
-	store, err := c.buildPostingChunkStoreFromTable(ctx, table, columnIndex)
+	sorter, err := c.buildPostingChunkEntrySorterFromTable(ctx, table, columnIndex)
 	if err != nil {
 		return err
 	}
+	defer sorter.Close()
 	sink, err := newJsonbGinPostingChunkRowSink(ctx, db, postingTable)
 	if err != nil {
 		return err
@@ -435,7 +442,7 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 		}
 		_ = sink.Close(ctx)
 	}()
-	if err = c.writePostingChunkRows(ctx, store, sink); err != nil {
+	if err = c.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
 		return err
 	}
 	if err = sink.Complete(ctx); err != nil {
@@ -446,15 +453,16 @@ func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, table sql.Table, columnIndex int) ([]sql.Row, error) {
-	store, err := c.buildPostingChunkStoreFromTable(ctx, table, columnIndex)
+	sorter, err := c.buildPostingChunkEntrySorterFromTable(ctx, table, columnIndex)
 	if err != nil {
 		return nil, err
 	}
-	return c.materializePostingChunkRows(store)
+	defer sorter.Close()
+	return c.materializePostingChunkRowsFromEntries(ctx, sorter)
 }
 
-func (c *CreateJsonbGinIndex) buildPostingChunkStoreFromTable(ctx *sql.Context, table sql.Table, columnIndex int) (*jsonbgin.ChunkedPostingStore, error) {
-	store := jsonbgin.NewChunkedPostingStore(c.postingChunkRowsPerChunkLimit())
+func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Context, table sql.Table, columnIndex int) (*jsonbGinPostingChunkEntrySorter, error) {
+	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
 	partitions, err := table.Partitions(ctx)
 	if err != nil {
 		return nil, err
@@ -466,32 +474,37 @@ func (c *CreateJsonbGinIndex) buildPostingChunkStoreFromTable(ctx *sql.Context, 
 			break
 		}
 		if err != nil {
+			_ = sorter.Close()
 			return nil, err
 		}
 		rows, err := table.PartitionRows(ctx, partition)
 		if err != nil {
+			_ = sorter.Close()
 			return nil, err
 		}
-		if err = c.addPostingChunkRows(ctx, table.Schema(ctx), rows, columnIndex, store); err != nil {
+		if err = c.addPostingChunkEntries(ctx, table.Schema(ctx), rows, columnIndex, sorter); err != nil {
 			_ = rows.Close(ctx)
+			_ = sorter.Close()
 			return nil, err
 		}
 		if err = rows.Close(ctx); err != nil {
+			_ = sorter.Close()
 			return nil, err
 		}
 	}
-	return store, nil
+	return sorter, nil
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) ([]sql.Row, error) {
-	store := jsonbgin.NewChunkedPostingStore(c.postingChunkRowsPerChunkLimit())
-	if err := c.addPostingChunkRows(ctx, sch, rows, columnIndex, store); err != nil {
+	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	defer sorter.Close()
+	if err := c.addPostingChunkEntries(ctx, sch, rows, columnIndex, sorter); err != nil {
 		return nil, err
 	}
-	return c.materializePostingChunkRows(store)
+	return c.materializePostingChunkRowsFromEntries(ctx, sorter)
 }
 
-func (c *CreateJsonbGinIndex) addPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, store *jsonbgin.ChunkedPostingStore) error {
+func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
 	for {
 		row, err := rows.Next(ctx)
 		if err == io.EOF {
@@ -511,38 +524,97 @@ func (c *CreateJsonbGinIndex) addPostingChunkRows(ctx *sql.Context, sch sql.Sche
 		if err != nil {
 			return err
 		}
-		tokens, err := jsonbgin.Extract(doc, c.opClass)
+		encodedTokens, err := jsonbgin.ExtractEncoded(doc, c.opClass)
 		if err != nil {
 			return err
 		}
-		if err = store.Add(rowRef.Bytes, tokens); err != nil {
-			return err
+		for _, encodedToken := range encodedTokens {
+			if err = sorter.Add(encodedToken, rowRef.Bytes); err != nil {
+				return err
+			}
 		}
 	}
 }
 
-func (c *CreateJsonbGinIndex) materializePostingChunkRows(store *jsonbgin.ChunkedPostingStore) ([]sql.Row, error) {
-	entries, err := store.ChunkEntries()
-	if err != nil {
+func (c *CreateJsonbGinIndex) materializePostingChunkRowsFromEntries(ctx *sql.Context, sorter *jsonbGinPostingChunkEntrySorter) ([]sql.Row, error) {
+	collector := &jsonbGinPostingChunkRowCollector{}
+	if err := c.writePostingChunkRowsFromEntries(ctx, sorter, collector); err != nil {
 		return nil, err
 	}
-	rows := make([]sql.Row, len(entries))
-	for i, entry := range entries {
-		rows[i] = postingChunkEntryRow(entry)
-	}
-	return rows, nil
+	return collector.rows, nil
 }
 
-func (c *CreateJsonbGinIndex) writePostingChunkRows(ctx *sql.Context, store *jsonbgin.ChunkedPostingStore, sink jsonbGinPostingRowSink) error {
-	entries, err := store.ChunkEntries()
+func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context, sorter *jsonbGinPostingChunkEntrySorter, sink jsonbGinPostingRowAppender) error {
+	iter, err := sorter.Iterator()
 	if err != nil {
 		return err
 	}
-	for _, entry := range entries {
-		if err = sink.Add(ctx, postingChunkEntryRow(entry)); err != nil {
+	defer iter.Close()
+	rowsPerChunk := c.postingChunkRowsPerChunkLimit()
+	var currentToken string
+	var chunkNo int64
+	var rowRefs [][]byte
+	var previous jsonbGinPostingChunkBuildEntry
+	havePrevious := false
+	flushChunk := func() error {
+		if len(rowRefs) == 0 {
+			return nil
+		}
+		chunk, err := jsonbgin.EncodePostingChunk(rowRefs)
+		if err != nil {
 			return err
 		}
+		if err = sink.Add(ctx, postingChunkEntryRow(jsonbgin.PostingChunkEntry{
+			Token:   currentToken,
+			ChunkNo: chunkNo,
+			Chunk:   chunk,
+		})); err != nil {
+			return err
+		}
+		chunkNo++
+		clear(rowRefs)
+		rowRefs = rowRefs[:0]
+		return nil
 	}
+	for {
+		entry, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if havePrevious && previous.token == entry.token && bytes.Equal(previous.rowRef, entry.rowRef) {
+			continue
+		}
+		previous = entry
+		havePrevious = true
+		if currentToken == "" {
+			currentToken = entry.token
+		}
+		if entry.token != currentToken {
+			if err = flushChunk(); err != nil {
+				return err
+			}
+			currentToken = entry.token
+			chunkNo = 0
+		}
+		rowRefs = append(rowRefs, entry.rowRef)
+		if len(rowRefs) >= rowsPerChunk {
+			if err = flushChunk(); err != nil {
+				return err
+			}
+		}
+	}
+	return flushChunk()
+}
+
+type jsonbGinPostingChunkRowCollector struct {
+	rows []sql.Row
+}
+
+func (c *jsonbGinPostingChunkRowCollector) Add(_ *sql.Context, row sql.Row) error {
+	c.rows = append(c.rows, append(sql.Row(nil), row...))
 	return nil
 }
 
@@ -567,10 +639,314 @@ func (c *CreateJsonbGinIndex) postingChunkRowsPerChunkLimit() int {
 	return jsonbGinPostingChunkRowsPerChunk
 }
 
+func (c *CreateJsonbGinIndex) postingChunkBuildSpillEntryLimit() int {
+	if c.postingChunkBuildSpillEntries > 0 {
+		return c.postingChunkBuildSpillEntries
+	}
+	return jsonbGinPostingChunkBuildSpillEntries
+}
+
 func postingChunkChecksumBytes(checksum uint32) []byte {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, checksum)
 	return buf
+}
+
+type jsonbGinPostingChunkBuildEntry struct {
+	token  string
+	rowRef []byte
+}
+
+type jsonbGinPostingChunkEntryIterator interface {
+	Next() (jsonbGinPostingChunkBuildEntry, error)
+	Close() error
+}
+
+type jsonbGinPostingChunkEntrySorter struct {
+	maxEntries int
+	entries    []jsonbGinPostingChunkBuildEntry
+	runs       []string
+}
+
+func newJsonbGinPostingChunkEntrySorter(maxEntries int) *jsonbGinPostingChunkEntrySorter {
+	if maxEntries <= 0 {
+		maxEntries = jsonbGinPostingChunkBuildSpillEntries
+	}
+	return &jsonbGinPostingChunkEntrySorter{
+		maxEntries: maxEntries,
+	}
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) Add(token string, rowRef []byte) error {
+	if token == "" {
+		return errors.Errorf("JSONB GIN posting token cannot be empty")
+	}
+	if len(rowRef) == 0 {
+		return errors.Errorf("JSONB GIN posting row reference cannot be empty")
+	}
+	s.entries = append(s.entries, jsonbGinPostingChunkBuildEntry{
+		token:  token,
+		rowRef: append([]byte(nil), rowRef...),
+	})
+	if len(s.entries) >= s.maxEntries {
+		return s.flushRun()
+	}
+	return nil
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) Iterator() (jsonbGinPostingChunkEntryIterator, error) {
+	if len(s.runs) == 0 {
+		sortPostingChunkBuildEntries(s.entries)
+		return &jsonbGinPostingChunkMemoryIterator{entries: s.entries}, nil
+	}
+	if err := s.flushRun(); err != nil {
+		return nil, err
+	}
+	return newJsonbGinPostingChunkMergeIterator(s.runs)
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) Close() error {
+	var ret error
+	clear(s.entries)
+	s.entries = nil
+	for _, run := range s.runs {
+		if err := os.Remove(run); err != nil && !os.IsNotExist(err) && ret == nil {
+			ret = err
+		}
+	}
+	clear(s.runs)
+	s.runs = nil
+	return ret
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) flushRun() error {
+	if len(s.entries) == 0 {
+		return nil
+	}
+	sortPostingChunkBuildEntries(s.entries)
+	file, err := os.CreateTemp("", "doltgres-jsonb-gin-posting-chunks-*.run")
+	if err != nil {
+		return err
+	}
+	path := file.Name()
+	writer := bufio.NewWriter(file)
+	for _, entry := range s.entries {
+		if err = writePostingChunkBuildEntry(writer, entry); err != nil {
+			_ = file.Close()
+			_ = os.Remove(path)
+			return err
+		}
+	}
+	if err = writer.Flush(); err != nil {
+		_ = file.Close()
+		_ = os.Remove(path)
+		return err
+	}
+	if err = file.Close(); err != nil {
+		_ = os.Remove(path)
+		return err
+	}
+	s.runs = append(s.runs, path)
+	clear(s.entries)
+	s.entries = s.entries[:0]
+	return nil
+}
+
+func sortPostingChunkBuildEntries(entries []jsonbGinPostingChunkBuildEntry) {
+	sort.Slice(entries, func(i, j int) bool {
+		return jsonbGinPostingChunkBuildEntryLess(entries[i], entries[j])
+	})
+}
+
+func jsonbGinPostingChunkBuildEntryLess(left jsonbGinPostingChunkBuildEntry, right jsonbGinPostingChunkBuildEntry) bool {
+	if left.token != right.token {
+		return left.token < right.token
+	}
+	return bytes.Compare(left.rowRef, right.rowRef) < 0
+}
+
+func writePostingChunkBuildEntry(writer *bufio.Writer, entry jsonbGinPostingChunkBuildEntry) error {
+	if len(entry.token) > math.MaxUint32 {
+		return errors.Errorf("JSONB GIN posting token is too large: %d bytes", len(entry.token))
+	}
+	if len(entry.rowRef) > math.MaxUint32 {
+		return errors.Errorf("JSONB GIN posting row reference is too large: %d bytes", len(entry.rowRef))
+	}
+	var lenBuf [4]byte
+	binary.BigEndian.PutUint32(lenBuf[:], uint32(len(entry.token)))
+	if _, err := writer.Write(lenBuf[:]); err != nil {
+		return err
+	}
+	if _, err := writer.WriteString(entry.token); err != nil {
+		return err
+	}
+	binary.BigEndian.PutUint32(lenBuf[:], uint32(len(entry.rowRef)))
+	if _, err := writer.Write(lenBuf[:]); err != nil {
+		return err
+	}
+	_, err := writer.Write(entry.rowRef)
+	return err
+}
+
+func readPostingChunkBuildEntry(reader *bufio.Reader) (jsonbGinPostingChunkBuildEntry, error) {
+	var lenBuf [4]byte
+	if _, err := io.ReadFull(reader, lenBuf[:]); err != nil {
+		return jsonbGinPostingChunkBuildEntry{}, err
+	}
+	tokenLen := binary.BigEndian.Uint32(lenBuf[:])
+	token := make([]byte, tokenLen)
+	if _, err := io.ReadFull(reader, token); err != nil {
+		return jsonbGinPostingChunkBuildEntry{}, err
+	}
+	if _, err := io.ReadFull(reader, lenBuf[:]); err != nil {
+		return jsonbGinPostingChunkBuildEntry{}, err
+	}
+	rowRefLen := binary.BigEndian.Uint32(lenBuf[:])
+	rowRef := make([]byte, rowRefLen)
+	if _, err := io.ReadFull(reader, rowRef); err != nil {
+		return jsonbGinPostingChunkBuildEntry{}, err
+	}
+	return jsonbGinPostingChunkBuildEntry{token: string(token), rowRef: rowRef}, nil
+}
+
+type jsonbGinPostingChunkMemoryIterator struct {
+	entries []jsonbGinPostingChunkBuildEntry
+	pos     int
+}
+
+func (i *jsonbGinPostingChunkMemoryIterator) Next() (jsonbGinPostingChunkBuildEntry, error) {
+	if i.pos >= len(i.entries) {
+		return jsonbGinPostingChunkBuildEntry{}, io.EOF
+	}
+	entry := i.entries[i.pos]
+	i.pos++
+	return entry, nil
+}
+
+func (i *jsonbGinPostingChunkMemoryIterator) Close() error {
+	return nil
+}
+
+type jsonbGinPostingChunkRunIterator struct {
+	file   *os.File
+	reader *bufio.Reader
+}
+
+func newJsonbGinPostingChunkRunIterator(path string) (*jsonbGinPostingChunkRunIterator, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return &jsonbGinPostingChunkRunIterator{
+		file:   file,
+		reader: bufio.NewReader(file),
+	}, nil
+}
+
+func (i *jsonbGinPostingChunkRunIterator) Next() (jsonbGinPostingChunkBuildEntry, error) {
+	return readPostingChunkBuildEntry(i.reader)
+}
+
+func (i *jsonbGinPostingChunkRunIterator) Close() error {
+	if i.file == nil {
+		return nil
+	}
+	err := i.file.Close()
+	i.file = nil
+	return err
+}
+
+type jsonbGinPostingChunkMergeIterator struct {
+	runs []*jsonbGinPostingChunkRunIterator
+	heap jsonbGinPostingChunkMergeHeap
+}
+
+func newJsonbGinPostingChunkMergeIterator(paths []string) (*jsonbGinPostingChunkMergeIterator, error) {
+	iter := &jsonbGinPostingChunkMergeIterator{
+		runs: make([]*jsonbGinPostingChunkRunIterator, 0, len(paths)),
+	}
+	for _, path := range paths {
+		run, err := newJsonbGinPostingChunkRunIterator(path)
+		if err != nil {
+			_ = iter.Close()
+			return nil, err
+		}
+		runIndex := len(iter.runs)
+		iter.runs = append(iter.runs, run)
+		entry, err := run.Next()
+		if err == io.EOF {
+			continue
+		}
+		if err != nil {
+			_ = iter.Close()
+			return nil, err
+		}
+		heap.Push(&iter.heap, jsonbGinPostingChunkMergeItem{entry: entry, runIndex: runIndex})
+	}
+	return iter, nil
+}
+
+func (i *jsonbGinPostingChunkMergeIterator) Next() (jsonbGinPostingChunkBuildEntry, error) {
+	if i.heap.Len() == 0 {
+		return jsonbGinPostingChunkBuildEntry{}, io.EOF
+	}
+	item := heap.Pop(&i.heap).(jsonbGinPostingChunkMergeItem)
+	if next, err := i.runs[item.runIndex].Next(); err == nil {
+		heap.Push(&i.heap, jsonbGinPostingChunkMergeItem{entry: next, runIndex: item.runIndex})
+	} else if err != io.EOF {
+		return jsonbGinPostingChunkBuildEntry{}, err
+	}
+	return item.entry, nil
+}
+
+func (i *jsonbGinPostingChunkMergeIterator) Close() error {
+	var ret error
+	for _, run := range i.runs {
+		if run == nil {
+			continue
+		}
+		if err := run.Close(); err != nil && ret == nil {
+			ret = err
+		}
+	}
+	clear(i.runs)
+	i.runs = nil
+	clear(i.heap)
+	i.heap = nil
+	return ret
+}
+
+type jsonbGinPostingChunkMergeItem struct {
+	entry    jsonbGinPostingChunkBuildEntry
+	runIndex int
+}
+
+type jsonbGinPostingChunkMergeHeap []jsonbGinPostingChunkMergeItem
+
+var _ heap.Interface = (*jsonbGinPostingChunkMergeHeap)(nil)
+
+func (h jsonbGinPostingChunkMergeHeap) Len() int {
+	return len(h)
+}
+
+func (h jsonbGinPostingChunkMergeHeap) Less(i int, j int) bool {
+	return jsonbGinPostingChunkBuildEntryLess(h[i].entry, h[j].entry)
+}
+
+func (h jsonbGinPostingChunkMergeHeap) Swap(i int, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h *jsonbGinPostingChunkMergeHeap) Push(value any) {
+	*h = append(*h, value.(jsonbGinPostingChunkMergeItem))
+}
+
+func (h *jsonbGinPostingChunkMergeHeap) Pop() any {
+	old := *h
+	n := len(old)
+	value := old[n-1]
+	*h = old[:n-1]
+	return value
 }
 
 type jsonbGinPostingRowAppender interface {

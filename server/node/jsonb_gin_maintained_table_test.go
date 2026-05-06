@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -535,6 +536,86 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbPathOps(t *testing.T) {
 	require.Equal(t, jsonbgin.TokenKindPathValue, token.Kind)
 }
 
+func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithSpill(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	baseSchema := jsonbGinPostingStorageBaseSchema()
+	rows := []sql.Row{
+		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
+		{int32(2), `{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}`},
+		{int32(3), `{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}`},
+		{int32(4), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-3"}}`},
+	}
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingChunkRowsPerChunk = 2
+	expected, err := create.buildPostingChunkRows(ctx, baseSchema, &benchmarkRowIter{rows: rows}, 1)
+	require.NoError(t, err)
+
+	spilled := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	spilled.postingChunkRowsPerChunk = 2
+	spilled.postingChunkBuildSpillEntries = 3
+	got, err := spilled.buildPostingChunkRows(ctx, baseSchema, &benchmarkRowIter{rows: rows}, 1)
+	require.NoError(t, err)
+	require.Equal(t, expected, got)
+}
+
+func TestJsonbGinPostingChunkSpillDeduplicatesEntries(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	sorter := newJsonbGinPostingChunkEntrySorter(1)
+	defer sorter.Close()
+	require.NoError(t, sorter.Add("token/a", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/a", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/a", []byte("row/2")))
+
+	collector := &jsonbGinPostingChunkRowCollector{}
+	create := &CreateJsonbGinIndex{postingChunkRowsPerChunk: 10}
+	require.NoError(t, create.writePostingChunkRowsFromEntries(ctx, sorter, collector))
+	require.Len(t, collector.rows, 1)
+	require.Equal(t, int32(2), collector.rows[0][3])
+	payload, ok := collector.rows[0][6].([]byte)
+	require.True(t, ok)
+	chunk, err := jsonbgin.DecodePostingChunk(payload)
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{[]byte("row/1"), []byte("row/2")}, chunk.RowRefs)
+}
+
+func TestJsonbGinPostingChunkEntrySorterMergeOrdersAndCleansRuns(t *testing.T) {
+	sorter := newJsonbGinPostingChunkEntrySorter(2)
+	defer sorter.Close()
+	require.NoError(t, sorter.Add("token/b", []byte("row/2")))
+	require.NoError(t, sorter.Add("token/a", []byte("row/3")))
+	require.NoError(t, sorter.Add("token/a", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/b", []byte("row/1")))
+	require.NoError(t, sorter.Add("token/a", []byte("row/2")))
+
+	iter, err := sorter.Iterator()
+	require.NoError(t, err)
+	var got []jsonbGinPostingChunkBuildEntry
+	for {
+		entry, err := iter.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		require.NoError(t, err)
+		got = append(got, entry)
+	}
+	require.NoError(t, iter.Close())
+	require.Equal(t, []jsonbGinPostingChunkBuildEntry{
+		{token: "token/a", rowRef: []byte("row/1")},
+		{token: "token/a", rowRef: []byte("row/2")},
+		{token: "token/a", rowRef: []byte("row/3")},
+		{token: "token/b", rowRef: []byte("row/1")},
+		{token: "token/b", rowRef: []byte("row/2")},
+	}, got)
+
+	runPaths := append([]string(nil), sorter.runs...)
+	require.NotEmpty(t, runPaths)
+	require.NoError(t, sorter.Close())
+	for _, runPath := range runPaths {
+		_, err = os.Stat(runPath)
+		require.True(t, os.IsNotExist(err), "expected spill run %s to be removed", runPath)
+	}
+}
+
 func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	ns := tree.NewTestNodeStore()
@@ -631,23 +712,40 @@ func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
 	ctx := sql.NewEmptyContext()
 	sch := benchmarkJsonbGinSchema()
 	rows := benchmarkJsonbGinRows(512)
-	create := &CreateJsonbGinIndex{
-		opClass:                  indexmetadata.OpClassJsonbOps,
-		postingChunkRowsPerChunk: 128,
-	}
-	store := jsonbgin.NewChunkedPostingStore(create.postingChunkRowsPerChunkLimit())
-	require.NoError(b, create.addPostingChunkRows(ctx, sch, &benchmarkRowIter{rows: rows}, 1, store))
-	sink := &countingPostingRowSink{}
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		sink.count = 0
-		if err := create.writePostingChunkRows(ctx, store, sink); err != nil {
-			b.Fatal(err)
-		}
-		if sink.count == 0 {
-			b.Fatal("expected chunk rows")
-		}
+	for _, test := range []struct {
+		name         string
+		spillEntries int
+	}{
+		{name: "memory", spillEntries: 0},
+		{name: "spill", spillEntries: 64},
+	} {
+		test := test
+		b.Run(test.name, func(b *testing.B) {
+			create := &CreateJsonbGinIndex{
+				opClass:                       indexmetadata.OpClassJsonbOps,
+				postingChunkRowsPerChunk:      128,
+				postingChunkBuildSpillEntries: test.spillEntries,
+			}
+			sink := &countingPostingRowSink{}
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				sink.count = 0
+				sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
+				if err := create.addPostingChunkEntries(ctx, sch, &benchmarkRowIter{rows: rows}, 1, sorter); err != nil {
+					b.Fatal(err)
+				}
+				if err := create.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
+					_ = sorter.Close()
+					b.Fatal(err)
+				}
+				if err := sorter.Close(); err != nil {
+					b.Fatal(err)
+				}
+				if sink.count == 0 {
+					b.Fatal("expected chunk rows")
+				}
+			}
+		})
 	}
 }
 
