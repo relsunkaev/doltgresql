@@ -655,11 +655,7 @@ func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator fr
 	opClass = indexmetadata.NormalizeOpClass(opClass)
 	switch operator {
 	case framework.Operator_BinaryJSONContainsRight:
-		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, value)
-		if err != nil {
-			return nil, "", false, err
-		}
-		tokens, err := jsonbgin.ExtractEncoded(doc, opClass)
+		tokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, value, opClass)
 		if err != nil || len(tokens) == 0 {
 			return nil, "", false, err
 		}
@@ -1303,11 +1299,7 @@ func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGin
 	if index.ColumnIndex >= len(row) || row[index.ColumnIndex] == nil {
 		return nil, nil
 	}
-	doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[index.ColumnIndex])
-	if err != nil {
-		return nil, err
-	}
-	encodedTokens, err := jsonbgin.ExtractEncoded(doc, index.OpClass)
+	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[index.ColumnIndex], index.OpClass)
 	if err != nil {
 		return nil, err
 	}
@@ -1330,11 +1322,7 @@ func (e *jsonbGinMaintainingEditor) postingChunkMutation(ctx *sql.Context, index
 	if err != nil {
 		return nil, nil, err
 	}
-	doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[index.ColumnIndex])
-	if err != nil {
-		return nil, nil, err
-	}
-	encodedTokens, err := jsonbgin.ExtractEncoded(doc, index.OpClass)
+	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[index.ColumnIndex], index.OpClass)
 	if err != nil {
 		return nil, nil, err
 	}

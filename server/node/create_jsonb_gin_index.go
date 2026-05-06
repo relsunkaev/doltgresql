@@ -520,11 +520,7 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.S
 		if err != nil {
 			return err
 		}
-		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[columnIndex])
-		if err != nil {
-			return err
-		}
-		encodedTokens, err := jsonbgin.ExtractEncoded(doc, c.opClass)
+		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
 		if err != nil {
 			return err
 		}
@@ -979,11 +975,7 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 		}
 		rowID := rowIdentity(sch, row)
 		keyValues := primaryKeyRowValues(sch, row)
-		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[columnIndex])
-		if err != nil {
-			return err
-		}
-		encodedTokens, err := jsonbgin.ExtractEncoded(doc, c.opClass)
+		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
 		if err != nil {
 			return err
 		}

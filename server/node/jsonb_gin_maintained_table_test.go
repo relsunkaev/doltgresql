@@ -629,6 +629,49 @@ func TestJsonbGinPostingChunkEntrySorterAddRowTokensValidatesInput(t *testing.T)
 	require.NoError(t, iter.Close())
 }
 
+func TestJsonbGinExtractEncodedTokensFromSQLValueMatchesConversion(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	input := `{"bbb":1,"a":[{"z":true},{"z":true}],"tags":["vip","vip"],"empty":{},"none":null}`
+	doc, err := pgtypes.UnmarshalToJsonDocument([]byte(input))
+	require.NoError(t, err)
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		t.Run(opClass+"/string", func(t *testing.T) {
+			expectedDoc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, input)
+			require.NoError(t, err)
+			expected, err := jsonbgin.ExtractEncoded(expectedDoc, opClass)
+			require.NoError(t, err)
+
+			got, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, input, opClass)
+			require.NoError(t, err)
+			require.Equal(t, expected, got)
+		})
+
+		t.Run(opClass+"/document", func(t *testing.T) {
+			expectedDoc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, doc)
+			require.NoError(t, err)
+			expected, err := jsonbgin.ExtractEncoded(expectedDoc, opClass)
+			require.NoError(t, err)
+
+			got, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, doc, opClass)
+			require.NoError(t, err)
+			require.Equal(t, expected, got)
+		})
+
+		t.Run(opClass+"/value", func(t *testing.T) {
+			expected, err := jsonbgin.ExtractValueEncoded(doc.Value, opClass)
+			require.NoError(t, err)
+
+			got, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, doc.Value, opClass)
+			require.NoError(t, err)
+			require.Equal(t, expected, got)
+		})
+	}
+
+	_, err = jsonbGinExtractEncodedTokensFromSQLValue(ctx, doc, "text_ops")
+	require.ErrorContains(t, err, "unsupported JSONB GIN opclass")
+}
+
 func TestJsonbGinPostingChunkEntrySorterMergeOrdersAndCleansRuns(t *testing.T) {
 	sorter := newJsonbGinPostingChunkEntrySorter(2)
 	defer sorter.Close()
@@ -810,43 +853,93 @@ func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
 func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
 	ctx := sql.NewEmptyContext()
 	sch := benchmarkJsonbGinSchema()
-	rows := benchmarkJsonbGinRows(512)
-	for _, test := range []struct {
+	doc := mustBenchmarkJsonDocument(b, benchmarkJsonbGinDocument())
+	rowSets := []struct {
+		name string
+		rows []sql.Row
+	}{
+		{name: "string", rows: benchmarkJsonbGinRows(512)},
+		{name: "document", rows: benchmarkJsonbGinRowsWithValue(512, doc)},
+	}
+	spillCases := []struct {
 		name         string
 		spillEntries int
 	}{
 		{name: "memory", spillEntries: 0},
 		{name: "spill", spillEntries: 64},
-	} {
-		test := test
-		b.Run(test.name, func(b *testing.B) {
-			create := &CreateJsonbGinIndex{
-				opClass:                       indexmetadata.OpClassJsonbOps,
-				postingChunkRowsPerChunk:      128,
-				postingChunkBuildSpillEntries: test.spillEntries,
+	}
+	for _, rowSet := range rowSets {
+		rowSet := rowSet
+		b.Run(rowSet.name, func(b *testing.B) {
+			for _, test := range spillCases {
+				test := test
+				b.Run(test.name, func(b *testing.B) {
+					create := &CreateJsonbGinIndex{
+						opClass:                       indexmetadata.OpClassJsonbOps,
+						postingChunkRowsPerChunk:      128,
+						postingChunkBuildSpillEntries: test.spillEntries,
+					}
+					sink := &countingPostingRowSink{}
+					b.ReportAllocs()
+					var lastChunkRows int
+					for i := 0; i < b.N; i++ {
+						sink.count = 0
+						sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
+						if err := create.addPostingChunkEntries(ctx, sch, &benchmarkRowIter{rows: rowSet.rows}, 1, sorter); err != nil {
+							b.Fatal(err)
+						}
+						if err := create.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
+							_ = sorter.Close()
+							b.Fatal(err)
+						}
+						if err := sorter.Close(); err != nil {
+							b.Fatal(err)
+						}
+						if sink.count == 0 {
+							b.Fatal("expected chunk rows")
+						}
+						lastChunkRows = sink.count
+					}
+					b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
+				})
 			}
-			sink := &countingPostingRowSink{}
-			b.ReportAllocs()
-			var lastChunkRows int
-			for i := 0; i < b.N; i++ {
-				sink.count = 0
-				sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
-				if err := create.addPostingChunkEntries(ctx, sch, &benchmarkRowIter{rows: rows}, 1, sorter); err != nil {
-					b.Fatal(err)
-				}
-				if err := create.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
-					_ = sorter.Close()
-					b.Fatal(err)
-				}
-				if err := sorter.Close(); err != nil {
-					b.Fatal(err)
-				}
-				if sink.count == 0 {
-					b.Fatal("expected chunk rows")
-				}
-				lastChunkRows = sink.count
+		})
+	}
+}
+
+func BenchmarkJsonbGinExtractEncodedTokensFromSQLValue(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	docText := benchmarkJsonbGinDocument()
+	doc := mustBenchmarkJsonDocument(b, docText)
+	values := []struct {
+		name  string
+		value any
+	}{
+		{name: "string", value: docText},
+		{name: "document", value: doc},
+		{name: "value", value: doc.Value},
+	}
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		opClass := opClass
+		b.Run(opClass, func(b *testing.B) {
+			for _, test := range values {
+				test := test
+				b.Run(test.name, func(b *testing.B) {
+					b.ReportAllocs()
+					var tokenCount int
+					for i := 0; i < b.N; i++ {
+						tokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, test.value, opClass)
+						if err != nil {
+							b.Fatal(err)
+						}
+						tokenCount = len(tokens)
+					}
+					if tokenCount == 0 {
+						b.Fatal("expected tokens")
+					}
+					b.ReportMetric(float64(tokenCount), "tokens/op")
+				})
 			}
-			b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
 		})
 	}
 }
@@ -1140,11 +1233,22 @@ func benchmarkJsonbGinSchema() sql.Schema {
 
 func benchmarkJsonbGinRows(rowCount int) []sql.Row {
 	doc := benchmarkJsonbGinDocument()
+	return benchmarkJsonbGinRowsWithValue(rowCount, doc)
+}
+
+func benchmarkJsonbGinRowsWithValue(rowCount int, doc any) []sql.Row {
 	rows := make([]sql.Row, rowCount)
 	for i := range rows {
 		rows[i] = sql.Row{int32(i), doc}
 	}
 	return rows
+}
+
+func mustBenchmarkJsonDocument(tb testing.TB, input string) pgtypes.JsonDocument {
+	tb.Helper()
+	doc, err := pgtypes.UnmarshalToJsonDocument([]byte(input))
+	require.NoError(tb, err)
+	return doc
 }
 
 func benchmarkJsonbGinDocument() string {
