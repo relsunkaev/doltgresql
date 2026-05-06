@@ -40,6 +40,7 @@ const (
 	ruleId_AssignSelectiveLookupJoinHints                                   // assignSelectiveLookupJoinHints
 	ruleId_AssignTriggers                                                   // assignTriggers
 	ruleId_AssignUpdateCasts                                                // assignUpdateCasts
+	ruleId_UseSchemaAwareStatsProvider                                      // useSchemaAwareStatsProvider
 	ruleId_ConvertDropPrimaryKeyConstraint                                  // convertDropPrimaryKeyConstraint
 	ruleId_WrapPrimaryKeyMetadata                                           // wrapPrimaryKeyMetadata
 	ruleId_GenerateForeignKeyName                                           // generateForeignKeyName
@@ -83,6 +84,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ValidateColumnDefaults, Apply: ValidateColumnDefaults},
 		analyzer.Rule{Id: ruleId_AssignInsertCasts, Apply: AssignInsertCasts},
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
+		analyzer.Rule{Id: ruleId_UseSchemaAwareStatsProvider, Apply: UseSchemaAwareStatsProvider},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
 		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
