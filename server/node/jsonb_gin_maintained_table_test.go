@@ -304,6 +304,8 @@ func TestJsonbGinPostingChunkEditorAppendsDMLChunksWithoutRewritingExisting(t *t
 	require.NoError(t, posting.flush(ctx))
 	require.Empty(t, editor.deleted)
 	require.Len(t, editor.inserted, 1)
+	require.Zero(t, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
 	chunkNo, ok, err := postingChunkRowChunkNo(editor.inserted[0])
 	require.NoError(t, err)
 	require.True(t, ok)

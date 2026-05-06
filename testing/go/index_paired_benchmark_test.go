@@ -552,7 +552,7 @@ func runPairedIndexDMLBenchmarks(b *testing.B, dgCtx context.Context, dg pairedB
 }
 
 func runPairedJsonbGinDMLBucketBenchmarks(b *testing.B, dgCtx context.Context, dg pairedBenchmarkConn, pgCtx context.Context, pg pairedBenchmarkConn) {
-	for _, operation := range []string{"insert", "update", "delete"} {
+	for _, operation := range []string{"insert", "update", "delete", "mixed_multi_row", "rollback", "failure"} {
 		operation := operation
 		b.Run("jsonb_gin/dml_"+operation, func(b *testing.B) {
 			iterations := pairedBenchmarkIterationCount()
@@ -602,6 +602,33 @@ func measurePairedJsonbGinDMLBucket(tb testing.TB, ctx context.Context, conn pai
 			execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(i+2))
 		}
 		return elapsed
+	case "mixed_multi_row":
+		start := time.Now()
+		for i := 0; i < iterations; i++ {
+			firstID := i*2 + 1
+			secondID := firstID + 1
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb), ($3, $4::jsonb)", table),
+				firstID, benchmarkJsonbDocument(firstID), secondID, benchmarkJsonbDocument(secondID))
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("UPDATE %s SET doc = $3::jsonb WHERE id IN ($1::integer, $2::integer)", table),
+				firstID, secondID, benchmarkJsonbDocument(firstID+100000))
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("DELETE FROM %s WHERE id IN ($1::integer, $2::integer)", table), firstID, secondID)
+		}
+		return time.Since(start)
+	case "rollback":
+		start := time.Now()
+		for i := 0; i < iterations; i++ {
+			execPairedSQL(tb, ctx, conn, "BEGIN")
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), i+1, benchmarkJsonbDocument(i+1))
+			execPairedSQL(tb, ctx, conn, "ROLLBACK")
+		}
+		return time.Since(start)
+	case "failure":
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(1))
+		start := time.Now()
+		for i := 0; i < iterations; i++ {
+			execPairedSQLExpectError(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(i+2))
+		}
+		return time.Since(start)
 	default:
 		tb.Fatalf("unknown JSONB GIN DML operation: %s", operation)
 		return 0
@@ -787,6 +814,13 @@ func execPairedSQL(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn,
 	tb.Helper()
 	if _, err := conn.Exec(ctx, query, args...); err != nil {
 		tb.Fatalf("paired benchmark SQL failed: %v\nquery: %s", err, query)
+	}
+}
+
+func execPairedSQLExpectError(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, query string, args ...any) {
+	tb.Helper()
+	if _, err := conn.Exec(ctx, query, args...); err == nil {
+		tb.Fatalf("paired benchmark SQL unexpectedly succeeded\nquery: %s", query)
 	}
 }
 

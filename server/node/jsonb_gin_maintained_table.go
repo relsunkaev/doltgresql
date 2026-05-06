@@ -1264,6 +1264,20 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		if len(pendingByRowRef) == 0 {
 			continue
 		}
+		deleteRowRefs, insertRowRefs := pendingPostingChunkMutations(pendingByRowRef)
+		if len(deleteRowRefs) == 0 {
+			for _, rowRef := range insertRowRefs {
+				chunkNo := postingChunkDMLChunkNo(encodedToken, rowRef, nil)
+				row, err := materializePostingChunkRow(encodedToken, chunkNo, [][]byte{rowRef})
+				if err != nil {
+					return err
+				}
+				if err = p.editor.Insert(ctx, row); err != nil {
+					return err
+				}
+			}
+			continue
+		}
 		existingRows, err := lookupPostingChunkRows(ctx, p.table, encodedToken)
 		if err != nil {
 			return err
@@ -1272,7 +1286,6 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		if err != nil {
 			return err
 		}
-		deleteRowRefs, insertRowRefs := pendingPostingChunkMutations(pendingByRowRef)
 		occupiedChunkNos, err := postingChunkRowsOccupiedChunkNos(existingRows)
 		if err != nil {
 			return err
