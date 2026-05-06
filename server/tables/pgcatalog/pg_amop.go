@@ -123,6 +123,11 @@ var defaultPostgresAmops = func() []amop {
 			amops = append(amops, newBtreeAmop(typ, operator))
 		}
 	}
+	for _, typ := range btreePatternCatalogTypes {
+		for _, operator := range btreePatternComparisonOperators {
+			amops = append(amops, newBtreePatternAmop(typ, operator))
+		}
+	}
 	amops = append(amops,
 		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "@>", "jsonb", int16(7)),
 		newJsonbGinAmop(indexmetadata.OpClassJsonbOps, "?", "text", int16(9)),
@@ -134,6 +139,18 @@ var defaultPostgresAmops = func() []amop {
 }()
 
 func newBtreeAmop(typ btreeCatalogType, operator btreeComparisonOperator) amop {
+	return amop{
+		oid:       btreeAmopID(typ.opfamily, typ.typeName, operator.strategy),
+		family:    btreeOpfamilyID(typ.opfamily),
+		leftType:  pgCatalogTypeID(typ.typeName),
+		rightType: pgCatalogTypeID(typ.typeName),
+		strategy:  operator.strategy,
+		operator:  pgCatalogOperatorID(operator.name, typ.typeName, typ.typeName),
+		method:    id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
+	}
+}
+
+func newBtreePatternAmop(typ btreePatternCatalogType, operator btreeComparisonOperator) amop {
 	return amop{
 		oid:       btreeAmopID(typ.opfamily, typ.typeName, operator.strategy),
 		family:    btreeOpfamilyID(typ.opfamily),

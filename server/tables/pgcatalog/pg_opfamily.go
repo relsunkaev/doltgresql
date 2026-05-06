@@ -112,6 +112,8 @@ var defaultPostgresOpfamilies = []opfamily{
 	newBtreeOpfamily("numeric_ops"),
 	newBtreeOpfamily("text_ops"),
 	newBtreeOpfamily("bpchar_ops"),
+	newBtreeOpfamily(indexmetadata.OpClassTextPatternOps),
+	newBtreeOpfamily(indexmetadata.OpClassBpcharPatternOps),
 	newBtreeOpfamily("datetime_ops"),
 	newBtreeOpfamily("uuid_ops"),
 	newJsonbGinOpfamily(indexmetadata.OpClassJsonbOps),

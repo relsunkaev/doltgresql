@@ -35,12 +35,45 @@ type btreeComparisonOperator struct {
 	commutator string
 }
 
+type btreePatternCatalogType struct {
+	typeName        string
+	opfamily        string
+	compareProc     string
+	sortSupportProc string
+	comparisonFuncs [5]string
+}
+
 var btreeComparisonOperators = []btreeComparisonOperator{
 	{name: "<", strategy: 1, commutator: ">"},
 	{name: "<=", strategy: 2, commutator: ">="},
 	{name: "=", strategy: 3, commutator: "="},
 	{name: ">=", strategy: 4, commutator: "<="},
 	{name: ">", strategy: 5, commutator: "<"},
+}
+
+var btreePatternComparisonOperators = []btreeComparisonOperator{
+	{name: "~<~", strategy: 1, commutator: "~>~"},
+	{name: "~<=~", strategy: 2, commutator: "~>=~"},
+	{name: "=", strategy: 3, commutator: "="},
+	{name: "~>=~", strategy: 4, commutator: "~<=~"},
+	{name: "~>~", strategy: 5, commutator: "~<~"},
+}
+
+var btreePatternCatalogTypes = []btreePatternCatalogType{
+	{
+		typeName:        "text",
+		opfamily:        "text_pattern_ops",
+		compareProc:     "bttext_pattern_cmp",
+		sortSupportProc: "bttext_pattern_sortsupport",
+		comparisonFuncs: [5]string{"text_pattern_lt", "text_pattern_le", "texteq", "text_pattern_ge", "text_pattern_gt"},
+	},
+	{
+		typeName:        "bpchar",
+		opfamily:        "bpchar_pattern_ops",
+		compareProc:     "btbpchar_pattern_cmp",
+		sortSupportProc: "btbpchar_pattern_sortsupport",
+		comparisonFuncs: [5]string{"bpchar_pattern_lt", "bpchar_pattern_le", "bpchareq", "bpchar_pattern_ge", "bpchar_pattern_gt"},
+	},
 }
 
 var btreeCatalogTypes = []btreeCatalogType{

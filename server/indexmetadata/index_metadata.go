@@ -26,6 +26,10 @@ const (
 	OpClassJsonbOps     = "jsonb_ops"
 	OpClassJsonbPathOps = "jsonb_path_ops"
 
+	OpClassTextPatternOps    = "text_pattern_ops"
+	OpClassVarcharPatternOps = "varchar_pattern_ops"
+	OpClassBpcharPatternOps  = "bpchar_pattern_ops"
+
 	CollationDefault  = "default"
 	CollationC        = "C"
 	CollationPOSIX    = "POSIX"
@@ -45,20 +49,23 @@ const (
 )
 
 var supportedBtreeOpClasses = map[string]struct{}{
-	"bool_ops":        {},
-	"int2_ops":        {},
-	"int4_ops":        {},
-	"int8_ops":        {},
-	"float4_ops":      {},
-	"float8_ops":      {},
-	"numeric_ops":     {},
-	"text_ops":        {},
-	"varchar_ops":     {},
-	"bpchar_ops":      {},
-	"date_ops":        {},
-	"timestamp_ops":   {},
-	"timestamptz_ops": {},
-	"uuid_ops":        {},
+	"bool_ops":               {},
+	"int2_ops":               {},
+	"int4_ops":               {},
+	"int8_ops":               {},
+	"float4_ops":             {},
+	"float8_ops":             {},
+	"numeric_ops":            {},
+	"text_ops":               {},
+	"varchar_ops":            {},
+	"bpchar_ops":             {},
+	OpClassTextPatternOps:    {},
+	OpClassVarcharPatternOps: {},
+	OpClassBpcharPatternOps:  {},
+	"date_ops":               {},
+	"timestamp_ops":          {},
+	"timestamptz_ops":        {},
+	"uuid_ops":               {},
 }
 
 var supportedCollations = map[string]struct{}{

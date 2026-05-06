@@ -82,11 +82,13 @@ ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
 						{"bool_ops", 5},
 						{"bpchar_ops", 5},
+						{"bpchar_pattern_ops", 5},
 						{"datetime_ops", 15},
 						{"float_ops", 10},
 						{"integer_ops", 15},
 						{"numeric_ops", 5},
 						{"text_ops", 10},
+						{"text_pattern_ops", 5},
 						{"uuid_ops", 5},
 					},
 				},
@@ -115,7 +117,7 @@ ORDER BY opf.opfname, amop.amopstrategy;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMOP;",
-					Expected: []sql.Row{{75}},
+					Expected: []sql.Row{{85}},
 				},
 			},
 		},
@@ -138,11 +140,13 @@ ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
 						{"bool_ops", 1},
 						{"bpchar_ops", 1},
+						{"bpchar_pattern_ops", 3},
 						{"datetime_ops", 3},
 						{"float_ops", 2},
 						{"integer_ops", 3},
 						{"numeric_ops", 1},
 						{"text_ops", 2},
+						{"text_pattern_ops", 3},
 						{"uuid_ops", 1},
 					},
 				},
@@ -175,7 +179,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{24}},
+					Expected: []sql.Row{{30}},
 				},
 			},
 		},
@@ -2295,6 +2299,21 @@ func TestPgOpclass(t *testing.T) {
 			Name: "pg_opclass",
 			Assertions: []ScriptTestAssertion{
 				{
+					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
+FROM "pg_catalog"."pg_opclass" opc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = opc.opcfamily
+JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
+JOIN "pg_catalog"."pg_type" typ ON typ.oid = opc.opcintype
+WHERE am.amname = 'btree'
+	AND opc.opcname IN ('text_pattern_ops', 'varchar_pattern_ops', 'bpchar_pattern_ops')
+ORDER BY opc.opcname;`,
+					Expected: []sql.Row{
+						{"bpchar_pattern_ops", "bpchar_pattern_ops", "bpchar", "f", 0},
+						{"text_pattern_ops", "text_pattern_ops", "text", "f", 0},
+						{"varchar_pattern_ops", "text_pattern_ops", "text", "f", 0},
+					},
+				},
+				{
 					Query: `SELECT opc.opcname, am.amname, opc.opcdefault, typ.typname
 FROM "pg_catalog"."pg_opclass" opc
 JOIN "pg_catalog"."pg_am" am ON am.oid = opc.opcmethod
@@ -2319,6 +2338,7 @@ ORDER BY opc.opcname;`,
 					Expected: []sql.Row{
 						{"bool_ops"},
 						{"bpchar_ops"},
+						{"bpchar_pattern_ops"},
 						{"date_ops"},
 						{"float4_ops"},
 						{"float8_ops"},
@@ -2329,10 +2349,12 @@ ORDER BY opc.opcname;`,
 						{"jsonb_path_ops"},
 						{"numeric_ops"},
 						{"text_ops"},
+						{"text_pattern_ops"},
 						{"timestamp_ops"},
 						{"timestamptz_ops"},
 						{"uuid_ops"},
 						{"varchar_ops"},
+						{"varchar_pattern_ops"},
 					},
 				},
 			},
@@ -2416,6 +2438,30 @@ ORDER BY lt.typname;`,
 						{"varchar", 5},
 					},
 				},
+				{
+					Query: `SELECT o.oprname, lt.typname, rt.typname
+FROM "pg_catalog"."pg_operator" o
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = o.oprleft
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = o.oprright
+WHERE o.oprname IN ('~<~', '~<=~', '~>=~', '~>~')
+	AND lt.typname IN ('bpchar', 'text')
+ORDER BY lt.typname, CASE o.oprname
+	WHEN '~<~' THEN 1
+	WHEN '~<=~' THEN 2
+	WHEN '~>=~' THEN 3
+	WHEN '~>~' THEN 4
+END;`,
+					Expected: []sql.Row{
+						{"~<~", "bpchar", "bpchar"},
+						{"~<=~", "bpchar", "bpchar"},
+						{"~>=~", "bpchar", "bpchar"},
+						{"~>~", "bpchar", "bpchar"},
+						{"~<~", "text", "text"},
+						{"~<=~", "text", "text"},
+						{"~>=~", "text", "text"},
+						{"~>~", "text", "text"},
+					},
+				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_operator";`,
 					ExpectedErr: "not",
@@ -2426,7 +2472,7 @@ ORDER BY lt.typname;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_OPERATOR;",
-					Expected: []sql.Row{{75}},
+					Expected: []sql.Row{{83}},
 				},
 			},
 		},
@@ -2446,6 +2492,7 @@ ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
 						{"bool_ops", "btree"},
 						{"bpchar_ops", "btree"},
+						{"bpchar_pattern_ops", "btree"},
 						{"datetime_ops", "btree"},
 						{"float_ops", "btree"},
 						{"integer_ops", "btree"},
@@ -2453,6 +2500,7 @@ ORDER BY opf.opfname;`,
 						{"jsonb_path_ops", "gin"},
 						{"numeric_ops", "btree"},
 						{"text_ops", "btree"},
+						{"text_pattern_ops", "btree"},
 						{"uuid_ops", "btree"},
 					},
 				},
@@ -2469,6 +2517,7 @@ ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
 						{"bool_ops"},
 						{"bpchar_ops"},
+						{"bpchar_pattern_ops"},
 						{"datetime_ops"},
 						{"float_ops"},
 						{"integer_ops"},
@@ -2476,6 +2525,7 @@ ORDER BY opf.opfname;`,
 						{"jsonb_path_ops"},
 						{"numeric_ops"},
 						{"text_ops"},
+						{"text_pattern_ops"},
 						{"uuid_ops"},
 					},
 				},

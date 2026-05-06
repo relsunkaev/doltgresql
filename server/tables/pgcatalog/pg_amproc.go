@@ -114,6 +114,13 @@ var defaultPostgresAmprocs = func() []amproc {
 	for _, typ := range btreeCatalogTypes {
 		amprocs = append(amprocs, newBtreeAmproc(typ, int16(1), typ.compareProc))
 	}
+	for _, typ := range btreePatternCatalogTypes {
+		amprocs = append(amprocs,
+			newBtreePatternAmproc(typ, int16(1), typ.compareProc),
+			newBtreePatternAmproc(typ, int16(2), typ.sortSupportProc),
+			newBtreePatternAmproc(typ, int16(4), "btequalimage"),
+		)
+	}
 	amprocs = append(amprocs,
 		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(1), "gin_compare_jsonb"),
 		newJsonbGinAmproc(indexmetadata.OpClassJsonbOps, int16(2), "gin_extract_jsonb"),
@@ -130,6 +137,17 @@ var defaultPostgresAmprocs = func() []amproc {
 }()
 
 func newBtreeAmproc(typ btreeCatalogType, procNum int16, proc string) amproc {
+	return amproc{
+		oid:       btreeAmprocID(typ.opfamily, typ.typeName, procNum),
+		family:    btreeOpfamilyID(typ.opfamily),
+		leftType:  pgCatalogTypeID(typ.typeName),
+		rightType: pgCatalogTypeID(typ.typeName),
+		procNum:   procNum,
+		proc:      proc,
+	}
+}
+
+func newBtreePatternAmproc(typ btreePatternCatalogType, procNum int16, proc string) amproc {
 	return amproc{
 		oid:       btreeAmprocID(typ.opfamily, typ.typeName, procNum),
 		family:    btreeOpfamilyID(typ.opfamily),

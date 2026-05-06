@@ -137,6 +137,14 @@ var defaultPostgresOperators = func() []pgOperator {
 			operators = append(operators, newBtreeOperator(typ, operator, typ.comparisonFuncs[idx]))
 		}
 	}
+	for _, typ := range btreePatternCatalogTypes {
+		for idx, operator := range btreePatternComparisonOperators {
+			if operator.name == "=" {
+				continue
+			}
+			operators = append(operators, newBtreePatternOperator(typ, operator, typ.comparisonFuncs[idx]))
+		}
+	}
 	operators = append(operators,
 		newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
 		newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
@@ -163,6 +171,21 @@ func newBtreeOperator(typ btreeCatalogType, operator btreeComparisonOperator, fu
 	}
 }
 
+func newBtreePatternOperator(typ btreePatternCatalogType, operator btreeComparisonOperator, function string) pgOperator {
+	return pgOperator{
+		oid:        pgCatalogOperatorID(operator.name, typ.typeName, typ.typeName),
+		name:       operator.name,
+		namespace:  pgCatalogNamespaceID(),
+		leftType:   pgCatalogTypeID(typ.typeName),
+		rightType:  pgCatalogTypeID(typ.typeName),
+		result:     pgCatalogTypeID("bool"),
+		commutator: pgCatalogOperatorID(operator.commutator, typ.typeName, typ.typeName),
+		code:       pgCatalogFunctionID(function, pgCatalogType(typ.typeName), pgCatalogType(typ.typeName)),
+		restrict:   btreePatternOperatorRestrictFunctionID(operator.name),
+		join:       btreePatternOperatorJoinFunctionID(operator.name),
+	}
+}
+
 func btreeOperatorRestrictFunctionID(name string) id.Id {
 	switch name {
 	case "=":
@@ -174,12 +197,38 @@ func btreeOperatorRestrictFunctionID(name string) id.Id {
 	}
 }
 
+func btreePatternOperatorRestrictFunctionID(name string) id.Id {
+	switch name {
+	case "~<~":
+		return pgCatalogFunctionID("scalarltsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "~<=~":
+		return pgCatalogFunctionID("scalarlesel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "~>=~":
+		return pgCatalogFunctionID("scalargesel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtsel", pgCatalogType("int4"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
+}
+
 func btreeOperatorJoinFunctionID(name string) id.Id {
 	switch name {
 	case "=":
 		return pgCatalogFunctionID("eqjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	case "<", "<=":
 		return pgCatalogFunctionID("scalarltjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	default:
+		return pgCatalogFunctionID("scalargtjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	}
+}
+
+func btreePatternOperatorJoinFunctionID(name string) id.Id {
+	switch name {
+	case "~<~":
+		return pgCatalogFunctionID("scalarltjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "~<=~":
+		return pgCatalogFunctionID("scalarlejoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
+	case "~>=~":
+		return pgCatalogFunctionID("scalargejoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	default:
 		return pgCatalogFunctionID("scalargtjoinsel", pgCatalogType("int2"), pgCatalogType("oid"), pgCatalogType("internal"), pgCatalogType("internal"), pgCatalogType("internal"))
 	}

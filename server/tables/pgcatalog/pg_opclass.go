@@ -128,6 +128,9 @@ var defaultPostgresOpclasses = []opclass{
 	newBtreeOpclass("text_ops", "text", "text_ops"),
 	newBtreeOpclass("varchar_ops", "varchar", "text_ops"),
 	newBtreeOpclass("bpchar_ops", "bpchar", "bpchar_ops"),
+	newBtreeOpclassWithDefault(indexmetadata.OpClassTextPatternOps, "text", "text_pattern_ops", false),
+	newBtreeOpclassWithDefault(indexmetadata.OpClassVarcharPatternOps, "text", "text_pattern_ops", false),
+	newBtreeOpclassWithDefault(indexmetadata.OpClassBpcharPatternOps, "bpchar", "bpchar_pattern_ops", false),
 	newBtreeOpclass("date_ops", "date", "datetime_ops"),
 	newBtreeOpclass("timestamp_ops", "timestamp", "datetime_ops"),
 	newBtreeOpclass("timestamptz_ops", "timestamptz", "datetime_ops"),
@@ -137,6 +140,10 @@ var defaultPostgresOpclasses = []opclass{
 }
 
 func newBtreeOpclass(name string, typeName string, family string) opclass {
+	return newBtreeOpclassWithDefault(name, typeName, family, true)
+}
+
+func newBtreeOpclassWithDefault(name string, typeName string, family string, isDefault bool) opclass {
 	return opclass{
 		oid:       id.NewId(id.Section_OperatorClass, name),
 		opcmethod: id.NewAccessMethod(indexmetadata.AccessMethodBtree).AsId(),
@@ -145,7 +152,7 @@ func newBtreeOpclass(name string, typeName string, family string) opclass {
 		family:    btreeOpfamilyID(family),
 		intype:    pgCatalogTypeID(typeName),
 		keytype:   zeroOID(),
-		isDefault: true,
+		isDefault: isDefault,
 	}
 }
 

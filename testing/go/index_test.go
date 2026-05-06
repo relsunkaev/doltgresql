@@ -1076,9 +1076,8 @@ func TestBasicIndexing(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// Unsupported btree opclasses are rejected instead of being hidden by other ignored options.
 					Query:       "CREATE INDEX v1_idx ON test(v1 varchar_pattern_ops) WITH (storage_opt1 = foo) TABLESPACE tablespace_name;",
-					ExpectedErr: "operator class varchar_pattern_ops is not yet supported for btree indexes",
+					ExpectedErr: "index storage parameter storage_opt1 is not yet supported",
 				},
 				{
 					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
@@ -2003,6 +2002,50 @@ WHERE c.relname = 'btree_opclass_meta_idx';`,
 				{
 					Query:       "CREATE INDEX btree_opclass_meta_bad_idx ON btree_opclass_meta (a jsonb_ops);",
 					ExpectedErr: "operator class jsonb_ops is not yet supported for btree indexes",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL btree pattern opclass metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_pattern_opclass_meta (id INTEGER PRIMARY KEY, t TEXT, v VARCHAR, c CHARACTER(12));",
+				"CREATE INDEX btree_pattern_text_idx ON btree_pattern_opclass_meta (t text_pattern_ops);",
+				"CREATE INDEX btree_pattern_varchar_idx ON btree_pattern_opclass_meta (v varchar_pattern_ops);",
+				"CREATE INDEX btree_pattern_bpchar_idx ON btree_pattern_opclass_meta (c bpchar_pattern_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	c.relname,
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	i.indclass,
+	i.indcollation,
+	i.indoption
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname LIKE 'btree_pattern_%_idx'
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"btree_pattern_bpchar_idx", "CREATE INDEX btree_pattern_bpchar_idx ON public.btree_pattern_opclass_meta USING btree (c bpchar_pattern_ops)", "c bpchar_pattern_ops", opClassOidVector("bpchar_pattern_ops"), collationOidVector("default"), "0"},
+						{"btree_pattern_text_idx", "CREATE INDEX btree_pattern_text_idx ON public.btree_pattern_opclass_meta USING btree (t text_pattern_ops)", "t text_pattern_ops", opClassOidVector("text_pattern_ops"), collationOidVector("default"), "0"},
+						{"btree_pattern_varchar_idx", "CREATE INDEX btree_pattern_varchar_idx ON public.btree_pattern_opclass_meta USING btree (v varchar_pattern_ops)", "v varchar_pattern_ops", opClassOidVector("varchar_pattern_ops"), collationOidVector("default"), "0"},
+					},
+				},
+				{
+					Query: `SELECT opc.opcname, opf.opfname, typ.typname, opc.opcdefault, opc.opckeytype
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = opc.opcfamily
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+WHERE am.amname = 'btree'
+	AND opc.opcname IN ('text_pattern_ops', 'varchar_pattern_ops', 'bpchar_pattern_ops')
+ORDER BY opc.opcname;`,
+					Expected: []sql.Row{
+						{"bpchar_pattern_ops", "bpchar_pattern_ops", "bpchar", "f", 0},
+						{"text_pattern_ops", "text_pattern_ops", "text", "f", 0},
+						{"varchar_pattern_ops", "text_pattern_ops", "text", "f", 0},
+					},
 				},
 			},
 		},
