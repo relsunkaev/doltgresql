@@ -27,7 +27,7 @@ func TestBatchedIndexLookupCachesDuplicateBtreeLookups(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	idx := fakeBatchedLookupIndex{id: "btree_idx", indexType: "BTREE"}
 	base := newFakeBatchedLookupIndexedTable()
-	base.rowsByLookup[batchedLookupTestKey(ctx, idx, 7)] = []sql.Row{{int64(7), "first"}, {int64(7), "second"}}
+	base.rowsByLookup[batchedLookupTestKey(ctx, batchedLookupTestLookup(idx, 7))] = []sql.Row{{int64(7), "first"}, {int64(7), "second"}}
 
 	indexed, wrapped := WrapBatchedIndexLookupIndexedTable(base, idx)
 	require.True(t, wrapped)
@@ -43,6 +43,68 @@ func TestBatchedIndexLookupCachesDuplicateBtreeLookups(t *testing.T) {
 	require.Equal(t, 2, base.partitionRowsCalls)
 }
 
+func TestBatchedIndexLookupCacheSeparatesReverseLookups(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	idx := fakeBatchedLookupIndex{id: "btree_idx", indexType: "BTREE"}
+	base := newFakeBatchedLookupIndexedTable()
+	forwardLookup := batchedLookupTestLookup(idx, 7)
+	reverseLookup := batchedLookupTestReverseLookup(idx, 7)
+	base.rowsByLookup[batchedLookupTestKey(ctx, forwardLookup)] = []sql.Row{{int64(7), "forward"}}
+	base.rowsByLookup[batchedLookupTestKey(ctx, reverseLookup)] = []sql.Row{{int64(7), "reverse"}}
+
+	indexed, wrapped := WrapBatchedIndexLookupIndexedTable(base, idx)
+	require.True(t, wrapped)
+
+	require.Equal(t, []sql.Row{{int64(7), "forward"}}, readBatchedLookupRows(t, ctx, indexed, forwardLookup))
+	require.Equal(t, []sql.Row{{int64(7), "reverse"}}, readBatchedLookupRows(t, ctx, indexed, reverseLookup))
+	require.Equal(t, []sql.Row{{int64(7), "forward"}}, readBatchedLookupRows(t, ctx, indexed, forwardLookup))
+	require.Equal(t, []sql.Row{{int64(7), "reverse"}}, readBatchedLookupRows(t, ctx, indexed, reverseLookup))
+	require.Equal(t, 2, base.lookupCalls)
+	require.Equal(t, 2, base.partitionRowsCalls)
+}
+
+func TestBatchedIndexLookupCacheKeepsMixedHitMissBatchesCorrect(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	idx := fakeBatchedLookupIndex{id: "btree_idx", indexType: "BTREE"}
+	base := newFakeBatchedLookupIndexedTable()
+	base.rowsByLookup[batchedLookupTestKey(ctx, batchedLookupTestLookup(idx, 1))] = []sql.Row{{int64(1), "one"}}
+	base.rowsByLookup[batchedLookupTestKey(ctx, batchedLookupTestLookup(idx, 3))] = []sql.Row{{int64(3), "three-a"}, {int64(3), "three-b"}}
+
+	indexed, wrapped := WrapBatchedIndexLookupIndexedTable(base, idx)
+	require.True(t, wrapped)
+
+	require.Equal(t, []sql.Row{{int64(1), "one"}}, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 1)))
+	require.Empty(t, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 2)))
+	require.Equal(t, []sql.Row{{int64(3), "three-a"}, {int64(3), "three-b"}}, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 3)))
+	require.Empty(t, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 2)))
+	require.Equal(t, []sql.Row{{int64(1), "one"}}, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 1)))
+	require.Equal(t, []sql.Row{{int64(3), "three-a"}, {int64(3), "three-b"}}, readBatchedLookupRows(t, ctx, indexed, batchedLookupTestLookup(idx, 3)))
+	require.Equal(t, 3, base.lookupCalls)
+	require.Equal(t, 3, base.partitionRowsCalls)
+}
+
+func TestBatchedIndexLookupCacheSeparatesNullRanges(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	idx := fakeBatchedLookupIndex{id: "btree_idx", indexType: "BTREE"}
+	base := newFakeBatchedLookupIndexedTable()
+	nullLookup := batchedLookupTestNullLookup(idx)
+	zeroLookup := batchedLookupTestLookup(idx, 0)
+	nullKey := batchedLookupTestKey(ctx, nullLookup)
+	zeroKey := batchedLookupTestKey(ctx, zeroLookup)
+	require.NotEqual(t, zeroKey, nullKey)
+	base.rowsByLookup[zeroKey] = []sql.Row{{int64(0), "zero"}}
+
+	indexed, wrapped := WrapBatchedIndexLookupIndexedTable(base, idx)
+	require.True(t, wrapped)
+
+	require.Empty(t, readBatchedLookupRows(t, ctx, indexed, nullLookup))
+	require.Equal(t, []sql.Row{{int64(0), "zero"}}, readBatchedLookupRows(t, ctx, indexed, zeroLookup))
+	require.Empty(t, readBatchedLookupRows(t, ctx, indexed, nullLookup))
+	require.Equal(t, []sql.Row{{int64(0), "zero"}}, readBatchedLookupRows(t, ctx, indexed, zeroLookup))
+	require.Equal(t, 2, base.lookupCalls)
+	require.Equal(t, 2, base.partitionRowsCalls)
+}
+
 func TestBatchedIndexLookupDoesNotCacheBroadResults(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	idx := fakeBatchedLookupIndex{id: "btree_idx", indexType: "BTREE"}
@@ -51,7 +113,7 @@ func TestBatchedIndexLookupDoesNotCacheBroadResults(t *testing.T) {
 	for i := range rows {
 		rows[i] = sql.Row{int64(i)}
 	}
-	base.rowsByLookup[batchedLookupTestKey(ctx, idx, 9)] = rows
+	base.rowsByLookup[batchedLookupTestKey(ctx, batchedLookupTestLookup(idx, 9))] = rows
 
 	indexed, wrapped := WrapBatchedIndexLookupIndexedTable(base, idx)
 	require.True(t, wrapped)
@@ -105,8 +167,19 @@ func batchedLookupTestLookup(index sql.Index, value int64) sql.IndexLookup {
 	}}, true, false, false, false)
 }
 
-func batchedLookupTestKey(ctx *sql.Context, index sql.Index, value int64) string {
-	lookup := batchedLookupTestLookup(index, value)
+func batchedLookupTestReverseLookup(index sql.Index, value int64) sql.IndexLookup {
+	return sql.NewIndexLookup(index, sql.MySQLRangeCollection{{
+		sql.ClosedRangeColumnExpr(value, value, types.Int64),
+	}}, true, false, false, true)
+}
+
+func batchedLookupTestNullLookup(index sql.Index) sql.IndexLookup {
+	return sql.NewIndexLookup(index, sql.MySQLRangeCollection{{
+		sql.NullRangeColumnExpr(types.Int64),
+	}}, true, false, false, false)
+}
+
+func batchedLookupTestKey(ctx *sql.Context, lookup sql.IndexLookup) string {
 	key, ok := batchedIndexLookupCacheKey(ctx, lookup)
 	if !ok {
 		panic("test lookup should be cacheable")

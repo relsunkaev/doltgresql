@@ -624,6 +624,18 @@ func BenchmarkBtreeSQLLookup(b *testing.B) {
 			indexedPlan: true,
 		},
 		{
+			name:        "indexed/leading_column_in_list",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant IN (2, 4, 6)`,
+			want:        3 * (btreeBenchmarkRows / 8),
+			indexedPlan: true,
+		},
+		{
+			name:        "indexed/duplicate_heavy_in_list",
+			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant IN (4, 2, 4, 2, 4)`,
+			want:        2 * (btreeBenchmarkRows / 8),
+			indexedPlan: true,
+		},
+		{
 			name:        "indexed/multi_column_prefix_equality",
 			query:       `SELECT count(id) FROM btree_bench_idx WHERE tenant = 4 AND score = 36`,
 			want:        btreeBenchmarkRows / 64,
