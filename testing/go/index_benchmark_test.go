@@ -607,6 +607,68 @@ func BenchmarkBtreeSQLLookup(b *testing.B) {
 	}
 }
 
+func BenchmarkBtreeProjectionPushdown(b *testing.B) {
+	ctx, conn := newBenchmarkServer(b)
+	setupBtreeLookupBenchmark(b, ctx, conn)
+	setupBtreeJoinBenchmark(b, ctx, conn)
+
+	rowQueries := []struct {
+		name            string
+		query           string
+		wantRows        int
+		planContains    []string
+		planNotContains []string
+	}{
+		{
+			name:            "indexed/projected_columns",
+			query:           `SELECT tenant, score FROM btree_bench_idx WHERE tenant = 4 AND score >= 32`,
+			wantRows:        btreeBenchmarkRows / 16,
+			planContains:    []string{"IndexedTableAccess", "columns: [tenant score]"},
+			planNotContains: []string{"label"},
+		},
+		{
+			name:         "indexed/full_row",
+			query:        `SELECT id, tenant, score, label FROM btree_bench_idx WHERE tenant = 4 AND score >= 32`,
+			wantRows:     btreeBenchmarkRows / 16,
+			planContains: []string{"IndexedTableAccess", "label"},
+		},
+		{
+			name: "join/projected_columns",
+			query: `SELECT l.tenant, r.score
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4`,
+			wantRows:        btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+			planContains:    []string{"HashJoin", "IndexedTableAccess(btree_join_right_idx)"},
+			planNotContains: []string{"label"},
+		},
+	}
+	for _, query := range rowQueries {
+		for _, expected := range query.planContains {
+			assertBenchmarkPlanContains(b, ctx, conn, query.query, expected)
+		}
+		for _, unexpected := range query.planNotContains {
+			assertBenchmarkPlanNotContains(b, ctx, conn, query.query, unexpected)
+		}
+	}
+	for _, query := range rowQueries {
+		query := query
+		b.Run(query.name, func(b *testing.B) {
+			benchmarkRowQuery(b, ctx, conn, query.query, query.wantRows)
+		})
+	}
+
+	aggregate := `SELECT count(*) FROM btree_bench_idx WHERE tenant = 4 AND score >= 32`
+	assertBenchmarkPlanContains(b, ctx, conn, aggregate, "IndexedTableAccess")
+	assertBenchmarkPlanContains(b, ctx, conn, aggregate, "columns: [tenant score]")
+	assertBenchmarkPlanNotContains(b, ctx, conn, aggregate, "label")
+	b.Run("aggregate/filter_columns", func(b *testing.B) {
+		benchmarkCountQuery(b, ctx, conn, aggregate, btreeBenchmarkRows/16)
+	})
+}
+
 func BenchmarkBtreeSQLJoin(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupBtreeJoinBenchmark(b, ctx, conn)
@@ -1239,6 +1301,33 @@ func benchmarkCountQuery(b *testing.B, ctx context.Context, conn *Connection, qu
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		assertCountResult(b, ctx, conn, query, want)
+	}
+}
+
+func benchmarkRowQuery(b *testing.B, ctx context.Context, conn *Connection, query string, wantRows int) {
+	b.Helper()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rows, err := conn.Query(ctx, query)
+		if err != nil {
+			b.Fatalf("query failed: %v\nquery: %s", err, query)
+		}
+		count := 0
+		for rows.Next() {
+			if _, err = rows.Values(); err != nil {
+				rows.Close()
+				b.Fatalf("query values failed: %v\nquery: %s", err, query)
+			}
+			count++
+		}
+		rows.Close()
+		if err = rows.Err(); err != nil {
+			b.Fatalf("query rows failed: %v\nquery: %s", err, query)
+		}
+		if count != wantRows {
+			b.Fatalf("query returned %d rows, expected %d\nquery: %s", count, wantRows, query)
+		}
 	}
 }
 
