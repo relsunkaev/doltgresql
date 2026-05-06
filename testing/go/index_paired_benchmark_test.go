@@ -146,11 +146,32 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			want:             btreeBenchmarkRows / 2,
 		},
 		{
+			name:             "btree/in_list",
+			doltgresScanSQL:  `SELECT count(id) FROM dg_pair_btree_scan WHERE tenant IN (2, 4, 6)`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_btree_idx WHERE tenant IN (2, 4, 6)`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_btree_idx WHERE tenant IN (2, 4, 6)`,
+			want:             3 * (btreeBenchmarkRows / 8),
+		},
+		{
+			name:             "btree/duplicate_heavy_in_list",
+			doltgresScanSQL:  `SELECT count(id) FROM dg_pair_btree_scan WHERE tenant IN (4, 2, 4, 2, 4)`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_btree_idx WHERE tenant IN (4, 2, 4, 2, 4)`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_btree_idx WHERE tenant IN (4, 2, 4, 2, 4)`,
+			want:             2 * (btreeBenchmarkRows / 8),
+		},
+		{
 			name:             "btree/covered_projection",
 			doltgresScanSQL:  `SELECT count(*) FROM (SELECT tenant, score FROM dg_pair_btree_scan WHERE tenant = 4 AND score >= 32) covered`,
 			doltgresIndexSQL: `SELECT count(*) FROM (SELECT tenant, score FROM dg_pair_btree_idx WHERE tenant = 4 AND score >= 32) covered`,
 			postgresSQL:      `SELECT count(*) FROM (SELECT tenant, score FROM pg_pair_btree_idx WHERE tenant = 4 AND score >= 32) covered`,
 			want:             btreeBenchmarkRows / 16,
+		},
+		{
+			name:             "btree/stats_selective_index",
+			doltgresScanSQL:  `SELECT count(id) FROM dg_pair_stats_scan WHERE tenant = 1 AND score = 777`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_stats_idx WHERE tenant = 1 AND score = 777`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_stats_idx WHERE tenant = 1 AND score = 777`,
+			want:             1,
 		},
 		{
 			name:             "btree/join",
@@ -179,6 +200,13 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ? 'vip'`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ? 'vip'`,
 			want:             102,
+		},
+		{
+			name:             "jsonb_gin/key_exists_any",
+			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc ?| ARRAY['vip','archived']`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ?| ARRAY['vip','archived']`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ?| ARRAY['vip','archived']`,
+			want:             136,
 		},
 		{
 			name:             "jsonb_gin/key_exists_all",
@@ -226,6 +254,15 @@ func setupPairedBtreeBenchmark(tb testing.TB, ctx context.Context, conn pairedBe
 		insertPairedBtreeRows(tb, ctx, conn, rightTable, btreeBenchmarkRows)
 	}
 	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_join_right_idx_tenant_score_idx ON %s_join_right_idx (tenant, score)", prefix, prefix))
+
+	for _, table := range []string{prefix + "_stats_scan", prefix + "_stats_idx"} {
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", table))
+		insertPairedStatsChoiceRows(tb, ctx, conn, table, btreeBenchmarkRows)
+	}
+	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_stats_idx_tenant_idx ON %s_stats_idx (tenant)", prefix, prefix))
+	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_stats_idx_score_idx ON %s_stats_idx (score)", prefix, prefix))
+	execPairedSQL(tb, ctx, conn, fmt.Sprintf("ANALYZE %s_stats_idx", prefix))
 }
 
 func setupPairedJsonbGinBenchmark(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, prefix string) {
@@ -394,6 +431,26 @@ func insertPairedBtreeRows(tb testing.TB, ctx context.Context, conn pairedBenchm
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%8, id%64, id%16)
+		}
+		execPairedSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertPairedStatsChoiceRows(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string, rowCount int) {
+	tb.Helper()
+	const chunkSize = 64
+	for chunkStart := 1; chunkStart <= rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > rowCount+1 {
+			chunkEnd = rowCount + 1
+		}
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%4, id, id%16)
 		}
 		execPairedSQL(tb, ctx, conn, query.String())
 	}

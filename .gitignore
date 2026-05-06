@@ -22,6 +22,7 @@ testing/go/regression/out
 
 # ignore sysbench
 scripts/mini_sysbench
+.local_benchmarks
 
 # ignore doltgres db created
 doltgres

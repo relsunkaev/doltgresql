@@ -37,3 +37,7 @@ run the Go benchmark directly:
 DOLTGRES_POSTGRES_BASELINE_URL='postgres://postgres:password@127.0.0.1:5432/postgres?sslmode=disable' \
 go test ./testing/go -run '^$' -bench '^BenchmarkPairedIndexBaselines$' -benchtime=1x -count=1 -v
 ```
+
+For the local suite that runs the CI Sysbench case list against Doltgres and
+PostgreSQL 18 before appending these paired index benchmarks, use
+`testing/perf/run_local_full_benchmarks.sh`.
