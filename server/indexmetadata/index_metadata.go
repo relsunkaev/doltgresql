@@ -76,6 +76,7 @@ type Metadata struct {
 	Columns      []string            `json:"columns,omitempty"`
 	Collations   []string            `json:"collations,omitempty"`
 	OpClasses    []string            `json:"opClasses,omitempty"`
+	RelOptions   []string            `json:"relOptions,omitempty"`
 	SortOptions  []IndexColumnOption `json:"sortOptions,omitempty"`
 	Constraint   string              `json:"constraint,omitempty"`
 	Gin          *GinMetadata        `json:"gin,omitempty"`
@@ -104,6 +105,7 @@ func EncodeComment(metadata Metadata) string {
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
+	normalizeRelOptions(metadata.RelOptions)
 	normalizeSortOptions(metadata.SortOptions)
 	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
 	encoded, _ := json.Marshal(metadata)
@@ -129,6 +131,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	for i := range metadata.OpClasses {
 		metadata.OpClasses[i] = NormalizeOpClass(metadata.OpClasses[i])
 	}
+	normalizeRelOptions(metadata.RelOptions)
 	normalizeSortOptions(metadata.SortOptions)
 	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
 	return metadata, true
@@ -183,6 +186,17 @@ func NormalizeCollation(collation string) string {
 	}
 }
 
+func normalizeRelOptions(relOptions []string) {
+	for i := range relOptions {
+		key, value, ok := strings.Cut(strings.TrimSpace(relOptions[i]), "=")
+		if !ok {
+			relOptions[i] = strings.TrimSpace(relOptions[i])
+			continue
+		}
+		relOptions[i] = strings.ToLower(strings.TrimSpace(key)) + "=" + strings.TrimSpace(value)
+	}
+}
+
 func normalizeSortOptions(sortOptions []IndexColumnOption) {
 	for i := range sortOptions {
 		sortOptions[i].Direction = strings.ToLower(strings.TrimSpace(sortOptions[i].Direction))
@@ -215,6 +229,15 @@ func Collations(comment string) []string {
 		return nil
 	}
 	return metadata.Collations
+}
+
+// RelOptions returns the PostgreSQL reloptions encoded for an index.
+func RelOptions(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.RelOptions
 }
 
 // Columns returns the PostgreSQL logical columns encoded for an index.

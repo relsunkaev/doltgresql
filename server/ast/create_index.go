@@ -16,6 +16,7 @@ package ast
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -57,7 +58,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if indexName == "" {
 		indexName = defaultCreateIndexName(tableName.Name.String(), node.Columns)
 	}
-	indexDef, err := nodeIndexTableDef(ctx, &tree.IndexTableDef{
+	indexDef, err := nodeIndexTableDefAllowingStorageParams(ctx, &tree.IndexTableDef{
 		Name:        tree.Name(indexName),
 		Columns:     node.Columns,
 		IndexParams: node.IndexParams,
@@ -169,6 +170,9 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	case indexmetadata.AccessMethodBtree:
 		return nodeBtreeIndexMetadata(node)
 	case indexmetadata.AccessMethodGin:
+		if len(node.IndexParams.StorageParams) > 0 {
+			return nil, errors.Errorf("storage parameters are not yet supported for gin indexes")
+		}
 		opClasses := make([]string, len(node.Columns))
 		for i, column := range node.Columns {
 			if column.Collation != "" {
@@ -245,6 +249,13 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 			return nil, errors.Errorf("unknown NULL ordering for index")
 		}
 	}
+	relOptions, err := nodeIndexRelOptions(node.IndexParams.StorageParams)
+	if err != nil {
+		return nil, err
+	}
+	if len(relOptions) > 0 {
+		hasMetadata = true
+	}
 	if !hasMetadata {
 		return nil, nil
 	}
@@ -252,6 +263,58 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 		AccessMethod: indexmetadata.AccessMethodBtree,
 		Collations:   collations,
 		OpClasses:    opClasses,
+		RelOptions:   relOptions,
 		SortOptions:  sortOptions,
 	}, nil
+}
+
+func nodeIndexRelOptions(params tree.StorageParams) ([]string, error) {
+	if len(params) == 0 {
+		return nil, nil
+	}
+	relOptions := make([]string, 0, len(params))
+	seen := make(map[string]struct{}, len(params))
+	for _, param := range params {
+		key := strings.ToLower(strings.TrimSpace(string(param.Key)))
+		if _, ok := seen[key]; ok {
+			return nil, errors.Errorf("index storage parameter %s is specified more than once", key)
+		}
+		seen[key] = struct{}{}
+		switch key {
+		case "fillfactor":
+			fillfactor, err := nodeIndexStorageParamInt(param.Value)
+			if err != nil {
+				return nil, errors.Errorf("fillfactor must be an integer")
+			}
+			if fillfactor < 10 || fillfactor > 100 {
+				return nil, errors.Errorf("fillfactor must be between 10 and 100")
+			}
+			relOptions = append(relOptions, fmt.Sprintf("fillfactor=%d", fillfactor))
+		default:
+			return nil, errors.Errorf("index storage parameter %s is not yet supported", key)
+		}
+	}
+	return relOptions, nil
+}
+
+func nodeIndexStorageParamInt(expr tree.Expr) (int, error) {
+	if expr == nil {
+		return 0, errors.Errorf("missing value")
+	}
+	switch v := expr.(type) {
+	case *tree.NumVal:
+		val, err := v.AsInt64()
+		if err != nil {
+			return 0, err
+		}
+		return int(val), nil
+	case *tree.DInt:
+		return int(*v), nil
+	default:
+		val, err := strconv.Atoi(strings.Trim(tree.AsString(expr), "'"))
+		if err != nil {
+			return 0, err
+		}
+		return val, nil
+	}
 }

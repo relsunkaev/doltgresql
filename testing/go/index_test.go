@@ -1093,8 +1093,8 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "not yet supported",
 				},
 				{
-					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (fillfactor = 70);",
-					ExpectedErr: "storage parameters are not yet supported for indexes",
+					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
 				{
 					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE pg_default;",
@@ -1111,6 +1111,42 @@ func TestBasicIndexing(t *testing.T) {
 				{
 					Query:       "ALTER INDEX v1_idx_storage ALTER COLUMN 1 SET STATISTICS 100;",
 					ExpectedErr: "ALTER INDEX is not yet supported",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL btree reloptions metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_reloptions_meta (id INTEGER PRIMARY KEY, v TEXT);",
+				"CREATE INDEX btree_reloptions_meta_v_idx ON btree_reloptions_meta (v) WITH (fillfactor = 70);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	pg_catalog.pg_get_indexdef(c.oid),
+	pg_catalog.pg_get_indexdef(c.oid, 1, false),
+	CAST(c.reloptions AS TEXT)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'btree_reloptions_meta_v_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX btree_reloptions_meta_v_idx ON public.btree_reloptions_meta USING btree (v) WITH (fillfactor='70')", "v", "{fillfactor=70}"},
+					},
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta_v_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX btree_reloptions_meta_v_idx ON public.btree_reloptions_meta USING btree (v) WITH (fillfactor='70')"},
+					},
+				},
+				{
+					Query:       "CREATE INDEX btree_reloptions_bad_name_idx ON btree_reloptions_meta (v) WITH (definitely_not_supported = 1);",
+					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
+				},
+				{
+					Query:       "CREATE INDEX btree_reloptions_bad_fillfactor_idx ON btree_reloptions_meta (v) WITH (fillfactor = 9);",
+					ExpectedErr: "fillfactor must be between 10 and 100",
 				},
 			},
 		},

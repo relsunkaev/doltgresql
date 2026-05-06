@@ -99,6 +99,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOidNative: id.Cache().ToOID(schemaOid.AsId()),
 				relType:         id.Null,
 				relam:           id.NewAccessMethod(indexmetadata.AccessMethod(index.Item.IndexType(), index.Item.Comment())).AsId(),
+				reloptions:      pgClassRelOptions(index.Item.Comment()),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -382,6 +383,7 @@ type pgClass struct {
 	kind            string // r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
 	relType         id.Id
 	relam           id.Id
+	reloptions      []any
 }
 
 // lessOid is a sort function for pgClass based on oid.
@@ -420,6 +422,10 @@ func pgClassToRow(class *pgClass) sql.Row {
 	replicaIdentity := class.replicaIdentity
 	if replicaIdentity == "" {
 		replicaIdentity = replicaidentity.IdentityDefault.String()
+	}
+	var reloptions any
+	if len(class.reloptions) > 0 {
+		reloptions = class.reloptions
 	}
 
 	// TODO: this is temporary definition of 'relam' field
@@ -467,9 +473,21 @@ func pgClassToRow(class *pgClass) sql.Row {
 		uint32(0),        // relfrozenxid
 		uint32(0),        // relminmxid
 		nil,              // relacl
-		nil,              // reloptions
+		reloptions,       // reloptions
 		nil,              // relpartbound
 	}
+}
+
+func pgClassRelOptions(comment string) []any {
+	relOptions := indexmetadata.RelOptions(comment)
+	if len(relOptions) == 0 {
+		return nil
+	}
+	values := make([]any, len(relOptions))
+	for i, option := range relOptions {
+		values[i] = option
+	}
+	return values
 }
 
 // Close implements the interface sql.RowIter.

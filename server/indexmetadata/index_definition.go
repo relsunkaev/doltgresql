@@ -74,7 +74,7 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 	if index.IsUnique() {
 		unique = " UNIQUE"
 	}
-	return fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",
+	definition := fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",
 		unique,
 		displayName,
 		schema,
@@ -82,6 +82,10 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 		AccessMethod(index.IndexType(), index.Comment()),
 		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
+	if relOptions := relOptionsDefinition(index.Comment()); relOptions != "" {
+		definition += " WITH (" + relOptions + ")"
+	}
+	return definition
 }
 
 // LogicalColumn describes the PostgreSQL-facing indexed column or expression
@@ -278,6 +282,23 @@ func columnOptionDefinition(option IndexColumnOption) string {
 		parts = append(parts, "NULLS LAST")
 	}
 	return strings.Join(parts, " ")
+}
+
+func relOptionsDefinition(comment string) string {
+	relOptions := RelOptions(comment)
+	if len(relOptions) == 0 {
+		return ""
+	}
+	parts := make([]string, len(relOptions))
+	for i, option := range relOptions {
+		key, value, ok := strings.Cut(option, "=")
+		if !ok {
+			parts[i] = option
+			continue
+		}
+		parts[i] = strings.TrimSpace(key) + "='" + strings.ReplaceAll(strings.TrimSpace(value), "'", "''") + "'"
+	}
+	return strings.Join(parts, ", ")
 }
 
 func columnCollationDefinition(collation string) string {
