@@ -17,6 +17,7 @@ package jsonbgin
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 
@@ -29,8 +30,13 @@ import (
 // encoding for primary-key tuple references stored inside posting chunks.
 const RowReferenceFormatVersionV1 uint8 = 1
 
+// RowReferenceFormatVersionV2 adds opaque deterministic row identities for
+// table shapes that cannot use direct primary-key candidate fetch.
+const RowReferenceFormatVersionV2 uint8 = 2
+
 const (
 	rowReferenceHeaderSize     = 7
+	rowReferenceV2HeaderSize   = 6
 	rowReferenceNullMarker     = 0
 	rowReferenceNonNullMarker  = 1
 	rowReferenceTerminatorByte = 0
@@ -39,10 +45,26 @@ const (
 
 var rowReferenceMagic = [4]byte{'D', 'G', 'R', 'F'}
 
+// ErrUnsupportedRowReferenceType marks a primary-key type that cannot be
+// encoded as an ordered, direct-fetchable row reference.
+var ErrUnsupportedRowReferenceType = errors.New("unsupported ordered row-reference type")
+
+// RowReferenceKind describes whether a row reference can be decoded back to a
+// primary-key tuple for direct candidate fetch, or is an opaque identity that
+// requires scan-and-recheck fallback.
+type RowReferenceKind uint8
+
+const (
+	RowReferenceKindOrdered RowReferenceKind = 1
+	RowReferenceKindOpaque  RowReferenceKind = 2
+)
+
 // RowReference is an ordered, fetchable reference to a base-table row.
 type RowReference struct {
 	FormatVersion uint8
+	Kind          RowReferenceKind
 	Values        sql.Row
+	Identity      string
 	Bytes         []byte
 }
 
@@ -99,7 +121,27 @@ func EncodeRowReference(ctx *sql.Context, columnTypes []sql.Type, values sql.Row
 
 	return RowReference{
 		FormatVersion: RowReferenceFormatVersionV1,
+		Kind:          RowReferenceKindOrdered,
 		Values:        cloneRowReferenceValues(values),
+		Bytes:         encoded,
+	}, nil
+}
+
+// EncodeOpaqueRowReference encodes a deterministic row identity for table
+// shapes whose primary key cannot be represented as an ordered row reference.
+func EncodeOpaqueRowReference(identity string) (RowReference, error) {
+	if identity == "" {
+		return RowReference{}, fmt.Errorf("JSONB GIN opaque row reference requires a non-empty identity")
+	}
+	encoded := make([]byte, rowReferenceV2HeaderSize)
+	copy(encoded[:4], rowReferenceMagic[:])
+	encoded[4] = RowReferenceFormatVersionV2
+	encoded[5] = byte(RowReferenceKindOpaque)
+	encoded = append(encoded, encodeComparableBytes([]byte(identity))...)
+	return RowReference{
+		FormatVersion: RowReferenceFormatVersionV2,
+		Kind:          RowReferenceKindOpaque,
+		Identity:      identity,
 		Bytes:         encoded,
 	}, nil
 }
@@ -116,10 +158,15 @@ func DecodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 	version := encoded[4]
 	switch version {
 	case RowReferenceFormatVersionV1:
+		return decodeOrderedRowReference(ctx, columnTypes, encoded, version)
+	case RowReferenceFormatVersionV2:
+		return decodeV2RowReference(encoded)
 	default:
 		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference version %d", version)
 	}
+}
 
+func decodeOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte, version uint8) (RowReference, error) {
 	componentCount := int(binary.BigEndian.Uint16(encoded[5:rowReferenceHeaderSize]))
 	if componentCount != len(columnTypes) {
 		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: component count %d does not match %d key types", componentCount, len(columnTypes))
@@ -153,9 +200,35 @@ func DecodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 
 	return RowReference{
 		FormatVersion: version,
+		Kind:          RowReferenceKindOrdered,
 		Values:        values,
 		Bytes:         append([]byte(nil), encoded...),
 	}, nil
+}
+
+func decodeV2RowReference(encoded []byte) (RowReference, error) {
+	if len(encoded) < rowReferenceV2HeaderSize {
+		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
+	}
+	kind := RowReferenceKind(encoded[5])
+	switch kind {
+	case RowReferenceKindOpaque:
+		identity, offset, err := decodeComparableBytes(encoded, rowReferenceV2HeaderSize)
+		if err != nil {
+			return RowReference{}, fmt.Errorf("malformed JSONB GIN opaque row reference: %w", err)
+		}
+		if offset != len(encoded) {
+			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: trailing bytes after opaque identity")
+		}
+		return RowReference{
+			FormatVersion: RowReferenceFormatVersionV2,
+			Kind:          RowReferenceKindOpaque,
+			Identity:      string(identity),
+			Bytes:         append([]byte(nil), encoded...),
+		}, nil
+	default:
+		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference kind %d", kind)
+	}
 }
 
 // CompareRowReferences compares two row references using byte order.
@@ -163,10 +236,16 @@ func CompareRowReferences(left []byte, right []byte) int {
 	return bytes.Compare(left, right)
 }
 
+// IsUnsupportedRowReferenceType reports whether err came from an ordered row
+// reference type that should fall back to an opaque identity.
+func IsUnsupportedRowReferenceType(err error) bool {
+	return errors.Is(err, ErrUnsupportedRowReferenceType)
+}
+
 func encodeRowReferenceComponent(ctx *sql.Context, typ sql.Type, value any) ([]byte, error) {
 	dgType, ok := typ.(*pgtypes.DoltgresType)
 	if !ok {
-		return nil, fmt.Errorf("unsupported row-reference type %T", typ)
+		return nil, fmt.Errorf("%w %T", ErrUnsupportedRowReferenceType, typ)
 	}
 
 	if isStringRowReferenceType(dgType) {
@@ -184,7 +263,7 @@ func encodeRowReferenceComponent(ctx *sql.Context, typ sql.Type, value any) ([]b
 		return encodeComparableBytes(value), nil
 	}
 	if _, ok := fixedWidthRowReferenceType(dgType); !ok {
-		return nil, fmt.Errorf("unsupported ordered row-reference type %s", dgType.ID.TypeName())
+		return nil, fmt.Errorf("%w %s", ErrUnsupportedRowReferenceType, dgType.ID.TypeName())
 	}
 	encoded, err := dgType.SerializeValue(ctx, value)
 	if err != nil {
@@ -218,7 +297,7 @@ func decodeRowReferenceComponent(ctx *sql.Context, typ sql.Type, encoded []byte,
 	}
 	width, ok := fixedWidthRowReferenceType(dgType)
 	if !ok {
-		return nil, 0, fmt.Errorf("unsupported ordered row-reference type %s", dgType.ID.TypeName())
+		return nil, 0, fmt.Errorf("%w %s", ErrUnsupportedRowReferenceType, dgType.ID.TypeName())
 	}
 	if offset+width > len(encoded) {
 		return nil, 0, fmt.Errorf("truncated fixed-width component")
@@ -248,6 +327,12 @@ func fixedWidthRowReferenceType(typ *pgtypes.DoltgresType) (int, bool) {
 		return 4, true
 	case "int8", "bigserial":
 		return 8, true
+	case "float4":
+		return 4, true
+	case "float8":
+		return 8, true
+	case "uuid":
+		return 16, true
 	default:
 		return 0, false
 	}

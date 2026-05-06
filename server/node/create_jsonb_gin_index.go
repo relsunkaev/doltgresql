@@ -246,7 +246,12 @@ func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (
 			return columnIndex, column.Name, nil
 		}
 	}
-	return -1, "", errors.Errorf(`jsonb gin indexes currently require a primary key`)
+	for _, column := range sch {
+		if column.Name != c.columnName {
+			return columnIndex, column.Name, nil
+		}
+	}
+	return columnIndex, c.columnName, nil
 }
 
 func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
@@ -498,12 +503,9 @@ func (c *CreateJsonbGinIndex) addPostingChunkRows(ctx *sql.Context, sch sql.Sche
 		if row[columnIndex] == nil {
 			continue
 		}
-		rowRef, ok, err := jsonbgin.EncodePrimaryKeyRowReference(ctx, sch, row)
+		rowRef, err := jsonbGinPostingRowReference(ctx, sch, row)
 		if err != nil {
 			return err
-		}
-		if !ok {
-			return errors.Errorf(`jsonb gin indexes currently require a primary key`)
 		}
 		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[columnIndex])
 		if err != nil {
@@ -849,6 +851,17 @@ func rowIdentity(sch sql.Schema, row sql.Row) string {
 		writeRowIdentityColumns(hash, sch, row, false)
 	}
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func jsonbGinPostingRowReference(ctx *sql.Context, sch sql.Schema, row sql.Row) (jsonbgin.RowReference, error) {
+	rowRef, ok, err := jsonbgin.EncodePrimaryKeyRowReference(ctx, sch, row)
+	if err == nil && ok {
+		return rowRef, nil
+	}
+	if err != nil && !jsonbgin.IsUnsupportedRowReferenceType(err) {
+		return jsonbgin.RowReference{}, err
+	}
+	return jsonbgin.EncodeOpaqueRowReference(rowIdentity(sch, row))
 }
 
 func primaryKeyRowIdentity(sch sql.Schema, row sql.Row) (string, bool) {

@@ -1326,12 +1326,9 @@ func (e *jsonbGinMaintainingEditor) postingChunkMutation(ctx *sql.Context, index
 	if index.ColumnIndex >= len(row) || row[index.ColumnIndex] == nil {
 		return nil, nil, nil
 	}
-	rowRef, ok, err := jsonbgin.EncodePrimaryKeyRowReference(ctx, e.tableSchema, row)
+	rowRef, err := jsonbGinPostingRowReference(ctx, e.tableSchema, row)
 	if err != nil {
 		return nil, nil, err
-	}
-	if !ok {
-		return nil, nil, errors.Errorf(`jsonb gin indexes currently require a primary key`)
 	}
 	doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[index.ColumnIndex])
 	if err != nil {
@@ -2181,12 +2178,12 @@ func readPostingChunkBatchTokenRows(ctx *sql.Context, rows sql.RowIter, tokenInd
 			return err
 		}
 		for _, rowRef := range chunk.RowRefs {
-			rowID := string(rowRef)
-			tokenRows[tokenIndex][rowID] = struct{}{}
-			candidate, err := jsonbGinPostingCandidateFromRowReference(ctx, rowID, keyTypes, rowRef)
+			candidate, err := jsonbGinPostingCandidateFromRowReference(ctx, string(rowRef), keyTypes, rowRef)
 			if err != nil {
 				return err
 			}
+			rowID := candidate.rowID
+			tokenRows[tokenIndex][rowID] = struct{}{}
 			tokenCandidates[tokenIndex][rowID] = candidate
 		}
 	}
@@ -2571,9 +2568,6 @@ func (t *JsonbGinMaintainedTable) primaryKeyColumnExpressionTypes(ctx *sql.Conte
 			Type:       column.Type,
 		})
 	}
-	if len(keyTypes) == 0 {
-		return nil, errors.Errorf("JSONB GIN v2 posting chunk lookup requires a primary key")
-	}
 	return keyTypes, nil
 }
 
@@ -2585,6 +2579,11 @@ func jsonbGinPostingCandidateFromRowReference(ctx *sql.Context, rowID string, ke
 	decoded, err := jsonbgin.DecodeRowReference(ctx, columnTypes, rowRef)
 	if err != nil {
 		return jsonbGinPostingCandidate{}, err
+	}
+	if decoded.Kind == jsonbgin.RowReferenceKindOpaque {
+		return jsonbGinPostingCandidate{
+			rowID: decoded.Identity,
+		}, nil
 	}
 	return jsonbGinPostingCandidate{
 		rowID: rowID,
@@ -2640,6 +2639,10 @@ func (i *jsonbGinCandidateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		}
 		rowID, ok := primaryKeyRowIdentity(i.tableSchema, row)
 		if !ok {
+			fullRowID := rowIdentity(i.tableSchema, row)
+			if _, ok := i.rowIDs[fullRowID]; ok {
+				return row, nil
+			}
 			// Aggregate plans such as count(*) may prune the primary key while keeping
 			// the JSONB column needed by the retained recheck filter.
 			return row, nil

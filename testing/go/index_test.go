@@ -119,25 +119,90 @@ FROM dg_gin_jsonb_gin_v2_build_jsonb_gin_v2_build_doc_idx_posting_chunks;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 build failure cleanup",
+			Name: "PostgreSQL jsonb gin v2 numeric primary key fallback",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_bad_pk (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_bad_pk VALUES (1.1, '{"tags":["vip"]}');`,
+				"CREATE TABLE jsonb_gin_v2_numeric_pk (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_numeric_pk VALUES
+					(1.1, '{"tags":["vip"],"status":"open"}'),
+					(2.2, '{"tags":["vip","archived"],"status":"open"}'),
+					(3.3, '{"tags":["standard"],"status":"closed"}');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE INDEX jsonb_gin_v2_bad_pk_doc_idx ON jsonb_gin_v2_bad_pk USING gin (doc);",
-					ExpectedErr: "unsupported ordered row-reference type numeric",
+					Query: "CREATE INDEX jsonb_gin_v2_numeric_pk_doc_idx ON jsonb_gin_v2_numeric_pk USING gin (doc);",
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'jsonb_gin_v2_numeric_pk' AND indexname = 'jsonb_gin_v2_numeric_pk_doc_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX jsonb_gin_v2_numeric_pk_doc_idx ON public.jsonb_gin_v2_numeric_pk USING gin (doc jsonb_ops)"},
+					},
+				},
+				{
+					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_pk
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+				},
+				{
+					Query: `SELECT COUNT(*) > 0, SUM(row_count) > 0
+FROM dg_gin_jsonb_gin_v2_numeric_pk_jsonb_gin_v2_numeric_pk_doc_idx_posting_chunks;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 no primary key fallback",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_no_pk (id INTEGER NOT NULL, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_no_pk VALUES
+					(1, '{"tags":["vip"],"status":"open"}'),
+					(2, '{"tags":["standard"],"status":"open"}'),
+					(3, '{"tags":["vip"],"status":"closed"}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX jsonb_gin_v2_no_pk_doc_idx ON jsonb_gin_v2_no_pk USING gin (doc);",
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'jsonb_gin_v2_no_pk' AND indexname = 'jsonb_gin_v2_no_pk_doc_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX jsonb_gin_v2_no_pk_doc_idx ON public.jsonb_gin_v2_no_pk USING gin (doc jsonb_ops)"},
+					},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_no_pk
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {3}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 failed create index cleanup",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_bad_create (id INTEGER PRIMARY KEY, doc TEXT NOT NULL);",
+				"INSERT INTO jsonb_gin_v2_bad_create VALUES (1, '{\"tags\":[\"vip\"]}');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE INDEX jsonb_gin_v2_bad_create_doc_idx ON jsonb_gin_v2_bad_create USING gin (doc);",
+					ExpectedErr: "gin indexes are only supported on jsonb columns",
 				},
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_v2_bad_pk' AND indexname = 'jsonb_gin_v2_bad_pk_doc_idx';`,
+WHERE tablename = 'jsonb_gin_v2_bad_create' AND indexname = 'jsonb_gin_v2_bad_create_doc_idx';`,
 					Expected: []sql.Row{{0}},
 				},
 				{
-					Query:       "SELECT COUNT(*) FROM dg_gin_jsonb_gin_v2_bad_pk_jsonb_gin_v2_bad_pk_doc_idx_posting_chunks;",
-					ExpectedErr: "not found",
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_class
+WHERE relname = 'dg_gin_jsonb_gin_v2_bad_create_jsonb_gin_v2_bad_create_doc_idx_posting_chunks';`,
+					Expected: []sql.Row{{0}},
 				},
 			},
 		},
@@ -232,6 +297,25 @@ ORDER BY id;`,
 				},
 			},
 		},
+		{
+			Name: "PostgreSQL jsonb gin v2 fallback row-reference lookup",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_fallback_lookup (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_fallback_lookup VALUES
+						(1.1, '{"a":1,"tags":["x"]}'),
+						(2.2, '{"a":1,"tags":["y"]}'),
+						(3.3, '{"a":2,"tags":["x"]}');`,
+				"CREATE INDEX jsonb_gin_v2_fallback_lookup_idx ON jsonb_gin_v2_fallback_lookup USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id::text FROM jsonb_gin_v2_fallback_lookup
+WHERE doc @> '{"a":1}'
+ORDER BY id;`,
+					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+				},
+			},
+		},
 	})
 }
 
@@ -309,6 +393,70 @@ ORDER BY id;`,
 WHERE doc @> '{"status":"rolled-back"}'
 ORDER BY id;`,
 					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 fallback primary key DML maintenance",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_numeric_dml (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_numeric_dml VALUES
+					(1.1, '{"tags":["vip"],"status":"open"}'),
+					(2.2, '{"tags":["standard"],"status":"open"}');`,
+				"CREATE INDEX jsonb_gin_v2_numeric_dml_idx ON jsonb_gin_v2_numeric_dml USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE jsonb_gin_v2_numeric_dml
+SET doc = '{"tags":["vip"],"status":"closed"}'
+WHERE id = 2.2;`,
+				},
+				{
+					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{"1.1"}, {"2.2"}},
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_v2_numeric_dml WHERE id = 1.1;",
+				},
+				{
+					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{"2.2"}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 no primary key DML maintenance",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_no_pk_dml (id INTEGER NOT NULL, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_no_pk_dml VALUES
+					(1, '{"tags":["vip"],"status":"open"}'),
+					(2, '{"tags":["standard"],"status":"open"}');`,
+				"CREATE INDEX jsonb_gin_v2_no_pk_dml_idx ON jsonb_gin_v2_no_pk_dml USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE jsonb_gin_v2_no_pk_dml
+SET doc = '{"tags":["vip"],"status":"closed"}'
+WHERE id = 2;`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_no_pk_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}},
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_v2_no_pk_dml WHERE id = 1;",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_no_pk_dml
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{2}},
 				},
 			},
 		},

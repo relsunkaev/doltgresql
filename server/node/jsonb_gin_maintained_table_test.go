@@ -236,6 +236,16 @@ func TestJsonbGinPostingCandidateFromRowReference(t *testing.T) {
 	require.Len(t, ranges, 2)
 }
 
+func TestJsonbGinPostingCandidateFromOpaqueRowReference(t *testing.T) {
+	rowRef, err := jsonbgin.EncodeOpaqueRowReference("opaque-row-id")
+	require.NoError(t, err)
+
+	candidate, err := jsonbGinPostingCandidateFromRowReference(sql.NewEmptyContext(), "ignored", nil, rowRef.Bytes)
+	require.NoError(t, err)
+	require.Equal(t, "opaque-row-id", candidate.rowID)
+	require.Empty(t, candidate.key)
+}
+
 func TestJsonbGinPostingRowCompaction(t *testing.T) {
 	oldRows := []sql.Row{
 		{"token/a", "row/1", int32(1)},

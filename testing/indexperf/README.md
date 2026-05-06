@@ -15,6 +15,8 @@ The harness covers:
 - JSONB GIN containment, key existence, `?|`, `?&`, `jsonb_path_ops`
   containment, and skewed-document reads, with Doltgres v1 and v2 indexed
   timings where v2 is supported
+- JSONB GIN v2 fallback row-reference reads, currently including a numeric
+  primary-key shape that logs `dg_v2_direct_fetch=false`
 - JSONB GIN index build for `jsonb_ops` and `jsonb_path_ops`, reporting
   Doltgres v1, Doltgres v2, and PostgreSQL timings
 - JSONB GIN indexed DML maintenance, including separate INSERT, UPDATE, and
@@ -27,6 +29,9 @@ metrics for `dg_scan_us/op`, `dg_index_us/op`, `dg_v1_index_us/op`,
 `dg_v1_index_vs_pg`, `dg_v2_index_vs_pg`, and `dg_v2_vs_v1` where those fields
 apply. PostgreSQL plans are included for read benchmarks so Doltgres changes can
 be compared to the baseline plan shape as well as elapsed time.
+JSONB GIN v2 read benchmarks also log `dg_v2_direct_fetch=true|false`; false
+marks an opaque row-reference fallback where Doltgres must scan and recheck
+candidate rows instead of fetching directly by decoded primary-key values.
 
 JSONB GIN v2 should not become the default storage format until the paired
 PostgreSQL 18 output shows:
@@ -36,6 +41,8 @@ PostgreSQL 18 output shows:
 - v2 lookup buckets are no worse than 1.10x v1 for selective containment, broad
   containment, `?`, `?|`, `?&`, `jsonb_path_ops`, and skewed-document cases
   unless the planner intentionally chooses the scan boundary.
+- v2 fallback row-reference buckets explicitly report `dg_v2_direct_fetch=false`
+  and should be tracked separately until direct references cover that key shape.
 - v2 INSERT, UPDATE, and DELETE buckets are no worse than 1.25x v1 and have a
   documented PostgreSQL 18 ratio in the same run.
 

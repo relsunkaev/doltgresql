@@ -19,6 +19,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/dolthub/doltgresql/postgres/parser/uuid"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,37 @@ func TestRowReferenceCompositeRoundTrip(t *testing.T) {
 	decoded, err := DecodeRowReference(ctx, types, rowRef.Bytes)
 	require.NoError(t, err)
 	require.Equal(t, values, decoded.Values)
+}
+
+func TestRowReferenceAdditionalScalarRoundTrip(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	u, err := uuid.FromString("00112233-4455-6677-8899-aabbccddeeff")
+	require.NoError(t, err)
+	types := []sql.Type{pgtypes.Bool, pgtypes.Float32, pgtypes.Float64, pgtypes.Uuid, pgtypes.Bytea}
+	values := sql.Row{true, float32(-1.25), float64(3.5), u, []byte("a\x00b")}
+
+	rowRef, err := EncodeRowReference(ctx, types, values)
+	require.NoError(t, err)
+	require.Equal(t, RowReferenceKindOrdered, rowRef.Kind)
+
+	decoded, err := DecodeRowReference(ctx, types, rowRef.Bytes)
+	require.NoError(t, err)
+	require.Equal(t, values, decoded.Values)
+}
+
+func TestOpaqueRowReferenceRoundTrip(t *testing.T) {
+	rowRef, err := EncodeOpaqueRowReference("a1b2")
+	require.NoError(t, err)
+	require.Equal(t, uint8(RowReferenceFormatVersionV2), rowRef.FormatVersion)
+	require.Equal(t, RowReferenceKindOpaque, rowRef.Kind)
+	require.Equal(t, "a1b2", rowRef.Identity)
+	require.Empty(t, rowRef.Values)
+
+	decoded, err := DecodeRowReference(sql.NewEmptyContext(), nil, rowRef.Bytes)
+	require.NoError(t, err)
+	require.Equal(t, RowReferenceKindOpaque, decoded.Kind)
+	require.Equal(t, rowRef.Identity, decoded.Identity)
+	require.Equal(t, rowRef.Bytes, decoded.Bytes)
 }
 
 func TestRowReferenceOrdersLikePrimaryKey(t *testing.T) {
