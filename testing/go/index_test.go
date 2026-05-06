@@ -85,6 +85,65 @@ WHERE relname = '` + indexName + `';`,
 	}
 }
 
+func TestJsonbGinV2PostingChunkBuildGate(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PostgreSQL jsonb gin v2 posting chunk build gate",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_build (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_build VALUES
+					(1, '{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}'),
+					(2, '{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}'),
+					(3, '{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX jsonb_gin_v2_build_doc_idx ON jsonb_gin_v2_build USING gin (doc);",
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'jsonb_gin_v2_build' AND indexname = 'jsonb_gin_v2_build_doc_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX jsonb_gin_v2_build_doc_idx ON public.jsonb_gin_v2_build USING gin (doc jsonb_ops)"},
+					},
+				},
+				{
+					Query: `SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)
+FROM dg_gin_jsonb_gin_v2_build_jsonb_gin_v2_build_doc_idx_posting_chunks;`,
+					Expected: []sql.Row{
+						{"t", 1, float64(22), 11, 11},
+					},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 build failure cleanup",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_bad_pk (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_bad_pk VALUES (1.1, '{"tags":["vip"]}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE INDEX jsonb_gin_v2_bad_pk_doc_idx ON jsonb_gin_v2_bad_pk USING gin (doc);",
+					ExpectedErr: "unsupported ordered row-reference type numeric",
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'jsonb_gin_v2_bad_pk' AND indexname = 'jsonb_gin_v2_bad_pk_doc_idx';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       "SELECT COUNT(*) FROM dg_gin_jsonb_gin_v2_bad_pk_jsonb_gin_v2_bad_pk_doc_idx_posting_chunks;",
+					ExpectedErr: "not found",
+				},
+			},
+		},
+	})
+}
+
 func TestBasicIndexing(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
