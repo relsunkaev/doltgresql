@@ -151,6 +151,22 @@ ON CONFLICT (id) do update set c1 = $4`,
 					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
 				},
 				{
+					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email update') ON CONFLICT (email) DO UPDATE SET name = 'email update'",
+					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+				},
+				{
+					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email ignore') ON CONFLICT (email) DO NOTHING",
+					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+				},
+				{
+					Query:       "INSERT INTO mytable (id, name) VALUES (1, 'predicate target') ON CONFLICT (id) WHERE id > 0 DO UPDATE SET name = 'predicate target'",
+					ExpectedErr: "the ON CONFLICT clause provided is not yet supported",
+				},
+				{
+					Query:       "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'newworld'",
+					ExpectedErr: "the ON CONFLICT clause provided is not yet supported",
+				},
+				{
 					Query: "SELECT * FROM conflict_arbiters ORDER BY id",
 					Expected: []sql.Row{
 						{1, "a@example.com", "first"},
