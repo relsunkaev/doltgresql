@@ -277,6 +277,36 @@ func TestBtreeDMLRollbackPreservesIndex(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 1)
 }
 
+func TestBtreeUnhintedLookupJoinPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	setupBtreeJoinBenchmark(t, ctx, conn)
+
+	selective := `SELECT count(*)
+FROM btree_join_left_idx
+JOIN btree_join_right_idx
+  ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
+ AND btree_join_right_idx.score = btree_join_left_idx.score
+WHERE btree_join_left_idx.tenant = 4`
+	assertBenchmarkPlanContains(t, ctx, conn, selective, "LookupJoin")
+	assertBenchmarkPlanContains(t, ctx, conn, selective, "IndexedTableAccess(btree_join_right_idx)")
+	assertCountResult(t, ctx, conn, selective, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
+
+	nonselective := `SELECT count(*)
+FROM btree_join_left_idx
+JOIN btree_join_right_idx
+  ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
+ AND btree_join_right_idx.score = btree_join_left_idx.score`
+	assertCountResult(t, ctx, conn, nonselective, btreeJoinProbeRows*(btreeBenchmarkRows/64))
+}
+
 func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -422,7 +452,18 @@ WHERE btree_join_left_scan.tenant = 4`,
 			want: btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
 		},
 		{
-			name: "indexed/composite_lookup_join",
+			name: "indexed/unhinted_composite_lookup_join",
+			query: `SELECT count(*)
+FROM btree_join_left_idx
+JOIN btree_join_right_idx
+  ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
+ AND btree_join_right_idx.score = btree_join_left_idx.score
+WHERE btree_join_left_idx.tenant = 4`,
+			want:         btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
+			planContains: []string{"LookupJoin", "IndexedTableAccess(btree_join_right_idx)"},
+		},
+		{
+			name: "indexed/hinted_composite_lookup_join",
 			query: `SELECT /*+ lookup_join(btree_join_left_idx, btree_join_right_idx) */ HINT count(*)
 FROM btree_join_left_idx
 JOIN btree_join_right_idx

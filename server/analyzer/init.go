@@ -36,6 +36,7 @@ const (
 	ruleId_AssignJsonbGinLookups                                            // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                        // assignJsonbGinMaintainers
 	ruleId_AssignBtreePlannerBoundaries                                     // assignBtreePlannerBoundaries
+	ruleId_AssignSelectiveLookupJoinHints                                   // assignSelectiveLookupJoinHints
 	ruleId_AssignTriggers                                                   // assignTriggers
 	ruleId_AssignUpdateCasts                                                // assignUpdateCasts
 	ruleId_ConvertDropPrimaryKeyConstraint                                  // convertDropPrimaryKeyConstraint
@@ -108,6 +109,7 @@ func Init() {
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "optimizeJoins", true,
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
+		analyzer.Rule{Id: ruleId_AssignSelectiveLookupJoinHints, Apply: AssignSelectiveLookupJoinHints},
 	)
 
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,

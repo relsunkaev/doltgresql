@@ -155,7 +155,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 		{
 			name:             "btree/join",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_join_left_scan JOIN dg_pair_join_right_scan ON dg_pair_join_right_scan.tenant = dg_pair_join_left_scan.tenant AND dg_pair_join_right_scan.score = dg_pair_join_left_scan.score WHERE dg_pair_join_left_scan.tenant = 4`,
-			doltgresIndexSQL: `SELECT /*+ lookup_join(dg_pair_join_left_idx, dg_pair_join_right_idx) */ HINT count(*) FROM dg_pair_join_left_idx JOIN dg_pair_join_right_idx ON dg_pair_join_right_idx.tenant = dg_pair_join_left_idx.tenant AND dg_pair_join_right_idx.score = dg_pair_join_left_idx.score WHERE dg_pair_join_left_idx.tenant = 4`,
+			doltgresIndexSQL: `SELECT count(*) FROM dg_pair_join_left_idx JOIN dg_pair_join_right_idx ON dg_pair_join_right_idx.tenant = dg_pair_join_left_idx.tenant AND dg_pair_join_right_idx.score = dg_pair_join_left_idx.score WHERE dg_pair_join_left_idx.tenant = 4`,
 			postgresSQL:      `SELECT count(*) FROM pg_pair_join_left_idx JOIN pg_pair_join_right_idx ON pg_pair_join_right_idx.tenant = pg_pair_join_left_idx.tenant AND pg_pair_join_right_idx.score = pg_pair_join_left_idx.score WHERE pg_pair_join_left_idx.tenant = 4`,
 			want:             btreeJoinProbeRows / 8 * (btreeBenchmarkRows / 64),
 		},
