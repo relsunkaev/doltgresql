@@ -144,6 +144,97 @@ WHERE tablename = 'jsonb_gin_v2_bad_pk' AND indexname = 'jsonb_gin_v2_bad_pk_doc
 	})
 }
 
+func TestJsonbGinV2PostingChunkLookupGate(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PostgreSQL jsonb gin v2 indexed lookup and recheck",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_lookup VALUES
+						(1, '{"a":1,"b":2,"tags":["x"],"nested":{"a":9}}'),
+						(2, '{"a":1,"b":3,"tags":["y"]}'),
+						(3, '{"a":2,"b":2,"tags":["x"]}'),
+						(4, '{"nested":{"a":1},"tags":["z"]}'),
+						(5, '{"a":null,"tags":["x"]}');`,
+				"CREATE INDEX jsonb_gin_v2_lookup_idx ON jsonb_gin_v2_lookup USING gin (doc);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `EXPLAIN SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc @> '{"a":1}'
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [jsonb_gin_v2_lookup.id]"},
+						{" └─ Sort(jsonb_gin_v2_lookup.id ASC)"},
+						{"     └─ Filter"},
+						{`         ├─ jsonb_gin_v2_lookup.doc @> '{"a":1}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_v2_lookup)"},
+						{"             ├─ index: [jsonb_gin(doc)]"},
+						{"             ├─ filters: [{[jsonb_gin_v2_lookup_idx intersect 2 token(s), jsonb_gin_v2_lookup_idx intersect 2 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
+					},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc @> '{"a":1}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}},
+				},
+				{
+					Query: `SELECT count(*) FROM jsonb_gin_v2_lookup
+WHERE doc @> '{"a":1}';`,
+					Expected: []sql.Row{{2}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc @> '{"nested":{"a":1}}'
+ORDER BY id;`,
+					Expected: []sql.Row{{4}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc ? 'a'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc ?| ARRAY['missing','a']
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_lookup
+WHERE doc ?& ARRAY['a','tags']
+ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}, {3}, {5}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 path ops indexed lookup",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_path_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_path_lookup VALUES
+						(1, '{"a":{"b":1},"tags":["x"]}'),
+						(2, '{"a":{"b":2},"tags":["x"]}'),
+						(3, '{"a":{"c":1},"tags":["y"]}');`,
+				"CREATE INDEX jsonb_gin_v2_path_lookup_idx ON jsonb_gin_v2_path_lookup USING gin (doc jsonb_path_ops);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_path_lookup
+WHERE doc @> '{"a":{"b":1}}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 func TestBasicIndexing(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

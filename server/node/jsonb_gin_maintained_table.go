@@ -96,6 +96,17 @@ func (i JsonbGinMaintainedIndex) v1PostingTableName() (string, error) {
 	return i.PostingTable, nil
 }
 
+func (i JsonbGinMaintainedIndex) v2PostingChunkTableName() (string, error) {
+	storageVersion := indexmetadata.NormalizeGinPostingStorageVersion(i.PostingStorageVersion)
+	if storageVersion != indexmetadata.GinPostingStorageVersionV2 {
+		return "", errors.Errorf("JSONB GIN posting storage version %d is not supported by the v2 posting chunk path", storageVersion)
+	}
+	if i.PostingChunkTable == "" {
+		return "", errors.Errorf(`posting chunk table for gin index "%s" is not configured`, i.Name)
+	}
+	return i.PostingChunkTable, nil
+}
+
 const (
 	jsonbGinMaxBroadKeyPostingRowsForIndexedLookup = 128
 	jsonbGinMaxCandidateRowsForIndexedLookup       = 512
@@ -449,6 +460,17 @@ func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr
 }
 
 func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForIndex(ctx *sql.Context, lookupSpec jsonbGinLookupSpec) (bool, error) {
+	switch indexmetadata.NormalizeGinPostingStorageVersion(lookupSpec.index.PostingStorageVersion) {
+	case indexmetadata.GinPostingStorageVersionV1:
+		return t.lookupSpecTooBroadForV1Index(ctx, lookupSpec)
+	case indexmetadata.GinPostingStorageVersionV2:
+		return t.lookupSpecTooBroadForV2Index(ctx, lookupSpec)
+	default:
+		return false, errors.Errorf("unsupported JSONB GIN posting storage version %d", lookupSpec.index.PostingStorageVersion)
+	}
+}
+
+func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForV1Index(ctx *sql.Context, lookupSpec jsonbGinLookupSpec) (bool, error) {
 	postingTableName, err := lookupSpec.index.v1PostingTableName()
 	if err != nil {
 		return false, err
@@ -473,6 +495,50 @@ func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForIndex(ctx *sql.Context, l
 			return false, err
 		}
 		tokenRows[i] = rowIDs
+	}
+	var candidateRows map[string]struct{}
+	switch lookupSpec.mode {
+	case jsonbGinLookupUnion:
+		candidateRows = unionPostingRowIDs(tokenRows)
+	case jsonbGinLookupIntersect:
+		candidateRows = intersectPostingRowIDs(tokenRows)
+	default:
+		return false, errors.Errorf("unknown JSONB GIN lookup mode %q", lookupSpec.mode)
+	}
+	if len(candidateRows) > jsonbGinMaxCandidateRowsForIndexedLookup {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForV2Index(ctx *sql.Context, lookupSpec jsonbGinLookupSpec) (bool, error) {
+	postingChunkTableName, err := lookupSpec.index.v2PostingChunkTableName()
+	if err != nil {
+		return false, err
+	}
+	postingChunkTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: postingChunkTableName, Schema: t.schemaName})
+	if err != nil {
+		return false, err
+	}
+	if postingChunkTable == nil {
+		return false, errors.Errorf(`posting chunk table "%s" for gin index "%s" does not exist`, postingChunkTableName, lookupSpec.index.Name)
+	}
+	keyTypes, err := t.primaryKeyColumnExpressionTypes(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, encodedToken := range lookupSpec.encodedTokens {
+		if !lookupSpec.broadTokenSensitive {
+			continue
+		}
+		exceeds, err := postingChunkTokenRowRefCountExceeds(ctx, postingChunkTable, encodedToken, jsonbGinMaxBroadKeyPostingRowsForIndexedLookup)
+		if err != nil || exceeds {
+			return exceeds, err
+		}
+	}
+	tokenRows, _, err := lookupPostingChunkTokensRowIDsAndCandidates(ctx, postingChunkTable, lookupSpec.encodedTokens, keyTypes)
+	if err != nil {
+		return false, err
 	}
 	var candidateRows map[string]struct{}
 	switch lookupSpec.mode {
@@ -1265,6 +1331,17 @@ func (t *jsonbGinIndexedTable) directCandidateRowIter(ctx *sql.Context, candidat
 }
 
 func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string]struct{}, []jsonbGinPostingCandidate, error) {
+	switch indexmetadata.NormalizeGinPostingStorageVersion(t.lookup.index.PostingStorageVersion) {
+	case indexmetadata.GinPostingStorageVersionV1:
+		return t.lookupV1PostingRowIDs(ctx)
+	case indexmetadata.GinPostingStorageVersionV2:
+		return t.lookupV2PostingRowIDs(ctx)
+	default:
+		return nil, nil, errors.Errorf("unsupported JSONB GIN posting storage version %d", t.lookup.index.PostingStorageVersion)
+	}
+}
+
+func (t *jsonbGinIndexedTable) lookupV1PostingRowIDs(ctx *sql.Context) (map[string]struct{}, []jsonbGinPostingCandidate, error) {
 	postingTableName, err := t.lookup.index.v1PostingTableName()
 	if err != nil {
 		return nil, nil, err
@@ -1282,6 +1359,38 @@ func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string
 		return nil, nil, err
 	}
 
+	var rowIDs map[string]struct{}
+	switch t.lookup.mode {
+	case jsonbGinLookupUnion:
+		rowIDs = unionPostingRowIDs(tokenRows)
+	case jsonbGinLookupIntersect:
+		rowIDs = intersectPostingRowIDs(tokenRows)
+	default:
+		return nil, nil, errors.Errorf("unknown JSONB GIN lookup mode %q", t.lookup.mode)
+	}
+	return rowIDs, postingCandidatesForRowIDs(rowIDs, tokenCandidates), nil
+}
+
+func (t *jsonbGinIndexedTable) lookupV2PostingRowIDs(ctx *sql.Context) (map[string]struct{}, []jsonbGinPostingCandidate, error) {
+	postingChunkTableName, err := t.lookup.index.v2PostingChunkTableName()
+	if err != nil {
+		return nil, nil, err
+	}
+	postingChunkTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: postingChunkTableName, Schema: t.schemaName})
+	if err != nil {
+		return nil, nil, err
+	}
+	if postingChunkTable == nil {
+		return nil, nil, errors.Errorf(`posting chunk table "%s" for gin index "%s" does not exist`, postingChunkTableName, t.lookup.index.Name)
+	}
+	keyTypes, err := t.primaryKeyColumnExpressionTypes(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokenRows, tokenCandidates, err := lookupPostingChunkTokensRowIDsAndCandidates(ctx, postingChunkTable, t.lookup.encodedTokens, keyTypes)
+	if err != nil {
+		return nil, nil, err
+	}
 	var rowIDs map[string]struct{}
 	switch t.lookup.mode {
 	case jsonbGinLookupUnion:
@@ -1330,6 +1439,29 @@ func lookupPostingTokensRowIDsAndCandidates(ctx *sql.Context, postingTable sql.T
 	return tokenRows, tokenCandidates, nil
 }
 
+func lookupPostingChunkTokensRowIDsAndCandidates(ctx *sql.Context, postingChunkTable sql.Table, encodedTokens []string, keyTypes []sql.ColumnExpressionType) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, error) {
+	tokenRows := make([]map[string]struct{}, len(encodedTokens))
+	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, len(encodedTokens))
+	if len(encodedTokens) == 0 {
+		return tokenRows, tokenCandidates, nil
+	}
+	if indexAddressable, ok := postingChunkTable.(sql.IndexAddressable); ok {
+		rows, candidates, indexed, err := lookupPostingChunkTokensRowIDsFromIndex(ctx, indexAddressable, encodedTokens, keyTypes)
+		if err != nil || indexed {
+			return rows, candidates, err
+		}
+	}
+	for i, encodedToken := range encodedTokens {
+		rowIDs, candidates, err := scanPostingChunkTokenRowIDs(ctx, postingChunkTable, encodedToken, keyTypes)
+		if err != nil {
+			return nil, nil, err
+		}
+		tokenRows[i] = rowIDs
+		tokenCandidates[i] = candidates
+	}
+	return tokenRows, tokenCandidates, nil
+}
+
 func lookupPostingTokenRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedToken string) (map[string]struct{}, map[string]jsonbGinPostingCandidate, bool, error) {
 	tokenRows, tokenCandidates, indexed, err := lookupPostingTokensRowIDsFromIndex(ctx, indexAddressable, []string{encodedToken})
 	if err != nil || !indexed {
@@ -1365,6 +1497,36 @@ func lookupPostingTokensRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.I
 		return nil, nil, false, nil
 	}
 	rowIDs, candidates, err := readPostingIndexedTokenRows(ctx, indexedTable, lookup, tokenIndexes, len(encodedTokens))
+	return rowIDs, candidates, true, err
+}
+
+func lookupPostingChunkTokensRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedTokens []string, keyTypes []sql.ColumnExpressionType) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, bool, error) {
+	indexes, err := indexAddressable.GetIndexes(ctx)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	postingIndex := jsonbGinPostingTokenIndex(ctx, indexes)
+	if postingIndex == nil {
+		return nil, nil, false, nil
+	}
+	columnTypes := postingIndex.ColumnExpressionTypes(ctx)
+	if len(columnTypes) == 0 {
+		return nil, nil, false, nil
+	}
+	ranges := make(sql.MySQLRangeCollection, len(encodedTokens))
+	tokenIndexes := make(map[string]int, len(encodedTokens))
+	for i, encodedToken := range encodedTokens {
+		ranges[i] = sql.MySQLRange{
+			sql.ClosedRangeColumnExpr(encodedToken, encodedToken, columnTypes[0].Type),
+		}
+		tokenIndexes[encodedToken] = i
+	}
+	lookup := sql.NewIndexLookup(postingIndex, ranges, false, false, false, false)
+	indexedTable := indexAddressable.IndexedAccess(ctx, lookup)
+	if indexedTable == nil {
+		return nil, nil, false, nil
+	}
+	rowIDs, candidates, err := readPostingChunkIndexedTokenRows(ctx, indexedTable, lookup, tokenIndexes, len(encodedTokens), keyTypes)
 	return rowIDs, candidates, true, err
 }
 
@@ -1422,6 +1584,41 @@ func readPostingIndexedTokenRows(ctx *sql.Context, indexedTable sql.IndexedTable
 			return nil, nil, err
 		}
 		if err = readPostingBatchTokenRows(ctx, rows, tokenIndexes, tokenRows, tokenCandidates); err != nil {
+			_ = rows.Close(ctx)
+			return nil, nil, err
+		}
+		if err = rows.Close(ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+	return tokenRows, tokenCandidates, nil
+}
+
+func readPostingChunkIndexedTokenRows(ctx *sql.Context, indexedTable sql.IndexedTable, lookup sql.IndexLookup, tokenIndexes map[string]int, tokenCount int, keyTypes []sql.ColumnExpressionType) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, error) {
+	tokenRows := make([]map[string]struct{}, tokenCount)
+	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, tokenCount)
+	for i := 0; i < tokenCount; i++ {
+		tokenRows[i] = make(map[string]struct{})
+		tokenCandidates[i] = make(map[string]jsonbGinPostingCandidate)
+	}
+	partitions, err := indexedTable.LookupPartitions(ctx, lookup)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		rows, err := indexedTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = readPostingChunkBatchTokenRows(ctx, rows, tokenIndexes, tokenRows, tokenCandidates, keyTypes); err != nil {
 			_ = rows.Close(ctx)
 			return nil, nil, err
 		}
@@ -1496,6 +1693,37 @@ func scanPostingTokenRowIDs(ctx *sql.Context, postingTable sql.Table, encodedTok
 	return rowIDs, candidates, nil
 }
 
+func scanPostingChunkTokenRowIDs(ctx *sql.Context, postingChunkTable sql.Table, encodedToken string, keyTypes []sql.ColumnExpressionType) (map[string]struct{}, map[string]jsonbGinPostingCandidate, error) {
+	tokenRows := []map[string]struct{}{make(map[string]struct{})}
+	tokenCandidates := []map[string]jsonbGinPostingCandidate{make(map[string]jsonbGinPostingCandidate)}
+	partitions, err := postingChunkTable.Partitions(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		rows, err := postingChunkTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = readPostingChunkBatchTokenRows(ctx, rows, map[string]int{encodedToken: 0}, tokenRows, tokenCandidates, keyTypes); err != nil {
+			_ = rows.Close(ctx)
+			return nil, nil, err
+		}
+		if err = rows.Close(ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+	return tokenRows[0], tokenCandidates[0], nil
+}
+
 func readPostingTokenRows(ctx *sql.Context, rows sql.RowIter, encodedToken string, rowIDs map[string]struct{}, candidates map[string]jsonbGinPostingCandidate) error {
 	for {
 		row, err := rows.Next(ctx)
@@ -1557,6 +1785,49 @@ func readPostingBatchTokenRows(ctx *sql.Context, rows sql.RowIter, tokenIndexes 
 	}
 }
 
+func readPostingChunkBatchTokenRows(ctx *sql.Context, rows sql.RowIter, tokenIndexes map[string]int, tokenRows []map[string]struct{}, tokenCandidates []map[string]jsonbGinPostingCandidate, keyTypes []sql.ColumnExpressionType) error {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if len(row) < 7 || row[0] == nil || row[6] == nil {
+			continue
+		}
+		tokenText, ok := row[0].(string)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting chunk token type %T", row[0])
+		}
+		tokenIndex, ok := tokenIndexes[tokenText]
+		if !ok {
+			continue
+		}
+		payload, ok := row[6].([]byte)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", row[6])
+		}
+		chunk, err := jsonbgin.DecodePostingChunk(payload)
+		if err != nil {
+			return err
+		}
+		if err = validatePostingChunkRowMetadata(row, chunk); err != nil {
+			return err
+		}
+		for _, rowRef := range chunk.RowRefs {
+			rowID := string(rowRef)
+			tokenRows[tokenIndex][rowID] = struct{}{}
+			candidate, err := jsonbGinPostingCandidateFromRowReference(ctx, rowID, keyTypes, rowRef)
+			if err != nil {
+				return err
+			}
+			tokenCandidates[tokenIndex][rowID] = candidate
+		}
+	}
+}
+
 func readPostingTokenRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedToken string, rowIDs map[string]struct{}, limit int) (bool, error) {
 	for {
 		row, err := rows.Next(ctx)
@@ -1584,6 +1855,185 @@ func readPostingTokenRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedT
 		if len(rowIDs) > limit {
 			return true, nil
 		}
+	}
+}
+
+func postingChunkTokenRowRefCountExceeds(ctx *sql.Context, postingChunkTable sql.Table, encodedToken string, limit int) (bool, error) {
+	if indexAddressable, ok := postingChunkTable.(sql.IndexAddressable); ok {
+		exceeds, indexed, err := postingChunkTokenRowRefIndexCountExceeds(ctx, indexAddressable, encodedToken, limit)
+		if err != nil || indexed {
+			return exceeds, err
+		}
+	}
+	partitions, err := postingChunkTable.Partitions(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer partitions.Close(ctx)
+	count := 0
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		rows, err := postingChunkTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, err
+		}
+		nextCount, exceeds, err := readPostingChunkRowsUntilLimit(ctx, rows, encodedToken, count, limit)
+		closeErr := rows.Close(ctx)
+		if err != nil {
+			return false, err
+		}
+		if closeErr != nil {
+			return false, closeErr
+		}
+		count = nextCount
+		if exceeds {
+			return true, nil
+		}
+	}
+}
+
+func postingChunkTokenRowRefIndexCountExceeds(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedToken string, limit int) (bool, bool, error) {
+	indexes, err := indexAddressable.GetIndexes(ctx)
+	if err != nil {
+		return false, false, err
+	}
+	postingIndex := jsonbGinPostingTokenIndex(ctx, indexes)
+	if postingIndex == nil {
+		return false, false, nil
+	}
+	columnTypes := postingIndex.ColumnExpressionTypes(ctx)
+	if len(columnTypes) == 0 {
+		return false, false, nil
+	}
+	lookup := sql.NewIndexLookup(postingIndex, sql.MySQLRangeCollection{{
+		sql.ClosedRangeColumnExpr(encodedToken, encodedToken, columnTypes[0].Type),
+	}}, false, false, false, false)
+	indexedTable := indexAddressable.IndexedAccess(ctx, lookup)
+	if indexedTable == nil {
+		return false, false, nil
+	}
+	partitions, err := indexedTable.LookupPartitions(ctx, lookup)
+	if err != nil {
+		return false, true, err
+	}
+	defer partitions.Close(ctx)
+	count := 0
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return false, true, nil
+		}
+		if err != nil {
+			return false, true, err
+		}
+		rows, err := indexedTable.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, true, err
+		}
+		nextCount, exceeds, err := readPostingChunkRowsUntilLimit(ctx, rows, encodedToken, count, limit)
+		closeErr := rows.Close(ctx)
+		if err != nil {
+			return false, true, err
+		}
+		if closeErr != nil {
+			return false, true, closeErr
+		}
+		count = nextCount
+		if exceeds {
+			return true, true, nil
+		}
+	}
+}
+
+func readPostingChunkRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedToken string, count int, limit int) (int, bool, error) {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return count, false, nil
+		}
+		if err != nil {
+			return count, false, err
+		}
+		if len(row) < 7 || row[0] == nil || row[6] == nil {
+			continue
+		}
+		tokenText, ok := row[0].(string)
+		if !ok {
+			return count, false, errors.Errorf("unexpected JSONB GIN posting chunk token type %T", row[0])
+		}
+		if tokenText != encodedToken {
+			continue
+		}
+		payload, ok := row[6].([]byte)
+		if !ok {
+			return count, false, errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", row[6])
+		}
+		chunk, err := jsonbgin.DecodePostingChunk(payload)
+		if err != nil {
+			return count, false, err
+		}
+		if err = validatePostingChunkRowMetadata(row, chunk); err != nil {
+			return count, false, err
+		}
+		count += len(chunk.RowRefs)
+		if count > limit {
+			return count, true, nil
+		}
+	}
+}
+
+func validatePostingChunkRowMetadata(row sql.Row, chunk jsonbgin.PostingChunk) error {
+	if len(row) > 2 && row[2] != nil {
+		formatVersion, ok := integralInt64(row[2])
+		if !ok || formatVersion < 0 || uint16(formatVersion) != chunk.FormatVersion {
+			return errors.Errorf("malformed JSONB GIN posting chunk row: metadata format version %v does not match payload version %d", row[2], chunk.FormatVersion)
+		}
+	}
+	if len(row) > 3 && row[3] != nil {
+		rowCount, ok := integralInt64(row[3])
+		if !ok || rowCount < 0 || uint32(rowCount) != chunk.RowCount {
+			return errors.Errorf("malformed JSONB GIN posting chunk row: metadata row count %v does not match payload row count %d", row[3], chunk.RowCount)
+		}
+	}
+	return nil
+}
+
+func integralInt64(value any) (int64, bool) {
+	switch value := value.(type) {
+	case int:
+		return int64(value), true
+	case int8:
+		return int64(value), true
+	case int16:
+		return int64(value), true
+	case int32:
+		return int64(value), true
+	case int64:
+		return value, true
+	case uint:
+		if uint64(value) > uint64(^uint64(0)>>1) {
+			return 0, false
+		}
+		return int64(value), true
+	case uint8:
+		return int64(value), true
+	case uint16:
+		return int64(value), true
+	case uint32:
+		return int64(value), true
+	case uint64:
+		if value > uint64(^uint64(0)>>1) {
+			return 0, false
+		}
+		return int64(value), true
+	default:
+		return 0, false
 	}
 }
 
@@ -1642,6 +2092,36 @@ func postingCandidatesForRowIDs(rowIDs map[string]struct{}, tokenCandidates []ma
 		candidates = append(candidates, candidate)
 	}
 	return candidates
+}
+
+func (t *JsonbGinMaintainedTable) primaryKeyColumnExpressionTypes(ctx *sql.Context) ([]sql.ColumnExpressionType, error) {
+	if indexAddressable, ok := t.underlying.(sql.IndexAddressable); ok {
+		primaryIndex, ok, err := primaryLookupIndex(ctx, indexAddressable)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			keyTypes := primaryIndex.ColumnExpressionTypes(ctx)
+			if len(keyTypes) > 0 {
+				return keyTypes, nil
+			}
+		}
+	}
+	tableSchema := t.underlying.Schema(ctx)
+	keyTypes := make([]sql.ColumnExpressionType, 0)
+	for _, column := range tableSchema {
+		if !column.PrimaryKey {
+			continue
+		}
+		keyTypes = append(keyTypes, sql.ColumnExpressionType{
+			Expression: column.Name,
+			Type:       column.Type,
+		})
+	}
+	if len(keyTypes) == 0 {
+		return nil, errors.Errorf("JSONB GIN v2 posting chunk lookup requires a primary key")
+	}
+	return keyTypes, nil
 }
 
 func jsonbGinPostingCandidateFromRowReference(ctx *sql.Context, rowID string, keyTypes []sql.ColumnExpressionType, rowRef []byte) (jsonbGinPostingCandidate, error) {

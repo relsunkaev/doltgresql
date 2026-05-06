@@ -110,6 +110,68 @@ func TestJsonbGinPostingTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
 	require.Zero(t, table.fullScans)
 }
 
+func TestJsonbGinPostingChunkTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	vip := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	})
+	draft := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "draft",
+	})
+	other := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "archived",
+	})
+	keyTypes := []sql.ColumnExpressionType{{Expression: "docs.id", Type: pgtypes.Int32}}
+	vipRow, vipRefs := jsonbGinPostingChunkTestRow(t, ctx, vip, 0, []int32{1, 3})
+	draftRow, draftRefs := jsonbGinPostingChunkTestRow(t, ctx, draft, 0, []int32{2})
+	otherRow, _ := jsonbGinPostingChunkTestRow(t, ctx, other, 0, []int32{4})
+	table := &fakePostingTable{
+		rows: []sql.Row{vipRow, draftRow, otherRow},
+	}
+
+	rowIDs, candidates, err := lookupPostingChunkTokensRowIDsAndCandidates(ctx, table, []string{vip, draft}, keyTypes)
+	require.NoError(t, err)
+	require.Equal(t, map[string]struct{}{string(vipRefs[0]): {}, string(vipRefs[1]): {}}, rowIDs[0])
+	require.Equal(t, map[string]struct{}{string(draftRefs[0]): {}}, rowIDs[1])
+	require.Equal(t, sql.Row{int32(1)}, candidates[0][string(vipRefs[0])].key)
+	require.Equal(t, sql.Row{int32(3)}, candidates[0][string(vipRefs[1])].key)
+	require.Equal(t, sql.Row{int32(2)}, candidates[1][string(draftRefs[0])].key)
+	require.Equal(t, 1, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
+}
+
+func TestJsonbGinPostingChunkTokenCountUsesIndex(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	vip := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	})
+	other := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "archived",
+	})
+	vipChunkA, _ := jsonbGinPostingChunkTestRow(t, ctx, vip, 0, []int32{1, 2})
+	vipChunkB, _ := jsonbGinPostingChunkTestRow(t, ctx, vip, 1, []int32{3})
+	otherChunk, _ := jsonbGinPostingChunkTestRow(t, ctx, other, 0, []int32{4, 5, 6})
+	table := &fakePostingTable{
+		rows: []sql.Row{vipChunkA, vipChunkB, otherChunk},
+	}
+
+	exceeds, err := postingChunkTokenRowRefCountExceeds(ctx, table, vip, 2)
+	require.NoError(t, err)
+	require.True(t, exceeds)
+	require.Equal(t, 1, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
+}
+
 func TestJsonbGinPostingCandidateFromRowReference(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	keyTypes := []sql.ColumnExpressionType{
@@ -802,6 +864,28 @@ func requirePostingChunkRow(t *testing.T, ctx *sql.Context, row sql.Row, chunkNo
 		require.NoError(t, err)
 		require.Equal(t, sql.Row{ids[i]}, decoded.Values)
 	}
+}
+
+func jsonbGinPostingChunkTestRow(t *testing.T, ctx *sql.Context, token string, chunkNo int64, ids []int32) (sql.Row, [][]byte) {
+	t.Helper()
+	rowRefs := make([][]byte, len(ids))
+	for i, id := range ids {
+		rowRef, err := jsonbgin.EncodeRowReference(ctx, []sql.Type{pgtypes.Int32}, sql.Row{id})
+		require.NoError(t, err)
+		rowRefs[i] = rowRef.Bytes
+	}
+	chunk, err := jsonbgin.EncodePostingChunk(rowRefs)
+	require.NoError(t, err)
+	return sql.Row{
+		token,
+		chunkNo,
+		int16(chunk.FormatVersion),
+		int32(chunk.RowCount),
+		chunk.FirstRowRef,
+		chunk.LastRowRef,
+		chunk.Payload,
+		postingChunkChecksumBytes(chunk.Checksum),
+	}, rowRefs
 }
 
 type fakePostingTable struct {
