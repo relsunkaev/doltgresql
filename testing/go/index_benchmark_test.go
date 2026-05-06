@@ -107,6 +107,13 @@ func TestBtreeStatsBackedIndexChoice(t *testing.T) {
 	assertBenchmarkPlanContains(t, ctx, conn, selectiveScore, "index: [btree_stats_choice.score]")
 	assertCountResult(t, ctx, conn, selectiveScore, 1)
 
+	insertBtreeConstantScoreRows(t, ctx, conn, "btree_stats_choice", 2000, 4096, 777)
+	execBenchmarkSQL(t, ctx, conn, "ANALYZE btree_stats_choice")
+
+	broadScore := `SELECT count(id) FROM btree_stats_choice WHERE tenant = 1 AND score = 777`
+	assertBenchmarkPlanContains(t, ctx, conn, broadScore, "index: [btree_stats_choice.tenant]")
+	assertCountResult(t, ctx, conn, broadScore, 1025)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_stats_composite_choice (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
 	insertBtreeStatsChoiceRows(t, ctx, conn, "btree_stats_composite_choice", 1024)
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_stats_composite_choice_tenant_idx ON btree_stats_composite_choice (tenant)")
@@ -1293,6 +1300,27 @@ func insertBtreeStatsChoiceRows(tb testing.TB, ctx context.Context, conn *Connec
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%4, id, id%16)
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertBtreeConstantScoreRows(tb testing.TB, ctx context.Context, conn *Connection, table string, firstID, rowCount, score int) {
+	tb.Helper()
+	const chunkSize = 64
+	for chunkStart := firstID; chunkStart < firstID+rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > firstID+rowCount {
+			chunkEnd = firstID + rowCount
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%4, score, id%16)
 		}
 		execBenchmarkSQL(tb, ctx, conn, query.String())
 	}
