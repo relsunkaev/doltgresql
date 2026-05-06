@@ -1082,7 +1082,7 @@ func TestBasicIndexing(t *testing.T) {
 				},
 				{
 					Query:       "CREATE INDEX v1_idx2 ON test using hash (v1);",
-					ExpectedErr: "not yet supported",
+					ExpectedErr: "index method hash is not yet supported",
 				},
 				{
 					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
@@ -1103,6 +1103,61 @@ func TestBasicIndexing(t *testing.T) {
 				{
 					Query:       "ALTER INDEX v1_idx_existing ALTER COLUMN 1 SET STATISTICS 100;",
 					ExpectedErr: `cannot alter statistics on non-expression column "v1" of index "v1_idx_existing"`,
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL hash access method boundary",
+			SetUpScript: []string{
+				"CREATE TABLE hash_access_method_boundary (id INTEGER PRIMARY KEY, v TEXT NOT NULL);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT amname, amhandler, amtype
+FROM pg_catalog.pg_am
+WHERE amname = 'hash';`,
+					Expected: []sql.Row{
+						{"hash", "hashhandler", "i"},
+					},
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+WHERE am.amname = 'hash';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_opfamily opf
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE am.amname = 'hash';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+WHERE am.amname = 'hash';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_amproc amproc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE am.amname = 'hash';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       "CREATE INDEX hash_access_method_boundary_v_hash_idx ON hash_access_method_boundary USING hash (v);",
+					ExpectedErr: "index method hash is not yet supported",
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_class
+WHERE relname = 'hash_access_method_boundary_v_hash_idx';`,
+					Expected: []sql.Row{{0}},
 				},
 			},
 		},
