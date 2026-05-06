@@ -180,6 +180,29 @@ func TestBasicIndexing(t *testing.T) {
 					},
 				},
 				{
+					Query: "SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
+					Expected: []sql.Row{
+						{12, 2},
+						{14, 4},
+					},
+				},
+				{
+					Query: "explain SELECT * FROM test WHERE v1 IN (4, 2, 4, 2) ORDER BY pk;",
+					Expected: []sql.Row{
+						{"Sort(test.pk ASC)"},
+						{" └─ IndexedTableAccess(test)"},
+						{"     ├─ index: [test.v1]"},
+						{"     ├─ filters: [{[2, 2]}, {[4, 4]}]"},
+						{"     └─ columns: [pk v1]"},
+					},
+				},
+				{
+					Query: "SELECT * FROM test WHERE v1 IN (NULL, 2, 2) ORDER BY pk;",
+					Expected: []sql.Row{
+						{12, 2},
+					},
+				},
+				{
 					Query: "SELECT * FROM test WHERE v1 NOT IN (2, 4) ORDER BY pk;",
 					Expected: []sql.Row{
 						{11, 1},
@@ -2845,7 +2868,8 @@ ORDER BY id;`,
 						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
 						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
 						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             └─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
+						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
 					},
 				},
 				{
@@ -2913,7 +2937,8 @@ WHERE doc @> '{"a":1}';`,
 						{`         ├─ jsonb_gin_path_lookup.doc @> '{"a":{"b":1}}'`},
 						{"         └─ IndexedTableAccess(jsonb_gin_path_lookup)"},
 						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             └─ filters: [{[jsonb_gin_path_lookup_idx intersect 1 token(s), jsonb_gin_path_lookup_idx intersect 1 token(s)]}]"},
+						{"             ├─ filters: [{[jsonb_gin_path_lookup_idx intersect 1 token(s), jsonb_gin_path_lookup_idx intersect 1 token(s)]}]"},
+						{"             └─ columns: [id doc]"},
 					},
 				},
 				{
