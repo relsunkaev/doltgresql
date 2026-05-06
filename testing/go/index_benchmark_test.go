@@ -23,6 +23,66 @@ import (
 
 const jsonbGinBenchmarkRows = 1024
 
+func TestBtreeIndexPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_plan_tenant_score_idx ON btree_plan (tenant, score)")
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:        "leading_column_equality",
+			query:       `SELECT count(id) FROM btree_plan WHERE tenant = 4`,
+			want:        16,
+			indexedPlan: true,
+		},
+		{
+			name:        "leading_column_range",
+			query:       `SELECT count(id) FROM btree_plan WHERE tenant >= 2 AND tenant <= 5`,
+			want:        64,
+			indexedPlan: true,
+		},
+		{
+			name:        "multi_column_prefix_equality",
+			query:       `SELECT count(id) FROM btree_plan WHERE tenant = 4 AND score = 36`,
+			want:        2,
+			indexedPlan: true,
+		},
+		{
+			name:        "multi_column_prefix_range",
+			query:       `SELECT count(id) FROM btree_plan WHERE tenant = 4 AND score >= 32`,
+			want:        8,
+			indexedPlan: true,
+		},
+		{
+			name:  "suffix_without_prefix",
+			query: `SELECT count(id) FROM btree_plan WHERE score = 36`,
+			want:  2,
+		},
+	}
+
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, query.indexedPlan)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
 func BenchmarkJsonbGinSQLLookup(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupJsonbGinLookupBenchmark(b, ctx, conn)
@@ -246,6 +306,27 @@ func insertJsonbGinBenchmarkRows(tb testing.TB, ctx context.Context, conn *Conne
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, '%s'::jsonb)", id, benchmarkJsonbDocument(id))
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertBtreePlanRows(tb testing.TB, ctx context.Context, conn *Connection, table string, rowCount int) {
+	tb.Helper()
+	const chunkSize = 64
+	for chunkStart := 1; chunkStart <= rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > rowCount+1 {
+			chunkEnd = rowCount + 1
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%8, id%64, id%16)
 		}
 		execBenchmarkSQL(tb, ctx, conn, query.String())
 	}
