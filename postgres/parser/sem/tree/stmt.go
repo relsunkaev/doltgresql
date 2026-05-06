@@ -849,6 +849,12 @@ func (*ReleaseSavepoint) StatementType() StatementType { return Ack }
 func (*ReleaseSavepoint) StatementTag() string { return "RELEASE" }
 
 // StatementType implements the Statement interface.
+func (*Reindex) StatementType() StatementType { return DDL }
+
+// StatementTag implements the Statement interface.
+func (*Reindex) StatementTag() string { return "REINDEX" }
+
+// StatementType implements the Statement interface.
 func (*RenameColumn) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1334,6 +1340,7 @@ func (n *Import) String() string                    { return AsString(n) }
 func (n *ParenSelect) String() string               { return AsString(n) }
 func (n *Prepare) String() string                   { return AsString(n) }
 func (n *ReleaseSavepoint) String() string          { return AsString(n) }
+func (n *Reindex) String() string                   { return AsString(n) }
 func (n *Relocate) String() string                  { return AsString(n) }
 func (n *RefreshMaterializedView) String() string   { return AsString(n) }
 func (n *RenameColumn) String() string              { return AsString(n) }

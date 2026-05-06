@@ -1397,6 +1397,7 @@ ORDER BY id;`,
 			Name: "PostgreSQL drop index restrict lifecycle",
 			SetUpScript: []string{
 				"CREATE TABLE drop_index_restrict (id INTEGER PRIMARY KEY, v INTEGER);",
+				"INSERT INTO drop_index_restrict VALUES (1, 10), (2, 20);",
 				"CREATE INDEX drop_index_restrict_idx ON drop_index_restrict (v);",
 				"CREATE INDEX drop_index_restrict_cascade_idx ON drop_index_restrict (v);",
 			},
@@ -1406,12 +1407,36 @@ ORDER BY id;`,
 					ExpectedErr: "concurrent indexes are not yet supported",
 				},
 				{
-					Query:       "REINDEX INDEX drop_index_restrict_idx;",
-					ExpectedErr: "unimplemented: this syntax",
+					Query:       "REINDEX INDEX CONCURRENTLY drop_index_restrict_idx;",
+					ExpectedErr: "concurrent reindex is not yet supported",
 				},
 				{
-					Query:       "REINDEX TABLE drop_index_restrict;",
-					ExpectedErr: "unimplemented: this syntax",
+					Query: "REINDEX INDEX drop_index_restrict_idx;",
+				},
+				{
+					Query: "REINDEX TABLE drop_index_restrict;",
+				},
+				{
+					Query: `SELECT pg_catalog.pg_get_indexdef(c.oid)
+FROM pg_catalog.pg_class c
+WHERE c.relname = 'drop_index_restrict_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX drop_index_restrict_idx ON public.drop_index_restrict USING btree (v)"},
+					},
+				},
+				{
+					Query: "SELECT id FROM drop_index_restrict WHERE v = 20;",
+					Expected: []sql.Row{
+						{2},
+					},
+				},
+				{
+					Query:       "REINDEX INDEX drop_index_restrict_missing_idx;",
+					ExpectedErr: `index "drop_index_restrict_missing_idx" does not exist`,
+				},
+				{
+					Query:       "REINDEX TABLE drop_index_restrict_missing;",
+					ExpectedErr: "table not found: drop_index_restrict_missing",
 				},
 				{
 					Query: "DROP INDEX drop_index_restrict_idx RESTRICT;",

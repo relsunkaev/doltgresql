@@ -6672,7 +6672,23 @@ declare_cursor_stmt:
 	DECLARE { return unimplementedWithIssue(sqllex, 41412) }
 
 reindex_stmt:
-  REINDEX TABLE error
+  REINDEX INDEX opt_concurrently table_index_name
+  {
+    $$.val = &tree.Reindex{
+      Target: tree.ReindexIndex,
+      Index: $4.newTableIndexName(),
+      Concurrently: $3.bool(),
+    }
+  }
+| REINDEX TABLE opt_concurrently table_name
+  {
+    $$.val = &tree.Reindex{
+      Target: tree.ReindexTable,
+      Table: $4.unresolvedObjectName().ToTableName(),
+      Concurrently: $3.bool(),
+    }
+  }
+| REINDEX TABLE error
   {
     /* SKIP DOC */
     return purposelyUnimplemented(sqllex, "reindex table", "CockroachDB does not require reindexing.")

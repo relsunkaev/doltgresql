@@ -253,6 +253,15 @@ func unaryNegation(e tree.Expr) tree.Expr {
 
 // Parse parses a sql statement string and returns a list of Statements.
 func Parse(sql string) (Statements, error) {
+	if reindex, ok, err := parseReindex(sql); ok || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		return Statements{{
+			AST: reindex,
+			SQL: sql,
+		}}, nil
+	}
 	var p Parser
 	return p.parseWithDepth(1, sql, defaultNakedIntType)
 }
@@ -264,8 +273,97 @@ func Parse(sql string) (Statements, error) {
 // bits of SQL from other nodes. In general,earwe expect that all
 // user-generated SQL has been run through the ParseWithInt() function.
 func ParseOne(sql string) (Statement, error) {
+	if reindex, ok, err := parseReindex(sql); ok || err != nil {
+		if err != nil {
+			return Statement{}, err
+		}
+		return Statement{
+			AST: reindex,
+			SQL: sql,
+		}, nil
+	}
 	var p Parser
 	return p.parseOneWithDepth(1, sql)
+}
+
+func parseReindex(sql string) (*tree.Reindex, bool, error) {
+	query := strings.TrimSpace(sql)
+	query = strings.TrimSpace(strings.TrimSuffix(query, ";"))
+	fields := strings.Fields(query)
+	if len(fields) < 3 || !strings.EqualFold(fields[0], "REINDEX") {
+		return nil, false, nil
+	}
+
+	target := strings.ToUpper(fields[1])
+	switch target {
+	case "INDEX", "TABLE":
+	default:
+		return nil, false, nil
+	}
+
+	idx := 2
+	concurrently := false
+	if idx < len(fields) && strings.EqualFold(fields[idx], "CONCURRENTLY") {
+		concurrently = true
+		idx++
+	}
+	if idx != len(fields)-1 {
+		return nil, false, nil
+	}
+
+	switch target {
+	case "INDEX":
+		indexName, err := parseReindexIndexName(fields[idx])
+		if err != nil {
+			return nil, true, err
+		}
+		return &tree.Reindex{
+			Target:       tree.ReindexIndex,
+			Index:        indexName,
+			Concurrently: concurrently,
+		}, true, nil
+	case "TABLE":
+		tableName, err := ParseQualifiedTableName(fields[idx])
+		if err != nil {
+			return nil, true, err
+		}
+		return &tree.Reindex{
+			Target:       tree.ReindexTable,
+			Table:        *tableName,
+			Concurrently: concurrently,
+		}, true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
+func parseReindexIndexName(name string) (*tree.TableIndexName, error) {
+	if tablePart, indexPart, ok := strings.Cut(name, "@"); ok {
+		tableName, err := ParseQualifiedTableName(tablePart)
+		if err != nil {
+			return nil, err
+		}
+		indexName, err := ParseTableName(indexPart)
+		if err != nil {
+			return nil, err
+		}
+		return &tree.TableIndexName{
+			Table: *tableName,
+			Index: tree.UnrestrictedName(indexName.ToTableName().ObjectName),
+		}, nil
+	}
+
+	parsedName, err := ParseTableName(name)
+	if err != nil {
+		return nil, err
+	}
+	tableName := parsedName.ToTableName()
+	indexName := tree.UnrestrictedName(tableName.ObjectName)
+	tableName.ObjectName = ""
+	return &tree.TableIndexName{
+		Table: tableName,
+		Index: indexName,
+	}, nil
 }
 
 // HasMultipleStatements returns true if the sql string contains more than one
