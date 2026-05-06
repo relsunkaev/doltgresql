@@ -86,6 +86,43 @@ func TestBtreeIndexPlannerShape(t *testing.T) {
 	}
 }
 
+func TestExpressionBtreeIndexPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE expression_btree_plan (id INTEGER PRIMARY KEY, title TEXT NOT NULL)")
+	insertExpressionBtreePlanRows(t, ctx, conn, "expression_btree_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX expression_btree_plan_lower_idx ON expression_btree_plan (lower(title))")
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:        "matching_expression_equality",
+			query:       `SELECT count(id) FROM expression_btree_plan WHERE lower(title) = 'title-4'`,
+			want:        8,
+			indexedPlan: true,
+		},
+	}
+
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, query.indexedPlan)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
 func BenchmarkBtreeSQLLookup(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupBtreeLookupBenchmark(b, ctx, conn)
@@ -396,6 +433,27 @@ func insertBtreePlanRows(tb testing.TB, ctx context.Context, conn *Connection, t
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, %d, %d, 'label-%d')", id, id%8, id%64, id%16)
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertExpressionBtreePlanRows(tb testing.TB, ctx context.Context, conn *Connection, table string, rowCount int) {
+	tb.Helper()
+	const chunkSize = 64
+	for chunkStart := 1; chunkStart <= rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > rowCount+1 {
+			chunkEnd = rowCount + 1
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, 'Title-%d')", id, id%16)
 		}
 		execBenchmarkSQL(tb, ctx, conn, query.String())
 	}
