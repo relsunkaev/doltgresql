@@ -200,6 +200,16 @@ var btreeTextSupportProcs = []btreeSupportProc{
 	{leftType: "text", rightType: "text", opfamily: "text_ops", procNum: 4, proc: "btvarstrequalimage"},
 }
 
+var btreeScalarSupportProcs = []btreeSupportProc{
+	{leftType: "bool", rightType: "bool", opfamily: "bool_ops", procNum: 4, proc: "btequalimage"},
+	{leftType: "bpchar", rightType: "bpchar", opfamily: "bpchar_ops", procNum: 2, proc: "bpchar_sortsupport"},
+	{leftType: "bpchar", rightType: "bpchar", opfamily: "bpchar_ops", procNum: 4, proc: "btvarstrequalimage"},
+	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 2, proc: "numeric_sortsupport"},
+	{leftType: "numeric", rightType: "numeric", opfamily: "numeric_ops", procNum: 3, proc: "pg_catalog.in_range"},
+	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 2, proc: "uuid_sortsupport"},
+	{leftType: "uuid", rightType: "uuid", opfamily: "uuid_ops", procNum: 4, proc: "btequalimage"},
+}
+
 var btreeCatalogTypes = []btreeCatalogType{
 	{
 		typeName:        "bool",

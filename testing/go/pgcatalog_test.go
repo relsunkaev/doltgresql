@@ -191,16 +191,38 @@ WHERE am.amname = 'btree'
 GROUP BY opf.opfname
 ORDER BY opf.opfname;`,
 					Expected: []sql.Row{
-						{"bool_ops", 1},
-						{"bpchar_ops", 1},
+						{"bool_ops", 2},
+						{"bpchar_ops", 3},
 						{"bpchar_pattern_ops", 3},
 						{"datetime_ops", 3},
 						{"float_ops", 8},
 						{"integer_ops", 22},
-						{"numeric_ops", 1},
+						{"numeric_ops", 3},
 						{"text_ops", 8},
 						{"text_pattern_ops", 3},
-						{"uuid_ops", 1},
+						{"uuid_ops", 3},
+					},
+				},
+				{
+					Query: `SELECT opf.opfname, lt.typname, rt.typname, amproc.amprocnum, amproc.amproc
+FROM "pg_catalog"."pg_amproc" amproc
+JOIN "pg_catalog"."pg_opfamily" opf ON opf.oid = amproc.amprocfamily
+JOIN "pg_catalog"."pg_type" lt ON lt.oid = amproc.amproclefttype
+JOIN "pg_catalog"."pg_type" rt ON rt.oid = amproc.amprocrighttype
+WHERE opf.opfname IN ('bool_ops', 'bpchar_ops', 'numeric_ops', 'uuid_ops')
+ORDER BY opf.opfname, lt.typname, rt.typname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"bool_ops", "bool", "bool", 1, "btboolcmp"},
+						{"bool_ops", "bool", "bool", 4, "btequalimage"},
+						{"bpchar_ops", "bpchar", "bpchar", 1, "bpcharcmp"},
+						{"bpchar_ops", "bpchar", "bpchar", 2, "bpchar_sortsupport"},
+						{"bpchar_ops", "bpchar", "bpchar", 4, "btvarstrequalimage"},
+						{"numeric_ops", "numeric", "numeric", 1, "numeric_cmp"},
+						{"numeric_ops", "numeric", "numeric", 2, "numeric_sortsupport"},
+						{"numeric_ops", "numeric", "numeric", 3, "pg_catalog.in_range"},
+						{"uuid_ops", "uuid", "uuid", 1, "uuid_cmp"},
+						{"uuid_ops", "uuid", "uuid", 2, "uuid_sortsupport"},
+						{"uuid_ops", "uuid", "uuid", 4, "btequalimage"},
 					},
 				},
 				{
@@ -303,7 +325,7 @@ ORDER BY opf.opfname, amproc.amprocnum;`,
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT COUNT(*) FROM PG_catalog.pg_AMPROC;",
-					Expected: []sql.Row{{61}},
+					Expected: []sql.Row{{68}},
 				},
 			},
 		},

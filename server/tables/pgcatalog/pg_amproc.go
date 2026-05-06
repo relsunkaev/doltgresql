@@ -123,6 +123,9 @@ var defaultPostgresAmprocs = func() []amproc {
 	for _, proc := range btreeTextSupportProcs {
 		amprocs = append(amprocs, newBtreeSupportAmproc(proc))
 	}
+	for _, proc := range btreeScalarSupportProcs {
+		amprocs = append(amprocs, newBtreeSupportAmproc(proc))
+	}
 	for _, typ := range btreePatternCatalogTypes {
 		amprocs = append(amprocs,
 			newBtreePatternAmproc(typ, int16(1), typ.compareProc),
