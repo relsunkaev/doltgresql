@@ -64,12 +64,13 @@ import (
 // ConnectionHandler is responsible for the entire lifecycle of a user connection: receiving messages they send,
 // executing queries, sending the correct messages in return, and terminating the connection when appropriate.
 type ConnectionHandler struct {
-	mysqlConn          *mysql.Conn
-	preparedStatements map[string]PreparedStatementData
-	portals            map[string]PortalData
-	doltgresHandler    *DoltgresHandler
-	backend            *pgproto3.Backend
-	sendMu             sync.Mutex
+	mysqlConn           *mysql.Conn
+	preparedStatements  map[string]PreparedStatementData
+	planCacheGeneration uint64
+	portals             map[string]PortalData
+	doltgresHandler     *DoltgresHandler
+	backend             *pgproto3.Backend
+	sendMu              sync.Mutex
 
 	waitForSync bool
 	// copyFromStdinState is set when this connection is in the COPY FROM STDIN mode, meaning it is waiting on
@@ -781,12 +782,20 @@ func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, quer
 		return err
 	}
 
-	h.preparedStatements[stmt.Name] = PreparedStatementData{
+	preparedData := PreparedStatementData{
 		Query:        preparedQuery,
 		ReturnFields: fields,
 		BindVarTypes: bindVarTypes,
 		FromSQL:      true,
 	}
+	if h.preparedPlanCacheable(preparedQuery, bindVarTypes) {
+		cacheCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, preparedQuery.String)
+		if err != nil {
+			return err
+		}
+		h.cachePreparedPlan(cacheCtx, &preparedData, analyzedPlan)
+	}
+	h.preparedStatements[stmt.Name] = preparedData
 	h.recordPreparedStatement(stmt.Name, query.String, fields, bindVarTypes, true)
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
@@ -866,23 +875,51 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 		params[i] = value
 	}
 
-	analyzedPlan, fields, err := h.doltgresHandler.ComBind(
-		context.Background(),
-		h.mysqlConn,
-		preparedData.Query.String,
-		preparedData.Query.AST,
-		BindVariables{
-			varTypes:   preparedData.BindVarTypes,
-			parameters: params,
-		},
-		nil,
-	)
-	if err != nil {
-		return err
+	var fields []pgproto3.FieldDescription
+	var boundPlan sql.Node
+	var err error
+	if len(params) == 0 {
+		cacheCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, preparedData.Query.String)
+		if err != nil {
+			return err
+		}
+		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
+			boundPlan = cachedPlan
+			fields, err = schemaToFieldDescriptions(cacheCtx, boundPlan.Schema(cacheCtx), nil)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	boundPlan, ok := analyzedPlan.(sql.Node)
-	if !ok {
-		return errors.Errorf("expected a sql.Node, got %T", analyzedPlan)
+	if boundPlan == nil {
+		analyzedPlan, bindFields, err := h.doltgresHandler.ComBind(
+			context.Background(),
+			h.mysqlConn,
+			preparedData.Query.String,
+			preparedData.Query.AST,
+			BindVariables{
+				varTypes:   preparedData.BindVarTypes,
+				parameters: params,
+			},
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+		fields = bindFields
+		var ok bool
+		boundPlan, ok = analyzedPlan.(sql.Node)
+		if !ok {
+			return errors.Errorf("expected a sql.Node, got %T", analyzedPlan)
+		}
+		if len(params) == 0 {
+			cacheCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, preparedData.Query.String)
+			if err != nil {
+				return err
+			}
+			h.cachePreparedPlan(cacheCtx, &preparedData, boundPlan)
+			h.preparedStatements[stmt.Name] = preparedData
+		}
 	}
 
 	query := preparedData.Query
@@ -1040,11 +1077,15 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 		}
 	}
 
-	h.preparedStatements[message.Name] = PreparedStatementData{
+	preparedData := PreparedStatementData{
 		Query:        query,
 		ReturnFields: fields,
 		BindVarTypes: bindVarTypes,
 	}
+	if h.preparedPlanCacheable(query, bindVarTypes) {
+		h.cachePreparedPlan(ctx, &preparedData, analyzedPlan)
+	}
+	h.preparedStatements[message.Name] = preparedData
 	return h.send(&pgproto3.ParseComplete{})
 }
 
@@ -1105,24 +1146,50 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		return h.send(&pgproto3.BindComplete{})
 	}
 
-	analyzedPlan, fields, err := h.doltgresHandler.ComBind(
-		context.Background(),
-		h.mysqlConn,
-		preparedData.Query.String,
-		preparedData.Query.AST,
-		BindVariables{
-			varTypes:    preparedData.BindVarTypes,
-			formatCodes: message.ParameterFormatCodes,
-			parameters:  message.Parameters,
-		},
-		message.ResultFormatCodes)
-	if err != nil {
-		return err
+	var fields []pgproto3.FieldDescription
+	var boundPlan sql.Node
+	if len(message.Parameters) == 0 {
+		cacheCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, preparedData.Query.String)
+		if err != nil {
+			return err
+		}
+		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
+			boundPlan = cachedPlan
+			fields, err = schemaToFieldDescriptions(cacheCtx, boundPlan.Schema(cacheCtx), message.ResultFormatCodes)
+			if err != nil {
+				return err
+			}
+		}
 	}
-
-	boundPlan, ok := analyzedPlan.(sql.Node)
-	if !ok {
-		return errors.Errorf("expected a sql.Node, got %T", analyzedPlan)
+	if boundPlan == nil {
+		analyzedPlan, bindFields, err := h.doltgresHandler.ComBind(
+			context.Background(),
+			h.mysqlConn,
+			preparedData.Query.String,
+			preparedData.Query.AST,
+			BindVariables{
+				varTypes:    preparedData.BindVarTypes,
+				formatCodes: message.ParameterFormatCodes,
+				parameters:  message.Parameters,
+			},
+			message.ResultFormatCodes)
+		if err != nil {
+			return err
+		}
+		fields = bindFields
+		var ok bool
+		boundPlan, ok = analyzedPlan.(sql.Node)
+		if !ok {
+			return errors.Errorf("expected a sql.Node, got %T", analyzedPlan)
+		}
+		if len(message.Parameters) == 0 {
+			cacheCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, preparedData.Query.String)
+			if err != nil {
+				return err
+			}
+			h.cachePreparedPlan(cacheCtx, &preparedData, boundPlan)
+			h.preparedStatements[message.PreparedStatement] = preparedData
+		}
 	}
 
 	resultFormatCodes, err := extendFormatCodes(len(fields), message.ResultFormatCodes)
@@ -1903,6 +1970,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 		if err = h.executeBoundWithReplication(clientQuery, replicationQuery, executionPlan, executionFormatCodes, capture, false, &rowsAffected, false); err != nil {
 			return err
 		}
+		h.invalidatePreparedPlanCacheIfNeeded(clientQuery)
 		return h.send(makeCommandComplete(clientQuery.StatementTag, rowsAffected))
 	}
 	queryToExecute := clientQuery
@@ -1945,6 +2013,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 		h.clearPendingReplication()
 	}
 
+	h.invalidatePreparedPlanCacheIfNeeded(query)
 	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
 }
 

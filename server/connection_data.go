@@ -102,10 +102,12 @@ type PortalData struct {
 }
 
 type PreparedStatementData struct {
-	Query        ConvertedQuery
-	ReturnFields []pgproto3.FieldDescription
-	BindVarTypes []uint32
-	FromSQL      bool
+	Query                ConvertedQuery
+	ReturnFields         []pgproto3.FieldDescription
+	BindVarTypes         []uint32
+	FromSQL              bool
+	cachedPlan           sql.Node
+	cachedPlanGeneration uint64
 }
 
 // extractBindVarTypes returns types based on the given query plan.
