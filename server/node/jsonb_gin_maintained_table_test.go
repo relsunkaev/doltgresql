@@ -578,6 +578,57 @@ func TestJsonbGinPostingChunkSpillDeduplicatesEntries(t *testing.T) {
 	require.Equal(t, [][]byte{[]byte("row/1"), []byte("row/2")}, chunk.RowRefs)
 }
 
+func TestJsonbGinPostingChunkEntrySorterAddRowTokensCopiesRowRefAndMatchesSpill(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	buildRows := func(t *testing.T, spillEntries int) []sql.Row {
+		t.Helper()
+		sorter := newJsonbGinPostingChunkEntrySorter(spillEntries)
+		defer sorter.Close()
+		sourceRowRef := []byte("row/1")
+		require.NoError(t, sorter.AddRowTokens([]string{"token/b", "token/a", "token/a"}, sourceRowRef))
+		copy(sourceRowRef, []byte("bad/1"))
+		require.NoError(t, sorter.AddRowTokens([]string{"token/a"}, []byte("row/2")))
+
+		collector := &jsonbGinPostingChunkRowCollector{}
+		create := &CreateJsonbGinIndex{postingChunkRowsPerChunk: 10}
+		require.NoError(t, create.writePostingChunkRowsFromEntries(ctx, sorter, collector))
+		return collector.rows
+	}
+
+	memoryRows := buildRows(t, 100)
+	spillRows := buildRows(t, 2)
+	require.Equal(t, memoryRows, spillRows)
+	require.Len(t, memoryRows, 2)
+	require.Equal(t, "token/a", memoryRows[0][0])
+	require.Equal(t, "token/b", memoryRows[1][0])
+
+	pathPayload, ok := memoryRows[0][6].([]byte)
+	require.True(t, ok)
+	pathChunk, err := jsonbgin.DecodePostingChunk(pathPayload)
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{[]byte("row/1"), []byte("row/2")}, pathChunk.RowRefs)
+
+	keyPayload, ok := memoryRows[1][6].([]byte)
+	require.True(t, ok)
+	keyChunk, err := jsonbgin.DecodePostingChunk(keyPayload)
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{[]byte("row/1")}, keyChunk.RowRefs)
+}
+
+func TestJsonbGinPostingChunkEntrySorterAddRowTokensValidatesInput(t *testing.T) {
+	sorter := newJsonbGinPostingChunkEntrySorter(10)
+	defer sorter.Close()
+	require.NoError(t, sorter.AddRowTokens(nil, nil))
+	require.ErrorContains(t, sorter.AddRowTokens([]string{""}, []byte("row/1")), "posting token")
+	require.ErrorContains(t, sorter.AddRowTokens([]string{"token/a"}, nil), "row reference")
+
+	iter, err := sorter.Iterator()
+	require.NoError(t, err)
+	_, err = iter.Next()
+	require.ErrorIs(t, err, io.EOF)
+	require.NoError(t, iter.Close())
+}
+
 func TestJsonbGinPostingChunkEntrySorterMergeOrdersAndCleansRuns(t *testing.T) {
 	sorter := newJsonbGinPostingChunkEntrySorter(2)
 	defer sorter.Close()

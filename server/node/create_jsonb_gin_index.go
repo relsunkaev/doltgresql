@@ -528,10 +528,8 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.S
 		if err != nil {
 			return err
 		}
-		for _, encodedToken := range encodedTokens {
-			if err = sorter.Add(encodedToken, rowRef.Bytes); err != nil {
-				return err
-			}
+		if err = sorter.AddRowTokens(encodedTokens, rowRef.Bytes); err != nil {
+			return err
 		}
 	}
 }
@@ -678,18 +676,32 @@ func newJsonbGinPostingChunkEntrySorter(maxEntries int) *jsonbGinPostingChunkEnt
 }
 
 func (s *jsonbGinPostingChunkEntrySorter) Add(token string, rowRef []byte) error {
-	if token == "" {
-		return errors.Errorf("JSONB GIN posting token cannot be empty")
+	return s.AddRowTokens([]string{token}, rowRef)
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) AddRowTokens(tokens []string, rowRef []byte) error {
+	if len(tokens) == 0 {
+		return nil
+	}
+	for _, token := range tokens {
+		if token == "" {
+			return errors.Errorf("JSONB GIN posting token cannot be empty")
+		}
 	}
 	if len(rowRef) == 0 {
 		return errors.Errorf("JSONB GIN posting row reference cannot be empty")
 	}
-	s.entries = append(s.entries, jsonbGinPostingChunkBuildEntry{
-		token:  token,
-		rowRef: append([]byte(nil), rowRef...),
-	})
-	if len(s.entries) >= s.maxEntries {
-		return s.flushRun()
+	rowRefCopy := append([]byte(nil), rowRef...)
+	for _, token := range tokens {
+		s.entries = append(s.entries, jsonbGinPostingChunkBuildEntry{
+			token:  token,
+			rowRef: rowRefCopy,
+		})
+		if len(s.entries) >= s.maxEntries {
+			if err := s.flushRun(); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
