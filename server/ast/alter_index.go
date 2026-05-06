@@ -19,6 +19,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterIndex handles *tree.AlterIndex nodes.
@@ -27,5 +28,19 @@ func nodeAlterIndex(ctx *Context, node *tree.AlterIndex) (vitess.Statement, erro
 		return nil, nil
 	}
 
-	return nil, errors.Errorf("ALTER INDEX is not yet supported")
+	switch cmd := node.Cmd.(type) {
+	case *tree.AlterIndexSetTablespace:
+		if !isDefaultIndexTablespaceName(cmd.Tablespace) {
+			return nil, errors.Errorf("TABLESPACE is not yet supported for indexes")
+		}
+		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, &node.Index)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterIndexSetDefaultTablespace(node.IfExists, schemaName, tableName, indexName),
+		}, nil
+	default:
+		return nil, errors.Errorf("ALTER INDEX is not yet supported")
+	}
 }

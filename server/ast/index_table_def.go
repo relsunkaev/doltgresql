@@ -69,5 +69,9 @@ func nodeIndexTableDefWithOptions(
 }
 
 func isDefaultIndexTablespace(tablespace tree.Name) bool {
-	return strings.EqualFold(strings.Trim(strings.TrimSpace(string(tablespace)), `"`), "pg_default")
+	return isDefaultIndexTablespaceName(string(tablespace))
+}
+
+func isDefaultIndexTablespaceName(tablespace string) bool {
+	return strings.EqualFold(strings.Trim(strings.TrimSpace(tablespace), `"`), "pg_default")
 }

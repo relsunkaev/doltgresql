@@ -1096,8 +1096,8 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "ALTER INDEX is not yet supported",
 				},
 				{
-					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE pg_default;",
-					ExpectedErr: "ALTER INDEX is not yet supported",
+					Query:       "ALTER INDEX v1_idx_storage SET TABLESPACE definitely_not_supported;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
 					Query:       "ALTER INDEX v1_idx_storage ALTER COLUMN 1 SET STATISTICS 100;",
@@ -1163,6 +1163,43 @@ WHERE idx.tablename = 'btree_default_tablespace_meta'
 				},
 				{
 					Query:       "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL alter index default tablespace",
+			SetUpScript: []string{
+				"CREATE TABLE alter_index_default_tablespace (id INTEGER PRIMARY KEY, v TEXT);",
+				"CREATE INDEX alter_index_default_tablespace_v_idx ON alter_index_default_tablespace (v);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "ALTER INDEX alter_index_default_tablespace_v_idx SET TABLESPACE pg_default;",
+				},
+				{
+					Query: "ALTER INDEX alter_index_default_tablespace_pkey SET TABLESPACE pg_default;",
+				},
+				{
+					Query: "ALTER INDEX IF EXISTS alter_index_default_tablespace_missing_idx SET TABLESPACE pg_default;",
+				},
+				{
+					Query: `SELECT
+	idx.indexname,
+	idx.indexdef,
+	c.reltablespace,
+	idx.tablespace
+FROM pg_catalog.pg_indexes idx
+JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
+WHERE idx.tablename = 'alter_index_default_tablespace'
+ORDER BY idx.indexname;`,
+					Expected: []sql.Row{
+						{"alter_index_default_tablespace_pkey", "CREATE UNIQUE INDEX alter_index_default_tablespace_pkey ON public.alter_index_default_tablespace USING btree (id)", 0, nil},
+						{"alter_index_default_tablespace_v_idx", "CREATE INDEX alter_index_default_tablespace_v_idx ON public.alter_index_default_tablespace USING btree (v)", 0, nil},
+					},
+				},
+				{
+					Query:       "ALTER INDEX alter_index_default_tablespace_v_idx SET TABLESPACE definitely_not_supported;",
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 			},

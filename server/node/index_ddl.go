@@ -240,6 +240,83 @@ func (r *RenameIndex) WithResolvedChildren(ctx context.Context, children []any) 
 	return r, nil
 }
 
+// AlterIndexSetDefaultTablespace handles ALTER INDEX ... SET TABLESPACE pg_default.
+// Doltgres currently only supports the default tablespace, which is already the
+// stored state for every index, so the execution step validates the target and
+// otherwise leaves catalog metadata unchanged.
+type AlterIndexSetDefaultTablespace struct {
+	ifExists bool
+	schema   string
+	table    string
+	index    string
+}
+
+var _ sql.ExecSourceRel = (*AlterIndexSetDefaultTablespace)(nil)
+var _ vitess.Injectable = (*AlterIndexSetDefaultTablespace)(nil)
+
+// NewAlterIndexSetDefaultTablespace returns a new *AlterIndexSetDefaultTablespace.
+func NewAlterIndexSetDefaultTablespace(ifExists bool, schema string, table string, index string) *AlterIndexSetDefaultTablespace {
+	return &AlterIndexSetDefaultTablespace{
+		ifExists: ifExists,
+		schema:   schema,
+		table:    table,
+		index:    index,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	_, ok, err := locateIndex(ctx, a.schema, a.table, a.index, a.ifExists)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		if a.ifExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, sql.ErrIndexNotFound.New(a.index)
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) String() string {
+	return "ALTER INDEX SET TABLESPACE"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterIndexSetDefaultTablespace) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterIndexSetDefaultTablespace) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
 func locateIndex(ctx *sql.Context, schemaName string, tableName string, indexName string, missingOK bool) (*locatedIndex, bool, error) {
 	schemaName, err := core.GetSchemaName(ctx, nil, schemaName)
 	if err != nil {
