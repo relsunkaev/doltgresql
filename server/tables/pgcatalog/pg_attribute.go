@@ -17,11 +17,13 @@ package pgcatalog
 import (
 	"io"
 	"math"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -89,42 +91,15 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					continue
 				}
 				attnum++
-				typeOid := id.Null
-				attcollation := id.Null
-				doltgresType, ok := doltgresType(col.Type)
-				if !ok {
-					// TODO: Remove once all information_schema tables are converted to use DoltgresType
-					doltgresType = pgtypes.FromGmsType(col.Type)
-				}
-				if doltgresType != nil {
-					typeOid = doltgresType.ID.AsId()
-					attcollation = collationIDForDoltgresType(doltgresType)
-				}
-
-				generated := ""
-				if col.Generated != nil {
-					generated = "s"
-				}
-
-				dimensions := int16(0)
-				if s, ok := col.Type.(sql.SetType); ok {
-					dimensions = int16(s.NumberOfElements())
-				}
-
-				hasDefault := col.Default != nil
-
-				attr := &pgAttribute{
-					attrelid:       table.OID.AsId(),
-					attrelidNative: id.Cache().ToOID(table.OID.AsId()),
-					attname:        col.Name,
-					atttypid:       typeOid,
-					attnum:         attnum,
-					attndims:       dimensions,
-					attnotnull:     !col.Nullable,
-					atthasdef:      hasDefault,
-					attgenerated:   generated,
-					attcollation:   attcollation,
-				}
+				attr := tableColumnAttribute(table.OID.AsId(), attnum, col)
+				attrelidIdx.Add(attr)
+				attrelidAttnameIdx.Add(attr)
+				attributes = append(attributes, attr)
+			}
+			return true, nil
+		},
+		Index: func(ctx *sql.Context, _ functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
+			for _, attr := range indexAttributes(ctx, table.Item, index.Item, index.OID.AsId()) {
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
@@ -143,6 +118,110 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	return nil
+}
+
+func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAttribute {
+	typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+	generated := ""
+	if col.Generated != nil {
+		generated = "s"
+	}
+	return &pgAttribute{
+		attrelid:       relationID,
+		attrelidNative: id.Cache().ToOID(relationID),
+		attname:        col.Name,
+		atttypid:       typeOid,
+		attnum:         attnum,
+		attndims:       dimensions,
+		attnotnull:     !col.Nullable,
+		atthasdef:      col.Default != nil,
+		attgenerated:   generated,
+		attcollation:   attcollation,
+	}
+}
+
+func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationID id.Id) []*pgAttribute {
+	tableSchema := table.Schema(ctx)
+	logicalColumns := indexmetadata.LogicalColumns(idx, tableSchema)
+	includeColumns := indexmetadata.IncludeColumns(idx.Comment())
+	attrs := make([]*pgAttribute, 0, len(logicalColumns)+len(includeColumns))
+
+	collations := indexmetadata.Collations(idx.Comment())
+	for i, logicalColumn := range logicalColumns {
+		col, ok := columnForIndexAttribute(tableSchema, logicalColumn.StorageName)
+		if !ok {
+			continue
+		}
+		typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+		if i < len(collations) && collations[i] != "" {
+			attcollation = id.NewCollation("pg_catalog", collations[i]).AsId()
+		}
+		attrs = append(attrs, &pgAttribute{
+			attrelid:       relationID,
+			attrelidNative: id.Cache().ToOID(relationID),
+			attname:        indexAttributeName(logicalColumn),
+			atttypid:       typeOid,
+			attnum:         int16(len(attrs) + 1),
+			attndims:       dimensions,
+			attcollation:   attcollation,
+		})
+	}
+
+	for _, includeColumn := range includeColumns {
+		col, ok := columnForIndexAttribute(tableSchema, includeColumn)
+		if !ok {
+			continue
+		}
+		typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+		attrs = append(attrs, &pgAttribute{
+			attrelid:       relationID,
+			attrelidNative: id.Cache().ToOID(relationID),
+			attname:        col.Name,
+			atttypid:       typeOid,
+			attnum:         int16(len(attrs) + 1),
+			attndims:       dimensions,
+			attcollation:   attcollation,
+		})
+	}
+
+	return attrs
+}
+
+func columnForIndexAttribute(schema sql.Schema, name string) (*sql.Column, bool) {
+	idx := schema.IndexOfColName(name)
+	if idx < 0 {
+		return nil, false
+	}
+	return schema[idx], true
+}
+
+func indexAttributeName(logicalColumn indexmetadata.LogicalColumn) string {
+	if !logicalColumn.Expression {
+		return logicalColumn.Definition
+	}
+	expr := strings.TrimSpace(logicalColumn.Definition)
+	if openParen := strings.Index(expr, "("); openParen > 0 {
+		return strings.TrimSpace(expr[:openParen])
+	}
+	return expr
+}
+
+func attributeTypeMetadata(typ sql.Type) (typeOid id.Id, attcollation id.Id, dimensions int16) {
+	typeOid = id.Null
+	attcollation = id.Null
+	doltgresType, ok := doltgresType(typ)
+	if !ok {
+		// TODO: Remove once all information_schema tables are converted to use DoltgresType.
+		doltgresType = pgtypes.FromGmsType(typ)
+	}
+	if doltgresType != nil {
+		typeOid = doltgresType.ID.AsId()
+		attcollation = collationIDForDoltgresType(doltgresType)
+	}
+	if s, ok := typ.(sql.SetType); ok {
+		dimensions = int16(s.NumberOfElements())
+	}
+	return typeOid, attcollation, dimensions
 }
 
 // getIndexScanRange implements the interface RangeConverter.

@@ -3072,6 +3072,10 @@ WHERE doc @> '{"a":1}';`,
 					Expected: []sql.Row{},
 				},
 				{
+					Query:    `CREATE INDEX idx_items_title_updated_include ON items(title COLLATE "C", updated_at) INCLUDE (metadata);`,
+					Expected: []sql.Row{},
+				},
+				{
 					Query: `SELECT i.indkey,
 	i.indexprs,
 	pg_catalog.pg_get_expr(i.indexprs, i.indrelid),
@@ -3095,6 +3099,27 @@ ORDER BY a.attnum;`,
 						{"title", 2},
 						{"metadata", 3},
 						{"updated_at", 4},
+					},
+				},
+				{
+					Query: `SELECT
+	c.relname,
+	a.attname,
+	a.attnum,
+	a.atttypid,
+	a.attcollation,
+	a.attstattarget
+FROM pg_catalog.pg_attribute a
+JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+WHERE c.relname IN ('items_pkey', 'idx_items_title_lower', 'idx_items_title_updated_include')
+  AND a.attnum > 0
+ORDER BY c.relname, a.attnum;`,
+					Expected: []sql.Row{
+						{"idx_items_title_lower", "lower", int16(1), typeOid("text"), collationOid("default"), int16(-1)},
+						{"idx_items_title_updated_include", "title", int16(1), typeOid("varchar"), collationOid("C"), int16(-1)},
+						{"idx_items_title_updated_include", "updated_at", int16(2), typeOid("timestamp"), uint32(0), int16(-1)},
+						{"idx_items_title_updated_include", "metadata", int16(3), typeOid("json"), uint32(0), int16(-1)},
+						{"items_pkey", "id", int16(1), typeOid("int4"), uint32(0), int16(-1)},
 					},
 				},
 				{
@@ -3177,6 +3202,10 @@ func opClassOidVectorForMethod(method string, names ...string) string {
 
 func typeOid(name string) uint32 {
 	return id.Cache().ToOID(id.NewType("pg_catalog", name).AsId())
+}
+
+func collationOid(name string) uint32 {
+	return id.Cache().ToOID(id.NewCollation("pg_catalog", name).AsId())
 }
 
 func collationOidVector(names ...string) string {
