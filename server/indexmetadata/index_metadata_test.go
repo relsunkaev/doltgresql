@@ -41,7 +41,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 		},
 		Constraint: " NONE ",
 		Gin: &GinMetadata{
-			PostingTable: "dg_gin_docs_doc_idx_postings",
+			PostingTable:          " dg_gin_docs_doc_idx_postings ",
+			PostingStorageVersion: GinPostingStorageVersionV2,
+			PostingChunkTable:     " dg_gin_docs_doc_idx_posting_chunks ",
 		},
 	})
 
@@ -106,11 +108,48 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
 	}
+	if metadata.Gin.PostingStorageVersion != GinPostingStorageVersionV2 {
+		t.Fatalf("unexpected gin posting storage version: %#v", metadata.Gin)
+	}
+	if metadata.Gin.PostingChunkTable != "dg_gin_docs_doc_idx_posting_chunks" {
+		t.Fatalf("unexpected gin posting chunk table: %#v", metadata.Gin)
+	}
 	if metadata.Constraint != ConstraintNone {
 		t.Fatalf("unexpected constraint marker: %q", metadata.Constraint)
 	}
 	if !IsStandaloneIndex(comment) {
 		t.Fatal("expected standalone index marker")
+	}
+}
+
+func TestGinPostingStorageVersionDefaultsLegacyMetadataToV1(t *testing.T) {
+	comment := commentPrefix + `{"accessMethod":"gin","gin":{"postingTable":"dg_gin_docs_doc_idx_postings"}}`
+
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		t.Fatal("expected metadata comment to decode")
+	}
+	if metadata.Gin == nil {
+		t.Fatal("expected gin metadata")
+	}
+	if got := metadata.Gin.PostingStorageVersion; got != GinPostingStorageVersionV1 {
+		t.Fatalf("expected legacy gin metadata to default to v1, got %d", got)
+	}
+	if got := GinPostingStorageVersion(comment); got != GinPostingStorageVersionV1 {
+		t.Fatalf("expected accessor to default legacy gin metadata to v1, got %d", got)
+	}
+}
+
+func TestGinPostingStorageVersionRejectsUnknownVersions(t *testing.T) {
+	comment := EncodeComment(Metadata{
+		AccessMethod: AccessMethodGin,
+		Gin: &GinMetadata{
+			PostingStorageVersion: 99,
+		},
+	})
+
+	if got := GinPostingStorageVersion(comment); got != GinPostingStorageVersionUnsupported {
+		t.Fatalf("expected unsupported storage version marker, got %d", got)
 	}
 }
 

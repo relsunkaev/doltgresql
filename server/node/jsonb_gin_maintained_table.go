@@ -39,11 +39,13 @@ import (
 )
 
 type JsonbGinMaintainedIndex struct {
-	Name         string
-	ColumnName   string
-	ColumnIndex  int
-	OpClass      string
-	PostingTable string
+	Name                  string
+	ColumnName            string
+	ColumnIndex           int
+	OpClass               string
+	PostingTable          string
+	PostingChunkTable     string
+	PostingStorageVersion int
 }
 
 type JsonbGinMaintainedTable struct {
@@ -83,6 +85,17 @@ type jsonbGinPostingCandidate struct {
 	key   sql.Row
 }
 
+func (i JsonbGinMaintainedIndex) v1PostingTableName() (string, error) {
+	storageVersion := indexmetadata.NormalizeGinPostingStorageVersion(i.PostingStorageVersion)
+	if storageVersion != indexmetadata.GinPostingStorageVersionV1 {
+		return "", errors.Errorf("JSONB GIN posting storage version %d is not supported by the v1 posting table path", storageVersion)
+	}
+	if i.PostingTable == "" {
+		return "", errors.Errorf(`posting table for gin index "%s" is not configured`, i.Name)
+	}
+	return i.PostingTable, nil
+}
+
 const (
 	jsonbGinMaxBroadKeyPostingRowsForIndexedLookup = 128
 	jsonbGinMaxCandidateRowsForIndexedLookup       = 512
@@ -112,7 +125,20 @@ func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.
 	ginIndexes := make([]JsonbGinMaintainedIndex, 0)
 	for _, index := range indexes {
 		metadata, ok := indexmetadata.DecodeComment(index.Comment())
-		if !ok || metadata.AccessMethod != indexmetadata.AccessMethodGin || metadata.Gin == nil || metadata.Gin.PostingTable == "" {
+		if !ok || metadata.AccessMethod != indexmetadata.AccessMethodGin || metadata.Gin == nil {
+			continue
+		}
+		postingStorageVersion := indexmetadata.NormalizeGinPostingStorageVersion(metadata.Gin.PostingStorageVersion)
+		switch postingStorageVersion {
+		case indexmetadata.GinPostingStorageVersionV1:
+			if metadata.Gin.PostingTable == "" {
+				continue
+			}
+		case indexmetadata.GinPostingStorageVersionV2:
+			if metadata.Gin.PostingChunkTable == "" {
+				continue
+			}
+		default:
 			continue
 		}
 		columns := metadata.Columns
@@ -131,11 +157,13 @@ func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.
 			opClass = metadata.OpClasses[0]
 		}
 		ginIndexes = append(ginIndexes, JsonbGinMaintainedIndex{
-			Name:         index.ID(),
-			ColumnName:   columns[0],
-			ColumnIndex:  columnIndex,
-			OpClass:      opClass,
-			PostingTable: metadata.Gin.PostingTable,
+			Name:                  index.ID(),
+			ColumnName:            columns[0],
+			ColumnIndex:           columnIndex,
+			OpClass:               opClass,
+			PostingTable:          metadata.Gin.PostingTable,
+			PostingChunkTable:     metadata.Gin.PostingChunkTable,
+			PostingStorageVersion: postingStorageVersion,
 		})
 	}
 	if len(ginIndexes) == 0 {
@@ -421,12 +449,16 @@ func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr
 }
 
 func (t *JsonbGinMaintainedTable) lookupSpecTooBroadForIndex(ctx *sql.Context, lookupSpec jsonbGinLookupSpec) (bool, error) {
-	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: lookupSpec.index.PostingTable, Schema: t.schemaName})
+	postingTableName, err := lookupSpec.index.v1PostingTableName()
+	if err != nil {
+		return false, err
+	}
+	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: postingTableName, Schema: t.schemaName})
 	if err != nil {
 		return false, err
 	}
 	if postingTable == nil {
-		return false, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, lookupSpec.index.PostingTable, lookupSpec.index.Name)
+		return false, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, postingTableName, lookupSpec.index.Name)
 	}
 	tokenRows := make([]map[string]struct{}, len(lookupSpec.encodedTokens))
 	for i, encodedToken := range lookupSpec.encodedTokens {
@@ -707,16 +739,20 @@ func planErr(format string, args ...any) error {
 func (t *JsonbGinMaintainedTable) newEditor(ctx *sql.Context, primary jsonbGinPrimaryEditor) (*jsonbGinMaintainingEditor, error) {
 	postingEditors := make([]jsonbGinPostingEditor, len(t.indexes))
 	for i, ginIndex := range t.indexes {
-		postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: ginIndex.PostingTable, Schema: t.schemaName})
+		postingTableName, err := ginIndex.v1PostingTableName()
+		if err != nil {
+			return nil, err
+		}
+		postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: postingTableName, Schema: t.schemaName})
 		if err != nil {
 			return nil, err
 		}
 		if postingTable == nil {
-			return nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, ginIndex.PostingTable, ginIndex.Name)
+			return nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, postingTableName, ginIndex.Name)
 		}
 		replaceable, ok := postingTable.(sql.ReplaceableTable)
 		if !ok {
-			return nil, errors.Errorf(`posting table "%s" for gin index "%s" is not editable`, ginIndex.PostingTable, ginIndex.Name)
+			return nil, errors.Errorf(`posting table "%s" for gin index "%s" is not editable`, postingTableName, ginIndex.Name)
 		}
 		postingEditors[i] = jsonbGinPostingEditor{
 			index:  ginIndex,
@@ -1229,12 +1265,16 @@ func (t *jsonbGinIndexedTable) directCandidateRowIter(ctx *sql.Context, candidat
 }
 
 func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string]struct{}, []jsonbGinPostingCandidate, error) {
-	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: t.lookup.index.PostingTable, Schema: t.schemaName})
+	postingTableName, err := t.lookup.index.v1PostingTableName()
+	if err != nil {
+		return nil, nil, err
+	}
+	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: postingTableName, Schema: t.schemaName})
 	if err != nil {
 		return nil, nil, err
 	}
 	if postingTable == nil {
-		return nil, nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, t.lookup.index.PostingTable, t.lookup.index.Name)
+		return nil, nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, postingTableName, t.lookup.index.Name)
 	}
 
 	tokenRows, tokenCandidates, err := lookupPostingTokensRowIDsAndCandidates(ctx, postingTable, t.lookup.encodedTokens)

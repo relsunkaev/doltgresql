@@ -37,17 +37,20 @@ import (
 )
 
 const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
+const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
-	ifNotExists bool
-	schema      string
-	tableName   string
-	indexName   string
-	columnName  string
-	opClass     string
-	postingName string
+	ifNotExists           bool
+	schema                string
+	tableName             string
+	indexName             string
+	columnName            string
+	opClass               string
+	postingName           string
+	postingChunkName      string
+	postingStorageVersion int
 }
 
 var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
@@ -56,13 +59,15 @@ var _ vitess.Injectable = (*CreateJsonbGinIndex)(nil)
 // NewCreateJsonbGinIndex returns a new *CreateJsonbGinIndex.
 func NewCreateJsonbGinIndex(ifNotExists bool, schema string, tableName string, indexName string, columnName string, opClass string) *CreateJsonbGinIndex {
 	return &CreateJsonbGinIndex{
-		ifNotExists: ifNotExists,
-		schema:      schema,
-		tableName:   tableName,
-		indexName:   indexName,
-		columnName:  columnName,
-		opClass:     indexmetadata.NormalizeOpClass(opClass),
-		postingName: jsonbgin.PostingTableName(tableName, indexName),
+		ifNotExists:           ifNotExists,
+		schema:                schema,
+		tableName:             tableName,
+		indexName:             indexName,
+		columnName:            columnName,
+		opClass:               indexmetadata.NormalizeOpClass(opClass),
+		postingName:           jsonbgin.PostingTableName(tableName, indexName),
+		postingChunkName:      jsonbgin.PostingChunkTableName(tableName, indexName),
+		postingStorageVersion: indexmetadata.GinPostingStorageVersionV1,
 	}
 }
 
@@ -121,14 +126,7 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 		return nil, errors.Errorf(`schema "%s" does not support table creation`, schemaName)
 	}
 
-	metadata := indexmetadata.Metadata{
-		AccessMethod: indexmetadata.AccessMethodGin,
-		Columns:      []string{c.columnName},
-		OpClasses:    []string{c.opClass},
-		Gin: &indexmetadata.GinMetadata{
-			PostingTable: c.postingName,
-		},
-	}
+	metadata := c.indexMetadata()
 	if err = alterable.CreateIndex(ctx, sql.IndexDef{
 		Name:       c.indexName,
 		Comment:    indexmetadata.EncodeComment(metadata),
@@ -138,9 +136,15 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	}); err != nil {
 		return nil, err
 	}
-	if err = c.createPostingTable(ctx, tableCreator, table.Schema(ctx)); err != nil {
+	if err = c.createPostingStorageTables(ctx, tableCreator, table.Schema(ctx)); err != nil {
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
+	}
+	postingStorageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
+	if postingStorageVersion != indexmetadata.GinPostingStorageVersionV1 {
+		_ = dropTable(ctx, db, c.postingChunkName)
+		_ = alterable.DropIndex(ctx, c.indexName)
+		return nil, errors.Errorf("JSONB GIN posting storage version %d is not yet executable", postingStorageVersion)
 	}
 	if err = c.backfillPostingTable(ctx, db, schemaName, table, columnIndex); err != nil {
 		_ = dropTable(ctx, db, c.postingName)
@@ -148,6 +152,25 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateJsonbGinIndex) indexMetadata() indexmetadata.Metadata {
+	storageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
+	metadata := indexmetadata.Metadata{
+		AccessMethod: indexmetadata.AccessMethodGin,
+		Columns:      []string{c.columnName},
+		OpClasses:    []string{c.opClass},
+		Gin: &indexmetadata.GinMetadata{
+			PostingStorageVersion: storageVersion,
+		},
+	}
+	switch storageVersion {
+	case indexmetadata.GinPostingStorageVersionV1:
+		metadata.Gin.PostingTable = c.postingName
+	case indexmetadata.GinPostingStorageVersionV2:
+		metadata.Gin.PostingChunkTable = c.postingChunkName
+	}
+	return metadata
 }
 
 func schemaDatabase(ctx *sql.Context, schemaName string) (sql.Database, error) {
@@ -240,6 +263,71 @@ func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator 
 	}
 	postingSchema := sql.NewPrimaryKeySchema(schema)
 	return tableCreator.CreateTable(ctx, c.postingName, postingSchema, sql.Collation_Default, jsonbGinPostingTableComment)
+}
+
+func (c *CreateJsonbGinIndex) createPostingStorageTables(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
+	switch indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion) {
+	case indexmetadata.GinPostingStorageVersionV1:
+		return c.createPostingTable(ctx, tableCreator, baseSchema)
+	case indexmetadata.GinPostingStorageVersionV2:
+		return c.createPostingChunkTable(ctx, tableCreator)
+	default:
+		return errors.Errorf("unsupported JSONB GIN posting storage version %d", c.postingStorageVersion)
+	}
+}
+
+func (c *CreateJsonbGinIndex) createPostingChunkTable(ctx *sql.Context, tableCreator sql.TableCreator) error {
+	schema := sql.Schema{
+		{
+			Name:       "token",
+			Source:     c.postingChunkName,
+			Type:       pgtypes.Text,
+			PrimaryKey: true,
+			Nullable:   false,
+		},
+		{
+			Name:       "chunk_no",
+			Source:     c.postingChunkName,
+			Type:       pgtypes.Int64,
+			PrimaryKey: true,
+			Nullable:   false,
+		},
+		{
+			Name:     "format_version",
+			Source:   c.postingChunkName,
+			Type:     pgtypes.Int16,
+			Nullable: false,
+		},
+		{
+			Name:     "row_count",
+			Source:   c.postingChunkName,
+			Type:     pgtypes.Int32,
+			Nullable: false,
+		},
+		{
+			Name:   "first_row_ref",
+			Source: c.postingChunkName,
+			Type:   pgtypes.Bytea,
+		},
+		{
+			Name:   "last_row_ref",
+			Source: c.postingChunkName,
+			Type:   pgtypes.Bytea,
+		},
+		{
+			Name:     "payload",
+			Source:   c.postingChunkName,
+			Type:     pgtypes.Bytea,
+			Nullable: false,
+		},
+		{
+			Name:   "checksum",
+			Source: c.postingChunkName,
+			Type:   pgtypes.Bytea,
+		},
+	}
+	postingSchema := sql.NewPrimaryKeySchema(schema)
+	return tableCreator.CreateTable(ctx, c.postingChunkName, postingSchema, sql.Collation_Default, jsonbGinPostingChunkTableComment)
 }
 
 func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, db sql.Database, schemaName string, table sql.Table, columnIndex int) error {

@@ -47,6 +47,10 @@ const (
 
 	ConstraintNone = "none"
 
+	GinPostingStorageVersionUnsupported = -1
+	GinPostingStorageVersionV1          = 1
+	GinPostingStorageVersionV2          = 2
+
 	IndOptionDesc       int16 = 1
 	IndOptionNullsFirst int16 = 2
 
@@ -161,7 +165,9 @@ type IndexColumnOption struct {
 
 // GinMetadata stores durable metadata for PostgreSQL GIN indexes.
 type GinMetadata struct {
-	PostingTable string `json:"postingTable,omitempty"`
+	PostingTable          string `json:"postingTable,omitempty"`
+	PostingStorageVersion int    `json:"postingStorageVersion,omitempty"`
+	PostingChunkTable     string `json:"postingChunkTable,omitempty"`
 }
 
 // EncodeComment returns a durable index comment containing PostgreSQL metadata.
@@ -189,6 +195,7 @@ func EncodeComment(metadata Metadata) string {
 	normalizeRelOptions(metadata.RelOptions)
 	normalizeSortOptions(metadata.SortOptions)
 	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
+	normalizeGinMetadata(metadata.Gin)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -225,6 +232,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeRelOptions(metadata.RelOptions)
 	normalizeSortOptions(metadata.SortOptions)
 	metadata.Constraint = NormalizeConstraint(metadata.Constraint)
+	normalizeGinMetadata(metadata.Gin)
 	return metadata, true
 }
 
@@ -253,6 +261,19 @@ func NormalizeConstraint(constraint string) string {
 // NormalizeOpClass lower-cases PostgreSQL opclass names.
 func NormalizeOpClass(opClass string) string {
 	return strings.ToLower(strings.TrimSpace(opClass))
+}
+
+// NormalizeGinPostingStorageVersion returns the supported storage version for
+// JSONB GIN posting metadata. Missing legacy metadata defaults to v1.
+func NormalizeGinPostingStorageVersion(version int) int {
+	switch version {
+	case 0, GinPostingStorageVersionV1:
+		return GinPostingStorageVersionV1
+	case GinPostingStorageVersionV2:
+		return GinPostingStorageVersionV2
+	default:
+		return GinPostingStorageVersionUnsupported
+	}
 }
 
 // NormalizeCollation trims PostgreSQL collation names and preserves the
@@ -295,6 +316,15 @@ func normalizeSortOptions(sortOptions []IndexColumnOption) {
 	}
 }
 
+func normalizeGinMetadata(gin *GinMetadata) {
+	if gin == nil {
+		return
+	}
+	gin.PostingTable = strings.TrimSpace(gin.PostingTable)
+	gin.PostingChunkTable = strings.TrimSpace(gin.PostingChunkTable)
+	gin.PostingStorageVersion = NormalizeGinPostingStorageVersion(gin.PostingStorageVersion)
+}
+
 // AccessMethod returns the PostgreSQL access method for an index. If no
 // Doltgres metadata is present, the index's native type is used.
 func AccessMethod(indexType string, comment string) string {
@@ -329,6 +359,16 @@ func RelOptions(comment string) []string {
 		return nil
 	}
 	return metadata.RelOptions
+}
+
+// GinPostingStorageVersion returns the per-index JSONB GIN posting storage
+// version encoded in metadata. Missing legacy GIN metadata defaults to v1.
+func GinPostingStorageVersion(comment string) int {
+	metadata, ok := DecodeComment(comment)
+	if !ok || metadata.Gin == nil {
+		return 0
+	}
+	return metadata.Gin.PostingStorageVersion
 }
 
 // NullsNotDistinct returns whether this unique index treats NULL values as

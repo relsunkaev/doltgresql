@@ -115,6 +115,12 @@ func PostingTableName(tableName string, indexName string) string {
 	return "dg_gin_" + sanitizePostingNamePart(tableName) + "_" + sanitizePostingNamePart(indexName) + "_postings"
 }
 
+// PostingChunkTableName returns the deterministic sidecar table name for a
+// JSONB GIN index's persisted posting-list chunks.
+func PostingChunkTableName(tableName string, indexName string) string {
+	return "dg_gin_" + sanitizePostingNamePart(tableName) + "_" + sanitizePostingNamePart(indexName) + "_posting_chunks"
+}
+
 func sanitizePostingNamePart(name string) string {
 	name = strings.ToLower(strings.TrimSpace(name))
 	var sb strings.Builder

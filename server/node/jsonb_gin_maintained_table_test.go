@@ -276,6 +276,46 @@ func TestJsonbGinPostingRowBufferFlushesChunks(t *testing.T) {
 	}, editor.inserted)
 }
 
+func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+
+	metadata := create.indexMetadata()
+	require.NotNil(t, metadata.Gin)
+	require.Equal(t, indexmetadata.GinPostingStorageVersionV1, metadata.Gin.PostingStorageVersion)
+	require.Equal(t, jsonbgin.PostingTableName("docs", "docs_doc_idx"), metadata.Gin.PostingTable)
+	require.Empty(t, metadata.Gin.PostingChunkTable)
+}
+
+func TestCreateJsonbGinIndexCreatesV1PostingStorageByDefault(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	creator := &recordingTableCreator{}
+
+	require.NoError(t, create.createPostingStorageTables(ctx, creator, jsonbGinPostingStorageBaseSchema()))
+	require.Len(t, creator.created, 1)
+	require.Equal(t, jsonbgin.PostingTableName("docs", "docs_doc_idx"), creator.created[0].name)
+	require.Equal(t, jsonbGinPostingTableComment, creator.created[0].comment)
+	require.NotEqual(t, -1, creator.created[0].schema.Schema.IndexOfColName("row_id"))
+	require.Equal(t, -1, creator.created[0].schema.Schema.IndexOfColName("chunk_no"))
+}
+
+func TestCreateJsonbGinIndexCreatesV2PostingChunkStorageWhenSelected(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create.postingStorageVersion = indexmetadata.GinPostingStorageVersionV2
+	create.postingChunkName = jsonbgin.PostingChunkTableName("docs", "docs_doc_idx")
+	creator := &recordingTableCreator{}
+
+	require.NoError(t, create.createPostingStorageTables(ctx, creator, jsonbGinPostingStorageBaseSchema()))
+	require.Len(t, creator.created, 1)
+	require.Equal(t, jsonbgin.PostingChunkTableName("docs", "docs_doc_idx"), creator.created[0].name)
+	require.Equal(t, jsonbGinPostingChunkTableComment, creator.created[0].comment)
+	for _, columnName := range []string{"token", "chunk_no", "format_version", "row_count", "first_row_ref", "last_row_ref", "payload", "checksum"} {
+		require.NotEqual(t, -1, creator.created[0].schema.Schema.IndexOfColName(columnName), columnName)
+	}
+	require.Equal(t, -1, creator.created[0].schema.Schema.IndexOfColName("row_id"))
+}
+
 func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	ns := tree.NewTestNodeStore()
@@ -622,6 +662,52 @@ func benchmarkJsonbGinPostingStorageRows(rowCount int) []sql.Row {
 		}
 	}
 	return rows
+}
+
+func jsonbGinPostingStorageBaseSchema() sql.Schema {
+	return sql.Schema{
+		{Name: "id", Type: pgtypes.Int32, PrimaryKey: true, Nullable: false},
+		{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
+	}
+}
+
+type recordingCreatedTable struct {
+	name      string
+	schema    sql.PrimaryKeySchema
+	collation sql.CollationID
+	comment   string
+}
+
+type recordingTableCreator struct {
+	created []recordingCreatedTable
+}
+
+var _ sql.TableCreator = (*recordingTableCreator)(nil)
+
+func (c *recordingTableCreator) Name() string {
+	return "recording"
+}
+
+func (c *recordingTableCreator) GetTableInsensitive(*sql.Context, string) (sql.Table, bool, error) {
+	return nil, false, nil
+}
+
+func (c *recordingTableCreator) GetTableNames(*sql.Context) ([]string, error) {
+	names := make([]string, len(c.created))
+	for i, table := range c.created {
+		names[i] = table.name
+	}
+	return names, nil
+}
+
+func (c *recordingTableCreator) CreateTable(_ *sql.Context, name string, schema sql.PrimaryKeySchema, collation sql.CollationID, comment string) error {
+	c.created = append(c.created, recordingCreatedTable{
+		name:      name,
+		schema:    schema,
+		collation: collation,
+		comment:   comment,
+	})
+	return nil
 }
 
 type fakePostingTable struct {

@@ -129,6 +129,11 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 				return nil, err
 			}
 		}
+		if target.hasMetadata && target.metadata.Gin != nil && target.metadata.Gin.PostingChunkTable != "" {
+			if err := dropTable(ctx, target.located.db, target.metadata.Gin.PostingChunkTable); err != nil && !sql.ErrTableNotFound.Is(err) {
+				return nil, err
+			}
+		}
 	}
 	return sql.RowsToRowIter(), nil
 }
