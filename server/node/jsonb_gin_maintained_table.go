@@ -15,6 +15,8 @@
 package node
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -665,10 +667,12 @@ func (t *JsonbGinMaintainedTable) newEditor(ctx *sql.Context, primary jsonbGinPr
 			editor: replaceable.Replacer(ctx),
 		}
 	}
+	tableSchema := t.Schema(ctx)
 	return &jsonbGinMaintainingEditor{
-		tableSchema: t.Schema(ctx),
-		primary:     primary,
-		postings:    postingEditors,
+		tableSchema:        tableSchema,
+		primaryKeyOrdinals: primaryKeyOrdinals(tableSchema),
+		primary:            primary,
+		postings:           postingEditors,
 	}, nil
 }
 
@@ -678,29 +682,39 @@ type jsonbGinPrimaryEditor interface {
 }
 
 type jsonbGinPostingEditor struct {
-	index  JsonbGinMaintainedIndex
-	editor sql.RowReplacer
+	index   JsonbGinMaintainedIndex
+	editor  sql.RowReplacer
+	pending map[string]jsonbGinPendingPosting
+}
+
+type jsonbGinPendingPosting struct {
+	row    sql.Row
+	insert bool
+	delete bool
 }
 
 type jsonbGinMaintainingEditor struct {
-	tableSchema sql.Schema
-	primary     jsonbGinPrimaryEditor
-	postings    []jsonbGinPostingEditor
+	tableSchema        sql.Schema
+	primaryKeyOrdinals []int
+	primary            jsonbGinPrimaryEditor
+	postings           []jsonbGinPostingEditor
 }
 
 var _ sql.TableEditor = (*jsonbGinMaintainingEditor)(nil)
 
 func (e *jsonbGinMaintainingEditor) StatementBegin(ctx *sql.Context) {
-	for _, posting := range e.postings {
-		posting.editor.StatementBegin(ctx)
+	for i := range e.postings {
+		e.postings[i].pending = make(map[string]jsonbGinPendingPosting)
+		e.postings[i].editor.StatementBegin(ctx)
 	}
 	e.primary.StatementBegin(ctx)
 }
 
 func (e *jsonbGinMaintainingEditor) DiscardChanges(ctx *sql.Context, err error) error {
 	var ret error
-	for _, posting := range e.postings {
-		if nextErr := posting.editor.DiscardChanges(ctx, err); ret == nil {
+	for i := range e.postings {
+		clear(e.postings[i].pending)
+		if nextErr := e.postings[i].editor.DiscardChanges(ctx, err); ret == nil {
 			ret = nextErr
 		}
 	}
@@ -712,12 +726,35 @@ func (e *jsonbGinMaintainingEditor) DiscardChanges(ctx *sql.Context, err error) 
 
 func (e *jsonbGinMaintainingEditor) StatementComplete(ctx *sql.Context) error {
 	var ret error
-	for _, posting := range e.postings {
-		if nextErr := posting.editor.StatementComplete(ctx); ret == nil {
+	for i := range e.postings {
+		if nextErr := e.postings[i].flush(ctx); ret == nil {
+			ret = nextErr
+		}
+		if ret != nil {
+			continue
+		}
+		if nextErr := e.postings[i].editor.StatementComplete(ctx); ret == nil {
 			ret = nextErr
 		}
 	}
+	if ret != nil {
+		return e.discardAfterStatementCompleteError(ctx, ret)
+	}
 	if nextErr := e.primary.StatementComplete(ctx); ret == nil {
+		ret = nextErr
+	}
+	return ret
+}
+
+func (e *jsonbGinMaintainingEditor) discardAfterStatementCompleteError(ctx *sql.Context, err error) error {
+	ret := err
+	for i := range e.postings {
+		clear(e.postings[i].pending)
+		if nextErr := e.postings[i].editor.DiscardChanges(ctx, err); ret == nil {
+			ret = nextErr
+		}
+	}
+	if nextErr := e.primary.DiscardChanges(ctx, err); ret == nil {
 		ret = nextErr
 	}
 	return ret
@@ -758,8 +795,8 @@ func (e *jsonbGinMaintainingEditor) Update(ctx *sql.Context, oldRow sql.Row, new
 
 func (e *jsonbGinMaintainingEditor) Close(ctx *sql.Context) error {
 	var ret error
-	for _, posting := range e.postings {
-		if nextErr := posting.editor.Close(ctx); ret == nil {
+	for i := range e.postings {
+		if nextErr := e.postings[i].editor.Close(ctx); ret == nil {
 			ret = nextErr
 		}
 	}
@@ -770,56 +807,112 @@ func (e *jsonbGinMaintainingEditor) Close(ctx *sql.Context) error {
 }
 
 func (e *jsonbGinMaintainingEditor) insertPostings(ctx *sql.Context, row sql.Row) error {
-	for _, posting := range e.postings {
-		postingRows, err := e.postingRows(ctx, posting.index, row)
+	for i := range e.postings {
+		postingRows, err := e.postingRows(ctx, e.postings[i].index, row)
 		if err != nil {
 			return err
 		}
 		for _, postingRow := range postingRows {
-			if err = posting.editor.Insert(ctx, postingRow); err != nil {
-				return err
-			}
+			e.postings[i].stageInsert(postingRow)
 		}
 	}
 	return nil
 }
 
 func (e *jsonbGinMaintainingEditor) deletePostings(ctx *sql.Context, row sql.Row) error {
-	for _, posting := range e.postings {
-		postingRows, err := e.postingRows(ctx, posting.index, row)
+	for i := range e.postings {
+		postingRows, err := e.postingRows(ctx, e.postings[i].index, row)
 		if err != nil {
 			return err
 		}
 		for _, postingRow := range postingRows {
-			if err = posting.editor.Delete(ctx, postingRow); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
-				return err
-			}
+			e.postings[i].stageDelete(postingRow)
 		}
 	}
 	return nil
 }
 
 func (e *jsonbGinMaintainingEditor) updatePostings(ctx *sql.Context, oldRow sql.Row, newRow sql.Row) error {
-	for _, posting := range e.postings {
-		oldPostingRows, err := e.postingRows(ctx, posting.index, oldRow)
+	for i := range e.postings {
+		oldPostingRows, err := e.postingRows(ctx, e.postings[i].index, oldRow)
 		if err != nil {
 			return err
 		}
-		newPostingRows, err := e.postingRows(ctx, posting.index, newRow)
+		newPostingRows, err := e.postingRows(ctx, e.postings[i].index, newRow)
 		if err != nil {
 			return err
 		}
 		for _, postingRow := range compactPostingRowsToDelete(oldPostingRows, newPostingRows) {
-			if err = posting.editor.Delete(ctx, postingRow); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
-				return err
-			}
+			e.postings[i].stageDelete(postingRow)
 		}
 		for _, postingRow := range compactPostingRowsToInsert(oldPostingRows, newPostingRows) {
-			if err = posting.editor.Insert(ctx, postingRow); err != nil {
-				return err
-			}
+			e.postings[i].stageInsert(postingRow)
 		}
 	}
+	return nil
+}
+
+func (p *jsonbGinPostingEditor) stageInsert(row sql.Row) {
+	p.ensurePending()
+	key := postingRowKey(row)
+	pending := p.pending[key]
+	if pending.delete {
+		pending.delete = false
+	} else {
+		pending.insert = true
+	}
+	pending.row = row
+	if !pending.insert && !pending.delete {
+		delete(p.pending, key)
+		return
+	}
+	p.pending[key] = pending
+}
+
+func (p *jsonbGinPostingEditor) stageDelete(row sql.Row) {
+	p.ensurePending()
+	key := postingRowKey(row)
+	pending := p.pending[key]
+	if pending.insert {
+		pending.insert = false
+	} else {
+		pending.delete = true
+	}
+	pending.row = row
+	if !pending.insert && !pending.delete {
+		delete(p.pending, key)
+		return
+	}
+	p.pending[key] = pending
+}
+
+func (p *jsonbGinPostingEditor) ensurePending() {
+	if p.pending == nil {
+		p.pending = make(map[string]jsonbGinPendingPosting)
+	}
+}
+
+func (p *jsonbGinPostingEditor) flush(ctx *sql.Context) error {
+	if len(p.pending) == 0 {
+		return nil
+	}
+	for _, pending := range p.pending {
+		if !pending.delete {
+			continue
+		}
+		if err := p.editor.Delete(ctx, pending.row); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
+			return err
+		}
+	}
+	for _, pending := range p.pending {
+		if !pending.insert {
+			continue
+		}
+		if err := p.editor.Insert(ctx, pending.row); err != nil {
+			return err
+		}
+	}
+	clear(p.pending)
 	return nil
 }
 
@@ -835,15 +928,54 @@ func (e *jsonbGinMaintainingEditor) postingRows(ctx *sql.Context, index JsonbGin
 	if err != nil {
 		return nil, err
 	}
-	rowID := rowIdentity(e.tableSchema, row)
+	rowID := e.rowIdentity(row)
 	postingRows := make([]sql.Row, len(tokens))
-	keyValues := primaryKeyRowValues(e.tableSchema, row)
+	keyValues := e.primaryKeyRowValues(row)
 	for i, token := range tokens {
 		postingRow := sql.Row{jsonbgin.EncodeToken(token), rowID}
 		postingRow = append(postingRow, keyValues...)
 		postingRows[i] = postingRow
 	}
 	return postingRows, nil
+}
+
+func (e *jsonbGinMaintainingEditor) rowIdentity(row sql.Row) string {
+	if len(e.primaryKeyOrdinals) == 0 {
+		return rowIdentity(e.tableSchema, row)
+	}
+	hash := sha256.New()
+	for i, ordinal := range e.primaryKeyOrdinals {
+		if i > 0 {
+			_, _ = hash.Write([]byte{0})
+		}
+		if ordinal < len(row) {
+			_, _ = hash.Write([]byte(fmt.Sprintf("%T=%v", row[ordinal], row[ordinal])))
+		}
+	}
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func (e *jsonbGinMaintainingEditor) primaryKeyRowValues(row sql.Row) sql.Row {
+	if len(e.primaryKeyOrdinals) == 0 {
+		return nil
+	}
+	keyValues := make(sql.Row, len(e.primaryKeyOrdinals))
+	for i, ordinal := range e.primaryKeyOrdinals {
+		if ordinal < len(row) {
+			keyValues[i] = row[ordinal]
+		}
+	}
+	return keyValues
+}
+
+func primaryKeyOrdinals(sch sql.Schema) []int {
+	ordinals := make([]int, 0)
+	for i, column := range sch {
+		if column.PrimaryKey {
+			ordinals = append(ordinals, i)
+		}
+	}
+	return ordinals
 }
 
 func compactPostingRowsToDelete(oldRows []sql.Row, newRows []sql.Row) []sql.Row {

@@ -76,6 +76,25 @@ func TestJsonbGinPostingRowCompaction(t *testing.T) {
 	require.Empty(t, compactPostingRowsToInsert(oldRows, oldRows))
 }
 
+func TestJsonbGinPostingEditorBatchesAndCancelsStatementRows(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	editor := &recordingPostingEditor{}
+	posting := jsonbGinPostingEditor{
+		editor:  editor,
+		pending: make(map[string]jsonbGinPendingPosting),
+	}
+
+	posting.stageInsert(sql.Row{"token/a", "row/1", int32(1)})
+	posting.stageDelete(sql.Row{"token/a", "row/1", int32(1)})
+	posting.stageDelete(sql.Row{"token/b", "row/2", int32(2)})
+	posting.stageInsert(sql.Row{"token/c", "row/3", int32(3)})
+
+	require.NoError(t, posting.flush(ctx))
+	require.Equal(t, []sql.Row{{"token/b", "row/2", int32(2)}}, editor.deleted)
+	require.Equal(t, []sql.Row{{"token/c", "row/3", int32(3)}}, editor.inserted)
+	require.Empty(t, posting.pending)
+}
+
 func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	literal := gmsexpression.NewLiteral(`{"tenant":8,"status":"open"}`, pgtypes.JsonB)
@@ -92,6 +111,39 @@ func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, jsonbGinLookupIntersect, modeAgain)
 	require.NotEqual(t, "mutated", tokensAgain[0].Value)
+}
+
+type recordingPostingEditor struct {
+	inserted []sql.Row
+	deleted  []sql.Row
+}
+
+var _ sql.RowReplacer = (*recordingPostingEditor)(nil)
+
+func (e *recordingPostingEditor) StatementBegin(*sql.Context) {}
+
+func (e *recordingPostingEditor) DiscardChanges(*sql.Context, error) error {
+	e.inserted = nil
+	e.deleted = nil
+	return nil
+}
+
+func (e *recordingPostingEditor) StatementComplete(*sql.Context) error {
+	return nil
+}
+
+func (e *recordingPostingEditor) Insert(_ *sql.Context, row sql.Row) error {
+	e.inserted = append(e.inserted, row)
+	return nil
+}
+
+func (e *recordingPostingEditor) Delete(_ *sql.Context, row sql.Row) error {
+	e.deleted = append(e.deleted, row)
+	return nil
+}
+
+func (e *recordingPostingEditor) Close(*sql.Context) error {
+	return nil
 }
 
 type fakePostingTable struct {

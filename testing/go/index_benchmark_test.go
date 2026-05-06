@@ -252,6 +252,31 @@ func TestBtreePatternOpclassCacheDoesNotLeakAcrossIndexRecreate(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 2)
 }
 
+func TestBtreeDMLRollbackPreservesIndex(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_dml_rollback (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_dml_rollback_tenant_score_idx ON btree_dml_rollback (tenant, score)")
+	execBenchmarkSQL(t, ctx, conn, "BEGIN")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_dml_rollback VALUES (1, 4, 10), (2, 4, 11)")
+	execBenchmarkSQL(t, ctx, conn, "ROLLBACK")
+
+	query := `SELECT count(id) FROM btree_dml_rollback WHERE tenant = 4 AND score >= 10`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 0)
+
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_dml_rollback VALUES (1, 4, 10), (2, 5, 11)")
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 1)
+}
+
 func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -689,6 +714,34 @@ func TestJsonbGinLiteralCacheDoesNotLeakAcrossIndexRecreate(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 64)
 }
 
+func TestJsonbGinDMLRollbackPreservesPostingIndex(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_dml_rollback (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_dml_rollback_doc_idx ON jsonb_gin_dml_rollback USING gin (doc)")
+	execBenchmarkSQL(t, ctx, conn, "BEGIN")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_dml_rollback VALUES
+		(1, '{"vip":true,"tenant":1}'::jsonb),
+		(2, '{"vip":true,"tenant":2}'::jsonb)`)
+	execBenchmarkSQL(t, ctx, conn, "ROLLBACK")
+
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_dml_rollback WHERE doc ? 'vip'`, 0)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM dg_gin_jsonb_gin_dml_rollback_jsonb_gin_dml_rollback_doc_idx_postings`, 0)
+
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_dml_rollback VALUES
+		(1, '{"vip":true,"tenant":1}'::jsonb),
+		(2, '{"tenant":2}'::jsonb)`)
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_dml_rollback WHERE doc ? 'vip'`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_dml_rollback WHERE doc ? 'vip'`, 1)
+}
+
 func BenchmarkJsonbGinIndexBuild(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	createJsonbGinBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_build")
@@ -795,6 +848,7 @@ func setupBtreeJoinBenchmark(tb testing.TB, ctx context.Context, conn *Connectio
 
 func createBtreeDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
 	b.Helper()
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)", table))
 	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s (tenant, score)", table, table))
 }
@@ -808,6 +862,8 @@ func insertBtreeDMLBenchmarkRow(b *testing.B, ctx context.Context, conn *Connect
 
 func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
 	b.Helper()
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS dg_gin_%s_%s_idx_postings", table, table))
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 	createJsonbGinBenchmarkTable(b, ctx, conn, table)
 	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s USING gin (doc)", table, table))
 }
