@@ -150,6 +150,99 @@ func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 2)
 }
 
+func TestBtreeCrossTypeNumericRangePlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_cross_type_range_plan (id INTEGER PRIMARY KEY, v INTEGER NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_cross_type_range_plan VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_cross_type_range_plan_v_idx ON btree_cross_type_range_plan (v)")
+
+	queries := []struct {
+		name  string
+		query string
+		want  int64
+	}{
+		{
+			name:  "integer_less_than_non_integral_float",
+			query: `SELECT count(id) FROM btree_cross_type_range_plan WHERE v < 4.9::float8`,
+			want:  4,
+		},
+		{
+			name:  "integer_greater_than_non_integral_float",
+			query: `SELECT count(id) FROM btree_cross_type_range_plan WHERE v > 2.1::float8`,
+			want:  3,
+		},
+		{
+			name:  "integer_equal_non_integral_float",
+			query: `SELECT count(id) FROM btree_cross_type_range_plan WHERE v = 2.1::float8`,
+			want:  0,
+		},
+	}
+
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, true)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+}
+
+func TestBtreePatternOpclassPlannerBoundary(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_pattern_opclass_plan (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_pattern_opclass_plan VALUES (1, 'alpha'), (2, 'alphabet'), (3, 'beta'), (4, 'alpaca')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_pattern_opclass_plan_name_idx ON btree_pattern_opclass_plan (name text_pattern_ops)")
+
+	indexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'btree_pattern_opclass_plan_name_idx'")
+	if !strings.Contains(indexDef, "text_pattern_ops") {
+		t.Fatalf("expected pg_indexes to preserve text_pattern_ops, got %q", indexDef)
+	}
+
+	query := `SELECT count(id) FROM btree_pattern_opclass_plan WHERE name LIKE 'alph%'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 2)
+}
+
+func TestBtreeCollationPlannerBoundary(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_collation_plan (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_collation_plan VALUES (1, 'Alpha'), (2, 'alpha'), (3, 'beta')")
+	execBenchmarkSQL(t, ctx, conn, `CREATE INDEX btree_collation_plan_name_c_idx ON btree_collation_plan (name COLLATE "C")`)
+
+	indexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'btree_collation_plan_name_c_idx'")
+	if !strings.Contains(indexDef, `COLLATE "C"`) {
+		t.Fatalf(`expected pg_indexes to preserve COLLATE "C", got %q`, indexDef)
+	}
+
+	query := `SELECT count(id) FROM btree_collation_plan WHERE name >= 'A' AND name < 'b'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 2)
+}
+
 func BenchmarkBtreeSQLLookup(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	setupBtreeLookupBenchmark(b, ctx, conn)
@@ -688,6 +781,30 @@ func assertCountResult(tb testing.TB, ctx context.Context, conn *Connection, que
 	if got != want {
 		tb.Fatalf("count query returned %d, expected %d\nquery: %s", got, want, query)
 	}
+}
+
+func queryBenchmarkString(tb testing.TB, ctx context.Context, conn *Connection, query string) string {
+	tb.Helper()
+	rows, err := conn.Query(ctx, query)
+	if err != nil {
+		tb.Fatalf("query failed: %v\nquery: %s", err, query)
+	}
+	defer rows.Close()
+
+	var got string
+	if !rows.Next() {
+		tb.Fatalf("query returned no rows: %s", query)
+	}
+	if err = rows.Scan(&got); err != nil {
+		tb.Fatalf("query scan failed: %v\nquery: %s", err, query)
+	}
+	if rows.Next() {
+		tb.Fatalf("query returned more than one row: %s", query)
+	}
+	if err = rows.Err(); err != nil {
+		tb.Fatalf("query rows failed: %v\nquery: %s", err, query)
+	}
+	return got
 }
 
 func assertBenchmarkPlanShape(tb testing.TB, ctx context.Context, conn *Connection, query string, indexedPlan bool) {
