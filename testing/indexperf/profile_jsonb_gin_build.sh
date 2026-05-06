@@ -40,7 +40,7 @@ set_local_icu_env
   go test -c -o "$NODE_TEST_BIN" ./server/node
   "$NODE_TEST_BIN" \
     -test.run '^$' \
-    -test.bench 'Benchmark(JsonbGinPostingChunkRowsToSink|BuildSortedPrimaryRowIndexPostingRows|SortedPrimaryRowIndexBuilderPostingRows)$' \
+    -test.bench 'Benchmark(JsonbGinPostingChunkRowsToSink|JsonbGinPostingChunkRowsToSinkWorkers|BuildSortedPrimaryRowIndexPostingRows|SortedPrimaryRowIndexBuilderPostingRows)$' \
     -test.benchtime=1x \
     -test.count=1 \
     -test.benchmem \
@@ -60,7 +60,7 @@ set_local_icu_env
   echo "## Stage Benchmarks"
   echo
   echo '```'
-  grep -E 'Benchmark(JsonbGinPostingChunkRowsToSink|BuildSortedPrimaryRowIndexPostingRows|SortedPrimaryRowIndexBuilderPostingRows)' "$NODE_BENCH_OUT" || true
+  grep -E 'Benchmark(JsonbGinPostingChunkRowsToSink|JsonbGinPostingChunkRowsToSinkWorkers|BuildSortedPrimaryRowIndexPostingRows|SortedPrimaryRowIndexBuilderPostingRows)' "$NODE_BENCH_OUT" || true
   echo '```'
   echo
   echo "## Paired PostgreSQL 18 Build Benchmarks"

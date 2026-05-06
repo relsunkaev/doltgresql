@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -31,6 +32,7 @@ import (
 	"github.com/dolthub/dolt/go/store/prolly/tree"
 	dolttypes "github.com/dolthub/dolt/go/store/types"
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -558,6 +560,64 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithSpill(t *testing.T) {
 	require.Equal(t, expected, got)
 }
 
+func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithParallelWorkers(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	testCases := []struct {
+		name    string
+		schema  sql.Schema
+		rows    []sql.Row
+		opClass string
+	}{
+		{
+			name:    "jsonb_ops_primary_key",
+			schema:  jsonbGinPostingStorageBaseSchema(),
+			opClass: indexmetadata.OpClassJsonbOps,
+			rows: []sql.Row{
+				{int32(1), `{"tags":["vip","hot"],"status":"open","payload":{"category":"cat-1","skew":"hot"}}`},
+				{int32(2), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1","skew":"hot"}}`},
+				{int32(3), `{"tags":["standard"],"status":"closed","payload":{"category":"cat-2","skew":"rare"}}`},
+				{int32(4), `{"tags":["vip","archived"],"status":"closed","payload":{"category":"cat-3","skew":"hot"}}`},
+				{int32(5), `{"tags":["standard"],"status":"open","payload":{"category":"cat-2","skew":"hot"}}`},
+			},
+		},
+		{
+			name: "jsonb_path_ops_opaque_fallback",
+			schema: sql.Schema{
+				{Name: "id", Type: pgtypes.Numeric, Nullable: false},
+				{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
+			},
+			opClass: indexmetadata.OpClassJsonbPathOps,
+			rows: []sql.Row{
+				{decimal.RequireFromString("1.1"), `{"payload":{"category":"cat-1","skew":"hot"},"tags":["vip"]}`},
+				{decimal.RequireFromString("2.2"), `{"payload":{"category":"cat-1","skew":"hot"},"tags":["vip","vip"]}`},
+				{decimal.RequireFromString("3.3"), `{"payload":{"category":"cat-2","skew":"rare"},"tags":["standard"]}`},
+				{decimal.RequireFromString("4.4"), `{"payload":{"category":"cat-3","skew":"hot"},"tags":["vip","archived"]}`},
+			},
+		},
+	}
+	workerCounts := []int{1, 2, runtime.GOMAXPROCS(0) + 1}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			var expected []sql.Row
+			for _, workers := range workerCounts {
+				create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", test.opClass)
+				create.postingChunkRowsPerChunk = 2
+				create.postingChunkBuildSpillEntries = 3
+				create.postingChunkBuildWorkers = workers
+				got, err := create.buildPostingChunkRows(ctx, test.schema, &benchmarkRowIter{rows: test.rows}, 1)
+				require.NoError(t, err)
+				require.NotEmpty(t, got)
+				if expected == nil {
+					expected = got
+					continue
+				}
+				require.Equal(t, expected, got, "worker count %d should match serial output", workers)
+			}
+		})
+	}
+}
+
 func TestJsonbGinPostingChunkSpillDeduplicatesEntries(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	sorter := newJsonbGinPostingChunkEntrySorter(1)
@@ -940,6 +1000,47 @@ func BenchmarkJsonbGinExtractEncodedTokensFromSQLValue(b *testing.B) {
 					b.ReportMetric(float64(tokenCount), "tokens/op")
 				})
 			}
+		})
+	}
+}
+
+func BenchmarkJsonbGinPostingChunkRowsToSinkWorkers(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	sch := benchmarkJsonbGinSchema()
+	doc := mustBenchmarkJsonDocument(b, benchmarkJsonbGinDocument())
+	rows := benchmarkJsonbGinRowsWithValue(512, doc)
+	for _, workers := range []int{1, 2, 4} {
+		workers := workers
+		b.Run(fmt.Sprintf("workers_%d", workers), func(b *testing.B) {
+			create := &CreateJsonbGinIndex{
+				opClass:                       indexmetadata.OpClassJsonbOps,
+				postingChunkRowsPerChunk:      128,
+				postingChunkBuildSpillEntries: 64,
+				postingChunkBuildWorkers:      workers,
+			}
+			sink := &countingPostingRowSink{}
+			b.ReportAllocs()
+			var lastChunkRows int
+			for i := 0; i < b.N; i++ {
+				sink.count = 0
+				sorter, err := create.buildPostingChunkEntrySorterFromRows(ctx, sch, &benchmarkRowIter{rows: rows}, 1)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if err = create.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
+					_ = sorter.Close()
+					b.Fatal(err)
+				}
+				if err = sorter.Close(); err != nil {
+					b.Fatal(err)
+				}
+				if sink.count == 0 {
+					b.Fatal("expected chunk rows")
+				}
+				lastChunkRows = sink.count
+			}
+			b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
+			b.ReportMetric(float64(workers), "workers/op")
 		})
 	}
 }

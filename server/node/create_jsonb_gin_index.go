@@ -62,6 +62,7 @@ type CreateJsonbGinIndex struct {
 	postingStorageVersion         int
 	postingChunkRowsPerChunk      int
 	postingChunkBuildSpillEntries int
+	postingChunkBuildWorkers      int
 }
 
 var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
@@ -462,12 +463,47 @@ func (c *CreateJsonbGinIndex) buildPostingChunkRowsFromTable(ctx *sql.Context, t
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Context, table sql.Table, columnIndex int) (*jsonbGinPostingChunkEntrySorter, error) {
+	if c.postingChunkBuildWorkerLimit() <= 1 {
+		sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+		partitions, err := table.Partitions(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer partitions.Close(ctx)
+		for {
+			partition, err := partitions.Next(ctx)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				_ = sorter.Close()
+				return nil, err
+			}
+			rows, err := table.PartitionRows(ctx, partition)
+			if err != nil {
+				_ = sorter.Close()
+				return nil, err
+			}
+			if err = c.addPostingChunkEntries(ctx, table.Schema(ctx), rows, columnIndex, sorter); err != nil {
+				_ = rows.Close(ctx)
+				_ = sorter.Close()
+				return nil, err
+			}
+			if err = rows.Close(ctx); err != nil {
+				_ = sorter.Close()
+				return nil, err
+			}
+		}
+		return sorter, nil
+	}
+
 	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
 	partitions, err := table.Partitions(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer partitions.Close(ctx)
+	sch := table.Schema(ctx)
 	for {
 		partition, err := partitions.Next(ctx)
 		if err == io.EOF {
@@ -482,7 +518,19 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Con
 			_ = sorter.Close()
 			return nil, err
 		}
-		if err = c.addPostingChunkEntries(ctx, table.Schema(ctx), rows, columnIndex, sorter); err != nil {
+		partitionSorter, err := c.buildPostingChunkEntrySorterFromRows(ctx, sch, rows, columnIndex)
+		if err != nil {
+			_ = rows.Close(ctx)
+			_ = sorter.Close()
+			return nil, err
+		}
+		if err = sorter.appendRunsFrom(partitionSorter); err != nil {
+			_ = partitionSorter.Close()
+			_ = rows.Close(ctx)
+			_ = sorter.Close()
+			return nil, err
+		}
+		if err = partitionSorter.Close(); err != nil {
 			_ = rows.Close(ctx)
 			_ = sorter.Close()
 			return nil, err
@@ -496,12 +544,28 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromTable(ctx *sql.Con
 }
 
 func (c *CreateJsonbGinIndex) buildPostingChunkRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) ([]sql.Row, error) {
-	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
-	defer sorter.Close()
-	if err := c.addPostingChunkEntries(ctx, sch, rows, columnIndex, sorter); err != nil {
+	sorter, err := c.buildPostingChunkEntrySorterFromRows(ctx, sch, rows, columnIndex)
+	if err != nil {
 		return nil, err
 	}
+	defer sorter.Close()
 	return c.materializePostingChunkRowsFromEntries(ctx, sorter)
+}
+
+func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromRows(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int) (*jsonbGinPostingChunkEntrySorter, error) {
+	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	if c.postingChunkBuildWorkerLimit() <= 1 {
+		if err := c.addPostingChunkEntries(ctx, sch, rows, columnIndex, sorter); err != nil {
+			_ = sorter.Close()
+			return nil, err
+		}
+		return sorter, nil
+	}
+	if err := c.addPostingChunkEntriesParallel(ctx, sch, rows, columnIndex, sorter); err != nil {
+		_ = sorter.Close()
+		return nil, err
+	}
+	return sorter, nil
 }
 
 func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
@@ -513,21 +577,95 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.S
 		if err != nil {
 			return err
 		}
-		if row[columnIndex] == nil {
-			continue
-		}
-		rowRef, err := jsonbGinPostingRowReference(ctx, sch, row)
-		if err != nil {
-			return err
-		}
-		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
-		if err != nil {
-			return err
-		}
-		if err = sorter.AddRowTokens(encodedTokens, rowRef.Bytes); err != nil {
+		if err = c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter); err != nil {
 			return err
 		}
 	}
+}
+
+func (c *CreateJsonbGinIndex) addPostingChunkEntriesParallel(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
+	// The base row scan stays serial; workers turn rows into sorted spill runs
+	// that the existing chunk writer can merge deterministically.
+	workerCount := c.postingChunkBuildWorkerLimit()
+	jobs := make(chan sql.Row, workerCount*2)
+	results := make(chan jsonbGinPostingChunkBuildWorkerResult, workerCount)
+	for i := 0; i < workerCount; i++ {
+		go c.runPostingChunkBuildWorker(ctx, sch, jobs, columnIndex, results)
+	}
+
+	var scanErr error
+	for scanErr == nil {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			scanErr = err
+			break
+		}
+		jobs <- append(sql.Row(nil), row...)
+	}
+	close(jobs)
+
+	var retErr error
+	if scanErr != nil {
+		retErr = scanErr
+	}
+	for i := 0; i < workerCount; i++ {
+		result := <-results
+		if result.err != nil && retErr == nil {
+			retErr = result.err
+		}
+		if result.sorter == nil {
+			continue
+		}
+		if retErr == nil {
+			if err := sorter.appendRunsFrom(result.sorter); err != nil {
+				retErr = err
+			}
+		}
+		if err := result.sorter.Close(); err != nil && retErr == nil {
+			retErr = err
+		}
+	}
+	return retErr
+}
+
+type jsonbGinPostingChunkBuildWorkerResult struct {
+	sorter *jsonbGinPostingChunkEntrySorter
+	err    error
+}
+
+func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch sql.Schema, jobs <-chan sql.Row, columnIndex int, results chan<- jsonbGinPostingChunkBuildWorkerResult) {
+	sorter := newJsonbGinPostingChunkEntrySorter(c.postingChunkBuildSpillEntryLimit())
+	var retErr error
+	for row := range jobs {
+		if retErr != nil {
+			continue
+		}
+		if err := c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter); err != nil {
+			retErr = err
+		}
+	}
+	if retErr == nil {
+		retErr = sorter.flushRun()
+	}
+	results <- jsonbGinPostingChunkBuildWorkerResult{sorter: sorter, err: retErr}
+}
+
+func (c *CreateJsonbGinIndex) addPostingChunkEntriesForRow(ctx *sql.Context, sch sql.Schema, row sql.Row, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
+	if row[columnIndex] == nil {
+		return nil
+	}
+	rowRef, err := jsonbGinPostingRowReference(ctx, sch, row)
+	if err != nil {
+		return err
+	}
+	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
+	if err != nil {
+		return err
+	}
+	return sorter.AddRowTokens(encodedTokens, rowRef.Bytes)
 }
 
 func (c *CreateJsonbGinIndex) materializePostingChunkRowsFromEntries(ctx *sql.Context, sorter *jsonbGinPostingChunkEntrySorter) ([]sql.Row, error) {
@@ -640,6 +778,13 @@ func (c *CreateJsonbGinIndex) postingChunkBuildSpillEntryLimit() int {
 	return jsonbGinPostingChunkBuildSpillEntries
 }
 
+func (c *CreateJsonbGinIndex) postingChunkBuildWorkerLimit() int {
+	if c.postingChunkBuildWorkers > 0 {
+		return c.postingChunkBuildWorkers
+	}
+	return 1
+}
+
 func postingChunkChecksumBytes(checksum uint32) []byte {
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, checksum)
@@ -725,6 +870,18 @@ func (s *jsonbGinPostingChunkEntrySorter) Close() error {
 	clear(s.runs)
 	s.runs = nil
 	return ret
+}
+
+func (s *jsonbGinPostingChunkEntrySorter) appendRunsFrom(other *jsonbGinPostingChunkEntrySorter) error {
+	if other == nil {
+		return nil
+	}
+	if err := other.flushRun(); err != nil {
+		return err
+	}
+	s.runs = append(s.runs, other.runs...)
+	other.runs = nil
+	return nil
 }
 
 func (s *jsonbGinPostingChunkEntrySorter) flushRun() error {
