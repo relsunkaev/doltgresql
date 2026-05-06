@@ -249,6 +249,11 @@ func TestBtreeCollationPlannerBoundary(t *testing.T) {
 	query := `SELECT count(id) FROM btree_collation_plan WHERE name >= 'A' AND name < 'b'`
 	assertBenchmarkPlanShape(t, ctx, conn, query, false)
 	assertCountResult(t, ctx, conn, query, 2)
+
+	execBenchmarkSQL(t, ctx, conn, `CREATE INDEX btree_collation_plan_name_default_idx ON btree_collation_plan (name)`)
+	query = `SELECT count(id) FROM btree_collation_plan WHERE name COLLATE "C" >= 'A' AND name COLLATE "C" < 'b'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 2)
 }
 
 func BenchmarkBtreeSQLLookup(b *testing.B) {

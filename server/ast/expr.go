@@ -24,7 +24,6 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -297,8 +296,14 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			Exprs: exprs,
 		}, nil
 	case *tree.CollateExpr:
-		logrus.Warnf("collate is not yet supported, ignoring")
-		return nodeExpr(ctx, node.Expr)
+		expr, err := nodeExpr(ctx, node.Expr)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedExpr{
+			Expression: pgexprs.NewCollate(node.Locale),
+			Children:   vitess.Exprs{expr},
+		}, nil
 	case *tree.ColumnAccessExpr:
 		colAccess, err := pgexprs.NewColumnAccess(node.ColName, node.ColIndex)
 		if err != nil {
