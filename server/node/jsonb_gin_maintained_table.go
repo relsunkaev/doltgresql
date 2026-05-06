@@ -537,6 +537,7 @@ func jsonbGinLookupTokensFromValue(ctx *sql.Context, opClass string, operator fr
 		for i, key := range keys {
 			tokens[i] = jsonbgin.EncodeToken(jsonbgin.Token{OpClass: opClass, Kind: jsonbgin.TokenKindKey, Value: key})
 		}
+		tokens = normalizeJsonbGinLookupTokens(tokens)
 		if operator == framework.Operator_BinaryJSONTopLevelAny {
 			return tokens, jsonbGinLookupUnion, true, nil
 		}
@@ -569,6 +570,18 @@ func cloneStrings(tokens []string) []string {
 	cloned := make([]string, len(tokens))
 	copy(cloned, tokens)
 	return cloned
+}
+
+func normalizeJsonbGinLookupTokens(tokens []string) []string {
+	sort.Strings(tokens)
+	writeIdx := 0
+	for _, token := range tokens {
+		if writeIdx == 0 || tokens[writeIdx-1] != token {
+			tokens[writeIdx] = token
+			writeIdx++
+		}
+	}
+	return tokens[:writeIdx]
 }
 
 func textArrayStrings(value any) ([]string, bool) {

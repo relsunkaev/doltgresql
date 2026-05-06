@@ -116,6 +116,28 @@ func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
 	require.NotEqual(t, "mutated", tokensAgain[0])
 }
 
+func TestJsonbGinLookupTokensDeduplicatesTopLevelKeys(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	literal := gmsexpression.NewLiteral([]any{"vip", "draft", "vip"}, pgtypes.TextArray)
+	expected := []string{
+		jsonbgin.EncodeToken(jsonbgin.Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: jsonbgin.TokenKindKey, Value: "draft"}),
+		jsonbgin.EncodeToken(jsonbgin.Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: jsonbgin.TokenKindKey, Value: "vip"}),
+	}
+	expected = normalizeJsonbGinLookupTokens(expected)
+
+	tokens, mode, ok, err := jsonbGinLookupTokens(ctx, indexmetadata.OpClassJsonbOps, framework.Operator_BinaryJSONTopLevelAny, literal)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, jsonbGinLookupUnion, mode)
+	require.Equal(t, expected, tokens)
+
+	tokens, mode, ok, err = jsonbGinLookupTokens(ctx, indexmetadata.OpClassJsonbOps, framework.Operator_BinaryJSONTopLevelAll, literal)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, jsonbGinLookupIntersect, mode)
+	require.Equal(t, expected, tokens)
+}
+
 func TestJsonbGinPostingRowBufferSortsRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	editor := &recordingPostingEditor{}
