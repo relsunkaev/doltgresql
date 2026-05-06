@@ -286,6 +286,54 @@ func TestJsonbGinPostingEditorBatchesAndCancelsStatementRows(t *testing.T) {
 	require.Empty(t, posting.pending)
 }
 
+func TestJsonbGinPostingChunkEditorAppendsDMLChunksWithoutRewritingExisting(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	token := "token/shared"
+	existingRow, _ := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{1, 2})
+	_, insertedRefs := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{3})
+	table := &fakePostingTable{rows: []sql.Row{existingRow}}
+	editor := &recordingPostingEditor{}
+	posting := jsonbGinPostingChunkEditor{
+		table:   table,
+		editor:  editor,
+		pending: make(map[string]map[string]jsonbGinPendingPostingChunk),
+	}
+
+	posting.stageInsert(insertedRefs[0], []string{token})
+
+	require.NoError(t, posting.flush(ctx))
+	require.Empty(t, editor.deleted)
+	require.Len(t, editor.inserted, 1)
+	chunkNo, ok, err := postingChunkRowChunkNo(editor.inserted[0])
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.GreaterOrEqual(t, chunkNo, jsonbGinPostingChunkDMLChunkNoBase)
+	requirePostingChunkRow(t, ctx, editor.inserted[0], chunkNo, []int32{3})
+	require.Empty(t, posting.pending)
+}
+
+func TestJsonbGinPostingChunkEditorDeletesOnlyTouchedChunks(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	token := "token/shared"
+	existingRow, existingRefs := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{1, 2})
+	appendedRow, _ := jsonbGinPostingChunkTestRow(t, ctx, token, jsonbGinPostingChunkDMLChunkNoBase, []int32{3})
+	table := &fakePostingTable{rows: []sql.Row{existingRow, appendedRow}}
+	editor := &recordingPostingEditor{}
+	posting := jsonbGinPostingChunkEditor{
+		table:   table,
+		editor:  editor,
+		pending: make(map[string]map[string]jsonbGinPendingPostingChunk),
+	}
+
+	posting.stageDelete(existingRefs[1], []string{token})
+
+	require.NoError(t, posting.flush(ctx))
+	require.Equal(t, []sql.Row{existingRow}, editor.deleted)
+	require.Len(t, editor.inserted, 1)
+	requirePostingChunkRow(t, ctx, editor.inserted[0], 0, []int32{1})
+	require.Empty(t, posting.pending)
+}
+
 func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tableSchema := jsonbGinPostingStorageBaseSchema()

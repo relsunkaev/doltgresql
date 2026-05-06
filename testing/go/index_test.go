@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -461,6 +462,228 @@ ORDER BY id;`,
 			},
 		},
 	})
+}
+
+func TestJsonbGinV2PostingChunkRootSemantics(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PostgreSQL jsonb gin v2 posting chunk Dolt root semantics",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_root (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_root VALUES
+					(1, '{"tags":["vip"],"status":"open"}'),
+					(2, '{"tags":["standard"],"status":"open"}');`,
+				"CREATE INDEX jsonb_gin_v2_root_idx ON jsonb_gin_v2_root USING gin (doc);",
+				"SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin root');",
+				"SELECT DOLT_BRANCH('feature');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
+FROM dg_gin_jsonb_gin_v2_root_jsonb_gin_v2_root_idx_posting_chunks;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:            "SELECT DOLT_CHECKOUT('feature');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+						(3, '{"tags":["vip","feature"],"status":"feature"}');`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["feature"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{3}},
+				},
+				{
+					Query:            "SELECT DOLT_COMMIT('-Am', 'feature v2 jsonb gin root');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query:            "SELECT DOLT_CHECKOUT('main');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["feature"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+						(4, '{"tags":["main"],"status":"main"}');`,
+				},
+				{
+					Query:            "SELECT DOLT_COMMIT('-Am', 'main v2 jsonb gin root');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query:            "SELECT DOLT_MERGE('feature');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["main"]}' OR doc @> '{"tags":["feature"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{3}, {4}},
+				},
+				{
+					Query: "BEGIN;",
+				},
+				{
+					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+						(5, '{"tags":["rolled_back"],"status":"temporary"}');`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["rolled_back"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{5}},
+				},
+				{
+					Query: "ROLLBACK;",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["rolled_back"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `UPDATE jsonb_gin_v2_root
+SET doc = '{"tags":["vip","updated"],"status":"updated"}'
+WHERE id = 2;`,
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["updated"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{2}},
+				},
+				{
+					Query: "DELETE FROM jsonb_gin_v2_root WHERE id = 1;",
+				},
+				{
+					Query: `SELECT id FROM jsonb_gin_v2_root
+WHERE doc @> '{"tags":["vip"]}'
+ORDER BY id;`,
+					Expected: []sql.Row{{2}, {3}},
+				},
+				{
+					Query: "DROP INDEX jsonb_gin_v2_root_idx;",
+				},
+				{
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_class
+WHERE relname = 'dg_gin_jsonb_gin_v2_root_jsonb_gin_v2_root_idx_posting_chunks';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL jsonb gin v2 posting chunk conflicting merge remains table conflict",
+			SetUpScript: []string{
+				"CREATE TABLE jsonb_gin_v2_root_conflict (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_v2_root_conflict VALUES
+					(1, '{"tags":["vip"],"status":"open"}');`,
+				"CREATE INDEX jsonb_gin_v2_root_conflict_idx ON jsonb_gin_v2_root_conflict USING gin (doc);",
+				"SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin root conflict');",
+				"SELECT DOLT_BRANCH('jsonb_gin_v2_conflict');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:            "SELECT DOLT_CHECKOUT('jsonb_gin_v2_conflict');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `UPDATE jsonb_gin_v2_root_conflict
+SET doc = '{"tags":["vip","feature"],"status":"feature"}'
+WHERE id = 1;`,
+				},
+				{
+					Query:            "SELECT DOLT_COMMIT('-Am', 'feature v2 jsonb gin root conflict');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query:            "SELECT DOLT_CHECKOUT('main');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `UPDATE jsonb_gin_v2_root_conflict
+SET doc = '{"tags":["vip","main"],"status":"main"}'
+WHERE id = 1;`,
+				},
+				{
+					Query:            "SELECT DOLT_COMMIT('-Am', 'main v2 jsonb gin root conflict');",
+					SkipResultsCheck: true,
+				},
+				{
+					Query:       "SELECT DOLT_MERGE('jsonb_gin_v2_conflict');",
+					ExpectedErr: "Merge conflict detected",
+				},
+			},
+		},
+	})
+}
+
+func TestJsonbGinV2PostingChunkReopenRootSemantics(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	if err != nil {
+		t.Fatalf("creating temp database directory: %v", err)
+	}
+	defer os.RemoveAll(dbDir)
+
+	port, err := sql.GetEmptyPort()
+	if err != nil {
+		t.Fatalf("finding empty port: %v", err)
+	}
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_v2_reopen (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_v2_reopen VALUES
+		(1, '{"tags":["vip"],"status":"open"}'),
+		(2, '{"tags":["standard"],"status":"open"}');`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_reopen_idx ON jsonb_gin_v2_reopen USING gin (doc);")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
+	if got := queryBenchmarkString(t, ctx, conn, `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
+FROM dg_gin_jsonb_gin_v2_reopen_jsonb_gin_v2_reopen_idx_posting_chunks`); got != "t" {
+		t.Fatalf("expected posting chunk sidecar rows before restart, got %q", got)
+	}
+	execBenchmarkSQL(t, ctx, conn, "SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin reopen');")
+	conn.Close(ctx)
+	controller.Stop()
+	controller.WaitForStop()
+
+	port, err = sql.GetEmptyPort()
+	if err != nil {
+		t.Fatalf("finding empty port after restart: %v", err)
+	}
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		controller.WaitForStop()
+	}()
+
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
+	if got := queryBenchmarkString(t, ctx, conn, `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
+FROM dg_gin_jsonb_gin_v2_reopen_jsonb_gin_v2_reopen_idx_posting_chunks`); got != "t" {
+		t.Fatalf("expected posting chunk sidecar rows after restart, got %q", got)
+	}
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_v2_reopen VALUES
+		(3, '{"tags":["after_reopen"],"status":"open"}');`)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["after_reopen"]}'`, 1)
 }
 
 func TestBasicIndexing(t *testing.T) {
