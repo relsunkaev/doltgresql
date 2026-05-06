@@ -277,7 +277,7 @@ func TestBtreeDMLRollbackPreservesIndex(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 1)
 }
 
-func TestBtreeUnhintedLookupJoinPlannerShape(t *testing.T) {
+func TestBtreeInferredPredicateHashJoinPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
 		conn.Close(ctx)
@@ -295,8 +295,9 @@ JOIN btree_join_right_idx
   ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
  AND btree_join_right_idx.score = btree_join_left_idx.score
 WHERE btree_join_left_idx.tenant = 4`
-	assertBenchmarkPlanContains(t, ctx, conn, selective, "LookupJoin")
+	assertBenchmarkPlanContains(t, ctx, conn, selective, "HashJoin")
 	assertBenchmarkPlanContains(t, ctx, conn, selective, "IndexedTableAccess(btree_join_right_idx)")
+	assertBenchmarkPlanNotContains(t, ctx, conn, selective, "LookupJoin")
 	assertCountResult(t, ctx, conn, selective, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
 
 	nonselective := `SELECT count(*)
@@ -305,6 +306,80 @@ JOIN btree_join_right_idx
   ON btree_join_right_idx.tenant = btree_join_left_idx.tenant
  AND btree_join_right_idx.score = btree_join_left_idx.score`
 	assertCountResult(t, ctx, conn, nonselective, btreeJoinProbeRows*(btreeBenchmarkRows/64))
+}
+
+func TestBtreeJoinInfersConstantPredicateForIndexedSide(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	setupBtreeJoinBenchmark(t, ctx, conn)
+
+	query := `SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+	AND r.score = l.score
+WHERE l.tenant = 4`
+	assertBenchmarkPlanContains(t, ctx, conn, query, "HashJoin")
+	assertBenchmarkPlanContains(t, ctx, conn, query, "IndexedTableAccess(btree_join_right_idx)")
+	assertBenchmarkPlanNotContains(t, ctx, conn, query, "LookupJoin")
+	assertCountResult(t, ctx, conn, query, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
+}
+
+func TestBtreeJoinPredicateInferenceBoundaries(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	setupBtreeJoinBenchmark(t, ctx, conn)
+
+	rightConstant := `SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE r.tenant = 4`
+	assertBenchmarkPlanContains(t, ctx, conn, rightConstant, "l.tenant = 4")
+	assertCountResult(t, ctx, conn, rightConstant, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
+
+	conflicting := `SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4
+  AND r.tenant = 5`
+	assertBenchmarkPlanContains(t, ctx, conn, conflicting, "keys: 5, l.score")
+	assertBenchmarkPlanNotContains(t, ctx, conn, conflicting, "r.tenant = 4")
+	assertCountResult(t, ctx, conn, conflicting, 0)
+
+	leftJoin := `SELECT count(*)
+FROM btree_join_left_idx AS l
+LEFT JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4`
+	assertBenchmarkPlanNotContains(t, ctx, conn, leftJoin, "r.tenant = 4")
+
+	nullConstant := `SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = NULL`
+	assertBenchmarkPlanNotContains(t, ctx, conn, nullConstant, "r.tenant = NULL")
+	assertCountResult(t, ctx, conn, nullConstant, 0)
 }
 
 func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
@@ -1102,6 +1177,14 @@ func assertBenchmarkPlanContains(tb testing.TB, ctx context.Context, conn *Conne
 	plan := explainBenchmarkQuery(tb, ctx, conn, query)
 	if !strings.Contains(plan, expected) {
 		tb.Fatalf("expected benchmark query plan to contain %q\nplan:\n%s", expected, plan)
+	}
+}
+
+func assertBenchmarkPlanNotContains(tb testing.TB, ctx context.Context, conn *Connection, query string, unexpected string) {
+	tb.Helper()
+	plan := explainBenchmarkQuery(tb, ctx, conn, query)
+	if strings.Contains(plan, unexpected) {
+		tb.Fatalf("expected benchmark query plan not to contain %q\nplan:\n%s", unexpected, plan)
 	}
 }
 

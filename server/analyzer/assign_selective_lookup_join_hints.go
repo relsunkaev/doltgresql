@@ -20,7 +20,6 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 	gmsanalyzer "github.com/dolthub/go-mysql-server/sql/analyzer"
-	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
@@ -44,6 +43,9 @@ func AssignSelectiveLookupJoinHints(ctx *sql.Context, _ *gmsanalyzer.Analyzer, n
 		if !ok {
 			return node, transform.SameTree, nil
 		}
+		if hasSelectiveEqualityFilter(ctx, join.Right()) {
+			return node, transform.SameTree, nil
+		}
 		rightName, rightTable, ok := lookupJoinIndexedTable(join.Right())
 		if !ok || !hasUsableLookupJoinIndex(ctx, rightTable) {
 			return node, transform.SameTree, nil
@@ -59,26 +61,11 @@ func hasSelectiveEqualityFilter(ctx *sql.Context, node sql.Node) bool {
 		return false
 	}
 	for _, expr := range SplitConjunction(ctx, filter.Expression) {
-		equals, ok := expr.(*gmsexpression.Equals)
-		if !ok {
-			continue
-		}
-		if equalityComparesFieldToConstant(equals) {
+		if field, literal, ok := equalityFieldAndLiteral(expr); ok && field != nil && literal.Value() != nil {
 			return true
 		}
 	}
 	return false
-}
-
-func equalityComparesFieldToConstant(equals *gmsexpression.Equals) bool {
-	leftField := expressionIsGetField(equals.Left())
-	rightField := expressionIsGetField(equals.Right())
-	return leftField != rightField
-}
-
-func expressionIsGetField(expr sql.Expression) bool {
-	_, ok := expr.(*gmsexpression.GetField)
-	return ok
 }
 
 func lookupJoinTableName(node sql.Node) (string, bool) {
