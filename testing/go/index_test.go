@@ -1097,7 +1097,7 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
 				{
-					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE pg_default;",
+					Query:       "CREATE INDEX v1_idx_tablespace ON test(v1) TABLESPACE definitely_not_supported;",
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 				{
@@ -1147,6 +1147,32 @@ WHERE tablename = 'btree_reloptions_meta' AND indexname = 'btree_reloptions_meta
 				{
 					Query:       "CREATE INDEX btree_reloptions_bad_fillfactor_idx ON btree_reloptions_meta (v) WITH (fillfactor = 9);",
 					ExpectedErr: "fillfactor must be between 10 and 100",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL default tablespace index metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_default_tablespace_meta (id INTEGER PRIMARY KEY, v TEXT);",
+				"CREATE INDEX btree_default_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE pg_default;",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	idx.indexdef,
+	c.reltablespace,
+	idx.tablespace
+FROM pg_catalog.pg_indexes idx
+JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
+WHERE idx.tablename = 'btree_default_tablespace_meta'
+  AND idx.indexname = 'btree_default_tablespace_meta_v_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX btree_default_tablespace_meta_v_idx ON public.btree_default_tablespace_meta USING btree (v)", 0, nil},
+					},
+				},
+				{
+					Query:       "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;",
+					ExpectedErr: "TABLESPACE is not yet supported for indexes",
 				},
 			},
 		},

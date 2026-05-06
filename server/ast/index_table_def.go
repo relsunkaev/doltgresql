@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -25,14 +27,19 @@ import (
 // nodeIndexTableDef handles *tree.IndexTableDef nodes. The parser does not store type information in the index
 // definition (PRIMARY KEY, UNIQUE, etc.) so it must be added to this definition by the caller.
 func nodeIndexTableDef(ctx *Context, node *tree.IndexTableDef) (*vitess.IndexDefinition, error) {
-	return nodeIndexTableDefWithOptions(ctx, node, false)
+	return nodeIndexTableDefWithOptions(ctx, node, false, false)
 }
 
 func nodeIndexTableDefAllowingStorageParams(ctx *Context, node *tree.IndexTableDef) (*vitess.IndexDefinition, error) {
-	return nodeIndexTableDefWithOptions(ctx, node, true)
+	return nodeIndexTableDefWithOptions(ctx, node, true, true)
 }
 
-func nodeIndexTableDefWithOptions(ctx *Context, node *tree.IndexTableDef, allowStorageParams bool) (*vitess.IndexDefinition, error) {
+func nodeIndexTableDefWithOptions(
+	ctx *Context,
+	node *tree.IndexTableDef,
+	allowStorageParams bool,
+	allowDefaultTablespace bool,
+) (*vitess.IndexDefinition, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -42,7 +49,7 @@ func nodeIndexTableDefWithOptions(ctx *Context, node *tree.IndexTableDef, allowS
 	if len(node.IndexParams.StorageParams) > 0 && !allowStorageParams {
 		return nil, errors.Errorf("storage parameters are not yet supported for indexes")
 	}
-	if node.IndexParams.Tablespace != "" {
+	if node.IndexParams.Tablespace != "" && (!allowDefaultTablespace || !isDefaultIndexTablespace(node.IndexParams.Tablespace)) {
 		return nil, errors.Errorf("TABLESPACE is not yet supported for indexes")
 	}
 
@@ -58,4 +65,8 @@ func nodeIndexTableDefWithOptions(ctx *Context, node *tree.IndexTableDef, allowS
 		},
 		Fields: indexFields,
 	}, nil
+}
+
+func isDefaultIndexTablespace(tablespace tree.Name) bool {
+	return strings.EqualFold(strings.Trim(strings.TrimSpace(string(tablespace)), `"`), "pg_default")
 }
