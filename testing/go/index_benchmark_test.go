@@ -579,6 +579,28 @@ func TestJsonbGinSelectivityPlannerShape(t *testing.T) {
 	}
 }
 
+func TestJsonbGinDirectFetchPreservesRecheck(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_recheck_plan (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_recheck_plan VALUES
+		(1, '{"status":"open","payload":{"note":"closed"}}'::jsonb),
+		(2, '{"status":"closed","payload":{"note":"open"}}'::jsonb),
+		(3, '{"payload":{"status":"open"}}'::jsonb)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_recheck_plan_idx ON jsonb_gin_recheck_plan USING gin (doc)")
+
+	query := `SELECT count(id) FROM jsonb_gin_recheck_plan WHERE doc @> '{"status":"open"}'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 1)
+}
+
 func BenchmarkJsonbGinIndexBuild(b *testing.B) {
 	ctx, conn := newBenchmarkServer(b)
 	createJsonbGinBenchmarkTable(b, ctx, conn, "jsonb_gin_bench_build")

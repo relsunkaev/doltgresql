@@ -135,7 +135,7 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	}); err != nil {
 		return nil, err
 	}
-	if err = c.createPostingTable(ctx, tableCreator); err != nil {
+	if err = c.createPostingTable(ctx, tableCreator, table.Schema(ctx)); err != nil {
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
 	}
@@ -207,8 +207,8 @@ func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (
 	return -1, "", errors.Errorf(`jsonb gin indexes currently require a primary key`)
 }
 
-func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator sql.TableCreator) error {
-	postingSchema := sql.NewPrimaryKeySchema(sql.Schema{
+func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
+	schema := sql.Schema{
 		{
 			Name:       "token",
 			Source:     c.postingName,
@@ -223,7 +223,19 @@ func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator 
 			PrimaryKey: true,
 			Nullable:   false,
 		},
-	})
+	}
+	for i, column := range baseSchema {
+		if !column.PrimaryKey {
+			continue
+		}
+		schema = append(schema, &sql.Column{
+			Name:     fmt.Sprintf("pk_%d", i),
+			Source:   c.postingName,
+			Type:     column.Type,
+			Nullable: column.Nullable,
+		})
+	}
+	postingSchema := sql.NewPrimaryKeySchema(schema)
 	return tableCreator.CreateTable(ctx, c.postingName, postingSchema, sql.Collation_Default, jsonbGinPostingTableComment)
 }
 
@@ -300,6 +312,7 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 			continue
 		}
 		rowID := rowIdentity(sch, row)
+		keyValues := primaryKeyRowValues(sch, row)
 		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, row[columnIndex])
 		if err != nil {
 			return err
@@ -309,7 +322,9 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 			return err
 		}
 		for _, token := range tokens {
-			if err = inserter.Insert(ctx, sql.Row{jsonbgin.EncodeToken(token), rowID}); err != nil {
+			postingRow := sql.Row{jsonbgin.EncodeToken(token), rowID}
+			postingRow = append(postingRow, keyValues...)
+			if err = inserter.Insert(ctx, postingRow); err != nil {
 				return err
 			}
 		}
