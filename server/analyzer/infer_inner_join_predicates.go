@@ -40,7 +40,9 @@ func InferInnerJoinPredicates(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node sq
 
 		leftConstants := collectEqualityConstants(ctx, join.Left())
 		rightConstants := collectEqualityConstants(ctx, join.Right())
-		if len(leftConstants) == 0 && len(rightConstants) == 0 {
+		leftComparisons := collectRangeComparisons(ctx, join.Left())
+		rightComparisons := collectRangeComparisons(ctx, join.Right())
+		if len(leftConstants) == 0 && len(rightConstants) == 0 && len(leftComparisons) == 0 && len(rightComparisons) == 0 {
 			return node, transform.SameTree, nil
 		}
 
@@ -77,9 +79,21 @@ func InferInnerJoinPredicates(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node sq
 					rightPredicates = append(rightPredicates, predicate)
 				}
 			}
+			for _, comparison := range leftComparisons[leftSide.key] {
+				predicate, ok := inferredRangePredicate(ctx, join.Right(), rightSide.field, comparison)
+				if ok && !hasEqualityConstant(rightConstants, rightSide.key) && !hasRangeComparison(rightComparisons, rightSide.key, comparison) {
+					rightPredicates = append(rightPredicates, predicate)
+				}
+			}
 			if literal, ok := rightConstants[rightSide.key]; ok {
 				predicate, ok := inferredEqualityPredicate(ctx, join.Left(), leftSide.field, literal)
 				if ok && !hasEqualityConstant(leftConstants, leftSide.key) {
+					leftPredicates = append(leftPredicates, predicate)
+				}
+			}
+			for _, comparison := range rightComparisons[rightSide.key] {
+				predicate, ok := inferredRangePredicate(ctx, join.Left(), leftSide.field, comparison)
+				if ok && !hasEqualityConstant(leftConstants, leftSide.key) && !hasRangeComparison(leftComparisons, leftSide.key, comparison) {
 					leftPredicates = append(leftPredicates, predicate)
 				}
 			}
@@ -122,6 +136,11 @@ type equalityFieldKey struct {
 	name    string
 }
 
+type rangeComparison struct {
+	op      sql.IndexScanOp
+	literal *gmsexpression.Literal
+}
+
 func collectEqualityConstants(ctx *sql.Context, node sql.Node) map[equalityFieldKey]*gmsexpression.Literal {
 	constants := make(map[equalityFieldKey]*gmsexpression.Literal)
 	for {
@@ -135,6 +154,28 @@ func collectEqualityConstants(ctx *sql.Context, node sql.Node) map[equalityField
 				continue
 			}
 			constants[fieldKey(field)] = literal
+		}
+		node = filter.Child
+	}
+}
+
+func collectRangeComparisons(ctx *sql.Context, node sql.Node) map[equalityFieldKey][]rangeComparison {
+	comparisons := make(map[equalityFieldKey][]rangeComparison)
+	for {
+		filter, ok := node.(*plan.Filter)
+		if !ok {
+			return comparisons
+		}
+		for _, expr := range SplitConjunction(ctx, filter.Expression) {
+			field, comparison, ok := rangeFieldAndLiteral(expr)
+			if !ok || comparison.literal.Value() == nil {
+				continue
+			}
+			key := fieldKey(field)
+			if hasRangeComparison(comparisons, key, comparison) {
+				continue
+			}
+			comparisons[key] = append(comparisons[key], comparison)
 		}
 		node = filter.Child
 	}
@@ -164,6 +205,37 @@ func equalityExpressionSides(expr sql.Expression) (sql.Expression, sql.Expressio
 		return nil, nil, false
 	}
 	return equality.Left(), equality.Right(), true
+}
+
+func rangeFieldAndLiteral(expr sql.Expression) (*gmsexpression.GetField, rangeComparison, bool) {
+	comparison, ok := expr.(sql.IndexComparisonExpression)
+	if !ok {
+		return nil, rangeComparison{}, false
+	}
+	op, left, right, ok := comparison.IndexScanOperation()
+	if !ok || !isRangeScanOp(op) {
+		return nil, rangeComparison{}, false
+	}
+	if field, ok := left.(*gmsexpression.GetField); ok {
+		if literal, ok := right.(*gmsexpression.Literal); ok {
+			return field, rangeComparison{op: op, literal: literal}, true
+		}
+	}
+	if literal, ok := left.(*gmsexpression.Literal); ok {
+		if field, ok := right.(*gmsexpression.GetField); ok {
+			return field, rangeComparison{op: op.Swap(), literal: literal}, true
+		}
+	}
+	return nil, rangeComparison{}, false
+}
+
+func isRangeScanOp(op sql.IndexScanOp) bool {
+	switch op {
+	case sql.IndexScanOpGt, sql.IndexScanOpGte, sql.IndexScanOpLt, sql.IndexScanOpLte:
+		return true
+	default:
+		return false
+	}
 }
 
 func joinEqualitySides(ctx *sql.Context, join *plan.JoinNode, first *gmsexpression.GetField, second *gmsexpression.GetField) (joinFieldSide, joinFieldSide, bool) {
@@ -216,6 +288,15 @@ func hasEqualityConstant(constants map[equalityFieldKey]*gmsexpression.Literal, 
 	return ok
 }
 
+func hasRangeComparison(comparisons map[equalityFieldKey][]rangeComparison, key equalityFieldKey, candidate rangeComparison) bool {
+	for _, existing := range comparisons[key] {
+		if existing.op == candidate.op && existing.literal.String() == candidate.literal.String() {
+			return true
+		}
+	}
+	return false
+}
+
 func inferredEqualityPredicate(ctx *sql.Context, child sql.Node, field *gmsexpression.GetField, literal *gmsexpression.Literal) (sql.Expression, bool) {
 	childField, ok := fieldForChild(ctx, child, field)
 	if !ok {
@@ -226,6 +307,37 @@ func inferredEqualityPredicate(ctx *sql.Context, child sql.Node, field *gmsexpre
 		return nil, false
 	}
 	return predicate, true
+}
+
+func inferredRangePredicate(ctx *sql.Context, child sql.Node, field *gmsexpression.GetField, comparison rangeComparison) (sql.Expression, bool) {
+	childField, ok := fieldForChild(ctx, child, field)
+	if !ok {
+		return nil, false
+	}
+	operator, ok := rangeOperatorForIndexScanOp(comparison.op)
+	if !ok {
+		return nil, false
+	}
+	predicate, err := pgexpression.NewBinaryOperator(operator).WithChildren(ctx, childField, comparison.literal)
+	if err != nil {
+		return nil, false
+	}
+	return predicate, true
+}
+
+func rangeOperatorForIndexScanOp(op sql.IndexScanOp) (framework.Operator, bool) {
+	switch op {
+	case sql.IndexScanOpGt:
+		return framework.Operator_BinaryGreaterThan, true
+	case sql.IndexScanOpGte:
+		return framework.Operator_BinaryGreaterOrEqual, true
+	case sql.IndexScanOpLt:
+		return framework.Operator_BinaryLessThan, true
+	case sql.IndexScanOpLte:
+		return framework.Operator_BinaryLessOrEqual, true
+	default:
+		return 0, false
+	}
 }
 
 func addFilterPredicates(node sql.Node, predicates []sql.Expression) sql.Node {

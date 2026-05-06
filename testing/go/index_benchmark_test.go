@@ -382,6 +382,51 @@ WHERE l.tenant = NULL`
 	assertCountResult(t, ctx, conn, nullConstant, 0)
 }
 
+func TestBtreeJoinInfersRangePredicateForIndexedSide(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	setupBtreeJoinBenchmark(t, ctx, conn)
+
+	queries := []string{
+		`SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4
+  AND l.score >= 32`,
+		`SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4
+  AND 32 <= l.score`,
+	}
+	for _, query := range queries {
+		assertBenchmarkPlanContains(t, ctx, conn, query, "HashJoin")
+		assertBenchmarkPlanContains(t, ctx, conn, query, "filters: [{[4, 4], [32,")
+		assertBenchmarkPlanNotContains(t, ctx, conn, query, "LookupJoin")
+		assertCountResult(t, ctx, conn, query, btreeJoinProbeRows/16*(btreeBenchmarkRows/64))
+	}
+
+	leftJoinRange := `SELECT count(*)
+FROM btree_join_left_idx AS l
+LEFT JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4
+  AND l.score >= 32`
+	assertBenchmarkPlanNotContains(t, ctx, conn, leftJoinRange, "filters: [{[4, 4], [32,")
+}
+
 func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
