@@ -53,4 +53,28 @@ var StatsTests = []ScriptTest{
 			},
 		},
 	},
+	{
+		Name: "ANALYZE populates dolt statistics",
+		SetUpScript: []string{
+			"CREATE TABLE stats_provider_plan (id int primary key, tenant int not null, name varchar(10));",
+			"CREATE INDEX stats_provider_plan_tenant_name_idx ON stats_provider_plan (tenant, name);",
+			"INSERT INTO stats_provider_plan VALUES (1, 1, 'a'), (2, 1, 'a'), (3, 2, 'b'), (4, 2, 'b'), (5, 3, 'c'), (6, 3, 'c');",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "ANALYZE stats_provider_plan;",
+				Expected: []sql.Row{},
+			},
+			{
+				Query: `SELECT index_name, columns, row_count, distinct_count, null_count
+FROM dolt_statistics
+WHERE table_name = 'stats_provider_plan'
+ORDER BY index_name;`,
+				Expected: []sql.Row{
+					{"primary", "id", uint64(6), uint64(6), uint64(0)},
+					{"stats_provider_plan_tenant_name_idx", "tenant,name", uint64(6), uint64(3), uint64(0)},
+				},
+			},
+		},
+	},
 }
