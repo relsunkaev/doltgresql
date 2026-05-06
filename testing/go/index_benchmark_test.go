@@ -227,6 +227,44 @@ func TestBtreePatternOpclassPlannerBoundary(t *testing.T) {
 	assertCountResult(t, ctx, conn, query, 1)
 }
 
+func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_covered_projection_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_covered_projection_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_covered_projection_plan_tenant_score_idx ON btree_covered_projection_plan (tenant, score)")
+
+	query := `SELECT tenant, score FROM btree_covered_projection_plan WHERE tenant = 4 AND score >= 32`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertBenchmarkPlanContains(t, ctx, conn, query, "columns: [tenant score]")
+}
+
+func TestBtreePatternOpclassCoveredProjectionPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_pattern_covered_projection_plan (id INTEGER PRIMARY KEY, name TEXT NOT NULL, label TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_pattern_covered_projection_plan VALUES (1, 'alpha', 'a'), (2, 'alphabet', 'b'), (3, 'beta', 'c'), (4, 'alpaca', 'd')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_pattern_covered_projection_plan_name_idx ON btree_pattern_covered_projection_plan (name text_pattern_ops)")
+
+	query := `SELECT name FROM btree_pattern_covered_projection_plan WHERE name LIKE 'alph%'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertBenchmarkPlanContains(t, ctx, conn, query, "columns: [name]")
+}
+
 func TestBtreeCollationPlannerBoundary(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {

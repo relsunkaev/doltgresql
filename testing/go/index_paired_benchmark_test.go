@@ -146,6 +146,13 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			want:             btreeBenchmarkRows / 2,
 		},
 		{
+			name:             "btree/covered_projection",
+			doltgresScanSQL:  `SELECT count(*) FROM (SELECT tenant, score FROM dg_pair_btree_scan WHERE tenant = 4 AND score >= 32) covered`,
+			doltgresIndexSQL: `SELECT count(*) FROM (SELECT tenant, score FROM dg_pair_btree_idx WHERE tenant = 4 AND score >= 32) covered`,
+			postgresSQL:      `SELECT count(*) FROM (SELECT tenant, score FROM pg_pair_btree_idx WHERE tenant = 4 AND score >= 32) covered`,
+			want:             btreeBenchmarkRows / 16,
+		},
+		{
 			name:             "btree/join",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_join_left_scan JOIN dg_pair_join_right_scan ON dg_pair_join_right_scan.tenant = dg_pair_join_left_scan.tenant AND dg_pair_join_right_scan.score = dg_pair_join_left_scan.score WHERE dg_pair_join_left_scan.tenant = 4`,
 			doltgresIndexSQL: `SELECT /*+ lookup_join(dg_pair_join_left_idx, dg_pair_join_right_idx) */ HINT count(*) FROM dg_pair_join_left_idx JOIN dg_pair_join_right_idx ON dg_pair_join_right_idx.tenant = dg_pair_join_left_idx.tenant AND dg_pair_join_right_idx.score = dg_pair_join_left_idx.score WHERE dg_pair_join_left_idx.tenant = 4`,

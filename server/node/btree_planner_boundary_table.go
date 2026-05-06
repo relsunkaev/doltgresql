@@ -35,6 +35,7 @@ var _ sql.DatabaseSchemaTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexAddressableTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexedTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexSearchableTable = (*BtreePlannerBoundaryTable)(nil)
+var _ sql.ProjectedTable = (*BtreePlannerBoundaryTable)(nil)
 
 func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*BtreePlannerBoundaryTable); ok {
@@ -70,6 +71,25 @@ func (t *BtreePlannerBoundaryTable) Schema(ctx *sql.Context) sql.Schema {
 
 func (t *BtreePlannerBoundaryTable) Collation() sql.CollationID {
 	return t.underlying.Collation()
+}
+
+func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames []string) (sql.Table, error) {
+	projected, ok := t.underlying.(sql.ProjectedTable)
+	if !ok {
+		return nil, errors.Errorf("table %s does not support projections", t.Name())
+	}
+	table, err := projected.WithProjections(ctx, colNames)
+	if err != nil {
+		return nil, err
+	}
+	return &BtreePlannerBoundaryTable{underlying: table}, nil
+}
+
+func (t *BtreePlannerBoundaryTable) Projections() []string {
+	if projected, ok := t.underlying.(sql.ProjectedTable); ok {
+		return projected.Projections()
+	}
+	return nil
 }
 
 func (t *BtreePlannerBoundaryTable) Partitions(ctx *sql.Context) (sql.PartitionIter, error) {
