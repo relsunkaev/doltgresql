@@ -26,6 +26,7 @@ import (
 )
 
 const pairedIndexBenchmarkIterations = 25
+const jsonbGinPostingStorageVersionEnv = "DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION"
 
 type pairedBenchmarkConn interface {
 	Exec(context.Context, string, ...any) (any, error)
@@ -60,6 +61,7 @@ type pairedBenchmarkCase struct {
 	name             string
 	doltgresScanSQL  string
 	doltgresIndexSQL string
+	doltgresV2SQL    string
 	postgresSQL      string
 	want             int64
 	planBoundary     bool
@@ -85,19 +87,28 @@ func BenchmarkPairedIndexBaselines(b *testing.B) {
 	pg := pairedPostgresConn{conn: pgConn}
 	setupPairedBtreeBenchmark(b, dgCtx, dg, "dg_pair")
 	setupPairedBtreeBenchmark(b, ctx, pg, "pg_pair")
-	setupPairedJsonbGinBenchmark(b, dgCtx, dg, "dg_pair")
-	setupPairedJsonbGinBenchmark(b, ctx, pg, "pg_pair")
+	setupPairedJsonbGinBenchmark(b, dgCtx, dg, "dg_pair", true)
+	setupPairedJsonbGinBenchmark(b, ctx, pg, "pg_pair", false)
 
 	for _, benchCase := range pairedIndexBenchmarkCases() {
 		benchCase := benchCase
 		b.Run(benchCase.name, func(b *testing.B) {
 			assertPairedCount(b, dgCtx, dg, benchCase.doltgresScanSQL, benchCase.want)
 			assertPairedCount(b, dgCtx, dg, benchCase.doltgresIndexSQL, benchCase.want)
+			if benchCase.doltgresV2SQL != "" {
+				assertPairedCount(b, dgCtx, dg, benchCase.doltgresV2SQL, benchCase.want)
+			}
 			assertPairedCount(b, ctx, pg, benchCase.postgresSQL, benchCase.want)
 			if !benchCase.planBoundary {
 				assertBenchmarkPlanShape(b, dgCtx, dgConn, benchCase.doltgresIndexSQL, true)
+				if benchCase.doltgresV2SQL != "" {
+					assertBenchmarkPlanShape(b, dgCtx, dgConn, benchCase.doltgresV2SQL, true)
+				}
 			} else {
 				assertBenchmarkPlanShape(b, dgCtx, dgConn, benchCase.doltgresIndexSQL, false)
+				if benchCase.doltgresV2SQL != "" {
+					assertBenchmarkPlanShape(b, dgCtx, dgConn, benchCase.doltgresV2SQL, false)
+				}
 			}
 			pgPlan := explainPairedPostgres(b, ctx, pg, benchCase.postgresSQL)
 
@@ -111,12 +122,27 @@ func BenchmarkPairedIndexBaselines(b *testing.B) {
 			b.ReportMetric(float64(pgIndexed.Microseconds())/float64(iterations), "pg_us/op")
 			b.ReportMetric(ratio(dgIndexed, dgScan), "dg_index_vs_scan")
 			b.ReportMetric(ratio(dgIndexed, pgIndexed), "dg_index_vs_pg")
-			b.Logf("paired-index-baseline name=%s iterations=%d dg_scan=%s dg_index=%s pg=%s dg_index_vs_scan=%.2fx dg_index_vs_pg=%.2fx pg_plan=%s",
-				benchCase.name, iterations, dgScan, dgIndexed, pgIndexed, ratio(dgIndexed, dgScan), ratio(dgIndexed, pgIndexed), oneLinePlan(pgPlan))
+			if benchCase.doltgresV2SQL == "" {
+				b.Logf("paired-index-baseline name=%s iterations=%d dg_scan=%s dg_index=%s pg=%s dg_index_vs_scan=%.2fx dg_index_vs_pg=%.2fx pg_plan=%s",
+					benchCase.name, iterations, dgScan, dgIndexed, pgIndexed, ratio(dgIndexed, dgScan), ratio(dgIndexed, pgIndexed), oneLinePlan(pgPlan))
+				return
+			}
+
+			dgV2Indexed := measurePairedCountQuery(b, dgCtx, dg, benchCase.doltgresV2SQL, benchCase.want, iterations)
+			b.ReportMetric(float64(dgIndexed.Microseconds())/float64(iterations), "dg_v1_index_us/op")
+			b.ReportMetric(float64(dgV2Indexed.Microseconds())/float64(iterations), "dg_v2_index_us/op")
+			b.ReportMetric(ratio(dgIndexed, dgScan), "dg_v1_index_vs_scan")
+			b.ReportMetric(ratio(dgIndexed, pgIndexed), "dg_v1_index_vs_pg")
+			b.ReportMetric(ratio(dgV2Indexed, dgScan), "dg_v2_index_vs_scan")
+			b.ReportMetric(ratio(dgV2Indexed, pgIndexed), "dg_v2_index_vs_pg")
+			b.ReportMetric(ratio(dgV2Indexed, dgIndexed), "dg_v2_vs_v1")
+			b.Logf("paired-index-baseline name=%s iterations=%d dg_scan=%s dg_v1_index=%s dg_v2_index=%s pg=%s dg_v1_index_vs_scan=%.2fx dg_v2_index_vs_scan=%.2fx dg_v1_index_vs_pg=%.2fx dg_v2_index_vs_pg=%.2fx dg_v2_vs_v1=%.2fx pg_plan=%s",
+				benchCase.name, iterations, dgScan, dgIndexed, dgV2Indexed, pgIndexed, ratio(dgIndexed, dgScan), ratio(dgV2Indexed, dgScan), ratio(dgIndexed, pgIndexed), ratio(dgV2Indexed, pgIndexed), ratio(dgV2Indexed, dgIndexed), oneLinePlan(pgPlan))
 		})
 	}
 	runPairedIndexBuildBenchmarks(b, dgCtx, dg, ctx, pg)
 	runPairedIndexDMLBenchmarks(b, dgCtx, dg, ctx, pg)
+	runPairedJsonbGinDMLBucketBenchmarks(b, dgCtx, dg, ctx, pg)
 }
 
 func pairedBenchmarkIterationCount() int {
@@ -184,6 +210,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/selective_containment",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc @> '{"tenant":8,"status":"open"}'`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_ops_v2 WHERE doc @> '{"tenant":8,"status":"open"}'`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc @> '{"tenant":8,"status":"open"}'`,
 			want:             32,
 		},
@@ -191,6 +218,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/broad_containment",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc @> '{"status":"open"}'`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc @> '{"status":"open"}'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_ops_v2 WHERE doc @> '{"status":"open"}'`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc @> '{"status":"open"}'`,
 			want:             256,
 		},
@@ -198,6 +226,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/key_exists",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc ? 'vip'`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ? 'vip'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_ops_v2 WHERE doc ? 'vip'`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ? 'vip'`,
 			want:             102,
 		},
@@ -205,6 +234,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/key_exists_any",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc ?| ARRAY['vip','archived']`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ?| ARRAY['vip','archived']`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_ops_v2 WHERE doc ?| ARRAY['vip','archived']`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ?| ARRAY['vip','archived']`,
 			want:             136,
 		},
@@ -212,6 +242,7 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/key_exists_all",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc ?& ARRAY['tenant','vip']`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_ops WHERE doc ?& ARRAY['tenant','vip']`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_ops_v2 WHERE doc ?& ARRAY['tenant','vip']`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_ops WHERE doc ?& ARRAY['tenant','vip']`,
 			want:             102,
 			planBoundary:     true,
@@ -220,8 +251,26 @@ func pairedIndexBenchmarkCases() []pairedBenchmarkCase {
 			name:             "jsonb_gin/path_containment",
 			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_scan WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
 			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_path WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_path_v2 WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
 			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_path WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
 			want:             64,
+		},
+		{
+			name:             "jsonb_gin/skewed_rare_containment",
+			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_skew_scan WHERE doc @> '{"payload":{"skew":"rare"}}'`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_skew_ops WHERE doc @> '{"payload":{"skew":"rare"}}'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_skew_ops_v2 WHERE doc @> '{"payload":{"skew":"rare"}}'`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_skew_ops WHERE doc @> '{"payload":{"skew":"rare"}}'`,
+			want:             32,
+		},
+		{
+			name:             "jsonb_gin/skewed_hot_key_exists",
+			doltgresScanSQL:  `SELECT count(*) FROM dg_pair_jsonb_skew_scan WHERE doc ? 'hot'`,
+			doltgresIndexSQL: `SELECT count(id) FROM dg_pair_jsonb_skew_ops WHERE doc ? 'hot'`,
+			doltgresV2SQL:    `SELECT count(id) FROM dg_pair_jsonb_skew_ops_v2 WHERE doc ? 'hot'`,
+			postgresSQL:      `SELECT count(id) FROM pg_pair_jsonb_skew_ops WHERE doc ? 'hot'`,
+			want:             896,
+			planBoundary:     true,
 		},
 		{
 			name:             "boundary/btree_suffix_scan",
@@ -265,15 +314,40 @@ func setupPairedBtreeBenchmark(tb testing.TB, ctx context.Context, conn pairedBe
 	execPairedSQL(tb, ctx, conn, fmt.Sprintf("ANALYZE %s_stats_idx", prefix))
 }
 
-func setupPairedJsonbGinBenchmark(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, prefix string) {
+func setupPairedJsonbGinBenchmark(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, prefix string, includeDoltgresV2 bool) {
 	tb.Helper()
-	for _, table := range []string{prefix + "_jsonb_scan", prefix + "_jsonb_ops", prefix + "_jsonb_path"} {
+	for _, table := range []string{prefix + "_jsonb_scan", prefix + "_jsonb_ops", prefix + "_jsonb_path", prefix + "_jsonb_skew_scan", prefix + "_jsonb_skew_ops"} {
 		execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
-		insertPairedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+		if strings.Contains(table, "_jsonb_skew_") {
+			insertPairedSkewedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+		} else {
+			insertPairedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+		}
 	}
-	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_ops_idx ON %s_jsonb_ops USING gin (doc)", prefix, prefix))
-	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_path_idx ON %s_jsonb_path USING gin (doc jsonb_path_ops)", prefix, prefix))
+	if includeDoltgresV2 {
+		for _, table := range []string{prefix + "_jsonb_ops_v2", prefix + "_jsonb_path_v2", prefix + "_jsonb_skew_ops_v2"} {
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+			if strings.Contains(table, "_jsonb_skew_") {
+				insertPairedSkewedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+			} else {
+				insertPairedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+			}
+		}
+	}
+	withJsonbGinPostingStorageVersion(tb, "1", func() {
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_ops_idx ON %s_jsonb_ops USING gin (doc)", prefix, prefix))
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_path_idx ON %s_jsonb_path USING gin (doc jsonb_path_ops)", prefix, prefix))
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_skew_ops_idx ON %s_jsonb_skew_ops USING gin (doc)", prefix, prefix))
+	})
+	if includeDoltgresV2 {
+		withJsonbGinPostingStorageVersion(tb, "2", func() {
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_ops_v2_idx ON %s_jsonb_ops_v2 USING gin (doc)", prefix, prefix))
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_path_v2_idx ON %s_jsonb_path_v2 USING gin (doc jsonb_path_ops)", prefix, prefix))
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_jsonb_skew_ops_v2_idx ON %s_jsonb_skew_ops_v2 USING gin (doc)", prefix, prefix))
+		})
+	}
 }
 
 func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg pairedBenchmarkConn, pgCtx context.Context, pg pairedBenchmarkConn) {
@@ -282,6 +356,7 @@ func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg paire
 		table      string
 		createSQL  string
 		dropSQL    string
+		jsonbGin   bool
 		setupTable func(testing.TB, context.Context, pairedBenchmarkConn, string)
 	}{
 		{
@@ -296,10 +371,23 @@ func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg paire
 			},
 		},
 		{
-			name:      "jsonb_gin/build",
+			name:      "jsonb_gin/build_jsonb_ops",
 			table:     "pair_build_jsonb",
 			createSQL: "CREATE INDEX %s_idx ON %s USING gin (doc)",
 			dropSQL:   "DROP INDEX %s_idx",
+			jsonbGin:  true,
+			setupTable: func(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string) {
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+				execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+				insertPairedJsonbRows(tb, ctx, conn, table, jsonbGinBenchmarkRows)
+			},
+		},
+		{
+			name:      "jsonb_gin/build_jsonb_path_ops",
+			table:     "pair_build_jsonb_path",
+			createSQL: "CREATE INDEX %s_idx ON %s USING gin (doc jsonb_path_ops)",
+			dropSQL:   "DROP INDEX %s_idx",
+			jsonbGin:  true,
 			setupTable: func(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string) {
 				execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 				execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
@@ -314,8 +402,21 @@ func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg paire
 			target.setupTable(b, dgCtx, dg, dgTable)
 			target.setupTable(b, pgCtx, pg, pgTable)
 			iterations := pairedBenchmarkIterationCount()
-			dgBuild := measurePairedIndexBuild(b, dgCtx, dg, fmt.Sprintf(target.createSQL, dgTable, dgTable), fmt.Sprintf(target.dropSQL, dgTable), iterations)
 			pgBuild := measurePairedIndexBuild(b, pgCtx, pg, fmt.Sprintf(target.createSQL, pgTable, pgTable), fmt.Sprintf(target.dropSQL, pgTable), iterations)
+			if target.jsonbGin {
+				dgV1Build := measurePairedJsonbGinIndexBuild(b, dgCtx, dg, "1", fmt.Sprintf(target.createSQL, dgTable, dgTable), fmt.Sprintf(target.dropSQL, dgTable), iterations)
+				dgV2Build := measurePairedJsonbGinIndexBuild(b, dgCtx, dg, "2", fmt.Sprintf(target.createSQL, dgTable, dgTable), fmt.Sprintf(target.dropSQL, dgTable), iterations)
+				b.ReportMetric(float64(dgV1Build.Microseconds())/float64(iterations), "dg_v1_index_us/op")
+				b.ReportMetric(float64(dgV2Build.Microseconds())/float64(iterations), "dg_v2_index_us/op")
+				b.ReportMetric(float64(pgBuild.Microseconds())/float64(iterations), "pg_us/op")
+				b.ReportMetric(ratio(dgV1Build, pgBuild), "dg_v1_index_vs_pg")
+				b.ReportMetric(ratio(dgV2Build, pgBuild), "dg_v2_index_vs_pg")
+				b.ReportMetric(ratio(dgV2Build, dgV1Build), "dg_v2_vs_v1")
+				b.Logf("paired-index-baseline name=%s iterations=%d dg_v1_index=%s dg_v2_index=%s pg=%s dg_v1_index_vs_pg=%.2fx dg_v2_index_vs_pg=%.2fx dg_v2_vs_v1=%.2fx",
+					target.name, iterations, dgV1Build, dgV2Build, pgBuild, ratio(dgV1Build, pgBuild), ratio(dgV2Build, pgBuild), ratio(dgV2Build, dgV1Build))
+				return
+			}
+			dgBuild := measurePairedIndexBuild(b, dgCtx, dg, fmt.Sprintf(target.createSQL, dgTable, dgTable), fmt.Sprintf(target.dropSQL, dgTable), iterations)
 			b.ReportMetric(float64(dgBuild.Microseconds())/float64(iterations), "dg_index_us/op")
 			b.ReportMetric(float64(pgBuild.Microseconds())/float64(iterations), "pg_us/op")
 			b.ReportMetric(ratio(dgBuild, pgBuild), "dg_index_vs_pg")
@@ -323,6 +424,15 @@ func runPairedIndexBuildBenchmarks(b *testing.B, dgCtx context.Context, dg paire
 				target.name, iterations, dgBuild, pgBuild, ratio(dgBuild, pgBuild))
 		})
 	}
+}
+
+func measurePairedJsonbGinIndexBuild(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, storageVersion string, createSQL string, dropSQL string, iterations int) time.Duration {
+	tb.Helper()
+	var elapsed time.Duration
+	withJsonbGinPostingStorageVersion(tb, storageVersion, func() {
+		elapsed = measurePairedIndexBuild(tb, ctx, conn, createSQL, dropSQL, iterations)
+	})
+	return elapsed
 }
 
 func runPairedIndexDMLBenchmarks(b *testing.B, dgCtx context.Context, dg pairedBenchmarkConn, pgCtx context.Context, pg pairedBenchmarkConn) {
@@ -383,6 +493,75 @@ func runPairedIndexDMLBenchmarks(b *testing.B, dgCtx context.Context, dg pairedB
 				target.name, iterations, dgScan, dgIndexed, pgIndexed, ratio(dgIndexed, dgScan), ratio(dgIndexed, pgIndexed))
 		})
 	}
+}
+
+func runPairedJsonbGinDMLBucketBenchmarks(b *testing.B, dgCtx context.Context, dg pairedBenchmarkConn, pgCtx context.Context, pg pairedBenchmarkConn) {
+	for _, operation := range []string{"insert", "update", "delete"} {
+		operation := operation
+		b.Run("jsonb_gin/dml_"+operation, func(b *testing.B) {
+			iterations := pairedBenchmarkIterationCount()
+			dgScan := measurePairedJsonbGinDMLBucket(b, dgCtx, dg, "dg_jsonb_gin_dml_"+operation+"_scan", false, "1", operation, iterations)
+			dgV1Indexed := measurePairedJsonbGinDMLBucket(b, dgCtx, dg, "dg_jsonb_gin_dml_"+operation+"_v1", true, "1", operation, iterations)
+			dgV2Indexed := measurePairedJsonbGinDMLBucket(b, dgCtx, dg, "dg_jsonb_gin_dml_"+operation+"_v2", true, "2", operation, iterations)
+			pgIndexed := measurePairedJsonbGinDMLBucket(b, pgCtx, pg, "pg_jsonb_gin_dml_"+operation+"_idx", true, "1", operation, iterations)
+			b.ReportMetric(float64(dgScan.Microseconds())/float64(iterations), "dg_scan_us/op")
+			b.ReportMetric(float64(dgV1Indexed.Microseconds())/float64(iterations), "dg_v1_index_us/op")
+			b.ReportMetric(float64(dgV2Indexed.Microseconds())/float64(iterations), "dg_v2_index_us/op")
+			b.ReportMetric(float64(pgIndexed.Microseconds())/float64(iterations), "pg_us/op")
+			b.ReportMetric(ratio(dgV1Indexed, dgScan), "dg_v1_index_vs_scan")
+			b.ReportMetric(ratio(dgV2Indexed, dgScan), "dg_v2_index_vs_scan")
+			b.ReportMetric(ratio(dgV1Indexed, pgIndexed), "dg_v1_index_vs_pg")
+			b.ReportMetric(ratio(dgV2Indexed, pgIndexed), "dg_v2_index_vs_pg")
+			b.ReportMetric(ratio(dgV2Indexed, dgV1Indexed), "dg_v2_vs_v1")
+			b.Logf("paired-index-baseline name=jsonb_gin/dml_%s iterations=%d dg_scan=%s dg_v1_index=%s dg_v2_index=%s pg=%s dg_v1_index_vs_scan=%.2fx dg_v2_index_vs_scan=%.2fx dg_v1_index_vs_pg=%.2fx dg_v2_index_vs_pg=%.2fx dg_v2_vs_v1=%.2fx",
+				operation, iterations, dgScan, dgV1Indexed, dgV2Indexed, pgIndexed, ratio(dgV1Indexed, dgScan), ratio(dgV2Indexed, dgScan), ratio(dgV1Indexed, pgIndexed), ratio(dgV2Indexed, pgIndexed), ratio(dgV2Indexed, dgV1Indexed))
+		})
+	}
+}
+
+func measurePairedJsonbGinDMLBucket(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string, indexed bool, storageVersion string, operation string, iterations int) time.Duration {
+	tb.Helper()
+	setupPairedJsonbGinDMLTable(tb, ctx, conn, table, indexed, storageVersion)
+	switch operation {
+	case "insert":
+		start := time.Now()
+		for i := 0; i < iterations; i++ {
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), i+1, benchmarkJsonbDocument(i+1))
+		}
+		return time.Since(start)
+	case "update":
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(1))
+		start := time.Now()
+		for i := 0; i < iterations; i++ {
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("UPDATE %s SET doc = $1::jsonb WHERE id = 1", table), benchmarkJsonbDocument(i+2))
+		}
+		return time.Since(start)
+	case "delete":
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(1))
+		var elapsed time.Duration
+		for i := 0; i < iterations; i++ {
+			start := time.Now()
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("DELETE FROM %s WHERE id = 1", table))
+			elapsed += time.Since(start)
+			execPairedSQL(tb, ctx, conn, fmt.Sprintf("INSERT INTO %s VALUES ($1, $2::jsonb)", table), 1, benchmarkJsonbDocument(i+2))
+		}
+		return elapsed
+	default:
+		tb.Fatalf("unknown JSONB GIN DML operation: %s", operation)
+		return 0
+	}
+}
+
+func setupPairedJsonbGinDMLTable(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string, indexed bool, storageVersion string) {
+	tb.Helper()
+	execPairedSQL(tb, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
+	execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE TABLE %s (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)", table))
+	if !indexed {
+		return
+	}
+	withJsonbGinPostingStorageVersion(tb, storageVersion, func() {
+		execPairedSQL(tb, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s USING gin (doc)", table, table))
+	})
 }
 
 func measurePairedIndexBuild(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, createSQL string, dropSQL string, iterations int) time.Duration {
@@ -476,6 +655,26 @@ func insertPairedJsonbRows(tb testing.TB, ctx context.Context, conn pairedBenchm
 	}
 }
 
+func insertPairedSkewedJsonbRows(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, table string, rowCount int) {
+	tb.Helper()
+	const chunkSize = 128
+	for chunkStart := 1; chunkStart <= rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > rowCount+1 {
+			chunkEnd = rowCount + 1
+		}
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, '%s'::jsonb)", id, benchmarkSkewedJsonbDocument(id))
+		}
+		execPairedSQL(tb, ctx, conn, query.String())
+	}
+}
+
 func measurePairedCountQuery(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn, query string, want int64, iterations int) time.Duration {
 	tb.Helper()
 	start := time.Now()
@@ -533,6 +732,46 @@ func execPairedSQL(tb testing.TB, ctx context.Context, conn pairedBenchmarkConn,
 	if _, err := conn.Exec(ctx, query, args...); err != nil {
 		tb.Fatalf("paired benchmark SQL failed: %v\nquery: %s", err, query)
 	}
+}
+
+func benchmarkSkewedJsonbDocument(id int) string {
+	skew := "common"
+	if id%32 == 0 {
+		skew = "rare"
+	}
+	hotKey := ""
+	if id%8 != 0 {
+		hotKey = `,"hot":true`
+	}
+	return fmt.Sprintf(
+		`{"tenant":%d,"status":"active","payload":{"category":"cat-%d","region":"r-%d","skew":"%s","score":%d},"tags":["tag-%d","group-%d"]%s}`,
+		id%16,
+		id%8,
+		id%4,
+		skew,
+		id%100,
+		id%64,
+		id%7,
+		hotKey,
+	)
+}
+
+func withJsonbGinPostingStorageVersion(tb testing.TB, version string, fn func()) {
+	tb.Helper()
+	previous, hadPrevious := os.LookupEnv(jsonbGinPostingStorageVersionEnv)
+	if version == "" {
+		_ = os.Unsetenv(jsonbGinPostingStorageVersionEnv)
+	} else {
+		_ = os.Setenv(jsonbGinPostingStorageVersionEnv, version)
+	}
+	defer func() {
+		if hadPrevious {
+			_ = os.Setenv(jsonbGinPostingStorageVersionEnv, previous)
+		} else {
+			_ = os.Unsetenv(jsonbGinPostingStorageVersionEnv)
+		}
+	}()
+	fn()
 }
 
 func ratio(numerator time.Duration, denominator time.Duration) float64 {

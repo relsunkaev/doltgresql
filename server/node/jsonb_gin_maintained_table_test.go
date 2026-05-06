@@ -15,6 +15,7 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -38,6 +39,50 @@ import (
 	"github.com/dolthub/doltgresql/server/jsonbgin"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+func TestPostingChunkPayloadBytesUnwrapsByteWrappers(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	payload := []byte("posting-chunk-payload")
+
+	got, err := postingChunkPayloadBytes(ctx, payload)
+	require.NoError(t, err)
+	require.Equal(t, payload, got)
+
+	got, err = postingChunkPayloadBytes(ctx, testPostingChunkBytesWrapper{payload: payload})
+	require.NoError(t, err)
+	require.Equal(t, payload, got)
+
+	_, err = postingChunkPayloadBytes(ctx, "not bytes")
+	require.ErrorContains(t, err, "unexpected JSONB GIN posting chunk payload type string")
+}
+
+type testPostingChunkBytesWrapper struct {
+	payload []byte
+}
+
+func (w testPostingChunkBytesWrapper) Unwrap(ctx context.Context) ([]byte, error) {
+	return append([]byte(nil), w.payload...), nil
+}
+
+func (w testPostingChunkBytesWrapper) UnwrapAny(ctx context.Context) (interface{}, error) {
+	return w.Unwrap(ctx)
+}
+
+func (w testPostingChunkBytesWrapper) IsExactLength() bool {
+	return true
+}
+
+func (w testPostingChunkBytesWrapper) MaxByteLength() int64 {
+	return int64(len(w.payload))
+}
+
+func (w testPostingChunkBytesWrapper) Compare(ctx context.Context, other interface{}) (int, bool, error) {
+	return 0, false, nil
+}
+
+func (w testPostingChunkBytesWrapper) Hash() interface{} {
+	return string(w.payload)
+}
 
 func TestJsonbGinPostingTokenLookupUsesIndex(t *testing.T) {
 	ctx := sql.NewEmptyContext()

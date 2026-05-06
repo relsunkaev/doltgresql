@@ -1268,7 +1268,7 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		if err != nil {
 			return err
 		}
-		rowRefs, err := postingChunkRowsRowRefs(existingRows)
+		rowRefs, err := postingChunkRowsRowRefs(ctx, existingRows)
 		if err != nil {
 			return err
 		}
@@ -2169,9 +2169,9 @@ func readPostingChunkBatchTokenRows(ctx *sql.Context, rows sql.RowIter, tokenInd
 		if !ok {
 			continue
 		}
-		payload, ok := row[6].([]byte)
-		if !ok {
-			return errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", row[6])
+		payload, err := postingChunkPayloadBytes(ctx, row[6])
+		if err != nil {
+			return err
 		}
 		chunk, err := jsonbgin.DecodePostingChunk(payload)
 		if err != nil {
@@ -2334,9 +2334,9 @@ func readPostingChunkRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedT
 		if tokenText != encodedToken {
 			continue
 		}
-		payload, ok := row[6].([]byte)
-		if !ok {
-			return count, false, errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", row[6])
+		payload, err := postingChunkPayloadBytes(ctx, row[6])
+		if err != nil {
+			return count, false, err
 		}
 		chunk, err := jsonbgin.DecodePostingChunk(payload)
 		if err != nil {
@@ -2401,15 +2401,15 @@ func integralInt64(value any) (int64, bool) {
 	}
 }
 
-func postingChunkRowsRowRefs(rows []sql.Row) (map[string][]byte, error) {
+func postingChunkRowsRowRefs(ctx *sql.Context, rows []sql.Row) (map[string][]byte, error) {
 	rowRefs := make(map[string][]byte)
 	for _, row := range rows {
 		if len(row) < 7 || row[6] == nil {
 			continue
 		}
-		payload, ok := row[6].([]byte)
-		if !ok {
-			return nil, errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", row[6])
+		payload, err := postingChunkPayloadBytes(ctx, row[6])
+		if err != nil {
+			return nil, err
 		}
 		chunk, err := jsonbgin.DecodePostingChunk(payload)
 		if err != nil {
@@ -2434,6 +2434,17 @@ func rowRefMapValues(rowRefs map[string][]byte) [][]byte {
 		return bytes.Compare(values[i], values[j]) < 0
 	})
 	return values
+}
+
+func postingChunkPayloadBytes(ctx *sql.Context, value any) ([]byte, error) {
+	payload, ok, err := sql.Unwrap[[]byte](ctx, value)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.Errorf("unexpected JSONB GIN posting chunk payload type %T", value)
+	}
+	return payload, nil
 }
 
 func materializePostingChunkRowsForToken(encodedToken string, rowRefs [][]byte, rowsPerChunk int) ([]sql.Row, error) {

@@ -1,7 +1,7 @@
 # Index Performance Benchmarks
 
 `run_paired_benchmarks.sh` runs the `dg-idxperf` paired baseline harness against
-a local Doltgres test server and a disposable PostgreSQL 16 container.
+a local Doltgres test server and a disposable PostgreSQL 18 container.
 
 ```sh
 testing/indexperf/run_paired_benchmarks.sh
@@ -12,22 +12,39 @@ The harness covers:
 - btree equality and range reads, including Doltgres scan and indexed plans
 - btree lookup joins, with Doltgres scan and lookup-join indexed plans
 - btree index build and indexed DML maintenance
-- JSONB GIN containment, key existence, and `jsonb_path_ops` containment reads
-- JSONB GIN index build and indexed DML maintenance
+- JSONB GIN containment, key existence, `?|`, `?&`, `jsonb_path_ops`
+  containment, and skewed-document reads, with Doltgres v1 and v2 indexed
+  timings where v2 is supported
+- JSONB GIN index build for `jsonb_ops` and `jsonb_path_ops`, reporting
+  Doltgres v1, Doltgres v2, and PostgreSQL timings
+- JSONB GIN indexed DML maintenance, including separate INSERT, UPDATE, and
+  DELETE buckets for Doltgres v1, Doltgres v2, and PostgreSQL
 - representative scan-boundary cases such as a suffix-only btree predicate
 
 Each benchmark logs a `paired-index-baseline` line and emits Go benchmark
-metrics for `dg_scan_us/op`, `dg_index_us/op`, `pg_us/op`,
-`dg_index_vs_scan`, and `dg_index_vs_pg` where those fields apply. PostgreSQL
-plans are included for read benchmarks so Doltgres changes can be compared to
-the baseline plan shape as well as elapsed time.
+metrics for `dg_scan_us/op`, `dg_index_us/op`, `dg_v1_index_us/op`,
+`dg_v2_index_us/op`, `pg_us/op`, `dg_index_vs_scan`, `dg_index_vs_pg`,
+`dg_v1_index_vs_pg`, `dg_v2_index_vs_pg`, and `dg_v2_vs_v1` where those fields
+apply. PostgreSQL plans are included for read benchmarks so Doltgres changes can
+be compared to the baseline plan shape as well as elapsed time.
+
+JSONB GIN v2 should not become the default storage format until the paired
+PostgreSQL 18 output shows:
+
+- v2 CREATE INDEX is at least 3x faster than v1 and no worse than 6x
+  PostgreSQL 18 for both `jsonb_ops` and `jsonb_path_ops` in the local suite.
+- v2 lookup buckets are no worse than 1.10x v1 for selective containment, broad
+  containment, `?`, `?|`, `?&`, `jsonb_path_ops`, and skewed-document cases
+  unless the planner intentionally chooses the scan boundary.
+- v2 INSERT, UPDATE, and DELETE buckets are no worse than 1.25x v1 and have a
+  documented PostgreSQL 18 ratio in the same run.
 
 Useful overrides:
 
 ```sh
 DOLTGRES_PAIRED_INDEX_BENCH_ITERS=100 testing/indexperf/run_paired_benchmarks.sh
 POSTGRES_PORT=15439 testing/indexperf/run_paired_benchmarks.sh
-POSTGRES_IMAGE=postgres:16.13-alpine testing/indexperf/run_paired_benchmarks.sh
+POSTGRES_IMAGE=postgres:18-alpine testing/indexperf/run_paired_benchmarks.sh
 ```
 
 To use an already-running PostgreSQL instead of the script-managed container,
