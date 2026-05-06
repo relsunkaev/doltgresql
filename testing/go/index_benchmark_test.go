@@ -215,8 +215,16 @@ func TestBtreePatternOpclassPlannerBoundary(t *testing.T) {
 	}
 
 	query := `SELECT count(id) FROM btree_pattern_opclass_plan WHERE name LIKE 'alph%'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertCountResult(t, ctx, conn, query, 2)
+
+	query = `SELECT count(id) FROM btree_pattern_opclass_plan WHERE name LIKE '%lph%'`
 	assertBenchmarkPlanShape(t, ctx, conn, query, false)
 	assertCountResult(t, ctx, conn, query, 2)
+
+	query = `SELECT count(id) FROM btree_pattern_opclass_plan WHERE name LIKE 'alph_'`
+	assertBenchmarkPlanShape(t, ctx, conn, query, false)
+	assertCountResult(t, ctx, conn, query, 1)
 }
 
 func TestBtreeCollationPlannerBoundary(t *testing.T) {
