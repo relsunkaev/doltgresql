@@ -660,6 +660,54 @@ func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 	}, got)
 }
 
+func TestSortedPrimaryRowIndexBuilderStreamsSortedRows(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	ns := tree.NewTestNodeStore()
+	sqlSch := sql.Schema{
+		{Name: "token", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
+		{Name: "chunk_no", Source: "postings", Type: pgtypes.Int64, PrimaryKey: true, Nullable: false},
+		{Name: "payload", Source: "postings", Type: pgtypes.Bytea, Nullable: false},
+	}
+	doltSch := doltschema.MustSchemaFromCols(doltschema.NewColCollection(
+		doltschema.NewColumn("token", 1, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("chunk_no", 2, dolttypes.IntKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("payload", 3, dolttypes.InlineBlobKind, false, doltschema.NotNullConstraint{}),
+	))
+	rows := []sql.Row{
+		{"token/a", int64(0), []byte("a0")},
+		{"token/a", int64(1), []byte("a1")},
+		{"token/b", int64(0), []byte("b0")},
+	}
+
+	builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
+	require.NoError(t, err)
+	for _, row := range rows {
+		require.NoError(t, builder.Add(ctx, row))
+	}
+	rowData, err := builder.Complete(ctx)
+	require.NoError(t, err)
+	require.Equal(t, uint64(len(rows)), mustIndexCount(t, rowData))
+}
+
+func TestSortedPrimaryRowIndexBuilderRejectsUnsortedRows(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	ns := tree.NewTestNodeStore()
+	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
+	builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
+	require.NoError(t, err)
+	require.NoError(t, builder.Add(ctx, sql.Row{"token/b", "row/2", "pk/2"}))
+
+	err = builder.Add(ctx, sql.Row{"token/a", "row/1", "pk/1"})
+	require.ErrorContains(t, err, "sorted primary row builder received rows out of order")
+}
+
+func mustIndexCount(t *testing.T, idx durable.Index) uint64 {
+	t.Helper()
+	count, err := idx.Count()
+	require.NoError(t, err)
+	return count
+}
+
 func TestJsonbGinPostingChunkRowLessSortsRows(t *testing.T) {
 	rows := []sql.Row{
 		{"token/b", int64(1)},
@@ -728,6 +776,7 @@ func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
 			}
 			sink := &countingPostingRowSink{}
 			b.ReportAllocs()
+			var lastChunkRows int
 			for i := 0; i < b.N; i++ {
 				sink.count = 0
 				sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
@@ -744,7 +793,9 @@ func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
 				if sink.count == 0 {
 					b.Fatal("expected chunk rows")
 				}
+				lastChunkRows = sink.count
 			}
+			b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
 		})
 	}
 }
@@ -795,6 +846,42 @@ func BenchmarkBuildSortedPrimaryRowIndexPostingRows(b *testing.B) {
 			b.Fatalf("expected %d rows, found %d", len(rows), count)
 		}
 	}
+	b.ReportMetric(float64(len(rows)), "sidecar_rows/op")
+}
+
+func BenchmarkSortedPrimaryRowIndexBuilderPostingRows(b *testing.B) {
+	ctx := sql.NewEmptyContext()
+	ns := tree.NewTestNodeStore()
+	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
+	rows := benchmarkJsonbGinPostingStorageRows(4096)
+	sort.Slice(rows, func(i, j int) bool {
+		return jsonbGinPostingRowLess(rows[i], rows[j])
+	})
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
+		if err != nil {
+			b.Fatal(err)
+		}
+		for _, row := range rows {
+			if err = builder.Add(ctx, row); err != nil {
+				b.Fatal(err)
+			}
+		}
+		rowData, err := builder.Complete(ctx)
+		if err != nil {
+			b.Fatal(err)
+		}
+		count, err := rowData.Count()
+		if err != nil {
+			b.Fatal(err)
+		}
+		if count != uint64(len(rows)) {
+			b.Fatalf("expected %d rows, found %d", len(rows), count)
+		}
+	}
+	b.ReportMetric(float64(len(rows)), "sidecar_rows/op")
 }
 
 func BenchmarkJsonbGinLookupTokensEncoded(b *testing.B) {

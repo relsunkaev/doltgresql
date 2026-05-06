@@ -1009,7 +1009,7 @@ func newJsonbGinPostingRowSink(ctx *sql.Context, db sql.Database, postingTable s
 }
 
 func newJsonbGinPostingChunkRowSink(ctx *sql.Context, db sql.Database, postingChunkTable sql.Table) (jsonbGinPostingRowSink, error) {
-	if sink, ok, err := newJsonbGinBulkPostingRowSink(ctx, db, postingChunkTable, jsonbGinPostingChunkRowLess); ok || err != nil {
+	if sink, ok, err := newJsonbGinBulkSortedPostingRowSink(ctx, db, postingChunkTable); ok || err != nil {
 		return sink, err
 	}
 	insertable, ok := postingChunkTable.(sql.InsertableTable)
@@ -1133,6 +1133,84 @@ func (s *jsonbGinBulkPostingRowSink) Discard(_ *sql.Context, _ error) error {
 }
 
 func (s *jsonbGinBulkPostingRowSink) Close(_ *sql.Context) error {
+	return nil
+}
+
+type jsonbGinBulkSortedPostingRowSink struct {
+	db        doltRootDatabase
+	tableName doltdb.TableName
+	table     *doltdb.Table
+	builder   *sortedPrimaryRowIndexBuilder
+}
+
+var _ jsonbGinPostingRowSink = (*jsonbGinBulkSortedPostingRowSink)(nil)
+
+func newJsonbGinBulkSortedPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table) (*jsonbGinBulkSortedPostingRowSink, bool, error) {
+	rootDb, ok := db.(doltRootDatabase)
+	if !ok {
+		return nil, false, nil
+	}
+	doltTableSource, ok := postingTable.(doltBackedTable)
+	if !ok {
+		return nil, false, nil
+	}
+	table, err := doltTableSource.DoltTable(ctx)
+	if err != nil {
+		return nil, true, err
+	}
+	doltSch, err := table.GetSchema(ctx)
+	if err != nil {
+		return nil, true, err
+	}
+	builder, err := newSortedPrimaryRowIndexBuilder(ctx, table.NodeStore(), doltSch, postingTable.Schema(ctx))
+	if err != nil {
+		return nil, true, err
+	}
+	return &jsonbGinBulkSortedPostingRowSink{
+		db:        rootDb,
+		tableName: doltTableSource.TableName(),
+		table:     table,
+		builder:   builder,
+	}, true, nil
+}
+
+func (s *jsonbGinBulkSortedPostingRowSink) Add(ctx *sql.Context, row sql.Row) error {
+	if s.builder == nil {
+		return errors.Errorf("sorted JSONB GIN posting sink is closed")
+	}
+	return s.builder.Add(ctx, row)
+}
+
+func (s *jsonbGinBulkSortedPostingRowSink) Complete(ctx *sql.Context) error {
+	if s.builder == nil {
+		return errors.Errorf("sorted JSONB GIN posting sink is closed")
+	}
+	rowData, err := s.builder.Complete(ctx)
+	if err != nil {
+		return err
+	}
+	updatedTable, err := s.table.UpdateRows(ctx, rowData)
+	if err != nil {
+		return err
+	}
+	root, err := s.db.GetRoot(ctx)
+	if err != nil {
+		return err
+	}
+	updatedRoot, err := root.PutTable(ctx, s.tableName, updatedTable)
+	if err != nil {
+		return err
+	}
+	s.builder = nil
+	return s.db.SetRoot(ctx, updatedRoot)
+}
+
+func (s *jsonbGinBulkSortedPostingRowSink) Discard(_ *sql.Context, _ error) error {
+	s.builder = nil
+	return nil
+}
+
+func (s *jsonbGinBulkSortedPostingRowSink) Close(_ *sql.Context) error {
 	return nil
 }
 

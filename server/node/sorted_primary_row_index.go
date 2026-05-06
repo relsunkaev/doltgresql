@@ -23,6 +23,7 @@ import (
 	doltschema "github.com/dolthub/dolt/go/libraries/doltcore/schema"
 	"github.com/dolthub/dolt/go/store/pool"
 	"github.com/dolthub/dolt/go/store/prolly"
+	"github.com/dolthub/dolt/go/store/prolly/message"
 	"github.com/dolthub/dolt/go/store/prolly/tree"
 	"github.com/dolthub/dolt/go/store/val"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -43,6 +44,34 @@ func buildSortedPrimaryRowIndex(
 		return rowLess(sortedRows[i], sortedRows[j])
 	})
 
+	builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range sortedRows {
+		if err = builder.Add(ctx, row); err != nil {
+			return nil, err
+		}
+	}
+	return builder.Complete(ctx)
+}
+
+type sortedPrimaryRowIndexBuilder struct {
+	ns           tree.NodeStore
+	keyDesc      *val.TupleDesc
+	valueDesc    *val.TupleDesc
+	chunker      tree.Chunker
+	tupleBuilder sortedPrimaryRowTupleBuilder
+	previousKey  val.Tuple
+	completed    bool
+}
+
+func newSortedPrimaryRowIndexBuilder(
+	ctx context.Context,
+	ns tree.NodeStore,
+	doltSch doltschema.Schema,
+	sqlSch sql.Schema,
+) (*sortedPrimaryRowIndexBuilder, error) {
 	keyMap, err := ordinalMappingForColumns(sqlSch, doltSch.GetPKCols())
 	if err != nil {
 		return nil, err
@@ -59,18 +88,48 @@ func buildSortedPrimaryRowIndex(
 		keyMap:   keyMap,
 		valueMap: valMap,
 	}
-	tuples := make([]sortedPrimaryRowTuple, 0, len(sortedRows))
-	for _, row := range sortedRows {
-		keyTuple, valueTuple, err := builder.tuplesFromRow(ctx, row)
-		if err != nil {
-			return nil, err
-		}
-		tuples = append(tuples, sortedPrimaryRowTuple{key: keyTuple, value: valueTuple})
-	}
-	rowMap, err := prolly.NewMapFromTupleIter(ctx, ns, keyDesc, valueDesc, &sortedPrimaryRowTupleIter{tuples: tuples})
+	serializer := message.NewProllyMapSerializer(valueDesc, ns.Pool())
+	chunker, err := tree.NewEmptyChunker(ctx, ns, serializer)
 	if err != nil {
 		return nil, err
 	}
+	return &sortedPrimaryRowIndexBuilder{
+		ns:           ns,
+		keyDesc:      keyDesc,
+		valueDesc:    valueDesc,
+		chunker:      chunker,
+		tupleBuilder: builder,
+	}, nil
+}
+
+func (b *sortedPrimaryRowIndexBuilder) Add(ctx context.Context, row sql.Row) error {
+	if b.completed {
+		return errors.Errorf("sorted primary row builder is already complete")
+	}
+	keyTuple, valueTuple, err := b.tupleBuilder.tuplesFromRow(ctx, row)
+	if err != nil {
+		return err
+	}
+	if b.previousKey != nil && b.keyDesc.Compare(ctx, b.previousKey, keyTuple) >= 0 {
+		return errors.Errorf("sorted primary row builder received rows out of order")
+	}
+	if err = b.chunker.AddPair(ctx, tree.Item(keyTuple), tree.Item(valueTuple)); err != nil {
+		return err
+	}
+	b.previousKey = append(val.Tuple(nil), keyTuple...)
+	return nil
+}
+
+func (b *sortedPrimaryRowIndexBuilder) Complete(ctx context.Context) (durable.Index, error) {
+	if b.completed {
+		return nil, errors.Errorf("sorted primary row builder is already complete")
+	}
+	root, err := b.chunker.Done(ctx)
+	if err != nil {
+		return nil, err
+	}
+	b.completed = true
+	rowMap := prolly.NewMap(root, b.ns, b.keyDesc, b.valueDesc)
 	return durable.IndexFromProllyMap(rowMap), nil
 }
 
@@ -121,25 +180,4 @@ func (b sortedPrimaryRowTupleBuilder) tupleFromRow(ctx context.Context, tupleBui
 		return tupleBuilder.BuildPermissive(sortedPrimaryRowBuildPool)
 	}
 	return tupleBuilder.Build(sortedPrimaryRowBuildPool)
-}
-
-type sortedPrimaryRowTuple struct {
-	key   val.Tuple
-	value val.Tuple
-}
-
-type sortedPrimaryRowTupleIter struct {
-	tuples []sortedPrimaryRowTuple
-	pos    int
-}
-
-var _ prolly.TupleIter = (*sortedPrimaryRowTupleIter)(nil)
-
-func (i *sortedPrimaryRowTupleIter) Next(context.Context) (val.Tuple, val.Tuple) {
-	if i.pos >= len(i.tuples) {
-		return nil, nil
-	}
-	tuple := i.tuples[i.pos]
-	i.pos++
-	return tuple.key, tuple.value
 }
