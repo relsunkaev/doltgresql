@@ -1297,6 +1297,7 @@ ORDER BY id;`,
 			SetUpScript: []string{
 				"CREATE TABLE drop_index_restrict (id INTEGER PRIMARY KEY, v INTEGER);",
 				"CREATE INDEX drop_index_restrict_idx ON drop_index_restrict (v);",
+				"CREATE INDEX drop_index_restrict_cascade_idx ON drop_index_restrict (v);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1313,6 +1314,9 @@ ORDER BY id;`,
 				},
 				{
 					Query: "DROP INDEX drop_index_restrict_idx RESTRICT;",
+				},
+				{
+					Query: "DROP INDEX drop_index_restrict_cascade_idx CASCADE;",
 				},
 				{
 					Query: `SELECT indexname
@@ -1332,7 +1336,7 @@ ORDER BY indexname;`,
 				},
 				{
 					Query:       "DROP INDEX drop_index_restrict_pkey CASCADE;",
-					ExpectedErr: "CASCADE is not yet supported",
+					ExpectedErr: `because constraint "drop_index_restrict_pkey" on table "drop_index_restrict" requires it`,
 				},
 			},
 		},
