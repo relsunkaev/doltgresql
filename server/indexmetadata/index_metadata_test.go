@@ -23,6 +23,8 @@ func TestEncodeDecodeComment(t *testing.T) {
 		StorageColumns:    []string{" doc "},
 		ExpressionColumns: []bool{true},
 		IncludeColumns:    []string{" doc_id ", " title "},
+		Predicate:         " doc_id > 10 ",
+		PredicateColumns:  []string{" doc_id "},
 		Collations:        []string{` "C" `, "und-x-icu"},
 		OpClasses:         []string{" JSONB_OPS ", "jsonb_path_ops"},
 		RelOptions:        []string{" FILLFACTOR = 70 "},
@@ -55,6 +57,12 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if len(metadata.IncludeColumns) != 2 || metadata.IncludeColumns[0] != "doc_id" || metadata.IncludeColumns[1] != "title" {
 		t.Fatalf("unexpected include columns: %#v", metadata.IncludeColumns)
+	}
+	if metadata.Predicate != "doc_id > 10" {
+		t.Fatalf("unexpected predicate: %q", metadata.Predicate)
+	}
+	if len(metadata.PredicateColumns) != 1 || metadata.PredicateColumns[0] != "doc_id" {
+		t.Fatalf("unexpected predicate columns: %#v", metadata.PredicateColumns)
 	}
 	if len(metadata.Collations) != 2 || metadata.Collations[0] != CollationC || metadata.Collations[1] != CollationUndIcu {
 		t.Fatalf("unexpected collations: %#v", metadata.Collations)

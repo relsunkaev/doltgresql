@@ -154,6 +154,13 @@ func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.
 		}
 	}
 
+	for _, predicateColumn := range indexmetadata.PredicateColumns(idxDef.Comment) {
+		schCol, exists := colMap[strings.ToLower(predicateColumn)]
+		if !exists || schCol.HiddenSystem {
+			return sql.ErrKeyColumnDoesNotExist.New(predicateColumn)
+		}
+	}
+
 	return nil
 }
 

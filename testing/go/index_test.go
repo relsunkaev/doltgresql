@@ -1085,10 +1085,6 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "not yet supported",
 				},
 				{
-					Query:       "CREATE INDEX v1_idx2 ON test(v1) WHERE v1 > 100;",
-					ExpectedErr: "not yet supported",
-				},
-				{
 					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
 					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
@@ -1169,6 +1165,61 @@ WHERE idx.tablename = 'btree_default_tablespace_meta'
 				{
 					Query:       "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;",
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL btree partial index metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_partial_meta (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT);",
+				"INSERT INTO btree_partial_meta VALUES (1, 5, 'x'), (2, 15, 'y'), (3, 25, NULL);",
+				"CREATE INDEX btree_partial_meta_a_idx ON btree_partial_meta (a) WHERE a > 10 AND b IS NOT NULL;",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	i.indkey,
+	i.indpred IS NOT NULL,
+	pg_catalog.pg_get_expr(i.indpred, i.indrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'btree_partial_meta_a_idx';`,
+					Expected: []sql.Row{
+						{
+							"2",
+							"t",
+							"(a > 10) AND (b IS NOT NULL)",
+							"CREATE INDEX btree_partial_meta_a_idx ON public.btree_partial_meta USING btree (a) WHERE (a > 10) AND (b IS NOT NULL)",
+						},
+					},
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'btree_partial_meta'
+  AND indexname = 'btree_partial_meta_a_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX btree_partial_meta_a_idx ON public.btree_partial_meta USING btree (a) WHERE (a > 10) AND (b IS NOT NULL)"},
+					},
+				},
+				{
+					Query: `SELECT id
+FROM btree_partial_meta
+WHERE a > 10
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{2},
+						{3},
+					},
+				},
+				{
+					Query:       "CREATE INDEX btree_partial_missing_idx ON btree_partial_meta (a) WHERE missing > 0;",
+					ExpectedErr: "key column 'missing' doesn't exist in table",
+				},
+				{
+					Query:       "CREATE UNIQUE INDEX btree_partial_unique_idx ON btree_partial_meta (a) WHERE b IS NOT NULL;",
+					ExpectedErr: "unique partial indexes are not yet supported",
 				},
 			},
 		},

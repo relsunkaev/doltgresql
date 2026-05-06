@@ -40,11 +40,16 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
 	}
-	if node.Predicate != nil {
-		return nil, errors.Errorf("WHERE is not yet supported")
-	}
 	if node.Unique && !node.NullsDistinct {
 		return nil, errors.Errorf("NULLS NOT DISTINCT is not yet supported")
+	}
+	if node.Predicate != nil {
+		if node.Unique {
+			return nil, errors.Errorf("unique partial indexes are not yet supported")
+		}
+		if accessMethod != indexmetadata.AccessMethodBtree {
+			return nil, errors.Errorf("partial %s indexes are not yet supported", accessMethod)
+		}
 	}
 	tableName, err := nodeTableName(ctx, &node.Table)
 	if err != nil {
@@ -283,16 +288,25 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 	if len(includeColumns) > 0 {
 		hasMetadata = true
 	}
+	predicate, predicateColumns, err := nodeIndexPredicate(node.Predicate)
+	if err != nil {
+		return nil, err
+	}
+	if predicate != "" {
+		hasMetadata = true
+	}
 	if !hasMetadata {
 		return nil, nil
 	}
 	return &indexmetadata.Metadata{
-		AccessMethod:   indexmetadata.AccessMethodBtree,
-		IncludeColumns: includeColumns,
-		Collations:     collations,
-		OpClasses:      opClasses,
-		RelOptions:     relOptions,
-		SortOptions:    sortOptions,
+		AccessMethod:     indexmetadata.AccessMethodBtree,
+		IncludeColumns:   includeColumns,
+		Predicate:        predicate,
+		PredicateColumns: predicateColumns,
+		Collations:       collations,
+		OpClasses:        opClasses,
+		RelOptions:       relOptions,
+		SortOptions:      sortOptions,
 	}, nil
 }
 
@@ -324,6 +338,14 @@ func nodeIndexIncludeColumns(columns tree.IndexElemList) ([]string, error) {
 		includeColumns[i] = string(column.Column)
 	}
 	return includeColumns, nil
+}
+
+func nodeIndexPredicate(predicate tree.Expr) (string, []string, error) {
+	if predicate == nil {
+		return "", nil, nil
+	}
+	columns := referencedIndexColumns(predicate)
+	return indexExpressionDefinition(predicate), columns, nil
 }
 
 func nodeIndexRelOptions(params tree.StorageParams) ([]string, error) {
@@ -440,39 +462,56 @@ func metadataBackedBtreeIndexFields(columns tree.IndexElemList) ([]*vitess.Index
 }
 
 func firstReferencedIndexColumn(expr tree.Expr) (string, error) {
-	visitor := indexColumnReferenceVisitor{}
+	visitor := indexColumnReferenceVisitor{
+		seen: map[string]struct{}{},
+	}
 	tree.WalkExprConst(&visitor, expr)
-	if visitor.name == "" {
+	if len(visitor.names) == 0 {
 		return "", errors.Errorf("expression indexes without column references are not yet supported")
 	}
-	return visitor.name, nil
+	return visitor.names[0], nil
+}
+
+func referencedIndexColumns(expr tree.Expr) []string {
+	visitor := indexColumnReferenceVisitor{
+		seen: map[string]struct{}{},
+	}
+	tree.WalkExprConst(&visitor, expr)
+	return visitor.names
 }
 
 type indexColumnReferenceVisitor struct {
-	name string
+	names []string
+	seen  map[string]struct{}
 }
 
 func (v *indexColumnReferenceVisitor) VisitPre(expr tree.Expr) (bool, tree.Expr) {
-	if v.name != "" {
-		return false, expr
-	}
 	switch expr := expr.(type) {
 	case *tree.ColumnItem:
-		v.name = expr.Column()
+		v.add(expr.Column())
 	case *tree.UnresolvedName:
 		normalized, err := expr.NormalizeVarName()
 		if err != nil {
 			return true, expr
 		}
 		if column, ok := normalized.(*tree.ColumnItem); ok {
-			v.name = column.Column()
+			v.add(column.Column())
 		}
 	}
-	return v.name == "", expr
+	return true, expr
 }
 
 func (v *indexColumnReferenceVisitor) VisitPost(expr tree.Expr) tree.Expr {
 	return expr
+}
+
+func (v *indexColumnReferenceVisitor) add(name string) {
+	key := strings.ToLower(name)
+	if _, ok := v.seen[key]; ok {
+		return
+	}
+	v.seen[key] = struct{}{}
+	v.names = append(v.names, name)
 }
 
 func indexExpressionDefinition(expr tree.Expr) string {

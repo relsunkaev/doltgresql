@@ -88,6 +88,9 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 	if relOptions := relOptionsDefinition(index.Comment()); relOptions != "" {
 		definition += " WITH (" + relOptions + ")"
 	}
+	if predicate := Predicate(index.Comment()); predicate != "" {
+		definition += " WHERE " + predicate
+	}
 	return definition
 }
 

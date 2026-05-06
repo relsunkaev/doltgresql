@@ -77,6 +77,8 @@ type Metadata struct {
 	StorageColumns    []string            `json:"storageColumns,omitempty"`
 	ExpressionColumns []bool              `json:"expressionColumns,omitempty"`
 	IncludeColumns    []string            `json:"includeColumns,omitempty"`
+	Predicate         string              `json:"predicate,omitempty"`
+	PredicateColumns  []string            `json:"predicateColumns,omitempty"`
 	Collations        []string            `json:"collations,omitempty"`
 	OpClasses         []string            `json:"opClasses,omitempty"`
 	RelOptions        []string            `json:"relOptions,omitempty"`
@@ -107,6 +109,10 @@ func EncodeComment(metadata Metadata) string {
 	}
 	for i := range metadata.IncludeColumns {
 		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
+	}
+	metadata.Predicate = strings.TrimSpace(metadata.Predicate)
+	for i := range metadata.PredicateColumns {
+		metadata.PredicateColumns[i] = strings.TrimSpace(metadata.PredicateColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -139,6 +145,10 @@ func DecodeComment(comment string) (Metadata, bool) {
 	}
 	for i := range metadata.IncludeColumns {
 		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
+	}
+	metadata.Predicate = strings.TrimSpace(metadata.Predicate)
+	for i := range metadata.PredicateColumns {
+		metadata.PredicateColumns[i] = strings.TrimSpace(metadata.PredicateColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -291,6 +301,25 @@ func IncludeColumns(comment string) []string {
 		return nil
 	}
 	return metadata.IncludeColumns
+}
+
+// Predicate returns the PostgreSQL partial-index predicate encoded for an index.
+func Predicate(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.Predicate
+}
+
+// PredicateColumns returns physical table columns referenced by an encoded
+// partial-index predicate.
+func PredicateColumns(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.PredicateColumns
 }
 
 // SortOptions returns the PostgreSQL sort/null options encoded for an index.

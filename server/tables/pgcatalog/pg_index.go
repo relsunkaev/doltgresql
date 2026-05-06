@@ -220,6 +220,7 @@ type pgIndex struct {
 	indcollation   []any
 	indclass       []any
 	indexprs       any
+	indpred        any
 	indexdef       string
 }
 
@@ -289,7 +290,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		indclass,               // indclass
 		indoption,              // indoption
 		index.indexprs,         // indexprs
-		nil,                    // indpred
+		index.indpred,          // indpred
 	}
 }
 
@@ -332,6 +333,10 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if len(indexExpressions) > 0 {
 				indexprs = strings.Join(indexExpressions, ", ")
 			}
+			var indpred any
+			if predicate := indexmetadata.Predicate(index.Item.Comment()); predicate != "" {
+				indpred = predicate
+			}
 			indClass := indexOpClassIds(index.Item, s, indexColumns)
 			indCollation := indexCollationIds(index.Item, s, indexColumns)
 
@@ -351,6 +356,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indcollation:   indCollation,
 				indclass:       indClass,
 				indexprs:       indexprs,
+				indpred:        indpred,
 				indexdef:       indexmetadata.DefinitionForTable(index.Item, schema.Item.SchemaName(), table.Item, s),
 			}
 			replicaIdent := replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name())
