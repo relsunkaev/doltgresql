@@ -457,6 +457,51 @@ func TestBtreeCoveredProjectionPlannerShape(t *testing.T) {
 	assertBenchmarkPlanContains(t, ctx, conn, query, "columns: [tenant score]")
 }
 
+func TestBtreeAggregateProjectionPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_aggregate_projection_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_aggregate_projection_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_aggregate_projection_plan_tenant_score_idx ON btree_aggregate_projection_plan (tenant, score)")
+
+	query := `SELECT count(*) FROM btree_aggregate_projection_plan WHERE tenant = 4 AND score >= 32`
+	assertBenchmarkPlanShape(t, ctx, conn, query, true)
+	assertBenchmarkPlanContains(t, ctx, conn, query, "columns: [tenant score]")
+	assertBenchmarkPlanNotContains(t, ctx, conn, query, "label")
+	assertCountResult(t, ctx, conn, query, 8)
+}
+
+func TestBtreeJoinProjectionPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	setupBtreeJoinBenchmark(t, ctx, conn)
+
+	query := `SELECT count(*)
+FROM btree_join_left_idx AS l
+JOIN btree_join_right_idx AS r
+  ON r.tenant = l.tenant
+ AND r.score = l.score
+WHERE l.tenant = 4`
+	assertBenchmarkPlanContains(t, ctx, conn, query, "HashJoin")
+	assertBenchmarkPlanContains(t, ctx, conn, query, "IndexedTableAccess(btree_join_right_idx)")
+	assertBenchmarkPlanNotContains(t, ctx, conn, query, "label")
+	assertCountResult(t, ctx, conn, query, btreeJoinProbeRows/8*(btreeBenchmarkRows/64))
+}
+
 func TestBtreePatternOpclassCoveredProjectionPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
