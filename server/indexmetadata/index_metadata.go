@@ -72,14 +72,16 @@ var supportedCollations = map[string]struct{}{
 // Metadata stores PostgreSQL index metadata that Dolt's native index metadata
 // does not currently expose.
 type Metadata struct {
-	AccessMethod string              `json:"accessMethod,omitempty"`
-	Columns      []string            `json:"columns,omitempty"`
-	Collations   []string            `json:"collations,omitempty"`
-	OpClasses    []string            `json:"opClasses,omitempty"`
-	RelOptions   []string            `json:"relOptions,omitempty"`
-	SortOptions  []IndexColumnOption `json:"sortOptions,omitempty"`
-	Constraint   string              `json:"constraint,omitempty"`
-	Gin          *GinMetadata        `json:"gin,omitempty"`
+	AccessMethod      string              `json:"accessMethod,omitempty"`
+	Columns           []string            `json:"columns,omitempty"`
+	StorageColumns    []string            `json:"storageColumns,omitempty"`
+	ExpressionColumns []bool              `json:"expressionColumns,omitempty"`
+	Collations        []string            `json:"collations,omitempty"`
+	OpClasses         []string            `json:"opClasses,omitempty"`
+	RelOptions        []string            `json:"relOptions,omitempty"`
+	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
+	Constraint        string              `json:"constraint,omitempty"`
+	Gin               *GinMetadata        `json:"gin,omitempty"`
 }
 
 // IndexColumnOption stores PostgreSQL per-column index options.
@@ -98,6 +100,9 @@ func EncodeComment(metadata Metadata) string {
 	metadata.AccessMethod = NormalizeAccessMethod(metadata.AccessMethod)
 	for i := range metadata.Columns {
 		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
+	}
+	for i := range metadata.StorageColumns {
+		metadata.StorageColumns[i] = strings.TrimSpace(metadata.StorageColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -124,6 +129,9 @@ func DecodeComment(comment string) (Metadata, bool) {
 	metadata.AccessMethod = NormalizeAccessMethod(metadata.AccessMethod)
 	for i := range metadata.Columns {
 		metadata.Columns[i] = strings.TrimSpace(metadata.Columns[i])
+	}
+	for i := range metadata.StorageColumns {
+		metadata.StorageColumns[i] = strings.TrimSpace(metadata.StorageColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -247,6 +255,26 @@ func Columns(comment string) []string {
 		return nil
 	}
 	return metadata.Columns
+}
+
+// StorageColumns returns the physical columns backing PostgreSQL-facing
+// logical index columns, when they differ from the display definitions.
+func StorageColumns(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.StorageColumns
+}
+
+// ExpressionColumns returns whether each PostgreSQL-facing index column is an
+// expression slot.
+func ExpressionColumns(comment string) []bool {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.ExpressionColumns
 }
 
 // SortOptions returns the PostgreSQL sort/null options encoded for an index.

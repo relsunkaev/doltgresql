@@ -18,11 +18,13 @@ import "testing"
 
 func TestEncodeDecodeComment(t *testing.T) {
 	comment := EncodeComment(Metadata{
-		AccessMethod: "GIN",
-		Columns:      []string{" doc "},
-		Collations:   []string{` "C" `, "und-x-icu"},
-		OpClasses:    []string{" JSONB_OPS ", "jsonb_path_ops"},
-		RelOptions:   []string{" FILLFACTOR = 70 "},
+		AccessMethod:      "GIN",
+		Columns:           []string{" lower(doc) "},
+		StorageColumns:    []string{" doc "},
+		ExpressionColumns: []bool{true},
+		Collations:        []string{` "C" `, "und-x-icu"},
+		OpClasses:         []string{" JSONB_OPS ", "jsonb_path_ops"},
+		RelOptions:        []string{" FILLFACTOR = 70 "},
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
 			{NullsOrder: " FIRST "},
@@ -41,8 +43,14 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.AccessMethod != AccessMethodGin {
 		t.Fatalf("expected access method %q, got %q", AccessMethodGin, metadata.AccessMethod)
 	}
-	if len(metadata.Columns) != 1 || metadata.Columns[0] != "doc" {
+	if len(metadata.Columns) != 1 || metadata.Columns[0] != "lower(doc)" {
 		t.Fatalf("unexpected columns: %#v", metadata.Columns)
+	}
+	if len(metadata.StorageColumns) != 1 || metadata.StorageColumns[0] != "doc" {
+		t.Fatalf("unexpected storage columns: %#v", metadata.StorageColumns)
+	}
+	if len(metadata.ExpressionColumns) != 1 || !metadata.ExpressionColumns[0] {
+		t.Fatalf("unexpected expression column flags: %#v", metadata.ExpressionColumns)
 	}
 	if len(metadata.Collations) != 2 || metadata.Collations[0] != CollationC || metadata.Collations[1] != CollationUndIcu {
 		t.Fatalf("unexpected collations: %#v", metadata.Collations)

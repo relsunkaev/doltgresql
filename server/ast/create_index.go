@@ -66,6 +66,23 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if err != nil {
 		return nil, err
 	}
+	if accessMethod == indexmetadata.AccessMethodBtree && requiresMetadataBackedBtreeIndex(node.Columns) {
+		if node.Unique {
+			return nil, errors.Errorf("unique mixed expression indexes are not yet supported")
+		}
+		// GMS can only build a real functional index for one expression with no other columns.
+		// Preserve PostgreSQL-facing shape in metadata and use ordinary columns for Dolt storage.
+		if metadata == nil {
+			metadata = &indexmetadata.Metadata{}
+		}
+		if err = applyLogicalIndexMetadata(metadata, node.Columns); err != nil {
+			return nil, err
+		}
+		indexDef.Fields, err = metadataBackedBtreeIndexFields(node.Columns)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if accessMethod == indexmetadata.AccessMethodGin {
 		if node.Unique {
 			return nil, errors.Errorf("unique gin indexes are not yet supported")
@@ -317,4 +334,132 @@ func nodeIndexStorageParamInt(expr tree.Expr) (int, error) {
 		}
 		return val, nil
 	}
+}
+
+func requiresMetadataBackedBtreeIndex(columns tree.IndexElemList) bool {
+	expressionCount := 0
+	for _, column := range columns {
+		if column.Expr != nil {
+			expressionCount++
+		}
+	}
+	return expressionCount > 1 || expressionCount == 1 && len(columns) > 1
+}
+
+func applyLogicalIndexMetadata(metadata *indexmetadata.Metadata, columns tree.IndexElemList) error {
+	metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	metadata.Columns = make([]string, len(columns))
+	metadata.StorageColumns = make([]string, len(columns))
+	metadata.ExpressionColumns = make([]bool, len(columns))
+	for i, column := range columns {
+		if column.Expr == nil {
+			columnName := string(column.Column)
+			metadata.Columns[i] = columnName
+			metadata.StorageColumns[i] = columnName
+			continue
+		}
+		storageColumn, err := firstReferencedIndexColumn(column.Expr)
+		if err != nil {
+			return err
+		}
+		metadata.Columns[i] = indexExpressionDefinition(column.Expr)
+		metadata.StorageColumns[i] = storageColumn
+		metadata.ExpressionColumns[i] = true
+	}
+	return nil
+}
+
+func metadataBackedBtreeIndexFields(columns tree.IndexElemList) ([]*vitess.IndexField, error) {
+	indexFields := make([]*vitess.IndexField, 0, len(columns))
+	seen := make(map[string]struct{}, len(columns))
+	for _, column := range columns {
+		storageColumn := string(column.Column)
+		if column.Expr != nil {
+			var err error
+			storageColumn, err = firstReferencedIndexColumn(column.Expr)
+			if err != nil {
+				return nil, err
+			}
+		}
+		storageColumnKey := strings.ToLower(storageColumn)
+		if _, ok := seen[storageColumnKey]; ok {
+			continue
+		}
+		seen[storageColumnKey] = struct{}{}
+		order := vitess.AscScr
+		if column.Direction == tree.Descending {
+			order = vitess.DescScr
+		}
+		indexFields = append(indexFields, &vitess.IndexField{
+			Column: vitess.NewColIdent(storageColumn),
+			Order:  order,
+		})
+	}
+	return indexFields, nil
+}
+
+func firstReferencedIndexColumn(expr tree.Expr) (string, error) {
+	visitor := indexColumnReferenceVisitor{}
+	tree.WalkExprConst(&visitor, expr)
+	if visitor.name == "" {
+		return "", errors.Errorf("expression indexes without column references are not yet supported")
+	}
+	return visitor.name, nil
+}
+
+type indexColumnReferenceVisitor struct {
+	name string
+}
+
+func (v *indexColumnReferenceVisitor) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	if v.name != "" {
+		return false, expr
+	}
+	switch expr := expr.(type) {
+	case *tree.ColumnItem:
+		v.name = expr.Column()
+	case *tree.UnresolvedName:
+		normalized, err := expr.NormalizeVarName()
+		if err != nil {
+			return true, expr
+		}
+		if column, ok := normalized.(*tree.ColumnItem); ok {
+			v.name = column.Column()
+		}
+	}
+	return v.name == "", expr
+}
+
+func (v *indexColumnReferenceVisitor) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
+}
+
+func indexExpressionDefinition(expr tree.Expr) string {
+	return trimIndexExpressionParens(tree.AsString(expr))
+}
+
+func trimIndexExpressionParens(expr string) string {
+	expr = strings.TrimSpace(expr)
+	if len(expr) < 2 || expr[0] != '(' || expr[len(expr)-1] != ')' {
+		return expr
+	}
+	depth := 0
+	for i, ch := range expr {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+			if depth < 0 {
+				return expr
+			}
+			if depth == 0 && i != len(expr)-1 {
+				return expr
+			}
+		}
+	}
+	if depth != 0 {
+		return expr
+	}
+	return strings.TrimSpace(expr[1 : len(expr)-1])
 }

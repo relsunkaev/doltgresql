@@ -2677,6 +2677,54 @@ ORDER BY a.attnum;`,
 				},
 			},
 		},
+		{
+			Name: "PostgreSQL mixed expression index metadata",
+			SetUpScript: []string{
+				`CREATE TABLE mixed_expression_index_meta (
+					id INTEGER PRIMARY KEY,
+					title TEXT NOT NULL,
+					code TEXT NOT NULL
+				);`,
+				`INSERT INTO mixed_expression_index_meta VALUES
+					(1, 'Alpha', 'a1'),
+					(2, 'Beta', 'b2'),
+					(3, 'Alpha', 'a3');`,
+				"CREATE INDEX mixed_expression_index_meta_idx ON mixed_expression_index_meta (lower(title), code, (upper(code)));",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	i.indkey,
+	i.indexprs,
+	pg_catalog.pg_get_expr(i.indexprs, i.indrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 1, true),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 2, true),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 3, true)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'mixed_expression_index_meta_idx';`,
+					Expected: []sql.Row{
+						{
+							"0 3 0",
+							"lower(title), upper(code)",
+							"lower(title), upper(code)",
+							"CREATE INDEX mixed_expression_index_meta_idx ON public.mixed_expression_index_meta USING btree (lower(title), code, upper(code))",
+							"lower(title)",
+							"code",
+							"upper(code)",
+						},
+					},
+				},
+				{
+					Query: `SELECT id
+FROM mixed_expression_index_meta
+WHERE lower(title) = 'alpha' AND code = 'a1'
+ORDER BY id;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
 	})
 }
 

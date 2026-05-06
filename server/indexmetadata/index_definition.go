@@ -100,11 +100,22 @@ type LogicalColumn struct {
 func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
 	cols := Columns(index.Comment())
 	if len(cols) > 0 {
+		storageColumns := StorageColumns(index.Comment())
+		expressionColumns := ExpressionColumns(index.Comment())
 		logical := make([]LogicalColumn, len(cols))
 		for i, col := range cols {
+			storageName := col
+			if i < len(storageColumns) && storageColumns[i] != "" {
+				storageName = storageColumns[i]
+			}
+			expression := false
+			if i < len(expressionColumns) {
+				expression = expressionColumns[i]
+			}
 			logical[i] = LogicalColumn{
 				Definition:  col,
-				StorageName: col,
+				StorageName: storageName,
+				Expression:  expression,
 			}
 		}
 		return logical
