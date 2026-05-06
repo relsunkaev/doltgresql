@@ -61,6 +61,50 @@ func TestJsonbGinPostingTokenLookupUsesIndex(t *testing.T) {
 	require.Zero(t, table.fullScans)
 }
 
+func TestJsonbGinPostingTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	vip := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	})
+	draft := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "draft",
+	})
+	other := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "archived",
+	})
+
+	table := &fakePostingTable{
+		rows: []sql.Row{
+			{vip, "row/1", int32(1)},
+			{draft, "row/2", int32(2)},
+			{vip, "row/3", int32(3)},
+			{other, "row/4", int32(4)},
+		},
+	}
+
+	rowIDs, candidates, err := lookupPostingTokensRowIDsAndCandidates(ctx, table, []string{vip, draft})
+	require.NoError(t, err)
+	require.Equal(t, []map[string]struct{}{
+		{"row/1": {}, "row/3": {}},
+		{"row/2": {}},
+	}, rowIDs)
+	require.Equal(t, map[string]jsonbGinPostingCandidate{
+		"row/1": {rowID: "row/1", key: sql.Row{int32(1)}},
+		"row/3": {rowID: "row/3", key: sql.Row{int32(3)}},
+	}, candidates[0])
+	require.Equal(t, map[string]jsonbGinPostingCandidate{
+		"row/2": {rowID: "row/2", key: sql.Row{int32(2)}},
+	}, candidates[1])
+	require.Equal(t, 1, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
+}
+
 func TestJsonbGinPostingRowCompaction(t *testing.T) {
 	oldRows := []sql.Row{
 		{"token/a", "row/1", int32(1)},
@@ -545,11 +589,11 @@ func (t *fakePostingIndexedTable) Partitions(ctx *sql.Context) (sql.PartitionIte
 }
 
 func (t *fakePostingIndexedTable) LookupPartitions(_ *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
-	token, ok := tokenFromPostingLookup(lookup)
+	tokens, ok := tokensFromPostingLookup(lookup)
 	if !ok {
 		return nil, fmt.Errorf("expected exact token lookup, got %s", lookup.Ranges.String())
 	}
-	return sql.PartitionsToPartitionIter(fakePostingPartition{token: token}), nil
+	return sql.PartitionsToPartitionIter(fakePostingPartition{tokens: tokens}), nil
 }
 
 func (t *fakePostingIndexedTable) PartitionRows(_ *sql.Context, partition sql.Partition) (sql.RowIter, error) {
@@ -558,8 +602,12 @@ func (t *fakePostingIndexedTable) PartitionRows(_ *sql.Context, partition sql.Pa
 		return nil, fmt.Errorf("unexpected partition %T", partition)
 	}
 	var rows []sql.Row
+	tokens := make(map[string]struct{}, len(postingPartition.tokens))
+	for _, token := range postingPartition.tokens {
+		tokens[token] = struct{}{}
+	}
 	for _, row := range t.table.rows {
-		if row[0] == postingPartition.token {
+		if _, ok := tokens[row[0].(string)]; ok {
 			rows = append(rows, row)
 		}
 	}
@@ -567,11 +615,11 @@ func (t *fakePostingIndexedTable) PartitionRows(_ *sql.Context, partition sql.Pa
 }
 
 type fakePostingPartition struct {
-	token string
+	tokens []string
 }
 
 func (p fakePostingPartition) Key() []byte {
-	return []byte(p.token)
+	return []byte(strings.Join(p.tokens, "\x00"))
 }
 
 type fakePostingIndex struct{}
@@ -642,18 +690,36 @@ func (fakePostingIndex) PrefixLengths() []uint16 {
 }
 
 func tokenFromPostingLookup(lookup sql.IndexLookup) (string, bool) {
+	tokens, ok := tokensFromPostingLookup(lookup)
+	if !ok || len(tokens) != 1 {
+		return "", false
+	}
+	return tokens[0], true
+}
+
+func tokensFromPostingLookup(lookup sql.IndexLookup) ([]string, bool) {
 	ranges, ok := lookup.Ranges.(sql.MySQLRangeCollection)
-	if !ok || len(ranges) != 1 || len(ranges[0]) != 1 {
-		return "", false
+	if !ok || len(ranges) == 0 {
+		return nil, false
 	}
-	lower, ok := ranges[0][0].LowerBound.(sql.Below)
-	if !ok {
-		return "", false
+	tokens := make([]string, len(ranges))
+	for i, lookupRange := range ranges {
+		if len(lookupRange) != 1 {
+			return nil, false
+		}
+		lower, ok := lookupRange[0].LowerBound.(sql.Below)
+		if !ok {
+			return nil, false
+		}
+		upper, ok := lookupRange[0].UpperBound.(sql.Above)
+		if !ok || lower.Key != upper.Key {
+			return nil, false
+		}
+		token, ok := lower.Key.(string)
+		if !ok {
+			return nil, false
+		}
+		tokens[i] = token
 	}
-	upper, ok := ranges[0][0].UpperBound.(sql.Above)
-	if !ok || lower.Key != upper.Key {
-		return "", false
-	}
-	token, ok := lower.Key.(string)
-	return token, ok
+	return tokens, true
 }

@@ -1237,13 +1237,9 @@ func (t *jsonbGinIndexedTable) lookupPostingRowIDs(ctx *sql.Context) (map[string
 		return nil, nil, errors.Errorf(`posting table "%s" for gin index "%s" does not exist`, t.lookup.index.PostingTable, t.lookup.index.Name)
 	}
 
-	tokenRows := make([]map[string]struct{}, len(t.lookup.encodedTokens))
-	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, len(t.lookup.encodedTokens))
-	for i, encodedToken := range t.lookup.encodedTokens {
-		tokenRows[i], tokenCandidates[i], err = lookupPostingTokenRowIDsAndCandidates(ctx, postingTable, encodedToken)
-		if err != nil {
-			return nil, nil, err
-		}
+	tokenRows, tokenCandidates, err := lookupPostingTokensRowIDsAndCandidates(ctx, postingTable, t.lookup.encodedTokens)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var rowIDs map[string]struct{}
@@ -1264,16 +1260,45 @@ func lookupPostingTokenRowIDs(ctx *sql.Context, postingTable sql.Table, encodedT
 }
 
 func lookupPostingTokenRowIDsAndCandidates(ctx *sql.Context, postingTable sql.Table, encodedToken string) (map[string]struct{}, map[string]jsonbGinPostingCandidate, error) {
+	tokenRows, tokenCandidates, err := lookupPostingTokensRowIDsAndCandidates(ctx, postingTable, []string{encodedToken})
+	if err != nil {
+		return nil, nil, err
+	}
+	return tokenRows[0], tokenCandidates[0], nil
+}
+
+func lookupPostingTokensRowIDsAndCandidates(ctx *sql.Context, postingTable sql.Table, encodedTokens []string) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, error) {
+	tokenRows := make([]map[string]struct{}, len(encodedTokens))
+	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, len(encodedTokens))
+	if len(encodedTokens) == 0 {
+		return tokenRows, tokenCandidates, nil
+	}
 	if indexAddressable, ok := postingTable.(sql.IndexAddressable); ok {
-		rowIDs, candidates, indexed, err := lookupPostingTokenRowIDsFromIndex(ctx, indexAddressable, encodedToken)
+		rows, candidates, indexed, err := lookupPostingTokensRowIDsFromIndex(ctx, indexAddressable, encodedTokens)
 		if err != nil || indexed {
-			return rowIDs, candidates, err
+			return rows, candidates, err
 		}
 	}
-	return scanPostingTokenRowIDs(ctx, postingTable, encodedToken)
+	for i, encodedToken := range encodedTokens {
+		rowIDs, candidates, err := scanPostingTokenRowIDs(ctx, postingTable, encodedToken)
+		if err != nil {
+			return nil, nil, err
+		}
+		tokenRows[i] = rowIDs
+		tokenCandidates[i] = candidates
+	}
+	return tokenRows, tokenCandidates, nil
 }
 
 func lookupPostingTokenRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedToken string) (map[string]struct{}, map[string]jsonbGinPostingCandidate, bool, error) {
+	tokenRows, tokenCandidates, indexed, err := lookupPostingTokensRowIDsFromIndex(ctx, indexAddressable, []string{encodedToken})
+	if err != nil || !indexed {
+		return nil, nil, indexed, err
+	}
+	return tokenRows[0], tokenCandidates[0], true, nil
+}
+
+func lookupPostingTokensRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.IndexAddressable, encodedTokens []string) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, bool, error) {
 	indexes, err := indexAddressable.GetIndexes(ctx)
 	if err != nil {
 		return nil, nil, false, err
@@ -1286,14 +1311,20 @@ func lookupPostingTokenRowIDsFromIndex(ctx *sql.Context, indexAddressable sql.In
 	if len(columnTypes) == 0 {
 		return nil, nil, false, nil
 	}
-	lookup := sql.NewIndexLookup(postingIndex, sql.MySQLRangeCollection{{
-		sql.ClosedRangeColumnExpr(encodedToken, encodedToken, columnTypes[0].Type),
-	}}, false, false, false, false)
+	ranges := make(sql.MySQLRangeCollection, len(encodedTokens))
+	tokenIndexes := make(map[string]int, len(encodedTokens))
+	for i, encodedToken := range encodedTokens {
+		ranges[i] = sql.MySQLRange{
+			sql.ClosedRangeColumnExpr(encodedToken, encodedToken, columnTypes[0].Type),
+		}
+		tokenIndexes[encodedToken] = i
+	}
+	lookup := sql.NewIndexLookup(postingIndex, ranges, false, false, false, false)
 	indexedTable := indexAddressable.IndexedAccess(ctx, lookup)
 	if indexedTable == nil {
 		return nil, nil, false, nil
 	}
-	rowIDs, candidates, err := readPostingIndexedRows(ctx, indexedTable, lookup, encodedToken)
+	rowIDs, candidates, err := readPostingIndexedTokenRows(ctx, indexedTable, lookup, tokenIndexes, len(encodedTokens))
 	return rowIDs, candidates, true, err
 }
 
@@ -1319,8 +1350,20 @@ func indexExpressionColumnName(expression string) string {
 }
 
 func readPostingIndexedRows(ctx *sql.Context, indexedTable sql.IndexedTable, lookup sql.IndexLookup, encodedToken string) (map[string]struct{}, map[string]jsonbGinPostingCandidate, error) {
-	rowIDs := make(map[string]struct{})
-	candidates := make(map[string]jsonbGinPostingCandidate)
+	tokenRows, tokenCandidates, err := readPostingIndexedTokenRows(ctx, indexedTable, lookup, map[string]int{encodedToken: 0}, 1)
+	if err != nil {
+		return nil, nil, err
+	}
+	return tokenRows[0], tokenCandidates[0], nil
+}
+
+func readPostingIndexedTokenRows(ctx *sql.Context, indexedTable sql.IndexedTable, lookup sql.IndexLookup, tokenIndexes map[string]int, tokenCount int) ([]map[string]struct{}, []map[string]jsonbGinPostingCandidate, error) {
+	tokenRows := make([]map[string]struct{}, tokenCount)
+	tokenCandidates := make([]map[string]jsonbGinPostingCandidate, tokenCount)
+	for i := 0; i < tokenCount; i++ {
+		tokenRows[i] = make(map[string]struct{})
+		tokenCandidates[i] = make(map[string]jsonbGinPostingCandidate)
+	}
 	partitions, err := indexedTable.LookupPartitions(ctx, lookup)
 	if err != nil {
 		return nil, nil, err
@@ -1338,7 +1381,7 @@ func readPostingIndexedRows(ctx *sql.Context, indexedTable sql.IndexedTable, loo
 		if err != nil {
 			return nil, nil, err
 		}
-		if err = readPostingTokenRows(ctx, rows, encodedToken, rowIDs, candidates); err != nil {
+		if err = readPostingBatchTokenRows(ctx, rows, tokenIndexes, tokenRows, tokenCandidates); err != nil {
 			_ = rows.Close(ctx)
 			return nil, nil, err
 		}
@@ -1346,7 +1389,7 @@ func readPostingIndexedRows(ctx *sql.Context, indexedTable sql.IndexedTable, loo
 			return nil, nil, err
 		}
 	}
-	return rowIDs, candidates, nil
+	return tokenRows, tokenCandidates, nil
 }
 
 func readPostingIndexedRowsUntilLimit(ctx *sql.Context, indexedTable sql.IndexedTable, lookup sql.IndexLookup, encodedToken string, limit int) (bool, error) {
@@ -1439,6 +1482,37 @@ func readPostingTokenRows(ctx *sql.Context, rows sql.RowIter, encodedToken strin
 		rowIDs[rowID] = struct{}{}
 		if len(row) > 2 {
 			candidates[rowID] = jsonbGinPostingCandidate{rowID: rowID, key: append(sql.Row(nil), row[2:]...)}
+		}
+	}
+}
+
+func readPostingBatchTokenRows(ctx *sql.Context, rows sql.RowIter, tokenIndexes map[string]int, tokenRows []map[string]struct{}, tokenCandidates []map[string]jsonbGinPostingCandidate) error {
+	for {
+		row, err := rows.Next(ctx)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if len(row) < 2 || row[0] == nil || row[1] == nil {
+			continue
+		}
+		tokenText, ok := row[0].(string)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting token type %T", row[0])
+		}
+		tokenIndex, ok := tokenIndexes[tokenText]
+		if !ok {
+			continue
+		}
+		rowID, ok := row[1].(string)
+		if !ok {
+			return errors.Errorf("unexpected JSONB GIN posting row identity type %T", row[1])
+		}
+		tokenRows[tokenIndex][rowID] = struct{}{}
+		if len(row) > 2 {
+			tokenCandidates[tokenIndex][rowID] = jsonbGinPostingCandidate{rowID: rowID, key: append(sql.Row(nil), row[2:]...)}
 		}
 	}
 }
