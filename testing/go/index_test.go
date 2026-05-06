@@ -1089,10 +1089,6 @@ func TestBasicIndexing(t *testing.T) {
 					ExpectedErr: "not yet supported",
 				},
 				{
-					Query:       "CREATE INDEX v1_idx2 ON test(v1) INCLUDE (pk);",
-					ExpectedErr: "not yet supported",
-				},
-				{
 					Query:       "CREATE INDEX v1_idx_storage ON test(v1) WITH (definitely_not_supported = 1);",
 					ExpectedErr: "index storage parameter definitely_not_supported is not yet supported",
 				},
@@ -1173,6 +1169,76 @@ WHERE idx.tablename = 'btree_default_tablespace_meta'
 				{
 					Query:       "CREATE INDEX btree_custom_tablespace_meta_v_idx ON btree_default_tablespace_meta (v) TABLESPACE definitely_not_supported;",
 					ExpectedErr: "TABLESPACE is not yet supported for indexes",
+				},
+			},
+		},
+		{
+			Name: "PostgreSQL btree INCLUDE index metadata",
+			SetUpScript: []string{
+				"CREATE TABLE btree_include_meta (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT NOT NULL, c TEXT NOT NULL);",
+				"INSERT INTO btree_include_meta VALUES (1, 10, 'x', 'cx'), (2, 20, 'y', 'cy'), (3, 10, 'z', 'cz');",
+				"CREATE INDEX btree_include_meta_a_idx ON btree_include_meta (a) INCLUDE (b, c);",
+				"CREATE TABLE btree_include_unique_meta (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT NOT NULL);",
+				"CREATE UNIQUE INDEX btree_include_unique_meta_a_idx ON btree_include_unique_meta (a) INCLUDE (b);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+	i.indnatts,
+	i.indnkeyatts,
+	i.indkey,
+	i.indcollation,
+	i.indclass,
+	i.indoption,
+	pg_catalog.pg_get_indexdef(i.indexrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 1, true),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 2, true),
+	pg_catalog.pg_get_indexdef(i.indexrelid, 3, true)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'btree_include_meta_a_idx';`,
+					Expected: []sql.Row{
+						{
+							3,
+							1,
+							"2 3 4",
+							collationOidVector(""),
+							opClassOidVector("int4_ops"),
+							"0",
+							"CREATE INDEX btree_include_meta_a_idx ON public.btree_include_meta USING btree (a) INCLUDE (b, c)",
+							"a",
+							"b",
+							"c",
+						},
+					},
+				},
+				{
+					Query: `SELECT id
+FROM btree_include_meta
+WHERE a = 10
+ORDER BY id;`,
+					Expected: []sql.Row{
+						{1},
+						{3},
+					},
+				},
+				{
+					Query: "INSERT INTO btree_include_unique_meta VALUES (1, 10, 'x');",
+				},
+				{
+					Query:       "INSERT INTO btree_include_unique_meta VALUES (2, 10, 'y');",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO btree_include_unique_meta VALUES (3, 11, 'y');",
+				},
+				{
+					Query:       "CREATE INDEX btree_include_missing_idx ON btree_include_meta (a) INCLUDE (missing);",
+					ExpectedErr: "key column 'missing' doesn't exist in table",
+				},
+				{
+					Query:       "CREATE INDEX btree_include_expr_idx ON btree_include_meta (a) INCLUDE ((lower(b)));",
+					ExpectedErr: "syntax error",
 				},
 			},
 		},

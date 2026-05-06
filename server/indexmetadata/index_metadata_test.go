@@ -22,6 +22,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 		Columns:           []string{" lower(doc) "},
 		StorageColumns:    []string{" doc "},
 		ExpressionColumns: []bool{true},
+		IncludeColumns:    []string{" doc_id ", " title "},
 		Collations:        []string{` "C" `, "und-x-icu"},
 		OpClasses:         []string{" JSONB_OPS ", "jsonb_path_ops"},
 		RelOptions:        []string{" FILLFACTOR = 70 "},
@@ -51,6 +52,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if len(metadata.ExpressionColumns) != 1 || !metadata.ExpressionColumns[0] {
 		t.Fatalf("unexpected expression column flags: %#v", metadata.ExpressionColumns)
+	}
+	if len(metadata.IncludeColumns) != 2 || metadata.IncludeColumns[0] != "doc_id" || metadata.IncludeColumns[1] != "title" {
+		t.Fatalf("unexpected include columns: %#v", metadata.IncludeColumns)
 	}
 	if len(metadata.Collations) != 2 || metadata.Collations[0] != CollationC || metadata.Collations[1] != CollationUndIcu {
 		t.Fatalf("unexpected collations: %#v", metadata.Collations)

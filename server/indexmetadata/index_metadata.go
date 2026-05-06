@@ -76,6 +76,7 @@ type Metadata struct {
 	Columns           []string            `json:"columns,omitempty"`
 	StorageColumns    []string            `json:"storageColumns,omitempty"`
 	ExpressionColumns []bool              `json:"expressionColumns,omitempty"`
+	IncludeColumns    []string            `json:"includeColumns,omitempty"`
 	Collations        []string            `json:"collations,omitempty"`
 	OpClasses         []string            `json:"opClasses,omitempty"`
 	RelOptions        []string            `json:"relOptions,omitempty"`
@@ -103,6 +104,9 @@ func EncodeComment(metadata Metadata) string {
 	}
 	for i := range metadata.StorageColumns {
 		metadata.StorageColumns[i] = strings.TrimSpace(metadata.StorageColumns[i])
+	}
+	for i := range metadata.IncludeColumns {
+		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -132,6 +136,9 @@ func DecodeComment(comment string) (Metadata, bool) {
 	}
 	for i := range metadata.StorageColumns {
 		metadata.StorageColumns[i] = strings.TrimSpace(metadata.StorageColumns[i])
+	}
+	for i := range metadata.IncludeColumns {
+		metadata.IncludeColumns[i] = strings.TrimSpace(metadata.IncludeColumns[i])
 	}
 	for i := range metadata.Collations {
 		metadata.Collations[i] = NormalizeCollation(metadata.Collations[i])
@@ -275,6 +282,15 @@ func ExpressionColumns(comment string) []bool {
 		return nil
 	}
 	return metadata.ExpressionColumns
+}
+
+// IncludeColumns returns PostgreSQL INCLUDE columns encoded for an index.
+func IncludeColumns(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.IncludeColumns
 }
 
 // SortOptions returns the PostgreSQL sort/null options encoded for an index.

@@ -187,6 +187,9 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	case indexmetadata.AccessMethodBtree:
 		return nodeBtreeIndexMetadata(node)
 	case indexmetadata.AccessMethodGin:
+		if len(node.IndexParams.IncludeColumns) > 0 {
+			return nil, errors.Errorf("INCLUDE is not yet supported for gin indexes")
+		}
 		if len(node.IndexParams.StorageParams) > 0 {
 			return nil, errors.Errorf("storage parameters are not yet supported for gin indexes")
 		}
@@ -273,16 +276,54 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 	if len(relOptions) > 0 {
 		hasMetadata = true
 	}
+	includeColumns, err := nodeIndexIncludeColumns(node.IndexParams.IncludeColumns)
+	if err != nil {
+		return nil, err
+	}
+	if len(includeColumns) > 0 {
+		hasMetadata = true
+	}
 	if !hasMetadata {
 		return nil, nil
 	}
 	return &indexmetadata.Metadata{
-		AccessMethod: indexmetadata.AccessMethodBtree,
-		Collations:   collations,
-		OpClasses:    opClasses,
-		RelOptions:   relOptions,
-		SortOptions:  sortOptions,
+		AccessMethod:   indexmetadata.AccessMethodBtree,
+		IncludeColumns: includeColumns,
+		Collations:     collations,
+		OpClasses:      opClasses,
+		RelOptions:     relOptions,
+		SortOptions:    sortOptions,
 	}, nil
+}
+
+func nodeIndexIncludeColumns(columns tree.IndexElemList) ([]string, error) {
+	if len(columns) == 0 {
+		return nil, nil
+	}
+	includeColumns := make([]string, len(columns))
+	for i, column := range columns {
+		if column.Expr != nil {
+			return nil, errors.Errorf("expressions are not supported in included columns")
+		}
+		if column.Collation != "" {
+			return nil, errors.Errorf("including column does not support a collation")
+		}
+		if column.OpClass != nil {
+			return nil, errors.Errorf("including column does not support an operator class")
+		}
+		switch column.Direction {
+		case tree.DefaultDirection:
+		default:
+			return nil, errors.Errorf("including column does not support ASC/DESC options")
+		}
+		switch column.NullsOrder {
+		case tree.DefaultNullsOrder:
+		default:
+			return nil, errors.Errorf("including column does not support NULLS FIRST/LAST options")
+		}
+		includeColumns[i] = string(column.Column)
+	}
+	return includeColumns, nil
 }
 
 func nodeIndexRelOptions(params tree.StorageParams) ([]string, error) {

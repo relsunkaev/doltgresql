@@ -70,7 +70,7 @@ var pg_get_indexdef_oid_integer_bool = framework.Function3{
 					indexDef = indexmetadata.DefinitionForTable(index.Item, schema.Item.SchemaName(), table.Item, table.Item.Schema(ctx))
 					return false, nil
 				}
-				cols := indexmetadata.ColumnDefinitionsForSchema(index.Item, table.Item.Schema(ctx))
+				cols := indexmetadata.AttributeDefinitionsForSchema(index.Item, table.Item.Schema(ctx))
 				if colNo < 1 || int(colNo) > len(cols) {
 					indexDef = nil
 					return false, nil

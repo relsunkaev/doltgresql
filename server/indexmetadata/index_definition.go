@@ -82,6 +82,9 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 		AccessMethod(index.IndexType(), index.Comment()),
 		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
+	if includeColumns := IncludeColumns(index.Comment()); len(includeColumns) > 0 {
+		definition += " INCLUDE (" + strings.Join(includeColumns, ", ") + ")"
+	}
 	if relOptions := relOptionsDefinition(index.Comment()); relOptions != "" {
 		definition += " WITH (" + relOptions + ")"
 	}
@@ -179,6 +182,20 @@ func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []strin
 		}
 	}
 	return cols
+}
+
+// AttributeDefinitionsForSchema returns PostgreSQL-facing index attributes,
+// including non-key INCLUDE columns after the key column definitions.
+func AttributeDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []string {
+	keyColumns := ColumnDefinitionsForSchema(index, tableSchema)
+	includeColumns := IncludeColumns(index.Comment())
+	if len(includeColumns) == 0 {
+		return keyColumns
+	}
+	attributes := make([]string, 0, len(keyColumns)+len(includeColumns))
+	attributes = append(attributes, keyColumns...)
+	attributes = append(attributes, includeColumns...)
+	return attributes
 }
 
 // ExpressionDefinitions returns the expressions stored in pg_index.indexprs.

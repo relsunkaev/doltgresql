@@ -212,6 +212,7 @@ type pgIndex struct {
 	tableOid       id.Id
 	tableOidNative uint32
 	indnatts       int16
+	indnkeyatts    int16
 	indisunique    bool
 	indisprimary   bool
 	indisreplident bool
@@ -266,12 +267,12 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 	if indclass == nil {
 		indclass = []any{}
 	}
-	indoption := indexmetadata.IndOptionValues(index.index.Comment(), len(index.indkey))
+	indoption := indexmetadata.IndOptionValues(index.index.Comment(), int(index.indnkeyatts))
 	return sql.Row{
 		index.indexOid,         // indexrelid
 		index.tableOid,         // indrelid
 		index.indnatts,         // indnatts
-		index.indnatts,         // indnkeyatts
+		index.indnkeyatts,      // indnkeyatts
 		index.index.IsUnique(), // indisunique
 		false,                  // indnullsnotdistinct
 		index.indisprimary,     // indisprimary
@@ -313,14 +314,18 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			s := tableSchemas[table.OID.AsId()]
 			logicalColumns := indexmetadata.LogicalColumns(index.Item, s)
 			indexColumns := make([]string, len(logicalColumns))
-			indKey := make([]any, len(logicalColumns))
+			includeColumns := indexmetadata.IncludeColumns(index.Item.Comment())
+			indKey := make([]any, 0, len(logicalColumns)+len(includeColumns))
 			for i, col := range logicalColumns {
 				indexColumns[i] = col.StorageName
 				if col.Expression {
-					indKey[i] = int16(0)
+					indKey = append(indKey, int16(0))
 					continue
 				}
-				indKey[i] = visibleAttributeNumber(s, col.StorageName)
+				indKey = append(indKey, visibleAttributeNumber(s, col.StorageName))
+			}
+			for _, includeColumn := range includeColumns {
+				indKey = append(indKey, visibleAttributeNumber(s, includeColumn))
 			}
 			indexExpressions := indexmetadata.ExpressionDefinitions(index.Item, s)
 			var indexprs any
@@ -339,7 +344,8 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				tableOid:       table.OID.AsId(),
 				tableOidNative: id.Cache().ToOID(table.OID.AsId()),
 				indkey:         indKey,
-				indnatts:       int16(len(indexColumns)),
+				indnatts:       int16(len(indKey)),
+				indnkeyatts:    int16(len(indexColumns)),
 				indisunique:    index.Item.IsUnique(),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
 				indcollation:   indCollation,

@@ -27,11 +27,11 @@ import (
 // nodeIndexTableDef handles *tree.IndexTableDef nodes. The parser does not store type information in the index
 // definition (PRIMARY KEY, UNIQUE, etc.) so it must be added to this definition by the caller.
 func nodeIndexTableDef(ctx *Context, node *tree.IndexTableDef) (*vitess.IndexDefinition, error) {
-	return nodeIndexTableDefWithOptions(ctx, node, false, false)
+	return nodeIndexTableDefWithOptions(ctx, node, false, false, false)
 }
 
 func nodeIndexTableDefAllowingStorageParams(ctx *Context, node *tree.IndexTableDef) (*vitess.IndexDefinition, error) {
-	return nodeIndexTableDefWithOptions(ctx, node, true, true)
+	return nodeIndexTableDefWithOptions(ctx, node, true, true, true)
 }
 
 func nodeIndexTableDefWithOptions(
@@ -39,11 +39,12 @@ func nodeIndexTableDefWithOptions(
 	node *tree.IndexTableDef,
 	allowStorageParams bool,
 	allowDefaultTablespace bool,
+	allowIncludeColumns bool,
 ) (*vitess.IndexDefinition, error) {
 	if node == nil {
 		return nil, nil
 	}
-	if node.IndexParams.IncludeColumns != nil {
+	if node.IndexParams.IncludeColumns != nil && !allowIncludeColumns {
 		return nil, errors.Errorf("include columns is not yet supported")
 	}
 	if len(node.IndexParams.StorageParams) > 0 && !allowStorageParams {

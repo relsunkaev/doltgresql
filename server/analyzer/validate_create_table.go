@@ -22,6 +22,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // validateCreateTable validates that a table can be created as specified
@@ -143,6 +145,13 @@ func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.
 
 	if idxDef.IsSpatial() {
 		return errors.Errorf("spatial indexes are not supported")
+	}
+
+	for _, includeColumn := range indexmetadata.IncludeColumns(idxDef.Comment) {
+		schCol, exists := colMap[strings.ToLower(includeColumn)]
+		if !exists || schCol.HiddenSystem {
+			return sql.ErrKeyColumnDoesNotExist.New(includeColumn)
+		}
 	}
 
 	return nil
