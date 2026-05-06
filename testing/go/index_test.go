@@ -1168,6 +1168,7 @@ func TestBasicIndexing(t *testing.T) {
 		},
 		unsupportedAccessMethodBoundaryScript("hash", "hash", "hashhandler"),
 		unsupportedAccessMethodBoundaryScript("GiST", "gist", "gisthandler"),
+		unsupportedAccessMethodBoundaryScript("SP-GiST", "spgist", "spghandler"),
 		{
 			Name: "PostgreSQL btree reloptions metadata",
 			SetUpScript: []string{
