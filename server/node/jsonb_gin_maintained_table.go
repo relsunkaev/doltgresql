@@ -1282,10 +1282,6 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		if err != nil {
 			return err
 		}
-		rowRefs, err := postingChunkRowsRowRefs(ctx, existingRows)
-		if err != nil {
-			return err
-		}
 		occupiedChunkNos, err := postingChunkRowsOccupiedChunkNos(existingRows)
 		if err != nil {
 			return err
@@ -1293,9 +1289,6 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 		rowsToDelete, rowsToInsert, err := postingChunkRowsAfterDeletes(ctx, existingRows, deleteRowRefs)
 		if err != nil {
 			return err
-		}
-		for rowRefKey := range deleteRowRefs {
-			delete(rowRefs, rowRefKey)
 		}
 		for _, row := range rowsToDelete {
 			chunkNo, ok, err := postingChunkRowChunkNo(row)
@@ -1316,9 +1309,6 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 			}
 		}
 		for _, rowRef := range insertRowRefs {
-			if _, ok := rowRefs[string(rowRef)]; ok {
-				continue
-			}
 			chunkNo := postingChunkDMLChunkNo(encodedToken, rowRef, occupiedChunkNos)
 			occupiedChunkNos[chunkNo] = struct{}{}
 			row, err := materializePostingChunkRow(encodedToken, chunkNo, [][]byte{rowRef})
@@ -1326,7 +1316,6 @@ func (p *jsonbGinPostingChunkEditor) flush(ctx *sql.Context) error {
 				return err
 			}
 			rowsToInsert = append(rowsToInsert, row)
-			rowRefs[string(rowRef)] = append([]byte(nil), rowRef...)
 		}
 		for _, row := range rowsToDelete {
 			if err := p.editor.Delete(ctx, row); err != nil && !sql.ErrDeleteRowNotFound.Is(err) {
@@ -1364,9 +1353,17 @@ func postingChunkRowsAfterDeletes(ctx *sql.Context, existingRows []sql.Row, dele
 	if len(deleteRowRefs) == 0 {
 		return nil, nil, nil
 	}
+	sortedDeleteRowRefs := sortedPostingChunkDeleteRowRefs(deleteRowRefs)
 	rowsToDelete := make([]sql.Row, 0)
 	rowsToInsert := make([]sql.Row, 0)
 	for _, row := range existingRows {
+		mightContainDelete, err := postingChunkRowMightContainAnyRowRef(ctx, row, sortedDeleteRowRefs)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !mightContainDelete {
+			continue
+		}
 		changed, nextRow, err := postingChunkRowAfterDeletes(ctx, row, deleteRowRefs)
 		if err != nil {
 			return nil, nil, err
@@ -1380,6 +1377,41 @@ func postingChunkRowsAfterDeletes(ctx *sql.Context, existingRows []sql.Row, dele
 		}
 	}
 	return rowsToDelete, rowsToInsert, nil
+}
+
+func sortedPostingChunkDeleteRowRefs(deleteRowRefs map[string]struct{}) [][]byte {
+	rowRefs := make([][]byte, 0, len(deleteRowRefs))
+	for rowRef := range deleteRowRefs {
+		rowRefs = append(rowRefs, []byte(rowRef))
+	}
+	sort.Slice(rowRefs, func(i, j int) bool {
+		return bytes.Compare(rowRefs[i], rowRefs[j]) < 0
+	})
+	return rowRefs
+}
+
+func postingChunkRowMightContainAnyRowRef(ctx *sql.Context, row sql.Row, sortedRowRefs [][]byte) (bool, error) {
+	if len(sortedRowRefs) == 0 {
+		return false, nil
+	}
+	if len(row) < 6 || row[4] == nil || row[5] == nil {
+		return true, nil
+	}
+	firstRowRef, err := postingChunkPayloadBytes(ctx, row[4])
+	if err != nil {
+		return true, nil
+	}
+	lastRowRef, err := postingChunkPayloadBytes(ctx, row[5])
+	if err != nil {
+		return true, nil
+	}
+	if len(firstRowRef) == 0 || len(lastRowRef) == 0 || bytes.Compare(firstRowRef, lastRowRef) > 0 {
+		return true, nil
+	}
+	firstPossible := sort.Search(len(sortedRowRefs), func(i int) bool {
+		return bytes.Compare(sortedRowRefs[i], firstRowRef) >= 0
+	})
+	return firstPossible < len(sortedRowRefs) && bytes.Compare(sortedRowRefs[firstPossible], lastRowRef) <= 0, nil
 }
 
 func postingChunkRowAfterDeletes(ctx *sql.Context, row sql.Row, deleteRowRefs map[string]struct{}) (bool, sql.Row, error) {

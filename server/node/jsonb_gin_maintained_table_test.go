@@ -336,6 +336,41 @@ func TestJsonbGinPostingChunkEditorDeletesOnlyTouchedChunks(t *testing.T) {
 	require.Empty(t, posting.pending)
 }
 
+func TestJsonbGinPostingChunkEditorSkipsDeleteChunksOutsideRowRefRange(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	token := "token/shared"
+	existingRow, existingRefs := jsonbGinPostingChunkTestRow(t, ctx, token, 0, []int32{1, 2})
+	farFirst, err := jsonbgin.EncodeRowReference(ctx, []sql.Type{pgtypes.Int32}, sql.Row{int32(100)})
+	require.NoError(t, err)
+	farLast, err := jsonbgin.EncodeRowReference(ctx, []sql.Type{pgtypes.Int32}, sql.Row{int32(101)})
+	require.NoError(t, err)
+	malformedFarRow := sql.Row{
+		token,
+		int64(1),
+		int16(jsonbgin.PostingChunkFormatVersionV1),
+		int32(2),
+		farFirst.Bytes,
+		farLast.Bytes,
+		[]byte("not a posting chunk"),
+		[]byte{0, 0, 0, 0},
+	}
+	table := &fakePostingTable{rows: []sql.Row{existingRow, malformedFarRow}}
+	editor := &recordingPostingEditor{}
+	posting := jsonbGinPostingChunkEditor{
+		table:   table,
+		editor:  editor,
+		pending: make(map[string]map[string]jsonbGinPendingPostingChunk),
+	}
+
+	posting.stageDelete(existingRefs[0], []string{token})
+
+	require.NoError(t, posting.flush(ctx))
+	require.Equal(t, []sql.Row{existingRow}, editor.deleted)
+	require.Len(t, editor.inserted, 1)
+	requirePostingChunkRow(t, ctx, editor.inserted[0], 0, []int32{2})
+	require.Empty(t, posting.pending)
+}
+
 func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tableSchema := jsonbGinPostingStorageBaseSchema()
