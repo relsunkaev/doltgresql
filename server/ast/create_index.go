@@ -40,9 +40,6 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
 	}
-	if node.Unique && !node.NullsDistinct {
-		return nil, errors.Errorf("NULLS NOT DISTINCT is not yet supported")
-	}
 	if node.Predicate != nil {
 		if node.Unique {
 			return nil, errors.Errorf("unique partial indexes are not yet supported")
@@ -110,6 +107,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 		}, nil
 	}
 	if node.Unique {
+		if !node.NullsDistinct && hasIndexExpression(node.Columns) {
+			return nil, errors.Errorf("NULLS NOT DISTINCT expression indexes are not yet supported")
+		}
 		if metadata == nil {
 			metadata = &indexmetadata.Metadata{}
 		}
@@ -185,6 +185,15 @@ func sanitizeIndexNamePart(part string, fallback string) string {
 		return fallback
 	}
 	return sanitized
+}
+
+func hasIndexExpression(columns tree.IndexElemList) bool {
+	for _, column := range columns {
+		if column.Expr != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetadata.Metadata, error) {
@@ -295,6 +304,9 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 	if predicate != "" {
 		hasMetadata = true
 	}
+	if node.Unique && !node.NullsDistinct {
+		hasMetadata = true
+	}
 	if !hasMetadata {
 		return nil, nil
 	}
@@ -307,6 +319,7 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 		OpClasses:        opClasses,
 		RelOptions:       relOptions,
 		SortOptions:      sortOptions,
+		NullsNotDistinct: node.Unique && !node.NullsDistinct,
 	}, nil
 }
 

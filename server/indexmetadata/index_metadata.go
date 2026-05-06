@@ -148,6 +148,7 @@ type Metadata struct {
 	RelOptions        []string            `json:"relOptions,omitempty"`
 	StatisticsTargets []int16             `json:"statisticsTargets,omitempty"`
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
+	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
 }
@@ -328,6 +329,13 @@ func RelOptions(comment string) []string {
 		return nil
 	}
 	return metadata.RelOptions
+}
+
+// NullsNotDistinct returns whether this unique index treats NULL values as
+// equal for uniqueness checks.
+func NullsNotDistinct(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.NullsNotDistinct
 }
 
 // StatisticsTargets returns the PostgreSQL per-attribute statistics targets encoded for an index.

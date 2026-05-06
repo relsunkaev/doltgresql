@@ -1530,22 +1530,116 @@ ORDER BY indexname;`,
 			},
 		},
 		{
-			Name: "PostgreSQL unique nulls not distinct unsupported boundary",
+			Name: "PostgreSQL unique nulls not distinct",
 			SetUpScript: []string{
-				"CREATE TABLE unique_nulls_not_distinct (id INTEGER PRIMARY KEY, v INTEGER);",
+				"CREATE TABLE unique_nulls_not_distinct (id INTEGER PRIMARY KEY, v INTEGER, w INTEGER);",
+				"CREATE TABLE unique_nulls_not_distinct_batch (id INTEGER PRIMARY KEY, v INTEGER);",
+				"CREATE TABLE unique_nulls_not_distinct_update_batch (id INTEGER PRIMARY KEY, v INTEGER);",
+				"CREATE TABLE unique_nulls_distinct_default (id INTEGER PRIMARY KEY, v INTEGER);",
+				"CREATE TABLE unique_nulls_column_constraint (id INTEGER PRIMARY KEY, v INTEGER UNIQUE NULLS NOT DISTINCT);",
+				"CREATE TABLE unique_nulls_table_constraint (id INTEGER PRIMARY KEY, v INTEGER, UNIQUE NULLS NOT DISTINCT (v));",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE UNIQUE INDEX unique_nulls_not_distinct_idx ON unique_nulls_not_distinct (v) NULLS NOT DISTINCT;",
-					ExpectedErr: "NULLS NOT DISTINCT is not yet supported",
+					Query: "CREATE UNIQUE INDEX unique_nulls_not_distinct_idx ON unique_nulls_not_distinct (v) NULLS NOT DISTINCT;",
+				},
+				{
+					Query: "CREATE UNIQUE INDEX unique_nulls_not_distinct_multi_idx ON unique_nulls_not_distinct (v, w) NULLS NOT DISTINCT;",
+				},
+				{
+					Query: "CREATE UNIQUE INDEX unique_nulls_not_distinct_batch_idx ON unique_nulls_not_distinct_batch (v) NULLS NOT DISTINCT;",
+				},
+				{
+					Query: "CREATE UNIQUE INDEX unique_nulls_not_distinct_update_batch_idx ON unique_nulls_not_distinct_update_batch (v) NULLS NOT DISTINCT;",
+				},
+				{
+					Query: "CREATE UNIQUE INDEX unique_nulls_distinct_default_idx ON unique_nulls_distinct_default (v);",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_not_distinct VALUES (1, NULL, 10);",
+				},
+				{
+					Query:       "INSERT INTO unique_nulls_not_distinct VALUES (2, NULL, 11);",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_not_distinct VALUES (3, 20, NULL);",
+				},
+				{
+					Query:       "INSERT INTO unique_nulls_not_distinct VALUES (4, 20, NULL);",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_not_distinct VALUES (5, 21, NULL);",
+				},
+				{
+					Query:       "UPDATE unique_nulls_not_distinct SET v = NULL WHERE id = 5;",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       "INSERT INTO unique_nulls_not_distinct_batch VALUES (1, NULL), (2, NULL);",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_not_distinct_update_batch VALUES (1, 100), (2, 101);",
+				},
+				{
+					Query:       "UPDATE unique_nulls_not_distinct_update_batch SET v = NULL;",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_distinct_default VALUES (1, NULL), (2, NULL);",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_column_constraint VALUES (1, NULL);",
+				},
+				{
+					Query:       "INSERT INTO unique_nulls_column_constraint VALUES (2, NULL);",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: "INSERT INTO unique_nulls_table_constraint VALUES (1, NULL);",
+				},
+				{
+					Query:       "INSERT INTO unique_nulls_table_constraint VALUES (2, NULL);",
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `SELECT c.relname, i.indnullsnotdistinct
+FROM pg_catalog.pg_class c
+JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+WHERE c.relname IN (
+	'unique_nulls_not_distinct_idx',
+	'unique_nulls_not_distinct_multi_idx',
+	'unique_nulls_not_distinct_batch_idx',
+	'unique_nulls_not_distinct_update_batch_idx',
+	'unique_nulls_distinct_default_idx',
+	'unique_nulls_column_constraint_v_key',
+	'unique_nulls_table_constraint_v_key'
+)
+ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"unique_nulls_column_constraint_v_key", "t"},
+						{"unique_nulls_distinct_default_idx", "f"},
+						{"unique_nulls_not_distinct_batch_idx", "t"},
+						{"unique_nulls_not_distinct_idx", "t"},
+						{"unique_nulls_not_distinct_multi_idx", "t"},
+						{"unique_nulls_not_distinct_update_batch_idx", "t"},
+						{"unique_nulls_table_constraint_v_key", "t"},
+					},
 				},
 				{
 					Query: `SELECT indexname
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'unique_nulls_not_distinct'
+WHERE indexdef LIKE '%NULLS NOT DISTINCT%'
 ORDER BY indexname;`,
 					Expected: []sql.Row{
-						{"unique_nulls_not_distinct_pkey"},
+						{"unique_nulls_column_constraint_v_key"},
+						{"unique_nulls_not_distinct_batch_idx"},
+						{"unique_nulls_not_distinct_idx"},
+						{"unique_nulls_not_distinct_multi_idx"},
+						{"unique_nulls_not_distinct_update_batch_idx"},
+						{"unique_nulls_table_constraint_v_key"},
 					},
 				},
 			},

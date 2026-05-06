@@ -22,6 +22,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -109,10 +110,6 @@ func nodeUniqueConstraintTableDef(
 		return nil, errors.Errorf("TABLESPACE is not yet supported")
 	}
 
-	if node.NullsNotDistinct {
-		return nil, errors.Errorf("NULLS NOT DISTINCT is not yet supported")
-	}
-
 	indexFields, err := nodeIndexElemList(ctx, node.Columns)
 	if err != nil {
 		return nil, err
@@ -132,13 +129,25 @@ func nodeUniqueConstraintTableDef(
 		Table:    tableName,
 		IfExists: ifExists,
 		IndexSpec: &vitess.IndexSpec{
-			ToName: vitess.NewColIdent(indexName),
-			Action: "create",
-			Type:   indexType,
-			Fields: indexFields,
+			ToName:  vitess.NewColIdent(indexName),
+			Action:  "create",
+			Type:    indexType,
+			Fields:  indexFields,
+			Options: uniqueConstraintIndexOptions(node.NullsNotDistinct),
 		},
 	}
 	return ddl, nil
+}
+
+func uniqueConstraintIndexOptions(nullsNotDistinct bool) []*vitess.IndexOption {
+	if !nullsNotDistinct {
+		return nil
+	}
+	metadata := indexmetadata.Metadata{
+		AccessMethod:     indexmetadata.AccessMethodBtree,
+		NullsNotDistinct: true,
+	}
+	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}
 }
 
 func primaryKeyConstraintMetadataDDL(tableName vitess.TableName, ifExists bool, name string) *vitess.DDL {
@@ -185,7 +194,7 @@ func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) s
 	return strings.Join(parts, "_")
 }
 
-func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name) (*vitess.IndexDefinition, error) {
+func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name, nullsNotDistinct bool) (*vitess.IndexDefinition, error) {
 	columns := tree.IndexElemList{{Column: column}}
 	fields, err := nodeIndexElemList(ctx, columns)
 	if err != nil {
@@ -201,6 +210,14 @@ func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Nam
 			Name:   vitess.NewColIdent(indexName),
 			Unique: true,
 		},
-		Fields: fields,
+		Fields:  fields,
+		Options: uniqueConstraintIndexOptions(nullsNotDistinct),
 	}, nil
+}
+
+func indexMetadataCommentOption(metadata indexmetadata.Metadata) *vitess.IndexOption {
+	return &vitess.IndexOption{
+		Name:  vitess.KeywordString(vitess.COMMENT_KEYWORD),
+		Value: vitess.NewStrVal([]byte(indexmetadata.EncodeComment(metadata))),
+	}
 }

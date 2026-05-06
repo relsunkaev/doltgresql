@@ -130,6 +130,7 @@ func nodeAlterTableCmds(
 						Name:    cmd.ColumnDef.UniqueConstraintName,
 						Columns: tree.IndexElemList{{Column: cmd.ColumnDef.Name}},
 					},
+					NullsNotDistinct: cmd.ColumnDef.UniqueNullsNotDistinct,
 				}, tableName, ifExists)
 				if err != nil {
 					return nil, nil, err

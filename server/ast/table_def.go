@@ -59,7 +59,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		}
 		target.TableSpec.AddColumn(columnDef)
 		if node.Unique {
-			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName)
+			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName, node.UniqueNullsNotDistinct)
 			if err != nil {
 				return err
 			}
@@ -130,6 +130,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		}
 		indexDef.Info.Unique = true
 		indexDef.Info.Primary = node.PrimaryKey
+		if !node.PrimaryKey {
+			indexDef.Options = append(indexDef.Options, uniqueConstraintIndexOptions(node.NullsNotDistinct)...)
+		}
 		// If we're setting a primary key, then we need to make sure that all of the columns are also set to NOT NULL
 		if indexDef.Info.Primary {
 			tableColumns := utils.SliceToMapValues(target.TableSpec.Columns, func(col *vitess.ColumnDefinition) string {

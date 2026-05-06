@@ -28,34 +28,35 @@ import (
 // Comments are to match the Stringer formatting rules in the original rule definition file, but we can't generate
 // human-readable strings for these extended types because they are in another package.
 const (
-	ruleId_TypeSanitizer                   analyzer.RuleId = iota + 1000 // typeSanitizer
-	ruleId_AddDomainConstraints                                          // addDomainConstraints
-	ruleId_AddDomainConstraintsToCasts                                   // addDomainConstraintsToCasts
-	ruleId_ApplyTablesForAnalyzeAllTables                                // applyTablesForAnalyzeAllTables
-	ruleId_AssignInsertCasts                                             // assignInsertCasts
-	ruleId_AssignJsonbGinLookups                                         // assignJsonbGinLookups
-	ruleId_AssignJsonbGinMaintainers                                     // assignJsonbGinMaintainers
-	ruleId_AssignTriggers                                                // assignTriggers
-	ruleId_AssignUpdateCasts                                             // assignUpdateCasts
-	ruleId_ConvertDropPrimaryKeyConstraint                               // convertDropPrimaryKeyConstraint
-	ruleId_WrapPrimaryKeyMetadata                                        // wrapPrimaryKeyMetadata
-	ruleId_GenerateForeignKeyName                                        // generateForeignKeyName
-	ruleId_ReplaceIndexedTables                                          // replaceIndexedTables
-	ruleId_ReplaceNode                                                   // replaceNode
-	ruleId_ReplaceSerial                                                 // replaceSerial
-	ruleId_InsertContextRootFinalizer                                    // insertContextRootFinalizer
-	ruleId_ResolveType                                                   // resolveType
-	ruleId_ReplaceArithmeticExpressions                                  // replaceArithmeticExpressions
-	ruleId_OptimizeFunctions                                             // optimizeFunctions
-	ruleId_ValidateColumnDefaults                                        // validateColumnDefaults
-	ruleId_ValidateCreateTable                                           // validateCreateTable
-	ruleId_ValidateCreateSchema                                          // validateCreateSchema
-	ruleId_ResolveAlterColumn                                            // resolveAlterColumn
-	ruleId_ValidateCreateFunction                                        // validateCreateFunction
-	ruleId_ResolveValuesTypes                                            // resolveValuesTypes
-	ruleId_ResolveProcedureDefaults                                      // resolveProcedureDefaults
-	ruleId_ValidateDropConstraintOwnership                               // validateDropConstraintOwnership
-	ruleId_ValidateOnConflictArbiter                                     // validateOnConflictArbiter
+	ruleId_TypeSanitizer                      analyzer.RuleId = iota + 1000 // typeSanitizer
+	ruleId_AddDomainConstraints                                             // addDomainConstraints
+	ruleId_AddDomainConstraintsToCasts                                      // addDomainConstraintsToCasts
+	ruleId_ApplyTablesForAnalyzeAllTables                                   // applyTablesForAnalyzeAllTables
+	ruleId_AssignInsertCasts                                                // assignInsertCasts
+	ruleId_AssignJsonbGinLookups                                            // assignJsonbGinLookups
+	ruleId_AssignJsonbGinMaintainers                                        // assignJsonbGinMaintainers
+	ruleId_AssignTriggers                                                   // assignTriggers
+	ruleId_AssignUpdateCasts                                                // assignUpdateCasts
+	ruleId_ConvertDropPrimaryKeyConstraint                                  // convertDropPrimaryKeyConstraint
+	ruleId_WrapPrimaryKeyMetadata                                           // wrapPrimaryKeyMetadata
+	ruleId_GenerateForeignKeyName                                           // generateForeignKeyName
+	ruleId_ReplaceIndexedTables                                             // replaceIndexedTables
+	ruleId_ReplaceNode                                                      // replaceNode
+	ruleId_ReplaceSerial                                                    // replaceSerial
+	ruleId_InsertContextRootFinalizer                                       // insertContextRootFinalizer
+	ruleId_ResolveType                                                      // resolveType
+	ruleId_ReplaceArithmeticExpressions                                     // replaceArithmeticExpressions
+	ruleId_OptimizeFunctions                                                // optimizeFunctions
+	ruleId_ValidateColumnDefaults                                           // validateColumnDefaults
+	ruleId_ValidateCreateTable                                              // validateCreateTable
+	ruleId_ValidateCreateSchema                                             // validateCreateSchema
+	ruleId_ResolveAlterColumn                                               // resolveAlterColumn
+	ruleId_ValidateCreateFunction                                           // validateCreateFunction
+	ruleId_ResolveValuesTypes                                               // resolveValuesTypes
+	ruleId_ResolveProcedureDefaults                                         // resolveProcedureDefaults
+	ruleId_ValidateDropConstraintOwnership                                  // validateDropConstraintOwnership
+	ruleId_ValidateOnConflictArbiter                                        // validateOnConflictArbiter
+	ruleId_AssignNullsNotDistinctUniqueChecks                               // assignNullsNotDistinctUniqueChecks
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -80,6 +81,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignInsertCasts, Apply: AssignInsertCasts},
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
+		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
 		analyzer.Rule{Id: ruleId_ValidateCreateFunction, Apply: ValidateCreateFunction},
 		analyzer.Rule{Id: ruleId_ValidateCreateSchema, Apply: ValidateCreateSchema},

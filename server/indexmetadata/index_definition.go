@@ -85,6 +85,9 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 	if includeColumns := IncludeColumns(index.Comment()); len(includeColumns) > 0 {
 		definition += " INCLUDE (" + strings.Join(includeColumns, ", ") + ")"
 	}
+	if NullsNotDistinct(index.Comment()) {
+		definition += " NULLS NOT DISTINCT"
+	}
 	if relOptions := relOptionsDefinition(index.Comment()); relOptions != "" {
 		definition += " WITH (" + relOptions + ")"
 	}
