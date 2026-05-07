@@ -119,4 +119,47 @@ func TestSelectStarFieldMetadata(t *testing.T) {
 		// path isn't fixed yet — this subtest documents the gap.
 		t.Skip("Source attribution through AliasedExpr is a follow-up; SELECT * is the dominant editor case")
 	})
+
+	t.Run("reordered SELECT preserves real attnum, not result position", func(t *testing.T) {
+		// Resolve attnum for each base column from pg_attribute first
+		// so the assertion fails with a concrete diff if the wire
+		// metadata drifts from the catalog.
+		var attHits, attName, attID int16
+		require.NoError(t, conn.QueryRow(context.Background(),
+			`SELECT a.attnum FROM pg_catalog.pg_attribute a
+			 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+			 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			 WHERE c.relname = 'editable' AND n.nspname = 'public' AND a.attname = 'hits';`).
+			Scan(&attHits))
+		require.NoError(t, conn.QueryRow(context.Background(),
+			`SELECT a.attnum FROM pg_catalog.pg_attribute a
+			 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+			 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			 WHERE c.relname = 'editable' AND n.nspname = 'public' AND a.attname = 'name';`).
+			Scan(&attName))
+		require.NoError(t, conn.QueryRow(context.Background(),
+			`SELECT a.attnum FROM pg_catalog.pg_attribute a
+			 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
+			 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			 WHERE c.relname = 'editable' AND n.nspname = 'public' AND a.attname = 'id';`).
+			Scan(&attID))
+		require.NotZero(t, attHits)
+		require.NotZero(t, attName)
+		require.NotZero(t, attID)
+
+		rows, err := conn.Query(ctx, "SELECT hits, name, id FROM editable;")
+		require.NoError(t, err)
+		defer rows.Close()
+		fields := rows.FieldDescriptions()
+		require.Len(t, fields, 3)
+		// Each column must report its source-table attnum, not the
+		// position within the SELECT list (which would have been
+		// 1, 2, 3 — happens to be wrong for at least 'id' here).
+		require.Equal(t, uint16(attHits), fields[0].TableAttributeNumber,
+			"hits attnum: column 0")
+		require.Equal(t, uint16(attName), fields[1].TableAttributeNumber,
+			"name attnum: column 1")
+		require.Equal(t, uint16(attID), fields[2].TableAttributeNumber,
+			"id attnum: column 2")
+	})
 }

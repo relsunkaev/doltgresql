@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"runtime/trace"
+	"strings"
 	"sync"
 	"time"
 
@@ -605,36 +606,56 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 	return fields, nil
 }
 
-// lookupTableOIDForSource returns the pg_class OID for the source
-// table backing a result column, or 0 when the source cannot be
-// resolved. GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) read
-// RowDescription.TableOID to decide whether a result-set grid is
-// editable; without it they refuse edits with messages like
-// "could not resolve table name." The OID is constructed the same
-// way pg_class advertises it so a follow-up pg_class lookup by the
-// client resolves to the matching row.
+// sourceTableMeta caches the wire-protocol metadata Doltgres has to
+// emit per result column whose schema entry advertises a Source: the
+// table OID (so GUI editors can resolve the column back to a base
+// table) and the attnum-by-column-name map (so reordered SELECT
+// projections still report each column's true source-table attnum
+// instead of its position in the result set).
+type sourceTableMeta struct {
+	tableOID uint32
+	attnums  map[string]uint16
+}
+
+func (m *sourceTableMeta) attnumOf(columnName string) (uint16, bool) {
+	if m == nil || m.attnums == nil {
+		return 0, false
+	}
+	if attnum, ok := m.attnums[strings.ToLower(columnName)]; ok {
+		return attnum, true
+	}
+	return 0, false
+}
+
+// lookupSourceTableMeta returns the cached (or freshly resolved)
+// table-OID + attnum metadata for source. Resolution walks the
+// session search_path (settings.GetCurrentSchemas), probes each
+// schema for the named table via the GMS provider, and on first
+// match builds an attnum map from the resolved table's schema.
 //
-// Resolution walks the session search_path (settings.GetCurrentSchemas)
-// and probes each schema for the named table via the GMS provider.
-// The first hit wins, matching how PostgreSQL itself resolves an
-// unqualified table reference. Cached per-call so SELECT * pays the
+// GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) and ORM
+// migration tools (Drizzle Kit, Prisma db pull) inspect both
+// RowDescription.TableOID and TableAttributeNumber to map result
+// columns back to pg_class / pg_attribute. Without these populated
+// they refuse to offer cell edits with errors like "could not
+// resolve table name." Cached per-call so SELECT * pays the
 // search-path walk once per distinct source table.
-func lookupTableOIDForSource(ctx *sql.Context, source, databaseSource string, cache map[string]uint32) uint32 {
+func lookupSourceTableMeta(ctx *sql.Context, source, databaseSource string, cache map[string]*sourceTableMeta) *sourceTableMeta {
 	if cached, ok := cache[source]; ok {
 		return cached
 	}
-	oid := resolveTableOID(ctx, source, databaseSource)
-	cache[source] = oid
-	return oid
+	meta := resolveSourceTableMeta(ctx, source, databaseSource)
+	cache[source] = meta
+	return meta
 }
 
-func resolveTableOID(ctx *sql.Context, source, databaseSource string) uint32 {
+func resolveSourceTableMeta(ctx *sql.Context, source, databaseSource string) *sourceTableMeta {
 	if source == "" {
-		return 0
+		return nil
 	}
 	doltSession, ok := ctx.Session.(*dsess.DoltSession)
 	if !ok {
-		return 0
+		return nil
 	}
 	dbName := databaseSource
 	if dbName == "" {
@@ -642,11 +663,11 @@ func resolveTableOID(ctx *sql.Context, source, databaseSource string) uint32 {
 	}
 	database, err := doltSession.Provider().Database(ctx, dbName)
 	if err != nil {
-		return 0
+		return nil
 	}
 	schemaDB, ok := database.(sql.SchemaDatabase)
 	if !ok {
-		return 0
+		return nil
 	}
 	searchPath, err := settings.GetCurrentSchemas(ctx)
 	if err != nil || len(searchPath) == 0 {
@@ -657,12 +678,24 @@ func resolveTableOID(ctx *sql.Context, source, databaseSource string) uint32 {
 		if err != nil || !ok {
 			continue
 		}
-		if _, found, err := schema.GetTableInsensitive(ctx, source); err != nil || !found {
+		table, found, err := schema.GetTableInsensitive(ctx, source)
+		if err != nil || !found {
 			continue
 		}
-		return id.Cache().ToOID(id.NewTable(schema.SchemaName(), source).AsId())
+		tableSchema := table.Schema(ctx)
+		attnums := make(map[string]uint16, len(tableSchema))
+		for i, col := range tableSchema {
+			// PostgreSQL attnums start at 1; Doltgres has no
+			// system columns to skip so the offset matches the
+			// positional index directly.
+			attnums[strings.ToLower(col.Name)] = uint16(i + 1)
+		}
+		return &sourceTableMeta{
+			tableOID: id.Cache().ToOID(id.NewTable(schema.SchemaName(), source).AsId()),
+			attnums:  attnums,
+		}
 	}
-	return 0
+	return nil
 }
 
 // resultForOkIter reads a maximum of one result row from a result iterator.
