@@ -86,6 +86,19 @@ The write-heavy sysbench gap is dominated by the GMS/Dolt auto-commit path:
 3. Dolt commits the dirty working set through working-set validation and root
    persistence.
 
+A follow-up `oltp_insert` CPU profile on the same committed tree reproduced
+the benchmark throughput at 157.86 QPS. The cumulative profile showed the hot
+commit chain under
+`server.resultForOkIter` ->
+`rowexec.(*TransactionCommittingIter).Close` ->
+`dsess.(*DoltSession).CommitTransaction` ->
+`doltdb.(*DoltDB).UpdateWorkingSet` ->
+`nbs.(*journalWriter).commitRootHashUnlocked`. Within that path,
+`commitRootHashUnlocked` spent sampled time flushing and syncing the journal.
+The visible Doltgres protocol/analyzer work in the same profile was small
+relative to the working-set persistence path and cannot close the write gap by
+itself.
+
 Closing the remaining write gap enough to hit parity would require a
 guarantee-preserving improvement in Dolt or GMS transaction / working-set
 persistence internals. Doltgres should not shortcut conflict checks,
