@@ -22,22 +22,26 @@ import (
 )
 
 func jsonbGinExtractEncodedTokensFromSQLValue(ctx *sql.Context, value any, opClass string) ([]string, error) {
+	return jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx, value, opClass, nil)
+}
+
+func jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx *sql.Context, value any, opClass string, scratch *jsonbgin.EncodedTokenScratch) ([]string, error) {
 	unwrapped, err := sql.UnwrapAny(ctx, value)
 	if err != nil {
 		return nil, err
 	}
 	switch value := unwrapped.(type) {
 	case pgtypes.JsonDocument:
-		return jsonbgin.ExtractValueEncoded(value.Value, opClass)
+		return scratch.ExtractValueEncoded(value.Value, opClass)
 	case pgtypes.JsonValue:
-		return jsonbgin.ExtractValueEncoded(value, opClass)
+		return scratch.ExtractValueEncoded(value, opClass)
 	case nil:
-		return jsonbgin.ExtractValueEncoded(pgtypes.JsonValueNull(0), opClass)
+		return scratch.ExtractValueEncoded(pgtypes.JsonValueNull(0), opClass)
 	default:
 		doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, unwrapped)
 		if err != nil {
 			return nil, err
 		}
-		return jsonbgin.ExtractValueEncoded(doc.Value, opClass)
+		return scratch.ExtractValueEncoded(doc.Value, opClass)
 	}
 }

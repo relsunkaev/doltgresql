@@ -22,7 +22,7 @@ import (
 
 const defaultChunkedPostingStoreRowsPerChunk = 256
 
-// ChunkedPostingStore is the in-memory model for JSONB GIN v2 posting-list
+// ChunkedPostingStore is the in-memory model for JSONB GIN posting-list
 // chunks. It mirrors PostingStore's candidate semantics while materializing
 // sorted row-reference chunks on demand.
 type ChunkedPostingStore struct {

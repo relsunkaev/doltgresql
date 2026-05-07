@@ -67,6 +67,42 @@ func TestPostingChunkDoesNotRetainCallerBuffers(t *testing.T) {
 	require.Equal(t, []byte("row/1"), decoded.RowRefs[0])
 }
 
+func TestPostingChunkForStorageOmitsDecodedRowRefs(t *testing.T) {
+	rowRefs := [][]byte{[]byte("row/1"), []byte("row/2")}
+
+	chunk, err := EncodePostingChunkForStorage(rowRefs)
+	require.NoError(t, err)
+	require.Equal(t, uint32(len(rowRefs)), chunk.RowCount)
+	require.Equal(t, []byte("row/1"), chunk.FirstRowRef)
+	require.Equal(t, []byte("row/2"), chunk.LastRowRef)
+	require.Empty(t, chunk.RowRefs)
+	require.NotEmpty(t, chunk.Payload)
+
+	rowRefs[0][0] = 'x'
+	require.Equal(t, []byte("row/1"), chunk.FirstRowRef)
+
+	decoded, err := DecodePostingChunk(chunk.Payload)
+	require.NoError(t, err)
+	require.Equal(t, [][]byte{[]byte("row/1"), []byte("row/2")}, decoded.RowRefs)
+}
+
+func TestPostingChunkDecodeRowReferencesBorrowsPayload(t *testing.T) {
+	rowRefs := [][]byte{[]byte("row/1"), []byte("row/2")}
+
+	chunk, err := EncodePostingChunk(rowRefs)
+	require.NoError(t, err)
+
+	decoded, err := DecodePostingChunkRowReferences(chunk.Payload)
+	require.NoError(t, err)
+	require.Equal(t, chunk.FormatVersion, decoded.FormatVersion)
+	require.Equal(t, chunk.RowCount, decoded.RowCount)
+	require.Equal(t, chunk.Checksum, decoded.Checksum)
+	require.Equal(t, rowRefs, decoded.RowRefs)
+
+	decoded.RowRefs[0][0] = 'x'
+	require.Equal(t, byte('x'), chunk.Payload[postingChunkV1HeaderSize+postingChunkV1LengthSize])
+}
+
 func TestPostingChunkEmptyRoundTrip(t *testing.T) {
 	chunk, err := EncodePostingChunk(nil)
 	require.NoError(t, err)

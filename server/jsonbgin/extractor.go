@@ -45,6 +45,15 @@ const (
 	TokenKindPathValue TokenKind = "path-value"
 )
 
+const defaultEncodedTokenCapacity = 64
+
+// EncodedTokenScratch lets bulk callers reuse the transient slice and de-dupe
+// map needed while extracting encoded tokens for one JSONB value.
+type EncodedTokenScratch struct {
+	encodedTokens          []string
+	encodedIndependentSeen map[encodedIndependentToken]struct{}
+}
+
 // Token is the deterministic JSONB GIN key emitted for one indexed JSONB
 // document. Path is only populated for path/value opclass tokens.
 type Token struct {
@@ -91,8 +100,9 @@ func ExtractValue(value pgtypes.JsonValue, opClass string) ([]Token, error) {
 // value using opClass.
 func ExtractValueEncoded(value pgtypes.JsonValue, opClass string) ([]string, error) {
 	extractor := extractor{
-		opClass: indexmetadata.NormalizeOpClass(opClass),
-		encoded: true,
+		opClass:       indexmetadata.NormalizeOpClass(opClass),
+		encodedTokens: make([]string, 0, defaultEncodedTokenCapacity),
+		encoded:       true,
 	}
 
 	switch extractor.opClass {
@@ -109,6 +119,45 @@ func ExtractValueEncoded(value pgtypes.JsonValue, opClass string) ([]string, err
 	}
 
 	return normalizeEncodedTokens(extractor.encodedTokens), nil
+}
+
+// ExtractValueEncoded extracts encoded tokens using reusable scratch storage.
+// The returned slice is valid until the next call on scratch.
+func (s *EncodedTokenScratch) ExtractValueEncoded(value pgtypes.JsonValue, opClass string) ([]string, error) {
+	if s == nil {
+		return ExtractValueEncoded(value, opClass)
+	}
+	if cap(s.encodedTokens) < defaultEncodedTokenCapacity {
+		s.encodedTokens = make([]string, 0, defaultEncodedTokenCapacity)
+	} else {
+		s.encodedTokens = s.encodedTokens[:0]
+	}
+	for key := range s.encodedIndependentSeen {
+		delete(s.encodedIndependentSeen, key)
+	}
+	extractor := extractor{
+		opClass:                indexmetadata.NormalizeOpClass(opClass),
+		encodedTokens:          s.encodedTokens,
+		encodedIndependentSeen: s.encodedIndependentSeen,
+		encoded:                true,
+	}
+
+	switch extractor.opClass {
+	case indexmetadata.OpClassJsonbOps:
+		if err := extractor.extractJsonbOps(value, false); err != nil {
+			return nil, err
+		}
+	case indexmetadata.OpClassJsonbPathOps:
+		if err := extractor.extractJsonbPathOps(value); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported JSONB GIN opclass %q", opClass)
+	}
+
+	s.encodedTokens = normalizeEncodedTokens(extractor.encodedTokens)
+	s.encodedIndependentSeen = extractor.encodedIndependentSeen
+	return s.encodedTokens, nil
 }
 
 type extractor struct {
@@ -219,7 +268,7 @@ func (e *extractor) addIndependent(kind TokenKind, value string) {
 			return
 		}
 		if e.encodedIndependentSeen == nil {
-			e.encodedIndependentSeen = make(map[encodedIndependentToken]struct{})
+			e.encodedIndependentSeen = make(map[encodedIndependentToken]struct{}, defaultEncodedTokenCapacity)
 		}
 		e.encodedIndependentSeen[seenKey] = struct{}{}
 		e.encodedTokens = append(e.encodedTokens, encodeTokenParts(e.opClass, kind, nil, value))

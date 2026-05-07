@@ -29,8 +29,7 @@ func EncodeToken(token Token) string {
 }
 
 func encodeTokenParts(opClass string, kind TokenKind, path []string, value string) string {
-	pathCount := strconv.Itoa(len(path))
-	size := encodedPartSize(opClass) + encodedPartSize(string(kind)) + encodedPartSize(pathCount) + encodedPartSize(value)
+	size := encodedPartSize(opClass) + encodedPartSize(string(kind)) + encodedIntPartSize(len(path)) + encodedPartSize(value)
 	for _, part := range path {
 		size += encodedPartSize(part)
 	}
@@ -39,7 +38,7 @@ func encodeTokenParts(opClass string, kind TokenKind, path []string, value strin
 	sb.Grow(size)
 	writeEncodedPart(&sb, opClass)
 	writeEncodedPart(&sb, string(kind))
-	writeEncodedPart(&sb, pathCount)
+	writeEncodedIntPart(&sb, len(path))
 	for _, part := range path {
 		writeEncodedPart(&sb, part)
 	}
@@ -48,13 +47,42 @@ func encodeTokenParts(opClass string, kind TokenKind, path []string, value strin
 }
 
 func encodedPartSize(part string) int {
-	return len(strconv.Itoa(len(part))) + 1 + len(part)
+	return decimalDigitCount(len(part)) + 1 + len(part)
+}
+
+func encodedIntPartSize(value int) int {
+	digitCount := decimalDigitCount(value)
+	return decimalDigitCount(digitCount) + 1 + digitCount
 }
 
 func writeEncodedPart(sb *strings.Builder, part string) {
-	sb.WriteString(strconv.Itoa(len(part)))
+	writeDecimal(sb, len(part))
 	sb.WriteByte(':')
 	sb.WriteString(part)
+}
+
+func writeEncodedIntPart(sb *strings.Builder, value int) {
+	writeDecimal(sb, decimalDigitCount(value))
+	sb.WriteByte(':')
+	writeDecimal(sb, value)
+}
+
+func writeDecimal(sb *strings.Builder, value int) {
+	var buf [20]byte
+	digits := strconv.AppendInt(buf[:0], int64(value), 10)
+	_, _ = sb.Write(digits)
+}
+
+func decimalDigitCount(value int) int {
+	if value < 10 {
+		return 1
+	}
+	count := 0
+	for value > 0 {
+		count++
+		value /= 10
+	}
+	return count
 }
 
 // DecodeToken decodes a storage key emitted by EncodeToken.
