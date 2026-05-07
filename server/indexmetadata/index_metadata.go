@@ -151,6 +151,21 @@ type Metadata struct {
 	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
+
+	// NotReady mirrors PostgreSQL's `pg_index.indisready=false`: the
+	// index exists in the catalog but writers must not maintain it
+	// yet. Used during the warmup window of CREATE INDEX
+	// CONCURRENTLY before flipping it on. Stored inverted so older
+	// comments (no build-state field) deserialize as ready=true,
+	// preserving backwards compatibility for every pre-existing index.
+	NotReady bool `json:"notReady,omitempty"`
+
+	// Invalid mirrors PostgreSQL's `pg_index.indisvalid=false`: the
+	// planner must skip this index for query rewriting. Set during
+	// the build phase of CREATE INDEX CONCURRENTLY and on poisoned
+	// indexes whose backfill failed. Stored inverted for the same
+	// backwards-compatibility reason as NotReady.
+	Invalid bool `json:"invalid,omitempty"`
 }
 
 // IndexColumnOption stores PostgreSQL per-column index options.
@@ -347,6 +362,28 @@ func RelOptions(comment string) []string {
 func NullsNotDistinct(comment string) bool {
 	metadata, ok := DecodeComment(comment)
 	return ok && metadata.NullsNotDistinct
+}
+
+// IsReady reports PostgreSQL's pg_index.indisready: writers maintain
+// the index. Indexes with no metadata (the legacy comment shape) and
+// indexes whose metadata does not set NotReady both default to ready;
+// only indexes mid-CREATE-INDEX-CONCURRENTLY return false.
+func IsReady(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return true
+	}
+	return !metadata.NotReady
+}
+
+// IsValid reports PostgreSQL's pg_index.indisvalid: the planner may use
+// the index for query rewriting. Same default rule as IsReady.
+func IsValid(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return true
+	}
+	return !metadata.Invalid
 }
 
 // StatisticsTargets returns the PostgreSQL per-attribute statistics targets encoded for an index.

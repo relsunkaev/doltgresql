@@ -268,21 +268,24 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 	if indclass == nil {
 		indclass = []any{}
 	}
-	indoption := indexmetadata.IndOptionValues(index.index.Comment(), int(index.indnkeyatts))
+	comment := index.index.Comment()
+	indoption := indexmetadata.IndOptionValues(comment, int(index.indnkeyatts))
+	indisvalid := indexmetadata.IsValid(comment)
+	indisready := indexmetadata.IsReady(comment)
 	return sql.Row{
 		index.indexOid,         // indexrelid
 		index.tableOid,         // indrelid
 		index.indnatts,         // indnatts
 		index.indnkeyatts,      // indnkeyatts
 		index.index.IsUnique(), // indisunique
-		indexmetadata.NullsNotDistinct(index.index.Comment()), // indnullsnotdistinct
+		indexmetadata.NullsNotDistinct(comment), // indnullsnotdistinct
 		index.indisprimary,     // indisprimary
 		false,                  // indisexclusion
 		index.index.IsUnique(), // indimmediate
 		false,                  // indisclustered
-		true,                   // indisvalid
+		indisvalid,             // indisvalid
 		false,                  // indcheckxmin
-		true,                   // indisready
+		indisready,             // indisready
 		true,                   // indislive
 		index.indisreplident,   // indisreplident
 		index.indkey,           // indkey

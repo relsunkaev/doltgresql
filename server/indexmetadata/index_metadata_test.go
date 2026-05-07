@@ -287,6 +287,67 @@ func TestIsSupportedCollation(t *testing.T) {
 	}
 }
 
+func TestBuildStateDefaultsToReadyAndValid(t *testing.T) {
+	// A fresh metadata with no build flags should report as ready+valid
+	// — that is the steady state for every normal CREATE INDEX.
+	comment := EncodeComment(Metadata{AccessMethod: "btree"})
+	if !IsReady(comment) {
+		t.Fatal("default-state index should report as ready (writers maintain it)")
+	}
+	if !IsValid(comment) {
+		t.Fatal("default-state index should report as valid (planner may use it)")
+	}
+
+	// An index whose author never wrote build-state bits at all (the
+	// pre-CONCURRENTLY format) must keep deserializing as ready+valid.
+	legacy := commentPrefix + `{"accessMethod":"btree"}`
+	if !IsReady(legacy) {
+		t.Fatal("legacy comment should default to ready")
+	}
+	if !IsValid(legacy) {
+		t.Fatal("legacy comment should default to valid")
+	}
+}
+
+func TestBuildStateRoundTrip(t *testing.T) {
+	tests := []struct {
+		name      string
+		notReady  bool
+		invalid   bool
+		wantReady bool
+		wantValid bool
+	}{
+		{name: "ready_valid", notReady: false, invalid: false, wantReady: true, wantValid: true},
+		{name: "ready_invalid", notReady: false, invalid: true, wantReady: true, wantValid: false},
+		{name: "notready_invalid", notReady: true, invalid: true, wantReady: false, wantValid: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			comment := EncodeComment(Metadata{
+				AccessMethod: "btree",
+				NotReady:     tt.notReady,
+				Invalid:      tt.invalid,
+			})
+			metadata, ok := DecodeComment(comment)
+			if !ok {
+				t.Fatal("expected metadata to decode")
+			}
+			if metadata.NotReady != tt.notReady {
+				t.Fatalf("expected NotReady=%v, got %v", tt.notReady, metadata.NotReady)
+			}
+			if metadata.Invalid != tt.invalid {
+				t.Fatalf("expected Invalid=%v, got %v", tt.invalid, metadata.Invalid)
+			}
+			if got := IsReady(comment); got != tt.wantReady {
+				t.Fatalf("expected IsReady=%v, got %v", tt.wantReady, got)
+			}
+			if got := IsValid(comment); got != tt.wantValid {
+				t.Fatalf("expected IsValid=%v, got %v", tt.wantValid, got)
+			}
+		})
+	}
+}
+
 func TestIndOptionValue(t *testing.T) {
 	tests := []struct {
 		name   string

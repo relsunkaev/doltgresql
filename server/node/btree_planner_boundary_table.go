@@ -57,18 +57,22 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	if err != nil {
 		return table, false, err
 	}
-	hasUnsafeIndex := false
+	needsWrap := false
 	patternOpLookups := make([]btreePatternOpLookup, 0)
 	for _, index := range indexes {
+		if hidePlannerIndex(index) {
+			needsWrap = true
+			continue
+		}
 		if unsafeBtreePlannerIndex(index) {
-			hasUnsafeIndex = true
+			needsWrap = true
 			if lookup, ok := patternOpClassLookup(ctx, index, table.Schema(ctx)); ok {
 				patternOpLookups = append(patternOpLookups, lookup)
 			}
 			continue
 		}
 	}
-	if !hasUnsafeIndex {
+	if !needsWrap {
 		return table, false, nil
 	}
 	if len(patternOpLookups) == 0 {
@@ -145,11 +149,26 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 	}
 	filtered := make([]sql.Index, 0, len(indexes))
 	for _, index := range indexes {
-		if !unsafeBtreePlannerIndex(index) {
-			filtered = append(filtered, index)
+		if hidePlannerIndex(index) {
+			continue
 		}
+		if unsafeBtreePlannerIndex(index) {
+			continue
+		}
+		filtered = append(filtered, index)
 	}
 	return filtered, nil
+}
+
+// hidePlannerIndex reports whether an index must not be considered by
+// the planner. This covers PostgreSQL's pg_index.indisvalid=false and
+// indisready=false states: an index that is mid-build (CREATE INDEX
+// CONCURRENTLY) or whose backfill failed must remain in the catalog
+// (so writers can keep maintaining it) but must not be used to satisfy
+// query plans.
+func hidePlannerIndex(index sql.Index) bool {
+	comment := index.Comment()
+	return !indexmetadata.IsValid(comment) || !indexmetadata.IsReady(comment)
 }
 
 func (t *BtreePlannerBoundaryTable) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
