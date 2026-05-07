@@ -615,11 +615,45 @@ func (p *jsonEncodedTokenParser) parseNumber() (string, error) {
 	for p.pos < len(p.input) && isJSONNumberByte(p.input[p.pos]) {
 		p.pos++
 	}
-	number, err := decimal.NewFromString(string(p.input[start:p.pos]))
+	raw := p.input[start:p.pos]
+	if !bytes.ContainsAny(raw, ".eE") {
+		return canonicalJSONIntegerLiteral(raw)
+	}
+	number, err := decimal.NewFromString(string(raw))
 	if err != nil {
 		return "", err
 	}
 	return number.String(), nil
+}
+
+func canonicalJSONIntegerLiteral(raw []byte) (string, error) {
+	if len(raw) == 0 {
+		return "", fmt.Errorf("malformed JSON number")
+	}
+	start := 0
+	negative := false
+	if raw[0] == '-' {
+		negative = true
+		start = 1
+		if len(raw) == 1 {
+			return "", fmt.Errorf("malformed JSON number")
+		}
+	}
+	if raw[start] < '0' || raw[start] > '9' {
+		return "", fmt.Errorf("malformed JSON number")
+	}
+	if raw[start] == '0' && len(raw[start:]) > 1 {
+		return "", fmt.Errorf("malformed JSON number")
+	}
+	for i := start + 1; i < len(raw); i++ {
+		if raw[i] < '0' || raw[i] > '9' {
+			return "", fmt.Errorf("malformed JSON number")
+		}
+	}
+	if negative && len(raw[start:]) == 1 && raw[start] == '0' {
+		return "0", nil
+	}
+	return string(raw), nil
 }
 
 func (p *jsonEncodedTokenParser) skipWhitespace() {

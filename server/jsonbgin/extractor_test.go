@@ -197,7 +197,7 @@ func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
 		},
 		{
 			name:  "number_canonicalization",
-			input: `{"n":1e3,"small":1.25,"arr":[-2]}`,
+			input: `{"n":1e3,"small":1.25,"arr":[-2],"zero":-0}`,
 		},
 		{
 			name:  "scalar_string",
@@ -242,6 +242,23 @@ func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
 					require.NoError(t, err)
 					require.ElementsMatch(t, want, jsonEncoded)
 				})
+			}
+		})
+	}
+}
+
+func TestExtractJSONEncodedRejectsMalformedNumbers(t *testing.T) {
+	tests := []string{
+		`{"n":01}`,
+		`{"n":-}`,
+		`{"n":1+2}`,
+	}
+	for _, input := range tests {
+		t.Run(input, func(t *testing.T) {
+			for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+				var scratch EncodedTokenScratch
+				_, err := scratch.ExtractJSONEncoded([]byte(input), opClass)
+				require.Error(t, err)
 			}
 		})
 	}

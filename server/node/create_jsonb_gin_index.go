@@ -46,7 +46,7 @@ const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
 const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
 const jsonbGinPostingChunkRowsPerChunk = 512
-const jsonbGinPostingChunkBuildSpillEntries = 65536
+const jsonbGinPostingChunkBuildSpillEntries = 262144
 const jsonbGinPostingBuildContextCheckInterval = 1024
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
@@ -880,7 +880,8 @@ type jsonbGinPostingChunkEntryIterator interface {
 
 type jsonbGinPostingChunkEntrySorter struct {
 	maxEntries int
-	entries    []jsonbGinPostingChunkBuildEntry
+	entryCount int
+	buckets    map[string][][]byte
 	runs       []string
 	tempDir    string
 }
@@ -915,13 +916,14 @@ func (s *jsonbGinPostingChunkEntrySorter) AddRowTokens(tokens []string, rowRef [
 	if len(rowRef) == 0 {
 		return errors.Errorf("JSONB GIN posting row reference cannot be empty")
 	}
+	if s.buckets == nil {
+		s.buckets = make(map[string][][]byte)
+	}
 	rowRefCopy := append([]byte(nil), rowRef...)
 	for _, token := range tokens {
-		s.entries = append(s.entries, jsonbGinPostingChunkBuildEntry{
-			token:  token,
-			rowRef: rowRefCopy,
-		})
-		if len(s.entries) >= s.maxEntries {
+		s.buckets[token] = append(s.buckets[token], rowRefCopy)
+		s.entryCount++
+		if s.entryCount >= s.maxEntries {
 			if err := s.flushRun(); err != nil {
 				return err
 			}
@@ -932,8 +934,7 @@ func (s *jsonbGinPostingChunkEntrySorter) AddRowTokens(tokens []string, rowRef [
 
 func (s *jsonbGinPostingChunkEntrySorter) Iterator() (jsonbGinPostingChunkEntryIterator, error) {
 	if len(s.runs) == 0 {
-		sortPostingChunkBuildEntries(s.entries)
-		return &jsonbGinPostingChunkMemoryIterator{entries: s.entries}, nil
+		return newJsonbGinPostingChunkMemoryIterator(s.buckets), nil
 	}
 	if err := s.flushRun(); err != nil {
 		return nil, err
@@ -943,8 +944,8 @@ func (s *jsonbGinPostingChunkEntrySorter) Iterator() (jsonbGinPostingChunkEntryI
 
 func (s *jsonbGinPostingChunkEntrySorter) Close() error {
 	var ret error
-	clear(s.entries)
-	s.entries = nil
+	s.clearBuckets()
+	s.buckets = nil
 	for _, run := range s.runs {
 		if err := os.Remove(run); err != nil && !os.IsNotExist(err) && ret == nil {
 			ret = err
@@ -968,21 +969,30 @@ func (s *jsonbGinPostingChunkEntrySorter) appendRunsFrom(other *jsonbGinPostingC
 }
 
 func (s *jsonbGinPostingChunkEntrySorter) flushRun() error {
-	if len(s.entries) == 0 {
+	if s.entryCount == 0 {
 		return nil
 	}
-	sortPostingChunkBuildEntries(s.entries)
 	file, err := os.CreateTemp(s.tempDir, "doltgres-jsonb-gin-posting-chunks-*.run")
 	if err != nil {
 		return err
 	}
 	path := file.Name()
 	writer := bufio.NewWriter(file)
-	for _, entry := range s.entries {
-		if err = writePostingChunkBuildEntry(writer, entry); err != nil {
-			_ = file.Close()
-			_ = os.Remove(path)
-			return err
+	tokens := sortedPostingChunkBucketTokens(s.buckets)
+	for _, token := range tokens {
+		rowRefs := s.buckets[token]
+		sortPostingChunkBucketRowRefs(rowRefs)
+		var previous []byte
+		for _, rowRef := range rowRefs {
+			if previous != nil && bytes.Equal(previous, rowRef) {
+				continue
+			}
+			previous = rowRef
+			if err = writePostingChunkBuildEntry(writer, jsonbGinPostingChunkBuildEntry{token: token, rowRef: rowRef}); err != nil {
+				_ = file.Close()
+				_ = os.Remove(path)
+				return err
+			}
 		}
 	}
 	if err = writer.Flush(); err != nil {
@@ -995,14 +1005,30 @@ func (s *jsonbGinPostingChunkEntrySorter) flushRun() error {
 		return err
 	}
 	s.runs = append(s.runs, path)
-	clear(s.entries)
-	s.entries = s.entries[:0]
+	s.clearBuckets()
 	return nil
 }
 
-func sortPostingChunkBuildEntries(entries []jsonbGinPostingChunkBuildEntry) {
-	sort.Slice(entries, func(i, j int) bool {
-		return jsonbGinPostingChunkBuildEntryLess(entries[i], entries[j])
+func (s *jsonbGinPostingChunkEntrySorter) clearBuckets() {
+	for token, rowRefs := range s.buckets {
+		clear(rowRefs)
+		delete(s.buckets, token)
+	}
+	s.entryCount = 0
+}
+
+func sortedPostingChunkBucketTokens(buckets map[string][][]byte) []string {
+	tokens := make([]string, 0, len(buckets))
+	for token := range buckets {
+		tokens = append(tokens, token)
+	}
+	sort.Strings(tokens)
+	return tokens
+}
+
+func sortPostingChunkBucketRowRefs(rowRefs [][]byte) {
+	sort.Slice(rowRefs, func(i, j int) bool {
+		return bytes.Compare(rowRefs[i], rowRefs[j]) < 0
 	})
 }
 
@@ -1058,20 +1084,50 @@ func readPostingChunkBuildEntry(reader *bufio.Reader) (jsonbGinPostingChunkBuild
 }
 
 type jsonbGinPostingChunkMemoryIterator struct {
-	entries []jsonbGinPostingChunkBuildEntry
-	pos     int
+	buckets        map[string][][]byte
+	tokens         []string
+	tokenPos       int
+	currentToken   string
+	currentRowRefs [][]byte
+	rowRefPos      int
+	previousRowRef []byte
+}
+
+func newJsonbGinPostingChunkMemoryIterator(buckets map[string][][]byte) *jsonbGinPostingChunkMemoryIterator {
+	return &jsonbGinPostingChunkMemoryIterator{
+		buckets: buckets,
+		tokens:  sortedPostingChunkBucketTokens(buckets),
+	}
 }
 
 func (i *jsonbGinPostingChunkMemoryIterator) Next() (jsonbGinPostingChunkBuildEntry, error) {
-	if i.pos >= len(i.entries) {
-		return jsonbGinPostingChunkBuildEntry{}, io.EOF
+	for {
+		if i.rowRefPos < len(i.currentRowRefs) {
+			rowRef := i.currentRowRefs[i.rowRefPos]
+			i.rowRefPos++
+			if i.previousRowRef != nil && bytes.Equal(i.previousRowRef, rowRef) {
+				continue
+			}
+			i.previousRowRef = rowRef
+			return jsonbGinPostingChunkBuildEntry{token: i.currentToken, rowRef: rowRef}, nil
+		}
+		if i.tokenPos >= len(i.tokens) {
+			return jsonbGinPostingChunkBuildEntry{}, io.EOF
+		}
+		i.currentToken = i.tokens[i.tokenPos]
+		i.tokenPos++
+		i.currentRowRefs = i.buckets[i.currentToken]
+		sortPostingChunkBucketRowRefs(i.currentRowRefs)
+		i.rowRefPos = 0
+		i.previousRowRef = nil
 	}
-	entry := i.entries[i.pos]
-	i.pos++
-	return entry, nil
 }
 
 func (i *jsonbGinPostingChunkMemoryIterator) Close() error {
+	clear(i.tokens)
+	i.tokens = nil
+	i.currentRowRefs = nil
+	i.previousRowRef = nil
 	return nil
 }
 
