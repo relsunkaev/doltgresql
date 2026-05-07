@@ -41,6 +41,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
@@ -49,6 +51,7 @@ import (
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/settings"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -527,6 +530,11 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 		return nil, err
 	}
 
+	// sourceSchemaCache memoizes the (table-name -> table-OID) lookup
+	// across the columns of a single result so SELECT * never walks
+	// search_path more than once per source table.
+	sourceSchemaCache := make(map[string]uint32)
+
 	fields := make([]pgproto3.FieldDescription, len(s))
 	for i, c := range s {
 		var oid uint32
@@ -569,9 +577,13 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 			}
 		}
 
+		var tableOID uint32
+		if c.Source != "" {
+			tableOID = lookupTableOIDForSource(ctx, c.Source, c.DatabaseSource, sourceSchemaCache)
+		}
 		fields[i] = pgproto3.FieldDescription{
 			Name:                 []byte(colName),
-			TableOID:             uint32(0),
+			TableOID:             tableOID,
 			TableAttributeNumber: tableAttributeNumber,
 			DataTypeOID:          oid,
 			DataTypeSize:         dataTypeSize,
@@ -581,6 +593,66 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 	}
 
 	return fields, nil
+}
+
+// lookupTableOIDForSource returns the pg_class OID for the source
+// table backing a result column, or 0 when the source cannot be
+// resolved. GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) read
+// RowDescription.TableOID to decide whether a result-set grid is
+// editable; without it they refuse edits with messages like
+// "could not resolve table name." The OID is constructed the same
+// way pg_class advertises it so a follow-up pg_class lookup by the
+// client resolves to the matching row.
+//
+// Resolution walks the session search_path (settings.GetCurrentSchemas)
+// and probes each schema for the named table via the GMS provider.
+// The first hit wins, matching how PostgreSQL itself resolves an
+// unqualified table reference. Cached per-call so SELECT * pays the
+// search-path walk once per distinct source table.
+func lookupTableOIDForSource(ctx *sql.Context, source, databaseSource string, cache map[string]uint32) uint32 {
+	if cached, ok := cache[source]; ok {
+		return cached
+	}
+	oid := resolveTableOID(ctx, source, databaseSource)
+	cache[source] = oid
+	return oid
+}
+
+func resolveTableOID(ctx *sql.Context, source, databaseSource string) uint32 {
+	if source == "" {
+		return 0
+	}
+	doltSession, ok := ctx.Session.(*dsess.DoltSession)
+	if !ok {
+		return 0
+	}
+	dbName := databaseSource
+	if dbName == "" {
+		dbName = ctx.GetCurrentDatabase()
+	}
+	database, err := doltSession.Provider().Database(ctx, dbName)
+	if err != nil {
+		return 0
+	}
+	schemaDB, ok := database.(sql.SchemaDatabase)
+	if !ok {
+		return 0
+	}
+	searchPath, err := settings.GetCurrentSchemas(ctx)
+	if err != nil || len(searchPath) == 0 {
+		searchPath = []string{"public"}
+	}
+	for _, schemaName := range searchPath {
+		schema, ok, err := schemaDB.GetSchema(ctx, schemaName)
+		if err != nil || !ok {
+			continue
+		}
+		if _, found, err := schema.GetTableInsensitive(ctx, source); err != nil || !found {
+			continue
+		}
+		return id.Cache().ToOID(id.NewTable(schema.SchemaName(), source).AsId())
+	}
+	return 0
 }
 
 // resultForOkIter reads a maximum of one result row from a result iterator.
