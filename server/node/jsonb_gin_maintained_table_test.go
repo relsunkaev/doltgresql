@@ -87,78 +87,6 @@ func (w testPostingChunkBytesWrapper) Hash() interface{} {
 	return string(w.payload)
 }
 
-func TestJsonbGinPostingTokenLookupUsesIndex(t *testing.T) {
-	ctx := sql.NewEmptyContext()
-	wanted := jsonbgin.EncodeToken(jsonbgin.Token{
-		OpClass: indexmetadata.OpClassJsonbOps,
-		Kind:    jsonbgin.TokenKindKey,
-		Value:   "vip",
-	})
-	other := jsonbgin.EncodeToken(jsonbgin.Token{
-		OpClass: indexmetadata.OpClassJsonbOps,
-		Kind:    jsonbgin.TokenKindKey,
-		Value:   "draft",
-	})
-
-	table := &fakePostingTable{
-		rows: []sql.Row{
-			{wanted, "row/1"},
-			{wanted, "row/2"},
-			{other, "row/3"},
-		},
-	}
-
-	rowIDs, err := lookupPostingTokenRowIDs(ctx, table, wanted)
-	require.NoError(t, err)
-	require.Equal(t, map[string]struct{}{"row/1": {}, "row/2": {}}, rowIDs)
-	require.Equal(t, 1, table.indexedAccesses)
-	require.Zero(t, table.fullScans)
-}
-
-func TestJsonbGinPostingTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
-	ctx := sql.NewEmptyContext()
-	vip := jsonbgin.EncodeToken(jsonbgin.Token{
-		OpClass: indexmetadata.OpClassJsonbOps,
-		Kind:    jsonbgin.TokenKindKey,
-		Value:   "vip",
-	})
-	draft := jsonbgin.EncodeToken(jsonbgin.Token{
-		OpClass: indexmetadata.OpClassJsonbOps,
-		Kind:    jsonbgin.TokenKindKey,
-		Value:   "draft",
-	})
-	other := jsonbgin.EncodeToken(jsonbgin.Token{
-		OpClass: indexmetadata.OpClassJsonbOps,
-		Kind:    jsonbgin.TokenKindKey,
-		Value:   "archived",
-	})
-
-	table := &fakePostingTable{
-		rows: []sql.Row{
-			{vip, "row/1", int32(1)},
-			{draft, "row/2", int32(2)},
-			{vip, "row/3", int32(3)},
-			{other, "row/4", int32(4)},
-		},
-	}
-
-	rowIDs, candidates, err := lookupPostingTokensRowIDsAndCandidates(ctx, table, []string{vip, draft})
-	require.NoError(t, err)
-	require.Equal(t, []map[string]struct{}{
-		{"row/1": {}, "row/3": {}},
-		{"row/2": {}},
-	}, rowIDs)
-	require.Equal(t, map[string]jsonbGinPostingCandidate{
-		"row/1": {rowID: "row/1", key: sql.Row{int32(1)}},
-		"row/3": {rowID: "row/3", key: sql.Row{int32(3)}},
-	}, candidates[0])
-	require.Equal(t, map[string]jsonbGinPostingCandidate{
-		"row/2": {rowID: "row/2", key: sql.Row{int32(2)}},
-	}, candidates[1])
-	require.Equal(t, 1, table.indexedAccesses)
-	require.Zero(t, table.fullScans)
-}
-
 func TestJsonbGinPostingChunkTokenBatchLookupUsesSingleIndexAccess(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	vip := jsonbgin.EncodeToken(jsonbgin.Token{
@@ -339,43 +267,6 @@ func TestJsonbGinPostingCandidateFromOpaqueRowReference(t *testing.T) {
 	require.Empty(t, candidate.key)
 }
 
-func TestJsonbGinPostingRowCompaction(t *testing.T) {
-	oldRows := []sql.Row{
-		{"token/a", "row/1", int32(1)},
-		{"token/b", "row/1", int32(1)},
-		{"token/c", "row/1", int32(1)},
-	}
-	newRows := []sql.Row{
-		{"token/b", "row/1", int32(1)},
-		{"token/c", "row/1", int32(1)},
-		{"token/d", "row/1", int32(1)},
-	}
-
-	require.Equal(t, []sql.Row{{"token/a", "row/1", int32(1)}}, compactPostingRowsToDelete(oldRows, newRows))
-	require.Equal(t, []sql.Row{{"token/d", "row/1", int32(1)}}, compactPostingRowsToInsert(oldRows, newRows))
-	require.Empty(t, compactPostingRowsToDelete(oldRows, oldRows))
-	require.Empty(t, compactPostingRowsToInsert(oldRows, oldRows))
-}
-
-func TestJsonbGinPostingEditorBatchesAndCancelsStatementRows(t *testing.T) {
-	ctx := sql.NewEmptyContext()
-	editor := &recordingPostingEditor{}
-	posting := jsonbGinPostingEditor{
-		editor:  editor,
-		pending: make(map[string]jsonbGinPendingPosting),
-	}
-
-	posting.stageInsert(sql.Row{"token/a", "row/1", int32(1)})
-	posting.stageDelete(sql.Row{"token/a", "row/1", int32(1)})
-	posting.stageDelete(sql.Row{"token/b", "row/2", int32(2)})
-	posting.stageInsert(sql.Row{"token/c", "row/3", int32(3)})
-
-	require.NoError(t, posting.flush(ctx))
-	require.Equal(t, []sql.Row{{"token/b", "row/2", int32(2)}}, editor.deleted)
-	require.Equal(t, []sql.Row{{"token/c", "row/3", int32(3)}}, editor.inserted)
-	require.Empty(t, posting.pending)
-}
-
 func TestJsonbGinPostingChunkEditorAppendsDMLChunksWithoutRewritingExisting(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	token := "token/shared"
@@ -437,7 +328,7 @@ func TestJsonbGinPostingChunkEditorSkipsDeleteChunksOutsideRowRefRange(t *testin
 	malformedFarRow := sql.Row{
 		token,
 		int64(1),
-		int16(jsonbgin.PostingChunkFormatVersion),
+		int16(jsonbgin.PostingChunkCurrentFormat),
 		int32(2),
 		farFirst.Bytes,
 		farLast.Bytes,
@@ -511,35 +402,22 @@ func TestMaterializePostingChunkRowsForAppendedDMLSplitsAndDeduplicates(t *testi
 	requirePostingChunkRow(t, ctx, rows[2], rows[2][1].(int64), []int32{5})
 }
 
-func TestJsonbGinMaintainingEditorMaintainsMixedLegacyAndChunkIndexes(t *testing.T) {
+func TestJsonbGinMaintainingEditorMaintainsChunkIndexes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
-	tableSchema := jsonbGinPostingStorageBaseSchema()
+	tableSchema := jsonbGinBaseSchema()
 	primary := &countingRowInserter{}
-	legacyEditor := &recordingPostingEditor{}
 	chunkEditor := &recordingPostingEditor{}
 	editor := &jsonbGinMaintainingEditor{
 		tableSchema:        tableSchema,
 		primaryKeyOrdinals: primaryKeyOrdinals(tableSchema),
 		primary:            primary,
-		postings: []jsonbGinPostingEditor{{
-			index: JsonbGinMaintainedIndex{
-				Name:                  "docs_doc_legacy_idx",
-				ColumnName:            "doc",
-				ColumnIndex:           1,
-				OpClass:               indexmetadata.OpClassJsonbOps,
-				PostingTable:          "docs_doc_legacy_postings",
-				PostingStorageVersion: indexmetadata.GinPostingStorageLegacy,
-			},
-			editor: legacyEditor,
-		}},
 		postingChunks: []jsonbGinPostingChunkEditor{{
 			index: JsonbGinMaintainedIndex{
-				Name:                  "docs_doc_chunk_idx",
-				ColumnName:            "doc",
-				ColumnIndex:           1,
-				OpClass:               indexmetadata.OpClassJsonbOps,
-				PostingChunkTable:     "docs_doc_chunk_posting_chunks",
-				PostingStorageVersion: indexmetadata.GinPostingStorageChunked,
+				Name:              "docs_doc_chunk_idx",
+				ColumnName:        "doc",
+				ColumnIndex:       1,
+				OpClass:           indexmetadata.OpClassJsonbOps,
+				PostingChunkTable: "docs_doc_chunk_posting_chunks",
 			},
 			table:  &fakePostingTable{},
 			editor: chunkEditor,
@@ -551,7 +429,6 @@ func TestJsonbGinMaintainingEditorMaintainsMixedLegacyAndChunkIndexes(t *testing
 	require.NoError(t, editor.StatementComplete(ctx))
 
 	require.Equal(t, 1, primary.count)
-	require.NotEmpty(t, legacyEditor.inserted)
 	require.NotEmpty(t, chunkEditor.inserted)
 	require.Len(t, chunkEditor.inserted[0], 8)
 }
@@ -629,17 +506,17 @@ func TestJsonbGinMaintainedTableProjectionRemapsColumnIndex(t *testing.T) {
 func TestJsonbGinPostingRowBufferSortsRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	editor := &recordingPostingEditor{}
-	buffer := newJsonbGinPostingRowBuffer(editor, 0)
+	buffer := newJsonbGinPostingRowBuffer(editor, 0, jsonbGinPostingChunkRowLess)
 
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/c", "row/2", int32(2)}))
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/3", int32(3)}))
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/1", int32(1)}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/c", int64(2), int32(2)}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", int64(3), int32(3)}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", int64(1), int32(1)}))
 	require.NoError(t, buffer.Flush(ctx))
 
 	require.Equal(t, []sql.Row{
-		{"token/a", "row/1", int32(1)},
-		{"token/a", "row/3", int32(3)},
-		{"token/c", "row/2", int32(2)},
+		{"token/a", int64(1), int32(1)},
+		{"token/a", int64(3), int32(3)},
+		{"token/c", int64(2), int32(2)},
 	}, editor.inserted)
 	require.Empty(t, buffer.rows)
 }
@@ -647,23 +524,23 @@ func TestJsonbGinPostingRowBufferSortsRows(t *testing.T) {
 func TestJsonbGinPostingRowBufferFlushesChunks(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	editor := &recordingPostingEditor{}
-	buffer := newJsonbGinPostingRowBuffer(editor, 2)
+	buffer := newJsonbGinPostingRowBuffer(editor, 2, jsonbGinPostingChunkRowLess)
 
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/b", "row/2"}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/b", int64(2)}))
 	require.Empty(t, editor.inserted)
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", "row/1"}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/a", int64(1)}))
 	require.Equal(t, []sql.Row{
-		{"token/a", "row/1"},
-		{"token/b", "row/2"},
+		{"token/a", int64(1)},
+		{"token/b", int64(2)},
 	}, editor.inserted)
 	require.Empty(t, buffer.rows)
 
-	require.NoError(t, buffer.Add(ctx, sql.Row{"token/d", "row/4"}))
+	require.NoError(t, buffer.Add(ctx, sql.Row{"token/d", int64(4)}))
 	require.NoError(t, buffer.Flush(ctx))
 	require.Equal(t, []sql.Row{
-		{"token/a", "row/1"},
-		{"token/b", "row/2"},
-		{"token/d", "row/4"},
+		{"token/a", int64(1)},
+		{"token/b", int64(2)},
+		{"token/d", int64(4)},
 	}, editor.inserted)
 }
 
@@ -672,7 +549,6 @@ func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
 
 	metadata := create.indexMetadata()
 	require.NotNil(t, metadata.Gin)
-	require.Equal(t, indexmetadata.GinPostingStorageChunked, metadata.Gin.PostingStorageVersion)
 	require.Empty(t, metadata.Gin.PostingTable)
 	require.Equal(t, jsonbgin.PostingChunkTableName("docs", "docs_doc_idx"), metadata.Gin.PostingChunkTable)
 }
@@ -682,7 +558,7 @@ func TestCreateJsonbGinIndexCreatesPostingChunkStorageByDefault(t *testing.T) {
 	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	creator := &recordingTableCreator{}
 
-	require.NoError(t, create.createPostingStorageTables(ctx, creator, jsonbGinPostingStorageBaseSchema()))
+	require.NoError(t, create.createPostingStorageTables(ctx, creator))
 	require.Len(t, creator.created, 1)
 	require.Equal(t, jsonbgin.PostingChunkTableName("docs", "docs_doc_idx"), creator.created[0].name)
 	require.Equal(t, jsonbGinPostingChunkTableComment, creator.created[0].comment)
@@ -696,7 +572,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbOps(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkRowsPerChunk = 2
-	baseSchema := jsonbGinPostingStorageBaseSchema()
+	baseSchema := jsonbGinBaseSchema()
 	rows := sql.RowsToRowIter(
 		sql.Row{int32(1), `{"tags":["vip"],"status":"open"}`},
 		sql.Row{int32(2), `{"tags":["vip","archived"],"status":"open"}`},
@@ -721,7 +597,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbPathOps(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbPathOps)
 	create.postingChunkRowsPerChunk = 2
-	baseSchema := jsonbGinPostingStorageBaseSchema()
+	baseSchema := jsonbGinBaseSchema()
 	rows := sql.RowsToRowIter(
 		sql.Row{int32(1), `{"payload":{"category":"cat-1"}}`},
 		sql.Row{int32(2), `{"payload":{"category":"cat-1"}}`},
@@ -739,7 +615,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbPathOps(t *testing.T) {
 
 func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithSpill(t *testing.T) {
 	ctx := sql.NewEmptyContext()
-	baseSchema := jsonbGinPostingStorageBaseSchema()
+	baseSchema := jsonbGinBaseSchema()
 	rows := []sql.Row{
 		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
 		{int32(2), `{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}`},
@@ -769,7 +645,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithParallelWorkers(t *testing
 	}{
 		{
 			name:    "jsonb_ops_primary_key",
-			schema:  jsonbGinPostingStorageBaseSchema(),
+			schema:  jsonbGinBaseSchema(),
 			opClass: indexmetadata.OpClassJsonbOps,
 			rows: []sql.Row{
 				{int32(1), `{"tags":["vip","hot"],"status":"open","payload":{"category":"cat-1","skew":"hot"}}`},
@@ -827,7 +703,7 @@ func TestCreateJsonbGinIndexParallelBuildHonorsCanceledContext(t *testing.T) {
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
 
-	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
 		{int32(1), `{"tags":["vip"],"status":"open"}`},
 		{int32(2), `{"tags":["vip"],"status":"closed"}`},
 	}}, 1)
@@ -843,7 +719,7 @@ func TestCreateJsonbGinIndexParallelBuildCleansRunsOnScanError(t *testing.T) {
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
 
-	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &errorAfterRowsIter{
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinBaseSchema(), &errorAfterRowsIter{
 		rows: []sql.Row{
 			{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
 			{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
@@ -862,7 +738,7 @@ func TestCreateJsonbGinIndexParallelBuildCleansRunsOnWorkerError(t *testing.T) {
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
 
-	_, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+	_, err := create.buildPostingChunkRows(ctx, jsonbGinBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
 		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
 		{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
 		{int32(3), `{"tags":[`},
@@ -879,7 +755,7 @@ func TestCreateJsonbGinIndexParallelBuildCleansRunsOnSuccess(t *testing.T) {
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
 
-	chunkRows, err := create.buildPostingChunkRows(ctx, jsonbGinPostingStorageBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
+	chunkRows, err := create.buildPostingChunkRows(ctx, jsonbGinBaseSchema(), &benchmarkRowIter{rows: []sql.Row{
 		{int32(1), `{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}`},
 		{int32(2), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-2"}}`},
 	}}, 1)
@@ -1077,21 +953,21 @@ func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 	ns := tree.NewTestNodeStore()
 	sqlSch := sql.Schema{
 		{Name: "token", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
-		{Name: "row_id", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
-		{Name: "pk_2", Source: "postings", Type: pgtypes.Text, Nullable: true},
+		{Name: "chunk_no", Source: "postings", Type: pgtypes.Int64, PrimaryKey: true, Nullable: false},
+		{Name: "payload", Source: "postings", Type: pgtypes.Bytea, Nullable: false},
 	}
 	doltSch := doltschema.MustSchemaFromCols(doltschema.NewColCollection(
 		doltschema.NewColumn("token", 1, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
-		doltschema.NewColumn("row_id", 2, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
-		doltschema.NewColumn("pk_2", 3, dolttypes.StringKind, false),
+		doltschema.NewColumn("chunk_no", 2, dolttypes.IntKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("payload", 3, dolttypes.InlineBlobKind, false, doltschema.NotNullConstraint{}),
 	))
 	rows := []sql.Row{
-		{"token/c", "row/2", "pk-2"},
-		{"token/a", "row/3", nil},
-		{"token/a", "row/1", "pk-1"},
+		{"token/c", int64(2), []byte("c2")},
+		{"token/a", int64(3), []byte("a3")},
+		{"token/a", int64(1), []byte("a1")},
 	}
 
-	rowData, err := buildSortedPrimaryRowIndex(ctx, ns, doltSch, sqlSch, rows, jsonbGinPostingRowLess)
+	rowData, err := buildSortedPrimaryRowIndex(ctx, ns, doltSch, sqlSch, rows, jsonbGinPostingChunkRowLess)
 	require.NoError(t, err)
 	rowMap, err := durable.ProllyMapFromIndex(rowData)
 	require.NoError(t, err)
@@ -1110,9 +986,9 @@ func TestBuildSortedPrimaryRowIndexSortsAndMaterializesRows(t *testing.T) {
 		got = append(got, row)
 	}
 	require.Equal(t, []sql.Row{
-		{"token/a", "row/1", "pk-1"},
-		{"token/a", "row/3", nil},
-		{"token/c", "row/2", "pk-2"},
+		{"token/a", int64(1), []byte("a1")},
+		{"token/a", int64(3), []byte("a3")},
+		{"token/c", int64(2), []byte("c2")},
 	}, got)
 }
 
@@ -1148,12 +1024,12 @@ func TestSortedPrimaryRowIndexBuilderStreamsSortedRows(t *testing.T) {
 func TestSortedPrimaryRowIndexBuilderRejectsUnsortedRows(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	ns := tree.NewTestNodeStore()
-	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
+	sqlSch, doltSch := benchmarkJsonbGinPostingChunkStorageSchemas()
 	builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
 	require.NoError(t, err)
-	require.NoError(t, builder.Add(ctx, sql.Row{"token/b", "row/2", "pk/2"}))
+	require.NoError(t, builder.Add(ctx, sql.Row{"token/b", int64(2), []byte("b2")}))
 
-	err = builder.Add(ctx, sql.Row{"token/a", "row/1", "pk/1"})
+	err = builder.Add(ctx, sql.Row{"token/a", int64(1), []byte("a1")})
 	require.ErrorContains(t, err, "sorted primary row builder received rows out of order")
 }
 
@@ -1182,34 +1058,6 @@ func TestJsonbGinPostingChunkRowLessSortsRows(t *testing.T) {
 		{"token/b", int64(0)},
 		{"token/b", int64(1)},
 	}, rows)
-}
-
-func BenchmarkJsonbGinBackfillPartitionEncodedTokens(b *testing.B) {
-	ctx := sql.NewEmptyContext()
-	sch := benchmarkJsonbGinSchema()
-	rows := benchmarkJsonbGinRows(128)
-
-	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
-		b.Run(opClass, func(b *testing.B) {
-			create := &CreateJsonbGinIndex{opClass: opClass}
-			inserter := &countingRowInserter{}
-			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
-				inserter.count = 0
-				iter := &benchmarkRowIter{rows: rows}
-				buffer := newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows)
-				if err := create.backfillPartition(ctx, sch, iter, buffer, 1); err != nil {
-					b.Fatal(err)
-				}
-				if err := buffer.Flush(ctx); err != nil {
-					b.Fatal(err)
-				}
-				if inserter.count == 0 {
-					b.Fatal("expected posting rows")
-				}
-			}
-		})
-	}
 }
 
 func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
@@ -1383,90 +1231,6 @@ func BenchmarkJsonbGinPostingChunkRowsToSinkWorkers(b *testing.B) {
 			b.ReportMetric(float64(workers), "workers/op")
 		})
 	}
-}
-
-func BenchmarkJsonbGinPostingRowsEncodedTokens(b *testing.B) {
-	ctx := sql.NewEmptyContext()
-	sch := benchmarkJsonbGinSchema()
-	row := sql.Row{int32(1), benchmarkJsonbGinDocument()}
-	editor := jsonbGinMaintainingEditor{
-		tableSchema:        sch,
-		primaryKeyOrdinals: primaryKeyOrdinals(sch),
-	}
-
-	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
-		b.Run(opClass, func(b *testing.B) {
-			index := JsonbGinMaintainedIndex{ColumnName: "doc", ColumnIndex: 1, OpClass: opClass}
-			b.ReportAllocs()
-			for i := 0; i < b.N; i++ {
-				rows, err := editor.postingRows(ctx, index, row, &editor.tokenScratch)
-				if err != nil {
-					b.Fatal(err)
-				}
-				if len(rows) == 0 {
-					b.Fatal("expected posting rows")
-				}
-			}
-		})
-	}
-}
-
-func BenchmarkBuildSortedPrimaryRowIndexPostingRows(b *testing.B) {
-	ctx := sql.NewEmptyContext()
-	ns := tree.NewTestNodeStore()
-	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
-	rows := benchmarkJsonbGinPostingStorageRows(4096)
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		rowData, err := buildSortedPrimaryRowIndex(ctx, ns, doltSch, sqlSch, rows, jsonbGinPostingRowLess)
-		if err != nil {
-			b.Fatal(err)
-		}
-		count, err := rowData.Count()
-		if err != nil {
-			b.Fatal(err)
-		}
-		if count != uint64(len(rows)) {
-			b.Fatalf("expected %d rows, found %d", len(rows), count)
-		}
-	}
-	b.ReportMetric(float64(len(rows)), "sidecar_rows/op")
-}
-
-func BenchmarkSortedPrimaryRowIndexBuilderPostingRows(b *testing.B) {
-	ctx := sql.NewEmptyContext()
-	ns := tree.NewTestNodeStore()
-	sqlSch, doltSch := benchmarkJsonbGinPostingStorageSchemas()
-	rows := benchmarkJsonbGinPostingStorageRows(4096)
-	sort.Slice(rows, func(i, j int) bool {
-		return jsonbGinPostingRowLess(rows[i], rows[j])
-	})
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		builder, err := newSortedPrimaryRowIndexBuilder(ctx, ns, doltSch, sqlSch)
-		if err != nil {
-			b.Fatal(err)
-		}
-		for _, row := range rows {
-			if err = builder.Add(ctx, row); err != nil {
-				b.Fatal(err)
-			}
-		}
-		rowData, err := builder.Complete(ctx)
-		if err != nil {
-			b.Fatal(err)
-		}
-		count, err := rowData.Count()
-		if err != nil {
-			b.Fatal(err)
-		}
-		if count != uint64(len(rows)) {
-			b.Fatalf("expected %d rows, found %d", len(rows), count)
-		}
-	}
-	b.ReportMetric(float64(len(rows)), "sidecar_rows/op")
 }
 
 func BenchmarkJsonbGinLookupTokensEncoded(b *testing.B) {
@@ -1747,33 +1511,21 @@ func benchmarkJsonbGinDocument() string {
 	return sb.String()
 }
 
-func benchmarkJsonbGinPostingStorageSchemas() (sql.Schema, doltschema.Schema) {
+func benchmarkJsonbGinPostingChunkStorageSchemas() (sql.Schema, doltschema.Schema) {
 	sqlSch := sql.Schema{
 		{Name: "token", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
-		{Name: "row_id", Source: "postings", Type: pgtypes.Text, PrimaryKey: true, Nullable: false},
-		{Name: "pk_2", Source: "postings", Type: pgtypes.Text, Nullable: true},
+		{Name: "chunk_no", Source: "postings", Type: pgtypes.Int64, PrimaryKey: true, Nullable: false},
+		{Name: "payload", Source: "postings", Type: pgtypes.Bytea, Nullable: false},
 	}
 	doltSch := doltschema.MustSchemaFromCols(doltschema.NewColCollection(
 		doltschema.NewColumn("token", 1, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
-		doltschema.NewColumn("row_id", 2, dolttypes.StringKind, true, doltschema.NotNullConstraint{}),
-		doltschema.NewColumn("pk_2", 3, dolttypes.StringKind, false),
+		doltschema.NewColumn("chunk_no", 2, dolttypes.IntKind, true, doltschema.NotNullConstraint{}),
+		doltschema.NewColumn("payload", 3, dolttypes.InlineBlobKind, false, doltschema.NotNullConstraint{}),
 	))
 	return sqlSch, doltSch
 }
 
-func benchmarkJsonbGinPostingStorageRows(rowCount int) []sql.Row {
-	rows := make([]sql.Row, rowCount)
-	for i := range rows {
-		rows[i] = sql.Row{
-			fmt.Sprintf("token/%04d", rowCount-i),
-			fmt.Sprintf("row/%04d", i),
-			fmt.Sprintf("pk/%04d", i),
-		}
-	}
-	return rows
-}
-
-func jsonbGinPostingStorageBaseSchema() sql.Schema {
+func jsonbGinBaseSchema() sql.Schema {
 	return sql.Schema{
 		{Name: "id", Type: pgtypes.Int32, PrimaryKey: true, Nullable: false},
 		{Name: "doc", Type: pgtypes.JsonB, Nullable: false},
@@ -1834,7 +1586,7 @@ func postingChunkRowsForToken(t *testing.T, rows []sql.Row, token string) []sql.
 func requirePostingChunkRow(t *testing.T, ctx *sql.Context, row sql.Row, chunkNo int64, ids []int32) {
 	t.Helper()
 	require.Equal(t, chunkNo, row[1])
-	require.Equal(t, int16(jsonbgin.PostingChunkFormatVersion), row[2])
+	require.Equal(t, int16(jsonbgin.PostingChunkCurrentFormat), row[2])
 	require.Equal(t, int32(len(ids)), row[3])
 	require.NotEmpty(t, row[4])
 	require.NotEmpty(t, row[5])

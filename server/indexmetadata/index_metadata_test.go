@@ -41,9 +41,8 @@ func TestEncodeDecodeComment(t *testing.T) {
 		},
 		Constraint: " NONE ",
 		Gin: &GinMetadata{
-			PostingTable:          " dg_gin_docs_doc_idx_postings ",
-			PostingStorageVersion: GinPostingStorageChunked,
-			PostingChunkTable:     " dg_gin_docs_doc_idx_posting_chunks ",
+			PostingTable:      " dg_gin_docs_doc_idx_postings ",
+			PostingChunkTable: " dg_gin_docs_doc_idx_posting_chunks ",
 		},
 	})
 
@@ -108,9 +107,6 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
 	}
-	if metadata.Gin.PostingStorageVersion != GinPostingStorageChunked {
-		t.Fatalf("unexpected gin posting storage version: %#v", metadata.Gin)
-	}
 	if metadata.Gin.PostingChunkTable != "dg_gin_docs_doc_idx_posting_chunks" {
 		t.Fatalf("unexpected gin posting chunk table: %#v", metadata.Gin)
 	}
@@ -122,8 +118,8 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 }
 
-func TestGinPostingStorageVersionDefaultsLegacyMetadataToLegacy(t *testing.T) {
-	comment := commentPrefix + `{"accessMethod":"gin","gin":{"postingTable":"dg_gin_docs_doc_idx_postings"}}`
+func TestGinPostingMetadataTrimsChunkTable(t *testing.T) {
+	comment := commentPrefix + `{"accessMethod":"gin","gin":{"postingChunkTable":"dg_gin_docs_doc_idx_posting_chunks"}}`
 
 	metadata, ok := DecodeComment(comment)
 	if !ok {
@@ -132,24 +128,8 @@ func TestGinPostingStorageVersionDefaultsLegacyMetadataToLegacy(t *testing.T) {
 	if metadata.Gin == nil {
 		t.Fatal("expected gin metadata")
 	}
-	if got := metadata.Gin.PostingStorageVersion; got != GinPostingStorageLegacy {
-		t.Fatalf("expected legacy gin metadata to default to legacy storage, got %d", got)
-	}
-	if got := GinPostingStorageVersion(comment); got != GinPostingStorageLegacy {
-		t.Fatalf("expected accessor to default legacy gin metadata to legacy storage, got %d", got)
-	}
-}
-
-func TestGinPostingStorageVersionRejectsUnknownVersions(t *testing.T) {
-	comment := EncodeComment(Metadata{
-		AccessMethod: AccessMethodGin,
-		Gin: &GinMetadata{
-			PostingStorageVersion: 99,
-		},
-	})
-
-	if got := GinPostingStorageVersion(comment); got != GinPostingStorageVersionUnsupported {
-		t.Fatalf("expected unsupported storage version marker, got %d", got)
+	if got := metadata.Gin.PostingChunkTable; got != "dg_gin_docs_doc_idx_posting_chunks" {
+		t.Fatalf("expected gin posting chunk table, got %q", got)
 	}
 }
 

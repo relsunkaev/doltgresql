@@ -116,8 +116,8 @@ base table's primary-key index when available and only falls back to a base scan
 when that direct lookup is unavailable.
 
 The storage layout is defined in `docs/jsonb-gin-posting-list-storage.md`,
-including copy-on-write DML maintenance, rollback/merge semantics, migration
-from legacy sidecars, and the measurement plan used for PostgreSQL comparison.
+including copy-on-write DML maintenance, rollback/merge semantics, and the
+measurement plan used for PostgreSQL comparison.
 
 ## Planning and execution
 

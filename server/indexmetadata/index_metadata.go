@@ -47,10 +47,6 @@ const (
 
 	ConstraintNone = "none"
 
-	GinPostingStorageVersionUnsupported = -1
-	GinPostingStorageLegacy             = 1
-	GinPostingStorageChunked            = 2
-
 	IndOptionDesc       int16 = 1
 	IndOptionNullsFirst int16 = 2
 
@@ -165,9 +161,8 @@ type IndexColumnOption struct {
 
 // GinMetadata stores durable metadata for PostgreSQL GIN indexes.
 type GinMetadata struct {
-	PostingTable          string `json:"postingTable,omitempty"`
-	PostingStorageVersion int    `json:"postingStorageVersion,omitempty"`
-	PostingChunkTable     string `json:"postingChunkTable,omitempty"`
+	PostingTable      string `json:"postingTable,omitempty"`
+	PostingChunkTable string `json:"postingChunkTable,omitempty"`
 }
 
 // EncodeComment returns a durable index comment containing PostgreSQL metadata.
@@ -263,19 +258,6 @@ func NormalizeOpClass(opClass string) string {
 	return strings.ToLower(strings.TrimSpace(opClass))
 }
 
-// NormalizeGinPostingStorageVersion returns the supported storage version for
-// JSONB GIN posting metadata. Missing legacy metadata defaults to legacy storage.
-func NormalizeGinPostingStorageVersion(version int) int {
-	switch version {
-	case 0, GinPostingStorageLegacy:
-		return GinPostingStorageLegacy
-	case GinPostingStorageChunked:
-		return GinPostingStorageChunked
-	default:
-		return GinPostingStorageVersionUnsupported
-	}
-}
-
 // NormalizeCollation trims PostgreSQL collation names and preserves the
 // canonical spelling for built-in names whose OIDs are case-sensitive.
 func NormalizeCollation(collation string) string {
@@ -322,7 +304,6 @@ func normalizeGinMetadata(gin *GinMetadata) {
 	}
 	gin.PostingTable = strings.TrimSpace(gin.PostingTable)
 	gin.PostingChunkTable = strings.TrimSpace(gin.PostingChunkTable)
-	gin.PostingStorageVersion = NormalizeGinPostingStorageVersion(gin.PostingStorageVersion)
 }
 
 // AccessMethod returns the PostgreSQL access method for an index. If no
@@ -359,16 +340,6 @@ func RelOptions(comment string) []string {
 		return nil
 	}
 	return metadata.RelOptions
-}
-
-// GinPostingStorageVersion returns the per-index JSONB GIN posting storage
-// version encoded in metadata. Missing legacy GIN metadata defaults to legacy storage.
-func GinPostingStorageVersion(comment string) int {
-	metadata, ok := DecodeComment(comment)
-	if !ok || metadata.Gin == nil {
-		return 0
-	}
-	return metadata.Gin.PostingStorageVersion
 }
 
 // NullsNotDistinct returns whether this unique index treats NULL values as

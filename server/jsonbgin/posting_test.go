@@ -53,13 +53,7 @@ func TestDecodeTokenRejectsMalformedStorageKeys(t *testing.T) {
 	}
 }
 
-func TestPostingTableName(t *testing.T) {
-	require.Equal(t,
-		"dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_postings",
-		PostingTableName("jsonb_gin_backfill", "jsonb_gin_backfill_idx"))
-	require.Equal(t,
-		"dg_gin_mixed_case_bad_name_idx_postings",
-		PostingTableName("Mixed Case", "bad-name.idx"))
+func TestPostingChunkTableName(t *testing.T) {
 	require.Equal(t,
 		"dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks",
 		PostingChunkTableName("jsonb_gin_backfill", "jsonb_gin_backfill_idx"))

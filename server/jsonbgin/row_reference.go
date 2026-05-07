@@ -29,14 +29,13 @@ import (
 )
 
 const (
-	legacyRowReferenceFormatVersion = 1
-	rowReferenceFormatVersion       = 2
-	rowReferenceKindHeaderSize      = 6
-	rowReferenceOrderedHeaderSize   = 8
-	rowReferenceNullMarker          = 0
-	rowReferenceNonNullMarker       = 1
-	rowReferenceTerminatorByte      = 0
-	rowReferenceEscapedNulByte      = 0xff
+	rowReferenceCurrentFormat     = 2
+	rowReferenceKindHeaderSize    = 6
+	rowReferenceOrderedHeaderSize = 8
+	rowReferenceNullMarker        = 0
+	rowReferenceNonNullMarker     = 1
+	rowReferenceTerminatorByte    = 0
+	rowReferenceEscapedNulByte    = 0xff
 
 	rowReferenceNumericNegativeMarker = 0
 	rowReferenceNumericZeroMarker     = 1
@@ -102,7 +101,7 @@ func EncodeRowReference(ctx *sql.Context, columnTypes []sql.Type, values sql.Row
 
 	encoded := make([]byte, rowReferenceOrderedHeaderSize)
 	copy(encoded[:4], rowReferenceMagic[:])
-	encoded[4] = rowReferenceFormatVersion
+	encoded[4] = rowReferenceCurrentFormat
 	encoded[5] = byte(RowReferenceKindOrdered)
 	binary.BigEndian.PutUint16(encoded[rowReferenceKindHeaderSize:rowReferenceOrderedHeaderSize], uint16(len(columnTypes)))
 
@@ -121,7 +120,7 @@ func EncodeRowReference(ctx *sql.Context, columnTypes []sql.Type, values sql.Row
 	}
 
 	return RowReference{
-		FormatVersion: rowReferenceFormatVersion,
+		FormatVersion: rowReferenceCurrentFormat,
 		Kind:          RowReferenceKindOrdered,
 		Values:        cloneRowReferenceValues(values),
 		Bytes:         encoded,
@@ -136,11 +135,11 @@ func EncodeOpaqueRowReference(identity string) (RowReference, error) {
 	}
 	encoded := make([]byte, rowReferenceKindHeaderSize)
 	copy(encoded[:4], rowReferenceMagic[:])
-	encoded[4] = rowReferenceFormatVersion
+	encoded[4] = rowReferenceCurrentFormat
 	encoded[5] = byte(RowReferenceKindOpaque)
 	encoded = append(encoded, encodeComparableBytes([]byte(identity))...)
 	return RowReference{
-		FormatVersion: rowReferenceFormatVersion,
+		FormatVersion: rowReferenceCurrentFormat,
 		Kind:          RowReferenceKindOpaque,
 		Identity:      identity,
 		Bytes:         encoded,
@@ -158,21 +157,11 @@ func DecodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 	}
 	version := encoded[4]
 	switch version {
-	case legacyRowReferenceFormatVersion:
-		return decodeLegacyOrderedRowReference(ctx, columnTypes, encoded, version)
-	case rowReferenceFormatVersion:
+	case rowReferenceCurrentFormat:
 		return decodeRowReference(ctx, columnTypes, encoded)
 	default:
 		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference version %d", version)
 	}
-}
-
-func decodeLegacyOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte, version uint8) (RowReference, error) {
-	const legacyHeaderSize = 7
-	if len(encoded) < legacyHeaderSize {
-		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
-	}
-	return decodeOrderedRowReference(ctx, columnTypes, encoded, legacyHeaderSize, int(binary.BigEndian.Uint16(encoded[5:legacyHeaderSize])), version)
 }
 
 func decodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte) (RowReference, error) {
@@ -183,7 +172,7 @@ func decodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
 		}
 		componentCount := int(binary.BigEndian.Uint16(encoded[rowReferenceKindHeaderSize:rowReferenceOrderedHeaderSize]))
-		return decodeOrderedRowReference(ctx, columnTypes, encoded, rowReferenceOrderedHeaderSize, componentCount, rowReferenceFormatVersion)
+		return decodeOrderedRowReference(ctx, columnTypes, encoded, rowReferenceOrderedHeaderSize, componentCount, rowReferenceCurrentFormat)
 	case RowReferenceKindOpaque:
 		identity, offset, err := decodeComparableBytes(encoded, rowReferenceKindHeaderSize)
 		if err != nil {
@@ -193,7 +182,7 @@ func decodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: trailing bytes after opaque identity")
 		}
 		return RowReference{
-			FormatVersion: rowReferenceFormatVersion,
+			FormatVersion: rowReferenceCurrentFormat,
 			Kind:          RowReferenceKindOpaque,
 			Identity:      string(identity),
 			Bytes:         append([]byte(nil), encoded...),

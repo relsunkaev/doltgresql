@@ -33,7 +33,7 @@ func TestPostingChunkRoundTrip(t *testing.T) {
 
 	chunk, err := EncodePostingChunk(rowRefs)
 	require.NoError(t, err)
-	require.Equal(t, uint16(PostingChunkFormatVersion), chunk.FormatVersion)
+	require.Equal(t, uint16(PostingChunkCurrentFormat), chunk.FormatVersion)
 	require.Equal(t, uint32(len(rowRefs)), chunk.RowCount)
 	require.Equal(t, rowRefs[0], chunk.FirstRowRef)
 	require.Equal(t, rowRefs[len(rowRefs)-1], chunk.LastRowRef)
@@ -106,7 +106,7 @@ func TestPostingChunkDecodeRowReferencesBorrowsPayload(t *testing.T) {
 func TestPostingChunkEmptyRoundTrip(t *testing.T) {
 	chunk, err := EncodePostingChunk(nil)
 	require.NoError(t, err)
-	require.Equal(t, uint16(PostingChunkFormatVersion), chunk.FormatVersion)
+	require.Equal(t, uint16(PostingChunkCurrentFormat), chunk.FormatVersion)
 	require.Zero(t, chunk.RowCount)
 	require.Empty(t, chunk.FirstRowRef)
 	require.Empty(t, chunk.LastRowRef)
@@ -129,7 +129,7 @@ func TestInspectPostingChunkMetadata(t *testing.T) {
 	metadata, err := InspectPostingChunkMetadata(chunk.Payload)
 	require.NoError(t, err)
 	require.Equal(t, PostingChunkMetadata{
-		FormatVersion: PostingChunkFormatVersion,
+		FormatVersion: PostingChunkCurrentFormat,
 		RowCount:      uint32(len(rowRefs)),
 		Checksum:      chunk.Checksum,
 	}, metadata)
@@ -236,7 +236,7 @@ func TestPostingChunkQuickRoundTrip(t *testing.T) {
 			t.Logf("DecodePostingChunk returned error: %v", err)
 			return false
 		}
-		if decoded.FormatVersion != PostingChunkFormatVersion || decoded.RowCount != uint32(len(rowRefs)) {
+		if decoded.FormatVersion != PostingChunkCurrentFormat || decoded.RowCount != uint32(len(rowRefs)) {
 			t.Logf("unexpected metadata: version=%d rowCount=%d", decoded.FormatVersion, decoded.RowCount)
 			return false
 		}

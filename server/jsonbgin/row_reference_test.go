@@ -16,7 +16,6 @@ package jsonbgin
 
 import (
 	"bytes"
-	"encoding/binary"
 	"sort"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestRowReferenceSingleColumnRoundTrip(t *testing.T) {
 
 	rowRef, err := EncodeRowReference(ctx, []sql.Type{pgtypes.Int32}, sql.Row{int32(-42)})
 	require.NoError(t, err)
-	require.Equal(t, uint8(rowReferenceFormatVersion), rowRef.FormatVersion)
+	require.Equal(t, uint8(rowReferenceCurrentFormat), rowRef.FormatVersion)
 	require.NotEmpty(t, rowRef.Bytes)
 	require.Equal(t, sql.Row{int32(-42)}, rowRef.Values)
 
@@ -76,7 +75,7 @@ func TestRowReferenceAdditionalScalarRoundTrip(t *testing.T) {
 func TestOpaqueRowReferenceRoundTrip(t *testing.T) {
 	rowRef, err := EncodeOpaqueRowReference("a1b2")
 	require.NoError(t, err)
-	require.Equal(t, uint8(rowReferenceFormatVersion), rowRef.FormatVersion)
+	require.Equal(t, uint8(rowReferenceCurrentFormat), rowRef.FormatVersion)
 	require.Equal(t, RowReferenceKindOpaque, rowRef.Kind)
 	require.Equal(t, "a1b2", rowRef.Identity)
 	require.Empty(t, rowRef.Values)
@@ -86,25 +85,6 @@ func TestOpaqueRowReferenceRoundTrip(t *testing.T) {
 	require.Equal(t, RowReferenceKindOpaque, decoded.Kind)
 	require.Equal(t, rowRef.Identity, decoded.Identity)
 	require.Equal(t, rowRef.Bytes, decoded.Bytes)
-}
-
-func TestLegacyOrderedRowReferenceDecode(t *testing.T) {
-	ctx := sql.NewEmptyContext()
-	component, err := encodeRowReferenceComponent(ctx, pgtypes.Int32, int32(42))
-	require.NoError(t, err)
-
-	encoded := make([]byte, 7)
-	copy(encoded[:4], rowReferenceMagic[:])
-	encoded[4] = legacyRowReferenceFormatVersion
-	binary.BigEndian.PutUint16(encoded[5:7], 1)
-	encoded = append(encoded, rowReferenceNonNullMarker)
-	encoded = append(encoded, component...)
-
-	decoded, err := DecodeRowReference(ctx, []sql.Type{pgtypes.Int32}, encoded)
-	require.NoError(t, err)
-	require.Equal(t, uint8(legacyRowReferenceFormatVersion), decoded.FormatVersion)
-	require.Equal(t, RowReferenceKindOrdered, decoded.Kind)
-	require.Equal(t, sql.Row{int32(42)}, decoded.Values)
 }
 
 func TestRowReferenceOrdersLikePrimaryKey(t *testing.T) {

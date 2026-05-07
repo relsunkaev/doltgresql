@@ -22,7 +22,7 @@ Suggested schema:
 | --- | --- | --- | --- |
 | `token` | `TEXT` | primary | Encoded opclass-aware token from `jsonbgin.EncodeToken`. |
 | `chunk_no` | `INT8` | primary | Stable chunk number within one token posting list. |
-| `format_version` | `INT2` | | Payload encoding version. |
+| `format_version` | `INT2` | | Current payload encoding marker. |
 | `row_count` | `INT4` | | Number of row references in the chunk. |
 | `first_row_ref` | `BYTEA` or `TEXT` | | Lowest encoded row reference in the chunk. |
 | `last_row_ref` | `BYTEA` or `TEXT` | | Highest encoded row reference in the chunk. |
@@ -30,7 +30,7 @@ Suggested schema:
 | `checksum` | `BYTEA` | | Optional corruption/debug guard for decoded payloads. |
 
 `token` already carries opclass, token kind, path, and value. Do not duplicate
-opclass columns unless a future catalog/versioning need appears.
+opclass columns unless a future catalog need appears.
 
 ## Row Reference
 
@@ -44,22 +44,21 @@ The row reference must be ordered and fetchable:
 - Tables whose primary key changes during UPDATE: treat the update as delete of
   the old row reference plus insert of the new row reference.
 
-Legacy row-id hashes are useful for equality membership, but chunked posting
-storage should not depend on hashes for direct fetch. They are not enough to
-seek the base row without carrying primary-key values.
+Opaque row-id hashes are useful for equality membership, but chunked posting
+storage does not depend on hashes for direct fetch. They are not enough to seek
+the base row without carrying primary-key values.
 
 ## Payload Encoding
 
-Version 1 payload should be deliberately boring:
+The current payload should be deliberately boring:
 
 1. Length-prefixed encoded row references sorted ascending.
 2. No duplicate references within a chunk.
 3. A target chunk size of 4-16 KiB or a row-count cap around 256-1024,
    whichever comes first.
 
-The first implementation can skip delta compression until benchmarks justify
-it. If primary-key tuple encodings are byte-sortable, a later
-`format_version = 2` can use prefix/delta compression inside the chunk.
+The current implementation skips delta compression until benchmarks justify
+the added complexity.
 
 ## Lookup
 
@@ -101,7 +100,7 @@ UPDATE:
 Chunk edits should be copy-on-write at the Dolt row level. A single statement
 may keep an in-memory pending map keyed by `(token, chunk_no)` and flush sorted
 chunk rows at statement complete, matching the current
-`jsonbGinPostingEditor` lifecycle.
+`jsonbGinPostingChunkEditor` lifecycle.
 
 ## MVCC, Rollback, And Merge
 
@@ -116,22 +115,15 @@ No global mutable cache can be the source of truth.
   posting list from base rows when automatic chunk merge is unsafe.
 - Reset/clone: sidecar tables travel with the root like ordinary Dolt tables.
 
-## Compatibility And Migration
+## Compatibility
 
-Existing legacy sidecar tables can be rebuilt into chunked sidecars.
+New JSONB GIN indexes create chunked sidecars directly. The sidecar is
+maintained eagerly with base-table writes, so `REINDEX INDEX` only validates the
+target today.
 
-1. Add durable index metadata `posting_storage_version`.
-2. Keep legacy readers and writers only for migration of existing indexes.
-3. New JSONB GIN indexes create chunked sidecars directly.
-4. Make `REINDEX INDEX` rebuild an index into the current default storage
-   layout.
-5. Provide a one-index migration path: create chunks from the base table,
-   validate row counts/token counts against legacy storage, swap metadata, then
-   drop the old sidecar.
-
-The planner/executor should select a posting reader by storage version. The
-JSONB operator support boundary must not depend on whether the underlying
-posting store came from a legacy row table or current chunks.
+The planner/executor uses chunked postings for JSONB GIN indexes. The JSONB
+operator support boundary is defined by token extraction, posting lookup, direct
+candidate fetch when available, and predicate recheck.
 
 ## Performance Tradeoffs
 
@@ -159,7 +151,7 @@ reduce DML rewrite cost; large chunks reduce lookup row count.
 Prototype in this order:
 
 1. Add a pure `jsonbgin.PostingChunk` encoder/decoder with property tests for
-   sorted unique row references, corruption errors, and version dispatch.
+   sorted unique row references and corruption errors.
 2. Add an in-memory chunked store beside `jsonbgin.PostingStore` and verify
    `Lookup`, `Union`, and `Intersect` return byte-for-byte identical sorted row
    references.
@@ -183,5 +175,5 @@ Required measurement buckets:
 - rollback after failed DML
 - branch merge/rebuild of a touched broad token
 
-New indexes use chunked posting storage by default; benchmark evidence should
-continue tracking lookup, build, and DML behavior against PostgreSQL.
+New indexes use chunked posting storage; benchmark evidence should continue
+tracking lookup, build, and DML behavior against PostgreSQL.

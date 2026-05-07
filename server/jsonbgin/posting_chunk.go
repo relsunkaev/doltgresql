@@ -22,10 +22,10 @@ import (
 	"math"
 )
 
-// PostingChunkFormatVersion is the initial JSONB GIN posting-list payload
+// PostingChunkCurrentFormat is the current JSONB GIN posting-list payload
 // format. It stores sorted, unique row references as length-prefixed byte
 // strings with a CRC32 checksum over the header and row-reference body.
-const PostingChunkFormatVersion uint16 = 1
+const PostingChunkCurrentFormat uint16 = 1
 
 const (
 	postingChunkHeaderSize   = 10
@@ -60,7 +60,7 @@ type PostingChunkMetadata struct {
 }
 
 // EncodePostingChunk validates and encodes sorted, unique row references into a
-// versioned JSONB GIN posting-list chunk payload.
+// JSONB GIN posting-list chunk payload.
 func EncodePostingChunk(rowRefs [][]byte) (PostingChunk, error) {
 	return encodePostingChunk(rowRefs, true)
 }
@@ -109,7 +109,7 @@ func encodePostingChunk(rowRefs [][]byte, includeRowRefs bool) (PostingChunk, er
 
 	payload := make([]byte, postingChunkHeaderSize, payloadSize)
 	copy(payload[:4], postingChunkMagic[:])
-	binary.BigEndian.PutUint16(payload[4:6], PostingChunkFormatVersion)
+	binary.BigEndian.PutUint16(payload[4:6], PostingChunkCurrentFormat)
 	binary.BigEndian.PutUint32(payload[6:postingChunkHeaderSize], uint32(len(rowRefs)))
 	for _, rowRef := range rowRefs {
 		payload = binary.BigEndian.AppendUint32(payload, uint32(len(rowRef)))
@@ -120,7 +120,7 @@ func encodePostingChunk(rowRefs [][]byte, includeRowRefs bool) (PostingChunk, er
 	payload = binary.BigEndian.AppendUint32(payload, checksum)
 
 	chunk := PostingChunk{
-		FormatVersion: PostingChunkFormatVersion,
+		FormatVersion: PostingChunkCurrentFormat,
 		RowCount:      uint32(len(rowRefs)),
 		RowRefs:       copied,
 		Payload:       payload,
@@ -144,7 +144,7 @@ func InspectPostingChunkMetadata(payload []byte) (PostingChunkMetadata, error) {
 	}
 	version := binary.BigEndian.Uint16(payload[4:6])
 	switch version {
-	case PostingChunkFormatVersion:
+	case PostingChunkCurrentFormat:
 		if len(payload) < postingChunkHeaderSize+postingChunkChecksumSize {
 			return PostingChunkMetadata{}, fmt.Errorf("malformed JSONB GIN posting chunk payload: missing checksum")
 		}
@@ -158,8 +158,8 @@ func InspectPostingChunkMetadata(payload []byte) (PostingChunkMetadata, error) {
 	}
 }
 
-// DecodePostingChunk validates and decodes a versioned JSONB GIN posting-list
-// chunk payload.
+// DecodePostingChunk validates and decodes a JSONB GIN posting-list chunk
+// payload.
 func DecodePostingChunk(payload []byte) (PostingChunk, error) {
 	if len(payload) < postingChunkHeaderSize {
 		return PostingChunk{}, fmt.Errorf("malformed JSONB GIN posting chunk payload: too short")
@@ -170,7 +170,7 @@ func DecodePostingChunk(payload []byte) (PostingChunk, error) {
 
 	version := binary.BigEndian.Uint16(payload[4:6])
 	switch version {
-	case PostingChunkFormatVersion:
+	case PostingChunkCurrentFormat:
 		return decodePostingChunkPayload(payload, true)
 	default:
 		return PostingChunk{}, fmt.Errorf("unsupported JSONB GIN posting chunk payload version %d", version)
@@ -190,7 +190,7 @@ func DecodePostingChunkRowReferences(payload []byte) (PostingChunk, error) {
 
 	version := binary.BigEndian.Uint16(payload[4:6])
 	switch version {
-	case PostingChunkFormatVersion:
+	case PostingChunkCurrentFormat:
 		return decodePostingChunkPayload(payload, false)
 	default:
 		return PostingChunk{}, fmt.Errorf("unsupported JSONB GIN posting chunk payload version %d", version)
@@ -255,7 +255,7 @@ func decodePostingChunkPayload(payload []byte, copyBuffers bool) (PostingChunk, 
 		chunkPayload = append([]byte(nil), payload...)
 	}
 	chunk := PostingChunk{
-		FormatVersion: PostingChunkFormatVersion,
+		FormatVersion: PostingChunkCurrentFormat,
 		RowCount:      rowCount,
 		RowRefs:       rowRefs,
 		Payload:       chunkPayload,

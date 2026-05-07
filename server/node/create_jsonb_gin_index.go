@@ -31,7 +31,6 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
-	doltschema "github.com/dolthub/dolt/go/libraries/doltcore/schema"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -42,7 +41,6 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
-const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
 const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
 const jsonbGinPostingChunkRowsPerChunk = 512
@@ -57,9 +55,7 @@ type CreateJsonbGinIndex struct {
 	indexName                     string
 	columnName                    string
 	opClass                       string
-	postingName                   string
 	postingChunkName              string
-	postingStorageVersion         int
 	postingChunkRowsPerChunk      int
 	postingChunkBuildSpillEntries int
 	postingChunkBuildWorkers      int
@@ -72,20 +68,14 @@ var _ vitess.Injectable = (*CreateJsonbGinIndex)(nil)
 // NewCreateJsonbGinIndex returns a new *CreateJsonbGinIndex.
 func NewCreateJsonbGinIndex(ifNotExists bool, schema string, tableName string, indexName string, columnName string, opClass string) *CreateJsonbGinIndex {
 	return &CreateJsonbGinIndex{
-		ifNotExists:           ifNotExists,
-		schema:                schema,
-		tableName:             tableName,
-		indexName:             indexName,
-		columnName:            columnName,
-		opClass:               indexmetadata.NormalizeOpClass(opClass),
-		postingName:           jsonbgin.PostingTableName(tableName, indexName),
-		postingChunkName:      jsonbgin.PostingChunkTableName(tableName, indexName),
-		postingStorageVersion: defaultJsonbGinPostingStorageVersion(),
+		ifNotExists:      ifNotExists,
+		schema:           schema,
+		tableName:        tableName,
+		indexName:        indexName,
+		columnName:       columnName,
+		opClass:          indexmetadata.NormalizeOpClass(opClass),
+		postingChunkName: jsonbgin.PostingChunkTableName(tableName, indexName),
 	}
-}
-
-func defaultJsonbGinPostingStorageVersion() int {
-	return indexmetadata.GinPostingStorageChunked
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -153,21 +143,12 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	}); err != nil {
 		return nil, err
 	}
-	if err = c.createPostingStorageTables(ctx, tableCreator, table.Schema(ctx)); err != nil {
+	if err = c.createPostingStorageTables(ctx, tableCreator); err != nil {
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
 	}
-	postingStorageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
-	switch postingStorageVersion {
-	case indexmetadata.GinPostingStorageLegacy:
-		err = c.backfillPostingTable(ctx, db, schemaName, table, columnIndex)
-	case indexmetadata.GinPostingStorageChunked:
-		err = c.backfillPostingChunkTable(ctx, db, schemaName, table, columnIndex)
-	default:
-		err = errors.Errorf("unsupported JSONB GIN posting storage version %d", postingStorageVersion)
-	}
+	err = c.backfillPostingChunkTable(ctx, db, schemaName, table, columnIndex)
 	if err != nil {
-		_ = dropTable(ctx, db, c.postingName)
 		_ = dropTable(ctx, db, c.postingChunkName)
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
@@ -176,22 +157,14 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 }
 
 func (c *CreateJsonbGinIndex) indexMetadata() indexmetadata.Metadata {
-	storageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
-	metadata := indexmetadata.Metadata{
+	return indexmetadata.Metadata{
 		AccessMethod: indexmetadata.AccessMethodGin,
 		Columns:      []string{c.columnName},
 		OpClasses:    []string{c.opClass},
 		Gin: &indexmetadata.GinMetadata{
-			PostingStorageVersion: storageVersion,
+			PostingChunkTable: c.postingChunkName,
 		},
 	}
-	switch storageVersion {
-	case indexmetadata.GinPostingStorageLegacy:
-		metadata.Gin.PostingTable = c.postingName
-	case indexmetadata.GinPostingStorageChunked:
-		metadata.Gin.PostingChunkTable = c.postingChunkName
-	}
-	return metadata
 }
 
 func schemaDatabase(ctx *sql.Context, schemaName string) (sql.Database, error) {
@@ -259,47 +232,8 @@ func (c *CreateJsonbGinIndex) validateTable(ctx *sql.Context, table sql.Table) (
 	return columnIndex, c.columnName, nil
 }
 
-func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
-	schema := sql.Schema{
-		{
-			Name:       "token",
-			Source:     c.postingName,
-			Type:       pgtypes.Text,
-			PrimaryKey: true,
-			Nullable:   false,
-		},
-		{
-			Name:       "row_id",
-			Source:     c.postingName,
-			Type:       pgtypes.Text,
-			PrimaryKey: true,
-			Nullable:   false,
-		},
-	}
-	for i, column := range baseSchema {
-		if !column.PrimaryKey {
-			continue
-		}
-		schema = append(schema, &sql.Column{
-			Name:     fmt.Sprintf("pk_%d", i),
-			Source:   c.postingName,
-			Type:     column.Type,
-			Nullable: column.Nullable,
-		})
-	}
-	postingSchema := sql.NewPrimaryKeySchema(schema)
-	return tableCreator.CreateTable(ctx, c.postingName, postingSchema, sql.Collation_Default, jsonbGinPostingTableComment)
-}
-
-func (c *CreateJsonbGinIndex) createPostingStorageTables(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
-	switch indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion) {
-	case indexmetadata.GinPostingStorageLegacy:
-		return c.createPostingTable(ctx, tableCreator, baseSchema)
-	case indexmetadata.GinPostingStorageChunked:
-		return c.createPostingChunkTable(ctx, tableCreator)
-	default:
-		return errors.Errorf("unsupported JSONB GIN posting storage version %d", c.postingStorageVersion)
-	}
+func (c *CreateJsonbGinIndex) createPostingStorageTables(ctx *sql.Context, tableCreator sql.TableCreator) error {
+	return c.createPostingChunkTable(ctx, tableCreator)
 }
 
 func (c *CreateJsonbGinIndex) createPostingChunkTable(ctx *sql.Context, tableCreator sql.TableCreator) error {
@@ -354,64 +288,6 @@ func (c *CreateJsonbGinIndex) createPostingChunkTable(ctx *sql.Context, tableCre
 	}
 	postingSchema := sql.NewPrimaryKeySchema(schema)
 	return tableCreator.CreateTable(ctx, c.postingChunkName, postingSchema, sql.Collation_Default, jsonbGinPostingChunkTableComment)
-}
-
-func (c *CreateJsonbGinIndex) backfillPostingTable(ctx *sql.Context, db sql.Database, schemaName string, table sql.Table, columnIndex int) error {
-	postingTable, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: c.postingName, Schema: schemaName})
-	if err != nil {
-		return err
-	}
-	if postingTable == nil {
-		return errors.Errorf(`posting table "%s" was not created`, c.postingName)
-	}
-	postingRows, err := newJsonbGinPostingRowSink(ctx, db, postingTable, jsonbGinPostingBackfillChunkRows)
-	if err != nil {
-		return err
-	}
-	closed := false
-	defer func() {
-		if !closed {
-			_ = postingRows.Close(ctx)
-		}
-	}()
-	completed := false
-	defer func() {
-		if !completed {
-			_ = postingRows.Discard(ctx, errors.New("JSONB GIN backfill failed"))
-		}
-	}()
-
-	partitions, err := table.Partitions(ctx)
-	if err != nil {
-		return err
-	}
-	defer partitions.Close(ctx)
-	for {
-		partition, err := partitions.Next(ctx)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		rows, err := table.PartitionRows(ctx, partition)
-		if err != nil {
-			return err
-		}
-		if err = c.backfillPartition(ctx, table.Schema(ctx), rows, postingRows, columnIndex); err != nil {
-			_ = rows.Close(ctx)
-			return err
-		}
-		if err = rows.Close(ctx); err != nil {
-			return err
-		}
-	}
-	if err = postingRows.Complete(ctx); err != nil {
-		return err
-	}
-	completed = true
-	closed = true
-	return postingRows.Close(ctx)
 }
 
 func (c *CreateJsonbGinIndex) backfillPostingChunkTable(ctx *sql.Context, db sql.Database, schemaName string, table sql.Table, columnIndex int) error {
@@ -1257,56 +1133,11 @@ type jsonbGinPostingRowAppender interface {
 	Add(ctx *sql.Context, row sql.Row) error
 }
 
-func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, postingRows jsonbGinPostingRowAppender, columnIndex int) error {
-	var tokenScratch jsonbgin.EncodedTokenScratch
-	for {
-		row, err := rows.Next(ctx)
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if row[columnIndex] == nil {
-			continue
-		}
-		rowID := rowIdentity(sch, row)
-		keyValues := primaryKeyRowValues(sch, row)
-		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx, row[columnIndex], c.opClass, &tokenScratch)
-		if err != nil {
-			return err
-		}
-		for _, encodedToken := range encodedTokens {
-			postingRow := sql.Row{encodedToken, rowID}
-			postingRow = append(postingRow, keyValues...)
-			if err = postingRows.Add(ctx, postingRow); err != nil {
-				return err
-			}
-		}
-	}
-}
-
 type jsonbGinPostingRowSink interface {
 	jsonbGinPostingRowAppender
 	Complete(ctx *sql.Context) error
 	Discard(ctx *sql.Context, err error) error
 	Close(ctx *sql.Context) error
-}
-
-func newJsonbGinPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table, maxRows int) (jsonbGinPostingRowSink, error) {
-	if sink, ok, err := newJsonbGinBulkPostingRowSink(ctx, db, postingTable, jsonbGinPostingRowLess); ok || err != nil {
-		return sink, err
-	}
-	insertable, ok := postingTable.(sql.InsertableTable)
-	if !ok {
-		return nil, errors.Errorf(`posting table "%s" does not support inserts`, postingTable.Name())
-	}
-	inserter := insertable.Inserter(ctx)
-	inserter.StatementBegin(ctx)
-	return &jsonbGinInserterPostingRowSink{
-		inserter: inserter,
-		buffer:   newJsonbGinPostingRowBuffer(inserter, maxRows),
-	}, nil
 }
 
 func newJsonbGinPostingChunkRowSink(ctx *sql.Context, db sql.Database, postingChunkTable sql.Table) (jsonbGinPostingRowSink, error) {
@@ -1321,7 +1152,7 @@ func newJsonbGinPostingChunkRowSink(ctx *sql.Context, db sql.Database, postingCh
 	inserter.StatementBegin(ctx)
 	return &jsonbGinInserterPostingRowSink{
 		inserter: inserter,
-		buffer:   newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows),
+		buffer:   newJsonbGinPostingRowBuffer(inserter, jsonbGinPostingBackfillChunkRows, jsonbGinPostingChunkRowLess),
 	}, nil
 }
 
@@ -1359,82 +1190,6 @@ type doltRootDatabase interface {
 type doltBackedTable interface {
 	DoltTable(ctx *sql.Context) (*doltdb.Table, error)
 	TableName() doltdb.TableName
-}
-
-type jsonbGinBulkPostingRowSink struct {
-	db        doltRootDatabase
-	tableName doltdb.TableName
-	table     *doltdb.Table
-	doltSch   doltschema.Schema
-	sqlSch    sql.Schema
-	rows      []sql.Row
-	less      func(left sql.Row, right sql.Row) bool
-}
-
-var _ jsonbGinPostingRowSink = (*jsonbGinBulkPostingRowSink)(nil)
-
-func newJsonbGinBulkPostingRowSink(ctx *sql.Context, db sql.Database, postingTable sql.Table, less func(left sql.Row, right sql.Row) bool) (*jsonbGinBulkPostingRowSink, bool, error) {
-	rootDb, ok := db.(doltRootDatabase)
-	if !ok {
-		return nil, false, nil
-	}
-	doltTableSource, ok := postingTable.(doltBackedTable)
-	if !ok {
-		return nil, false, nil
-	}
-	table, err := doltTableSource.DoltTable(ctx)
-	if err != nil {
-		return nil, true, err
-	}
-	doltSch, err := table.GetSchema(ctx)
-	if err != nil {
-		return nil, true, err
-	}
-	return &jsonbGinBulkPostingRowSink{
-		db:        rootDb,
-		tableName: doltTableSource.TableName(),
-		table:     table,
-		doltSch:   doltSch,
-		sqlSch:    postingTable.Schema(ctx),
-		less:      less,
-	}, true, nil
-}
-
-func (s *jsonbGinBulkPostingRowSink) Add(_ *sql.Context, row sql.Row) error {
-	s.rows = append(s.rows, append(sql.Row(nil), row...))
-	return nil
-}
-
-func (s *jsonbGinBulkPostingRowSink) Complete(ctx *sql.Context) error {
-	rowData, err := buildSortedPrimaryRowIndex(ctx, s.table.NodeStore(), s.doltSch, s.sqlSch, s.rows, s.less)
-	if err != nil {
-		return err
-	}
-	updatedTable, err := s.table.UpdateRows(ctx, rowData)
-	if err != nil {
-		return err
-	}
-	root, err := s.db.GetRoot(ctx)
-	if err != nil {
-		return err
-	}
-	updatedRoot, err := root.PutTable(ctx, s.tableName, updatedTable)
-	if err != nil {
-		return err
-	}
-	clear(s.rows)
-	s.rows = nil
-	return s.db.SetRoot(ctx, updatedRoot)
-}
-
-func (s *jsonbGinBulkPostingRowSink) Discard(_ *sql.Context, _ error) error {
-	clear(s.rows)
-	s.rows = nil
-	return nil
-}
-
-func (s *jsonbGinBulkPostingRowSink) Close(_ *sql.Context) error {
-	return nil
 }
 
 type jsonbGinBulkSortedPostingRowSink struct {
@@ -1519,12 +1274,14 @@ type jsonbGinPostingRowBuffer struct {
 	inserter sql.RowInserter
 	maxRows  int
 	rows     []sql.Row
+	less     func(left sql.Row, right sql.Row) bool
 }
 
-func newJsonbGinPostingRowBuffer(inserter sql.RowInserter, maxRows int) *jsonbGinPostingRowBuffer {
+func newJsonbGinPostingRowBuffer(inserter sql.RowInserter, maxRows int, less func(left sql.Row, right sql.Row) bool) *jsonbGinPostingRowBuffer {
 	return &jsonbGinPostingRowBuffer{
 		inserter: inserter,
 		maxRows:  maxRows,
+		less:     less,
 	}
 }
 
@@ -1540,9 +1297,11 @@ func (b *jsonbGinPostingRowBuffer) Flush(ctx *sql.Context) error {
 	if len(b.rows) == 0 {
 		return nil
 	}
-	sort.Slice(b.rows, func(i, j int) bool {
-		return jsonbGinPostingRowLess(b.rows[i], b.rows[j])
-	})
+	if b.less != nil {
+		sort.Slice(b.rows, func(i, j int) bool {
+			return b.less(b.rows[i], b.rows[j])
+		})
+	}
 	for _, row := range b.rows {
 		if err := b.inserter.Insert(ctx, row); err != nil {
 			return err
@@ -1551,20 +1310,6 @@ func (b *jsonbGinPostingRowBuffer) Flush(ctx *sql.Context) error {
 	clear(b.rows)
 	b.rows = b.rows[:0]
 	return nil
-}
-
-func jsonbGinPostingRowLess(left sql.Row, right sql.Row) bool {
-	leftToken := jsonbGinPostingSortString(left, 0)
-	rightToken := jsonbGinPostingSortString(right, 0)
-	if leftToken != rightToken {
-		return leftToken < rightToken
-	}
-	leftRowID := jsonbGinPostingSortString(left, 1)
-	rightRowID := jsonbGinPostingSortString(right, 1)
-	if leftRowID != rightRowID {
-		return leftRowID < rightRowID
-	}
-	return fmt.Sprint(left) < fmt.Sprint(right)
 }
 
 func jsonbGinPostingChunkRowLess(left sql.Row, right sql.Row) bool {
