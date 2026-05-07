@@ -764,8 +764,12 @@ func writeJsonStoredString(sb *strings.Builder, value string) {
 
 // JsonStringUnescape returns the decoded text represented by a stored JSON string.
 func JsonStringUnescape(value JsonValueString) (string, error) {
+	stored := string(value)
+	if !strings.Contains(stored, `\`) {
+		return stored, nil
+	}
 	sb := strings.Builder{}
-	writeJsonStoredString(&sb, string(value))
+	writeJsonStoredString(&sb, stored)
 	var decoded string
 	if err := json.Unmarshal([]byte(sb.String()), &decoded); err != nil {
 		return "", err

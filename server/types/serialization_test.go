@@ -81,3 +81,24 @@ func TestJsonDocumentString(t *testing.T) {
 	require.Equal(t, `2`, scalar.String())
 	require.Equal(t, scalar.String(), fmt.Sprint(scalar))
 }
+
+func TestJsonStringUnescape(t *testing.T) {
+	tests := []struct {
+		name  string
+		value JsonValueString
+		want  string
+	}{
+		{name: "plain", value: JsonValueString("status"), want: "status"},
+		{name: "quote", value: JsonValueString(`a"b`), want: `a"b`},
+		{name: "backslash", value: JsonValueString(`a\\b`), want: `a\b`},
+		{name: "newline", value: JsonValueString(`a\nb`), want: "a\nb"},
+		{name: "unicode", value: JsonValueString(`\u263a`), want: "☺"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := JsonStringUnescape(test.value)
+			require.NoError(t, err)
+			require.Equal(t, test.want, got)
+		})
+	}
+}
