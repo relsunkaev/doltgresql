@@ -33,7 +33,7 @@ func TestPostingChunkRoundTrip(t *testing.T) {
 
 	chunk, err := EncodePostingChunk(rowRefs)
 	require.NoError(t, err)
-	require.Equal(t, uint16(PostingChunkFormatVersionV1), chunk.FormatVersion)
+	require.Equal(t, uint16(PostingChunkFormatVersion), chunk.FormatVersion)
 	require.Equal(t, uint32(len(rowRefs)), chunk.RowCount)
 	require.Equal(t, rowRefs[0], chunk.FirstRowRef)
 	require.Equal(t, rowRefs[len(rowRefs)-1], chunk.LastRowRef)
@@ -100,13 +100,13 @@ func TestPostingChunkDecodeRowReferencesBorrowsPayload(t *testing.T) {
 	require.Equal(t, rowRefs, decoded.RowRefs)
 
 	decoded.RowRefs[0][0] = 'x'
-	require.Equal(t, byte('x'), chunk.Payload[postingChunkV1HeaderSize+postingChunkV1LengthSize])
+	require.Equal(t, byte('x'), chunk.Payload[postingChunkHeaderSize+postingChunkLengthSize])
 }
 
 func TestPostingChunkEmptyRoundTrip(t *testing.T) {
 	chunk, err := EncodePostingChunk(nil)
 	require.NoError(t, err)
-	require.Equal(t, uint16(PostingChunkFormatVersionV1), chunk.FormatVersion)
+	require.Equal(t, uint16(PostingChunkFormatVersion), chunk.FormatVersion)
 	require.Zero(t, chunk.RowCount)
 	require.Empty(t, chunk.FirstRowRef)
 	require.Empty(t, chunk.LastRowRef)
@@ -129,7 +129,7 @@ func TestInspectPostingChunkMetadata(t *testing.T) {
 	metadata, err := InspectPostingChunkMetadata(chunk.Payload)
 	require.NoError(t, err)
 	require.Equal(t, PostingChunkMetadata{
-		FormatVersion: PostingChunkFormatVersionV1,
+		FormatVersion: PostingChunkFormatVersion,
 		RowCount:      uint32(len(rowRefs)),
 		Checksum:      chunk.Checksum,
 	}, metadata)
@@ -146,7 +146,7 @@ func TestInspectPostingChunkMetadataRejectsMalformedHeaders(t *testing.T) {
 	}{
 		{name: "empty", payload: nil, wantErr: "too short"},
 		{name: "bad magic", payload: append([]byte("BAD!"), chunk.Payload[4:]...), wantErr: "magic"},
-		{name: "missing checksum", payload: chunk.Payload[:postingChunkV1HeaderSize], wantErr: "missing checksum"},
+		{name: "missing checksum", payload: chunk.Payload[:postingChunkHeaderSize], wantErr: "missing checksum"},
 		{name: "unsupported version", payload: unsupportedPostingChunkVersionPayload(chunk.Payload), wantErr: "unsupported"},
 	}
 
@@ -200,8 +200,8 @@ func TestPostingChunkRejectsMalformedPayloads(t *testing.T) {
 	}{
 		{name: "empty", payload: nil, wantErr: "too short"},
 		{name: "bad magic", payload: append([]byte("BAD!"), chunk.Payload[4:]...), wantErr: "magic"},
-		{name: "truncated header", payload: chunk.Payload[:postingChunkV1HeaderSize-1], wantErr: "too short"},
-		{name: "truncated row length", payload: chunk.Payload[:postingChunkV1HeaderSize+2], wantErr: "row length"},
+		{name: "truncated header", payload: chunk.Payload[:postingChunkHeaderSize-1], wantErr: "too short"},
+		{name: "truncated row length", payload: chunk.Payload[:postingChunkHeaderSize+2], wantErr: "row length"},
 		{name: "truncated row bytes", payload: truncatedPostingChunkRowRefPayload(chunk.Payload), wantErr: "row reference"},
 		{name: "trailing bytes", payload: append(append([]byte(nil), chunk.Payload...), 0x00), wantErr: "trailing"},
 		{name: "checksum mismatch", payload: corruptPostingChunkPayloadByte(chunk.Payload), wantErr: "checksum"},
@@ -236,7 +236,7 @@ func TestPostingChunkQuickRoundTrip(t *testing.T) {
 			t.Logf("DecodePostingChunk returned error: %v", err)
 			return false
 		}
-		if decoded.FormatVersion != PostingChunkFormatVersionV1 || decoded.RowCount != uint32(len(rowRefs)) {
+		if decoded.FormatVersion != PostingChunkFormatVersion || decoded.RowCount != uint32(len(rowRefs)) {
 			t.Logf("unexpected metadata: version=%d rowCount=%d", decoded.FormatVersion, decoded.RowCount)
 			return false
 		}
@@ -282,17 +282,17 @@ func equalRowRefs(left [][]byte, right [][]byte) bool {
 
 func corruptPostingChunkPayloadByte(payload []byte) []byte {
 	corrupted := append([]byte(nil), payload...)
-	bodyByte := len(corrupted) - postingChunkV1ChecksumSize - 1
-	if bodyByte >= postingChunkV1HeaderSize+postingChunkV1LengthSize {
+	bodyByte := len(corrupted) - postingChunkChecksumSize - 1
+	if bodyByte >= postingChunkHeaderSize+postingChunkLengthSize {
 		corrupted[bodyByte] ^= 0x01
 	}
 	return corrupted
 }
 
 func truncatedPostingChunkRowRefPayload(payload []byte) []byte {
-	bodyPrefixEnd := postingChunkV1HeaderSize + postingChunkV1LengthSize + 1
+	bodyPrefixEnd := postingChunkHeaderSize + postingChunkLengthSize + 1
 	truncated := append([]byte(nil), payload[:bodyPrefixEnd]...)
-	return append(truncated, payload[len(payload)-postingChunkV1ChecksumSize:]...)
+	return append(truncated, payload[len(payload)-postingChunkChecksumSize:]...)
 }
 
 func unsupportedPostingChunkVersionPayload(payload []byte) []byte {

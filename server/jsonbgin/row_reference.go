@@ -28,21 +28,15 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
-// RowReferenceFormatVersionV1 is the initial ordered JSONB GIN row-reference
-// encoding for primary-key tuple references stored inside posting chunks.
-const RowReferenceFormatVersionV1 uint8 = 1
-
-// RowReferenceFormatVersionV2 adds opaque deterministic row identities for
-// table shapes that cannot use direct primary-key candidate fetch.
-const RowReferenceFormatVersionV2 uint8 = 2
-
 const (
-	rowReferenceHeaderSize     = 7
-	rowReferenceV2HeaderSize   = 6
-	rowReferenceNullMarker     = 0
-	rowReferenceNonNullMarker  = 1
-	rowReferenceTerminatorByte = 0
-	rowReferenceEscapedNulByte = 0xff
+	legacyRowReferenceFormatVersion = 1
+	rowReferenceFormatVersion       = 2
+	rowReferenceKindHeaderSize      = 6
+	rowReferenceOrderedHeaderSize   = 8
+	rowReferenceNullMarker          = 0
+	rowReferenceNonNullMarker       = 1
+	rowReferenceTerminatorByte      = 0
+	rowReferenceEscapedNulByte      = 0xff
 
 	rowReferenceNumericNegativeMarker = 0
 	rowReferenceNumericZeroMarker     = 1
@@ -106,10 +100,11 @@ func EncodeRowReference(ctx *sql.Context, columnTypes []sql.Type, values sql.Row
 		return RowReference{}, fmt.Errorf("JSONB GIN row reference component count %d exceeds maximum %d", len(columnTypes), uint64(math.MaxUint16))
 	}
 
-	encoded := make([]byte, rowReferenceHeaderSize)
+	encoded := make([]byte, rowReferenceOrderedHeaderSize)
 	copy(encoded[:4], rowReferenceMagic[:])
-	encoded[4] = RowReferenceFormatVersionV1
-	binary.BigEndian.PutUint16(encoded[5:rowReferenceHeaderSize], uint16(len(columnTypes)))
+	encoded[4] = rowReferenceFormatVersion
+	encoded[5] = byte(RowReferenceKindOrdered)
+	binary.BigEndian.PutUint16(encoded[rowReferenceKindHeaderSize:rowReferenceOrderedHeaderSize], uint16(len(columnTypes)))
 
 	for i, typ := range columnTypes {
 		value := values[i]
@@ -126,7 +121,7 @@ func EncodeRowReference(ctx *sql.Context, columnTypes []sql.Type, values sql.Row
 	}
 
 	return RowReference{
-		FormatVersion: RowReferenceFormatVersionV1,
+		FormatVersion: rowReferenceFormatVersion,
 		Kind:          RowReferenceKindOrdered,
 		Values:        cloneRowReferenceValues(values),
 		Bytes:         encoded,
@@ -139,13 +134,13 @@ func EncodeOpaqueRowReference(identity string) (RowReference, error) {
 	if identity == "" {
 		return RowReference{}, fmt.Errorf("JSONB GIN opaque row reference requires a non-empty identity")
 	}
-	encoded := make([]byte, rowReferenceV2HeaderSize)
+	encoded := make([]byte, rowReferenceKindHeaderSize)
 	copy(encoded[:4], rowReferenceMagic[:])
-	encoded[4] = RowReferenceFormatVersionV2
+	encoded[4] = rowReferenceFormatVersion
 	encoded[5] = byte(RowReferenceKindOpaque)
 	encoded = append(encoded, encodeComparableBytes([]byte(identity))...)
 	return RowReference{
-		FormatVersion: RowReferenceFormatVersionV2,
+		FormatVersion: rowReferenceFormatVersion,
 		Kind:          RowReferenceKindOpaque,
 		Identity:      identity,
 		Bytes:         encoded,
@@ -155,7 +150,7 @@ func EncodeOpaqueRowReference(identity string) (RowReference, error) {
 // DecodeRowReference decodes a row reference using the primary-key column types
 // for the table that owns the posting list.
 func DecodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte) (RowReference, error) {
-	if len(encoded) < rowReferenceHeaderSize {
+	if len(encoded) < rowReferenceKindHeaderSize {
 		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
 	}
 	if !bytes.Equal(encoded[:4], rowReferenceMagic[:]) {
@@ -163,23 +158,57 @@ func DecodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte
 	}
 	version := encoded[4]
 	switch version {
-	case RowReferenceFormatVersionV1:
-		return decodeOrderedRowReference(ctx, columnTypes, encoded, version)
-	case RowReferenceFormatVersionV2:
-		return decodeV2RowReference(encoded)
+	case legacyRowReferenceFormatVersion:
+		return decodeLegacyOrderedRowReference(ctx, columnTypes, encoded, version)
+	case rowReferenceFormatVersion:
+		return decodeRowReference(ctx, columnTypes, encoded)
 	default:
 		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference version %d", version)
 	}
 }
 
-func decodeOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte, version uint8) (RowReference, error) {
-	componentCount := int(binary.BigEndian.Uint16(encoded[5:rowReferenceHeaderSize]))
+func decodeLegacyOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte, version uint8) (RowReference, error) {
+	const legacyHeaderSize = 7
+	if len(encoded) < legacyHeaderSize {
+		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
+	}
+	return decodeOrderedRowReference(ctx, columnTypes, encoded, legacyHeaderSize, int(binary.BigEndian.Uint16(encoded[5:legacyHeaderSize])), version)
+}
+
+func decodeRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte) (RowReference, error) {
+	kind := RowReferenceKind(encoded[5])
+	switch kind {
+	case RowReferenceKindOrdered:
+		if len(encoded) < rowReferenceOrderedHeaderSize {
+			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
+		}
+		componentCount := int(binary.BigEndian.Uint16(encoded[rowReferenceKindHeaderSize:rowReferenceOrderedHeaderSize]))
+		return decodeOrderedRowReference(ctx, columnTypes, encoded, rowReferenceOrderedHeaderSize, componentCount, rowReferenceFormatVersion)
+	case RowReferenceKindOpaque:
+		identity, offset, err := decodeComparableBytes(encoded, rowReferenceKindHeaderSize)
+		if err != nil {
+			return RowReference{}, fmt.Errorf("malformed JSONB GIN opaque row reference: %w", err)
+		}
+		if offset != len(encoded) {
+			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: trailing bytes after opaque identity")
+		}
+		return RowReference{
+			FormatVersion: rowReferenceFormatVersion,
+			Kind:          RowReferenceKindOpaque,
+			Identity:      string(identity),
+			Bytes:         append([]byte(nil), encoded...),
+		}, nil
+	default:
+		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference kind %d", kind)
+	}
+}
+
+func decodeOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded []byte, offset int, componentCount int, version uint8) (RowReference, error) {
 	if componentCount != len(columnTypes) {
 		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: component count %d does not match %d key types", componentCount, len(columnTypes))
 	}
 
 	values := make(sql.Row, componentCount)
-	offset := rowReferenceHeaderSize
 	for i, typ := range columnTypes {
 		if offset >= len(encoded) {
 			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: missing null marker for component %d", i)
@@ -210,31 +239,6 @@ func decodeOrderedRowReference(ctx *sql.Context, columnTypes []sql.Type, encoded
 		Values:        values,
 		Bytes:         append([]byte(nil), encoded...),
 	}, nil
-}
-
-func decodeV2RowReference(encoded []byte) (RowReference, error) {
-	if len(encoded) < rowReferenceV2HeaderSize {
-		return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: too short")
-	}
-	kind := RowReferenceKind(encoded[5])
-	switch kind {
-	case RowReferenceKindOpaque:
-		identity, offset, err := decodeComparableBytes(encoded, rowReferenceV2HeaderSize)
-		if err != nil {
-			return RowReference{}, fmt.Errorf("malformed JSONB GIN opaque row reference: %w", err)
-		}
-		if offset != len(encoded) {
-			return RowReference{}, fmt.Errorf("malformed JSONB GIN row reference: trailing bytes after opaque identity")
-		}
-		return RowReference{
-			FormatVersion: RowReferenceFormatVersionV2,
-			Kind:          RowReferenceKindOpaque,
-			Identity:      string(identity),
-			Bytes:         append([]byte(nil), encoded...),
-		}, nil
-	default:
-		return RowReference{}, fmt.Errorf("unsupported JSONB GIN row reference kind %d", kind)
-	}
 }
 
 // CompareRowReferences compares two row references using byte order.

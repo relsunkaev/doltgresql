@@ -437,7 +437,7 @@ func TestJsonbGinPostingChunkEditorSkipsDeleteChunksOutsideRowRefRange(t *testin
 	malformedFarRow := sql.Row{
 		token,
 		int64(1),
-		int16(jsonbgin.PostingChunkFormatVersionV1),
+		int16(jsonbgin.PostingChunkFormatVersion),
 		int32(2),
 		farFirst.Bytes,
 		farLast.Bytes,
@@ -1834,7 +1834,7 @@ func postingChunkRowsForToken(t *testing.T, rows []sql.Row, token string) []sql.
 func requirePostingChunkRow(t *testing.T, ctx *sql.Context, row sql.Row, chunkNo int64, ids []int32) {
 	t.Helper()
 	require.Equal(t, chunkNo, row[1])
-	require.Equal(t, int16(jsonbgin.PostingChunkFormatVersionV1), row[2])
+	require.Equal(t, int16(jsonbgin.PostingChunkFormatVersion), row[2])
 	require.Equal(t, int32(len(ids)), row[3])
 	require.NotEmpty(t, row[4])
 	require.NotEmpty(t, row[5])

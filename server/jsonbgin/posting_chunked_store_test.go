@@ -24,7 +24,7 @@ import (
 )
 
 func TestChunkedPostingStoreMatchesPostingStoreLookups(t *testing.T) {
-	v1, chunked := buildComparablePostingStores(t, 3, []string{
+	baseline, chunked := buildComparablePostingStores(t, 3, []string{
 		`{"tenant":1,"status":"open","tags":["vip","west"],"payload":{"category":"cat-1"}}`,
 		`{"tenant":1,"status":"open","tags":["standard","west"],"payload":{"category":"cat-2"}}`,
 		`{"tenant":2,"status":"closed","tags":["vip","east"],"payload":{"category":"cat-1"}}`,
@@ -44,16 +44,16 @@ func TestChunkedPostingStoreMatchesPostingStoreLookups(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, len(chunks), 1)
 
-	require.Equal(t, v1.Lookup(vip), rowRefStrings(chunked.Lookup(vip)))
-	require.Equal(t, v1.Lookup(tenantKey), rowRefStrings(chunked.Lookup(tenantKey)))
-	require.Equal(t, v1.Lookup(categoryCat1), rowRefStrings(chunked.Lookup(categoryCat1)))
-	require.Equal(t, v1.Union(vip, archived), rowRefStrings(chunked.Union(vip, archived)))
-	require.Equal(t, v1.Intersect(vip, open), rowRefStrings(chunked.Intersect(vip, open)))
-	require.Equal(t, v1.Intersect(vip, open, categoryCat1), rowRefStrings(chunked.Intersect(vip, open, categoryCat1)))
+	require.Equal(t, baseline.Lookup(vip), rowRefStrings(chunked.Lookup(vip)))
+	require.Equal(t, baseline.Lookup(tenantKey), rowRefStrings(chunked.Lookup(tenantKey)))
+	require.Equal(t, baseline.Lookup(categoryCat1), rowRefStrings(chunked.Lookup(categoryCat1)))
+	require.Equal(t, baseline.Union(vip, archived), rowRefStrings(chunked.Union(vip, archived)))
+	require.Equal(t, baseline.Intersect(vip, open), rowRefStrings(chunked.Intersect(vip, open)))
+	require.Equal(t, baseline.Intersect(vip, open, categoryCat1), rowRefStrings(chunked.Intersect(vip, open, categoryCat1)))
 }
 
 func TestChunkedPostingStoreHandlesSkewedAndDuplicateTokens(t *testing.T) {
-	v1 := NewPostingStore()
+	baseline := NewPostingStore()
 	chunked := NewChunkedPostingStore(4)
 	common := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "common"}
 	rare := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "rare"}
@@ -64,13 +64,13 @@ func TestChunkedPostingStoreHandlesSkewedAndDuplicateTokens(t *testing.T) {
 		if i%7 == 0 {
 			tokens = append(tokens, rare, rare)
 		}
-		require.NoError(t, v1.Add(rowID, tokens))
+		require.NoError(t, baseline.Add(rowID, tokens))
 		require.NoError(t, chunked.Add([]byte(rowID), tokens))
 	}
 
-	require.Equal(t, v1.Lookup(common), rowRefStrings(chunked.Lookup(common)))
-	require.Equal(t, v1.Lookup(rare), rowRefStrings(chunked.Lookup(rare)))
-	require.Equal(t, v1.Intersect(common, rare), rowRefStrings(chunked.Intersect(common, rare)))
+	require.Equal(t, baseline.Lookup(common), rowRefStrings(chunked.Lookup(common)))
+	require.Equal(t, baseline.Lookup(rare), rowRefStrings(chunked.Lookup(rare)))
+	require.Equal(t, baseline.Intersect(common, rare), rowRefStrings(chunked.Intersect(common, rare)))
 
 	chunks, err := chunked.Chunks(common)
 	require.NoError(t, err)
@@ -81,24 +81,24 @@ func TestChunkedPostingStoreHandlesSkewedAndDuplicateTokens(t *testing.T) {
 }
 
 func TestChunkedPostingStoreMutationsMatchPostingStore(t *testing.T) {
-	v1 := NewPostingStore()
+	baseline := NewPostingStore()
 	chunked := NewChunkedPostingStore(2)
 	oldTokens, err := Extract(mustJsonDocument(t, `{"tags":["old","vip"],"status":"draft"}`), indexmetadata.OpClassJsonbOps)
 	require.NoError(t, err)
 	newTokens, err := Extract(mustJsonDocument(t, `{"tags":["new","vip"],"status":"posted"}`), indexmetadata.OpClassJsonbOps)
 	require.NoError(t, err)
 
-	require.NoError(t, v1.Add("row/1", oldTokens))
+	require.NoError(t, baseline.Add("row/1", oldTokens))
 	require.NoError(t, chunked.Add([]byte("row/1"), oldTokens))
-	require.NoError(t, v1.Replace("row/1", oldTokens, newTokens))
+	require.NoError(t, baseline.Replace("row/1", oldTokens, newTokens))
 	require.NoError(t, chunked.Replace([]byte("row/1"), oldTokens, newTokens))
 
 	oldToken := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "old"}
 	newToken := Token{OpClass: indexmetadata.OpClassJsonbOps, Kind: TokenKindKey, Value: "new"}
-	require.Equal(t, v1.Lookup(oldToken), rowRefStrings(chunked.Lookup(oldToken)))
-	require.Equal(t, v1.Lookup(newToken), rowRefStrings(chunked.Lookup(newToken)))
+	require.Equal(t, baseline.Lookup(oldToken), rowRefStrings(chunked.Lookup(oldToken)))
+	require.Equal(t, baseline.Lookup(newToken), rowRefStrings(chunked.Lookup(newToken)))
 
-	require.NoError(t, v1.Delete("row/1", newTokens))
+	require.NoError(t, baseline.Delete("row/1", newTokens))
 	require.NoError(t, chunked.Delete([]byte("row/1"), newTokens))
 	require.Empty(t, chunked.Lookup(newToken))
 }
@@ -170,16 +170,16 @@ func BenchmarkChunkedPostingStoreUnionIntersect(b *testing.B) {
 
 func buildComparablePostingStores(tb testing.TB, rowsPerChunk int, documents []string) (*PostingStore, *ChunkedPostingStore) {
 	tb.Helper()
-	v1 := NewPostingStore()
+	baseline := NewPostingStore()
 	chunked := NewChunkedPostingStore(rowsPerChunk)
 	for i, input := range documents {
 		rowID := fmt.Sprintf("row/%04d", i)
 		tokens, err := Extract(mustJsonDocument(tb, input), indexmetadata.OpClassJsonbOps)
 		require.NoError(tb, err)
-		require.NoError(tb, v1.Add(rowID, tokens))
+		require.NoError(tb, baseline.Add(rowID, tokens))
 		require.NoError(tb, chunked.Add([]byte(rowID), tokens))
 	}
-	return v1, chunked
+	return baseline, chunked
 }
 
 func rowRefStrings(rowRefs [][]byte) []string {
