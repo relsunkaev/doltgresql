@@ -38,9 +38,7 @@ var pg_sleep_float64 = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		f := val.(float64)
-		time.Sleep(time.Duration(f * float64(time.Second)))
-		return nil, nil
+		return nil, sleepWithContext(ctx, time.Duration(val.(float64)*float64(time.Second)))
 	},
 }
 
@@ -52,8 +50,25 @@ var pg_sleep_for_interval = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		d := val.(duration.Duration)
-		time.Sleep(time.Duration(d.Nanos()))
-		return nil, nil
+		return nil, sleepWithContext(ctx, time.Duration(val.(duration.Duration).Nanos()))
 	},
+}
+
+// sleepWithContext blocks for d, but returns the context error early
+// if the session is canceled (e.g. from a CancelRequest startup
+// message or a client-side query timeout). Real PG's pg_sleep also
+// short-circuits on cancellation; without this the time.Sleep call
+// would hold the goroutine open until d expired regardless.
+func sleepWithContext(ctx *sql.Context, d time.Duration) error {
+	if d <= 0 {
+		return nil
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

@@ -91,6 +91,13 @@ type ConnectionHandler struct {
 	database string
 	// replicationSenderID is set while this connection is in START_REPLICATION copy-both mode.
 	replicationSenderID uint64
+	// cancelSecretKey is the random 32-bit secret paired with the
+	// connection ID and reported to the client via BackendKeyData
+	// at startup. PostgreSQL's CancelRequest startup-message variant
+	// presents this pair to authorize cancellation of the active
+	// query — so the value lives for the connection's lifetime and
+	// must be nonzero to distinguish from "uninitialized" sessions.
+	cancelSecretKey uint32
 }
 
 // Set this env var to disable panic handling in the connection, which is useful when debugging a panic
@@ -126,6 +133,7 @@ func NewConnectionHandler(conn net.Conn, handler mysql.Handler, sel server.Serve
 		PrepareData: make(map[uint32]*mysql.PrepareData),
 	}
 	mysqlConn.ConnectionID = atomic.AddUint32(&connectionIDCounter, 1)
+	cancelSecretKey := generateSecretKey()
 
 	// Postgres has a two-stage procedure for prepared queries. First the query is parsed via a |Parse| message, and
 	// the result is stored in the |preparedStatements| map by the name provided. Then one or more |Bind| messages
@@ -154,6 +162,7 @@ func NewConnectionHandler(conn net.Conn, handler mysql.Handler, sel server.Serve
 		portals:            portals,
 		doltgresHandler:    doltgresHandler,
 		backend:            pgproto3.NewBackend(conn, conn),
+		cancelSecretKey:    cancelSecretKey,
 	}
 }
 
@@ -198,6 +207,7 @@ func (h *ConnectionHandler) HandleConnection() {
 	defer func() {
 		h.closeReplicationSender()
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+		globalCancelRegistry.unregister(h.mysqlConn.ConnectionID, h.cancelSecretKey)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
 	}()
 
@@ -289,6 +299,17 @@ func (h *ConnectionHandler) handleStartup() (bool, error) {
 			return false, errors.Errorf("error sending response to GSS Enc Request: %w", err)
 		}
 		return h.handleStartup()
+	case *pgproto3.CancelRequest:
+		// CancelRequest is the only startup-message variant that does
+		// not expect any reply: per the PG protocol the server merely
+		// kills the running query and closes the connection. We look
+		// up the (ProcessID, SecretKey) pair against the registry,
+		// and on a match ask the engine's process list to interrupt
+		// every query for that connection. A miss is silently ignored
+		// (no response is permitted, so the only safe action is to
+		// drop the connection).
+		h.handleCancelRequest(sm)
+		return false, nil
 	default:
 		return false, errors.Errorf("terminating connection: unexpected start message: %#v", startupMessage)
 	}
@@ -323,10 +344,39 @@ func (h *ConnectionHandler) sendClientStartupMessages() error {
 			return err
 		}
 	}
+	// Real PG advertises a per-connection (ProcessID, SecretKey) pair
+	// so any process holding the same pair can issue CancelRequest
+	// for that connection. Use the GMS connection id as ProcessID
+	// (already unique per session) and a per-session random secret.
+	globalCancelRegistry.register(h.mysqlConn.ConnectionID, h.cancelSecretKey, h.mysqlConn.ConnectionID)
 	return h.send(&pgproto3.BackendKeyData{
-		ProcessID: processID,
-		SecretKey: 0, // TODO: this should represent an ID that can uniquely identify this connection, so that CancelRequest will work
+		ProcessID: h.mysqlConn.ConnectionID,
+		SecretKey: h.cancelSecretKey,
 	})
+}
+
+// handleCancelRequest looks up the cancel registry for a presented
+// (ProcessID, SecretKey) pair and, on match, asks the engine's
+// process list to interrupt the active query on the matching
+// connection. A non-matching pair is silently ignored — the
+// PostgreSQL protocol forbids sending any response on the cancel
+// connection, and a wrong/stale pair is the most common case
+// (clients reconnect and ask the registry for a stale entry).
+func (h *ConnectionHandler) handleCancelRequest(req *pgproto3.CancelRequest) {
+	if req == nil || req.SecretKey == 0 {
+		return
+	}
+	connID, ok := globalCancelRegistry.lookup(req.ProcessID, req.SecretKey)
+	if !ok {
+		return
+	}
+	server := sqlserver.GetRunningServer()
+	if server == nil || server.Engine == nil {
+		return
+	}
+	if pl := server.Engine.ProcessList; pl != nil {
+		pl.Kill(connID)
+	}
 }
 
 // startupParam returns the value the client supplied for a given startup
