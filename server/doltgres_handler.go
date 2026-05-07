@@ -49,9 +49,9 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
-	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/settings"
+	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -530,10 +530,14 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 		return nil, err
 	}
 
-	// sourceSchemaCache memoizes the (table-name -> table-OID) lookup
-	// across the columns of a single result so SELECT * never walks
-	// search_path more than once per source table.
-	sourceSchemaCache := make(map[string]uint32)
+	// sourceSchemaCache memoizes the (table-name -> resolved metadata)
+	// lookup across the columns of a single result so SELECT * never
+	// walks search_path more than once per source table. Each entry
+	// carries the table OID and the attnum-by-column-name map so a
+	// reordered SELECT (`SELECT col2, col1 FROM t`) can report each
+	// column's true source-table attnum instead of its result-set
+	// position.
+	sourceSchemaCache := make(map[string]*sourceTableMeta)
 
 	fields := make([]pgproto3.FieldDescription, len(s))
 	for i, c := range s {
@@ -579,7 +583,13 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 
 		var tableOID uint32
 		if c.Source != "" {
-			tableOID = lookupTableOIDForSource(ctx, c.Source, c.DatabaseSource, sourceSchemaCache)
+			meta := lookupSourceTableMeta(ctx, c.Source, c.DatabaseSource, sourceSchemaCache)
+			if meta != nil {
+				tableOID = meta.tableOID
+				if attnum, ok := meta.attnumOf(c.Name); ok {
+					tableAttributeNumber = attnum
+				}
+			}
 		}
 		fields[i] = pgproto3.FieldDescription{
 			Name:                 []byte(colName),
@@ -868,15 +878,19 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 		// should not happen
 		return nil, errors.Errorf("received empty schema")
 	}
-	formatCodes, err := extendFormatCodes(len(row), formatCodes)
-	if err != nil {
-		return nil, err
+	textFormatOnly := ForceTextWireFormat || len(formatCodes) == 0
+	var err error
+	if !textFormatOnly {
+		formatCodes, err = extendFormatCodes(len(row), formatCodes)
+		if err != nil {
+			return nil, err
+		}
 	}
 	o := make([][]byte, len(row))
 	for i, v := range row {
 		if v == nil {
 			o[i] = nil
-		} else if formatCodes[i] == 1 {
+		} else if !textFormatOnly && formatCodes[i] == 1 {
 			switch d := s[i].Type.(type) {
 			case *pgtypes.DoltgresType:
 				o[i], err = d.CallSend(ctx, v)

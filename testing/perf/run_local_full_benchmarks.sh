@@ -21,6 +21,7 @@ SYSBENCH_THREADS="${SYSBENCH_THREADS:-1}"
 SYSBENCH_TABLE_SIZE="${SYSBENCH_TABLE_SIZE:-1000}"
 SYSBENCH_TABLES="${SYSBENCH_TABLES:-1}"
 SYSBENCH_REPORT_INTERVAL="${SYSBENCH_REPORT_INTERVAL:-0}"
+SYSBENCH_DB_PS_MODE="${SYSBENCH_DB_PS_MODE:-disable}"
 SYSBENCH_LUA_REPO="${SYSBENCH_LUA_REPO:-https://github.com/dolthub/sysbench-lua-scripts.git}"
 
 DOLTGRES_PAIRED_INDEX_BENCH_ITERS="${DOLTGRES_PAIRED_INDEX_BENCH_ITERS:-25}"
@@ -192,7 +193,7 @@ sysbench_common_args() {
     "--pgsql-user=postgres" \
     "--pgsql-password=$password" \
     "--pgsql-db=$db" \
-    "--db-ps-mode=disable" \
+    "--db-ps-mode=$SYSBENCH_DB_PS_MODE" \
     "--threads=$SYSBENCH_THREADS" \
     "--table-size=$SYSBENCH_TABLE_SIZE" \
     "--report-interval=$SYSBENCH_REPORT_INTERVAL"
@@ -284,6 +285,7 @@ write_sysbench_report() {
     echo "- PostgreSQL: $POSTGRES_IMAGE on port $POSTGRES_PORT"
     echo "- Sysbench time: ${SYSBENCH_TIME}s"
     echo "- Sysbench threads: $SYSBENCH_THREADS"
+    echo "- Sysbench prepared-statement mode: $SYSBENCH_DB_PS_MODE"
     echo "- Sysbench table size: $SYSBENCH_TABLE_SIZE"
     echo "- Output directory: $OUT_DIR"
     echo

@@ -56,7 +56,7 @@ func TestWireFlushMessage(t *testing.T) {
 						&pgproto3.RowDescription{
 							Fields: []pgproto3.FieldDescription{
 								{
-									Name:                 []byte("1"),
+									Name:                 []byte("?column?"),
 									TableOID:             0,
 									TableAttributeNumber: 1,
 									DataTypeOID:          23,
