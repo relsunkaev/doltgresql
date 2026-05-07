@@ -884,6 +884,64 @@ func TestSystemInformationFunctions(t *testing.T) {
 						{int32(-1477818771), int32(-1768572819), int32(-785388649), int32(1425101999), nil},
 					},
 				},
+				{
+					Query: `SELECT hashtextextended('', 0), hashtextextended('electric_slot_default', 0), hashtextextended('abc', 0), hashtextextended('ümlaut', 0), hashtextextended(NULL::text, 0), hashtextextended(NULL::text, 1);`,
+					Expected: []sql.Row{
+						{int64(-6939563903564495251), int64(3078871274581506157), int64(-6747756470228489321), int64(-6459857908154674001), nil, nil},
+					},
+				},
+				{
+					// When seed=0, the low 32 bits of hashtextextended must equal hashtext (as PG documents).
+					Query: `SELECT v, (hashtext(v)::int8 & 4294967295) = (hashtextextended(v, 0) & 4294967295) AS matches
+                            FROM (VALUES (''::text), ('PostgreSQL'), ('eIpUEtqmY89'), ('AXKEJBTK'), ('muop28x03'), ('yi3nm0d73'), ('ümlaut'), ('abc')) x(v);`,
+					Expected: []sql.Row{
+						{"", "t"},
+						{"PostgreSQL", "t"},
+						{"eIpUEtqmY89", "t"},
+						{"AXKEJBTK", "t"},
+						{"muop28x03", "t"},
+						{"yi3nm0d73", "t"},
+						{"ümlaut", "t"},
+						{"abc", "t"},
+					},
+				},
+				{
+					// With non-zero seed, hashtextextended must produce a different result than the unseeded form.
+					Query: `SELECT hashtextextended('PostgreSQL', 1), hashtextextended('PostgreSQL', 1) = hashtextextended('PostgreSQL', 0) AS same;`,
+					Expected: []sql.Row{
+						{int64(-1358846221981485480), "f"},
+					},
+				},
+				{
+					// Large positive and negative seeds must produce values that match real PostgreSQL.
+					Query: `SELECT hashtextextended('abc', 1234567890123), hashtextextended('abc', -1);`,
+					Expected: []sql.Row{
+						{int64(-7559745029679409952), int64(1911237551546830967)},
+					},
+				},
+				{
+					// Length boundary cases for the 12-byte chunk loop in the hash mixer.
+					Query: `SELECT hashtextextended('a', 0), hashtextextended('ab', 0), hashtextextended('abcd', 0), hashtextextended('abcdefghijkl', 0), hashtextextended('abcdefghijklm', 0);`,
+					Expected: []sql.Row{
+						{int64(3591986179850072241), int64(2833316173711343549), int64(-1038429303365892052), int64(-7556637188122330412), int64(8871624171452417744)},
+					},
+				},
+				{
+					// Long input plus extreme bigint seeds.
+					Query: `SELECT hashtextextended('the quick brown fox jumps over the lazy dog', 0),
+                                   hashtextextended('the quick brown fox jumps over the lazy dog', 9223372036854775807),
+                                   hashtextextended('the quick brown fox jumps over the lazy dog', -9223372036854775808);`,
+					Expected: []sql.Row{
+						{int64(-6494288192639172655), int64(-2017140918319894201), int64(2793360898120234633)},
+					},
+				},
+				{
+					// Result must be deterministic — same input/seed yields same output.
+					Query: `SELECT hashtextextended('PostgreSQL', 42) = hashtextextended('PostgreSQL', 42);`,
+					Expected: []sql.Row{
+						{"t"},
+					},
+				},
 			},
 		},
 		{

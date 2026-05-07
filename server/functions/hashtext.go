@@ -27,6 +27,7 @@ import (
 // initHashText registers the functions to the catalog.
 func initHashText() {
 	framework.RegisterFunction(hashtext_text)
+	framework.RegisterFunction(hashtextextended_text_int8)
 }
 
 // hashtext_text represents the PostgreSQL function hashtext(text).
@@ -40,11 +41,46 @@ var hashtext_text = framework.Function1{
 	},
 }
 
-func pgHashBytes(k []byte) uint32 {
-	a := uint32(0x9e3779b9 + len(k) + 3923095)
-	b := a
-	c := a
+// hashtextextended_text_int8 represents the PostgreSQL function hashtextextended(text, bigint).
+// It must agree with hashtext on its low 32 bits when the seed is zero.
+var hashtextextended_text_int8 = framework.Function2{
+	Name:       "hashtextextended",
+	Return:     pgtypes.Int64,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return int64(pgHashBytesExtended([]byte(val1.(string)), uint64(val2.(int64)))), nil
+	},
+}
 
+func pgHashBytes(k []byte) uint32 {
+	a, b, c := pgHashInit(len(k))
+	a, b, c = pgHashConsume(a, b, c, k)
+	_, _, c = pgHashFinal(a, b, c)
+	return c
+}
+
+// pgHashBytesExtended is the 64-bit seeded variant matching PostgreSQL's
+// hash_bytes_extended. With seed == 0 it produces the same low 32 bits as
+// pgHashBytes; with any non-zero seed it perturbs the initial mixer state.
+func pgHashBytesExtended(k []byte, seed uint64) uint64 {
+	a, b, c := pgHashInit(len(k))
+	if seed != 0 {
+		a += uint32(seed >> 32)
+		b += uint32(seed)
+		a, b, c = pgHashMix(a, b, c)
+	}
+	a, b, c = pgHashConsume(a, b, c, k)
+	_, b, c = pgHashFinal(a, b, c)
+	return uint64(b)<<32 | uint64(c)
+}
+
+func pgHashInit(keylen int) (uint32, uint32, uint32) {
+	x := uint32(0x9e3779b9 + keylen + 3923095)
+	return x, x, x
+}
+
+func pgHashConsume(a, b, c uint32, k []byte) (uint32, uint32, uint32) {
 	for len(k) >= 12 {
 		a += binary.LittleEndian.Uint32(k[0:4])
 		b += binary.LittleEndian.Uint32(k[4:8])
@@ -88,7 +124,7 @@ func pgHashBytes(k []byte) uint32 {
 		a += uint32(k[0])
 	}
 
-	return pgHashFinal(a, b, c)
+	return a, b, c
 }
 
 func pgHashMix(a uint32, b uint32, c uint32) (uint32, uint32, uint32) {
@@ -113,7 +149,7 @@ func pgHashMix(a uint32, b uint32, c uint32) (uint32, uint32, uint32) {
 	return a, b, c
 }
 
-func pgHashFinal(a uint32, b uint32, c uint32) uint32 {
+func pgHashFinal(a uint32, b uint32, c uint32) (uint32, uint32, uint32) {
 	c ^= b
 	c -= bits.RotateLeft32(b, 14)
 	a ^= c
@@ -128,5 +164,5 @@ func pgHashFinal(a uint32, b uint32, c uint32) uint32 {
 	b -= bits.RotateLeft32(a, 14)
 	c ^= b
 	c -= bits.RotateLeft32(b, 24)
-	return c
+	return a, b, c
 }
