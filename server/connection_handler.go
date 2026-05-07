@@ -55,6 +55,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/sessionstate"
@@ -524,9 +525,12 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		}
 		handled, endOfMessages, err = h.handleQueryOutsideEngine(queries[0])
 		if handled {
+			h.releaseXactAdvisoryLocksIfOutsideTransaction()
 			return endOfMessages, err
 		}
-		return true, h.query(queries[0])
+		err = h.query(queries[0])
+		h.releaseXactAdvisoryLocksIfOutsideTransaction()
+		return true, err
 	}
 
 	for _, query := range queries {
@@ -538,11 +542,31 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			continue
 		}
 		err = h.query(query)
+		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		if err != nil {
 			return true, err
 		}
 	}
 	return true, nil
+}
+
+// releaseXactAdvisoryLocksIfOutsideTransaction releases every transaction-scope
+// advisory lock the session holds when the wire-protocol transaction has ended
+// (either via COMMIT/ROLLBACK or because we are running in autocommit mode and
+// the previous statement just finished). Mirrors PostgreSQL's automatic
+// release of pg_advisory_xact_lock() at transaction end.
+func (h *ConnectionHandler) releaseXactAdvisoryLocksIfOutsideTransaction() {
+	if h.inTransaction || h.mysqlConn == nil {
+		return
+	}
+	if !functions.HasSessionXactLocks(h.mysqlConn.ConnectionID) {
+		return
+	}
+	ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+	if err != nil {
+		return
+	}
+	_ = functions.ReleaseSessionXactLocks(ctx)
 }
 
 // handleQueryOutsideEngine handles any queries that should be handled by the handler directly, rather than being
@@ -1258,6 +1282,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 // handleExecute handles an execute message, returning any error that occurs
 func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	h.waitForSync = true
+	defer h.releaseXactAdvisoryLocksIfOutsideTransaction()
 
 	// TODO: implement the RowMax
 	portalData, ok := h.portals[message.Portal]

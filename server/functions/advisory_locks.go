@@ -15,7 +15,7 @@
 package functions
 
 import (
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -31,64 +31,84 @@ func initAdvisoryLockFunctions() {
 	framework.RegisterFunction(pg_advisory_lock_bigint)
 	framework.RegisterFunction(pg_advisory_unlock_bigint)
 	framework.RegisterFunction(pg_try_advisory_lock_bigint)
+	framework.RegisterFunction(pg_advisory_lock_int4_int4)
+	framework.RegisterFunction(pg_advisory_unlock_int4_int4)
+	framework.RegisterFunction(pg_try_advisory_lock_int4_int4)
+	framework.RegisterFunction(pg_advisory_xact_lock_bigint)
+	framework.RegisterFunction(pg_advisory_xact_lock_int4_int4)
+	framework.RegisterFunction(pg_try_advisory_xact_lock_bigint)
+	framework.RegisterFunction(pg_try_advisory_xact_lock_int4_int4)
+	framework.RegisterFunction(pg_advisory_unlock_all)
+}
+
+// PostgreSQL keeps the (int4, int4) and (int8) advisory lock spaces
+// disjoint. We mirror that here by prefixing every internal lock name
+// with the form's tag — "8" for the int8 overload, "4" for the
+// (int4, int4) overload — so the same numeric value cannot collide
+// across forms.
+const (
+	advisoryLockPrefixInt8     = "8:"
+	advisoryLockPrefixInt4Pair = "4:"
+)
+
+func advisoryLockNameInt8(key int64) string {
+	return advisoryLockPrefixInt8 + strconv.FormatInt(key, 10)
+}
+
+func advisoryLockNameInt4Pair(key1, key2 int32) string {
+	return advisoryLockPrefixInt4Pair + strconv.FormatInt(int64(key1), 10) + ":" + strconv.FormatInt(int64(key2), 10)
 }
 
 // pg_advisory_lock_bigint represents the pg_advisory_lock(bigint) function.
 // https://www.postgresql.org/docs/9.1/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS
 var pg_advisory_lock_bigint = framework.Function1{
-	Name:       "pg_advisory_lock",
-	Return:     pgtypes.Bool,
-	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int64},
-	Strict:     true,
+	Name:               "pg_advisory_lock",
+	Return:             pgtypes.Void,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Int64},
+	IsNonDeterministic: true,
+	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		lockNumericId := val1.(int64)
-		lockName := fmt.Sprintf("%v", lockNumericId)
+		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, false)
+	},
+}
 
-		lockSubsystem := getLockSubsystem()
-		if lockSubsystem == nil {
-			return false, errors.Errorf("lock subsystem not available")
-		}
-
-		// TODO: Postgres supports reentrant locks, meaning if pg_advisory_lock(123) is called multiple times,
-		//       pg_advisory_unlock(123) must be called the same number of times to fully release a lock. This
-		//       is different from MySQL's locking behavior, so LockSubsystem should be updated to support
-		//       a reentrant mode in addition to the current mode.
-		err := lockSubsystem.Lock(ctx, lockName, time.Millisecond*-1)
-		return err == nil, err
+// pg_advisory_lock_int4_int4 represents the pg_advisory_lock(int4, int4) function.
+var pg_advisory_lock_int4_int4 = framework.Function2{
+	Name:               "pg_advisory_lock",
+	Return:             pgtypes.Void,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, false)
 	},
 }
 
 // pg_try_advisory_lock_bigint represents the pg_try_advisory_lock(bigint) function.
-// https://www.postgresql.org/docs/9.1/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS
 var pg_try_advisory_lock_bigint = framework.Function1{
-	Name:       "pg_try_advisory_lock",
-	Return:     pgtypes.Bool,
-	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int64},
-	Strict:     true,
+	Name:               "pg_try_advisory_lock",
+	Return:             pgtypes.Bool,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Int64},
+	IsNonDeterministic: true,
+	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		lockNumericId := val1.(int64)
-		lockName := fmt.Sprintf("%v", lockNumericId)
+		return tryAcquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), false)
+	},
+}
 
-		lockSubsystem := getLockSubsystem()
-		if lockSubsystem == nil {
-			return false, errors.Errorf("lock subsystem not available")
-		}
-
-		// TODO: We currently need to specify a timeout, but it may be a better mapping to
-		//       this function if we had a lockSubsystem.TryLock function that would try
-		//       to grab the lock once and then return immediately. Until then, we set a
-		//       short timeout and translate any timeout errors into a false return value.
-		err := lockSubsystem.Lock(ctx, lockName, time.Millisecond*1)
-		if sql.ErrLockTimeout.Is(err) {
-			return false, nil
-		}
-
-		return err == nil, err
+// pg_try_advisory_lock_int4_int4 represents the pg_try_advisory_lock(int4, int4) function.
+var pg_try_advisory_lock_int4_int4 = framework.Function2{
+	Name:               "pg_try_advisory_lock",
+	Return:             pgtypes.Bool,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return tryAcquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), false)
 	},
 }
 
 // pg_advisory_unlock_bigint represents the pg_advisory_unlock(bigint) function.
-// https://www.postgresql.org/docs/9.1/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS
 var pg_advisory_unlock_bigint = framework.Function1{
 	Name:               "pg_advisory_unlock",
 	Return:             pgtypes.Bool,
@@ -96,21 +116,203 @@ var pg_advisory_unlock_bigint = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		lockNumericId := val1.(int64)
-		lockName := fmt.Sprintf("%v", lockNumericId)
-
-		lockSubsystem := getLockSubsystem()
-		if lockSubsystem == nil {
-			return false, errors.Errorf("lock subsystem not available")
-		}
-
-		err := lockSubsystem.Unlock(ctx, lockName)
-		if sql.ErrLockDoesNotExist.Is(err) {
-			return false, nil
-		}
-
-		return err == nil, err
+		return releaseAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)))
 	},
+}
+
+// pg_advisory_unlock_int4_int4 represents the pg_advisory_unlock(int4, int4) function.
+var pg_advisory_unlock_int4_int4 = framework.Function2{
+	Name:               "pg_advisory_unlock",
+	Return:             pgtypes.Bool,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return releaseAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)))
+	},
+}
+
+// pg_advisory_xact_lock_bigint represents the pg_advisory_xact_lock(bigint) function.
+// The lock is held for the duration of the surrounding transaction (or, in
+// autocommit mode, the duration of the statement) and released at transaction
+// end by the connection layer via ReleaseSessionXactLocks.
+var pg_advisory_xact_lock_bigint = framework.Function1{
+	Name:               "pg_advisory_xact_lock",
+	Return:             pgtypes.Void,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Int64},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), -1, true)
+	},
+}
+
+// pg_advisory_xact_lock_int4_int4 represents the pg_advisory_xact_lock(int4, int4) function.
+var pg_advisory_xact_lock_int4_int4 = framework.Function2{
+	Name:               "pg_advisory_xact_lock",
+	Return:             pgtypes.Void,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return nil, acquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), -1, true)
+	},
+}
+
+// pg_try_advisory_xact_lock_bigint represents the pg_try_advisory_xact_lock(bigint) function.
+var pg_try_advisory_xact_lock_bigint = framework.Function1{
+	Name:               "pg_try_advisory_xact_lock",
+	Return:             pgtypes.Bool,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Int64},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		return tryAcquireAdvisoryLock(ctx, advisoryLockNameInt8(val1.(int64)), true)
+	},
+}
+
+// pg_try_advisory_xact_lock_int4_int4 represents the pg_try_advisory_xact_lock(int4, int4) function.
+var pg_try_advisory_xact_lock_int4_int4 = framework.Function2{
+	Name:               "pg_try_advisory_xact_lock",
+	Return:             pgtypes.Bool,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return tryAcquireAdvisoryLock(ctx, advisoryLockNameInt4Pair(val1.(int32), val2.(int32)), true)
+	},
+}
+
+// pg_advisory_unlock_all represents the pg_advisory_unlock_all() function.
+// PostgreSQL semantics: releases every session-level advisory lock currently
+// held by the session. Transaction-level advisory locks are unaffected and
+// remain held until the transaction ends.
+var pg_advisory_unlock_all = framework.Function0{
+	Name:               "pg_advisory_unlock_all",
+	Return:             pgtypes.Void,
+	IsNonDeterministic: true,
+	Callable: func(ctx *sql.Context) (any, error) {
+		ls := getLockSubsystem()
+		if ls == nil {
+			return nil, errors.Errorf("lock subsystem not available")
+		}
+
+		xactCounts := snapshotSessionXactLockCounts(uint32(ctx.Session.ID()))
+
+		var allNames []string
+		_ = ctx.Session.IterLocks(func(name string) error {
+			allNames = append(allNames, name)
+			return nil
+		})
+
+		for _, name := range allNames {
+			// Repeatedly unlock until the count reserved for the
+			// transaction-scope tracker remains, so reentrant
+			// session-scope acquisitions are fully released.
+			for {
+				state, owner := ls.GetLockState(name)
+				if state != sql.LockInUse || uint32(owner) != uint32(ctx.Session.ID()) {
+					break
+				}
+				if reentrantCountForSession(name) <= xactCounts[name] {
+					break
+				}
+				if err := ls.Unlock(ctx, name); err != nil {
+					break
+				}
+			}
+		}
+		return nil, nil
+	},
+}
+
+// snapshotSessionXactLockCounts produces a {name -> count} snapshot of every
+// transaction-scope advisory lock the given session has on file, used by
+// pg_advisory_unlock_all to avoid releasing transaction-scope acquisitions.
+func snapshotSessionXactLockCounts(sessionID uint32) map[string]int {
+	xactLocksMu.Lock()
+	defer xactLocksMu.Unlock()
+	out := make(map[string]int, len(xactLocks[sessionID]))
+	for _, name := range xactLocks[sessionID] {
+		out[name]++
+	}
+	return out
+}
+
+// reentrantCountForSession returns the LockSubsystem reentrant count for the
+// given lock name as observed by the calling session, or 0 if the lock is
+// free or owned by another session.
+func reentrantCountForSession(name string) int {
+	ls := getLockSubsystem()
+	if ls == nil {
+		return 0
+	}
+	state, _ := ls.GetLockState(name)
+	if state != sql.LockInUse {
+		return 0
+	}
+	// LockSubsystem doesn't expose the count directly. Approximate by
+	// returning 1: this is enough to make pg_advisory_unlock_all release
+	// at least once per name, after which we recheck state and stop.
+	return 1
+}
+
+// acquireAdvisoryLock acquires the named lock with the given timeout. When
+// txn is true, the acquisition is recorded for transaction-scope release;
+// the caller must hold the lock for the lifetime of the surrounding
+// transaction (or autocommit statement).
+func acquireAdvisoryLock(ctx *sql.Context, name string, timeout time.Duration, txn bool) error {
+	ls := getLockSubsystem()
+	if ls == nil {
+		return errors.Errorf("lock subsystem not available")
+	}
+	if err := ls.Lock(ctx, name, timeout); err != nil {
+		return err
+	}
+	if txn {
+		recordXactLock(uint32(ctx.Session.ID()), name)
+	}
+	return nil
+}
+
+// tryAcquireAdvisoryLock attempts to acquire the named lock without
+// blocking, returning (true, nil) on success or (false, nil) when the lock
+// is held by another session. Returns a non-nil error only on infrastructure
+// failures (e.g. missing lock subsystem).
+func tryAcquireAdvisoryLock(ctx *sql.Context, name string, txn bool) (bool, error) {
+	ls := getLockSubsystem()
+	if ls == nil {
+		return false, errors.Errorf("lock subsystem not available")
+	}
+	// timeout = 0 makes the LockSubsystem run a single CAS attempt and
+	// return ErrLockTimeout immediately if the lock is held by another
+	// session — matching pg_try_advisory_lock semantics.
+	err := ls.Lock(ctx, name, 0)
+	if sql.ErrLockTimeout.Is(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if txn {
+		recordXactLock(uint32(ctx.Session.ID()), name)
+	}
+	return true, nil
+}
+
+// releaseAdvisoryLock releases one count of the named session-scope
+// advisory lock. Returns true if a count was released, false if the lock
+// is not held by this session.
+func releaseAdvisoryLock(ctx *sql.Context, name string) (bool, error) {
+	ls := getLockSubsystem()
+	if ls == nil {
+		return false, errors.Errorf("lock subsystem not available")
+	}
+	err := ls.Unlock(ctx, name)
+	if sql.ErrLockDoesNotExist.Is(err) || sql.ErrLockNotOwned.Is(err) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 // getLockSubsystem returns the active lock system for the SQL engine.

@@ -48,6 +48,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
+	"github.com/dolthub/doltgresql/server/functions"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -462,6 +463,11 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		logrus.Errorf("unable to release all locks on session close: %s", err)
 		logrus.Errorf("unable to unlock tables on session close: %s", err)
 	} else {
+		// Drain any outstanding transaction-scope advisory locks before
+		// the session-wide ReleaseAll: we want the in-memory tracker to
+		// stay in sync with the LockSubsystem so it doesn't try to
+		// re-release them later for a reused connection id.
+		_ = functions.ReleaseSessionXactLocks(ctx)
 		_, err = h.e.LS.ReleaseAll(ctx)
 		if err != nil {
 			logrus.Errorf("unable to release all locks on session close: %s", err)
