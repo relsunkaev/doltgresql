@@ -70,6 +70,28 @@ func TestExecutionFormatCodesExpandsBinaryShortForm(t *testing.T) {
 	require.Equal(t, []int16{1, 1, 1}, formatCodes)
 }
 
+func TestSchemaToFieldDescriptionsUsesDefaultTextFormat(t *testing.T) {
+	fields, err := schemaToFieldDescriptionsWithSource(sql.NewEmptyContext(), sql.Schema{
+		{Name: "a", Type: pgtypes.Int32},
+		{Name: "b", Type: pgtypes.Text},
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, fields, 2)
+	require.Equal(t, int16(0), fields[0].Format)
+	require.Equal(t, int16(0), fields[1].Format)
+}
+
+func TestSchemaToFieldDescriptionsExpandsBinaryFormat(t *testing.T) {
+	fields, err := schemaToFieldDescriptionsWithSource(sql.NewEmptyContext(), sql.Schema{
+		{Name: "a", Type: pgtypes.Int32},
+		{Name: "b", Type: pgtypes.Text},
+	}, nil, []int16{1})
+	require.NoError(t, err)
+	require.Len(t, fields, 2)
+	require.Equal(t, int16(1), fields[0].Format)
+	require.Equal(t, int16(1), fields[1].Format)
+}
+
 func TestConvertBindParametersReturnsNilForNoValues(t *testing.T) {
 	bindings, err := (&DoltgresHandler{}).convertBindParameters(sql.NewEmptyContext(), nil, nil, nil)
 	require.NoError(t, err)

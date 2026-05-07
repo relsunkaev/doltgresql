@@ -571,10 +571,13 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 // alias (`SELECT col AS x FROM t`) can still be traced back to the
 // base table for editor-friendly RowDescription metadata.
 func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceNode sql.Node, formatCodes []int16) ([]pgproto3.FieldDescription, error) {
-	var err error
-	formatCodes, err = extendFormatCodes(len(s), formatCodes)
-	if err != nil {
-		return nil, err
+	textFormatOnly := ForceTextWireFormat || len(formatCodes) == 0
+	if !textFormatOnly {
+		var err error
+		formatCodes, err = extendFormatCodes(len(s), formatCodes)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// sourceSchemaCache memoizes the (table-name -> resolved metadata)
@@ -651,6 +654,11 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 				}
 			}
 		}
+		formatCode := int16(0)
+		if !textFormatOnly {
+			formatCode = formatCodes[i]
+		}
+
 		fields[i] = pgproto3.FieldDescription{
 			Name:                 []byte(colName),
 			TableOID:             tableOID,
@@ -658,7 +666,7 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 			DataTypeOID:          oid,
 			DataTypeSize:         dataTypeSize,
 			TypeModifier:         typmod,
-			Format:               formatCodes[i],
+			Format:               formatCode,
 		}
 	}
 
