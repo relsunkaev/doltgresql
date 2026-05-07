@@ -312,20 +312,44 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 			},
 		},
 		{
-			Name: "ON CONFLICT (pk) DO NOTHING with multi-unique still rejected",
+			Name: "ON CONFLICT (pk) DO NOTHING with multi-unique: target conflict ignored",
 			SetUpScript: []string{
 				"CREATE TABLE u4 (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT);",
 				"INSERT INTO u4 VALUES (1, 'a@x.com', 'first');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// DO NOTHING on a multi-unique table still routes
-					// through INSERT IGNORE in GMS, which would silently
-					// swallow non-target unique violations — incorrect
-					// under PG semantics. The DO UPDATE form is
-					// supported via the target-guard wrapper instead.
-					Query:       `INSERT INTO u4 (id, email, name) VALUES (1, 'b@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
+					// PK conflict on the named target -> ignored. The
+					// pre-check inserter wrapper sees email='b@x.com'
+					// has no non-target conflict, so the row reaches
+					// the underlying inserter, which raises the PK
+					// violation that INSERT IGNORE then swallows.
+					Query: `INSERT INTO u4 (id, email, name) VALUES (1, 'b@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
+				},
+				{
+					Query:    "SELECT id, email, name FROM u4;",
+					Expected: []gms.Row{{1, "a@x.com", "first"}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT (pk) DO NOTHING raises on non-target unique conflict",
+			SetUpScript: []string{
+				"CREATE TABLE u4b (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT);",
+				"INSERT INTO u4b VALUES (1, 'a@x.com', 'first');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					// New id, but email already on id=1. Without the
+					// pre-check this would be silently swallowed by
+					// INSERT IGNORE; with the wrapper, the non-target
+					// conflict surfaces.
+					Query:       `INSERT INTO u4b (id, email, name) VALUES (2, 'a@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
+					ExpectedErr: "duplicate key value violates unique constraint",
+				},
+				{
+					Query:    "SELECT id, email, name FROM u4b ORDER BY id;",
+					Expected: []gms.Row{{1, "a@x.com", "first"}},
 				},
 			},
 		},

@@ -151,13 +151,12 @@ ON CONFLICT (id) do update set c1 = $4`,
 					ExpectedErr: "duplicate key value violates unique constraint",
 				},
 				{
-					// DO NOTHING on a multi-unique table is rejected
-					// (GMS's INSERT IGNORE would silently swallow
-					// non-target unique violations). DO UPDATE is the
-					// supported form; see the conflict_arbiters cases
-					// below.
+					// New id=3, email='a@example.com' conflicts on the
+					// non-target email index — pre-check raises the
+					// duplicate-key error rather than letting INSERT
+					// IGNORE silently swallow it.
 					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong ignore') ON CONFLICT (id) DO NOTHING",
-					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
+					ExpectedErr: "duplicate key value violates unique constraint",
 				},
 				{
 					// Email is the targeted unique here; the existing
@@ -165,10 +164,12 @@ ON CONFLICT (id) do update set c1 = $4`,
 					Query: "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email update') ON CONFLICT (email) DO UPDATE SET name = 'email update'",
 				},
 				{
-					// DO NOTHING on a multi-unique table is rejected
-					// (see the (id) variant above for rationale).
-					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email ignore') ON CONFLICT (email) DO NOTHING",
-					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
+					// Email is the targeted unique. The existing row
+					// matches email='a@example.com' so the conflict
+					// is on the target → DO NOTHING swallows it. The
+					// non-target id index sees no collision (id=3 is
+					// new), so the pre-check passes through.
+					Query: "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email ignore') ON CONFLICT (email) DO NOTHING",
 				},
 				{
 					// Arbiter predicate is accepted: doltgres has no

@@ -28,6 +28,8 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
+	pgtransform "github.com/dolthub/doltgresql/server/transform"
 )
 
 // ValidateOnConflictArbiter prevents PostgreSQL targeted ON CONFLICT clauses
@@ -66,11 +68,15 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 		// DO NOTHING on a multi-unique table routes through INSERT
 		// IGNORE in GMS, which would silently swallow a violation of
 		// any unique index — including a non-target one — making the
-		// upsert incorrect under PG semantics. Until a pre-check
-		// inserter wrapper is in place, reject this shape.
-		return nil, transform.NewTree, errors.Errorf(
-			"ON CONFLICT (%s) DO NOTHING is not yet supported on tables with multiple unique indexes; use DO UPDATE",
-			joinNameList(target.targetColumnNames))
+		// upsert incorrect under PG semantics. Wrap the destination
+		// with a pre-check inserter that raises (as a non-Unique-
+		// KeyError) on a non-target unique conflict; target conflicts
+		// still flow through to the underlying INSERT IGNORE path.
+		wrapped, err := wrapDestinationForArbiterPreCheck(ctx, insert, target)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		return wrapped, transform.NewTree, nil
 	}
 
 	wrapped, err := wrapOnDupForTargetGuard(ctx, insert, target)
@@ -255,6 +261,43 @@ func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, target
 // ON DUP expressions have their RHS wrapped with the
 // OnConflictTargetGuard so a conflict on a non-target unique index
 // raises rather than silently firing the update.
+// wrapDestinationForArbiterPreCheck wraps the InsertInto's
+// destination table with an OnConflictDoNothingArbiterTable so that
+// a non-target unique-index conflict raises (as a non-Unique-Key
+// error that GMS's INSERT IGNORE handler does not swallow). The
+// target unique still flows through to the underlying inserter
+// where the IGNORE swallow correctly suppresses the user's chosen
+// duplicate.
+func wrapDestinationForArbiterPreCheck(ctx *sql.Context, insert *plan.InsertInto, target conflictTarget) (sql.Node, error) {
+	targetSet := map[string]struct{}{target.constraintName: {}}
+	destination, same, err := pgtransform.NodeWithOpaque(ctx, insert.Destination, func(ctx *sql.Context, n sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		resolved, ok := n.(*plan.ResolvedTable)
+		if !ok {
+			return n, transform.SameTree, nil
+		}
+		wrapped, wasWrapped, err := pgnodes.WrapOnConflictDoNothingArbiterTable(ctx, resolved.Table, targetSet)
+		if err != nil || !wasWrapped {
+			return n, transform.SameTree, err
+		}
+		newNode, err := resolved.ReplaceTable(ctx, wrapped)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		return newNode.(sql.Node), transform.NewTree, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if same == transform.SameTree {
+		return insert, nil
+	}
+	out, err := insert.WithChildren(ctx, destination)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func wrapOnDupForTargetGuard(ctx *sql.Context, insert *plan.InsertInto, target conflictTarget) (sql.Node, error) {
 	if insert.OnDupExprs == nil {
 		return insert, nil

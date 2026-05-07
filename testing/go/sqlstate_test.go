@@ -113,9 +113,16 @@ func TestSQLStateCodes(t *testing.T) {
 			code: "42703",
 		},
 		{
-			name: "DO NOTHING multi-unique rejection -> 42601 (syntax/feature)",
-			sql:  "INSERT INTO udq VALUES (1, 'd@x.com', 1) ON CONFLICT (id) DO NOTHING;",
-			code: "0A000",
+			// DO NOTHING multi-unique with a non-target conflict
+			// surfaces the unique-violation through the pre-check
+			// wrapper (rather than being silently swallowed by
+			// INSERT IGNORE). udq has id=1 / email='a@x.com'; the
+			// new row reuses email='a@x.com' on a different id,
+			// triggering the email index — which is non-target for
+			// `ON CONFLICT (id)`.
+			name: "DO NOTHING multi-unique non-target conflict -> 23505",
+			sql:  "INSERT INTO udq VALUES (2, 'a@x.com', 1) ON CONFLICT (id) DO NOTHING;",
+			code: "23505",
 		},
 	}
 	for _, tc := range cases {

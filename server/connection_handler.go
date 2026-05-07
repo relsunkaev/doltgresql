@@ -2362,6 +2362,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.CheckViolation.String(), true
 	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
 		return pgcode.UndefinedColumn.String(), true
+	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
+		return pgcode.UniqueViolation.String(), true
 	}
 	return "", false
 }
