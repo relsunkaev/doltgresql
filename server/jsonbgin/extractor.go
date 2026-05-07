@@ -15,6 +15,7 @@
 package jsonbgin
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 
@@ -165,11 +166,45 @@ func (s *EncodedTokenScratch) ExtractValueEncoded(value pgtypes.JsonValue, opCla
 // scratch storage. It avoids materializing an intermediate JsonDocument tree.
 // The returned slice is valid until the next call on scratch.
 func (s *EncodedTokenScratch) ExtractJSONEncoded(input []byte, opClass string) ([]string, error) {
-	var decoded any
-	if err := json.Unmarshal(input, &decoded); err != nil {
+	if s == nil {
+		var scratch EncodedTokenScratch
+		return scratch.ExtractJSONEncoded(input, opClass)
+	}
+	if cap(s.encodedTokens) < defaultEncodedTokenCapacity {
+		s.encodedTokens = make([]string, 0, defaultEncodedTokenCapacity)
+	} else {
+		s.encodedTokens = s.encodedTokens[:0]
+	}
+	for key := range s.encodedIndependentSeen {
+		delete(s.encodedIndependentSeen, key)
+	}
+	extractor := extractor{
+		opClass:                indexmetadata.NormalizeOpClass(opClass),
+		encodedTokens:          s.encodedTokens,
+		encodedIndependentSeen: s.encodedIndependentSeen,
+		encoded:                true,
+	}
+	switch extractor.opClass {
+	case indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps:
+	default:
+		return nil, fmt.Errorf("unsupported JSONB GIN opclass %q", opClass)
+	}
+
+	parser := jsonEncodedTokenParser{
+		input:     input,
+		extractor: &extractor,
+	}
+	if err := parser.parseValue(false); err != nil {
 		return nil, err
 	}
-	return s.extractDecodedJSONEncoded(decoded, opClass)
+	parser.skipWhitespace()
+	if parser.pos != len(parser.input) {
+		return nil, fmt.Errorf("unexpected trailing JSON at offset %d", parser.pos)
+	}
+
+	s.encodedTokens = normalizeEncodedTokens(extractor.encodedTokens)
+	s.encodedIndependentSeen = extractor.encodedIndependentSeen
+	return s.encodedTokens, nil
 }
 
 func (s *EncodedTokenScratch) extractDecodedJSONEncoded(value any, opClass string) ([]string, error) {
@@ -388,6 +423,238 @@ func (e *extractor) extractDecodedJsonbPathOps(value any) error {
 		return fmt.Errorf("unexpected JSONB value type %T", value)
 	}
 	return nil
+}
+
+type jsonEncodedTokenParser struct {
+	input     []byte
+	pos       int
+	extractor *extractor
+}
+
+func (p *jsonEncodedTokenParser) parseValue(arrayElement bool) error {
+	p.skipWhitespace()
+	if p.pos >= len(p.input) {
+		return fmt.Errorf("unexpected end of JSON input")
+	}
+	switch p.input[p.pos] {
+	case '{':
+		return p.parseObject()
+	case '[':
+		return p.parseArray()
+	case '"':
+		value, err := p.parseString()
+		if err != nil {
+			return err
+		}
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			if arrayElement {
+				p.extractor.addIndependent(TokenKindKey, value)
+			} else {
+				p.extractor.addIndependent(TokenKindString, value)
+			}
+		} else {
+			p.extractor.addPathValue("string:" + value)
+		}
+		return nil
+	case 't':
+		if !p.consumeLiteral("true") {
+			return fmt.Errorf("malformed JSON literal at offset %d", p.pos)
+		}
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindBoolean, "true")
+		} else {
+			p.extractor.addPathValue("boolean:true")
+		}
+		return nil
+	case 'f':
+		if !p.consumeLiteral("false") {
+			return fmt.Errorf("malformed JSON literal at offset %d", p.pos)
+		}
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindBoolean, "false")
+		} else {
+			p.extractor.addPathValue("boolean:false")
+		}
+		return nil
+	case 'n':
+		if !p.consumeLiteral("null") {
+			return fmt.Errorf("malformed JSON literal at offset %d", p.pos)
+		}
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindNull, "null")
+		} else {
+			p.extractor.addPathValue("null:null")
+		}
+		return nil
+	default:
+		if isJSONNumberStart(p.input[p.pos]) {
+			number, err := p.parseNumber()
+			if err != nil {
+				return err
+			}
+			if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+				p.extractor.addIndependent(TokenKindNumber, number)
+			} else {
+				p.extractor.addPathValue("number:" + number)
+			}
+			return nil
+		}
+		return fmt.Errorf("unexpected JSON byte %q at offset %d", p.input[p.pos], p.pos)
+	}
+}
+
+func (p *jsonEncodedTokenParser) parseObject() error {
+	p.pos++
+	p.skipWhitespace()
+	if p.consumeByte('}') {
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindEmptyObject, "")
+		}
+		return nil
+	}
+	for {
+		p.skipWhitespace()
+		if p.pos >= len(p.input) || p.input[p.pos] != '"' {
+			return fmt.Errorf("expected JSON object key at offset %d", p.pos)
+		}
+		key, err := p.parseString()
+		if err != nil {
+			return err
+		}
+		p.skipWhitespace()
+		if !p.consumeByte(':') {
+			return fmt.Errorf("expected JSON object colon at offset %d", p.pos)
+		}
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindKey, key)
+			if err = p.parseValue(false); err != nil {
+				return err
+			}
+		} else {
+			p.extractor.pushPath(key)
+			if err = p.parseValue(false); err != nil {
+				return err
+			}
+			p.extractor.popPath()
+		}
+		p.skipWhitespace()
+		if p.consumeByte('}') {
+			return nil
+		}
+		if !p.consumeByte(',') {
+			return fmt.Errorf("expected JSON object comma at offset %d", p.pos)
+		}
+	}
+}
+
+func (p *jsonEncodedTokenParser) parseArray() error {
+	p.pos++
+	p.skipWhitespace()
+	if p.consumeByte(']') {
+		if p.extractor.opClass == indexmetadata.OpClassJsonbOps {
+			p.extractor.addIndependent(TokenKindEmptyArray, "")
+		}
+		return nil
+	}
+	for {
+		if err := p.parseValue(true); err != nil {
+			return err
+		}
+		p.skipWhitespace()
+		if p.consumeByte(']') {
+			return nil
+		}
+		if !p.consumeByte(',') {
+			return fmt.Errorf("expected JSON array comma at offset %d", p.pos)
+		}
+	}
+}
+
+func (p *jsonEncodedTokenParser) parseString() (string, error) {
+	if p.pos >= len(p.input) || p.input[p.pos] != '"' {
+		return "", fmt.Errorf("expected JSON string at offset %d", p.pos)
+	}
+	quoteStart := p.pos
+	p.pos++
+	start := p.pos
+	escaped := false
+	for p.pos < len(p.input) {
+		c := p.input[p.pos]
+		switch c {
+		case '"':
+			if !escaped {
+				value := string(p.input[start:p.pos])
+				p.pos++
+				return value, nil
+			}
+			var value string
+			p.pos++
+			if err := json.Unmarshal(p.input[quoteStart:p.pos], &value); err != nil {
+				return "", err
+			}
+			return value, nil
+		case '\\':
+			escaped = true
+			p.pos++
+			if p.pos >= len(p.input) {
+				return "", fmt.Errorf("malformed JSON string escape at offset %d", p.pos)
+			}
+			p.pos++
+		default:
+			if c < 0x20 {
+				return "", fmt.Errorf("malformed JSON string control byte at offset %d", p.pos)
+			}
+			p.pos++
+		}
+	}
+	return "", fmt.Errorf("unterminated JSON string at offset %d", quoteStart)
+}
+
+func (p *jsonEncodedTokenParser) parseNumber() (string, error) {
+	start := p.pos
+	for p.pos < len(p.input) && isJSONNumberByte(p.input[p.pos]) {
+		p.pos++
+	}
+	number, err := decimal.NewFromString(string(p.input[start:p.pos]))
+	if err != nil {
+		return "", err
+	}
+	return number.String(), nil
+}
+
+func (p *jsonEncodedTokenParser) skipWhitespace() {
+	for p.pos < len(p.input) {
+		switch p.input[p.pos] {
+		case ' ', '\n', '\r', '\t':
+			p.pos++
+		default:
+			return
+		}
+	}
+}
+
+func (p *jsonEncodedTokenParser) consumeByte(value byte) bool {
+	if p.pos < len(p.input) && p.input[p.pos] == value {
+		p.pos++
+		return true
+	}
+	return false
+}
+
+func (p *jsonEncodedTokenParser) consumeLiteral(value string) bool {
+	if bytes.HasPrefix(p.input[p.pos:], []byte(value)) {
+		p.pos += len(value)
+		return true
+	}
+	return false
+}
+
+func isJSONNumberStart(value byte) bool {
+	return value == '-' || (value >= '0' && value <= '9')
+}
+
+func isJSONNumberByte(value byte) bool {
+	return value == '-' || value == '+' || value == '.' || value == 'e' || value == 'E' || (value >= '0' && value <= '9')
 }
 
 func (e *extractor) addIndependent(kind TokenKind, value string) {

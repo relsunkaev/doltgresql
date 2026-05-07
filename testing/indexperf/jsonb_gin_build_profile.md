@@ -18,16 +18,15 @@ The script writes a timestamped directory under `.local_benchmarks/` with:
 
 ## Current Snapshot
 
-From `.local_benchmarks/jsonb-gin-build-profile-20260506-153427/report.md`,
-plus the local byte-enabled paired smoke refreshed after the sidecar-byte metric
-landed:
+From `.local_benchmarks/full-20260506-204618/report.md`, refreshed after
+defaulting chunked posting storage to 512 refs/chunk:
 
 | Case | Doltgres | PostgreSQL 18 | Doltgres vs PG18 | Sidecar rows | Sidecar bytes |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `jsonb_ops` representative | 20.726 ms | 3.905 ms | 5.31x | 230 | 242,630 |
-| `jsonb_path_ops` representative | 16.279 ms | 4.284 ms | 3.80x | 233 | 134,135 |
-| `jsonb_ops` skewed | 24.460 ms | 4.243 ms | 5.76x | 232 | 299,492 |
-| `jsonb_path_ops` skewed | 12.956 ms | 2.189 ms | 5.92x | 212 | 160,636 |
+| `jsonb_ops` representative | 16.239 ms/op | 3.889 ms/op | 4.18x | 215 | 242,012 |
+| `jsonb_path_ops` representative | 10.732 ms/op | 2.537 ms/op | 4.23x | 232 | 134,064 |
+| `jsonb_ops` skewed | 19.663 ms/op | 4.293 ms/op | 4.58x | 208 | 298,502 |
+| `jsonb_path_ops` skewed | 11.656 ms/op | 2.733 ms/op | 4.26x | 206 | 160,204 |
 
 The chunked storage shape has removed the durable sidecar row explosion. The
 remaining build gap is now mostly pre-row-map work rather than Dolt row-map
@@ -56,33 +55,43 @@ only reduced encoded payload bytes by about 1.2%. That makes a compact payload
 format a lower-leverage follow-up than extraction, row-reference encoding, and
 scratch-reuse work.
 
+The production default is 512 refs/chunk. A local 1024 refs/chunk trial improved
+some build cases, but it made JSONB GIN DML maintenance noisier and worse in
+delete/mixed buckets, so 512 is the better whole-benchmark tradeoff.
+
 ## Stage Signals
 
-The same run reported:
+The latest focused local stage benchmarks reported:
 
 ```text
-BenchmarkJsonbGinPostingChunkRowsToSink/memory  258.432 ms  1244 chunk_rows/op  259.640 MB/op  6,774,649 allocs/op
-BenchmarkJsonbGinPostingChunkRowsToSink/spill   677.750 ms  1244 chunk_rows/op  269.287 MB/op  6,819,403 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_ops/chunk_512/memory      130.900-134.238 ms  311 chunk_rows/op   72.702 MB/op  2,552,086 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_path_ops/chunk_512/memory 181.706-195.596 ms  314 chunk_rows/op  110.002 MB/op  3,071,804 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_ops/chunk_512/memory    165.768 ms          311 chunk_rows/op   58.837 MB/op  1,704,725 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_path_ops/chunk_512/memory 239.878 ms        314 chunk_rows/op   96.802 MB/op  2,224,439 allocs/op
 BenchmarkBuildSortedPrimaryRowIndexPostingRows  2.043 ms    4096 rows/op        1.456 MB/op    54,115 allocs/op
 BenchmarkSortedPrimaryRowIndexBuilderPostingRows 1.799 ms   4096 rows/op        1.294 MB/op    53,263 allocs/op
 ```
 
-The memory profile puts most allocations in JSON conversion and token/entry
-generation:
+The JSON text path now scans directly into tokens instead of materializing a
+decoded map. The focused extractor benchmark reports roughly 100-103 us and
+41 KB/op for `jsonb_ops`, and 127-130 us and 80.5 KB/op for
+`jsonb_path_ops`.
 
-- `server/types.ConvertToJsonDocument`: 148.56 MB cumulative
-- `jsonbgin.ExtractEncoded`: 99.14 MB cumulative
-- `CreateJsonbGinIndex.addPostingChunkEntries`: 418.51 MB cumulative
-- `CreateJsonbGinIndex.writePostingChunkRowsFromEntries`: 81.68 MB cumulative
-- `buildSortedPrimaryRowIndex`: 3.05 MB cumulative
+The memory profile still puts most allocations in token/entry generation:
+
+- JSON string decoding and token string creation
+- `CreateJsonbGinIndex.addPostingChunkEntries`
+- posting build-entry sort/merge work
+- `CreateJsonbGinIndex.writePostingChunkRowsFromEntries`
+- `buildSortedPrimaryRowIndex` remains small by comparison
 
 The CPU profile for the spill-inclusive run is dominated by temp-file I/O and
 entry sorting/merge:
 
-- `syscall.rawsyscalln`: 600 ms flat
-- `jsonbGinPostingChunkEntrySorter.Add`: 410 ms cumulative
-- `bufio.Writer.Flush`: 100 ms cumulative
-- `jsonbgin.ExtractEncoded`: 50 ms cumulative
+- `syscall.rawsyscalln`: 72.52% flat
+- `jsonbGinPostingChunkEntrySorter.AddRowTokens`: 44.97% cumulative
+- `jsonbGinPostingChunkEntrySorter.flushRun`: 46.34% cumulative
+- `writePostingChunkRowsFromEntries`: 14.75% cumulative
 - row-map chunker/write work is visible but not dominant
 
 ## Follow-Up Queue

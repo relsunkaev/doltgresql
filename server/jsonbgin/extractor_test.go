@@ -193,11 +193,23 @@ func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
 		},
 		{
 			name:  "escaped_strings",
-			input: `{"text":"a\nb","tags":["x\u263a","x\u263a"],"quote":"a\"b"}`,
+			input: `{"text":"a\nb","tags":["x\u263a","x\u263a"],"quote":"a\"b","slash":"a\/b"}`,
+		},
+		{
+			name:  "number_canonicalization",
+			input: `{"n":1e3,"small":1.25,"arr":[-2]}`,
 		},
 		{
 			name:  "scalar_string",
 			input: `"text"`,
+		},
+		{
+			name:  "scalar_bool",
+			input: `true`,
+		},
+		{
+			name:  "scalar_null",
+			input: `null`,
 		},
 		{
 			name:  "scalar_number",

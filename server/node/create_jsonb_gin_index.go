@@ -45,7 +45,7 @@ import (
 const jsonbGinPostingTableComment = "Doltgres JSONB GIN posting storage"
 const jsonbGinPostingChunkTableComment = "Doltgres JSONB GIN posting chunk storage"
 const jsonbGinPostingBackfillChunkRows = 8192
-const jsonbGinPostingChunkRowsPerChunk = 256
+const jsonbGinPostingChunkRowsPerChunk = 512
 const jsonbGinPostingChunkBuildSpillEntries = 65536
 const jsonbGinPostingBuildContextCheckInterval = 1024
 
