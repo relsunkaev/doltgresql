@@ -19,7 +19,7 @@ The harness covers:
   primary-key shape that logs `dg_v2_direct_fetch=false`
 - JSONB GIN index build for representative and skewed `jsonb_ops` and
   `jsonb_path_ops` documents, reporting Doltgres v1, Doltgres v2, PostgreSQL
-  timings, and Doltgres sidecar row counts
+  timings, Doltgres sidecar row counts, and encoded sidecar bytes
 - JSONB GIN indexed DML maintenance, including separate INSERT, UPDATE, and
   DELETE buckets for Doltgres v1, Doltgres v2, and PostgreSQL
 - representative scan-boundary cases such as a suffix-only btree predicate
@@ -28,7 +28,8 @@ Each benchmark logs a `paired-index-baseline` line and emits Go benchmark
 metrics for `dg_scan_us/op`, `dg_index_us/op`, `dg_v1_index_us/op`,
 `dg_v2_index_us/op`, `pg_us/op`, `dg_index_vs_scan`, `dg_index_vs_pg`,
 `dg_v1_index_vs_pg`, `dg_v2_index_vs_pg`, `dg_v2_vs_v1`,
-`dg_v1_sidecar_rows/op`, and `dg_v2_sidecar_rows/op` where those fields apply.
+`dg_v1_sidecar_rows/op`, `dg_v2_sidecar_rows/op`,
+`dg_v1_sidecar_bytes/op`, and `dg_v2_sidecar_bytes/op` where those fields apply.
 PostgreSQL plans are included for read benchmarks so Doltgres changes can be
 compared to the baseline plan shape as well as elapsed time.
 JSONB GIN v2 read benchmarks also log `dg_v2_direct_fetch=true|false`; false
@@ -68,7 +69,10 @@ The profile script writes a timestamped report and raw artifacts under
 PostgreSQL 18 index benchmark so the report includes v1/v2/PostgreSQL build
 ratios and sidecar row counts.
 The latest checked-in findings are summarized in
-`testing/indexperf/jsonb_gin_build_profile.md`.
+`testing/indexperf/jsonb_gin_build_profile.md`. The node-stage benchmark
+`BenchmarkJsonbGinPostingChunkRowsToSink` also reports `payload_bytes/op`,
+`avg_refs/chunk`, and `max_refs/chunk` across multiple fixed chunk sizes for
+JSONB GIN payload-format evaluation.
 
 To use an already-running PostgreSQL instead of the script-managed container,
 run the Go benchmark directly:

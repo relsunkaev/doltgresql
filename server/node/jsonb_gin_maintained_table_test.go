@@ -1241,40 +1241,78 @@ func BenchmarkJsonbGinPostingChunkRowsToSink(b *testing.B) {
 	for _, rowSet := range rowSets {
 		rowSet := rowSet
 		b.Run(rowSet.name, func(b *testing.B) {
-			for _, test := range spillCases {
-				test := test
-				b.Run(test.name, func(b *testing.B) {
-					create := &CreateJsonbGinIndex{
-						opClass:                       indexmetadata.OpClassJsonbOps,
-						postingChunkRowsPerChunk:      128,
-						postingChunkBuildSpillEntries: test.spillEntries,
+			for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+				opClass := opClass
+				b.Run(opClass, func(b *testing.B) {
+					for _, rowsPerChunk := range []int{64, 128, 256, 512} {
+						rowsPerChunk := rowsPerChunk
+						b.Run(fmt.Sprintf("chunk_%d", rowsPerChunk), func(b *testing.B) {
+							for _, test := range spillCases {
+								test := test
+								b.Run(test.name, func(b *testing.B) {
+									create := &CreateJsonbGinIndex{
+										opClass:                       opClass,
+										postingChunkRowsPerChunk:      rowsPerChunk,
+										postingChunkBuildSpillEntries: test.spillEntries,
+									}
+									b.ReportAllocs()
+									var lastChunkRows int
+									var lastPayloadBytes int
+									var lastAvgRefs float64
+									var lastMaxRefs int
+									for i := 0; i < b.N; i++ {
+										collector := &jsonbGinPostingChunkRowCollector{}
+										sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
+										if err := create.addPostingChunkEntries(ctx, sch, &benchmarkRowIter{rows: rowSet.rows}, 1, sorter); err != nil {
+											b.Fatal(err)
+										}
+										if err := create.writePostingChunkRowsFromEntries(ctx, sorter, collector); err != nil {
+											_ = sorter.Close()
+											b.Fatal(err)
+										}
+										if err := sorter.Close(); err != nil {
+											b.Fatal(err)
+										}
+										if len(collector.rows) == 0 {
+											b.Fatal("expected chunk rows")
+										}
+										payloadBytes, totalRefs, maxRefs := postingChunkRowsPayloadStats(collector.rows)
+										lastChunkRows = len(collector.rows)
+										lastPayloadBytes = payloadBytes
+										lastMaxRefs = maxRefs
+										lastAvgRefs = float64(totalRefs) / float64(len(collector.rows))
+									}
+									b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
+									b.ReportMetric(float64(lastPayloadBytes), "payload_bytes/op")
+									b.ReportMetric(lastAvgRefs, "avg_refs/chunk")
+									b.ReportMetric(float64(lastMaxRefs), "max_refs/chunk")
+								})
+							}
+						})
 					}
-					sink := &countingPostingRowSink{}
-					b.ReportAllocs()
-					var lastChunkRows int
-					for i := 0; i < b.N; i++ {
-						sink.count = 0
-						sorter := newJsonbGinPostingChunkEntrySorter(create.postingChunkBuildSpillEntryLimit())
-						if err := create.addPostingChunkEntries(ctx, sch, &benchmarkRowIter{rows: rowSet.rows}, 1, sorter); err != nil {
-							b.Fatal(err)
-						}
-						if err := create.writePostingChunkRowsFromEntries(ctx, sorter, sink); err != nil {
-							_ = sorter.Close()
-							b.Fatal(err)
-						}
-						if err := sorter.Close(); err != nil {
-							b.Fatal(err)
-						}
-						if sink.count == 0 {
-							b.Fatal("expected chunk rows")
-						}
-						lastChunkRows = sink.count
-					}
-					b.ReportMetric(float64(lastChunkRows), "chunk_rows/op")
 				})
 			}
 		})
 	}
+}
+
+func postingChunkRowsPayloadStats(rows []sql.Row) (payloadBytes int, totalRefs int, maxRefs int) {
+	for _, row := range rows {
+		if len(row) > 6 {
+			if payload, ok := row[6].([]byte); ok {
+				payloadBytes += len(payload)
+			}
+		}
+		if len(row) > 3 {
+			if rowCount, ok := integralInt64(row[3]); ok {
+				totalRefs += int(rowCount)
+				if int(rowCount) > maxRefs {
+					maxRefs = int(rowCount)
+				}
+			}
+		}
+	}
+	return payloadBytes, totalRefs, maxRefs
 }
 
 func BenchmarkJsonbGinExtractEncodedTokensFromSQLValue(b *testing.B) {

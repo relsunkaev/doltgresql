@@ -18,18 +18,43 @@ The script writes a timestamped directory under `.local_benchmarks/` with:
 
 ## Current Snapshot
 
-From `.local_benchmarks/jsonb-gin-build-profile-20260506-153427/report.md`:
+From `.local_benchmarks/jsonb-gin-build-profile-20260506-153427/report.md`,
+plus the local byte-enabled paired smoke refreshed after the sidecar-byte metric
+landed:
 
-| Case | Doltgres v1 | Doltgres v2 | PostgreSQL 18 | v2 vs PG18 | v1 rows | v2 rows |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `jsonb_ops` representative | 115.697 ms | 18.455 ms | 3.939 ms | 4.68x | 14,579 | 230 |
-| `jsonb_path_ops` representative | 58.747 ms | 11.914 ms | 2.285 ms | 5.21x | 7,338 | 233 |
-| `jsonb_ops` skewed | 144.420 ms | 23.908 ms | 4.641 ms | 5.15x | 18,129 | 232 |
-| `jsonb_path_ops` skewed | 75.980 ms | 12.943 ms | 55.451 ms | 0.23x | 9,088 | 212 |
+| Case | Doltgres v1 | Doltgres v2 | PostgreSQL 18 | v2 vs PG18 | v1 rows | v2 rows | v1 sidecar bytes | v2 sidecar bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `jsonb_ops` representative | 174.742 ms | 20.726 ms | 3.905 ms | 5.31x | 14,579 | 230 | 1,330,252 | 242,630 |
+| `jsonb_path_ops` representative | 94.616 ms | 16.279 ms | 4.284 ms | 3.80x | 7,338 | 233 | 898,105 | 134,135 |
+| `jsonb_ops` skewed | 208.535 ms | 24.460 ms | 4.243 ms | 5.76x | 18,129 | 232 | 1,653,066 | 299,492 |
+| `jsonb_path_ops` skewed | 97.323 ms | 12.956 ms | 2.189 ms | 5.92x | 9,088 | 212 | 1,113,523 | 160,636 |
 
 The v2 storage shape has removed the durable sidecar row explosion. The
 remaining build gap is now mostly pre-row-map work rather than Dolt row-map
 construction.
+
+## Chunk Size Signals
+
+A one-iteration local run of
+`BenchmarkJsonbGinPostingChunkRowsToSink/string/(jsonb_ops|jsonb_path_ops)`
+with the in-memory sink produced:
+
+| Opclass | Rows/chunk | Chunk rows | Payload bytes | Avg refs/chunk | Max refs/chunk |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `jsonb_ops` | 64 | 2,488 | 2,582,544 | 64 | 64 |
+| `jsonb_ops` | 128 | 1,244 | 2,565,128 | 128 | 128 |
+| `jsonb_ops` | 256 | 622 | 2,556,420 | 256 | 256 |
+| `jsonb_ops` | 512 | 311 | 2,552,066 | 512 | 512 |
+| `jsonb_path_ops` | 64 | 2,512 | 2,607,456 | 64 | 64 |
+| `jsonb_path_ops` | 128 | 1,256 | 2,589,872 | 128 | 128 |
+| `jsonb_path_ops` | 256 | 628 | 2,581,080 | 256 | 256 |
+| `jsonb_path_ops` | 512 | 314 | 2,576,684 | 512 | 512 |
+
+The fixed-size comparison shows larger chunks mostly reduce sidecar row count,
+not payload bytes. Moving from 64 to 512 refs/chunk cut chunk rows by 8x but
+only reduced encoded payload bytes by about 1.2%. That makes a compact payload
+format a lower-leverage follow-up than the already-landed extraction,
+row-reference, and parallel-build work.
 
 ## Stage Signals
 
@@ -70,6 +95,7 @@ The profile points at these already-encoded beads:
 - `dg-perfparity.10.20`: parallelize JSONB GIN v2 `CREATE INDEX` builds. The
   remaining work is mostly per-row/token production plus sort/merge, which can
   be partitioned into deterministic runs.
-- `dg-perfparity.10.16`: evaluate compressed/adaptive posting chunks only after
-  the extraction and build-pipeline costs are lower; chunk count is already
-  small in v2.
+- `dg-perfparity.10.16`: compression is not justified as a default-promotion
+  blocker from the current measurements. Keep versioned compact payload work as
+  an optional future storage experiment if larger datasets show payload bytes,
+  rather than row production, dominate.
