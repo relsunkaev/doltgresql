@@ -1293,7 +1293,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		}
 	}
 
-	resultFormatCodes, err := extendFormatCodes(len(fields), message.ResultFormatCodes)
+	resultFormatCodes, err := executionFormatCodes(len(fields), message.ResultFormatCodes)
 	if err != nil {
 		return err
 	}
@@ -1337,8 +1337,8 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			if err != nil {
 				return err
 			}
-			replicationFormatCodes = make([]int16, len(replicationFields))
-			if replicationCapture != nil && replicationCapture.clientReturnsRows && len(fields) > 0 {
+			if len(resultFormatCodes) > 0 && replicationCapture != nil && replicationCapture.clientReturnsRows && len(fields) > 0 {
+				replicationFormatCodes = make([]int16, len(replicationFields))
 				copy(replicationFormatCodes, resultFormatCodes)
 			}
 		} else {

@@ -456,6 +456,22 @@ func executionResultFields(ctx *sql.Context, schema sql.Schema, analyzedPlan sql
 	return schemaToFieldDescriptionsWithSource(ctx, schema, analyzedPlan, formatCodes)
 }
 
+func executionFormatCodes(fieldLength int, formatCodes []int16) ([]int16, error) {
+	if ForceTextWireFormat || len(formatCodes) == 0 {
+		return nil, nil
+	}
+	expandedFormatCodes, err := extendFormatCodes(fieldLength, formatCodes)
+	if err != nil {
+		return nil, err
+	}
+	for _, formatCode := range expandedFormatCodes {
+		if formatCode != 0 {
+			return expandedFormatCodes, nil
+		}
+	}
+	return nil, nil
+}
+
 // QueryExecutor is a function that executes a query and returns the result as a schema and iterator. Either of
 // |parsed| or |analyzed| can be nil depending on the use case
 type QueryExecutor func(ctx *sql.Context, query string, parsed sqlparser.Statement, analyzed sql.Node) (sql.Schema, sql.RowIter, *sql.QueryFlags, error)

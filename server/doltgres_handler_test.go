@@ -45,3 +45,27 @@ func TestExecutionResultFieldsRecomputesOnLengthMismatch(t *testing.T) {
 	require.Len(t, fields, 1)
 	require.Equal(t, []byte("from_schema"), fields[0].Name)
 }
+
+func TestExecutionFormatCodesKeepsDefaultTextCompact(t *testing.T) {
+	formatCodes, err := executionFormatCodes(3, nil)
+	require.NoError(t, err)
+	require.Nil(t, formatCodes)
+
+	formatCodes, err = executionFormatCodes(3, []int16{})
+	require.NoError(t, err)
+	require.Nil(t, formatCodes)
+
+	formatCodes, err = executionFormatCodes(3, []int16{0})
+	require.NoError(t, err)
+	require.Nil(t, formatCodes)
+
+	formatCodes, err = executionFormatCodes(3, []int16{0, 0, 0})
+	require.NoError(t, err)
+	require.Nil(t, formatCodes)
+}
+
+func TestExecutionFormatCodesExpandsBinaryShortForm(t *testing.T) {
+	formatCodes, err := executionFormatCodes(3, []int16{1})
+	require.NoError(t, err)
+	require.Equal(t, []int16{1, 1, 1}, formatCodes)
+}
