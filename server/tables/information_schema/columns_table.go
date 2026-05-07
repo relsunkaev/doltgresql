@@ -376,9 +376,39 @@ func getCharAndCollNamesAndCharMaxAndOctetLens(ctx *sql.Context, colType sql.Typ
 				charMaxLen = l
 			}
 		}
+		// PostgreSQL only populates collation_name when the column
+		// declared an explicit COLLATE clause; the default catalog
+		// collation ("pg_catalog"."default") is reported as NULL.
+		// The AST converter stores any explicit collation in
+		// TypCollation; surface its TypeName here so introspection
+		// tools (Drizzle Kit, Alembic autogenerate) reproduce the
+		// original DDL.
+		if name := explicitCollationName(t); name != "" {
+			collName = name
+		}
 	}
 
 	return charName, collName, charMaxLen, charOctetLen
+}
+
+// explicitCollationName returns the user-supplied collation name when
+// the column carries one, or "" for the implicit catalog default that
+// PG itself reports as NULL in information_schema.columns.
+func explicitCollationName(t *pgtypes.DoltgresType) string {
+	if t == nil {
+		return ""
+	}
+	coll := t.TypCollation
+	if coll == id.NullCollation {
+		return ""
+	}
+	name := coll.CollationName()
+	// Treat the catalog default ("pg_catalog"."default") as no
+	// explicit collation for parity with PG's information_schema.
+	if name == "" || name == "default" {
+		return ""
+	}
+	return name
 }
 
 func getDatetimePrecision(colType sql.Type) interface{} {

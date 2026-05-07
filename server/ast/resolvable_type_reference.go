@@ -21,6 +21,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/lib/pq/oid"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -230,6 +231,14 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 				doltgresType = pgtypes.NewUnresolvedDoltgresType("", strings.ToLower(columnType.Name()))
 			}
 		}
+		// Thread an explicit COLLATE clause through to TypCollation so
+		// information_schema.columns and downstream introspection
+		// surface the user-supplied collation name.
+		if locale := collationLocaleFromColumnType(columnType); locale != "" && doltgresType != nil {
+			withCollation := *doltgresType
+			withCollation.TypCollation = id.NewCollation("pg_catalog", locale)
+			doltgresType = &withCollation
+		}
 	default:
 		doltgresType = pgtypes.NewUnresolvedDoltgresType("", strings.ToLower(typ.SQLString()))
 	}
@@ -240,6 +249,23 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 		Scale:   columnTypeScale,
 		Charset: "", // TODO
 	}, doltgresType, nil
+}
+
+// collationLocaleFromColumnType returns the user-supplied collation
+// for a CollatedStringFamily column declaration, or "" when no
+// COLLATE clause was given. Routed through the existing CollatedT
+// helper so the value matches what processCollationOnType stored.
+func collationLocaleFromColumnType(t *types.T) string {
+	if t == nil {
+		return ""
+	}
+	if t.Family() == types.CollatedStringFamily {
+		return t.Locale()
+	}
+	if t.Family() == types.ArrayFamily && t.ArrayContents() != nil {
+		return collationLocaleFromColumnType(t.ArrayContents())
+	}
+	return ""
 }
 
 // newTimeFamilyType returns the right DoltgresType for a TIMESTAMP /

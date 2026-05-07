@@ -64,28 +64,30 @@ ORDER BY ordinal_position;`,
 			},
 		},
 		{
-			Name: "explicit COLLATE on column DDL parses for built-in PG collations",
+			Name: "explicit COLLATE surfaces collation_name in information_schema.columns",
 			SetUpScript: []string{
 				`CREATE TABLE coll_explicit (
 					id   INT PRIMARY KEY,
 					a    TEXT COLLATE "C",
 					b    TEXT COLLATE "POSIX",
-					c    TEXT COLLATE "default"
+					def  TEXT COLLATE "default",
+					plain TEXT
 				);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// PG built-in collations are accepted by the
-					// parser. Column-level collation_name population
-					// remains a follow-up: information_schema still
-					// reports NULL for now.
-					Query: `SELECT column_name FROM information_schema.columns
-WHERE table_name = 'coll_explicit' AND column_name IN ('a', 'b', 'c')
+					// Real PG: explicit COLLATE populates
+					// collation_name; the catalog default and the
+					// no-COLLATE column report NULL.
+					Query: `SELECT column_name, collation_name
+FROM information_schema.columns
+WHERE table_name = 'coll_explicit' AND column_name IN ('a', 'b', 'def', 'plain')
 ORDER BY column_name;`,
 					Expected: []sql.Row{
-						{"a"},
-						{"b"},
-						{"c"},
+						{"a", "C"},
+						{"b", "POSIX"},
+						{"def", nil},
+						{"plain", nil},
 					},
 				},
 			},
