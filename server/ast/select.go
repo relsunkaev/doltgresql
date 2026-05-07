@@ -50,7 +50,7 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	if err != nil {
 		return nil, err
 	}
-	_, err = nodeLockingClause(ctx, node.Locking)
+	lock, err := nodeLockingClause(ctx, node.Locking)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +62,13 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 		selectStmt.OrderBy = orderBy
 		selectStmt.With = with
 		selectStmt.Limit = limit
+		selectStmt.Lock = lock
 		return selectStmt, nil
 	case *vitess.SetOp:
 		selectStmt.OrderBy = orderBy
 		selectStmt.With = with
 		selectStmt.Limit = limit
+		selectStmt.Lock = lock
 		return selectStmt, nil
 	default:
 		return nil, errors.Errorf("SELECT has encountered an unknown clause: `%T`", selectStmt)
