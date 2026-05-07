@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"strings"
@@ -208,6 +209,85 @@ WHERE relname = 'dg_gin_jsonb_gin_v2_bad_create_jsonb_gin_v2_bad_create_doc_idx_
 			},
 		},
 	})
+}
+
+func TestJsonbGinReindexMigratesV1ToV2PostingChunks(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "1")
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jgr (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr VALUES
+		(1, '{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}'),
+		(2, '{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}'),
+		(3, '{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jgr_doc_idx ON jgr USING gin (doc)")
+
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 1)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 0)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 2)
+
+	execBenchmarkSQL(t, ctx, conn, "REINDEX INDEX jgr_doc_idx")
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 1)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 0)
+
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	execBenchmarkSQL(t, ctx, conn, "REINDEX INDEX jgr_doc_idx")
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 0)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 1)
+	if got := queryBenchmarkString(t, ctx, conn, `SELECT indexdef FROM pg_catalog.pg_indexes WHERE tablename = 'jgr' AND indexname = 'jgr_doc_idx'`); got != "CREATE INDEX jgr_doc_idx ON public.jgr USING gin (doc jsonb_ops)" {
+		t.Fatalf("unexpected JSONB GIN index definition after REINDEX: %s", got)
+	}
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 2)
+
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr VALUES (4, '{"tags":["vip"],"status":"open","payload":{"category":"cat-3"}}')`)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 3)
+}
+
+func TestJsonbGinReindexV1ToV2ValidationFailureKeepsV1(t *testing.T) {
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "1")
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jgr_fail (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr_fail VALUES
+		(1, '{"tags":["vip"],"status":"open"}'),
+		(2, '{"tags":["vip","archived"],"status":"open"}'),
+		(3, '{"tags":["standard"],"status":"closed"}')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jgr_fail_doc_idx ON jgr_fail USING gin (doc)")
+	execBenchmarkSQL(t, ctx, conn, `DELETE FROM dg_gin_jgr_fail_jgr_fail_doc_idx_postings
+WHERE row_id = (SELECT row_id FROM dg_gin_jgr_fail_jgr_fail_doc_idx_postings LIMIT 1)`)
+
+	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+	assertQueryErrorContains(t, ctx, conn, "REINDEX INDEX jgr_fail_doc_idx", "JSONB GIN REINDEX validation failed")
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_fail_jgr_fail_doc_idx_postings'`, 1)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_fail_jgr_fail_doc_idx_posting_chunks'`, 0)
+	if got := queryBenchmarkString(t, ctx, conn, `SELECT indexdef FROM pg_catalog.pg_indexes WHERE tablename = 'jgr_fail' AND indexname = 'jgr_fail_doc_idx'`); got != "CREATE INDEX jgr_fail_doc_idx ON public.jgr_fail USING gin (doc jsonb_ops)" {
+		t.Fatalf("unexpected JSONB GIN index definition after failed REINDEX: %s", got)
+	}
+}
+
+func assertQueryErrorContains(t *testing.T, ctx context.Context, conn *Connection, query string, expected string) {
+	t.Helper()
+	_, err := conn.Exec(ctx, query)
+	if err == nil {
+		t.Fatalf("expected query to fail with %q\nquery: %s", expected, query)
+	}
+	if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("expected query error to contain %q, got %q\nquery: %s", expected, err.Error(), query)
+	}
 }
 
 func TestJsonbGinV2PostingChunkLookupGate(t *testing.T) {
