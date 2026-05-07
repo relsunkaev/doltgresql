@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/server/functions/binary"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/functions/unary"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/tables"
 	"github.com/dolthub/doltgresql/server/tables/dtables"
 	"github.com/dolthub/doltgresql/server/tables/information_schema"
@@ -52,6 +53,14 @@ func Initialize(dEnv *env.DoltEnv, cfg *doltgresservercfg.DoltgresConfig) {
 		binary.Init()
 		unary.Init()
 		functions.Init()
+		// Wire the row-locking iterator's advisory-lock primitives
+		// from functions into the node package. The two-step
+		// registration avoids an import cycle (functions already
+		// depends on node).
+		pgnodes.SetRowLockerFuncs(pgnodes.RowLockerFuncs{
+			Acquire:    functions.AcquireRowLevelXactLock,
+			TryAcquire: functions.TryAcquireRowLevelXactLock,
+		})
 		aggregate.Init()
 		cast.Init()
 		framework.Initialize()

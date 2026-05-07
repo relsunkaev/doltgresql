@@ -41,6 +41,22 @@ func initAdvisoryLockFunctions() {
 	framework.RegisterFunction(pg_advisory_unlock_all)
 }
 
+// AcquireRowLevelXactLock is the row-level FOR UPDATE entry point
+// the server/node package dispatches through. It blocks until the
+// named lock is held for the duration of the surrounding
+// transaction.
+func AcquireRowLevelXactLock(ctx *sql.Context, lockName string) error {
+	return acquireAdvisoryLock(ctx, lockName, -1, true)
+}
+
+// TryAcquireRowLevelXactLock is the non-blocking variant used for
+// FOR UPDATE NOWAIT / SKIP LOCKED. Returns (true, nil) when the
+// lock was acquired and (false, nil) when another session holds
+// it.
+func TryAcquireRowLevelXactLock(ctx *sql.Context, lockName string) (bool, error) {
+	return tryAcquireAdvisoryLock(ctx, lockName, true)
+}
+
 // PostgreSQL keeps the (int4, int4) and (int8) advisory lock spaces
 // disjoint. We mirror that here by prefixing every internal lock name
 // with the form's tag — "8" for the int8 overload, "4" for the

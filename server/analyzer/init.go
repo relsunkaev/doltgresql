@@ -62,6 +62,7 @@ const (
 	ruleId_ValidateDropConstraintOwnership                                  // validateDropConstraintOwnership
 	ruleId_ValidateOnConflictArbiter                                        // validateOnConflictArbiter
 	ruleId_AssignNullsNotDistinctUniqueChecks                               // assignNullsNotDistinctUniqueChecks
+	ruleId_AssignRowLevelLocking                                            // assignRowLevelLocking
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -88,6 +89,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_UseSchemaAwareStatsProvider, Apply: UseSchemaAwareStatsProvider},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinMaintainers, Apply: AssignJsonbGinMaintainers},
 		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
+		analyzer.Rule{Id: ruleId_AssignRowLevelLocking, Apply: AssignRowLevelLocking},
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
 		analyzer.Rule{Id: ruleId_ValidateCreateFunction, Apply: ValidateCreateFunction},
 		analyzer.Rule{Id: ruleId_ValidateCreateSchema, Apply: ValidateCreateSchema},
