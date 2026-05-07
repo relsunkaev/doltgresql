@@ -2027,6 +2027,64 @@ func TestPgIndexes(t *testing.T) {
 					Query:    "SELECT indexname FROM PG_catalog.pg_INDEXES where schemaname='testschema' ORDER BY indexname;",
 					Expected: []sql.Row{{"my_index"}, {"testing2_pkey"}, {"testing_pkey"}, {"testing_v1_key"}},
 				},
+				{
+					// Workload pattern: ORM/migration tools test for index
+					// existence with EXISTS before issuing conditional DDL.
+					Query: `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes
+                                        WHERE schemaname = 'testschema' AND indexname = 'my_index');`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					// And the same pattern returning false for a missing index.
+					Query: `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes
+                                        WHERE schemaname = 'testschema' AND indexname = 'not_yet');`,
+					Expected: []sql.Row{{"f"}},
+				},
+				{
+					// drizzle-kit-style: filter to a specific table and read indexdef.
+					Query: `SELECT indexname, indexdef FROM pg_catalog.pg_indexes
+                            WHERE schemaname = 'testschema' AND tablename = 'testing'
+                            ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"testing_pkey", "CREATE UNIQUE INDEX testing_pkey ON testschema.testing USING btree (pk)"},
+						{"testing_v1_key", "CREATE UNIQUE INDEX testing_v1_key ON testschema.testing USING btree (v1)"},
+					},
+				},
+				{
+					// Simulate the conditional DDL pattern: only issue
+					// CREATE INDEX when pg_indexes does not list it yet.
+					// The view is the source of truth that the migration
+					// tool consults; the second invocation is a no-op
+					// because the index now exists.
+					Query: `SELECT count(*) FROM pg_catalog.pg_indexes
+                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					// Coverage of CREATE INDEX IF NOT EXISTS. The first
+					// invocation was already in setup; the second must
+					// be a no-op even though the index already exists.
+					Query:    `CREATE INDEX IF NOT EXISTS my_index ON testschema.testing2(v1);`,
+					Expected: []sql.Row{},
+				},
+				{
+					// After the no-op CREATE INDEX IF NOT EXISTS the view
+					// should still report exactly one matching index.
+					Query: `SELECT count(*) FROM pg_catalog.pg_indexes
+                            WHERE schemaname = 'testschema' AND indexname = 'my_index';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					// Joined query against pg_class — admin tools commonly
+					// stitch pg_indexes with pg_class/pg_namespace to derive
+					// owner/oid information.
+					Query: `SELECT idx.indexname, c.relname
+                            FROM pg_catalog.pg_indexes idx
+                            JOIN pg_catalog.pg_class c ON c.relname = idx.indexname
+                            WHERE idx.schemaname = 'testschema'
+                              AND idx.indexname = 'my_index';`,
+					Expected: []sql.Row{{"my_index", "my_index"}},
+				},
 			},
 		},
 	})
