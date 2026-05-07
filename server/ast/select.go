@@ -159,6 +159,26 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			}
 		}
 
+		// PostgreSQL has its own conventions for the auto-generated
+		// column name when the user does not supply AS. Match the
+		// most common cases here so the result-row description sent
+		// back to clients is what migration tools and ORMs expect.
+		// The general rule is: bare literal expressions and operator
+		// expressions without a natural name show up as `?column?`;
+		// `CASE` shows up as `case`. Function calls are already
+		// handled by the engine via the function name.
+		if node.As == "" {
+			switch expr.(type) {
+			case *tree.CaseExpr:
+				node.As = "case"
+			case tree.Constant, *tree.BinaryExpr, *tree.ComparisonExpr,
+				*tree.UnaryExpr, *tree.NotExpr, *tree.AndExpr, *tree.OrExpr,
+				*tree.IsNullExpr, *tree.IsNotNullExpr, *tree.IsOfTypeExpr,
+				*tree.ParenExpr:
+				node.As = "?column?"
+			}
+		}
+
 		return &vitess.AliasedExpr{
 			Expr:            vitessExpr,
 			As:              vitess.NewColIdent(string(node.As)),

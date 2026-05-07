@@ -544,7 +544,16 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 				// such as `SELECT 'foo';`
 				doltgresType = pgtypes.Text
 				dataTypeSize = int16(doltgresType.MaxTextResponseByteLength(ctx))
-				colName = "?column?"
+				// PostgreSQL labels an unaliased unknown-typed column as
+				// "?column?" but honors any explicit alias the user
+				// provided (e.g. `SELECT 'foo' AS x` produces column
+				// name "x", and `SELECT CASE WHEN ... END AS type`
+				// produces "type"). The previous unconditional override
+				// here was breaking client tooling — drizzle-kit reads
+				// the alias by name when introspecting pg_class.
+				if colName == "" {
+					colName = "?column?"
+				}
 				tableAttributeNumber = 0
 			}
 			if doltgresType.TypType == pgtypes.TypeType_Domain {
