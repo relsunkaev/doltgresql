@@ -52,10 +52,10 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 	}
 
 	conflict, ok := onConflictClauseForInsert(ctx.Query(), nodeName(insert.Destination))
-	if !ok || conflict == nil || len(conflict.Columns) == 0 {
+	if !ok || conflict == nil || (len(conflict.Columns) == 0 && conflict.Constraint == "") {
 		return node, transform.SameTree, nil
 	}
-	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns)
+	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, string(conflict.Constraint))
 	if err != nil {
 		return nil, transform.NewTree, err
 	}
@@ -148,7 +148,7 @@ func joinNameList(names []string) string {
 	return out
 }
 
-func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList) (conflictTarget, error) {
+func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList, constraintName string) (conflictTarget, error) {
 	table, err := plan.GetInsertable(destination)
 	if err != nil {
 		return conflictTarget{}, err
@@ -169,11 +169,24 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 			continue
 		}
 		uniqueIndexCount++
-		if matchingIndex == nil && uniqueIndexMatchesConflictTarget(index, schema, targetColumns) {
+		if matchingIndex != nil {
+			continue
+		}
+		if constraintName != "" {
+			if uniqueIndexMatchesConstraintName(index, constraintName) {
+				matchingIndex = index
+			}
+			continue
+		}
+		if uniqueIndexMatchesConflictTarget(index, schema, targetColumns) {
 			matchingIndex = index
 		}
 	}
 	if matchingIndex == nil {
+		if constraintName != "" {
+			return conflictTarget{}, errors.Errorf(
+				"constraint %q for table does not exist", constraintName)
+		}
 		return conflictTarget{}, errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
 	}
 	indexes2 := indexmetadata.LogicalColumns(matchingIndex, schema)
@@ -194,6 +207,25 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 		constraintName:    matchingIndex.ID(),
 		multipleUniques:   uniqueIndexCount > 1,
 	}, nil
+}
+
+// uniqueIndexMatchesConstraintName returns whether the named index
+// is the one targeted by an `ON CONFLICT ON CONSTRAINT name` clause.
+// PG users address indexes by the constraint name produced by
+// `CREATE TABLE ... PRIMARY KEY` (e.g. `t_pkey`), whereas GMS
+// reports the primary key as id "PRIMARY". Translate both forms so
+// either spelling resolves.
+func uniqueIndexMatchesConstraintName(index sql.Index, constraintName string) bool {
+	if strings.EqualFold(index.ID(), constraintName) {
+		return true
+	}
+	// PostgreSQL's auto-generated primary-key constraint name is
+	// `<table>_pkey`; GMS reports the same index as "PRIMARY".
+	if strings.EqualFold(index.ID(), "PRIMARY") &&
+		strings.EqualFold(strings.TrimSuffix(constraintName, "_pkey"), index.Table()) {
+		return true
+	}
+	return false
 }
 
 func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, targetColumns tree.NameList) bool {

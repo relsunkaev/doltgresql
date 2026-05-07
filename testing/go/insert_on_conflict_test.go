@@ -352,6 +352,84 @@ ON CONFLICT (email) DO UPDATE SET name = 'email update';`,
 	})
 }
 
+// TestInsertOnConflictOnConstraint covers the
+// `ON CONFLICT ON CONSTRAINT name` syntax. ORM-generated upserts
+// (Drizzle .onConflictDoUpdate({target: "constraint_name"}),
+// SQLAlchemy.dialects.postgresql.insert(...).on_conflict_do_update
+// with constraint=) routinely use the named-constraint form because
+// it resolves cleanly even when the constraint columns include
+// expressions or are inferred from a table-rename migration.
+//
+// The implementation looks up the constraint by name, derives its
+// column list, and routes through the existing target-by-columns
+// pipeline (which already handles the multi-unique target guard
+// added earlier).
+func TestInsertOnConflictOnConstraint(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT ON CONSTRAINT named PK index updates",
+			SetUpScript: []string{
+				"CREATE TABLE oc_pk (id INT PRIMARY KEY, v INT);",
+				"INSERT INTO oc_pk VALUES (1, 10);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "INSERT INTO oc_pk VALUES (1, 99) ON CONFLICT ON CONSTRAINT oc_pk_pkey DO UPDATE SET v = EXCLUDED.v;",
+				},
+				{
+					Query:    "SELECT v FROM oc_pk WHERE id = 1;",
+					Expected: []gms.Row{{99}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT ON CONSTRAINT named UNIQUE updates",
+			SetUpScript: []string{
+				"CREATE TABLE oc_uq (id INT PRIMARY KEY, code TEXT, name TEXT);",
+				"CREATE UNIQUE INDEX oc_uq_code ON oc_uq (code);",
+				"INSERT INTO oc_uq VALUES (1, 'A', 'first');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "INSERT INTO oc_uq VALUES (99, 'A', 'updated') ON CONFLICT ON CONSTRAINT oc_uq_code DO UPDATE SET name = EXCLUDED.name;",
+				},
+				{
+					Query:    "SELECT id, code, name FROM oc_uq;",
+					Expected: []gms.Row{{1, "A", "updated"}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT ON CONSTRAINT DO NOTHING ignores target conflict",
+			SetUpScript: []string{
+				"CREATE TABLE oc_dn (id INT PRIMARY KEY, v INT);",
+				"INSERT INTO oc_dn VALUES (1, 10);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "INSERT INTO oc_dn VALUES (1, 999) ON CONFLICT ON CONSTRAINT oc_dn_pkey DO NOTHING;",
+				},
+				{
+					Query:    "SELECT v FROM oc_dn WHERE id = 1;",
+					Expected: []gms.Row{{10}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT ON CONSTRAINT with unknown name errors",
+			SetUpScript: []string{
+				"CREATE TABLE oc_bad (id INT PRIMARY KEY);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "INSERT INTO oc_bad VALUES (1) ON CONFLICT ON CONSTRAINT nope_no_such_constraint DO NOTHING;",
+					ExpectedErr: "constraint",
+				},
+			},
+		},
+	})
+}
+
 // TestInsertOnConflictORMShape exercises the upsert workflow exactly
 // as Drizzle / Prisma / SQLAlchemy emit it through the pgx driver.
 func TestInsertOnConflictORMShape(t *testing.T) {

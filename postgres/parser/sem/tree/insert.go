@@ -109,6 +109,11 @@ type OnConflict struct {
 	Exprs            UpdateExprs
 	Where            *Where
 	DoNothing        bool
+	// Constraint is set when the user wrote ON CONFLICT ON CONSTRAINT
+	// name instead of a column list. The AST converter resolves this
+	// to a unique-index column list before routing through the rest
+	// of the ON CONFLICT pipeline.
+	Constraint Name
 }
 
 // IsUpsertAlias returns true if the UPSERT syntactic sugar was used.
