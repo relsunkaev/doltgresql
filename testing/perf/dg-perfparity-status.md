@@ -108,3 +108,40 @@ win this benchmark.
 Any future work in this lane should start by proving the optimization preserves
 Dolt guarantees under ordinary commits, rollback, conflicts, constraint
 violations, branch/reset behavior, and indexed sidecar maintenance.
+
+## Dolt working-set experiment
+
+Measured on 2026-05-07 with Dolt checked out locally at
+`/Users/ramazan/Code/oss/dolt`, branch `perf/dg-qps-experiment`, commit
+`d3f1fca722 perf: experiment with faster working set commits`. Doltgres was
+built through a temporary `go.work` using that Dolt checkout.
+
+Command:
+
+```sh
+GOWORK=/Users/ramazan/Code/oss/doltgresql/.local_benchmarks/dolt-qps-work/go.work \
+  SYSBENCH_TIME=5 \
+  SYSBENCH_DB_PS_MODE=auto \
+  testing/perf/run_local_full_benchmarks.sh
+```
+
+Final report:
+
+`.local_benchmarks/full-20260507-103807/report.md`
+
+The experiment tried the proposed Dolt-side fast paths: optimistic direct
+working-set update, dirty-table scoped validation with foreign-key expansion,
+hook/listener no-op paths, working-set serialization avoidance when listeners
+are absent, and a same-root journal no-op guard. It did not improve the core
+write workloads.
+
+| workload | baseline Doltgres QPS | experiment Doltgres QPS | experiment/baseline |
+| --- | ---: | ---: | ---: |
+| `oltp_update_index` | 158.45 | 153.69 | 0.97x |
+| `oltp_update_non_index` | 157.87 | 155.26 | 0.98x |
+| `oltp_insert` | 156.01 | 145.47 | 0.93x |
+| `oltp_write_only` | 871.70 | 720.24 | 0.83x |
+| `oltp_delete_insert_postgres` | 167.50 | 159.41 | 0.95x |
+| `types_delete_insert_postgres` | 199.20 | 187.68 | 0.94x |
+
+The parity target remains unmet after the Dolt-side experiment.
