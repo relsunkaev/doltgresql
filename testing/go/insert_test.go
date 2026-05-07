@@ -143,20 +143,32 @@ ON CONFLICT (id) do update set c1 = $4`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 				{
+					// New row id=3 with email='a@example.com' targets ON
+					// CONFLICT (id), but email='a@example.com' already
+					// belongs to id=1. The non-target unique conflict
+					// raises rather than silently firing the update.
 					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong update') ON CONFLICT (id) DO UPDATE SET name = 'wrong update'",
-					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+					ExpectedErr: "duplicate key value violates unique constraint",
 				},
 				{
+					// DO NOTHING on a multi-unique table is rejected
+					// (GMS's INSERT IGNORE would silently swallow
+					// non-target unique violations). DO UPDATE is the
+					// supported form; see the conflict_arbiters cases
+					// below.
 					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'wrong ignore') ON CONFLICT (id) DO NOTHING",
-					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
 				},
 				{
-					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email update') ON CONFLICT (email) DO UPDATE SET name = 'email update'",
-					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+					// Email is the targeted unique here; the existing
+					// email='a@example.com' row is updated.
+					Query: "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email update') ON CONFLICT (email) DO UPDATE SET name = 'email update'",
 				},
 				{
+					// DO NOTHING on a multi-unique table is rejected
+					// (see the (id) variant above for rationale).
 					Query:       "INSERT INTO conflict_arbiters VALUES (3, 'a@example.com', 'email ignore') ON CONFLICT (email) DO NOTHING",
-					ExpectedErr: "ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes",
+					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
 				},
 				{
 					Query:       "INSERT INTO mytable (id, name) VALUES (1, 'predicate target') ON CONFLICT (id) WHERE id > 0 DO UPDATE SET name = 'predicate target'",
@@ -171,9 +183,11 @@ ON CONFLICT (id) do update set c1 = $4`,
 					Query: "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'newworld'",
 				},
 				{
+					// id=1's name has been updated by the targeted
+					// email upsert above; id=2 stays as seeded.
 					Query: "SELECT * FROM conflict_arbiters ORDER BY id",
 					Expected: []sql.Row{
-						{1, "a@example.com", "first"},
+						{1, "a@example.com", "email update"},
 						{2, "b@example.com", "second"},
 					},
 				},

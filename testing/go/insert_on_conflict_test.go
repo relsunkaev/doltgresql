@@ -312,35 +312,40 @@ ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name;`,
 			},
 		},
 		{
-			Name: "ON CONFLICT (pk) DO NOTHING with multi-unique: target conflict ignored",
+			Name: "ON CONFLICT (pk) DO NOTHING with multi-unique still rejected",
 			SetUpScript: []string{
 				"CREATE TABLE u4 (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT);",
 				"INSERT INTO u4 VALUES (1, 'a@x.com', 'first');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// PK conflict -> ignored.
-					Query: `INSERT INTO u4 (id, email, name) VALUES (1, 'b@x.com', 'wrong')
-ON CONFLICT (id) DO NOTHING;`,
-				},
-				{
-					Query:    "SELECT id, email, name FROM u4;",
-					Expected: []gms.Row{{1, "a@x.com", "first"}},
+					// DO NOTHING on a multi-unique table still routes
+					// through INSERT IGNORE in GMS, which would silently
+					// swallow non-target unique violations — incorrect
+					// under PG semantics. The DO UPDATE form is
+					// supported via the target-guard wrapper instead.
+					Query:       `INSERT INTO u4 (id, email, name) VALUES (1, 'b@x.com', 'wrong') ON CONFLICT (id) DO NOTHING;`,
+					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
 				},
 			},
 		},
 		{
-			Name: "ON CONFLICT (pk) DO NOTHING with multi-unique: non-target conflict raises",
+			Name: "ON CONFLICT (email) on table with id PK + email UNIQUE (2 seed rows)",
 			SetUpScript: []string{
-				"CREATE TABLE u5 (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT);",
-				"INSERT INTO u5 VALUES (1, 'a@x.com', 'first');",
+				"CREATE TABLE u_two (id INT PRIMARY KEY, email TEXT UNIQUE, name TEXT);",
+				"INSERT INTO u_two VALUES (1, 'a@x.com', 'first'), (2, 'b@x.com', 'second');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// New PK, but email duplicates -> raise.
-					Query: `INSERT INTO u5 (id, email, name) VALUES (2, 'a@x.com', 'wrong')
-ON CONFLICT (id) DO NOTHING;`,
-					ExpectedErr: "duplicate",
+					Query: `INSERT INTO u_two VALUES (3, 'a@x.com', 'email update')
+ON CONFLICT (email) DO UPDATE SET name = 'email update';`,
+				},
+				{
+					Query: "SELECT id, email, name FROM u_two ORDER BY id;",
+					Expected: []gms.Row{
+						{1, "a@x.com", "email update"},
+						{2, "b@x.com", "second"},
+					},
 				},
 			},
 		},

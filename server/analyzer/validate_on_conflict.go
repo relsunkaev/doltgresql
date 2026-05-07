@@ -20,17 +20,27 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	gmsanalyzer "github.com/dolthub/go-mysql-server/sql/analyzer"
+	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // ValidateOnConflictArbiter prevents PostgreSQL targeted ON CONFLICT clauses
 // from falling through to MySQL's broader ON DUPLICATE KEY / INSERT IGNORE
 // behavior when multiple unique indexes could be the source of the conflict.
+//
+// For tables with a single unique index, the GMS path matches PG semantics
+// and the rule is a pure validator. For tables with multiple unique indexes,
+// the rule allows targeted DO UPDATE by wrapping each ON DUP expression with
+// an OnConflictTargetGuard so a conflict against a non-target unique index
+// raises instead of silently firing the update. DO NOTHING on multi-unique
+// tables remains rejected because INSERT IGNORE swallows the non-target
+// unique violation; that case still requires the explicit pre-check path.
 func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node sql.Node, _ *plan.Scope, _ gmsanalyzer.RuleSelector, _ *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	insert, ok := node.(*plan.InsertInto)
 	if !ok {
@@ -45,10 +55,29 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 	if !ok || conflict == nil || len(conflict.Columns) == 0 {
 		return node, transform.SameTree, nil
 	}
-	if err := validateConflictTargetMatchesOnlyUniqueIndex(ctx, insert.Destination, conflict.Columns); err != nil {
+	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns)
+	if err != nil {
 		return nil, transform.NewTree, err
 	}
-	return node, transform.SameTree, nil
+	if !target.multipleUniques {
+		return node, transform.SameTree, nil
+	}
+	if !hasOnDuplicateUpdates {
+		// DO NOTHING on a multi-unique table routes through INSERT
+		// IGNORE in GMS, which would silently swallow a violation of
+		// any unique index — including a non-target one — making the
+		// upsert incorrect under PG semantics. Until a pre-check
+		// inserter wrapper is in place, reject this shape.
+		return nil, transform.NewTree, errors.Errorf(
+			"ON CONFLICT (%s) DO NOTHING is not yet supported on tables with multiple unique indexes; use DO UPDATE",
+			joinNameList(target.targetColumnNames))
+	}
+
+	wrapped, err := wrapOnDupForTargetGuard(ctx, insert, target)
+	if err != nil {
+		return nil, transform.NewTree, err
+	}
+	return wrapped, transform.NewTree, nil
 }
 
 func nodeName(node sql.Node) string {
@@ -95,39 +124,76 @@ func insertTableObjectName(table tree.TableExpr) (string, bool) {
 	}
 }
 
-func validateConflictTargetMatchesOnlyUniqueIndex(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList) error {
+// conflictTarget summarizes the resolved targeted unique index for an
+// ON CONFLICT clause: the column indexes (in destination schema order),
+// the destination schema length, the constraint name to embed in error
+// messages, and whether the destination has more than one unique index
+// (the case that needs runtime guarding).
+type conflictTarget struct {
+	targetIndexes      []int
+	targetColumnNames  []string
+	schemaLen          int
+	constraintName     string
+	multipleUniques    bool
+}
+
+func joinNameList(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	out := names[0]
+	for _, n := range names[1:] {
+		out += ", " + n
+	}
+	return out
+}
+
+func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList) (conflictTarget, error) {
 	table, err := plan.GetInsertable(destination)
 	if err != nil {
-		return err
+		return conflictTarget{}, err
 	}
 	indexedTable, ok := table.(sql.IndexAddressable)
 	if !ok {
-		return errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
+		return conflictTarget{}, errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
 	}
 	indexes, err := indexedTable.GetIndexes(ctx)
 	if err != nil {
-		return err
+		return conflictTarget{}, err
 	}
-
 	schema := table.Schema(ctx)
 	uniqueIndexCount := 0
-	matchingUniqueIndexCount := 0
+	var matchingIndex sql.Index
 	for _, index := range indexes {
 		if !index.IsUnique() {
 			continue
 		}
 		uniqueIndexCount++
-		if uniqueIndexMatchesConflictTarget(index, schema, targetColumns) {
-			matchingUniqueIndexCount++
+		if matchingIndex == nil && uniqueIndexMatchesConflictTarget(index, schema, targetColumns) {
+			matchingIndex = index
 		}
 	}
-	if matchingUniqueIndexCount == 0 {
-		return errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
+	if matchingIndex == nil {
+		return conflictTarget{}, errors.Errorf("there is no unique or exclusion constraint matching the ON CONFLICT specification")
 	}
-	if uniqueIndexCount > 1 {
-		return errors.Errorf("ON CONFLICT with a conflict target is not yet supported on tables with multiple unique indexes")
+	indexes2 := indexmetadata.LogicalColumns(matchingIndex, schema)
+	targetIndexes := make([]int, 0, len(indexes2))
+	targetNames := make([]string, 0, len(indexes2))
+	for _, column := range indexes2 {
+		idx := schema.IndexOfColName(column.StorageName)
+		if idx < 0 {
+			return conflictTarget{}, errors.Errorf("ON CONFLICT target column %q does not exist", column.StorageName)
+		}
+		targetIndexes = append(targetIndexes, idx)
+		targetNames = append(targetNames, column.StorageName)
 	}
-	return nil
+	return conflictTarget{
+		targetIndexes:     targetIndexes,
+		targetColumnNames: targetNames,
+		schemaLen:         len(schema),
+		constraintName:    matchingIndex.ID(),
+		multipleUniques:   uniqueIndexCount > 1,
+	}, nil
 }
 
 func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, targetColumns tree.NameList) bool {
@@ -151,4 +217,40 @@ func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, target
 		indexColumnCounts[name]--
 	}
 	return true
+}
+
+// wrapOnDupForTargetGuard returns an updated InsertInto whose
+// ON DUP expressions have their RHS wrapped with the
+// OnConflictTargetGuard so a conflict on a non-target unique index
+// raises rather than silently firing the update.
+func wrapOnDupForTargetGuard(ctx *sql.Context, insert *plan.InsertInto, target conflictTarget) (sql.Node, error) {
+	if insert.OnDupExprs == nil {
+		return insert, nil
+	}
+	exprs := insert.OnDupExprs.AllExpressions()
+	if len(exprs) == 0 {
+		return insert, nil
+	}
+	newExprs := make([]sql.Expression, len(exprs))
+	for i, e := range exprs {
+		setField, ok := e.(*expression.SetField)
+		if !ok {
+			newExprs[i] = e
+			continue
+		}
+		guarded := pgexprs.NewOnConflictTargetGuard(
+			setField.RightChild, target.targetIndexes, target.schemaLen, target.constraintName)
+		replaced, err := setField.WithChildren(ctx, setField.LeftChild, guarded)
+		if err != nil {
+			return nil, err
+		}
+		newExprs[i] = replaced
+	}
+	updated, err := insert.OnDupExprs.WithExpressions(newExprs)
+	if err != nil {
+		return nil, err
+	}
+	out := *insert
+	out.OnDupExprs = updated
+	return &out, nil
 }
