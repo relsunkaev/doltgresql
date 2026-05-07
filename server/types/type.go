@@ -129,9 +129,14 @@ func (t *DoltgresType) AnalyzeFuncName() string {
 }
 
 // ArrayBaseType returns a base type of given array type.
-// If this type is not an array type, it returns itself.
+// If this type is not an array type, it returns itself. Vector
+// types (oidvector, int2vector) — categorized as ArrayTypes but
+// retaining a non-null Array attribute so they can themselves be
+// array-wrapped — also resolve to their declared Elem so
+// `oid = ANY(oidvector_col)` and similar planner shapes can find
+// the right element-comparison function.
 func (t *DoltgresType) ArrayBaseType() *DoltgresType {
-	if !t.IsArrayType() {
+	if !t.IsArrayType() && !(t.IsArrayCategory() && t.Elem != id.NullType) {
 		return t
 	}
 
