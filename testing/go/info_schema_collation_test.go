@@ -64,23 +64,29 @@ ORDER BY ordinal_position;`,
 			},
 		},
 		{
-			Name: "explicit COLLATE flow through column DDL is a follow-up",
+			Name: "explicit COLLATE on column DDL parses for built-in PG collations",
 			SetUpScript: []string{
-				`CREATE TABLE coll_placeholder (id INT PRIMARY KEY);`,
+				`CREATE TABLE coll_explicit (
+					id   INT PRIMARY KEY,
+					a    TEXT COLLATE "C",
+					b    TEXT COLLATE "POSIX",
+					c    TEXT COLLATE "default"
+				);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// Doltgres' parser does not yet accept a COLLATE
-					// clause on a column definition (it routes through
-					// the ICU locale validator and rejects PG's
-					// supported collations like "C", "POSIX").
-					// Once the column-DDL parser path lands, the
-					// information_schema.columns.collation_name lookup
-					// here should populate from the resolved
-					// metadata; pin the gap with an explicit error
-					// assertion so the boundary is loud.
-					Query:       `CREATE TABLE coll_explicit (id INT PRIMARY KEY, body TEXT COLLATE "C");`,
-					ExpectedErr: "invalid locale C",
+					// PG built-in collations are accepted by the
+					// parser. Column-level collation_name population
+					// remains a follow-up: information_schema still
+					// reports NULL for now.
+					Query: `SELECT column_name FROM information_schema.columns
+WHERE table_name = 'coll_explicit' AND column_name IN ('a', 'b', 'c')
+ORDER BY column_name;`,
+					Expected: []sql.Row{
+						{"a"},
+						{"b"},
+						{"c"},
+					},
 				},
 			},
 		},

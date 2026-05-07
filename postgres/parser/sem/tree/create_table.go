@@ -223,6 +223,26 @@ type TableDef interface {
 	tableDef()
 }
 
+// isBuiltinPGCollation reports whether collation is one of the
+// built-in PostgreSQL collation names that the RFC-5646 locale
+// parser cannot accept (C, POSIX, default, ucs_basic) or one of
+// the ICU-style names PG ships by default (und-x-icu and the
+// "<lang>_<region>.<encoding>" form). Acceptance here only means
+// the parser will not reject the syntax outright; the catalog
+// validates again when the collation is actually resolved.
+func isBuiltinPGCollation(collation string) bool {
+	switch strings.ToLower(collation) {
+	case "c", "posix", "default", "ucs_basic", "und-x-icu":
+		return true
+	}
+	if strings.Contains(collation, ".") {
+		// "en_US.utf8" / "en_US.UTF-8" — POSIX-style locale name
+		// PG accepts but golang.org/x/text/language does not.
+		return true
+	}
+	return false
+}
+
 func (*ColumnTableDef) tableDef()               {}
 func (*IndexTableDef) tableDef()                {}
 func (*ForeignKeyConstraintTableDef) tableDef() {}
@@ -350,9 +370,15 @@ func NewColumnTableDef(
 	}
 	d.Nullable.Nullability = SilentNull
 	if collation != "" {
-		_, err := language.Parse(collation)
-		if err != nil {
-			return nil, pgerror.Wrapf(err, pgcode.Syntax, "invalid locale %s", collation)
+		// PostgreSQL built-in collations ("C", "POSIX", "default",
+		// "ucs_basic") and ICU-style names ("und-x-icu",
+		// "en_US.utf8") don't all parse as RFC-5646 language tags,
+		// so bypass language.Parse for those and let the catalog
+		// validate when the collation is actually resolved.
+		if !isBuiltinPGCollation(collation) {
+			if _, err := language.Parse(collation); err != nil {
+				return nil, pgerror.Wrapf(err, pgcode.Syntax, "invalid locale %s", collation)
+			}
 		}
 		collatedTyp, err := processCollationOnType(name, d.Type, collation)
 		if err != nil {
