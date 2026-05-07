@@ -263,50 +263,15 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 			return 1, nil
 		}
 	case int16:
-		bb := v2.(int16)
-		if ab == bb {
-			return 0, nil
-		} else if ab < bb {
-			return -1, nil
-		} else {
-			return 1, nil
-		}
+		return compareSignedIntegral(int64(ab), v2)
 	case int32:
-		bb := v2.(int32)
-		if ab == bb {
-			return 0, nil
-		} else if ab < bb {
-			return -1, nil
-		} else {
-			return 1, nil
-		}
+		return compareSignedIntegral(int64(ab), v2)
 	case int64:
-		bb := v2.(int64)
-		if ab == bb {
-			return 0, nil
-		} else if ab < bb {
-			return -1, nil
-		} else {
-			return 1, nil
-		}
+		return compareSignedIntegral(ab, v2)
 	case uint32:
-		bb := v2.(uint32)
-		if ab == bb {
-			return 0, nil
-		} else if ab < bb {
-			return -1, nil
-		} else {
-			return 1, nil
-		}
+		return compareUnsignedIntegral(uint64(ab), v2)
 	case uint64:
-		bb := v2.(uint64)
-		if ab == bb {
-			return 0, nil
-		} else if ab < bb {
-			return -1, nil
-		} else {
-			return 1, nil
-		}
+		return compareUnsignedIntegral(ab, v2)
 	case string:
 		bb := v2.(string)
 		if ab == bb {
@@ -402,6 +367,74 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 	default:
 		return 0, errors.Errorf("unhandled type %T in Compare", v1)
 	}
+}
+
+func compareSignedIntegral(left int64, right interface{}) (int, error) {
+	switch typedRight := right.(type) {
+	case int:
+		return cmp.Compare(left, int64(typedRight)), nil
+	case int8:
+		return cmp.Compare(left, int64(typedRight)), nil
+	case int16:
+		return cmp.Compare(left, int64(typedRight)), nil
+	case int32:
+		return cmp.Compare(left, int64(typedRight)), nil
+	case int64:
+		return cmp.Compare(left, typedRight), nil
+	case uint:
+		return compareSignedToUnsigned(left, uint64(typedRight)), nil
+	case uint8:
+		return compareSignedToUnsigned(left, uint64(typedRight)), nil
+	case uint16:
+		return compareSignedToUnsigned(left, uint64(typedRight)), nil
+	case uint32:
+		return compareSignedToUnsigned(left, uint64(typedRight)), nil
+	case uint64:
+		return compareSignedToUnsigned(left, typedRight), nil
+	default:
+		return 0, errors.Errorf("unhandled integral type %T in Compare", right)
+	}
+}
+
+func compareUnsignedIntegral(left uint64, right interface{}) (int, error) {
+	switch typedRight := right.(type) {
+	case int:
+		return compareUnsignedToSigned(left, int64(typedRight)), nil
+	case int8:
+		return compareUnsignedToSigned(left, int64(typedRight)), nil
+	case int16:
+		return compareUnsignedToSigned(left, int64(typedRight)), nil
+	case int32:
+		return compareUnsignedToSigned(left, int64(typedRight)), nil
+	case int64:
+		return compareUnsignedToSigned(left, typedRight), nil
+	case uint:
+		return cmp.Compare(left, uint64(typedRight)), nil
+	case uint8:
+		return cmp.Compare(left, uint64(typedRight)), nil
+	case uint16:
+		return cmp.Compare(left, uint64(typedRight)), nil
+	case uint32:
+		return cmp.Compare(left, uint64(typedRight)), nil
+	case uint64:
+		return cmp.Compare(left, typedRight), nil
+	default:
+		return 0, errors.Errorf("unhandled integral type %T in Compare", right)
+	}
+}
+
+func compareSignedToUnsigned(left int64, right uint64) int {
+	if left < 0 {
+		return -1
+	}
+	return cmp.Compare(uint64(left), right)
+}
+
+func compareUnsignedToSigned(left uint64, right int64) int {
+	if right < 0 {
+		return 1
+	}
+	return cmp.Compare(left, uint64(right))
 }
 
 // Convert implements the types.ExtendedType interface.
