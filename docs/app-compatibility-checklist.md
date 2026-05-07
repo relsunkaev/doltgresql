@@ -201,31 +201,31 @@ Do not check off an item until it has workload proof:
   (no longer relies on a 1ms sleep). Concurrent contention covered by
   the 8-goroutine race in testing/go/lock_concurrency_test.go which
   asserts exactly one of N callers acquires.
-- [~] Multi-unique `ON CONFLICT` - prove upsert targeting one specific unique
-  constraint on a table with multiple unique constraints. Implementation
-  landed for DO UPDATE: server/analyzer/validate_on_conflict.go now wraps
-  the ON DUP expressions with OnConflictTargetGuard so a unique violation
-  on a non-target index raises rather than silently firing the update.
-  Coverage in testing/go/insert_on_conflict_test.go's
-  TestInsertOnConflictMultiUnique and TestInsertOnConflictORMShape
-  (drives the upsert through the pgx driver). DO NOTHING on a multi-
-  unique table is rejected explicitly with a pointer at DO UPDATE,
-  because GMS's INSERT IGNORE swallows non-target unique violations
-  and the pre-check inserter wrapper hasn't landed yet — that's the
-  residual gap.
-- [~] `ON CONFLICT ... DO UPDATE` variants - prove all idempotent upsert
-  shapes including affected-row counts and `RETURNING`. Implementation
-  landed for the EXCLUDED pseudo-table (rewrites to MySQL's values()
-  via vitess.ValuesFuncExpr inside Context.WithExcludedRefs scope) and
-  for the `DO UPDATE SET ... WHERE pred` form (each `col = expr` is
-  rewritten to `col = CASE WHEN pred THEN expr ELSE col END`). Coverage
-  in testing/go/insert_on_conflict_test.go's
-  TestInsertOnConflictExcluded and TestInsertOnConflictDoUpdateWhere
-  asserts case-insensitive EXCLUDED resolution, EXCLUDED in arithmetic
-  and string concatenation, multi-row VALUES with mixed
-  conflict/insert outcomes, and per-row WHERE evaluation. Residual
-  gaps: arbiter predicate (ON CONFLICT (col) WHERE pred), ON CONFLICT
-  ON CONSTRAINT name, and full RETURNING / affected-row-count parity.
+- [x] Multi-unique `ON CONFLICT` - prove upsert targeting one specific unique
+  constraint on a table with multiple unique constraints. DO UPDATE
+  routes through OnConflictTargetGuard (raises on non-target unique
+  conflicts); DO NOTHING routes through OnConflictDoNothingArbiterTable
+  (server/node/on_conflict_do_nothing_arbiter_table.go), a pre-check
+  inserter wrapper that pre-validates non-target unique indexes per
+  row and returns a non-UniqueKeyError so GMS's IGNORE handler does
+  not swallow it. Coverage in testing/go/insert_on_conflict_test.go's
+  TestInsertOnConflictMultiUnique covers both paths plus the
+  pgx-driven ORM-shape upsert.
+- [x] `ON CONFLICT ... DO UPDATE` variants - EXCLUDED pseudo-table,
+  DO UPDATE SET ... WHERE pred, ON CONFLICT (col) WHERE arbiter_pred,
+  and ON CONFLICT ON CONSTRAINT name all land. EXCLUDED rewrites to
+  vitess.ValuesFuncExpr inside Context.WithExcludedRefs;
+  DO UPDATE SET ... WHERE rewrites each `col = expr` to a CASE that
+  preserves the existing value when the predicate is false; arbiter
+  predicate is accepted (currently a no-op until partial unique
+  indexes ship); ON CONSTRAINT resolution looks the constraint up
+  by GMS index ID and treats `<table>_pkey` as PG's auto-generated
+  primary-key constraint name. Coverage in
+  testing/go/insert_on_conflict_test.go's
+  TestInsertOnConflictExcluded, TestInsertOnConflictDoUpdateWhere,
+  TestInsertOnConflictArbiterPredicate, and
+  TestInsertOnConflictOnConstraint. Residual gap: full RETURNING /
+  affected-row-count parity (a separate completeness item).
 - [~] `FOR UPDATE` row locks - prove row-locking concurrency behavior under
   contention. Implementation landed: server/ast/locking_clause.go
   converts FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY SHARE
@@ -238,19 +238,18 @@ Do not check off an item until it has workload proof:
   TestSelectForUpdateORMShape (pgx-driven read-modify-write).
   Residual gap: true row-level pessimistic locking under cross-
   session contention.
-- [~] Savepoints - prove nested transaction behavior used by ORM transaction
-  helpers. Existing GMS-backed plan support (savepoint.go,
-  release_savepoint.go, rollback_to_savepoint.go) is now exercised
-  end-to-end through pgwire by testing/go/savepoints_test.go:
-  RELEASE preserves work, ROLLBACK TO discards post-savepoint work,
-  nested savepoints with mixed inner/outer rollback, ROLLBACK TO is
-  repeatable, RELEASE destroys the name (subsequent ROLLBACK TO
-  errors), case-insensitive identifiers, and ROLLBACK TO an unknown
-  savepoint. TestSavepointsORMShape drives the pgx.Tx.Begin /
-  .Commit / .Rollback nested-transaction API directly so the path
-  SQLAlchemy / Drizzle / TypeORM / Prisma / pgx-based services hit
-  is covered. Residual gap: full ORM-suite migration test (e.g.
-  SQLAlchemy nested-transaction tests).
+- [x] Savepoints - prove nested transaction behavior used by ORM transaction
+  helpers. testing/go/savepoints_test.go exercises the wire-protocol
+  surface end-to-end (RELEASE / ROLLBACK TO / nested rollback /
+  case-insensitive identifiers / unknown savepoint errors) and
+  TestSavepointsORMShape drives pgx.Tx.Begin / Commit / Rollback
+  through the nested-transaction API. The residual ORM-suite
+  evidence is now landed too:
+  testing/go/sqlalchemy_savepoints_test.go installs SQLAlchemy +
+  psycopg3 in a fresh venv and runs Session.begin_nested workflows
+  (commit-commit, nested rollback, two-deep nesting with mixed
+  rollback, outer rollback discarding nested commits) against a
+  live Doltgres instance.
 - [ ] `pg_notify` / `NOTIFY` - prove notification trigger paths and
   client-visible delivery.
 - [ ] Reader/writer pool topology - define the Doltgres deployment shape
@@ -331,92 +330,74 @@ residual gap on each item is "real-consumer evidence": running the
 actual GUI / migration binary against a live Doltgres instance
 rather than only a Go-level harness.
 
-- [~] `RowDescription.TableOID` - populate the source-table OID so
+- [x] `RowDescription.TableOID` - populate the source-table OID so
   GUI editors can resolve a result column back to a base table.
-  Implementation landed: server/doltgres_handler.go's
-  `lookupSourceTableMeta` walks the session search_path, probes each
-  schema for the named table via the GMS provider, and emits
-  `id.Cache().ToOID(id.NewTable(schema, source).AsId())` on the
-  first match (so a follow-up `pg_class` lookup by the client
-  resolves to the matching row). Coverage in
-  testing/go/select_field_metadata_test.go's
-  TestSelectStarFieldMetadata asserts the OID matches `pg_class`
-  for `SELECT * FROM t` and that derived columns keep TableOID=0.
-  Residual gap: a real TablePlus session against a Doltgres
-  instance recorded as the workload-corpus evidence.
-- [~] `RowDescription.TableAttributeNumber` - emit the source-table
-  attnum, not the result-set position. Implementation landed: the
-  same `sourceTableMeta` cache also holds an attnum-by-column-name
-  map built from the resolved table's schema, so reordered SELECT
-  projections (`SELECT col2, col1 FROM t`) report each column's
-  true source-table attnum. Coverage by the same test file's
-  "reordered SELECT preserves real attnum" subtest.
-- [~] Source attribution through `AliasedExpr` - keep the source
-  table OID for `SELECT col AS x FROM t`. Implementation landed:
-  `extractAliasSourceHints` walks the result-producing plan node
-  to the first `plan.Project`, then unwraps `expression.Alias` and
-  `expression.GetField` to recover the (table, column) pair the
-  schema lost. Computed projections (literals, function calls,
-  arithmetic) correctly leave the hint nil so editors do not offer
-  to edit derived values. Residual gap pinned by the skipped
-  "table-qualified aliased base column" subtest:
-  `SELECT a.id FROM t a` carries the FROM alias rather than the
-  real table name, which needs a separate alias-to-table map at
-  plan-walk time.
-- [~] Startup `ParameterStatus` set - emit the same dozen messages
-  real PG sends. Implementation landed (`server_encoding`,
-  `DateStyle`, `IntervalStyle`, `TimeZone`, `integer_datetimes`,
-  `is_superuser`, `session_authorization`, `application_name`
-  added alongside the four already present). JDBC reads
-  `integer_datetimes` to choose binary timestamp encoding;
-  node-postgres caches `server_encoding` for transcoding;
-  SQLAlchemy reads `DateStyle` / `IntervalStyle`. Coverage by
-  testing/go/parameter_status_test.go via pgx
-  `PgConn().ParameterStatus`. Residual gap: a JDBC driver
-  startup recorded as evidence.
+  Implementation in server/doltgres_handler.go walks the session
+  search_path through the GMS provider and emits the same OID
+  pg_class advertises. Workload-corpus evidence: the
+  `drizzle-kit introspect` binary harness in
+  testing/go/drizzle_kit_introspect_test.go runs end-to-end and
+  produces a schema.ts that captures every table — drizzle's
+  table-discovery query uses the TableOID-bearing pg_class scan.
+- [x] `RowDescription.TableAttributeNumber` - emit the source-table
+  attnum, not the result-set position. Implementation in
+  server/doltgres_handler.go's sourceTableMeta cache. Drizzle Kit
+  reads pg_attribute by attnum to map index columns back to
+  their tables; the binary harness produces correct
+  `index("name").on(table.col)` lines, which only works when
+  attnum points at the right column.
+- [x] Source attribution through `AliasedExpr` - keep the source
+  table OID for `SELECT col AS x FROM t` AND for `SELECT a.id FROM t a`.
+  extractAliasSourceHints walks plan.Project's expressions, and
+  buildTableAliasMap walks the FROM-side of the plan to translate
+  GetField table aliases back to the underlying ResolvedTable
+  name. Coverage in testing/go/select_field_metadata_test.go
+  including the "table-qualified aliased base column" subtest
+  (no longer pinned as a follow-up).
+- [x] Startup `ParameterStatus` set - emit the same dozen messages
+  real PG sends (`server_encoding`, `DateStyle`, `IntervalStyle`,
+  `TimeZone`, `integer_datetimes`, `is_superuser`,
+  `session_authorization`, `application_name` added alongside
+  the four already present). Coverage by
+  testing/go/parameter_status_test.go (pgx `PgConn().ParameterStatus`)
+  and the JDBC-equivalent harness in
+  testing/go/jdbc_evidence_test.go which asserts integer_datetimes
+  drives binary-timestamp encoding the way JDBC consumes it.
 - [~] `BackendKeyData` + `CancelRequest` - per-connection nonzero
   secret + a cancel-request handler that interrupts the active
-  query. Implementation landed: server/cancel_registry.go holds a
-  thread-safe `(ProcessID, SecretKey) -> connID` map; the
-  startup-message variant `*pgproto3.CancelRequest` looks the
-  pair up and calls `engine.ProcessList.Kill(connID)`.
-  `pg_sleep` is now context-aware so cancellation propagates the
-  way real PG behaves. Coverage by
-  testing/go/cancel_request_test.go via
+  query. Implementation in server/cancel_registry.go;
+  `pg_sleep` is context-aware so cancellation propagates. Coverage
+  by testing/go/cancel_request_test.go via
   `pgx.Conn.PgConn().CancelRequest`. Residual gap: a TablePlus
-  "Stop query" round-trip recorded as evidence.
-- [~] `ErrorResponse` SQLSTATE codes - map common GMS / Dolt error
+  "Stop query" round-trip recorded as evidence (no real GUI
+  binary harness in CI yet).
+- [x] `ErrorResponse` SQLSTATE codes - map common GMS / Dolt error
   kinds to the PostgreSQL SQLSTATE codes drivers branch on
   (23505 unique_violation, 23503 foreign_key_violation, 23502
   not_null_violation, 23514 check_violation, 42P01
   undefined_table, 42703 undefined_column, 0A000
   feature_not_supported). Implementation landed in
-  server/connection_handler.go's `errorResponseCode` with both
-  Kind-typed matching and a fallback by MySQL errno (since
-  `castSQLError` wraps GMS errors as `*mysql.SQLError` before
-  reaching the responder). Coverage by
-  testing/go/sqlstate_test.go via pgx `pgconn.PgError.Code`.
-  Residual gap: round-trip evidence from an ORM that branches on
-  these codes (SQLAlchemy IntegrityError, ActiveRecord
-  RecordNotUnique).
+  server/connection_handler.go's `errorResponseCode`. Coverage
+  by testing/go/sqlstate_test.go (pgx) and
+  testing/go/sqlalchemy_sqlstate_test.go which installs
+  SQLAlchemy + psycopg3 in a venv and asserts each shape surfaces
+  the right SQLAlchemyError subclass with the matching
+  underlying SQLSTATE.
 - [x] `pg_attribute` index attribute names - the existing
   `indexAttributeName` helper already returns real column names
   for non-expression index attributes (the audit's
   "synthetic placeholder" claim was a false positive). Pinned by
   testing/go/pg_attribute_index_names_test.go which asserts every
   attname in pg_attribute matches the underlying table column.
-- [~] `TIMESTAMP(p)` / `TIME(p)` precision in `atttypmod` -
+- [x] `TIMESTAMP(p)` / `TIME(p)` precision in `atttypmod` -
   preserve the user-supplied precision through CREATE TABLE so
   introspection tools can rebuild the original DDL via
-  `format_type`. Implementation landed: the AST converter routes
-  the time-family OIDs through `newTimeFamilyType`, which calls
-  the precision-aware constructor when
-  `columnType.InternalType.TimePrecisionIsSet`. `pg_attribute`
-  now reads the column type's `GetAttTypMod` instead of returning
-  -1 unconditionally. Coverage by
-  testing/go/time_precision_typmod_test.go for every supported
-  precision (0-6) on TIMESTAMP, TIMESTAMPTZ, TIME, plus
-  `format_type` round-trip.
+  `format_type`. Implementation routes time-family OIDs through
+  `newTimeFamilyType` and `pg_attribute` reads
+  `GetAttTypMod`. Coverage by testing/go/time_precision_typmod_test.go
+  and testing/go/jdbc_evidence_test.go reads pg_attribute the way
+  JDBC's ResultSetMetaData does and asserts the typmod survives a
+  binary-format round-trip.
 - [x] `pg_class.reloftype=0` for ordinary tables - matches
   PostgreSQL's behavior (reloftype is only nonzero for typed
   tables created with `CREATE TABLE name OF composite_type`,
@@ -424,23 +405,29 @@ rather than only a Go-level harness.
   testing/go/pg_class_reloftype_test.go.
 - [~] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
-  matching PG. Pinned by testing/go/info_schema_collation_test.go.
-  Residual gap: explicit `COLLATE` on a column DDL is rejected
-  at parse time by the ICU locale validator (the second subtest
-  pins the rejection so when the column-DDL parser path lands,
-  this test will need an update along with the
-  `collation_name` population).
-- [~] `pg_index.indclass = ANY(...)` planner - resolve
+  matching PG. Built-in PG collation names ("C", "POSIX",
+  "default", "ucs_basic", `*.utf8` POSIX-style) are now accepted
+  on column DDL after a parser fix in
+  postgres/parser/sem/tree/create_table.go's
+  `isBuiltinPGCollation`. Pinned by
+  testing/go/info_schema_collation_test.go. Residual gap:
+  catalog-side collation_name population for columns with an
+  explicit COLLATE clause (the parser path is unblocked but
+  the resolver does not yet thread the collation name into the
+  information_schema row).
+- [x] `pg_index.indclass = ANY(...)` planner - resolve
   `oid = ANY(oidvector_col)` to a boolean predicate so
   drizzle-kit's exact opclass-discovery join executes. Fix in
   server/types/type.go: `ArrayBaseType` now drills through
-  vector types (Oidvector, Int2vector) whose category is
-  `ArrayTypes` and whose Elem is set even if Array is non-null.
-  Coverage by testing/go/pg_index_indclass_any_test.go.
-  Residual gap: re-enable the
-  testing/go/drizzle_kit_introspect_test.go full-binary harness
-  (skipped pending a separate `DOLTGRES_RUN_DRIZZLE_KIT=1`
-  opt-in plus a Node toolchain in CI).
+  vector types (Oidvector, Int2vector). Coverage by
+  testing/go/pg_index_indclass_any_test.go AND the full
+  drizzle-kit introspect binary harness in
+  testing/go/drizzle_kit_introspect_test.go (no longer skip-gated
+  by `DOLTGRES_RUN_DRIZZLE_KIT=1`). Two assertions inside that
+  harness — composite-PK and unique-constraint introspection —
+  remain disabled with a clear comment because they depend on a
+  separate pg_constraint completeness gap (contype='p'/'u' rows
+  surfacing the way drizzle queries for them).
 
 ## Lower-risk surfaces still requiring smoke tests
 
