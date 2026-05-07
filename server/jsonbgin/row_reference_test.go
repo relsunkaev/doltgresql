@@ -124,6 +124,69 @@ func TestRowReferenceOrdersLikePrimaryKey(t *testing.T) {
 	}
 }
 
+func TestRowReferenceNumericRoundTripAndOrder(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	types := []sql.Type{pgtypes.Numeric}
+	rows := []sql.Row{
+		{decimal.RequireFromString("-1000")},
+		{decimal.RequireFromString("-2.5")},
+		{decimal.RequireFromString("-1")},
+		{decimal.RequireFromString("-0.01")},
+		{decimal.RequireFromString("0")},
+		{decimal.RequireFromString("0.01")},
+		{decimal.RequireFromString("0.1")},
+		{decimal.RequireFromString("1")},
+		{decimal.RequireFromString("1.01")},
+		{decimal.RequireFromString("1.1")},
+		{decimal.RequireFromString("9.99")},
+		{decimal.RequireFromString("10")},
+		{decimal.RequireFromString("123.45")},
+	}
+	rowRefs := make([]RowReference, len(rows))
+	for i, row := range rows {
+		rowRef, err := EncodeRowReference(ctx, types, row)
+		require.NoError(t, err)
+		rowRefs[i] = rowRef
+
+		decoded, err := DecodeRowReference(ctx, types, rowRef.Bytes)
+		require.NoError(t, err)
+		cmp, err := pgtypes.Numeric.Compare(ctx, row[0], decoded.Values[0])
+		require.NoError(t, err)
+		require.Zero(t, cmp)
+	}
+
+	for i := range rows {
+		for j := range rows {
+			want, err := compareRowReferenceValues(ctx, types, rows[i], rows[j])
+			require.NoError(t, err)
+			require.Equal(t, sign(want), sign(CompareRowReferences(rowRefs[i].Bytes, rowRefs[j].Bytes)))
+		}
+	}
+
+	shuffled := append([]RowReference(nil), rowRefs...)
+	sort.Slice(shuffled, func(i, j int) bool {
+		return CompareRowReferences(shuffled[j].Bytes, shuffled[i].Bytes) < 0
+	})
+	sort.Slice(shuffled, func(i, j int) bool {
+		return CompareRowReferences(shuffled[i].Bytes, shuffled[j].Bytes) < 0
+	})
+	for i, rowRef := range shuffled {
+		decoded, err := DecodeRowReference(ctx, types, rowRef.Bytes)
+		require.NoError(t, err)
+		cmp, err := pgtypes.Numeric.Compare(ctx, rows[i][0], decoded.Values[0])
+		require.NoError(t, err)
+		require.Zero(t, cmp)
+	}
+
+	rowRef, err := EncodeRowReference(ctx, types, sql.Row{decimal.RequireFromString("1.2300")})
+	require.NoError(t, err)
+	decoded, err := DecodeRowReference(ctx, types, rowRef.Bytes)
+	require.NoError(t, err)
+	cmp, err := pgtypes.Numeric.Compare(ctx, decimal.RequireFromString("1.23"), decoded.Values[0])
+	require.NoError(t, err)
+	require.Zero(t, cmp)
+}
+
 func TestRowReferenceNullableComponentsRoundTripAndOrder(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	types := []sql.Type{pgtypes.Int32, pgtypes.Text}
@@ -208,7 +271,7 @@ func TestRowReferenceRejectsMalformedPayloads(t *testing.T) {
 func TestRowReferenceRejectsUnsupportedTypes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 
-	_, err := EncodeRowReference(ctx, []sql.Type{pgtypes.Numeric}, sql.Row{decimal.RequireFromString("10.5")})
+	_, err := EncodeRowReference(ctx, []sql.Type{pgtypes.JsonB}, sql.Row{pgtypes.JsonDocument{}})
 	require.ErrorContains(t, err, "unsupported")
 }
 

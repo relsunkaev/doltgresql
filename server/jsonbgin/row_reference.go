@@ -20,8 +20,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/shopspring/decimal"
 
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -41,6 +43,10 @@ const (
 	rowReferenceNonNullMarker  = 1
 	rowReferenceTerminatorByte = 0
 	rowReferenceEscapedNulByte = 0xff
+
+	rowReferenceNumericNegativeMarker = 0
+	rowReferenceNumericZeroMarker     = 1
+	rowReferenceNumericPositiveMarker = 2
 )
 
 var rowReferenceMagic = [4]byte{'D', 'G', 'R', 'F'}
@@ -262,6 +268,13 @@ func encodeRowReferenceComponent(ctx *sql.Context, typ sql.Type, value any) ([]b
 		}
 		return encodeComparableBytes(value), nil
 	}
+	if isNumericRowReferenceType(dgType) {
+		value, ok := value.(decimal.Decimal)
+		if !ok {
+			return nil, fmt.Errorf("unsupported numeric value type %T", value)
+		}
+		return encodeNumericRowReferenceComponent(value)
+	}
 	if _, ok := fixedWidthRowReferenceType(dgType); !ok {
 		return nil, fmt.Errorf("%w %s", ErrUnsupportedRowReferenceType, dgType.ID.TypeName())
 	}
@@ -295,6 +308,9 @@ func decodeRowReferenceComponent(ctx *sql.Context, typ sql.Type, encoded []byte,
 		}
 		return decoded, nextOffset, nil
 	}
+	if isNumericRowReferenceType(dgType) {
+		return decodeNumericRowReferenceComponent(encoded, offset)
+	}
 	width, ok := fixedWidthRowReferenceType(dgType)
 	if !ok {
 		return nil, 0, fmt.Errorf("%w %s", ErrUnsupportedRowReferenceType, dgType.ID.TypeName())
@@ -317,6 +333,10 @@ func isByteaRowReferenceType(typ *pgtypes.DoltgresType) bool {
 	return typ.ID.TypeName() == "bytea"
 }
 
+func isNumericRowReferenceType(typ *pgtypes.DoltgresType) bool {
+	return typ.ID.TypeName() == "numeric"
+}
+
 func fixedWidthRowReferenceType(typ *pgtypes.DoltgresType) (int, bool) {
 	switch typ.ID.TypeName() {
 	case "bool":
@@ -335,6 +355,116 @@ func fixedWidthRowReferenceType(typ *pgtypes.DoltgresType) (int, bool) {
 		return 16, true
 	default:
 		return 0, false
+	}
+}
+
+func encodeNumericRowReferenceComponent(value decimal.Decimal) ([]byte, error) {
+	sign := value.Sign()
+	if sign == 0 {
+		return []byte{rowReferenceNumericZeroMarker}, nil
+	}
+
+	magnitude := value.Abs()
+	coefficient := magnitude.Coefficient()
+	exponent := magnitude.Exponent()
+	normalizeNumericCoefficient(coefficient, &exponent)
+
+	digits := coefficient.String()
+	adjustedExponent := int64(len(digits)) + int64(exponent) - 1
+	if adjustedExponent < -1<<31 || adjustedExponent > 1<<31-1 {
+		return nil, fmt.Errorf("%w numeric adjusted exponent %d", ErrUnsupportedRowReferenceType, adjustedExponent)
+	}
+
+	encoded := make([]byte, 1+4+len(digits)+1)
+	if sign < 0 {
+		encoded[0] = rowReferenceNumericNegativeMarker
+	} else {
+		encoded[0] = rowReferenceNumericPositiveMarker
+	}
+	binary.BigEndian.PutUint32(encoded[1:5], uint32(int32(adjustedExponent))^0x80000000)
+	copy(encoded[5:], digits)
+	encoded[len(encoded)-1] = rowReferenceTerminatorByte
+
+	if sign < 0 {
+		for i := 1; i < len(encoded); i++ {
+			encoded[i] = ^encoded[i]
+		}
+	}
+	return encoded, nil
+}
+
+func decodeNumericRowReferenceComponent(encoded []byte, offset int) (any, int, error) {
+	if offset >= len(encoded) {
+		return nil, 0, fmt.Errorf("truncated numeric component")
+	}
+	marker := encoded[offset]
+	offset++
+	switch marker {
+	case rowReferenceNumericZeroMarker:
+		return decimal.Zero, offset, nil
+	case rowReferenceNumericPositiveMarker, rowReferenceNumericNegativeMarker:
+	default:
+		return nil, 0, fmt.Errorf("invalid numeric marker %d", marker)
+	}
+	if offset+4 >= len(encoded) {
+		return nil, 0, fmt.Errorf("truncated numeric component")
+	}
+
+	negative := marker == rowReferenceNumericNegativeMarker
+	terminator := byte(rowReferenceTerminatorByte)
+	if negative {
+		terminator = ^terminator
+	}
+	end := offset + 4
+	for end < len(encoded) && encoded[end] != terminator {
+		end++
+	}
+	if end >= len(encoded) {
+		return nil, 0, fmt.Errorf("unterminated numeric component")
+	}
+	if end == offset+4 {
+		return nil, 0, fmt.Errorf("numeric component missing coefficient digits")
+	}
+
+	sortKey := append([]byte(nil), encoded[offset:end]...)
+	if negative {
+		for i := range sortKey {
+			sortKey[i] = ^sortKey[i]
+		}
+	}
+	adjustedExponent := int32(binary.BigEndian.Uint32(sortKey[:4]) ^ 0x80000000)
+	digits := sortKey[4:]
+	for _, digit := range digits {
+		if digit < '0' || digit > '9' {
+			return nil, 0, fmt.Errorf("invalid numeric coefficient digit 0x%02x", digit)
+		}
+	}
+	coefficient, ok := new(big.Int).SetString(string(digits), 10)
+	if !ok {
+		return nil, 0, fmt.Errorf("invalid numeric coefficient")
+	}
+	if negative {
+		coefficient.Neg(coefficient)
+	}
+	exponent := adjustedExponent - int32(len(digits)) + 1
+	return decimal.NewFromBigInt(coefficient, exponent), end + 1, nil
+}
+
+func normalizeNumericCoefficient(coefficient *big.Int, exponent *int32) {
+	if coefficient.Sign() == 0 {
+		*exponent = 0
+		return
+	}
+	ten := big.NewInt(10)
+	quotient := new(big.Int)
+	remainder := new(big.Int)
+	for {
+		quotient.QuoRem(coefficient, ten, remainder)
+		if remainder.Sign() != 0 {
+			return
+		}
+		coefficient.Set(quotient)
+		*exponent = *exponent + 1
 	}
 }
 
