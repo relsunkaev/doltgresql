@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/goccy/go-json"
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -160,6 +161,55 @@ func (s *EncodedTokenScratch) ExtractValueEncoded(value pgtypes.JsonValue, opCla
 	return s.encodedTokens, nil
 }
 
+// ExtractJSONEncoded extracts encoded tokens from JSON text using reusable
+// scratch storage. It avoids materializing an intermediate JsonDocument tree.
+// The returned slice is valid until the next call on scratch.
+func (s *EncodedTokenScratch) ExtractJSONEncoded(input []byte, opClass string) ([]string, error) {
+	var decoded any
+	if err := json.Unmarshal(input, &decoded); err != nil {
+		return nil, err
+	}
+	return s.extractDecodedJSONEncoded(decoded, opClass)
+}
+
+func (s *EncodedTokenScratch) extractDecodedJSONEncoded(value any, opClass string) ([]string, error) {
+	if s == nil {
+		var scratch EncodedTokenScratch
+		return scratch.extractDecodedJSONEncoded(value, opClass)
+	}
+	if cap(s.encodedTokens) < defaultEncodedTokenCapacity {
+		s.encodedTokens = make([]string, 0, defaultEncodedTokenCapacity)
+	} else {
+		s.encodedTokens = s.encodedTokens[:0]
+	}
+	for key := range s.encodedIndependentSeen {
+		delete(s.encodedIndependentSeen, key)
+	}
+	extractor := extractor{
+		opClass:                indexmetadata.NormalizeOpClass(opClass),
+		encodedTokens:          s.encodedTokens,
+		encodedIndependentSeen: s.encodedIndependentSeen,
+		encoded:                true,
+	}
+
+	switch extractor.opClass {
+	case indexmetadata.OpClassJsonbOps:
+		if err := extractor.extractDecodedJsonbOps(value, false); err != nil {
+			return nil, err
+		}
+	case indexmetadata.OpClassJsonbPathOps:
+		if err := extractor.extractDecodedJsonbPathOps(value); err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported JSONB GIN opclass %q", opClass)
+	}
+
+	s.encodedTokens = normalizeEncodedTokens(extractor.encodedTokens)
+	s.encodedIndependentSeen = extractor.encodedIndependentSeen
+	return s.encodedTokens, nil
+}
+
 type extractor struct {
 	opClass                string
 	path                   []string
@@ -254,6 +304,85 @@ func (e *extractor) extractJsonbPathOps(value pgtypes.JsonValue) error {
 			e.addPathValue("boolean:false")
 		}
 	case pgtypes.JsonValueNull:
+		e.addPathValue("null:null")
+	default:
+		return fmt.Errorf("unexpected JSONB value type %T", value)
+	}
+	return nil
+}
+
+func (e *extractor) extractDecodedJsonbOps(value any, arrayElement bool) error {
+	switch value := value.(type) {
+	case map[string]any:
+		if len(value) == 0 {
+			e.addIndependent(TokenKindEmptyObject, "")
+			return nil
+		}
+		for key, item := range value {
+			e.addIndependent(TokenKindKey, key)
+			if err := e.extractDecodedJsonbOps(item, false); err != nil {
+				return err
+			}
+		}
+	case []any:
+		if len(value) == 0 {
+			e.addIndependent(TokenKindEmptyArray, "")
+			return nil
+		}
+		for _, item := range value {
+			if err := e.extractDecodedJsonbOps(item, true); err != nil {
+				return err
+			}
+		}
+	case string:
+		if arrayElement {
+			e.addIndependent(TokenKindKey, value)
+		} else {
+			e.addIndependent(TokenKindString, value)
+		}
+	case float64:
+		e.addIndependent(TokenKindNumber, decimal.NewFromFloat(value).String())
+	case bool:
+		if value {
+			e.addIndependent(TokenKindBoolean, "true")
+		} else {
+			e.addIndependent(TokenKindBoolean, "false")
+		}
+	case nil:
+		e.addIndependent(TokenKindNull, "null")
+	default:
+		return fmt.Errorf("unexpected JSONB value type %T", value)
+	}
+	return nil
+}
+
+func (e *extractor) extractDecodedJsonbPathOps(value any) error {
+	switch value := value.(type) {
+	case map[string]any:
+		for key, item := range value {
+			e.pushPath(key)
+			if err := e.extractDecodedJsonbPathOps(item); err != nil {
+				return err
+			}
+			e.popPath()
+		}
+	case []any:
+		for _, item := range value {
+			if err := e.extractDecodedJsonbPathOps(item); err != nil {
+				return err
+			}
+		}
+	case string:
+		e.addPathValue("string:" + value)
+	case float64:
+		e.addPathValue("number:" + decimal.NewFromFloat(value).String())
+	case bool:
+		if value {
+			e.addPathValue("boolean:true")
+		} else {
+			e.addPathValue("boolean:false")
+		}
+	case nil:
 		e.addPathValue("null:null")
 	default:
 		return fmt.Errorf("unexpected JSONB value type %T", value)

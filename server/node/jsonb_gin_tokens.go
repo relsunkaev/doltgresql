@@ -35,6 +35,8 @@ func jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx *sql.Context, value
 		return scratch.ExtractValueEncoded(value.Value, opClass)
 	case pgtypes.JsonValue:
 		return scratch.ExtractValueEncoded(value, opClass)
+	case string:
+		return scratch.ExtractJSONEncoded([]byte(value), opClass)
 	case nil:
 		return scratch.ExtractValueEncoded(pgtypes.JsonValueNull(0), opClass)
 	default:

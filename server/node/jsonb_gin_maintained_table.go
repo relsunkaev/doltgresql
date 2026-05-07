@@ -1214,20 +1214,24 @@ func (p *jsonbGinPostingChunkEditor) stageInsert(rowRef []byte, encodedTokens []
 		return
 	}
 	p.ensurePending()
-	for _, encodedToken := range normalizeJsonbGinLookupTokens(append([]string(nil), encodedTokens...)) {
+	rowRefKey := string(rowRef)
+	rowRefCopy := append([]byte(nil), rowRef...)
+	for _, encodedToken := range encodedTokens {
+		if encodedToken == "" {
+			continue
+		}
 		tokenPending := p.pending[encodedToken]
 		if tokenPending == nil {
 			tokenPending = make(map[string]jsonbGinPendingPostingChunk)
 			p.pending[encodedToken] = tokenPending
 		}
-		rowRefKey := string(rowRef)
 		pending := tokenPending[rowRefKey]
 		if pending.delete {
 			pending.delete = false
 		} else {
 			pending.insert = true
 		}
-		pending.rowRef = append([]byte(nil), rowRef...)
+		pending.rowRef = rowRefCopy
 		if !pending.insert && !pending.delete {
 			delete(tokenPending, rowRefKey)
 			continue
@@ -1241,20 +1245,24 @@ func (p *jsonbGinPostingChunkEditor) stageDelete(rowRef []byte, encodedTokens []
 		return
 	}
 	p.ensurePending()
-	for _, encodedToken := range normalizeJsonbGinLookupTokens(append([]string(nil), encodedTokens...)) {
+	rowRefKey := string(rowRef)
+	rowRefCopy := append([]byte(nil), rowRef...)
+	for _, encodedToken := range encodedTokens {
+		if encodedToken == "" {
+			continue
+		}
 		tokenPending := p.pending[encodedToken]
 		if tokenPending == nil {
 			tokenPending = make(map[string]jsonbGinPendingPostingChunk)
 			p.pending[encodedToken] = tokenPending
 		}
-		rowRefKey := string(rowRef)
 		pending := tokenPending[rowRefKey]
 		if pending.insert {
 			pending.insert = false
 		} else {
 			pending.delete = true
 		}
-		pending.rowRef = append([]byte(nil), rowRef...)
+		pending.rowRef = rowRefCopy
 		if !pending.insert && !pending.delete {
 			delete(tokenPending, rowRefKey)
 			continue

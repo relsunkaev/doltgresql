@@ -192,6 +192,10 @@ func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
 			input: `{"a":{"b":"text","n":7,"empty":{}},"tags":["vip","vip",null,false,3,""],"z":[]}`,
 		},
 		{
+			name:  "escaped_strings",
+			input: `{"text":"a\nb","tags":["x\u263a","x\u263a"],"quote":"a\"b"}`,
+		},
+		{
 			name:  "scalar_string",
 			input: `"text"`,
 		},
@@ -220,6 +224,11 @@ func TestExtractEncodedMatchesStructuredTokens(t *testing.T) {
 					encoded, err := ExtractEncoded(doc, opClass)
 					require.NoError(t, err)
 					require.ElementsMatch(t, want, encoded)
+
+					var scratch EncodedTokenScratch
+					jsonEncoded, err := scratch.ExtractJSONEncoded([]byte(test.input), opClass)
+					require.NoError(t, err)
+					require.ElementsMatch(t, want, jsonEncoded)
 				})
 			}
 		})
@@ -282,6 +291,26 @@ func BenchmarkExtractEncodedLargeDocument(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				tokens, err := ExtractEncoded(doc, opClass)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if len(tokens) == 0 {
+					b.Fatal("expected extracted tokens")
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkExtractJSONEncodedLargeDocument(b *testing.B) {
+	input := []byte(largeJsonDocument())
+
+	for _, opClass := range []string{indexmetadata.OpClassJsonbOps, indexmetadata.OpClassJsonbPathOps} {
+		b.Run(opClass, func(b *testing.B) {
+			var scratch EncodedTokenScratch
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				tokens, err := scratch.ExtractJSONEncoded(input, opClass)
 				if err != nil {
 					b.Fatal(err)
 				}
