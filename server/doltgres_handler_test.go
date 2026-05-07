@@ -69,3 +69,9 @@ func TestExecutionFormatCodesExpandsBinaryShortForm(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []int16{1, 1, 1}, formatCodes)
 }
+
+func TestConvertBindParametersReturnsNilForNoValues(t *testing.T) {
+	bindings, err := (&DoltgresHandler{}).convertBindParameters(sql.NewEmptyContext(), nil, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, bindings)
+}

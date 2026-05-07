@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"runtime/trace"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -323,6 +324,9 @@ func (h *DoltgresHandler) InitSessionParameterDefault(ctx context.Context, c *my
 
 // convertBindParameters handles the conversion from bind parameters to variable values.
 func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32, formatCodes []int16, values [][]byte) (map[string]sqlparser.Expr, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
 	bindings := make(map[string]sqlparser.Expr, len(values))
 	// It's valid to send just one format code that should be used by all values, so we extend the slice in that case
 	formatCodes, err := extendFormatCodes(len(values), formatCodes)
@@ -345,19 +349,23 @@ func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32
 				if err != nil {
 					return nil, err
 				}
-				bindings[fmt.Sprintf("v%d", i+1)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(v, dgType)}
+				bindings[bindVariableName(i)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(v, dgType)}
 			} else {
 				v, err := dgType.CallReceive(ctx, values[i])
 				if err != nil {
 					return nil, err
 				}
-				bindings[fmt.Sprintf("v%d", i+1)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(v, dgType)}
+				bindings[bindVariableName(i)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(v, dgType)}
 			}
 		} else {
-			bindings[fmt.Sprintf("v%d", i+1)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(nil, dgType)}
+			bindings[bindVariableName(i)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(nil, dgType)}
 		}
 	}
 	return bindings, nil
+}
+
+func bindVariableName(index int) string {
+	return "v" + strconv.Itoa(index+1)
 }
 
 var queryLoggingRegex = regexp.MustCompile(`[\r\n\t ]+`)
