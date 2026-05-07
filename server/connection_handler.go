@@ -2004,7 +2004,8 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 			return err
 		}
 		h.invalidatePreparedPlanCacheIfNeeded(clientQuery)
-		return h.send(makeCommandComplete(clientQuery.StatementTag, rowsAffected))
+		h.sendBuffered(makeCommandComplete(clientQuery.StatementTag, rowsAffected))
+		return nil
 	}
 	queryToExecute := clientQuery
 	suppressRows := capture != nil && !capture.clientReturnsRows
@@ -2047,7 +2048,8 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	}
 
 	h.invalidatePreparedPlanCacheIfNeeded(query)
-	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
+	return nil
 }
 
 func isCommitQuery(query ConvertedQuery) bool {
@@ -2125,19 +2127,15 @@ func (h *ConnectionHandler) spoolRowsCallbackWithRowSuppression(query ConvertedQ
 			// EXECUTE does not send RowDescription; instead it should be sent from DESCRIBE prior to it
 			if !isExecute && !hasSentRowDescription {
 				hasSentRowDescription = true
-				if err := h.send(&pgproto3.RowDescription{
+				h.sendBuffered(&pgproto3.RowDescription{
 					Fields: res.Fields,
-				}); err != nil {
-					return err
-				}
+				})
 			}
 
 			for _, row := range res.Rows {
-				if err := h.send(&pgproto3.DataRow{
+				h.sendBuffered(&pgproto3.DataRow{
 					Values: row.val,
-				}); err != nil {
-					return err
-				}
+				})
 			}
 		}
 
@@ -2343,6 +2341,15 @@ func (h *ConnectionHandler) send(message pgproto3.BackendMessage) error {
 	defer h.sendMu.Unlock()
 	h.backend.Send(message)
 	return h.backend.Flush()
+}
+
+// sendBuffered queues a backend message without forcing a socket flush. Simple
+// query execution uses this for row/result messages that are immediately
+// followed by ReadyForQuery, which flushes the full response batch.
+func (h *ConnectionHandler) sendBuffered(message pgproto3.BackendMessage) {
+	h.sendMu.Lock()
+	defer h.sendMu.Unlock()
+	h.backend.Send(message)
 }
 
 // returnsRow returns whether the query returns set of rows such as SELECT and FETCH statements.
