@@ -163,8 +163,12 @@ ON CONFLICT (id) do update set c1 = $4`,
 					ExpectedErr: "the ON CONFLICT clause provided is not yet supported",
 				},
 				{
-					Query:       "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'newworld'",
-					ExpectedErr: "the ON CONFLICT clause provided is not yet supported",
+					// DO UPDATE WHERE predicate is supported by
+					// rewriting `col = expr` to a CASE expression that
+					// preserves the existing value when the predicate
+					// is false. Predicate is true (mytable.id=1's name
+					// is 'newworld'), so the update applies.
+					Query: "INSERT INTO mytable (id, name) VALUES (1, 'conditional update') ON CONFLICT (id) DO UPDATE SET name = 'conditional update' WHERE mytable.name = 'newworld'",
 				},
 				{
 					Query: "SELECT * FROM conflict_arbiters ORDER BY id",

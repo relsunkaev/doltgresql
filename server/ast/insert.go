@@ -48,13 +48,24 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 		} else if supportedOnConflictClause(node.OnConflict) {
 			// TODO: we are ignoring the column names, which are used to infer which index under conflict is to be checked
 			var updateExprs vitess.AssignmentExprs
+			var whereExpr vitess.Expr
 			if err := ctx.WithExcludedRefs(func() error {
-				var convertErr error
-				updateExprs, convertErr = nodeUpdateExprs(ctx, node.OnConflict.Exprs)
-				return convertErr
+				converted, convertErr := nodeUpdateExprs(ctx, node.OnConflict.Exprs)
+				if convertErr != nil {
+					return convertErr
+				}
+				updateExprs = converted
+				if node.OnConflict.Where != nil {
+					whereExpr, convertErr = nodeExpr(ctx, node.OnConflict.Where.Expr)
+					if convertErr != nil {
+						return convertErr
+					}
+				}
+				return nil
 			}); err != nil {
 				return nil, err
 			}
+			updateExprs = applyOnConflictUpdateWhere(updateExprs, whereExpr)
 			for _, updateExpr := range updateExprs {
 				onDuplicate = append(onDuplicate, updateExpr)
 			}
@@ -136,13 +147,43 @@ func isIgnore(conflict *tree.OnConflict) bool {
 }
 
 // supportedOnConflictClause returns true if the ON CONFLICT clause given can be represented as
-// an ON DUPLICATE KEY UPDATE clause in GMS
+// an ON DUPLICATE KEY UPDATE clause in GMS. The clause's WHERE predicate is supported by
+// rewriting each `col = expr` pair as `col = CASE WHEN <pred> THEN <expr> ELSE col END` so
+// the ELSE branch keeps the existing row unchanged when the predicate is false.
 func supportedOnConflictClause(conflict *tree.OnConflict) bool {
 	if conflict.ArbiterPredicate != nil {
 		return false
 	}
-	if conflict.Where != nil {
-		return false
-	}
 	return true
+}
+
+// applyOnConflictUpdateWhere wraps each assignment expression with a CASE
+// expression that preserves the existing column value when the ON CONFLICT
+// DO UPDATE WHERE predicate evaluates to false. Returns the input unchanged
+// when no predicate is provided.
+func applyOnConflictUpdateWhere(updateExprs vitess.AssignmentExprs, whereExpr vitess.Expr) vitess.AssignmentExprs {
+	if whereExpr == nil || len(updateExprs) == 0 {
+		return updateExprs
+	}
+	wrapped := make(vitess.AssignmentExprs, len(updateExprs))
+	for i, ae := range updateExprs {
+		// The bare ColName references the existing row in
+		// ON DUPLICATE KEY UPDATE context. When the predicate
+		// is false the column is set to its prior value, which
+		// GMS skips writing when oldRow == newRow.
+		oldVal := &vitess.ColName{Name: ae.Name.Name}
+		wrapped[i] = &vitess.AssignmentExpr{
+			Name: ae.Name,
+			Expr: &vitess.CaseExpr{
+				Whens: []*vitess.When{
+					{
+						Cond: whereExpr,
+						Val:  ae.Expr,
+					},
+				},
+				Else: oldVal,
+			},
+		}
+	}
+	return wrapped
 }
