@@ -320,6 +320,128 @@ actually exercise.
   authorization-policy SQL (Zero `.permissions.sql`, Supabase RLS, or
   equivalent) loads and is interpreted correctly.
 
+## Wire protocol and catalog metadata
+
+These items track the wire-protocol and catalog-correctness surfaces
+that GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) and ORM
+introspection tools (Drizzle Kit, Prisma db pull, Alembic
+autogenerate) inspect to drive editable result grids, schema diffs,
+typed-exception handling, and client-side query timeouts. The
+residual gap on each item is "real-consumer evidence": running the
+actual GUI / migration binary against a live Doltgres instance
+rather than only a Go-level harness.
+
+- [~] `RowDescription.TableOID` - populate the source-table OID so
+  GUI editors can resolve a result column back to a base table.
+  Implementation landed: server/doltgres_handler.go's
+  `lookupSourceTableMeta` walks the session search_path, probes each
+  schema for the named table via the GMS provider, and emits
+  `id.Cache().ToOID(id.NewTable(schema, source).AsId())` on the
+  first match (so a follow-up `pg_class` lookup by the client
+  resolves to the matching row). Coverage in
+  testing/go/select_field_metadata_test.go's
+  TestSelectStarFieldMetadata asserts the OID matches `pg_class`
+  for `SELECT * FROM t` and that derived columns keep TableOID=0.
+  Residual gap: a real TablePlus session against a Doltgres
+  instance recorded as the workload-corpus evidence.
+- [~] `RowDescription.TableAttributeNumber` - emit the source-table
+  attnum, not the result-set position. Implementation landed: the
+  same `sourceTableMeta` cache also holds an attnum-by-column-name
+  map built from the resolved table's schema, so reordered SELECT
+  projections (`SELECT col2, col1 FROM t`) report each column's
+  true source-table attnum. Coverage by the same test file's
+  "reordered SELECT preserves real attnum" subtest.
+- [~] Source attribution through `AliasedExpr` - keep the source
+  table OID for `SELECT col AS x FROM t`. Implementation landed:
+  `extractAliasSourceHints` walks the result-producing plan node
+  to the first `plan.Project`, then unwraps `expression.Alias` and
+  `expression.GetField` to recover the (table, column) pair the
+  schema lost. Computed projections (literals, function calls,
+  arithmetic) correctly leave the hint nil so editors do not offer
+  to edit derived values. Residual gap pinned by the skipped
+  "table-qualified aliased base column" subtest:
+  `SELECT a.id FROM t a` carries the FROM alias rather than the
+  real table name, which needs a separate alias-to-table map at
+  plan-walk time.
+- [~] Startup `ParameterStatus` set - emit the same dozen messages
+  real PG sends. Implementation landed (`server_encoding`,
+  `DateStyle`, `IntervalStyle`, `TimeZone`, `integer_datetimes`,
+  `is_superuser`, `session_authorization`, `application_name`
+  added alongside the four already present). JDBC reads
+  `integer_datetimes` to choose binary timestamp encoding;
+  node-postgres caches `server_encoding` for transcoding;
+  SQLAlchemy reads `DateStyle` / `IntervalStyle`. Coverage by
+  testing/go/parameter_status_test.go via pgx
+  `PgConn().ParameterStatus`. Residual gap: a JDBC driver
+  startup recorded as evidence.
+- [~] `BackendKeyData` + `CancelRequest` - per-connection nonzero
+  secret + a cancel-request handler that interrupts the active
+  query. Implementation landed: server/cancel_registry.go holds a
+  thread-safe `(ProcessID, SecretKey) -> connID` map; the
+  startup-message variant `*pgproto3.CancelRequest` looks the
+  pair up and calls `engine.ProcessList.Kill(connID)`.
+  `pg_sleep` is now context-aware so cancellation propagates the
+  way real PG behaves. Coverage by
+  testing/go/cancel_request_test.go via
+  `pgx.Conn.PgConn().CancelRequest`. Residual gap: a TablePlus
+  "Stop query" round-trip recorded as evidence.
+- [~] `ErrorResponse` SQLSTATE codes - map common GMS / Dolt error
+  kinds to the PostgreSQL SQLSTATE codes drivers branch on
+  (23505 unique_violation, 23503 foreign_key_violation, 23502
+  not_null_violation, 23514 check_violation, 42P01
+  undefined_table, 42703 undefined_column, 0A000
+  feature_not_supported). Implementation landed in
+  server/connection_handler.go's `errorResponseCode` with both
+  Kind-typed matching and a fallback by MySQL errno (since
+  `castSQLError` wraps GMS errors as `*mysql.SQLError` before
+  reaching the responder). Coverage by
+  testing/go/sqlstate_test.go via pgx `pgconn.PgError.Code`.
+  Residual gap: round-trip evidence from an ORM that branches on
+  these codes (SQLAlchemy IntegrityError, ActiveRecord
+  RecordNotUnique).
+- [x] `pg_attribute` index attribute names - the existing
+  `indexAttributeName` helper already returns real column names
+  for non-expression index attributes (the audit's
+  "synthetic placeholder" claim was a false positive). Pinned by
+  testing/go/pg_attribute_index_names_test.go which asserts every
+  attname in pg_attribute matches the underlying table column.
+- [~] `TIMESTAMP(p)` / `TIME(p)` precision in `atttypmod` -
+  preserve the user-supplied precision through CREATE TABLE so
+  introspection tools can rebuild the original DDL via
+  `format_type`. Implementation landed: the AST converter routes
+  the time-family OIDs through `newTimeFamilyType`, which calls
+  the precision-aware constructor when
+  `columnType.InternalType.TimePrecisionIsSet`. `pg_attribute`
+  now reads the column type's `GetAttTypMod` instead of returning
+  -1 unconditionally. Coverage by
+  testing/go/time_precision_typmod_test.go for every supported
+  precision (0-6) on TIMESTAMP, TIMESTAMPTZ, TIME, plus
+  `format_type` round-trip.
+- [x] `pg_class.reloftype=0` for ordinary tables - matches
+  PostgreSQL's behavior (reloftype is only nonzero for typed
+  tables created with `CREATE TABLE name OF composite_type`,
+  which Doltgres does not yet support). Pinned by
+  testing/go/pg_class_reloftype_test.go.
+- [~] `information_schema.columns.collation_name` - reports NULL
+  for default-collated string columns and non-string columns,
+  matching PG. Pinned by testing/go/info_schema_collation_test.go.
+  Residual gap: explicit `COLLATE` on a column DDL is rejected
+  at parse time by the ICU locale validator (the second subtest
+  pins the rejection so when the column-DDL parser path lands,
+  this test will need an update along with the
+  `collation_name` population).
+- [~] `pg_index.indclass = ANY(...)` planner - resolve
+  `oid = ANY(oidvector_col)` to a boolean predicate so
+  drizzle-kit's exact opclass-discovery join executes. Fix in
+  server/types/type.go: `ArrayBaseType` now drills through
+  vector types (Oidvector, Int2vector) whose category is
+  `ArrayTypes` and whose Elem is set even if Array is non-null.
+  Coverage by testing/go/pg_index_indclass_any_test.go.
+  Residual gap: re-enable the
+  testing/go/drizzle_kit_introspect_test.go full-binary harness
+  (skipped pending a separate `DOLTGRES_RUN_DRIZZLE_KIT=1`
+  opt-in plus a Node toolchain in CI).
+
 ## Lower-risk surfaces still requiring smoke tests
 
 - [ ] Basic driver pools and ORM CRUD across the advertised driver matrix.
