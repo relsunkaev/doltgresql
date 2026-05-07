@@ -2246,12 +2246,99 @@ func (h *ConnectionHandler) sendError(err error) {
 }
 
 func errorResponseCode(err error) string {
-	switch pgerror.GetPGCode(err) {
-	case pgcode.DuplicateObject:
-		return pgcode.DuplicateObject.String()
-	default:
-		return "XX000"
+	// Honor an explicit pgcode annotation when one was wired in
+	// (pgerror.Newf and friends).
+	if code := pgerror.GetPGCode(err); code != pgcode.Uncategorized {
+		return code.String()
 	}
+	// Map common GMS / Dolt error kinds to PostgreSQL SQLSTATE codes
+	// drivers and ORMs branch on. Without this mapping every error
+	// surfaces as XX000 (internal_error), so retry/typed-exception
+	// logic in pgx, JDBC, SQLAlchemy, ActiveRecord, etc. is broken.
+	switch {
+	case sql.ErrPrimaryKeyViolation.Is(err),
+		sql.ErrUniqueKeyViolation.Is(err):
+		return pgcode.UniqueViolation.String()
+	case sql.ErrForeignKeyChildViolation.Is(err),
+		sql.ErrForeignKeyParentViolation.Is(err):
+		return pgcode.ForeignKeyViolation.String()
+	case sql.ErrInsertIntoNonNullableProvidedNull.Is(err),
+		sql.ErrInsertIntoNonNullableDefaultNullColumn.Is(err):
+		return pgcode.NotNullViolation.String()
+	case sql.ErrCheckConstraintViolated.Is(err):
+		return pgcode.CheckViolation.String()
+	case sql.ErrTableNotFound.Is(err):
+		return pgcode.UndefinedTable.String()
+	case sql.ErrColumnNotFound.Is(err):
+		return pgcode.UndefinedColumn.String()
+	case sql.ErrInvalidValue.Is(err):
+		return pgcode.InvalidTextRepresentation.String()
+	}
+	// castSQLError wraps GMS errors as *mysql.SQLError before they
+	// reach this point, which swallows the kind matchers above. Fall
+	// back to mapping by MySQL errno (and, for errors that all share
+	// the generic 1105 errno, by message-prefix sniffing) so the
+	// wrapped form still produces the right SQLSTATE.
+	if mysqlErr, ok := err.(*mysql.SQLError); ok {
+		if code, ok := mysqlErrnoToSQLState(mysqlErr.Number()); ok {
+			return code
+		}
+		if code, ok := errMessageToSQLState(mysqlErr.Message); ok {
+			return code
+		}
+	}
+	if isFeatureNotSupportedMessage(err) {
+		return pgcode.FeatureNotSupported.String()
+	}
+	return "XX000"
+}
+
+// errMessageToSQLState classifies wrapped GMS errors that all share
+// MySQL's generic ER_UNKNOWN (1105) error number by sniffing the
+// message prefix. The text matched here mirrors the error templates
+// declared in go-mysql-server's sql/errors.go so the matching stays
+// stable as new errors are added: only the *prefix* of each Kind's
+// template needs to remain in place.
+func errMessageToSQLState(msg string) (string, bool) {
+	switch {
+	case strings.HasPrefix(msg, "Check constraint "):
+		return pgcode.CheckViolation.String(), true
+	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
+		return pgcode.UndefinedColumn.String(), true
+	}
+	return "", false
+}
+
+// mysqlErrnoToSQLState maps the MySQL error numbers the GMS error
+// adapter assigns to common constraint / lookup failures back into
+// the matching PostgreSQL SQLSTATE codes. Returns false when no
+// mapping is known so the caller can fall through.
+func mysqlErrnoToSQLState(errno int) (string, bool) {
+	switch errno {
+	case mysql.ERDupEntry:
+		return pgcode.UniqueViolation.String(), true
+	case mysql.ErNoReferencedRow2, mysql.ERNoReferencedRow:
+		return pgcode.ForeignKeyViolation.String(), true
+	case mysql.ERRowIsReferenced2, mysql.ERRowIsReferenced:
+		return pgcode.ForeignKeyViolation.String(), true
+	case mysql.ERBadNullError:
+		return pgcode.NotNullViolation.String(), true
+	case mysql.ERNoSuchTable:
+		return pgcode.UndefinedTable.String(), true
+	case mysql.ERBadFieldError:
+		return pgcode.UndefinedColumn.String(), true
+	}
+	return "", false
+}
+
+// isFeatureNotSupportedMessage matches free-text errors that announce a
+// "not yet supported" boundary so drivers see them as PG's
+// feature_not_supported (0A000) rather than internal_error (XX000).
+func isFeatureNotSupportedMessage(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "is not yet supported")
 }
 
 // convertQuery takes the given Postgres query, and converts it as an ast.ConvertedQuery that will work with the handler.
