@@ -97,6 +97,7 @@ type PortalData struct {
 	FormatCodes            []int16
 	ReplicationQuery       ConvertedQuery
 	ReplicationCapture     *replicationChangeCapture
+	ReplicationFields      []pgproto3.FieldDescription
 	ReplicationBoundPlan   sql.Node
 	ReplicationFormatCodes []int16
 }

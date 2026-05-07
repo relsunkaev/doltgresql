@@ -145,6 +145,11 @@ func (h *DoltgresHandler) ComBind(ctx context.Context, c *mysql.Conn, query stri
 
 // ComExecuteBound implements the Handler interface.
 func (h *DoltgresHandler) ComExecuteBound(ctx context.Context, conn *mysql.Conn, query string, boundQuery mysql.BoundQuery, formatCodes []int16, callback func(*sql.Context, *Result) error) error {
+	return h.ComExecuteBoundWithFields(ctx, conn, query, boundQuery, formatCodes, nil, callback)
+}
+
+// ComExecuteBoundWithFields executes a bound query, reusing field descriptions that were already built during Bind.
+func (h *DoltgresHandler) ComExecuteBoundWithFields(ctx context.Context, conn *mysql.Conn, query string, boundQuery mysql.BoundQuery, formatCodes []int16, resultFields []pgproto3.FieldDescription, callback func(*sql.Context, *Result) error) error {
 	analyzedPlan, ok := boundQuery.(sql.Node)
 	if !ok {
 		return errors.Errorf("boundQuery must be a sql.Node, but got %T", boundQuery)
@@ -156,7 +161,7 @@ func (h *DoltgresHandler) ComExecuteBound(ctx context.Context, conn *mysql.Conn,
 		h.sel.QueryStarted()
 	}
 
-	err := h.doQuery(ctx, conn, query, nil, analyzedPlan, h.executeBoundPlan, callback, formatCodes)
+	err := h.doQuery(ctx, conn, query, nil, analyzedPlan, h.executeBoundPlan, callback, formatCodes, resultFields)
 	if err != nil {
 		err = castSQLError(err)
 	}
@@ -235,7 +240,7 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 		h.sel.QueryStarted()
 	}
 
-	err := h.doQuery(ctx, c, query, parsed, nil, h.executeQuery, callback, nil)
+	err := h.doQuery(ctx, c, query, parsed, nil, h.executeQuery, callback, nil, nil)
 	if err != nil {
 		err = castSQLError(err)
 	}
@@ -357,7 +362,7 @@ func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32
 
 var queryLoggingRegex = regexp.MustCompile(`[\r\n\t ]+`)
 
-func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query string, parsed sqlparser.Statement, analyzedPlan sql.Node, queryExec QueryExecutor, callback func(*sql.Context, *Result) error, formatCodes []int16) error {
+func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query string, parsed sqlparser.Statement, analyzedPlan sql.Node, queryExec QueryExecutor, callback func(*sql.Context, *Result) error, formatCodes []int16, suppliedResultFields []pgproto3.FieldDescription) error {
 	sqlCtx, err := h.sm.NewContextWithQuery(ctx, c, query)
 	if err != nil {
 		return err
@@ -414,7 +419,7 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else if analyzer.FlagIsSet(qFlags, sql.QFlagMax1Row) {
-		resultFields, err := schemaToFieldDescriptionsWithSource(sqlCtx, schema, analyzedPlan, formatCodes)
+		resultFields, err := executionResultFields(sqlCtx, schema, analyzedPlan, formatCodes, suppliedResultFields)
 		if err != nil {
 			return err
 		}
@@ -423,7 +428,7 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else {
-		resultFields, err := schemaToFieldDescriptionsWithSource(sqlCtx, schema, analyzedPlan, formatCodes)
+		resultFields, err := executionResultFields(sqlCtx, schema, analyzedPlan, formatCodes, suppliedResultFields)
 		if err != nil {
 			return err
 		}
@@ -442,6 +447,13 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 	}
 
 	return callback(sqlCtx, r)
+}
+
+func executionResultFields(ctx *sql.Context, schema sql.Schema, analyzedPlan sql.Node, formatCodes []int16, suppliedFields []pgproto3.FieldDescription) ([]pgproto3.FieldDescription, error) {
+	if suppliedFields != nil && len(suppliedFields) == len(schema) {
+		return suppliedFields, nil
+	}
+	return schemaToFieldDescriptionsWithSource(ctx, schema, analyzedPlan, formatCodes)
 }
 
 // QueryExecutor is a function that executes a query and returns the result as a schema and iterator. Either of

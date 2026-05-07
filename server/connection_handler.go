@@ -1022,6 +1022,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	rowsAffected := int32(0)
 	executionQuery := query
 	executionPlan := boundPlan
+	executionFields := fields
 	var replicationCapture *replicationChangeCapture
 	var replicationQuery ConvertedQuery
 	var hasReplicationCapture bool
@@ -1058,6 +1059,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 			if err != nil {
 				return err
 			}
+			executionFields = replicationFields
 			executionPlan, err = wrapReplicationCapturePlan(replicationCtx, executionPlan, replicationCapture)
 			if err != nil {
 				return err
@@ -1068,7 +1070,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	} else if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
 		advanceLSN = true
 	}
-	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, replicationCapture, advanceLSN, &rowsAffected, false); err != nil {
+	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, executionFields, replicationCapture, advanceLSN, &rowsAffected, false); err != nil {
 		return err
 	}
 
@@ -1296,6 +1298,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		return err
 	}
 	var replicationCapture *replicationChangeCapture
+	var replicationFields []pgproto3.FieldDescription
 	var replicationBoundPlan sql.Node
 	var replicationFormatCodes []int16
 	var replicationQuery ConvertedQuery
@@ -1306,7 +1309,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			return err
 		}
 		if hasReplicationCapture {
-			replicationPlan, replicationFields, err := h.doltgresHandler.ComBind(
+			replicationPlan, bindReplicationFields, err := h.doltgresHandler.ComBind(
 				context.Background(),
 				h.mysqlConn,
 				replicationQuery.String,
@@ -1320,6 +1323,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			if err != nil {
 				return err
 			}
+			replicationFields = bindReplicationFields
 			var ok bool
 			replicationBoundPlan, ok = replicationPlan.(sql.Node)
 			if !ok {
@@ -1348,6 +1352,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		FormatCodes:            resultFormatCodes,
 		ReplicationQuery:       replicationQuery,
 		ReplicationCapture:     replicationCapture,
+		ReplicationFields:      replicationFields,
 		ReplicationBoundPlan:   replicationBoundPlan,
 		ReplicationFormatCodes: replicationFormatCodes,
 	}
@@ -1386,19 +1391,21 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	executionQuery := query
 	executionPlan := portalData.BoundPlan
 	executionFormatCodes := portalData.FormatCodes
+	executionFields := portalData.Fields
 	advanceLSN := false
 	replicationCapture := portalData.ReplicationCapture
 	if replicationCapture != nil && replsource.HasSlots() {
 		executionQuery = portalData.ReplicationQuery
 		executionPlan = portalData.ReplicationBoundPlan
 		executionFormatCodes = portalData.ReplicationFormatCodes
+		executionFields = portalData.ReplicationFields
 	} else {
 		replicationCapture = nil
 		if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
 			advanceLSN = true
 		}
 	}
-	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, replicationCapture, advanceLSN, &rowsAffected, true); err != nil {
+	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, executionFields, replicationCapture, advanceLSN, &rowsAffected, true); err != nil {
 		return err
 	}
 
@@ -1406,7 +1413,7 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	return nil
 }
 
-func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQuery, executionQuery ConvertedQuery, boundPlan sql.Node, formatCodes []int16, capture *replicationChangeCapture, advanceLSN bool, rowsAffected *int32, isExecute bool) error {
+func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQuery, executionQuery ConvertedQuery, boundPlan sql.Node, formatCodes []int16, resultFields []pgproto3.FieldDescription, capture *replicationChangeCapture, advanceLSN bool, rowsAffected *int32, isExecute bool) error {
 	suppressRows := capture != nil && !capture.clientReturnsRows
 	var captureCtx *sql.Context
 	callback := h.spoolRowsCallbackWithRowSuppression(clientQuery, rowsAffected, isExecute, suppressRows)
@@ -1421,7 +1428,7 @@ func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQue
 			return clientCallback(ctx, clientResult)
 		}
 	}
-	if err := h.doltgresHandler.ComExecuteBound(context.Background(), h.mysqlConn, executionQuery.String, boundPlan, formatCodes, callback); err != nil {
+	if err := h.doltgresHandler.ComExecuteBoundWithFields(context.Background(), h.mysqlConn, executionQuery.String, boundPlan, formatCodes, resultFields, callback); err != nil {
 		return err
 	}
 	if capture != nil {
@@ -2070,7 +2077,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 			return err
 		}
 		executionFormatCodes := make([]int16, len(replicationFields))
-		if err = h.executeBoundWithReplication(clientQuery, replicationQuery, executionPlan, executionFormatCodes, capture, false, &rowsAffected, false); err != nil {
+		if err = h.executeBoundWithReplication(clientQuery, replicationQuery, executionPlan, executionFormatCodes, replicationFields, capture, false, &rowsAffected, false); err != nil {
 			return err
 		}
 		h.invalidatePreparedPlanCacheIfNeeded(clientQuery)
