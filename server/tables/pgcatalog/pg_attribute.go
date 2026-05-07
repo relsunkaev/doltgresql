@@ -121,7 +121,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 }
 
 func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAttribute {
-	typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+	typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 	generated := ""
 	if col.Generated != nil {
 		generated = "s"
@@ -138,6 +138,7 @@ func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAt
 		attgenerated:   generated,
 		attstattarget:  -1,
 		attcollation:   attcollation,
+		atttypmod:      atttypmod,
 	}
 }
 
@@ -154,7 +155,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 		if !ok {
 			continue
 		}
-		typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+		typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 		if i < len(collations) && collations[i] != "" {
 			attcollation = id.NewCollation("pg_catalog", collations[i]).AsId()
 		}
@@ -167,6 +168,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 			attndims:       dimensions,
 			attstattarget:  statisticsTargetForAttribute(statisticsTargets, i),
 			attcollation:   attcollation,
+			atttypmod:      atttypmod,
 		})
 	}
 
@@ -175,7 +177,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 		if !ok {
 			continue
 		}
-		typeOid, attcollation, dimensions := attributeTypeMetadata(col.Type)
+		typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 		attrs = append(attrs, &pgAttribute{
 			attrelid:       relationID,
 			attrelidNative: id.Cache().ToOID(relationID),
@@ -185,6 +187,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 			attndims:       dimensions,
 			attstattarget:  -1,
 			attcollation:   attcollation,
+			atttypmod:      atttypmod,
 		})
 	}
 
@@ -217,9 +220,10 @@ func indexAttributeName(logicalColumn indexmetadata.LogicalColumn) string {
 	return expr
 }
 
-func attributeTypeMetadata(typ sql.Type) (typeOid id.Id, attcollation id.Id, dimensions int16) {
+func attributeTypeMetadata(typ sql.Type) (typeOid id.Id, attcollation id.Id, dimensions int16, atttypmod int32) {
 	typeOid = id.Null
 	attcollation = id.Null
+	atttypmod = -1
 	doltgresType, ok := doltgresType(typ)
 	if !ok {
 		// TODO: Remove once all information_schema tables are converted to use DoltgresType.
@@ -228,11 +232,17 @@ func attributeTypeMetadata(typ sql.Type) (typeOid id.Id, attcollation id.Id, dim
 	if doltgresType != nil {
 		typeOid = doltgresType.ID.AsId()
 		attcollation = collationIDForDoltgresType(doltgresType)
+		// pg_attribute.atttypmod carries the user-supplied type
+		// modifier (e.g. precision for TIMESTAMP(p), max length
+		// for VARCHAR(n)). The DoltgresType already exposes it
+		// via GetAttTypMod; pass it through so introspection tools
+		// can rebuild the original DDL with format_type.
+		atttypmod = doltgresType.GetAttTypMod()
 	}
 	if s, ok := typ.(sql.SetType); ok {
 		dimensions = int16(s.NumberOfElements())
 	}
-	return typeOid, attcollation, dimensions
+	return typeOid, attcollation, dimensions, atttypmod
 }
 
 // getIndexScanRange implements the interface RangeConverter.
@@ -455,6 +465,7 @@ type pgAttribute struct {
 	attgenerated   string
 	attstattarget  int16
 	attcollation   id.Id
+	atttypmod      int32
 }
 
 // lessAttNum is a sort function for pgAttribute based on attrelid.
@@ -506,7 +517,7 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		int16(0),           // attlen
 		attr.attnum,        // attnum
 		int32(-1),          // attcacheoff
-		int32(-1),          // atttypmod
+		attr.atttypmod,     // atttypmod
 		attr.attndims,      // attndims
 		false,              // attbyval
 		"i",                // attalign

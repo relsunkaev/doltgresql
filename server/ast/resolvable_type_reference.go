@@ -164,13 +164,25 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 			case oid.T_text:
 				doltgresType = pgtypes.Text
 			case oid.T_time:
-				doltgresType = pgtypes.Time
+				doltgresType, err = newTimeFamilyType(pgtypes.Time, columnType, pgtypes.NewTimeType)
+				if err != nil {
+					return nil, nil, err
+				}
 			case oid.T_timestamp:
-				doltgresType = pgtypes.Timestamp
+				doltgresType, err = newTimeFamilyType(pgtypes.Timestamp, columnType, pgtypes.NewTimestampType)
+				if err != nil {
+					return nil, nil, err
+				}
 			case oid.T_timestamptz:
-				doltgresType = pgtypes.TimestampTZ
+				doltgresType, err = newTimeFamilyType(pgtypes.TimestampTZ, columnType, pgtypes.NewTimestampTZType)
+				if err != nil {
+					return nil, nil, err
+				}
 			case oid.T_timetz:
-				doltgresType = pgtypes.TimeTZ
+				doltgresType, err = newTimeFamilyType(pgtypes.TimeTZ, columnType, pgtypes.NewTimeTZType)
+				if err != nil {
+					return nil, nil, err
+				}
 			case oid.T_uuid:
 				doltgresType = pgtypes.Uuid
 			case oid.T_varchar:
@@ -228,4 +240,18 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 		Scale:   columnTypeScale,
 		Charset: "", // TODO
 	}, doltgresType, nil
+}
+
+// newTimeFamilyType returns the right DoltgresType for a TIMESTAMP /
+// TIMESTAMPTZ / TIME / TIMETZ column declaration. When the user
+// specified an explicit precision (e.g. `TIMESTAMP(3)`) we route
+// through the constructor that records the precision in atttypmod
+// so introspection tools can rebuild the original DDL via
+// format_type. When no precision was specified the unbounded base
+// type stays in place (PG reports atttypmod=-1 for that case).
+func newTimeFamilyType(base *pgtypes.DoltgresType, columnType *types.T, withPrecision func(int32) (*pgtypes.DoltgresType, error)) (*pgtypes.DoltgresType, error) {
+	if columnType == nil || !columnType.InternalType.TimePrecisionIsSet {
+		return base, nil
+	}
+	return withPrecision(columnType.Precision())
 }
