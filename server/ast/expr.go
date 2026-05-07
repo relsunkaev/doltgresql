@@ -878,6 +878,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if node.Star {
 			return nil, errors.Errorf("* syntax is not yet supported in this context")
 		}
+		if ctx.ResolveExcludedRefs() && isExcludedRef(node) {
+			return excludedToValuesFunc(node)
+		}
 		return unresolvedNameToColName(node)
 	case nil:
 		return nil, nil
@@ -914,6 +917,37 @@ func unresolvedNameToColName(name *tree.UnresolvedName) (*vitess.ColName, error)
 	return &vitess.ColName{
 		Name:      vitess.NewColIdent(name.Parts[0]),
 		Qualifier: tableName,
+	}, nil
+}
+
+// isExcludedRef reports whether name refers to the PostgreSQL EXCLUDED
+// pseudo-table (`EXCLUDED.col` or schema-qualified equivalents).
+func isExcludedRef(name *tree.UnresolvedName) bool {
+	if name.NumParts < 2 {
+		return false
+	}
+	return strings.EqualFold(name.Parts[1], "excluded")
+}
+
+// excludedToValuesFunc rewrites a reference to EXCLUDED.col as a call
+// to the MySQL `values(col)` function. PostgreSQL's EXCLUDED holds
+// the proposed-insert row inside ON CONFLICT ... DO UPDATE; MySQL's
+// values(col) returns the same value when used in ON DUPLICATE KEY
+// UPDATE. PG accepts schema-qualified forms (e.g. EXCLUDED.* or
+// schema.EXCLUDED.col) but the SET-clause grammar accepts only
+// EXCLUDED.col, so anything else is rejected.
+func excludedToValuesFunc(name *tree.UnresolvedName) (vitess.Expr, error) {
+	if name.NumParts != 2 {
+		return nil, errors.Errorf("EXCLUDED qualifier may only be used as EXCLUDED.column_name")
+	}
+	column := name.Parts[0]
+	if column == "" {
+		return nil, errors.Errorf("EXCLUDED reference is missing a column name")
+	}
+	return &vitess.ValuesFuncExpr{
+		Name: &vitess.ColName{
+			Name: vitess.NewColIdent(column),
+		},
 	}, nil
 }
 

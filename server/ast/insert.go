@@ -47,8 +47,12 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 			ignore = vitess.IgnoreStr
 		} else if supportedOnConflictClause(node.OnConflict) {
 			// TODO: we are ignoring the column names, which are used to infer which index under conflict is to be checked
-			updateExprs, err := nodeUpdateExprs(ctx, node.OnConflict.Exprs)
-			if err != nil {
+			var updateExprs vitess.AssignmentExprs
+			if err := ctx.WithExcludedRefs(func() error {
+				var convertErr error
+				updateExprs, convertErr = nodeUpdateExprs(ctx, node.OnConflict.Exprs)
+				return convertErr
+			}); err != nil {
 				return nil, err
 			}
 			for _, updateExpr := range updateExprs {

@@ -25,6 +25,14 @@ import (
 type Context struct {
 	authContext   *auth.AuthContext
 	originalQuery string
+
+	// resolveExcludedRefs, when true, rewrites references to the
+	// EXCLUDED pseudo-table (e.g. `EXCLUDED.col`) into MySQL's
+	// `values(col)` function. PostgreSQL exposes EXCLUDED only
+	// inside ON CONFLICT ... DO UPDATE SET / WHERE clauses; outside
+	// that scope EXCLUDED is just an ordinary identifier and must
+	// not be rewritten.
+	resolveExcludedRefs bool
 }
 
 // NewContext returns a new *Context.
@@ -38,4 +46,21 @@ func NewContext(postgresStmt parser.Statement) *Context {
 // Auth returns the portion that handles authentication.
 func (ctx *Context) Auth() *auth.AuthContext {
 	return ctx.authContext
+}
+
+// WithExcludedRefs runs fn with EXCLUDED rewriting enabled and
+// restores the previous value when fn returns. Used to bracket
+// AST conversion of ON CONFLICT ... DO UPDATE expressions so
+// references to the EXCLUDED pseudo-table become `values(col)`.
+func (ctx *Context) WithExcludedRefs(fn func() error) error {
+	prev := ctx.resolveExcludedRefs
+	ctx.resolveExcludedRefs = true
+	defer func() { ctx.resolveExcludedRefs = prev }()
+	return fn()
+}
+
+// ResolveExcludedRefs reports whether EXCLUDED.col should be
+// rewritten to values(col) at this point in AST conversion.
+func (ctx *Context) ResolveExcludedRefs() bool {
+	return ctx.resolveExcludedRefs
 }
