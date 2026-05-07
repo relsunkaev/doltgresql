@@ -294,36 +294,48 @@ func (h *ConnectionHandler) handleStartup() (bool, error) {
 	}
 }
 
-// sendClientStartupMessages sends introductory messages to the client and returns any error
+// sendClientStartupMessages sends introductory messages to the client and returns any error.
+// The set mirrors what real PostgreSQL emits at startup: drivers and ORMs key behavior off
+// these (JDBC reads integer_datetimes for binary date encoding, node-postgres caches the
+// encoding pair for transcoding, SQLAlchemy reads DateStyle / IntervalStyle, GUI editors
+// surface application_name and session_authorization).
 func (h *ConnectionHandler) sendClientStartupMessages() error {
-	if err := h.send(&pgproto3.ParameterStatus{
-		Name:  "server_version",
-		Value: "15.17",
-	}); err != nil {
-		return err
+	statuses := []pgproto3.ParameterStatus{
+		{Name: "server_version", Value: "15.17"},
+		{Name: "server_encoding", Value: "UTF8"},
+		{Name: "client_encoding", Value: "UTF8"},
+		{Name: "standard_conforming_strings", Value: "on"},
+		{Name: "in_hot_standby", Value: "off"},
+		{Name: "DateStyle", Value: h.startupParam("datestyle", "ISO, MDY")},
+		{Name: "IntervalStyle", Value: h.startupParam("intervalstyle", "postgres")},
+		{Name: "TimeZone", Value: h.startupParam("timezone", "UTC")},
+		// integer_datetimes has been "on" since PG 10. Drivers branch on
+		// this to choose binary vs. floating-point timestamp encoding.
+		{Name: "integer_datetimes", Value: "on"},
+		// is_superuser is reported as advisory; doltgres lacks the role
+		// concept that distinguishes it, so report off by default.
+		{Name: "is_superuser", Value: "off"},
+		{Name: "session_authorization", Value: h.mysqlConn.User},
+		{Name: "application_name", Value: h.startupParam("application_name", "")},
 	}
-	if err := h.send(&pgproto3.ParameterStatus{
-		Name:  "client_encoding",
-		Value: "UTF8",
-	}); err != nil {
-		return err
-	}
-	if err := h.send(&pgproto3.ParameterStatus{
-		Name:  "standard_conforming_strings",
-		Value: "on",
-	}); err != nil {
-		return err
-	}
-	if err := h.send(&pgproto3.ParameterStatus{
-		Name:  "in_hot_standby",
-		Value: "off",
-	}); err != nil {
-		return err
+	for i := range statuses {
+		if err := h.send(&statuses[i]); err != nil {
+			return err
+		}
 	}
 	return h.send(&pgproto3.BackendKeyData{
 		ProcessID: processID,
 		SecretKey: 0, // TODO: this should represent an ID that can uniquely identify this connection, so that CancelRequest will work
 	})
+}
+
+// startupParam returns the value the client supplied for a given startup
+// parameter (case-insensitive) or fallback when the client did not send one.
+func (h *ConnectionHandler) startupParam(name, fallback string) string {
+	if v, ok := h.startupParams[strings.ToLower(name)]; ok && v != "" {
+		return v
+	}
+	return fallback
 }
 
 // chooseInitialParameters attempts to choose the initial parameter settings for the connection,
@@ -457,7 +469,7 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 		h.waitForSync = false
 		return false, true, nil
 	case *pgproto3.Flush:
-		return false, false, nil
+		return false, false, h.flush()
 	case *pgproto3.Query:
 		endOfMessages, err = h.handleQuery(message)
 		return false, endOfMessages, err
@@ -478,7 +490,8 @@ func (h *ConnectionHandler) handleMessage(msg pgproto3.Message) (stop, endOfMess
 		} else {
 			delete(h.portals, message.Name)
 		}
-		return false, false, h.send(&pgproto3.CloseComplete{})
+		h.sendBuffered(&pgproto3.CloseComplete{})
+		return false, false, nil
 	case *pgproto3.CopyData:
 		return h.handleCopyData(message)
 	case *pgproto3.CopyDone:
@@ -1079,7 +1092,8 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 		h.preparedStatements[message.Name] = PreparedStatementData{
 			Query: query,
 		}
-		return h.send(&pgproto3.ParseComplete{})
+		h.sendBuffered(&pgproto3.ParseComplete{})
+		return nil
 	}
 
 	ctx, err := h.doltgresHandler.sm.NewContextWithQuery(context.Background(), h.mysqlConn, query.String)
@@ -1118,7 +1132,8 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 		h.cachePreparedPlan(ctx, &preparedData, analyzedPlan)
 	}
 	h.preparedStatements[message.Name] = preparedData
-	return h.send(&pgproto3.ParseComplete{})
+	h.sendBuffered(&pgproto3.ParseComplete{})
+	return nil
 }
 
 // handleDescribe handles a Describe message, returning any error that occurs
@@ -1168,14 +1183,16 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			Query:        preparedData.Query,
 			IsEmptyQuery: true,
 		}
-		return h.send(&pgproto3.BindComplete{})
+		h.sendBuffered(&pgproto3.BindComplete{})
+		return nil
 	}
 
 	if h.queryHandledOutsideEngine(preparedData.Query) {
 		h.portals[message.DestinationPortal] = PortalData{
 			Query: preparedData.Query,
 		}
-		return h.send(&pgproto3.BindComplete{})
+		h.sendBuffered(&pgproto3.BindComplete{})
+		return nil
 	}
 
 	var fields []pgproto3.FieldDescription
@@ -1284,7 +1301,8 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		ReplicationBoundPlan:   replicationBoundPlan,
 		ReplicationFormatCodes: replicationFormatCodes,
 	}
-	return h.send(&pgproto3.BindComplete{})
+	h.sendBuffered(&pgproto3.BindComplete{})
+	return nil
 }
 
 // handleExecute handles an execute message, returning any error that occurs
@@ -1302,7 +1320,8 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	query := portalData.Query
 
 	if portalData.IsEmptyQuery {
-		return h.send(&pgproto3.EmptyQueryResponse{})
+		h.sendBuffered(&pgproto3.EmptyQueryResponse{})
+		return nil
 	}
 
 	// Certain statement types get handled directly by the handler instead of being passed to the engine
@@ -1333,7 +1352,8 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 		return err
 	}
 
-	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
+	return nil
 }
 
 func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQuery, executionQuery ConvertedQuery, boundPlan sql.Node, formatCodes []int16, capture *replicationChangeCapture, advanceLSN bool, rowsAffected *int32, isExecute bool) error {
@@ -2153,20 +2173,20 @@ func (h *ConnectionHandler) spoolRowsCallbackWithRowSuppression(query ConvertedQ
 func (h *ConnectionHandler) sendDescribeResponse(fields []pgproto3.FieldDescription, types []uint32, query ConvertedQuery) error {
 	// The prepared statement variant of the describe command returns the OIDs of the parameters.
 	if types != nil {
-		if err := h.send(&pgproto3.ParameterDescription{
+		h.sendBuffered(&pgproto3.ParameterDescription{
 			ParameterOIDs: types,
-		}); err != nil {
-			return err
-		}
+		})
 	}
 
 	if returnsRow(query) {
 		// Both variants finish with a row description.
-		return h.send(&pgproto3.RowDescription{
+		h.sendBuffered(&pgproto3.RowDescription{
 			Fields: fields,
 		})
+		return nil
 	} else {
-		return h.send(&pgproto3.NoData{})
+		h.sendBuffered(&pgproto3.NoData{})
+		return nil
 	}
 }
 
@@ -2343,9 +2363,18 @@ func (h *ConnectionHandler) send(message pgproto3.BackendMessage) error {
 	return h.backend.Flush()
 }
 
-// sendBuffered queues a backend message without forcing a socket flush. Simple
-// query execution uses this for row/result messages that are immediately
-// followed by ReadyForQuery, which flushes the full response batch.
+// flush sends any backend messages queued by sendBuffered. PostgreSQL's
+// extended query protocol lets the client batch Parse/Bind/Execute messages
+// until Sync, but a Flush message must make pending responses visible earlier.
+func (h *ConnectionHandler) flush() error {
+	h.sendMu.Lock()
+	defer h.sendMu.Unlock()
+	return h.backend.Flush()
+}
+
+// sendBuffered queues a backend message without forcing a socket flush. Query
+// execution uses this for responses that are immediately followed by Sync,
+// Flush, or ReadyForQuery, which flushes the full response batch.
 func (h *ConnectionHandler) sendBuffered(message pgproto3.BackendMessage) {
 	h.sendMu.Lock()
 	defer h.sendMu.Unlock()
