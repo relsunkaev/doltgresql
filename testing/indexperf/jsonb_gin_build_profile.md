@@ -18,19 +18,21 @@ The script writes a timestamped directory under `.local_benchmarks/` with:
 
 ## Current Snapshot
 
-From `.local_benchmarks/full-20260506-204618/report.md`, refreshed after
-defaulting chunked posting storage to 512 refs/chunk:
+From `.local_benchmarks/full-20260506-212028/report.md`, refreshed after the
+bucketed build sorter and JSON integer fast path:
 
 | Case | Doltgres | PostgreSQL 18 | Doltgres vs PG18 | Sidecar rows | Sidecar bytes |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `jsonb_ops` representative | 16.239 ms/op | 3.889 ms/op | 4.18x | 215 | 242,012 |
-| `jsonb_path_ops` representative | 10.732 ms/op | 2.537 ms/op | 4.23x | 232 | 134,064 |
-| `jsonb_ops` skewed | 19.663 ms/op | 4.293 ms/op | 4.58x | 208 | 298,502 |
-| `jsonb_path_ops` skewed | 11.656 ms/op | 2.733 ms/op | 4.26x | 206 | 160,204 |
+| `jsonb_ops` representative | 12.491 ms/op | 3.511 ms/op | 3.56x | 215 | 242,012 |
+| `jsonb_path_ops` representative | 7.702 ms/op | 2.010 ms/op | 3.83x | 232 | 134,064 |
+| `jsonb_ops` skewed | 15.775 ms/op | 4.048 ms/op | 3.90x | 208 | 298,502 |
+| `jsonb_path_ops` skewed | 8.974 ms/op | 2.076 ms/op | 4.32x | 206 | 160,204 |
 
 The chunked storage shape has removed the durable sidecar row explosion. The
-remaining build gap is now mostly pre-row-map work rather than Dolt row-map
-construction.
+row-map chunk construction stage is no longer the dominant local bottleneck.
+The remaining SQL-level gap is concentrated in base-table JSONB deserialization,
+sidecar table writes, and the working-set/root update around the backfilled
+sidecar.
 
 ## Chunk Size Signals
 
@@ -64,47 +66,51 @@ delete/mixed buckets, so 512 is the better whole-benchmark tradeoff.
 The latest focused local stage benchmarks reported:
 
 ```text
-BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_ops/chunk_512/memory      130.900-134.238 ms  311 chunk_rows/op   72.702 MB/op  2,552,086 allocs/op
-BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_path_ops/chunk_512/memory 181.706-195.596 ms  314 chunk_rows/op  110.002 MB/op  3,071,804 allocs/op
-BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_ops/chunk_512/memory    165.768 ms          311 chunk_rows/op   58.837 MB/op  1,704,725 allocs/op
-BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_path_ops/chunk_512/memory 239.878 ms        314 chunk_rows/op   96.802 MB/op  2,224,439 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_ops/chunk_512/memory       45.714 ms  311 chunk_rows/op  29.525 MB/op    832,145 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/string/jsonb_path_ops/chunk_512/memory  68.651 ms  314 chunk_rows/op  54.427 MB/op  1,341,141 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_ops/chunk_512/memory     42.810 ms  311 chunk_rows/op  24.676 MB/op    594,073 allocs/op
+BenchmarkJsonbGinPostingChunkRowsToSink/document/jsonb_path_ops/chunk_512/memory 64.443 ms 314 chunk_rows/op  50.321 MB/op  1,103,073 allocs/op
 BenchmarkBuildSortedPrimaryRowIndexPostingRows  2.043 ms    4096 rows/op        1.456 MB/op    54,115 allocs/op
 BenchmarkSortedPrimaryRowIndexBuilderPostingRows 1.799 ms   4096 rows/op        1.294 MB/op    53,263 allocs/op
 ```
 
 The JSON text path now scans directly into tokens instead of materializing a
-decoded map. The focused extractor benchmark reports roughly 100-103 us and
-41 KB/op for `jsonb_ops`, and 127-130 us and 80.5 KB/op for
+decoded map, and integer-heavy documents avoid decimal parsing on the common
+canonical integer path. The focused extractor benchmark reports roughly
+100-182 us and 73.9 KB/op for `jsonb_ops`, and 130-157 us and 93.4 KB/op for
 `jsonb_path_ops`.
 
-The memory profile still puts most allocations in token/entry generation:
+The pre-SQL stage has moved from hundreds of milliseconds to tens of
+milliseconds on the local benchmark fixture. That leaves the full `CREATE
+INDEX` case dominated by work outside token/chunk construction:
 
-- JSON string decoding and token string creation
-- `CreateJsonbGinIndex.addPostingChunkEntries`
-- posting build-entry sort/merge work
-- `CreateJsonbGinIndex.writePostingChunkRowsFromEntries`
-- `buildSortedPrimaryRowIndex` remains small by comparison
+- deserializing base JSONB rows from Dolt storage
+- writing the sidecar table through Dolt's table/root update path
+- committing the sidecar root update after the backfill
+- Postgres' much lower fixed overhead for small `CREATE INDEX` repeats
 
-The CPU profile for the spill-inclusive run is dominated by temp-file I/O and
-entry sorting/merge:
+A local trial defaulting build workers to 4 was rejected. The worker benchmark
+improved spill-heavy row construction, but the paired SQL build regressed
+because the current parallel path always emits temp runs and then merges them.
+Parallel build remains promising only after adding an in-memory partition/merge
+path for non-spilling builds.
 
-- `syscall.rawsyscalln`: 72.52% flat
-- `jsonbGinPostingChunkEntrySorter.AddRowTokens`: 44.97% cumulative
-- `jsonbGinPostingChunkEntrySorter.flushRun`: 46.34% cumulative
-- `writePostingChunkRowsFromEntries`: 14.75% cumulative
-- row-map chunker/write work is visible but not dominant
+The spill-inclusive CPU profile is still useful for larger datasets: it is
+dominated by temp-file I/O and entry sorting/merge. The default small-table path
+now avoids that spill work.
 
 ## Follow-Up Queue
 
 The profile points at these already-encoded beads:
 
-- `dg-perfparity.10.19`: reduce row-reference and JSONB build allocation
-  overhead. This should target JSON document conversion, token extraction, and
-  entry allocation first.
-- `dg-perfparity.10.20`: parallelize JSONB GIN `CREATE INDEX` builds. The
-  remaining work is mostly per-row/token production plus sort/merge, which can
-  be partitioned into deterministic runs.
+- `dg-perfparity.10.19`: reduce base-row JSONB deserialization and sidecar write
+  overhead. The next highest-leverage path is avoiding full JSONB object
+  materialization during index backfill when the serialized Dolt value can feed
+  the JSONB GIN extractor directly.
+- `dg-perfparity.10.20`: parallelize JSONB GIN `CREATE INDEX` builds only after
+  the parallel path can merge in memory for non-spilling builds. The current
+  temp-run implementation is not a safe default for the benchmark-sized tables.
 - `dg-perfparity.10.16`: compression is not justified as a default-promotion
-  blocker from the current measurements. Keep versioned compact payload work as
-  an optional future storage experiment if larger datasets show payload bytes,
+  blocker from the current measurements. Keep compact payload work as an
+  optional future storage experiment if larger datasets show payload bytes,
   rather than row production, dominate.
