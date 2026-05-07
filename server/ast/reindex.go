@@ -27,9 +27,8 @@ func nodeReindex(ctx *Context, node *tree.Reindex) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
 	}
-	if node.Concurrently {
-		return nil, errors.Errorf("concurrent reindex is not yet supported")
-	}
+	// CONCURRENTLY is silently downgraded to a synchronous rebuild.
+	_ = node.Concurrently
 
 	switch node.Target {
 	case tree.ReindexIndex:

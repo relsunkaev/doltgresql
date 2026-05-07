@@ -15,8 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -32,9 +30,9 @@ func nodeDropIndex(ctx *Context, node *tree.DropIndex) (vitess.Statement, error)
 	case tree.DropDefault, tree.DropRestrict, tree.DropCascade:
 		// PostgreSQL still refuses constraint-backed indexes in the executor.
 	}
-	if node.Concurrently {
-		return nil, errors.Errorf("concurrent indexes are not yet supported")
-	}
+	// CONCURRENTLY is silently downgraded to a synchronous drop so that
+	// migration tooling that emits the keyword does not error.
+	_ = node.Concurrently
 	targets := make([]pgnodes.DropIndexTarget, len(node.IndexList))
 	for i, index := range node.IndexList {
 		schemaName, tableName, indexName, err := tableIndexNameParts(ctx, index)

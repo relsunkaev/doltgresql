@@ -2085,8 +2085,22 @@ ORDER BY id;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE INDEX CONCURRENTLY drop_index_restrict_concurrent_idx ON drop_index_restrict (v);",
-					ExpectedErr: "concurrent index creation is not yet supported",
+					// CONCURRENTLY is silently downgraded to a synchronous build.
+					// PostgreSQL builds the index without holding a strong
+					// table lock; doltgres takes the same lock as a regular
+					// CREATE INDEX. We accept the keyword so that ORM
+					// migration tooling that emits CONCURRENTLY (Drizzle,
+					// Prisma, Alembic, Rails) does not error.
+					Query: "CREATE INDEX CONCURRENTLY drop_index_restrict_concurrent_idx ON drop_index_restrict (v);",
+				},
+				{
+					Query: `SELECT COUNT(*)
+FROM pg_catalog.pg_class
+WHERE relname = 'drop_index_restrict_concurrent_idx';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: "DROP INDEX CONCURRENTLY drop_index_restrict_concurrent_idx;",
 				},
 				{
 					Query: `SELECT COUNT(*)
@@ -2095,12 +2109,7 @@ WHERE relname = 'drop_index_restrict_concurrent_idx';`,
 					Expected: []sql.Row{{0}},
 				},
 				{
-					Query:       "DROP INDEX CONCURRENTLY drop_index_restrict_idx;",
-					ExpectedErr: "concurrent indexes are not yet supported",
-				},
-				{
-					Query:       "REINDEX INDEX CONCURRENTLY drop_index_restrict_idx;",
-					ExpectedErr: "concurrent reindex is not yet supported",
+					Query: "REINDEX INDEX CONCURRENTLY drop_index_restrict_idx;",
 				},
 				{
 					Query: "REINDEX INDEX drop_index_restrict_idx;",

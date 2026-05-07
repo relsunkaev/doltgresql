@@ -33,9 +33,10 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	if node.Concurrently {
-		return nil, errors.Errorf("concurrent index creation is not yet supported")
-	}
+	// CONCURRENTLY is silently downgraded to a synchronous build so
+	// migration tooling that emits the keyword by default (Drizzle Kit,
+	// Prisma migrate, Alembic, Rails) does not error.
+	_ = node.Concurrently
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
