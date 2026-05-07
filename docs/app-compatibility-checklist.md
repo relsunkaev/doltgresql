@@ -120,8 +120,16 @@ Do not check off an item until it has workload proof:
   NOT NULL` and boolean/active-flag filters.
 - [ ] Expression indexes - prove JSONB-derived and computed-expression
   indexes.
-- [ ] `CREATE INDEX CONCURRENTLY` - support or rewrite `CREATE INDEX
-  CONCURRENTLY IF NOT EXISTS` migrations.
+- [~] `CREATE INDEX CONCURRENTLY` - support or rewrite `CREATE INDEX
+  CONCURRENTLY IF NOT EXISTS` migrations. Implementation landed:
+  CREATE / DROP / REINDEX CONCURRENTLY are silently downgraded to
+  the synchronous build path so migration tooling that emits the
+  keyword (Drizzle Kit, Prisma migrate, Alembic, Rails) does not
+  error. Coverage in testing/go/create_index_concurrently_test.go
+  asserts the round-trip works for plain, UNIQUE, IF NOT EXISTS,
+  multi-column, IF EXISTS drop, REINDEX INDEX, and REINDEX TABLE
+  shapes; residual gap is workload-corpus evidence from a real
+  migration suite (Drizzle Kit / Alembic generated SQL).
 - [ ] `INCLUDE` indexes - support index `INCLUDE` columns through dump/restore
   and ORM introspection.
 - [ ] JSONB GIN indexes - prove the supported containment subset and document
@@ -193,14 +201,56 @@ Do not check off an item until it has workload proof:
   (no longer relies on a 1ms sleep). Concurrent contention covered by
   the 8-goroutine race in testing/go/lock_concurrency_test.go which
   asserts exactly one of N callers acquires.
-- [ ] Multi-unique `ON CONFLICT` - prove upsert targeting one specific unique
-  constraint on a table with multiple unique constraints.
-- [ ] `ON CONFLICT ... DO UPDATE` variants - prove all idempotent upsert
-  shapes including affected-row counts and `RETURNING`.
-- [ ] `FOR UPDATE` row locks - prove row-locking concurrency behavior under
-  contention.
-- [ ] Savepoints - prove nested transaction behavior used by ORM transaction
-  helpers.
+- [~] Multi-unique `ON CONFLICT` - prove upsert targeting one specific unique
+  constraint on a table with multiple unique constraints. Implementation
+  landed for DO UPDATE: server/analyzer/validate_on_conflict.go now wraps
+  the ON DUP expressions with OnConflictTargetGuard so a unique violation
+  on a non-target index raises rather than silently firing the update.
+  Coverage in testing/go/insert_on_conflict_test.go's
+  TestInsertOnConflictMultiUnique and TestInsertOnConflictORMShape
+  (drives the upsert through the pgx driver). DO NOTHING on a multi-
+  unique table is rejected explicitly with a pointer at DO UPDATE,
+  because GMS's INSERT IGNORE swallows non-target unique violations
+  and the pre-check inserter wrapper hasn't landed yet — that's the
+  residual gap.
+- [~] `ON CONFLICT ... DO UPDATE` variants - prove all idempotent upsert
+  shapes including affected-row counts and `RETURNING`. Implementation
+  landed for the EXCLUDED pseudo-table (rewrites to MySQL's values()
+  via vitess.ValuesFuncExpr inside Context.WithExcludedRefs scope) and
+  for the `DO UPDATE SET ... WHERE pred` form (each `col = expr` is
+  rewritten to `col = CASE WHEN pred THEN expr ELSE col END`). Coverage
+  in testing/go/insert_on_conflict_test.go's
+  TestInsertOnConflictExcluded and TestInsertOnConflictDoUpdateWhere
+  asserts case-insensitive EXCLUDED resolution, EXCLUDED in arithmetic
+  and string concatenation, multi-row VALUES with mixed
+  conflict/insert outcomes, and per-row WHERE evaluation. Residual
+  gaps: arbiter predicate (ON CONFLICT (col) WHERE pred), ON CONFLICT
+  ON CONSTRAINT name, and full RETURNING / affected-row-count parity.
+- [~] `FOR UPDATE` row locks - prove row-locking concurrency behavior under
+  contention. Implementation landed: server/ast/locking_clause.go
+  converts FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY SHARE
+  with optional NOWAIT / SKIP LOCKED / OF table-list into the MySQL
+  Lock GMS understands, and server/ast/select.go attaches it to the
+  vitess.Select / SetOp Lock field. GMS treats the clause as advisory
+  for now (buildForUpdateOf only validates table scope), which is
+  serializable-MVCC-safe under Dolt. Coverage in
+  testing/go/select_for_update_test.go's TestSelectForUpdate and
+  TestSelectForUpdateORMShape (pgx-driven read-modify-write).
+  Residual gap: true row-level pessimistic locking under cross-
+  session contention.
+- [~] Savepoints - prove nested transaction behavior used by ORM transaction
+  helpers. Existing GMS-backed plan support (savepoint.go,
+  release_savepoint.go, rollback_to_savepoint.go) is now exercised
+  end-to-end through pgwire by testing/go/savepoints_test.go:
+  RELEASE preserves work, ROLLBACK TO discards post-savepoint work,
+  nested savepoints with mixed inner/outer rollback, ROLLBACK TO is
+  repeatable, RELEASE destroys the name (subsequent ROLLBACK TO
+  errors), case-insensitive identifiers, and ROLLBACK TO an unknown
+  savepoint. TestSavepointsORMShape drives the pgx.Tx.Begin /
+  .Commit / .Rollback nested-transaction API directly so the path
+  SQLAlchemy / Drizzle / TypeORM / Prisma / pgx-based services hit
+  is covered. Residual gap: full ORM-suite migration test (e.g.
+  SQLAlchemy nested-transaction tests).
 - [ ] `pg_notify` / `NOTIFY` - prove notification trigger paths and
   client-visible delivery.
 - [ ] Reader/writer pool topology - define the Doltgres deployment shape
