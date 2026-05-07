@@ -352,6 +352,46 @@ ON CONFLICT (email) DO UPDATE SET name = 'email update';`,
 	})
 }
 
+// TestInsertOnConflictArbiterPredicate covers the
+// `ON CONFLICT (col) WHERE arb_pred` form used to disambiguate
+// partial unique indexes. Doltgres has no partial unique indexes
+// yet, so the predicate is accepted but functionally a no-op:
+// every candidate unique index covers the entire table. Real-world
+// ORM-generated upserts often include an arbiter predicate as a
+// hedge against a future partial-index migration; rejecting it
+// blocks all those clients even when the predicate is benign.
+func TestInsertOnConflictArbiterPredicate(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT (col) WHERE pred parses and routes through target",
+			SetUpScript: []string{
+				"CREATE TABLE arb_t (id INT PRIMARY KEY, v INT);",
+				"INSERT INTO arb_t VALUES (1, 10);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					// Arbiter predicate is accepted; the existing
+					// target-by-columns path resolves the unique
+					// index for `id` and the upsert proceeds.
+					Query: "INSERT INTO arb_t VALUES (1, 99) ON CONFLICT (id) WHERE id > 0 DO UPDATE SET v = EXCLUDED.v;",
+				},
+				{
+					Query:    "SELECT v FROM arb_t WHERE id = 1;",
+					Expected: []gms.Row{{99}},
+				},
+				{
+					// DO NOTHING shape with arbiter predicate.
+					Query: "INSERT INTO arb_t VALUES (1, 1) ON CONFLICT (id) WHERE id IS NOT NULL DO NOTHING;",
+				},
+				{
+					Query:    "SELECT v FROM arb_t WHERE id = 1;",
+					Expected: []gms.Row{{99}},
+				},
+			},
+		},
+	})
+}
+
 // TestInsertOnConflictOnConstraint covers the
 // `ON CONFLICT ON CONSTRAINT name` syntax. ORM-generated upserts
 // (Drizzle .onConflictDoUpdate({target: "constraint_name"}),

@@ -140,8 +140,7 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 
 // isIgnore returns true if the ON CONFLICT clause provided is equivalent to INSERT IGNORE in GMS
 func isIgnore(conflict *tree.OnConflict) bool {
-	return conflict.ArbiterPredicate == nil &&
-		conflict.Exprs == nil &&
+	return conflict.Exprs == nil &&
 		conflict.Where == nil &&
 		conflict.DoNothing
 }
@@ -149,11 +148,13 @@ func isIgnore(conflict *tree.OnConflict) bool {
 // supportedOnConflictClause returns true if the ON CONFLICT clause given can be represented as
 // an ON DUPLICATE KEY UPDATE clause in GMS. The clause's WHERE predicate is supported by
 // rewriting each `col = expr` pair as `col = CASE WHEN <pred> THEN <expr> ELSE col END` so
-// the ELSE branch keeps the existing row unchanged when the predicate is false.
+// the ELSE branch keeps the existing row unchanged when the predicate is false. The arbiter
+// predicate (`ON CONFLICT (col) WHERE arb_pred`) is accepted; it would only matter if doltgres
+// had partial unique indexes whose predicates needed to be matched against arb_pred for index
+// selection, and those are not yet implemented. Real-world ORM-emitted upserts that include the
+// arbiter predicate as a hedge against a future partial-index migration still work because the
+// predicate is benign when every candidate unique index is full.
 func supportedOnConflictClause(conflict *tree.OnConflict) bool {
-	if conflict.ArbiterPredicate != nil {
-		return false
-	}
 	return true
 }
 

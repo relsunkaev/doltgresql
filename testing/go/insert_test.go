@@ -171,8 +171,12 @@ ON CONFLICT (id) do update set c1 = $4`,
 					ExpectedErr: "DO NOTHING is not yet supported on tables with multiple unique indexes",
 				},
 				{
-					Query:       "INSERT INTO mytable (id, name) VALUES (1, 'predicate target') ON CONFLICT (id) WHERE id > 0 DO UPDATE SET name = 'predicate target'",
-					ExpectedErr: "the ON CONFLICT clause provided is not yet supported",
+					// Arbiter predicate is accepted: doltgres has no
+					// partial unique indexes to discriminate against,
+					// so the predicate is benign and the upsert
+					// proceeds via the existing target-by-columns
+					// resolver.
+					Query: "INSERT INTO mytable (id, name) VALUES (1, 'predicate target') ON CONFLICT (id) WHERE id > 0 DO UPDATE SET name = 'predicate target'",
 				},
 				{
 					// DO UPDATE WHERE predicate is supported by
