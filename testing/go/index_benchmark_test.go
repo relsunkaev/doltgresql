@@ -1025,6 +1025,89 @@ func TestJsonbGinSelectivityPlannerShape(t *testing.T) {
 	}
 }
 
+func TestJsonbGinV2ChunkMetadataPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	withJsonbGinPostingStorageVersion(t, "2", func() {
+		createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_v2_metadata_plan")
+		insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_v2_metadata_plan", 1, jsonbGinBenchmarkRows)
+		execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_metadata_plan_idx ON jsonb_gin_v2_metadata_plan USING gin (doc)")
+
+		createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_v2_metadata_path_plan")
+		insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_v2_metadata_path_plan", 1, jsonbGinBenchmarkRows)
+		execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_metadata_path_plan_idx ON jsonb_gin_v2_metadata_path_plan USING gin (doc jsonb_path_ops)")
+	})
+
+	queries := []struct {
+		name        string
+		query       string
+		want        int64
+		indexedPlan bool
+	}{
+		{
+			name:        "selective_containment_uses_gin",
+			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			want:        32,
+			indexedPlan: true,
+		},
+		{
+			name:        "broad_containment_uses_gin_when_candidate_set_is_bounded",
+			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc @> '{"status":"open"}'`,
+			want:        256,
+			indexedPlan: true,
+		},
+		{
+			name:        "selective_key_exists_uses_gin",
+			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'vip'`,
+			want:        102,
+			indexedPlan: true,
+		},
+		{
+			name:  "broad_key_exists_scans",
+			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'tenant'`,
+			want:  jsonbGinBenchmarkRows,
+		},
+		{
+			name:  "broad_key_exists_any_scans",
+			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ?| ARRAY['tenant','missing']`,
+			want:  jsonbGinBenchmarkRows,
+		},
+		{
+			name:  "broad_key_exists_all_scans",
+			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ?& ARRAY['tenant','vip']`,
+			want:  102,
+		},
+		{
+			name:        "jsonb_path_ops_containment_uses_gin",
+			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_path_plan WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
+			want:        64,
+			indexedPlan: true,
+		},
+	}
+
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, query.indexedPlan)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+
+	postDMLHotKey := `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'post_dml_hot'`
+	assertBenchmarkPlanShape(t, ctx, conn, postDMLHotKey, true)
+	assertCountResult(t, ctx, conn, postDMLHotKey, 0)
+	insertJsonbGinConstantKeyRows(t, ctx, conn, "jsonb_gin_v2_metadata_plan", jsonbGinBenchmarkRows+1, 129, "post_dml_hot")
+	assertBenchmarkPlanShape(t, ctx, conn, postDMLHotKey, false)
+	assertCountResult(t, ctx, conn, postDMLHotKey, 129)
+}
+
 func TestJsonbGinDirectFetchPreservesRecheck(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -1270,6 +1353,27 @@ func insertJsonbGinBenchmarkRows(tb testing.TB, ctx context.Context, conn *Conne
 				query.WriteString(", ")
 			}
 			fmt.Fprintf(&query, "(%d, '%s'::jsonb)", id, benchmarkJsonbDocument(id))
+		}
+		execBenchmarkSQL(tb, ctx, conn, query.String())
+	}
+}
+
+func insertJsonbGinConstantKeyRows(tb testing.TB, ctx context.Context, conn *Connection, table string, firstID int, rowCount int, key string) {
+	tb.Helper()
+	const chunkSize = 128
+	for chunkStart := firstID; chunkStart < firstID+rowCount; chunkStart += chunkSize {
+		chunkEnd := chunkStart + chunkSize
+		if chunkEnd > firstID+rowCount {
+			chunkEnd = firstID + rowCount
+		}
+
+		var query strings.Builder
+		fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := chunkStart; id < chunkEnd; id++ {
+			if id > chunkStart {
+				query.WriteString(", ")
+			}
+			fmt.Fprintf(&query, "(%d, '{\"%s\":true,\"tenant\":1,\"payload\":{\"category\":\"dml\"}}'::jsonb)", id, key)
 		}
 		execBenchmarkSQL(tb, ctx, conn, query.String())
 	}

@@ -51,6 +51,14 @@ type PostingChunk struct {
 	Checksum      uint32
 }
 
+// PostingChunkMetadata is the fixed-width metadata stored in a posting chunk
+// payload header and checksum trailer.
+type PostingChunkMetadata struct {
+	FormatVersion uint16
+	RowCount      uint32
+	Checksum      uint32
+}
+
 // EncodePostingChunk validates and encodes sorted, unique row references into a
 // versioned JSONB GIN posting-list chunk payload.
 func EncodePostingChunk(rowRefs [][]byte) (PostingChunk, error) {
@@ -107,6 +115,31 @@ func EncodePostingChunk(rowRefs [][]byte) (PostingChunk, error) {
 		chunk.LastRowRef = append([]byte(nil), copied[len(copied)-1]...)
 	}
 	return chunk, nil
+}
+
+// InspectPostingChunkMetadata returns fixed-width posting chunk metadata without
+// decoding row references.
+func InspectPostingChunkMetadata(payload []byte) (PostingChunkMetadata, error) {
+	if len(payload) < postingChunkV1HeaderSize {
+		return PostingChunkMetadata{}, fmt.Errorf("malformed JSONB GIN posting chunk payload: too short")
+	}
+	if !bytes.Equal(payload[:4], postingChunkMagic[:]) {
+		return PostingChunkMetadata{}, fmt.Errorf("malformed JSONB GIN posting chunk payload: invalid magic")
+	}
+	version := binary.BigEndian.Uint16(payload[4:6])
+	switch version {
+	case PostingChunkFormatVersionV1:
+		if len(payload) < postingChunkV1HeaderSize+postingChunkV1ChecksumSize {
+			return PostingChunkMetadata{}, fmt.Errorf("malformed JSONB GIN posting chunk payload: missing checksum")
+		}
+		return PostingChunkMetadata{
+			FormatVersion: version,
+			RowCount:      binary.BigEndian.Uint32(payload[6:postingChunkV1HeaderSize]),
+			Checksum:      binary.BigEndian.Uint32(payload[len(payload)-postingChunkV1ChecksumSize:]),
+		}, nil
+	default:
+		return PostingChunkMetadata{}, fmt.Errorf("unsupported JSONB GIN posting chunk payload version %d", version)
+	}
 }
 
 // DecodePostingChunk validates and decodes a versioned JSONB GIN posting-list

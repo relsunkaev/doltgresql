@@ -2575,6 +2575,17 @@ func readPostingChunkRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedT
 		if tokenText != encodedToken {
 			continue
 		}
+		rowCount, ok, err := postingChunkRowCountMetadata(ctx, row)
+		if err != nil {
+			return count, false, err
+		}
+		if ok {
+			if rowCount > int64(limit-count) {
+				return limit + 1, true, nil
+			}
+			count += int(rowCount)
+			continue
+		}
 		payload, err := postingChunkPayloadBytes(ctx, row[6])
 		if err != nil {
 			return count, false, err
@@ -2583,14 +2594,51 @@ func readPostingChunkRowsUntilLimit(ctx *sql.Context, rows sql.RowIter, encodedT
 		if err != nil {
 			return count, false, err
 		}
-		if err = validatePostingChunkRowMetadata(row, chunk); err != nil {
-			return count, false, err
-		}
 		count += len(chunk.RowRefs)
 		if count > limit {
 			return count, true, nil
 		}
 	}
+}
+
+func postingChunkRowCountMetadata(ctx *sql.Context, row sql.Row) (int64, bool, error) {
+	if len(row) <= 3 || row[3] == nil {
+		return 0, false, nil
+	}
+	rowCount, ok := integralInt64(row[3])
+	if !ok || rowCount < 0 {
+		return 0, false, nil
+	}
+	if rowCount > int64(^uint32(0)) {
+		return 0, false, nil
+	}
+	if len(row) <= 6 || row[6] == nil {
+		return 0, false, nil
+	}
+	payload, err := postingChunkPayloadBytes(ctx, row[6])
+	if err != nil {
+		return 0, false, err
+	}
+	metadata, err := jsonbgin.InspectPostingChunkMetadata(payload)
+	if err != nil {
+		return 0, false, nil
+	}
+	if uint32(rowCount) != metadata.RowCount {
+		return 0, false, nil
+	}
+	if len(row) > 2 && row[2] != nil {
+		formatVersion, ok := integralInt64(row[2])
+		if !ok || formatVersion < 0 || uint16(formatVersion) != metadata.FormatVersion {
+			return 0, false, nil
+		}
+	}
+	if len(row) > 7 && row[7] != nil {
+		checksumBytes, ok := row[7].([]byte)
+		if !ok || len(checksumBytes) != 4 || binary.BigEndian.Uint32(checksumBytes) != metadata.Checksum {
+			return 0, false, nil
+		}
+	}
+	return rowCount, true, nil
 }
 
 func validatePostingChunkRowMetadata(row sql.Row, chunk jsonbgin.PostingChunk) error {

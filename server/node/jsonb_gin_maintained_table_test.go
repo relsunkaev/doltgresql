@@ -221,6 +221,78 @@ func TestJsonbGinPostingChunkTokenCountUsesIndex(t *testing.T) {
 	require.Zero(t, table.fullScans)
 }
 
+func TestJsonbGinPostingChunkTokenCountUsesRowCountMetadata(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	vip := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	})
+	vipChunk, _ := jsonbGinPostingChunkTestRow(t, ctx, vip, 0, []int32{1, 2, 3})
+	payload := append([]byte(nil), vipChunk[6].([]byte)...)
+	payload[len(payload)-5] ^= 0xff
+	vipChunk[6] = payload
+	table := &fakePostingTable{
+		rows: []sql.Row{vipChunk},
+	}
+
+	exceeds, err := postingChunkTokenRowRefCountExceeds(ctx, table, vip, 2)
+	require.NoError(t, err)
+	require.True(t, exceeds)
+	require.Equal(t, 1, table.indexedAccesses)
+	require.Zero(t, table.fullScans)
+}
+
+func TestJsonbGinPostingChunkTokenCountFallsBackToPayloadMetadata(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	vip := jsonbgin.EncodeToken(jsonbgin.Token{
+		OpClass: indexmetadata.OpClassJsonbOps,
+		Kind:    jsonbgin.TokenKindKey,
+		Value:   "vip",
+	})
+
+	testCases := []struct {
+		name      string
+		mutateRow func(sql.Row)
+	}{
+		{
+			name: "missing row count",
+			mutateRow: func(row sql.Row) {
+				row[3] = nil
+			},
+		},
+		{
+			name: "stale row count",
+			mutateRow: func(row sql.Row) {
+				row[3] = int32(1)
+			},
+		},
+		{
+			name: "stale checksum",
+			mutateRow: func(row sql.Row) {
+				row[7] = []byte{0, 0, 0, 0}
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			vipChunk, _ := jsonbGinPostingChunkTestRow(t, ctx, vip, 0, []int32{1, 2, 3})
+			test.mutateRow(vipChunk)
+			table := &fakePostingTable{
+				rows: []sql.Row{vipChunk},
+			}
+
+			exceeds, err := postingChunkTokenRowRefCountExceeds(ctx, table, vip, 2)
+			require.NoError(t, err)
+			require.True(t, exceeds)
+			require.Equal(t, 1, table.indexedAccesses)
+			require.Zero(t, table.fullScans)
+		})
+	}
+}
+
 func TestJsonbGinPostingCandidateFromRowReference(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	keyTypes := []sql.ColumnExpressionType{

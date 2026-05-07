@@ -85,6 +85,43 @@ func TestPostingChunkEmptyRoundTrip(t *testing.T) {
 	require.Empty(t, decoded.RowRefs)
 }
 
+func TestInspectPostingChunkMetadata(t *testing.T) {
+	rowRefs := [][]byte{[]byte("row/1"), []byte("row/2"), []byte("row/3")}
+	chunk, err := EncodePostingChunk(rowRefs)
+	require.NoError(t, err)
+
+	metadata, err := InspectPostingChunkMetadata(chunk.Payload)
+	require.NoError(t, err)
+	require.Equal(t, PostingChunkMetadata{
+		FormatVersion: PostingChunkFormatVersionV1,
+		RowCount:      uint32(len(rowRefs)),
+		Checksum:      chunk.Checksum,
+	}, metadata)
+}
+
+func TestInspectPostingChunkMetadataRejectsMalformedHeaders(t *testing.T) {
+	chunk, err := EncodePostingChunk([][]byte{[]byte("row/1")})
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		payload []byte
+		wantErr string
+	}{
+		{name: "empty", payload: nil, wantErr: "too short"},
+		{name: "bad magic", payload: append([]byte("BAD!"), chunk.Payload[4:]...), wantErr: "magic"},
+		{name: "missing checksum", payload: chunk.Payload[:postingChunkV1HeaderSize], wantErr: "missing checksum"},
+		{name: "unsupported version", payload: unsupportedPostingChunkVersionPayload(chunk.Payload), wantErr: "unsupported"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := InspectPostingChunkMetadata(test.payload)
+			require.ErrorContains(t, err, test.wantErr)
+		})
+	}
+}
+
 func TestPostingChunkRejectsUnsortedDuplicateOrEmptyReferences(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -146,11 +183,7 @@ func TestPostingChunkRejectsUnsupportedVersion(t *testing.T) {
 	chunk, err := EncodePostingChunk([][]byte{[]byte("row/1")})
 	require.NoError(t, err)
 
-	payload := append([]byte(nil), chunk.Payload...)
-	payload[4] = 0
-	payload[5] = 99
-
-	_, err = DecodePostingChunk(payload)
+	_, err = DecodePostingChunk(unsupportedPostingChunkVersionPayload(chunk.Payload))
 	require.ErrorContains(t, err, "unsupported")
 }
 
@@ -224,4 +257,11 @@ func truncatedPostingChunkRowRefPayload(payload []byte) []byte {
 	bodyPrefixEnd := postingChunkV1HeaderSize + postingChunkV1LengthSize + 1
 	truncated := append([]byte(nil), payload[:bodyPrefixEnd]...)
 	return append(truncated, payload[len(payload)-postingChunkV1ChecksumSize:]...)
+}
+
+func unsupportedPostingChunkVersionPayload(payload []byte) []byte {
+	copied := append([]byte(nil), payload...)
+	copied[4] = 0
+	copied[5] = 99
+	return copied
 }
