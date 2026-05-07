@@ -162,10 +162,29 @@ YAML
   wait_for_tcp "127.0.0.1" "$DOLTGRES_PORT" "Doltgres"
 }
 
+sysbench_supports_tables_arg() {
+  case "$1" in
+    covering_index_scan_postgres | \
+      index_scan_postgres | \
+      table_scan_postgres | \
+      groupby_scan_postgres | \
+      index_join_scan_postgres | \
+      types_table_scan_postgres | \
+      index_join_postgres | \
+      types_delete_insert_postgres)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
 sysbench_common_args() {
-  local port="$1"
-  local db="$2"
-  local password="$3"
+  local test_name="$1"
+  local port="$2"
+  local db="$3"
+  local password="$4"
   printf '%s\n' \
     "--db-driver=pgsql" \
     "--pgsql-host=127.0.0.1" \
@@ -175,9 +194,11 @@ sysbench_common_args() {
     "--pgsql-db=$db" \
     "--db-ps-mode=disable" \
     "--threads=$SYSBENCH_THREADS" \
-    "--tables=$SYSBENCH_TABLES" \
     "--table-size=$SYSBENCH_TABLE_SIZE" \
     "--report-interval=$SYSBENCH_REPORT_INTERVAL"
+  if sysbench_supports_tables_arg "$test_name"; then
+    printf '%s\n' "--tables=$SYSBENCH_TABLES"
+  fi
 }
 
 extract_metric() {
@@ -212,7 +233,7 @@ run_sysbench_case() {
   local log_file="$LOG_DIR/sysbench-$engine-$test_name.log"
   local status="pass"
   local common_args=()
-  common_args=($(sysbench_common_args "$port" "$db" "$password"))
+  common_args=($(sysbench_common_args "$test_name" "$port" "$db" "$password"))
 
   {
     echo "----$engine/$test_name----"

@@ -48,8 +48,8 @@ const (
 	ConstraintNone = "none"
 
 	GinPostingStorageVersionUnsupported = -1
-	GinPostingStorageVersionV1          = 1
-	GinPostingStorageVersionV2          = 2
+	GinPostingStorageLegacy             = 1
+	GinPostingStorageChunked            = 2
 
 	IndOptionDesc       int16 = 1
 	IndOptionNullsFirst int16 = 2
@@ -264,13 +264,13 @@ func NormalizeOpClass(opClass string) string {
 }
 
 // NormalizeGinPostingStorageVersion returns the supported storage version for
-// JSONB GIN posting metadata. Missing legacy metadata defaults to v1.
+// JSONB GIN posting metadata. Missing legacy metadata defaults to legacy storage.
 func NormalizeGinPostingStorageVersion(version int) int {
 	switch version {
-	case 0, GinPostingStorageVersionV1:
-		return GinPostingStorageVersionV1
-	case GinPostingStorageVersionV2:
-		return GinPostingStorageVersionV2
+	case 0, GinPostingStorageLegacy:
+		return GinPostingStorageLegacy
+	case GinPostingStorageChunked:
+		return GinPostingStorageChunked
 	default:
 		return GinPostingStorageVersionUnsupported
 	}
@@ -362,7 +362,7 @@ func RelOptions(comment string) []string {
 }
 
 // GinPostingStorageVersion returns the per-index JSONB GIN posting storage
-// version encoded in metadata. Missing legacy GIN metadata defaults to v1.
+// version encoded in metadata. Missing legacy GIN metadata defaults to legacy storage.
 func GinPostingStorageVersion(comment string) int {
 	metadata, ok := DecodeComment(comment)
 	if !ok || metadata.Gin == nil {

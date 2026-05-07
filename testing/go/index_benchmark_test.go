@@ -133,6 +133,24 @@ func TestBtreeStatsBackedIndexChoice(t *testing.T) {
 	assertCountResult(t, ctx, conn, missingStats, 1)
 }
 
+func TestBtreeBigIntStatsInequalityAcceptsIntLiteral(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_bigint_stats_cmp (id INTEGER PRIMARY KEY, big_int_col BIGINT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_bigint_stats_cmp VALUES (1, -1), (2, 0), (3, 1), (4, 2)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_bigint_stats_cmp_big_int_idx ON btree_bigint_stats_cmp (big_int_col)")
+	execBenchmarkSQL(t, ctx, conn, "ANALYZE btree_bigint_stats_cmp")
+
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_bigint_stats_cmp WHERE big_int_col > 0`, 2)
+}
+
 func TestExpressionBtreeIndexPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
@@ -1010,9 +1028,10 @@ func TestJsonbGinSelectivityPlannerShape(t *testing.T) {
 			want:  jsonbGinBenchmarkRows,
 		},
 		{
-			name:  "broad_key_exists_all_scans",
-			query: `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc ?& ARRAY['tenant','vip']`,
-			want:  102,
+			name:        "broad_key_exists_all_uses_gin_when_intersection_is_bounded",
+			query:       `SELECT count(id) FROM jsonb_gin_selectivity_plan WHERE doc ?& ARRAY['tenant','vip']`,
+			want:        102,
+			indexedPlan: true,
 		},
 	}
 
@@ -1025,7 +1044,7 @@ func TestJsonbGinSelectivityPlannerShape(t *testing.T) {
 	}
 }
 
-func TestJsonbGinV2ChunkMetadataPlannerShape(t *testing.T) {
+func TestJsonbGinChunkMetadataPlannerShape(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
 		conn.Close(ctx)
@@ -1035,15 +1054,13 @@ func TestJsonbGinV2ChunkMetadataPlannerShape(t *testing.T) {
 		}
 	})
 
-	withJsonbGinPostingStorageVersion(t, "2", func() {
-		createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_v2_metadata_plan")
-		insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_v2_metadata_plan", 1, jsonbGinBenchmarkRows)
-		execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_metadata_plan_idx ON jsonb_gin_v2_metadata_plan USING gin (doc)")
+	createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_metadata_plan")
+	insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_metadata_plan", 1, jsonbGinBenchmarkRows)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_metadata_plan_idx ON jsonb_gin_metadata_plan USING gin (doc)")
 
-		createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_v2_metadata_path_plan")
-		insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_v2_metadata_path_plan", 1, jsonbGinBenchmarkRows)
-		execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_metadata_path_plan_idx ON jsonb_gin_v2_metadata_path_plan USING gin (doc jsonb_path_ops)")
-	})
+	createJsonbGinBenchmarkTable(t, ctx, conn, "jsonb_gin_metadata_path_plan")
+	insertJsonbGinBenchmarkRows(t, ctx, conn, "jsonb_gin_metadata_path_plan", 1, jsonbGinBenchmarkRows)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_metadata_path_plan_idx ON jsonb_gin_metadata_path_plan USING gin (doc jsonb_path_ops)")
 
 	queries := []struct {
 		name        string
@@ -1053,40 +1070,41 @@ func TestJsonbGinV2ChunkMetadataPlannerShape(t *testing.T) {
 	}{
 		{
 			name:        "selective_containment_uses_gin",
-			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc @> '{"tenant":8,"status":"open"}'`,
+			query:       `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc @> '{"tenant":8,"status":"open"}'`,
 			want:        32,
 			indexedPlan: true,
 		},
 		{
 			name:        "broad_containment_uses_gin_when_candidate_set_is_bounded",
-			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc @> '{"status":"open"}'`,
+			query:       `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc @> '{"status":"open"}'`,
 			want:        256,
 			indexedPlan: true,
 		},
 		{
 			name:        "selective_key_exists_uses_gin",
-			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'vip'`,
+			query:       `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc ? 'vip'`,
 			want:        102,
 			indexedPlan: true,
 		},
 		{
 			name:  "broad_key_exists_scans",
-			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'tenant'`,
+			query: `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc ? 'tenant'`,
 			want:  jsonbGinBenchmarkRows,
 		},
 		{
 			name:  "broad_key_exists_any_scans",
-			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ?| ARRAY['tenant','missing']`,
+			query: `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc ?| ARRAY['tenant','missing']`,
 			want:  jsonbGinBenchmarkRows,
 		},
 		{
-			name:  "broad_key_exists_all_scans",
-			query: `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ?& ARRAY['tenant','vip']`,
-			want:  102,
+			name:        "broad_key_exists_all_uses_gin_when_intersection_is_bounded",
+			query:       `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc ?& ARRAY['tenant','vip']`,
+			want:        102,
+			indexedPlan: true,
 		},
 		{
 			name:        "jsonb_path_ops_containment_uses_gin",
-			query:       `SELECT count(id) FROM jsonb_gin_v2_metadata_path_plan WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
+			query:       `SELECT count(id) FROM jsonb_gin_metadata_path_plan WHERE doc @> '{"payload":{"category":"cat-3"}}'`,
 			want:        64,
 			indexedPlan: true,
 		},
@@ -1100,10 +1118,10 @@ func TestJsonbGinV2ChunkMetadataPlannerShape(t *testing.T) {
 		})
 	}
 
-	postDMLHotKey := `SELECT count(id) FROM jsonb_gin_v2_metadata_plan WHERE doc ? 'post_dml_hot'`
+	postDMLHotKey := `SELECT count(id) FROM jsonb_gin_metadata_plan WHERE doc ? 'post_dml_hot'`
 	assertBenchmarkPlanShape(t, ctx, conn, postDMLHotKey, true)
 	assertCountResult(t, ctx, conn, postDMLHotKey, 0)
-	insertJsonbGinConstantKeyRows(t, ctx, conn, "jsonb_gin_v2_metadata_plan", jsonbGinBenchmarkRows+1, 129, "post_dml_hot")
+	insertJsonbGinConstantKeyRows(t, ctx, conn, "jsonb_gin_metadata_plan", jsonbGinBenchmarkRows+1, 129, "post_dml_hot")
 	assertBenchmarkPlanShape(t, ctx, conn, postDMLHotKey, false)
 	assertCountResult(t, ctx, conn, postDMLHotKey, 129)
 }
@@ -1197,7 +1215,7 @@ func TestJsonbGinDMLRollbackPreservesPostingIndex(t *testing.T) {
 	execBenchmarkSQL(t, ctx, conn, "ROLLBACK")
 
 	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_dml_rollback WHERE doc ? 'vip'`, 0)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM dg_gin_jsonb_gin_dml_rollback_jsonb_gin_dml_rollback_doc_idx_postings`, 0)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM dg_gin_jsonb_gin_dml_rollback_jsonb_gin_dml_rollback_doc_idx_posting_chunks`, 0)
 
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_dml_rollback VALUES
 		(1, '{"vip":true,"tenant":1}'::jsonb),
@@ -1326,7 +1344,7 @@ func insertBtreeDMLBenchmarkRow(b *testing.B, ctx context.Context, conn *Connect
 
 func createJsonbGinDMLBenchmarkTable(b *testing.B, ctx context.Context, conn *Connection, table string) {
 	b.Helper()
-	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS dg_gin_%s_%s_idx_postings", table, table))
+	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS dg_gin_%s_%s_idx_posting_chunks", table, table))
 	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 	createJsonbGinBenchmarkTable(b, ctx, conn, table)
 	execBenchmarkSQL(b, ctx, conn, fmt.Sprintf("CREATE INDEX %s_idx ON %s USING gin (doc)", table, table))

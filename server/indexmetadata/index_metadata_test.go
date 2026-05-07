@@ -42,7 +42,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 		Constraint: " NONE ",
 		Gin: &GinMetadata{
 			PostingTable:          " dg_gin_docs_doc_idx_postings ",
-			PostingStorageVersion: GinPostingStorageVersionV2,
+			PostingStorageVersion: GinPostingStorageChunked,
 			PostingChunkTable:     " dg_gin_docs_doc_idx_posting_chunks ",
 		},
 	})
@@ -108,7 +108,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if metadata.Gin == nil || metadata.Gin.PostingTable != "dg_gin_docs_doc_idx_postings" {
 		t.Fatalf("unexpected gin metadata: %#v", metadata.Gin)
 	}
-	if metadata.Gin.PostingStorageVersion != GinPostingStorageVersionV2 {
+	if metadata.Gin.PostingStorageVersion != GinPostingStorageChunked {
 		t.Fatalf("unexpected gin posting storage version: %#v", metadata.Gin)
 	}
 	if metadata.Gin.PostingChunkTable != "dg_gin_docs_doc_idx_posting_chunks" {
@@ -122,7 +122,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 }
 
-func TestGinPostingStorageVersionDefaultsLegacyMetadataToV1(t *testing.T) {
+func TestGinPostingStorageVersionDefaultsLegacyMetadataToLegacy(t *testing.T) {
 	comment := commentPrefix + `{"accessMethod":"gin","gin":{"postingTable":"dg_gin_docs_doc_idx_postings"}}`
 
 	metadata, ok := DecodeComment(comment)
@@ -132,11 +132,11 @@ func TestGinPostingStorageVersionDefaultsLegacyMetadataToV1(t *testing.T) {
 	if metadata.Gin == nil {
 		t.Fatal("expected gin metadata")
 	}
-	if got := metadata.Gin.PostingStorageVersion; got != GinPostingStorageVersionV1 {
-		t.Fatalf("expected legacy gin metadata to default to v1, got %d", got)
+	if got := metadata.Gin.PostingStorageVersion; got != GinPostingStorageLegacy {
+		t.Fatalf("expected legacy gin metadata to default to legacy storage, got %d", got)
 	}
-	if got := GinPostingStorageVersion(comment); got != GinPostingStorageVersionV1 {
-		t.Fatalf("expected accessor to default legacy gin metadata to v1, got %d", got)
+	if got := GinPostingStorageVersion(comment); got != GinPostingStorageLegacy {
+		t.Fatalf("expected accessor to default legacy gin metadata to legacy storage, got %d", got)
 	}
 }
 

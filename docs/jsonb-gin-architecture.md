@@ -108,21 +108,16 @@ Physical GIN storage should be separate from scalar btree storage:
 Posting lists should reference the table primary key or stable row identity. For
 keyless tables, the design must define the row identity before claiming support.
 
-The current sidecar stores encoded GIN tokens and stable row-identity hashes as
-the `(token, row_id)` primary key. Token lookup uses that sidecar primary key
-when the table exposes indexed access, with a full sidecar scan only as a
-fallback. Posting rows also carry base primary-key values when available, so
-execution can fetch candidates directly through the base table's primary-key
-index and only falls back to a base scan when that direct lookup is unavailable.
-That gives correct lookup candidates and avoids reading unrelated posting
-lists, but the one-row-per-token-row layout is still a bridge until chunked
-posting lists have benchmark evidence for large and skewed posting lists.
+The current sidecar stores encoded GIN tokens with chunked posting-list rows.
+Token lookup uses that sidecar primary key when the table exposes indexed
+access, with a full sidecar scan only as a fallback. Posting chunks carry
+ordered row references, so execution can fetch candidates directly through the
+base table's primary-key index when available and only falls back to a base scan
+when that direct lookup is unavailable.
 
-The next storage target is defined in
-`docs/jsonb-gin-posting-list-storage.md`. It keeps the current v1 sidecar as a
-compatibility format and designs a v2 chunked posting-list layout with
-copy-on-write DML maintenance, rollback/merge semantics, and a measurement plan
-before any default storage switch.
+The storage layout is defined in `docs/jsonb-gin-posting-list-storage.md`,
+including copy-on-write DML maintenance, rollback/merge semantics, migration
+from legacy sidecars, and the measurement plan used for PostgreSQL comparison.
 
 ## Planning and execution
 

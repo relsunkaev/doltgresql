@@ -48,7 +48,6 @@ const jsonbGinPostingBackfillChunkRows = 8192
 const jsonbGinPostingChunkRowsPerChunk = 256
 const jsonbGinPostingChunkBuildSpillEntries = 65536
 const jsonbGinPostingBuildContextCheckInterval = 1024
-const jsonbGinPostingStorageVersionEnv = "DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION"
 
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
@@ -86,10 +85,7 @@ func NewCreateJsonbGinIndex(ifNotExists bool, schema string, tableName string, i
 }
 
 func defaultJsonbGinPostingStorageVersion() int {
-	if strings.TrimSpace(os.Getenv(jsonbGinPostingStorageVersionEnv)) == "2" {
-		return indexmetadata.GinPostingStorageVersionV2
-	}
-	return indexmetadata.GinPostingStorageVersionV1
+	return indexmetadata.GinPostingStorageChunked
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -163,9 +159,9 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	}
 	postingStorageVersion := indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion)
 	switch postingStorageVersion {
-	case indexmetadata.GinPostingStorageVersionV1:
+	case indexmetadata.GinPostingStorageLegacy:
 		err = c.backfillPostingTable(ctx, db, schemaName, table, columnIndex)
-	case indexmetadata.GinPostingStorageVersionV2:
+	case indexmetadata.GinPostingStorageChunked:
 		err = c.backfillPostingChunkTable(ctx, db, schemaName, table, columnIndex)
 	default:
 		err = errors.Errorf("unsupported JSONB GIN posting storage version %d", postingStorageVersion)
@@ -190,9 +186,9 @@ func (c *CreateJsonbGinIndex) indexMetadata() indexmetadata.Metadata {
 		},
 	}
 	switch storageVersion {
-	case indexmetadata.GinPostingStorageVersionV1:
+	case indexmetadata.GinPostingStorageLegacy:
 		metadata.Gin.PostingTable = c.postingName
-	case indexmetadata.GinPostingStorageVersionV2:
+	case indexmetadata.GinPostingStorageChunked:
 		metadata.Gin.PostingChunkTable = c.postingChunkName
 	}
 	return metadata
@@ -297,9 +293,9 @@ func (c *CreateJsonbGinIndex) createPostingTable(ctx *sql.Context, tableCreator 
 
 func (c *CreateJsonbGinIndex) createPostingStorageTables(ctx *sql.Context, tableCreator sql.TableCreator, baseSchema sql.Schema) error {
 	switch indexmetadata.NormalizeGinPostingStorageVersion(c.postingStorageVersion) {
-	case indexmetadata.GinPostingStorageVersionV1:
+	case indexmetadata.GinPostingStorageLegacy:
 		return c.createPostingTable(ctx, tableCreator, baseSchema)
-	case indexmetadata.GinPostingStorageVersionV2:
+	case indexmetadata.GinPostingStorageChunked:
 		return c.createPostingChunkTable(ctx, tableCreator)
 	default:
 		return errors.Errorf("unsupported JSONB GIN posting storage version %d", c.postingStorageVersion)
@@ -588,6 +584,7 @@ func (c *CreateJsonbGinIndex) buildPostingChunkEntrySorterFromRows(ctx *sql.Cont
 }
 
 func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
+	var tokenScratch jsonbgin.EncodedTokenScratch
 	for {
 		if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
 			return err
@@ -599,7 +596,7 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntries(ctx *sql.Context, sch sql.S
 		if err != nil {
 			return err
 		}
-		if err = c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter); err != nil {
+		if err = c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter, &tokenScratch); err != nil {
 			return err
 		}
 	}
@@ -672,6 +669,7 @@ type jsonbGinPostingChunkBuildWorkerResult struct {
 
 func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch sql.Schema, jobs <-chan sql.Row, columnIndex int, results chan<- jsonbGinPostingChunkBuildWorkerResult) {
 	sorter := c.newPostingChunkEntrySorter()
+	var tokenScratch jsonbgin.EncodedTokenScratch
 	var retErr error
 	for {
 		var row sql.Row
@@ -688,7 +686,7 @@ func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch s
 		if retErr != nil {
 			continue
 		}
-		if err := c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter); err != nil {
+		if err := c.addPostingChunkEntriesForRow(ctx, sch, row, columnIndex, sorter, &tokenScratch); err != nil {
 			retErr = err
 		}
 	}
@@ -701,7 +699,7 @@ func (c *CreateJsonbGinIndex) runPostingChunkBuildWorker(ctx *sql.Context, sch s
 	results <- jsonbGinPostingChunkBuildWorkerResult{sorter: sorter, err: retErr}
 }
 
-func (c *CreateJsonbGinIndex) addPostingChunkEntriesForRow(ctx *sql.Context, sch sql.Schema, row sql.Row, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter) error {
+func (c *CreateJsonbGinIndex) addPostingChunkEntriesForRow(ctx *sql.Context, sch sql.Schema, row sql.Row, columnIndex int, sorter *jsonbGinPostingChunkEntrySorter, tokenScratch *jsonbgin.EncodedTokenScratch) error {
 	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
 		return err
 	}
@@ -715,7 +713,7 @@ func (c *CreateJsonbGinIndex) addPostingChunkEntriesForRow(ctx *sql.Context, sch
 	if err := jsonbGinPostingBuildContextErr(ctx); err != nil {
 		return err
 	}
-	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
+	encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx, row[columnIndex], c.opClass, tokenScratch)
 	if err != nil {
 		return err
 	}
@@ -752,7 +750,7 @@ func (c *CreateJsonbGinIndex) writePostingChunkRowsFromEntries(ctx *sql.Context,
 		if len(rowRefs) == 0 {
 			return nil
 		}
-		chunk, err := jsonbgin.EncodePostingChunk(rowRefs)
+		chunk, err := jsonbgin.EncodePostingChunkForStorage(rowRefs)
 		if err != nil {
 			return err
 		}
@@ -1204,6 +1202,7 @@ type jsonbGinPostingRowAppender interface {
 }
 
 func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema, rows sql.RowIter, postingRows jsonbGinPostingRowAppender, columnIndex int) error {
+	var tokenScratch jsonbgin.EncodedTokenScratch
 	for {
 		row, err := rows.Next(ctx)
 		if err == io.EOF {
@@ -1217,7 +1216,7 @@ func (c *CreateJsonbGinIndex) backfillPartition(ctx *sql.Context, sch sql.Schema
 		}
 		rowID := rowIdentity(sch, row)
 		keyValues := primaryKeyRowValues(sch, row)
-		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValue(ctx, row[columnIndex], c.opClass)
+		encodedTokens, err := jsonbGinExtractEncodedTokensFromSQLValueWithScratch(ctx, row[columnIndex], c.opClass, &tokenScratch)
 		if err != nil {
 			return err
 		}

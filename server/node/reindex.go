@@ -30,8 +30,8 @@ import (
 )
 
 // ReindexIndex validates a REINDEX INDEX target. Most Doltgres indexes are
-// maintained eagerly, but JSONB GIN can use this path to migrate v1 posting
-// sidecars to v2 chunked postings when the v2 storage gate is enabled.
+// maintained eagerly, but JSONB GIN can use this path to migrate legacy posting
+// sidecars to chunked postings when needed.
 type ReindexIndex struct {
 	schema string
 	table  string
@@ -117,13 +117,13 @@ func reindexJsonbGinIndexIfRequested(ctx *sql.Context, schemaName string, locate
 	if currentVersion == targetVersion {
 		return nil
 	}
-	if currentVersion != indexmetadata.GinPostingStorageVersionV1 || targetVersion != indexmetadata.GinPostingStorageVersionV2 {
+	if currentVersion != indexmetadata.GinPostingStorageLegacy || targetVersion != indexmetadata.GinPostingStorageChunked {
 		return errors.Errorf("REINDEX migration from JSONB GIN posting storage version %d to %d is not supported", currentVersion, targetVersion)
 	}
-	return rebuildJsonbGinIndexToV2(ctx, schemaName, located, metadata)
+	return rebuildJsonbGinIndexToChunkedStorage(ctx, schemaName, located, metadata)
 }
 
-func rebuildJsonbGinIndexToV2(ctx *sql.Context, schemaName string, located *locatedIndex, metadata indexmetadata.Metadata) error {
+func rebuildJsonbGinIndexToChunkedStorage(ctx *sql.Context, schemaName string, located *locatedIndex, metadata indexmetadata.Metadata) error {
 	if len(metadata.Columns) != 1 {
 		return errors.Errorf("JSONB GIN REINDEX requires exactly one indexed column")
 	}
@@ -134,7 +134,7 @@ func rebuildJsonbGinIndexToV2(ctx *sql.Context, schemaName string, located *loca
 	tableName := located.index.Table()
 	indexName := located.index.ID()
 	create := NewCreateJsonbGinIndex(false, schemaName, tableName, indexName, metadata.Columns[0], opClass)
-	create.postingStorageVersion = indexmetadata.GinPostingStorageVersionV2
+	create.postingStorageVersion = indexmetadata.GinPostingStorageChunked
 	create.postingChunkName = jsonbGinReindexPostingChunkTableName(metadata.Gin.PostingTable, tableName, indexName)
 
 	columnIndex, anchorColumn, err := create.validateTable(ctx, located.table)
@@ -160,13 +160,13 @@ func rebuildJsonbGinIndexToV2(ctx *sql.Context, schemaName string, located *loca
 	if err = create.backfillPostingChunkTable(ctx, located.db, schemaName, located.table, columnIndex); err != nil {
 		return err
 	}
-	if err = validateJsonbGinV1ToV2Rebuild(ctx, located.db, metadata.Gin.PostingTable, create.postingChunkName); err != nil {
+	if err = validateJsonbGinLegacyToChunkedRebuild(ctx, located.db, metadata.Gin.PostingTable, create.postingChunkName); err != nil {
 		return err
 	}
 
 	nextMetadata := metadata
 	nextMetadata.Gin = &indexmetadata.GinMetadata{
-		PostingStorageVersion: indexmetadata.GinPostingStorageVersionV2,
+		PostingStorageVersion: indexmetadata.GinPostingStorageChunked,
 		PostingChunkTable:     create.postingChunkName,
 	}
 	if err = rebuildLocatedIndexWithMetadata(ctx, located, nextMetadata, []sql.IndexColumn{{Name: anchorColumn}}); err != nil {
@@ -208,7 +208,7 @@ func rebuildLocatedIndexWithMetadata(ctx *sql.Context, located *locatedIndex, me
 	return located.alterable.CreateIndex(ctx, indexDef)
 }
 
-func validateJsonbGinV1ToV2Rebuild(ctx *sql.Context, db sql.Database, postingTableName string, postingChunkTableName string) error {
+func validateJsonbGinLegacyToChunkedRebuild(ctx *sql.Context, db sql.Database, postingTableName string, postingChunkTableName string) error {
 	postingTable, err := tableByInsensitiveName(ctx, db, postingTableName)
 	if err != nil {
 		return err
@@ -217,20 +217,20 @@ func validateJsonbGinV1ToV2Rebuild(ctx *sql.Context, db sql.Database, postingTab
 	if err != nil {
 		return err
 	}
-	v1Counts, err := jsonbGinPostingTokenCounts(ctx, postingTable)
+	legacyCounts, err := jsonbGinPostingTokenCounts(ctx, postingTable)
 	if err != nil {
 		return err
 	}
-	v2Counts, err := jsonbGinPostingChunkTokenCounts(ctx, postingChunkTable)
+	chunkCounts, err := jsonbGinPostingChunkTokenCounts(ctx, postingChunkTable)
 	if err != nil {
 		return err
 	}
-	if len(v1Counts) != len(v2Counts) {
-		return errors.Errorf("JSONB GIN REINDEX validation failed: v1 has %d token(s), v2 has %d", len(v1Counts), len(v2Counts))
+	if len(legacyCounts) != len(chunkCounts) {
+		return errors.Errorf("JSONB GIN REINDEX validation failed: legacy storage has %d token(s), chunked storage has %d", len(legacyCounts), len(chunkCounts))
 	}
-	for token, v1Count := range v1Counts {
-		if v2Count := v2Counts[token]; v2Count != v1Count {
-			return errors.Errorf("JSONB GIN REINDEX validation failed for token %q: v1 has %d row reference(s), v2 has %d", token, v1Count, v2Count)
+	for token, legacyCount := range legacyCounts {
+		if chunkCount := chunkCounts[token]; chunkCount != legacyCount {
+			return errors.Errorf("JSONB GIN REINDEX validation failed for token %q: legacy storage has %d row reference(s), chunked storage has %d", token, legacyCount, chunkCount)
 		}
 	}
 	return nil

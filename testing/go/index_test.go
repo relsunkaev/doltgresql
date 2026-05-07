@@ -15,7 +15,6 @@
 package _go
 
 import (
-	"context"
 	"os"
 	"strconv"
 	"strings"
@@ -87,33 +86,32 @@ WHERE relname = '` + indexName + `';`,
 	}
 }
 
-func TestJsonbGinV2PostingChunkBuildGate(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+func TestJsonbGinPostingChunkBuildGate(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "PostgreSQL jsonb gin v2 posting chunk build gate",
+			Name: "PostgreSQL jsonb gin posting chunk build gate",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_build (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_build VALUES
+				"CREATE TABLE jsonb_gin_build (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_build VALUES
 					(1, '{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}'),
 					(2, '{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}'),
 					(3, '{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "CREATE INDEX jsonb_gin_v2_build_doc_idx ON jsonb_gin_v2_build USING gin (doc);",
+					Query: "CREATE INDEX jsonb_gin_build_doc_idx ON jsonb_gin_build USING gin (doc);",
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_v2_build' AND indexname = 'jsonb_gin_v2_build_doc_idx';`,
+WHERE tablename = 'jsonb_gin_build' AND indexname = 'jsonb_gin_build_doc_idx';`,
 					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_v2_build_doc_idx ON public.jsonb_gin_v2_build USING gin (doc jsonb_ops)"},
+						{"CREATE INDEX jsonb_gin_build_doc_idx ON public.jsonb_gin_build USING gin (doc jsonb_ops)"},
 					},
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)
-FROM dg_gin_jsonb_gin_v2_build_jsonb_gin_v2_build_doc_idx_posting_chunks;`,
+FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`,
 					Expected: []sql.Row{
 						{"t", 1, float64(22), 11, 11},
 					},
@@ -121,62 +119,62 @@ FROM dg_gin_jsonb_gin_v2_build_jsonb_gin_v2_build_doc_idx_posting_chunks;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 numeric primary key fallback",
+			Name: "PostgreSQL jsonb gin numeric primary key direct references",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_numeric_pk (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_numeric_pk VALUES
+				"CREATE TABLE jsonb_gin_numeric_pk (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_numeric_pk VALUES
 					(1.1, '{"tags":["vip"],"status":"open"}'),
 					(2.2, '{"tags":["vip","archived"],"status":"open"}'),
 					(3.3, '{"tags":["standard"],"status":"closed"}');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "CREATE INDEX jsonb_gin_v2_numeric_pk_doc_idx ON jsonb_gin_v2_numeric_pk USING gin (doc);",
+					Query: "CREATE INDEX jsonb_gin_numeric_pk_doc_idx ON jsonb_gin_numeric_pk USING gin (doc);",
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_v2_numeric_pk' AND indexname = 'jsonb_gin_v2_numeric_pk_doc_idx';`,
+WHERE tablename = 'jsonb_gin_numeric_pk' AND indexname = 'jsonb_gin_numeric_pk_doc_idx';`,
 					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_v2_numeric_pk_doc_idx ON public.jsonb_gin_v2_numeric_pk USING gin (doc jsonb_ops)"},
+						{"CREATE INDEX jsonb_gin_numeric_pk_doc_idx ON public.jsonb_gin_numeric_pk USING gin (doc jsonb_ops)"},
 					},
 				},
 				{
-					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_pk
+					Query: `SELECT id::text FROM jsonb_gin_numeric_pk
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{"1.1"}, {"2.2"}},
 				},
 				{
 					Query: `SELECT COUNT(*) > 0, SUM(row_count) > 0
-FROM dg_gin_jsonb_gin_v2_numeric_pk_jsonb_gin_v2_numeric_pk_doc_idx_posting_chunks;`,
+FROM dg_gin_jsonb_gin_numeric_pk_jsonb_gin_numeric_pk_doc_idx_posting_chunks;`,
 					Expected: []sql.Row{{"t", "t"}},
 				},
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 no primary key fallback",
+			Name: "PostgreSQL jsonb gin no primary key fallback",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_no_pk (id INTEGER NOT NULL, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_no_pk VALUES
+				"CREATE TABLE jsonb_gin_no_pk (id INTEGER NOT NULL, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_no_pk VALUES
 					(1, '{"tags":["vip"],"status":"open"}'),
 					(2, '{"tags":["standard"],"status":"open"}'),
 					(3, '{"tags":["vip"],"status":"closed"}');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "CREATE INDEX jsonb_gin_v2_no_pk_doc_idx ON jsonb_gin_v2_no_pk USING gin (doc);",
+					Query: "CREATE INDEX jsonb_gin_no_pk_doc_idx ON jsonb_gin_no_pk USING gin (doc);",
 				},
 				{
 					Query: `SELECT indexdef
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_v2_no_pk' AND indexname = 'jsonb_gin_v2_no_pk_doc_idx';`,
+WHERE tablename = 'jsonb_gin_no_pk' AND indexname = 'jsonb_gin_no_pk_doc_idx';`,
 					Expected: []sql.Row{
-						{"CREATE INDEX jsonb_gin_v2_no_pk_doc_idx ON public.jsonb_gin_v2_no_pk USING gin (doc jsonb_ops)"},
+						{"CREATE INDEX jsonb_gin_no_pk_doc_idx ON public.jsonb_gin_no_pk USING gin (doc jsonb_ops)"},
 					},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_no_pk
+					Query: `SELECT id FROM jsonb_gin_no_pk
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {3}},
@@ -184,26 +182,26 @@ ORDER BY id;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 failed create index cleanup",
+			Name: "PostgreSQL jsonb gin failed create index cleanup",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_bad_create (id INTEGER PRIMARY KEY, doc TEXT NOT NULL);",
-				"INSERT INTO jsonb_gin_v2_bad_create VALUES (1, '{\"tags\":[\"vip\"]}');",
+				"CREATE TABLE jsonb_gin_bad_create (id INTEGER PRIMARY KEY, doc TEXT NOT NULL);",
+				"INSERT INTO jsonb_gin_bad_create VALUES (1, '{\"tags\":[\"vip\"]}');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE INDEX jsonb_gin_v2_bad_create_doc_idx ON jsonb_gin_v2_bad_create USING gin (doc);",
+					Query:       "CREATE INDEX jsonb_gin_bad_create_doc_idx ON jsonb_gin_bad_create USING gin (doc);",
 					ExpectedErr: "gin indexes are only supported on jsonb columns",
 				},
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_indexes
-WHERE tablename = 'jsonb_gin_v2_bad_create' AND indexname = 'jsonb_gin_v2_bad_create_doc_idx';`,
+WHERE tablename = 'jsonb_gin_bad_create' AND indexname = 'jsonb_gin_bad_create_doc_idx';`,
 					Expected: []sql.Row{{0}},
 				},
 				{
 					Query: `SELECT COUNT(*)
 FROM pg_catalog.pg_class
-WHERE relname = 'dg_gin_jsonb_gin_v2_bad_create_jsonb_gin_v2_bad_create_doc_idx_posting_chunks';`,
+WHERE relname = 'dg_gin_jsonb_gin_bad_create_jsonb_gin_bad_create_doc_idx_posting_chunks';`,
 					Expected: []sql.Row{{0}},
 				},
 			},
@@ -211,148 +209,68 @@ WHERE relname = 'dg_gin_jsonb_gin_v2_bad_create_jsonb_gin_v2_bad_create_doc_idx_
 	})
 }
 
-func TestJsonbGinReindexMigratesV1ToV2PostingChunks(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "1")
-	ctx, conn, controller := CreateServer(t, "postgres")
-	t.Cleanup(func() {
-		conn.Close(ctx)
-		controller.Stop()
-		if err := controller.WaitForStop(); err != nil {
-			t.Fatalf("error stopping test server: %v", err)
-		}
-	})
-
-	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jgr (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
-	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr VALUES
-		(1, '{"tags":["vip"],"status":"open","payload":{"category":"cat-1"}}'),
-		(2, '{"tags":["vip","archived"],"status":"open","payload":{"category":"cat-2"}}'),
-		(3, '{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jgr_doc_idx ON jgr USING gin (doc)")
-
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 1)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 0)
-	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 2)
-
-	execBenchmarkSQL(t, ctx, conn, "REINDEX INDEX jgr_doc_idx")
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 1)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 0)
-
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
-	execBenchmarkSQL(t, ctx, conn, "REINDEX INDEX jgr_doc_idx")
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_postings'`, 0)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_jgr_doc_idx_posting_chunks'`, 1)
-	if got := queryBenchmarkString(t, ctx, conn, `SELECT indexdef FROM pg_catalog.pg_indexes WHERE tablename = 'jgr' AND indexname = 'jgr_doc_idx'`); got != "CREATE INDEX jgr_doc_idx ON public.jgr USING gin (doc jsonb_ops)" {
-		t.Fatalf("unexpected JSONB GIN index definition after REINDEX: %s", got)
-	}
-	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 2)
-
-	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr VALUES (4, '{"tags":["vip"],"status":"open","payload":{"category":"cat-3"}}')`)
-	assertCountResult(t, ctx, conn, `SELECT count(id) FROM jgr WHERE doc @> '{"tags":["vip"]}'`, 3)
-}
-
-func TestJsonbGinReindexV1ToV2ValidationFailureKeepsV1(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "1")
-	ctx, conn, controller := CreateServer(t, "postgres")
-	t.Cleanup(func() {
-		conn.Close(ctx)
-		controller.Stop()
-		if err := controller.WaitForStop(); err != nil {
-			t.Fatalf("error stopping test server: %v", err)
-		}
-	})
-
-	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jgr_fail (id INTEGER PRIMARY KEY, doc JSONB NOT NULL)")
-	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jgr_fail VALUES
-		(1, '{"tags":["vip"],"status":"open"}'),
-		(2, '{"tags":["vip","archived"],"status":"open"}'),
-		(3, '{"tags":["standard"],"status":"closed"}')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jgr_fail_doc_idx ON jgr_fail USING gin (doc)")
-	execBenchmarkSQL(t, ctx, conn, `DELETE FROM dg_gin_jgr_fail_jgr_fail_doc_idx_postings
-WHERE row_id = (SELECT row_id FROM dg_gin_jgr_fail_jgr_fail_doc_idx_postings LIMIT 1)`)
-
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
-	assertQueryErrorContains(t, ctx, conn, "REINDEX INDEX jgr_fail_doc_idx", "JSONB GIN REINDEX validation failed")
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_fail_jgr_fail_doc_idx_postings'`, 1)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM pg_catalog.pg_class WHERE relname = 'dg_gin_jgr_fail_jgr_fail_doc_idx_posting_chunks'`, 0)
-	if got := queryBenchmarkString(t, ctx, conn, `SELECT indexdef FROM pg_catalog.pg_indexes WHERE tablename = 'jgr_fail' AND indexname = 'jgr_fail_doc_idx'`); got != "CREATE INDEX jgr_fail_doc_idx ON public.jgr_fail USING gin (doc jsonb_ops)" {
-		t.Fatalf("unexpected JSONB GIN index definition after failed REINDEX: %s", got)
-	}
-}
-
-func assertQueryErrorContains(t *testing.T, ctx context.Context, conn *Connection, query string, expected string) {
-	t.Helper()
-	_, err := conn.Exec(ctx, query)
-	if err == nil {
-		t.Fatalf("expected query to fail with %q\nquery: %s", expected, query)
-	}
-	if !strings.Contains(err.Error(), expected) {
-		t.Fatalf("expected query error to contain %q, got %q\nquery: %s", expected, err.Error(), query)
-	}
-}
-
-func TestJsonbGinV2PostingChunkLookupGate(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+func TestJsonbGinPostingChunkLookupGate(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "PostgreSQL jsonb gin v2 indexed lookup and recheck",
+			Name: "PostgreSQL jsonb gin indexed lookup and recheck",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_lookup VALUES
+				"CREATE TABLE jsonb_gin_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_lookup VALUES
 						(1, '{"a":1,"b":2,"tags":["x"],"nested":{"a":9}}'),
 						(2, '{"a":1,"b":3,"tags":["y"]}'),
 						(3, '{"a":2,"b":2,"tags":["x"]}'),
 						(4, '{"nested":{"a":1},"tags":["z"]}'),
 						(5, '{"a":null,"tags":["x"]}');`,
-				"CREATE INDEX jsonb_gin_v2_lookup_idx ON jsonb_gin_v2_lookup USING gin (doc);",
+				"CREATE INDEX jsonb_gin_lookup_idx ON jsonb_gin_lookup USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `EXPLAIN SELECT id FROM jsonb_gin_v2_lookup
+					Query: `EXPLAIN SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
 ORDER BY id;`,
 					Expected: []sql.Row{
 						{"Project"},
-						{" ├─ columns: [jsonb_gin_v2_lookup.id]"},
-						{" └─ Sort(jsonb_gin_v2_lookup.id ASC)"},
+						{" ├─ columns: [jsonb_gin_lookup.id]"},
+						{" └─ Sort(jsonb_gin_lookup.id ASC)"},
 						{"     └─ Filter"},
-						{`         ├─ jsonb_gin_v2_lookup.doc @> '{"a":1}'`},
-						{"         └─ IndexedTableAccess(jsonb_gin_v2_lookup)"},
+						{`         ├─ jsonb_gin_lookup.doc @> '{"a":1}'`},
+						{"         └─ IndexedTableAccess(jsonb_gin_lookup)"},
 						{"             ├─ index: [jsonb_gin(doc)]"},
-						{"             ├─ filters: [{[jsonb_gin_v2_lookup_idx intersect 2 token(s), jsonb_gin_v2_lookup_idx intersect 2 token(s)]}]"},
+						{"             ├─ filters: [{[jsonb_gin_lookup_idx intersect 2 token(s), jsonb_gin_lookup_idx intersect 2 token(s)]}]"},
 						{"             └─ columns: [id doc]"},
 					},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_lookup
+					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}},
 				},
 				{
-					Query: `SELECT count(*) FROM jsonb_gin_v2_lookup
+					Query: `SELECT count(*) FROM jsonb_gin_lookup
 WHERE doc @> '{"a":1}';`,
 					Expected: []sql.Row{{2}},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_lookup
+					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc @> '{"nested":{"a":1}}'
 ORDER BY id;`,
 					Expected: []sql.Row{{4}},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_lookup
+					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ? 'a'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}, {3}, {5}},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_lookup
+					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ?| ARRAY['missing','a']
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}, {3}, {5}},
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_lookup
+					Query: `SELECT id FROM jsonb_gin_lookup
 WHERE doc ?& ARRAY['a','tags']
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}, {3}, {5}},
@@ -360,18 +278,18 @@ ORDER BY id;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 path ops indexed lookup",
+			Name: "PostgreSQL jsonb gin path ops indexed lookup",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_path_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_path_lookup VALUES
+				"CREATE TABLE jsonb_gin_path_lookup (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_path_lookup VALUES
 						(1, '{"a":{"b":1},"tags":["x"]}'),
 						(2, '{"a":{"b":2},"tags":["x"]}'),
 						(3, '{"a":{"c":1},"tags":["y"]}');`,
-				"CREATE INDEX jsonb_gin_v2_path_lookup_idx ON jsonb_gin_v2_path_lookup USING gin (doc jsonb_path_ops);",
+				"CREATE INDEX jsonb_gin_path_lookup_idx ON jsonb_gin_path_lookup USING gin (doc jsonb_path_ops);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_path_lookup
+					Query: `SELECT id FROM jsonb_gin_path_lookup
 WHERE doc @> '{"a":{"b":1}}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}},
@@ -379,18 +297,18 @@ ORDER BY id;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 fallback row-reference lookup",
+			Name: "PostgreSQL jsonb gin fallback row-reference lookup",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_fallback_lookup (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_fallback_lookup VALUES
+				"CREATE TABLE jsonb_gin_fallback_lookup (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_fallback_lookup VALUES
 						(1.1, '{"a":1,"tags":["x"]}'),
 						(2.2, '{"a":1,"tags":["y"]}'),
 						(3.3, '{"a":2,"tags":["x"]}');`,
-				"CREATE INDEX jsonb_gin_v2_fallback_lookup_idx ON jsonb_gin_v2_fallback_lookup USING gin (doc);",
+				"CREATE INDEX jsonb_gin_fallback_lookup_idx ON jsonb_gin_fallback_lookup USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id::text FROM jsonb_gin_v2_fallback_lookup
+					Query: `SELECT id::text FROM jsonb_gin_fallback_lookup
 WHERE doc @> '{"a":1}'
 ORDER BY id;`,
 					Expected: []sql.Row{{"1.1"}, {"2.2"}},
@@ -400,55 +318,54 @@ ORDER BY id;`,
 	})
 }
 
-func TestJsonbGinV2PostingChunkDMLGate(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+func TestJsonbGinPostingChunkDMLGate(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "PostgreSQL jsonb gin v2 posting chunk DML maintenance",
+			Name: "PostgreSQL jsonb gin posting chunk DML maintenance",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_dml (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_dml VALUES
+				"CREATE TABLE jsonb_gin_dml (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_dml VALUES
 					(1, '{"tags":["vip"],"status":"open"}'),
 					(2, '{"tags":["standard"],"status":"open"}');`,
-				"CREATE INDEX jsonb_gin_v2_dml_idx ON jsonb_gin_v2_dml USING gin (doc);",
+				"CREATE INDEX jsonb_gin_dml_idx ON jsonb_gin_dml USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `INSERT INTO jsonb_gin_v2_dml VALUES
+					Query: `INSERT INTO jsonb_gin_dml VALUES
 						(3, '{"tags":["vip","archived"],"status":"closed"}');`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {3}},
 				},
 				{
-					Query: `UPDATE jsonb_gin_v2_dml
+					Query: `UPDATE jsonb_gin_dml
 SET doc = '{"tags":["vip"],"status":"open"}'
 WHERE id = 2;`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}, {3}},
 				},
 				{
-					Query: "DELETE FROM jsonb_gin_v2_dml WHERE id = 1;",
+					Query: "DELETE FROM jsonb_gin_dml WHERE id = 1;",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{2}, {3}},
 				},
 				{
-					Query:       `INSERT INTO jsonb_gin_v2_dml VALUES (2, '{"tags":["vip"],"status":"duplicate"}');`,
+					Query:       `INSERT INTO jsonb_gin_dml VALUES (2, '{"tags":["vip"],"status":"duplicate"}');`,
 					ExpectedErr: "duplicate",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"duplicate"}'
 ORDER BY id;`,
 					Expected: []sql.Row{},
@@ -457,11 +374,11 @@ ORDER BY id;`,
 					Query: "BEGIN;",
 				},
 				{
-					Query: `INSERT INTO jsonb_gin_v2_dml VALUES
+					Query: `INSERT INTO jsonb_gin_dml VALUES
 						(4, '{"tags":["vip"],"status":"rolled-back"}');`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"rolled-back"}'
 ORDER BY id;`,
 					Expected: []sql.Row{{4}},
@@ -470,7 +387,7 @@ ORDER BY id;`,
 					Query: "ROLLBACK;",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_dml
+					Query: `SELECT id FROM jsonb_gin_dml
 WHERE doc @> '{"status":"rolled-back"}'
 ORDER BY id;`,
 					Expected: []sql.Row{},
@@ -478,31 +395,31 @@ ORDER BY id;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 fallback primary key DML maintenance",
+			Name: "PostgreSQL jsonb gin fallback primary key DML maintenance",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_numeric_dml (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_numeric_dml VALUES
+				"CREATE TABLE jsonb_gin_numeric_dml (id NUMERIC PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_numeric_dml VALUES
 					(1.1, '{"tags":["vip"],"status":"open"}'),
 					(2.2, '{"tags":["standard"],"status":"open"}');`,
-				"CREATE INDEX jsonb_gin_v2_numeric_dml_idx ON jsonb_gin_v2_numeric_dml USING gin (doc);",
+				"CREATE INDEX jsonb_gin_numeric_dml_idx ON jsonb_gin_numeric_dml USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `UPDATE jsonb_gin_v2_numeric_dml
+					Query: `UPDATE jsonb_gin_numeric_dml
 SET doc = '{"tags":["vip"],"status":"closed"}'
 WHERE id = 2.2;`,
 				},
 				{
-					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_dml
+					Query: `SELECT id::text FROM jsonb_gin_numeric_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{"1.1"}, {"2.2"}},
 				},
 				{
-					Query: "DELETE FROM jsonb_gin_v2_numeric_dml WHERE id = 1.1;",
+					Query: "DELETE FROM jsonb_gin_numeric_dml WHERE id = 1.1;",
 				},
 				{
-					Query: `SELECT id::text FROM jsonb_gin_v2_numeric_dml
+					Query: `SELECT id::text FROM jsonb_gin_numeric_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{"2.2"}},
@@ -510,31 +427,31 @@ ORDER BY id;`,
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 no primary key DML maintenance",
+			Name: "PostgreSQL jsonb gin no primary key DML maintenance",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_no_pk_dml (id INTEGER NOT NULL, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_no_pk_dml VALUES
+				"CREATE TABLE jsonb_gin_no_pk_dml (id INTEGER NOT NULL, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_no_pk_dml VALUES
 					(1, '{"tags":["vip"],"status":"open"}'),
 					(2, '{"tags":["standard"],"status":"open"}');`,
-				"CREATE INDEX jsonb_gin_v2_no_pk_dml_idx ON jsonb_gin_v2_no_pk_dml USING gin (doc);",
+				"CREATE INDEX jsonb_gin_no_pk_dml_idx ON jsonb_gin_no_pk_dml USING gin (doc);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `UPDATE jsonb_gin_v2_no_pk_dml
+					Query: `UPDATE jsonb_gin_no_pk_dml
 SET doc = '{"tags":["vip"],"status":"closed"}'
 WHERE id = 2;`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_no_pk_dml
+					Query: `SELECT id FROM jsonb_gin_no_pk_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}, {2}},
 				},
 				{
-					Query: "DELETE FROM jsonb_gin_v2_no_pk_dml WHERE id = 1;",
+					Query: "DELETE FROM jsonb_gin_no_pk_dml WHERE id = 1;",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_no_pk_dml
+					Query: `SELECT id FROM jsonb_gin_no_pk_dml
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{2}},
@@ -544,30 +461,29 @@ ORDER BY id;`,
 	})
 }
 
-func TestJsonbGinV2PostingChunkRootSemantics(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
+func TestJsonbGinPostingChunkRootSemantics(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "PostgreSQL jsonb gin v2 posting chunk Dolt root semantics",
+			Name: "PostgreSQL jsonb gin posting chunk Dolt root semantics",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_root (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_root VALUES
+				"CREATE TABLE jsonb_gin_root (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_root VALUES
 					(1, '{"tags":["vip"],"status":"open"}'),
 					(2, '{"tags":["standard"],"status":"open"}');`,
-				"CREATE INDEX jsonb_gin_v2_root_idx ON jsonb_gin_v2_root USING gin (doc);",
-				"SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin root');",
+				"CREATE INDEX jsonb_gin_root_idx ON jsonb_gin_root USING gin (doc);",
+				"SELECT DOLT_COMMIT('-Am', 'initial jsonb gin root');",
 				"SELECT DOLT_BRANCH('feature');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{1}},
 				},
 				{
 					Query: `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
-FROM dg_gin_jsonb_gin_v2_root_jsonb_gin_v2_root_idx_posting_chunks;`,
+FROM dg_gin_jsonb_gin_root_jsonb_gin_root_idx_posting_chunks;`,
 					Expected: []sql.Row{{"t"}},
 				},
 				{
@@ -575,17 +491,17 @@ FROM dg_gin_jsonb_gin_v2_root_jsonb_gin_v2_root_idx_posting_chunks;`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+					Query: `INSERT INTO jsonb_gin_root VALUES
 						(3, '{"tags":["vip","feature"],"status":"feature"}');`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["feature"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{3}},
 				},
 				{
-					Query:            "SELECT DOLT_COMMIT('-Am', 'feature v2 jsonb gin root');",
+					Query:            "SELECT DOLT_COMMIT('-Am', 'feature jsonb gin root');",
 					SkipResultsCheck: true,
 				},
 				{
@@ -593,17 +509,17 @@ ORDER BY id;`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["feature"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{},
 				},
 				{
-					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+					Query: `INSERT INTO jsonb_gin_root VALUES
 						(4, '{"tags":["main"],"status":"main"}');`,
 				},
 				{
-					Query:            "SELECT DOLT_COMMIT('-Am', 'main v2 jsonb gin root');",
+					Query:            "SELECT DOLT_COMMIT('-Am', 'main jsonb gin root');",
 					SkipResultsCheck: true,
 				},
 				{
@@ -611,7 +527,7 @@ ORDER BY id;`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["main"]}' OR doc @> '{"tags":["feature"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{3}, {4}},
@@ -620,11 +536,11 @@ ORDER BY id;`,
 					Query: "BEGIN;",
 				},
 				{
-					Query: `INSERT INTO jsonb_gin_v2_root VALUES
+					Query: `INSERT INTO jsonb_gin_root VALUES
 						(5, '{"tags":["rolled_back"],"status":"temporary"}');`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["rolled_back"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{5}},
@@ -633,63 +549,63 @@ ORDER BY id;`,
 					Query: "ROLLBACK;",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["rolled_back"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{},
 				},
 				{
-					Query: `UPDATE jsonb_gin_v2_root
+					Query: `UPDATE jsonb_gin_root
 SET doc = '{"tags":["vip","updated"],"status":"updated"}'
 WHERE id = 2;`,
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["updated"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{2}},
 				},
 				{
-					Query: "DELETE FROM jsonb_gin_v2_root WHERE id = 1;",
+					Query: "DELETE FROM jsonb_gin_root WHERE id = 1;",
 				},
 				{
-					Query: `SELECT id FROM jsonb_gin_v2_root
+					Query: `SELECT id FROM jsonb_gin_root
 WHERE doc @> '{"tags":["vip"]}'
 ORDER BY id;`,
 					Expected: []sql.Row{{2}, {3}},
 				},
 				{
-					Query: "DROP INDEX jsonb_gin_v2_root_idx;",
+					Query: "DROP INDEX jsonb_gin_root_idx;",
 				},
 				{
 					Query: `SELECT COUNT(*) FROM pg_catalog.pg_class
-WHERE relname = 'dg_gin_jsonb_gin_v2_root_jsonb_gin_v2_root_idx_posting_chunks';`,
+WHERE relname = 'dg_gin_jsonb_gin_root_jsonb_gin_root_idx_posting_chunks';`,
 					Expected: []sql.Row{{0}},
 				},
 			},
 		},
 		{
-			Name: "PostgreSQL jsonb gin v2 posting chunk conflicting merge remains table conflict",
+			Name: "PostgreSQL jsonb gin posting chunk conflicting merge remains table conflict",
 			SetUpScript: []string{
-				"CREATE TABLE jsonb_gin_v2_root_conflict (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
-				`INSERT INTO jsonb_gin_v2_root_conflict VALUES
+				"CREATE TABLE jsonb_gin_root_conflict (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);",
+				`INSERT INTO jsonb_gin_root_conflict VALUES
 					(1, '{"tags":["vip"],"status":"open"}');`,
-				"CREATE INDEX jsonb_gin_v2_root_conflict_idx ON jsonb_gin_v2_root_conflict USING gin (doc);",
-				"SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin root conflict');",
-				"SELECT DOLT_BRANCH('jsonb_gin_v2_conflict');",
+				"CREATE INDEX jsonb_gin_root_conflict_idx ON jsonb_gin_root_conflict USING gin (doc);",
+				"SELECT DOLT_COMMIT('-Am', 'initial jsonb gin root conflict');",
+				"SELECT DOLT_BRANCH('jsonb_gin_conflict');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:            "SELECT DOLT_CHECKOUT('jsonb_gin_v2_conflict');",
+					Query:            "SELECT DOLT_CHECKOUT('jsonb_gin_conflict');",
 					SkipResultsCheck: true,
 				},
 				{
-					Query: `UPDATE jsonb_gin_v2_root_conflict
+					Query: `UPDATE jsonb_gin_root_conflict
 SET doc = '{"tags":["vip","feature"],"status":"feature"}'
 WHERE id = 1;`,
 				},
 				{
-					Query:            "SELECT DOLT_COMMIT('-Am', 'feature v2 jsonb gin root conflict');",
+					Query:            "SELECT DOLT_COMMIT('-Am', 'feature jsonb gin root conflict');",
 					SkipResultsCheck: true,
 				},
 				{
@@ -697,16 +613,16 @@ WHERE id = 1;`,
 					SkipResultsCheck: true,
 				},
 				{
-					Query: `UPDATE jsonb_gin_v2_root_conflict
+					Query: `UPDATE jsonb_gin_root_conflict
 SET doc = '{"tags":["vip","main"],"status":"main"}'
 WHERE id = 1;`,
 				},
 				{
-					Query:            "SELECT DOLT_COMMIT('-Am', 'main v2 jsonb gin root conflict');",
+					Query:            "SELECT DOLT_COMMIT('-Am', 'main jsonb gin root conflict');",
 					SkipResultsCheck: true,
 				},
 				{
-					Query:       "SELECT DOLT_MERGE('jsonb_gin_v2_conflict');",
+					Query:       "SELECT DOLT_MERGE('jsonb_gin_conflict');",
 					ExpectedErr: "Merge conflict detected",
 				},
 			},
@@ -714,9 +630,7 @@ WHERE id = 1;`,
 	})
 }
 
-func TestJsonbGinV2PostingChunkReopenRootSemantics(t *testing.T) {
-	t.Setenv("DOLTGRES_JSONB_GIN_POSTING_STORAGE_VERSION", "2")
-
+func TestJsonbGinPostingChunkReopenRootSemantics(t *testing.T) {
 	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
 	if err != nil {
 		t.Fatalf("creating temp database directory: %v", err)
@@ -728,18 +642,18 @@ func TestJsonbGinV2PostingChunkReopenRootSemantics(t *testing.T) {
 		t.Fatalf("finding empty port: %v", err)
 	}
 	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
-	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_v2_reopen (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);")
-	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_v2_reopen VALUES
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE jsonb_gin_reopen (id INTEGER PRIMARY KEY, doc JSONB NOT NULL);")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_reopen VALUES
 		(1, '{"tags":["vip"],"status":"open"}'),
 		(2, '{"tags":["standard"],"status":"open"}');`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_v2_reopen_idx ON jsonb_gin_v2_reopen USING gin (doc);")
-	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX jsonb_gin_reopen_idx ON jsonb_gin_reopen USING gin (doc);")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
 	if got := queryBenchmarkString(t, ctx, conn, `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
-FROM dg_gin_jsonb_gin_v2_reopen_jsonb_gin_v2_reopen_idx_posting_chunks`); got != "t" {
+FROM dg_gin_jsonb_gin_reopen_jsonb_gin_reopen_idx_posting_chunks`); got != "t" {
 		t.Fatalf("expected posting chunk sidecar rows before restart, got %q", got)
 	}
-	execBenchmarkSQL(t, ctx, conn, "SELECT DOLT_COMMIT('-Am', 'initial v2 jsonb gin reopen');")
+	execBenchmarkSQL(t, ctx, conn, "SELECT DOLT_COMMIT('-Am', 'initial jsonb gin reopen');")
 	conn.Close(ctx)
 	controller.Stop()
 	controller.WaitForStop()
@@ -755,15 +669,15 @@ FROM dg_gin_jsonb_gin_v2_reopen_jsonb_gin_v2_reopen_idx_posting_chunks`); got !=
 		controller.WaitForStop()
 	}()
 
-	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_reopen WHERE doc @> '{"tags":["vip"]}'`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_reopen WHERE doc @> '{"tags":["vip"]}'`, 1)
 	if got := queryBenchmarkString(t, ctx, conn, `SELECT CASE WHEN COUNT(*) > 0 THEN 't' ELSE 'f' END
-FROM dg_gin_jsonb_gin_v2_reopen_jsonb_gin_v2_reopen_idx_posting_chunks`); got != "t" {
+FROM dg_gin_jsonb_gin_reopen_jsonb_gin_reopen_idx_posting_chunks`); got != "t" {
 		t.Fatalf("expected posting chunk sidecar rows after restart, got %q", got)
 	}
-	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_v2_reopen VALUES
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO jsonb_gin_reopen VALUES
 		(3, '{"tags":["after_reopen"],"status":"open"}');`)
-	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_v2_reopen WHERE doc @> '{"tags":["after_reopen"]}'`, 1)
+	assertCountResult(t, ctx, conn, `SELECT count(*) FROM jsonb_gin_reopen WHERE doc @> '{"tags":["after_reopen"]}'`, 1)
 }
 
 func TestBasicIndexing(t *testing.T) {
@@ -3345,19 +3259,19 @@ ORDER BY c.relname;`,
 					Query: "CREATE INDEX jsonb_gin_backfill_idx ON jsonb_gin_backfill USING gin (doc);",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_postings;`,
-					Expected: []sql.Row{{12, 2}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(12), "t", "t"}},
 				},
 				{
-					Query: `SELECT token, COUNT(*)
-FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_postings
+					Query: `SELECT token, SUM(row_count)
+FROM dg_gin_jsonb_gin_backfill_jsonb_gin_backfill_idx_posting_chunks
 WHERE token IN ('9:jsonb_ops3:key1:01:a', '9:jsonb_ops3:key1:01:x')
 GROUP BY token
 ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:a", 2},
-						{"9:jsonb_ops3:key1:01:x", 1},
+						{"9:jsonb_ops3:key1:01:a", float64(2)},
+						{"9:jsonb_ops3:key1:01:x", float64(1)},
 					},
 				},
 			},
@@ -3376,9 +3290,9 @@ ORDER BY token;`,
 						(2, '{"a":2,"tags":["y","y"]}');`,
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
-					Expected: []sql.Row{{8, 2}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(8), "t", "t"}},
 				},
 				{
 					Query: `UPDATE jsonb_gin_dml
@@ -3386,22 +3300,22 @@ SET doc = '{"a":3,"tags":["z"]}'
 WHERE id = 1;`,
 				},
 				{
-					Query: `SELECT token, COUNT(*)
-FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings
+					Query: `SELECT token, SUM(row_count)
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks
 WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
 GROUP BY token
 ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:z", 1},
+						{"9:jsonb_ops3:key1:01:z", float64(1)},
 					},
 				},
 				{
 					Query: "DELETE FROM jsonb_gin_dml WHERE id = 2;",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
-					Expected: []sql.Row{{4, 1}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(4), "t", "t"}},
 				},
 			},
 		},
@@ -3422,17 +3336,17 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 							(2, '{"a":2,"tags":["y","y"]}');`,
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
-					Expected: []sql.Row{{8, 2}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(8), "t", "t"}},
 				},
 				{
 					Query: "ROLLBACK;",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
-					Expected: []sql.Row{{4, 1}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(4), "t", "t"}},
 				},
 				{
 					Query: "BEGIN;",
@@ -3443,26 +3357,26 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 	WHERE id = 1;`,
 				},
 				{
-					Query: `SELECT token, COUNT(*)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings
+					Query: `SELECT token, SUM(row_count)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks
 	WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
 	GROUP BY token
 	ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:z", 1},
+						{"9:jsonb_ops3:key1:01:z", float64(1)},
 					},
 				},
 				{
 					Query: "ROLLBACK;",
 				},
 				{
-					Query: `SELECT token, COUNT(*)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings
+					Query: `SELECT token, SUM(row_count)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks
 	WHERE token IN ('9:jsonb_ops3:key1:01:x', '9:jsonb_ops3:key1:01:z')
 	GROUP BY token
 	ORDER BY token;`,
 					Expected: []sql.Row{
-						{"9:jsonb_ops3:key1:01:x", 1},
+						{"9:jsonb_ops3:key1:01:x", float64(1)},
 					},
 				},
 				{
@@ -3472,17 +3386,17 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 					Query: "DELETE FROM jsonb_gin_txn WHERE id = 1;",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
-					Expected: []sql.Row{{0, 0}},
+					Query: `SELECT COALESCE(SUM(row_count), 0), COUNT(*)
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(0), 0}},
 				},
 				{
 					Query: "ROLLBACK;",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_postings;`,
-					Expected: []sql.Row{{4, 1}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+	FROM dg_gin_jsonb_gin_txn_jsonb_gin_txn_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(4), "t", "t"}},
 				},
 			},
 		},
@@ -3503,24 +3417,24 @@ FROM dg_gin_jsonb_gin_dml_jsonb_gin_dml_idx_postings;`,
 						(2, '{"a":2,"tags":["y","y"]}');`,
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
-					Expected: []sql.Row{{8, 2}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(8), "t", "t"}},
 				},
 				{
 					Query: "DROP INDEX jsonb_gin_lifecycle_renamed_idx;",
 				},
 				{
-					Query:       "SELECT COUNT(*) FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;",
+					Query:       "SELECT COUNT(*) FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;",
 					ExpectedErr: "table not found",
 				},
 				{
 					Query: "CREATE INDEX jsonb_gin_lifecycle_idx ON jsonb_gin_lifecycle USING gin (doc);",
 				},
 				{
-					Query: `SELECT COUNT(*), COUNT(DISTINCT row_id)
-FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_postings;`,
-					Expected: []sql.Row{{8, 2}},
+					Query: `SELECT SUM(row_count), COUNT(payload) > 0, COUNT(checksum) > 0
+FROM dg_gin_jsonb_gin_lifecycle_jsonb_gin_lifecycle_idx_posting_chunks;`,
+					Expected: []sql.Row{{float64(8), "t", "t"}},
 				},
 			},
 		},

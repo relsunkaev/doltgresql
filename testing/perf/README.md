@@ -7,8 +7,8 @@ benchmarks from `testing/go/index_paired_benchmark_test.go`.
 The suite starts one local Doltgres process and one PostgreSQL 18 Docker
 container, runs every Sysbench case against both, appends the paired btree and
 JSONB GIN index benchmarks, and writes a Markdown report, CSV, and raw logs
-under `.local_benchmarks/`. The JSONB GIN paired output includes Doltgres v1,
-Doltgres v2, and PostgreSQL 18 timings for build, lookup, and DML buckets.
+under `.local_benchmarks/`. The JSONB GIN paired output includes Doltgres and
+PostgreSQL 18 timings for build, lookup, and DML buckets.
 
 ```sh
 testing/perf/run_local_full_benchmarks.sh

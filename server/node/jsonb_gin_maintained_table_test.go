@@ -309,6 +309,24 @@ func TestJsonbGinPostingCandidateFromRowReference(t *testing.T) {
 
 	ranges := primaryKeyRanges(candidate.key, keyTypes)
 	require.Len(t, ranges, 2)
+
+	numericKeyTypes := []sql.ColumnExpressionType{
+		{Expression: "docs.id", Type: pgtypes.Numeric},
+	}
+	numericRef, err := jsonbGinPostingRowReference(ctx, sql.Schema{
+		{Name: "id", Type: pgtypes.Numeric, PrimaryKey: true},
+		{Name: "doc", Type: pgtypes.JsonB},
+	}, sql.Row{decimal.RequireFromString("42.50"), pgtypes.JsonDocument{}})
+	require.NoError(t, err)
+	require.Equal(t, jsonbgin.RowReferenceKindOrdered, numericRef.Kind)
+
+	numericCandidate, err := jsonbGinPostingCandidateFromRowReference(ctx, "numeric/ref", numericKeyTypes, numericRef.Bytes)
+	require.NoError(t, err)
+	require.Equal(t, "numeric/ref", numericCandidate.rowID)
+	require.Len(t, numericCandidate.key, 1)
+	cmp, err := pgtypes.Numeric.Compare(ctx, decimal.RequireFromString("42.5"), numericCandidate.key[0])
+	require.NoError(t, err)
+	require.Zero(t, cmp)
 }
 
 func TestJsonbGinPostingCandidateFromOpaqueRowReference(t *testing.T) {
@@ -493,38 +511,38 @@ func TestMaterializePostingChunkRowsForAppendedDMLSplitsAndDeduplicates(t *testi
 	requirePostingChunkRow(t, ctx, rows[2], rows[2][1].(int64), []int32{5})
 }
 
-func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
+func TestJsonbGinMaintainingEditorMaintainsMixedLegacyAndChunkIndexes(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tableSchema := jsonbGinPostingStorageBaseSchema()
 	primary := &countingRowInserter{}
-	v1Editor := &recordingPostingEditor{}
-	v2Editor := &recordingPostingEditor{}
+	legacyEditor := &recordingPostingEditor{}
+	chunkEditor := &recordingPostingEditor{}
 	editor := &jsonbGinMaintainingEditor{
 		tableSchema:        tableSchema,
 		primaryKeyOrdinals: primaryKeyOrdinals(tableSchema),
 		primary:            primary,
 		postings: []jsonbGinPostingEditor{{
 			index: JsonbGinMaintainedIndex{
-				Name:                  "docs_doc_v1_idx",
+				Name:                  "docs_doc_legacy_idx",
 				ColumnName:            "doc",
 				ColumnIndex:           1,
 				OpClass:               indexmetadata.OpClassJsonbOps,
-				PostingTable:          "docs_doc_v1_postings",
-				PostingStorageVersion: indexmetadata.GinPostingStorageVersionV1,
+				PostingTable:          "docs_doc_legacy_postings",
+				PostingStorageVersion: indexmetadata.GinPostingStorageLegacy,
 			},
-			editor: v1Editor,
+			editor: legacyEditor,
 		}},
 		postingChunks: []jsonbGinPostingChunkEditor{{
 			index: JsonbGinMaintainedIndex{
-				Name:                  "docs_doc_v2_idx",
+				Name:                  "docs_doc_chunk_idx",
 				ColumnName:            "doc",
 				ColumnIndex:           1,
 				OpClass:               indexmetadata.OpClassJsonbOps,
-				PostingChunkTable:     "docs_doc_v2_posting_chunks",
-				PostingStorageVersion: indexmetadata.GinPostingStorageVersionV2,
+				PostingChunkTable:     "docs_doc_chunk_posting_chunks",
+				PostingStorageVersion: indexmetadata.GinPostingStorageChunked,
 			},
 			table:  &fakePostingTable{},
-			editor: v2Editor,
+			editor: chunkEditor,
 		}},
 	}
 
@@ -533,9 +551,9 @@ func TestJsonbGinMaintainingEditorMaintainsMixedV1V2Indexes(t *testing.T) {
 	require.NoError(t, editor.StatementComplete(ctx))
 
 	require.Equal(t, 1, primary.count)
-	require.NotEmpty(t, v1Editor.inserted)
-	require.NotEmpty(t, v2Editor.inserted)
-	require.Len(t, v2Editor.inserted[0], 8)
+	require.NotEmpty(t, legacyEditor.inserted)
+	require.NotEmpty(t, chunkEditor.inserted)
+	require.Len(t, chunkEditor.inserted[0], 8)
 }
 
 func TestJsonbGinLookupTokenCacheCopiesTokens(t *testing.T) {
@@ -654,40 +672,14 @@ func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
 
 	metadata := create.indexMetadata()
 	require.NotNil(t, metadata.Gin)
-	require.Equal(t, indexmetadata.GinPostingStorageVersionV1, metadata.Gin.PostingStorageVersion)
-	require.Equal(t, jsonbgin.PostingTableName("docs", "docs_doc_idx"), metadata.Gin.PostingTable)
-	require.Empty(t, metadata.Gin.PostingChunkTable)
-}
-
-func TestCreateJsonbGinIndexV2PostingStorageFeatureGate(t *testing.T) {
-	t.Setenv(jsonbGinPostingStorageVersionEnv, "2")
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
-
-	metadata := create.indexMetadata()
-	require.NotNil(t, metadata.Gin)
-	require.Equal(t, indexmetadata.GinPostingStorageVersionV2, metadata.Gin.PostingStorageVersion)
+	require.Equal(t, indexmetadata.GinPostingStorageChunked, metadata.Gin.PostingStorageVersion)
 	require.Empty(t, metadata.Gin.PostingTable)
 	require.Equal(t, jsonbgin.PostingChunkTableName("docs", "docs_doc_idx"), metadata.Gin.PostingChunkTable)
 }
 
-func TestCreateJsonbGinIndexCreatesV1PostingStorageByDefault(t *testing.T) {
+func TestCreateJsonbGinIndexCreatesPostingChunkStorageByDefault(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
-	creator := &recordingTableCreator{}
-
-	require.NoError(t, create.createPostingStorageTables(ctx, creator, jsonbGinPostingStorageBaseSchema()))
-	require.Len(t, creator.created, 1)
-	require.Equal(t, jsonbgin.PostingTableName("docs", "docs_doc_idx"), creator.created[0].name)
-	require.Equal(t, jsonbGinPostingTableComment, creator.created[0].comment)
-	require.NotEqual(t, -1, creator.created[0].schema.Schema.IndexOfColName("row_id"))
-	require.Equal(t, -1, creator.created[0].schema.Schema.IndexOfColName("chunk_no"))
-}
-
-func TestCreateJsonbGinIndexCreatesV2PostingChunkStorageWhenSelected(t *testing.T) {
-	ctx := sql.NewEmptyContext()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
-	create.postingStorageVersion = indexmetadata.GinPostingStorageVersionV2
-	create.postingChunkName = jsonbgin.PostingChunkTableName("docs", "docs_doc_idx")
 	creator := &recordingTableCreator{}
 
 	require.NoError(t, create.createPostingStorageTables(ctx, creator, jsonbGinPostingStorageBaseSchema()))
@@ -1407,7 +1399,7 @@ func BenchmarkJsonbGinPostingRowsEncodedTokens(b *testing.B) {
 			index := JsonbGinMaintainedIndex{ColumnName: "doc", ColumnIndex: 1, OpClass: opClass}
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				rows, err := editor.postingRows(ctx, index, row)
+				rows, err := editor.postingRows(ctx, index, row, &editor.tokenScratch)
 				if err != nil {
 					b.Fatal(err)
 				}

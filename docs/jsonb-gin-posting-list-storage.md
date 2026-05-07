@@ -1,33 +1,15 @@
 # JSONB GIN posting-list storage design
 
-This document is the next storage target for Doltgres JSONB GIN. It builds on
+This document describes the chunked posting-list storage used by Doltgres JSONB GIN. It builds on
 `docs/jsonb-gin-architecture.md` and the current sidecar bridge implemented by
 `server/node/create_jsonb_gin_index.go`,
 `server/node/jsonb_gin_maintained_table.go`, and the in-memory posting model in
 `server/jsonbgin/posting.go`.
 
-## Current bridge
+## Storage Shape
 
-The current persisted shape is one sidecar row per `(token, row identity)`:
-
-- `token TEXT NOT NULL`
-- `row_id TEXT NOT NULL`
-- one nullable column per base-table primary-key component
-- primary key `(token, row_id)`
-
-This layout is simple and correct. It supports deterministic token lookup,
-union/intersection, rollback through the same statement lifecycle as the base
-write, and direct base-row fetch when the posting row has enough primary-key
-columns and the base table exposes primary-key indexed access.
-
-The bridge is not the final performance layout. Common tokens create many
-sidecar rows, broad-token queries still move large row-id sets through SQL row
-iterators, and DML maintenance performs many row-level posting inserts/deletes.
-
-## Target Layout
-
-The next storage version should store one row per posting-list chunk instead of
-one row per row identity. The sidecar remains a Dolt table so it participates in
+The persisted shape stores one row per posting-list chunk instead of one row per
+row identity. The sidecar remains a Dolt table so it participates in
 branching, merge, rollback, clone, and ordinary root updates.
 
 Suggested table name:
@@ -62,9 +44,9 @@ The row reference must be ordered and fetchable:
 - Tables whose primary key changes during UPDATE: treat the update as delete of
   the old row reference plus insert of the new row reference.
 
-The existing hash `row_id` can remain for v1 compatibility, but v2 should not
-depend on hashes for direct fetch. Hashes are useful for equality membership;
-they are not enough to seek the base row without carrying primary-key values.
+Legacy row-id hashes are useful for equality membership, but chunked posting
+storage should not depend on hashes for direct fetch. They are not enough to
+seek the base row without carrying primary-key values.
 
 ## Payload Encoding
 
@@ -132,25 +114,24 @@ No global mutable cache can be the source of truth.
 - Merge/conflict: chunk rows conflict when two branches edit the same
   `(token, chunk_no)`. The conflict resolver can rebuild the affected token
   posting list from base rows when automatic chunk merge is unsafe.
-- Reset/clone: sidecar tables travel with the root like the current v1 posting
-  table.
+- Reset/clone: sidecar tables travel with the root like ordinary Dolt tables.
 
 ## Compatibility And Migration
 
-Do not break existing v1 sidecar tables.
+Existing legacy sidecar tables can be rebuilt into chunked sidecars.
 
 1. Add durable index metadata `posting_storage_version`.
-2. Keep v1 readers and writers for existing indexes.
-3. Gate v2 creation behind an internal feature flag until benchmark evidence is
-   available.
+2. Keep legacy readers and writers only for migration of existing indexes.
+3. New JSONB GIN indexes create chunked sidecars directly.
 4. Make `REINDEX INDEX` rebuild an index into the current default storage
-   version.
-5. Provide a one-index migration path: create v2 chunks from the base table,
-   validate row counts/token counts against v1, swap metadata, then drop v1.
+   layout.
+5. Provide a one-index migration path: create chunks from the base table,
+   validate row counts/token counts against legacy storage, swap metadata, then
+   drop the old sidecar.
 
 The planner/executor should select a posting reader by storage version. The
 JSONB operator support boundary must not depend on whether the underlying
-posting store is v1 rows or v2 chunks.
+posting store came from a legacy row table or current chunks.
 
 ## Performance Tradeoffs
 
@@ -184,9 +165,9 @@ Prototype in this order:
    references.
 3. Add microbenchmarks for chunk encode/decode, intersection, and union across
    selective, broad, and skewed token distributions.
-4. Add a v2 sidecar build prototype that bulk-materializes sorted chunk rows
+4. Add a sidecar build prototype that bulk-materializes sorted chunk rows
    using the existing `buildSortedPrimaryRowIndex` path.
-5. Compare v1 and v2 with:
+5. Compare Doltgres and PostgreSQL with:
    - `BenchmarkJsonbGinSQLLookup`
    - `BenchmarkJsonbGinIndexBuild`
    - `BenchmarkJsonbGinDMLMaintenance`
@@ -202,5 +183,5 @@ Required measurement buckets:
 - rollback after failed DML
 - branch merge/rebuild of a touched broad token
 
-Do not switch new indexes to v2 by default until lookup and build improve on
-representative workloads without unacceptable DML regression.
+New indexes use chunked posting storage by default; benchmark evidence should
+continue tracking lookup, build, and DML behavior against PostgreSQL.
