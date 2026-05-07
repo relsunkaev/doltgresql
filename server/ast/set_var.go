@@ -25,6 +25,45 @@ import (
 	"github.com/dolthub/doltgresql/server/config"
 )
 
+// setLocalSelect rewrites `SET LOCAL name = value` into the equivalent
+// `SELECT set_config('name', 'value', true)`, which routes through the
+// transaction-scope variable tracker.
+func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
+	if len(node.Values) != 1 {
+		return nil, errors.Errorf("SET LOCAL %s requires exactly one value", node.Name)
+	}
+	valueExpr, err := nodeExpr(ctx, node.Values[0])
+	if err != nil {
+		return nil, err
+	}
+	fullName := node.Name
+	if node.Namespace != "" {
+		fullName = fmt.Sprintf("%s.%s", node.Namespace, node.Name)
+	}
+	// We dispatch through __doltgres_set_config_local(name, value)
+	// rather than the public set_config(name, value, is_local=true)
+	// to avoid materializing a boolean literal in vitess (which
+	// resolves to an integer overload that does not exist for
+	// set_config). The internal function shares its implementation
+	// with set_config and does the same SET LOCAL bookkeeping.
+	return &vitess.Select{
+		SelectExprs: vitess.SelectExprs{
+			&vitess.AliasedExpr{
+				Expr: &vitess.FuncExpr{
+					Name: vitess.NewColIdent("__doltgres_set_config_local"),
+					Exprs: vitess.SelectExprs{
+						&vitess.AliasedExpr{
+							Expr: &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(fullName)},
+						},
+						&vitess.AliasedExpr{Expr: valueExpr},
+					},
+				},
+				As: vitess.NewColIdent("set_config"),
+			},
+		},
+	}, nil
+}
+
 // nodeSetVar handles *tree.SetVar nodes.
 func nodeSetVar(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 	if node == nil {
@@ -42,8 +81,14 @@ func nodeSetVar(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 		return nil, errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, node.Name)
 	}
 	if node.IsLocal {
-		// TODO: takes effect for only the current transaction rather than the current session.
-		return nil, errors.Errorf("SET LOCAL is not yet supported")
+		// PostgreSQL's SET LOCAL writes the variable for the duration
+		// of the surrounding transaction only. We rewrite it into a
+		// SELECT against set_config(name, value, true): the function
+		// records a snapshot of the pre-write value and the wire layer
+		// restores it at transaction end. This deliberately leaves the
+		// command tag as SELECT instead of SET — a tradeoff we accept
+		// to keep the GUC machinery on a single code path.
+		return setLocalSelect(ctx, node)
 	}
 	var expr vitess.Expr
 	var err error

@@ -466,8 +466,12 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		// Drain any outstanding transaction-scope advisory locks before
 		// the session-wide ReleaseAll: we want the in-memory tracker to
 		// stay in sync with the LockSubsystem so it doesn't try to
-		// re-release them later for a reused connection id.
+		// re-release them later for a reused connection id. Also
+		// discard any uncommitted SET LOCAL snapshots tracked on the
+		// session, so the next session reusing the connection id
+		// doesn't see stale rollback state.
 		_ = functions.ReleaseSessionXactLocks(ctx)
+		_ = functions.ReleaseSessionXactVars(ctx)
 		_, err = h.e.LS.ReleaseAll(ctx)
 		if err != nil {
 			logrus.Errorf("unable to release all locks on session close: %s", err)

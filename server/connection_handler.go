@@ -553,20 +553,28 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 // releaseXactAdvisoryLocksIfOutsideTransaction releases every transaction-scope
 // advisory lock the session holds when the wire-protocol transaction has ended
 // (either via COMMIT/ROLLBACK or because we are running in autocommit mode and
-// the previous statement just finished). Mirrors PostgreSQL's automatic
-// release of pg_advisory_xact_lock() at transaction end.
+// the previous statement just finished). Also rolls back transaction-local
+// GUC writes (SET LOCAL / set_config(..., true)). Mirrors PostgreSQL's
+// automatic cleanup at transaction end.
 func (h *ConnectionHandler) releaseXactAdvisoryLocksIfOutsideTransaction() {
 	if h.inTransaction || h.mysqlConn == nil {
 		return
 	}
-	if !functions.HasSessionXactLocks(h.mysqlConn.ConnectionID) {
+	hasLocks := functions.HasSessionXactLocks(h.mysqlConn.ConnectionID)
+	hasVars := functions.HasSessionXactVars(h.mysqlConn.ConnectionID)
+	if !hasLocks && !hasVars {
 		return
 	}
 	ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
 	if err != nil {
 		return
 	}
-	_ = functions.ReleaseSessionXactLocks(ctx)
+	if hasLocks {
+		_ = functions.ReleaseSessionXactLocks(ctx)
+	}
+	if hasVars {
+		_ = functions.ReleaseSessionXactVars(ctx)
+	}
 }
 
 // handleQueryOutsideEngine handles any queries that should be handled by the handler directly, rather than being

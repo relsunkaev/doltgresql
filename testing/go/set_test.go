@@ -8870,4 +8870,172 @@ var setStmts = []ScriptTest{
 			},
 		},
 	},
+	{
+		Name: "set_config with is_local=true reverts at transaction end",
+		Assertions: []ScriptTestAssertion{
+			{
+				// Pre-transaction baseline.
+				Query:    "SELECT current_setting('app.user_id', true);",
+				Expected: []sql.Row{{nil}},
+			},
+			{
+				Query:    "BEGIN;",
+				Expected: []sql.Row{},
+			},
+			{
+				Query:    "SELECT set_config('app.user_id', '42', true);",
+				Expected: []sql.Row{{"42"}},
+			},
+			{
+				// Visible inside the transaction.
+				Query:    "SELECT current_setting('app.user_id');",
+				Expected: []sql.Row{{"42"}},
+			},
+			{
+				Query:    "COMMIT;",
+				Expected: []sql.Row{},
+			},
+			{
+				// PostgreSQL semantics: SET LOCAL reverts on COMMIT.
+				Query:    "SELECT current_setting('app.user_id', true);",
+				Expected: []sql.Row{{nil}},
+			},
+		},
+	},
+	{
+		Name: "set_config with is_local=true reverts on ROLLBACK",
+		Assertions: []ScriptTestAssertion{
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				Query:    "SELECT set_config('app.tenant', 'rolling', true);",
+				Expected: []sql.Row{{"rolling"}},
+			},
+			{
+				Query:    "SELECT current_setting('app.tenant');",
+				Expected: []sql.Row{{"rolling"}},
+			},
+			{Query: "ROLLBACK;", Expected: []sql.Row{}},
+			{
+				Query:    "SELECT current_setting('app.tenant', true);",
+				Expected: []sql.Row{{nil}},
+			},
+		},
+	},
+	{
+		Name: "set_config with is_local=true preserves a prior session-scope value",
+		Assertions: []ScriptTestAssertion{
+			{
+				// Establish a session-scope baseline first.
+				Query:    "SELECT set_config('app.role', 'reader', false);",
+				Expected: []sql.Row{{"reader"}},
+			},
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				// Override transaction-locally; reader was the prior value.
+				Query:    "SELECT set_config('app.role', 'writer', true);",
+				Expected: []sql.Row{{"writer"}},
+			},
+			{
+				Query:    "SELECT current_setting('app.role');",
+				Expected: []sql.Row{{"writer"}},
+			},
+			{Query: "COMMIT;", Expected: []sql.Row{}},
+			{
+				// After COMMIT the original session value is restored.
+				Query:    "SELECT current_setting('app.role');",
+				Expected: []sql.Row{{"reader"}},
+			},
+		},
+	},
+	{
+		Name: "set_config with is_local=true restores to first-seen value across multiple SET LOCALs",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT set_config('app.step', 'baseline', false);",
+				Expected: []sql.Row{{"baseline"}},
+			},
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				Query:    "SELECT set_config('app.step', 'first', true);",
+				Expected: []sql.Row{{"first"}},
+			},
+			{
+				Query:    "SELECT set_config('app.step', 'second', true);",
+				Expected: []sql.Row{{"second"}},
+			},
+			{
+				Query:    "SELECT current_setting('app.step');",
+				Expected: []sql.Row{{"second"}},
+			},
+			{Query: "COMMIT;", Expected: []sql.Row{}},
+			{
+				// Restored to baseline (the value before the transaction
+				// started), not to "first" (an intermediate SET LOCAL).
+				Query:    "SELECT current_setting('app.step');",
+				Expected: []sql.Row{{"baseline"}},
+			},
+		},
+	},
+	{
+		Name: "set_config with is_local=true under autocommit reverts at statement end",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT set_config('app.transient', 'now', true);",
+				Expected: []sql.Row{{"now"}},
+			},
+			{
+				// In autocommit, the transaction ended with the previous
+				// statement, so the variable should already be reverted.
+				Query:    "SELECT current_setting('app.transient', true);",
+				Expected: []sql.Row{{nil}},
+			},
+		},
+	},
+	{
+		// SET LOCAL is rewritten internally to a function call that
+		// shares set_config's lifecycle bookkeeping. pgx returns no
+		// rows for `SET LOCAL` so we skip the result check on those
+		// statements; the lifecycle is still validated by the
+		// surrounding current_setting calls.
+		Name: "SET LOCAL var rolls back at COMMIT",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SELECT set_config('app.local_session', 'baseline', false);",
+				Expected: []sql.Row{{"baseline"}},
+			},
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				Query:            "SET LOCAL app.local_session = 'inside';",
+				SkipResultsCheck: true,
+			},
+			{
+				Query:    "SELECT current_setting('app.local_session');",
+				Expected: []sql.Row{{"inside"}},
+			},
+			{Query: "COMMIT;", Expected: []sql.Row{}},
+			{
+				Query:    "SELECT current_setting('app.local_session');",
+				Expected: []sql.Row{{"baseline"}},
+			},
+		},
+	},
+	{
+		Name: "SET LOCAL var rolls back at ROLLBACK",
+		Assertions: []ScriptTestAssertion{
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				Query:            "SET LOCAL app.audit_actor = 'test-user';",
+				SkipResultsCheck: true,
+			},
+			{
+				Query:    "SELECT current_setting('app.audit_actor');",
+				Expected: []sql.Row{{"test-user"}},
+			},
+			{Query: "ROLLBACK;", Expected: []sql.Row{}},
+			{
+				Query:    "SELECT current_setting('app.audit_actor', true);",
+				Expected: []sql.Row{{nil}},
+			},
+		},
+	},
 }

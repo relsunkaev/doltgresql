@@ -26,42 +26,64 @@ import (
 
 func initSetConfig() {
 	framework.RegisterFunction(set_config_text_text_boolean)
+	framework.RegisterFunction(internal_set_config_local_text_text)
+}
+
+// internal_set_config_local_text_text is the two-argument helper the SET
+// LOCAL AST conversion calls to avoid having to materialize a boolean
+// literal in vitess. Its semantics are exactly set_config(name, value, true).
+var internal_set_config_local_text_text = framework.Function2{
+	Name:               "__doltgres_set_config_local",
+	Return:             pgtypes.Text,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	IsNonDeterministic: true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, settingName any, newValue any) (any, error) {
+		return setConfigLocal(ctx, settingName, newValue, true)
+	},
+}
+
+// setConfigLocal performs the work of set_config(name, value, is_local)
+// with both forms (the public three-argument and internal two-argument
+// helper) sharing one implementation.
+func setConfigLocal(ctx *sql.Context, settingName any, newValue any, isLocal bool) (any, error) {
+	if settingName == nil {
+		return nil, errors.Errorf("NULL value not allowed for configuration setting name")
+	}
+	if newValue == nil {
+		newValue = ""
+	}
+	name := settingName.(string)
+	value := newValue.(string)
+	isUserConfig := strings.Contains(name, ".")
+
+	if isLocal {
+		if err := SnapshotSessionVarBeforeLocalSet(ctx, name, isUserConfig); err != nil {
+			return nil, err
+		}
+	}
+
+	if isUserConfig {
+		if err := ctx.SetUserVariable(ctx, name, value, pgtypes.Text); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := ctx.SetSessionVariable(ctx, name, value); err != nil {
+			return nil, err
+		}
+	}
+
+	return value, nil
 }
 
 // set_config_text_text_boolean implements the set_config() function
 // https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADMIN-SET
 var set_config_text_text_boolean = framework.Function3{
-	Name:       "set_config",
-	Return:     pgtypes.Text,
-	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Bool},
+	Name:               "set_config",
+	Return:             pgtypes.Text,
+	Parameters:         [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Bool},
+	IsNonDeterministic: true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, settingName any, newValue any, isLocal any) (any, error) {
-		if settingName == nil {
-			return nil, errors.Errorf("NULL value not allowed for configuration setting name")
-		}
-
-		// NULL is not supported for configuration values, and gets turned into the empty string
-		if newValue == nil {
-			newValue = ""
-		}
-
-		if isLocal == true {
-			// TODO: If isLocal is true, then the config setting should only persist for the current transaction
-			return nil, errors.Errorf("setting configuration values for the current transaction is not supported yet")
-		}
-
-		// set_config can set system configuration or user configuration. System configuration settings are in top
-		// level settings, while user configuration settings are namespaced.
-		isUserConfig := strings.Contains(settingName.(string), ".")
-		if isUserConfig {
-			if err := ctx.SetUserVariable(ctx, settingName.(string), newValue.(string), pgtypes.Text); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := ctx.SetSessionVariable(ctx, settingName.(string), newValue.(string)); err != nil {
-				return nil, err
-			}
-		}
-
-		return newValue.(string), nil
+		local, _ := isLocal.(bool)
+		return setConfigLocal(ctx, settingName, newValue, local)
 	},
 }
