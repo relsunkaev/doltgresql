@@ -120,16 +120,19 @@ Do not check off an item until it has workload proof:
   NOT NULL` and boolean/active-flag filters.
 - [ ] Expression indexes - prove JSONB-derived and computed-expression
   indexes.
-- [~] `CREATE INDEX CONCURRENTLY` - support or rewrite `CREATE INDEX
-  CONCURRENTLY IF NOT EXISTS` migrations. Implementation landed:
-  CREATE / DROP / REINDEX CONCURRENTLY are silently downgraded to
-  the synchronous build path so migration tooling that emits the
-  keyword (Drizzle Kit, Prisma migrate, Alembic, Rails) does not
-  error. Coverage in testing/go/create_index_concurrently_test.go
-  asserts the round-trip works for plain, UNIQUE, IF NOT EXISTS,
-  multi-column, IF EXISTS drop, REINDEX INDEX, and REINDEX TABLE
-  shapes; residual gap is workload-corpus evidence from a real
-  migration suite (Drizzle Kit / Alembic generated SQL).
+- [x] `CREATE INDEX CONCURRENTLY` - CREATE / DROP / REINDEX
+  CONCURRENTLY are silently downgraded to the synchronous build
+  path so migration tooling that emits the keyword (Drizzle Kit,
+  Prisma migrate, Alembic, Rails) does not error. SQL-level
+  coverage in testing/go/create_index_concurrently_test.go
+  (plain, UNIQUE, IF NOT EXISTS, multi-column, IF EXISTS drop,
+  REINDEX INDEX, REINDEX TABLE). Workload-corpus evidence in
+  testing/go/alembic_concurrently_test.go: the harness installs
+  Alembic + SQLAlchemy + psycopg in a venv and runs a real
+  migration with op.create_index(..., postgresql_concurrently=True)
+  / op.drop_index(..., postgresql_concurrently=True) against a
+  live Doltgres instance, asserting both indexes exist after
+  upgrade and disappear after downgrade.
 - [ ] `INCLUDE` indexes - support index `INCLUDE` columns through dump/restore
   and ORM introspection.
 - [ ] JSONB GIN indexes - prove the supported containment subset and document
@@ -226,18 +229,20 @@ Do not check off an item until it has workload proof:
   TestInsertOnConflictArbiterPredicate, and
   TestInsertOnConflictOnConstraint. Residual gap: full RETURNING /
   affected-row-count parity (a separate completeness item).
-- [~] `FOR UPDATE` row locks - prove row-locking concurrency behavior under
-  contention. Implementation landed: server/ast/locking_clause.go
-  converts FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY SHARE
-  with optional NOWAIT / SKIP LOCKED / OF table-list into the MySQL
-  Lock GMS understands, and server/ast/select.go attaches it to the
-  vitess.Select / SetOp Lock field. GMS treats the clause as advisory
-  for now (buildForUpdateOf only validates table scope), which is
-  serializable-MVCC-safe under Dolt. Coverage in
-  testing/go/select_for_update_test.go's TestSelectForUpdate and
-  TestSelectForUpdateORMShape (pgx-driven read-modify-write).
-  Residual gap: true row-level pessimistic locking under cross-
-  session contention.
+- [x] `FOR UPDATE` row locks - row-level pessimistic locking
+  with cross-session contention. server/ast/locking_clause.go
+  parses FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY
+  SHARE plus NOWAIT / SKIP LOCKED / OF table-list; the new
+  AssignRowLevelLocking analyzer rule wraps every base table in
+  scope with server/node/row_locking_table.go's RowLockingTable.
+  Each row read acquires a transaction-scoped advisory lock on
+  (relationOID, primary-key) so two sessions racing for the same
+  row serialize. NOWAIT raises immediately on contention; SKIP
+  LOCKED elides the held row and continues. Coverage in
+  testing/go/select_for_update_test.go (parsing) and
+  testing/go/select_for_update_contention_test.go: holder/waiter
+  blocking, NOWAIT raises in <250ms on contention, SKIP LOCKED
+  elides the held row, eight-way race serializes correctly.
 - [x] Savepoints - prove nested transaction behavior used by ORM transaction
   helpers. testing/go/savepoints_test.go exercises the wire-protocol
   surface end-to-end (RELEASE / ROLLBACK TO / nested rollback /
@@ -363,14 +368,17 @@ rather than only a Go-level harness.
   and the JDBC-equivalent harness in
   testing/go/jdbc_evidence_test.go which asserts integer_datetimes
   drives binary-timestamp encoding the way JDBC consumes it.
-- [~] `BackendKeyData` + `CancelRequest` - per-connection nonzero
+- [x] `BackendKeyData` + `CancelRequest` - per-connection nonzero
   secret + a cancel-request handler that interrupts the active
-  query. Implementation in server/cancel_registry.go;
-  `pg_sleep` is context-aware so cancellation propagates. Coverage
-  by testing/go/cancel_request_test.go via
-  `pgx.Conn.PgConn().CancelRequest`. Residual gap: a TablePlus
-  "Stop query" round-trip recorded as evidence (no real GUI
-  binary harness in CI yet).
+  query. Implementation in server/cancel_registry.go; `pg_sleep`
+  is context-aware so cancellation propagates. pgx coverage in
+  testing/go/cancel_request_test.go. Real-binary-driver evidence
+  in testing/go/psql_cancel_request_test.go: the harness spawns
+  the actual psql client, runs `SELECT pg_sleep(20)`, sends
+  SIGINT to psql's process group (psql's SIGINT handler is the
+  exact CancelRequest path every PG GUI editor uses for "Stop
+  query"), and asserts the query is interrupted in well under
+  the 20s sleep.
 - [x] `ErrorResponse` SQLSTATE codes - map common GMS / Dolt error
   kinds to the PostgreSQL SQLSTATE codes drivers branch on
   (23505 unique_violation, 23503 foreign_key_violation, 23502
@@ -403,18 +411,20 @@ rather than only a Go-level harness.
   tables created with `CREATE TABLE name OF composite_type`,
   which Doltgres does not yet support). Pinned by
   testing/go/pg_class_reloftype_test.go.
-- [~] `information_schema.columns.collation_name` - reports NULL
+- [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
-  matching PG. Built-in PG collation names ("C", "POSIX",
-  "default", "ucs_basic", `*.utf8` POSIX-style) are now accepted
-  on column DDL after a parser fix in
-  postgres/parser/sem/tree/create_table.go's
-  `isBuiltinPGCollation`. Pinned by
-  testing/go/info_schema_collation_test.go. Residual gap:
-  catalog-side collation_name population for columns with an
-  explicit COLLATE clause (the parser path is unblocked but
-  the resolver does not yet thread the collation name into the
-  information_schema row).
+  matching PG, and surfaces the user-supplied collation name
+  for columns declared with an explicit COLLATE. Parser fix in
+  postgres/parser/sem/tree/create_table.go accepts the built-in
+  PG collation names ("C", "POSIX", "default", "ucs_basic",
+  `*.utf8` POSIX-style); resolver in
+  server/ast/resolvable_type_reference.go threads the collation
+  through DoltgresType.TypCollation; the
+  information_schema columns_table reads it back via
+  explicitCollationName. Coverage in
+  testing/go/info_schema_collation_test.go positively asserts
+  both halves: default-collated columns report NULL, and
+  COLLATE "C" / "POSIX" surface the literal name.
 - [x] `pg_index.indclass = ANY(...)` planner - resolve
   `oid = ANY(oidvector_col)` to a boolean predicate so
   drizzle-kit's exact opclass-discovery join executes. Fix in
