@@ -139,7 +139,7 @@ func (h *DoltgresHandler) ComBind(ctx context.Context, c *mysql.Conn, query stri
 		}
 		return nil, nil, err
 	}
-	fields, err := schemaToFieldDescriptions(sqlCtx, queryPlan.Schema(sqlCtx), formatCodes)
+	fields, err := schemaToFieldDescriptionsWithSource(sqlCtx, queryPlan.Schema(sqlCtx), queryPlan, formatCodes)
 	return queryPlan, fields, err
 }
 
@@ -219,7 +219,7 @@ func (h *DoltgresHandler) ComPrepareParsed(ctx context.Context, c *mysql.Conn, q
 			},
 		}
 	} else {
-		fields, err = schemaToFieldDescriptions(sqlCtx, analyzed.Schema(sqlCtx), nil)
+		fields, err = schemaToFieldDescriptionsWithSource(sqlCtx, analyzed.Schema(sqlCtx), analyzed, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -414,7 +414,7 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else if analyzer.FlagIsSet(qFlags, sql.QFlagMax1Row) {
-		resultFields, err := schemaToFieldDescriptions(sqlCtx, schema, formatCodes)
+		resultFields, err := schemaToFieldDescriptionsWithSource(sqlCtx, schema, analyzedPlan, formatCodes)
 		if err != nil {
 			return err
 		}
@@ -423,7 +423,7 @@ func (h *DoltgresHandler) doQuery(ctx context.Context, c *mysql.Conn, query stri
 			return err
 		}
 	} else {
-		resultFields, err := schemaToFieldDescriptions(sqlCtx, schema, formatCodes)
+		resultFields, err := schemaToFieldDescriptionsWithSource(sqlCtx, schema, analyzedPlan, formatCodes)
 		if err != nil {
 			return err
 		}
@@ -525,6 +525,16 @@ func extendFormatCodes(fieldLength int, formatCodes []int16) ([]int16, error) {
 }
 
 func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int16) ([]pgproto3.FieldDescription, error) {
+	return schemaToFieldDescriptionsWithSource(ctx, s, nil, formatCodes)
+}
+
+// schemaToFieldDescriptionsWithSource is the primary entry point for
+// building wire-protocol field descriptions. The optional sourceNode
+// parameter lets the caller pass the resolved query plan so result
+// columns whose schema entry has lost its Source through a project
+// alias (`SELECT col AS x FROM t`) can still be traced back to the
+// base table for editor-friendly RowDescription metadata.
+func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceNode sql.Node, formatCodes []int16) ([]pgproto3.FieldDescription, error) {
 	var err error
 	formatCodes, err = extendFormatCodes(len(s), formatCodes)
 	if err != nil {
@@ -539,6 +549,10 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 	// column's true source-table attnum instead of its result-set
 	// position.
 	sourceSchemaCache := make(map[string]*sourceTableMeta)
+	// aliasHints pulls back source attribution that AliasedExpr would
+	// otherwise strip. nil entries fall through to c.Source (the
+	// unaliased path).
+	aliasHints := extractAliasSourceHints(sourceNode, len(s))
 
 	fields := make([]pgproto3.FieldDescription, len(s))
 	for i, c := range s {
@@ -582,12 +596,21 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 			}
 		}
 
+		// Prefer the column's declared Source; if the projection
+		// stripped it (aliased base column), fall back to a hint
+		// recovered from the plan.
+		sourceTable := c.Source
+		sourceColumn := c.Name
+		if sourceTable == "" && i < len(aliasHints) && aliasHints[i] != nil {
+			sourceTable = aliasHints[i].table
+			sourceColumn = aliasHints[i].column
+		}
 		var tableOID uint32
-		if c.Source != "" {
-			meta := lookupSourceTableMeta(ctx, c.Source, c.DatabaseSource, sourceSchemaCache)
+		if sourceTable != "" {
+			meta := lookupSourceTableMeta(ctx, sourceTable, c.DatabaseSource, sourceSchemaCache)
 			if meta != nil {
 				tableOID = meta.tableOID
-				if attnum, ok := meta.attnumOf(c.Name); ok {
+				if attnum, ok := meta.attnumOf(sourceColumn); ok {
 					tableAttributeNumber = attnum
 				}
 			}
@@ -604,6 +627,84 @@ func schemaToFieldDescriptions(ctx *sql.Context, s sql.Schema, formatCodes []int
 	}
 
 	return fields, nil
+}
+
+// aliasSourceHint records the (sourceTable, sourceColumn) pair we can
+// recover for a result column whose schema entry has lost Source
+// through plan.Project's AliasedExpr unwrap.
+type aliasSourceHint struct {
+	table  string
+	column string
+}
+
+// extractAliasSourceHints walks the result-producing plan node and
+// returns one hint per output column. A nil entry means we could not
+// confidently identify a single source column (the projection is a
+// computed expression, a function call, etc.) so the caller should
+// fall through to c.Source.
+//
+// PG GUI editors and migration tools want to map every result column
+// back to a base column whenever possible. The most common case where
+// GMS strips the schema's Source is a project alias
+// (`SELECT col AS x FROM t`); plan.Project's expression list still
+// holds the original GetField, so unwrapping the AliasedExpr recovers
+// the source attribution the schema lost.
+func extractAliasSourceHints(node sql.Node, columnCount int) []*aliasSourceHint {
+	if node == nil || columnCount == 0 {
+		return nil
+	}
+	project := findFirstProject(node)
+	if project == nil {
+		return nil
+	}
+	exprs := project.Projections
+	if len(exprs) != columnCount {
+		return nil
+	}
+	hints := make([]*aliasSourceHint, columnCount)
+	for i, expr := range exprs {
+		hints[i] = aliasHintFromExpr(expr)
+	}
+	return hints
+}
+
+// findFirstProject returns the closest plan.Project under node along
+// the result-producing axis (a sequence of single-child wrappers).
+// Returns nil if no qualifying Project is found.
+func findFirstProject(node sql.Node) *plan.Project {
+	current := node
+	for current != nil {
+		if project, ok := current.(*plan.Project); ok {
+			return project
+		}
+		children := current.Children()
+		if len(children) != 1 {
+			return nil
+		}
+		current = children[0]
+	}
+	return nil
+}
+
+// aliasHintFromExpr unwraps the projection expression and, when it
+// resolves to a single GetField, returns the source attribution. The
+// GetField carries the qualified table and column name, which is
+// exactly what the editor needs to look up pg_class / pg_attribute.
+func aliasHintFromExpr(expr sql.Expression) *aliasSourceHint {
+	for expr != nil {
+		switch e := expr.(type) {
+		case *expression.Alias:
+			expr = e.Child
+		case *expression.GetField:
+			if e.Table() == "" {
+				return nil
+			}
+			return &aliasSourceHint{table: e.Table(), column: e.Name()}
+		default:
+			return nil
+		}
+	}
+	return nil
 }
 
 // sourceTableMeta caches the wire-protocol metadata Doltgres has to

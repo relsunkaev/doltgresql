@@ -111,13 +111,46 @@ func TestSelectStarFieldMetadata(t *testing.T) {
 			"derived column 'h' must not advertise a source table")
 	})
 
-	t.Run("aliased base column resolves through the AliasedExpr unwrap", func(t *testing.T) {
-		// Aliased projections route through plan.Project's AliasedExpr,
-		// which strips Source from the schema column GMS hands back.
-		// Keeping the source table OID through that unwrap would let
-		// GUI editors edit `SELECT name AS x FROM t` results too. That
-		// path isn't fixed yet — this subtest documents the gap.
-		t.Skip("Source attribution through AliasedExpr is a follow-up; SELECT * is the dominant editor case")
+	t.Run("aliased computed expression keeps TableOID=0", func(t *testing.T) {
+		// String concat is a derived value; the editor should not
+		// offer to edit it, so the source attribution must stay clear.
+		rows, err := conn.Query(ctx, "SELECT name || '!' AS shouted FROM editable;")
+		require.NoError(t, err)
+		defer rows.Close()
+		fields := rows.FieldDescriptions()
+		require.Len(t, fields, 1)
+		require.Zero(t, fields[0].TableOID,
+			"computed alias must not advertise a source table")
+	})
+
+	t.Run("table-qualified aliased base column resolves through alias", func(t *testing.T) {
+		// `editable a` introduces a table alias; the GetField inside
+		// the AliasedExpr names that alias, not "editable". The
+		// resolver still has to walk back to the real table OID via
+		// the search-path lookup. This case mirrors the SQL pattern
+		// `SELECT a.id AS x FROM editable a` that ORM-generated
+		// queries emit constantly when joining.
+		t.Skip("table-aliased FROM (`FROM editable a`) is a follow-up — GetField names the table alias, not the real table; needs a separate alias->table map at plan walk time")
+	})
+
+	t.Run("aliased base column carries Source through AliasedExpr", func(t *testing.T) {
+		var expectedTableOID uint32
+		require.NoError(t, conn.QueryRow(context.Background(),
+			`SELECT c.oid FROM pg_catalog.pg_class c
+			 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			 WHERE c.relname = 'editable' AND n.nspname = 'public';`).
+			Scan(&expectedTableOID))
+
+		rows, err := conn.Query(ctx, "SELECT name AS user_name FROM editable;")
+		require.NoError(t, err)
+		defer rows.Close()
+		fields := rows.FieldDescriptions()
+		require.Len(t, fields, 1)
+		require.Equal(t, "user_name", string(fields[0].Name))
+		require.Equal(t, expectedTableOID, fields[0].TableOID,
+			"aliased base column must report the source table OID")
+		require.NotZero(t, fields[0].TableAttributeNumber,
+			"aliased base column must report the source attnum")
 	})
 
 	t.Run("reordered SELECT preserves real attnum, not result position", func(t *testing.T) {

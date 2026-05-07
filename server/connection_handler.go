@@ -930,7 +930,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 		}
 		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
 			boundPlan = cachedPlan
-			fields, err = schemaToFieldDescriptions(cacheCtx, boundPlan.Schema(cacheCtx), nil)
+			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, boundPlan.Schema(cacheCtx), boundPlan, nil)
 			if err != nil {
 				return err
 			}
@@ -1204,7 +1204,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 		}
 		if cachedPlan, ok := h.cachedPreparedPlan(cacheCtx, preparedData); ok {
 			boundPlan = cachedPlan
-			fields, err = schemaToFieldDescriptions(cacheCtx, boundPlan.Schema(cacheCtx), message.ResultFormatCodes)
+			fields, err = schemaToFieldDescriptionsWithSource(cacheCtx, boundPlan.Schema(cacheCtx), boundPlan, message.ResultFormatCodes)
 			if err != nil {
 				return err
 			}
