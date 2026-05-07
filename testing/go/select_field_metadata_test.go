@@ -126,11 +126,24 @@ func TestSelectStarFieldMetadata(t *testing.T) {
 	t.Run("table-qualified aliased base column resolves through alias", func(t *testing.T) {
 		// `editable a` introduces a table alias; the GetField inside
 		// the AliasedExpr names that alias, not "editable". The
-		// resolver still has to walk back to the real table OID via
-		// the search-path lookup. This case mirrors the SQL pattern
-		// `SELECT a.id AS x FROM editable a` that ORM-generated
-		// queries emit constantly when joining.
-		t.Skip("table-aliased FROM (`FROM editable a`) is a follow-up — GetField names the table alias, not the real table; needs a separate alias->table map at plan walk time")
+		// resolver walks the FROM tree to build an alias->table map
+		// so the catalog lookup still finds the right OID.
+		var expectedTableOID uint32
+		require.NoError(t, conn.QueryRow(context.Background(),
+			`SELECT c.oid FROM pg_catalog.pg_class c
+			 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+			 WHERE c.relname = 'editable' AND n.nspname = 'public';`).
+			Scan(&expectedTableOID))
+
+		rows, err := conn.Query(ctx, "SELECT a.id AS x FROM editable a;")
+		require.NoError(t, err)
+		defer rows.Close()
+		fields := rows.FieldDescriptions()
+		require.Len(t, fields, 1)
+		require.Equal(t, "x", string(fields[0].Name))
+		require.Equal(t, expectedTableOID, fields[0].TableOID,
+			"table-aliased base column must resolve to the real table OID")
+		require.NotZero(t, fields[0].TableAttributeNumber)
 	})
 
 	t.Run("aliased base column carries Source through AliasedExpr", func(t *testing.T) {

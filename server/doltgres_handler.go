@@ -36,6 +36,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/transform"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/dolthub/vitess/go/mysql"
 	"github.com/dolthub/vitess/go/vt/sqlparser"
@@ -692,7 +693,10 @@ type aliasSourceHint struct {
 // GMS strips the schema's Source is a project alias
 // (`SELECT col AS x FROM t`); plan.Project's expression list still
 // holds the original GetField, so unwrapping the AliasedExpr recovers
-// the source attribution the schema lost.
+// the source attribution the schema lost. A second case is a
+// table-aliased FROM (`SELECT a.col FROM t a`) whose GetField names
+// the alias instead of the real table — for that we walk the FROM
+// tree and resolve the alias back to its underlying ResolvedTable.
 func extractAliasSourceHints(node sql.Node, columnCount int) []*aliasSourceHint {
 	if node == nil || columnCount == 0 {
 		return nil
@@ -705,11 +709,62 @@ func extractAliasSourceHints(node sql.Node, columnCount int) []*aliasSourceHint 
 	if len(exprs) != columnCount {
 		return nil
 	}
+	aliasMap := buildTableAliasMap(project.Child)
 	hints := make([]*aliasSourceHint, columnCount)
 	for i, expr := range exprs {
-		hints[i] = aliasHintFromExpr(expr)
+		hints[i] = aliasHintFromExpr(expr, aliasMap)
 	}
 	return hints
+}
+
+// buildTableAliasMap walks the FROM-side of the plan and returns a
+// case-insensitive map of (alias name -> underlying table name) for
+// every plan.TableAlias whose child resolves to a real table. The
+// map lets aliasHintFromExpr translate `a.col` (where `a` is a FROM
+// alias) into the catalog table name needed by the source-meta
+// lookup.
+func buildTableAliasMap(node sql.Node) map[string]string {
+	if node == nil {
+		return nil
+	}
+	aliases := map[string]string{}
+	transform.Inspect(node, func(n sql.Node) bool {
+		ta, ok := n.(*plan.TableAlias)
+		if !ok {
+			return true
+		}
+		if name := underlyingTableName(ta.Child); name != "" {
+			aliases[strings.ToLower(ta.Name())] = name
+		}
+		return true
+	})
+	if len(aliases) == 0 {
+		return nil
+	}
+	return aliases
+}
+
+// underlyingTableName returns the catalog table name backing a
+// FROM-side plan node, or "" when the source is not a single base
+// table (subqueries, set ops, etc.).
+func underlyingTableName(node sql.Node) string {
+	for node != nil {
+		switch n := node.(type) {
+		case *plan.ResolvedTable:
+			if n.Table != nil {
+				return n.Table.Name()
+			}
+			return ""
+		case *plan.UnresolvedTable:
+			return n.Name()
+		}
+		children := node.Children()
+		if len(children) != 1 {
+			return ""
+		}
+		node = children[0]
+	}
+	return ""
 }
 
 // findFirstProject returns the closest plan.Project under node along
@@ -731,10 +786,11 @@ func findFirstProject(node sql.Node) *plan.Project {
 }
 
 // aliasHintFromExpr unwraps the projection expression and, when it
-// resolves to a single GetField, returns the source attribution. The
-// GetField carries the qualified table and column name, which is
-// exactly what the editor needs to look up pg_class / pg_attribute.
-func aliasHintFromExpr(expr sql.Expression) *aliasSourceHint {
+// resolves to a single GetField, returns the source attribution.
+// aliasMap is consulted to translate FROM-side table aliases (the
+// ones GetField records) into the catalog table names the editor
+// needs to look up pg_class / pg_attribute.
+func aliasHintFromExpr(expr sql.Expression, aliasMap map[string]string) *aliasSourceHint {
 	for expr != nil {
 		switch e := expr.(type) {
 		case *expression.Alias:
@@ -743,7 +799,11 @@ func aliasHintFromExpr(expr sql.Expression) *aliasSourceHint {
 			if e.Table() == "" {
 				return nil
 			}
-			return &aliasSourceHint{table: e.Table(), column: e.Name()}
+			tableName := e.Table()
+			if real, ok := aliasMap[strings.ToLower(tableName)]; ok {
+				tableName = real
+			}
+			return &aliasSourceHint{table: tableName, column: e.Name()}
 		default:
 			return nil
 		}
