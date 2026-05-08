@@ -21,6 +21,7 @@ import (
 	"unicode"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -33,10 +34,12 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	// CONCURRENTLY is silently downgraded to a synchronous build so
-	// migration tooling that emits the keyword by default (Drizzle Kit,
-	// Prisma migrate, Alembic, Rails) does not error.
-	_ = node.Concurrently
+	// CONCURRENTLY for plain btree is routed through the two-phase
+	// state-machine node below so external sessions can observe the
+	// in-progress build via pg_index.indisready/indisvalid. Edge cases
+	// (GIN, expression indexes, partial indexes, INCLUDE columns)
+	// fall back to a synchronous build that ignores CONCURRENTLY —
+	// migration tooling still gets a successful CREATE.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
@@ -120,6 +123,24 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node.Unique {
 		indexType = vitess.UniqueStr
 	}
+	if node.Concurrently && canRouteConcurrentBtree(node, metadata) {
+		columns := indexFieldsToIndexColumns(indexDef.Fields)
+		baseMetadata := indexmetadata.Metadata{}
+		if metadata != nil {
+			baseMetadata = *metadata
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreateIndexConcurrently(
+				node.IfNotExists,
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				indexDef.Info.Name.String(),
+				node.Unique,
+				columns,
+				baseMetadata,
+			),
+		}, nil
+	}
 	options := indexDef.Options
 	var using vitess.ColIdent
 	if metadata != nil {
@@ -148,6 +169,56 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 			},
 		},
 	}, nil
+}
+
+// canRouteConcurrentBtree reports whether a CREATE INDEX CONCURRENTLY
+// statement should be handled by the two-phase state-machine node. The
+// node only knows how to construct a plain btree IndexDef from a
+// vitess.IndexField list; expression columns, INCLUDE columns,
+// partial-index predicates, and the GIN/CONSTRAINT shapes route through
+// the existing synchronous AlterTable path because they need extra
+// build-time machinery the new node doesn't reproduce.
+func canRouteConcurrentBtree(node *tree.CreateIndex, metadata *indexmetadata.Metadata) bool {
+	if node.Predicate != nil || len(node.IndexParams.IncludeColumns) > 0 {
+		return false
+	}
+	for _, column := range node.Columns {
+		if column.Expr != nil {
+			return false
+		}
+	}
+	if metadata == nil {
+		return true
+	}
+	if len(metadata.Columns) > 0 || len(metadata.StorageColumns) > 0 || hasTrueExpressionColumns(metadata.ExpressionColumns) {
+		return false
+	}
+	return true
+}
+
+func hasTrueExpressionColumns(values []bool) bool {
+	for _, value := range values {
+		if value {
+			return true
+		}
+	}
+	return false
+}
+
+// indexFieldsToIndexColumns converts the vitess.IndexField slice the AST
+// builder already produced into the sql.IndexColumn shape Dolt's
+// IndexAlterableTable.CreateIndex consumes.
+func indexFieldsToIndexColumns(fields []*vitess.IndexField) []sql.IndexColumn {
+	columns := make([]sql.IndexColumn, 0, len(fields))
+	for _, field := range fields {
+		if field == nil {
+			continue
+		}
+		columns = append(columns, sql.IndexColumn{
+			Name: field.Column.String(),
+		})
+	}
+	return columns
 }
 
 func defaultCreateIndexName(tableName string, columns tree.IndexElemList) string {

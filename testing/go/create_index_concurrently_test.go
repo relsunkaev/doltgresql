@@ -150,6 +150,27 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			// After the two-phase state machine completes, the index
+			// must surface as (indisready=true, indisvalid=true) so
+			// migration tooling that polls pg_index post-CONCURRENTLY
+			// (drizzle-kit, alembic, knex) sees the index as
+			// production-ready, and the planner uses it.
+			Name: "CREATE INDEX CONCURRENTLY ends in indisready=true, indisvalid=true",
+			SetUpScript: []string{
+				"CREATE TABLE state_t (id INT PRIMARY KEY, v INT);",
+				"INSERT INTO state_t VALUES (1, 10), (2, 20);",
+				"CREATE INDEX CONCURRENTLY state_t_v_idx ON state_t (v);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT i.indisready, i.indisvalid FROM pg_catalog.pg_index i JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid WHERE c.relname = 'state_t_v_idx';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+			},
+		},
+		{
 			Name: "REINDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE rt (id INT PRIMARY KEY, v INT);",
