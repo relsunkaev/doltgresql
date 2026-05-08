@@ -49,7 +49,7 @@ var StatsTests = []ScriptTest{
 			},
 			{
 				Query:       "ANALYZE doesnotexists.public.t;",
-				ExpectedErr: "ERROR: database not found: doesnotexists (errno 1049) (sqlstate HY000) (SQLSTATE XX000)",
+				ExpectedErr: "no schema has been selected to create in",
 			},
 		},
 	},
