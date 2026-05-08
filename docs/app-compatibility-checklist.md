@@ -464,7 +464,11 @@ Do not check off an item until it has workload proof:
   row and returns a non-UniqueKeyError so GMS's IGNORE handler does
   not swallow it. Coverage in testing/go/insert_on_conflict_test.go's
   TestInsertOnConflictMultiUnique covers both paths plus the
-  pgx-driven ORM-shape upsert.
+  pgx-driven ORM-shape upsert. The concurrent DO NOTHING race where
+  many sessions target one unique index while colliding on another
+  is pinned by testing/go/on_conflict_do_nothing_concurrency_test.go:
+  exactly one row commits and every loser receives SQLSTATE 23505
+  instead of a silent no-op.
 - [x] `ON CONFLICT ... DO UPDATE` variants - EXCLUDED pseudo-table,
   DO UPDATE SET ... WHERE pred, ON CONFLICT (col) WHERE arbiter_pred,
   and ON CONFLICT ON CONSTRAINT name all land. EXCLUDED rewrites to
@@ -745,7 +749,8 @@ rather than only a Go-level harness.
   Implementation landed in server/connection_handler.go's
   `errorResponseCode` across three layers — GMS error-kind matchers,
   MySQL-errno fallback, and message-prefix sniffing for errors that
-  share errno 1105. Coverage by testing/go/sqlstate_test.go (pgx,
+  share errno 1105, including Dolt's commit-time "Unique Key
+  Constraint Violation" shape. Coverage by testing/go/sqlstate_test.go (pgx,
   with cases for each code above) and
   testing/go/sqlalchemy_sqlstate_test.go which installs SQLAlchemy
   + psycopg3 in a venv and asserts each shape surfaces the right
