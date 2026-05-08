@@ -95,8 +95,16 @@ Do not check off an item until it has workload proof:
   testing/go/common_extensions_probe_test.go.
 - [ ] ICU nondeterministic collations - support `CREATE COLLATION ... provider
   = icu, deterministic = false` or document the migration path away from it.
-- [ ] Explicit query collations - prove runtime queries that reference
-  collations such as `"en_US.utf8"` directly.
+- [x] Explicit query collations - runtime `ORDER BY col COLLATE "C"`
+  and `ORDER BY col COLLATE "POSIX"` both run and produce
+  byte-order-correct ordering (uppercase before lowercase). Column-
+  level `COLLATE "C"` survives DDL and round-trips through
+  `information_schema.columns.collation_name`. Coverage in
+  testing/go/explicit_collation_probe_test.go (and the existing
+  testing/go/info_schema_collation_test.go for the
+  default-vs-explicit collation_name assertion). ICU
+  nondeterministic collations (`"en_US.utf8"`, etc.) remain a
+  separate gap tracked above.
 - [ ] Materialized views - support DDL, indexes created at materialized-view
   creation, and refresh; or document a rewrite path.
 - [ ] PL/pgSQL trigger functions - load and execute trigger functions defined
