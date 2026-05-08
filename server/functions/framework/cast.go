@@ -406,5 +406,8 @@ func UnknownLiteralCast(ctx *sql.Context, val any, targetType *pgtypes.DoltgresT
 	if err != nil {
 		return nil, err
 	}
+	if targetType.ID == pgtypes.Cstring.ID {
+		return str, nil
+	}
 	return targetType.IoInput(ctx, str)
 }

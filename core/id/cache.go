@@ -76,7 +76,7 @@ func (cache *cacheStruct) ToOID(id Id) uint32 {
 	copy(modifiedBytes[1:], underlyingBytes)
 	for i := byte(0); i < 255; i++ {
 		modifiedBytes[0] = i
-		oid = crc32.Checksum(underlyingBytes, crcTable)
+		oid = crc32.Checksum(modifiedBytes, crcTable)
 		if _, ok := cache.toInternal[oid]; !ok && oid > builtinOidLimit {
 			cache.toOID[id] = oid
 			cache.toInternal[oid] = id
@@ -85,10 +85,10 @@ func (cache *cacheStruct) ToOID(id Id) uint32 {
 	}
 	// If we're here, then we'll just search for an empty OID as a last resort
 	for i := uint32(4294967295); i > builtinOidLimit; i-- {
-		if _, ok := cache.toInternal[oid]; !ok {
-			cache.toOID[id] = oid
-			cache.toInternal[oid] = id
-			return oid
+		if _, ok := cache.toInternal[i]; !ok {
+			cache.toOID[id] = i
+			cache.toInternal[i] = id
+			return i
 		}
 	}
 	// We must have over 4 billion items in the database, so we'll panic since there's nothing we can do
