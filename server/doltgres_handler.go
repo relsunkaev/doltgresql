@@ -342,9 +342,15 @@ func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32
 	}
 	for i := range values {
 		formatCode := formatCodes[i]
-		dgType, err := typeColl.GetType(ctx, id.Type(id.Cache().ToInternal(types[i])))
-		if err != nil {
-			return nil, err
+		dgType := pgtypes.Unknown
+		if i < len(types) && types[i] != 0 {
+			dgType, err = typeColl.GetType(ctx, id.Type(id.Cache().ToInternal(types[i])))
+			if err != nil {
+				return nil, err
+			}
+			if dgType == nil {
+				dgType = pgtypes.Unknown
+			}
 		}
 		if values[i] != nil {
 			if formatCode == 0 {

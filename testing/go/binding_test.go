@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"testing"
 
+	gms "github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/stretchr/testify/require"
@@ -43,14 +44,22 @@ func TestBindingWithOidZero(t *testing.T) {
 		[]byte(strconv.Itoa(42)),
 		[]byte("Alice"),
 	}
-	paramOIDs := []uint32{0, 123}
+	paramOIDs := []uint32{0, 999999}
 	paramFormats := []int16{0, 0}
-	sql := "INSERT INTO my_table (id, name) VALUES ($1, $2);"
+	query := "INSERT INTO my_table (id, name) VALUES ($1, $2);"
 
-	// Execute a query with the zero OID and assert that we don't get an error
-	resultReader := conn.PgConn().ExecParams(ctx, sql, args, paramOIDs, paramFormats, nil)
+	// Execute a query with zero and unrecognized OIDs. The server
+	// should treat both as unknown text literals that can be coerced
+	// by the target columns.
+	resultReader := conn.PgConn().ExecParams(ctx, query, args, paramOIDs, paramFormats, nil)
 	result := resultReader.Read()
 	require.NoError(t, result.Err)
+
+	rows, err := connection.Query(ctx, "SELECT id::text, name FROM my_table;")
+	require.NoError(t, err)
+	readRows, _, err := ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []gms.Row{{"42", "Alice"}}, readRows)
 }
 
 func TestIssue2386(t *testing.T) {

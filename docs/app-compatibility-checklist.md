@@ -655,8 +655,14 @@ actually exercise.
   `drizzle-kit introspect` binary harness in
   testing/go/drizzle_kit_introspect_test.go now asserts
   composite-PK and unique-constraint shapes end-to-end.
-- [ ] Migration-tool introspection - run `drizzle-kit introspect`, `prisma db
-  pull`, Alembic autogenerate, or equivalent against Doltgres.
+- [x] Migration-tool introspection - `drizzle-kit introspect`
+  runs end-to-end against Doltgres through the real `pg` Node driver
+  and emits `schema.ts` for a schema slice with primary keys, a
+  composite primary key, a unique constraint, non-unique indexes, and
+  a foreign key. This covers one real migration-tool path; Prisma db
+  pull and Alembic autogenerate remain useful future broadening but
+  are no longer required to prove the checklist item. Covered by
+  testing/go/drizzle_kit_introspect_test.go.
 - [ ] Authorization-policy deployment - prove application-managed
   authorization-policy SQL (Zero `.permissions.sql`, Supabase RLS, or
   equivalent) loads and is interpreted correctly.

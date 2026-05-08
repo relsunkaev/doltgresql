@@ -28,23 +28,11 @@ import (
 )
 
 // TestDrizzleKitIntrospect runs the actual `drizzle-kit introspect`
-// migration tool against a running Doltgres instance, opt-in via
-// DOLTGRES_RUN_DRIZZLE_KIT=1.
-//
-// Why opt-in: drizzle-kit currently hangs on Doltgres because of a
-// separate planner bug — its index-introspection query uses
-// `JOIN pg_opclass opc ON opc.oid = ANY(i.indclass)` which Doltgres
-// rejects with "found equality comparison that does not return a
-// bool". Until the ANY-operator-with-array-column path lands, the
-// full introspection pipeline cannot complete, so the harness is
-// preserved here but skipped by default.
-//
-// Running it locally exercises the parts that DO work end-to-end:
-// connect via the `pg` driver, table discovery via pg_class +
-// pg_namespace (which depends on the column-alias fix in commit
-// where this test was added), column discovery via
-// information_schema, and foreign-key + check-constraint
-// introspection via pg_constraint.
+// migration tool against a running Doltgres instance. It exercises
+// connect via the `pg` driver, table discovery through pg_class and
+// pg_namespace, column discovery through information_schema,
+// opclass/index introspection through pg_index and pg_opclass, and
+// constraint discovery through pg_constraint.
 func TestDrizzleKitIntrospect(t *testing.T) {
 	if _, err := exec.LookPath("npm"); err != nil {
 		t.Skip("npm not available; install Node.js to enable this harness")
