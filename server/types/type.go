@@ -477,16 +477,31 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 			return v, sql.InRange, nil
 		}
 	case "int2":
-		if _, ok := v.(int16); ok {
-			return v, sql.InRange, nil
+		switch n := v.(type) {
+		case int16:
+			return n, sql.InRange, nil
+		case int8:
+			return int16(n), sql.InRange, nil
 		}
 	case "int4":
-		if _, ok := v.(int32); ok {
-			return v, sql.InRange, nil
+		switch n := v.(type) {
+		case int32:
+			return n, sql.InRange, nil
+		case int16:
+			return int32(n), sql.InRange, nil
+		case int8:
+			return int32(n), sql.InRange, nil
 		}
 	case "int8":
-		if _, ok := v.(int64); ok {
-			return v, sql.InRange, nil
+		switch n := v.(type) {
+		case int64:
+			return n, sql.InRange, nil
+		case int32:
+			return int64(n), sql.InRange, nil
+		case int16:
+			return int64(n), sql.InRange, nil
+		case int8:
+			return int64(n), sql.InRange, nil
 		}
 	case "interval":
 		if _, ok := v.(duration.Duration); ok {
