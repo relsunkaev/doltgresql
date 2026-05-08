@@ -78,16 +78,15 @@ Do not check off an item until it has workload proof:
 
 ## Schema/bootstrap TODO
 
-- [~] Dump version identity - the version-identity surface that
+- [x] Dump version identity - the version-identity surface that
   pg_dump probes works end-to-end: `version()` returns a string
   prefixed with `PostgreSQL `, the `server_version` GUC is
   queryable via `current_setting`, and `server_version_num` is a
   parseable integer >= 90000 (the threshold above which pg_dump
   branches on dialect quirks). Coverage in
   testing/go/dump_version_identity_probe_test.go. Doltgres reports
-  PostgreSQL 15; pg_dump 16/17 still target a 15-compatible
-  output but specific keyword forms emitted by the newer
-  versions may need rewrites — that's the residual gap.
+  PostgreSQL 15; pg_dump output compatibility remains tracked by
+  the separate schema-output and restore-path items.
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
   "uuid-ossp"` is accepted at DDL and its core UUID helpers are
   callable. `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also
