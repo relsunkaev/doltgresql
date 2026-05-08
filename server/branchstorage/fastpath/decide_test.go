@@ -82,7 +82,7 @@ func baseInputs() (Inputs, []byte) {
 		EncodedDelta:         encoded,
 		ExpectedBaseRoot:     mkHash(0x10),
 		ExpectedTargetCommit: mkHash(0x20),
-		RowChangeLimit:       10000,
+		Config:               DefaultConfig(),
 		Snapshots: map[string]TableSnapshots{
 			tblJournals: {
 				Base:   map[string]RowSnapshot{string(pk): snap(0xA0, cols("memo", "old", "amount", "100"))},
@@ -274,7 +274,7 @@ func TestSchemaChange_Declines(t *testing.T) {
 // 7) Batch too large: fast path declines.
 func TestBatchTooLarge_Declines(t *testing.T) {
 	in, _ := baseInputs()
-	in.RowChangeLimit = 0 // any non-zero delta exceeds
+	in.Config.RowChangeLimit = 0 // any non-zero delta exceeds
 	got := Decide(in)
 	if got.Result.Status != StatusDeclinedBatchTooLarge {
 		t.Fatalf("want declined_batch_too_large, got %s", got.Result.Status)
@@ -303,7 +303,7 @@ func TestCleanInsert_Applies(t *testing.T) {
 		},
 		ExpectedBaseRoot:     mkHash(0x10),
 		ExpectedTargetCommit: mkHash(0x20),
-		RowChangeLimit:       10000,
+		Config:               DefaultConfig(),
 		Snapshots: map[string]TableSnapshots{
 			tblJournals: {
 				Base:   map[string]RowSnapshot{},
@@ -488,7 +488,7 @@ func TestMultiRowMix_Applies(t *testing.T) {
 		EncodedDelta:         enc,
 		ExpectedBaseRoot:     mkHash(0x10),
 		ExpectedTargetCommit: mkHash(0x20),
-		RowChangeLimit:       10000,
+		Config:               DefaultConfig(),
 		Snapshots: map[string]TableSnapshots{
 			tblJournals: {
 				Base: map[string]RowSnapshot{

@@ -187,8 +187,8 @@ func TestPlanIsCanonicalRegardlessOfInputOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encode 2: %v", err)
 	}
-	in1 := Inputs{Delta: d1, EncodedDelta: enc1, ExpectedBaseRoot: mkHash(0x10), ExpectedTargetCommit: mkHash(0x20), RowChangeLimit: 10000, Snapshots: snaps}
-	in2 := Inputs{Delta: d2, EncodedDelta: enc2, ExpectedBaseRoot: mkHash(0x10), ExpectedTargetCommit: mkHash(0x20), RowChangeLimit: 10000, Snapshots: snaps}
+	in1 := Inputs{Delta: d1, EncodedDelta: enc1, ExpectedBaseRoot: mkHash(0x10), ExpectedTargetCommit: mkHash(0x20), Config: DefaultConfig(), Snapshots: snaps}
+	in2 := Inputs{Delta: d2, EncodedDelta: enc2, ExpectedBaseRoot: mkHash(0x10), ExpectedTargetCommit: mkHash(0x20), Config: DefaultConfig(), Snapshots: snaps}
 
 	r1 := Decide(in1)
 	r2 := Decide(in2)
@@ -218,7 +218,7 @@ func TestEveryDeclineCarriesContextForTriage(t *testing.T) {
 		}},
 		{"batch too large", func() Inputs {
 			in, _ := baseInputs()
-			in.RowChangeLimit = 0
+			in.Config.RowChangeLimit = 0
 			return in
 		}},
 		{"same-column conflict", func() Inputs {

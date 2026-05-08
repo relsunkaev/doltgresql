@@ -82,9 +82,12 @@ type Inputs struct {
 	SchemaChanged    bool
 	SchemaChangeNote string
 
-	// RowChangeLimit is the maximum number of changed rows the fast path
-	// will attempt. Above this it declines as declined_batch_too_large.
-	RowChangeLimit int
+	// Config carries per-deployment tuning (row-change limit, blocked-column
+	// set). Decide reads it once at the top of the call (per-merge snapshot).
+	// A zero-value Config is taken at face value: zero RowChangeLimit means
+	// no rows will be accepted. Callers wanting defaults must pass
+	// DefaultConfig().
+	Config Config
 
 	// Snapshots is the per-table base/main/target row maps the merge
 	// driver loaded for the rows the delta lists.
@@ -158,12 +161,13 @@ func Decide(in Inputs) Decision {
 	}
 
 	// Step 3: batch size.
+	cfg := in.Config // per-merge snapshot
 	rowCount := parsed.RowCount()
-	if rowCount > in.RowChangeLimit {
+	if rowCount > cfg.RowChangeLimit {
 		return Decision{Result: Decline(StatusDeclinedBatchTooLarge, Context{
 			Tables:   parsed.AffectedTableNames(),
 			RowCount: rowCount,
-			Limit:    in.RowChangeLimit,
+			Limit:    cfg.RowChangeLimit,
 		})}
 	}
 
@@ -173,7 +177,7 @@ func Decide(in Inputs) Decision {
 		snaps := in.Snapshots[table.Name] // zero-value works fine if missing
 		tp := TablePlan{Name: table.Name}
 		for _, row := range table.Rows {
-			res, op, kind := classifyRow(table.Name, row, snaps)
+			res, op, kind := classifyRow(table.Name, row, snaps, cfg)
 			if res.Status.IsDecline() {
 				return Decision{Result: res}
 			}
@@ -210,11 +214,23 @@ const (
 
 // classifyRow runs the per-row 3-way decision for one delta entry. It returns
 // either a Result (decline) with no plan, or a Result-applied with a single
-// op kind and the row op.
-func classifyRow(table string, row deltameta.RowChange, snaps TableSnapshots) (Result, RowOp, planOpKind) {
+// op kind and the row op. cfg lets the operator force declines on
+// blocklisted columns regardless of the producer's classification.
+func classifyRow(table string, row deltameta.RowChange, snaps TableSnapshots, cfg Config) (Result, RowOp, planOpKind) {
 	pk := string(row.PrimaryKey)
 	main, mainHas := snaps.Main[pk]
 	target, targetHas := snaps.Target[pk]
+
+	// Operator blocklist applies independent of side-overlap: any branch
+	// edit (scalar or complex) on a blocked column is declined.
+	if blocked := branchTouchedBlocked(table, row, cfg); len(blocked) > 0 {
+		return Decline(StatusDeclinedUnsupportedColumn, Context{
+			UnsupportedTable: table,
+			UnsupportedPK:    row.PrimaryKey,
+			UnsupportedCols:  blocked,
+			Detail:           "branch edit on operator-blocklisted column",
+		}), RowOp{}, opNoop
+	}
 
 	switch row.Kind() {
 	case deltameta.RowKindInsert:
@@ -387,6 +403,41 @@ func overlappingColumns(a, b []string) []string {
 		if _, ok := set[c]; ok {
 			out = append(out, c)
 		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// branchTouchedBlocked returns the operator-blocklisted columns the branch
+// edited on this row. Both ChangedScalars and TouchedComplex count as branch
+// edits (the blocklist's contract is "if the branch edits this column for any
+// reason, decline"). The returned slice is sorted for deterministic decline
+// context.
+func branchTouchedBlocked(table string, row deltameta.RowChange, cfg Config) []string {
+	if len(cfg.UnsupportedColumns) == 0 {
+		return nil
+	}
+	tcols, ok := cfg.UnsupportedColumns[table]
+	if !ok || len(tcols) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	for _, col := range row.ChangedScalars {
+		if _, blocked := tcols[col]; blocked {
+			seen[col] = struct{}{}
+		}
+	}
+	for _, col := range row.TouchedComplex {
+		if _, blocked := tcols[col]; blocked {
+			seen[col] = struct{}{}
+		}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(seen))
+	for k := range seen {
+		out = append(out, k)
 	}
 	sort.Strings(out)
 	return out
