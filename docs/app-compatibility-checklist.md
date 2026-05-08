@@ -130,13 +130,27 @@ Do not check off an item until it has workload proof:
   positions, not the trigger-returned positions). Pinned by the
   partial-column subtest of
   testing/go/plpgsql_trigger_function_probe_test.go.
-- [ ] Event triggers - handle event-trigger DDL (e.g. AWS DMS-style intercept
-  triggers) or strip them safely on import.
-- [ ] `CREATE AGGREGATE` - support custom aggregate DDL or document rewrite.
-- [ ] GiST exclusion constraints - support `EXCLUDE USING gist` or document
-  rewrite.
-- [ ] Statement triggers and transition tables - support `REFERENCING NEW
-  TABLE` / `OLD TABLE` and statement-level trigger semantics.
+- [~] Event triggers - `CREATE EVENT TRIGGER` is rejected at the
+  parser today (`at or near "event": syntax error`). DMS-style
+  intercept triggers must be stripped from the dump before import.
+  Pinned by testing/go/unsupported_ddl_probes_test.go.
+- [~] `CREATE AGGREGATE` - rejected with SQLSTATE 0A000 (`CREATE
+  AGGREGATE is not yet supported`). Apps that depend on custom
+  aggregates must rewrite to scalar UDFs / window functions.
+  Pinned by testing/go/unsupported_ddl_probes_test.go.
+- [~] GiST exclusion constraints - the `EXCLUDE USING gist (...)`
+  table constraint is rejected at the parser today (`at or near
+  "&": syntax error` while parsing the WITH-operator block).
+  Apps that emit EXCLUDE constraints (range non-overlap
+  enforcement) must rewrite to either application-level checks or
+  an INSERT trigger that runs the overlap query. Pinned by
+  testing/go/unsupported_ddl_probes_test.go.
+- [~] Statement triggers and transition tables - `REFERENCING NEW
+  TABLE AS ...` on CREATE TRIGGER is rejected with SQLSTATE 0A000
+  (`REFERENCING is not yet supported for CREATE TRIGGER`). Apps
+  that need batch-level trigger semantics must rewrite to
+  per-row AFTER triggers. Pinned by
+  testing/go/unsupported_ddl_probes_test.go.
 - [~] Trigger catalog introspection - the `pg_trigger` and
   `information_schema.triggers` views exist and are queryable
   without erroring, but both are stubs that return zero rows even
