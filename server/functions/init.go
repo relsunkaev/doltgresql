@@ -180,6 +180,7 @@ func Init() {
 	initQuoteIdent()
 	initRadians()
 	initRandom()
+	initRegexpSetReturning()
 	initRepeat()
 	initReplace()
 	initReverse()

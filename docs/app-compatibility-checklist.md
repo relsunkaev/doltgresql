@@ -232,8 +232,13 @@ Do not check off an item until it has workload proof:
   `ORDER BY` (`string_agg(DISTINCT t ORDER BY t, ',')`) is still
   rejected at the parser; needs a separate sql.y change to accept
   `ORDER BY` inside aggregate calls.
-- [ ] Regex set-returning functions - prove `regexp_matches(...)` and
-  `regexp_split_to_table(...)` placement and result behavior.
+- [x] Regex set-returning functions - `regexp_matches(text, pattern[,
+  flags])` and `regexp_split_to_table(text, pattern[, flags])` are now
+  registered. Both work in projection and FROM-clause positions and
+  honour the 'g' (global) and 'i' (case-insensitive) flags. Coverage in
+  testing/go/regex_srf_test.go pins the workload shapes (single-match
+  capture-group access, global-match row counting, split-to-rows over
+  comma/whitespace separators).
 - [~] `generate_series` and `unnest` - generate_series works end-to-end:
   2-/3-arg numeric ranges with positive and negative step, as a
   FROM-clause source feeding aggregates, and count(*) over a 1000-
