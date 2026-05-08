@@ -576,7 +576,13 @@ actually exercise.
   Text format preserves `\N` NULLs and CSV format uses query output
   names for `HEADER TRUE`. Covered by
   testing/go/copy_form_probe_test.go.
-- [ ] `COPY FROM stdin` restore - prove seed and dump data import.
+- [x] `COPY FROM stdin` restore - `psql` can replay dump-shaped
+  `COPY ... FROM stdin` text and CSV data streams into Doltgres,
+  including `\N` NULLs, UUIDs, booleans, numeric values, jsonb
+  payloads, and quoted CSV fields. Covered by
+  testing/go/copy_from_stdin_restore_probe_test.go; broader pgx
+  coverage in testing/go/copy_test.go also covers headers,
+  generated-column column lists, chunking, and binary COPY round trips.
 - [x] `information_schema.columns` - column-order queries used by
   pg_dump, drizzle-kit, prisma db pull, and Alembic autogenerate
   work end-to-end. `ordinal_position` reflects DDL order,
