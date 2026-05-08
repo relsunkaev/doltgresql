@@ -30,6 +30,13 @@ type ArrayAgg struct {
 	selectExprs []sql.Expression
 	orderBy     sql.SortFields
 	id          sql.ColumnId
+	distinct    bool
+}
+
+// NewArrayAgg constructs a fresh ArrayAgg expression. distinct mirrors
+// the SQL `DISTINCT` modifier inside the function call.
+func NewArrayAgg(distinct bool) *ArrayAgg {
+	return &ArrayAgg{distinct: distinct}
 }
 
 var _ sql.Aggregation = (*ArrayAgg)(nil)
@@ -145,16 +152,23 @@ func (a *ArrayAgg) Window() *sql.WindowDefinition {
 
 // NewBuffer implements sql.Aggregation
 func (a *ArrayAgg) NewBuffer(ctx *sql.Context) (sql.AggregationBuffer, error) {
-	return &arrayAggBuffer{
+	buf := &arrayAggBuffer{
 		elements: make([]sql.Row, 0),
 		a:        a,
-	}, nil
+	}
+	if a.distinct {
+		buf.seen = make(map[string]struct{})
+	}
+	return buf, nil
 }
 
 // arrayAggBuffer is the buffer used to accumulate values for the array_agg aggregation function.
 type arrayAggBuffer struct {
 	elements []sql.Row
 	a        *ArrayAgg
+	// seen tracks already-recorded element keys when DISTINCT is set;
+	// nil otherwise. Reuses jsonAggDistinctKey for shape-stable encoding.
+	seen map[string]struct{}
 }
 
 // Dispose implements sql.AggregationBuffer
@@ -193,6 +207,17 @@ func (a *arrayAggBuffer) Update(ctx *sql.Context, row sql.Row) error {
 	evalRow, err := evalExprs(ctx, a.a.selectExprs, row)
 	if err != nil {
 		return err
+	}
+
+	if a.seen != nil {
+		key, err := jsonAggDistinctKey(ctx, evalRow)
+		if err != nil {
+			return err
+		}
+		if _, dup := a.seen[key]; dup {
+			return nil
+		}
+		a.seen[key] = struct{}{}
 	}
 
 	// TODO: unwrap values as necessary

@@ -107,8 +107,13 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			}
 		}
 
+		distinctStr := ""
+		if distinct {
+			distinctStr = vitess.DistinctStr
+		}
 		return &vitess.GroupConcatExpr{
-			Exprs: exprs[:1],
+			Distinct: distinctStr,
+			Exprs:    exprs[:1],
 			Separator: vitess.Separator{
 				SeparatorString: sepString,
 			},
@@ -125,7 +130,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 
 		return &vitess.OrderedInjectedExpr{
 			InjectedExpr: vitess.InjectedExpr{
-				Expression:         &pgexprs.ArrayAgg{},
+				Expression:         pgexprs.NewArrayAgg(distinct),
 				SelectExprChildren: exprs,
 				Auth:               vitess.AuthInformation{},
 			},
