@@ -81,9 +81,18 @@ Do not check off an item until it has workload proof:
 - [ ] Dump version identity - handle the schema shape produced by current
   `pg_dump` versions (16+, 17+) even though Doltgres reports PostgreSQL 15,
   or document the required dump-rewrite path.
-- [ ] Common extensions - support or document rewrites for `uuid-ossp`,
-  `btree_gist`, `pgcrypto`, `citext`, and `pgvector` (`vector(N)` columns,
-  HNSW / IVFFlat indexes), plus their function and operator surfaces.
+- [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
+  "uuid-ossp"` is accepted at DDL (no-op shim — the extension isn't
+  actually installed but the statement returns cleanly so pg_dump
+  output loads). `gen_random_uuid()` is registered as a native
+  builtin and returns a 36-char UUID, so apps that only need UUID
+  generation can drop the pgcrypto extension load. **pgcrypto
+  fails** at the parser: `CREATE EXTENSION IF NOT EXISTS pgcrypto`
+  errors with `at or near "out": syntax error` because pgcrypto's
+  catalog install file uses `OUT` parameters in CREATE FUNCTION
+  declarations and the parser rejects the keyword. `btree_gist`,
+  `citext`, and `pgvector` remain untested. Pinned by
+  testing/go/common_extensions_probe_test.go.
 - [ ] ICU nondeterministic collations - support `CREATE COLLATION ... provider
   = icu, deterministic = false` or document the migration path away from it.
 - [ ] Explicit query collations - prove runtime queries that reference
