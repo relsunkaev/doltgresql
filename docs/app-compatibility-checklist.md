@@ -116,19 +116,27 @@ Do not check off an item until it has workload proof:
 
 ## Index/planner TODO
 
-- [ ] Partial indexes - prove non-trivial predicates such as `WHERE column IS
-  NOT NULL` and boolean/active-flag filters, including partial *unique*
-  indexes. Dependent: `ON CONFLICT (col) WHERE arbiter_pred` enforcement
-  in the upsert path. Today the arbiter predicate is parsed and accepted
-  but never matched against a candidate index's predicate (see the
-  `ON CONFLICT ... DO UPDATE` entry below) because every unique index
-  is full. When partial unique indexes ship, the arbiter must select the
-  unique index whose predicate is implied by `arbiter_pred`; until then,
-  `ON CONFLICT (col) WHERE pred` silently falls through to full-unique
-  semantics, which is wrong for any app that relied on the predicate to
-  scope the conflict target.
-- [ ] Expression indexes - prove JSONB-derived and computed-expression
-  indexes.
+- [~] Partial indexes - non-unique partial indexes (e.g. `WHERE column
+  IS NOT NULL`, `WHERE active = true`) are accepted at DDL: the index
+  is created, round-trips through `pg_indexes`, and queries that match
+  the predicate return the right rows. Partial *UNIQUE* indexes are
+  explicitly rejected with `unique partial indexes are not yet
+  supported` — that's the deeper gap. Dependent: `ON CONFLICT (col)
+  WHERE arbiter_pred` enforcement in the upsert path. Today the
+  arbiter predicate is parsed and accepted but never matched against
+  a candidate index's predicate (see the `ON CONFLICT ... DO UPDATE`
+  entry below) because every unique index is full. When partial
+  unique indexes ship, the arbiter must select the unique index whose
+  predicate is implied by `arbiter_pred`; until then, `ON CONFLICT
+  (col) WHERE pred` silently falls through to full-unique semantics,
+  which is wrong for any app that relied on the predicate to scope the
+  conflict target. DDL-level coverage in
+  testing/go/partial_expression_index_test.go.
+- [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
+  end-to-end for the common `lower(email)` shape: the index is
+  created, round-trips through `pg_indexes`, and queries that match
+  the expression return the right rows. Coverage in
+  testing/go/partial_expression_index_test.go.
 - [x] `CREATE INDEX CONCURRENTLY` keyword acceptance and btree
   two-phase catalog visibility - plain btree CONCURRENTLY drives
   PostgreSQL's two-phase state machine: register-and-build under
