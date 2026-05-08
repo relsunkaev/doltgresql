@@ -135,6 +135,7 @@ func Init() {
 	initLower()
 	initLpad()
 	initLtrim()
+	initMakeDate()
 	initMakeTimestamp()
 	initMd5()
 	initMinScale()

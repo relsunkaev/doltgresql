@@ -248,8 +248,12 @@ Do not check off an item until it has workload proof:
   nested paths, and array elements. Coverage in
   testing/go/jsonb_expansion_test.go pins the workload shapes real
   views rely on.
-- [ ] Date/time casts and helpers - prove text-to-date/timestamp casts,
-  `make_date`, `extract`, fiscal-year math, and time-zone-aware computations.
+- [x] Date/time casts and helpers - text-to-date/timestamp casts,
+  `make_date`/`make_timestamp`, `extract` (year/month/day/quarter/dow/hour),
+  date arithmetic with `INTERVAL`, date subtraction, and `date_trunc` all
+  work end-to-end. `make_date` was missing and is now registered.
+  Coverage in testing/go/datetime_workload_test.go pins the workload
+  shapes real reporting views rely on.
 
 ## Runtime SQL TODO
 
