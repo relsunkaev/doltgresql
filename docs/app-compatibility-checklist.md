@@ -405,14 +405,25 @@ actually exercise.
   diagnostics.
 - [ ] `pg_class` / `pg_index` - prove low-level catalog inspection used by
   scripts.
-- [ ] `pg_constraint` completeness for primary-key and unique-constraint
-  introspection - drizzle-kit's introspect binary harness has
-  composite-PK and unique-constraint assertions disabled because
-  doltgres' `pg_constraint` does not surface `contype='p'` and
-  `contype='u'` rows the way the drizzle queries shape them. Fix this
-  and the disabled drizzle assertions inside
-  testing/go/drizzle_kit_introspect_test.go can be re-enabled (they
-  are flagged with a clear comment pointing here).
+- [x] `pg_constraint` completeness for primary-key and unique-constraint
+  introspection - drizzle-kit, Prisma db pull, and Alembic autogenerate
+  all join `information_schema.table_constraints` to
+  `information_schema.constraint_column_usage` by `constraint_name`,
+  then read `pg_constraint` with `contype='p'/'u'` to derive
+  `primaryKey({...})` and `.unique()` blocks. Three gaps closed in
+  doltgres: (1) `table_constraints` now overrides the upstream GMS
+  default to emit PostgreSQL-style names (`<table>_pkey`,
+  `<table>_<col>_key`) instead of the literal `PRIMARY`; (2)
+  `constraint_column_usage` now emits one row per (constraint, column)
+  pair for PK / unique / FK in addition to CHECK; (3) the
+  `regnamespace` OID-alias type now exists with `regnamespace -> oid`
+  implicit cast so drizzle's `connamespace = 'public'::regnamespace`
+  composite-PK lookup resolves. Coverage in
+  testing/go/pg_constraint_introspection_test.go pins all three
+  surfaces against the exact drizzle-kit query shapes; the
+  `drizzle-kit introspect` binary harness in
+  testing/go/drizzle_kit_introspect_test.go now asserts
+  composite-PK and unique-constraint shapes end-to-end.
 - [ ] Migration-tool introspection - run `drizzle-kit introspect`, `prisma db
   pull`, Alembic autogenerate, or equivalent against Doltgres.
 - [ ] Authorization-policy deployment - prove application-managed
