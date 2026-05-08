@@ -39,6 +39,32 @@ type QuickFunction interface {
 	WithResolvedTypes(newTypes []*pgtypes.DoltgresType) any
 }
 
+// quickFunctionTypesMatch reports whether the types of |child| and |existing| are interchangeable for a
+// QuickFunction's WithChildren. It accepts strict equality, but also accepts a resolved DoltgresType
+// (e.g. "pg_catalog.pg_lsn") replacing an unresolved one with the same type name (e.g. "pg_lsn"), which the
+// analyzer's resolveType pass produces after construction.
+func quickFunctionTypesMatch(ctx *sql.Context, child, existing sql.Expression) bool {
+	ct := child.Type(ctx)
+	et := existing.Type(ctx)
+	if ct.Equals(et) {
+		return true
+	}
+	cdt, cok := ct.(*pgtypes.DoltgresType)
+	edt, eok := et.(*pgtypes.DoltgresType)
+	if !cok || !eok {
+		return false
+	}
+	if cdt.ID == edt.ID {
+		return true
+	}
+	if cdt.ID.TypeName() != edt.ID.TypeName() {
+		return false
+	}
+	cSchema := cdt.ID.SchemaName()
+	eSchema := edt.ID.SchemaName()
+	return cSchema == "" || eSchema == ""
+}
+
 // QuickFunction1 is an implementation of QuickFunction that handles a single parameter.
 type QuickFunction1 struct {
 	Name         string
@@ -171,7 +197,7 @@ func (q *QuickFunction1) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return nil, sql.ErrInvalidChildrenNumber.New(q, len(children), 1)
 	}
 
-	if children[0].Type(ctx).Equals(q.Argument.Type(ctx)) {
+	if quickFunctionTypesMatch(ctx, children[0], q.Argument) {
 		nq := *q
 		nq.Argument = children[0]
 		return &nq, nil
@@ -334,8 +360,8 @@ func (q *QuickFunction2) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return nil, sql.ErrInvalidChildrenNumber.New(q, len(children), 2)
 	}
 
-	if children[0].Type(ctx).Equals(q.Arguments[0].Type(ctx)) &&
-		children[1].Type(ctx).Equals(q.Arguments[1].Type(ctx)) {
+	if quickFunctionTypesMatch(ctx, children[0], q.Arguments[0]) &&
+		quickFunctionTypesMatch(ctx, children[1], q.Arguments[1]) {
 		nq := *q
 		nq.Arguments = [2]sql.Expression{children[0], children[1]}
 		return &nq, nil
@@ -495,9 +521,9 @@ func (q *QuickFunction3) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return nil, sql.ErrInvalidChildrenNumber.New(q, len(children), 3)
 	}
 
-	if children[0].Type(ctx).Equals(q.Arguments[0].Type(ctx)) &&
-		children[1].Type(ctx).Equals(q.Arguments[1].Type(ctx)) &&
-		children[2].Type(ctx).Equals(q.Arguments[2].Type(ctx)) {
+	if quickFunctionTypesMatch(ctx, children[0], q.Arguments[0]) &&
+		quickFunctionTypesMatch(ctx, children[1], q.Arguments[1]) &&
+		quickFunctionTypesMatch(ctx, children[2], q.Arguments[2]) {
 		nq := *q
 		nq.Arguments = [3]sql.Expression{children[0], children[1], children[2]}
 		return &nq, nil
