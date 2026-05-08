@@ -294,14 +294,16 @@ Do not check off an item until it has workload proof:
   non-overlap, btree_gist composite uniqueness) must rewrite to
   btree with a custom unique key, or strip the USING gist suffix
   from the dump. Pinned by testing/go/gist_index_probe_test.go.
-- [~] Opclasses - explicit opclass declarations on btree columns
-  (e.g. `text_ops`, `int4_ops`) are accepted at DDL and the index
-  round-trips through `pg_indexes`. The planner does not yet route
-  query plans through opclass-specific operator families, so the
-  semantic effect is currently a no-op (the column-default opclass
-  is always used). DDL acceptance pinned by
-  testing/go/index_opclass_nulls_probe_test.go so dump/migration
-  tools that emit explicit opclasses don't trip.
+- [x] Opclasses - explicit opclass declarations on btree columns
+  (e.g. `text_ops`, `int4_ops`, `text_pattern_ops`) are accepted,
+  type-validated, preserved in `pg_indexes`, exposed through
+  `pg_index.indclass`, and available through `pg_opclass` joins.
+  Pattern opclasses route prefix `LIKE 'foo%'` scans through the
+  btree planner boundary while non-prefix patterns fall back to a
+  table scan. Pinned by testing/go/index_opclass_nulls_probe_test.go,
+  testing/go/index_test.go, testing/go/pg_index_indclass_any_test.go,
+  testing/go/pgcatalog_test.go, and
+  testing/go/index_benchmark_test.go.
 - [~] Null ordering in indexes - `ASC NULLS LAST` / `DESC NULLS
   FIRST` is accepted at DDL but the engine emits two warnings —
   `descending index scan order is not yet supported, preserving
