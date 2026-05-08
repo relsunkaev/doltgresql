@@ -136,8 +136,16 @@ Do not check off an item until it has workload proof:
   a SetConstraints AST handler. Pinned by
   testing/go/deferrable_constraints_probe_test.go so the silent
   immediate-enforcement and the missing-handler cases stay visible.
-- [ ] Privilege and ownership DDL - load or safely strip ownership statements,
-  `ALTER DEFAULT PRIVILEGES`, and ACL output produced by `pg_dump`.
+- [~] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`
+  and `GRANT/REVOKE SELECT ON <table> TO <role>` are accepted at
+  DDL today, so pg_dump's per-table ownership and privilege blocks
+  load cleanly. **`ALTER DEFAULT PRIVILEGES` is rejected** with
+  SQLSTATE 0A000 (`ALTER DEFAULT PRIVILEGES statement is not yet
+  supported`) — pg_dump emits this for schemas with non-default
+  ACL inheritance, so output from those schemas needs stripping
+  until the AST handler lands. Pinned by
+  testing/go/privilege_ownership_ddl_probe_test.go so the
+  rejection contract stays stable.
 - [~] `DO $$` blocks - rejected at the parser today (`at or near "do":
   syntax error` SQLSTATE 42601). pg_dump uses these for matview /
   state repair, Alembic upgrade scripts wrap conditional DDL in them,
