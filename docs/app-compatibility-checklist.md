@@ -452,8 +452,16 @@ actually exercise.
 - [ ] Query-form `COPY` - support `COPY (SELECT * FROM table ORDER BY ...) TO
   STDOUT WITH (FORMAT text)`.
 - [ ] `COPY FROM stdin` restore - prove seed and dump data import.
-- [ ] `information_schema.columns` - prove column-order queries used by dump
-  and ORM tooling.
+- [x] `information_schema.columns` - column-order queries used by
+  pg_dump, drizzle-kit, prisma db pull, and Alembic autogenerate
+  work end-to-end. `ordinal_position` reflects DDL order,
+  `is_nullable` reports YES/NO accurately for NOT NULL constraints
+  and PK columns, `data_type` emits PG type names (`integer`,
+  `text`, `numeric`, `timestamp without time zone`, `character
+  varying`), and `column_default` surfaces both literal and
+  expression defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
+  testing/go/info_schema_column_order_test.go pins the workload
+  shapes.
 - [ ] `pg_matviews` - support matview repair checks.
 - [x] `pg_indexes` - prove index existence checks and conditional DDL.
   testing/go/migration_tool_introspect_test.go now installs and runs
