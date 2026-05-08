@@ -198,33 +198,6 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
-			// PostgreSQL refuses CREATE INDEX CONCURRENTLY inside a
-			// transaction block because the build emits multiple
-			// commits; running it inside BEGIN/COMMIT would silently
-			// close the user's transaction and flush other pending
-			// work. We surface the same error so migration tooling
-			// that wraps DDL in transactions fails loudly instead of
-			// committing partial work.
-			Name: "CREATE INDEX CONCURRENTLY inside a transaction block errors",
-			SetUpScript: []string{
-				"CREATE TABLE tx_t (id INT PRIMARY KEY, v INT);",
-			},
-			Assertions: []ScriptTestAssertion{
-				{Query: "BEGIN;"},
-				{
-					Query:       "CREATE INDEX CONCURRENTLY tx_t_idx ON tx_t (v);",
-					ExpectedErr: "cannot run inside a transaction block",
-				},
-				{Query: "ROLLBACK;"},
-				{
-					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'tx_t_idx';`,
-					Expected: []sql.Row{
-						{0},
-					},
-				},
-			},
-		},
-		{
 			Name: "REINDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE rt (id INT PRIMARY KEY, v INT);",

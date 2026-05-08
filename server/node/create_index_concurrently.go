@@ -131,18 +131,20 @@ func (c *CreateIndexConcurrently) WithResolvedChildren(_ context.Context, childr
 }
 
 // RowIter executes the two-phase state machine.
+//
+// Note: PostgreSQL refuses CREATE INDEX CONCURRENTLY inside an
+// explicit transaction block because the build needs its own commits.
+// Doltgres does not currently distinguish reliably between "inside an
+// explicit BEGIN/COMMIT" and "inside an SQLAlchemy/psycopg3 implicit
+// auto-begun transaction" — both set the IgnoreAutoCommit signal
+// under realistic ORM connections. Erroring on either would block the
+// canonical Alembic CONCURRENTLY migration patterns. We therefore let
+// the build proceed and let the inter-phase commit absorb whatever
+// transaction state was open. A user who intentionally batches DML
+// before CONCURRENTLY in the same explicit transaction will see that
+// work flushed by the inter-phase commit; that is the documented
+// limitation.
 func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	// PostgreSQL refuses CREATE INDEX CONCURRENTLY inside a
-	// transaction block because the build is intentionally split
-	// across multiple commits. Doltgres mirrors that contract: each
-	// phase emits its own commit, so allowing CONCURRENTLY inside an
-	// explicit BEGIN/COMMIT would prematurely close the user's
-	// transaction and silently flush their other pending work. The
-	// session sets IgnoreAutoCommit when an explicit BEGIN runs, so
-	// that bit is the unambiguous "in a transaction block" signal.
-	if ctx.GetIgnoreAutoCommit() {
-		return nil, errors.Errorf("CREATE INDEX CONCURRENTLY cannot run inside a transaction block")
-	}
 	schemaName, err := core.GetSchemaName(ctx, nil, c.schema)
 	if err != nil {
 		return nil, err
@@ -210,20 +212,16 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		testHookBetweenPhases(ctx)
 	}
 
-	// Phase 2: flip the bits. Re-locate (the schema mutation may have
-	// rewrapped the underlying table reference) and rebuild with the
-	// state-machine bits cleared so the index becomes planner-visible.
-	located, ok, err := locateIndex(ctx, c.schema, c.table, c.indexName, false)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, errors.Errorf(`could not relocate index "%s" after concurrent build`, c.indexName)
-	}
+	// Phase 2: flip the bits via a metadata-only update — the index's
+	// prolly tree from Phase 1 is preserved verbatim. This used to be
+	// a drop-and-rebuild because the IndexAlterableTable surface had
+	// no comment-only path; flipIndexComment goes one level lower
+	// (doltdb.Table.UpdateSchema), which the upstream contract
+	// documents as data-preserving.
 	finalMetadata := c.metadata
 	finalMetadata.NotReady = false
 	finalMetadata.Invalid = false
-	if err = rebuildIndexWithMetadata(ctx, located, finalMetadata); err != nil {
+	if err = flipIndexComment(ctx, c.schema, c.table, c.indexName, alteredIndexComment(finalMetadata)); err != nil {
 		return nil, err
 	}
 	// Commit Phase 2 explicitly. The auto-commit path that wraps the
