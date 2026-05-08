@@ -53,6 +53,13 @@ type xactVarSnapshot struct {
 var xactVarsMu sync.Mutex
 var xactVars = map[uint32]map[string]xactVarSnapshot{}
 
+type xactVarSavepoint struct {
+	name      string
+	snapshots map[string]xactVarSnapshot
+}
+
+var xactVarSavepoints = map[uint32][]xactVarSavepoint{}
+
 // SnapshotSessionVarBeforeLocalSet records the current value of the
 // named variable so it can be restored at end of transaction. Only the
 // first call for a given (session, name) pair takes effect; subsequent
@@ -64,6 +71,10 @@ func SnapshotSessionVarBeforeLocalSet(ctx *sql.Context, name string, isUserVar b
 		return nil
 	}
 	id := uint32(ctx.Session.ID())
+
+	if err := snapshotSavepointVarsBeforeLocalSet(ctx, id, name, isUserVar); err != nil {
+		return err
+	}
 
 	xactVarsMu.Lock()
 	if _, ok := xactVars[id][name]; ok {
@@ -103,6 +114,161 @@ func SnapshotSessionVarBeforeLocalSet(ctx *sql.Context, name string, isUserVar b
 	return nil
 }
 
+// PushSessionXactVarSavepoint snapshots all currently transaction-local
+// variables for a new SAVEPOINT. Variables first written after the
+// savepoint are captured lazily by SnapshotSessionVarBeforeLocalSet.
+func PushSessionXactVarSavepoint(ctx *sql.Context, name string) error {
+	if ctx == nil || ctx.Session == nil {
+		return nil
+	}
+	id := uint32(ctx.Session.ID())
+
+	xactVarsMu.Lock()
+	varNames := make(map[string]bool, len(xactVars[id]))
+	for varName, snap := range xactVars[id] {
+		varNames[varName] = snap.isUser
+	}
+	xactVarsMu.Unlock()
+
+	snapshots := make(map[string]xactVarSnapshot, len(varNames))
+	for varName, isUser := range varNames {
+		snap, err := currentXactVarSnapshot(ctx, varName, isUser)
+		if err != nil {
+			return err
+		}
+		snapshots[varName] = snap
+	}
+
+	xactVarsMu.Lock()
+	xactVarSavepoints[id] = append(xactVarSavepoints[id], xactVarSavepoint{
+		name:      name,
+		snapshots: snapshots,
+	})
+	xactVarsMu.Unlock()
+	return nil
+}
+
+// RollbackSessionXactVarsToSavepoint restores transaction-local
+// variables to the state they had when the named SAVEPOINT was made.
+// The target savepoint remains active; later savepoints are discarded,
+// matching PostgreSQL's ROLLBACK TO SAVEPOINT semantics.
+func RollbackSessionXactVarsToSavepoint(ctx *sql.Context, name string) error {
+	if ctx == nil || ctx.Session == nil {
+		return nil
+	}
+	id := uint32(ctx.Session.ID())
+
+	xactVarsMu.Lock()
+	stack := xactVarSavepoints[id]
+	idx := findXactVarSavepoint(stack, name)
+	if idx < 0 {
+		xactVarsMu.Unlock()
+		return nil
+	}
+	frame := stack[idx]
+	xactVarSavepoints[id] = stack[:idx+1]
+	snapshots := make(map[string]xactVarSnapshot, len(frame.snapshots))
+	for varName, snap := range frame.snapshots {
+		snapshots[varName] = snap
+	}
+	xactVarsMu.Unlock()
+
+	var firstErr error
+	for varName, snap := range snapshots {
+		if err := restoreXactVar(ctx, varName, snap); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
+}
+
+// ReleaseSessionXactVarSavepoint releases the named savepoint and all
+// savepoints created after it. The variable values themselves remain as
+// they are, matching PostgreSQL RELEASE SAVEPOINT semantics.
+func ReleaseSessionXactVarSavepoint(ctx *sql.Context, name string) {
+	if ctx == nil || ctx.Session == nil {
+		return
+	}
+	id := uint32(ctx.Session.ID())
+
+	xactVarsMu.Lock()
+	defer xactVarsMu.Unlock()
+	stack := xactVarSavepoints[id]
+	idx := findXactVarSavepoint(stack, name)
+	if idx < 0 {
+		return
+	}
+	if idx == 0 {
+		delete(xactVarSavepoints, id)
+		return
+	}
+	xactVarSavepoints[id] = stack[:idx]
+}
+
+func snapshotSavepointVarsBeforeLocalSet(ctx *sql.Context, sessionID uint32, name string, isUserVar bool) error {
+	xactVarsMu.Lock()
+	needsSnapshot := false
+	for _, frame := range xactVarSavepoints[sessionID] {
+		if _, ok := frame.snapshots[name]; !ok {
+			needsSnapshot = true
+			break
+		}
+	}
+	xactVarsMu.Unlock()
+	if !needsSnapshot {
+		return nil
+	}
+
+	snap, err := currentXactVarSnapshot(ctx, name, isUserVar)
+	if err != nil {
+		return err
+	}
+
+	xactVarsMu.Lock()
+	stack := xactVarSavepoints[sessionID]
+	for i := range stack {
+		if stack[i].snapshots == nil {
+			stack[i].snapshots = map[string]xactVarSnapshot{}
+		}
+		if _, ok := stack[i].snapshots[name]; !ok {
+			stack[i].snapshots[name] = snap
+		}
+	}
+	xactVarSavepoints[sessionID] = stack
+	xactVarsMu.Unlock()
+	return nil
+}
+
+func currentXactVarSnapshot(ctx *sql.Context, name string, isUserVar bool) (xactVarSnapshot, error) {
+	snap := xactVarSnapshot{isUser: isUserVar}
+	if isUserVar {
+		_, val, err := ctx.GetUserVariable(ctx, name)
+		if err != nil {
+			return snap, err
+		}
+		snap.existed = val != nil
+		snap.value = val
+		return snap, nil
+	}
+	val, err := ctx.GetSessionVariable(ctx, name)
+	if err != nil {
+		snap.existed = false
+		return snap, nil
+	}
+	snap.existed = true
+	snap.value = val
+	return snap, nil
+}
+
+func findXactVarSavepoint(stack []xactVarSavepoint, name string) int {
+	for i := len(stack) - 1; i >= 0; i-- {
+		if stack[i].name == name {
+			return i
+		}
+	}
+	return -1
+}
+
 // ReleaseSessionXactVars restores every variable snapshotted by SET
 // LOCAL / set_config(..., true) within the current transaction back to
 // its pre-transaction value, then clears the snapshot table for this
@@ -116,6 +282,7 @@ func ReleaseSessionXactVars(ctx *sql.Context) error {
 	xactVarsMu.Lock()
 	snapshots := xactVars[id]
 	delete(xactVars, id)
+	delete(xactVarSavepoints, id)
 	xactVarsMu.Unlock()
 
 	if len(snapshots) == 0 {
@@ -160,5 +327,5 @@ func restoreXactVar(ctx *sql.Context, name string, snap xactVarSnapshot) error {
 func HasSessionXactVars(sessionID uint32) bool {
 	xactVarsMu.Lock()
 	defer xactVarsMu.Unlock()
-	return len(xactVars[sessionID]) > 0
+	return len(xactVars[sessionID]) > 0 || len(xactVarSavepoints[sessionID]) > 0
 }

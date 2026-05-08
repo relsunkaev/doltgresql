@@ -413,29 +413,23 @@ Do not check off an item until it has workload proof:
 
 - [x] `SET LOCAL` - support transaction-local GUC settings used by audit
   contexts and trigger-control patterns. Implementation landed
-  (snapshot/restore at COMMIT/ROLLBACK/autocommit boundary).
+  (snapshot/restore at COMMIT/ROLLBACK/autocommit boundary, plus
+  savepoint-scoped restore below).
   testing/go/set_local_trigger_test.go now exercises the audit-context
   workflow end-to-end: a BEFORE INSERT trigger written in PL/pgSQL
   reads `current_setting('app.actor', true)` and writes the value into
   an audit row, with cases for COMMIT, ROLLBACK, autocommit, and
-  session-scope-vs-transaction-local override. The savepoint-rollback
-  case is a known limitation tracked separately below
-  (`SET LOCAL` snapshot is per-transaction, not per-savepoint;
-  `ROLLBACK TO SAVEPOINT` does not re-snapshot). Pinned by
+  session-scope-vs-transaction-local override. Pinned by
+  testing/go/set_local_savepoint_test.go for the savepoint cases.
+- [x] `SET LOCAL` snapshots scoped to savepoints - SAVEPOINT now
+  records a transaction-local GUC frame, ROLLBACK TO SAVEPOINT
+  restores the savepoint-time value, and SET LOCAL values first
+  written after a savepoint are cleared when rolling back to that
+  savepoint. RELEASE SAVEPOINT drops only the savepoint frame while
+  preserving current variable values, matching PostgreSQL behavior.
+  Implementation in server/functions/xact_vars.go with hooks in
+  server/connection_handler.go. Coverage in
   testing/go/set_local_savepoint_test.go.
-- [ ] `SET LOCAL` snapshots scoped to savepoints - PG snapshots GUC
-  values at every SAVEPOINT and restores them on ROLLBACK TO
-  SAVEPOINT. Doltgres only snapshots once per transaction (at the
-  first SET LOCAL of each variable inside the tx), so a
-  ROLLBACK TO SAVEPOINT keeps the most-recent SET LOCAL value
-  applied instead of restoring the savepoint-time value. Closing
-  this needs a per-savepoint stack of GUC snapshots in
-  server/functions/xact_vars.go plus connection-handler hooks at
-  SAVEPOINT / ROLLBACK TO SAVEPOINT / RELEASE SAVEPOINT
-  statements. Current behavior pinned by
-  testing/go/set_local_savepoint_test.go's
-  ROLLBACK_TO_SAVEPOINT_does_NOT_restore_SET_LOCAL subtest; flip
-  it to PG-correct when this lands.
 - [x] Transaction-local `set_config(..., true)` - support audit-context
   helpers and similar patterns. Implementation landed; covered by the
   same trigger harness above plus testing/go/set_test.go.

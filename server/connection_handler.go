@@ -592,6 +592,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			return endOfMessages, err
 		}
 		err = h.query(queries[0])
+		if err == nil {
+			err = h.applyXactVarSavepointHook(queries[0])
+		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		return true, err
 	}
@@ -605,6 +608,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			continue
 		}
 		err = h.query(query)
+		if err == nil {
+			err = h.applyXactVarSavepointHook(query)
+		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		if err != nil {
 			return true, err
@@ -1409,6 +1415,9 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, executionFields, replicationCapture, advanceLSN, &rowsAffected, true); err != nil {
 		return err
 	}
+	if err = h.applyXactVarSavepointHook(query); err != nil {
+		return err
+	}
 
 	// Invalidate cached prepared plans for schema-mutating queries that
 	// reach the engine through the extended Parse/Bind/Execute path. The
@@ -1418,6 +1427,35 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	h.invalidatePreparedPlanCacheIfNeeded(query)
 	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
 	return nil
+}
+
+func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) error {
+	var apply func(*sql.Context) error
+	switch stmt := query.AST.(type) {
+	case *sqlparser.Savepoint:
+		name := stmt.Identifier
+		apply = func(ctx *sql.Context) error {
+			return functions.PushSessionXactVarSavepoint(ctx, name)
+		}
+	case *sqlparser.RollbackSavepoint:
+		name := stmt.Identifier
+		apply = func(ctx *sql.Context) error {
+			return functions.RollbackSessionXactVarsToSavepoint(ctx, name)
+		}
+	case *sqlparser.ReleaseSavepoint:
+		name := stmt.Identifier
+		apply = func(ctx *sql.Context) error {
+			functions.ReleaseSessionXactVarSavepoint(ctx, name)
+			return nil
+		}
+	default:
+		return nil
+	}
+	ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	return apply(ctx)
 }
 
 func (h *ConnectionHandler) executeBoundWithReplication(clientQuery ConvertedQuery, executionQuery ConvertedQuery, boundPlan sql.Node, formatCodes []int16, resultFields []pgproto3.FieldDescription, capture *replicationChangeCapture, advanceLSN bool, rowsAffected *int32, isExecute bool) error {
