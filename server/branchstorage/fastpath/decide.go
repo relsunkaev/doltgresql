@@ -309,6 +309,17 @@ func classifyRow(table string, row deltameta.RowChange, snaps TableSnapshots) (R
 			}), RowOp{}, opNoop
 		}
 
+		if len(row.ChangedScalars) == 0 {
+			// Hash changed but the producer declared no scalars and no
+			// complex columns. Replaying the change would lose main's
+			// edits to columns the branch didn't describe.
+			return Decline(StatusDeclinedMissingDeltaMetadata, Context{
+				ConflictingTable: table,
+				ConflictingPK:    row.PrimaryKey,
+				Detail:           "UPDATE row hash changed but no changed columns declared",
+			}), RowOp{}, opNoop
+		}
+
 		mainChanged := changedScalars(base.Cols, main.Cols)
 		overlap := overlappingColumns(mainChanged, row.ChangedScalars)
 		if len(overlap) > 0 {

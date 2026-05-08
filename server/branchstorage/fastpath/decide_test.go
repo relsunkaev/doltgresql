@@ -559,6 +559,47 @@ func TestUpdate_MainUnchanged_AppliesAsClean(t *testing.T) {
 	}
 }
 
+// 15) Under-described UPDATE: branch reports old != new hash but lists no
+// changed scalars and no touched complex columns. The producer didn't
+// describe what actually changed, so the merge driver cannot replay it
+// without losing data when main also edited the row. Decline.
+func TestUnderDescribedUpdate_DeclinesWhenMainAlsoEdited(t *testing.T) {
+	in, _ := baseInputs()
+	pk := []byte{0x01}
+	in.Delta.Tables[0].Rows[0].ChangedScalars = nil // producer lied/omitted
+	enc, err := deltameta.Encode(in.Delta)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	in.EncodedDelta = enc
+
+	main := in.Snapshots[tblJournals].Main[string(pk)]
+	main.Hash = mkHash(0xA2)
+	main.Cols["amount"] = ColValue{Bytes: []byte("999")} // main edited a column
+	in.Snapshots[tblJournals].Main[string(pk)] = main
+
+	got := Decide(in)
+	if got.Result.Status != StatusDeclinedMissingDeltaMetadata {
+		t.Fatalf("want declined_missing_delta_metadata, got %s (%+v)", got.Result.Status, got.Result.Context)
+	}
+}
+
+// 15b) Under-described UPDATE while main is unchanged is still acceptable
+// because we can write target's full row and not lose anything.
+func TestUnderDescribedUpdate_AppliesWhenMainUnchanged(t *testing.T) {
+	in, _ := baseInputs()
+	in.Delta.Tables[0].Rows[0].ChangedScalars = nil
+	enc, err := deltameta.Encode(in.Delta)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	in.EncodedDelta = enc
+	got := Decide(in)
+	if !got.Result.Status.IsApplied() {
+		t.Fatalf("want applied (main unchanged, target row replaces), got %s", got.Result.Status)
+	}
+}
+
 func contains(ss []string, want string) bool {
 	for _, s := range ss {
 		if s == want {
