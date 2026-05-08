@@ -139,8 +139,15 @@ Do not check off an item until it has workload proof:
   firing during restore — closing the gap needs the inserter /
   trigger-firing path to skip enforcement when the GUC is `replica`.
   Pinned by testing/go/session_replication_role_probe_test.go.
-- [ ] `REPLICA IDENTITY FULL` DDL - preserve full-row old tuples for synced
-  tables.
+- [~] `REPLICA IDENTITY FULL` DDL - both `ALTER TABLE ... REPLICA
+  IDENTITY FULL` and `... REPLICA IDENTITY DEFAULT` are accepted at
+  DDL today (silently — pg_dump and Electric `replica: "full"` /
+  Debezium emit these without erroring). The downstream contract
+  ("the WAL stream carries pre-image tuples") is dependent on
+  logical-replication output, which is tracked separately in the
+  Replication and sync TODO; for now the DDL acceptance is enough
+  for dump/restore not to trip. Pinned by
+  testing/go/replica_identity_full_probe_test.go.
 
 ## Index/planner TODO
 
