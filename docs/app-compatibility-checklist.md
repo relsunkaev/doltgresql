@@ -102,8 +102,12 @@ Do not check off an item until it has workload proof:
 - [ ] Trigger catalog introspection - make `pg_trigger` /
   `information_schema` trigger views adequate for dumps, ORMs, and admin
   tools.
-- [ ] Generated columns - prove generated-column DDL and runtime behavior
-  through dump/restore.
+- [x] Generated columns - `GENERATED ALWAYS AS (...) STORED` DDL is
+  accepted, the value is computed on INSERT, and is recomputed when
+  source columns are UPDATEd. `information_schema.columns.is_generated`
+  reports `ALWAYS` for generated columns and `NEVER` for ordinary
+  columns so dump tools can reconstruct the DDL. Coverage in
+  testing/go/generated_columns_probe_test.go.
 - [ ] Deferrable constraints - prove `DEFERRABLE` FK behavior end-to-end.
 - [ ] Privilege and ownership DDL - load or safely strip ownership statements,
   `ALTER DEFAULT PRIVILEGES`, and ACL output produced by `pg_dump`.
