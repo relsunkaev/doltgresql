@@ -129,8 +129,16 @@ Do not check off an item until it has workload proof:
   executor for the inner block. Pinned by
   testing/go/do_block_probe_test.go so the rejection contract stays
   stable until the executor lands.
-- [ ] `session_replication_role` - support or safely replace `SET
-  session_replication_role = replica` during data import.
+- [~] `session_replication_role` - the GUC is settable and readable
+  via SET / SHOW (`replica` and `origin` round-trip). **But the value
+  does not actually suppress FK or trigger firing during bulk load**:
+  `SET session_replication_role = 'replica'` followed by an
+  FK-violating INSERT still rejects with `Foreign key violation`,
+  matching the immediate-enforcement default. pg_dump and most ORM
+  data-import paths flip this to `replica` to suppress trigger and FK
+  firing during restore — closing the gap needs the inserter /
+  trigger-firing path to skip enforcement when the GUC is `replica`.
+  Pinned by testing/go/session_replication_role_probe_test.go.
 - [ ] `REPLICA IDENTITY FULL` DDL - preserve full-row old tuples for synced
   tables.
 
