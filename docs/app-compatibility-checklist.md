@@ -184,8 +184,14 @@ Do not check off an item until it has workload proof:
 
 - [ ] Dynamic view rebuild - run a non-trivial application's `CREATE OR
   REPLACE VIEW` rebuild path end-to-end against Doltgres.
-- [ ] `LATERAL` joins - prove `LEFT JOIN LATERAL` and `CROSS JOIN LATERAL`
-  view shapes.
+- [~] `LATERAL` joins - `CROSS JOIN LATERAL` works end-to-end for the
+  top-N-per-group and computed-column-per-row shapes; `LEFT JOIN
+  LATERAL ... ON true` projects matching rows correctly. Coverage in
+  testing/go/lateral_test.go. Residual gap: `LEFT JOIN LATERAL` drops
+  outer rows whose lateral subquery returns empty rather than
+  preserving them with NULL on the inner side. Likely a planner
+  rewrite that elides the LEFT-side preservation when the inner is
+  derived; needs investigation in the GMS join planner.
 - [x] `DISTINCT ON` - "latest row per group" pattern works against both
   single-column and multi-column distinct keys, with WHERE filters and
   across NULL groups. Coverage in testing/go/distinct_on_test.go pins
