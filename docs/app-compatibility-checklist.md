@@ -108,7 +108,17 @@ Do not check off an item until it has workload proof:
   reports `ALWAYS` for generated columns and `NEVER` for ordinary
   columns so dump tools can reconstruct the DDL. Coverage in
   testing/go/generated_columns_probe_test.go.
-- [ ] Deferrable constraints - prove `DEFERRABLE` FK behavior end-to-end.
+- [~] Deferrable constraints - `DEFERRABLE INITIALLY DEFERRED` is
+  parsed and accepted at DDL, the table is created, and the FK
+  metadata round-trips. **But FK enforcement is still immediate** —
+  the violating row is rejected at INSERT, not at COMMIT, which is
+  wrong for any app that batches related rows in a transaction. And
+  `SET CONSTRAINTS ALL DEFERRED` errors with `unknown statement type
+  encountered: *tree.SetConstraints` (no AST handler). Closing this
+  needs (a) a deferred-violation queue checked at commit time and (b)
+  a SetConstraints AST handler. Pinned by
+  testing/go/deferrable_constraints_probe_test.go so the silent
+  immediate-enforcement and the missing-handler cases stay visible.
 - [ ] Privilege and ownership DDL - load or safely strip ownership statements,
   `ALTER DEFAULT PRIVILEGES`, and ACL output produced by `pg_dump`.
 - [ ] `DO $$` blocks - support or rewrite anonymous code blocks emitted by
