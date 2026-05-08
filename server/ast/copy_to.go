@@ -32,6 +32,11 @@ func nodeCopyTo(ctx *Context, node *tree.CopyTo) (vitess.Statement, error) {
 		return nil, errors.Errorf("COPY TO only supports STDOUT")
 	}
 
+	var query string
+	if node.Query != nil {
+		query = tree.AsString(node.Query)
+	}
+
 	return vitess.InjectedStatement{
 		Statement: pgnodes.NewCopyTo(
 			node.Table.Catalog(),
@@ -39,6 +44,7 @@ func nodeCopyTo(ctx *Context, node *tree.CopyTo) (vitess.Statement, error) {
 				Name:   node.Table.Object(),
 				Schema: node.Table.Schema(),
 			},
+			query,
 			node.Stdout,
 			node.Columns,
 			node.Options,

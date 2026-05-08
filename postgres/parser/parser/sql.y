@@ -1108,6 +1108,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*tree.RestoreOptions> opt_with_restore_options restore_options restore_options_list
 %type <*tree.CopyOptions> copy_options copy_options_list
 %type <*tree.CopyOptions> opt_legacy_copy_options legacy_copy_options legacy_copy_options_list
+%type <*tree.Select> copy_to_query
 %type <str> import_format
 %type <tree.StorageParam> storage_parameter
 %type <[]tree.StorageParam> storage_parameter_list opt_table_with opt_with_storage_parameter_list attribution_list
@@ -3781,6 +3782,28 @@ copy_to_stmt:
        Stdout: true,
        Options: *$6.copyOptions(),
     }
+  }
+| COPY copy_to_query TO STDOUT opt_with '(' copy_options_list ')'
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       Stdout: true,
+       Options: *$7.copyOptions(),
+    }
+  }
+| COPY copy_to_query TO STDOUT opt_legacy_copy_options
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       Stdout: true,
+       Options: *$5.copyOptions(),
+    }
+  }
+
+copy_to_query:
+  select_with_parens
+  {
+    $$.val = $1.selectStmt().(*tree.ParenSelect).Select
   }
 
 // legacy_copy_options represent the previous format that PostgreSQL supported for

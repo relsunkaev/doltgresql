@@ -15,33 +15,36 @@
 package _go
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-// TestCopyFormProbe pins how PG `COPY` keyword forms parse today.
-// pg_dump emits `COPY (SELECT ...) TO STDOUT WITH (FORMAT text)`
-// for filtered exports, and `COPY FROM stdin` for restore. Per the
-// Dump/admin/tooling TODO in
-// docs/app-compatibility-checklist.md.
-func TestCopyFormProbe(t *testing.T) {
-	RunScripts(t, []ScriptTest{
-		{
-			Name: "COPY (SELECT ...) TO STDOUT keyword acceptance",
-			SetUpScript: []string{
-				`CREATE TABLE t (id INT PRIMARY KEY, v TEXT);`,
-				`INSERT INTO t VALUES (1, 'a'), (2, 'b');`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					// Today: parser rejection at `(` after COPY.
-					// pg_dump emits this for filtered exports, so
-					// it must be stripped or rewritten before
-					// import. Pin the rejection so the gap stays
-					// visible.
-					Query:       `COPY (SELECT id, v FROM t ORDER BY id) TO STDOUT WITH (FORMAT text);`,
-					ExpectedErr: `at or near "(": syntax error`,
-				},
-			},
-		},
-	})
+// TestCopyQueryToStdout covers the query-form COPY syntax emitted by pg_dump
+// for filtered exports.
+func TestCopyQueryToStdout(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE t (id INT PRIMARY KEY, v TEXT, include BOOL);`)
+	require.NoError(t, err)
+	_, err = connection.Exec(ctx, `INSERT INTO t VALUES (1, 'a', TRUE), (2, 'b', FALSE), (3, NULL, TRUE);`)
+	require.NoError(t, err)
+
+	var textOut bytes.Buffer
+	tag, err := connection.Default.PgConn().CopyTo(ctx, &textOut, `COPY (SELECT id, v FROM t WHERE include ORDER BY id) TO STDOUT WITH (FORMAT text);`)
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+	require.Equal(t, "1\ta\n3\t\\N\n", textOut.String())
+
+	var csvOut bytes.Buffer
+	tag, err = connection.Default.PgConn().CopyTo(ctx, &csvOut, `COPY (SELECT v AS label, id + 10 AS shifted_id FROM t WHERE id < 3 ORDER BY id DESC) TO STDOUT WITH (FORMAT CSV, HEADER TRUE);`)
+	require.NoError(t, err)
+	require.Equal(t, "COPY 2", tag.String())
+	require.Equal(t, "label,shifted_id\nb,12\na,11\n", csvOut.String())
 }

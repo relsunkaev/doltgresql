@@ -40,6 +40,7 @@ type CopyFrom struct {
 // CopyTo represents a COPY TO statement.
 type CopyTo struct {
 	Table   TableName
+	Query   *Select
 	Columns NameList
 	Stdout  bool
 	Options CopyOptions
@@ -78,11 +79,15 @@ func (node *CopyFrom) Format(ctx *FmtCtx) {
 
 func (node *CopyTo) Format(ctx *FmtCtx) {
 	ctx.WriteString("COPY ")
-	ctx.FormatNode(&node.Table)
-	if len(node.Columns) > 0 {
-		ctx.WriteString(" (")
-		ctx.FormatNode(&node.Columns)
-		ctx.WriteString(")")
+	if node.Query != nil {
+		ctx.FormatNode(node.Query)
+	} else {
+		ctx.FormatNode(&node.Table)
+		if len(node.Columns) > 0 {
+			ctx.WriteString(" (")
+			ctx.FormatNode(&node.Columns)
+			ctx.WriteString(")")
+		}
 	}
 	ctx.WriteString(" TO ")
 	if node.Stdout {

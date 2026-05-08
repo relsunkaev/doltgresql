@@ -28,6 +28,7 @@ import (
 type CopyTo struct {
 	DatabaseName string
 	TableName    doltdb.TableName
+	Query        string
 	Stdout       bool
 	Columns      tree.NameList
 	CopyOptions  tree.CopyOptions
@@ -36,10 +37,11 @@ type CopyTo struct {
 var _ vitess.Injectable = (*CopyTo)(nil)
 
 // NewCopyTo returns a new *CopyTo.
-func NewCopyTo(databaseName string, tableName doltdb.TableName, stdout bool, columns tree.NameList, options tree.CopyOptions) *CopyTo {
+func NewCopyTo(databaseName string, tableName doltdb.TableName, query string, stdout bool, columns tree.NameList, options tree.CopyOptions) *CopyTo {
 	return &CopyTo{
 		DatabaseName: databaseName,
 		TableName:    tableName,
+		Query:        query,
 		Stdout:       stdout,
 		Columns:      columns,
 		CopyOptions:  options,

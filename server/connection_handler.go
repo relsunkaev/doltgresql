@@ -1902,6 +1902,10 @@ func (h *ConnectionHandler) handleCopyToStdoutQuery(copyTo *node.CopyTo) error {
 }
 
 func copyToSelectQuery(copyTo *node.CopyTo) string {
+	if copyTo.Query != "" {
+		return copyTo.Query
+	}
+
 	var columns string
 	if len(copyTo.Columns) == 0 {
 		columns = "*"
