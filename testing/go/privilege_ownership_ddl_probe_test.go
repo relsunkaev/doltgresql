@@ -54,13 +54,11 @@ func TestPrivilegeOwnershipDDLProbe(t *testing.T) {
 			},
 		},
 		{
-			// ALTER DEFAULT PRIVILEGES is rejected with a clear
-			// SQLSTATE 0A000 ('feature not supported') today.
 			// pg_dump emits this for schemas that have non-default
-			// ACL inheritance; either pg_dump output needs
-			// stripping or this needs to land. Pin the rejection so
-			// the gap stays visible.
-			Name: "ALTER DEFAULT PRIVILEGES is rejected with feature_not_supported",
+			// ACL inheritance. Doltgres does not enforce default ACLs,
+			// but accepting the statement as a no-op keeps dump replay
+			// from failing.
+			Name: "ALTER DEFAULT PRIVILEGES is accepted as a no-op",
 			SetUpScript: []string{
 				`CREATE ROLE deployer;`,
 			},
@@ -68,7 +66,6 @@ func TestPrivilegeOwnershipDDLProbe(t *testing.T) {
 				{
 					Query: `ALTER DEFAULT PRIVILEGES IN SCHEMA public
 						GRANT SELECT ON TABLES TO deployer;`,
-					ExpectedErr: "ALTER DEFAULT PRIVILEGES statement is not yet supported",
 				},
 			},
 		},

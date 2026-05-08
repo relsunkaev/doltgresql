@@ -22,5 +22,5 @@ import (
 
 // nodeAlterDefaultPrivileges handles *tree.AlterDefaultPrivileges nodes.
 func nodeAlterDefaultPrivileges(ctx *Context, node *tree.AlterDefaultPrivileges) (vitess.Statement, error) {
-	return NotYetSupportedError("ALTER DEFAULT PRIVILEGES statement is not yet supported")
+	return NewNoOp("ALTER DEFAULT PRIVILEGES is unsupported and ignored"), nil
 }
