@@ -89,16 +89,15 @@ Do not check off an item until it has workload proof:
   output but specific keyword forms emitted by the newer
   versions may need rewrites — that's the residual gap.
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
-  "uuid-ossp"` is accepted at DDL (no-op shim — the extension isn't
-  actually installed but the statement returns cleanly so pg_dump
-  output loads). `gen_random_uuid()` is registered as a native
-  builtin and returns a 36-char UUID, so apps that only need UUID
-  generation can drop the pgcrypto extension load. **pgcrypto
-  fails** at the parser: `CREATE EXTENSION IF NOT EXISTS pgcrypto`
-  errors with `at or near "out": syntax error` because pgcrypto's
-  catalog install file uses `OUT` parameters in CREATE FUNCTION
-  declarations and the parser rejects the keyword. `btree_gist`,
-  `citext`, and `pgvector` remain untested. Pinned by
+  "uuid-ossp"` is accepted at DDL and its core UUID helpers are
+  callable. `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also
+  accepted via a compatibility shim: the parser accepts pgcrypto's
+  `name OUT type` CREATE FUNCTION declarations, but Doltgres does
+  not load pgcrypto's PostgreSQL C library payload because it expects
+  server symbols Doltgres does not export. `gen_random_uuid()` is
+  registered as a native builtin and returns a 36-char UUID, covering
+  the common ORM/default-PK path. `btree_gist`, `citext`, and
+  `pgvector` remain untested. Pinned by
   testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser

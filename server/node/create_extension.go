@@ -26,6 +26,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -93,6 +94,12 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	if createExtensionSkipsSQL(c.Name) {
+		if err = c.addLoadedExtension(ctx, extCollection, ext); err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
+	}
 	// The returned files are in their proper order of execution, so we can iterate and execute
 	sqlFiles, err := ext.LoadSQLFiles()
 	if err != nil {
@@ -136,20 +143,33 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 			}
 		}
 	}
+	err = c.addLoadedExtension(ctx, extCollection, ext)
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *extensions.Collection, ext *pg_extension.ExtensionFiles) error {
 	namespace := id.NullNamespace
 	if len(ext.Control.Schema) > 0 {
 		namespace = id.NewNamespace(ext.Control.Schema)
 	}
-	err = extCollection.AddLoadedExtension(ctx, extensions.Extension{
+	return extCollection.AddLoadedExtension(ctx, extensions.Extension{
 		ExtName:       id.NewExtension(c.Name),
 		Namespace:     namespace,
 		Relocatable:   ext.Control.Relocatable,
 		LibIdentifier: extensions.CreateLibraryIdentifier(c.Name, ext.Control.DefaultVersion),
 	})
-	if err != nil {
-		return nil, err
+}
+
+func createExtensionSkipsSQL(name string) bool {
+	switch strings.ToLower(name) {
+	case "pgcrypto":
+		return true
+	default:
+		return false
 	}
-	return sql.RowsToRowIter(), nil
 }
 
 // Schema implements the interface sql.ExecSourceRel.

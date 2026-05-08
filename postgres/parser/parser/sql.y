@@ -3046,6 +3046,10 @@ routine_arg:
   {
     $$.val = &tree.RoutineArg{Mode: tree.RoutineArgModeOut, Name: tree.Name($2), Type: $3.typeReference()}
   }
+| type_function_name OUT typename
+  {
+    $$.val = &tree.RoutineArg{Mode: tree.RoutineArgModeOut, Name: tree.Name($1), Type: $3.typeReference()}
+  }
 | INOUT typename
   {
     $$.val = &tree.RoutineArg{Mode: tree.RoutineArgModeInout, Type: $2.typeReference()}
@@ -3053,6 +3057,10 @@ routine_arg:
 | INOUT type_function_name typename
   {
     $$.val = &tree.RoutineArg{Mode: tree.RoutineArgModeInout, Name: tree.Name($2), Type: $3.typeReference()}
+  }
+| type_function_name INOUT typename
+  {
+    $$.val = &tree.RoutineArg{Mode: tree.RoutineArgModeInout, Name: tree.Name($1), Type: $3.typeReference()}
   }
 
 alter_collation_stmt:

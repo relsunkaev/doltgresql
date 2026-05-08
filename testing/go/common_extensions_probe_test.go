@@ -37,20 +37,20 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
-			// pgcrypto's catalog install file uses OUT parameters in
-			// CREATE FUNCTION declarations; the parser rejects the
-			// keyword today (`at or near "out": syntax error`). The
-			// related `gen_random_uuid` builtin (which pgcrypto used
-			// to be the only source of pre-PG-13) is registered
-			// natively, so apps that only need UUID generation can
-			// drop the extension load. Pin the rejection so the gap
-			// is visible.
-			Name:        "CREATE EXTENSION pgcrypto is rejected on OUT-parameter parse",
+			// pgcrypto's catalog install file uses `name OUT type`
+			// parameters in CREATE FUNCTION declarations. This pins
+			// the dump-facing extension load shape, while the
+			// `gen_random_uuid` runtime assertion below covers the
+			// function most ORM schemas need from pgcrypto-era dumps.
+			Name:        "CREATE EXTENSION pgcrypto keyword acceptance",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
-					ExpectedErr: `at or near "out": syntax error`,
+					Query: `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
+				},
+				{
+					Query:       `CREATE EXTENSION pgcrypto;`,
+					ExpectedErr: `extension "pgcrypto" already exists`,
 				},
 			},
 		},
