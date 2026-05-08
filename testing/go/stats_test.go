@@ -49,7 +49,7 @@ var StatsTests = []ScriptTest{
 			},
 			{
 				Query:       "ANALYZE doesnotexists.public.t;",
-				ExpectedErr: "no schema has been selected to create in",
+				ExpectedErr: "database not found: doesnotexists",
 			},
 		},
 	},

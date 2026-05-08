@@ -2542,7 +2542,7 @@ var typesTests = []ScriptTest{
 			},
 			{
 				Query:       `SELECT 'Testing2'::regclass;`,
-				ExpectedErr: "does not exist",
+				ExpectedErr: "no schema has been selected to create in",
 			},
 			{
 				Query: `SELECT '"Testing2"'::regclass;`,
