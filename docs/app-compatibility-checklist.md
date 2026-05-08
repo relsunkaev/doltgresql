@@ -190,8 +190,17 @@ Do not check off an item until it has workload proof:
   group" patterns.
 - [ ] Window functions - prove `row_number()`, `lag()`, `lead()`, partitioned
   windows, and frame specifications.
-- [ ] Aggregate `FILTER` - prove `count(*) FILTER (...)` and similar aggregate
-  filter usage in real views.
+- [x] Aggregate `FILTER` - reporting/grid views rely on FILTER for
+  two-axis counts and revenue-vs-refund splits. AST conversion in
+  server/ast/func_expr.go now rewrites
+  `func(args...) FILTER (WHERE pred)` to
+  `func(CASE WHEN pred THEN arg ELSE NULL END, ...)`. Aggregates that
+  ignore NULLs (sum/avg/count) naturally skip non-matching rows.
+  count(*) is special-cased: the * is replaced with a literal 1 so
+  the rewrite becomes count(CASE WHEN pred THEN 1 END). Coverage in
+  testing/go/aggregate_filter_test.go: count(*)/sum/avg FILTER,
+  FILTER+GROUP BY, FILTER returning NULL when no rows match, and
+  FILTER mixed with non-filtered aggregates under COALESCE.
 - [ ] `string_agg(DISTINCT ...)` and `array_agg(DISTINCT ...)` - prove
   distinct aggregate behavior.
 - [ ] Regex set-returning functions - prove `regexp_matches(...)` and
