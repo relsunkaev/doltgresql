@@ -182,8 +182,12 @@ Do not check off an item until it has workload proof:
 
 ## View/query TODO
 
-- [ ] Dynamic view rebuild - run a non-trivial application's `CREATE OR
-  REPLACE VIEW` rebuild path end-to-end against Doltgres.
+- [x] Dynamic view rebuild - `CREATE OR REPLACE VIEW` works end-to-end:
+  same-shape body swap, view-on-view dependency chains where the inner
+  view is rebuilt and outer aggregations reflect the new shape, and
+  bodies built from CASE/COALESCE expressions. DROP VIEW + CREATE VIEW
+  rebuild flow also works for shape-changing rebuilds. Coverage in
+  testing/go/view_rebuild_test.go pins these workload shapes.
 - [~] `LATERAL` joins - `CROSS JOIN LATERAL` works end-to-end for the
   top-N-per-group and computed-column-per-row shapes; `LEFT JOIN
   LATERAL ... ON true` projects matching rows correctly. Coverage in
