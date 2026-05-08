@@ -105,8 +105,13 @@ Do not check off an item until it has workload proof:
   default-vs-explicit collation_name assertion). ICU
   nondeterministic collations (`"en_US.utf8"`, etc.) remain a
   separate gap tracked above.
-- [ ] Materialized views - support DDL, indexes created at materialized-view
-  creation, and refresh; or document a rewrite path.
+- [~] Materialized views - `CREATE MATERIALIZED VIEW` is rejected
+  with SQLSTATE 0A000 (`CREATE MATERIALIZED VIEW is not yet
+  supported`). Apps that emit matviews must rewrite to ordinary
+  views (covered) or to a backing table + scheduled refresh job.
+  The pg_matviews catalog view exists and returns zero rows so
+  dump tools skip the matview repair branch cleanly. Pinned by
+  testing/go/materialized_view_probe_test.go.
 - [~] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
