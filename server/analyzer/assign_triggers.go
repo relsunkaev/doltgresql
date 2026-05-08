@@ -33,6 +33,13 @@ import (
 
 // AssignTriggers assigns triggers wherever they're needed.
 func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
+	replicaRole, err := sessionReplicationRoleIsReplica(ctx)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	if replicaRole {
+		return node, transform.SameTree, nil
+	}
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		switch node := node.(type) {
 		case *plan.DeleteFrom, *plan.InsertInto, *plan.Truncate, *plan.Update:

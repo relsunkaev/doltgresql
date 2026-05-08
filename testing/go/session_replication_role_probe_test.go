@@ -20,11 +20,10 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestSessionReplicationRoleProbe pins how `SET
-// session_replication_role` is handled today. pg_dump and many ORM
-// data-import paths flip this to 'replica' to suppress trigger and FK
-// firing during bulk load. Per the Schema/DDL TODO in
-// docs/app-compatibility-checklist.md.
+// TestSessionReplicationRoleProbe pins `SET session_replication_role`
+// behavior. pg_dump and many ORM data-import paths flip this to
+// 'replica' to suppress trigger and FK firing during bulk load. Per the
+// Schema/DDL TODO in docs/app-compatibility-checklist.md.
 func TestSessionReplicationRoleProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -48,13 +47,7 @@ func TestSessionReplicationRoleProbe(t *testing.T) {
 			},
 		},
 		{
-			// pg_dump bulk-load path uses session_replication_role =
-			// 'replica' to suppress FK enforcement during data
-			// import. Today the GUC value is settable and readable
-			// but FK enforcement runs unconditionally — pin the
-			// gap so it stays visible. PG-correct semantics would
-			// allow the violating row when the role is 'replica'.
-			Name: "session_replication_role = replica does NOT yet suppress FK enforcement",
+			Name: "session_replication_role = replica suppresses FK enforcement",
 			SetUpScript: []string{
 				`CREATE TABLE p (id INT PRIMARY KEY);`,
 				`CREATE TABLE c (id INT PRIMARY KEY, pid INT REFERENCES p(id));`,
@@ -64,10 +57,51 @@ func TestSessionReplicationRoleProbe(t *testing.T) {
 					Query: `SET session_replication_role = 'replica';`,
 				},
 				{
-					// PG would accept this in 'replica' mode.
-					// Doltgres still rejects.
-					Query:       `INSERT INTO c VALUES (1, 999);`,
+					Query: `INSERT INTO c VALUES (1, 999);`,
+				},
+				{
+					Query: `SET session_replication_role = 'origin';`,
+				},
+				{
+					Query:       `INSERT INTO c VALUES (2, 999);`,
 					ExpectedErr: "Foreign key violation",
+				},
+			},
+		},
+		{
+			Name: "session_replication_role = replica suppresses trigger firing",
+			SetUpScript: []string{
+				`CREATE TABLE main (id INT PRIMARY KEY, label TEXT);`,
+				`CREATE TABLE audit_log (main_id INT, label TEXT);`,
+				`CREATE FUNCTION log_main_insert() RETURNS trigger AS $$
+BEGIN
+	INSERT INTO audit_log VALUES (NEW.id, NEW.label);
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER tg_log_main_insert AFTER INSERT ON main
+					FOR EACH ROW EXECUTE FUNCTION log_main_insert();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SET session_replication_role = 'replica';`,
+				},
+				{
+					Query: `INSERT INTO main VALUES (1, 'suppressed');`,
+				},
+				{
+					Query:    `SELECT count(*)::TEXT FROM audit_log;`,
+					Expected: []sql.Row{{"0"}},
+				},
+				{
+					Query: `SET session_replication_role = 'origin';`,
+				},
+				{
+					Query: `INSERT INTO main VALUES (2, 'logged');`,
+				},
+				{
+					Query:    `SELECT count(*)::TEXT FROM audit_log;`,
+					Expected: []sql.Row{{"1"}},
 				},
 			},
 		},
