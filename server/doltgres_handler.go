@@ -50,6 +50,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
@@ -601,6 +602,14 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 
 		var err error
 		colName := c.Name
+		// Remap the synthetic alias the AST layer mints for unaliased
+		// PostgreSQL expressions (`?column?`, `case`) back to the
+		// user-visible name. The unique alias is only an internal
+		// identifier required so GMS's analyzer keeps each anonymous
+		// projection distinct.
+		if display, ok := ast.AnonColumnAliasDisplayName(colName); ok {
+			colName = display
+		}
 		dataTypeSize := int16(c.Type.MaxTextResponseByteLength(ctx))
 		tableAttributeNumber := uint16(i + 1) // TODO: this should be based on the actual table field index, not the return schema
 		if doltgresType, ok := c.Type.(*pgtypes.DoltgresType); ok {

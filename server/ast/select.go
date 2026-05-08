@@ -16,6 +16,7 @@ package ast
 
 import (
 	"strings"
+	"sync/atomic"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -23,6 +24,53 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 )
+
+// AnonColumnAliasPrefix tags aliases minted for unaliased PostgreSQL
+// expressions (`?column?`, `case`). The protocol layer recognises this
+// prefix and rewrites these aliases back to the user-visible name on
+// the wire so clients still observe Postgres-style result column names
+// while the analyzer internally keeps each projection slot uniquely
+// identified.
+const AnonColumnAliasPrefix = "__doltgres_anon__"
+
+var anonColumnAliasCounter uint64
+
+// anonColumnAlias mints a unique sentinel alias whose suffix encodes
+// the user-visible column name (typically `?column?` or `case`).
+func anonColumnAlias(displayName string) string {
+	n := atomic.AddUint64(&anonColumnAliasCounter, 1)
+	return AnonColumnAliasPrefix + displayName + "__" + uint64ToBase36(n)
+}
+
+// AnonColumnAliasDisplayName returns the user-visible column name
+// embedded in an alias produced by anonColumnAlias, plus a flag
+// indicating whether the input matched the sentinel pattern.
+func AnonColumnAliasDisplayName(alias string) (string, bool) {
+	if !strings.HasPrefix(alias, AnonColumnAliasPrefix) {
+		return alias, false
+	}
+	rest := alias[len(AnonColumnAliasPrefix):]
+	idx := strings.LastIndex(rest, "__")
+	if idx < 0 {
+		return alias, false
+	}
+	return rest[:idx], true
+}
+
+func uint64ToBase36(n uint64) string {
+	if n == 0 {
+		return "0"
+	}
+	const digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+	var buf [16]byte
+	i := len(buf)
+	for n > 0 {
+		i--
+		buf[i] = digits[n%36]
+		n /= 36
+	}
+	return string(buf[i:])
+}
 
 // nodeSelect handles *tree.Select nodes.
 func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error) {
@@ -169,15 +217,24 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 		// expressions without a natural name show up as `?column?`;
 		// `CASE` shows up as `case`. Function calls are already
 		// handled by the engine via the function name.
+		//
+		// We must keep these aliases unique — otherwise GMS's analyzer
+		// assigns the same column id to every `?column?` projection,
+		// and INSERT...SELECT with multiple anonymous expressions in a
+		// permuted column list collapses both projection slots to the
+		// same value. We mint a unique sentinel here and remap it back
+		// to the user-visible `?column?` (or `case`) name in the
+		// protocol response (see protocolDisplayName in
+		// server/doltgres_handler.go).
 		if node.As == "" {
 			switch expr.(type) {
 			case *tree.CaseExpr:
-				node.As = "case"
+				node.As = tree.UnrestrictedName(anonColumnAlias("case"))
 			case tree.Constant, *tree.BinaryExpr, *tree.ComparisonExpr,
 				*tree.UnaryExpr, *tree.NotExpr, *tree.AndExpr, *tree.OrExpr,
 				*tree.IsNullExpr, *tree.IsNotNullExpr, *tree.IsOfTypeExpr,
 				*tree.ParenExpr:
-				node.As = "?column?"
+				node.As = tree.UnrestrictedName(anonColumnAlias("?column?"))
 			}
 		}
 
