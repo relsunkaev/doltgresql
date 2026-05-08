@@ -195,21 +195,12 @@ WHERE c.relkind IN ('r', 'v', 'm') AND n.nspname = 'public';`)
 			"introspected schema is missing table %q\nschema:\n%s", tbl, schema)
 	}
 
-	// Primary-key introspection through pg_constraint is a separate
-	// gap from indclass — drizzle-kit reads pg_constraint with
-	// contype='p' to derive primaryKey({...}) blocks, and our
-	// pg_constraint currently does not surface PK rows that match
-	// drizzle's exact discovery query. The harness still exercises
-	// the rest of the introspection pipeline; once pg_constraint is
-	// closed off this assertion can be re-enabled.
-	if false {
-		requireContainsAny(t, schema, []string{
-			`primaryKey({\n\t\t\tcolumns: [table.orderId, table.lineNo]`,
-			`primaryKey({ columns: [table.orderId, table.lineNo] })`,
-			`primaryKey({columns: [table.orderId, table.lineNo]})`,
-			`.primaryKey()`,
-		}, "composite primary key on order_items")
-	}
+	requireContainsAny(t, schema, []string{
+		`primaryKey({\n\t\t\tcolumns: [table.orderId, table.lineNo]`,
+		`primaryKey({ columns: [table.orderId, table.lineNo] })`,
+		`primaryKey({columns: [table.orderId, table.lineNo]})`,
+		`.primaryKey()`,
+	}, "composite primary key on order_items")
 
 	// Non-unique secondary indexes: drizzle emits `index("name").on(...)`.
 	for _, idxName := range []string{"idx_orders_customer", "idx_orders_status"} {
@@ -222,18 +213,11 @@ WHERE c.relkind IN ('r', 'v', 'm') AND n.nspname = 'public';`)
 	require.Contains(t, schema, "foreignKey",
 		"introspected schema is missing the orders -> customers foreign key")
 
-	// Unique constraint introspection — same pg_constraint gap as
-	// the PK assertion above. drizzle-kit reads pg_constraint with
-	// contype='u' to derive .unique() modifiers; doltgres'
-	// pg_constraint does not yet surface them in drizzle's
-	// discovery query. Once that's closed off, re-enable.
-	if false {
-		requireContainsAny(t, schema, []string{
-			`.unique()`,
-			`.unique(`,
-			`unique(`,
-		}, "unique constraint on customers.email")
-	}
+	requireContainsAny(t, schema, []string{
+		`.unique()`,
+		`.unique(`,
+		`unique(`,
+	}, "unique constraint on customers.email")
 }
 
 // requireContainsAny asserts that one of the candidate substrings is

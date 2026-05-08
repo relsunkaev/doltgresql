@@ -27,9 +27,13 @@ func Init() {
 	information_schema.NewTablesTable = newTablesTable
 	information_schema.NewViewsTable = newViewsTable
 
-	// Postgres-specific tables/views to be added to information_schema database
+	// Postgres-specific tables/views to be added to information_schema database.
+	// Entries here also override existing GMS tables of the same name (the
+	// upstream initializer copies this map into the table set after the
+	// defaults, so map keys take precedence).
 	information_schema.NewInformationSchemaTablesToAdd = map[string]sql.Table{
 		ConstraintColumnUsageViewName: newConstraintColumnUsageView(),
 		SequencesTableName:            newSequencesTable(),
+		TableConstraintsViewName:      newTableConstraintsView(),
 	}
 }

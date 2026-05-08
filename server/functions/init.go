@@ -52,6 +52,7 @@ func initTypeFunctions() {
 	initPgSnapshot()
 	initRecord()
 	initRegclass()
+	initRegnamespace()
 	initRegproc()
 	initRegtype()
 	initShell()

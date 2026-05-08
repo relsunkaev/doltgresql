@@ -19,6 +19,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
 
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // ConstraintColumnUsageViewName is the name of the CONSTRAINT_COLUMN_USAGE view.
@@ -45,20 +46,71 @@ var constraintColumnUsageSchema = sql.Schema{
 }
 
 // constraintColumnUsageRowIter implements the sql.RowIter for the information_schema.CONSTRAINT_COLUMN_USAGE view.
+//
+// Per the PostgreSQL spec, this view emits one row per constraint per
+// constrained column for primary-key, unique, foreign-key, and check
+// constraints. ORM introspection paths (drizzle-kit, Prisma db pull,
+// Alembic autogenerate) join this view to information_schema.table_constraints
+// to discover which columns participate in each constraint.
 func constraintColumnUsageRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.RowIter, error) {
 	var rows []sql.Row
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
+			isPK := index.Item.ID() == "PRIMARY"
+			isUnique := index.Item.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Item.Comment())
+			if !isPK && !isUnique {
+				return true, nil
+			}
+			constraintName := indexmetadata.DisplayNameForTable(index.Item, table.Item)
+			for _, expr := range index.Item.Expressions() {
+				rows = append(rows, sql.Row{
+					schema.Item.Name(),       // table_catalog
+					schema.Item.SchemaName(), // table_schema
+					table.Item.Name(),        // table_name
+					exprColumnName(expr),     // column_name
+					schema.Item.Name(),       // constraint_catalog
+					schema.Item.SchemaName(), // constraint_schema
+					constraintName,           // constraint_name
+				})
+			}
+			return true, nil
+		},
+		ForeignKey: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, fk functions.ItemForeignKey) (cont bool, err error) {
+			// constraint_column_usage names the *referenced* (parent)
+			// columns for FKs — the columns the constraint targets,
+			// not the constrained columns. ORM introspection joins
+			// this against table_constraints by constraint_name to
+			// resolve the referenced side.
+			parentTable, ok, err := schema.Item.GetTableInsensitive(ctx, fk.Item.ParentTable)
+			if err != nil {
+				return false, err
+			}
+			parentTableName := fk.Item.ParentTable
+			if ok {
+				parentTableName = parentTable.Name()
+			}
+			for _, col := range fk.Item.ParentColumns {
+				rows = append(rows, sql.Row{
+					schema.Item.Name(),       // table_catalog
+					schema.Item.SchemaName(), // table_schema (of referenced table)
+					parentTableName,          // table_name (referenced table)
+					col,                      // column_name (referenced column)
+					schema.Item.Name(),       // constraint_catalog
+					schema.Item.SchemaName(), // constraint_schema
+					fk.Item.Name,             // constraint_name
+				})
+			}
+			return true, nil
+		},
 		Check: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, check functions.ItemCheck) (cont bool, err error) {
-
-			// TODO: Fill out the rest of the columns.
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // table_catalog
 				schema.Item.SchemaName(), // table_schema
 				table.Item.Name(),        // table_name
-				nil,                      // column_name
-				nil,                      // constraint_catalog
-				nil,                      // constraint_schema
+				nil,                      // column_name (TODO: parse check expression)
+				schema.Item.Name(),       // constraint_catalog
+				schema.Item.SchemaName(), // constraint_schema
 				check.Item.Name,          // constraint_name
 			})
 			return true, nil
@@ -69,4 +121,16 @@ func constraintColumnUsageRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.Ro
 	}
 
 	return sql.RowsToRowIter(rows...), nil
+}
+
+// exprColumnName extracts the bare column name from an index expression
+// like "tablename.columnname". Returns the input unchanged if no dot
+// separator is present (e.g. expression indexes that emit raw text).
+func exprColumnName(expr string) string {
+	for i := len(expr) - 1; i >= 0; i-- {
+		if expr[i] == '.' {
+			return expr[i+1:]
+		}
+	}
+	return expr
 }
