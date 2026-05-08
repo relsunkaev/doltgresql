@@ -412,8 +412,11 @@ func (c *CompiledFunction) WithChildren(ctx *sql.Context, children ...sql.Expres
 		return nil, sql.ErrInvalidChildrenNumber.New(len(children), len(c.Arguments))
 	}
 
-	// We have to re-resolve here, since the change in children may require it (e.g. we have more type info than we did)
-	return newCompiledFunctionInternal(ctx, c.Name, children, c.overloads, c.fnOverloads, c.IsOperator, c.runner), nil
+	// We have to re-resolve here, since the change in children may require it (e.g. we have more type info than we did).
+	// Recompute fnOverloads against the current child count because ResolveDefaultValues may have extended c.Arguments
+	// after the initial overload list was cached, leaving cached entries whose argTypes are shorter than len(children).
+	fnOverloads := c.overloads.overloadsForParams(len(children))
+	return newCompiledFunctionInternal(ctx, c.Name, children, c.overloads, fnOverloads, c.IsOperator, c.runner), nil
 }
 
 // SetStatementRunner implements the interface analyzer.Interpreter.
