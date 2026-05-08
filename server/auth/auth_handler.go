@@ -204,6 +204,14 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 				// This will error later in the process, so we'll pass auth for now.
 				return nil
 			}
+			// Schema USAGE is a necessary prerequisite for any sequence
+			// operation. PG requires the user to be able to navigate the
+			// schema before any object-level privilege applies. Without
+			// this prerequisite the sequence-level check could let a user
+			// with only sequence USAGE bypass schema-level revocation.
+			if err := checkPrivilegeOnSchema(state, schemaName, []Privilege{Privilege_USAGE}); err != nil {
+				return err
+			}
 			err = checkPrivilegeOnSequence(state, schemaName, auth.TargetNames[i+1], privileges)
 			if err != nil {
 				return err

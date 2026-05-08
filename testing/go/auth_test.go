@@ -677,6 +677,9 @@ func TestAuthTests(t *testing.T) {
 				authTestCreateSuperUser,
 				`CREATE USER user1 PASSWORD 'a';`,
 				`CREATE SEQUENCE genre_id_seq_by_3 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;`,
+				// Sequence USAGE is necessary but never sufficient for nextval; schema USAGE controls
+				// the test's success/failure flips below.
+				`GRANT USAGE ON SEQUENCE public.genre_id_seq_by_3 TO user1;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
