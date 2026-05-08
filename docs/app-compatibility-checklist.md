@@ -186,8 +186,13 @@ Do not check off an item until it has workload proof:
   REPLACE VIEW` rebuild path end-to-end against Doltgres.
 - [ ] `LATERAL` joins - prove `LEFT JOIN LATERAL` and `CROSS JOIN LATERAL`
   view shapes.
-- [ ] `DISTINCT ON` - prove ordering and result stability for "latest row per
-  group" patterns.
+- [x] `DISTINCT ON` - "latest row per group" pattern works against both
+  single-column and multi-column distinct keys, with WHERE filters and
+  across NULL groups. Coverage in testing/go/distinct_on_test.go pins
+  the four shapes real PG views use. Default ASC NULL ordering follows
+  MySQL convention (NULLS FIRST) rather than PG (NULLS LAST); explicit
+  `NULLS LAST` syntax remains a separate gap (see "Null ordering in
+  indexes" above).
 - [ ] Window functions - prove `row_number()`, `lag()`, `lead()`, partitioned
   windows, and frame specifications.
 - [x] Aggregate `FILTER` - reporting/grid views rely on FILTER for
