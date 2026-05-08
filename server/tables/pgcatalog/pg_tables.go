@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -135,15 +137,21 @@ func (iter *pgTablesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		}
 	}
 
+	triggerCollection, err := core.GetTriggersCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return nil, err
+	}
+	hasTriggers := len(triggerCollection.GetTriggersForTable(ctx, id.NewTable(schema, tableName))) > 0
+
 	return sql.Row{
-		schema,     // schemaname
-		tableName,  // tablename
-		"postgres", // tableowner
-		nil,        // tablespace
-		hasIndexes, // hasindexes
-		false,      // hasrules  // TODO
-		false,      // hastriggers // TODO
-		false,      // rowsecurity
+		schema,      // schemaname
+		tableName,   // tablename
+		"postgres",  // tableowner
+		nil,         // tablespace
+		hasIndexes,  // hasindexes
+		false,       // hasrules  // TODO
+		hasTriggers, // hastriggers
+		false,       // rowsecurity
 	}, nil
 }
 

@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -37,8 +39,7 @@ var pg_get_triggerdef_oid = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: triggers are not supported yet
-		return "", nil
+		return getTriggerDef(ctx, val.(id.Id))
 	},
 }
 
@@ -54,7 +55,24 @@ var pg_get_triggerdef_oid_bool = framework.Function2{
 		if pretty {
 			return "", errors.Errorf("pretty printing is not yet supported")
 		}
-		// TODO: triggers are not supported yet
-		return "", nil
+		return getTriggerDef(ctx, val1.(id.Id))
 	},
+}
+
+func getTriggerDef(ctx *sql.Context, oidVal id.Id) (any, error) {
+	if oidVal.Section() != id.Section_Trigger {
+		return nil, nil
+	}
+	collection, err := core.GetTriggersCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return nil, err
+	}
+	trigger, err := collection.GetTrigger(ctx, id.Trigger(oidVal))
+	if err != nil {
+		return nil, err
+	}
+	if !trigger.ID.IsValid() {
+		return nil, nil
+	}
+	return trigger.Definition, nil
 }

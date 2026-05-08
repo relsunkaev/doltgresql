@@ -45,21 +45,46 @@ func TestPgTriggerIntrospectionProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// Today: zero rows. Triggers are persisted in
-					// the schema and fire correctly, but the catalog
-					// surface (pg_trigger) is not populated. Pin
-					// the current behaviour so the gap is visible.
-					Query: `SELECT count(*)::text
+					Query: `SELECT tgname, tgtype::int, tgenabled, tgisinternal,
+							tgnargs::int, pg_get_triggerdef(oid) <> ''
 						FROM pg_trigger
 						WHERE tgname = 'tg_audit_main';`,
-					Expected: []sql.Row{{"0"}},
+					Expected: []sql.Row{{
+						"tg_audit_main",
+						int32(5), // row-level AFTER INSERT
+						"O",
+						"f",
+						int32(0),
+						"t",
+					}},
 				},
 				{
-					// Same gap on information_schema.triggers.
-					Query: `SELECT count(*)::text
+					Query: `SELECT trigger_name, event_manipulation,
+							event_object_schema, event_object_table,
+							action_timing, action_orientation
 						FROM information_schema.triggers
 						WHERE trigger_name = 'tg_audit_main';`,
-					Expected: []sql.Row{{"0"}},
+					Expected: []sql.Row{{
+						"tg_audit_main",
+						"INSERT",
+						"public",
+						"main",
+						"AFTER",
+						"ROW",
+					}},
+				},
+				{
+					Query: `SELECT relhastriggers
+						FROM pg_class
+						WHERE relname = 'main';`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query: `SELECT hastriggers
+						FROM pg_tables
+						WHERE schemaname = 'public'
+							AND tablename = 'main';`,
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},
