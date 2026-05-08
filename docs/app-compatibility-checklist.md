@@ -330,16 +330,18 @@ Do not check off an item until it has workload proof:
   TestInsertOnConflictArbiterPredicate, and
   TestInsertOnConflictOnConstraint. RETURNING / affected-row-count
   parity is tracked separately as its own follow-up below.
-- [ ] `INSERT ... ON CONFLICT ... RETURNING` and affected-row-count
-  parity - PG's RETURNING reports both inserted and updated rows
-  with the post-state values; the affected-row-count distinguishes
-  inserts (1) from on-conflict updates (1) from on-conflict no-ops
-  (0). ORM helpers like SQLAlchemy `Session.execute(stmt).rowcount`
-  and Drizzle `.returning()` on upserts depend on these for
-  optimistic-concurrency checks and "did we actually insert this?"
-  branches. Coverage gap: doltgres' upsert path has not been pinned
-  on the inserted-vs-updated row split or on the rowcount each
-  shape reports.
+- [~] `INSERT ... ON CONFLICT ... RETURNING` and affected-row-count
+  parity - Plain `INSERT ... RETURNING` works end-to-end (single-row
+  and multi-row projecting subsets or full rows). `ON CONFLICT DO
+  NOTHING ... RETURNING` correctly returns zero rows when the
+  existing row is preserved. Coverage in
+  testing/go/on_conflict_returning_test.go. Three residual gaps:
+  (1) `ON CONFLICT DO UPDATE ... RETURNING` errors at the planner
+  with `*plan.InsertInto: invalid expression number, got N, expected M`;
+  (2) the same planner error fires for multi-row VALUES that mix
+  insert and update outcomes; (3) `ON CONFLICT DO NOTHING ... RETURNING`
+  on the *no-conflict* insert path inserts the row but reports zero
+  rows in RETURNING (should report the inserted row).
 - [x] `FOR UPDATE` row locks - row-level pessimistic locking
   with cross-session contention. server/ast/locking_clause.go
   parses FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY
