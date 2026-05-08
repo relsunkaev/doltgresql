@@ -206,8 +206,16 @@ Do not check off an item until it has workload proof:
   testing/go/aggregate_filter_test.go: count(*)/sum/avg FILTER,
   FILTER+GROUP BY, FILTER returning NULL when no rows match, and
   FILTER mixed with non-filtered aggregates under COALESCE.
-- [ ] `string_agg(DISTINCT ...)` and `array_agg(DISTINCT ...)` - prove
-  distinct aggregate behavior.
+- [~] `string_agg(DISTINCT ...)` and `array_agg(DISTINCT ...)` - DISTINCT
+  was being parsed but silently ignored for both. string_agg now
+  threads distinct through to vitess.GroupConcatExpr.Distinct;
+  ArrayAgg gained a `distinct` field and a per-buffer seen-set
+  de-dup using the same jsonAggDistinctKey shape jsonb_agg uses.
+  Coverage in testing/go/aggregate_distinct_test.go pins both shapes
+  via length/array_length on the result. Residual gap: agg-internal
+  `ORDER BY` (`string_agg(DISTINCT t ORDER BY t, ',')`) is still
+  rejected at the parser; needs a separate sql.y change to accept
+  `ORDER BY` inside aggregate calls.
 - [ ] Regex set-returning functions - prove `regexp_matches(...)` and
   `regexp_split_to_table(...)` placement and result behavior.
 - [ ] `generate_series` and `unnest` - prove SRF behavior in analytics and
