@@ -637,7 +637,7 @@ func TestIssuesWire(t *testing.T) {
 						&pgproto3.BindComplete{},
 						&pgproto3.DataRow{
 							Values: [][]byte{
-								[]byte(`dollar \u0024 character`),
+								[]byte(`dollar $ character`),
 							},
 						},
 						&pgproto3.CommandComplete{CommandTag: []byte("SELECT 1")},
