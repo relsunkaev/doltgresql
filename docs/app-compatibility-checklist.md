@@ -592,8 +592,12 @@ actually exercise.
 
 - [ ] `pg_dump` schema output against Doltgres, or define a separate
   Doltgres-native dump path that ORMs can consume.
-- [ ] Query-form `COPY` - support `COPY (SELECT * FROM table ORDER BY ...) TO
-  STDOUT WITH (FORMAT text)`.
+- [~] Query-form `COPY` - `COPY (SELECT ...) TO STDOUT` is rejected
+  at the parser today (`at or near "(": syntax error` SQLSTATE
+  42601). pg_dump emits this for filtered exports; until query-form
+  COPY is parsed, dumps with filtered exports must be stripped or
+  rewritten before import. Pinned by
+  testing/go/copy_form_probe_test.go.
 - [ ] `COPY FROM stdin` restore - prove seed and dump data import.
 - [x] `information_schema.columns` - column-order queries used by
   pg_dump, drizzle-kit, prisma db pull, and Alembic autogenerate
