@@ -117,7 +117,9 @@ func AssignInsertCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			return nil, false, err
 		}
 		// TODO: this relies on a particular implementation detail InsertInto.WithExpressions
-		newInsertInto, err := insertInto.WithExpressions(ctx, append(newDupExprs, insertInto.Checks().ToExpressions()...)...)
+		exprs := append(newDupExprs, insertInto.Checks().ToExpressions()...)
+		exprs = append(exprs, insertInto.Returning...)
+		newInsertInto, err := insertInto.WithExpressions(ctx, exprs...)
 		if err != nil {
 			return nil, false, err
 		}

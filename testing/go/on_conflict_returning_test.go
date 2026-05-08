@@ -54,14 +54,10 @@ func TestInsertOnConflictReturning(t *testing.T) {
 			},
 		},
 		{
-			// ON CONFLICT DO NOTHING RETURNING correctly returns zero
-			// rows when the existing row is preserved (the conflict
-			// case). Inserting a non-conflicting row through the
-			// DO NOTHING branch and reporting it via RETURNING is a
-			// residual gap (RETURNING returns empty; the row IS
-			// inserted), pinned outside this test as a TODO in the
-			// Runtime SQL TODO.
-			Name: "ON CONFLICT DO NOTHING RETURNING returns no row on conflict",
+			// ON CONFLICT DO NOTHING RETURNING returns zero rows when
+			// the existing row is preserved, and returns the inserted row
+			// when no conflict occurs.
+			Name: "ON CONFLICT DO NOTHING RETURNING",
 			SetUpScript: []string{
 				`CREATE TABLE kv (k INT PRIMARY KEY, v INT);`,
 				`INSERT INTO kv VALUES (1, 10);`,
@@ -77,6 +73,104 @@ func TestInsertOnConflictReturning(t *testing.T) {
 					// Confirm DO NOTHING preserved the original row.
 					Query:    `SELECT k, v FROM kv WHERE k = 1;`,
 					Expected: []sql.Row{{int32(1), int32(10)}},
+				},
+				{
+					Query: `INSERT INTO kv VALUES (2, 20)
+						ON CONFLICT (k) DO NOTHING
+						RETURNING k, v;`,
+					Expected: []sql.Row{{int32(2), int32(20)}},
+				},
+				{
+					Query: "SELECT k, v FROM kv ORDER BY k;",
+					Expected: []sql.Row{
+						{int32(1), int32(10)},
+						{int32(2), int32(20)},
+					},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT DO UPDATE RETURNING returns updated row",
+			SetUpScript: []string{
+				`CREATE TABLE kv (k INT PRIMARY KEY, v INT);`,
+				`INSERT INTO kv VALUES (1, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO kv VALUES (1, 99)
+						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
+						RETURNING k, v;`,
+					Expected: []sql.Row{{int32(1), int32(99)}},
+				},
+				{
+					Query:    `SELECT k, v FROM kv WHERE k = 1;`,
+					Expected: []sql.Row{{int32(1), int32(99)}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT DO UPDATE RETURNING mixed insert and update rows",
+			SetUpScript: []string{
+				`CREATE TABLE kv (k INT PRIMARY KEY, v INT);`,
+				`INSERT INTO kv VALUES (1, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO kv VALUES (1, 11), (2, 22)
+						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
+						RETURNING k, v;`,
+					Expected: []sql.Row{
+						{int32(1), int32(11)},
+						{int32(2), int32(22)},
+					},
+				},
+				{
+					Query: "SELECT k, v FROM kv ORDER BY k;",
+					Expected: []sql.Row{
+						{int32(1), int32(11)},
+						{int32(2), int32(22)},
+					},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT RETURNING command tags count affected rows",
+			SetUpScript: []string{
+				`CREATE TABLE kv (k INT PRIMARY KEY, v INT);`,
+				`INSERT INTO kv VALUES (1, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO kv VALUES (1, 99)
+						ON CONFLICT (k) DO NOTHING
+						RETURNING k, v;`,
+					ExpectedTag: `INSERT 0 0`,
+				},
+				{
+					Query: `INSERT INTO kv VALUES (2, 20)
+						ON CONFLICT (k) DO NOTHING
+						RETURNING k, v;`,
+					ExpectedTag: `INSERT 0 1`,
+				},
+				{
+					Query: `INSERT INTO kv VALUES (1, 11)
+						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
+						RETURNING k, v;`,
+					ExpectedTag: `INSERT 0 1`,
+				},
+				{
+					Query: `INSERT INTO kv VALUES (1, 12), (3, 30)
+						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
+						RETURNING k, v;`,
+					ExpectedTag: `INSERT 0 2`,
+				},
+				{
+					Query: "SELECT k, v FROM kv ORDER BY k;",
+					Expected: []sql.Row{
+						{int32(1), int32(12)},
+						{int32(2), int32(20)},
+						{int32(3), int32(30)},
+					},
 				},
 			},
 		},

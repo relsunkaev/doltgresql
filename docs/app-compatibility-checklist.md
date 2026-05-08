@@ -486,19 +486,17 @@ Do not check off an item until it has workload proof:
   TestInsertOnConflictExcluded, TestInsertOnConflictDoUpdateWhere,
   TestInsertOnConflictArbiterPredicate, and
   TestInsertOnConflictOnConstraint. RETURNING / affected-row-count
-  parity is tracked separately as its own follow-up below.
-- [~] `INSERT ... ON CONFLICT ... RETURNING` and affected-row-count
+  parity is covered separately below.
+- [x] `INSERT ... ON CONFLICT ... RETURNING` and affected-row-count
   parity - Plain `INSERT ... RETURNING` works end-to-end (single-row
   and multi-row projecting subsets or full rows). `ON CONFLICT DO
-  NOTHING ... RETURNING` correctly returns zero rows when the
-  existing row is preserved. Coverage in
-  testing/go/on_conflict_returning_test.go. Three residual gaps:
-  (1) `ON CONFLICT DO UPDATE ... RETURNING` errors at the planner
-  with `*plan.InsertInto: invalid expression number, got N, expected M`;
-  (2) the same planner error fires for multi-row VALUES that mix
-  insert and update outcomes; (3) `ON CONFLICT DO NOTHING ... RETURNING`
-  on the *no-conflict* insert path inserts the row but reports zero
-  rows in RETURNING (should report the inserted row).
+  NOTHING ... RETURNING` now returns zero rows when the existing row
+  is preserved and returns the inserted row on the no-conflict path.
+  `ON CONFLICT DO UPDATE ... RETURNING` now returns the post-update
+  row for single-row conflicts and for multi-row VALUES that mix
+  insert and update outcomes. Command tags for these RETURNING forms
+  report PostgreSQL-style affected row counts (`INSERT 0 n`).
+  Coverage in testing/go/on_conflict_returning_test.go.
 - [x] `FOR UPDATE` row locks - row-level pessimistic locking
   with cross-session contention. server/ast/locking_clause.go
   parses FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY
