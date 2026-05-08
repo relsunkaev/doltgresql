@@ -43,9 +43,6 @@ func TestAggregateDistinct(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// ORDER BY inside the aggregate is a separate gap;
-					// pin DISTINCT alone here. Real workloads use a
-					// pre-sorted subquery when stable ordering matters.
 					Query: `SELECT entity_id,
 						length(string_agg(DISTINCT tag, '')) AS distinct_tag_chars
 						FROM tags
@@ -54,6 +51,17 @@ func TestAggregateDistinct(t *testing.T) {
 					Expected: []sql.Row{
 						{int32(1), int32(2)}, // {a, b}
 						{int32(2), int32(2)}, // {c, d}
+					},
+				},
+				{
+					Query: `SELECT entity_id,
+						string_agg(DISTINCT tag, ',' ORDER BY tag DESC) AS tags
+						FROM tags
+						GROUP BY entity_id
+						ORDER BY entity_id;`,
+					Expected: []sql.Row{
+						{int32(1), "b,a"},
+						{int32(2), "d,c"},
 					},
 				},
 			},
@@ -75,8 +83,6 @@ func TestAggregateDistinct(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// Use cardinality to pin DISTINCT semantics without
-					// also depending on agg-internal ORDER BY (separate gap).
 					Query: `SELECT user_id,
 						array_length(array_agg(DISTINCT group_id), 1) AS distinct_count
 						FROM memberships
@@ -85,6 +91,17 @@ func TestAggregateDistinct(t *testing.T) {
 					Expected: []sql.Row{
 						{int32(1), int32(2)},
 						{int32(2), int32(2)},
+					},
+				},
+				{
+					Query: `SELECT user_id,
+						array_agg(DISTINCT group_id ORDER BY group_id DESC) AS group_ids
+						FROM memberships
+						GROUP BY user_id
+						ORDER BY user_id;`,
+					Expected: []sql.Row{
+						{int32(1), "{20,10}"},
+						{int32(2), "{40,30}"},
 					},
 				},
 			},
