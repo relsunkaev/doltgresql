@@ -27,14 +27,9 @@ import (
 func TestLateralJoins(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			// LEFT JOIN LATERAL: matching rows (rows whose lateral
-			// subquery returns at least one row) project correctly. Rows
-			// with no lateral match are currently dropped instead of
-			// being preserved with NULL on the inner side — a residual
-			// gap tracked under the View/query TODO. The CROSS JOIN
-			// LATERAL shape below covers the matching-row half of the
-			// behavior, which is the common case in practice.
-			Name: "LEFT JOIN LATERAL: matching rows",
+			// LEFT JOIN LATERAL preserves outer rows whose lateral
+			// subquery returns no rows, projecting NULLs on the inner side.
+			Name: "LEFT JOIN LATERAL",
 			SetUpScript: []string{
 				`CREATE TABLE customers (id INT PRIMARY KEY, name TEXT);`,
 				`CREATE TABLE orders (
@@ -43,7 +38,7 @@ func TestLateralJoins(t *testing.T) {
 					placed_at INT,
 					amount INT
 				);`,
-				`INSERT INTO customers VALUES (1, 'Alice'), (2, 'Bob');`,
+				`INSERT INTO customers VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Cara');`,
 				`INSERT INTO orders VALUES
 					(10, 1, 100, 50),
 					(11, 1, 200, 75),
@@ -64,6 +59,7 @@ func TestLateralJoins(t *testing.T) {
 					Expected: []sql.Row{
 						{int32(1), "Alice", int32(200)},
 						{int32(2), "Bob", int32(30)},
+						{int32(3), "Cara", nil},
 					},
 				},
 			},

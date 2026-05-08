@@ -333,14 +333,11 @@ Do not check off an item until it has workload proof:
   bodies built from CASE/COALESCE expressions. DROP VIEW + CREATE VIEW
   rebuild flow also works for shape-changing rebuilds. Coverage in
   testing/go/view_rebuild_test.go pins these workload shapes.
-- [~] `LATERAL` joins - `CROSS JOIN LATERAL` works end-to-end for the
-  top-N-per-group and computed-column-per-row shapes; `LEFT JOIN
-  LATERAL ... ON true` projects matching rows correctly. Coverage in
-  testing/go/lateral_test.go. Residual gap: `LEFT JOIN LATERAL` drops
-  outer rows whose lateral subquery returns empty rather than
-  preserving them with NULL on the inner side. Likely a planner
-  rewrite that elides the LEFT-side preservation when the inner is
-  derived; needs investigation in the GMS join planner.
+- [x] `LATERAL` joins - `CROSS JOIN LATERAL` works end-to-end for the
+  top-N-per-group and computed-column-per-row shapes. `LEFT JOIN
+  LATERAL ... ON true` projects matching rows and preserves outer
+  rows whose lateral subquery returns empty by null-extending the
+  inner side. Coverage in testing/go/lateral_test.go.
 - [x] `DISTINCT ON` - "latest row per group" pattern works against both
   single-column and multi-column distinct keys, with WHERE filters and
   across NULL groups. Coverage in testing/go/distinct_on_test.go pins

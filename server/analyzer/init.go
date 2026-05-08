@@ -39,6 +39,7 @@ const (
 	ruleId_AssignBatchedIndexLookups                                        // assignBatchedIndexLookups
 	ruleId_InferInnerJoinPredicates                                         // inferInnerJoinPredicates
 	ruleId_AssignSelectiveLookupJoinHints                                   // assignSelectiveLookupJoinHints
+	ruleId_PreserveLateralLeftJoin                                          // preserveLateralLeftJoin
 	ruleId_AssignTriggers                                                   // assignTriggers
 	ruleId_AssignUpdateCasts                                                // assignUpdateCasts
 	ruleId_UseSchemaAwareStatsProvider                                      // useSchemaAwareStatsProvider
@@ -113,6 +114,7 @@ func Init() {
 	analyzer.DefaultValidationRules = removeAnalyzerRules(analyzer.DefaultValidationRules, analyzer.ValidateOperandsId)
 
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "optimizeJoins", true,
+		analyzer.Rule{Id: ruleId_PreserveLateralLeftJoin, Apply: PreserveLateralLeftJoin},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
