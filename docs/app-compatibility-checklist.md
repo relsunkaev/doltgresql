@@ -109,21 +109,22 @@ Do not check off an item until it has workload proof:
   creation, and refresh; or document a rewrite path.
 - [~] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
-  EXECUTE FUNCTION` lands cleanly for the AFTER-trigger audit-log
-  pattern (write to a side table from the trigger body — covered
-  end-to-end in testing/go/set_local_trigger_test.go and the
-  AFTER-INSERT subtest of
-  testing/go/plpgsql_trigger_function_probe_test.go). **BEFORE
-  triggers that *assign* to a NEW field** (e.g.
-  `NEW.marked := upper(NEW.label);`) panic the server with `index
-  out of range [2] with length 2` in
-  `plpgsql.InterpreterStack.GetVariable`
-  (server/plpgsql/interpreter_stack.go:133). The panic surfaces
-  when the INSERT does not specify every column (the NEW row has
-  fewer entries than the table schema, but the interpreter
-  indexes by schema position). The rejection contract is pinned by
-  the BEFORE-INSERT subtest so the panic remains visible until a
-  proper fix lands.
+  EXECUTE FUNCTION` works end-to-end for two real shapes:
+  (a) AFTER-trigger audit-log writes to a side table — covered by
+  testing/go/set_local_trigger_test.go and the AFTER-INSERT subtest
+  of testing/go/plpgsql_trigger_function_probe_test.go;
+  (b) BEFORE-trigger NEW-field assignment (e.g.
+  `NEW.marked := upper(NEW.label);`) when the INSERT specifies the
+  full column list. The panic that previously fired on partial-
+  column INSERTs (`index out of range [2] with length 2` in
+  plpgsql.InterpreterStack.GetVariable) is fixed: NEW/OLD rows are
+  now padded to schema length in NewRecord. Residual gap: when the
+  INSERT omits the trigger-target column, the trigger no longer
+  panics but the modified value does not yet flow back into the
+  inserted row (the inserter uses the original-column-list row
+  positions, not the trigger-returned positions). Pinned by the
+  partial-column subtest of
+  testing/go/plpgsql_trigger_function_probe_test.go.
 - [ ] Event triggers - handle event-trigger DDL (e.g. AWS DMS-style intercept
   triggers) or strip them safely on import.
 - [ ] `CREATE AGGREGATE` - support custom aggregate DDL or document rewrite.

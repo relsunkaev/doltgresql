@@ -62,16 +62,26 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 			},
 		},
 		{
-			// BEFORE INSERT triggers that *assign* to a NEW field
-			// (e.g. `NEW.marked := upper(NEW.label)`) panic the
-			// server today with `index out of range [2] with
-			// length 2` in plpgsql.InterpreterStack.GetVariable —
-			// see server/plpgsql/interpreter_stack.go:133. Pin the
-			// shape so the gap is visible. PG-correct semantics
-			// would compute and store the upper-cased value.
-			Name: "BEFORE INSERT NEW-field assignment panics (residual gap)",
+			// BEFORE INSERT trigger that assigns to a NEW field via
+			// `NEW.marked := upper(NEW.label)`. This used to panic
+			// with `index out of range [2] with length 2` in
+			// plpgsql.InterpreterStack.GetVariable when the INSERT
+			// did not specify every column (NEW row was shorter
+			// than the schema). Fixed by padding NEW/OLD rows to
+			// schema length in InterpreterStack.NewRecord.
+			//
+			// The full-column-list form below is what works
+			// end-to-end: the trigger fires, NEW.marked is assigned
+			// to upper(NEW.label), and the modified value is
+			// persisted. The partial-column-list form
+			// (`INSERT (id, label) VALUES (...)` — i.e. omitting the
+			// trigger-target column from the INSERT) no longer
+			// panics, but the trigger's modification does not yet
+			// flow back into the inserted row; that's a separate
+			// gap pinned in the partial-column subtest below.
+			Name: "BEFORE INSERT NEW-field assignment with full column list",
 			SetUpScript: []string{
-				`CREATE TABLE will_panic (id INT PRIMARY KEY, label TEXT, marked TEXT);`,
+				`CREATE TABLE rows (id INT PRIMARY KEY, label TEXT, marked TEXT);`,
 				`CREATE FUNCTION mark_label() RETURNS trigger AS $$
 					BEGIN
 						NEW.marked := upper(NEW.label);
@@ -79,13 +89,55 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 					END;
 				$$ LANGUAGE plpgsql;`,
 				`CREATE TRIGGER mark_before_insert
-					BEFORE INSERT ON will_panic
+					BEFORE INSERT ON rows
 					FOR EACH ROW EXECUTE FUNCTION mark_label();`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO will_panic (id, label) VALUES (1, 'hello');`,
-					ExpectedErr: "index out of range",
+					Query: `INSERT INTO rows (id, label, marked) VALUES (1, 'hello', NULL), (2, 'world', NULL);`,
+				},
+				{
+					Query: `SELECT id, marked FROM rows ORDER BY id;`,
+					Expected: []sql.Row{
+						{int32(1), "HELLO"},
+						{int32(2), "WORLD"},
+					},
+				},
+			},
+		},
+		{
+			// Partial-column INSERT: trigger no longer panics
+			// (NewRecord now pads the NEW row to schema length), but
+			// the BEFORE trigger's modification of NEW does not yet
+			// propagate back into the inserted row. The row is
+			// inserted with the trigger-target column NULL (or the
+			// column default), not the upper-cased value the
+			// trigger computed. That's a separate gap in the row-
+			// flow plumbing — fixing it needs the inserter to use
+			// the trigger-returned row positions for columns the
+			// INSERT statement omitted.
+			Name: "BEFORE INSERT partial-column INSERT does not yet propagate NEW changes",
+			SetUpScript: []string{
+				`CREATE TABLE partial_rows (id INT PRIMARY KEY, label TEXT, marked TEXT);`,
+				`CREATE FUNCTION mark_label_partial() RETURNS trigger AS $$
+					BEGIN
+						NEW.marked := upper(NEW.label);
+						RETURN NEW;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER mark_before_insert_partial
+					BEFORE INSERT ON partial_rows
+					FOR EACH ROW EXECUTE FUNCTION mark_label_partial();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_rows (id, label) VALUES (1, 'hello');`,
+				},
+				{
+					// PG-correct: marked='HELLO'. Today: marked=NULL.
+					// Pin current behaviour so the gap is visible.
+					Query:    `SELECT marked IS NULL FROM partial_rows WHERE id = 1;`,
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},

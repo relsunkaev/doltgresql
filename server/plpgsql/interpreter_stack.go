@@ -177,7 +177,15 @@ func (is *InterpreterStack) NewRecord(name string, sch sql.Schema, val sql.Row) 
 	// TODO: this is currently implemented only for the specific record types used in triggers: OLD and NEW
 	var newVal sql.Row
 	if val != nil {
-		newVal = make(sql.Row, len(val))
+		// Pad to schema length: GetVariable indexes by schema position
+		// (iv.Value.(sql.Row)[fieldIdx]), so a row that is shorter
+		// than the schema (e.g. an INSERT that omits columns) panics
+		// when the trigger body references a missing field.
+		size := len(val)
+		if len(sch) > size {
+			size = len(sch)
+		}
+		newVal = make(sql.Row, size)
 		copy(newVal, val)
 	}
 	is.stack.Peek().variables[name] = &interpreterVariable{
