@@ -117,10 +117,20 @@ Do not check off an item until it has workload proof:
 ## Index/planner TODO
 
 - [ ] Partial indexes - prove non-trivial predicates such as `WHERE column IS
-  NOT NULL` and boolean/active-flag filters.
+  NOT NULL` and boolean/active-flag filters, including partial *unique*
+  indexes. Dependent: `ON CONFLICT (col) WHERE arbiter_pred` enforcement
+  in the upsert path. Today the arbiter predicate is parsed and accepted
+  but never matched against a candidate index's predicate (see the
+  `ON CONFLICT ... DO UPDATE` entry below) because every unique index
+  is full. When partial unique indexes ship, the arbiter must select the
+  unique index whose predicate is implied by `arbiter_pred`; until then,
+  `ON CONFLICT (col) WHERE pred` silently falls through to full-unique
+  semantics, which is wrong for any app that relied on the predicate to
+  scope the conflict target.
 - [ ] Expression indexes - prove JSONB-derived and computed-expression
   indexes.
-- [x] `CREATE INDEX CONCURRENTLY` - plain btree CONCURRENTLY drives
+- [x] `CREATE INDEX CONCURRENTLY` keyword acceptance and btree
+  two-phase catalog visibility - plain btree CONCURRENTLY drives
   PostgreSQL's two-phase state machine: register-and-build under
   (indisready=false, indisvalid=false), commit, then flip to
   (true, true) in a separate transaction. The flip is now
@@ -142,13 +152,21 @@ Do not check off an item until it has workload proof:
   evidence in testing/go/alembic_concurrently_test.go: the harness
   installs Alembic + SQLAlchemy + psycopg in a venv and runs a real
   migration with op.create_index(..., postgresql_concurrently=True)
-  / op.drop_index(..., postgresql_concurrently=True). The Phase 1
-  build itself still holds a write lock for its duration — true
-  non-blocking writes during the build need Dolt-side dual-write
-  (writers maintain a pending index while the backfill runs)
-  which is out of scope here. GIN, expression, partial, and
-  INCLUDE indexes route through the existing synchronous
-  AlterTable path.
+  / op.drop_index(..., postgresql_concurrently=True). What this
+  does *not* deliver is PostgreSQL's "non-blocking on writers"
+  contract — see the two follow-ups below.
+- [ ] CONCURRENTLY non-blocking writes during Phase 1 - PG's whole
+  point of CONCURRENTLY is that producers can keep writing while
+  the index backfill runs. Doltgres' Phase 1 still holds a write
+  lock for the duration of the build, so concurrent writers
+  block. Closing this needs Dolt-side dual-write (writers
+  maintain a pending index while the backfill runs); out of
+  scope until that primitive lands.
+- [ ] CONCURRENTLY for non-btree index types - GIN, expression,
+  partial, and INCLUDE CONCURRENTLY all route through the
+  existing synchronous AlterTable path. The keyword is accepted
+  so migration tools don't error, but none of the two-phase
+  catalog visibility above applies.
 - [ ] `INCLUDE` indexes - support index `INCLUDE` columns through dump/restore
   and ORM introspection.
 - [ ] JSONB GIN indexes - prove the supported containment subset and document
@@ -194,7 +212,24 @@ Do not check off an item until it has workload proof:
   workflow end-to-end: a BEFORE INSERT trigger written in PL/pgSQL
   reads `current_setting('app.actor', true)` and writes the value into
   an audit row, with cases for COMMIT, ROLLBACK, autocommit, and
-  session-scope-vs-transaction-local override.
+  session-scope-vs-transaction-local override. The savepoint-rollback
+  case is a known limitation tracked separately below
+  (`SET LOCAL` snapshot is per-transaction, not per-savepoint;
+  `ROLLBACK TO SAVEPOINT` does not re-snapshot). Pinned by
+  testing/go/set_local_savepoint_test.go.
+- [ ] `SET LOCAL` snapshots scoped to savepoints - PG snapshots GUC
+  values at every SAVEPOINT and restores them on ROLLBACK TO
+  SAVEPOINT. Doltgres only snapshots once per transaction (at the
+  first SET LOCAL of each variable inside the tx), so a
+  ROLLBACK TO SAVEPOINT keeps the most-recent SET LOCAL value
+  applied instead of restoring the savepoint-time value. Closing
+  this needs a per-savepoint stack of GUC snapshots in
+  server/functions/xact_vars.go plus connection-handler hooks at
+  SAVEPOINT / ROLLBACK TO SAVEPOINT / RELEASE SAVEPOINT
+  statements. Current behavior pinned by
+  testing/go/set_local_savepoint_test.go's
+  ROLLBACK_TO_SAVEPOINT_does_NOT_restore_SET_LOCAL subtest; flip
+  it to PG-correct when this lands.
 - [x] Transaction-local `set_config(..., true)` - support audit-context
   helpers and similar patterns. Implementation landed; covered by the
   same trigger harness above plus testing/go/set_test.go.
@@ -236,29 +271,62 @@ Do not check off an item until it has workload proof:
   vitess.ValuesFuncExpr inside Context.WithExcludedRefs;
   DO UPDATE SET ... WHERE rewrites each `col = expr` to a CASE that
   preserves the existing value when the predicate is false; arbiter
-  predicate is accepted (currently a no-op until partial unique
-  indexes ship); ON CONSTRAINT resolution looks the constraint up
+  predicate `ON CONFLICT (col) WHERE pred` is parsed and accepted
+  but never matched against a candidate index's predicate — see the
+  Partial indexes entry above, which lists this enforcement as a
+  dependent. The current behavior silently falls through to
+  full-unique-index semantics, which is wrong for any app that uses
+  partial unique indexes to scope the conflict target;
+  ON CONSTRAINT resolution looks the constraint up
   by GMS index ID and treats `<table>_pkey` as PG's auto-generated
   primary-key constraint name. Coverage in
   testing/go/insert_on_conflict_test.go's
   TestInsertOnConflictExcluded, TestInsertOnConflictDoUpdateWhere,
   TestInsertOnConflictArbiterPredicate, and
-  TestInsertOnConflictOnConstraint. Residual gap: full RETURNING /
-  affected-row-count parity (a separate completeness item).
+  TestInsertOnConflictOnConstraint. RETURNING / affected-row-count
+  parity is tracked separately as its own follow-up below.
+- [ ] `INSERT ... ON CONFLICT ... RETURNING` and affected-row-count
+  parity - PG's RETURNING reports both inserted and updated rows
+  with the post-state values; the affected-row-count distinguishes
+  inserts (1) from on-conflict updates (1) from on-conflict no-ops
+  (0). ORM helpers like SQLAlchemy `Session.execute(stmt).rowcount`
+  and Drizzle `.returning()` on upserts depend on these for
+  optimistic-concurrency checks and "did we actually insert this?"
+  branches. Coverage gap: doltgres' upsert path has not been pinned
+  on the inserted-vs-updated row split or on the rowcount each
+  shape reports.
 - [x] `FOR UPDATE` row locks - row-level pessimistic locking
   with cross-session contention. server/ast/locking_clause.go
   parses FOR UPDATE / FOR SHARE / FOR NO KEY UPDATE / FOR KEY
-  SHARE plus NOWAIT / SKIP LOCKED / OF table-list; the new
+  SHARE plus NOWAIT / SKIP LOCKED / OF table-list; the
   AssignRowLevelLocking analyzer rule wraps every base table in
   scope with server/node/row_locking_table.go's RowLockingTable.
-  Each row read acquires a transaction-scoped advisory lock on
-  (relationOID, primary-key) so two sessions racing for the same
-  row serialize. NOWAIT raises immediately on contention; SKIP
-  LOCKED elides the held row and continues. Coverage in
-  testing/go/select_for_update_test.go (parsing) and
-  testing/go/select_for_update_contention_test.go: holder/waiter
-  blocking, NOWAIT raises in <250ms on contention, SKIP LOCKED
-  elides the held row, eight-way race serializes correctly.
+  Each row read acquires a transaction-scoped advisory lock on a
+  structured (relationOID, primary-key) key — the lock-name
+  encoding is a deterministic "row:<oid>:<pk>" string so a session
+  staring at pg_locks can read a held lock back to a specific row.
+  Keyless tables fall back to a table-level "reltable:<oid>" lock
+  via tableLevelLockingTable so the silent "no lock at all"
+  degradation is gone (over-serializing the table is correctness-
+  safe). NOWAIT raises immediately on contention; SKIP LOCKED
+  elides the held row (or the entire keyless table) and continues.
+  Synthesized locks surface in pg_locks (locktype='tuple' for
+  row-level, locktype='relation' for the keyless fallback) via a
+  registry in server/node/row_lock_registry.go, populated at
+  acquire/wait time and cleared at COMMIT/ROLLBACK alongside
+  ReleaseSessionXactLocks. Deadlock detection runs as a 10ms-poll
+  cycle walker (server/node/row_lock_deadlock.go); when two
+  sessions hold opposite-order locks the smallest-ID participant
+  aborts with SQLSTATE 40P01 deadlock_detected, which is what
+  every PG ORM and transaction helper branches on to retry.
+  Coverage in testing/go/select_for_update_test.go (parsing),
+  select_for_update_contention_test.go (holder/waiter blocking,
+  NOWAIT under 250ms, SKIP LOCKED elision, 8-way race
+  serialization, keyless table-level fallback, keyless SKIP
+  LOCKED elides whole table), pg_locks_for_update_test.go
+  (granted/waiting visibility, commit clears registry), and
+  select_for_update_deadlock_test.go (opposite-order cycle aborts
+  exactly one transaction with 40P01 within milliseconds).
 - [x] Savepoints - prove nested transaction behavior used by ORM transaction
   helpers. testing/go/savepoints_test.go exercises the wire-protocol
   surface end-to-end (RELEASE / ROLLBACK TO / nested rollback /
@@ -327,13 +395,24 @@ actually exercise.
   typed expressions were being clobbered to `?column?`, and bare
   literals/operator expressions were leaking input-expression text
   as the column name. The full `drizzle-kit introspect` binary
-  harness is preserved in testing/go/drizzle_kit_introspect_test.go
-  but skipped pending a separate planner gap on
-  `JOIN pg_opclass opc ON opc.oid = ANY(i.indclass)`.
+  harness in testing/go/drizzle_kit_introspect_test.go now runs end-
+  to-end (the earlier opclass-join planner gap was closed by the
+  `pg_index.indclass = ANY(...)` item below). Two assertions inside
+  the binary harness (composite-PK and unique-constraint
+  introspection) remain disabled — see the pg_constraint
+  completeness item below for the dependency.
 - [ ] `pg_stat_user_indexes` - prove or document misleading admin
   diagnostics.
 - [ ] `pg_class` / `pg_index` - prove low-level catalog inspection used by
   scripts.
+- [ ] `pg_constraint` completeness for primary-key and unique-constraint
+  introspection - drizzle-kit's introspect binary harness has
+  composite-PK and unique-constraint assertions disabled because
+  doltgres' `pg_constraint` does not surface `contype='p'` and
+  `contype='u'` rows the way the drizzle queries shape them. Fix this
+  and the disabled drizzle assertions inside
+  testing/go/drizzle_kit_introspect_test.go can be re-enabled (they
+  are flagged with a clear comment pointing here).
 - [ ] Migration-tool introspection - run `drizzle-kit introspect`, `prisma db
   pull`, Alembic autogenerate, or equivalent against Doltgres.
 - [ ] Authorization-policy deployment - prove application-managed
@@ -372,9 +451,16 @@ rather than only a Go-level harness.
   extractAliasSourceHints walks plan.Project's expressions, and
   buildTableAliasMap walks the FROM-side of the plan to translate
   GetField table aliases back to the underlying ResolvedTable
-  name. Coverage in testing/go/select_field_metadata_test.go
-  including the "table-qualified aliased base column" subtest
-  (no longer pinned as a follow-up).
+  name. Anything not directly resolvable to a base column —
+  computed expressions (`v + 1`), casts (`v::bigint`), function
+  calls, scalar subqueries, derived tables (`FROM (SELECT …) sub`),
+  CTE references, aggregates, CASE — falls through to TableOID=0,
+  which matches what real PostgreSQL emits for non-attributable
+  columns. Coverage in testing/go/select_field_metadata_test.go:
+  TestSelectStarFieldMetadata pins the attributable side
+  (including the "table-qualified aliased base column" subtest);
+  TestSelectFieldMetadataNonAttributableColumns pins the
+  non-attributable side (9 shapes that must report TableOID=0).
 - [x] Startup `ParameterStatus` set - emit the same dozen messages
   real PG sends (`server_encoding`, `DateStyle`, `IntervalStyle`,
   `TimeZone`, `integer_datetimes`, `is_superuser`,
@@ -396,32 +482,47 @@ rather than only a Go-level harness.
   query"), and asserts the query is interrupted in well under
   the 20s sleep.
 - [x] `ErrorResponse` SQLSTATE codes - map common GMS / Dolt error
-  kinds to the PostgreSQL SQLSTATE codes drivers branch on
-  (23505 unique_violation, 23503 foreign_key_violation, 23502
+  kinds to the PostgreSQL SQLSTATE codes drivers branch on:
+  23505 unique_violation, 23503 foreign_key_violation, 23502
   not_null_violation, 23514 check_violation, 42P01
-  undefined_table, 42703 undefined_column, 0A000
-  feature_not_supported). Implementation landed in
-  server/connection_handler.go's `errorResponseCode`. Coverage
-  by testing/go/sqlstate_test.go (pgx) and
-  testing/go/sqlalchemy_sqlstate_test.go which installs
-  SQLAlchemy + psycopg3 in a venv and asserts each shape surfaces
-  the right SQLAlchemyError subclass with the matching
-  underlying SQLSTATE.
+  undefined_table, 42703 undefined_column, 22P02
+  invalid_text_representation, 0A000 feature_not_supported,
+  42P07 duplicate_table, 22012 division_by_zero, 22003
+  numeric_value_out_of_range, 22001 string_data_right_truncation,
+  42601 syntax_error, 42883 undefined_function, 25P02
+  in_failed_sql_transaction, 40P01 deadlock_detected.
+  Implementation landed in server/connection_handler.go's
+  `errorResponseCode` across three layers — GMS error-kind matchers,
+  MySQL-errno fallback, and message-prefix sniffing for errors that
+  share errno 1105. Coverage by testing/go/sqlstate_test.go (pgx,
+  with cases for each code above) and
+  testing/go/sqlalchemy_sqlstate_test.go which installs SQLAlchemy
+  + psycopg3 in a venv and asserts each shape surfaces the right
+  SQLAlchemyError subclass with the matching underlying SQLSTATE.
+  Codes not yet mapped (notably 40001 serialization_failure for
+  retry loops, 22008 datetime_field_overflow) fall through to
+  XX000 internal_error.
 - [x] `pg_attribute` index attribute names - the existing
   `indexAttributeName` helper already returns real column names
   for non-expression index attributes (the audit's
   "synthetic placeholder" claim was a false positive). Pinned by
   testing/go/pg_attribute_index_names_test.go which asserts every
   attname in pg_attribute matches the underlying table column.
-- [x] `TIMESTAMP(p)` / `TIME(p)` precision in `atttypmod` -
-  preserve the user-supplied precision through CREATE TABLE so
-  introspection tools can rebuild the original DDL via
-  `format_type`. Implementation routes time-family OIDs through
-  `newTimeFamilyType` and `pg_attribute` reads
-  `GetAttTypMod`. Coverage by testing/go/time_precision_typmod_test.go
-  and testing/go/jdbc_evidence_test.go reads pg_attribute the way
-  JDBC's ResultSetMetaData does and asserts the typmod survives a
-  binary-format round-trip.
+- [x] `atttypmod` precision/scale preservation across the type
+  families ORM introspection cares about - `TIMESTAMP(p)`,
+  `TIME(p)`, `NUMERIC(p,s)`, and `VARCHAR(n)` all round-trip
+  through CREATE TABLE → pg_attribute.atttypmod → format_type
+  back to the original DDL textual form. Time-family OIDs go
+  through `newTimeFamilyType`; numeric/varchar use the native
+  typmod encoding (`((p<<16)|s)+4` for numeric, `n+4` for
+  varchar, `-1` for unconstrained). Coverage by
+  testing/go/time_precision_typmod_test.go (TIMESTAMP/TIME),
+  testing/go/numeric_varchar_typmod_test.go (NUMERIC/VARCHAR
+  including unconstrained `NUMERIC` / `VARCHAR` returning -1
+  and format_type round-trip), and
+  testing/go/jdbc_evidence_test.go which reads pg_attribute the
+  way JDBC's ResultSetMetaData does and asserts typmod survives
+  a binary-format round-trip.
 - [x] `pg_class.reloftype=0` for ordinary tables - matches
   PostgreSQL's behavior (reloftype is only nonzero for typed
   tables created with `CREATE TABLE name OF composite_type`,
@@ -449,11 +550,10 @@ rather than only a Go-level harness.
   testing/go/pg_index_indclass_any_test.go AND the full
   drizzle-kit introspect binary harness in
   testing/go/drizzle_kit_introspect_test.go (no longer skip-gated
-  by `DOLTGRES_RUN_DRIZZLE_KIT=1`). Two assertions inside that
-  harness — composite-PK and unique-constraint introspection —
-  remain disabled with a clear comment because they depend on a
-  separate pg_constraint completeness gap (contype='p'/'u' rows
-  surfacing the way drizzle queries for them).
+  by `DOLTGRES_RUN_DRIZZLE_KIT=1`). The harness's composite-PK
+  and unique-constraint assertions are still disabled — that's
+  the `pg_constraint` completeness item in the dump/admin section,
+  not a regression here.
 
 ## Lower-risk surfaces still requiring smoke tests
 
@@ -467,6 +567,71 @@ rather than only a Go-level harness.
 - [ ] Arrays, `ANY`, `array_agg`, and ordinary aggregate behavior.
 - [ ] Basic transactions and simple savepoint nesting.
 - [ ] Source-mode logical replication for the supported `pgoutput` subset.
+
+## Proposed dolt changes
+
+Items here are gaps that doltgresql alone cannot close because the
+seam lives inside the imported `github.com/dolthub/dolt/go` module.
+Doltgresql consumes dolt as a published Go module (no `replace`
+directive, no vendor copy, no local override), so any change to the
+writer/editor/storage path requires an upstream dolt PR. The
+investigation references below name the file:line targets so the
+follow-up work has a starting point.
+
+- [ ] CREATE INDEX CONCURRENTLY phase 4 — non-blocking writes during
+  the index backfill. Today doltgresql runs phase 1 as a synchronous
+  `IndexAlterableTable.CreateIndex`, which holds a write lock for
+  the duration of the prolly-tree build. The phase 2 metadata flip
+  is already lock-free (commit `665eba41`); only the build itself
+  still serializes writes.
+
+  The seam is in dolt's writer:
+  `libraries/doltcore/sqle/writer/schema_cache.go:newWriterSchema`
+  walks `Schema.Indexes().AllIndexes()` and populates
+  `WriterState.SecIndexes`. The prolly table writer
+  (`prolly_table_writer.go:Insert`/`Update`/`Delete`) iterates
+  `w.secondary` for every row write. Adding a per-index "skip while
+  pending" / "include during dual-write" decision in `newWriterSchema`
+  is the single chokepoint.
+
+  Minimal upstream patch (~100 lines across 4-5 files):
+  1. `schema.IndexProperties` (libraries/doltcore/schema/index_coll.go)
+     — add `NotReady bool` and `Invalid bool` fields, mirroring
+     PostgreSQL's `pg_index.indisready` / `pg_index.indisvalid`.
+  2. Schema serialization — preserve the new bits across the
+     flatbuffers / nbf round-trip used by `UpdateSchema`.
+  3. `newWriterSchema` — skip indexes flagged `NotReady=true` from
+     `SecIndexes`, include `NotReady=false, Invalid=true` indexes so
+     writers dual-write while the planner still ignores them.
+  4. `AlterableDoltTable.CreateIndex`
+     (libraries/doltcore/sqle/tables.go) — add a "register without
+     building" mode so phase 1 can install the (pending, invalid)
+     index entry without the synchronous backfill.
+  5. Add a `BackfillIndex` method that populates the prolly tree
+     from a snapshot read while writers continue against the live
+     working set, with a final validation scan to pick up rows
+     written between the snapshot point and the flip.
+
+  Doltgresql side (post-patch): swap the synchronous `CreateIndex`
+  in `server/node/create_index_concurrently.go` for the new
+  register-then-backfill API, and have the state-machine flip drive
+  the new bits through `flipIndexComment`'s peer (a
+  `flipIndexBuildState` that toggles `NotReady`/`Invalid` directly
+  on `IndexProperties` rather than the comment payload).
+
+  Branch-and-merge alternative entirely inside doltgresql is
+  technically possible via dolt's public branching/diff APIs, but
+  that re-implements inside doltgresql what dolt already does
+  internally and would run several hundred lines plus serious
+  correctness work for iterative-catchup races. Not worth it when
+  the upstream patch is ~100 lines.
+
+  Why this is not urgent: doltgresql's prolly-tree builds are fast,
+  so the phase 1 lock window is short for typical workloads. The
+  state-machine + metadata-flip already in place gives ORMs the
+  catalog/planner-visibility semantics they care about. Phase 4
+  matters once table sizes push the build into multi-second
+  territory.
 
 ## Current support claim
 
