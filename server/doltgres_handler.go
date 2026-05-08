@@ -54,6 +54,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/settings"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -257,7 +258,7 @@ func (h *DoltgresHandler) ComQuery(ctx context.Context, c *mysql.Conn, query str
 
 func castSQLError(err error) error {
 	switch pgerror.GetPGCode(err) {
-	case pgcode.DuplicateObject:
+	case pgcode.DeadlockDetected, pgcode.DuplicateObject, pgcode.LockNotAvailable:
 		return err
 	default:
 		return sql.CastSQLError(err)
@@ -513,6 +514,7 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		// session, so the next session reusing the connection id
 		// doesn't see stale rollback state.
 		_ = functions.ReleaseSessionXactLocks(ctx)
+		node.ReleaseSessionRowLocks(c.ConnectionID)
 		_ = functions.ReleaseSessionXactVars(ctx)
 		_, err = h.e.LS.ReleaseAll(ctx)
 		if err != nil {

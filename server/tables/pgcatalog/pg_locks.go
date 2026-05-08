@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,44 @@ func (p PgLocksHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgLocksHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_locks row iter
-	return emptyRowIter()
+	entries := pgnodes.SnapshotRowLocks()
+	rows := make([]sql.Row, 0, len(entries))
+	databaseID := id.NewDatabase(ctx.GetCurrentDatabase()).AsId()
+	for _, entry := range entries {
+		locktype := "tuple"
+		mode := "RowExclusiveLock"
+		if entry.Kind == pgnodes.RowLockKindTable {
+			locktype = "relation"
+			mode = "ExclusiveLock"
+		}
+		relationID := id.Cache().ToInternal(entry.RelationOID)
+		if relationID == id.Null {
+			relationID = id.NewOID(entry.RelationOID).AsId()
+		}
+		var waitStart any
+		if !entry.Granted {
+			waitStart = entry.WaitStart
+		}
+		rows = append(rows, sql.Row{
+			locktype,               // locktype
+			databaseID,             // database
+			relationID,             // relation
+			nil,                    // page
+			nil,                    // tuple
+			nil,                    // virtualxid
+			nil,                    // transactionid
+			nil,                    // classid
+			nil,                    // objid
+			nil,                    // objsubid
+			nil,                    // virtualtransaction
+			int32(entry.SessionID), // pid
+			mode,                   // mode
+			entry.Granted,          // granted
+			false,                  // fastpath
+			waitStart,              // waitstart
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -73,20 +109,4 @@ var pgLocksSchema = sql.Schema{
 	{Name: "granted", Type: pgtypes.Bool, Default: nil, Nullable: true, Source: PgLocksName},
 	{Name: "fastpath", Type: pgtypes.Bool, Default: nil, Nullable: true, Source: PgLocksName},
 	{Name: "waitstart", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgLocksName},
-}
-
-// pgLocksRowIter is the sql.RowIter for the pg_locks table.
-type pgLocksRowIter struct {
-}
-
-var _ sql.RowIter = (*pgLocksRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgLocksRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgLocksRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

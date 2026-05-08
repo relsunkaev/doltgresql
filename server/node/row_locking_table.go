@@ -16,10 +16,14 @@ package node
 
 import (
 	"fmt"
-	"hash/fnv"
+	"io"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // RowLockingPolicy mirrors PostgreSQL's row-locking wait modes:
@@ -77,14 +81,17 @@ func SetRowLockerFuncs(funcs RowLockerFuncs) {
 //   - NOWAIT           -> TryAcquire; raise on miss
 //   - SKIP LOCKED      -> TryAcquire; skip the row on miss
 //
-// Tables without a primary key surface no key to lock on, so the
-// wrapper transparently degrades to the unwrapped read path
-// rather than failing.
+// Tables without a primary key surface no key to lock on. PostgreSQL
+// would lock those rows by ctid; Doltgres does not have a stable ctid
+// equivalent, so we conservatively take a table-level lock for the
+// duration of the statement / transaction instead of silently not
+// locking at all.
 type RowLockingTable struct {
 	underlying sql.Table
 	tableOID   uint32
 	pkColumns  []int
 	policy     RowLockingPolicy
+	tableLevel bool
 }
 
 var _ sql.TableWrapper = (*RowLockingTable)(nil)
@@ -107,13 +114,6 @@ func WrapRowLockingTable(table sql.Table, tableOID uint32, schema sql.Schema, po
 			pkCols = append(pkCols, i)
 		}
 	}
-	if len(pkCols) == 0 {
-		// Without a PK we cannot key the lock to a specific row.
-		// PG's default UPDATE behavior in this case is to lock by
-		// ctid; we degrade to no locking, which matches doltgres'
-		// existing advisory-only semantics for keyless tables.
-		return table, false
-	}
 	if rowLockerFuncs.Acquire == nil || rowLockerFuncs.TryAcquire == nil {
 		return table, false
 	}
@@ -122,6 +122,7 @@ func WrapRowLockingTable(table sql.Table, tableOID uint32, schema sql.Schema, po
 		tableOID:   tableOID,
 		pkColumns:  pkCols,
 		policy:     policy,
+		tableLevel: len(pkCols) == 0,
 	}, true
 }
 
@@ -133,8 +134,8 @@ func (t *RowLockingTable) WithUnderlying(table sql.Table) sql.Table {
 	return &out
 }
 
-func (t *RowLockingTable) Name() string             { return t.underlying.Name() }
-func (t *RowLockingTable) String() string           { return t.underlying.String() }
+func (t *RowLockingTable) Name() string                     { return t.underlying.Name() }
+func (t *RowLockingTable) String() string                   { return t.underlying.String() }
 func (t *RowLockingTable) Schema(c *sql.Context) sql.Schema { return t.underlying.Schema(c) }
 func (t *RowLockingTable) Collation() sql.CollationID {
 	return t.underlying.Collation()
@@ -218,20 +219,23 @@ func (t *rowLockingIndexedTable) LookupPartitions(ctx *sql.Context, lookup sql.I
 // each row's primary key before yielding it.
 func (t *RowLockingTable) wrap(ctx *sql.Context, inner sql.RowIter) sql.RowIter {
 	return &rowLockingIter{
-		ctx:       ctx,
-		inner:     inner,
-		tableOID:  t.tableOID,
-		pkColumns: t.pkColumns,
-		policy:    t.policy,
+		ctx:        ctx,
+		inner:      inner,
+		tableOID:   t.tableOID,
+		pkColumns:  t.pkColumns,
+		policy:     t.policy,
+		tableLevel: t.tableLevel,
 	}
 }
 
 type rowLockingIter struct {
-	ctx       *sql.Context
-	inner     sql.RowIter
-	tableOID  uint32
-	pkColumns []int
-	policy    RowLockingPolicy
+	ctx        *sql.Context
+	inner      sql.RowIter
+	tableOID   uint32
+	pkColumns  []int
+	policy     RowLockingPolicy
+	tableLevel bool
+	locked     bool
 }
 
 var _ sql.RowIter = (*rowLockingIter)(nil)
@@ -242,30 +246,48 @@ func (r *rowLockingIter) Next(ctx *sql.Context) (sql.Row, error) {
 		if err != nil {
 			return nil, err
 		}
-		key := rowLockName(r.tableOID, row, r.pkColumns)
+		if r.tableLevel && r.locked {
+			return row, nil
+		}
+		key, kind, pkText := rowLockTarget(r.tableOID, row, r.pkColumns, r.tableLevel)
+		entry := RegisterRowLockWaiter(uint32(ctx.Session.ID()), key, kind, r.tableOID, pkText)
 		switch r.policy {
 		case RowLockingPolicyNoWait:
 			ok, err := rowLockerFuncs.TryAcquire(ctx, key)
 			if err != nil {
+				ReleaseRowLockEntry(entry)
 				return nil, err
 			}
 			if !ok {
-				return nil, errors.Errorf("could not obtain lock on row in relation %d", r.tableOID)
+				ReleaseRowLockEntry(entry)
+				return nil, pgerror.Newf(pgcode.LockNotAvailable, "could not obtain lock on row in relation %d", r.tableOID)
 			}
+			MarkRowLockGranted(entry)
+			r.locked = true
 			return row, nil
 		case RowLockingPolicySkipLocked:
 			ok, err := rowLockerFuncs.TryAcquire(ctx, key)
 			if err != nil {
+				ReleaseRowLockEntry(entry)
 				return nil, err
 			}
 			if !ok {
+				ReleaseRowLockEntry(entry)
+				if r.tableLevel {
+					return nil, io.EOF
+				}
 				continue
 			}
+			MarkRowLockGranted(entry)
+			r.locked = true
 			return row, nil
 		default:
-			if err := rowLockerFuncs.Acquire(ctx, key); err != nil {
+			if err := acquireWithDeadlockDetection(ctx, key); err != nil {
+				ReleaseRowLockEntry(entry)
 				return nil, err
 			}
+			MarkRowLockGranted(entry)
+			r.locked = true
 			return row, nil
 		}
 	}
@@ -275,25 +297,28 @@ func (r *rowLockingIter) Close(ctx *sql.Context) error {
 	return r.inner.Close(ctx)
 }
 
-// rowLockName builds the advisory-lock name for a (relationOID, PK)
-// pair. The hash includes the OID so two unrelated tables sharing a
-// PK value (1, 1) cannot accidentally serialize on each other.
-func rowLockName(tableOID uint32, row sql.Row, pkColumns []int) string {
-	h := fnv.New64a()
-	var oidBytes [4]byte
-	oidBytes[0] = byte(tableOID >> 24)
-	oidBytes[1] = byte(tableOID >> 16)
-	oidBytes[2] = byte(tableOID >> 8)
-	oidBytes[3] = byte(tableOID)
-	_, _ = h.Write(oidBytes[:])
+// rowLockTarget builds the advisory-lock name and pg_locks metadata
+// for a selected row. The relation OID prefixes the key so two
+// unrelated tables sharing a primary-key value cannot serialize each
+// other. Keyless tables use a relation-wide fallback key.
+func rowLockTarget(tableOID uint32, row sql.Row, pkColumns []int, tableLevel bool) (string, RowLockKind, string) {
+	if tableLevel {
+		return fmt.Sprintf("reltable:%d", tableOID), RowLockKindTable, ""
+	}
+	pkText := rowLockPrimaryKeyText(row, pkColumns)
+	return fmt.Sprintf("row:%d:%s", tableOID, pkText), RowLockKindRow, pkText
+}
+
+func rowLockPrimaryKeyText(row sql.Row, pkColumns []int) string {
+	var b strings.Builder
 	for _, idx := range pkColumns {
 		if idx >= len(row) {
 			continue
 		}
-		fmt.Fprintf(h, "\x00%v", row[idx])
+		if b.Len() > 0 {
+			b.WriteByte('|')
+		}
+		fmt.Fprintf(&b, "%v", row[idx])
 	}
-	// Match the "row:<key>" namespace used by other rowLock callers
-	// so a future user-visible advisory lock cannot collide with a
-	// row-level FOR UPDATE acquisition.
-	return fmt.Sprintf("row:%d", h.Sum64())
+	return b.String()
 }

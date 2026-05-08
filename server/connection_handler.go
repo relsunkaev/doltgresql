@@ -634,6 +634,7 @@ func (h *ConnectionHandler) releaseXactAdvisoryLocksIfOutsideTransaction() {
 	}
 	if hasLocks {
 		_ = functions.ReleaseSessionXactLocks(ctx)
+		node.ReleaseSessionRowLocks(h.mysqlConn.ConnectionID)
 	}
 	if hasVars {
 		_ = functions.ReleaseSessionXactVars(ctx)
