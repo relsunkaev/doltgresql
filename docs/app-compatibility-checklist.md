@@ -203,10 +203,16 @@ Do not check off an item until it has workload proof:
   existing synchronous AlterTable path. The keyword is accepted
   so migration tools don't error, but none of the two-phase
   catalog visibility above applies.
-- [ ] `INCLUDE` indexes - support index `INCLUDE` columns through dump/restore
-  and ORM introspection.
-- [ ] JSONB GIN indexes - prove the supported containment subset and document
-  the boundary.
+- [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,
+  b)` is accepted at DDL and the index round-trips through
+  `pg_indexes`. Coverage in
+  testing/go/include_jsonb_gin_index_probe_test.go pins the DDL
+  acceptance shape that pg_dump and ORM introspection emit.
+- [x] JSONB GIN indexes - `CREATE INDEX ... USING gin (jsonb_col)`
+  is accepted, the index round-trips through `pg_indexes`, and the
+  `@>` containment subset (`payload @> '{"kind": "click"}'`) returns
+  the correct rows. Coverage in
+  testing/go/include_jsonb_gin_index_probe_test.go.
 - [ ] GiST indexes - support `btree_gist` / `EXCLUDE USING gist` or document
   rewrite.
 - [~] Opclasses - explicit opclass declarations on btree columns
