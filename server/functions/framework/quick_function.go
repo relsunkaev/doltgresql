@@ -40,9 +40,13 @@ type QuickFunction interface {
 }
 
 // quickFunctionTypesMatch reports whether the types of |child| and |existing| are interchangeable for a
-// QuickFunction's WithChildren. It accepts strict equality, but also accepts a resolved DoltgresType
-// (e.g. "pg_catalog.pg_lsn") replacing an unresolved one with the same type name (e.g. "pg_lsn"), which the
-// analyzer's resolveType pass produces after construction.
+// QuickFunction's WithChildren. It accepts strict equality and also tolerates the analyzer's mid-resolution
+// shapes that show up after construction:
+//   - the resolveType pass replacing an unresolved DoltgresType ID (empty schema, e.g. "pg_lsn") with the
+//     fully-qualified one ("pg_catalog.pg_lsn");
+//   - a swap from a non-Doltgres GMS type to a DoltgresType (the analyzer rewriting an originally
+//     non-pg expression in a cast that yields the function's expected pg type);
+//   - a child that is still typed as the unknown placeholder while the surrounding cast is being threaded.
 func quickFunctionTypesMatch(ctx *sql.Context, child, existing sql.Expression) bool {
 	ct := child.Type(ctx)
 	et := existing.Type(ctx)
@@ -51,8 +55,14 @@ func quickFunctionTypesMatch(ctx *sql.Context, child, existing sql.Expression) b
 	}
 	cdt, cok := ct.(*pgtypes.DoltgresType)
 	edt, eok := et.(*pgtypes.DoltgresType)
+	if cok != eok {
+		return true
+	}
 	if !cok || !eok {
 		return false
+	}
+	if cdt.ID == pgtypes.Unknown.ID || edt.ID == pgtypes.Unknown.ID {
+		return true
 	}
 	if cdt.ID == edt.ID {
 		return true
