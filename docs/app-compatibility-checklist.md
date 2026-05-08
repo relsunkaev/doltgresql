@@ -482,8 +482,15 @@ actually exercise.
   completeness item below for the dependency.
 - [ ] `pg_stat_user_indexes` - prove or document misleading admin
   diagnostics.
-- [ ] `pg_class` / `pg_index` - prove low-level catalog inspection used by
-  scripts.
+- [x] `pg_class` / `pg_index` - low-level catalog inspection used by
+  admin scripts and migration tools works end-to-end. The canonical
+  "does the table exist?" join (`pg_class JOIN pg_namespace` filtered
+  by `relkind='r'`) returns the right answer; `pg_index` reports
+  `indisprimary` / `indisunique` accurately for PK indexes,
+  non-PK unique indexes, and non-unique secondary indexes; and the
+  `pg_index JOIN pg_class` enumeration that tools use to list every
+  index on a table returns all three index types in alphabetical
+  order. Coverage in testing/go/pg_class_pg_index_inspection_test.go.
 - [x] `pg_constraint` completeness for primary-key and unique-constraint
   introspection - drizzle-kit, Prisma db pull, and Alembic autogenerate
   all join `information_schema.table_constraints` to
