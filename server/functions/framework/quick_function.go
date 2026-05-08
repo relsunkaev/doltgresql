@@ -47,6 +47,9 @@ type QuickFunction1 struct {
 	IsSRF        bool
 	callResolved [2]*pgtypes.DoltgresType
 	function     Function1
+	overloads    *Overloads
+	isOperator   bool
+	runner       sql.StatementRunner
 }
 
 var _ QuickFunction = (*QuickFunction1)(nil)
@@ -151,6 +154,9 @@ func (q *QuickFunction1) WithResolvedTypes(newTypes []*pgtypes.DoltgresType) any
 		IsSRF:        q.IsSRF,
 		callResolved: [2]*pgtypes.DoltgresType(newTypes),
 		function:     q.function,
+		overloads:    q.overloads,
+		isOperator:   q.isOperator,
+		runner:       q.runner,
 	}
 }
 
@@ -171,7 +177,22 @@ func (q *QuickFunction1) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return &nq, nil
 	}
 
-	return nil, errors.Errorf("cannot change the types of children for `%T`", q)
+	return q.reresolve(ctx, children), nil
+}
+
+// reresolve falls back to a CompiledFunction when WithChildren receives children whose types do not match the
+// originally resolved overload. The returned expression may itself collapse back to a QuickFunction if the new types
+// allow for one.
+func (q *QuickFunction1) reresolve(ctx *sql.Context, children []sql.Expression) sql.Expression {
+	if q.overloads == nil {
+		return q
+	}
+	fnOverloads := q.overloads.overloadsForParams(len(children))
+	cf := newCompiledFunctionInternal(ctx, q.Name, children, q.overloads, fnOverloads, q.isOperator, q.runner)
+	if qf := cf.GetQuickFunction(); qf != nil {
+		return qf
+	}
+	return cf
 }
 
 // specificFuncImpl implements the interface sql.Expression.
@@ -185,6 +206,9 @@ type QuickFunction2 struct {
 	IsSRF        bool
 	callResolved [3]*pgtypes.DoltgresType
 	function     Function2
+	overloads    *Overloads
+	isOperator   bool
+	runner       sql.StatementRunner
 }
 
 var _ QuickFunction = (*QuickFunction2)(nil)
@@ -293,6 +317,9 @@ func (q *QuickFunction2) WithResolvedTypes(newTypes []*pgtypes.DoltgresType) any
 		IsSRF:        q.IsSRF,
 		callResolved: [3]*pgtypes.DoltgresType(newTypes),
 		function:     q.function,
+		overloads:    q.overloads,
+		isOperator:   q.isOperator,
+		runner:       q.runner,
 	}
 }
 
@@ -314,7 +341,19 @@ func (q *QuickFunction2) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return &nq, nil
 	}
 
-	return nil, errors.Errorf("cannot change the types of children for `%T`", q)
+	return q.reresolve(ctx, children), nil
+}
+
+func (q *QuickFunction2) reresolve(ctx *sql.Context, children []sql.Expression) sql.Expression {
+	if q.overloads == nil {
+		return q
+	}
+	fnOverloads := q.overloads.overloadsForParams(len(children))
+	cf := newCompiledFunctionInternal(ctx, q.Name, children, q.overloads, fnOverloads, q.isOperator, q.runner)
+	if qf := cf.GetQuickFunction(); qf != nil {
+		return qf
+	}
+	return cf
 }
 
 // specificFuncImpl implements the interface sql.Expression.
@@ -328,6 +367,9 @@ type QuickFunction3 struct {
 	IsSRF        bool
 	callResolved [4]*pgtypes.DoltgresType
 	function     Function3
+	overloads    *Overloads
+	isOperator   bool
+	runner       sql.StatementRunner
 }
 
 var _ QuickFunction = (*QuickFunction3)(nil)
@@ -436,6 +478,9 @@ func (q *QuickFunction3) WithResolvedTypes(newTypes []*pgtypes.DoltgresType) any
 		IsSRF:        q.IsSRF,
 		callResolved: [4]*pgtypes.DoltgresType(newTypes),
 		function:     q.function,
+		overloads:    q.overloads,
+		isOperator:   q.isOperator,
+		runner:       q.runner,
 	}
 }
 
@@ -458,7 +503,19 @@ func (q *QuickFunction3) WithChildren(ctx *sql.Context, children ...sql.Expressi
 		return &nq, nil
 	}
 
-	return nil, errors.Errorf("cannot change the types of children for `%T`", q)
+	return q.reresolve(ctx, children), nil
+}
+
+func (q *QuickFunction3) reresolve(ctx *sql.Context, children []sql.Expression) sql.Expression {
+	if q.overloads == nil {
+		return q
+	}
+	fnOverloads := q.overloads.overloadsForParams(len(children))
+	cf := newCompiledFunctionInternal(ctx, q.Name, children, q.overloads, fnOverloads, q.isOperator, q.runner)
+	if qf := cf.GetQuickFunction(); qf != nil {
+		return qf
+	}
+	return cf
 }
 
 // specificFuncImpl implements the interface sql.Expression.

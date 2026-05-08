@@ -442,6 +442,9 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 			IsSRF:        c.IsSRF(),
 			callResolved: ([2]*pgtypes.DoltgresType)(c.callResolved),
 			function:     f,
+			overloads:    c.overloads,
+			isOperator:   c.IsOperator,
+			runner:       c.runner,
 		}
 	case Function2:
 		return &QuickFunction2{
@@ -451,6 +454,9 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 			IsSRF:        c.IsSRF(),
 			callResolved: ([3]*pgtypes.DoltgresType)(c.callResolved),
 			function:     f,
+			overloads:    c.overloads,
+			isOperator:   c.IsOperator,
+			runner:       c.runner,
 		}
 	case Function3:
 		return &QuickFunction3{
@@ -460,6 +466,9 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 			IsSRF:        c.IsSRF(),
 			callResolved: ([4]*pgtypes.DoltgresType)(c.callResolved),
 			function:     f,
+			overloads:    c.overloads,
+			isOperator:   c.IsOperator,
+			runner:       c.runner,
 		}
 	default:
 		return nil
