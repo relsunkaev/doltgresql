@@ -177,7 +177,7 @@ func (b sortedPrimaryRowTupleBuilder) tupleFromRow(ctx context.Context, tupleBui
 		}
 	}
 	if permissive {
-		return tupleBuilder.BuildPermissive(sortedPrimaryRowBuildPool)
+		return tupleBuilder.BuildPermissive(ctx, sortedPrimaryRowBuildPool)
 	}
-	return tupleBuilder.Build(sortedPrimaryRowBuildPool)
+	return tupleBuilder.Build(ctx, sortedPrimaryRowBuildPool)
 }

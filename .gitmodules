@@ -1,0 +1,3 @@
+[submodule "dolt"]
+	path = third_party/dolt
+	url = git@github.com:uplinqai/dolt.git

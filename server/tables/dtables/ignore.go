@@ -60,7 +60,11 @@ func convertTupleToIgnoreBoolean(ctx context.Context, valueDesc *val.TupleDesc, 
 
 // getIgnoreTablePatternKey reads the pattern key from a tuple and returns it.
 func getIgnoreTablePatternKey(ctx context.Context, keyDesc *val.TupleDesc, keyTuple val.Tuple) (string, error) {
-	key, ok, err := keyDesc.GetStringAdaptiveValue(0, nil, keyTuple)
+	// Pattern strings are short identifiers that are always stored inline,
+	// so a nil ValueStore is safe here. Threading a real one would require
+	// changing dolt's GetIgnoreTablePatternKey signature, which we override
+	// via a function variable.
+	key, ok, err := keyDesc.GetStringAdaptiveValue(ctx, 0, nil, keyTuple)
 	if err != nil {
 		return "", err
 	}
