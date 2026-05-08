@@ -171,6 +171,60 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			// CREATE UNIQUE INDEX CONCURRENTLY against duplicate-key
+			// data must still raise. PostgreSQL's two-phase build
+			// detects the conflict during the validation step and
+			// drops the now-invalid index; doltgres's two-phase
+			// build catches it inside Phase 1 (ordinary CreateIndex
+			// uniqueness check) and surfaces the same error to the
+			// caller. The catalog must end up clean: no orphan
+			// pg_index row left behind.
+			Name: "CREATE UNIQUE INDEX CONCURRENTLY on duplicate data fails cleanly",
+			SetUpScript: []string{
+				"CREATE TABLE dup_t (id INT PRIMARY KEY, code TEXT);",
+				"INSERT INTO dup_t VALUES (1, 'a'), (2, 'a');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE UNIQUE INDEX CONCURRENTLY dup_t_idx ON dup_t (code);",
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'dup_t_idx';`,
+					Expected: []sql.Row{
+						{0},
+					},
+				},
+			},
+		},
+		{
+			// PostgreSQL refuses CREATE INDEX CONCURRENTLY inside a
+			// transaction block because the build emits multiple
+			// commits; running it inside BEGIN/COMMIT would silently
+			// close the user's transaction and flush other pending
+			// work. We surface the same error so migration tooling
+			// that wraps DDL in transactions fails loudly instead of
+			// committing partial work.
+			Name: "CREATE INDEX CONCURRENTLY inside a transaction block errors",
+			SetUpScript: []string{
+				"CREATE TABLE tx_t (id INT PRIMARY KEY, v INT);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{Query: "BEGIN;"},
+				{
+					Query:       "CREATE INDEX CONCURRENTLY tx_t_idx ON tx_t (v);",
+					ExpectedErr: "cannot run inside a transaction block",
+				},
+				{Query: "ROLLBACK;"},
+				{
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'tx_t_idx';`,
+					Expected: []sql.Row{
+						{0},
+					},
+				},
+			},
+		},
+		{
 			Name: "REINDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE rt (id INT PRIMARY KEY, v INT);",

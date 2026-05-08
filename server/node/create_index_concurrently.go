@@ -132,6 +132,17 @@ func (c *CreateIndexConcurrently) WithResolvedChildren(_ context.Context, childr
 
 // RowIter executes the two-phase state machine.
 func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	// PostgreSQL refuses CREATE INDEX CONCURRENTLY inside a
+	// transaction block because the build is intentionally split
+	// across multiple commits. Doltgres mirrors that contract: each
+	// phase emits its own commit, so allowing CONCURRENTLY inside an
+	// explicit BEGIN/COMMIT would prematurely close the user's
+	// transaction and silently flush their other pending work. The
+	// session sets IgnoreAutoCommit when an explicit BEGIN runs, so
+	// that bit is the unambiguous "in a transaction block" signal.
+	if ctx.GetIgnoreAutoCommit() {
+		return nil, errors.Errorf("CREATE INDEX CONCURRENTLY cannot run inside a transaction block")
+	}
 	schemaName, err := core.GetSchemaName(ctx, nil, c.schema)
 	if err != nil {
 		return nil, err
