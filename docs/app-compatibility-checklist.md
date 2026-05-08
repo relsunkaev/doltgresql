@@ -199,8 +199,18 @@ Do not check off an item until it has workload proof:
   MySQL convention (NULLS FIRST) rather than PG (NULLS LAST); explicit
   `NULLS LAST` syntax remains a separate gap (see "Null ordering in
   indexes" above).
-- [ ] Window functions - prove `row_number()`, `lag()`, `lead()`, partitioned
-  windows, and frame specifications.
+- [~] Window functions - `lag()`, `lead()`, `count(*) OVER (PARTITION
+  BY)`, `count(*) OVER ()`, `first_value()`, and `last_value()` (with
+  an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`
+  frame) work end-to-end. Coverage in
+  testing/go/window_functions_test.go. Two residual gaps tracked here:
+  (1) the rank family — `row_number()`, `rank()`, `dense_rank()`,
+  `percent_rank()`, `ntile()` — fails with 'a window function X is in
+  a context where it cannot be evaluated', even without PARTITION BY,
+  pointing at a window-iterator wiring difference for those functions
+  in the new GMS; (2) running `sum()` / `avg()` over an explicit
+  `ROWS BETWEEN ... PRECEDING ...` frame panics with int32-vs-float64
+  type confusion in the windowed numeric path.
 - [x] Aggregate `FILTER` - reporting/grid views rely on FILTER for
   two-axis counts and revenue-vs-refund splits. AST conversion in
   server/ast/func_expr.go now rewrites
