@@ -132,9 +132,18 @@ Do not check off an item until it has workload proof:
   rewrite.
 - [ ] Statement triggers and transition tables - support `REFERENCING NEW
   TABLE` / `OLD TABLE` and statement-level trigger semantics.
-- [ ] Trigger catalog introspection - make `pg_trigger` /
-  `information_schema` trigger views adequate for dumps, ORMs, and admin
-  tools.
+- [~] Trigger catalog introspection - the `pg_trigger` and
+  `information_schema.triggers` views exist and are queryable
+  without erroring, but both are stubs that return zero rows even
+  for triggers created via CREATE TRIGGER (see
+  server/tables/pgcatalog/pg_trigger.go's `// TODO: Implement
+  pg_trigger row iter`). The triggers themselves persist in the
+  GMS schema and fire correctly — only the catalog surface is
+  missing. Closing the gap needs the pg_trigger handler to walk
+  the per-table trigger list, derive the OID + tgtype encoding,
+  and expose tgname / tgrelid / tgfoid. Pinned by
+  testing/go/pg_trigger_introspection_probe_test.go so the empty-
+  catalog contract stays stable until the handler is implemented.
 - [x] Generated columns - `GENERATED ALWAYS AS (...) STORED` DDL is
   accepted, the value is computed on INSERT, and is recomputed when
   source columns are UPDATEd. `information_schema.columns.is_generated`
