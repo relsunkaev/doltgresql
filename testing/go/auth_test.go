@@ -851,6 +851,8 @@ func TestAuthTests(t *testing.T) {
 				authTestCreateSuperUser,
 				`CREATE USER user1 PASSWORD 'a';`,
 				`CREATE USER user2 PASSWORD 'b';`,
+				`GRANT USAGE ON SCHEMA public TO user1;`,
+				`GRANT USAGE ON SCHEMA public TO user2;`,
 				`CREATE SEQUENCE genre_id_seq_by_2 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;`,
 			},
 			Assertions: []ScriptTestAssertion{
@@ -898,6 +900,7 @@ func TestAuthTests(t *testing.T) {
 			SetUpScript: []string{
 				authTestCreateSuperUser,
 				`CREATE USER user1 PASSWORD 'a';`,
+				`GRANT USAGE ON SCHEMA public TO user1;`,
 				`CREATE SEQUENCE genre_id_seq_by_2 AS integer START WITH 1 INCREMENT BY 2 NO MINVALUE NO MAXVALUE CACHE 1;`,
 			},
 			Assertions: []ScriptTestAssertion{

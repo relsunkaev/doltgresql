@@ -187,12 +187,40 @@ func generateSequenceName(ctx *sql.Context, createTable *plan.CreateTable, col *
 // It parses schema and sequence names out of given expression.
 // There can be only one argument expression of string type.
 func authCheckSequenceFromExpr(ctx *sql.Context, ah sql.AuthorizationHandler, arg sql.Expression) error {
-	schemaName, seqName, err := functions.ParseRelationName(ctx, strings.Trim(arg.String(), "'"))
+	// Prefer Eval over String(): the analyzer may have wrapped the literal
+	// in an Alias for projection naming, in which case arg.String() leaks
+	// the alias suffix into the relation name and the sequence privilege
+	// lookup misses.
+	rawName, err := evalAsRelationName(ctx, arg)
+	if err != nil {
+		return err
+	}
+
+	schemaName, seqName, err := functions.ParseRelationName(ctx, rawName)
 	if err != nil {
 		return err
 	}
 
 	return authCheckSequence(ctx, ah, schemaName, seqName)
+}
+
+// evalAsRelationName extracts the literal string the sequence name was
+// expressed as. Falls back to a String()-based parse when the expression
+// cannot be evaluated outside row context (e.g. CASE expressions that take
+// the sequence-name argument from a column).
+func evalAsRelationName(ctx *sql.Context, arg sql.Expression) (string, error) {
+	if arg == nil {
+		return "", nil
+	}
+	if val, err := arg.Eval(ctx, nil); err == nil {
+		switch v := val.(type) {
+		case string:
+			return v, nil
+		case []byte:
+			return string(v), nil
+		}
+	}
+	return strings.Trim(arg.String(), "'"), nil
 }
 
 // authCheckSequence checks authorization of sequence being used. We cannot check it during parsing because we cannot
