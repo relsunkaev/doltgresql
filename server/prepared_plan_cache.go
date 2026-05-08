@@ -74,6 +74,13 @@ func preparedPlanCacheInvalidatingQuery(query ConvertedQuery) bool {
 	case *sqlparser.AlterTable, *sqlparser.Analyze, *sqlparser.DBDDL, *sqlparser.DDL,
 		*sqlparser.Delete, *sqlparser.Insert, *sqlparser.Set, *sqlparser.Update, *sqlparser.Use:
 		return true
+	case *sqlparser.Select:
+		// A bare SELECT is not invalidating, but SELECT calls that mutate
+		// the session's working set (DOLT_CHECKOUT, DOLT_REVERT, DOLT_MERGE,
+		// DOLT_RESET, DOLT_BRANCH, DOLT_COMMIT) leave cached plans pointing
+		// at the prior branch state. Walk the projection list looking for
+		// these calls.
+		return selectMutatesWorkingSet(stmt)
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
 		case node.PrepareStatement, node.ExecuteStatement:
@@ -84,4 +91,39 @@ func preparedPlanCacheInvalidatingQuery(query ConvertedQuery) bool {
 	default:
 		return false
 	}
+}
+
+// workingSetMutatingFuncs lists Dolt SQL functions whose call inside a SELECT
+// changes the session's branch/working-set view. Subsequent queries must not
+// reuse plans cached against the prior view.
+var workingSetMutatingFuncs = map[string]struct{}{
+	"dolt_checkout":   {},
+	"dolt_reset":      {},
+	"dolt_revert":     {},
+	"dolt_merge":      {},
+	"dolt_commit":     {},
+	"dolt_branch":     {},
+	"dolt_clone":      {},
+	"dolt_fetch":      {},
+	"dolt_pull":       {},
+	"dolt_rebase":     {},
+	"dolt_cherry_pick": {},
+	"dolt_clean":      {},
+}
+
+func selectMutatesWorkingSet(stmt *sqlparser.Select) bool {
+	mutates := false
+	_ = sqlparser.Walk(func(n sqlparser.SQLNode) (kontinue bool, err error) {
+		fn, ok := n.(*sqlparser.FuncExpr)
+		if !ok {
+			return true, nil
+		}
+		name := fn.Name.Lowered()
+		if _, ok := workingSetMutatingFuncs[name]; ok {
+			mutates = true
+			return false, nil
+		}
+		return true, nil
+	}, stmt)
+	return mutates
 }

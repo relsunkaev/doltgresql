@@ -858,15 +858,15 @@ func TestUserSpaceDoltTables(t *testing.T) {
 				{
 					Query: `SELECT violation_type, pk, col1, violation_info FROM dolt_constraint_violations_test`,
 					Expected: []sql.Row{
-						{"unique index", 1, 1, `{"Columns": ["col1"], "Name": "col1"}`},
-						{"unique index", 2, 1, `{"Columns": ["col1"], "Name": "col1"}`},
+						{"unique index", 1, 1, `{"Columns": ["col1"], "Name": "test_col1_key"}`},
+						{"unique index", 2, 1, `{"Columns": ["col1"], "Name": "test_col1_key"}`},
 					},
 				},
 				{
 					Query: `SELECT violation_type, pk, col1, violation_info FROM public.dolt_constraint_violations_test`,
 					Expected: []sql.Row{
-						{"unique index", 1, 1, `{"Columns": ["col1"], "Name": "col1"}`},
-						{"unique index", 2, 1, `{"Columns": ["col1"], "Name": "col1"}`},
+						{"unique index", 1, 1, `{"Columns": ["col1"], "Name": "test_col1_key"}`},
+						{"unique index", 2, 1, `{"Columns": ["col1"], "Name": "test_col1_key"}`},
 					},
 				},
 				{
@@ -2588,7 +2588,7 @@ func TestUserSpaceDoltTables(t *testing.T) {
 							"view",
 							"myview",
 							"create view myView as select 2 + 2",
-							"{\"CreatedAt\":0}",
+							"{\"Bytes\":\"eyJDcmVhdGVkQXQiOjB9\"}",
 							"NO_ENGINE_SUBSTITUTION,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES",
 						},
 					},
@@ -2600,7 +2600,7 @@ func TestUserSpaceDoltTables(t *testing.T) {
 							"view",
 							"myview",
 							"create view myView as select 2 + 2",
-							"{\"CreatedAt\":0}",
+							"{\"Bytes\":\"eyJDcmVhdGVkQXQiOjB9\"}",
 							"NO_ENGINE_SUBSTITUTION,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES",
 						},
 					},
@@ -2674,7 +2674,7 @@ func TestUserSpaceDoltTables(t *testing.T) {
 							"view",
 							"testview",
 							"CREATE VIEW testView AS SELECT 1 + 1",
-							"{\"CreatedAt\":0}",
+							"{\"Bytes\":\"eyJDcmVhdGVkQXQiOjB9\"}",
 							"NO_ENGINE_SUBSTITUTION,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES",
 						},
 					},
