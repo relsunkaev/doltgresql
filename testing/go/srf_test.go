@@ -28,7 +28,7 @@ import (
 func TestSetReturningFunctionsWorkload(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "generate_series numeric range",
+			Name:        "generate_series numeric range",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -46,7 +46,7 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 			},
 		},
 		{
-			Name: "generate_series in FROM clause with sum",
+			Name:        "generate_series in FROM clause with sum",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -60,20 +60,40 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 			},
 		},
 		{
-			// Two unnest residual gaps tracked in the View/query TODO:
-			// (1) `unnest(arr_col) AS t` joining a table does not
-			//     expose `t` as a column in scope (errors with
-			//     "column t could not be found in any table in scope");
-			// (2) `unnest(...)` in a projection with ORDER BY trips an
-			//     internal-type leak ("unhandled type
-			//     *types.SetReturningFunctionRowIter in Compare").
-			// The unnest-without-ORDER-BY shape works; pinned here.
-			Name: "unnest in projection (no ORDER BY)",
-			SetUpScript: []string{},
+			Name: "unnest in projection and table joins",
+			SetUpScript: []string{
+				`CREATE TABLE items (id INT PRIMARY KEY, vals INT[]);`,
+				`INSERT INTO items VALUES (1, ARRAY[10, 20]), (2, ARRAY[30]);`,
+				`CREATE TABLE alias_collision (id INT PRIMARY KEY, v INT, vals INT[]);`,
+				`INSERT INTO alias_collision VALUES (1, 99, ARRAY[3, 1, 2]);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query:    `SELECT unnest(ARRAY[10, 20, 30]) AS v;`,
 					Expected: []sql.Row{{int32(10)}, {int32(20)}, {int32(30)}},
+				},
+				{
+					Query:    `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v;`,
+					Expected: []sql.Row{{int32(1)}, {int32(2)}, {int32(3)}},
+				},
+				{
+					Query:    `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v LIMIT 2;`,
+					Expected: []sql.Row{{int32(1)}, {int32(2)}},
+				},
+				{
+					Query:    `SELECT unnest(vals) AS v FROM alias_collision ORDER BY v;`,
+					Expected: []sql.Row{{int32(1)}, {int32(2)}, {int32(3)}},
+				},
+				{
+					Query: `SELECT id, t
+						FROM items
+						CROSS JOIN unnest(vals) AS t
+						ORDER BY id, t;`,
+					Expected: []sql.Row{
+						{int32(1), int32(10)},
+						{int32(1), int32(20)},
+						{int32(2), int32(30)},
+					},
 				},
 			},
 		},

@@ -16,6 +16,7 @@ package analyzer
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -40,15 +41,28 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 	_, isInsertNode := node.(*plan.InsertInto)
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, n sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		if sortNode, ok := n.(*plan.Sort); ok {
+			sortNode, sameTree := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
+			return sortNode, sameTree, nil
+		}
+		if topNNode, ok := n.(*plan.TopN); ok {
+			topNNode, sameTree := rewriteTopNFieldsWithProjectedSRFs(ctx, topNNode)
+			return topNNode, sameTree, nil
+		}
+
 		projectNode, ok := n.(*plan.Project)
 		if !ok {
 			return n, transform.SameTree, nil
 		}
+		projectNode, sameProjection := rewriteProjectionsWithProjectedSRFs(ctx, projectNode)
 
 		hasMultipleExpressionTuples := false
 		hasSRF := false
 		// Check if there is set returning function in the source node (e.g. SELECT * FROM unnest())
 		n, sameNode, err := transform.NodeExprsWithNode(ctx, projectNode.Child, func(ctx *sql.Context, in sql.Node, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			if rowIterExpr, ok := expr.(sql.RowIterExpression); ok {
+				hasSRF = hasSRF || rowIterExpr.ReturnsRowIter()
+			}
 			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
 				// TODO: need better way to detect sequence usage
 				switch compiledFunction.FunctionName() {
@@ -58,7 +72,6 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 						return nil, transform.SameTree, err
 					}
 				}
-				hasSRF = hasSRF || compiledFunction.IsSRF()
 				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
 					return quickFunction, transform.NewTree, nil
 				}
@@ -90,8 +103,10 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
 		hasSRFInProjection := false
 		exprs, sameExprs, err := transform.Exprs(ctx, projectNode.Projections, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			if rowIterExpr, ok := expr.(sql.RowIterExpression); ok {
+				hasSRFInProjection = hasSRFInProjection || rowIterExpr.ReturnsRowIter()
+			}
 			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
-				hasSRFInProjection = hasSRFInProjection || compiledFunction.IsSRF()
 				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
 					return quickFunction, transform.NewTree, nil
 				}
@@ -128,8 +143,154 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			projectNode = projectNode.WithIncludesNestedIters(true)
 		}
 
-		return projectNode, sameNode && sameExprs, err
+		return projectNode, sameNode && sameExprs && sameProjection, err
 	})
+}
+
+func rewriteProjectionsWithProjectedSRFs(ctx *sql.Context, projectNode *plan.Project) (*plan.Project, transform.TreeIdentity) {
+	projections := make([]sql.Expression, len(projectNode.Projections))
+	copy(projections, projectNode.Projections)
+
+	var changed bool
+	for i, projection := range projections {
+		if !expressionReturnsRowIter(ctx, projection) {
+			continue
+		}
+		nameable, ok := projection.(sql.Nameable)
+		if !ok {
+			continue
+		}
+		getField, ok := projectedSRFGetField(ctx, projectNode.Child, nameable.Name())
+		if !ok {
+			continue
+		}
+		projections[i] = getField
+		changed = true
+	}
+	if !changed {
+		return projectNode, transform.SameTree
+	}
+	newProject := plan.NewProject(projections, projectNode.Child)
+	if projectNode.IncludesNestedIters {
+		newProject = newProject.WithIncludesNestedIters(true)
+	}
+	if projectNode.CanDefer {
+		newProject = newProject.WithCanDefer(true)
+	}
+	if projectNode.AliasDeps != nil {
+		newProject = newProject.WithAliasDeps(projectNode.AliasDeps)
+	}
+	return newProject, transform.NewTree
+}
+
+func rewriteSortFieldsWithProjectedSRFs(ctx *sql.Context, sortNode *plan.Sort) (*plan.Sort, transform.TreeIdentity) {
+	fields := make(sql.SortFields, len(sortNode.SortFields))
+	copy(fields, sortNode.SortFields)
+
+	var changed bool
+	for i, field := range fields {
+		if !expressionReturnsRowIter(ctx, field.Column) {
+			continue
+		}
+		nameable, ok := field.Column.(sql.Nameable)
+		if !ok {
+			continue
+		}
+		getField, ok := projectedSRFGetField(ctx, sortNode.Child, nameable.Name())
+		if !ok {
+			continue
+		}
+		fields[i].Column = getField
+		changed = true
+	}
+	if !changed {
+		return sortNode, transform.SameTree
+	}
+	return plan.NewSort(fields, sortNode.Child), transform.NewTree
+}
+
+func rewriteTopNFieldsWithProjectedSRFs(ctx *sql.Context, topNNode *plan.TopN) (*plan.TopN, transform.TreeIdentity) {
+	fields := make(sql.SortFields, len(topNNode.Fields))
+	copy(fields, topNNode.Fields)
+
+	var changed bool
+	for i, field := range fields {
+		if !expressionReturnsRowIter(ctx, field.Column) {
+			continue
+		}
+		nameable, ok := field.Column.(sql.Nameable)
+		if !ok {
+			continue
+		}
+		getField, ok := projectedSRFGetField(ctx, topNNode.Child, nameable.Name())
+		if !ok {
+			continue
+		}
+		fields[i].Column = getField
+		changed = true
+	}
+	if !changed {
+		return topNNode, transform.SameTree
+	}
+	newTopN := plan.NewTopN(fields, topNNode.Limit, topNNode.Child)
+	newTopN.CalcFoundRows = topNNode.CalcFoundRows
+	return newTopN, transform.NewTree
+}
+
+func projectedSRFGetField(ctx *sql.Context, child sql.Node, name string) (sql.Expression, bool) {
+	// ORDER BY aliases are materialized in an inner Project. Reuse that projected
+	// SRF column instead of re-evaluating the SRF in Sort/TopN/final Project.
+	projectNode, ok := child.(*plan.Project)
+	if !ok {
+		switch node := child.(type) {
+		case *plan.Sort:
+			projectNode, ok = node.Child.(*plan.Project)
+		case *plan.TopN:
+			projectNode, ok = node.Child.(*plan.Project)
+		default:
+			return nil, false
+		}
+		if !ok {
+			return nil, false
+		}
+	}
+	childSchema := child.Schema(ctx)
+	if len(projectNode.Projections) > len(childSchema) {
+		return nil, false
+	}
+	for colIdx, projection := range projectNode.Projections {
+		if !expressionReturnsRowIter(ctx, projection) {
+			continue
+		}
+		nameable, ok := projection.(sql.Nameable)
+		if !ok || !strings.EqualFold(nameable.Name(), name) {
+			continue
+		}
+		col := childSchema[colIdx]
+		return expression.NewGetFieldWithTable(
+			colIdx,
+			0,
+			col.Type,
+			col.DatabaseSource,
+			col.Source,
+			col.Name,
+			col.Nullable,
+		), true
+	}
+	return nil, false
+}
+
+func expressionReturnsRowIter(ctx *sql.Context, expr sql.Expression) bool {
+	var found bool
+	sql.Inspect(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
+		rowIterExpr, ok := expr.(sql.RowIterExpression)
+		if ok && rowIterExpr.ReturnsRowIter() {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
 }
 
 // getDefaultExpr takes the default value definition, parses, builds and returns sql.ColumnDefaultValue.

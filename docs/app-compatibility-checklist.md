@@ -388,15 +388,13 @@ Do not check off an item until it has workload proof:
   testing/go/regex_srf_test.go pins the workload shapes (single-match
   capture-group access, global-match row counting, split-to-rows over
   comma/whitespace separators).
-- [~] `generate_series` and `unnest` - generate_series works end-to-end:
+- [x] `generate_series` and `unnest` - generate_series works end-to-end:
   2-/3-arg numeric ranges with positive and negative step, as a
   FROM-clause source feeding aggregates, and count(*) over a 1000-
-  element series. unnest works in a bare projection. Coverage in
-  testing/go/srf_test.go. Two residual gaps: (1) joining a table to
-  `unnest(arr_col) AS t` does not expose `t` as a column in scope
-  ('column t could not be found in any table in scope'); (2) unnest(...)
-  in a projection with an outer ORDER BY trips an internal-type leak
-  ('unhandled type *types.SetReturningFunctionRowIter in Compare').
+  element series. unnest works in a bare projection, as a projected
+  SRF ordered by its alias, and as a lateral table function over an
+  array column (`CROSS JOIN unnest(vals) AS t`). Coverage in
+  testing/go/srf_test.go.
 - [x] JSONB expansion - `->`, `->>`, `#>`, `#>>`, `jsonb_array_elements`,
   and `jsonb_object_keys` all work end-to-end against object keys,
   nested paths, and array elements. Coverage in
