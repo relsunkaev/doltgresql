@@ -121,8 +121,14 @@ Do not check off an item until it has workload proof:
   immediate-enforcement and the missing-handler cases stay visible.
 - [ ] Privilege and ownership DDL - load or safely strip ownership statements,
   `ALTER DEFAULT PRIVILEGES`, and ACL output produced by `pg_dump`.
-- [ ] `DO $$` blocks - support or rewrite anonymous code blocks emitted by
-  dumps for matview / state repair.
+- [~] `DO $$` blocks - rejected at the parser today (`at or near "do":
+  syntax error` SQLSTATE 42601). pg_dump uses these for matview /
+  state repair, Alembic upgrade scripts wrap conditional DDL in them,
+  and many ORM init scripts emit the IF-NOT-EXISTS-via-DO pattern;
+  closing this needs DO-block tokenization plus a PL/pgSQL-style
+  executor for the inner block. Pinned by
+  testing/go/do_block_probe_test.go so the rejection contract stays
+  stable until the executor lands.
 - [ ] `session_replication_role` - support or safely replace `SET
   session_replication_role = replica` during data import.
 - [ ] `REPLICA IDENTITY FULL` DDL - preserve full-row old tuples for synced
