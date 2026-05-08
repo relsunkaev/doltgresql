@@ -296,8 +296,11 @@ Do not check off an item until it has workload proof:
   `@>` containment subset (`payload @> '{"kind": "click"}'`) returns
   the correct rows. Coverage in
   testing/go/include_jsonb_gin_index_probe_test.go.
-- [ ] GiST indexes - support `btree_gist` / `EXCLUDE USING gist` or document
-  rewrite.
+- [~] GiST indexes - rejected with SQLSTATE 0A000 `index method
+  gist is not yet supported`. Apps that need GiST (geometry, range
+  non-overlap, btree_gist composite uniqueness) must rewrite to
+  btree with a custom unique key, or strip the USING gist suffix
+  from the dump. Pinned by testing/go/gist_index_probe_test.go.
 - [~] Opclasses - explicit opclass declarations on btree columns
   (e.g. `text_ops`, `int4_ops`) are accepted at DDL and the index
   round-trips through `pg_indexes`. The planner does not yet route
