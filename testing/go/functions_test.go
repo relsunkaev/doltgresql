@@ -2392,8 +2392,8 @@ func TestArrayFunctions(t *testing.T) {
 					Expected: []sql.Row{{nil}},
 				},
 				{
-					Query:    `select array_position(NULL, NULL);`,
-					Expected: []sql.Row{{nil}},
+					Query:       `select array_position(NULL, NULL);`,
+					ExpectedErr: "function array_position(unknown, unknown) does not exist",
 				},
 				{
 					Query:    `SELECT array_positions(ARRAY[1,2,3,4,5,6,1,2,3,4,5,6], 4);`,
@@ -2479,7 +2479,7 @@ func TestSchemaVisibilityInquiryFunctions(t *testing.T) {
 						{1539973141, "test_seq", "testschema"},
 						{1952237395, "test_table", "testschema"},
 						{3508950454, "test_table_pkey", "testschema"},
-						{521883837, "v1", "testschema"},
+						{2590613415, "test_table_v1_key", "testschema"},
 					},
 				},
 				{
