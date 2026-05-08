@@ -243,8 +243,11 @@ Do not check off an item until it has workload proof:
   ('column t could not be found in any table in scope'); (2) unnest(...)
   in a projection with an outer ORDER BY trips an internal-type leak
   ('unhandled type *types.SetReturningFunctionRowIter in Compare').
-- [ ] JSONB expansion - prove `jsonb_array_elements`, `jsonb_object_keys`,
-  `->`, `->>`, `#>`, `#>>`, and JSONB path operators.
+- [x] JSONB expansion - `->`, `->>`, `#>`, `#>>`, `jsonb_array_elements`,
+  and `jsonb_object_keys` all work end-to-end against object keys,
+  nested paths, and array elements. Coverage in
+  testing/go/jsonb_expansion_test.go pins the workload shapes real
+  views rely on.
 - [ ] Date/time casts and helpers - prove text-to-date/timestamp casts,
   `make_date`, `extract`, fiscal-year math, and time-zone-aware computations.
 
