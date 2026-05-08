@@ -16,6 +16,8 @@ package _go
 
 import (
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestReplicaIdentityFullProbe pins how `ALTER TABLE ... REPLICA
@@ -35,6 +37,10 @@ func TestReplicaIdentityFullProbe(t *testing.T) {
 				{
 					Query: `ALTER TABLE shapes REPLICA IDENTITY FULL;`,
 				},
+				{
+					Query:    `SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'shapes';`,
+					Expected: []sql.Row{{"f"}},
+				},
 			},
 		},
 		{
@@ -44,7 +50,14 @@ func TestReplicaIdentityFullProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query: `ALTER TABLE other REPLICA IDENTITY FULL;`,
+				},
+				{
 					Query: `ALTER TABLE other REPLICA IDENTITY DEFAULT;`,
+				},
+				{
+					Query:    `SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'other';`,
+					Expected: []sql.Row{{"d"}},
 				},
 			},
 		},

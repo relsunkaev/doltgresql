@@ -212,15 +212,14 @@ Do not check off an item until it has workload proof:
   style inserts, while returning to `origin` restores normal
   enforcement. Pinned by
   testing/go/session_replication_role_probe_test.go.
-- [~] `REPLICA IDENTITY FULL` DDL - both `ALTER TABLE ... REPLICA
-  IDENTITY FULL` and `... REPLICA IDENTITY DEFAULT` are accepted at
-  DDL today (silently — pg_dump and Electric `replica: "full"` /
-  Debezium emit these without erroring). The downstream contract
-  ("the WAL stream carries pre-image tuples") is dependent on
-  logical-replication output, which is tracked separately in the
-  Replication and sync TODO; for now the DDL acceptance is enough
-  for dump/restore not to trip. Pinned by
-  testing/go/replica_identity_full_probe_test.go.
+- [x] `REPLICA IDENTITY FULL` DDL - `ALTER TABLE ... REPLICA
+  IDENTITY FULL` and `... REPLICA IDENTITY DEFAULT` are accepted and
+  round-trip through `pg_class.relreplident`. The logical-replication
+  source includes old update tuples for `REPLICA IDENTITY FULL`
+  tables, which is the downstream Electric/Debezium contract. Pinned
+  by testing/go/replica_identity_full_probe_test.go,
+  testing/go/publication_subscription_test.go, and
+  testing/go/logical_replication_source_test.go.
 
 ## Index/planner TODO
 
