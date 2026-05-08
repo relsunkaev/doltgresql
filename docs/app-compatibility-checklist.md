@@ -209,10 +209,22 @@ Do not check off an item until it has workload proof:
   the boundary.
 - [ ] GiST indexes - support `btree_gist` / `EXCLUDE USING gist` or document
   rewrite.
-- [ ] Opclasses - prove explicit opclasses such as `uuid_ops`, `text_ops`,
-  `timestamp_ops`, `int4_ops`, `bool_ops`, and JSONB-related opclasses.
-- [ ] Null ordering in indexes - prove `ASC NULLS LAST` / `DESC NULLS FIRST`
-  index semantics under planner usage.
+- [~] Opclasses - explicit opclass declarations on btree columns
+  (e.g. `text_ops`, `int4_ops`) are accepted at DDL and the index
+  round-trips through `pg_indexes`. The planner does not yet route
+  query plans through opclass-specific operator families, so the
+  semantic effect is currently a no-op (the column-default opclass
+  is always used). DDL acceptance pinned by
+  testing/go/index_opclass_nulls_probe_test.go so dump/migration
+  tools that emit explicit opclasses don't trip.
+- [~] Null ordering in indexes - `ASC NULLS LAST` / `DESC NULLS
+  FIRST` is accepted at DDL but the engine emits two warnings —
+  `descending index scan order is not yet supported, preserving
+  metadata only` and `NULLS LAST index ordering is not yet
+  supported, preserving metadata only`. The metadata is preserved
+  through pg_index, but the planner does not yet honour either
+  preference at scan time. DDL acceptance pinned by
+  testing/go/index_opclass_nulls_probe_test.go.
 - [ ] Materialized view indexes - support indexes required for matview refresh
   paths.
 
