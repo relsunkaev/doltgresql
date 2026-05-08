@@ -100,8 +100,13 @@ Do not check off an item until it has workload proof:
   declarations and the parser rejects the keyword. `btree_gist`,
   `citext`, and `pgvector` remain untested. Pinned by
   testing/go/common_extensions_probe_test.go.
-- [ ] ICU nondeterministic collations - support `CREATE COLLATION ... provider
-  = icu, deterministic = false` or document the migration path away from it.
+- [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
+  = icu, deterministic = false` is rejected at the parser
+  (`at or near "collation": syntax error` SQLSTATE 42601). Apps
+  that need case-insensitive equality on string columns must
+  rewrite to either `lower(col)` expression indexes (covered) or
+  a `citext`-style application-level rewrite. Pinned by
+  testing/go/icu_collation_probe_test.go.
 - [x] Explicit query collations - runtime `ORDER BY col COLLATE "C"`
   and `ORDER BY col COLLATE "POSIX"` both run and produce
   byte-order-correct ordering (uppercase before lowercase). Column-
