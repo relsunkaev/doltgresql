@@ -1409,6 +1409,12 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 		return err
 	}
 
+	// Invalidate cached prepared plans for schema-mutating queries that
+	// reach the engine through the extended Parse/Bind/Execute path. The
+	// simple-query handler invalidates here on its own, but without this
+	// call an ALTER TABLE / DROP / Insert run via Execute leaves stale
+	// plans for subsequent SELECTs against the same table.
+	h.invalidatePreparedPlanCacheIfNeeded(query)
 	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
 	return nil
 }
