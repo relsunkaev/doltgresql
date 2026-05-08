@@ -800,7 +800,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %token <str> NAN NAME NAMES NATURAL NEVER NEW NEXT NO NOCANCELQUERY NOCONTROLCHANGEFEED NOCONTROLJOB
 %token <str> NOBYPASSRLS NOCREATEDB NOCREATELOGIN NOCREATEROLE NOINHERIT NOLOGIN NOMODIFYCLUSTERSETTING NOREPLICATION NOSUPERUSER NO_INDEX_JOIN
-%token <str> NONE NORMAL NOT NOTHING NOTNULL NOVIEWACTIVITY NOWAIT NULL NULLIF NULLS NUMERIC YES
+%token <str> NONE NORMAL NOT NOTHING NOTIFY NOTNULL NOVIEWACTIVITY NOWAIT NULL NULLIF NULLS NUMERIC YES
 
 %token <str> OBJECT OF OFF OFFSET OID OIDS OIDVECTOR OLD ON ONLY ONLY_DATABASE_STATS OPT OPTION OPTIONS OR
 %token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OWNED OWNER OPERATOR
@@ -1018,6 +1018,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> insert_stmt
 %type <tree.Statement> import_stmt
 %type <tree.Statement> pause_stmt pause_jobs_stmt pause_schedules_stmt
+%type <tree.Statement> notify_stmt
 %type <*tree.Select>   for_schedules_clause
 %type <tree.Statement> release_stmt
 %type <tree.Statement> reset_stmt
@@ -1535,6 +1536,7 @@ non_transaction_stmt:
 | deallocate_stmt   // EXTEND WITH HELP: DEALLOCATE
 | discard_stmt      // EXTEND WITH HELP: DISCARD
 | grant_stmt        // EXTEND WITH HELP: GRANT
+| notify_stmt
 | prepare_stmt      // EXTEND WITH HELP: PREPARE
 | revoke_stmt       // EXTEND WITH HELP: REVOKE
 | savepoint_stmt    // EXTEND WITH HELP: SAVEPOINT
@@ -3892,6 +3894,17 @@ copy_options:
 | DELIMITER SCONST
   {
     $$.val = &tree.CopyOptions{Delimiter: $2}
+  }
+
+notify_stmt:
+  NOTIFY name
+  {
+    $$.val = &tree.Notify{Channel: tree.Name($2)}
+  }
+| NOTIFY name ',' SCONST
+  {
+    payload := $4
+    $$.val = &tree.Notify{Channel: tree.Name($2), Payload: &payload}
   }
 
 // %Help: CANCEL
@@ -15628,6 +15641,7 @@ unreserved_keyword:
 | NOMODIFYCLUSTERSETTING
 | NOREPLICATION
 | NORMAL
+| NOTIFY
 | NOSUPERUSER
 | NOVIEWACTIVITY
 | NOWAIT

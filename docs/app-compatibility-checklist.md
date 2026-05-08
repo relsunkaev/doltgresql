@@ -530,14 +530,13 @@ Do not check off an item until it has workload proof:
   (commit-commit, nested rollback, two-deep nesting with mixed
   rollback, outer rollback discarding nested commits) against a
   live Doltgres instance.
-- [~] `pg_notify` / `NOTIFY` - both surfaces are unsupported today:
-  `NOTIFY my_channel, 'payload'` is rejected at the parser
-  (`at or near "notify": syntax error`) and `pg_notify('chan',
-  'payload')` errors with `function: 'pg_notify' not found`. Apps
-  that depend on cache-invalidation fanout or listener queues must
-  rewrite to either an external pub/sub bus or a polled notification
-  table. Pinned by testing/go/pg_notify_probe_test.go so the
-  rejection contract stays stable.
+- [~] `pg_notify` / `NOTIFY` - `NOTIFY my_channel, 'payload'` and
+  `pg_notify('chan', 'payload')` are accepted as no-ops so migration
+  scripts and write paths do not fail on the call shape. Doltgres does
+  not implement asynchronous delivery to `LISTEN` clients, so apps that
+  depend on cache-invalidation fanout or listener queues still need an
+  external pub/sub bus or a polled notification table. Pinned by
+  testing/go/pg_notify_probe_test.go.
 - [ ] Reader/writer pool topology - define the Doltgres deployment shape
   expected by ORM `withReplicas`-style reader/writer routing.
 - [ ] SSL / SCRAM / auth / client parameters - prove driver pool startup with

@@ -185,6 +185,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeImport(ctx, stmt)
 	case *tree.Insert:
 		return nodeInsert(ctx, stmt)
+	case *tree.Notify:
+		return nodeNotify(ctx, stmt)
 	case *tree.ParenSelect:
 		return nodeParenSelect(ctx, stmt)
 	case *tree.Prepare:

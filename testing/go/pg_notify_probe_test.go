@@ -16,34 +16,36 @@ package _go
 
 import (
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestPgNotifyProbe pins where PG NOTIFY / pg_notify stand today.
-// Real apps use this for cache-invalidation fanout and listener
-// queues; if the call shape doesn't even parse, every connection
-// that issues NOTIFY blows up. Per the Runtime SQL TODO in
+// TestPgNotifyProbe pins PG NOTIFY / pg_notify compatibility. Real apps use
+// this for cache-invalidation fanout and listener queues; Doltgres accepts
+// the call shapes as no-ops so migrations and write paths do not fail, but
+// it does not implement listener delivery. Per the Runtime SQL TODO in
 // docs/app-compatibility-checklist.md.
 func TestPgNotifyProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			// NOTIFY is rejected at the parser today.
-			Name:        "NOTIFY is rejected at the parser",
+			Name:        "NOTIFY statement is accepted as a no-op",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `NOTIFY my_channel, 'payload';`,
-					ExpectedErr: `at or near "notify": syntax error`,
+					Query: `NOTIFY my_channel, 'payload';`,
+				},
+				{
+					Query: `NOTIFY my_channel;`,
 				},
 			},
 		},
 		{
-			// pg_notify function isn't registered.
-			Name:        "pg_notify function is not registered",
+			Name:        "pg_notify returns void",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT pg_notify('my_channel', 'payload');`,
-					ExpectedErr: "function: 'pg_notify' not found",
+					Query:    `SELECT pg_notify('my_channel', 'payload');`,
+					Expected: []sql.Row{{""}},
 				},
 			},
 		},

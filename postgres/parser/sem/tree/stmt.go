@@ -497,6 +497,12 @@ func (*CopyTo) StatementType() StatementType { return CopyOut }
 func (*CopyTo) StatementTag() string { return "COPY" }
 
 // StatementType implements the Statement interface.
+func (*Notify) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*Notify) StatementTag() string { return "NOTIFY" }
+
+// StatementType implements the Statement interface.
 func (*CreateAggregate) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.

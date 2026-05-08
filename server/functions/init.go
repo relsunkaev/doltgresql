@@ -161,6 +161,7 @@ func Init() {
 	initPgGetViewDef()
 	initPgIndexesSize()
 	initPgIsInRecovery()
+	initPgNotify()
 	initPgPostmasterStartTime()
 	initPgRelationIsPublishable()
 	initPgRelationSize()
