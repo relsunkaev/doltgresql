@@ -31,7 +31,17 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 		return nil, nil
 	}
 	if node.Filter != nil {
-		return nil, errors.Errorf("function filters are not yet supported")
+		// PostgreSQL aggregate FILTER (WHERE pred): rewrite each argument
+		// expression to `CASE WHEN pred THEN arg ELSE NULL END`. Aggregates
+		// that ignore NULLs (sum/avg/count/etc.) then naturally skip
+		// non-matching rows. count(*) is special-cased below: the * is
+		// replaced with a literal 1 so the rewritten form becomes
+		// count(CASE WHEN pred THEN 1 END).
+		filtered, err := rewriteAggregateFilter(node)
+		if err != nil {
+			return nil, err
+		}
+		node = filtered
 	}
 	if node.AggType == tree.OrderedSetAgg {
 		return nil, errors.Errorf("WITHIN GROUP is not yet supported")
@@ -163,4 +173,32 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			TargetNames: []string{qualifier.String(), name.String()},
 		},
 	}, nil
+}
+
+// rewriteAggregateFilter rewrites `func(args...) FILTER (WHERE pred)` to
+// `func(CASE WHEN pred THEN arg ELSE NULL END, ...)`. Returns a copy of
+// the node with the filter cleared and arguments wrapped. UnqualifiedStar
+// arguments are replaced with a literal 1 so count(*) FILTER becomes
+// count(CASE WHEN pred THEN 1 END).
+func rewriteAggregateFilter(node *tree.FuncExpr) (*tree.FuncExpr, error) {
+	pred := node.Filter
+	rewritten := *node
+	rewritten.Filter = nil
+
+	rewrittenExprs := make(tree.Exprs, len(node.Exprs))
+	for i, arg := range node.Exprs {
+		var val tree.Expr
+		switch arg.(type) {
+		case tree.UnqualifiedStar:
+			val = tree.NewDInt(1)
+		default:
+			val = arg
+		}
+		rewrittenExprs[i] = &tree.CaseExpr{
+			Whens: []*tree.When{{Cond: pred, Val: val}},
+			Else:  tree.DNull,
+		}
+	}
+	rewritten.Exprs = rewrittenExprs
+	return &rewritten, nil
 }
