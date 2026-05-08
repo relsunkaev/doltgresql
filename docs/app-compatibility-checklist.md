@@ -123,13 +123,18 @@ Do not check off an item until it has workload proof:
 - [x] `CREATE INDEX CONCURRENTLY` - plain btree CONCURRENTLY drives
   PostgreSQL's two-phase state machine: register-and-build under
   (indisready=false, indisvalid=false), commit, then flip to
-  (true, true) in a separate transaction. Other sessions observe
-  the in-progress catalog state via pg_index, and the planner
-  refuses to use the index until both bits are true. SQL-level
-  coverage in testing/go/create_index_concurrently_test.go (plain,
-  UNIQUE, IF NOT EXISTS, multi-column, IF EXISTS drop, REINDEX
-  INDEX, REINDEX TABLE, post-state pg_index assertion). Cross-
-  session evidence in
+  (true, true) in a separate transaction. The flip is now
+  metadata-only — it edits the index's IndexProperties.Comment
+  through doltdb.Table.UpdateSchema and reuses the Phase 1 prolly
+  tree verbatim (Dolt's upstream contract: "this method only
+  updates the schema of a table; the row data is unchanged"). Other
+  sessions observe the in-progress catalog state via pg_index, and
+  the planner refuses to use the index until both bits are true.
+  SQL-level coverage in testing/go/create_index_concurrently_test.go
+  (plain, UNIQUE, IF NOT EXISTS, multi-column, IF EXISTS drop,
+  REINDEX INDEX, REINDEX TABLE, post-state pg_index assertion,
+  duplicate-data uniqueness violation cleanup). Cross-session
+  evidence in
   testing/go/create_index_concurrently_contention_test.go: a test-
   only inter-phase hook deterministically pauses session A
   mid-build while session B observes (false, false) through
@@ -137,12 +142,13 @@ Do not check off an item until it has workload proof:
   evidence in testing/go/alembic_concurrently_test.go: the harness
   installs Alembic + SQLAlchemy + psycopg in a venv and runs a real
   migration with op.create_index(..., postgresql_concurrently=True)
-  / op.drop_index(..., postgresql_concurrently=True). The build
-  itself is still synchronous (it holds a write lock for the
-  duration of both phases) — true non-blocking writes are a
-  follow-up that requires a comment-only update path on the Dolt
-  side; GIN, expression, partial, and INCLUDE indexes route
-  through the existing synchronous AlterTable path.
+  / op.drop_index(..., postgresql_concurrently=True). The Phase 1
+  build itself still holds a write lock for its duration — true
+  non-blocking writes during the build need Dolt-side dual-write
+  (writers maintain a pending index while the backfill runs)
+  which is out of scope here. GIN, expression, partial, and
+  INCLUDE indexes route through the existing synchronous
+  AlterTable path.
 - [ ] `INCLUDE` indexes - support index `INCLUDE` columns through dump/restore
   and ORM introspection.
 - [ ] JSONB GIN indexes - prove the supported containment subset and document
