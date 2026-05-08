@@ -230,7 +230,11 @@ func nodeWithTriggers(ctx *sql.Context, node sql.Node, executionNode *pgnodes.Tr
 	case *plan.DeleteFrom:
 		return node.WithChildren(ctx, executionNode)
 	case *plan.InsertInto:
-		return node.WithSource(executionNode), nil
+		newNode := node.WithSource(executionNode)
+		if executionNode.Return == pgnodes.TriggerExecutionRowHandling_New {
+			newNode = newNode.WithColumnNames(schemaColumnNames(executionNode.Sch))
+		}
+		return newNode, nil
 	case *plan.Truncate:
 		return node.WithChildren(ctx, executionNode)
 	case *plan.Update:
@@ -238,4 +242,12 @@ func nodeWithTriggers(ctx *sql.Context, node sql.Node, executionNode *pgnodes.Tr
 	default:
 		return nil, fmt.Errorf("unknown node for triggers")
 	}
+}
+
+func schemaColumnNames(schema sql.Schema) []string {
+	columnNames := make([]string, len(schema))
+	for i, column := range schema {
+		columnNames[i] = column.Name
+	}
+	return columnNames
 }

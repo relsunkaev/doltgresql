@@ -106,17 +106,9 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 			},
 		},
 		{
-			// Partial-column INSERT: trigger no longer panics
-			// (NewRecord now pads the NEW row to schema length), but
-			// the BEFORE trigger's modification of NEW does not yet
-			// propagate back into the inserted row. The row is
-			// inserted with the trigger-target column NULL (or the
-			// column default), not the upper-cased value the
-			// trigger computed. That's a separate gap in the row-
-			// flow plumbing — fixing it needs the inserter to use
-			// the trigger-returned row positions for columns the
-			// INSERT statement omitted.
-			Name: "BEFORE INSERT partial-column INSERT does not yet propagate NEW changes",
+			// Partial-column INSERT: the trigger must be able to
+			// modify columns omitted from the INSERT column list.
+			Name: "BEFORE INSERT partial-column INSERT propagates NEW changes",
 			SetUpScript: []string{
 				`CREATE TABLE partial_rows (id INT PRIMARY KEY, label TEXT, marked TEXT);`,
 				`CREATE FUNCTION mark_label_partial() RETURNS trigger AS $$
@@ -134,10 +126,8 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 					Query: `INSERT INTO partial_rows (id, label) VALUES (1, 'hello');`,
 				},
 				{
-					// PG-correct: marked='HELLO'. Today: marked=NULL.
-					// Pin current behaviour so the gap is visible.
-					Query:    `SELECT marked IS NULL FROM partial_rows WHERE id = 1;`,
-					Expected: []sql.Row{{"t"}},
+					Query:    `SELECT marked FROM partial_rows WHERE id = 1;`,
+					Expected: []sql.Row{{"HELLO"}},
 				},
 			},
 		},

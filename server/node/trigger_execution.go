@@ -127,7 +127,17 @@ func (te *TriggerExecution) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder
 
 // Schema implements the interface sql.ExecBuilderNode.
 func (te *TriggerExecution) Schema(ctx *sql.Context) sql.Schema {
-	return te.Source.Schema(ctx)
+	switch te.Return {
+	case TriggerExecutionRowHandling_Old, TriggerExecutionRowHandling_New:
+		return te.Sch
+	case TriggerExecutionRowHandling_OldNew, TriggerExecutionRowHandling_NewOld:
+		sch := make(sql.Schema, 0, len(te.Sch)*2)
+		sch = append(sch, te.Sch...)
+		sch = append(sch, te.Sch...)
+		return sch
+	default:
+		return te.Source.Schema(ctx)
+	}
 }
 
 // String implements the interface sql.ExecBuilderNode.

@@ -124,24 +124,22 @@ Do not check off an item until it has workload proof:
   The pg_matviews catalog view exists and returns zero rows so
   dump tools skip the matview repair branch cleanly. Pinned by
   testing/go/materialized_view_probe_test.go.
-- [~] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
+- [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
   (a) AFTER-trigger audit-log writes to a side table — covered by
   testing/go/set_local_trigger_test.go and the AFTER-INSERT subtest
   of testing/go/plpgsql_trigger_function_probe_test.go;
   (b) BEFORE-trigger NEW-field assignment (e.g.
-  `NEW.marked := upper(NEW.label);`) when the INSERT specifies the
-  full column list. The panic that previously fired on partial-
-  column INSERTs (`index out of range [2] with length 2` in
-  plpgsql.InterpreterStack.GetVariable) is fixed: NEW/OLD rows are
-  now padded to schema length in NewRecord. Residual gap: when the
-  INSERT omits the trigger-target column, the trigger no longer
-  panics but the modified value does not yet flow back into the
-  inserted row (the inserter uses the original-column-list row
-  positions, not the trigger-returned positions). Pinned by the
-  partial-column subtest of
-  testing/go/plpgsql_trigger_function_probe_test.go.
+  `NEW.marked := upper(NEW.label);`) for both full-column and
+  partial-column INSERTs. The panic that previously fired on
+  partial-column INSERTs (`index out of range [2] with length 2`
+  in plpgsql.InterpreterStack.GetVariable) is fixed: NEW/OLD rows
+  are padded to schema length in NewRecord. The trigger-returned
+  NEW row now also keeps the full target schema through later insert
+  analysis, so columns omitted from the original INSERT can still be
+  written by the BEFORE trigger. Pinned by the partial-column subtest
+  of testing/go/plpgsql_trigger_function_probe_test.go.
 - [~] Event triggers - `CREATE EVENT TRIGGER` is rejected at the
   parser today (`at or near "event": syntax error`). DMS-style
   intercept triggers must be stripped from the dump before import.
