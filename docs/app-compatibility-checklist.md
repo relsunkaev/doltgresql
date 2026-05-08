@@ -593,14 +593,14 @@ actually exercise.
   expression defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
   testing/go/info_schema_column_order_test.go pins the workload
   shapes.
-- [~] `pg_matviews` - the catalog view exists and returns zero rows
+- [x] `pg_matviews` - the catalog view exists and returns zero rows
   (with or without a `schemaname` filter), which is exactly the
   shape dump tools need to skip the matview repair branch cleanly.
   Materialized views themselves are not yet supported (tracked as
   the separate "Materialized views" item in the Schema/DDL TODO);
-  when matviews land, this view's row contents — `definition`,
-  `ispopulated`, `hasindexes` — will need to surface the right
-  values per matview. Pinned by testing/go/pg_matviews_probe_test.go.
+  this item only covers the no-matview catalog surface that dump
+  tools can safely query today. Pinned by
+  testing/go/pg_matviews_probe_test.go.
 - [x] `pg_indexes` - prove index existence checks and conditional DDL.
   testing/go/migration_tool_introspect_test.go now installs and runs
   the real `pg` Node driver (the same driver Drizzle Kit, Prisma,

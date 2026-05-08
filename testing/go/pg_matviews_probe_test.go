@@ -39,10 +39,23 @@ func TestPgMatviewsProbe(t *testing.T) {
 				},
 				{
 					// dump tools issue this exact shape to discover
-					// matviews — column-name selection plus a
+					// matviews: column-name selection plus a
 					// schema filter. Must not blow up.
-					Query:    `SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'public';`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT schemaname, matviewname, matviewowner,
+							tablespace, hasindexes, ispopulated, definition
+						FROM pg_matviews
+						WHERE schemaname = 'public'
+						ORDER BY schemaname, matviewname;`,
+					ExpectedColNames: []string{
+						"schemaname",
+						"matviewname",
+						"matviewowner",
+						"tablespace",
+						"hasindexes",
+						"ispopulated",
+						"definition",
+					},
+					Expected: []sql.Row{},
 				},
 			},
 		},
