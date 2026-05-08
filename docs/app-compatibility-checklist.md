@@ -234,8 +234,15 @@ Do not check off an item until it has workload proof:
   `ORDER BY` inside aggregate calls.
 - [ ] Regex set-returning functions - prove `regexp_matches(...)` and
   `regexp_split_to_table(...)` placement and result behavior.
-- [ ] `generate_series` and `unnest` - prove SRF behavior in analytics and
-  reporting views.
+- [~] `generate_series` and `unnest` - generate_series works end-to-end:
+  2-/3-arg numeric ranges with positive and negative step, as a
+  FROM-clause source feeding aggregates, and count(*) over a 1000-
+  element series. unnest works in a bare projection. Coverage in
+  testing/go/srf_test.go. Two residual gaps: (1) joining a table to
+  `unnest(arr_col) AS t` does not expose `t` as a column in scope
+  ('column t could not be found in any table in scope'); (2) unnest(...)
+  in a projection with an outer ORDER BY trips an internal-type leak
+  ('unhandled type *types.SetReturningFunctionRowIter in Compare').
 - [ ] JSONB expansion - prove `jsonb_array_elements`, `jsonb_object_keys`,
   `->`, `->>`, `#>`, `#>>`, and JSONB path operators.
 - [ ] Date/time casts and helpers - prove text-to-date/timestamp casts,
