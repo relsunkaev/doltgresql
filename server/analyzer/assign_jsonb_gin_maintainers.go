@@ -137,5 +137,18 @@ func schemaNameForTable(ctx *sql.Context, table sql.Table) (string, error) {
 	if err == nil && ok {
 		return tableID.SchemaName(), nil
 	}
-	return core.GetSchemaName(ctx, nil, "")
+	// Fall back to the current schema, but tolerate the
+	// "no schema has been selected" error: if the session has
+	// `search_path = ''` the jsonb-gin maintainer simply has no
+	// candidate schema to wrap, and the error must not leak out
+	// of the analyzer for unrelated queries (e.g. SELECT casts
+	// that touch pg_catalog tables).
+	name, err := core.GetSchemaName(ctx, nil, "")
+	if err != nil {
+		if sql.ErrDatabaseNoDatabaseSchemaSelectedCreate.Is(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return name, nil
 }
