@@ -799,9 +799,16 @@ actually exercise.
   workers, initial table sync, remote slot creation, or incoming `pgoutput`
   apply, and only supports metadata-only `CREATE SUBSCRIPTION` round trips with
   `connect=false`. Pinned by testing/go/publication_subscription_test.go's
-  TestSubscriptionDDLAndCatalogs, which rejects a default publisher connection
-  and verifies disabled metadata in `pg_subscription` and
-  `pg_stat_subscription_stats`.
+  TestSubscriptionDDLAndCatalogs, which rejects a default publisher connection,
+  rejects PostgreSQL-incompatible `connect=false` combinations
+  (`create_slot=true`, `enabled=true`, `copy_data=true`), rejects `ENABLE` on
+  `slot_name=NONE`, rejects disabled `REFRESH`, rejects enabled `REFRESH`
+  because it requires a publisher connection, verifies metadata in
+  `pg_subscription` and `pg_stat_subscription_stats`, and verifies no
+  subscriber/apply-worker state is exposed through `pg_subscription_rel` or
+  `pg_stat_subscription`. The subscription catalog boundary was checked
+  against `postgres:15-alpine` on 2026-05-09 before updating the Doltgres
+  tests.
 - [x] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
   Proxy) that real-world stacks expose. docs/replication-provider-boundaries.md
@@ -812,8 +819,18 @@ actually exercise.
   AWS control-plane/proxy layer outside the Doltgres engine. Pinned by
   testing/go/provider_replication_boundary_test.go's
   TestProviderSpecificReplicationBoundaries.
-- [ ] Cover the rest of the replication feature surface in
-  `postgresql-parity-issues.md` once consumers exercise it.
+- [x] Cover the rest of the replication feature surface in
+  `postgresql-parity-issues.md` once consumers exercise it. The
+  consumer-exercised PostgreSQL 15 replication rows are now closed in
+  docs/postgresql-parity-issues.md: the source-mode `pgoutput` subset has
+  explicit boundaries for physical slots, non-`pgoutput` plugins, and
+  in-progress stream requests; subscriptions are documented and tested as
+  metadata-only `connect=false` without apply-worker state; and publication
+  DDL covers database-qualified table rejection plus the publication options
+  currently claimed through Electric, Zero, and direct `pgoutput` tests.
+  Later PostgreSQL-version features and unobserved consumer-specific surfaces
+  remain tracked in docs/postgresql-parity-issues.md until a real consumer
+  exercises them.
 
 ## Dump/admin/tooling TODO
 

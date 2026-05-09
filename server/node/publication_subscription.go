@@ -321,8 +321,15 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 	if len(c.Publications) == 0 {
 		return nil, errors.New("CREATE SUBSCRIPTION requires at least one publication")
 	}
-	if optionBoolDefault(c.Options, "connect", true) {
+	connect, err := optionBool(c.Options, "connect", true)
+	if err != nil {
+		return nil, err
+	}
+	if connect {
 		return nil, errors.New("subscription publisher connections are not yet supported; use WITH (connect=false)")
+	}
+	if err = validateMetadataOnlySubscriptionCreateOptions(c.Options); err != nil {
+		return nil, err
 	}
 	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
 	if err != nil {
@@ -436,10 +443,14 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 			return nil, err
 		}
 	case SubscriptionAlterRefresh:
-		if err = applySubscriptionOptions(&sub, a.Options); err != nil {
-			return nil, err
+		if !sub.Enabled {
+			return nil, errors.New("ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions")
 		}
+		return nil, errors.New("subscription refresh requires publisher connections, which are not yet supported")
 	case SubscriptionAlterEnable:
+		if sub.SlotName == "" {
+			return nil, errors.New("cannot enable subscription that does not have a slot name")
+		}
 		sub.Enabled = true
 	case SubscriptionAlterDisable:
 		sub.Enabled = false
@@ -783,6 +794,36 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 		}
 	}
 	return nil
+}
+
+func validateMetadataOnlySubscriptionCreateOptions(options map[string]string) error {
+	for _, key := range []string{"create_slot", "enabled", "copy_data"} {
+		value, ok, err := explicitBoolOption(options, key)
+		if err != nil {
+			return err
+		}
+		if ok && value {
+			return errors.Errorf("connect = false and %s = true are mutually exclusive options", key)
+		}
+	}
+	return nil
+}
+
+func optionBool(options map[string]string, key string, fallback bool) (bool, error) {
+	value, ok := options[key]
+	if !ok {
+		return fallback, nil
+	}
+	return parseReplicationBoolOption(key, value)
+}
+
+func explicitBoolOption(options map[string]string, key string) (bool, bool, error) {
+	value, ok := options[key]
+	if !ok {
+		return false, false, nil
+	}
+	parsed, err := parseReplicationBoolOption(key, value)
+	return parsed, true, err
 }
 
 func optionBoolDefault(options map[string]string, key string, fallback bool) bool {

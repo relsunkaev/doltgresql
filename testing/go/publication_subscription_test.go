@@ -32,6 +32,10 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:       "CREATE PUBLICATION dg_bad_db_qual_pub FOR TABLE postgres.public.pub_items;",
+					ExpectedErr: "publication table database qualifiers are not yet supported",
+				},
+				{
 					Query: "CREATE PUBLICATION dg_pub FOR TABLE pub_items (tenant_id, label) WHERE (tenant_id > 0) WITH (publish = 'insert, update', publish_via_partition_root = true);",
 				},
 				{
@@ -255,12 +259,30 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 					ExpectedErr: "connect=false",
 				},
 				{
-					Query: "CREATE SUBSCRIPTION dg_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false, binary = true, streaming = parallel, two_phase = false, disable_on_error = true, synchronous_commit = 'remote_apply');",
+					Query:       "CREATE SUBSCRIPTION dg_bad_slot_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = true);",
+					ExpectedErr: "connect = false and create_slot = true are mutually exclusive options",
+				},
+				{
+					Query:       "CREATE SUBSCRIPTION dg_bad_enabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = true, create_slot = false);",
+					ExpectedErr: "connect = false and enabled = true are mutually exclusive options",
+				},
+				{
+					Query:       "CREATE SUBSCRIPTION dg_bad_copy_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = false, copy_data = true);",
+					ExpectedErr: "connect = false and copy_data = true are mutually exclusive options",
+				},
+				{
+					Query: "CREATE SUBSCRIPTION dg_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false, binary = true, streaming = true, two_phase = false, disable_on_error = true, synchronous_commit = 'remote_apply');",
 				},
 				{
 					Query: "SELECT subname, subenabled, subbinary, substream, subtwophasestate, subdisableonerr, subslotname IS NULL, subsynccommit, array_to_string(subpublications, ','), subskiplsn::text FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
 					Expected: []sql.Row{
 						{"dg_sub", "f", "t", "t", "d", "t", "t", "remote_apply", "dg_pub", "0/0"},
+					},
+				},
+				{
+					Query: "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",
+					Expected: []sql.Row{
+						{0},
 					},
 				},
 				{
@@ -276,7 +298,8 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 					Query: "ALTER SUBSCRIPTION dg_sub SET PUBLICATION dg_pub2;",
 				},
 				{
-					Query: "ALTER SUBSCRIPTION dg_sub ENABLE;",
+					Query:       "ALTER SUBSCRIPTION dg_sub ENABLE;",
+					ExpectedErr: "cannot enable subscription that does not have a slot name",
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub SKIP (lsn = '0/16');",
@@ -284,11 +307,43 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 				{
 					Query: "SELECT subenabled, subskiplsn::text, array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
 					Expected: []sql.Row{
-						{"t", "0/16", "dg_pub2"},
+						{"f", "0/16", "dg_pub2"},
 					},
 				},
 				{
+					Query:       "ALTER SUBSCRIPTION dg_sub REFRESH PUBLICATION WITH (copy_data = false);",
+					ExpectedErr: "ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions",
+				},
+				{
 					Query: "ALTER SUBSCRIPTION dg_sub DISABLE;",
+				},
+				{
+					Query: "CREATE SUBSCRIPTION dg_enabled_metadata_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION dg_pub WITH (connect = false, enabled = false, create_slot = false);",
+				},
+				{
+					Query: "ALTER SUBSCRIPTION dg_enabled_metadata_sub ENABLE;",
+				},
+				{
+					Query: "SELECT subenabled, subslotname FROM pg_catalog.pg_subscription WHERE subname = 'dg_enabled_metadata_sub';",
+					Expected: []sql.Row{
+						{"t", "dg_enabled_metadata_sub"},
+					},
+				},
+				{
+					Query: "SELECT count(*) FROM pg_catalog.pg_subscription_rel;",
+					Expected: []sql.Row{
+						{0},
+					},
+				},
+				{
+					Query: "SELECT count(*) FROM pg_catalog.pg_stat_subscription;",
+					Expected: []sql.Row{
+						{0},
+					},
+				},
+				{
+					Query:       "ALTER SUBSCRIPTION dg_enabled_metadata_sub REFRESH PUBLICATION WITH (copy_data = false);",
+					ExpectedErr: "subscription refresh requires publisher connections, which are not yet supported",
 				},
 				{
 					Query: "ALTER SUBSCRIPTION dg_sub OWNER TO CURRENT_USER;",

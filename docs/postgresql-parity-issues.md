@@ -150,9 +150,9 @@ clients can hit even when they do not use newer PostgreSQL versions.
 - [ ] Foreign data wrappers - implement or explicitly reject FDW/server/foreign table/user mapping/import foreign schema behavior and catalogs.
 - [ ] Large objects - close large-object DDL, descriptors, read/write/seek/truncate, import/export, privilege, comment, ownership, helper, and catalog behavior.
 - [ ] Tablespaces - close tablespace DDL, placement, owner/rename, reloptions, reindex moves, partition interactions, and `pg_tablespace`.
-- [ ] Logical replication source - keep the supported `pgoutput` source-mode subset honest and add explicit boundaries for physical slots, non-`pgoutput` plugins, and in-progress stream messages.
-- [ ] Subscriptions and apply workers - implement live subscriber behavior or preserve explicit metadata-only `connect=false` support with tests for missing publisher connections, remote slot creation, initial sync, apply workers, and `pg_subscription_rel`.
-- [ ] Publications - close table database qualifiers and every publication option claimed through Electric or other consumers.
+- [x] Logical replication source - the supported `pgoutput` source-mode subset is pinned by `testing/go/logical_replication_source_test.go`: protocol/catalog startup, row messages, publication filtering/action flags, all-table/schema publications, slot stats, physical slot rejection, non-`pgoutput` plugin rejection, and whole-transaction behavior when clients request in-progress stream messages.
+- [x] Subscriptions and apply workers - Doltgres is source-only for current compatibility claims. `testing/go/publication_subscription_test.go` preserves explicit metadata-only `connect=false` support while rejecting missing publisher connections, remote slot creation, initial sync options, disabled refresh, enabled refresh that would require a publisher connection, and `ENABLE` on `slot_name=NONE`; it also verifies no apply-worker state appears in `pg_subscription_rel` or `pg_stat_subscription`.
+- [x] Publications - `testing/go/publication_subscription_test.go` covers database-qualified table rejection, table/schema membership, column lists, row filters, `publish`, `publish_via_partition_root`, and Zero-style repeated/omitted `TABLE` keywords; direct `pgoutput` tests cover the publication action/filter behavior claimed by current consumers.
 - [ ] Import/dump compatibility - unskip and triage the bulk dump-import suite and real-world dumps.
 
 ## PostgreSQL 16 TODO

@@ -77,8 +77,13 @@ These are not claimed as Electric-supported:
   subscription slots, or apply incoming `pgoutput` changes into local tables.
   `CREATE SUBSCRIPTION` is metadata-only and must use `connect=false` for any
   supported round trip. `TestSubscriptionDDLAndCatalogs` pins this by rejecting
-  a default publisher connection while allowing disabled `connect=false`
-  metadata to appear in `pg_subscription` and `pg_stat_subscription_stats`.
+  a default publisher connection, PostgreSQL-incompatible `connect=false`
+  combinations (`create_slot=true`, `enabled=true`, `copy_data=true`),
+  `ENABLE` on `slot_name=NONE`, disabled `REFRESH`, and enabled `REFRESH`
+  because it requires a publisher connection, while allowing metadata-only
+  `connect=false` rows to appear in `pg_subscription` and
+  `pg_stat_subscription_stats`. It also verifies that no apply worker state is
+  exposed through `pg_subscription_rel` or `pg_stat_subscription`.
 - Emitting pgoutput stream-start/stream-commit messages for in-progress
   transaction streaming. Clients may request `streaming 'true'`, but Doltgres
   publishes complete transactions only.
