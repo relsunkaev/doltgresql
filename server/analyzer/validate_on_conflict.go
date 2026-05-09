@@ -265,10 +265,69 @@ func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, target
 	if arbiterPredicate == "" {
 		return false
 	}
-	if indexPredicate != arbiterPredicate {
+	if !predicateImplies(indexPredicate, arbiterPredicate) {
 		return false
 	}
 	return true
+}
+
+func predicateImplies(indexPredicate string, arbiterPredicate string) bool {
+	if indexPredicate == arbiterPredicate {
+		return true
+	}
+
+	indexTerms, ok := predicateConjuncts(indexPredicate)
+	if !ok {
+		return false
+	}
+	arbiterTerms, ok := predicateConjuncts(arbiterPredicate)
+	if !ok {
+		return false
+	}
+	for term := range indexTerms {
+		if _, ok = arbiterTerms[term]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func predicateConjuncts(predicate string) (map[string]struct{}, bool) {
+	expr, ok := parsePredicateExpr(predicate)
+	if !ok {
+		return nil, false
+	}
+	terms := make(map[string]struct{})
+	collectPredicateConjuncts(expr, terms)
+	return terms, true
+}
+
+func parsePredicateExpr(predicate string) (tree.Expr, bool) {
+	statements, err := parser.Parse("SELECT 1 WHERE " + predicate)
+	if err != nil || len(statements) != 1 {
+		return nil, false
+	}
+	selectStatement, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return nil, false
+	}
+	selectClause, ok := selectStatement.Select.(*tree.SelectClause)
+	if !ok || selectClause.Where == nil {
+		return nil, false
+	}
+	return selectClause.Where.Expr, true
+}
+
+func collectPredicateConjuncts(expr tree.Expr, terms map[string]struct{}) {
+	switch expr := expr.(type) {
+	case *tree.AndExpr:
+		collectPredicateConjuncts(expr.Left, terms)
+		collectPredicateConjuncts(expr.Right, terms)
+	case *tree.ParenExpr:
+		collectPredicateConjuncts(expr.Expr, terms)
+	default:
+		terms[strings.TrimSpace(tree.AsString(expr))] = struct{}{}
+	}
 }
 
 func indexPredicateDefinition(predicate tree.Expr) string {

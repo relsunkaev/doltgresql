@@ -401,15 +401,17 @@ Do not check off an item until it has workload proof:
   comparisons, parentheses, AND, and OR, which covers the
   AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
   restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
-  exact predicate matches against metadata-backed partial unique
-  indexes, and non-target partial-unique conflicts are preserved for
-  multi-unique `DO NOTHING`. DDL and DML coverage in
+  exact predicate matches and simple conjunctive arbiter predicates that imply
+  the metadata-backed partial unique index predicate; non-target partial-unique
+  conflicts are preserved for multi-unique `DO NOTHING`. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
 - [ ] Implement PostgreSQL-style partial-index predicate implication. Today
-  predicate matching is exact-shape/exact-string based for the supported
-  partial-index planner and `ON CONFLICT` paths.
+  the partial-index planner is exact-shape based, and `ON CONFLICT` only covers
+  exact matches plus conjunctions where the arbiter predicate contains every
+  index-predicate term. Broader inequality, OR, and semantic implication remain
+  open.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match

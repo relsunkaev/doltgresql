@@ -543,9 +543,13 @@ ON CONFLICT (user_id) WHERE status = 'active' DO UPDATE SET note = EXCLUDED.note
 ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING;`,
 				},
 				{
+					Query: `INSERT INTO partial_arb VALUES (8, 10, 'active', 'implied')
+ON CONFLICT (user_id) WHERE status = 'active' AND note IS NOT NULL DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
 					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`,
 					Expected: []gms.Row{
-						{1, 10, "active", "updated"},
+						{1, 10, "active", "implied"},
 						{2, 10, "inactive", "inactive"},
 						{4, 10, "inactive", "inactive2"},
 					},
