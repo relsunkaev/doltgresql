@@ -56,6 +56,9 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (*vitess.DDL, error) 
 	if node.Tablespace != "" {
 		return nil, errors.Errorf("TABLESPACE is not yet supported")
 	}
+	if node.OfType != nil {
+		return nil, errors.Errorf("CREATE TABLE OF is not yet supported")
+	}
 	if node.AsSource != nil {
 		selectStmt, err := nodeSelect(ctx, node.AsSource)
 		if err != nil {

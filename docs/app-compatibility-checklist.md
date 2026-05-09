@@ -1110,8 +1110,13 @@ typed-exception handling, and client-side query timeouts.
   PostgreSQL's behavior (reloftype is only nonzero for typed
   tables created with `CREATE TABLE name OF composite_type`). Pinned by
   testing/go/pg_class_reloftype_test.go.
-- [ ] Support typed tables created with `CREATE TABLE name OF composite_type`
-  or add explicit unsupported coverage for that PostgreSQL table kind.
+- [x] Typed tables created with `CREATE TABLE name OF composite_type`
+  are explicitly rejected with SQLSTATE 0A000 (`CREATE TABLE OF is not yet
+  supported`) instead of reaching GMS' empty-schema create-table panic. This
+  keeps ordinary-table `pg_class.reloftype=0` correct while making the typed-table
+  non-goal stable for dump rewrite tooling. Pinned by
+  testing/go/sqlstate_test.go, testing/go/unsupported_ddl_probes_test.go, and
+  testing/go/pg_class_reloftype_test.go.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name
