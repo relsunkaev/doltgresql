@@ -348,11 +348,12 @@ Do not check off an item until it has workload proof:
   indexes now use the same two-phase `pg_index.indisready=false` /
   `pg_index.indisvalid=false` catalog visibility as plain btree
   `CREATE INDEX CONCURRENTLY`, then flip to ready/valid after the
-  inter-phase commit. Expression and partial-unique `CONCURRENTLY`
-  shapes still route through their existing synchronous build paths;
-  migration tools do not error, but those shapes do not expose the
-  two-phase catalog state yet. This does not change the separate
-  non-blocking writer gap above. Pinned by
+  inter-phase commit; partial-unique btree indexes keep
+  predicate-scoped uniqueness after the final flip. Expression
+  `CONCURRENTLY` shapes still route through their existing synchronous
+  build path; migration tools do not error, but that shape does not
+  expose the two-phase catalog state yet. This does not change the
+  separate non-blocking writer gap above. Pinned by
   testing/go/create_index_concurrently_test.go and
   testing/go/create_index_concurrently_contention_test.go.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,

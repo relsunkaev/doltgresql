@@ -48,9 +48,8 @@ import (
 // surface.
 //
 // Edge cases that fall back to a regular synchronous CREATE INDEX (no
-// state-machine wrapping) are handled at the AST level — expression indexes,
-// partial-unique indexes, and unique-with-expression shapes all keep their
-// existing build path.
+// state-machine wrapping) are handled at the AST level — expression indexes
+// and unique-with-expression shapes keep their existing build path.
 type CreateIndexConcurrently struct {
 	ifNotExists bool
 	schema      string

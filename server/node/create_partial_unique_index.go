@@ -30,12 +30,13 @@ import (
 // indexes plus Doltgres metadata. Predicate-scoped uniqueness is validated at
 // build time here and at write time by PartialUniqueTable.
 type CreatePartialUniqueIndex struct {
-	ifNotExists bool
-	schema      string
-	table       string
-	indexName   string
-	columns     []sql.IndexColumn
-	metadata    indexmetadata.Metadata
+	ifNotExists  bool
+	concurrently bool
+	schema       string
+	table        string
+	indexName    string
+	columns      []sql.IndexColumn
+	metadata     indexmetadata.Metadata
 }
 
 var _ sql.ExecSourceRel = (*CreatePartialUniqueIndex)(nil)
@@ -44,6 +45,7 @@ var _ vitess.Injectable = (*CreatePartialUniqueIndex)(nil)
 // NewCreatePartialUniqueIndex constructs the partial unique CREATE INDEX node.
 func NewCreatePartialUniqueIndex(
 	ifNotExists bool,
+	concurrently bool,
 	schema string,
 	table string,
 	indexName string,
@@ -53,12 +55,13 @@ func NewCreatePartialUniqueIndex(
 	cols := append([]sql.IndexColumn(nil), columns...)
 	metadata.Unique = true
 	return &CreatePartialUniqueIndex{
-		ifNotExists: ifNotExists,
-		schema:      schema,
-		table:       table,
-		indexName:   indexName,
-		columns:     cols,
-		metadata:    metadata,
+		ifNotExists:  ifNotExists,
+		concurrently: concurrently,
+		schema:       schema,
+		table:        table,
+		indexName:    indexName,
+		columns:      cols,
+		metadata:     metadata,
 	}
 }
 
@@ -130,12 +133,17 @@ func (c *CreatePartialUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row) (sql.Row
 	if err = validateNoPartialUniqueDuplicates(ctx, scanTableForPartialUniqueCheck(table), check); err != nil {
 		return nil, err
 	}
+	metadata := c.metadata
+	if c.concurrently {
+		metadata.NotReady = true
+		metadata.Invalid = true
+	}
 	indexDef := sql.IndexDef{
 		Name:       c.indexName,
 		Columns:    append([]sql.IndexColumn(nil), c.columns...),
 		Constraint: sql.IndexConstraint_None,
 		Storage:    sql.IndexUsing_BTree,
-		Comment:    indexmetadata.EncodeComment(c.metadata),
+		Comment:    indexmetadata.EncodeComment(metadata),
 	}
 	if err = alterable.CreateIndex(ctx, indexDef); err != nil {
 		if c.ifNotExists && sql.ErrDuplicateKey.Is(err) {
@@ -143,5 +151,24 @@ func (c *CreatePartialUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row) (sql.Row
 		}
 		return nil, err
 	}
+	if err = c.finishConcurrentBuild(ctx, schemaName); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreatePartialUniqueIndex) finishConcurrentBuild(ctx *sql.Context, schemaName string) error {
+	if !c.concurrently {
+		return nil
+	}
+	if err := commitInterPhaseTransaction(ctx); err != nil {
+		return err
+	}
+	if testHookBetweenPhases != nil {
+		testHookBetweenPhases(ctx)
+	}
+	if err := flipIndexComment(ctx, schemaName, c.table, c.indexName, alteredIndexComment(c.metadata)); err != nil {
+		return err
+	}
+	return commitInterPhaseTransaction(ctx)
 }

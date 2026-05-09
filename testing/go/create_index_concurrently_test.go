@@ -165,6 +165,42 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE UNIQUE INDEX CONCURRENTLY partial predicate",
+			SetUpScript: []string{
+				"CREATE TABLE partial_unique_concurrent_t (id INT PRIMARY KEY, tenant_id INT, active BOOL);",
+				"INSERT INTO partial_unique_concurrent_t VALUES (1, 10, true), (2, 10, false);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE UNIQUE INDEX CONCURRENTLY puc_tenant_active_idx ON partial_unique_concurrent_t (tenant_id) WHERE active;",
+				},
+				{
+					Query: `SELECT indexdef
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'partial_unique_concurrent_t' AND indexname = 'puc_tenant_active_idx';`,
+					Expected: []sql.Row{
+						{"CREATE UNIQUE INDEX puc_tenant_active_idx ON public.partial_unique_concurrent_t USING btree (tenant_id) WHERE active"},
+					},
+				},
+				{
+					Query: `SELECT i.indisready, i.indisvalid
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
+						WHERE c.relname = 'puc_tenant_active_idx';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+				{
+					Query:       "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, true);",
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: "INSERT INTO partial_unique_concurrent_t VALUES (3, 10, false);",
+				},
+			},
+		},
+		{
 			Name: "CREATE INDEX CONCURRENTLY JSONB GIN",
 			SetUpScript: []string{
 				"CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB);",
