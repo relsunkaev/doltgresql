@@ -122,5 +122,20 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "CREATE EXTENSION btree_gist dump compatibility shim",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'btree_gist';`,
+					Expected: []sql.Row{{"btree_gist", "public", "t", "1.7"}},
+				},
+			},
+		},
 	})
 }

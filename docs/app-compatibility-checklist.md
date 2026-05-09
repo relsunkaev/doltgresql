@@ -98,8 +98,10 @@ Do not check off an item until it has workload proof:
   `gen_random_uuid()` is registered as a native builtin and returns a
   36-char UUID, covering the common ORM/default-PK path. `CREATE
   EXTENSION vector` is accepted through a built-in pgvector shim and
-  the native `vector(n)` type round-trips scalar embeddings. `btree_gist`
-  and `citext` remain untested. Pinned by
+  the native `vector(n)` type round-trips scalar embeddings.
+  `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
+  for dump restore; actual GiST operator classes and indexes remain
+  tracked under the GiST item below. `citext` remains untested. Pinned by
   testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser

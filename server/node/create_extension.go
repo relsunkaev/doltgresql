@@ -182,6 +182,14 @@ func getExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
 
 func builtinExtensionShim(name string) (*pg_extension.ExtensionFiles, bool) {
 	switch strings.ToLower(name) {
+	case "btree_gist":
+		return &pg_extension.ExtensionFiles{
+			Name: name,
+			Control: pg_extension.Control{
+				DefaultVersion: pg_extension.ToVersion(1, 7),
+				Relocatable:    true,
+			},
+		}, true
 	case "vector":
 		return &pg_extension.ExtensionFiles{
 			Name: name,
@@ -250,7 +258,7 @@ func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
 
 func createExtensionSkipsSQL(name string) bool {
 	switch strings.ToLower(name) {
-	case "pgcrypto", "vector":
+	case "btree_gist", "pgcrypto", "vector":
 		return true
 	default:
 		return false
