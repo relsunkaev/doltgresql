@@ -89,8 +89,14 @@ Do not check off an item until it has workload proof:
   `DISTINCT ON` latest-row selection, and partitioned window
   aggregates; both the initial view and `CREATE OR REPLACE VIEW`
   output are pinned.
-- [ ] Run Electric and Zero (or equivalent logical-replication consumers)
-  against Doltgres with `REPLICA IDENTITY FULL`-marked tables.
+- [x] Run Electric and Zero (or equivalent logical-replication consumers)
+  against Doltgres with `REPLICA IDENTITY FULL`-marked tables. Electric is
+  covered by testing/go/electric_sync_test.go's Docker-backed shape API
+  harness. Zero is covered by testing/go/zero_sync_test.go's
+  Docker-backed discover-mode harness, which runs Zero against separate
+  upstream, CVR, and change databases, marks the source table
+  `REPLICA IDENTITY FULL`, waits for the `pgoutput` slot to become active,
+  inserts through Doltgres, and verifies `confirmed_flush_lsn` advances.
 - [~] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`
   restore -> ORM introspection -> running app. The schema-slice
   harness in testing/go/pg_dump_round_trip_test.go now proves this
@@ -746,8 +752,17 @@ actually exercise.
   testing/go/electric_sync_test.go; verified with
   `DOLTGRES_ELECTRIC_SMOKE=1 go test ./testing/go -run
   '^(TestElectricSyncSmoke|TestElectricReplicaFullShapeAPI)$'` on 2026-05-09.
-- [ ] Run Zero with `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, and
-  `ZERO_CHANGE_STREAMER_MODE=discover` against Doltgres.
+- [x] Run Zero with `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, and
+  `ZERO_CHANGE_STREAMER_MODE=discover` against Doltgres. The Docker-backed
+  smoke harness starts `rocicorp/zero:1.4.0` with a local `file://`
+  Litestream backup target for the view-syncer, uses distinct Doltgres
+  databases for the upstream source, CVR, and change state, waits for the
+  Zero-created publication and active `pgoutput` slot, inserts into a
+  `REPLICA IDENTITY FULL` table, and asserts `confirmed_flush_lsn` advances
+  past the insert LSN. Pinned by testing/go/zero_sync_test.go's
+  TestZeroDiscoverModeSmoke; verified with
+  `DOLTGRES_ZERO_SMOKE=1 go test ./testing/go -run
+  '^TestZeroDiscoverModeSmoke$'` on 2026-05-09.
 - [x] Prove publication-ownership flows where the consumer creates and owns
   publications and slots, not only repo-owned DDL. A non-superuser
   replication role now creates the source table, owns the publication, creates
@@ -767,9 +782,14 @@ actually exercise.
   `oid[]`, relation-drift detection through `UNNEST`, snapshot/current-LSN
   reads, and replication-slot telemetry based on `pg_wal_lsn_diff`. Verified
   with `go test ./testing/go -run
-  '^TestLogicalReplicationElectricCatalogProbeQueries$'` on 2026-05-09. Zero,
-  Debezium, and other consumers remain open until their exact query surfaces
-  are captured.
+  '^TestLogicalReplicationElectricCatalogProbeQueries$'` on 2026-05-09. Zero
+  1.4.0's startup and catalog surfaces are now covered by the live
+  discover-mode smoke plus pinned compatibility probes for publication
+  grammar, `pg_index.indclass = ANY(...)`, `int2vector` / `oidvector`
+  slices, zero-shaped published-column catalog CTEs, exported snapshots,
+  `pg_logical_emit_message`, `pg_column_size`, `starts_with`, array
+  operators, array subscripts, and JSON output serialization. Debezium and
+  other consumers remain open until their exact query surfaces are captured.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
