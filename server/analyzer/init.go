@@ -28,48 +28,50 @@ import (
 // Comments are to match the Stringer formatting rules in the original rule definition file, but we can't generate
 // human-readable strings for these extended types because they are in another package.
 const (
-	ruleId_TypeSanitizer                      analyzer.RuleId = iota + 1000 // typeSanitizer
-	ruleId_AddDomainConstraints                                             // addDomainConstraints
-	ruleId_AddDomainConstraintsToCasts                                      // addDomainConstraintsToCasts
-	ruleId_ApplyTablesForAnalyzeAllTables                                   // applyTablesForAnalyzeAllTables
-	ruleId_AssignInsertCasts                                                // assignInsertCasts
-	ruleId_AssignJsonbGinLookups                                            // assignJsonbGinLookups
-	ruleId_AssignJsonbGinMaintainers                                        // assignJsonbGinMaintainers
-	ruleId_AssignBtreePlannerBoundaries                                     // assignBtreePlannerBoundaries
-	ruleId_AssignBatchedIndexLookups                                        // assignBatchedIndexLookups
-	ruleId_InferInnerJoinPredicates                                         // inferInnerJoinPredicates
-	ruleId_AssignSelectiveLookupJoinHints                                   // assignSelectiveLookupJoinHints
-	ruleId_PreserveLateralLeftJoin                                          // preserveLateralLeftJoin
-	ruleId_AssignTriggers                                                   // assignTriggers
-	ruleId_AssignUpdateCasts                                                // assignUpdateCasts
-	ruleId_UseSchemaAwareStatsProvider                                      // useSchemaAwareStatsProvider
-	ruleId_ConvertDropPrimaryKeyConstraint                                  // convertDropPrimaryKeyConstraint
-	ruleId_WrapPrimaryKeyMetadata                                           // wrapPrimaryKeyMetadata
-	ruleId_GenerateForeignKeyName                                           // generateForeignKeyName
-	ruleId_ReplaceIndexedTables                                             // replaceIndexedTables
-	ruleId_ReplaceNode                                                      // replaceNode
-	ruleId_ReplaceSerial                                                    // replaceSerial
-	ruleId_InsertContextRootFinalizer                                       // insertContextRootFinalizer
-	ruleId_ResolveType                                                      // resolveType
-	ruleId_ReplaceArithmeticExpressions                                     // replaceArithmeticExpressions
-	ruleId_OptimizeFunctions                                                // optimizeFunctions
-	ruleId_ValidateColumnDefaults                                           // validateColumnDefaults
-	ruleId_ValidateCreateTable                                              // validateCreateTable
-	ruleId_ValidateCreateSchema                                             // validateCreateSchema
-	ruleId_ResolveAlterColumn                                               // resolveAlterColumn
-	ruleId_ValidateCreateFunction                                           // validateCreateFunction
-	ruleId_ResolveValuesTypes                                               // resolveValuesTypes
-	ruleId_ResolveProcedureDefaults                                         // resolveProcedureDefaults
-	ruleId_ValidateDropConstraintOwnership                                  // validateDropConstraintOwnership
-	ruleId_ValidateOnConflictArbiter                                        // validateOnConflictArbiter
-	ruleId_AssignNullsNotDistinctUniqueChecks                               // assignNullsNotDistinctUniqueChecks
-	ruleId_AssignRowLevelLocking                                            // assignRowLevelLocking
-	ruleId_SuppressReplicaRoleForeignKeys                                   // suppressReplicaRoleForeignKeys
-	ruleId_SuppressDeferrableForeignKeys                                    // suppressDeferrableForeignKeys
-	ruleId_UnwrapTableCopierCreateTable                                     // unwrapTableCopierCreateTable
-	ruleId_PreserveTableMetadata                                            // preserveTableMetadata
-	ruleId_AssignUnpopulatedMatviewScans                                    // assignUnpopulatedMaterializedViewScans
-	ruleId_AssignIndexStats                                                 // assignIndexStats
+	ruleId_TypeSanitizer                            analyzer.RuleId = iota + 1000 // typeSanitizer
+	ruleId_AddDomainConstraints                                                   // addDomainConstraints
+	ruleId_AddDomainConstraintsToCasts                                            // addDomainConstraintsToCasts
+	ruleId_ApplyTablesForAnalyzeAllTables                                         // applyTablesForAnalyzeAllTables
+	ruleId_AssignInsertCasts                                                      // assignInsertCasts
+	ruleId_AssignJsonbGinLookups                                                  // assignJsonbGinLookups
+	ruleId_AssignJsonbGinMaintainers                                              // assignJsonbGinMaintainers
+	ruleId_AssignBtreePlannerBoundaries                                           // assignBtreePlannerBoundaries
+	ruleId_AssignBatchedIndexLookups                                              // assignBatchedIndexLookups
+	ruleId_InferInnerJoinPredicates                                               // inferInnerJoinPredicates
+	ruleId_AssignSelectiveLookupJoinHints                                         // assignSelectiveLookupJoinHints
+	ruleId_PreserveLateralLeftJoin                                                // preserveLateralLeftJoin
+	ruleId_AssignTriggers                                                         // assignTriggers
+	ruleId_AssignUpdateCasts                                                      // assignUpdateCasts
+	ruleId_UseSchemaAwareStatsProvider                                            // useSchemaAwareStatsProvider
+	ruleId_ConvertDropPrimaryKeyConstraint                                        // convertDropPrimaryKeyConstraint
+	ruleId_WrapPrimaryKeyMetadata                                                 // wrapPrimaryKeyMetadata
+	ruleId_GenerateForeignKeyName                                                 // generateForeignKeyName
+	ruleId_ReplaceIndexedTables                                                   // replaceIndexedTables
+	ruleId_ReplaceNode                                                            // replaceNode
+	ruleId_ReplaceSerial                                                          // replaceSerial
+	ruleId_InsertContextRootFinalizer                                             // insertContextRootFinalizer
+	ruleId_ResolveType                                                            // resolveType
+	ruleId_ReplaceArithmeticExpressions                                           // replaceArithmeticExpressions
+	ruleId_OptimizeFunctions                                                      // optimizeFunctions
+	ruleId_ValidateColumnDefaults                                                 // validateColumnDefaults
+	ruleId_ValidateCreateTable                                                    // validateCreateTable
+	ruleId_ValidateCreateSchema                                                   // validateCreateSchema
+	ruleId_ResolveAlterColumn                                                     // resolveAlterColumn
+	ruleId_ValidateCreateFunction                                                 // validateCreateFunction
+	ruleId_ResolveValuesTypes                                                     // resolveValuesTypes
+	ruleId_ResolveProcedureDefaults                                               // resolveProcedureDefaults
+	ruleId_ValidateGroupBy                                                        // validateGroupBy
+	ruleId_ValidateDropConstraintOwnership                                        // validateDropConstraintOwnership
+	ruleId_ValidateOnConflictArbiter                                              // validateOnConflictArbiter
+	ruleId_AssignNullsNotDistinctUniqueChecks                                     // assignNullsNotDistinctUniqueChecks
+	ruleId_AssignRowLevelLocking                                                  // assignRowLevelLocking
+	ruleId_SuppressReplicaRoleForeignKeys                                         // suppressReplicaRoleForeignKeys
+	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
+	ruleId_UnwrapTableCopierCreateTable                                           // unwrapTableCopierCreateTable
+	ruleId_PreserveTableMetadata                                                  // preserveTableMetadata
+	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
+	ruleId_AssignIndexStats                                                       // assignIndexStats
+	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -109,6 +111,8 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ValidateCreateTable, Apply: validateCreateTable})
 	analyzer.OnceBeforeDefault = insertAnalyzerRules(analyzer.OnceBeforeDefault, analyzer.ResolveAlterColumnId, true,
 		analyzer.Rule{Id: ruleId_ResolveAlterColumn, Apply: resolveAlterColumn})
+	analyzer.OnceBeforeDefault = replaceAnalyzerRuleByName(analyzer.OnceBeforeDefault, "validateGroupBy",
+		analyzer.Rule{Id: ruleId_ValidateGroupBy, Apply: ValidateGroupBy})
 
 	analyzer.OnceBeforeDefault = removeAnalyzerRules(
 		analyzer.OnceBeforeDefault,
@@ -141,6 +145,8 @@ func Init() {
 
 	// The auto-commit rule writes the contents of the context, so we need to insert our finalizer before that.
 	// We also should optimize functions last, since other rules may change the underlying expressions, potentially changing their return types.
+	analyzer.OnceAfterAll = insertAnalyzerRulesByName(analyzer.OnceAfterAll, "assignExecIndexes", true,
+		analyzer.Rule{Id: ruleId_ClearUncorrelatedSubqueryAliasVisibility, Apply: ClearUncorrelatedSubqueryAliasVisibility})
 	analyzer.OnceAfterAll = insertAnalyzerRules(analyzer.OnceAfterAll, analyzer.QuoteDefaultColumnValueNamesId, false,
 		analyzer.Rule{Id: ruleId_OptimizeFunctions, Apply: OptimizeFunctions},
 		// AddDomainConstraintsToCasts needs to run after 'assignExecIndexes' rule in GMS.
@@ -237,6 +243,27 @@ func insertAnalyzerRulesByName(rules []analyzer.Rule, name string, before bool, 
 
 	if !inserted {
 		panic("no rules were inserted")
+	}
+
+	return newRules
+}
+
+// replaceAnalyzerRuleByName replaces a GMS analyzer rule whose ID is not
+// exported by the dependency.
+func replaceAnalyzerRuleByName(rules []analyzer.Rule, name string, replacement analyzer.Rule) []analyzer.Rule {
+	replaced := false
+	newRules := make([]analyzer.Rule, len(rules))
+	for i, rule := range rules {
+		if rule.Id.String() == name {
+			replaced = true
+			newRules[i] = replacement
+		} else {
+			newRules[i] = rule
+		}
+	}
+
+	if !replaced {
+		panic("one or more rules were not replaced, this is a bug")
 	}
 
 	return newRules

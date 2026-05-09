@@ -125,6 +125,18 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, slotName, slot.SlotName)
 	require.Equal(t, "pgoutput", slot.OutputPlugin)
+	require.Equal(t, "doltgres-snapshot-"+slotName, slot.SnapshotName)
+
+	noExportSlotName := "dg_logical_source_noexport_slot"
+	noExportSlot, err := pglogrepl.CreateReplicationSlot(ctx, replConn, noExportSlotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode:           pglogrepl.LogicalReplication,
+		SnapshotAction: "NOEXPORT_SNAPSHOT",
+		Temporary:      true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, noExportSlotName, noExportSlot.SlotName)
+	require.Empty(t, noExportSlot.SnapshotName)
+	require.NoError(t, pglogrepl.DropReplicationSlot(ctx, replConn, noExportSlotName, pglogrepl.DropReplicationSlotOptions{}))
 
 	var plugin, slotType, restartLSN, confirmedFlush string
 	var active bool
@@ -249,6 +261,55 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.NoError(t, conn.Current.QueryRow(ctx, `
 		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
 	require.Equal(t, 0, slotCount)
+}
+
+func TestPgLogicalEmitMessage(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	slotName := "dg_emit_message_slot"
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	var emittedLSNText string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT pg_logical_emit_message(false, 'zero/lag', '{"id":"abc"}')::text;`).Scan(&emittedLSNText))
+	emittedLSN, err := pglogrepl.ParseLSN(emittedLSNText)
+	require.NoError(t, err)
+	require.Greater(t, emittedLSN, pglogrepl.LSN(0))
+	emitted := receiveLogicalDecodingMessage(t, replConn)
+	require.Equal(t, emittedLSN, emitted.LSN)
+	require.False(t, emitted.Transactional)
+	require.Equal(t, "zero/lag", emitted.Prefix)
+	require.Equal(t, []byte(`{"id":"abc"}`), emitted.Content)
+
+	var flushedLSNText string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT pg_logical_emit_message(false, 'zero/lag', '{"id":"def"}', true)::text;`).Scan(&flushedLSNText))
+	flushedLSN, err := pglogrepl.ParseLSN(flushedLSNText)
+	require.NoError(t, err)
+	require.Greater(t, flushedLSN, emittedLSN)
+	flushed := receiveLogicalDecodingMessage(t, replConn)
+	require.Equal(t, flushedLSN, flushed.LSN)
+	require.Equal(t, []byte(`{"id":"def"}`), flushed.Content)
 }
 
 func TestLogicalReplicationConsumerOwnedPublicationAndSlot(t *testing.T) {
@@ -1641,6 +1702,26 @@ func receiveReplicationCopyData(t *testing.T, conn *pgconn.PgConn) *pgproto3.Cop
 	require.Truef(t, ok, "expected CopyData, got %T", msg)
 	require.NotEmpty(t, copyData.Data)
 	return copyData
+}
+
+func receiveLogicalDecodingMessage(t *testing.T, conn *pgconn.PgConn) *pglogrepl.LogicalDecodingMessageV2 {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		if emitted, ok := msg.(*pglogrepl.LogicalDecodingMessageV2); ok {
+			return emitted
+		}
+	}
+	require.FailNow(t, "timed out waiting for logical decoding message")
+	return nil
 }
 
 func requireNoReplicationCopyData(t *testing.T, conn *pgconn.PgConn, wait time.Duration) {

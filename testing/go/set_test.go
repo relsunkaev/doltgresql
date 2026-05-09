@@ -8445,7 +8445,7 @@ var setStmts = []ScriptTest{
 		Assertions: []ScriptTestAssertion{
 			{
 				Query:    "SHOW wal_level",
-				Expected: []sql.Row{{"replica"}},
+				Expected: []sql.Row{{"logical"}},
 			},
 			{
 				Query:       "SET wal_level TO 'replica'",
@@ -8453,7 +8453,7 @@ var setStmts = []ScriptTest{
 			},
 			{
 				Query:    "SELECT current_setting('wal_level')",
-				Expected: []sql.Row{{"replica"}},
+				Expected: []sql.Row{{"logical"}},
 			},
 		},
 	},
@@ -9036,6 +9036,21 @@ var setStmts = []ScriptTest{
 				Query:    "SELECT current_setting('app.audit_actor', true);",
 				Expected: []sql.Row{{nil}},
 			},
+		},
+	},
+	{
+		Name: "SET LOCAL system integer variable is stored as text",
+		Assertions: []ScriptTestAssertion{
+			{Query: "BEGIN;", Expected: []sql.Row{}},
+			{
+				Query:            "SET LOCAL lock_timeout = 1000;",
+				SkipResultsCheck: true,
+			},
+			{
+				Query:    "SELECT current_setting('lock_timeout');",
+				Expected: []sql.Row{{"1000"}},
+			},
+			{Query: "COMMIT;", Expected: []sql.Row{}},
 		},
 	},
 }

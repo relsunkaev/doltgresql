@@ -30,6 +30,11 @@ func initInt2vector() {
 	framework.RegisterFunction(int2vectorout)
 	framework.RegisterFunction(int2vectorrecv)
 	framework.RegisterFunction(int2vectorsend)
+	framework.MustAddExplicitTypeCast(framework.TypeCast{
+		FromType: pgtypes.Int16vector,
+		ToType:   pgtypes.Int16Array,
+		Function: framework.IdentityCast,
+	})
 }
 
 // int2vectorin represents the PostgreSQL function of int2vector type IO input.

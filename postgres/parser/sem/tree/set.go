@@ -170,12 +170,18 @@ var _ Statement = &SetTransaction{}
 
 // SetTransaction represents a SET TRANSACTION statement.
 type SetTransaction struct {
-	Modes TransactionModes
+	Modes    TransactionModes
+	Snapshot string
 }
 
 // Format implements the NodeFormatter interface.
 func (node *SetTransaction) Format(ctx *FmtCtx) {
 	ctx.WriteString("SET TRANSACTION")
+	if node.Snapshot != "" {
+		ctx.WriteString(" SNAPSHOT ")
+		ctx.FormatNode(NewStrVal(node.Snapshot))
+		return
+	}
 	node.Modes.Format(ctx)
 }
 

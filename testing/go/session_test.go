@@ -117,10 +117,35 @@ func TestSetTransaction(t *testing.T) {
 					Expected: []sql.Row{},
 				},
 				{
+					Query:    "SET TRANSACTION SNAPSHOT 'doltgres-snapshot-dgzero_0'",
+					Expected: []sql.Row{},
+				},
+				{
 					Query: `SELECT pg_current_snapshot(), pg_current_wal_lsn();`,
 					Expected: []sql.Row{
 						{"1:1:", "0/0"},
 					},
+				},
+				{
+					Query:    "COMMIT",
+					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
+			Name: "Begin transaction serializable isolation mode",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    "BEGIN ISOLATION LEVEL SERIALIZABLE",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "COMMIT",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "START TRANSACTION ISOLATION LEVEL SERIALIZABLE READ WRITE",
+					Expected: []sql.Row{},
 				},
 				{
 					Query:    "COMMIT",

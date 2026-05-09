@@ -538,6 +538,37 @@ var SchemaTests = []ScriptTest{
 		},
 	},
 	{
+		Name: "schema names with common prefixes do not overlap table maps",
+		SetUpScript: []string{
+			"CREATE SCHEMA dgzero;",
+			"CREATE SCHEMA dgzero_0;",
+		},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: "CREATE TABLE dgzero_0.version_history (pk BIGINT PRIMARY KEY);",
+			},
+			{
+				Query: "INSERT INTO dgzero_0.version_history VALUES (1);",
+			},
+			{
+				Query: "SELECT * FROM dgzero_0.version_history;",
+				Expected: []sql.Row{
+					{1},
+				},
+			},
+			{
+				Query:    "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero' ORDER BY tablename;",
+				Expected: []sql.Row{},
+			},
+			{
+				Query: "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'dgzero_0' ORDER BY tablename;",
+				Expected: []sql.Row{
+					{"version_history"},
+				},
+			},
+		},
+	},
+	{
 		Name: "non default schema qualifier",
 		SetUpScript: []string{
 			"CREATE SCHEMA myschema",

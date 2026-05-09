@@ -16,6 +16,7 @@ package expression
 
 import (
 	"context"
+	"io"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -37,11 +38,17 @@ var _ sql.Expression = (*ArrayFlatten)(nil)
 
 // Resolved implements sql.Expression.
 func (a ArrayFlatten) Resolved() bool {
+	if a.Subquery == nil {
+		return false
+	}
 	return a.Subquery.Resolved()
 }
 
 // String implements sql.Expression.
 func (a ArrayFlatten) String() string {
+	if a.Subquery == nil {
+		return "ARRAY(unresolved)"
+	}
 	return "ARRAY(" + a.Subquery.String() + ")"
 }
 
@@ -81,7 +88,40 @@ func (a ArrayFlatten) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 		return nil, errors.Errorf("expected doltgres type, got %T", sqType)
 	}
 
-	return subquery.EvalMultiple(ctx, row)
+	values, err := subquery.EvalMultiple(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+
+	flattened := make([]any, 0, len(values))
+	for _, value := range values {
+		iter, ok := value.(sql.RowIter)
+		if !ok {
+			flattened = append(flattened, value)
+			continue
+		}
+
+		for {
+			iterRow, err := iter.Next(ctx)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				_ = iter.Close(ctx)
+				return nil, err
+			}
+			if len(iterRow) == 1 {
+				flattened = append(flattened, iterRow[0])
+			} else {
+				flattened = append(flattened, append(sql.Row{}, iterRow...))
+			}
+		}
+		if err := iter.Close(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	return flattened, nil
 }
 
 // Children implements sql.Expression.

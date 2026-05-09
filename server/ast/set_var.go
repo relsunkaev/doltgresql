@@ -32,10 +32,6 @@ func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 	if len(node.Values) != 1 {
 		return nil, errors.Errorf("SET LOCAL %s requires exactly one value", node.Name)
 	}
-	valueExpr, err := nodeExpr(ctx, node.Values[0])
-	if err != nil {
-		return nil, err
-	}
 	fullName := node.Name
 	if node.Namespace != "" {
 		fullName = fmt.Sprintf("%s.%s", node.Namespace, node.Name)
@@ -55,13 +51,20 @@ func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 						&vitess.AliasedExpr{
 							Expr: &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(fullName)},
 						},
-						&vitess.AliasedExpr{Expr: valueExpr},
+						&vitess.AliasedExpr{Expr: setLocalValue(node.Values[0])},
 					},
 				},
 				As: vitess.NewColIdent("set_config"),
 			},
 		},
 	}, nil
+}
+
+func setLocalValue(value tree.Expr) vitess.Expr {
+	if str, ok := value.(*tree.StrVal); ok {
+		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(str.RawString())}
+	}
+	return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(value.String())}
 }
 
 // nodeSetVar handles *tree.SetVar nodes.

@@ -15,6 +15,7 @@
 package types
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -61,7 +62,15 @@ var Json = &DoltgresType{
 // serializeTypeJson handles serialization from the standard representation to our serialized representation that is
 // written in Dolt.
 func serializeTypeJson(ctx *sql.Context, t *DoltgresType, val any) ([]byte, error) {
-	return []byte(val.(string)), nil
+	unwrapped, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	str, ok := unwrapped.(string)
+	if !ok {
+		return nil, errors.Errorf(`"json" serialization requires a string argument, got %T`, unwrapped)
+	}
+	return []byte(str), nil
 }
 
 // deserializeTypeJson handles deserialization from the Dolt serialized format to our standard representation used by

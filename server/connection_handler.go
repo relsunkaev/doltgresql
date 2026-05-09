@@ -2582,6 +2582,9 @@ func isFeatureNotSupportedMessage(err error) bool {
 func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error) {
 	s, err := parser.Parse(query)
 	if err != nil {
+		if containsCreateEventTrigger(query) {
+			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied to create event trigger")
+		}
 		return nil, err
 	}
 	if len(s) == 0 {
@@ -2608,6 +2611,16 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 	}
 	return converted, nil
+}
+
+func containsCreateEventTrigger(query string) bool {
+	words := strings.Fields(strings.ToLower(query))
+	for i := 0; i+2 < len(words); i++ {
+		if words[i] == "create" && words[i+1] == "event" && words[i+2] == "trigger" {
+			return true
+		}
+	}
+	return false
 }
 
 // discardAll handles the DISCARD ALL command

@@ -86,12 +86,16 @@ func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 		}
 		slot = existing
 	}
+	snapshotName := []byte(replicationSlotSnapshotName(slot.Name))
+	if replicationSlotNoExportSnapshot(statement) {
+		snapshotName = nil
+	}
 	return h.sendReplicationRows(
 		[]string{"slot_name", "consistent_point", "snapshot_name", "output_plugin"},
 		[][][]byte{{
 			[]byte(slot.Name),
 			[]byte(formatReplicationLSN(slot.ConfirmedFlushLSN)),
-			nil,
+			snapshotName,
 			[]byte(slot.Plugin),
 		}},
 		"CREATE_REPLICATION_SLOT",
@@ -269,6 +273,14 @@ func normalizeReplicationIdentifier(value string) string {
 		return strings.ReplaceAll(value[1:len(value)-1], `""`, `"`)
 	}
 	return value
+}
+
+func replicationSlotSnapshotName(slotName string) string {
+	return "doltgres-snapshot-" + slotName
+}
+
+func replicationSlotNoExportSnapshot(statement string) bool {
+	return strings.Contains(strings.ToUpper(statement), "NOEXPORT_SNAPSHOT")
 }
 
 func replicationPublicationNames(statement string) []string {

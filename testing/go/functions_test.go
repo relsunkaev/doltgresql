@@ -962,6 +962,27 @@ func TestSystemInformationFunctions(t *testing.T) {
 			},
 		},
 		{
+			Name: "pg_column_size",
+			SetUpScript: []string{
+				`CREATE TABLE colsize_items (id int primary key, label text, active bool);`,
+				`INSERT INTO colsize_items VALUES (1, 'abc', true), (2, NULL, false);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_column_size(NULL::text), pg_column_size('abc'::text), pg_column_size(1::int2), pg_column_size(1::int4), pg_column_size(1::int8), pg_column_size(true);`,
+					Expected: []sql.Row{
+						{nil, int32(7), int32(2), int32(4), int32(8), int32(1)},
+					},
+				},
+				{
+					Query: `SELECT COALESCE(SUM(COALESCE(pg_column_size(id), 0)) + SUM(COALESCE(pg_column_size(label), 0)) + SUM(COALESCE(pg_column_size(active), 0)), 0)::bigint FROM colsize_items;`,
+					Expected: []sql.Row{
+						{int64(17)},
+					},
+				},
+			},
+		},
+		{
 			Name: "current user sql value functions",
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1754,6 +1775,10 @@ func TestJsonFunctions(t *testing.T) {
 				{
 					Query:    `SELECT json_object_keys('{"a":1,"b":2}'::json);`,
 					Expected: []sql.Row{{"a"}, {"b"}},
+				},
+				{
+					Query:    `SELECT array_to_string(ARRAY(SELECT json_object_keys('{"a":1,"b":2}'::json)), ',');`,
+					Expected: []sql.Row{{"a,b"}},
 				},
 				{
 					Query:    `SELECT * FROM json_each('{"a":1,"b":"x"}'::json) ORDER BY 1;`,
@@ -4027,6 +4052,10 @@ func TestStringFunction(t *testing.T) {
 				{
 					Query:    "SELECT lpad('name'::name, 7, '*');",
 					Expected: []sql.Row{{"***name"}},
+				},
+				{
+					Query:    "SELECT starts_with('profile', 'p'), starts_with('profile', 'x'), starts_with('profile', ''), starts_with(NULL::text, 'p');",
+					Expected: []sql.Row{{"t", "f", "t", nil}},
 				},
 			},
 		},

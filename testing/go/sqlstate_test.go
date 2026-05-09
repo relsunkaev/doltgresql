@@ -124,6 +124,11 @@ func TestSQLStateCodes(t *testing.T) {
 			sql:  "INSERT INTO udq VALUES (2, 'a@x.com', 1) ON CONFLICT (id) DO NOTHING;",
 			code: "23505",
 		},
+		{
+			name: "CREATE EVENT TRIGGER unsupported boundary -> 42501",
+			sql:  "CREATE EVENT TRIGGER ddl_audit ON ddl_command_end EXECUTE FUNCTION audit_fn();",
+			code: "42501",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

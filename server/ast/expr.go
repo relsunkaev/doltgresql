@@ -135,6 +135,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			Children:   unresolvedChildren,
 		}, nil
 	case *tree.ArrayFlatten:
+		if arrayExpr, ok, err := nodeArrayFlattenSimpleSelect(ctx, node); ok || err != nil {
+			return arrayExpr, err
+		}
 		subquery, err := nodeExpr(ctx, node.Subquery)
 		if err != nil {
 			return nil, err
@@ -503,7 +506,10 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 				Children:   vitess.Exprs{left, right},
 			}, nil
 		case tree.Overlaps:
-			return nil, errors.Errorf("&& is not yet supported")
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryOverlaps),
+				Children:   vitess.Exprs{left, right},
+			}, nil
 		case tree.Any:
 			return vitess.InjectedExpr{
 				Expression: pgexprs.NewAnyExpr(node.SubOperator.String()),
@@ -515,7 +521,10 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 				Children:   vitess.Exprs{left, right},
 			}, nil
 		case tree.All:
-			return nil, errors.Errorf("ALL is not yet supported")
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewAllExpr(node.SubOperator.String()),
+				Children:   vitess.Exprs{left, right},
+			}, nil
 		default:
 			return nil, errors.Errorf("unknown comparison operator used")
 		}
@@ -689,11 +698,33 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 
 		if len(node.Indirection) > 1 {
 			return nil, errors.Errorf("multi dimensional array subscripts are not yet supported")
-		} else if node.Indirection[0].Slice {
-			return nil, errors.Errorf("slice subscripts are not yet supported")
 		}
 
-		indexExpr, err := nodeExpr(ctx, node.Indirection[0].Begin)
+		subscript := node.Indirection[0]
+		if subscript.Slice {
+			children := vitess.Exprs{childExpr}
+			if subscript.Begin != nil {
+				beginExpr, err := nodeExpr(ctx, subscript.Begin)
+				if err != nil {
+					return nil, err
+				}
+				children = append(children, beginExpr)
+			}
+			if subscript.End != nil {
+				endExpr, err := nodeExpr(ctx, subscript.End)
+				if err != nil {
+					return nil, err
+				}
+				children = append(children, endExpr)
+			}
+
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewSliceSubscriptInjectable(subscript.Begin != nil, subscript.End != nil),
+				Children:   children,
+			}, nil
+		}
+
+		indexExpr, err := nodeExpr(ctx, subscript.Begin)
 		if err != nil {
 			return nil, err
 		}
@@ -987,6 +1018,53 @@ func excludedToValuesFunc(name *tree.UnresolvedName) (vitess.Expr, error) {
 			Name: vitess.NewColIdent(column),
 		},
 	}, nil
+}
+
+func nodeArrayFlattenSimpleSelect(ctx *Context, node *tree.ArrayFlatten) (vitess.Expr, bool, error) {
+	subquery, ok := node.Subquery.(*tree.Subquery)
+	if !ok {
+		return nil, false, nil
+	}
+	var selectClause *tree.SelectClause
+	switch selectNode := subquery.Select.(type) {
+	case *tree.SelectClause:
+		selectClause = selectNode
+	case *tree.ParenSelect:
+		if selectNode.Select == nil ||
+			selectNode.Select.With != nil ||
+			len(selectNode.Select.OrderBy) > 0 ||
+			selectNode.Select.Limit != nil ||
+			len(selectNode.Select.Locking) > 0 {
+			return nil, false, nil
+		}
+		var ok bool
+		selectClause, ok = selectNode.Select.Select.(*tree.SelectClause)
+		if !ok {
+			return nil, false, nil
+		}
+	default:
+		return nil, false, nil
+	}
+	if selectClause.Distinct ||
+		len(selectClause.DistinctOn) > 0 ||
+		len(selectClause.Exprs) != 1 ||
+		len(selectClause.From.Tables) > 0 ||
+		selectClause.Where != nil ||
+		len(selectClause.GroupBy) > 0 ||
+		selectClause.Having != nil ||
+		len(selectClause.Window) > 0 ||
+		selectClause.TableSelect {
+		return nil, false, nil
+	}
+
+	child, err := nodeExpr(ctx, selectClause.Exprs[0].Expr)
+	if err != nil {
+		return nil, true, err
+	}
+	return vitess.InjectedExpr{
+		Expression: pgexprs.NewArrayFromRowIter(),
+		Children:   vitess.Exprs{child},
+	}, true, nil
 }
 
 // translateConvertType translates the *vitess.ConvertType expression given to a new one, substituting type names as

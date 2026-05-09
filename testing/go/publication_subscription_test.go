@@ -126,6 +126,38 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "publication table lists accept repeated and omitted table keywords",
+			SetUpScript: []string{
+				`CREATE SCHEMA dgzero;`,
+				`CREATE SCHEMA zmeta;`,
+				`CREATE TABLE dgzero.permissions (id BIGINT PRIMARY KEY);`,
+				`CREATE TABLE zmeta.clients (id BIGINT PRIMARY KEY);`,
+				`CREATE TABLE zmeta.mutations (id BIGINT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE PUBLICATION "_dgzero_metadata_0" FOR TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;`,
+				},
+				{
+					Query: `SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;`,
+					Expected: []sql.Row{
+						{"dgzero", "permissions"},
+						{"zmeta", "clients"},
+						{"zmeta", "mutations"},
+					},
+				},
+				{
+					Query: `ALTER PUBLICATION "_dgzero_metadata_0" SET TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;`,
+				},
+				{
+					Query: `SELECT count(*) FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0';`,
+					Expected: []sql.Row{
+						{3},
+					},
+				},
+			},
+		},
 	})
 }
 

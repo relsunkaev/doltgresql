@@ -16,9 +16,11 @@ package functions
 
 import (
 	"cmp"
+	"encoding/binary"
 	"math/big"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pglogrepl"
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -36,6 +38,8 @@ func initPgLsn() {
 	framework.RegisterFunction(pg_lsn_cmp)
 	framework.RegisterFunction(pg_wal_lsn_diff)
 	framework.RegisterFunction(pg_current_wal_lsn)
+	framework.RegisterFunction(pg_logical_emit_message)
+	framework.RegisterFunction(pg_logical_emit_message_flush)
 	framework.RegisterFunction(pg_last_wal_receive_lsn)
 	framework.RegisterFunction(pg_last_wal_replay_lsn)
 	framework.RegisterFunction(pg_lsn_larger)
@@ -128,6 +132,30 @@ var pg_current_wal_lsn = framework.Function0{
 	},
 }
 
+// pg_logical_emit_message represents the PostgreSQL function of the same name.
+var pg_logical_emit_message = framework.Function3{
+	Name:               "pg_logical_emit_message",
+	Return:             pgtypes.PgLsn,
+	Parameters:         [3]*pgtypes.DoltgresType{pgtypes.Bool, pgtypes.Text, pgtypes.Text},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, transactional any, prefix any, content any) (any, error) {
+		return emitLogicalDecodingMessage(ctx, transactional, prefix, content)
+	},
+}
+
+// pg_logical_emit_message_flush represents the PostgreSQL 17 overload with the flush parameter.
+var pg_logical_emit_message_flush = framework.Function4{
+	Name:               "pg_logical_emit_message",
+	Return:             pgtypes.PgLsn,
+	Parameters:         [4]*pgtypes.DoltgresType{pgtypes.Bool, pgtypes.Text, pgtypes.Text, pgtypes.Bool},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, transactional any, prefix any, content any, _ any) (any, error) {
+		return emitLogicalDecodingMessage(ctx, transactional, prefix, content)
+	},
+}
+
 // pg_last_wal_receive_lsn reports NULL because Doltgres is not in standby recovery mode.
 var pg_last_wal_receive_lsn = framework.Function0{
 	Name:               "pg_last_wal_receive_lsn",
@@ -137,6 +165,49 @@ var pg_last_wal_receive_lsn = framework.Function0{
 	Callable: func(ctx *sql.Context) (any, error) {
 		return nil, nil
 	},
+}
+
+func emitLogicalDecodingMessage(ctx *sql.Context, transactional any, prefix any, content any) (any, error) {
+	transactional, err := sql.UnwrapAny(ctx, transactional)
+	if err != nil {
+		return nil, err
+	}
+	prefix, err = sql.UnwrapAny(ctx, prefix)
+	if err != nil {
+		return nil, err
+	}
+	content, err = sql.UnwrapAny(ctx, content)
+	if err != nil {
+		return nil, err
+	}
+
+	lsn := replsource.AdvanceLSN()
+	walData := encodeLogicalDecodingMessage(lsn, transactional.(bool), prefix.(string), []byte(content.(string)))
+	err = replsource.Broadcast(nil, []replsource.WALMessage{{
+		WALStart:     lsn,
+		ServerWALEnd: lsn,
+		WALData:      walData,
+	}})
+	if err != nil {
+		return nil, err
+	}
+	return uint64(lsn), nil
+}
+
+func encodeLogicalDecodingMessage(lsn pglogrepl.LSN, transactional bool, prefix string, content []byte) []byte {
+	data := make([]byte, 0, 1+1+8+len(prefix)+1+4+len(content))
+	data = append(data, byte(pglogrepl.MessageTypeMessage))
+	if transactional {
+		data = append(data, 1)
+	} else {
+		data = append(data, 0)
+	}
+	data = binary.BigEndian.AppendUint64(data, uint64(lsn))
+	data = append(data, prefix...)
+	data = append(data, 0)
+	data = binary.BigEndian.AppendUint32(data, uint32(len(content)))
+	data = append(data, content...)
+	return data
 }
 
 // pg_last_wal_replay_lsn reports NULL because Doltgres is not in standby recovery mode.

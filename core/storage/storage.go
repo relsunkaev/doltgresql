@@ -321,7 +321,8 @@ func decodeTableNameForAddressMap(encodedName, schemaName string) (string, bool)
 		return encodedName, true
 	} else if schemaName != "" && encodedName[0] == 0 &&
 		len(encodedName) > len(schemaName)+2 &&
-		encodedName[1:len(schemaName)+1] == schemaName {
+		encodedName[1:len(schemaName)+1] == schemaName &&
+		encodedName[len(schemaName)+1] == 0 {
 		return encodedName[len(schemaName)+2:], true
 	}
 	return "", false

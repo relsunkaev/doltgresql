@@ -31,6 +31,11 @@ func initOidvector() {
 	framework.RegisterFunction(oidvectorrecv)
 	framework.RegisterFunction(oidvectorsend)
 	framework.RegisterFunction(btoidvectorcmp)
+	framework.MustAddExplicitTypeCast(framework.TypeCast{
+		FromType: pgtypes.Oidvector,
+		ToType:   pgtypes.OidArray,
+		Function: framework.IdentityCast,
+	})
 }
 
 // oidvectorin represents the PostgreSQL function of oidvector type IO input.

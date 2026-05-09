@@ -71,5 +71,45 @@ func TestGroupBy(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "Postgres aggregate subquery in grouped select",
+			SetUpScript: []string{
+				`CREATE TABLE published_columns (
+					schema_name text,
+					table_name text,
+					col text,
+					key_pos int
+				);`,
+				`INSERT INTO published_columns VALUES
+					('public', 'items', 'id', 1),
+					('public', 'items', 'label', NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+						schema_name,
+						table_name,
+						json_object_agg(DISTINCT col, key_pos ORDER BY key_pos)
+					FROM published_columns
+					GROUP BY schema_name, table_name;`,
+					Expected: []sql.Row{{"public", "items", `{"id":1,"label":null}`}},
+				},
+				{
+					Query: `SELECT
+						schema_name,
+						table_name,
+						array_to_string(ARRAY(
+							SELECT json_object_keys(
+								json_strip_nulls(
+									json_object_agg(DISTINCT col, key_pos ORDER BY key_pos)
+								)
+							)
+						), ',') AS primary_key
+					FROM published_columns
+					GROUP BY schema_name, table_name;`,
+					Expected: []sql.Row{{"public", "items", "id"}},
+				},
+			},
+		},
 	})
 }

@@ -3630,6 +3630,26 @@ func TestOperators(t *testing.T) {
 			Name: "ARRAY",
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:    "SELECT ARRAY[1,2,3] @> ARRAY[2,2], ARRAY[2] <@ ARRAY[1,2,3], ARRAY[1,2] && ARRAY[2,3], ARRAY[1,2] && ARRAY[3,4];",
+					Expected: []sql.Row{{"t", "t", "t", "f"}},
+				},
+				{
+					Query:    "SELECT ARRAY[1,NULL]::int[] @> ARRAY[NULL]::int[], ARRAY[NULL]::int[] && ARRAY[NULL]::int[];",
+					Expected: []sql.Row{{"f", "f"}},
+				},
+				{
+					Query:    "SELECT ARRAY['label','category']::name[] <@ ARRAY['id','label','category']::name[];",
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    "SELECT (ARRAY[10,20])[1::bigint];",
+					Expected: []sql.Row{{int32(10)}},
+				},
+				{
+					Query:       "SELECT (ARRAY[10,20])[2147483648::bigint];",
+					ExpectedErr: "integer out of range",
+				},
+				{
 					Query:    "SELECT ARRAY[4] || 20;",
 					Expected: []sql.Row{{"{4,20}"}},
 				},

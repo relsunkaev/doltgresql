@@ -490,6 +490,16 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		switch n := v.(type) {
 		case int16:
 			return n, sql.InRange, nil
+		case int64:
+			if n > 32767 || n < -32768 {
+				return nil, sql.Overflow, errors.Wrap(ErrCastOutOfRange, "smallint out of range")
+			}
+			return int16(n), sql.InRange, nil
+		case int32:
+			if n > 32767 || n < -32768 {
+				return nil, sql.Overflow, errors.Wrap(ErrCastOutOfRange, "smallint out of range")
+			}
+			return int16(n), sql.InRange, nil
 		case int8:
 			return int16(n), sql.InRange, nil
 		}
@@ -497,6 +507,11 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		switch n := v.(type) {
 		case int32:
 			return n, sql.InRange, nil
+		case int64:
+			if n > 2147483647 || n < -2147483648 {
+				return nil, sql.Overflow, errors.Wrap(ErrCastOutOfRange, "integer out of range")
+			}
+			return int32(n), sql.InRange, nil
 		case int16:
 			return int32(n), sql.InRange, nil
 		case int8:

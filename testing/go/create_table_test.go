@@ -114,6 +114,31 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
+			Name: "Create table with named default column constraint",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE zero_version_history (
+						"dataVersion" int NOT NULL,
+						lock char(1) NOT NULL CONSTRAINT DF_schema_meta_lock DEFAULT 'v',
+						CONSTRAINT CK_schema_meta_lock CHECK (lock='v')
+					);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO zero_version_history ("dataVersion") VALUES (1);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT "dataVersion", lock FROM zero_version_history;`,
+					Expected: []sql.Row{{1, "v"}},
+				},
+				{
+					Query:       `INSERT INTO zero_version_history ("dataVersion", lock) VALUES (2, 'x');`,
+					ExpectedErr: `Check constraint "ck_schema_meta_lock" violated`,
+				},
+			},
+		},
+		{
 			Name: "Create table with table check constraint",
 			Assertions: []ScriptTestAssertion{
 				{

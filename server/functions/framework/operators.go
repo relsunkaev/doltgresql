@@ -52,6 +52,7 @@ const (
 	Operator_BinaryJSONTopLevelAll                      // ?&
 	Operator_BinaryJSONPathExists                       // @?
 	Operator_BinaryJSONPathMatch                        // @@
+	Operator_BinaryOverlaps                             // &&
 	Operator_BinaryHstoreLess                           // #<#
 	Operator_BinaryHstoreLessOrEqual                    // #<=#
 	Operator_BinaryHstoreGreater                        // #>#
@@ -240,6 +241,8 @@ func (o Operator) String() string {
 		return "@?"
 	case Operator_BinaryJSONPathMatch:
 		return "@@"
+	case Operator_BinaryOverlaps:
+		return "&&"
 	case Operator_BinaryHstoreLess:
 		return "#<#"
 	case Operator_BinaryHstoreLessOrEqual:
@@ -335,6 +338,8 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryJSONPathExists, nil
 	case "@@":
 		return Operator_BinaryJSONPathMatch, nil
+	case "&&":
+		return Operator_BinaryOverlaps, nil
 	case "#<#":
 		return Operator_BinaryHstoreLess, nil
 	case "#<=#":

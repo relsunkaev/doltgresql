@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -105,6 +106,7 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		}
 		return nil, nil
 	}
+	fromType = runtimeFromTypeForExplicitCast(fromType, val)
 
 	baseCastToType := checkForDomainType(c.castToType)
 	castFunction := framework.GetExplicitCast(fromType, baseCastToType)
@@ -142,6 +144,22 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 
 	return castResult, nil
+}
+
+func runtimeFromTypeForExplicitCast(fromType *pgtypes.DoltgresType, val any) *pgtypes.DoltgresType {
+	if _, ok := val.(id.Id); !ok || isIdBackedType(fromType) {
+		return fromType
+	}
+	return pgtypes.Oid
+}
+
+func isIdBackedType(fromType *pgtypes.DoltgresType) bool {
+	switch fromType.ID {
+	case pgtypes.Oid.ID, pgtypes.Regclass.ID, pgtypes.Regnamespace.ID, pgtypes.Regproc.ID, pgtypes.Regtype.ID:
+		return true
+	default:
+		return false
+	}
 }
 
 // IsNullable implements the sql.Expression interface.

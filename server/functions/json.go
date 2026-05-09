@@ -76,7 +76,18 @@ var json_out = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Json},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return val.(string), nil
+		unwrapped, err := sql.UnwrapAny(ctx, val)
+		if err != nil {
+			return nil, err
+		}
+		if unwrapped == nil {
+			return nil, nil
+		}
+		str, ok := unwrapped.(string)
+		if !ok {
+			return nil, errors.Errorf(`"json" output requires a string argument, got %T`, unwrapped)
+		}
+		return str, nil
 	},
 }
 

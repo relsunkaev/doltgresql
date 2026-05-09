@@ -21,5 +21,6 @@ func NewSomeExpr(subOperator string) *AnyExpr {
 		rightExpr:   nil,
 		subOperator: subOperator,
 		name:        "SOME",
+		matchAll:    false,
 	}
 }

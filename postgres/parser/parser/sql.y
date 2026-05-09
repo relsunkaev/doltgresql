@@ -41,6 +41,19 @@ const MaxUint = ^uint(0)
 // MaxInt is the maximum value of an int.
 const MaxInt = int(MaxUint >> 1)
 
+type publicationTargetKind int
+
+const (
+    publicationTargetNone publicationTargetKind = iota
+    publicationTargetTables
+    publicationTargetSchemas
+)
+
+type publicationTargetList struct {
+    targets tree.PublicationTargets
+    last    publicationTargetKind
+}
+
 func unimplemented(sqllex sqlLexer, feature string) int {
     sqllex.(*lexer).Unimplemented(feature)
     return 1
@@ -482,6 +495,9 @@ func (u *sqlSymUnion) publicationTables() tree.PublicationTables {
 }
 func (u *sqlSymUnion) publicationTargets() tree.PublicationTargets {
     return u.val.(tree.PublicationTargets)
+}
+func (u *sqlSymUnion) publicationTargetList() publicationTargetList {
+    return u.val.(publicationTargetList)
 }
 func (u *sqlSymUnion) backupOptions() *tree.BackupOptions {
   return u.val.(*tree.BackupOptions)
@@ -1269,8 +1285,9 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]tree.SequenceOption> alter_seq_option_list opt_alter_seq_option_list
 %type <tree.SequenceOption> create_seq_option_elem alter_seq_option_elem seq_as_type seq_increment seq_logged seq_unlogged
 %type <tree.SequenceOption> seq_minvalue seq_maxvalue seq_start seq_cache seq_cycle seq_owned_by seq_restart seq_name
-%type <tree.PublicationTable> publication_table
-%type <tree.PublicationTargets> opt_publication_for publication_member publication_member_list
+%type <tree.PublicationTable> publication_table publication_continuation_table
+%type <tree.PublicationTargets> opt_publication_for
+%type <publicationTargetList> publication_member publication_member_list
 %type <str> publication_schema_name
 %type <tree.Expr> opt_publication_where
 %type <[]tree.KVOption> opt_publication_options publication_option_list opt_subscription_options subscription_option_list
@@ -1732,15 +1749,15 @@ alter_sequence_owner_to_stmt:
 alter_publication_stmt:
   ALTER PUBLICATION name ADD publication_member_list
   {
-    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterAddTables, Targets: $5.publicationTargets()}
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterAddTables, Targets: $5.publicationTargetList().targets}
   }
 | ALTER PUBLICATION name SET publication_member_list
   {
-    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterSetTables, Targets: $5.publicationTargets()}
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterSetTables, Targets: $5.publicationTargetList().targets}
   }
 | ALTER PUBLICATION name DROP publication_member_list
   {
-    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterDropTables, Targets: $5.publicationTargets()}
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterDropTables, Targets: $5.publicationTargetList().targets}
   }
 | ALTER PUBLICATION name SET '(' publication_option_list ')'
   {
@@ -4310,37 +4327,53 @@ opt_publication_for:
   }
 | FOR publication_member_list
   {
-    $$.val = $2.publicationTargets()
+    $$.val = $2.publicationTargetList().targets
   }
 
 publication_member_list:
   publication_member
   {
-    $$.val = $1.publicationTargets()
+    $$.val = $1.publicationTargetList()
   }
 | publication_member_list ',' publication_member
   {
-    targets := $1.publicationTargets()
-    member := $3.publicationTargets()
-    targets.Tables = append(targets.Tables, member.Tables...)
-    targets.Schemas = append(targets.Schemas, member.Schemas...)
+    targets := $1.publicationTargetList()
+    member := $3.publicationTargetList()
+    targets.targets.Tables = append(targets.targets.Tables, member.targets.Tables...)
+    targets.targets.Schemas = append(targets.targets.Schemas, member.targets.Schemas...)
+    targets.last = member.last
     $$.val = targets
   }
-| publication_member_list ',' publication_schema_name
+| publication_member_list ',' publication_continuation_table
   {
-    targets := $1.publicationTargets()
-    targets.Schemas = append(targets.Schemas, $3)
+    targets := $1.publicationTargetList()
+    table := $3.publicationTable()
+    if targets.last == publicationTargetSchemas {
+      if table.Name.ExplicitSchema || table.Name.ExplicitCatalog || len(table.Columns) > 0 || table.RowFilter != nil {
+        return setErr(sqllex, fmt.Errorf("invalid schema name in publication"))
+      }
+      targets.targets.Schemas = append(targets.targets.Schemas, table.Name.Table())
+    } else {
+      targets.targets.Tables = append(targets.targets.Tables, table)
+      targets.last = publicationTargetTables
+    }
     $$.val = targets
   }
 
 publication_member:
   TABLES IN SCHEMA publication_schema_name
   {
-    $$.val = tree.PublicationTargets{Schemas: []string{$4}}
+    $$.val = publicationTargetList{
+      targets: tree.PublicationTargets{Schemas: []string{$4}},
+      last: publicationTargetSchemas,
+    }
   }
 | TABLE publication_table
   {
-    $$.val = tree.PublicationTargets{Tables: tree.PublicationTables{$2.publicationTable()}}
+    $$.val = publicationTargetList{
+      targets: tree.PublicationTargets{Tables: tree.PublicationTables{$2.publicationTable()}},
+      last: publicationTargetTables,
+    }
   }
 
 publication_schema_name:
@@ -4350,6 +4383,13 @@ publication_schema_name:
 
 publication_table:
   opt_only table_name opt_publication_star opt_column_list opt_publication_where
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = tree.PublicationTable{Name: name, Columns: $4.nameList(), RowFilter: $5.expr()}
+  }
+
+publication_continuation_table:
+  opt_only db_object_name_no_keywords opt_publication_star opt_column_list opt_publication_where
   {
     name := $2.unresolvedObjectName().ToTableName()
     $$.val = tree.PublicationTable{Name: name, Columns: $4.nameList(), RowFilter: $5.expr()}
@@ -6457,6 +6497,10 @@ set_transaction_stmt:
 | SET TRANSACTION SNAPSHOT transaction_mode_list
   {
     $$.val = &tree.SetTransaction{Modes: $4.transactionModes()}
+  }
+| SET TRANSACTION SNAPSHOT SCONST
+  {
+    $$.val = &tree.SetTransaction{Snapshot: $4}
   }
 | SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
   {

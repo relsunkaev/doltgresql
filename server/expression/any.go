@@ -33,6 +33,7 @@ type AnyExpr struct {
 	rightExpr   sql.Expression
 	subOperator string
 	name        string // ANY or SOME
+	matchAll    bool
 
 	subqueryAnyExpr   *subqueryAnyExpr
 	expressionAnyExpr *expressionAnyExpr
@@ -61,6 +62,18 @@ func NewAnyExpr(subOperator string) *AnyExpr {
 		rightExpr:   nil,
 		subOperator: subOperator,
 		name:        "ANY",
+		matchAll:    false,
+	}
+}
+
+// NewAllExpr creates a new AnyExpr expression for ALL.
+func NewAllExpr(subOperator string) *AnyExpr {
+	return &AnyExpr{
+		leftExpr:    nil,
+		rightExpr:   nil,
+		subOperator: subOperator,
+		name:        "ALL",
+		matchAll:    true,
 	}
 }
 
@@ -107,7 +120,7 @@ func (a *subqueryAnyExpr) resolved() bool {
 }
 
 // eval evaluates the comparison functions for subqueryAnyExpr.
-func (a *subqueryAnyExpr) eval(ctx *sql.Context, subOperator string, row sql.Row, left interface{}) (interface{}, error) {
+func (a *subqueryAnyExpr) eval(ctx *sql.Context, subOperator string, matchAll bool, row sql.Row, left interface{}) (interface{}, error) {
 	if len(a.compFuncs) == 0 {
 		return nil, errors.Errorf("%T: cannot Eval as it has not been fully resolved", a)
 	}
@@ -120,7 +133,7 @@ func (a *subqueryAnyExpr) eval(ctx *sql.Context, subOperator string, row sql.Row
 	}
 
 	if len(rightValues) == 0 {
-		return nil, nil
+		return matchAll, nil
 	}
 
 	// TODO: This is a workaround some subqueries where the schema length does not
@@ -150,17 +163,30 @@ func (a *subqueryAnyExpr) eval(ctx *sql.Context, subOperator string, row sql.Row
 		a.arrayLiterals[i].Val = rightValue
 	}
 	// Now we can loop over all comparison functions, as they'll reference their respective values
+	sawNull := false
 	for _, compFunc := range a.compFuncs {
 		result, err := compFunc.Eval(ctx, row)
 		if err != nil {
 			return nil, err
 		}
-		if result.(bool) {
+		if result == nil {
+			sawNull = true
+			continue
+		}
+		matched := result.(bool)
+		if matchAll {
+			if !matched {
+				return false, nil
+			}
+		} else if matched {
 			return true, nil
 		}
 	}
 
-	return false, nil
+	if sawNull {
+		return nil, nil
+	}
+	return matchAll, nil
 }
 
 // resolved checks if the comparison function for expressionAnyExpr is resolved.
@@ -172,7 +198,7 @@ func (a *expressionAnyExpr) resolved() bool {
 }
 
 // eval evaluates the comparison function for expressionAnyExpr.
-func (a *expressionAnyExpr) eval(ctx *sql.Context, row sql.Row, left interface{}) (interface{}, error) {
+func (a *expressionAnyExpr) eval(ctx *sql.Context, matchAll bool, row sql.Row, left interface{}) (interface{}, error) {
 	if a.compFunc == nil {
 		return nil, errors.Errorf("%T: cannot Eval as it has not been fully resolved", a)
 	}
@@ -191,12 +217,13 @@ func (a *expressionAnyExpr) eval(ctx *sql.Context, row sql.Row, left interface{}
 		return nil, errors.Errorf("%T: expected right child to return `%T` but returned `%T`", a, []any{}, rightInterface)
 	}
 	if len(rightValues) == 0 {
-		return nil, nil
+		return matchAll, nil
 	}
 
 	// Next we'll assign our evaluated values to the expressions that the comparison function reference
 	// Note that the compiled function has a reference to the staticLiteral and arrayLiteral, so we must alter them in place
 	a.staticLiteral.Val = left
+	sawNull := false
 	for _, rightValue := range rightValues {
 		a.arrayLiteral.Val = rightValue
 		result, err := a.compFunc.Eval(ctx, row)
@@ -204,14 +231,23 @@ func (a *expressionAnyExpr) eval(ctx *sql.Context, row sql.Row, left interface{}
 			return nil, err
 		}
 		if result == nil {
-			return nil, nil
+			sawNull = true
+			continue
 		}
-		if result.(bool) {
+		matched := result.(bool)
+		if matchAll {
+			if !matched {
+				return false, nil
+			}
+		} else if matched {
 			return true, nil
 		}
 	}
 
-	return false, nil
+	if sawNull {
+		return nil, nil
+	}
+	return matchAll, nil
 }
 
 // Eval implements the Expression interface.
@@ -222,11 +258,11 @@ func (a *AnyExpr) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 	}
 
 	if a.subqueryAnyExpr != nil {
-		return a.subqueryAnyExpr.eval(ctx, a.subOperator, row, left)
+		return a.subqueryAnyExpr.eval(ctx, a.subOperator, a.matchAll, row, left)
 	}
 
 	if a.expressionAnyExpr != nil {
-		return a.expressionAnyExpr.eval(ctx, row, left)
+		return a.expressionAnyExpr.eval(ctx, a.matchAll, row, left)
 	}
 
 	return nil, errors.Errorf("%T: cannot Eval as it has not been fully resolved", a)
@@ -253,6 +289,7 @@ func (a *AnyExpr) WithChildren(ctx *sql.Context, children ...sql.Expression) (sq
 		rightExpr:   rightExpr,
 		subOperator: a.subOperator,
 		name:        a.name,
+		matchAll:    a.matchAll,
 	}
 
 	if sub, ok := children[1].(*plan.Subquery); ok {

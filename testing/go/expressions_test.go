@@ -450,8 +450,12 @@ func TestSubscript(t *testing.T) {
 					Expected: []sql.Row{{"b"}},
 				},
 				{
-					Query:       `SELECT ARRAY[1, 2, 3][1:3];`,
-					ExpectedErr: "not yet supported",
+					Query:    `SELECT array_to_string((ARRAY[1, 2, 3, 4])[2:3], ','), array_to_string((ARRAY[1, 2, 3, 4])[:2], ','), array_to_string((ARRAY[1, 2, 3, 4])[3:], ',');`,
+					Expected: []sql.Row{{"2,3", "1,2", "3,4"}},
+				},
+				{
+					Query:    `SELECT array_to_string((ARRAY[1, 2, 3])[3:2], ','), array_to_string((ARRAY[1, 2, 3])[4:5], ',');`,
+					Expected: []sql.Row{{"", ""}},
 				},
 				{
 					Query:       `SELECT ARRAY[1, 2, 3]['abc'];`,
@@ -502,6 +506,42 @@ func TestSubscript(t *testing.T) {
 				},
 				{
 					Query:    `SELECT ('_abc'::name)[0] = '_'::"char";`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+		{
+			Name: "vector array subscript lower bound",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ('1 2 3'::int2vector)[0]::text, ('1 2 3'::int2vector)[1]::text, ('11 12 13'::oidvector)[0]::text;`,
+					Expected: []sql.Row{{"1", "2", "11"}},
+				},
+				{
+					Query:    `SELECT (('1 2 3'::int2vector)::int2[])[0]::text, array_to_string((('1 2 3'::int2vector)::int2[])[:1], ',');`,
+					Expected: []sql.Row{{"1", "1,2"}},
+				},
+			},
+		},
+	})
+}
+
+func TestAnyAllComparisons(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ANY and ALL array comparison semantics",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT 1 = ANY(ARRAY[]::int[]), 1 = ANY(ARRAY[NULL, 1]::int[]), 2 = ANY(ARRAY[NULL, 1]::int[]) IS NULL;`,
+					Expected: []sql.Row{{"f", "t", "t"}},
+				},
+				{
+					Query:    `SELECT false = ALL(ARRAY[false, false]), false = ALL(ARRAY[false, true]), false = ALL(ARRAY[]::bool[]), false = ALL(ARRAY[false, NULL]::bool[]) IS NULL;`,
+					Expected: []sql.Row{{"t", "f", "t", "t"}},
+				},
+				{
+					Query: `WITH indexed(generated) AS (VALUES (ARRAY[false, false]::bool[]))
+SELECT false = ALL(indexed.generated) FROM indexed;`,
 					Expected: []sql.Row{{"t"}},
 				},
 			},

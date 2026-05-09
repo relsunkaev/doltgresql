@@ -110,11 +110,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		}
 
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
-		hasSRFInProjection := false
 		exprs, sameExprs, err := transform.Exprs(ctx, projectNode.Projections, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-			if rowIterExpr, ok := expr.(sql.RowIterExpression); ok {
-				hasSRFInProjection = hasSRFInProjection || rowIterExpr.ReturnsRowIter()
-			}
 			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
 				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
 					return quickFunction, transform.NewTree, nil
@@ -142,6 +138,13 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		}
 		if !sameExprs {
 			projectNode.Projections = exprs
+		}
+		hasSRFInProjection := false
+		for _, expr := range projectNode.Projections {
+			if expressionReturnsRowIter(ctx, expr) {
+				hasSRFInProjection = true
+				break
+			}
 		}
 
 		// nested iter is used for set returning functions in the projections only
@@ -432,6 +435,9 @@ func projectedSRFGetField(ctx *sql.Context, child sql.Node, name string) (sql.Ex
 func expressionReturnsRowIter(ctx *sql.Context, expr sql.Expression) bool {
 	var found bool
 	sql.Inspect(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
+		if _, ok := expr.(pgexprs.ArrayFromRowIter); ok {
+			return false
+		}
 		rowIterExpr, ok := expr.(sql.RowIterExpression)
 		if ok && rowIterExpr.ReturnsRowIter() {
 			found = true

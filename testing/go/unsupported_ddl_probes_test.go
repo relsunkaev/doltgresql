@@ -114,7 +114,7 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 					Query: `CREATE EVENT TRIGGER ddl_audit
 						ON ddl_command_end
 						EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "syntax error",
+					ExpectedErr: "permission denied to create event trigger",
 				},
 			},
 		},

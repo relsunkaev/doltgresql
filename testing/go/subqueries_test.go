@@ -151,6 +151,13 @@ func TestSubqueries(t *testing.T) {
 						{"1,2,3"},
 					},
 				},
+				{
+					Query: `WITH flattened AS (SELECT ARRAY(SELECT id FROM test ORDER BY 1) AS ids)
+SELECT array_to_string(ids, ',') FROM flattened;`,
+					Expected: []sql.Row{
+						{"1,2,3"},
+					},
+				},
 			},
 		},
 	})

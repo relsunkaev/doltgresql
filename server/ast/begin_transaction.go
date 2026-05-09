@@ -27,8 +27,10 @@ func nodeBeginTransaction(ctx *Context, node *tree.BeginTransaction) (*vitess.Be
 	if node == nil {
 		return nil, nil
 	}
-	if node.Modes.Isolation != tree.UnspecifiedIsolation {
-		return nil, errors.Errorf("isolation levels are not yet supported")
+	switch node.Modes.Isolation {
+	case tree.UnspecifiedIsolation, tree.SerializableIsolation:
+	default:
+		return nil, errors.Errorf("unknown isolation level %s", node.Modes.Isolation)
 	}
 	if node.Modes.UserPriority != tree.UnspecifiedUserPriority {
 		return nil, errors.Errorf("user priority is not yet supported")

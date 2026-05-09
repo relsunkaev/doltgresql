@@ -15,8 +15,11 @@
 package functions
 
 import (
+	"math"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -25,6 +28,7 @@ import (
 func initArrayPosition() {
 	framework.RegisterFunction(array_position_anyarray_anyelement)
 	framework.RegisterFunction(array_position_anyarray_anyelement_int32)
+	framework.RegisterFunction(array_position_int2array_oid)
 	framework.RegisterFunction(array_position_int2vector_int2)
 	framework.RegisterFunction(array_positions_anyarray_anyelement)
 }
@@ -127,6 +131,57 @@ var array_position_int2vector_int2 = framework.Function2{
 
 		return nil, nil
 	},
+}
+
+var array_position_int2array_oid = framework.Function2{
+	Name:       "array_position",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Int16Array, pgtypes.Oid},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		if val1 == nil || val2 == nil {
+			return nil, nil
+		}
+		searchElement, ok := int16SearchElement(val2)
+		if !ok {
+			return nil, nil
+		}
+		for i, element := range val1.([]any) {
+			cmp, err := pgtypes.Int16.Compare(ctx, element, searchElement)
+			if err != nil {
+				return nil, err
+			}
+			if cmp == 0 {
+				return int32(i + 1), nil
+			}
+		}
+		return nil, nil
+	},
+}
+
+func int16SearchElement(val any) (int16, bool) {
+	switch v := val.(type) {
+	case int16:
+		return v, true
+	case int32:
+		if v < math.MinInt16 || v > math.MaxInt16 {
+			return 0, false
+		}
+		return int16(v), true
+	case int64:
+		if v < math.MinInt16 || v > math.MaxInt16 {
+			return 0, false
+		}
+		return int16(v), true
+	case id.Id:
+		oid := id.Cache().ToOID(v)
+		if oid > math.MaxInt16 {
+			return 0, false
+		}
+		return int16(oid), true
+	default:
+		return 0, false
+	}
 }
 
 // array_positions_anyarray_anyelement represents the PostgreSQL function of the same name, taking the same parameters.

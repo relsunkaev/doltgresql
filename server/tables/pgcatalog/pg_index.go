@@ -281,7 +281,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		indexmetadata.NullsNotDistinct(comment), // indnullsnotdistinct
 		index.indisprimary,                      // indisprimary
 		false,                                   // indisexclusion
-		indexmetadata.IsUnique(index.index),     // indimmediate
+		true,                                    // indimmediate
 		false,                                   // indisclustered
 		indisvalid,                              // indisvalid
 		false,                                   // indcheckxmin

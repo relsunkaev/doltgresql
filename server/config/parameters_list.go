@@ -4024,13 +4024,13 @@ var postgresConfigParameters = map[string]sql.SystemVariable{
 	},
 	"wal_level": &Parameter{
 		Name:      "wal_level",
-		Default:   "replica",
+		Default:   "logical",
 		Category:  "Write-Ahead Log / Settings",
 		ShortDesc: "Sets the level of information written to the WAL.",
 		Context:   ParameterContextPostmaster,
 		Type:      types.NewSystemEnumType("wal_level", "minimal", "replica", "logical"),
 		Source:    ParameterSourceDefault,
-		ResetVal:  "replica",
+		ResetVal:  "logical",
 		Scope:     GetPgsqlScope(PsqlScopeSession),
 	},
 	"wal_log_hints": &Parameter{

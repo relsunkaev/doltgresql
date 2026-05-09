@@ -86,7 +86,11 @@ var float4pl = framework.Function2{
 
 // float48pl_callable is the callable logic for the float48pl function.
 func float48pl_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-	return float64(val1.(float32)) + val2.(float64), nil
+	right, err := asFloat64(val2)
+	if err != nil {
+		return nil, err
+	}
+	return float64(val1.(float32)) + right, nil
 }
 
 // float48pl represents the PostgreSQL function of the same name, taking the same parameters.
@@ -100,7 +104,15 @@ var float48pl = framework.Function2{
 
 // float8pl_callable is the callable logic for the float8pl function.
 func float8pl_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-	return val1.(float64) + val2.(float64), nil
+	left, err := asFloat64(val1)
+	if err != nil {
+		return nil, err
+	}
+	right, err := asFloat64(val2)
+	if err != nil {
+		return nil, err
+	}
+	return left + right, nil
 }
 
 // float8pl represents the PostgreSQL function of the same name, taking the same parameters.
@@ -114,7 +126,11 @@ var float8pl = framework.Function2{
 
 // float84pl_callable is the callable logic for the float84pl function.
 func float84pl_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-	return val1.(float64) + float64(val2.(float32)), nil
+	left, err := asFloat64(val1)
+	if err != nil {
+		return nil, err
+	}
+	return left + float64(val2.(float32)), nil
 }
 
 // float84pl represents the PostgreSQL function of the same name, taking the same parameters.
@@ -124,6 +140,23 @@ var float84pl = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Float64, pgtypes.Float32},
 	Strict:     true,
 	Callable:   float84pl_callable,
+}
+
+func asFloat64(val any) (float64, error) {
+	switch val := val.(type) {
+	case float64:
+		return val, nil
+	case float32:
+		return float64(val), nil
+	case int64:
+		return float64(val), nil
+	case int32:
+		return float64(val), nil
+	case int16:
+		return float64(val), nil
+	default:
+		return 0, errors.Errorf("expected numeric value for float8 addition, got `%T`", val)
+	}
 }
 
 // int2pl_callable is the callable logic for the int2pl function.

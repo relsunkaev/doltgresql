@@ -25,6 +25,7 @@ import (
 func initPgGetExpr() {
 	framework.RegisterFunction(pg_get_expr_pgnodetree_oid)
 	framework.RegisterFunction(pg_get_expr_pgnodetree_oid_bool)
+	framework.RegisterFunction(pg_get_expr_oid_int16)
 }
 
 // pg_get_expr_pgnodetree_oid represents the PostgreSQL function of the same name, taking the same parameters.
@@ -49,6 +50,16 @@ var pg_get_expr_pgnodetree_oid_bool = framework.Function3{
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		// Until pg_node_tree exists, catalogs that can preserve expression text
 		// store that text directly in their pg_node_tree-shaped columns.
+		return val1, nil
+	},
+}
+
+var pg_get_expr_oid_int16 = framework.Function2{
+	Name:       "pg_get_expr",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int16},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
 		return val1, nil
 	},
 }
