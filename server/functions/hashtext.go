@@ -37,7 +37,7 @@ var hashtext_text = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
-		return int32(pgHashBytes([]byte(val1.(string)))), nil
+		return int32(PgHashBytes([]byte(val1.(string)))), nil
 	},
 }
 
@@ -49,21 +49,26 @@ var hashtextextended_text_int8 = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		return int64(pgHashBytesExtended([]byte(val1.(string)), uint64(val2.(int64)))), nil
+		return int64(PgHashBytesExtended([]byte(val1.(string)), uint64(val2.(int64)))), nil
 	},
 }
 
-func pgHashBytes(k []byte) uint32 {
+// PgHashBytes returns PostgreSQL's hash_bytes result for the given raw bytes.
+func PgHashBytes(k []byte) uint32 {
 	a, b, c := pgHashInit(len(k))
 	a, b, c = pgHashConsume(a, b, c, k)
 	_, _, c = pgHashFinal(a, b, c)
 	return c
 }
 
-// pgHashBytesExtended is the 64-bit seeded variant matching PostgreSQL's
+func pgHashBytes(k []byte) uint32 {
+	return PgHashBytes(k)
+}
+
+// PgHashBytesExtended is the 64-bit seeded variant matching PostgreSQL's
 // hash_bytes_extended. With seed == 0 it produces the same low 32 bits as
-// pgHashBytes; with any non-zero seed it perturbs the initial mixer state.
-func pgHashBytesExtended(k []byte, seed uint64) uint64 {
+// PgHashBytes; with any non-zero seed it perturbs the initial mixer state.
+func PgHashBytesExtended(k []byte, seed uint64) uint64 {
 	a, b, c := pgHashInit(len(k))
 	if seed != 0 {
 		a += uint32(seed >> 32)
@@ -73,6 +78,10 @@ func pgHashBytesExtended(k []byte, seed uint64) uint64 {
 	a, b, c = pgHashConsume(a, b, c, k)
 	_, b, c = pgHashFinal(a, b, c)
 	return uint64(b)<<32 | uint64(c)
+}
+
+func pgHashBytesExtended(k []byte, seed uint64) uint64 {
+	return PgHashBytesExtended(k, seed)
 }
 
 func pgHashInit(keylen int) (uint32, uint32, uint32) {

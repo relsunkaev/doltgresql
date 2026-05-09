@@ -168,7 +168,10 @@ Do not check off an item until it has workload proof:
   Custom comparison operators (`#<#`, `#<=#`, `#>#`, `#>=#`) cover the
   same ordering semantics, SQL NULL propagation, and extension-qualified
   `OPERATOR(public.#<#)` syntax. Index operator-class parity remains
-  residual risk. `hstore_to_json`,
+  residual risk. `hstore_hash` and `hstore_hash_extended` cover
+  PostgreSQL-compatible hashes for empty, populated, NULL-valued, escaped,
+  order-independent, duplicate-key-normalized, SQL NULL, and seeded inputs.
+  `hstore_to_json`,
   `hstore_to_jsonb`, `hstore_to_json_loose`, `hstore_to_jsonb_loose`,
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
   SQL NULL hstore values as JSON nulls, string escaping, loose numeric

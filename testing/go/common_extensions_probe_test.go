@@ -411,6 +411,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"2", "2", "t"}},
 				},
 				{
+					Query:    `SELECT hstore_hash(''::public.hstore)::text, hstore_hash('"A"=>"2"'::public.hstore)::text, hstore_hash('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, hstore_hash('"quote"=>"a\"b", "slash"=>"c\\d"'::public.hstore)::text, hstore_hash(NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{"-1524351049", "-653174632", "-1135331332", "1781935767", "t"}},
+				},
+				{
+					Query:    `SELECT hstore_hash('"A"=>"2", "B"=>"5"'::public.hstore) = hstore_hash('"B"=>"5", "A"=>"2"'::public.hstore), hstore_hash('"A"=>"first", "A"=>"second"'::public.hstore)::text, hstore_hash('"A"=>"first"'::public.hstore)::text;`,
+					Expected: []sql.Row{{"t", "-330768083", "-330768083"}},
+				},
+				{
+					Query:    `SELECT hstore_hash_extended(''::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 0)::text, hstore_hash_extended('"A"=>"2"'::public.hstore, 42)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, 0)::text, hstore_hash_extended('"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore, -1)::text, hstore_hash_extended(NULL::public.hstore, 0) IS NULL;`,
+					Expected: []sql.Row{{"1977219185673256887", "973419178382940312", "-9148714739893068701", "-6475142324932036612", "8123414359138430297", "t"}},
+				},
+				{
 					Query:    `SELECT hstore_to_json('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text, hstore_to_jsonb('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text;`,
 					Expected: []sql.Row{{`{"A":"2","B":"5","empty":null,"quote":"a\"b"}`, `{"A": "2", "B": "5", "empty": null, "quote": "a\"b"}`}},
 				},

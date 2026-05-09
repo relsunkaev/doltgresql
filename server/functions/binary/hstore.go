@@ -15,6 +15,7 @@
 package binary
 
 import (
+	byteorder "encoding/binary"
 	"fmt"
 	"io"
 	"regexp"
@@ -30,12 +31,20 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	pgfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
 var hstoreLooseJsonNumberPattern = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$`)
+
+const (
+	hstoreFlagNewVersion = uint32(0x80000000)
+	hstoreEntryIsFirst   = uint32(0x80000000)
+	hstoreEntryIsNull    = uint32(0x40000000)
+	hstoreEntryPosMask   = uint32(0x3fffffff)
+)
 
 // initHstore registers operators and functions supplied by the hstore extension.
 func initHstore() {
@@ -73,6 +82,8 @@ func initHstore() {
 	framework.RegisterFunction(hstore_to_jsonb)
 	framework.RegisterFunction(hstore_to_jsonb_loose)
 	framework.RegisterFunction(hstore_version_diag)
+	framework.RegisterFunction(hstore_hash)
+	framework.RegisterFunction(hstore_hash_extended)
 	framework.RegisterFunction(hstore_tconvert)
 	framework.RegisterFunction(hstore_from_record)
 	framework.RegisterFunction(hstore_from_text)
@@ -356,6 +367,34 @@ var hstore_version_diag = framework.Function1{
 			return nil, err
 		}
 		return int32(2), nil
+	},
+}
+
+var hstore_hash = framework.Function1{
+	Name:       "hstore_hash",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		payload, err := hstoreHashPayload(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		return int32(pgfunctions.PgHashBytes(payload)), nil
+	},
+}
+
+var hstore_hash_extended = framework.Function2{
+	Name:       "hstore_hash_extended",
+	Return:     pgtypes.Int64,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Int64},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		payload, err := hstoreHashPayload(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		return int64(pgfunctions.PgHashBytesExtended(payload, uint64(val2.(int64)))), nil
 	},
 }
 
@@ -1331,10 +1370,12 @@ func parseHstore(input string) (map[string]*string, error) {
 		if !ok {
 			return nil, invalidHstoreInput(input)
 		}
-		if isNull {
-			pairs[*key] = nil
-		} else {
-			pairs[*key] = value
+		if _, ok := pairs[*key]; !ok {
+			if isNull {
+				pairs[*key] = nil
+			} else {
+				pairs[*key] = value
+			}
 		}
 		p.skipSpaces()
 		if p.done() {
@@ -1451,6 +1492,67 @@ func formatHstore(pairs map[string]*string) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+func hstoreHashPayload(input string) ([]byte, error) {
+	pairs, err := parseHstore(input)
+	if err != nil {
+		return nil, err
+	}
+	keys := hstoreSortedKeys(pairs)
+	stringLen, err := hstorePayloadStringLen(keys, pairs)
+	if err != nil {
+		return nil, err
+	}
+	payload := make([]byte, 4+(len(keys)*8)+stringLen)
+	byteorder.LittleEndian.PutUint32(payload[0:4], uint32(len(keys))|hstoreFlagNewVersion)
+
+	entryOffset := 4
+	stringOffset := 4 + (len(keys) * 8)
+	endPos := uint32(0)
+	for i, key := range keys {
+		endPos += uint32(len(key))
+		keyEntry := endPos & hstoreEntryPosMask
+		if i == 0 {
+			keyEntry |= hstoreEntryIsFirst
+		}
+		byteorder.LittleEndian.PutUint32(payload[entryOffset:entryOffset+4], keyEntry)
+		entryOffset += 4
+		copy(payload[stringOffset:], key)
+		stringOffset += len(key)
+
+		value := pairs[key]
+		if value == nil {
+			byteorder.LittleEndian.PutUint32(payload[entryOffset:entryOffset+4], endPos|hstoreEntryIsNull)
+			entryOffset += 4
+			continue
+		}
+		endPos += uint32(len(*value))
+		byteorder.LittleEndian.PutUint32(payload[entryOffset:entryOffset+4], endPos&hstoreEntryPosMask)
+		entryOffset += 4
+		copy(payload[stringOffset:], *value)
+		stringOffset += len(*value)
+	}
+	return payload, nil
+}
+
+func hstorePayloadStringLen(keys []string, pairs map[string]*string) (int, error) {
+	var total int
+	for _, key := range keys {
+		if len(key) > int(hstoreEntryPosMask)-total {
+			return 0, errors.New("string too long for hstore key")
+		}
+		total += len(key)
+		value := pairs[key]
+		if value == nil {
+			continue
+		}
+		if len(*value) > int(hstoreEntryPosMask)-total {
+			return 0, errors.New("string too long for hstore value")
+		}
+		total += len(*value)
+	}
+	return total, nil
 }
 
 func hstoreSortedKeys(pairs map[string]*string) []string {
