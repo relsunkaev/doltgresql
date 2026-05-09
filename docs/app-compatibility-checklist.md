@@ -780,11 +780,14 @@ Do not check off an item until it has workload proof:
   parameter binding, JSONB and array adaptation, concurrent reads, transaction
   commit, and rollback behavior. Ruby `pg` runs through a real PG::Connection,
   including startup `application_name`, typed parameters, JSONB and text[]
-  values, prepared statements, concurrent reads, commit, and rollback. Pinned
-  by testing/go/postgres_js_client_test.go,
+  values, prepared statements, concurrent reads, commit, and rollback. libpq
+  runs through a compiled C probe with startup `application_name`, typed
+  parameters, JSONB and text[] values, prepared statements, multiple
+  connections, commit, and rollback. Pinned by
+  testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
   testing/go/ts_postgres_client_test.go, testing/go/psycopg_client_test.go,
-  and testing/go/ruby_pg_client_test.go.
+  testing/go/ruby_pg_client_test.go, and testing/go/libpq_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
 
@@ -1177,11 +1180,13 @@ typed-exception handling, and client-side query timeouts.
   JSONB/array adaptation, concurrent reads, and transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
-  boundaries.
+  boundaries, while the libpq harness compiles a C probe for typed parameters,
+  prepared statements, JSONB/text[] values, multiple connections, and
+  transaction boundaries.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, psycopg, and Ruby `pg`. Add runnable smoke gates
-  for the advertised client and migration-tool matrix before claiming broad
-  client compatibility.
+  postgres.js, ts-postgres, psycopg, Ruby `pg`, and libpq. Add runnable smoke
+  gates for the advertised client and migration-tool matrix before claiming
+  broad client compatibility.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
