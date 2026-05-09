@@ -96,7 +96,8 @@ Do not check off an item until it has workload proof:
   Docker-backed discover-mode harness, which runs Zero against separate
   upstream, CVR, and change databases, marks the source table
   `REPLICA IDENTITY FULL`, waits for the `pgoutput` slot to become active,
-  inserts through Doltgres, and verifies `confirmed_flush_lsn` advances.
+  deploys generated Zero permissions SQL, inserts through Doltgres, and
+  verifies `confirmed_flush_lsn` advances.
 - [~] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`
   restore -> ORM introspection -> running app. The schema-slice
   harness in testing/go/pg_dump_round_trip_test.go now proves this
@@ -757,7 +758,9 @@ actually exercise.
   smoke harness starts `rocicorp/zero:1.4.0` with a local `file://`
   Litestream backup target for the view-syncer, uses distinct Doltgres
   databases for the upstream source, CVR, and change state, waits for the
-  Zero-created publication and active `pgoutput` slot, inserts into a
+  Zero-created publication and active `pgoutput` slot, generates and applies
+  Zero permissions SQL with `zero-deploy-permissions`, validates a direct
+  permissions deploy against the published table/columns, inserts into a
   `REPLICA IDENTITY FULL` table, and asserts `confirmed_flush_lsn` advances
   past the insert LSN. Pinned by testing/go/zero_sync_test.go's
   TestZeroDiscoverModeSmoke; verified with
@@ -918,9 +921,17 @@ actually exercise.
   pull and Alembic autogenerate remain useful future broadening but
   are no longer required to prove the checklist item. Covered by
   testing/go/drizzle_kit_introspect_test.go.
-- [ ] Authorization-policy deployment - prove application-managed
-  authorization-policy SQL (Zero `.permissions.sql`, Supabase RLS, or
-  equivalent) loads and is interpreted correctly.
+- [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
+  is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
+  TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,
+  runs `zero-deploy-permissions --output-file --output-format sql`, applies
+  the generated `UPDATE dgzero.permissions ...` SQL to Doltgres, verifies the
+  stored JSON contains row/cell rules with `authData` references, then runs a
+  direct `zero-deploy-permissions --upstream-db` validation against the
+  Zero-created publication and asserts the CLI reports "Permissions unchanged".
+  The same slice pinned the PostgreSQL ordering requirement Zero relies on:
+  omitted defaults are materialized before `BEFORE INSERT` triggers while
+  explicit `NULL` values remain explicit.
 
 ## Wire protocol and catalog metadata
 

@@ -90,6 +90,7 @@ func TestZeroDiscoverModeSmoke(t *testing.T) {
 		waitForZeroPublication(t, serverCtx, conn)
 		slot := waitForAnyZeroReplicationSlot(t, serverCtx, conn)
 		initialLSN := waitForZeroReplicationSlotActive(t, serverCtx, conn, slot)
+		deployZeroPermissionsSQL(t, ctx, serverCtx, conn, cfg)
 
 		_, err = conn.Current.Exec(serverCtx, fmt.Sprintf("INSERT INTO %s VALUES (1, 'one');", tableName))
 		require.NoError(t, err)
@@ -256,6 +257,133 @@ func removeZeroContainer(t *testing.T, containerName string) {
 	if err != nil && !strings.Contains(string(out), "No such container") {
 		require.NoErrorf(t, err, "docker rm failed:\n%s", string(out))
 	}
+}
+
+func deployZeroPermissionsSQL(t *testing.T, dockerCtx context.Context, serverCtx context.Context, conn *Connection, cfg zeroContainerConfig) {
+	t.Helper()
+	permissionsDir := t.TempDir()
+	schemaPath := filepath.Join(permissionsDir, "schema.ts")
+	outputPath := filepath.Join(permissionsDir, "dgzero.permissions.sql")
+	require.NoError(t, os.WriteFile(filepath.Join(permissionsDir, "package.json"), []byte(`{"type":"module"}`), 0o644))
+	require.NoError(t, os.WriteFile(schemaPath, []byte(zeroPermissionsSchemaTS()), 0o644))
+
+	beforeHash := waitForZeroPermissionsRow(t, serverCtx, conn)
+
+	runZeroDeployPermissions(t, dockerCtx, cfg, permissionsDir,
+		"--schema-path", "/zero-permissions/schema.ts",
+		"--output-file", "/zero-permissions/dgzero.permissions.sql",
+		"--output-format", "sql",
+		"--app-id", zeroAppID,
+	)
+	permissionsSQL, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	require.Contains(t, string(permissionsSQL), fmt.Sprintf(`UPDATE %s.permissions SET permissions =`, zeroAppID))
+
+	_, err = conn.Current.Exec(serverCtx, string(permissionsSQL))
+	require.NoError(t, err)
+	assertZeroPermissionsStored(t, serverCtx, conn, beforeHash)
+
+	directDeployOutput := runZeroDeployPermissions(t, dockerCtx, cfg, permissionsDir,
+		"--schema-path", "/zero-permissions/schema.ts",
+		"--upstream-db", zeroDatabaseURL(cfg.doltgresPort, cfg.upstreamDB),
+		"--app-id", zeroAppID,
+	)
+	require.Contains(t, directDeployOutput, fmt.Sprintf(`Validating permissions against tables and columns published for "%s".`, zeroAppID))
+	require.Contains(t, directDeployOutput, "Permissions unchanged")
+}
+
+func runZeroDeployPermissions(t *testing.T, ctx context.Context, cfg zeroContainerConfig, permissionsDir string, args ...string) string {
+	t.Helper()
+	dockerArgs := []string{
+		"run", "--rm",
+		"--network", cfg.networkName,
+		"--add-host=host.docker.internal:host-gateway",
+		"-v", filepath.Clean(permissionsDir) + ":/zero-permissions",
+		"--entrypoint", "zero-deploy-permissions",
+		cfg.image,
+	}
+	dockerArgs = append(dockerArgs, args...)
+	out, err := exec.CommandContext(ctx, "docker", dockerArgs...).CombinedOutput()
+	require.NoErrorf(t, err, "zero-deploy-permissions failed:\n%s", string(out))
+	return string(out)
+}
+
+func assertZeroPermissionsStored(t *testing.T, ctx context.Context, conn *Connection, beforeHash string) {
+	t.Helper()
+	var afterHash string
+	var permissionsText string
+	require.NoError(t, conn.Current.QueryRow(ctx, fmt.Sprintf(`
+		SELECT COALESCE(hash, ''), COALESCE(permissions::text, '')
+		FROM "%s".permissions`, zeroAppID)).Scan(&afterHash, &permissionsText))
+	require.NotEmpty(t, afterHash)
+	require.NotEqual(t, beforeHash, afterHash)
+	require.Contains(t, permissionsText, `"zero_smoke_items"`)
+	require.Contains(t, permissionsText, `"label"`)
+	require.Contains(t, permissionsText, `"authData"`)
+	require.Contains(t, permissionsText, `"blockedLabel"`)
+	require.Contains(t, permissionsText, `"canWrite"`)
+}
+
+func waitForZeroPermissionsRow(t *testing.T, ctx context.Context, conn *Connection) string {
+	t.Helper()
+	deadline := time.Now().Add(30 * time.Second)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		var hash string
+		lastErr = conn.Current.QueryRow(ctx, fmt.Sprintf(`
+			SELECT COALESCE(hash, '')
+			FROM "%s".permissions`, zeroAppID)).Scan(&hash)
+		if lastErr == nil {
+			return hash
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	require.NoError(t, lastErr)
+	require.FailNow(t, "Zero permissions singleton row was not present")
+	return ""
+}
+
+func zeroPermissionsSchemaTS() string {
+	return `
+import {
+  createSchema,
+  definePermissions,
+  number,
+  string,
+  table,
+} from '/usr/local/lib/node_modules/@rocicorp/zero/out/zero/src/zero.js';
+
+const zeroSmokeItems = table('zeroSmokeItems')
+  .from('zero_smoke_items')
+  .columns({
+    id: number(),
+    label: string(),
+  })
+  .primaryKey('id');
+
+export const schema = createSchema({
+  tables: [zeroSmokeItems],
+});
+
+export const permissions = definePermissions(schema, () => ({
+  zeroSmokeItems: {
+    row: {
+      select: [(authData, eb) => eb.cmp('label', '!=', authData.blockedLabel)],
+      insert: [(authData, eb) => eb.cmpLit(authData.canWrite, '=', true)],
+      update: {
+        preMutation: [(authData, eb) => eb.cmp('label', '!=', authData.blockedLabel)],
+        postMutation: [(authData, eb) => eb.cmp('label', '!=', authData.blockedLabel)],
+      },
+      delete: [(authData, eb) => eb.cmpLit(authData.canDelete, '=', true)],
+    },
+    cell: {
+      label: {
+        select: [(authData, eb) => eb.cmp('label', '!=', authData.hiddenLabel)],
+      },
+    },
+  },
+}));
+`
 }
 
 func waitForZeroKeepalive(t *testing.T, ctx context.Context, zeroPort int) {
