@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/settings"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -94,6 +95,13 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				parentTableName,
 				getColumnNamesString(fk.Item.ParentColumns),
 			)
+			timing := deferrable.ForeignKeyTiming(fk.Item)
+			if timing.Deferrable {
+				result += " DEFERRABLE"
+			}
+			if timing.InitiallyDeferred {
+				result += " INITIALLY DEFERRED"
+			}
 			return false, nil
 		},
 		Index: func(ctx *sql.Context, schema ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {

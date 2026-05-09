@@ -127,6 +127,30 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 						{"child_not_deferrable_catalog_parent_fk", "f", "f"},
 					},
 				},
+				{
+					Query: `SELECT conname, pg_get_constraintdef(oid)
+						FROM pg_constraint
+						WHERE conname IN (
+							'child_deferred_catalog_parent_fk',
+							'child_immediate_catalog_parent_fk',
+							'child_not_deferrable_catalog_parent_fk'
+						)
+						ORDER BY conname;`,
+					Expected: []sql.Row{
+						{
+							"child_deferred_catalog_parent_fk",
+							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE INITIALLY DEFERRED",
+						},
+						{
+							"child_immediate_catalog_parent_fk",
+							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE",
+						},
+						{
+							"child_not_deferrable_catalog_parent_fk",
+							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)",
+						},
+					},
+				},
 			},
 		},
 	})
