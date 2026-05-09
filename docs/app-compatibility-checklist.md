@@ -131,8 +131,11 @@ Do not check off an item until it has workload proof:
   cover containment with SQL NULL value equality. `hstore || hstore`
   / `hs_concat` and `delete(hstore, text|text[]|hstore)` / the
   corresponding `-` operators cover overwrite and deletion semantics,
-  including NULL values and NULL key-array entries. Broader hstore
-  operators, functions, casts, and index parity remain residual risk.
+  including NULL values and NULL key-array entries. `hstore -> text[]`
+  / `slice_array` and `slice(hstore, text[])` cover ordered array
+  value lookup plus hstore subset extraction for missing keys, SQL NULL
+  hstore values, empty key arrays, and NULL key-array entries. Broader
+  hstore operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.

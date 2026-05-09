@@ -229,6 +229,7 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`CREATE TABLE vending_machines (id integer primary key, inventory public.hstore);`,
 				`INSERT INTO vending_machines VALUES (1, '"A"=>"2", "B"=>"5"');`,
 				`INSERT INTO vending_machines VALUES (2, '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x"');`,
+				`INSERT INTO vending_machines VALUES (3, '"A"=>"2", "B"=>"5", "empty"=>NULL');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -301,6 +302,26 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT ('"A"=>"2", "B"=>"5"'::public.hstore - '"A"=>"9", "B"=>"5"'::public.hstore)::text, delete('"empty"=>NULL, "quoted key"=>"a,b=>c"'::public.hstore, '"empty"=>NULL'::public.hstore)::text;`,
 					Expected: []sql.Row{{`"A"=>"2"`, `"quoted key"=>"a,b=>c"`}},
+				},
+				{
+					Query:    `SELECT array_to_string(inventory -> ARRAY['B', 'missing', 'empty', 'A'], '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
+					Expected: []sql.Row{{`5|<NULL>|<NULL>|2`}},
+				},
+				{
+					Query:    `SELECT array_to_string(slice_array(inventory, ARRAY['A', 'empty', 'missing']), '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
+					Expected: []sql.Row{{`2|<NULL>|<NULL>`}},
+				},
+				{
+					Query:    `SELECT slice(inventory, ARRAY['empty', 'missing', 'A'])::text FROM vending_machines WHERE id = 3;`,
+					Expected: []sql.Row{{`"A"=>"2", "empty"=>NULL`}},
+				},
+				{
+					Query:    `SELECT (inventory -> ARRAY[]::text[])::text, slice(inventory, ARRAY[]::text[])::text FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{`{}`, ``}},
+				},
+				{
+					Query:    `SELECT array_to_string(inventory -> ARRAY[NULL]::text[], '|', '<NULL>'), slice(inventory, ARRAY[NULL]::text[])::text FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{`<NULL>`, ``}},
 				},
 				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,

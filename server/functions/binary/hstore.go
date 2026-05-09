@@ -31,6 +31,7 @@ var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
 // initHstore registers operators and functions supplied by the hstore extension.
 func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_fetchval)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_slice_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, hstore_exist)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAny, hstore_exists_any)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAll, hstore_exists_all)
@@ -40,6 +41,7 @@ func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_hstore)
+	framework.RegisterFunction(hstore_slice)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -60,6 +62,55 @@ var hstore_fetchval = framework.Function2{
 			return nil, nil
 		}
 		return *value, nil
+	},
+}
+
+var hstore_slice_array = framework.Function2{
+	Name:       "slice_array",
+	Return:     pgtypes.TextArray,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		pairs, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreTextArrayValues(val2)
+		values := make([]any, len(keys))
+		for i, key := range keys {
+			if key == nil {
+				continue
+			}
+			value, ok := pairs[*key]
+			if !ok || value == nil {
+				continue
+			}
+			values[i] = *value
+		}
+		return values, nil
+	},
+}
+
+var hstore_slice = framework.Function2{
+	Name:       "slice",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		pairs, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		sliced := make(map[string]*string)
+		for _, key := range hstoreTextArrayValues(val2) {
+			if key == nil {
+				continue
+			}
+			if value, ok := pairs[*key]; ok {
+				sliced[*key] = value
+			}
+		}
+		return formatHstore(sliced), nil
 	},
 }
 
