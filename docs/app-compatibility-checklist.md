@@ -379,8 +379,11 @@ Do not check off an item until it has workload proof:
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip
   `pg_matviews.hasindexes`. This covers indexed restore-time snapshots
-  and read paths. Remaining gap: `REFRESH MATERIALIZED VIEW` and
-  PostgreSQL's refresh-time unique-index validation are still unsupported.
+  and read paths. Non-concurrent `REFRESH MATERIALIZED VIEW` preserves
+  existing matview indexes, and unique-index violations leave the prior
+  snapshot intact. Remaining gap: `REFRESH MATERIALIZED VIEW
+  CONCURRENTLY` and PostgreSQL's concurrent-refresh unique-index
+  eligibility validation are still unsupported.
   Pinned by testing/go/materialized_view_probe_test.go.
 
 ## View/query TODO
