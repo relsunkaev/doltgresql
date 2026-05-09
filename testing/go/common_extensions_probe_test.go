@@ -275,6 +275,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"f", "t", "f", "t"}},
 				},
 				{
+					Query:    `SELECT inventory @> '"A"=>"2"'::public.hstore, inventory @> '"A"=>"9"'::public.hstore, inventory @> '"missing"=>"1"'::public.hstore, inventory <@ '"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"t", "f", "f", "t"}},
+				},
+				{
+					Query:    `SELECT inventory @> '"empty"=>NULL'::public.hstore, inventory @> '"empty"=>"x"'::public.hstore, inventory <@ '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x", "extra"=>"1"'::public.hstore FROM vending_machines WHERE id = 2;`,
+					Expected: []sql.Row{{"t", "f", "t"}},
+				},
+				{
+					Query:    `SELECT hs_contains(inventory, '"A"=>"2"'::public.hstore), hs_contained(inventory, '"A"=>"2", "B"=>"5"'::public.hstore) FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
 					ExpectedErr: `invalid input syntax for type hstore`,
 				},

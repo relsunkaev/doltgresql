@@ -33,6 +33,8 @@ func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, hstore_exist)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAny, hstore_exists_any)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAll, hstore_exists_all)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsRight, hstore_contains)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsLeft, hstore_contained)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -104,6 +106,42 @@ var hstore_exists_all = framework.Function2{
 	Callable:   hstoreExistsAllCallable,
 }
 
+var hstore_contains = framework.Function2{
+	Name:       "hs_contains",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		right, err := parseHstore(val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		return hstoreContains(left, right), nil
+	},
+}
+
+var hstore_contained = framework.Function2{
+	Name:       "hs_contained",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		right, err := parseHstore(val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		return hstoreContains(right, left), nil
+	},
+}
+
 func hstoreExistCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 	pairs, err := parseHstore(val1.(string))
 	if err != nil {
@@ -165,6 +203,25 @@ func hstoreTextArrayValues(val any) []*string {
 		keys[i] = &key
 	}
 	return keys
+}
+
+func hstoreContains(left map[string]*string, right map[string]*string) bool {
+	for key, rightValue := range right {
+		leftValue, ok := left[key]
+		if !ok {
+			return false
+		}
+		if leftValue == nil || rightValue == nil {
+			if leftValue != rightValue {
+				return false
+			}
+			continue
+		}
+		if *leftValue != *rightValue {
+			return false
+		}
+	}
+	return true
 }
 
 func parseHstore(input string) (map[string]*string, error) {
