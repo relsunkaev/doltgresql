@@ -251,12 +251,15 @@ Do not check off an item until it has workload proof:
   evaluator covers column truthiness/NOT, IS NULL/IS NOT NULL,
   comparisons, parentheses, AND, and OR, which covers the
   AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
-  restore path. Residual gap: `ON CONFLICT (col) WHERE arbiter_pred`
-  still does not prove predicate implication against a partial unique
-  index, so upsert-target parity is tracked by the dependent
-  `ON CONFLICT ... DO UPDATE` entry below. DDL and DML coverage in
+  restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
+  exact predicate matches against metadata-backed partial unique
+  indexes, and non-target partial-unique conflicts are preserved for
+  multi-unique `DO NOTHING`. Residual gap: predicate implication is
+  exact-string matching today rather than PostgreSQL's broader logical
+  implication rules. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
-  testing/go/import_dump_probe_test.go.
+  testing/go/import_dump_probe_test.go; upsert coverage in
+  testing/go/insert_on_conflict_test.go.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
@@ -481,13 +484,11 @@ Do not check off an item until it has workload proof:
   vitess.ValuesFuncExpr inside Context.WithExcludedRefs;
   DO UPDATE SET ... WHERE rewrites each `col = expr` to a CASE that
   preserves the existing value when the predicate is false; arbiter
-  predicate `ON CONFLICT (col) WHERE pred` is parsed and accepted
-  but never matched against a candidate index's predicate — see the
-  Partial indexes entry above, which lists this enforcement as a
-  dependent. The current behavior silently falls through to
-  full-unique-index semantics, which is wrong for any app that uses
-  partial unique indexes to scope the conflict target;
-  ON CONSTRAINT resolution looks the constraint up
+  predicate `ON CONFLICT (col) WHERE pred` resolves exact predicate
+  matches against partial unique indexes and rejects non-matching
+  predicates instead of silently falling through to another unique
+  index. Broader predicate implication remains tracked by the Partial
+  indexes entry above. ON CONSTRAINT resolution looks the constraint up
   by GMS index ID and treats `<table>_pkey` as PG's auto-generated
   primary-key constraint name. Coverage in
   testing/go/insert_on_conflict_test.go's

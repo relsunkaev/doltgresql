@@ -20,6 +20,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/sqlutil"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // OnConflictDoNothingArbiterTable wraps a destination table for the
@@ -52,6 +54,7 @@ type arbiterIndexCheck struct {
 	columnIndexes []int
 	columnTypes   []sql.Type
 	name          string
+	predicate     *partialIndexPredicate
 }
 
 var _ sql.TableWrapper = (*OnConflictDoNothingArbiterTable)(nil)
@@ -85,21 +88,24 @@ func WrapOnConflictDoNothingArbiterTable(
 	tableSchema := table.Schema(ctx)
 	checks := make([]arbiterIndexCheck, 0)
 	for _, index := range indexes {
-		if !index.IsUnique() {
+		if !indexmetadata.IsUnique(index) {
 			continue
 		}
 		if _, isTarget := targetIndexIDs[index.ID()]; isTarget {
 			continue
 		}
-		exprs := index.Expressions()
-		if len(exprs) == 0 {
+		logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+		if len(logicalColumns) == 0 {
 			continue
 		}
-		colIndexes := make([]int, 0, len(exprs))
-		colTypes := make([]sql.Type, 0, len(exprs))
+		colIndexes := make([]int, 0, len(logicalColumns))
+		colTypes := make([]sql.Type, 0, len(logicalColumns))
 		colTypeMeta := index.ColumnExpressionTypes(ctx)
-		for i, expr := range exprs {
-			columnName := stripIndexExpressionTablePrefix(expr)
+		for i, column := range logicalColumns {
+			if column.Expression {
+				return nil, false, errors.Errorf("ON CONFLICT non-target arbiter expression indexes are not yet supported")
+			}
+			columnName := column.StorageName
 			colIdx := tableSchema.IndexOfColName(columnName)
 			if colIdx < 0 {
 				return nil, false, errors.Errorf("ON CONFLICT non-target arbiter column %q does not exist", columnName)
@@ -111,11 +117,21 @@ func WrapOnConflictDoNothingArbiterTable(
 				colTypes = append(colTypes, tableSchema[colIdx].Type)
 			}
 		}
+		var predicate *partialIndexPredicate
+		if indexmetadata.IsPartialUnique(index) {
+			predicateText := indexmetadata.Predicate(index.Comment())
+			var err error
+			predicate, err = parsePartialUniquePredicate(predicateText, table.Name(), tableSchema)
+			if err != nil {
+				return nil, false, err
+			}
+		}
 		checks = append(checks, arbiterIndexCheck{
 			index:         index,
 			columnIndexes: colIndexes,
 			columnTypes:   colTypes,
 			name:          index.ID(),
+			predicate:     predicate,
 		})
 	}
 	if len(checks) == 0 {
@@ -126,19 +142,6 @@ func WrapOnConflictDoNothingArbiterTable(
 		nonTargets:  checks,
 		schemaWidth: len(tableSchema),
 	}, true, nil
-}
-
-// stripIndexExpressionTablePrefix returns the column name portion of
-// an index expression of the form "table.column" without altering
-// expression-style indexes (`(lower(name))`); for those the caller's
-// IndexOfColName will fail and the wrapper will return an error.
-func stripIndexExpressionTablePrefix(expr string) string {
-	for i := len(expr) - 1; i >= 0; i-- {
-		if expr[i] == '.' {
-			return expr[i+1:]
-		}
-	}
-	return expr
 }
 
 func (t *OnConflictDoNothingArbiterTable) Underlying() sql.Table {
@@ -252,6 +255,15 @@ func (e *onConflictDoNothingArbiterInserter) StatementComplete(ctx *sql.Context)
 
 func (e *onConflictDoNothingArbiterInserter) Insert(ctx *sql.Context, row sql.Row) error {
 	for _, check := range e.table.nonTargets {
+		if check.predicate != nil {
+			matches, err := check.predicate.matches(ctx, row)
+			if err != nil {
+				return err
+			}
+			if !matches {
+				continue
+			}
+		}
 		key, hasNull := extractIndexKey(row, check.columnIndexes)
 		if hasNull {
 			// PG's default unique indexes treat NULLs as distinct,
@@ -319,16 +331,31 @@ func (c arbiterIndexCheck) hasMatch(ctx *sql.Context, table sql.Table, key sql.R
 		if err != nil {
 			return false, err
 		}
-		_, err = rows.Next(ctx)
-		closeErr := rows.Close(ctx)
-		if err == nil {
-			return true, nil
+		for {
+			row, err := rows.Next(ctx)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				_ = rows.Close(ctx)
+				return false, err
+			}
+			if c.predicate == nil {
+				_ = rows.Close(ctx)
+				return true, nil
+			}
+			matches, err := c.predicate.matches(ctx, row)
+			if err != nil {
+				_ = rows.Close(ctx)
+				return false, err
+			}
+			if matches {
+				_ = rows.Close(ctx)
+				return true, nil
+			}
 		}
-		if err != io.EOF {
+		if err := rows.Close(ctx); err != nil {
 			return false, err
-		}
-		if closeErr != nil {
-			return false, closeErr
 		}
 	}
 }

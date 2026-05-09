@@ -378,12 +378,9 @@ ON CONFLICT (email) DO UPDATE SET name = 'email update';`,
 
 // TestInsertOnConflictArbiterPredicate covers the
 // `ON CONFLICT (col) WHERE arb_pred` form used to disambiguate
-// partial unique indexes. Doltgres has no partial unique indexes
-// yet, so the predicate is accepted but functionally a no-op:
-// every candidate unique index covers the entire table. Real-world
-// ORM-generated upserts often include an arbiter predicate as a
-// hedge against a future partial-index migration; rejecting it
-// blocks all those clients even when the predicate is benign.
+// partial unique indexes. Full-table unique indexes still accept a
+// benign arbiter predicate, while partial unique indexes require an
+// exact predicate match.
 func TestInsertOnConflictArbiterPredicate(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -410,6 +407,53 @@ func TestInsertOnConflictArbiterPredicate(t *testing.T) {
 				{
 					Query:    "SELECT v FROM arb_t WHERE id = 1;",
 					Expected: []gms.Row{{99}},
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT targets partial unique index predicate",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb (id INT PRIMARY KEY, user_id INT, status TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_active_idx ON partial_arb (user_id) WHERE status = 'active';",
+				"INSERT INTO partial_arb VALUES (1, 10, 'active', 'old'), (2, 10, 'inactive', 'inactive');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb VALUES (3, 10, 'active', 'updated')
+ON CONFLICT (user_id) WHERE status = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "updated"},
+						{2, 10, "inactive", "inactive"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb VALUES (4, 10, 'inactive', 'inactive2')
+ON CONFLICT (user_id) WHERE status = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `INSERT INTO partial_arb VALUES (5, 10, 'active', 'ignored')
+ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING;`,
+				},
+				{
+					Query: `SELECT id, user_id, status, note FROM partial_arb ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "updated"},
+						{2, 10, "inactive", "inactive"},
+						{4, 10, "inactive", "inactive2"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb VALUES (6, 10, 'active', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE status = 'inactive' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb VALUES (7, 10, 'active', 'wrong-target')
+ON CONFLICT (id) DO NOTHING;`,
+					ExpectedErr: `duplicate key value violates unique constraint "partial_arb_active_idx"`,
 				},
 			},
 		},

@@ -57,7 +57,7 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 	if !ok || conflict == nil || (len(conflict.Columns) == 0 && conflict.Constraint == "") {
 		return node, transform.SameTree, nil
 	}
-	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, string(conflict.Constraint))
+	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, string(conflict.Constraint), conflict.ArbiterPredicate)
 	if err != nil {
 		return nil, transform.NewTree, err
 	}
@@ -136,11 +136,11 @@ func insertTableObjectName(table tree.TableExpr) (string, bool) {
 // messages, and whether the destination has more than one unique index
 // (the case that needs runtime guarding).
 type conflictTarget struct {
-	targetIndexes      []int
-	targetColumnNames  []string
-	schemaLen          int
-	constraintName     string
-	multipleUniques    bool
+	targetIndexes     []int
+	targetColumnNames []string
+	schemaLen         int
+	constraintName    string
+	multipleUniques   bool
 }
 
 func joinNameList(names []string) string {
@@ -154,7 +154,7 @@ func joinNameList(names []string) string {
 	return out
 }
 
-func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList, constraintName string) (conflictTarget, error) {
+func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns tree.NameList, constraintName string, arbiterPredicate tree.Expr) (conflictTarget, error) {
 	table, err := plan.GetInsertable(destination)
 	if err != nil {
 		return conflictTarget{}, err
@@ -170,8 +170,12 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 	schema := table.Schema(ctx)
 	uniqueIndexCount := 0
 	var matchingIndex sql.Index
+	arbiterPredicateDef := ""
+	if arbiterPredicate != nil {
+		arbiterPredicateDef = indexPredicateDefinition(arbiterPredicate)
+	}
 	for _, index := range indexes {
-		if !index.IsUnique() {
+		if !indexmetadata.IsUnique(index) {
 			continue
 		}
 		uniqueIndexCount++
@@ -184,7 +188,7 @@ func resolveConflictTarget(ctx *sql.Context, destination sql.Node, targetColumns
 			}
 			continue
 		}
-		if uniqueIndexMatchesConflictTarget(index, schema, targetColumns) {
+		if uniqueIndexMatchesConflictTarget(index, schema, targetColumns, arbiterPredicateDef) {
 			matchingIndex = index
 		}
 	}
@@ -234,7 +238,7 @@ func uniqueIndexMatchesConstraintName(index sql.Index, constraintName string) bo
 	return false
 }
 
-func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, targetColumns tree.NameList) bool {
+func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, targetColumns tree.NameList, arbiterPredicate string) bool {
 	logicalColumns := indexmetadata.LogicalColumns(index, schema)
 	if len(logicalColumns) != len(targetColumns) {
 		return false
@@ -254,7 +258,24 @@ func uniqueIndexMatchesConflictTarget(index sql.Index, schema sql.Schema, target
 		}
 		indexColumnCounts[name]--
 	}
+	indexPredicate := indexmetadata.Predicate(index.Comment())
+	if indexPredicate == "" {
+		return true
+	}
+	if arbiterPredicate == "" {
+		return false
+	}
+	if indexPredicate != arbiterPredicate {
+		return false
+	}
 	return true
+}
+
+func indexPredicateDefinition(predicate tree.Expr) string {
+	if predicate == nil {
+		return ""
+	}
+	return strings.TrimSpace(tree.AsString(predicate))
 }
 
 // wrapOnDupForTargetGuard returns an updated InsertInto whose

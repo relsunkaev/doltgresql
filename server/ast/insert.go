@@ -148,12 +148,10 @@ func isIgnore(conflict *tree.OnConflict) bool {
 // supportedOnConflictClause returns true if the ON CONFLICT clause given can be represented as
 // an ON DUPLICATE KEY UPDATE clause in GMS. The clause's WHERE predicate is supported by
 // rewriting each `col = expr` pair as `col = CASE WHEN <pred> THEN <expr> ELSE col END` so
-// the ELSE branch keeps the existing row unchanged when the predicate is false. The arbiter
-// predicate (`ON CONFLICT (col) WHERE arb_pred`) is accepted; it would only matter if doltgres
-// had partial unique indexes whose predicates needed to be matched against arb_pred for index
-// selection, and those are not yet implemented. Real-world ORM-emitted upserts that include the
-// arbiter predicate as a hedge against a future partial-index migration still work because the
-// predicate is benign when every candidate unique index is full.
+// the ELSE branch keeps the existing row unchanged when the predicate is false.
+// The arbiter predicate (`ON CONFLICT (col) WHERE arb_pred`) is preserved in
+// the original query text; ValidateOnConflictArbiter reparses that text and
+// matches it against metadata-backed partial unique indexes.
 func supportedOnConflictClause(conflict *tree.OnConflict) bool {
 	return true
 }
