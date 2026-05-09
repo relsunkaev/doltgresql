@@ -21,6 +21,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/rowexec"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
@@ -43,15 +44,16 @@ const (
 
 // TriggerExecution handles the execution of a set of triggers on a table.
 type TriggerExecution struct {
-	Timing    triggers.TriggerTiming
-	Statement bool
-	Operation string
-	Triggers  []triggers.Trigger
-	Split     TriggerExecutionRowHandling // How the source row should be split
-	Return    TriggerExecutionRowHandling // How the returned rows should be combined
-	Sch       sql.Schema
-	Source    sql.Node
-	Runner    pgexprs.StatementRunner
+	Timing                   triggers.TriggerTiming
+	Statement                bool
+	Operation                string
+	Triggers                 []triggers.Trigger
+	Split                    TriggerExecutionRowHandling // How the source row should be split
+	Return                   TriggerExecutionRowHandling // How the returned rows should be combined
+	Sch                      sql.Schema
+	Source                   sql.Node
+	Runner                   pgexprs.StatementRunner
+	InsertDefaultProjections []sql.Expression
 }
 
 var _ sql.ExecBuilderNode = (*TriggerExecution)(nil)
@@ -104,17 +106,18 @@ func (te *TriggerExecution) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder
 	}
 
 	return &triggerExecutionIter{
-		triggers:  te.Triggers,
-		functions: trigFuncs,
-		whens:     whens,
-		statement: te.Statement,
-		split:     te.Split,
-		treturn:   te.Return,
-		runner:    te.Runner.Runner,
-		sch:       te.Sch,
-		source:    sourceIter,
-		tgOp:      te.Operation,
-		timing:    te.Timing,
+		triggers:                 te.Triggers,
+		functions:                trigFuncs,
+		whens:                    whens,
+		statement:                te.Statement,
+		split:                    te.Split,
+		treturn:                  te.Return,
+		runner:                   te.Runner.Runner,
+		sch:                      te.Sch,
+		source:                   sourceIter,
+		tgOp:                     te.Operation,
+		timing:                   te.Timing,
+		insertDefaultProjections: te.InsertDefaultProjections,
 	}, nil
 }
 
@@ -184,20 +187,21 @@ func (te *TriggerExecution) loadTriggerFunction(ctx *sql.Context, trigger trigge
 
 // triggerExecutionIter is the iterator for TriggerExecution.
 type triggerExecutionIter struct {
-	triggers       []triggers.Trigger
-	functions      []framework.InterpretedFunction
-	whens          []framework.InterpretedFunction
-	statement      bool
-	statementFired bool
-	split          TriggerExecutionRowHandling
-	treturn        TriggerExecutionRowHandling
-	runner         sql.StatementRunner
-	sch            sql.Schema
-	source         sql.RowIter
-	tgOp           string
-	timing         triggers.TriggerTiming
-	oldRows        []sql.Row
-	newRows        []sql.Row
+	triggers                 []triggers.Trigger
+	functions                []framework.InterpretedFunction
+	whens                    []framework.InterpretedFunction
+	statement                bool
+	statementFired           bool
+	split                    TriggerExecutionRowHandling
+	treturn                  TriggerExecutionRowHandling
+	runner                   sql.StatementRunner
+	sch                      sql.Schema
+	source                   sql.RowIter
+	tgOp                     string
+	timing                   triggers.TriggerTiming
+	insertDefaultProjections []sql.Expression
+	oldRows                  []sql.Row
+	newRows                  []sql.Row
 }
 
 var _ sql.RowIter = (*triggerExecutionIter)(nil)
@@ -213,6 +217,12 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 		return nextRow, err
 	}
 	oldRow, newRow := splitTriggerRow(t.split, t.sch, nextRow)
+	if len(t.insertDefaultProjections) > 0 {
+		newRow, err = rowexec.ProjectRow(ctx, t.insertDefaultProjections, newRow)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	for funcIdx, trigger := range t.triggers {
 		function := t.functions[funcIdx]

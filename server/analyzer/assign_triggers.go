@@ -17,11 +17,14 @@ package analyzer
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
+	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+	"github.com/dolthub/go-mysql-server/sql/types"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
@@ -76,15 +79,23 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 			}
 			if len(triggerInfo.beforeRow) > 0 {
 				handling := getTriggerRowHandling(node)
+				var insertDefaultProjections []sql.Expression
+				if insert, ok := node.(*plan.InsertInto); ok {
+					insertDefaultProjections, err = insertTriggerDefaultProjections(ctx, insert, insert.Destination.Schema(ctx))
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+				}
 				newNode, err = nodeWithTriggers(ctx, newNode, &pgnodes.TriggerExecution{
-					Timing:    triggers.TriggerTiming_Before,
-					Operation: operation,
-					Triggers:  triggerInfo.beforeRow,
-					Split:     handling,
-					Return:    handling,
-					Sch:       triggerInfo.sch,
-					Source:    getTriggerSource(newNode),
-					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
+					Timing:                   triggers.TriggerTiming_Before,
+					Operation:                operation,
+					Triggers:                 triggerInfo.beforeRow,
+					Split:                    handling,
+					Return:                   handling,
+					Sch:                      triggerInfo.sch,
+					Source:                   getTriggerSource(newNode),
+					Runner:                   pgexprs.StatementRunner{Runner: a.Runner},
+					InsertDefaultProjections: insertDefaultProjections,
 				})
 				if err != nil {
 					return nil, transform.NewTree, err
@@ -335,4 +346,69 @@ func schemaColumnNames(schema sql.Schema) []string {
 		columnNames[i] = column.Name
 	}
 	return columnNames
+}
+
+func insertTriggerDefaultProjections(ctx *sql.Context, insert *plan.InsertInto, schema sql.Schema) ([]sql.Expression, error) {
+	columnNames := insert.ColumnNames
+	if len(columnNames) == 0 {
+		columnNames = schemaColumnNames(schema)
+	}
+
+	projections := make([]sql.Expression, len(schema))
+	colNameToIdx := make(map[string]int, len(schema))
+	for i, c := range schema {
+		colNameToIdx[strings.ToLower(c.Name)] = i
+		if c.Source != "" {
+			colNameToIdx[fmt.Sprintf("%s.%s", strings.ToLower(c.Source), strings.ToLower(c.Name))] = i
+		}
+	}
+
+	for i, col := range schema {
+		colIdx := findInsertColumnIndex(col.Name, columnNames)
+		if colIdx != -1 {
+			projections[i] = expression.NewGetField(colIdx, col.Type, col.Name, col.Nullable)
+			continue
+		}
+
+		defaultExpr := col.Default
+		if defaultExpr == nil {
+			defaultExpr = col.Generated
+		}
+		if defaultExpr == nil {
+			projections[i] = expression.NewLiteral(nil, types.Null)
+			continue
+		}
+
+		def, _, err := transform.Expr(ctx, defaultExpr, func(ctx *sql.Context, e sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			switch e := e.(type) {
+			case *expression.GetField:
+				key := strings.ToLower(e.Name())
+				if e.Table() != "" {
+					key = fmt.Sprintf("%s.%s", strings.ToLower(e.Table()), key)
+				}
+				idx, ok := colNameToIdx[key]
+				if !ok {
+					return nil, transform.SameTree, fmt.Errorf("field not found: %s", e.String())
+				}
+				return e.WithIndex(idx), transform.NewTree, nil
+			default:
+				return e, transform.SameTree, nil
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+		projections[i] = def
+	}
+
+	return projections, nil
+}
+
+func findInsertColumnIndex(colName string, columnNames []string) int {
+	for i, name := range columnNames {
+		if strings.EqualFold(name, colName) {
+			return i
+		}
+	}
+	return -1
 }

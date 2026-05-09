@@ -127,6 +127,111 @@ ON CONFLICT (id) DO UPDATE SET v = m.v + EXCLUDED.v;`,
 	})
 }
 
+func TestInsertOnConflictDoNothingAppliesDefaultsToOmittedPrimaryKey(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "Zero permissions singleton initializer",
+			SetUpScript: []string{
+				`CREATE TABLE zero_permissions_default_probe (
+					permissions JSONB,
+					hash TEXT,
+					lock BOOL PRIMARY KEY DEFAULT true CHECK (lock)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO zero_permissions_default_probe (permissions)
+						VALUES (NULL)
+						ON CONFLICT DO NOTHING;`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query:    `SELECT lock::text, (permissions IS NULL)::text FROM zero_permissions_default_probe;`,
+					Expected: []gms.Row{{"true", "true"}},
+				},
+				{
+					Query: `INSERT INTO zero_permissions_default_probe (permissions)
+						VALUES ('{"tables":{}}'::jsonb)
+						ON CONFLICT DO NOTHING;`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query:    `SELECT count(*)::text, bool_and(lock)::text FROM zero_permissions_default_probe;`,
+					Expected: []gms.Row{{"1", "true"}},
+				},
+			},
+		},
+		{
+			Name: "Zero permissions singleton initializer with hash trigger",
+			SetUpScript: []string{
+				`CREATE TABLE zero_permissions_trigger_probe (
+					"permissions" JSONB,
+					"hash" TEXT,
+					"lock" BOOL PRIMARY KEY DEFAULT true CHECK (lock)
+				);`,
+				`CREATE OR REPLACE FUNCTION zero_permissions_trigger_probe_hash()
+				RETURNS TRIGGER AS $$
+				BEGIN
+					NEW.hash = md5(NEW.permissions::text);
+					RETURN NEW;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE OR REPLACE TRIGGER on_zero_permissions_trigger_probe_hash
+					BEFORE INSERT OR UPDATE ON zero_permissions_trigger_probe
+					FOR EACH ROW
+					EXECUTE FUNCTION zero_permissions_trigger_probe_hash();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO zero_permissions_trigger_probe ("permissions")
+						VALUES (NULL)
+						ON CONFLICT DO NOTHING;`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query:    `SELECT count(*)::text, bool_and("lock")::text, bool_and("hash" IS NULL)::text FROM zero_permissions_trigger_probe;`,
+					Expected: []gms.Row{{"1", "true", "true"}},
+				},
+			},
+		},
+		{
+			Name: "BEFORE INSERT triggers see omitted defaults with explicit column mapping",
+			SetUpScript: []string{
+				`CREATE TABLE trigger_default_order_probe (
+					id INT PRIMARY KEY DEFAULT 10,
+					marker TEXT DEFAULT 'from_default',
+					supplied TEXT,
+					noted TEXT,
+					nullable_default TEXT DEFAULT 'fallback'
+				);`,
+				`CREATE OR REPLACE FUNCTION trigger_default_order_probe_note()
+				RETURNS TRIGGER AS $$
+				BEGIN
+					NEW.noted = COALESCE(NEW.marker, 'missing') || ':' || COALESCE(NEW.supplied, 'none') || ':' || COALESCE(NEW.nullable_default, 'null');
+					RETURN NEW;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE OR REPLACE TRIGGER on_trigger_default_order_probe_note
+					BEFORE INSERT ON trigger_default_order_probe
+					FOR EACH ROW
+					EXECUTE FUNCTION trigger_default_order_probe_note();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO trigger_default_order_probe (supplied, nullable_default)
+						VALUES ('explicit', NULL);`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `SELECT id, marker, supplied, nullable_default, noted
+						FROM trigger_default_order_probe;`,
+					Expected: []gms.Row{{10, "from_default", "explicit", nil, "from_default:explicit:null"}},
+				},
+			},
+		},
+	})
+}
+
 // TestInsertOnConflictDoUpdateWhere covers the conditional update form
 // of ON CONFLICT — `DO UPDATE SET ... WHERE pred`. PG semantics: the
 // UPDATE only fires when pred (evaluated against the existing row +
