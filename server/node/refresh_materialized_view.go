@@ -26,6 +26,7 @@ import (
 
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/settings"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -76,12 +77,27 @@ func (r *RefreshMaterializedView) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	if r.concurrently {
-		return nil, errors.Errorf("REFRESH MATERIALIZED VIEW CONCURRENTLY is not yet supported")
-	}
 	target, err := r.resolveTarget(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if r.concurrently && !tablemetadata.IsMaterializedViewPopulated(tableComment(target.table)) {
+		return nil, errors.Errorf("CONCURRENTLY cannot be used when the materialized view is not populated")
+	}
+	if r.concurrently && r.withNoData {
+		return nil, errors.Errorf("REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together")
+	}
+	if r.concurrently {
+		hasUniqueIndex, err := hasUsableConcurrentRefreshUniqueIndex(ctx, target.table)
+		if err != nil {
+			return nil, err
+		}
+		if !hasUniqueIndex {
+			return nil, errors.Errorf(
+				`cannot refresh materialized view "%s" concurrently`,
+				materializedViewDisplayName(target.schema, target.table.Name()),
+			)
+		}
 	}
 	definition := tablemetadata.MaterializedViewDefinition(tableComment(target.table))
 	if strings.TrimSpace(definition) == "" {
@@ -203,6 +219,58 @@ func (r *RefreshMaterializedView) runRefreshStatement(ctx *sql.Context, query st
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
 	return err
+}
+
+func hasUsableConcurrentRefreshUniqueIndex(ctx *sql.Context, table sql.Table) (bool, error) {
+	indexed, ok := table.(sql.IndexAddressable)
+	if !ok {
+		return false, nil
+	}
+	indexes, err := indexed.GetIndexes(ctx)
+	if err != nil {
+		return false, err
+	}
+	tableSchema := table.Schema(ctx)
+	for _, index := range indexes {
+		if usableConcurrentRefreshUniqueIndex(index, tableSchema) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func usableConcurrentRefreshUniqueIndex(index sql.Index, tableSchema sql.Schema) bool {
+	if !indexmetadata.IsUnique(index) || !indexmetadata.IsReady(index.Comment()) || !indexmetadata.IsValid(index.Comment()) {
+		return false
+	}
+	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+		return false
+	}
+	if indexmetadata.Predicate(index.Comment()) != "" {
+		return false
+	}
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+	if len(logicalColumns) == 0 {
+		return false
+	}
+	for _, column := range logicalColumns {
+		if column.Expression || tableSchema.IndexOfColName(column.StorageName) < 0 {
+			return false
+		}
+	}
+	for _, column := range indexmetadata.IncludeColumns(index.Comment()) {
+		if tableSchema.IndexOfColName(column) < 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func materializedViewDisplayName(schema string, name string) string {
+	if schema == "" {
+		return name
+	}
+	return schema + "." + name
 }
 
 func quoteQualifiedIdentifier(schema string, name string) string {

@@ -163,11 +163,15 @@ Do not check off an item until it has workload proof:
   prior snapshot intact when refresh data violates an existing unique
   index. This covers schemas that need restore-time snapshot data,
   indexed reads, unpopulated restore states, and ordinary scheduled
-  refreshes. Full PostgreSQL matview semantics are still partial:
-  `REFRESH MATERIALIZED VIEW CONCURRENTLY` and concurrent-refresh
-  unique-index eligibility validation are not implemented. Apps that
-  need concurrent refreshes must still rewrite to ordinary views
-  (covered) or to a backing table + scheduled refresh job. Pinned by
+  refreshes. `REFRESH MATERIALIZED VIEW CONCURRENTLY` now accepts
+  populated matviews with at least one usable all-row unique btree
+  column index, rejects `WITH NO DATA`, unpopulated matviews, and
+  matviews without a usable unique index with PostgreSQL-shaped errors,
+  and preserves the prior snapshot on unique-index refresh failures.
+  Full PostgreSQL matview semantics are still partial: concurrent
+  refresh currently runs through the same synchronous truncate/insert
+  refresh path, so lock-free concurrent writer behavior remains covered
+  by the broader concurrent index/locking gaps. Pinned by
   testing/go/materialized_view_probe_test.go.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
@@ -384,9 +388,10 @@ Do not check off an item until it has workload proof:
   `pg_matviews.hasindexes`. This covers indexed restore-time snapshots
   and read paths. Non-concurrent `REFRESH MATERIALIZED VIEW` preserves
   existing matview indexes, and unique-index violations leave the prior
-  snapshot intact. Remaining gap: `REFRESH MATERIALIZED VIEW
-  CONCURRENTLY` and PostgreSQL's concurrent-refresh unique-index
-  eligibility validation are still unsupported.
+  snapshot intact. `REFRESH MATERIALIZED VIEW CONCURRENTLY` now validates
+  PostgreSQL-style unique-index eligibility for all-row unique btree
+  column indexes and rejects missing or partial unique indexes; lock-free
+  concurrent refresh behavior remains a residual gap.
   Pinned by testing/go/materialized_view_probe_test.go.
 
 ## View/query TODO

@@ -371,8 +371,21 @@ func TestMaterializedViewProbe(t *testing.T) {
 					},
 				},
 				{
-					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;`,
-					ExpectedErr: "REFRESH MATERIALIZED VIEW CONCURRENTLY is not yet supported",
+					Query: `UPDATE source SET v = 450 WHERE id = 3;`,
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{2, 250},
+						{3, 450},
+					},
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv WITH NO DATA;`,
+					ExpectedErr: "REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together",
 				},
 				{
 					Query: `REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;`,
@@ -390,13 +403,17 @@ func TestMaterializedViewProbe(t *testing.T) {
 					ExpectedErr: `materialized view "source_mv" has not been populated`,
 				},
 				{
+					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;`,
+					ExpectedErr: "CONCURRENTLY cannot be used when the materialized view is not populated",
+				},
+				{
 					Query: `REFRESH MATERIALIZED VIEW source_mv;`,
 				},
 				{
 					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
 					Expected: []sql.Row{
 						{2, 250},
-						{3, 350},
+						{3, 450},
 					},
 				},
 				{
@@ -431,6 +448,23 @@ func TestMaterializedViewProbe(t *testing.T) {
 						{1},
 						{2},
 					},
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW no_unique_mv AS SELECT id, v FROM source;`,
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY no_unique_mv;`,
+					ExpectedErr: `cannot refresh materialized view "public.no_unique_mv" concurrently`,
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW partial_unique_mv AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `CREATE UNIQUE INDEX partial_unique_mv_idx ON partial_unique_mv (id) WHERE v IS NOT NULL;`,
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY partial_unique_mv;`,
+					ExpectedErr: `cannot refresh materialized view "public.partial_unique_mv" concurrently`,
 				},
 			},
 		},
