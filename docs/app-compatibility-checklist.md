@@ -63,10 +63,15 @@ Do not check off an item until it has workload proof:
 
 ## Critical path TODO
 
-- [ ] Stand up at least one representative non-trivial PostgreSQL dump as a
+- [~] Stand up at least one representative non-trivial PostgreSQL dump as a
   restore-gate corpus, and record the first hard failure for each.
-- [ ] Triage restore failures into implement, dump-rewrite, skip, and
-  explicit-non-goal buckets.
+  testing/go/import_dump_probe_test.go now restores the
+  AlexTransit/venderctl pg_dump through `psql`; its remaining skips
+  are the two known unique partial inventory indexes.
+- [~] Triage restore failures into implement, dump-rewrite, skip, and
+  explicit-non-goal buckets. The first gate's skip bucket is limited
+  to `idx_inventory_vmid_not_service` and `idx_inventory_vmid_service`,
+  both covered by the existing unique-partial-index gap below.
 - [ ] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
 - [ ] Run a real-world view rebuild path against Doltgres (CTEs, `LATERAL`,
@@ -249,7 +254,9 @@ Do not check off an item until it has workload proof:
   (col) WHERE pred` silently falls through to full-unique semantics,
   which is wrong for any app that relied on the predicate to scope the
   conflict target. DDL-level coverage in
-  testing/go/partial_expression_index_test.go.
+  testing/go/partial_expression_index_test.go. The
+  AlexTransit/venderctl restore gate skips two such indexes until
+  this lands.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
