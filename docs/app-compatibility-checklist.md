@@ -687,8 +687,13 @@ Do not check off an item until it has workload proof:
   `application_name` through `current_setting`, and run pooled CRUD.
   Pinned by testing/go/ssl_test.go's
   TestPooledSSLStartupParametersAndScramAuth.
-- [ ] Secondary clients - prove or scope-bound less common Postgres clients
-  (`ts-postgres`, `postgres.js`, and similar) where workloads use them.
+- [~] Secondary clients - `postgres.js` runs through the real client
+  package with a pooled connection configuration, prepared tagged-template
+  queries, parameter binding, JSONB insertion through `sql.json`, arrays,
+  lateral JSONB expansion, concurrent reads across the pool, transaction
+  commit, and rollback-on-error behavior. Pinned by
+  testing/go/postgres_js_client_test.go. `ts-postgres` and other less common
+  clients remain open until workloads require them.
 
 ## Replication and sync TODO
 
@@ -965,7 +970,11 @@ rather than only a Go-level harness.
 
 ## Lower-risk surfaces still requiring smoke tests
 
-- [ ] Basic driver pools and ORM CRUD across the advertised driver matrix.
+- [~] Basic driver pools and ORM CRUD across the advertised driver matrix.
+  The pgx smoke harness covers the baseline app schema and transaction
+  surface, and the postgres.js harness covers a secondary Node pooled-client
+  path with CRUD, parameters, JSONB, arrays, concurrent reads, commit, and
+  rollback. Broader ORM matrix proof remains open.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
