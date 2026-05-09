@@ -745,3 +745,141 @@ $$ LANGUAGE plpgsql;`,
 		},
 	})
 }
+
+func TestStatementTriggerTransitionTables(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "plain statement triggers fire once",
+			SetUpScript: []string{
+				`CREATE TABLE plain_target (id INT PRIMARY KEY);`,
+				`CREATE TABLE plain_audit (seq SERIAL PRIMARY KEY, phase TEXT, seen_count BIGINT);`,
+				`CREATE FUNCTION audit_plain_statement() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO plain_audit (phase, seen_count)
+						VALUES (
+							TG_WHEN || ':' || TG_LEVEL || ':' || TG_OP,
+							1
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER plain_before
+					BEFORE INSERT ON plain_target
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_plain_statement();`,
+				`CREATE TRIGGER plain_after
+					AFTER INSERT ON plain_target
+					EXECUTE FUNCTION audit_plain_statement();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO plain_target VALUES (1), (2);`,
+				},
+				{
+					Query: `SELECT phase, seen_count FROM plain_audit ORDER BY seq;`,
+					Expected: []sql.Row{
+						{"BEFORE:STATEMENT:INSERT", int64(1)},
+						{"AFTER:STATEMENT:INSERT", int64(1)},
+					},
+				},
+				{
+					Query:    `SELECT count(*) FROM plain_target;`,
+					Expected: []sql.Row{{int64(2)}},
+				},
+			},
+		},
+		{
+			Name: "AFTER statement triggers see transition tables",
+			SetUpScript: []string{
+				`CREATE TABLE target (id INT PRIMARY KEY, v INT);`,
+				`CREATE TABLE statement_audit (
+					seq SERIAL PRIMARY KEY,
+					tg_name TEXT,
+					tg_when TEXT,
+					tg_level TEXT,
+					tg_op TEXT,
+					old_count BIGINT,
+					new_count BIGINT,
+					old_sum BIGINT,
+					new_sum BIGINT
+				);`,
+				`CREATE FUNCTION audit_insert_statement() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO statement_audit (
+							tg_name, tg_when, tg_level, tg_op,
+							old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_NAME, TG_WHEN, TG_LEVEL, TG_OP,
+							0, (SELECT count(*) FROM new_rows),
+							0, (SELECT coalesce(sum(v), 0) FROM new_rows)
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION audit_update_statement() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO statement_audit (
+							tg_name, tg_when, tg_level, tg_op,
+							old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_NAME, TG_WHEN, TG_LEVEL, TG_OP,
+							(SELECT count(*) FROM old_rows),
+							(SELECT count(*) FROM new_rows),
+							(SELECT coalesce(sum(v), 0) FROM old_rows),
+							(SELECT coalesce(sum(v), 0) FROM new_rows)
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION audit_delete_statement() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO statement_audit (
+							tg_name, tg_when, tg_level, tg_op,
+							old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_NAME, TG_WHEN, TG_LEVEL, TG_OP,
+							(SELECT count(*) FROM old_rows), 0,
+							(SELECT coalesce(sum(v), 0) FROM old_rows), 0
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER audit_insert
+					AFTER INSERT ON target
+					REFERENCING NEW TABLE AS new_rows
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_insert_statement();`,
+				`CREATE TRIGGER audit_update
+					AFTER UPDATE ON target
+					REFERENCING OLD TABLE AS old_rows NEW TABLE AS new_rows
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_update_statement();`,
+				`CREATE TRIGGER audit_delete
+					AFTER DELETE ON target
+					REFERENCING OLD TABLE AS old_rows
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_delete_statement();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO target VALUES (1, 10), (2, 20), (3, 30);`,
+				},
+				{
+					Query: `UPDATE target SET v = v + 1 WHERE id IN (1, 2);`,
+				},
+				{
+					Query: `UPDATE target SET v = v + 100 WHERE id = 999;`,
+				},
+				{
+					Query: `DELETE FROM target WHERE id = 3;`,
+				},
+				{
+					Query: `SELECT tg_name, tg_when, tg_level, tg_op, old_count, new_count, old_sum, new_sum
+						FROM statement_audit ORDER BY seq;`,
+					Expected: []sql.Row{
+						{"audit_insert", "AFTER", "STATEMENT", "INSERT", int64(0), int64(3), int64(0), int64(60)},
+						{"audit_update", "AFTER", "STATEMENT", "UPDATE", int64(2), int64(2), int64(30), int64(32)},
+						{"audit_update", "AFTER", "STATEMENT", "UPDATE", int64(0), int64(0), int64(0), int64(0)},
+						{"audit_delete", "AFTER", "STATEMENT", "DELETE", int64(1), int64(0), int64(30), int64(0)},
+					},
+				},
+			},
+		},
+	})
+}

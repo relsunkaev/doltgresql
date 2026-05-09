@@ -43,38 +43,70 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		switch node := node.(type) {
 		case *plan.DeleteFrom, *plan.InsertInto, *plan.Truncate, *plan.Update:
-			sch, beforeTrigs, afterTrigs, err := getTriggerInformation(ctx, node)
+			triggerInfo, err := getTriggerInformation(ctx, node)
 			if err != nil {
 				return nil, transform.NewTree, err
 			}
-			if len(beforeTrigs) == 0 && len(afterTrigs) == 0 {
+			if triggerInfo.isEmpty() {
 				return node, transform.SameTree, nil
 			}
 			newNode := node
-			if len(beforeTrigs) > 0 {
-				handling := getTriggerRowHandling(node)
+			operation := getTriggerOperation(node)
+			if len(triggerInfo.beforeStatement) > 0 {
 				newNode, err = nodeWithTriggers(ctx, newNode, &pgnodes.TriggerExecution{
-					Timing:   triggers.TriggerTiming_Before,
-					Triggers: beforeTrigs,
-					Split:    handling,
-					Return:   handling,
-					Sch:      sch,
-					Source:   getTriggerSource(node),
-					Runner:   pgexprs.StatementRunner{Runner: a.Runner},
+					Timing:    triggers.TriggerTiming_Before,
+					Statement: true,
+					Operation: operation,
+					Triggers:  triggerInfo.beforeStatement,
+					Split:     pgnodes.TriggerExecutionRowHandling_None,
+					Return:    pgnodes.TriggerExecutionRowHandling_None,
+					Sch:       triggerInfo.sch,
+					Source:    getTriggerSource(newNode),
+					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
 				})
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
 			}
-			if len(afterTrigs) > 0 {
+			if len(triggerInfo.beforeRow) > 0 {
+				handling := getTriggerRowHandling(node)
+				newNode, err = nodeWithTriggers(ctx, newNode, &pgnodes.TriggerExecution{
+					Timing:    triggers.TriggerTiming_Before,
+					Operation: operation,
+					Triggers:  triggerInfo.beforeRow,
+					Split:     handling,
+					Return:    handling,
+					Sch:       triggerInfo.sch,
+					Source:    getTriggerSource(newNode),
+					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
+				})
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+			}
+			if len(triggerInfo.afterRow) > 0 {
 				newNode = &pgnodes.TriggerExecution{
-					Timing:   triggers.TriggerTiming_After,
-					Triggers: afterTrigs,
-					Split:    getTriggerRowHandling(node),
-					Return:   pgnodes.TriggerExecutionRowHandling_None,
-					Sch:      sch,
-					Source:   newNode,
-					Runner:   pgexprs.StatementRunner{Runner: a.Runner},
+					Timing:    triggers.TriggerTiming_After,
+					Operation: operation,
+					Triggers:  triggerInfo.afterRow,
+					Split:     getTriggerRowHandling(node),
+					Return:    pgnodes.TriggerExecutionRowHandling_None,
+					Sch:       triggerInfo.sch,
+					Source:    newNode,
+					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
+				}
+			}
+			if len(triggerInfo.afterStatement) > 0 {
+				newNode = &pgnodes.TriggerExecution{
+					Timing:    triggers.TriggerTiming_After,
+					Statement: true,
+					Operation: operation,
+					Triggers:  triggerInfo.afterStatement,
+					Split:     getTriggerRowHandling(node),
+					Return:    pgnodes.TriggerExecutionRowHandling_None,
+					Sch:       triggerInfo.sch,
+					Source:    newNode,
+					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
 				}
 			}
 			return newNode, transform.NewTree, nil
@@ -84,24 +116,40 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 	})
 }
 
+type triggerInformation struct {
+	sch             sql.Schema
+	beforeStatement []triggers.Trigger
+	beforeRow       []triggers.Trigger
+	afterRow        []triggers.Trigger
+	afterStatement  []triggers.Trigger
+}
+
+func (ti triggerInformation) isEmpty() bool {
+	return len(ti.beforeStatement) == 0 &&
+		len(ti.beforeRow) == 0 &&
+		len(ti.afterRow) == 0 &&
+		len(ti.afterStatement) == 0
+}
+
 // getTriggerInformation loads information that is common for the different trigger types.
-func getTriggerInformation(ctx *sql.Context, node sql.Node) (sch sql.Schema, beforeTrigs []triggers.Trigger, afterTrigs []triggers.Trigger, err error) {
+func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation, error) {
 	var tbl sql.Table
+	var err error
 	switch node := node.(type) {
 	case *plan.DeleteFrom:
 		tbl, err = plan.GetDeletable(node.Child)
 		if err != nil {
-			return nil, nil, nil, err
+			return triggerInformation{}, err
 		}
 	case *plan.InsertInto:
 		tbl, err = plan.GetInsertable(node.Destination)
 		if err != nil {
-			return nil, nil, nil, err
+			return triggerInformation{}, err
 		}
 	case *plan.Truncate:
 		tbl, err = plan.GetTruncatable(node.Child)
 		if err != nil {
-			return nil, nil, nil, err
+			return triggerInformation{}, err
 		}
 	case *plan.Update:
 		// TODO: If there is a JoinNode in here, then don't bother calling GetUpdatable, because
@@ -110,15 +158,15 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (sch sql.Schema, bef
 		//       update targets and to return types that are compatible with the interfaces
 		//       Doltgres needs in order to populate trigger information.
 		if hasJoinNode(node) {
-			return nil, nil, nil, nil
+			return triggerInformation{}, nil
 		}
 
 		tbl, err = plan.GetUpdatable(node.Child)
 		if err != nil {
-			return nil, nil, nil, err
+			return triggerInformation{}, err
 		}
 	default:
-		return nil, nil, nil, nil
+		return triggerInformation{}, nil
 	}
 
 	dbName := ctx.GetCurrentDatabase()
@@ -131,24 +179,25 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (sch sql.Schema, bef
 
 	trigCollection, err := core.GetTriggersCollectionFromContext(ctx, dbName)
 	if err != nil {
-		return nil, nil, nil, err
+		return triggerInformation{}, err
 	}
 
 	tblID, ok, _ := id.GetFromTable(ctx, tbl)
 	if !ok {
-		return nil, nil, nil, nil
+		return triggerInformation{}, nil
 	}
 	allTrigs := trigCollection.GetTriggersForTable(ctx, tblID)
+	info := triggerInformation{
+		sch: tbl.Schema(ctx),
+	}
 	// Return early if there are no triggers for the table
 	if len(allTrigs) == 0 {
-		return tbl.Schema(ctx), nil, nil, nil
+		return info, nil
 	}
 	// Trigger order is determined by the name
 	sort.Slice(allTrigs, func(i, j int) bool {
 		return allTrigs[i].ID.TriggerName() < allTrigs[j].ID.TriggerName()
 	})
-	beforeTrigs = make([]triggers.Trigger, 0, len(allTrigs))
-	afterTrigs = make([]triggers.Trigger, 0, len(allTrigs))
 	for _, trig := range allTrigs {
 		matchesEventType := false
 		for _, event := range trig.Events {
@@ -176,14 +225,22 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (sch sql.Schema, bef
 		}
 		switch trig.Timing {
 		case triggers.TriggerTiming_Before:
-			beforeTrigs = append(beforeTrigs, trig)
+			if trig.ForEachRow {
+				info.beforeRow = append(info.beforeRow, trig)
+			} else {
+				info.beforeStatement = append(info.beforeStatement, trig)
+			}
 		case triggers.TriggerTiming_After:
-			afterTrigs = append(afterTrigs, trig)
+			if trig.ForEachRow {
+				info.afterRow = append(info.afterRow, trig)
+			} else {
+				info.afterStatement = append(info.afterStatement, trig)
+			}
 		default:
-			return nil, nil, nil, fmt.Errorf("trigger timing has not yet been implemented")
+			return triggerInformation{}, fmt.Errorf("trigger timing has not yet been implemented")
 		}
 	}
-	return tbl.Schema(ctx), beforeTrigs, afterTrigs, nil
+	return info, nil
 }
 
 // hasJoinNode returns true if |node| or any child is a JoinNode.
@@ -228,6 +285,21 @@ func getTriggerRowHandling(node sql.Node) pgnodes.TriggerExecutionRowHandling {
 		return pgnodes.TriggerExecutionRowHandling_OldNew
 	default:
 		return pgnodes.TriggerExecutionRowHandling_None
+	}
+}
+
+func getTriggerOperation(node sql.Node) string {
+	switch node.(type) {
+	case *plan.DeleteFrom:
+		return "DELETE"
+	case *plan.InsertInto:
+		return "INSERT"
+	case *plan.Truncate:
+		return "TRUNCATE"
+	case *plan.Update:
+		return "UPDATE"
+	default:
+		return ""
 	}
 }
 

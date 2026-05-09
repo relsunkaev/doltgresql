@@ -32,15 +32,17 @@ import (
 
 // CreateTrigger implements CREATE TRIGGER.
 type CreateTrigger struct {
-	Name       id.Trigger
-	Function   id.Function
-	Replace    bool
-	Timing     triggers.TriggerTiming
-	Events     []triggers.TriggerEvent
-	ForEachRow bool
-	When       []plpgsql.InterpreterOperation
-	Arguments  []string
-	Definition string
+	Name              id.Trigger
+	Function          id.Function
+	Replace           bool
+	Timing            triggers.TriggerTiming
+	Events            []triggers.TriggerEvent
+	ForEachRow        bool
+	When              []plpgsql.InterpreterOperation
+	OldTransitionName string
+	NewTransitionName string
+	Arguments         []string
+	Definition        string
 }
 
 var _ sql.ExecSourceRel = (*CreateTrigger)(nil)
@@ -55,18 +57,22 @@ func NewCreateTrigger(
 	events []triggers.TriggerEvent,
 	forEachRow bool,
 	when []plpgsql.InterpreterOperation,
+	oldTransitionName string,
+	newTransitionName string,
 	arguments []string,
 	definition string) *CreateTrigger {
 	return &CreateTrigger{
-		Name:       triggerName,
-		Function:   functionName,
-		Replace:    replace,
-		Timing:     timing,
-		Events:     events,
-		ForEachRow: forEachRow,
-		When:       when,
-		Arguments:  arguments,
-		Definition: definition,
+		Name:              triggerName,
+		Function:          functionName,
+		Replace:           replace,
+		Timing:            timing,
+		Events:            events,
+		ForEachRow:        forEachRow,
+		When:              when,
+		OldTransitionName: oldTransitionName,
+		NewTransitionName: newTransitionName,
+		Arguments:         arguments,
+		Definition:        definition,
 	}
 }
 
@@ -130,8 +136,8 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		Deferrable:          triggers.TriggerDeferrable_NotDeferrable,
 		ReferencedTableName: "",
 		Constraint:          false,
-		OldTransitionName:   "",
-		NewTransitionName:   "",
+		OldTransitionName:   c.OldTransitionName,
+		NewTransitionName:   c.NewTransitionName,
 		Arguments:           c.Arguments,
 		Definition:          c.Definition,
 	})

@@ -17,6 +17,7 @@ package ast
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -43,11 +44,8 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 	if node.Deferrable != tree.TriggerNotDeferrable {
 		return NotYetSupportedError("DEFERRABLE is not yet supported for CREATE TRIGGER")
 	}
-	if len(node.Relations) > 0 {
-		return NotYetSupportedError("REFERENCING is not yet supported for CREATE TRIGGER")
-	}
-	if !node.ForEachRow {
-		return NotYetSupportedError("FOR EACH STATEMENT is not yet supported for CREATE TRIGGER")
+	if len(node.Relations) > 0 && node.ForEachRow {
+		return NotYetSupportedError("row-level transition tables are not yet supported for CREATE TRIGGER")
 	}
 	funcName := node.FuncName.ToTableName()
 	var timing triggers.TriggerTiming
@@ -84,6 +82,10 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 			return NotYetSupportedError("UNKNOWN EVENT TYPE is not yet supported for CREATE TRIGGER")
 		}
 	}
+	oldTransitionName, newTransitionName, err := createTriggerTransitionNames(node)
+	if err != nil {
+		return nil, err
+	}
 	// WHEN expressions seem to behave identically to interpreted functions, so we'll parse them as interpreted functions.
 	// To do this, we need the raw string, and we wrap it as though it were a trigger function (which has special logic
 	// for handling NEW and OLD rows). Using a regex for this rather than modifying the parser may seem suboptimal, but
@@ -113,9 +115,50 @@ $$ LANGUAGE plpgsql;`, matches[1]))
 			events,
 			node.ForEachRow,
 			whenOps,
+			oldTransitionName,
+			newTransitionName,
 			node.Args.ToStrings(),
 			ctx.originalQuery,
 		),
 		Children: nil,
 	}, nil
+}
+
+func createTriggerTransitionNames(node *tree.CreateTrigger) (oldTransitionName string, newTransitionName string, err error) {
+	if len(node.Relations) == 0 {
+		return "", "", nil
+	}
+	if node.Time != tree.TriggerTimeAfter {
+		return "", "", errors.New("transition tables are only supported for AFTER triggers")
+	}
+	if len(node.Events) != 1 {
+		return "", "", errors.New("transition tables cannot be specified for triggers with more than one event")
+	}
+	event := node.Events[0]
+	if event.Type == tree.TriggerEventUpdate && len(event.Cols) > 0 {
+		return "", "", errors.New("transition tables cannot be specified for triggers with column lists")
+	}
+	for _, rel := range node.Relations {
+		if rel.IsOld {
+			if len(oldTransitionName) > 0 {
+				return "", "", errors.New("OLD TABLE may only be specified once")
+			}
+			if event.Type != tree.TriggerEventUpdate && event.Type != tree.TriggerEventDelete {
+				return "", "", errors.New("OLD TABLE can only be specified for UPDATE or DELETE triggers")
+			}
+			oldTransitionName = rel.Name
+		} else {
+			if len(newTransitionName) > 0 {
+				return "", "", errors.New("NEW TABLE may only be specified once")
+			}
+			if event.Type != tree.TriggerEventInsert && event.Type != tree.TriggerEventUpdate {
+				return "", "", errors.New("NEW TABLE can only be specified for INSERT or UPDATE triggers")
+			}
+			newTransitionName = rel.Name
+		}
+	}
+	if len(oldTransitionName) > 0 && strings.EqualFold(oldTransitionName, newTransitionName) {
+		return "", "", errors.New("OLD TABLE and NEW TABLE transition names must be distinct")
+	}
+	return oldTransitionName, newTransitionName, nil
 }

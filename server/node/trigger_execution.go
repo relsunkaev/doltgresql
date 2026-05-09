@@ -16,12 +16,13 @@ package node
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/dolthub/go-mysql-server/sql/plan"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -42,13 +43,15 @@ const (
 
 // TriggerExecution handles the execution of a set of triggers on a table.
 type TriggerExecution struct {
-	Timing   triggers.TriggerTiming
-	Triggers []triggers.Trigger
-	Split    TriggerExecutionRowHandling // How the source row should be split
-	Return   TriggerExecutionRowHandling // How the returned rows should be combined
-	Sch      sql.Schema
-	Source   sql.Node
-	Runner   pgexprs.StatementRunner
+	Timing    triggers.TriggerTiming
+	Statement bool
+	Operation string
+	Triggers  []triggers.Trigger
+	Split     TriggerExecutionRowHandling // How the source row should be split
+	Return    TriggerExecutionRowHandling // How the returned rows should be combined
+	Sch       sql.Schema
+	Source    sql.Node
+	Runner    pgexprs.StatementRunner
 }
 
 var _ sql.ExecBuilderNode = (*TriggerExecution)(nil)
@@ -100,27 +103,17 @@ func (te *TriggerExecution) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder
 		}
 	}
 
-	tgOp := ""
-	switch te.Source.(type) {
-	case *plan.InsertInto:
-		tgOp = "INSERT"
-	case *plan.Update:
-		tgOp = "UPDATE"
-	case *plan.DeleteFrom:
-		tgOp = "DELETE"
-	case *plan.Truncate:
-		tgOp = "TRUNCATE"
-	}
-
 	return &triggerExecutionIter{
+		triggers:  te.Triggers,
 		functions: trigFuncs,
 		whens:     whens,
+		statement: te.Statement,
 		split:     te.Split,
 		treturn:   te.Return,
 		runner:    te.Runner.Runner,
 		sch:       te.Sch,
 		source:    sourceIter,
-		tgOp:      tgOp,
+		tgOp:      te.Operation,
 		timing:    te.Timing,
 	}, nil
 }
@@ -191,47 +184,39 @@ func (te *TriggerExecution) loadTriggerFunction(ctx *sql.Context, trigger trigge
 
 // triggerExecutionIter is the iterator for TriggerExecution.
 type triggerExecutionIter struct {
-	functions []framework.InterpretedFunction
-	whens     []framework.InterpretedFunction
-	split     TriggerExecutionRowHandling
-	treturn   TriggerExecutionRowHandling
-	runner    sql.StatementRunner
-	sch       sql.Schema
-	source    sql.RowIter
-	tgOp      string
-	timing    triggers.TriggerTiming
+	triggers       []triggers.Trigger
+	functions      []framework.InterpretedFunction
+	whens          []framework.InterpretedFunction
+	statement      bool
+	statementFired bool
+	split          TriggerExecutionRowHandling
+	treturn        TriggerExecutionRowHandling
+	runner         sql.StatementRunner
+	sch            sql.Schema
+	source         sql.RowIter
+	tgOp           string
+	timing         triggers.TriggerTiming
+	oldRows        []sql.Row
+	newRows        []sql.Row
 }
 
 var _ sql.RowIter = (*triggerExecutionIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
+	if t.statement {
+		return t.nextStatement(ctx)
+	}
+
 	nextRow, err := t.source.Next(ctx)
 	if err != nil {
 		return nextRow, err
 	}
-	var oldRow sql.Row
-	var newRow sql.Row
-	switch t.split {
-	case TriggerExecutionRowHandling_Old:
-		oldRow = nextRow
-	case TriggerExecutionRowHandling_OldNew:
-		oldRow = nextRow[:len(t.sch)]
-		newRow = nextRow[len(t.sch):]
-	case TriggerExecutionRowHandling_NewOld:
-		newRow = nextRow[:len(t.sch)]
-		oldRow = nextRow[len(t.sch):]
-	case TriggerExecutionRowHandling_New:
-		newRow = nextRow
-	}
+	oldRow, newRow := splitTriggerRow(t.split, t.sch, nextRow)
 
-	// TODO: handle other special variables
-	triggerVars := make(map[string]any)
-	if t.tgOp != "" {
-		triggerVars["TG_OP"] = t.tgOp
-	}
-
-	for funcIdx, function := range t.functions {
+	for funcIdx, trigger := range t.triggers {
+		function := t.functions[funcIdx]
+		triggerVars := t.triggerVars(trigger, "ROW")
 		if t.whens[funcIdx].ID.IsValid() {
 			whenValue, err := plpgsql.TriggerCall(ctx, t.whens[funcIdx], t.runner, t.sch, oldRow, newRow, triggerVars)
 			if err != nil {
@@ -294,6 +279,138 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 	default:
 		return nextRow, nil
 	}
+}
+
+func (t *triggerExecutionIter) nextStatement(ctx *sql.Context) (sql.Row, error) {
+	if t.timing == triggers.TriggerTiming_Before && !t.statementFired {
+		t.statementFired = true
+		if err := t.fireStatementTriggers(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	nextRow, err := t.source.Next(ctx)
+	if err == nil {
+		t.collectTransitionRows(nextRow)
+		return nextRow, nil
+	}
+	if err != io.EOF {
+		return nextRow, err
+	}
+	if t.timing == triggers.TriggerTiming_After && !t.statementFired {
+		t.statementFired = true
+		if fireErr := t.fireStatementTriggers(ctx); fireErr != nil {
+			return nil, fireErr
+		}
+	}
+	return nextRow, err
+}
+
+func (t *triggerExecutionIter) collectTransitionRows(row sql.Row) {
+	if len(row) == 0 {
+		return
+	}
+	oldRow, newRow := splitTriggerRow(t.split, t.sch, row)
+	if oldRow != nil {
+		t.oldRows = append(t.oldRows, cloneRow(oldRow))
+	}
+	if newRow != nil {
+		t.newRows = append(t.newRows, cloneRow(newRow))
+	}
+}
+
+func (t *triggerExecutionIter) fireStatementTriggers(ctx *sql.Context) error {
+	for funcIdx, trigger := range t.triggers {
+		triggerVars := t.triggerVars(trigger, "STATEMENT")
+		if t.whens[funcIdx].ID.IsValid() {
+			whenValue, err := plpgsql.TriggerCall(ctx, t.whens[funcIdx], t.runner, t.sch, nil, nil, triggerVars)
+			if err != nil {
+				if strings.Contains(err.Error(), "no valid cast for return value") {
+					return fmt.Errorf("argument of WHEN must be type boolean")
+				}
+				return err
+			}
+			whenBool, ok := whenValue.(bool)
+			if !ok {
+				return fmt.Errorf("argument of WHEN must be type boolean")
+			}
+			if !whenBool {
+				continue
+			}
+		}
+
+		restore, err := installTransitionTables(ctx, trigger, t.sch, t.oldRows, t.newRows)
+		if err != nil {
+			return err
+		}
+		_, callErr := plpgsql.TriggerCall(ctx, t.functions[funcIdx], t.runner, t.sch, nil, nil, triggerVars)
+		restoreErr := restore()
+		if callErr != nil {
+			return callErr
+		}
+		if restoreErr != nil {
+			return restoreErr
+		}
+	}
+	return nil
+}
+
+func (t *triggerExecutionIter) triggerVars(trigger triggers.Trigger, level string) map[string]any {
+	triggerVars := make(map[string]any)
+	triggerVars["TG_NAME"] = trigger.ID.TriggerName()
+	triggerVars["TG_WHEN"] = triggerTimingString(t.timing)
+	triggerVars["TG_LEVEL"] = level
+	if t.tgOp != "" {
+		triggerVars["TG_OP"] = t.tgOp
+	}
+	triggerVars["TG_RELID"] = triggerTableID(trigger).AsId()
+	triggerVars["TG_RELNAME"] = trigger.ID.TableName()
+	triggerVars["TG_TABLE_NAME"] = trigger.ID.TableName()
+	triggerVars["TG_TABLE_SCHEMA"] = trigger.ID.SchemaName()
+	triggerVars["TG_NARGS"] = int32(len(trigger.Arguments))
+	return triggerVars
+}
+
+func triggerTimingString(timing triggers.TriggerTiming) string {
+	switch timing {
+	case triggers.TriggerTiming_Before:
+		return "BEFORE"
+	case triggers.TriggerTiming_After:
+		return "AFTER"
+	case triggers.TriggerTiming_InsteadOf:
+		return "INSTEAD OF"
+	default:
+		return ""
+	}
+}
+
+func triggerTableID(trigger triggers.Trigger) id.Table {
+	return id.NewTable(trigger.ID.SchemaName(), trigger.ID.TableName())
+}
+
+func splitTriggerRow(handling TriggerExecutionRowHandling, sch sql.Schema, row sql.Row) (oldRow sql.Row, newRow sql.Row) {
+	switch handling {
+	case TriggerExecutionRowHandling_Old:
+		oldRow = row
+	case TriggerExecutionRowHandling_OldNew:
+		oldRow = row[:len(sch)]
+		newRow = row[len(sch):]
+	case TriggerExecutionRowHandling_NewOld:
+		newRow = row[:len(sch)]
+		oldRow = row[len(sch):]
+	case TriggerExecutionRowHandling_New:
+		newRow = row
+	}
+	return oldRow, newRow
+}
+
+func cloneRow(row sql.Row) sql.Row {
+	if row == nil {
+		return nil
+	}
+	cloned := make(sql.Row, len(row))
+	copy(cloned, row)
+	return cloned
 }
 
 // Close implements the interface sql.RowIter.

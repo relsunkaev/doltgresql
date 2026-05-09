@@ -76,9 +76,9 @@ func AssignInsertCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 				if colExprType == nil || colExprType == types.Null {
 					colExprType = pgtypes.Unknown
 				}
-				fromColType, ok := colExprType.(*pgtypes.DoltgresType)
-				if !ok {
-					return nil, transform.NewTree, errors.Errorf("INSERT: non-Doltgres type found in values source: %s", fromColType.String())
+				fromColType, err := insertSourceType(colExprType)
+				if err != nil {
+					return nil, transform.NewTree, errors.Wrap(err, "INSERT: non-Doltgres type found in values source")
 				}
 				toColType := destinationTypes[columnIndex]
 				// We only assign the existing expression if the types perfectly match (same parameters), otherwise we'll cast
@@ -94,9 +94,9 @@ func AssignInsertCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		sourceSchema := insertInto.Source.Schema(ctx)
 		projections := make([]sql.Expression, len(sourceSchema))
 		for i, col := range sourceSchema {
-			fromColType, ok := col.Type.(*pgtypes.DoltgresType)
-			if !ok {
-				return nil, transform.NewTree, errors.Errorf("INSERT: non-Doltgres type found in source: %s", fromColType.String())
+			fromColType, err := insertSourceType(col.Type)
+			if err != nil {
+				return nil, transform.NewTree, errors.Wrap(err, "INSERT: non-Doltgres type found in source")
 			}
 			toColType := destinationTypes[i]
 			getField := expression.NewGetField(i, fromColType, col.Name, true)
@@ -128,6 +128,20 @@ func AssignInsertCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 	}
 
 	return insertInto, transform.NewTree, nil
+}
+
+func insertSourceType(typ sql.Type) (*pgtypes.DoltgresType, error) {
+	if typ == nil || typ == types.Null {
+		return pgtypes.Unknown, nil
+	}
+	if doltgresType, ok := typ.(*pgtypes.DoltgresType); ok {
+		return doltgresType, nil
+	}
+	doltgresType, err := pgtypes.FromGmsTypeToDoltgresType(typ)
+	if err != nil {
+		return nil, errors.Errorf("%s", typ.String())
+	}
+	return doltgresType, nil
 }
 
 func isDoltgresNativeSource(ctx *sql.Context, dest sql.Node, source sql.Node) bool {
