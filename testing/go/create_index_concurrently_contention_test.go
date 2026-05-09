@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dolthub/dolt/go/libraries/doltcore/table/editor/creation"
 	gms "github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
@@ -250,11 +249,10 @@ func TestCreateIndexConcurrentlyAllowsWritersDuringPhase1(t *testing.T) {
 
 	paused := make(chan struct{})
 	resume := make(chan struct{})
-	creation.SetTestHookBeforeBuildSecondaryIndex(func(_ *gms.Context) {
+	setCreationTestHookBeforeBuildSecondaryIndex(t, func(_ *gms.Context) {
 		close(paused)
 		<-resume
 	})
-	t.Cleanup(func() { creation.SetTestHookBeforeBuildSecondaryIndex(nil) })
 	var resumeOnce sync.Once
 	releaseBuild := func() {
 		resumeOnce.Do(func() { close(resume) })

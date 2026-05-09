@@ -455,8 +455,9 @@ Do not check off an item until it has workload proof:
   `pg_index` is valid/ready, the planner uses `IndexedTableAccess`, and the
   final index sees the inserted row, updated row, and deleted-row absence.
   Pinned by testing/go/create_index_concurrently_contention_test.go's
-  TestCreateIndexConcurrentlyAllowsWritersDuringPhase1 and by the local Dolt
-  hook in third_party/dolt/go/libraries/doltcore/table/editor/creation/index.go.
+  TestCreateIndexConcurrentlyAllowsWritersDuringPhase1, with the local Dolt
+  pause point kept unexported and installed only by the SQL test binary through
+  testing/go/create_index_concurrently_test_hooks_test.go.
 - [ ] Add large-table `CREATE INDEX CONCURRENTLY` performance guardrails. The
   current evidence proves writer progress and correctness, but does not pin
   Phase 1 build latency, writer latency while Phase 1 is running, or planner
@@ -1217,10 +1218,11 @@ row changes with the committing schema/index build.
   Dolt secondary-index build and verifies concurrent insert/update/delete
   writers complete before the build resumes and remain visible through the
   final valid/ready index.
-- [ ] Replace the production-compiled local Dolt index-build pause hook with a
-  cleaner test-only seam. The current hook is nil in production and exists only
-  for deterministic SQL-level contention tests, but it is still an exported
-  production-compiled global in the local Dolt submodule.
+- [x] Remove the exported local Dolt index-build pause setter. The pause point
+  remains nil by default and unexported in the local Dolt submodule, while
+  testing/go/create_index_concurrently_test_hooks_test.go installs it from the
+  SQL test binary through a `_test.go` linkname shim for deterministic
+  contention coverage.
 
 ## Current support claim
 
