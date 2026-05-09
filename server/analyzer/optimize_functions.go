@@ -26,8 +26,10 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // OptimizeFunctions replaces all functions that fit specific criteria with their optimized variants. Also handles
@@ -41,6 +43,9 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 	_, isInsertNode := node.(*plan.InsertInto)
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, n sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		if windowNode, ok := n.(*plan.Window); ok {
+			return rewriteWindowSelectExprCasts(ctx, windowNode)
+		}
 		if sortNode, ok := n.(*plan.Sort); ok {
 			sortNode, sameTree := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
 			return sortNode, sameTree, nil
@@ -146,6 +151,39 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields, err
 	})
+}
+
+func rewriteWindowSelectExprCasts(ctx *sql.Context, windowNode *plan.Window) (sql.Node, transform.TreeIdentity, error) {
+	selectExprs := make([]sql.Expression, len(windowNode.SelectExprs))
+	copy(selectExprs, windowNode.SelectExprs)
+
+	var changed bool
+	for i, expr := range selectExprs {
+		if _, ok := expr.(*pgexprs.WindowGMSCast); ok {
+			continue
+		}
+		windowExpr, ok := expr.(sql.WindowAdaptableExpression)
+		if !ok || windowExpr.Window() == nil {
+			continue
+		}
+		if _, ok := pgexprs.WindowFunctionDoltgresType(ctx, expr); ok {
+			selectExprs[i] = pgexprs.NewWindowGMSCast(windowExpr)
+			changed = true
+			continue
+		}
+		if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); !ok {
+			selectExprs[i] = pgexprs.NewWindowGMSCast(windowExpr)
+			changed = true
+		}
+	}
+	if !changed {
+		return windowNode, transform.SameTree, nil
+	}
+	newNode, err := windowNode.WithExpressions(ctx, selectExprs...)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	return newNode, transform.NewTree, nil
 }
 
 func rewriteProjectionGetFieldsFromChildSchema(ctx *sql.Context, projectNode *plan.Project) (*plan.Project, transform.TreeIdentity) {

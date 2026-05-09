@@ -72,7 +72,7 @@ func (c *GMSCast) Child() sql.Expression {
 
 // DoltgresType returns the DoltgresType that the cast evaluates to. This is the same value that is returned by Type().
 func (c *GMSCast) DoltgresType(ctx *sql.Context) *pgtypes.DoltgresType {
-	if dt, ok := windowFunctionDoltgresType(c.sqlChild); ok {
+	if dt, ok := WindowFunctionDoltgresType(ctx, c.sqlChild); ok {
 		return dt
 	}
 	// GMSCast shouldn't receive a DoltgresType, but we shouldn't error if it happens
@@ -227,12 +227,18 @@ func castGMSValue(ctx *sql.Context, val any, sqlTyp sql.Type) (any, error) {
 	}
 }
 
-func windowFunctionDoltgresType(expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+// WindowFunctionDoltgresType returns the PostgreSQL return type for GMS window functions
+// whose runtime values need Doltgres conversion.
+func WindowFunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
 	fn, ok := expr.(sql.FunctionExpression)
 	if !ok {
 		return nil, false
 	}
 	switch strings.ToUpper(fn.FunctionName()) {
+	case "AVG":
+		return pgtypes.Numeric, true
+	case "SUM":
+		return windowSumDoltgresType(ctx, expr)
 	case "ROW_NUMBER", "RANK", "DENSE_RANK":
 		return pgtypes.Int64, true
 	case "NTILE":
@@ -244,13 +250,36 @@ func windowFunctionDoltgresType(expr sql.Expression) (*pgtypes.DoltgresType, boo
 	}
 }
 
+func windowSumDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	children := expr.Children()
+	if len(children) < 1 {
+		return nil, false
+	}
+	childType, ok := children[0].Type(ctx).(*pgtypes.DoltgresType)
+	if !ok {
+		return pgtypes.FromGmsType(children[0].Type(ctx)), true
+	}
+	switch {
+	case childType.Equals(pgtypes.Int16), childType.Equals(pgtypes.Int32):
+		return pgtypes.Int64, true
+	case childType.Equals(pgtypes.Int64), childType.Equals(pgtypes.Numeric):
+		return pgtypes.Numeric, true
+	case childType.Equals(pgtypes.Float32):
+		return pgtypes.Float32, true
+	case childType.Equals(pgtypes.Float64):
+		return pgtypes.Float64, true
+	default:
+		return childType, true
+	}
+}
+
 func castWindowFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (any, bool, error) {
-	fn, ok := expr.(sql.FunctionExpression)
+	dt, ok := WindowFunctionDoltgresType(ctx, expr)
 	if !ok {
 		return nil, false, nil
 	}
-	switch strings.ToUpper(fn.FunctionName()) {
-	case "ROW_NUMBER", "RANK", "DENSE_RANK":
+	switch {
+	case dt.Equals(pgtypes.Int64):
 		newVal, _, err := types.Int64.Convert(ctx, val)
 		if err != nil {
 			return nil, true, err
@@ -259,7 +288,7 @@ func castWindowFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (an
 			return nil, true, errors.Errorf("GMSCast expected type `int64`, got `%T`", val)
 		}
 		return newVal, true, nil
-	case "NTILE":
+	case dt.Equals(pgtypes.Int32):
 		newVal, _, err := types.Int32.Convert(ctx, val)
 		if err != nil {
 			return nil, true, err
@@ -268,13 +297,31 @@ func castWindowFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (an
 			return nil, true, errors.Errorf("GMSCast expected type `int32`, got `%T`", val)
 		}
 		return newVal, true, nil
-	case "PERCENT_RANK":
+	case dt.Equals(pgtypes.Float32):
+		newVal, _, err := types.Float32.Convert(ctx, val)
+		if err != nil {
+			return nil, true, err
+		}
+		if _, ok := newVal.(float32); !ok {
+			return nil, true, errors.Errorf("GMSCast expected type `float32`, got `%T`", val)
+		}
+		return newVal, true, nil
+	case dt.Equals(pgtypes.Float64):
 		newVal, _, err := types.Float64.Convert(ctx, val)
 		if err != nil {
 			return nil, true, err
 		}
 		if _, ok := newVal.(float64); !ok {
 			return nil, true, errors.Errorf("GMSCast expected type `float64`, got `%T`", val)
+		}
+		return newVal, true, nil
+	case dt.Equals(pgtypes.Numeric):
+		newVal, _, err := types.InternalDecimalType.Convert(ctx, val)
+		if err != nil {
+			return nil, true, err
+		}
+		if _, ok := newVal.(decimal.Decimal); !ok {
+			return nil, true, errors.Errorf("GMSCast expected type `decimal.Decimal`, got `%T`", val)
 		}
 		return newVal, true, nil
 	default:

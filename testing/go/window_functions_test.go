@@ -53,11 +53,6 @@ func TestWindowFunctions(t *testing.T) {
 			},
 		},
 		{
-			// Running-sum windows with explicit ROWS BETWEEN frames
-			// are a separate gap (engine panics with int32-vs-float64
-			// type conversion in the windowed sum). Tracked under
-			// View/query TODO. Pin the count(*) shape that works as
-			// evidence for the simpler frame.
 			Name: "count over partitioned window",
 			SetUpScript: []string{
 				`CREATE TABLE events (
@@ -83,6 +78,72 @@ func TestWindowFunctions(t *testing.T) {
 						{int32(4), "b", int64(2), int64(5)},
 						{int32(5), "b", int64(2), int64(5)},
 					},
+				},
+			},
+		},
+		{
+			Name: "running aggregates over explicit row frames",
+			SetUpScript: []string{
+				`CREATE TABLE measurements (
+					id INT PRIMARY KEY,
+					grp TEXT,
+					amount INT
+				);`,
+				`INSERT INTO measurements VALUES
+					(1, 'a', 10), (2, 'a', 20), (3, 'a', 30),
+					(4, 'b', 5), (5, 'b', 15);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, grp,
+						sum(amount) OVER (
+							PARTITION BY grp
+							ORDER BY id
+							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+						) AS rolling_sum
+						FROM measurements
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{int32(1), "a", int64(10)},
+						{int32(2), "a", int64(30)},
+						{int32(3), "a", int64(50)},
+						{int32(4), "b", int64(5)},
+						{int32(5), "b", int64(20)},
+					},
+				},
+				{
+					Query: `SELECT id, grp,
+						avg(amount) OVER (
+							PARTITION BY grp
+							ORDER BY id
+							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+						) AS rolling_avg
+						FROM measurements
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{int32(1), "a", Numeric("10")},
+						{int32(2), "a", Numeric("15")},
+						{int32(3), "a", Numeric("25")},
+						{int32(4), "b", Numeric("5")},
+						{int32(5), "b", Numeric("10")},
+					},
+				},
+				{
+					Query: `SELECT
+						pg_typeof(sum(amount) OVER (
+							PARTITION BY grp
+							ORDER BY id
+							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+						)),
+						pg_typeof(avg(amount) OVER (
+							PARTITION BY grp
+							ORDER BY id
+							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
+						))
+						FROM measurements
+						ORDER BY id
+						LIMIT 1;`,
+					Expected: []sql.Row{{"bigint", "numeric"}},
 				},
 			},
 		},

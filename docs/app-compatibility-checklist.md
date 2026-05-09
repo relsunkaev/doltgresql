@@ -334,17 +334,17 @@ Do not check off an item until it has workload proof:
   MySQL convention (NULLS FIRST) rather than PG (NULLS LAST); explicit
   `NULLS LAST` syntax remains a separate gap (see "Null ordering in
   indexes" above).
-- [~] Window functions - `lag()`, `lead()`, `count(*) OVER (PARTITION
+- [x] Window functions - `lag()`, `lead()`, `count(*) OVER (PARTITION
   BY)`, `count(*) OVER ()`, `first_value()`, and `last_value()` (with
   an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`
   frame) work end-to-end. The rank family (`row_number()`, `rank()`,
   `dense_rank()`, `percent_rank()`, `ntile()`) also works over
   partitions with PostgreSQL-shaped return types (`bigint`,
-  `double precision`, and `integer` as applicable). Coverage in
-  testing/go/window_functions_test.go. Residual gap tracked here:
-  running `sum()` / `avg()` over an explicit
-  `ROWS BETWEEN ... PRECEDING ...` frame panics with int32-vs-float64
-  type confusion in the windowed numeric path.
+  `double precision`, and `integer` as applicable). Running `sum()` and
+  `avg()` over explicit `ROWS BETWEEN ... PRECEDING ...` frames work
+  without the former int32-vs-float64 wire-type panic and expose
+  PostgreSQL return types for integer inputs (`bigint` and `numeric`).
+  Coverage in testing/go/window_functions_test.go.
 - [x] Aggregate `FILTER` - reporting/grid views rely on FILTER for
   two-axis counts and revenue-vs-refund splits. AST conversion in
   server/ast/func_expr.go now rewrites
