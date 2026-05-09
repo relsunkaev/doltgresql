@@ -433,6 +433,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "f"}},
 				},
 				{
+					Query:    `SELECT hstore_cmp(''::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore)::text, hstore_cmp('"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore)::text, hstore_cmp('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore)::text, hstore_cmp('"A"=>"1"'::public.hstore, '"A"=>"1", "B"=>"1"'::public.hstore)::text;`,
+					Expected: []sql.Row{{`-1`, `-1`, `1`, `1`, `-1`}},
+				},
+				{
+					Query:    `SELECT hstore_lt('"A"=>"1"'::public.hstore, '"A"=>"2"'::public.hstore), hstore_le('"A"=>"1"'::public.hstore, '"A"=>"1"'::public.hstore), hstore_gt('"B"=>"1"'::public.hstore, '"AA"=>"1"'::public.hstore), hstore_ge('"A"=>NULL'::public.hstore, '"A"=>""'::public.hstore);`,
+					Expected: []sql.Row{{"t", "t", "t", "t"}},
+				},
+				{
 					Query:       `SELECT hstore(ARRAY['A', '1', 'B']::text[]);`,
 					ExpectedErr: `array must have even number of elements`,
 				},

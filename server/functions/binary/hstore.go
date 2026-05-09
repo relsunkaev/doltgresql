@@ -73,6 +73,11 @@ func initHstore() {
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
+	framework.RegisterFunction(hstore_cmp)
+	framework.RegisterFunction(hstore_lt)
+	framework.RegisterFunction(hstore_le)
+	framework.RegisterFunction(hstore_gt)
+	framework.RegisterFunction(hstore_ge)
 	framework.MustAddExplicitTypeCast(framework.TypeCast{
 		FromType: hstoreType,
 		ToType:   pgtypes.Json,
@@ -430,6 +435,52 @@ var hstore_ne = framework.Function2{
 	},
 }
 
+var hstore_cmp = framework.Function2{
+	Name:       "hstore_cmp",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, right, err := parseHstorePair(val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		return int32(hstoreCompare(left, right)), nil
+	},
+}
+
+var hstore_lt = framework.Function2{
+	Name:       "hstore_lt",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable:   hstoreComparePredicate(func(cmp int) bool { return cmp < 0 }),
+}
+
+var hstore_le = framework.Function2{
+	Name:       "hstore_le",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable:   hstoreComparePredicate(func(cmp int) bool { return cmp <= 0 }),
+}
+
+var hstore_gt = framework.Function2{
+	Name:       "hstore_gt",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable:   hstoreComparePredicate(func(cmp int) bool { return cmp > 0 }),
+}
+
+var hstore_ge = framework.Function2{
+	Name:       "hstore_ge",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable:   hstoreComparePredicate(func(cmp int) bool { return cmp >= 0 }),
+}
+
 var hstore_exist = framework.Function2{
 	Name:       "exist",
 	Return:     pgtypes.Bool,
@@ -683,6 +734,73 @@ func hstoreValueEqual(left *string, right *string) bool {
 		return left == right
 	}
 	return *left == *right
+}
+
+func parseHstorePair(val1 any, val2 any) (map[string]*string, map[string]*string, error) {
+	left, err := parseHstore(val1.(string))
+	if err != nil {
+		return nil, nil, err
+	}
+	right, err := parseHstore(val2.(string))
+	if err != nil {
+		return nil, nil, err
+	}
+	return left, right, nil
+}
+
+func hstoreComparePredicate(predicate func(int) bool) func(*sql.Context, [3]*pgtypes.DoltgresType, any, any) (any, error) {
+	return func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, right, err := parseHstorePair(val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		return predicate(hstoreCompare(left, right)), nil
+	}
+}
+
+func hstoreCompare(left map[string]*string, right map[string]*string) int {
+	leftKeys := hstoreComparisonKeys(left)
+	rightKeys := hstoreComparisonKeys(right)
+	count := min(len(leftKeys), len(rightKeys))
+	for i := 0; i < count; i++ {
+		if cmp := normalizeCompare(strings.Compare(leftKeys[i], rightKeys[i])); cmp != 0 {
+			return cmp
+		}
+		leftValue := left[leftKeys[i]]
+		rightValue := right[rightKeys[i]]
+		switch {
+		case leftValue == nil && rightValue == nil:
+		case leftValue == nil:
+			return 1
+		case rightValue == nil:
+			return -1
+		default:
+			if cmp := normalizeCompare(strings.Compare(*leftValue, *rightValue)); cmp != 0 {
+				return cmp
+			}
+		}
+	}
+	return normalizeCompare(len(leftKeys) - len(rightKeys))
+}
+
+func normalizeCompare(cmp int) int {
+	switch {
+	case cmp < 0:
+		return -1
+	case cmp > 0:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func hstoreComparisonKeys(pairs map[string]*string) []string {
+	keys := make([]string, 0, len(pairs))
+	for key := range pairs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func hstoreAddTextPair(pairs map[string]*string, key string, value any) {

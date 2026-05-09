@@ -150,12 +150,17 @@ Do not check off an item until it has workload proof:
   current hstore storage version for valid hstore inputs.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
-  and missing-vs-extra key inequality. `hstore_to_json`,
+  and missing-vs-extra key inequality. `hstore_cmp`, `hstore_lt`,
+  `hstore_le`, `hstore_gt`, and `hstore_ge` cover btree comparison
+  helper ordering for lexicographic keys and values, NULL values after
+  non-NULL values, and shorter equal-prefix maps before longer maps.
+  Custom comparison operators (`#<#`, `#<=#`, `#>#`, `#>=#`) and
+  index operator-class parity remain residual risk. `hstore_to_json`,
   `hstore_to_jsonb`, `hstore_to_json_loose`, `hstore_to_jsonb_loose`,
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
   SQL NULL hstore values as JSON nulls, string escaping, loose numeric
   promotion, and boolean-looking hstore text remaining JSON strings.
-  Broader hstore operators, functions, casts, and index parity remain residual risk.
+  Broader hstore operators, functions, and casts remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
