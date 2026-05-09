@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,30 @@ func (p PgExtensionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgExtensionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_extension row iter
-	return emptyRowIter()
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	loadedExtensions := extCollection.GetLoadedExtensions(ctx)
+	rows := make([]sql.Row, 0, len(loadedExtensions))
+	for _, ext := range loadedExtensions {
+		namespace := ext.Namespace
+		if !id.Id(namespace).IsValid() {
+			namespace = id.NewNamespace("public")
+		}
+		rows = append(rows, sql.Row{
+			ext.ExtName.AsId(),                    // oid
+			ext.ExtName.Name(),                    // extname
+			id.NewId(id.Section_User, "postgres"), // extowner
+			namespace.AsId(),                      // extnamespace
+			ext.Relocatable,                       // extrelocatable
+			ext.LibIdentifier.Version().String(),  // extversion
+			nil,                                   // extconfig
+			nil,                                   // extcondition
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,20 +87,4 @@ var pgExtensionSchema = sql.Schema{
 	{Name: "extversion", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgExtensionName}, // TODO: collation C
 	{Name: "extconfig", Type: pgtypes.OidArray, Default: nil, Nullable: true, Source: PgExtensionName},
 	{Name: "extcondition", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgExtensionName}, // TODO: collation C
-}
-
-// pgExtensionRowIter is the sql.RowIter for the pg_extension table.
-type pgExtensionRowIter struct {
-}
-
-var _ sql.RowIter = (*pgExtensionRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgExtensionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgExtensionRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

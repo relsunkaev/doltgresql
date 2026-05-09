@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions"
 )
 
 // CreateExtension implements CREATE EXTENSION.
@@ -94,12 +95,21 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	targetNamespace, err := c.resolveTargetNamespace(ctx, ext)
+	if err != nil {
+		return nil, err
+	}
 	if createExtensionSkipsSQL(c.Name) {
-		if err = c.addLoadedExtension(ctx, extCollection, ext); err != nil {
+		if err = c.addLoadedExtension(ctx, extCollection, ext, targetNamespace); err != nil {
 			return nil, err
 		}
 		return sql.RowsToRowIter(), nil
 	}
+	restoreSearchPath, err := c.useExtensionSearchPath(ctx, targetNamespace)
+	if err != nil {
+		return nil, err
+	}
+	defer restoreSearchPath()
 	// The returned files are in their proper order of execution, so we can iterate and execute
 	sqlFiles, err := ext.LoadSQLFiles()
 	if err != nil {
@@ -143,24 +153,73 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 			}
 		}
 	}
-	err = c.addLoadedExtension(ctx, extCollection, ext)
+	err = c.addLoadedExtension(ctx, extCollection, ext, targetNamespace)
 	if err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *extensions.Collection, ext *pg_extension.ExtensionFiles) error {
-	namespace := id.NullNamespace
-	if len(ext.Control.Schema) > 0 {
-		namespace = id.NewNamespace(ext.Control.Schema)
-	}
+func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *extensions.Collection, ext *pg_extension.ExtensionFiles, namespace id.Namespace) error {
 	return extCollection.AddLoadedExtension(ctx, extensions.Extension{
 		ExtName:       id.NewExtension(c.Name),
 		Namespace:     namespace,
 		Relocatable:   ext.Control.Relocatable,
 		LibIdentifier: extensions.CreateLibraryIdentifier(c.Name, ext.Control.DefaultVersion),
 	})
+}
+
+func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_extension.ExtensionFiles) (id.Namespace, error) {
+	schemaName := c.SchemaName
+	if len(schemaName) == 0 {
+		schemaName = ext.Control.Schema
+	}
+	if len(schemaName) == 0 {
+		var err error
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return id.NullNamespace, err
+		}
+	}
+	exists, err := schemaExists(ctx, schemaName)
+	if err != nil {
+		return id.NullNamespace, err
+	}
+	if !exists {
+		return id.NullNamespace, errors.Errorf(`schema "%s" does not exist`, schemaName)
+	}
+	return id.NewNamespace(schemaName), nil
+}
+
+func (c *CreateExtension) useExtensionSearchPath(ctx *sql.Context, namespace id.Namespace) (func(), error) {
+	schemaName := namespace.SchemaName()
+	if len(schemaName) == 0 {
+		return func() {}, nil
+	}
+	originalSearchPath, err := ctx.GetSessionVariable(ctx, "search_path")
+	if err != nil {
+		return nil, err
+	}
+	if err = ctx.SetSessionVariable(ctx, "search_path", schemaName); err != nil {
+		return nil, err
+	}
+	return func() {
+		_ = ctx.SetSessionVariable(ctx, "search_path", originalSearchPath)
+	}, nil
+}
+
+func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
+	exists := false
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Schema: func(ctx *sql.Context, item functions.ItemSchema) (cont bool, err error) {
+			if strings.EqualFold(item.Item.SchemaName(), schemaName) {
+				exists = true
+				return false, nil
+			}
+			return true, nil
+		},
+	})
+	return exists, err
 }
 
 func createExtensionSkipsSQL(name string) bool {

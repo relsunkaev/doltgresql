@@ -72,6 +72,18 @@ func (pge *Collection) GetLoadedExtension(ctx context.Context, name id.Extension
 	return Extension{}, nil
 }
 
+// GetLoadedExtensions returns all loaded extensions sorted by extension name.
+func (pge *Collection) GetLoadedExtensions(ctx context.Context) []Extension {
+	loadedExtensions := make([]Extension, 0, len(pge.accessCache))
+	for _, ext := range pge.accessCache {
+		loadedExtensions = append(loadedExtensions, ext)
+	}
+	slices.SortFunc(loadedExtensions, func(a, b Extension) int {
+		return cmp.Compare(a.ExtName.Name(), b.ExtName.Name())
+	})
+	return loadedExtensions
+}
+
 // HasLoadedExtension returns whether the extension has been loaded.
 func (pge *Collection) HasLoadedExtension(ctx context.Context, name id.Extension) bool {
 	_, ok := pge.accessCache[name]

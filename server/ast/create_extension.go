@@ -24,12 +24,8 @@ import (
 
 // nodeCreateExtension handles *tree.CreateExtension nodes.
 func nodeCreateExtension(ctx *Context, node *tree.CreateExtension) (vitess.Statement, error) {
-	if len(node.Schema) > 0 {
-		if node.Schema == "pg_catalog" && node.Name == "plpgsql" {
-			return nil, nil
-		} else {
-			return NotYetSupportedError("SCHEMA is not yet supported")
-		}
+	if node.Schema == "pg_catalog" && node.Name == "plpgsql" {
+		return nil, nil
 	}
 	if len(node.Version) > 0 {
 		return NotYetSupportedError("VERSION is not yet supported")

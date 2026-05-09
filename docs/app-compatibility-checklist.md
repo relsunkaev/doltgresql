@@ -88,15 +88,16 @@ Do not check off an item until it has workload proof:
   PostgreSQL 15; pg_dump output compatibility remains tracked by
   the separate schema-output and restore-path items.
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
-  "uuid-ossp"` is accepted at DDL and its core UUID helpers are
-  callable. `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also
-  accepted via a compatibility shim: the parser accepts pgcrypto's
-  `name OUT type` CREATE FUNCTION declarations, but Doltgres does
-  not load pgcrypto's PostgreSQL C library payload because it expects
-  server symbols Doltgres does not export. `gen_random_uuid()` is
-  registered as a native builtin and returns a 36-char UUID, covering
-  the common ORM/default-PK path. `btree_gist`, `citext`, and
-  `pgvector` remain untested. Pinned by
+  "uuid-ossp"` is accepted at DDL, is listed in
+  `pg_catalog.pg_extension`, and its core UUID helpers are callable.
+  `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also accepted via a
+  compatibility shim, including `WITH SCHEMA` metadata: the parser
+  accepts pgcrypto's `name OUT type` CREATE FUNCTION declarations, but
+  Doltgres does not load pgcrypto's PostgreSQL C library payload
+  because it expects server symbols Doltgres does not export.
+  `gen_random_uuid()` is registered as a native builtin and returns a
+  36-char UUID, covering the common ORM/default-PK path. `btree_gist`,
+  `citext`, and `pgvector` remain untested. Pinned by
   testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser

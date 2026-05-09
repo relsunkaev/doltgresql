@@ -70,5 +70,36 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "loaded extension appears in pg_extension",
+			SetUpScript: []string{
+				`CREATE EXTENSION "uuid-ossp";`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion, e.extconfig, e.extcondition
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'uuid-ossp';`,
+					Expected: []sql.Row{{"uuid-ossp", "public", "t", "1.1", nil, nil}},
+				},
+			},
+		},
+		{
+			Name: "CREATE EXTENSION WITH SCHEMA records target namespace",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion, e.extconfig, e.extcondition
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'pgcrypto';`,
+					Expected: []sql.Row{{"pgcrypto", "extensions", "t", "1.3", nil, nil}},
+				},
+			},
+		},
 	})
 }

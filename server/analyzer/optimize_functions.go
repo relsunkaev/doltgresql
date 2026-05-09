@@ -229,7 +229,11 @@ func rewriteGetFieldsFromSchema(ctx *sql.Context, schema sql.Schema, expr sql.Ex
 			return in, transform.SameTree, nil
 		}
 		col := schema[idx]
-		if getField.Type(ctx).String() == col.Type.String() && getField.IsNullable(ctx) == col.Nullable {
+		getFieldType := getField.Type(ctx)
+		if getFieldType == nil || col == nil || col.Type == nil {
+			return in, transform.SameTree, nil
+		}
+		if getFieldType.String() == col.Type.String() && getField.IsNullable(ctx) == col.Nullable {
 			return in, transform.SameTree, nil
 		}
 		rewritten := expression.NewGetFieldWithTable(
