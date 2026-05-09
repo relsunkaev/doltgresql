@@ -17,9 +17,12 @@ package _go
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/table/editor/creation"
 	gms "github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
@@ -202,6 +205,103 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 		"CREATE INDEX CONCURRENTLY gin_t_doc_idx ON gin_t USING gin (doc jsonb_path_ops)",
 		"gin_t_doc_idx",
 	)
+}
+
+func TestCreateIndexConcurrentlyAllowsWritersDuringPhase1(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	dial := func(t *testing.T) *pgx.Conn {
+		t.Helper()
+		conn, err := pgx.Connect(ctx, fmt.Sprintf(
+			"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+		require.NoError(t, err)
+		return conn
+	}
+
+	setup := dial(t)
+	defer setup.Close(ctx)
+	_, err = setup.Exec(ctx, "CREATE TABLE nonblock_t (id INT PRIMARY KEY, v INT)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "INSERT INTO nonblock_t VALUES (1, 10), (2, 20)")
+	require.NoError(t, err)
+
+	paused := make(chan struct{})
+	resume := make(chan struct{})
+	creation.SetTestHookBeforeBuildSecondaryIndex(func(_ *gms.Context) {
+		close(paused)
+		<-resume
+	})
+	t.Cleanup(func() { creation.SetTestHookBeforeBuildSecondaryIndex(nil) })
+	var resumeOnce sync.Once
+	releaseBuild := func() {
+		resumeOnce.Do(func() { close(resume) })
+	}
+	defer releaseBuild()
+
+	sessionA := dial(t)
+	defer sessionA.Close(ctx)
+	createDone := make(chan error, 1)
+	go func() {
+		_, execErr := sessionA.Exec(ctx, "CREATE UNIQUE INDEX CONCURRENTLY nonblock_t_v_idx ON nonblock_t (v)")
+		createDone <- execErr
+	}()
+
+	select {
+	case <-paused:
+	case execErr := <-createDone:
+		require.NoError(t, execErr)
+		t.Fatal("CREATE INDEX CONCURRENTLY completed before reaching the Phase 1 build hook")
+	case <-time.After(15 * time.Second):
+		t.Fatal("CREATE INDEX CONCURRENTLY never reached the Phase 1 build hook")
+	}
+
+	sessionB := dial(t)
+	defer sessionB.Close(ctx)
+	writeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_, err = sessionB.Exec(writeCtx, "INSERT INTO nonblock_t VALUES (3, 30)")
+	require.NoError(t, err, "writer should not block while CREATE INDEX CONCURRENTLY is in Phase 1")
+	_, err = sessionB.Exec(writeCtx, "UPDATE nonblock_t SET v = 25 WHERE id = 2")
+	require.NoError(t, err, "updater should not block while CREATE INDEX CONCURRENTLY is in Phase 1")
+	_, err = sessionB.Exec(writeCtx, "DELETE FROM nonblock_t WHERE id = 1")
+	require.NoError(t, err, "deleter should not block while CREATE INDEX CONCURRENTLY is in Phase 1")
+
+	releaseBuild()
+	select {
+	case execErr := <-createDone:
+		require.NoError(t, execErr)
+	case <-time.After(15 * time.Second):
+		t.Fatal("CREATE INDEX CONCURRENTLY never finished after releasing the Phase 1 build hook")
+	}
+
+	var id int
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT id FROM nonblock_t WHERE v = 30").Scan(&id))
+	require.Equal(t, 3, id)
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT id FROM nonblock_t WHERE v = 25").Scan(&id))
+	require.Equal(t, 2, id)
+	var count int
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT count(*) FROM nonblock_t WHERE v = 10").Scan(&count))
+	require.Equal(t, 0, count)
+
+	rows, err := sessionB.Query(ctx, "EXPLAIN SELECT id FROM nonblock_t WHERE v = 30")
+	require.NoError(t, err)
+	defer rows.Close()
+	var plan strings.Builder
+	for rows.Next() {
+		var line string
+		require.NoError(t, rows.Scan(&line))
+		plan.WriteString(line)
+		plan.WriteByte('\n')
+	}
+	require.NoError(t, rows.Err())
+	require.Contains(t, plan.String(), "IndexedTableAccess")
 }
 
 func assertConcurrentIndexCrossSessionVisibility(

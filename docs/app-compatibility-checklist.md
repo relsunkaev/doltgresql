@@ -415,16 +415,18 @@ Do not check off an item until it has workload proof:
   evidence in testing/go/alembic_concurrently_test.go: the harness
   installs Alembic + SQLAlchemy + psycopg in a venv and runs a real
   migration with op.create_index(..., postgresql_concurrently=True)
-  / op.drop_index(..., postgresql_concurrently=True). What this
-  does *not* deliver is PostgreSQL's "non-blocking on writers"
-  contract — see the two follow-ups below.
-- [ ] CONCURRENTLY non-blocking writes during Phase 1 - PG's whole
-  point of CONCURRENTLY is that producers can keep writing while
-  the index backfill runs. Doltgres' Phase 1 still holds a write
-  lock for the duration of the build, so concurrent writers
-  block. Closing this needs Dolt-side dual-write (writers
-  maintain a pending index while the backfill runs); out of
-  scope until that primitive lands.
+  / op.drop_index(..., postgresql_concurrently=True).
+- [x] CONCURRENTLY non-blocking writes during Phase 1 - a deterministic
+  regression pauses Dolt's local `creation.CreateIndex` path after index
+  metadata is registered in memory and before the secondary prolly tree is
+  built, then proves a second session can insert, update, and delete rows
+  through a timeout-bounded writer while session A remains in the Phase 1
+  build. After session A resumes, the UNIQUE CONCURRENTLY build completes,
+  `pg_index` is valid/ready, the planner uses `IndexedTableAccess`, and the
+  final index sees the inserted row, updated row, and deleted-row absence.
+  Pinned by testing/go/create_index_concurrently_contention_test.go's
+  TestCreateIndexConcurrentlyAllowsWritersDuringPhase1 and by the local Dolt
+  hook in third_party/dolt/go/libraries/doltcore/table/editor/creation/index.go.
 - [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
   btree `INCLUDE`, non-unique btree partial, supported JSONB GIN, and
   non-unique btree expression indexes now use the same two-phase
@@ -434,8 +436,7 @@ Do not check off an item until it has workload proof:
   keep predicate-scoped uniqueness after the final flip. Unique
   expression `CONCURRENTLY` shapes still route through their existing
   synchronous build path; migration tools do not error, but that shape
-  does not expose the two-phase catalog state yet. This does not change
-  the separate non-blocking writer gap above. Pinned by
+  does not expose the two-phase catalog state yet. Pinned by
   testing/go/create_index_concurrently_test.go and
   testing/go/create_index_concurrently_contention_test.go.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,
@@ -1121,68 +1122,20 @@ rather than only a Go-level harness.
 
 ## Proposed dolt changes
 
-Items here are gaps that doltgresql alone cannot close because the
-seam lives inside the imported `github.com/dolthub/dolt/go` module.
-Doltgresql consumes dolt as a published Go module (no `replace`
-directive, no vendor copy, no local override), so any change to the
-writer/editor/storage path requires an upstream dolt PR. The
-investigation references below name the file:line targets so the
-follow-up work has a starting point.
+No open app-compatibility blocker currently needs a Dolt-side patch. The repo
+now uses a local `replace github.com/dolthub/dolt/go => ./third_party/dolt/go`,
+and the remaining `CREATE INDEX CONCURRENTLY` writer-concurrency concern was
+closed with executable evidence rather than a new storage primitive: writers
+can commit while Phase 1 is paused, and Dolt's working-set merge reconciles
+those row changes with the committing schema/index build.
 
-- [ ] CREATE INDEX CONCURRENTLY phase 4 — non-blocking writes during
-  the index backfill. Today doltgresql runs phase 1 as a synchronous
-  `IndexAlterableTable.CreateIndex`, which holds a write lock for
-  the duration of the prolly-tree build. The phase 2 metadata flip
-  is already lock-free (commit `665eba41`); only the build itself
-  still serializes writes.
-
-  The seam is in dolt's writer:
-  `libraries/doltcore/sqle/writer/schema_cache.go:newWriterSchema`
-  walks `Schema.Indexes().AllIndexes()` and populates
-  `WriterState.SecIndexes`. The prolly table writer
-  (`prolly_table_writer.go:Insert`/`Update`/`Delete`) iterates
-  `w.secondary` for every row write. Adding a per-index "skip while
-  pending" / "include during dual-write" decision in `newWriterSchema`
-  is the single chokepoint.
-
-  Minimal upstream patch (~100 lines across 4-5 files):
-  1. `schema.IndexProperties` (libraries/doltcore/schema/index_coll.go)
-     — add `NotReady bool` and `Invalid bool` fields, mirroring
-     PostgreSQL's `pg_index.indisready` / `pg_index.indisvalid`.
-  2. Schema serialization — preserve the new bits across the
-     flatbuffers / nbf round-trip used by `UpdateSchema`.
-  3. `newWriterSchema` — skip indexes flagged `NotReady=true` from
-     `SecIndexes`, include `NotReady=false, Invalid=true` indexes so
-     writers dual-write while the planner still ignores them.
-  4. `AlterableDoltTable.CreateIndex`
-     (libraries/doltcore/sqle/tables.go) — add a "register without
-     building" mode so phase 1 can install the (pending, invalid)
-     index entry without the synchronous backfill.
-  5. Add a `BackfillIndex` method that populates the prolly tree
-     from a snapshot read while writers continue against the live
-     working set, with a final validation scan to pick up rows
-     written between the snapshot point and the flip.
-
-  Doltgresql side (post-patch): swap the synchronous `CreateIndex`
-  in `server/node/create_index_concurrently.go` for the new
-  register-then-backfill API, and have the state-machine flip drive
-  the new bits through `flipIndexComment`'s peer (a
-  `flipIndexBuildState` that toggles `NotReady`/`Invalid` directly
-  on `IndexProperties` rather than the comment payload).
-
-  Branch-and-merge alternative entirely inside doltgresql is
-  technically possible via dolt's public branching/diff APIs, but
-  that re-implements inside doltgresql what dolt already does
-  internally and would run several hundred lines plus serious
-  correctness work for iterative-catchup races. Not worth it when
-  the upstream patch is ~100 lines.
-
-  Why this is not urgent: doltgresql's prolly-tree builds are fast,
-  so the phase 1 lock window is short for typical workloads. The
-  state-machine + metadata-flip already in place gives ORMs the
-  catalog/planner-visibility semantics they care about. Phase 4
-  matters once table sizes push the build into multi-second
-  territory.
+- [x] CREATE INDEX CONCURRENTLY phase 4 — non-blocking writes during the index
+  backfill. Pinned by
+  testing/go/create_index_concurrently_contention_test.go's
+  TestCreateIndexConcurrentlyAllowsWritersDuringPhase1, which pauses the local
+  Dolt secondary-index build and verifies concurrent insert/update/delete
+  writers complete before the build resumes and remain visible through the
+  final valid/ready index.
 
 ## Current support claim
 

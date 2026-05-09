@@ -32,20 +32,16 @@ import (
 //
 //  1. **Register**: build the index under (indisready=false, indisvalid=false)
 //     so the planner cannot use it and the catalog reflects an in-progress
-//     build to any other session that inspects pg_index. Today the build
-//     itself is synchronous because Dolt has no comment-only update path —
-//     the value of this phase is the catalog state, not concurrency.
-//  2. **Flip**: drop and recreate the index with the build-state bits
-//     cleared, surfacing it under steady-state (indisready=true,
+//     build to any other session that inspects pg_index. The build runs in
+//     this transaction while concurrent writers commit normally; Dolt's
+//     working-set merge folds those writes into the committing schema change.
+//  2. **Flip**: update only the encoded PostgreSQL build-state bits, surfacing
+//     the existing prolly index under steady-state (indisready=true,
 //     indisvalid=true) where the planner picks it up.
 //
-// The double-build cost is the deliberate stepping-stone trade-off: the
-// state machine becomes observable to outside sessions today, and Phase 3
-// will replace step 2 with a Dolt-side metadata-only flip once that API
-// lands. Workloads that emit CREATE INDEX CONCURRENTLY (Drizzle Kit,
-// Alembic, Prisma, Rails) get correct catalog semantics now; the build
-// performance characteristics improve later without a re-spec of the SQL
-// surface.
+// Workloads that emit CREATE INDEX CONCURRENTLY (Drizzle Kit, Alembic, Prisma,
+// Rails) get observable pg_index state, non-blocking writer behavior during
+// the phase 1 build, and a metadata-only final flip.
 //
 // Edge cases that fall back to a regular synchronous CREATE INDEX (no
 // state-machine wrapping) are handled at the AST level — unique expression
@@ -168,14 +164,11 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, errors.Errorf(`relation "%s" does not support index alteration`, c.table)
 	}
 
-	// Phase 1: register-with-Building. Writers maintain the index, but
-	// the planner skips it (indisready=false, indisvalid=false). In real
-	// PostgreSQL this is a 3-step dance — register pending, wait, flip
-	// indisready, wait, build, flip indisvalid — but the wait phases
-	// exist to drain transactions started under the old visibility, and
-	// doltgres does not expose the same multi-version snapshot view, so
-	// we collapse them into a single "register-and-build under both bits
-	// false" step.
+	// Phase 1: register-with-Building. The planner skips the index
+	// (indisready=false, indisvalid=false), while concurrent writers can still
+	// commit against the table. If those writers commit before this transaction,
+	// Dolt's working-set merge reconciles their row changes with this schema
+	// change and the newly built secondary index.
 	pendingMetadata := c.metadata
 	pendingMetadata.NotReady = true
 	pendingMetadata.Invalid = true
