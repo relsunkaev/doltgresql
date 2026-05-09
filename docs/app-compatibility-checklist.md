@@ -104,7 +104,10 @@ Do not check off an item until it has workload proof:
   the native `vector(n)` type round-trips scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
   for dump restore; actual GiST operator classes and indexes remain
-  tracked under the GiST item below. `citext` remains untested. Pinned by
+  tracked under the GiST item below. `CREATE EXTENSION citext`
+  installs a text-compatible `citext` type in the target schema so
+  dump schemas using `public.citext` can load and round-trip values;
+  full case-insensitive operator/index parity remains residual risk. Pinned by
   testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser

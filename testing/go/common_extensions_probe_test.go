@@ -152,5 +152,26 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "CREATE EXTENSION citext installs text-compatible type",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;`,
+				`CREATE TABLE app_users (id integer primary key, email public.citext);`,
+				`INSERT INTO app_users VALUES (1, 'Alice@Example.com');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'citext';`,
+					Expected: []sql.Row{{"citext", "public"}},
+				},
+				{
+					Query:    `SELECT email::text FROM app_users WHERE id = 1;`,
+					Expected: []sql.Row{{"Alice@Example.com"}},
+				},
+			},
+		},
 	})
 }

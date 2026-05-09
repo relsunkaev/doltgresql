@@ -32,6 +32,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // CreateExtension implements CREATE EXTENSION.
@@ -100,6 +101,9 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		return nil, err
 	}
 	if createExtensionSkipsSQL(c.Name) {
+		if err = c.installBuiltinExtensionObjects(ctx, targetNamespace); err != nil {
+			return nil, err
+		}
 		if err = c.addLoadedExtension(ctx, extCollection, ext, targetNamespace); err != nil {
 			return nil, err
 		}
@@ -190,6 +194,14 @@ func builtinExtensionShim(name string) (*pg_extension.ExtensionFiles, bool) {
 				Relocatable:    true,
 			},
 		}, true
+	case "citext":
+		return &pg_extension.ExtensionFiles{
+			Name: name,
+			Control: pg_extension.Control{
+				DefaultVersion: pg_extension.ToVersion(1, 6),
+				Relocatable:    true,
+			},
+		}, true
 	case "plpgsql":
 		return &pg_extension.ExtensionFiles{
 			Name: name,
@@ -234,6 +246,32 @@ func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_exten
 	return id.NewNamespace(schemaName), nil
 }
 
+func (c *CreateExtension) installBuiltinExtensionObjects(ctx *sql.Context, namespace id.Namespace) error {
+	switch strings.ToLower(c.Name) {
+	case "citext":
+		return c.installCitextType(ctx, namespace)
+	default:
+		return nil
+	}
+}
+
+func (c *CreateExtension) installCitextType(ctx *sql.Context, namespace id.Namespace) error {
+	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	typeID := id.NewType(namespace.SchemaName(), "citext")
+	arrayID := id.NewType(namespace.SchemaName(), "_citext")
+	if typesCollection.HasType(ctx, typeID) {
+		return nil
+	}
+	citext := pgtypes.NewCitextType(arrayID, typeID)
+	if err = typesCollection.CreateType(ctx, citext); err != nil {
+		return err
+	}
+	return typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(citext))
+}
+
 func (c *CreateExtension) useExtensionSearchPath(ctx *sql.Context, namespace id.Namespace) (func(), error) {
 	schemaName := namespace.SchemaName()
 	if len(schemaName) == 0 {
@@ -267,7 +305,7 @@ func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
 
 func createExtensionSkipsSQL(name string) bool {
 	switch strings.ToLower(name) {
-	case "btree_gist", "pgcrypto", "plpgsql", "vector":
+	case "btree_gist", "citext", "pgcrypto", "plpgsql", "vector":
 		return true
 	default:
 		return false

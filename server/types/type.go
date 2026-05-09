@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -179,7 +180,7 @@ func (t *DoltgresType) BaseType() *DoltgresType {
 // CharacterSet implements the sql.StringType interface.
 func (t *DoltgresType) CharacterSet() sql.CharacterSetID {
 	switch t.ID.TypeName() {
-	case "varchar", "text", "name":
+	case "citext", "varchar", "text", "name":
 		return sql.CharacterSet_binary
 	default:
 		return sql.CharacterSet_Unspecified
@@ -189,7 +190,7 @@ func (t *DoltgresType) CharacterSet() sql.CharacterSetID {
 // Collation implements the sql.StringType interface.
 func (t *DoltgresType) Collation() sql.CollationID {
 	switch t.ID.TypeName() {
-	case "varchar", "text", "name":
+	case "citext", "varchar", "text", "name":
 		return sql.Collation_Default
 	default:
 		return sql.Collation_Unspecified
@@ -279,6 +280,10 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		return compareUnsignedIntegral(ab, v2)
 	case string:
 		bb := v2.(string)
+		if t.ID.TypeName() == "citext" {
+			ab = strings.ToLower(ab)
+			bb = strings.ToLower(bb)
+		}
 		if ab == bb {
 			return 0, nil
 		} else if ab < bb {
