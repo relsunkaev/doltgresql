@@ -249,7 +249,7 @@ func nodeAlterTableAddConstraint(
 	case *tree.UniqueConstraintTableDef:
 		return nodeUniqueConstraintTableDef(ctx, constraintDef, tableName, ifExists)
 	case *tree.ForeignKeyConstraintTableDef:
-		foreignKeyDefinition, err := nodeForeignKeyConstraintTableDef(ctx, constraintDef)
+		foreignKeyDefinition, err := nodeForeignKeyConstraintTableDef(ctx, tableName.Name.String(), constraintDef)
 		if err != nil {
 			return nil, err
 		}
@@ -300,7 +300,7 @@ func nodeAlterTableAddColumn(ctx *Context, node *tree.AlterTableAddColumn, table
 	tableSpec.AddColumn(vitessColumnDef)
 
 	if node.ColumnDef.References.Table != nil {
-		constraintDef, err := nodeForeignKeyDefinitionFromColumnTableDef(ctx, node.ColumnDef.Name, node.ColumnDef)
+		constraintDef, err := nodeForeignKeyDefinitionFromColumnTableDef(ctx, tableName.Name.String(), node.ColumnDef.Name, node.ColumnDef)
 		if err != nil {
 			return nil, err
 		}

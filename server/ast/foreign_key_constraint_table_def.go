@@ -20,10 +20,11 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/deferrable"
 )
 
 // nodeForeignKeyConstraintTableDef handles *tree.ForeignKeyConstraintTableDef nodes.
-func nodeForeignKeyConstraintTableDef(ctx *Context, node *tree.ForeignKeyConstraintTableDef) (*vitess.ForeignKeyDefinition, error) {
+func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tree.ForeignKeyConstraintTableDef) (*vitess.ForeignKeyDefinition, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -48,6 +49,19 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, node *tree.ForeignKeyConstra
 	toCols := make([]vitess.ColIdent, len(node.ToCols))
 	for i := range node.ToCols {
 		toCols[i] = vitess.NewColIdent(string(node.ToCols[i]))
+	}
+	if childTable != "" {
+		deferrable.RegisterParsedForeignKey(deferrable.ParsedForeignKey{
+			Name:          string(node.Name),
+			Table:         childTable,
+			Columns:       nameListToStrings(node.FromCols),
+			ParentTable:   string(node.Table.ObjectName),
+			ParentColumns: nameListToStrings(node.ToCols),
+			Timing: deferrable.Timing{
+				Deferrable:        node.Deferrable == tree.Deferrable,
+				InitiallyDeferred: node.Initially == tree.InitiallyDeferred,
+			},
+		})
 	}
 	var refActions [2]vitess.ReferenceAction
 	for i, refAction := range []tree.RefAction{node.Actions.Delete, node.Actions.Update} {
@@ -79,4 +93,12 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, node *tree.ForeignKeyConstra
 		OnDelete:          refActions[0],
 		OnUpdate:          refActions[1],
 	}, nil
+}
+
+func nameListToStrings(names tree.NameList) []string {
+	strings := make([]string, len(names))
+	for i, name := range names {
+		strings[i] = string(name)
+	}
+	return strings
 }

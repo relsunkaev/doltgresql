@@ -65,6 +65,7 @@ const (
 	ruleId_AssignNullsNotDistinctUniqueChecks                               // assignNullsNotDistinctUniqueChecks
 	ruleId_AssignRowLevelLocking                                            // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                   // suppressReplicaRoleForeignKeys
+	ruleId_SuppressDeferrableForeignKeys                                    // suppressDeferrableForeignKeys
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -136,6 +137,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_OptimizeFunctions, Apply: OptimizeFunctions},
 		// AddDomainConstraintsToCasts needs to run after 'assignExecIndexes' rule in GMS.
 		analyzer.Rule{Id: ruleId_AddDomainConstraintsToCasts, Apply: AddDomainConstraintsToCasts},
+		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
 		analyzer.Rule{Id: ruleId_InsertContextRootFinalizer, Apply: InsertContextRootFinalizer},

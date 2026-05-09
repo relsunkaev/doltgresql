@@ -82,13 +82,15 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef) (*vitess.Column
 		if len(node.References.Col) == 0 {
 			return nil, errors.Errorf("implicit primary key matching on column foreign key is not yet supported")
 		}
-		fkDef, err = nodeForeignKeyConstraintTableDef(ctx, &tree.ForeignKeyConstraintTableDef{
-			Name:     node.References.ConstraintName,
-			Table:    *node.References.Table,
-			FromCols: tree.NameList{node.Name},
-			ToCols:   tree.NameList{node.References.Col},
-			Actions:  node.References.Actions,
-			Match:    node.References.Match,
+		fkDef, err = nodeForeignKeyConstraintTableDef(ctx, "", &tree.ForeignKeyConstraintTableDef{
+			Name:       node.References.ConstraintName,
+			Table:      *node.References.Table,
+			FromCols:   tree.NameList{node.Name},
+			ToCols:     tree.NameList{node.References.Col},
+			Actions:    node.References.Actions,
+			Match:      node.References.Match,
+			Deferrable: node.References.Deferrable,
+			Initially:  node.References.Initially,
 		})
 		if err != nil {
 			return nil, err

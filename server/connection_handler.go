@@ -55,6 +55,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/notifications"
@@ -220,6 +221,7 @@ func (h *ConnectionHandler) HandleConnection() {
 		return h.send(message)
 	})
 	defer notifications.Unregister(h.mysqlConn.ConnectionID)
+	defer deferrable.Rollback(h.mysqlConn.ConnectionID)
 
 	// Main session loop: read messages one at a time off the connection until we receive a |Terminate| message, in
 	// which case we hang up, or the connection is closed by the client, which generates an io.EOF from the connection.
@@ -2123,6 +2125,17 @@ func fieldDataTypeOIDs(fields []pgproto3.FieldDescription) []uint32 {
 
 // query runs the given query and sends a CommandComplete message to the client
 func (h *ConnectionHandler) query(query ConvertedQuery) error {
+	if isCommitQuery(query) {
+		if err := h.validateDeferredConstraints(); err != nil {
+			deferrable.Rollback(h.mysqlConn.ConnectionID)
+			h.clearPendingReplication()
+			if rollbackErr := h.rollbackOpenTransactionAfterFailedCommit(); rollbackErr != nil {
+				return fmt.Errorf("%v; rollback failed: %w", err, rollbackErr)
+			}
+			return err
+		}
+	}
+
 	// |rowsAffected| gets altered by the callback below
 	rowsAffected := int32(0)
 
@@ -2232,14 +2245,59 @@ func isRollbackQuery(query ConvertedQuery) bool {
 	return ok
 }
 
+func (h *ConnectionHandler) validateDeferredConstraints() error {
+	for _, check := range deferrable.PendingChecks(h.mysqlConn.ConnectionID) {
+		convertedChecks, err := h.convertQuery(check.Query)
+		if err != nil {
+			return err
+		}
+		if len(convertedChecks) != 1 {
+			return errors.Errorf("expected one deferred constraint check query, got %d", len(convertedChecks))
+		}
+		checkQuery := convertedChecks[0]
+		hasViolation := false
+		err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, checkQuery.String, checkQuery.AST, func(ctx *sql.Context, res *Result) error {
+			if len(res.Rows) > 0 {
+				hasViolation = true
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		if hasViolation {
+			fk := check.ForeignKey
+			return sql.ErrForeignKeyChildViolation.New(fk.Name, fk.Table, fk.ParentTable, "deferred")
+		}
+	}
+	return nil
+}
+
+func (h *ConnectionHandler) rollbackOpenTransactionAfterFailedCommit() error {
+	rollbackQueries, err := h.convertQuery("ROLLBACK")
+	if err != nil {
+		return err
+	}
+	if len(rollbackQueries) != 1 {
+		return errors.Errorf("expected one rollback query, got %d", len(rollbackQueries))
+	}
+	rollbackQuery := rollbackQueries[0]
+	return h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, rollbackQuery.String, rollbackQuery.AST, func(ctx *sql.Context, res *Result) error {
+		return nil
+	})
+}
+
 func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 	connectionID := h.mysqlConn.ConnectionID
 	switch {
 	case isBeginQuery(query):
+		deferrable.Begin(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
+		deferrable.Commit(connectionID)
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
+		deferrable.Rollback(connectionID)
 		notifications.Rollback(connectionID)
 	case !h.inTransaction:
 		return notifications.Commit(connectionID)

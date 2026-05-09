@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 )
 
@@ -54,6 +55,11 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					fk.Name = generatedName
 				}
 				generatedNames[fk.Name] = struct{}{}
+				fkForTiming := *fk
+				if fkForTiming.Table == "" {
+					fkForTiming.Table = n.Name()
+				}
+				deferrable.BindForeignKey(fkForTiming)
 			}
 			if changedForeignKey {
 				newCreateTable := plan.NewCreateTable(n.Db, n.Name(), n.IfNotExists(), n.Temporary(), &plan.TableSpec{
@@ -77,11 +83,13 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					return nil, transform.SameTree, err
 				}
 				copiedFk.Name = generatedName
+				deferrable.BindForeignKey(copiedFk)
 				return &plan.CreateForeignKey{
 					DbProvider: n.DbProvider,
 					FkDef:      &copiedFk,
 				}, transform.NewTree, nil
 			} else {
+				deferrable.BindForeignKey(*n.FkDef)
 				return n, transform.SameTree, nil
 			}
 

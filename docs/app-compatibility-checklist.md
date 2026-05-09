@@ -199,17 +199,19 @@ Do not check off an item until it has workload proof:
   reports `ALWAYS` for generated columns and `NEVER` for ordinary
   columns so dump tools can reconstruct the DDL. Coverage in
   testing/go/generated_columns_probe_test.go.
-- [~] Deferrable constraints - `DEFERRABLE INITIALLY DEFERRED` is
-  parsed and accepted at DDL, the table is created, and the FK
-  metadata round-trips. **But FK enforcement is still immediate** —
-  the violating row is rejected at INSERT, not at COMMIT, which is
-  wrong for any app that batches related rows in a transaction.
-  `SET CONSTRAINTS ALL DEFERRED` is accepted as a warning no-op for
-  migration compatibility, but it does not change enforcement timing.
-  Closing this still needs a deferred-violation queue checked at commit
-  time. Pinned by
-  testing/go/deferrable_constraints_probe_test.go so the silent
-  immediate-enforcement case stays visible.
+- [~] Deferrable constraints - `DEFERRABLE INITIALLY DEFERRED` FK DDL
+  is parsed and accepted. Child-side FK checks for constraints created
+  in the current server process are deferred inside explicit
+  transactions: inserting the child before the parent succeeds if the
+  parent is inserted before COMMIT, and an unresolved child row fails
+  COMMIT with SQLSTATE `23503` and rolls the transaction back.
+  Autocommit violations still reject at the statement boundary. This is
+  still partial PostgreSQL parity: `SET CONSTRAINTS ALL DEFERRED` is
+  accepted as a warning no-op and does not change runtime timing,
+  parent-side NO ACTION delete/update checks are not deferred, and
+  deferrability is not yet durable catalog metadata exposed through
+  `pg_constraint.condeferrable` / `pg_constraint.condeferred`. Pinned by
+  testing/go/deferrable_constraints_probe_test.go.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
   PRIVILEGES ...` are accepted so pg_dump's ownership and privilege

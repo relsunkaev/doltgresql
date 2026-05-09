@@ -201,12 +201,14 @@ func (node *CreateTable) HoistConstraints() {
 					targetCol = append(targetCol, col.References.Col)
 				}
 				node.Defs = append(node.Defs, &ForeignKeyConstraintTableDef{
-					Table:    *col.References.Table,
-					FromCols: NameList{col.Name},
-					ToCols:   targetCol,
-					Name:     col.References.ConstraintName,
-					Actions:  col.References.Actions,
-					Match:    col.References.Match,
+					Table:      *col.References.Table,
+					FromCols:   NameList{col.Name},
+					ToCols:     targetCol,
+					Name:       col.References.ConstraintName,
+					Actions:    col.References.Actions,
+					Match:      col.References.Match,
+					Deferrable: col.References.Deferrable,
+					Initially:  col.References.Initially,
 				})
 				col.References.Table = nil
 			}
@@ -925,12 +927,14 @@ func (c CompositeKeyMatchMethod) String() string {
 
 // ForeignKeyConstraintTableDef represents a FOREIGN KEY constraint in the AST.
 type ForeignKeyConstraintTableDef struct {
-	Name     Name
-	FromCols NameList
-	Table    TableName
-	ToCols   NameList
-	Actions  ReferenceActions
-	Match    CompositeKeyMatchMethod
+	Name       Name
+	FromCols   NameList
+	Table      TableName
+	ToCols     NameList
+	Actions    ReferenceActions
+	Match      CompositeKeyMatchMethod
+	Deferrable DeferrableMode
+	Initially  InitiallyMode
 }
 
 // Format implements the NodeFormatter interface.
@@ -958,6 +962,20 @@ func (node *ForeignKeyConstraintTableDef) Format(ctx *FmtCtx) {
 	}
 
 	ctx.FormatNode(&node.Actions)
+	switch node.Deferrable {
+	case Deferrable:
+		ctx.WriteString(" DEFERRABLE")
+		switch node.Initially {
+		case InitiallyImmediate:
+			ctx.WriteString(" INITIALLY IMMEDIATE")
+		case InitiallyDeferred:
+			ctx.WriteString(" INITIALLY DEFERRED")
+		default:
+		}
+	case NotDeferrable:
+		ctx.WriteString(" NOT DEFERRABLE")
+	default:
+	}
 }
 
 // SetName implements the ConstraintTableDef interface.

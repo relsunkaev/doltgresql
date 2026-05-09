@@ -15,7 +15,14 @@
 package _go
 
 import (
+	"context"
+	"fmt"
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/stretchr/testify/require"
 )
 
 // TestDeferrableConstraintsProbe pins how DEFERRABLE FK DDL behaves
@@ -46,13 +53,10 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 			},
 		},
 		{
-			// Today: DEFERRABLE INITIALLY DEFERRED is parsed and the
-			// table is created, but FK enforcement is still immediate
-			// — the violating row is rejected at INSERT time, not at
-			// COMMIT. Pin the silent-immediate behavior so the gap is
-			// visible. PG-correct semantics would defer enforcement
-			// to commit and only error there.
-			Name: "DEFERRED FK enforces immediately (residual gap)",
+			// In autocommit mode the statement boundary is also the
+			// transaction boundary, so a deferred FK violation is still
+			// visible to the client on the INSERT statement.
+			Name: "DEFERRED FK autocommit violation is rejected at statement boundary",
 			SetUpScript: []string{
 				`CREATE TABLE p (id INT PRIMARY KEY);`,
 				`CREATE TABLE c (
@@ -62,10 +66,6 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// PG would accept this (deferred until commit)
-					// and only reject at COMMIT. Doltgres rejects
-					// here, immediate-style. Pin the rejection so the
-					// gap stays visible.
 					Query:       `INSERT INTO c VALUES (1, 999);`,
 					ExpectedErr: "Foreign key violation",
 				},
@@ -86,4 +86,97 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestDeferrableForeignKeyTransactionSemantics(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	conn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable",
+		port,
+	))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Close(context.Background()))
+	})
+
+	for _, stmt := range []string{
+		`CREATE TABLE parent_deferred (id INT PRIMARY KEY)`,
+		`CREATE TABLE child_deferred (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_deferred_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_deferred(id)
+				DEFERRABLE INITIALLY DEFERRED
+		)`,
+		`CREATE TABLE child_recreated (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_recreated_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_deferred(id)
+				DEFERRABLE INITIALLY DEFERRED
+		)`,
+	} {
+		_, err = conn.Exec(ctx, stmt)
+		require.NoError(t, err, stmt)
+	}
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_deferred VALUES (1, 10)`)
+	require.NoError(t, err, "DEFERRABLE INITIALLY DEFERRED must not reject before commit")
+	_, err = conn.Exec(ctx, `INSERT INTO parent_deferred VALUES (10)`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `COMMIT`)
+	require.NoError(t, err)
+
+	var count int
+	err = conn.QueryRow(ctx, `SELECT count(*) FROM child_deferred`).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_deferred VALUES (2, 20)`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `COMMIT`)
+	require.Error(t, err)
+	requireForeignKeyViolation(t, err)
+
+	err = conn.QueryRow(ctx, `SELECT count(*) FROM child_deferred`).Scan(&count)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	_, err = conn.Exec(ctx, `DROP TABLE child_recreated`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `CREATE TABLE child_recreated (
+		id INT PRIMARY KEY,
+		parent_id INT,
+		CONSTRAINT child_recreated_parent_fk
+			FOREIGN KEY (parent_id) REFERENCES parent_deferred(id)
+			NOT DEFERRABLE
+	)`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_recreated VALUES (1, 30)`)
+	requireForeignKeyViolation(t, err)
+	_, err = conn.Exec(ctx, `ROLLBACK`)
+	require.NoError(t, err)
+}
+
+func requireForeignKeyViolation(t *testing.T, err error) {
+	t.Helper()
+	require.Error(t, err)
+	var pgErr *pgconn.PgError
+	require.ErrorAs(t, err, &pgErr)
+	require.Equal(t, "23503", pgErr.Code)
 }
