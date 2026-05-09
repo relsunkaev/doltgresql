@@ -165,6 +165,41 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE INDEX CONCURRENTLY JSONB GIN",
+			SetUpScript: []string{
+				"CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB);",
+				`INSERT INTO gin_t VALUES (1, '{"kind":"click","tags":["paid"]}'), (2, '{"kind":"view"}');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX CONCURRENTLY gin_t_doc_idx ON gin_t USING gin (doc jsonb_path_ops);",
+				},
+				{
+					Query: `SELECT indexdef
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'gin_t' AND indexname = 'gin_t_doc_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX gin_t_doc_idx ON public.gin_t USING gin (doc jsonb_path_ops)"},
+					},
+				},
+				{
+					Query: `SELECT i.indisready, i.indisvalid
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
+						WHERE c.relname = 'gin_t_doc_idx';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+				{
+					Query: `SELECT id FROM gin_t WHERE doc @> '{"kind":"click"}' ORDER BY id;`,
+					Expected: []sql.Row{
+						{1},
+					},
+				},
+			},
+		},
+		{
 			Name: "DROP INDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE drop_t (id INT PRIMARY KEY, v INT);",

@@ -545,7 +545,7 @@ func TestJsonbGinPostingRowBufferFlushesChunks(t *testing.T) {
 }
 
 func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 
 	metadata := create.indexMetadata()
 	require.NotNil(t, metadata.Gin)
@@ -555,7 +555,7 @@ func TestCreateJsonbGinIndexDefaultPostingStorageMetadata(t *testing.T) {
 
 func TestCreateJsonbGinIndexCreatesPostingChunkStorageByDefault(t *testing.T) {
 	ctx := sql.NewEmptyContext()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	creator := &recordingTableCreator{}
 
 	require.NoError(t, create.createPostingStorageTables(ctx, creator))
@@ -570,7 +570,7 @@ func TestCreateJsonbGinIndexCreatesPostingChunkStorageByDefault(t *testing.T) {
 
 func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbOps(t *testing.T) {
 	ctx := sql.NewEmptyContext()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkRowsPerChunk = 2
 	baseSchema := jsonbGinBaseSchema()
 	rows := sql.RowsToRowIter(
@@ -595,7 +595,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbOps(t *testing.T) {
 
 func TestCreateJsonbGinIndexBuildsPostingChunkRowsJsonbPathOps(t *testing.T) {
 	ctx := sql.NewEmptyContext()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbPathOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbPathOps)
 	create.postingChunkRowsPerChunk = 2
 	baseSchema := jsonbGinBaseSchema()
 	rows := sql.RowsToRowIter(
@@ -622,12 +622,12 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithSpill(t *testing.T) {
 		{int32(3), `{"tags":["standard"],"status":"closed","payload":{"category":"cat-1"}}`},
 		{int32(4), `{"tags":["vip"],"status":"closed","payload":{"category":"cat-3"}}`},
 	}
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkRowsPerChunk = 2
 	expected, err := create.buildPostingChunkRows(ctx, baseSchema, &benchmarkRowIter{rows: rows}, 1)
 	require.NoError(t, err)
 
-	spilled := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	spilled := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	spilled.postingChunkRowsPerChunk = 2
 	spilled.postingChunkBuildSpillEntries = 3
 	got, err := spilled.buildPostingChunkRows(ctx, baseSchema, &benchmarkRowIter{rows: rows}, 1)
@@ -676,7 +676,7 @@ func TestCreateJsonbGinIndexBuildsPostingChunkRowsWithParallelWorkers(t *testing
 		t.Run(test.name, func(t *testing.T) {
 			var expected []sql.Row
 			for _, workers := range workerCounts {
-				create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", test.opClass)
+				create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", test.opClass)
 				create.postingChunkRowsPerChunk = 2
 				create.postingChunkBuildSpillEntries = 3
 				create.postingChunkBuildWorkers = workers
@@ -698,7 +698,7 @@ func TestCreateJsonbGinIndexParallelBuildHonorsCanceledContext(t *testing.T) {
 	ctx := sql.NewContext(baseCtx)
 	cancel()
 	tempDir := t.TempDir()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkBuildSpillEntries = 1
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
@@ -714,7 +714,7 @@ func TestCreateJsonbGinIndexParallelBuildHonorsCanceledContext(t *testing.T) {
 func TestCreateJsonbGinIndexParallelBuildCleansRunsOnScanError(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tempDir := t.TempDir()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkBuildSpillEntries = 1
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
@@ -733,7 +733,7 @@ func TestCreateJsonbGinIndexParallelBuildCleansRunsOnScanError(t *testing.T) {
 func TestCreateJsonbGinIndexParallelBuildCleansRunsOnWorkerError(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tempDir := t.TempDir()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkBuildSpillEntries = 1
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir
@@ -750,7 +750,7 @@ func TestCreateJsonbGinIndexParallelBuildCleansRunsOnWorkerError(t *testing.T) {
 func TestCreateJsonbGinIndexParallelBuildCleansRunsOnSuccess(t *testing.T) {
 	ctx := sql.NewEmptyContext()
 	tempDir := t.TempDir()
-	create := NewCreateJsonbGinIndex(false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
+	create := NewCreateJsonbGinIndex(false, false, "public", "docs", "docs_doc_idx", "doc", indexmetadata.OpClassJsonbOps)
 	create.postingChunkBuildSpillEntries = 1
 	create.postingChunkBuildWorkers = 2
 	create.postingChunkBuildTempDir = tempDir

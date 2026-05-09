@@ -154,6 +154,10 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "INSERT INTO partial_t VALUES (1, 10, true), (2, 20, false)")
 	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, `INSERT INTO gin_t VALUES (1, '{"kind":"click"}'), (2, '{"kind":"view"}')`)
+	require.NoError(t, err)
 
 	assertConcurrentIndexCrossSessionVisibility(
 		t,
@@ -168,6 +172,13 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 		dial,
 		"CREATE INDEX CONCURRENTLY partial_t_tenant_active_idx ON partial_t (tenant_id) WHERE active",
 		"partial_t_tenant_active_idx",
+	)
+	assertConcurrentIndexCrossSessionVisibility(
+		t,
+		ctx,
+		dial,
+		"CREATE INDEX CONCURRENTLY gin_t_doc_idx ON gin_t USING gin (doc jsonb_path_ops)",
+		"gin_t_doc_idx",
 	)
 }
 

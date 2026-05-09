@@ -44,6 +44,7 @@ type JsonbGinMaintainedIndex struct {
 	ColumnIndex       int
 	OpClass           string
 	PostingChunkTable string
+	Searchable        bool
 }
 
 type JsonbGinMaintainedTable struct {
@@ -153,6 +154,7 @@ func WrapJsonbGinMaintainedTable(ctx *sql.Context, schemaName string, table sql.
 			ColumnIndex:       columnIndex,
 			OpClass:           opClass,
 			PostingChunkTable: metadata.Gin.PostingChunkTable,
+			Searchable:        indexmetadata.IsReady(index.Comment()) && indexmetadata.IsValid(index.Comment()),
 		})
 	}
 	if len(ginIndexes) == 0 {
@@ -419,6 +421,9 @@ func (t *JsonbGinMaintainedTable) lookupSpecForExpression(ctx *sql.Context, expr
 		return jsonbGinLookupSpec{}, false, nil
 	}
 	for _, index := range t.indexes {
+		if !index.Searchable {
+			continue
+		}
 		if !strings.EqualFold(field.Name(), index.ColumnName) {
 			continue
 		}

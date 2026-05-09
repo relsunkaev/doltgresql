@@ -37,8 +37,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	// CONCURRENTLY for btree indexes without expression columns is routed
 	// through the two-phase state-machine node below so external sessions
 	// can observe the in-progress build via pg_index.indisready/indisvalid.
-	// GIN and expression indexes fall back to a synchronous build that ignores
-	// CONCURRENTLY — migration tooling still gets a successful CREATE.
+	// Expression and partial-unique indexes fall back to a synchronous build
+	// that ignores CONCURRENTLY — migration tooling still gets a successful
+	// CREATE.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
@@ -98,6 +99,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 		return vitess.InjectedStatement{
 			Statement: pgnodes.NewCreateJsonbGinIndex(
 				node.IfNotExists,
+				node.Concurrently,
 				tableName.SchemaQualifier.String(),
 				tableName.Name.String(),
 				indexDef.Info.Name.String(),
@@ -194,8 +196,8 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 // canRouteConcurrentBtree reports whether a CREATE INDEX CONCURRENTLY
 // statement should be handled by the two-phase state-machine node. The
 // node can carry metadata-backed btree shapes such as INCLUDE columns
-// and non-unique partial predicates; expression columns, partial-unique
-// indexes, and GIN shapes route through their existing synchronous paths.
+// and non-unique partial predicates; expression columns and partial-unique
+// indexes route through their existing synchronous paths.
 func canRouteConcurrentBtree(node *tree.CreateIndex, metadata *indexmetadata.Metadata) bool {
 	for _, column := range node.Columns {
 		if column.Expr != nil {

@@ -46,10 +46,9 @@ import (
 // build is gone, so CONCURRENTLY now costs roughly one build plus a
 // metadata flip rather than two builds.
 //
-// Limitations: only handles plain btree indexes — fulltext, vector,
-// and spatial flags are forwarded unchanged but not specifically
-// exercised, so callers should reserve this path for the
-// state-machine flips it was written for.
+// Limitations: this only rewrites Dolt schema index metadata. Callers
+// should reserve it for state-machine flips where the physical index
+// tree and any sidecar storage are already correct.
 func flipIndexComment(ctx *sql.Context, schemaName, tableName, indexName, newComment string) error {
 	located, ok, err := locateIndex(ctx, schemaName, tableName, indexName, false)
 	if err != nil {

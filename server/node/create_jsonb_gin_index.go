@@ -50,6 +50,7 @@ const jsonbGinPostingBuildContextCheckInterval = 1024
 // CreateJsonbGinIndex handles CREATE INDEX USING gin for JSONB columns.
 type CreateJsonbGinIndex struct {
 	ifNotExists                   bool
+	concurrently                  bool
 	schema                        string
 	tableName                     string
 	indexName                     string
@@ -66,9 +67,10 @@ var _ sql.ExecSourceRel = (*CreateJsonbGinIndex)(nil)
 var _ vitess.Injectable = (*CreateJsonbGinIndex)(nil)
 
 // NewCreateJsonbGinIndex returns a new *CreateJsonbGinIndex.
-func NewCreateJsonbGinIndex(ifNotExists bool, schema string, tableName string, indexName string, columnName string, opClass string) *CreateJsonbGinIndex {
+func NewCreateJsonbGinIndex(ifNotExists bool, concurrently bool, schema string, tableName string, indexName string, columnName string, opClass string) *CreateJsonbGinIndex {
 	return &CreateJsonbGinIndex{
 		ifNotExists:      ifNotExists,
+		concurrently:     concurrently,
 		schema:           schema,
 		tableName:        tableName,
 		indexName:        indexName,
@@ -134,6 +136,10 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 	}
 
 	metadata := c.indexMetadata()
+	if c.concurrently {
+		metadata.NotReady = true
+		metadata.Invalid = true
+	}
 	if err = alterable.CreateIndex(ctx, sql.IndexDef{
 		Name:       c.indexName,
 		Comment:    indexmetadata.EncodeComment(metadata),
@@ -153,7 +159,27 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 		_ = alterable.DropIndex(ctx, c.indexName)
 		return nil, err
 	}
+	if err = c.finishConcurrentBuild(ctx, schemaName); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateJsonbGinIndex) finishConcurrentBuild(ctx *sql.Context, schemaName string) error {
+	if !c.concurrently {
+		return nil
+	}
+	if err := commitInterPhaseTransaction(ctx); err != nil {
+		return err
+	}
+	if testHookBetweenPhases != nil {
+		testHookBetweenPhases(ctx)
+	}
+	finalMetadata := c.indexMetadata()
+	if err := flipIndexComment(ctx, schemaName, c.tableName, c.indexName, alteredIndexComment(finalMetadata)); err != nil {
+		return err
+	}
+	return commitInterPhaseTransaction(ctx)
 }
 
 func (c *CreateJsonbGinIndex) indexMetadata() indexmetadata.Metadata {
