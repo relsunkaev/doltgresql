@@ -33,6 +33,13 @@ type Context struct {
 	// that scope EXCLUDED is just an ordinary identifier and must
 	// not be rewritten.
 	resolveExcludedRefs bool
+
+	// setOpOperandDepth marks SELECT conversion while it is an operand
+	// of UNION / INTERSECT / EXCEPT. GMS otherwise preserves source
+	// table column indexes for bare column projections, which can
+	// scramble set-op schemas when a catalog query selects a sparse
+	// subset of columns.
+	setOpOperandDepth int
 }
 
 // NewContext returns a new *Context.
@@ -63,4 +70,14 @@ func (ctx *Context) WithExcludedRefs(fn func() error) error {
 // rewritten to values(col) at this point in AST conversion.
 func (ctx *Context) ResolveExcludedRefs() bool {
 	return ctx.resolveExcludedRefs
+}
+
+func (ctx *Context) WithSetOpOperand(fn func() error) error {
+	ctx.setOpOperandDepth++
+	defer func() { ctx.setOpOperandDepth-- }()
+	return fn()
+}
+
+func (ctx *Context) InSetOpOperand() bool {
+	return ctx.setOpOperandDepth > 0
 }

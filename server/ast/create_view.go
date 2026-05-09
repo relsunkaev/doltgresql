@@ -100,7 +100,67 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 			Security:    sqlSecurity,
 			CheckOption: vCheckOpt,
 		},
-		SubStatementStr: node.AsSource.String(),
+		SubStatementStr: createViewSelectDefinition(ctx, node.AsSource.String()),
 	}
 	return stmt, nil
+}
+
+func createViewSelectDefinition(ctx *Context, fallback string) string {
+	query := strings.TrimSpace(ctx.originalQuery)
+	if query == "" {
+		return fallback
+	}
+	query = strings.TrimSuffix(query, ";")
+	asIdx := findKeywordOutsideQuotes(query, "as")
+	if asIdx < 0 {
+		return fallback
+	}
+	return strings.TrimSpace(query[asIdx+len("as"):])
+}
+
+func findKeywordOutsideQuotes(query, keyword string) int {
+	lowerKeyword := strings.ToLower(keyword)
+	inSingleQuote := false
+	inDoubleQuote := false
+	for i := 0; i < len(query); i++ {
+		switch query[i] {
+		case '\'':
+			if inDoubleQuote {
+				continue
+			}
+			if inSingleQuote && i+1 < len(query) && query[i+1] == '\'' {
+				i++
+				continue
+			}
+			inSingleQuote = !inSingleQuote
+		case '"':
+			if !inSingleQuote {
+				inDoubleQuote = !inDoubleQuote
+			}
+		default:
+			if inSingleQuote || inDoubleQuote {
+				continue
+			}
+			end := i + len(keyword)
+			if end > len(query) || strings.ToLower(query[i:end]) != lowerKeyword {
+				continue
+			}
+			if isIdentifierByteAround(query, i-1) || isIdentifierByteAround(query, end) {
+				continue
+			}
+			return i
+		}
+	}
+	return -1
+}
+
+func isIdentifierByteAround(query string, idx int) bool {
+	if idx < 0 || idx >= len(query) {
+		return false
+	}
+	ch := query[idx]
+	return ch == '_' ||
+		(ch >= '0' && ch <= '9') ||
+		(ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z')
 }

@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -70,6 +71,7 @@ var pgPublicationSchema = sql.Schema{
 	{Name: "pubdelete", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
 	{Name: "pubtruncate", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
 	{Name: "pubviaroot", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgPublicationName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationName},
 }
 
 // pgPublicationRowIter is the sql.RowIter for the pg_publication table.
@@ -97,6 +99,7 @@ func (iter *pgPublicationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		pub.PublishDelete,
 		pub.PublishTruncate,
 		pub.PublishViaPartition,
+		id.NewTable(PgCatalogName, PgPublicationName).AsId(),
 	}, nil
 }
 

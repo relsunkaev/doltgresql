@@ -69,6 +69,7 @@ var PgCollationSchema = sql.Schema{
 	{Name: "collctype", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName},     // TODO: collation C
 	{Name: "colliculocale", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName}, // TODO: collation C
 	{Name: "collversion", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgCollationName},   // TODO: collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgCollationName},
 }
 
 // pgCollationRowIter is the sql.RowIter for the pg_collation table.
@@ -140,17 +141,17 @@ var pgCollationRows = []pgCollation{
 
 func (collation pgCollation) toRow() sql.Row {
 	return sql.Row{
-		collation.oid,                        // oid
-		collation.name,                       // collname
-		id.NewNamespace("pg_catalog").AsId(), // collnamespace
-		id.Null,                              // collowner
-		collation.provider,                   // collprovider
-		true,                                 // collisdeterministic
-		int32(-1),                            // collencoding
-		collation.collate,                    // collcollate
-		collation.ctype,                      // collctype
-		collation.icuLocale,                  // colliculocale
-		nil,                                  // collicurules
-		collation.version,                    // collversion
+		collation.oid,                         // oid
+		collation.name,                        // collname
+		id.NewNamespace("pg_catalog").AsId(),  // collnamespace
+		id.NewId(id.Section_User, "postgres"), // collowner
+		collation.provider,                    // collprovider
+		true,                                  // collisdeterministic
+		int32(-1),                             // collencoding
+		collation.collate,                     // collcollate
+		collation.ctype,                       // collctype
+		collation.icuLocale,                   // colliculocale
+		collation.version,                     // collversion
+		id.NewTable(PgCatalogName, PgCollationName).AsId(), // tableoid
 	}
 }

@@ -101,6 +101,7 @@ var pgTriggerSchema = sql.Schema{
 	{Name: "tgqual", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgTriggerName}, // TODO: type pg_node_tree, collation C
 	{Name: "tgoldtable", Type: pgtypes.Name, Default: nil, Nullable: true, Source: PgTriggerName},
 	{Name: "tgnewtable", Type: pgtypes.Name, Default: nil, Nullable: true, Source: PgTriggerName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTriggerName},
 }
 
 func pgTriggerToRow(schema sql.Schema, trigger triggers.Trigger) sql.Row {
@@ -124,6 +125,7 @@ func pgTriggerToRow(schema sql.Schema, trigger triggers.Trigger) sql.Row {
 		nil,                                                                 // tgqual
 		emptyStringAsNil(trigger.OldTransitionName),                         // tgoldtable
 		emptyStringAsNil(trigger.NewTransitionName),                         // tgnewtable
+		id.NewTable(PgCatalogName, PgTriggerName).AsId(),                    // tableoid
 	}
 }
 

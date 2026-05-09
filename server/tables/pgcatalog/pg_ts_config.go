@@ -62,6 +62,7 @@ var pgTsConfigSchema = sql.Schema{
 	{Name: "cfgnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigName},
 	{Name: "cfgowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigName},
 	{Name: "cfgparser", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsConfigName},
 }
 
 // pgTsConfigRowIter is the sql.RowIter for the pg_ts_config table.

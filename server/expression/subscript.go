@@ -57,6 +57,9 @@ func (s Subscript) Type(ctx *sql.Context) sql.Type {
 	if !ok {
 		panic(fmt.Sprintf("unexpected type %T for subscript", s.Child.Type(ctx)))
 	}
+	if dt == types.Name {
+		return types.InternalChar
+	}
 	return dt.ArrayBaseType()
 }
 
@@ -99,6 +102,27 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 			return nil, nil
 		}
 		return child[index-1], nil
+	case string:
+		dt, ok := s.Child.Type(ctx).(*types.DoltgresType)
+		if !ok || dt != types.Name {
+			return nil, fmt.Errorf("unsupported type %T for subscript", child)
+		}
+
+		index, ok := indexVal.(int32)
+		if !ok {
+			converted, _, err := types.Int32.Convert(ctx, indexVal)
+			if err != nil {
+				return nil, err
+			}
+			index = converted.(int32)
+		}
+
+		// PostgreSQL name uses raw_array_subscript_handler over its fixed byte buffer.
+		// Unlike SQL arrays, this raw subscript path is zero-based.
+		if index < 0 || int(index) >= len(child) {
+			return nil, nil
+		}
+		return child[index : index+1], nil
 	default:
 		return nil, fmt.Errorf("unsupported type %T for subscript", child)
 	}

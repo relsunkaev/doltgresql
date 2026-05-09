@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,25 @@ func (p PgUserHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgUserHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_user row iter
-	return emptyRowIter()
+	roles := auth.GetAllRoles()
+	rows := make([]sql.Row, 0, len(roles))
+	for _, role := range roles {
+		if !role.CanLogin {
+			continue
+		}
+		rows = append(rows, sql.Row{
+			role.Name,                            // usename
+			id.NewId(id.Section_User, role.Name), // usesysid
+			role.CanCreateDB,                     // usecreatedb
+			role.IsSuperUser,                     // usesuper
+			role.IsReplicationRole,               // userepl
+			role.CanBypassRowLevelSecurity,       // usebypassrls
+			nil,                                  // passwd
+			roleValidUntil(role),                 // valuntil
+			nil,                                  // useconfig
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

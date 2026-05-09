@@ -80,6 +80,24 @@ var typesTests = []ScriptTest{
 		},
 	},
 	{
+		Name:        "schema-qualified array type cast",
+		SetUpScript: []string{},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    `SELECT pg_catalog.array_to_string('{70000,70001}'::pg_catalog.oid[], ',');`,
+				Expected: []sql.Row{{"70000,70001"}},
+			},
+			{
+				Query:    `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid);`,
+				Expected: []sql.Row{{int64(2)}},
+			},
+			{
+				Query:    `SELECT count(*) FROM unnest('{70000,70001}'::pg_catalog.oid[]) AS src(tbloid) JOIN (SELECT 70000::pg_catalog.oid AS oid) AS t ON src.tbloid = t.oid;`,
+				Expected: []sql.Row{{int64(1)}},
+			},
+		},
+	},
+	{
 		Name: "Bit type",
 		SetUpScript: []string{
 			"CREATE TABLE t_bit (id INTEGER primary key, v1 BIT(8), v2 BIT(3));",

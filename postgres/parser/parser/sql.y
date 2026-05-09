@@ -762,7 +762,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> DETACH DETACHED DICTIONARY DISABLE DISABLE_PAGE_SKIPPING DISCARD DISTINCT DO DOMAIN DOUBLE DROP
 
 %token <str> EACH ELEMENT ELSE ENABLE ENCODING ENCRYPTION_PASSPHRASE ENCRYPTED END ENUM ENUMS ESCAPE EVENT
-%token <str> EXCEPT EXCLUDE EXCLUDING EXISTS EXECUTE EXECUTION EXPERIMENTAL
+%token <str> EXCEPT EXCLUDE EXCLUDING EXCLUSIVE EXISTS EXECUTE EXECUTION EXPERIMENTAL
 %token <str> EXPERIMENTAL_FINGERPRINTS EXPERIMENTAL_REPLICA
 %token <str> EXPERIMENTAL_AUDIT EXPIRATION EXPLAIN EXPORT EXPRESSION
 %token <str> EXTENDED EXTENSION EXTERNAL EXTRACT EXTRACT_DURATION
@@ -791,9 +791,9 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> LANGUAGE LARGE LAST LATERAL LATEST LC_CTYPE LC_COLLATE
 %token <str> LEADING LEAKPROOF LEASE LEAST LEFT LESS LEVEL LIKE LIMIT
 %token <str> LINESTRING LINESTRINGM LINESTRINGZ LINESTRINGZM LIST
-%token <str> LOCAL LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCKED LOGGED LOGIN LOOKUP LOW LSHIFT
+%token <str> LOCAL LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCK LOCKED LOGGED LOGIN LOOKUP LOW LSHIFT
 
-%token <str> MAIN MATCH MATERIALIZED MAXVALUE MERGE METHOD MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
+%token <str> MAIN MATCH MATERIALIZED MAXVALUE MERGE METHOD MODE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
 %token <str> MINITCOND MINUTE MINVALUE MINVFUNC MODIFYCLUSTERSETTING MODULUS MONTH MSFUNC MSPACE MSSPACE MSTYPE
 %token <str> MULTILINESTRING MULTILINESTRINGM MULTILINESTRINGZ MULTILINESTRINGZM MULTIPOINT MULTIPOINTM
 %token <str> MULTIPOINTZ MULTIPOINTZM MULTIPOLYGON MULTIPOLYGONM MULTIPOLYGONZ MULTIPOLYGONZM MULTIRANGE_TYPE_NAME
@@ -1094,6 +1094,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> close_cursor_stmt
 %type <tree.Statement> declare_cursor_stmt
 %type <tree.Statement> reindex_stmt
+%type <tree.Statement> lock_stmt
 
 %type <tree.Statement> vacuum_stmt
 %type <*tree.VacuumOption> vacuum_option legacy_vacuum_option
@@ -1163,7 +1164,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.ValidationBehavior> opt_validate_behavior
 
 %type <str> opt_owner opt_template opt_encoding opt_strategy opt_locale opt_lc_collate opt_lc_ctype opt_icu_locale
-%type <str> opt_icu_rules opt_locale_provider opt_collation_version opt_tablespace opt_using_index_tablespace
+%type <str> lock_mode opt_lock_mode opt_icu_rules opt_locale_provider opt_collation_version opt_tablespace opt_using_index_tablespace
 
 %type <tree.IsolationLevel> transaction_iso_level
 %type <tree.UserPriority> transaction_user_priority
@@ -1546,6 +1547,7 @@ non_transaction_stmt:
 | close_cursor_stmt
 | declare_cursor_stmt
 | reindex_stmt
+| lock_stmt
 | vacuum_stmt
 
 stmt_list:
@@ -9087,6 +9089,61 @@ truncate_stmt:
   }
 | TRUNCATE error // SHOW HELP: TRUNCATE
 
+// %Help: LOCK - lock one or more tables
+// %Category: Misc
+// %Text: LOCK [TABLE] <tablename> [, ...] [IN <lockmode> MODE] [NOWAIT]
+// %SeeAlso: WEBDOCS/sql-lock.html
+lock_stmt:
+  LOCK opt_table relation_expr_list opt_lock_mode opt_nowait
+  {
+    $$.val = &tree.LockTable{Tables: $3.tableNames(), Mode: $4, Nowait: $5.bool()}
+  }
+| LOCK error // SHOW HELP: LOCK
+
+opt_lock_mode:
+  /* EMPTY */
+  {
+    $$ = "ACCESS EXCLUSIVE"
+  }
+| IN lock_mode MODE
+  {
+    $$ = $2
+  }
+
+lock_mode:
+  ACCESS SHARE
+  {
+    $$ = "ACCESS SHARE"
+  }
+| ROW SHARE
+  {
+    $$ = "ROW SHARE"
+  }
+| ROW EXCLUSIVE
+  {
+    $$ = "ROW EXCLUSIVE"
+  }
+| SHARE UPDATE EXCLUSIVE
+  {
+    $$ = "SHARE UPDATE EXCLUSIVE"
+  }
+| SHARE
+  {
+    $$ = "SHARE"
+  }
+| SHARE ROW EXCLUSIVE
+  {
+    $$ = "SHARE ROW EXCLUSIVE"
+  }
+| EXCLUSIVE
+  {
+    $$ = "EXCLUSIVE"
+  }
+| ACCESS EXCLUSIVE
+  {
+    $$ = "ACCESS EXCLUSIVE"
+  }
+
 password_clause:
   PASSWORD non_reserved_word_or_sconst
   {
@@ -15479,6 +15536,7 @@ unreserved_keyword:
 | EVENT
 | EXCLUDE
 | EXCLUDING
+| EXCLUSIVE
 | EXECUTE
 | EXECUTION
 | EXPERIMENTAL
@@ -15575,6 +15633,7 @@ unreserved_keyword:
 | LOCAL
 | LOCALE
 | LOCALE_PROVIDER
+| LOCK
 | LOCKED
 | LOGGED
 | LOGIN
@@ -15586,6 +15645,7 @@ unreserved_keyword:
 | MAXVALUE
 | MERGE
 | METHOD
+| MODE
 | MFINALFUNC
 | MFINALFUNC_EXTRA
 | MFINALFUNC_MODIFY

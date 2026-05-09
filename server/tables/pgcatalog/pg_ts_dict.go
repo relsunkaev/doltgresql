@@ -63,6 +63,7 @@ var pgTsDictSchema = sql.Schema{
 	{Name: "dictowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsDictName},
 	{Name: "dicttemplate", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsDictName},
 	{Name: "dictinitoption", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgTsDictName}, // TODO: collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsDictName},
 }
 
 // pgTsDictRowIter is the sql.RowIter for the pg_ts_dict table.

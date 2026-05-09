@@ -64,6 +64,7 @@ func (p PgExtensionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (
 			ext.LibIdentifier.Version().String(),  // extversion
 			nil,                                   // extconfig
 			nil,                                   // extcondition
+			id.NewTable(PgCatalogName, PgExtensionName).AsId(), // tableoid
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
@@ -87,4 +88,5 @@ var pgExtensionSchema = sql.Schema{
 	{Name: "extversion", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgExtensionName}, // TODO: collation C
 	{Name: "extconfig", Type: pgtypes.OidArray, Default: nil, Nullable: true, Source: PgExtensionName},
 	{Name: "extcondition", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgExtensionName}, // TODO: collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgExtensionName},
 }

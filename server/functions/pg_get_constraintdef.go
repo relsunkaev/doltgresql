@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/settings"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -81,12 +82,16 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 			return false, nil
 		},
 		ForeignKey: func(ctx *sql.Context, schema ItemSchema, table ItemTable, fk ItemForeignKey) (cont bool, err error) {
+			parentTableName, err := formatForeignKeyReferencedTable(ctx, schema, fk.Item)
+			if err != nil {
+				return false, err
+			}
 			// Note the postgres doesn't include the name of a foreign key when printing it via pg_get_constraintdef
 			// The spacing here is also significant, as certain tools (SQLAlchemy) use regex to parse
 			result = fmt.Sprintf(
 				"FOREIGN KEY (%s) REFERENCES %s(%s)",
 				getColumnNamesString(fk.Item.Columns),
-				fk.Item.ParentTable,
+				parentTableName,
 				getColumnNamesString(fk.Item.ParentColumns),
 			)
 			return false, nil
@@ -123,4 +128,19 @@ func getColumnNamesString(exprs []string) string {
 		}
 	}
 	return strings.Join(colNames, ", ")
+}
+
+func formatForeignKeyReferencedTable(ctx *sql.Context, schema ItemSchema, fk sql.ForeignKeyConstraint) (string, error) {
+	parentSchema := fk.ParentSchema
+	if parentSchema == "" {
+		parentSchema = schema.Item.SchemaName()
+	}
+	searchPath, err := settings.GetCurrentSchemasAsMap(ctx)
+	if err != nil {
+		return "", err
+	}
+	if _, ok := searchPath[parentSchema]; ok {
+		return fk.ParentTable, nil
+	}
+	return fmt.Sprintf("%s.%s", parentSchema, fk.ParentTable), nil
 }

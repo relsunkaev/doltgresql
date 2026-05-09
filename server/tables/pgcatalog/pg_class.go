@@ -122,6 +122,17 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			classes = append(classes, class)
 			return true, nil
 		},
+		ForeignKey: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, foreignKey functions.ItemForeignKey) (cont bool, err error) {
+			tableHasTriggers[id.Cache().ToOID(table.OID.AsId())] = struct{}{}
+
+			parentSchema := foreignKey.Item.ParentSchema
+			if parentSchema == "" {
+				parentSchema = schema.Item.SchemaName()
+			}
+			parentTableID := id.NewTable(parentSchema, foreignKey.Item.ParentTable)
+			tableHasTriggers[id.Cache().ToOID(parentTableID.AsId())] = struct{}{}
+			return true, nil
+		},
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			_, hasIndexes := tableHasIndexes[id.Cache().ToOID(table.OID.AsId())]
 			_, hasTriggers := tableHasTriggers[id.Cache().ToOID(table.OID.AsId())]
@@ -386,6 +397,7 @@ var pgClassSchema = sql.Schema{
 	{Name: "relacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgClassName},     // TODO: type aclitem[]
 	{Name: "reloptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgClassName}, // TODO: collation C
 	{Name: "relpartbound", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgClassName},    // TODO: type pg_node_tree, collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgClassName},
 }
 
 // pgClass represents a row in the pg_class table.
@@ -461,39 +473,40 @@ func pgClassToRow(class *pgClass) sql.Row {
 
 	// TODO: Fill in the rest of the pg_class columns
 	return sql.Row{
-		class.oid,         // oid
-		class.name,        // relname
-		class.schemaOid,   // relnamespace
-		class.relType,     // reltype
-		id.Null,           // reloftype
-		id.Null,           // relowner
-		relam,             // relam
-		id.Null,           // relfilenode
-		id.Null,           // reltablespace
-		int32(0),          // relpages
-		float32(0),        // reltuples
-		int32(0),          // relallvisible
-		id.Null,           // reltoastrelid
-		class.hasIndexes,  // relhasindex
-		false,             // relisshared
-		"p",               // relpersistence
-		class.kind,        // relkind
-		int16(0),          // relnatts
-		int16(0),          // relchecks
-		false,             // relhasrules
-		class.hasTriggers, // relhastriggers
-		false,             // relhassubclass
-		false,             // relrowsecurity
-		false,             // relforcerowsecurity
-		true,              // relispopulated
-		replicaIdentity,   // relreplident
-		false,             // relispartition
-		id.Null,           // relrewrite
-		uint32(0),         // relfrozenxid
-		uint32(0),         // relminmxid
-		nil,               // relacl
-		reloptions,        // reloptions
-		nil,               // relpartbound
+		class.oid,                             // oid
+		class.name,                            // relname
+		class.schemaOid,                       // relnamespace
+		class.relType,                         // reltype
+		id.Null,                               // reloftype
+		id.NewId(id.Section_User, "postgres"), // relowner
+		relam,                                 // relam
+		id.Null,                               // relfilenode
+		id.Null,                               // reltablespace
+		int32(0),                              // relpages
+		float32(0),                            // reltuples
+		int32(0),                              // relallvisible
+		id.Null,                               // reltoastrelid
+		class.hasIndexes,                      // relhasindex
+		false,                                 // relisshared
+		"p",                                   // relpersistence
+		class.kind,                            // relkind
+		int16(0),                              // relnatts
+		int16(0),                              // relchecks
+		false,                                 // relhasrules
+		class.hasTriggers,                     // relhastriggers
+		false,                                 // relhassubclass
+		false,                                 // relrowsecurity
+		false,                                 // relforcerowsecurity
+		true,                                  // relispopulated
+		replicaIdentity,                       // relreplident
+		false,                                 // relispartition
+		id.Null,                               // relrewrite
+		uint32(0),                             // relfrozenxid
+		uint32(0),                             // relminmxid
+		nil,                                   // relacl
+		reloptions,                            // reloptions
+		nil,                                   // relpartbound
+		id.NewTable(PgCatalogName, PgClassName).AsId(), // tableoid
 	}
 }
 

@@ -66,6 +66,7 @@ var pgOpfamilySchema = sql.Schema{
 	{Name: "opfname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgOpfamilyName},
 	{Name: "opfnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
 	{Name: "opfowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpfamilyName},
 }
 
 // pgOpfamilyRowIter is the sql.RowIter for the pg_opfamily table.
@@ -85,11 +86,12 @@ func (iter *pgOpfamilyRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	opfamily := iter.opfamilies[iter.idx-1]
 
 	return sql.Row{
-		opfamily.oid,       // oid
-		opfamily.opfmethod, // opfmethod
-		opfamily.opfname,   // opfname
-		opfamily.namespace, // opfnamespace
-		id.Null,            // opfowner
+		opfamily.oid,                          // oid
+		opfamily.opfmethod,                    // opfmethod
+		opfamily.opfname,                      // opfname
+		opfamily.namespace,                    // opfnamespace
+		id.NewId(id.Section_User, "postgres"), // opfowner
+		id.NewTable(PgCatalogName, PgOpfamilyName).AsId(), // tableoid
 	}, nil
 }
 

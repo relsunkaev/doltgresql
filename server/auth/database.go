@@ -17,6 +17,7 @@ package auth
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"sync/atomic"
 
@@ -77,6 +78,18 @@ func GetRole(name string) Role {
 		return createDefaultRoleWithoutID(name)
 	}
 	return globalDatabase.rolesByID[roleID]
+}
+
+// GetAllRoles returns all roles in a deterministic order.
+func GetAllRoles() []Role {
+	roles := make([]Role, 0, len(globalDatabase.rolesByID))
+	for _, role := range globalDatabase.rolesByID {
+		roles = append(roles, role)
+	}
+	sort.Slice(roles, func(i, j int) bool {
+		return roles[i].Name < roles[j].Name
+	})
+	return roles
 }
 
 // RenameRole renames the role with the old name to the new name. If the role does not exist, then this is a no-op.

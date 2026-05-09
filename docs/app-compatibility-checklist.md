@@ -592,8 +592,12 @@ actually exercise.
 
 ## Dump/admin/tooling TODO
 
-- [ ] `pg_dump` schema output against Doltgres, or define a separate
-  Doltgres-native dump path that ORMs can consume.
+- [x] `pg_dump` schema output against Doltgres - the real
+  `pg_dump --schema-only --no-owner --no-privileges` can connect to
+  Doltgres and emit table, default-expression, view, index, and foreign-key
+  DDL for a representative schema. Pinned by
+  testing/go/pg_dump_schema_probe_test.go. Broader dump/restore coverage
+  remains tracked separately.
 - [x] Query-form `COPY` - `COPY (SELECT ...) TO STDOUT` is parsed
   and streamed through the CopyOut protocol for filtered exports.
   Text format preserves `\N` NULLs and CSV format uses query output

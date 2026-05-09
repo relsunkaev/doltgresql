@@ -87,6 +87,7 @@ var pgProcSchema = sql.Schema{
 	{Name: "prosqlbody", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgProcName},     // TODO: type pg_node_tree, collation C
 	{Name: "proconfig", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgProcName}, // TODO: collation C
 	{Name: "proacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgProcName},    // TODO: type aclitem[]
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgProcName},
 }
 
 // pgProcRowIter is the sql.RowIter for the pg_proc table.

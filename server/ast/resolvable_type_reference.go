@@ -41,10 +41,20 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 	var err error
 	switch columnType := typ.(type) {
 	case *tree.ArrayTypeReference:
-		if uon, ok := columnType.ElementType.(*tree.UnresolvedObjectName); ok {
-			return nodeResolvableTypeReference(ctx, uon, mayBeTrigger)
+		_, elemType, err := nodeResolvableTypeReference(ctx, columnType.ElementType, mayBeTrigger)
+		if err != nil {
+			return nil, nil, err
 		}
-		return nil, nil, errors.Errorf("the given array type is not yet supported")
+		if elemType == nil {
+			return nil, nil, errors.Errorf("array element type could not be resolved")
+		}
+		if elemType.IsResolvedType() {
+			return nil, elemType.ToArrayType(), nil
+		}
+		arrayType := pgtypes.NewUnresolvedDoltgresType(elemType.ID.SchemaName(), "_"+elemType.ID.TypeName())
+		arrayType.TypCategory = pgtypes.TypeCategory_ArrayTypes
+		arrayType.Elem = elemType.ID
+		return nil, arrayType, nil
 	case *tree.TypeReferenceWithModifiers:
 		convertType, doltgresType, err := nodeResolvableTypeReference(ctx, columnType.Type, mayBeTrigger)
 		if err != nil {

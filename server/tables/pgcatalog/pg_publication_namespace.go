@@ -65,6 +65,7 @@ var pgPublicationNamespaceSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
 	{Name: "pnpubid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
 	{Name: "pnnspid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgPublicationNamespaceName},
 }
 
 // pgPublicationNamespaceRowIter is the sql.RowIter for the pg_publication_namespace table.
@@ -91,6 +92,7 @@ func (iter *pgPublicationNamespaceRowIter) Next(ctx *sql.Context) (sql.Row, erro
 			id.NewId(id.Section_Publication, pub.ID.PublicationName(), "schema", schema),
 			pub.ID.AsId(),
 			id.NewNamespace(schema).AsId(),
+			id.NewTable(PgCatalogName, PgPublicationNamespaceName).AsId(),
 		}, nil
 	}
 	return nil, io.EOF

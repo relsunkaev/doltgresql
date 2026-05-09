@@ -710,7 +710,7 @@ func TestPgAttrdef(t *testing.T) {
 				{
 					Query: `SELECT * FROM "pg_catalog"."pg_attrdef" WHERE adrelid='testschema.test'::regclass;`,
 					Expected: []sql.Row{
-						{597021512, 2502341994, 2, nil},
+						{597021512, 2502341994, 2, "'hey'", uint32(2604)},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -764,8 +764,11 @@ func TestPgAuthid(t *testing.T) {
 			Name: "pg_authid",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_authid";`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid, rolname, rolsuper, rolcanlogin FROM "pg_catalog"."pg_authid" ORDER BY rolname;`,
+					Expected: []sql.Row{
+						{3676603549, "postgres", "t", "t"},
+						{1214005198, "public", "f", "f"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_authid";`,
@@ -776,8 +779,11 @@ func TestPgAuthid(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT rolname FROM PG_catalog.pg_AUTHID ORDER BY rolname;",
-					Expected: []sql.Row{},
+					Query: "SELECT rolname FROM PG_catalog.pg_AUTHID ORDER BY rolname;",
+					Expected: []sql.Row{
+						{"postgres"},
+						{"public"},
+					},
 				},
 			},
 		},
@@ -1098,11 +1104,11 @@ func TestPgConstraint(t *testing.T) {
 				{
 					Query: `SELECT * FROM "pg_catalog"."pg_constraint" WHERE conrelid='testing2'::regclass OR conrelid='testing'::regclass order by 1`,
 					Expected: []sql.Row{
-						{1719906648, "testing2_pktesting_fkey", 2200, "f", "f", "f", "t", 2694106299, 0, 1719906648, 0, 2147906242, "a", "a", "s", "t", 0, "t", "{2}", "{1}", nil, nil, nil, nil, nil, nil},
-						{2068729390, "testing2_pkey", 2200, "p", "f", "f", "t", 2694106299, 0, 2068729390, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil},
-						{2652383090, "testing_v1_key", 2200, "u", "f", "f", "t", 2147906242, 0, 2652383090, 0, 0, "", "", "", "t", 0, "t", "{2}", nil, nil, nil, nil, nil, nil, nil},
-						{3259318326, "v1_check", 2200, "c", "f", "f", "t", 2694106299, 0, 0, 0, 0, "", "", "", "t", 0, "t", nil, nil, nil, nil, nil, nil, nil, nil},
-						{3757635986, "testing_pkey", 2200, "p", "f", "f", "t", 2147906242, 0, 3757635986, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil},
+						{1719906648, "testing2_pktesting_fkey", 2200, "f", "f", "f", "t", 2694106299, 0, 3757635986, 0, 2147906242, "a", "a", "s", "t", 0, "t", "{2}", "{1}", nil, nil, nil, nil, nil, nil, uint32(2606)},
+						{2068729390, "testing2_pkey", 2200, "p", "f", "f", "t", 2694106299, 0, 2068729390, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
+						{2652383090, "testing_v1_key", 2200, "u", "f", "f", "t", 2147906242, 0, 2652383090, 0, 0, "", "", "", "t", 0, "t", "{2}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
+						{3259318326, "v1_check", 2200, "c", "f", "f", "t", 2694106299, 0, 0, 0, 0, "", "", "", "t", 0, "t", nil, nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
+						{3757635986, "testing_pkey", 2200, "p", "f", "f", "t", 2147906242, 0, 3757635986, 0, 0, "", "", "", "t", 0, "t", "{1}", nil, nil, nil, nil, nil, nil, nil, uint32(2606)},
 					},
 				},
 				{ // Different cases and quoted, so it fails
@@ -1631,6 +1637,27 @@ func TestPgDepend(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT classid FROM PG_catalog.pg_DEPEND ORDER BY classid;",
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT classid, objid, refclassid, refobjid, deptype
+						FROM pg_catalog.pg_depend
+						WHERE deptype != 'p' AND deptype != 'e'
+						UNION ALL
+						SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amopfamily AS objid, refclassid, refobjid, deptype
+						FROM pg_catalog.pg_depend d, pg_catalog.pg_amop o
+						WHERE deptype NOT IN ('p', 'e', 'i')
+							AND classid = 'pg_amop'::pg_catalog.regclass
+							AND objid = o.oid
+							AND NOT (refclassid = 'pg_opfamily'::pg_catalog.regclass AND amopfamily = refobjid)
+						UNION ALL
+						SELECT 'pg_opfamily'::pg_catalog.regclass AS classid, amprocfamily AS objid, refclassid, refobjid, deptype
+						FROM pg_catalog.pg_depend d, pg_catalog.pg_amproc p
+						WHERE deptype NOT IN ('p', 'e', 'i')
+							AND classid = 'pg_amproc'::pg_catalog.regclass
+							AND objid = p.oid
+							AND NOT (refclassid = 'pg_opfamily'::pg_catalog.regclass AND amprocfamily = refobjid)
+						ORDER BY 1,2;`,
 					Expected: []sql.Row{},
 				},
 			},
@@ -3609,8 +3636,11 @@ func TestPgRoles(t *testing.T) {
 			Name: "pg_roles",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_roles";`,
-					Expected: []sql.Row{},
+					Query: `SELECT oid, rolname, rolcanlogin FROM "pg_catalog"."pg_roles" ORDER BY rolname;`,
+					Expected: []sql.Row{
+						{3676603549, "postgres", "t"},
+						{1214005198, "public", "f"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_roles";`,
@@ -3621,8 +3651,11 @@ func TestPgRoles(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT rolname FROM PG_catalog.pg_ROLES ORDER BY rolname;",
-					Expected: []sql.Row{},
+					Query: "SELECT rolname FROM PG_catalog.pg_ROLES ORDER BY rolname;",
+					Expected: []sql.Row{
+						{"postgres"},
+						{"public"},
+					},
 				},
 			},
 		},
@@ -5532,8 +5565,9 @@ func TestPgType(t *testing.T) {
 			Name: "pg_type",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE typname = 'float8' order by 1;`,
-					Expected: []sql.Row{{701, "float8", 11, 0, 8, "t", "b", "N", "t", "t", ",", 0, "-", 0, 1022, "float8in", "float8out", "float8recv", "float8send", "-", "-", "-", "d", "p", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE typname = 'float8' order by 1;`,
+					Expected: []sql.Row{{701, "float8", 11, 3676603549, "", "float8in", "float8out", "float8recv", "float8send", "", "", "", 1247}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_type";`,
@@ -5573,8 +5607,9 @@ func TestPgType(t *testing.T) {
 			Name: "pg_type with regtype",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='float8'::regtype;`,
-					Expected: []sql.Row{{701, "float8", 11, 0, 8, "t", "b", "N", "t", "t", ",", 0, "-", 0, 1022, "float8in", "float8out", "float8recv", "float8send", "-", "-", "-", "d", "p", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='float8'::regtype;`,
+					Expected: []sql.Row{{701, "float8", 11, 3676603549, "", "float8in", "float8out", "float8recv", "float8send", "", "", "", 1247}},
 				},
 				{
 					Query:    `SELECT oid, typname FROM "pg_catalog"."pg_type" WHERE oid='double precision'::regtype;`,
@@ -5621,28 +5656,34 @@ func TestPgType(t *testing.T) {
 					Expected: []sql.Row{{2206, "regtype"}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='integer[]'::regtype;`,
-					Expected: []sql.Row{{1007, "_int4", 11, 0, -1, "f", "b", "A", "f", "t", ",", 0, "array_subscript_handler", 23, 0, "array_in", "array_out", "array_recv", "array_send", "-", "-", "array_typanalyze", "i", "x", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='integer[]'::regtype;`,
+					Expected: []sql.Row{{1007, "_int4", 11, 3676603549, "array_subscript_handler", 23, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='anyarray'::regtype;`,
-					Expected: []sql.Row{{2277, "anyarray", 11, 0, -1, "f", "p", "P", "f", "t", ",", 0, "-", 0, 0, "anyarray_in", "anyarray_out", "anyarray_recv", "anyarray_send", "-", "-", "-", "d", "x", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='anyarray'::regtype;`,
+					Expected: []sql.Row{{2277, "anyarray", 11, 3676603549, "", 0, 0, "anyarray_in", "anyarray_out", "anyarray_recv", "anyarray_send", "", "", "", 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='anyelement'::regtype;`,
-					Expected: []sql.Row{{2283, "anyelement", 11, 0, 4, "t", "p", "P", "f", "t", ",", 0, "-", 0, 0, "anyelement_in", "anyelement_out", "-", "-", "-", "-", "-", "i", "p", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='anyelement'::regtype;`,
+					Expected: []sql.Row{{2283, "anyelement", 11, 3676603549, "", 0, 0, "anyelement_in", "anyelement_out", "", "", "", "", "", 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='json'::regtype;`,
-					Expected: []sql.Row{{114, "json", 11, 0, -1, "f", "b", "U", "f", "t", ",", 0, "-", 0, 199, "json_in", "json_out", "json_recv", "json_send", "-", "-", "-", "i", "x", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='json'::regtype;`,
+					Expected: []sql.Row{{114, "json", 11, 3676603549, "", 0, 199, "json_in", "json_out", "json_recv", "json_send", "", "", "", 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='char'::regtype;`,
-					Expected: []sql.Row{{1042, "bpchar", 11, 0, -1, "f", "b", "S", "f", "t", ",", 0, "-", 0, 1014, "bpcharin", "bpcharout", "bpcharrecv", "bpcharsend", "bpchartypmodin", "bpchartypmodout", "-", "i", "x", "f", 0, -1, 0, 100, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='char'::regtype;`,
+					Expected: []sql.Row{{1042, "bpchar", 11, 3676603549, "", 0, 1014, "bpcharin", "bpcharout", "bpcharrecv", "bpcharsend", "bpchartypmodin", "bpchartypmodout", "", 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE oid='"char"'::regtype;`,
-					Expected: []sql.Row{{18, "char", 11, 0, 1, "t", "b", "Z", "f", "t", ",", 0, "-", 0, 1002, "charin", "charout", "charrecv", "charsend", "-", "-", "-", "c", "p", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, tableoid
+						FROM "pg_catalog"."pg_type" WHERE oid='"char"'::regtype;`,
+					Expected: []sql.Row{{18, "char", 11, 3676603549, "", 0, 1002, "charin", "charout", "charrecv", "charsend", "", "", "", 1247}},
 				},
 			},
 		},
@@ -5654,20 +5695,24 @@ func TestPgType(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE typname = 'domain_type' order by 1;`,
-					Expected: []sql.Row{{2382076519, "domain_type", 2200, 0, 4, "t", "d", "N", "f", "t", ",", 0, "-", 0, 1297970968, "domain_in", "int4out", "domain_recv", "int4send", "-", "-", "-", "i", "p", "t", 23, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
+						FROM "pg_catalog"."pg_type" WHERE typname = 'domain_type' order by 1;`,
+					Expected: []sql.Row{{2382076519, "domain_type", 2200, 3676603549, "d", "N", "", 0, 1297970968, "domain_in", "int4out", "domain_recv", "int4send", "", "", "", 23, 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE typname = '_domain_type' order by 1;`,
-					Expected: []sql.Row{{1297970968, "_domain_type", 2200, 0, -1, "f", "b", "A", "f", "t", ",", 0, "array_subscript_handler", 2382076519, 0, "array_in", "array_out", "array_recv", "array_send", "-", "-", "array_typanalyze", "i", "x", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
+						FROM "pg_catalog"."pg_type" WHERE typname = '_domain_type' order by 1;`,
+					Expected: []sql.Row{{1297970968, "_domain_type", 2200, 3676603549, "b", "A", "array_subscript_handler", 2382076519, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 0, 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE typname = 'enum_type' order by 1;`,
-					Expected: []sql.Row{{2310414518, "enum_type", 2200, 0, 4, "t", "e", "E", "f", "t", ",", 0, "-", 0, 4245115549, "enum_in", "enum_out", "enum_recv", "enum_send", "-", "-", "-", "i", "p", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
+						FROM "pg_catalog"."pg_type" WHERE typname = 'enum_type' order by 1;`,
+					Expected: []sql.Row{{2310414518, "enum_type", 2200, 3676603549, "e", "E", "", 0, 4245115549, "enum_in", "enum_out", "enum_recv", "enum_send", "", "", "", 0, 1247}},
 				},
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_type" WHERE typname = '_enum_type' order by 1;`,
-					Expected: []sql.Row{{4245115549, "_enum_type", 2200, 0, -1, "f", "b", "A", "f", "t", ",", 0, "array_subscript_handler", 2310414518, 0, "array_in", "array_out", "array_recv", "array_send", "-", "-", "array_typanalyze", "i", "x", "f", 0, -1, 0, 0, "", "", "{}"}},
+					Query: `SELECT oid, typname, typnamespace, typowner, typtype, typcategory, typsubscript, typelem, typarray, typinput, typoutput, typreceive, typsend, typmodin, typmodout, typanalyze, typbasetype, tableoid
+						FROM "pg_catalog"."pg_type" WHERE typname = '_enum_type' order by 1;`,
+					Expected: []sql.Row{{4245115549, "_enum_type", 2200, 3676603549, "b", "A", "array_subscript_handler", 2310414518, 0, "array_in", "array_out", "array_recv", "array_send", "", "", "array_typanalyze", 0, 1247}},
 				},
 			},
 		},
@@ -5680,8 +5725,10 @@ func TestPgUser(t *testing.T) {
 			Name: "pg_user",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_user";`,
-					Expected: []sql.Row{},
+					Query: `SELECT usesysid, usename, usesuper FROM "pg_catalog"."pg_user" ORDER BY usename;`,
+					Expected: []sql.Row{
+						{3676603549, "postgres", "t"},
+					},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_user";`,
@@ -5692,8 +5739,10 @@ func TestPgUser(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT usename FROM PG_catalog.pg_USER ORDER BY usename;",
-					Expected: []sql.Row{},
+					Query: "SELECT usename FROM PG_catalog.pg_USER ORDER BY usename;",
+					Expected: []sql.Row{
+						{"postgres"},
+					},
 				},
 			},
 		},

@@ -60,6 +60,7 @@ var pgForeignTableSchema = sql.Schema{
 	{Name: "ftrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignTableName},
 	{Name: "ftserver", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignTableName},
 	{Name: "ftoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignTableName}, // TODO: collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignTableName},
 }
 
 // pgForeignTableRowIter is the sql.RowIter for the pg_foreign_table table.

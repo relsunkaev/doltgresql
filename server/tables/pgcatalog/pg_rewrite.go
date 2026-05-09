@@ -65,6 +65,7 @@ var pgRewriteSchema = sql.Schema{
 	{Name: "is_instead", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgRewriteName},
 	{Name: "ev_qual", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgRewriteName},   // TODO: pg_node_tree type, collation C
 	{Name: "ev_action", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgRewriteName}, // TODO: pg_node_tree type, collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgRewriteName},
 }
 
 // pgRewriteRowIter is the sql.RowIter for the pg_rewrite table.

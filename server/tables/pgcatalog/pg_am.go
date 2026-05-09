@@ -62,8 +62,9 @@ func (p PgAmHandler) PkSchema() sql.PrimaryKeySchema {
 var pgAmSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAmName},
 	{Name: "amname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgAmName},
-	{Name: "amhandler", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgAmName}, // TODO: type regproc
+	{Name: "amhandler", Type: pgtypes.Regproc, Default: nil, Nullable: false, Source: PgAmName},
 	{Name: "amtype", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgAmName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAmName},
 }
 
 // pgAmRowIter is the sql.RowIter for the pg_am table.
@@ -87,6 +88,7 @@ func (iter *pgAmRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		am.name,    // amname
 		am.handler, // amhandler
 		am.typ,     // amtype
+		id.NewTable(PgCatalogName, PgAmName).AsId(), // tableoid
 	}, nil
 }
 
@@ -98,17 +100,17 @@ func (iter *pgAmRowIter) Close(ctx *sql.Context) error {
 type accessMethod struct {
 	oid     id.Id
 	name    string
-	handler string
+	handler id.Id
 	typ     string
 }
 
 // defaultPostgresAms is the list of default access methods available in Postgres.
 var defaultPostgresAms = []accessMethod{
-	{oid: id.NewAccessMethod("heap").AsId(), name: "heap", handler: "heap_tableam_handler", typ: "t"},
-	{oid: id.NewAccessMethod("btree").AsId(), name: "btree", handler: "bthandler", typ: "i"},
-	{oid: id.NewAccessMethod("hash").AsId(), name: "hash", handler: "hashhandler", typ: "i"},
-	{oid: id.NewAccessMethod("gist").AsId(), name: "gist", handler: "gisthandler", typ: "i"},
-	{oid: id.NewAccessMethod("gin").AsId(), name: "gin", handler: "ginhandler", typ: "i"},
-	{oid: id.NewAccessMethod("spgist").AsId(), name: "spgist", handler: "spghandler", typ: "i"},
-	{oid: id.NewAccessMethod("brin").AsId(), name: "brin", handler: "brinhandler", typ: "i"},
+	{oid: id.NewAccessMethod("heap").AsId(), name: "heap", handler: pgCatalogFunctionID("heap_tableam_handler", pgCatalogType("internal")), typ: "t"},
+	{oid: id.NewAccessMethod("btree").AsId(), name: "btree", handler: pgCatalogFunctionID("bthandler", pgCatalogType("internal")), typ: "i"},
+	{oid: id.NewAccessMethod("hash").AsId(), name: "hash", handler: pgCatalogFunctionID("hashhandler", pgCatalogType("internal")), typ: "i"},
+	{oid: id.NewAccessMethod("gist").AsId(), name: "gist", handler: pgCatalogFunctionID("gisthandler", pgCatalogType("internal")), typ: "i"},
+	{oid: id.NewAccessMethod("gin").AsId(), name: "gin", handler: pgCatalogFunctionID("ginhandler", pgCatalogType("internal")), typ: "i"},
+	{oid: id.NewAccessMethod("spgist").AsId(), name: "spgist", handler: pgCatalogFunctionID("spghandler", pgCatalogType("internal")), typ: "i"},
+	{oid: id.NewAccessMethod("brin").AsId(), name: "brin", handler: pgCatalogFunctionID("brinhandler", pgCatalogType("internal")), typ: "i"},
 }

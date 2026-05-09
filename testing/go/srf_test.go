@@ -95,6 +95,17 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 						{int32(2), int32(30)},
 					},
 				},
+				{
+					Query: `SELECT id, x
+						FROM items
+						CROSS JOIN unnest(vals) AS t(x)
+						ORDER BY id, x;`,
+					Expected: []sql.Row{
+						{int32(1), int32(10)},
+						{int32(1), int32(20)},
+						{int32(2), int32(30)},
+					},
+				},
 			},
 		},
 	})

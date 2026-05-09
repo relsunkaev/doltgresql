@@ -70,6 +70,7 @@ var pgOpclassSchema = sql.Schema{
 	{Name: "opcintype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
 	{Name: "opcdefault", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgOpclassName},
 	{Name: "opckeytype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOpclassName},
 }
 
 // pgOpclassRowIter is the sql.RowIter for the pg_opclass table.
@@ -89,15 +90,16 @@ func (iter *pgOpclassRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	opclass := iter.opclasses[iter.idx-1]
 
 	return sql.Row{
-		opclass.oid,       // oid
-		opclass.opcmethod, // opcmethod
-		opclass.opcname,   // opcname
-		opclass.namespace, // opcnamespace
-		id.Null,           // opcowner
-		opclass.family,    // opcfamily
-		opclass.intype,    // opcintype
-		opclass.isDefault, // opcdefault
-		opclass.keytype,   // opckeytype
+		opclass.oid,                           // oid
+		opclass.opcmethod,                     // opcmethod
+		opclass.opcname,                       // opcname
+		opclass.namespace,                     // opcnamespace
+		id.NewId(id.Section_User, "postgres"), // opcowner
+		opclass.family,                        // opcfamily
+		opclass.intype,                        // opcintype
+		opclass.isDefault,                     // opcdefault
+		opclass.keytype,                       // opckeytype
+		id.NewTable(PgCatalogName, PgOpclassName).AsId(), // tableoid
 	}, nil
 }
 

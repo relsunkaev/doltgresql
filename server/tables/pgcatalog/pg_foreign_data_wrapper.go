@@ -64,6 +64,7 @@ var pgForeignDataWrapperSchema = sql.Schema{
 	{Name: "fdwvalidator", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignDataWrapperName},
 	{Name: "fdwacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignDataWrapperName},     // TODO: aclitem[] type
 	{Name: "fdwoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignDataWrapperName}, // TODO: collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignDataWrapperName},
 }
 
 // pgForeignDataWrapperRowIter is the sql.RowIter for the pg_foreign_data_wrapper table.

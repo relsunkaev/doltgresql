@@ -74,6 +74,7 @@ func initTypeFunctions() {
 // Init initializes all functions in this package.
 func Init() {
 	initTypeFunctions()
+	initAclDefault()
 	initAbs()
 	initAcos()
 	initAcosd()
@@ -82,6 +83,7 @@ func Init() {
 	initAge()
 	initArrayLength()
 	initArrayPosition()
+	initArrayRemove()
 	initArrayToString()
 	initArrayUpper()
 	initAscii()
@@ -162,6 +164,7 @@ func Init() {
 	initPgIndexesSize()
 	initPgIsInRecovery()
 	initPgNotify()
+	initPgOptionsToTable()
 	initPgPostmasterStartTime()
 	initPgRelationIsPublishable()
 	initPgRelationSize()
@@ -179,6 +182,7 @@ func Init() {
 	initPi()
 	initPower()
 	initQuoteIdent()
+	initQuoteLiteral()
 	initRadians()
 	initRandom()
 	initRegexpSetReturning()

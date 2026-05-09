@@ -80,17 +80,30 @@ func cachePgNamespaces(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	var namespaces []*pgNamespace
 	oidIdx := NewUniqueInMemIndexStorage[*pgNamespace](lessNamespaceOid)
 	nameIdx := NewUniqueInMemIndexStorage[*pgNamespace](lessNamespaceName)
+	seen := make(map[string]struct{})
+	addNamespace := func(name string) {
+		if _, ok := seen[name]; ok {
+			return
+		}
+		seen[name] = struct{}{}
+		namespaceID := id.NewNamespace(name)
+		namespace := &pgNamespace{
+			oid:       namespaceID.AsId(),
+			oidNative: id.Cache().ToOID(namespaceID.AsId()),
+			name:      name,
+		}
+		oidIdx.Add(namespace)
+		nameIdx.Add(namespace)
+		namespaces = append(namespaces, namespace)
+	}
+
+	addNamespace(PgCatalogName)
+	addNamespace("information_schema")
+	addNamespace("public")
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Schema: func(ctx *sql.Context, schema functions.ItemSchema) (cont bool, err error) {
-			namespace := &pgNamespace{
-				oid:       schema.OID.AsId(),
-				oidNative: id.Cache().ToOID(schema.OID.AsId()),
-				name:      schema.Item.SchemaName(),
-			}
-			oidIdx.Add(namespace)
-			nameIdx.Add(namespace)
-			namespaces = append(namespaces, namespace)
+			addNamespace(schema.Item.SchemaName())
 			return true, nil
 		},
 	})
@@ -219,6 +232,7 @@ var pgNamespaceSchema = sql.Schema{
 	{Name: "nspname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgNamespaceName},
 	{Name: "nspowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgNamespaceName},
 	{Name: "nspacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgNamespaceName}, // TODO: type aclitem[]
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgNamespaceName},
 }
 
 // lessNamespaceOid is a sort function for pgNamespace based on oid.
@@ -258,9 +272,10 @@ func (iter *pgNamespaceTableScanIter) Close(ctx *sql.Context) error {
 func pgNamespaceToRow(namespace *pgNamespace) sql.Row {
 	// TODO: columns are incomplete
 	return sql.Row{
-		namespace.oid,  // oid
-		namespace.name, // nspname
-		id.Null,        // nspowner
-		nil,            // nspacl
+		namespace.oid,                         // oid
+		namespace.name,                        // nspname
+		id.NewId(id.Section_User, "postgres"), // nspowner
+		nil,                                   // nspacl
+		id.NewTable(PgCatalogName, PgNamespaceName).AsId(), // tableoid
 	}
 }

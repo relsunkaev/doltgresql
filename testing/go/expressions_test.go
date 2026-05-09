@@ -485,5 +485,26 @@ func TestSubscript(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "name raw array subscript",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ('_abc'::name)[0];`,
+					Expected: []sql.Row{{"_"}},
+				},
+				{
+					Query:    `SELECT ('_abc'::name)[1];`,
+					Expected: []sql.Row{{"a"}},
+				},
+				{
+					Query:    `SELECT ('_abc'::name)[4];`,
+					Expected: []sql.Row{{nil}},
+				},
+				{
+					Query:    `SELECT ('_abc'::name)[0] = '_'::"char";`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
 	})
 }

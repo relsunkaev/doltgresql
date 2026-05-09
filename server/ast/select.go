@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // AnonColumnAliasPrefix tags aliases minted for unaliased PostgreSQL
@@ -172,6 +173,18 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			}, nil
 		}
 
+		if ctx.InSetOpOperand() {
+			if node.As == "" {
+				node.As = tree.UnrestrictedName(expr.Parts[0])
+			}
+			return &vitess.AliasedExpr{
+				Expr: vitess.InjectedExpr{
+					Expression: pgexprs.NewSetOpProjection(),
+					Children:   vitess.Exprs{colName},
+				},
+				As: vitess.NewColIdent(string(node.As)),
+			}, nil
+		}
 		// We don't set the InputExpression for ColName expressions. This matches the behavior in vitess's
 		// post-processing found in ast.go. Input expressions are load bearing for some parts of plan building
 		// so we need to match the behavior exactly.

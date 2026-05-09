@@ -129,6 +129,11 @@ func (t *DoltgresType) AnalyzeFuncName() string {
 	return globalFunctionRegistry.GetString(t.AnalyzeFunc)
 }
 
+// AnalyzeFuncID returns the internal function ID for the type analyze function.
+func (t *DoltgresType) AnalyzeFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.AnalyzeFunc).AsId()
+}
+
 // ArrayBaseType returns a base type of given array type.
 // If this type is not an array type, it returns itself. Vector
 // types (oidvector, int2vector) — categorized as ArrayTypes but
@@ -613,9 +618,35 @@ func (t *DoltgresType) DomainUnderlyingBaseType() *DoltgresType {
 // Equals implements the types.ExtendedType interface.
 func (t *DoltgresType) Equals(otherType sql.Type) bool {
 	if otherExtendedType, ok := otherType.(*DoltgresType); ok {
+		if oidAliasTypesEqual(t, otherExtendedType) {
+			return true
+		}
 		return bytes.Equal(t.Serialize(), otherExtendedType.Serialize())
 	}
 	return false
+}
+
+func oidAliasTypesEqual(left *DoltgresType, right *DoltgresType) bool {
+	leftBase, leftIsArray := oidAliasBase(left)
+	rightBase, rightIsArray := oidAliasBase(right)
+	return leftBase && rightBase && leftIsArray == rightIsArray
+}
+
+func oidAliasBase(t *DoltgresType) (bool, bool) {
+	if t.IsArrayType() {
+		base := t.ArrayBaseType()
+		return isOidAliasTypeName(base.ID.TypeName()), true
+	}
+	return isOidAliasTypeName(t.ID.TypeName()), false
+}
+
+func isOidAliasTypeName(typeName string) bool {
+	switch typeName {
+	case "oid", "regclass", "regnamespace", "regproc", "regtype":
+		return true
+	default:
+		return false
+	}
 }
 
 // FormatValue implements the types.ExtendedType interface. Callers with
@@ -644,6 +675,11 @@ func (t *DoltgresType) GetAttTypMod() int32 {
 // InputFuncName returns the name that would be displayed in pg_type for the `typinput` field.
 func (t *DoltgresType) InputFuncName() string {
 	return globalFunctionRegistry.GetString(t.InputFunc)
+}
+
+// InputFuncID returns the internal function ID for the type input function.
+func (t *DoltgresType) InputFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.InputFunc).AsId()
 }
 
 // IoInput converts input string value to given type value.
@@ -869,9 +905,19 @@ func (t *DoltgresType) ModInFuncName() string {
 	return globalFunctionRegistry.GetString(t.ModInFunc)
 }
 
+// ModInFuncID returns the internal function ID for the type modifier input function.
+func (t *DoltgresType) ModInFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.ModInFunc).AsId()
+}
+
 // ModOutFuncName returns the name that would be displayed in pg_type for the `typmodout` field.
 func (t *DoltgresType) ModOutFuncName() string {
 	return globalFunctionRegistry.GetString(t.ModOutFunc)
+}
+
+// ModOutFuncID returns the internal function ID for the type modifier output function.
+func (t *DoltgresType) ModOutFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.ModOutFunc).AsId()
 }
 
 // Name returns the name of the type.
@@ -884,6 +930,11 @@ func (t *DoltgresType) OutputFuncName() string {
 	return globalFunctionRegistry.GetString(t.OutputFunc)
 }
 
+// OutputFuncID returns the internal function ID for the type output function.
+func (t *DoltgresType) OutputFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.OutputFunc).AsId()
+}
+
 // Promote implements the types.ExtendedType interface.
 func (t *DoltgresType) Promote() sql.Type {
 	return t
@@ -894,6 +945,11 @@ func (t *DoltgresType) ReceiveFuncName() string {
 	return globalFunctionRegistry.GetString(t.ReceiveFunc)
 }
 
+// ReceiveFuncID returns the internal function ID for the type binary receive function.
+func (t *DoltgresType) ReceiveFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.ReceiveFunc).AsId()
+}
+
 // Schema returns the schema that the type is contained in.
 func (t *DoltgresType) Schema() string {
 	return t.ID.SchemaName()
@@ -902,6 +958,11 @@ func (t *DoltgresType) Schema() string {
 // SendFuncName returns the name that would be displayed in pg_type for the `typsend` field.
 func (t *DoltgresType) SendFuncName() string {
 	return globalFunctionRegistry.GetString(t.SendFunc)
+}
+
+// SendFuncID returns the internal function ID for the type binary send function.
+func (t *DoltgresType) SendFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.SendFunc).AsId()
 }
 
 // SerializedCompare implements the types.ExtendedType interface.
@@ -974,6 +1035,11 @@ func (t *DoltgresType) String() string {
 // SubscriptFuncName returns the name that would be displayed in pg_type for the `typsubscript` field.
 func (t *DoltgresType) SubscriptFuncName() string {
 	return globalFunctionRegistry.GetString(t.SubscriptFunc)
+}
+
+// SubscriptFuncID returns the internal function ID for the type subscript handler.
+func (t *DoltgresType) SubscriptFuncID() id.Id {
+	return globalFunctionRegistry.GetInternalID(t.SubscriptFunc).AsId()
 }
 
 // ToArrayType returns an array type of given base type.

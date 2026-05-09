@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -79,7 +81,10 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	var result string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		View: func(ctx *sql.Context, sch ItemSchema, view ItemView) (cont bool, err error) {
-			result = view.Item.TextDefinition
+			result = selectDefinitionFromCreateViewStatement(view.Item.CreateViewStatement)
+			if result == "" {
+				result = view.Item.TextDefinition
+			}
 			if result == "" {
 				stmts, err := parser.Parse(view.Item.CreateViewStatement)
 				if err != nil {
@@ -94,6 +99,7 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				}
 				result = cv.AsSource.String()
 			}
+			result = ensureTrailingSemicolon(closeTrailingStringLiteral(result))
 			return false, nil
 		},
 	})
@@ -101,4 +107,90 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func selectDefinitionFromCreateViewStatement(createViewStatement string) string {
+	query := strings.TrimSpace(createViewStatement)
+	if query == "" {
+		return ""
+	}
+	query = strings.TrimSuffix(query, ";")
+	asIdx := findKeywordOutsideQuotes(query, "as")
+	if asIdx < 0 {
+		return ""
+	}
+	return strings.TrimSpace(query[asIdx+len("as"):])
+}
+
+func closeTrailingStringLiteral(query string) string {
+	inSingleQuote := false
+	for i := 0; i < len(query); i++ {
+		if query[i] != '\'' {
+			continue
+		}
+		if inSingleQuote && i+1 < len(query) && query[i+1] == '\'' {
+			i++
+			continue
+		}
+		inSingleQuote = !inSingleQuote
+	}
+	if inSingleQuote {
+		return query + "'"
+	}
+	return query
+}
+
+func ensureTrailingSemicolon(query string) string {
+	trimmed := strings.TrimRight(query, " \t\r\n")
+	if strings.HasSuffix(trimmed, ";") {
+		return query
+	}
+	return query + ";"
+}
+
+func findKeywordOutsideQuotes(query string, keyword string) int {
+	lowerKeyword := strings.ToLower(keyword)
+	inSingleQuote := false
+	inDoubleQuote := false
+	for i := 0; i < len(query); i++ {
+		switch query[i] {
+		case '\'':
+			if inDoubleQuote {
+				continue
+			}
+			if inSingleQuote && i+1 < len(query) && query[i+1] == '\'' {
+				i++
+				continue
+			}
+			inSingleQuote = !inSingleQuote
+		case '"':
+			if !inSingleQuote {
+				inDoubleQuote = !inDoubleQuote
+			}
+		default:
+			if inSingleQuote || inDoubleQuote {
+				continue
+			}
+			end := i + len(keyword)
+			if end > len(query) || strings.ToLower(query[i:end]) != lowerKeyword {
+				continue
+			}
+			if isIdentifierByte(query, i-1) || isIdentifierByte(query, end) {
+				continue
+			}
+			return i
+		}
+	}
+	return -1
+}
+
+func isIdentifierByte(query string, idx int) bool {
+	if idx < 0 || idx >= len(query) {
+		return false
+	}
+	ch := query[idx]
+	return ch == '_' ||
+		(ch >= '0' && ch <= '9') ||
+		(ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z')
 }

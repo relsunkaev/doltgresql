@@ -66,6 +66,7 @@ var pgStatisticExtSchema = sql.Schema{
 	{Name: "stxkeys", Type: pgtypes.Int16Array, Default: nil, Nullable: false, Source: PgStatisticExtName}, // TODO: int2vector type
 	{Name: "stxkind", Type: pgtypes.InternalCharArray, Default: nil, Nullable: false, Source: PgStatisticExtName},
 	{Name: "stxexprs", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatisticExtName}, // TODO: collation C, pg_node_tree type
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgStatisticExtName},
 }
 
 // pgStatisticExtRowIter is the sql.RowIter for the pg_statistic_ext table.

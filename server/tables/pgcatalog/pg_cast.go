@@ -63,6 +63,7 @@ var pgCastSchema = sql.Schema{
 	{Name: "castfunc", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgCastName},
 	{Name: "castcontext", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgCastName},
 	{Name: "castmethod", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgCastName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgCastName},
 }
 
 // pgCastRowIter is the sql.RowIter for the pg_cast table.

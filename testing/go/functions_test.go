@@ -2694,7 +2694,7 @@ func TestSystemCatalogInformationFunctions(t *testing.T) {
 				},
 				{
 					Query:    `select pg_get_viewdef(2707638987);`,
-					Expected: []sql.Row{{"SELECT name FROM test"}},
+					Expected: []sql.Row{{"SELECT name FROM test;"}},
 				},
 			},
 		},

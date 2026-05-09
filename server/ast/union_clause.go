@@ -27,12 +27,20 @@ func nodeUnionClause(ctx *Context, node *tree.UnionClause) (*vitess.SetOp, error
 	if node == nil {
 		return nil, nil
 	}
-	left, err := nodeSelect(ctx, node.Left)
-	if err != nil {
+	var left vitess.SelectStatement
+	if err := ctx.WithSetOpOperand(func() error {
+		var err error
+		left, err = nodeSelect(ctx, node.Left)
+		return err
+	}); err != nil {
 		return nil, err
 	}
-	right, err := nodeSelect(ctx, node.Right)
-	if err != nil {
+	var right vitess.SelectStatement
+	if err := ctx.WithSetOpOperand(func() error {
+		var err error
+		right, err = nodeSelect(ctx, node.Right)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 	var unionType string

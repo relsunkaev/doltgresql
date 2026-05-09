@@ -65,6 +65,7 @@ var pgTsParserSchema = sql.Schema{
 	{Name: "prsend", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},      // TODO: regproc type
 	{Name: "prsheadline", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName}, // TODO: regproc type
 	{Name: "prslextype", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},  // TODO: regproc type
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},
 }
 
 // pgTsParserRowIter is the sql.RowIter for the pg_ts_parser table.

@@ -29,7 +29,7 @@ import (
 // initUnnest registers the functions to the catalog.
 func initUnnest() {
 	framework.RegisterFunction(unnest)
-	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions, &unnestWithOrdinalityTableFunction{})
+	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions, &unnestTableFunction{}, &unnestWithOrdinalityTableFunction{})
 }
 
 // unnest represents the PostgreSQL function of the same name, taking the same parameters.
@@ -56,6 +56,131 @@ var unnest = framework.Function1{
 
 var _ sql.TableFunction = (*unnestWithOrdinalityTableFunction)(nil)
 var _ sql.ExecSourceRel = (*unnestWithOrdinalityTableFunction)(nil)
+var _ sql.TableFunction = (*unnestTableFunction)(nil)
+var _ sql.ExecSourceRel = (*unnestTableFunction)(nil)
+
+type unnestTableFunction struct {
+	db        sql.Database
+	exprs     []sql.Expression
+	valueType sql.Type
+}
+
+func (u *unnestTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
+	if len(args) != 1 {
+		return nil, sql.ErrInvalidArgumentNumber.New(u.Name(), 1, len(args))
+	}
+	valueType := sql.Type(pgtypes.AnyElement)
+	if doltgresType, ok := args[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+		valueType = doltgresType.ArrayBaseType()
+	}
+	return &unnestTableFunction{
+		db:        db,
+		exprs:     args,
+		valueType: valueType,
+	}, nil
+}
+
+func (u *unnestTableFunction) Name() string {
+	return "unnest"
+}
+
+func (u *unnestTableFunction) String() string {
+	args := make([]string, len(u.exprs))
+	for i, expr := range u.exprs {
+		args[i] = expr.String()
+	}
+	return fmt.Sprintf("%s(%s)", u.Name(), strings.Join(args, ", "))
+}
+
+func (u *unnestTableFunction) Resolved() bool {
+	for _, expr := range u.exprs {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+func (u *unnestTableFunction) Expressions() []sql.Expression {
+	return u.exprs
+}
+
+func (u *unnestTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
+	if len(exprs) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(u, len(exprs), 1)
+	}
+	nu := *u
+	nu.exprs = exprs
+	if doltgresType, ok := exprs[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+		nu.valueType = doltgresType.ArrayBaseType()
+	}
+	return &nu, nil
+}
+
+func (u *unnestTableFunction) Database() sql.Database {
+	return u.db
+}
+
+func (u *unnestTableFunction) WithDatabase(db sql.Database) (sql.Node, error) {
+	nu := *u
+	nu.db = db
+	return &nu, nil
+}
+
+func (u *unnestTableFunction) IsReadOnly() bool {
+	return true
+}
+
+func (u *unnestTableFunction) Schema(ctx *sql.Context) sql.Schema {
+	var dbName string
+	if u.db != nil {
+		dbName = u.db.Name()
+	}
+	valueType := unnestValueType(ctx, u.exprs, u.valueType)
+	return sql.Schema{
+		&sql.Column{
+			DatabaseSource: dbName,
+			Source:         u.Name(),
+			Name:           "unnest",
+			Type:           valueType,
+			Nullable:       true,
+		},
+	}
+}
+
+func (u *unnestTableFunction) Children() []sql.Node {
+	return nil
+}
+
+func (u *unnestTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if len(children) != 0 {
+		return nil, sql.ErrInvalidChildrenNumber.New(u, len(children), 0)
+	}
+	return u, nil
+}
+
+func (u *unnestTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	value, err := u.exprs[0].Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	if value == nil {
+		return sql.RowsToRowIter(), nil
+	}
+	values, ok := value.([]any)
+	if !ok {
+		return nil, fmt.Errorf("%s expected array argument, got %T", u.Name(), value)
+	}
+	return &unnestRowIter{values: values}, nil
+}
+
+func (u *unnestTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
+	return sql.Collation_binary, 5
+}
+
+func (u *unnestTableFunction) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
 
 type unnestWithOrdinalityTableFunction struct {
 	db        sql.Database
@@ -134,10 +259,7 @@ func (u *unnestWithOrdinalityTableFunction) Schema(ctx *sql.Context) sql.Schema 
 	if u.db != nil {
 		dbName = u.db.Name()
 	}
-	valueType := u.valueType
-	if valueType == nil {
-		valueType = pgtypes.AnyElement
-	}
+	valueType := unnestValueType(ctx, u.exprs, u.valueType)
 	return sql.Schema{
 		&sql.Column{
 			DatabaseSource: dbName,
@@ -190,12 +312,43 @@ func (u *unnestWithOrdinalityTableFunction) Collation() sql.CollationID {
 	return sql.Collation_Default
 }
 
+func unnestValueType(ctx *sql.Context, exprs []sql.Expression, fallback sql.Type) sql.Type {
+	if len(exprs) == 1 {
+		if doltgresType, ok := exprs[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+			return doltgresType.ArrayBaseType()
+		}
+	}
+	if fallback != nil {
+		return fallback
+	}
+	return pgtypes.AnyElement
+}
+
 type unnestWithOrdinalityRowIter struct {
 	values []any
 	idx    int
 }
 
+type unnestRowIter struct {
+	values []any
+	idx    int
+}
+
 var _ sql.RowIter = (*unnestWithOrdinalityRowIter)(nil)
+var _ sql.RowIter = (*unnestRowIter)(nil)
+
+func (u *unnestRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	if u.idx >= len(u.values) {
+		return nil, io.EOF
+	}
+	value := u.values[u.idx]
+	u.idx++
+	return sql.Row{value}, nil
+}
+
+func (u *unnestRowIter) Close(ctx *sql.Context) error {
+	return nil
+}
 
 func (u *unnestWithOrdinalityRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	if u.idx >= len(u.values) {

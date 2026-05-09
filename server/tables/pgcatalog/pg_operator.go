@@ -75,6 +75,7 @@ var pgOperatorSchema = sql.Schema{
 	{Name: "oprcode", Type: pgtypes.Regproc, Default: nil, Nullable: false, Source: PgOperatorName},
 	{Name: "oprrest", Type: pgtypes.Regproc, Default: nil, Nullable: false, Source: PgOperatorName},
 	{Name: "oprjoin", Type: pgtypes.Regproc, Default: nil, Nullable: false, Source: PgOperatorName},
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgOperatorName},
 }
 
 // pgOperatorRowIter is the sql.RowIter for the pg_operator table.
@@ -94,21 +95,22 @@ func (iter *pgOperatorRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	operator := iter.operators[iter.idx-1]
 
 	return sql.Row{
-		operator.oid,        // oid
-		operator.name,       // oprname
-		operator.namespace,  // oprnamespace
-		id.Null,             // oprowner
-		"b",                 // oprkind
-		false,               // oprcanmerge
-		false,               // oprcanhash
-		operator.leftType,   // oprleft
-		operator.rightType,  // oprright
-		operator.result,     // oprresult
-		operator.commutator, // oprcom
-		zeroOID(),           // oprnegate
-		operator.code,       // oprcode
-		operator.restrict,   // oprrest
-		operator.join,       // oprjoin
+		operator.oid,                          // oid
+		operator.name,                         // oprname
+		operator.namespace,                    // oprnamespace
+		id.NewId(id.Section_User, "postgres"), // oprowner
+		"b",                                   // oprkind
+		false,                                 // oprcanmerge
+		false,                                 // oprcanhash
+		operator.leftType,                     // oprleft
+		operator.rightType,                    // oprright
+		operator.result,                       // oprresult
+		operator.commutator,                   // oprcom
+		zeroOID(),                             // oprnegate
+		operator.code,                         // oprcode
+		operator.restrict,                     // oprrest
+		operator.join,                         // oprjoin
+		id.NewTable(PgCatalogName, PgOperatorName).AsId(), // tableoid
 	}, nil
 }
 

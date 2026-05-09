@@ -16,6 +16,7 @@ package pgcatalog
 
 import (
 	"io"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -85,10 +86,11 @@ func (p PgAttrdefHandler) PkSchema() sql.PrimaryKeySchema {
 
 // pgAttrdefSchema is the schema for pg_attrdef.
 var pgAttrdefSchema = sql.Schema{
-	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttributeName},
-	{Name: "adrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttributeName},
-	{Name: "adnum", Type: pgtypes.Int16, Default: nil, Nullable: false, Source: PgAttributeName},
-	{Name: "adbin", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgAttributeName}, // TODO: collation C, type pg_node_tree
+	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName},
+	{Name: "adrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName},
+	{Name: "adnum", Type: pgtypes.Int16, Default: nil, Nullable: false, Source: PgAttrdefName},
+	{Name: "adbin", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgAttrdefName}, // TODO: collation C, type pg_node_tree
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAttrdefName},
 }
 
 // pgAttrdefRowIter is the sql.RowIter for the pg_attrdef table.
@@ -109,16 +111,55 @@ func (iter *pgAttrdefRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	col := iter.cols[iter.idx-1]
 	tableOid := iter.tableOIDs[iter.idx-1]
 
-	// TODO: Implement adbin when pg_node_tree exists
 	return sql.Row{
 		col.OID.AsId(),                  // oid
 		tableOid,                        // adrelid
 		int16(col.Item.ColumnIndex + 1), // adnum
-		nil,                             // adbin
+		columnDefaultText(col.Item.Column.Default),       // adbin
+		id.NewTable(PgCatalogName, PgAttrdefName).AsId(), // tableoid
 	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgAttrdefRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+func columnDefaultText(def *sql.ColumnDefaultValue) string {
+	if def == nil {
+		return ""
+	}
+	if def.Expr != nil {
+		return stripRedundantOuterParens(def.Expr.String())
+	}
+	return def.String()
+}
+
+func stripRedundantOuterParens(expr string) string {
+	for {
+		trimmed := strings.TrimSpace(expr)
+		if len(trimmed) < 2 || trimmed[0] != '(' || trimmed[len(trimmed)-1] != ')' {
+			return trimmed
+		}
+		depth := 0
+		wrapsWholeExpr := true
+		for i := 0; i < len(trimmed); i++ {
+			switch trimmed[i] {
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 && i < len(trimmed)-1 {
+					wrapsWholeExpr = false
+				}
+			}
+			if depth < 0 {
+				return trimmed
+			}
+		}
+		if depth != 0 || !wrapsWholeExpr {
+			return trimmed
+		}
+		expr = trimmed[1 : len(trimmed)-1]
+	}
 }

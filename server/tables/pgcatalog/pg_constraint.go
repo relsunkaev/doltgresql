@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -61,7 +62,6 @@ func (p PgConstraintHandler) RowIter(ctx *sql.Context, partition sql.Partition) 
 			return nil, err
 		}
 	}
-
 	if constraintIdxPart, ok := partition.(inMemIndexPartition); ok {
 		return &inMemIndexScanIter[*pgConstraint]{
 			lookup:         constraintIdxPart.lookup,
@@ -443,6 +443,11 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				}
 			}
 
+			idxOid, err := foreignKeyReferencedIndexOID(ctx, schema, parentTable, foreignKey.Item)
+			if err != nil {
+				return false, err
+			}
+
 			conFkey := make([]any, len(foreignKey.Item.ParentColumns))
 			for i, expr := range foreignKey.Item.ParentColumns {
 				conFkey[i] = parentTableColToIdxMap[expr]
@@ -457,7 +462,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				conType:         "f",
 				tableOid:        tableOIDs[schema.OID.AsId()][foreignKey.Item.Table],
 				tableOidNative:  id.Cache().ToOID(tableOIDs[schema.OID.AsId()][foreignKey.Item.Table]),
-				idxOid:          foreignKey.OID.AsId(),
+				idxOid:          idxOid,
 				tableRefOid:     tableOIDs[schema.OID.AsId()][foreignKey.Item.ParentTable],
 				fkUpdateType:    getFKAction(foreignKey.Item.OnUpdate),
 				fkDeleteType:    getFKAction(foreignKey.Item.OnDelete),
@@ -547,6 +552,46 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 	return nil
 }
 
+func foreignKeyReferencedIndexOID(ctx *sql.Context, schema functions.ItemSchema, parentTable sql.Table, foreignKey sql.ForeignKeyConstraint) (id.Id, error) {
+	indexedTable, ok := parentTable.(sql.IndexAddressable)
+	if !ok {
+		return id.Id(id.NewOID(0)), nil
+	}
+	indexes, err := indexedTable.GetIndexes(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	for _, index := range indexes {
+		if index.ID() != "PRIMARY" && !index.IsUnique() {
+			continue
+		}
+		if indexMatchesColumns(index, foreignKey.ParentColumns) {
+			return id.NewIndex(schema.Item.SchemaName(), foreignKey.ParentTable, index.ID()).AsId(), nil
+		}
+	}
+	return id.Id(id.NewOID(0)), nil
+}
+
+func indexMatchesColumns(index sql.Index, columns []string) bool {
+	exprs := index.Expressions()
+	if len(exprs) != len(columns) {
+		return false
+	}
+	for i, expr := range exprs {
+		if !strings.EqualFold(indexColumnName(expr), columns[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func indexColumnName(expr string) string {
+	if idx := strings.LastIndex(expr, "."); idx >= 0 {
+		return expr[idx+1:]
+	}
+	return expr
+}
+
 // lessConstraintOid is a sort function for pgConstraint based on oid.
 func lessConstraintOid(a, b *pgConstraint) bool {
 	return a.oidNative < b.oidNative
@@ -604,6 +649,7 @@ var PgConstraintSchema = sql.Schema{
 	{Name: "confdelsetcols", Type: pgtypes.Int16Array, Default: nil, Nullable: true, Source: PgConstraintName},
 	{Name: "conexclop", Type: pgtypes.OidArray, Default: nil, Nullable: true, Source: PgConstraintName},
 	{Name: "conbin", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgConstraintName}, // TODO: type pg_node_tree, collation C
+	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgConstraintName},
 }
 
 // pgConstraint is the struct for the pg_constraint table.
@@ -679,7 +725,7 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		constraint.tableOid,     // conrelid
 		constraint.typeOid,      // contypid
 		constraint.idxOid,       // conindid
-		id.Null,                 // conparentid
+		id.Id(id.NewOID(0)),     // conparentid
 		constraint.tableRefOid,  // confrelid
 		constraint.fkUpdateType, // confupdtype
 		constraint.fkDeleteType, // confdeltype
@@ -695,5 +741,6 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		nil,                     // confdelsetcols
 		nil,                     // conexclop
 		nil,                     // conbin
+		id.NewTable(PgCatalogName, PgConstraintName).AsId(), // tableoid
 	}
 }

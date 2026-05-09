@@ -112,6 +112,10 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 				return aliasedExpr, err
 			}
 		}
+		aliasedExpr, ok, err := nodeSingleColumnTableFunctionAlias(ctx, node, expr)
+		if err != nil || ok {
+			return aliasedExpr, err
+		}
 
 		tableExpr, err := nodeTableExpr(ctx, expr)
 		if err != nil {
@@ -159,6 +163,69 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 		Lateral: node.Lateral,
 		Auth:    authInfo,
 	}, nil
+}
+
+func nodeSingleColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {
+	if len(node.As.Cols) > 1 || len(rowsFromExpr.Items) != 1 {
+		return nil, false, nil
+	}
+	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
+	if !ok {
+		return nil, false, nil
+	}
+	funcName := singleColumnTableFunctionName(funcExpr)
+	switch funcName {
+	case "generate_series", "unnest":
+	default:
+		return nil, false, nil
+	}
+	if len(node.As.Cols) == 0 && node.As.Alias == "" {
+		return nil, false, nil
+	}
+
+	args, err := nodeExprs(ctx, funcExpr.Exprs)
+	if err != nil {
+		return nil, true, err
+	}
+	tableFuncArgs := make(vitess.SelectExprs, len(args))
+	for i, arg := range args {
+		tableFuncArgs[i] = &vitess.AliasedExpr{Expr: arg}
+	}
+
+	internalAlias := "__doltgres_" + strings.ReplaceAll(funcName, ".", "_")
+	colName := string(node.As.Alias)
+	if len(node.As.Cols) == 1 {
+		colName = string(node.As.Cols[0])
+	}
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: vitess.SelectExprs{
+					&vitess.AliasedExpr{
+						Expr: tableFuncColumn(internalAlias, funcName),
+						As:   vitess.NewColIdent(colName),
+					},
+				},
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  funcName,
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: true,
+	}, true, nil
+}
+
+func singleColumnTableFunctionName(funcExpr *tree.FuncExpr) string {
+	funcName := strings.ToLower(funcExpr.Func.String())
+	if idx := strings.LastIndex(funcName, "."); idx >= 0 {
+		funcName = funcName[idx+1:]
+	}
+	return strings.Trim(funcName, `"`)
 }
 
 func nodeJSONTableAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr, jsonTableExpr *tree.JSONTableExpr) (*vitess.AliasedTableExpr, error) {
