@@ -75,10 +75,11 @@ Do not check off an item until it has workload proof:
 - [ ] Expand restore-gate corpus beyond AlexTransit/venderctl. Add multiple
   external non-trivial application dumps, record the first hard failure for
   each dump, and keep each corpus runnable through the real `psql` restore
-  path.
+  path. Tracked by dg-7ug.1.
 - [ ] Triage expanded restore-corpus failures into implement, dump-rewrite,
   skip, and explicit-non-goal buckets, with each bucket tied to a tracked
-  implementation task, documented rewrite, or documented non-goal.
+  implementation task, documented rewrite, or documented non-goal. Tracked by
+  dg-7ug.1.
 - [x] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
   testing/go/pg_dump_round_trip_test.go creates a representative
@@ -112,7 +113,7 @@ Do not check off an item until it has workload proof:
   relying only on the schema-slice harness. The gate should document whether
   Doltgres' internal `dolt` schema is excluded, why, and what exact
   production-like dumps have passed `pg_dump` -> `psql` restore -> ORM
-  introspection -> running app queries.
+  introspection -> running app queries. Tracked by dg-7ug.2.
 
 ## Schema/bootstrap TODO
 
@@ -216,11 +217,13 @@ Do not check off an item until it has workload proof:
   `gen_random_uuid()` compatibility path, pgvector behavior beyond scalar
   `vector(n)` round-trips, `btree_gist` operator classes, and hstore
   operators/functions/casts outside testing/go/common_extensions_probe_test.go.
+  Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
   for PostgreSQL-style case-insensitive btree seeks. The current compatibility
   path preserves correctness by disabling unsafe raw btree range planning.
+  Tracked by dg-7ug.4.
 - [ ] Complete hstore index/operator-class parity, including planner use and
-  operator-class catalog behavior for hstore comparisons.
+  operator-class catalog behavior for hstore comparisons. Tracked by dg-7ug.5.
 - [x] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is explicitly rejected with
   SQLSTATE `0A000` (`CREATE COLLATION is not yet supported`).
@@ -268,9 +271,9 @@ Do not check off an item until it has workload proof:
   CONCURRENTLY`. The accepted concurrent form currently validates the
   PostgreSQL preconditions and preserves the prior snapshot on failure, but the
   refresh itself still runs through the synchronous truncate/insert refresh
-  path.
+  path. Tracked by dg-7ug.6.
 - [ ] Add materialized-view refresh performance guardrails for large snapshots,
-  indexed matviews, and unique-index refresh failures.
+  indexed matviews, and unique-index refresh failures. Tracked by dg-7ug.6.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
@@ -316,10 +319,11 @@ Do not check off an item until it has workload proof:
   the TRUNCATE statement trigger probe), including zero-row UPDATE transition
   sets.
 - [ ] Support PostgreSQL row-level transition-table triggers. Today row-level
-  transition-table declarations are rejected with SQLSTATE 0A000.
+  transition-table declarations are rejected with SQLSTATE 0A000. Tracked by
+  dg-7ug.7.
 - [ ] Fix plain AFTER statement trigger self-query visibility against the
   target table. This still inherits the existing AFTER-trigger target-table
-  visibility limitation.
+  visibility limitation. Tracked by dg-7ug.7.
 - [x] Trigger catalog introspection - `pg_trigger` now walks the
   persisted trigger collection and exposes created triggers with
   stable trigger OIDs, `tgrelid`, `tgfoid`, `tgtype`, `tgenabled`,
@@ -358,7 +362,7 @@ Do not check off an item until it has workload proof:
 - [ ] Persist deferrability metadata in the underlying FK storage so
   `DEFERRABLE` / `INITIALLY DEFERRED` behavior survives server restart and
   reaches PostgreSQL parity beyond constraints created in the current server
-  process.
+  process. Tracked by dg-980.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
   PRIVILEGES ...` are accepted so pg_dump's ownership and privilege
@@ -416,7 +420,7 @@ Do not check off an item until it has workload proof:
   the partial-index planner is exact-shape based, and `ON CONFLICT` only covers
   exact matches plus conjunctions where the arbiter predicate contains every
   index-predicate term. Broader inequality, OR, and semantic implication remain
-  open.
+  open. Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
@@ -461,7 +465,7 @@ Do not check off an item until it has workload proof:
 - [ ] Add large-table `CREATE INDEX CONCURRENTLY` performance guardrails. The
   current evidence proves writer progress and correctness, but does not pin
   Phase 1 build latency, writer latency while Phase 1 is running, or planner
-  behavior on large tables.
+  behavior on large tables. Tracked by dg-7ug.8.
 - [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
   btree `INCLUDE`, non-unique btree partial, supported JSONB GIN, and
   non-unique btree expression indexes now use the same two-phase
@@ -518,7 +522,7 @@ Do not check off an item until it has workload proof:
 - [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
   index storage and planner preference. Today those per-column scan choices
   are metadata-preserved but not planned as PostgreSQL-style physical index
-  scans.
+  scans. Tracked by dg-7ug.8.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip
@@ -790,6 +794,7 @@ Do not check off an item until it has workload proof:
   testing/go/ruby_pg_client_test.go, and testing/go/libpq_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
+  Tracked by dg-7ug.10.
 
 ## Replication and sync TODO
 
@@ -859,7 +864,7 @@ actually exercise.
 - [ ] Capture Debezium and other `pgoutput` consumer query surfaces in this
   checklist. Add executable probes for the exact slot, publication, LSN,
   snapshot, and replication-stat catalog queries those consumers issue before
-  claiming support for them.
+  claiming support for them. Tracked by dg-7ug.9.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
@@ -879,7 +884,7 @@ actually exercise.
 - [ ] Implement live subscription/apply behavior or keep rejecting it with
   executable boundaries. Open work includes subscription apply workers, initial
   table synchronization from a remote publisher, remote slot creation, and
-  incoming `pgoutput` apply into Doltgres.
+  incoming `pgoutput` apply into Doltgres. Tracked by dg-7ug.9.
 - [x] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
   Proxy) that real-world stacks expose. docs/replication-provider-boundaries.md
@@ -901,7 +906,7 @@ actually exercise.
   currently claimed through Electric, Zero, and direct `pgoutput` tests.
 - [ ] Mirror newly exercised PostgreSQL replication features back into this app
   checklist when a real consumer needs them, rather than leaving them only in
-  docs/postgresql-parity-issues.md.
+  docs/postgresql-parity-issues.md. Tracked by dg-7ug.9.
 
 ## Dump/admin/tooling TODO
 
@@ -1028,7 +1033,7 @@ typed-exception handling, and client-side query timeouts.
 
 - [ ] Run actual GUI / migration binaries against a live Doltgres instance for
   wire-protocol and catalog metadata surfaces that are currently proven only
-  through Go-level harnesses.
+  through Go-level harnesses. Tracked by dg-7ug.10.
 - [x] `RowDescription.TableOID` - populate the source-table OID so
   GUI editors can resolve a result column back to a base table.
   Implementation in server/doltgres_handler.go walks the session
@@ -1186,7 +1191,7 @@ typed-exception handling, and client-side query timeouts.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, psycopg, Ruby `pg`, and libpq. Add runnable smoke
   gates for the advertised client and migration-tool matrix before claiming
-  broad client compatibility.
+  broad client compatibility. Tracked by dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
