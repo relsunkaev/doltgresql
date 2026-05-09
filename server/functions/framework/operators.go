@@ -56,8 +56,11 @@ const (
 	Operator_BinaryHstoreLessOrEqual                    // #<=#
 	Operator_BinaryHstoreGreater                        // #>#
 	Operator_BinaryHstoreGreaterOrEqual                 // #>=#
+	Operator_BinaryHstorePopulate                       // #=
 	Operator_UnaryPlus                                  // +
 	Operator_UnaryMinus                                 // -
+	Operator_UnaryHstoreToArray                         // %%
+	Operator_UnaryHstoreToMatrix                        // %#
 	// NOTE: Any new operator should also be added to Operator.String() and GetOperatorFromString() functions.
 )
 
@@ -99,6 +102,20 @@ func RegisterUnaryFunction(operator Operator, f Function1) {
 		panic("non-unary operator: " + operator.String())
 	}
 	RegisterFunction(f)
+	registerUnaryFunctionSignature(operator, f)
+}
+
+// RegisterUnaryOperatorFunction registers the given function as an operator implementation without registering a
+// separate callable SQL function overload. Use this when PostgreSQL exposes the same underlying function by name and
+// also binds it to a nonstandard operator token.
+func RegisterUnaryOperatorFunction(operator Operator, f Function1) {
+	if !operator.IsUnary() {
+		panic("non-unary operator: " + operator.String())
+	}
+	registerUnaryFunctionSignature(operator, f)
+}
+
+func registerUnaryFunctionSignature(operator Operator, f Function1) {
 	sig := unaryFunction{
 		Operator: operator,
 		TypeID:   f.Parameters[0].ID,
@@ -231,6 +248,12 @@ func (o Operator) String() string {
 		return "#>#"
 	case Operator_BinaryHstoreGreaterOrEqual:
 		return "#>=#"
+	case Operator_BinaryHstorePopulate:
+		return "#="
+	case Operator_UnaryHstoreToArray:
+		return "%%"
+	case Operator_UnaryHstoreToMatrix:
+		return "%#"
 	default:
 		return "unknown operator"
 	}
@@ -239,7 +262,7 @@ func (o Operator) String() string {
 // IsUnary returns whether the operator is a unary operator.
 func (o Operator) IsUnary() bool {
 	switch o {
-	case Operator_UnaryPlus, Operator_UnaryMinus:
+	case Operator_UnaryPlus, Operator_UnaryMinus, Operator_UnaryHstoreToArray, Operator_UnaryHstoreToMatrix:
 		return true
 	default:
 		return false
@@ -320,6 +343,12 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryHstoreGreater, nil
 	case "#>=#":
 		return Operator_BinaryHstoreGreaterOrEqual, nil
+	case "#=":
+		return Operator_BinaryHstorePopulate, nil
+	case "%%":
+		return Operator_UnaryHstoreToArray, nil
+	case "%#":
+		return Operator_UnaryHstoreToMatrix, nil
 	default:
 		return 0, errors.Errorf("unhandled Operator `%s`", op)
 	}

@@ -195,6 +195,8 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			operator = framework.Operator_BinaryJSONExtractPathJson
 		case tree.JSONFetchTextPath:
 			operator = framework.Operator_BinaryJSONExtractPathText
+		case tree.HstorePopulate:
+			operator = framework.Operator_BinaryHstorePopulate
 		default:
 			return nil, errors.Errorf("the binary operator used is not yet supported")
 		}
@@ -885,6 +887,10 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		case tree.UnaryAbsolute:
 			// TODO: replace with a function
 			return nil, errors.Errorf("absolute operator is not yet supported")
+		case tree.HstoreToArray:
+			operator = framework.Operator_UnaryHstoreToArray
+		case tree.HstoreToMatrix:
+			operator = framework.Operator_UnaryHstoreToMatrix
 		default:
 			return nil, errors.Errorf("the unary operator used is not yet supported")
 		}

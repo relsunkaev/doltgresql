@@ -143,7 +143,8 @@ Do not check off an item until it has workload proof:
   key/value matrices, row-major `array_to_string` flattening, and matrix
   dimension reporting through `array_length` / `array_upper`; `skeys`,
   `svals`, and `each` also cover projection/table-function forms with
-  table column aliases.
+  table column aliases. The unary operator aliases `%% hstore` and
+  `%# hstore` cover the same array and matrix conversion output.
   `hstore(text, text)`, `hstore(text[], text[])`, `hstore(text[])`,
   and `hstore(record)` cover constructor semantics for NULL values,
   NULL key handling, duplicate-first key handling, empty arrays,
@@ -157,6 +158,7 @@ Do not check off an item until it has workload proof:
   values, scalar field access, array/composite/jsonb text input
   conversion, and invalid cast propagation. `hstore_version_diag`
   reports the current hstore storage version for valid hstore inputs.
+  `anyelement #= hstore` covers the operator alias for `populate_record`.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
   and missing-vs-extra key inequality. `hstore_cmp`, `hstore_lt`,

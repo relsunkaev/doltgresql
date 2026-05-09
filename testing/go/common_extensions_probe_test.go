@@ -471,6 +471,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t"}},
 				},
 				{
+					Query:    `SELECT (%% '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text, (%# '"B"=>"5", "A"=>"2", "empty"=>NULL'::public.hstore)::text;`,
+					Expected: []sql.Row{{"{A,2,B,5,empty,NULL}", "{{A,2},{B,5},{empty,NULL}}"}},
+				},
+				{
 					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"5", "b"=>"from hstore", "c"=>"f", "ignored"=>"x"'::public.hstore);`,
 					Expected: []sql.Row{{5, "from hstore", "f"}},
 				},
@@ -485,6 +489,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT populate_record(NULL::hstore_pop_base, NULL::public.hstore) IS NULL;`,
 					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).a, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).b, ((ROW(10, 'base', true)::hstore_pop_base #= '"a"=>"5", "b"=>NULL'::public.hstore)).c;`,
+					Expected: []sql.Row{{5, nil, "t"}},
+				},
+				{
+					Query:    `SELECT ((ROW(10, 'base', true)::hstore_pop_base #= NULL::public.hstore)).a, (NULL::hstore_pop_base #= NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{10, "t"}},
 				},
 				{
 					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"A"=>"5", "b"=>"exact"'::public.hstore);`,

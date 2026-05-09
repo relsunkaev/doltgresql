@@ -1111,6 +1111,7 @@ const (
 	JSONFetchText
 	JSONFetchValPath
 	JSONFetchTextPath
+	HstorePopulate
 
 	NumBinaryOperators
 )
@@ -1135,6 +1136,7 @@ var binaryOpName = [...]string{
 	JSONFetchText:     "->>",
 	JSONFetchValPath:  "#>",
 	JSONFetchTextPath: "#>>",
+	HstorePopulate:    "#=",
 }
 
 // binaryOpPrio follows the precedence order in the grammar. Used for pretty-printing.
@@ -1146,7 +1148,7 @@ var binaryOpPrio = [...]int{
 	Bitand: 5,
 	Bitxor: 6,
 	Bitor:  7,
-	Concat: 8, JSONFetchVal: 8, JSONFetchText: 8, JSONFetchValPath: 8, JSONFetchTextPath: 8,
+	Concat: 8, JSONFetchVal: 8, JSONFetchText: 8, JSONFetchValPath: 8, JSONFetchTextPath: 8, HstorePopulate: 8,
 }
 
 // binaryOpFullyAssoc indicates whether an operator is fully associative.
@@ -1159,7 +1161,7 @@ var binaryOpFullyAssoc = [...]bool{
 	Bitand: true,
 	Bitxor: true,
 	Bitor:  true,
-	Concat: true, JSONFetchVal: false, JSONFetchText: false, JSONFetchValPath: false, JSONFetchTextPath: false,
+	Concat: true, JSONFetchVal: false, JSONFetchText: false, JSONFetchValPath: false, JSONFetchTextPath: false, HstorePopulate: false,
 }
 
 func (i BinaryOperator) isPadded() bool {
@@ -1237,6 +1239,8 @@ const (
 	UnarySqrt
 	UnaryCbrt
 	UnaryAbsolute
+	HstoreToArray
+	HstoreToMatrix
 
 	NumUnaryOperators
 )
@@ -1249,6 +1253,8 @@ var unaryOpName = [...]string{
 	UnarySqrt:       "|/",
 	UnaryCbrt:       "||/",
 	UnaryAbsolute:   "@",
+	HstoreToArray:   "%%",
+	HstoreToMatrix:  "%#",
 }
 
 func (i UnaryOperator) String() string {

@@ -345,6 +345,19 @@ func (s *scanner) scan(lval *sqlSymType) {
 		}
 		return
 
+	case '%':
+		switch s.peek() {
+		case '%': // %%
+			s.pos++
+			lval.id = HSTORE_TO_ARRAY
+			return
+		case '#': // %#
+			s.pos++
+			lval.id = HSTORE_TO_MATRIX
+			return
+		}
+		return
+
 	case '~':
 		switch s.peek() {
 		case '*': // ~*
@@ -433,6 +446,10 @@ func (s *scanner) scan(lval *sqlSymType) {
 		case '-': // #-
 			s.pos++
 			lval.id = REMOVE_PATH
+			return
+		case '=': // #=
+			s.pos++
+			lval.id = HSTORE_POPULATE
 			return
 		}
 		return

@@ -729,6 +729,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> TYPECAST TYPEANNOTATE DOT_DOT
 %token <str> LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %token <str> HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
+%token <str> HSTORE_TO_ARRAY HSTORE_TO_MATRIX HSTORE_POPULATE
 %token <str> NOT_REGMATCH REGIMATCH NOT_REGIMATCH
 %token <str> TEXTSEARCHMATCH
 %token <str> ERROR
@@ -1454,7 +1455,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %right     NOT
 %nonassoc  IS ISNULL NOTNULL   // IS sets precedence for IS NULL, etc
 %nonassoc  VALUE SCALAR ARRAY OBJECT WITH WITHOUT
-%nonassoc  '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
+%nonassoc  '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS HSTORE_POPULATE
 %nonassoc  '~' BETWEEN DEFERRABLE IN LIKE ILIKE SIMILAR NOT_REGMATCH REGIMATCH NOT_REGIMATCH NOT_LA TEXTSEARCHMATCH
 %nonassoc  ESCAPE              // ESCAPE must be just above LIKE/ILIKE/SIMILAR
 %nonassoc  CONTAINS CONTAINED_BY '?' JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
@@ -13036,6 +13037,14 @@ a_expr:
   {
     $$.val = &tree.UnaryExpr{Operator: tree.UnaryAbsolute, Expr: $2.expr()}
   }
+| HSTORE_TO_ARRAY a_expr %prec UMINUS
+  {
+    $$.val = &tree.UnaryExpr{Operator: tree.HstoreToArray, Expr: $2.expr()}
+  }
+| HSTORE_TO_MATRIX a_expr %prec UMINUS
+  {
+    $$.val = &tree.UnaryExpr{Operator: tree.HstoreToMatrix, Expr: $2.expr()}
+  }
 | a_expr '+' a_expr
   {
     $$.val = &tree.BinaryExpr{Operator: tree.Plus, Left: $1.expr(), Right: $3.expr()}
@@ -13099,6 +13108,10 @@ a_expr:
 | a_expr HSTORE_GREATER_EQUALS a_expr
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGE, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr HSTORE_POPULATE a_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.HstorePopulate, Left: $1.expr(), Right: $3.expr()}
   }
 | a_expr '?' a_expr
   {
@@ -13756,6 +13769,10 @@ b_expr:
 | b_expr HSTORE_GREATER_EQUALS b_expr
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGE, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr HSTORE_POPULATE b_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.HstorePopulate, Left: $1.expr(), Right: $3.expr()}
   }
 | b_expr '=' b_expr
   {
@@ -14567,6 +14584,7 @@ operator:
 | FETCHTEXT { $$.val = tree.JSONFetchText }
 | FETCHVAL_PATH { $$.val = tree.JSONFetchValPath }
 | FETCHTEXT_PATH { $$.val = tree.JSONFetchTextPath }
+| HSTORE_POPULATE { $$.val = tree.HstorePopulate }
 | AND_AND { $$.val = tree.Overlaps }
 | TEXTSEARCHMATCH { $$.val = tree.TextSearchMatch }
 | HSTORE_LESS { $$.val = tree.HstoreLT }
