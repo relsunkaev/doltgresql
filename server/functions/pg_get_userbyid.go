@@ -15,8 +15,12 @@
 package functions
 
 import (
+	"fmt"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +38,23 @@ var pg_get_userbyid_oid = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: roles are not supported yet
-		return "postgres", nil
+		roleID := val.(id.Id)
+		if roleID.Section() == id.Section_User {
+			roleName := roleID.Segment(0)
+			roleExists := false
+			auth.LockRead(func() {
+				roleExists = auth.RoleExists(roleName)
+			})
+			if roleExists {
+				return roleName, nil
+			}
+		}
+
+		oid := id.Cache().ToOID(roleID)
+		if oid == 10 {
+			superUser, _ := auth.GetSuperUserAndPassword()
+			return superUser, nil
+		}
+		return fmt.Sprintf("unknown (OID=%d)", oid), nil
 	},
 }

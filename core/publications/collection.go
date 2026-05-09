@@ -47,6 +47,7 @@ type PublicationRelation struct {
 // Publication represents a logical replication publication.
 type Publication struct {
 	ID                  id.Publication
+	Owner               id.Id
 	AllTables           bool
 	Tables              []PublicationRelation
 	Schemas             []string
@@ -88,11 +89,16 @@ func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree
 func NewPublication(name string) Publication {
 	return Publication{
 		ID:              id.NewPublication(name),
+		Owner:           defaultPublicationOwner(),
 		PublishInsert:   true,
 		PublishUpdate:   true,
 		PublishDelete:   true,
 		PublishTruncate: true,
 	}
+}
+
+func defaultPublicationOwner() id.Id {
+	return id.NewOID(10).AsId()
 }
 
 // GetPublication returns the publication with the given ID.
@@ -243,8 +249,9 @@ func (publication Publication) Serialize(ctx context.Context) ([]byte, error) {
 	}
 	publication.normalize()
 	writer := utils.NewWriter(256)
-	writer.VariableUint(0)
+	writer.VariableUint(1)
 	writer.Id(publication.ID.AsId())
+	writer.Id(publication.Owner)
 	writer.Bool(publication.AllTables)
 	writer.Bool(publication.PublishInsert)
 	writer.Bool(publication.PublishUpdate)
@@ -268,11 +275,16 @@ func DeserializePublication(ctx context.Context, data []byte) (Publication, erro
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 0 {
+	if version > 1 {
 		return Publication{}, errors.Errorf("version %d of publications is not supported, please upgrade the server", version)
 	}
 	pub := Publication{}
 	pub.ID = id.Publication(reader.Id())
+	if version >= 1 {
+		pub.Owner = reader.Id()
+	} else {
+		pub.Owner = defaultPublicationOwner()
+	}
 	pub.AllTables = reader.Bool()
 	pub.PublishInsert = reader.Bool()
 	pub.PublishUpdate = reader.Bool()
@@ -295,6 +307,9 @@ func DeserializePublication(ctx context.Context, data []byte) (Publication, erro
 }
 
 func (publication *Publication) normalize() {
+	if !publication.Owner.IsValid() {
+		publication.Owner = defaultPublicationOwner()
+	}
 	slices.SortFunc(publication.Tables, func(a, b PublicationRelation) int {
 		return strings.Compare(string(a.Table), string(b.Table))
 	})
@@ -324,8 +339,8 @@ func compactStringsPreservingOrder(values []string) []string {
 
 func (publication Publication) summary() string {
 	publication.normalize()
-	return fmt.Sprintf("%s all=%t tables=%v schemas=%v publish=%t/%t/%t/%t viaRoot=%t",
-		publication.ID.PublicationName(), publication.AllTables, publication.Tables, publication.Schemas,
+	return fmt.Sprintf("%s owner=%s all=%t tables=%v schemas=%v publish=%t/%t/%t/%t viaRoot=%t",
+		publication.ID.PublicationName(), publication.Owner.String(), publication.AllTables, publication.Tables, publication.Schemas,
 		publication.PublishInsert, publication.PublishUpdate, publication.PublishDelete, publication.PublishTruncate,
 		publication.PublishViaPartition)
 }

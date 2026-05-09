@@ -92,7 +92,7 @@ func (iter *pgPublicationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	return sql.Row{
 		pub.ID.AsId(),
 		pub.ID.PublicationName(),
-		catalogOwnerOID(),
+		publicationOwnerOID(pub.Owner),
 		pub.AllTables,
 		pub.PublishInsert,
 		pub.PublishUpdate,
@@ -106,4 +106,11 @@ func (iter *pgPublicationRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 // Close implements the interface sql.RowIter.
 func (iter *pgPublicationRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+func publicationOwnerOID(owner id.Id) id.Id {
+	if owner.IsValid() {
+		return owner
+	}
+	return catalogOwnerOID()
 }

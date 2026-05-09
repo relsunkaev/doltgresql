@@ -2665,14 +2665,21 @@ func TestSystemCatalogInformationFunctions(t *testing.T) {
 			},
 		},
 		{
-			Name:        "pg_get_userbyid",
-			SetUpScript: []string{},
+			Name: "pg_get_userbyid",
+			SetUpScript: []string{
+				`CREATE USER catalog_user;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// TODO: users and roles are not supported yet
 					Query: `SELECT pg_get_userbyid(22)`,
 					Expected: []sql.Row{
-						{"postgres"},
+						{"unknown (OID=22)"},
+					},
+				},
+				{
+					Query: `SELECT pg_get_userbyid(oid) FROM pg_roles WHERE rolname = 'catalog_user'`,
+					Expected: []sql.Row{
+						{"catalog_user"},
 					},
 				},
 			},

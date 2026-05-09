@@ -723,8 +723,16 @@ actually exercise.
   '^(TestElectricSyncSmoke|TestElectricReplicaFullShapeAPI)$'` on 2026-05-09.
 - [ ] Run Zero with `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, and
   `ZERO_CHANGE_STREAMER_MODE=discover` against Doltgres.
-- [ ] Prove publication-ownership flows where the consumer creates and owns
-  publications and slots, not only repo-owned DDL.
+- [x] Prove publication-ownership flows where the consumer creates and owns
+  publications and slots, not only repo-owned DDL. A non-superuser
+  replication role now creates the source table, owns the publication, creates
+  the logical replication slot, reads the relevant `pg_publication` and
+  `pg_replication_slots` catalog rows, starts `pgoutput` for that publication,
+  and receives relation/insert/commit messages. Pinned by
+  testing/go/logical_replication_source_test.go's
+  TestLogicalReplicationConsumerOwnedPublicationAndSlot; verified with
+  `go test ./testing/go -run
+  '^TestLogicalReplicationConsumerOwnedPublicationAndSlot$'` on 2026-05-09.
 - [ ] Pin and test exactly the slot, publication, LSN, and replication-stat
   catalog queries each consumer issues.
 - [ ] Document Doltgres as source-only unless live subscriber/apply behavior

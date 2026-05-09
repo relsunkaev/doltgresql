@@ -312,6 +312,9 @@ func checkPrivilegeOnSchema(state AuthorizationQueryState, schemaName string, pr
 
 // checkPrivilegeOnTable checks privileges for given table provided with schema name.
 func checkPrivilegeOnTable(state AuthorizationQueryState, schemaName, tableName string, privileges []Privilege) error {
+	if strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid") && onlySelectPrivileges(privileges) {
+		return nil
+	}
 	roleTableKey := TablePrivilegeKey{
 		Role:  state.role.ID(),
 		Table: doltdb.TableName{Name: tableName, Schema: schemaName},
@@ -326,6 +329,15 @@ func checkPrivilegeOnTable(state AuthorizationQueryState, schemaName, tableName 
 		}
 	}
 	return nil
+}
+
+func onlySelectPrivileges(privileges []Privilege) bool {
+	for _, privilege := range privileges {
+		if privilege != Privilege_SELECT {
+			return false
+		}
+	}
+	return len(privileges) > 0
 }
 
 // checkPrivilegeOnSequence checks privileges for given sequence provided with schema name.

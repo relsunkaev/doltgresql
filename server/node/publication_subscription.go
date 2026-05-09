@@ -70,6 +70,7 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		return nil, err
 	}
 	pub := publications.NewPublication(c.Name)
+	pub.Owner = id.NewId(id.Section_User, ctx.Client().User)
 	pub.AllTables = c.AllTables
 	if err = applyPublicationOptions(&pub, c.Options); err != nil {
 		return nil, err

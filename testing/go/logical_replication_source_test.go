@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pglogrepl"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
@@ -188,6 +189,80 @@ func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	require.NoError(t, conn.Current.QueryRow(ctx, `
 		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
 	require.Equal(t, 0, slotCount)
+}
+
+func TestLogicalReplicationConsumerOwnedPublicationAndSlot(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, "CREATE USER electric_owner WITH LOGIN REPLICATION PASSWORD 'secret';")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "GRANT CREATE ON SCHEMA public TO electric_owner;")
+	require.NoError(t, err)
+
+	ownerConn, err := pgx.Connect(ctx, fmt.Sprintf("postgres://electric_owner:secret@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	defer ownerConn.Close(context.Background())
+
+	_, err = ownerConn.Exec(ctx, "CREATE TABLE owned_rep_items (tenant_id INT PRIMARY KEY, label TEXT NOT NULL);")
+	require.NoError(t, err)
+	_, err = ownerConn.Exec(ctx, "CREATE PUBLICATION owned_rep_pub FOR TABLE owned_rep_items;")
+	require.NoError(t, err)
+	_, err = ownerConn.Exec(ctx, "ALTER TABLE owned_rep_items REPLICA IDENTITY FULL;")
+	require.NoError(t, err)
+
+	var owned bool
+	require.NoError(t, ownerConn.QueryRow(ctx, `
+		SELECT pg_get_userbyid(pubowner) = current_role
+		FROM pg_catalog.pg_publication
+		WHERE pubname = 'owned_rep_pub'`).Scan(&owned))
+	require.True(t, owned)
+
+	replConn := connectReplicationConnAs(t, ctx, port, "electric_owner", "secret")
+	defer replConn.Close(context.Background())
+
+	slotName := "owned_rep_slot"
+	slot, err := pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.Equal(t, slotName, slot.SlotName)
+
+	var slotType string
+	var active bool
+	require.NoError(t, ownerConn.QueryRow(ctx, `
+		SELECT slot_type, active
+		FROM pg_catalog.pg_replication_slots
+		WHERE slot_name = $1`, slotName).Scan(&slotType, &active))
+	require.Equal(t, "logical", slotType)
+	require.False(t, active)
+
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'owned_rep_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	writerConn, err := pgx.Connect(ctx, fmt.Sprintf("postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	defer writerConn.Close(context.Background())
+	_, err = writerConn.Exec(ctx, "INSERT INTO owned_rep_items VALUES (7, 'owned');")
+	require.NoError(t, err)
+	relation, insert, commit := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "owned_rep_items", "7", "owned")
+	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
 }
 
 func TestLogicalReplicationSourceUpdateIncludesOldTupleForReplicaIdentityFull(t *testing.T) {
@@ -1391,7 +1466,12 @@ func TestLogicalReplicationSourceDropSlotRemovesDurableStateAfterRestart(t *test
 
 func connectReplicationConn(t *testing.T, ctx context.Context, port int) *pgconn.PgConn {
 	t.Helper()
-	conn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable&replication=database&application_name=dg-logical-source-test", port))
+	return connectReplicationConnAs(t, ctx, port, "postgres", "password")
+}
+
+func connectReplicationConnAs(t *testing.T, ctx context.Context, port int, user string, password string) *pgconn.PgConn {
+	t.Helper()
+	conn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://%s:%s@127.0.0.1:%d/postgres?sslmode=disable&replication=database&application_name=dg-logical-source-test", user, password, port))
 	require.NoError(t, err)
 	return conn
 }
