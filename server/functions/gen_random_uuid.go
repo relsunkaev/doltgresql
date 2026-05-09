@@ -25,10 +25,20 @@ import (
 // initGenRandomUuid registers the functions to the catalog.
 func initGenRandomUuid() {
 	framework.RegisterFunction(gen_random_uuid)
+	framework.RegisterFunction(uuid_generate_v4)
 }
 
 var gen_random_uuid = framework.Function0{
 	Name:   "gen_random_uuid",
+	Return: pgtypes.Uuid,
+	Strict: true,
+	Callable: func(ctx *sql.Context) (any, error) {
+		return uuid.NewV4()
+	},
+}
+
+var uuid_generate_v4 = framework.Function0{
+	Name:   "uuid_generate_v4",
 	Return: pgtypes.Uuid,
 	Strict: true,
 	Callable: func(ctx *sql.Context) (any, error) {

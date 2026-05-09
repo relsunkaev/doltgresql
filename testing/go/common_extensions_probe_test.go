@@ -37,6 +37,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "uuid-ossp uuid_generate_v4 runtime call",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT length(uuid_generate_v4()::text)::text;`,
+					Expected: []sql.Row{{"36"}},
+				},
+			},
+		},
+		{
 			Name: "CREATE EXTENSION plpgsql dump compatibility shim",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;`,

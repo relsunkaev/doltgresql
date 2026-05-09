@@ -159,11 +159,21 @@ var builtinExtensionShims = map[string]pg_extension.Control{
 		Superuser:      true,
 		Relocatable:    true,
 	},
+	"pgcrypto": {
+		DefaultVersion: pg_extension.ToVersion(1, 3),
+		Superuser:      true,
+		Relocatable:    true,
+	},
 	"plpgsql": {
 		DefaultVersion: pg_extension.ToVersion(1, 0),
 		Superuser:      true,
 		Relocatable:    false,
 		Schema:         "pg_catalog",
+	},
+	"uuid-ossp": {
+		DefaultVersion: pg_extension.ToVersion(1, 1),
+		Superuser:      true,
+		Relocatable:    true,
 	},
 	"vector": {
 		DefaultVersion: pg_extension.ToVersion(0, 0),

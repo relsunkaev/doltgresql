@@ -96,13 +96,13 @@ Do not check off an item until it has workload proof:
   the separate schema-output and restore-path items.
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
   "uuid-ossp"` is accepted at DDL, is listed in
-  `pg_catalog.pg_extension`, and its core UUID helpers are callable.
+  `pg_catalog.pg_extension`, and `uuid_generate_v4()` is callable for
+  UUID primary-key defaults.
   pg_dump's `CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA
   pg_catalog` shape is accepted and records the built-in PL/pgSQL
   runtime in `pg_extension`.
   `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also accepted via a
-  compatibility shim, including `WITH SCHEMA` metadata: the parser
-  accepts pgcrypto's `name OUT type` CREATE FUNCTION declarations, but
+  built-in compatibility shim, including `WITH SCHEMA` metadata:
   Doltgres does not load pgcrypto's PostgreSQL C library payload
   because it expects server symbols Doltgres does not export.
   `gen_random_uuid()` is registered as a native builtin and returns a
@@ -631,13 +631,14 @@ actually exercise.
   this item only covers the no-matview catalog surface that dump
   tools can safely query today. Pinned by
   testing/go/pg_matviews_probe_test.go.
-- [~] Extension availability catalogs -
+- [x] Extension availability catalogs -
   `pg_available_extensions` and `pg_available_extension_versions`
   list the supported extension shims (`btree_gist`, `citext`,
-  `hstore`, `plpgsql`, `vector`) plus any local PostgreSQL extension
-  files Doltgres can see, and mark installed versions from `pg_extension`.
-  Broader dump/restore coverage for extension-heavy schemas remains
-  tracked by the restore-gate corpus. Pinned by
+  `hstore`, `pgcrypto`, `plpgsql`, `uuid-ossp`, `vector`) plus any
+  local PostgreSQL extension files Doltgres can see, and mark installed
+  versions from `pg_extension`. Broader dump/restore coverage for
+  extension-heavy schemas remains tracked by the restore-gate corpus.
+  Pinned by
   testing/go/available_extensions_probe_test.go.
 - [x] `pg_indexes` - prove index existence checks and conditional DDL.
   testing/go/migration_tool_introspect_test.go now installs and runs

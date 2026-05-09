@@ -256,7 +256,7 @@ func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
 
 func createExtensionSkipsSQL(name string) bool {
 	switch strings.ToLower(name) {
-	case "btree_gist", "citext", "hstore", "pgcrypto", "plpgsql", "vector":
+	case "btree_gist", "citext", "hstore", "pgcrypto", "plpgsql", "uuid-ossp", "vector":
 		return true
 	default:
 		return false

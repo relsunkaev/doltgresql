@@ -29,31 +29,38 @@ func TestAvailableExtensionsProbe(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;`,
 				`CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA public;`,
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;`,
+				`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT name, default_version, installed_version
 						FROM pg_catalog.pg_available_extensions
-						WHERE name IN ('btree_gist', 'citext', 'hstore', 'plpgsql', 'vector')
+						WHERE name IN ('btree_gist', 'citext', 'hstore', 'pgcrypto', 'plpgsql', 'uuid-ossp', 'vector')
 						ORDER BY name;`,
 					Expected: []sql.Row{
 						{"btree_gist", "1.7", nil},
 						{"citext", "1.6", "1.6"},
 						{"hstore", "1.8", "1.8"},
+						{"pgcrypto", "1.3", "1.3"},
 						{"plpgsql", "1.0", nil},
+						{"uuid-ossp", "1.1", "1.1"},
 						{"vector", "0.0", nil},
 					},
 				},
 				{
 					Query: `SELECT name, version, installed, relocatable, schema
 						FROM pg_catalog.pg_available_extension_versions
-						WHERE name IN ('btree_gist', 'citext', 'hstore', 'plpgsql', 'vector')
+						WHERE name IN ('btree_gist', 'citext', 'hstore', 'pgcrypto', 'plpgsql', 'uuid-ossp', 'vector')
 						ORDER BY name;`,
 					Expected: []sql.Row{
 						{"btree_gist", "1.7", "f", "t", nil},
 						{"citext", "1.6", "t", "t", nil},
 						{"hstore", "1.8", "t", "t", nil},
+						{"pgcrypto", "1.3", "t", "t", nil},
 						{"plpgsql", "1.0", "f", "f", "pg_catalog"},
+						{"uuid-ossp", "1.1", "t", "t", nil},
 						{"vector", "0.0", "f", "t", nil},
 					},
 				},
