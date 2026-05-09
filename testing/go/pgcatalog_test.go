@@ -790,7 +790,7 @@ func TestPgAvailableExtensionVersions(t *testing.T) {
 			Name: "pg_available_extension_versions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_available_extension_versions";`,
+					Query:    `SELECT * FROM "pg_catalog"."pg_available_extension_versions" WHERE false;`,
 					Expected: []sql.Row{},
 				},
 				{ // Different cases and quoted, so it fails
@@ -802,8 +802,8 @@ func TestPgAvailableExtensionVersions(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSION_VERSIONS ORDER BY name;",
-					Expected: []sql.Row{},
+					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSION_VERSIONS WHERE name = 'citext';",
+					Expected: []sql.Row{{"citext"}},
 				},
 			},
 		},
@@ -816,7 +816,7 @@ func TestPgAvailableExtensions(t *testing.T) {
 			Name: "pg_available_extensions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_available_extensions";`,
+					Query:    `SELECT * FROM "pg_catalog"."pg_available_extensions" WHERE false;`,
 					Expected: []sql.Row{},
 				},
 				{ // Different cases and quoted, so it fails
@@ -828,8 +828,8 @@ func TestPgAvailableExtensions(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSIONS ORDER BY name;",
-					Expected: []sql.Row{},
+					Query:    "SELECT name FROM PG_catalog.pg_AVAILABLE_EXTENSIONS WHERE name = 'citext';",
+					Expected: []sql.Row{{"citext"}},
 				},
 			},
 		},

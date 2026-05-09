@@ -15,10 +15,13 @@
 package pgcatalog
 
 import (
-	"io"
+	"slices"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,35 @@ func (p PgAvailableExtensionVersionsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAvailableExtensionVersionsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_available_extension_versions row iter
-	return emptyRowIter()
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	availableExtensions := extensions.GetAvailableExtensions()
+	names := mapsKeys(availableExtensions)
+	slices.Sort(names)
+	rows := make([]sql.Row, 0, len(names))
+	for _, name := range names {
+		ext := availableExtensions[name]
+		installed := false
+		if loaded, err := extCollection.GetLoadedExtension(ctx, id.NewExtension(name)); err != nil {
+			return nil, err
+		} else if loaded.ExtName.IsValid() && loaded.LibIdentifier.Version() == ext.Control.DefaultVersion {
+			installed = true
+		}
+		rows = append(rows, sql.Row{
+			name,
+			ext.Control.DefaultVersion.String(),
+			installed,
+			ext.Control.Superuser,
+			ext.Control.Trusted,
+			ext.Control.Relocatable,
+			nullableString(ext.Control.Schema),
+			stringSliceToAny(ext.Control.Requires),
+			nullableString(ext.Control.Comment),
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -66,20 +96,4 @@ var pgAvailableExtensionVersionsSchema = sql.Schema{
 	{Name: "schema", Type: pgtypes.Name, Default: nil, Nullable: true, Source: PgAvailableExtensionVersionsName},
 	{Name: "requires", Type: pgtypes.NameArray, Default: nil, Nullable: true, Source: PgAvailableExtensionVersionsName},
 	{Name: "comment", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgAvailableExtensionVersionsName},
-}
-
-// pgAvailableExtensionVersionsRowIter is the sql.RowIter for the pg_available_extension_versions table.
-type pgAvailableExtensionVersionsRowIter struct {
-}
-
-var _ sql.RowIter = (*pgAvailableExtensionVersionsRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgAvailableExtensionVersionsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgAvailableExtensionVersionsRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

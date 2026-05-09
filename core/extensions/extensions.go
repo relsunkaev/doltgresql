@@ -16,7 +16,9 @@ package extensions
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/cockroachdb/errors"
@@ -81,6 +83,103 @@ func GetExtension(name string) (_ *pg_extension.ExtensionFiles, err error) {
 		return nil, errors.Errorf(`could not open extension control file "%s.control"`, name)
 	}
 	return ext, nil
+}
+
+// GetExtensionFiles returns the extension files for the named extension,
+// preferring Doltgres' builtin compatibility shims for surfaces Doltgres
+// implements directly.
+func GetExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
+	if shim, ok := BuiltinExtensionShim(name); ok {
+		return shim, nil
+	}
+	ext, err := GetExtension(name)
+	if err == nil {
+		return ext, nil
+	}
+	return nil, err
+}
+
+// GetAvailableExtensions returns all local PostgreSQL extensions Doltgres can
+// see plus builtin compatibility shims that Doltgres supports directly.
+func GetAvailableExtensions() map[string]*pg_extension.ExtensionFiles {
+	extMutex.Lock()
+	defer extMutex.Unlock()
+
+	available := make(map[string]*pg_extension.ExtensionFiles)
+	if cachedError == nil {
+		var err error
+		if allExtensions == nil {
+			allLibraries = make(map[string]*pg_extension.Library)
+			allExtensions, err = pg_extension.LoadExtensions()
+			if err != nil {
+				allExtensions = make(map[string]*pg_extension.ExtensionFiles)
+				cachedError = err
+			}
+		}
+		for name, ext := range allExtensions {
+			available[name] = cloneExtensionFiles(ext)
+		}
+	}
+	for name := range builtinExtensionShims {
+		if shim, ok := BuiltinExtensionShim(name); ok {
+			available[name] = shim
+		}
+	}
+	return available
+}
+
+// BuiltinExtensionShim returns metadata for extension surfaces that Doltgres
+// supports without replaying PostgreSQL's extension SQL payload.
+func BuiltinExtensionShim(name string) (*pg_extension.ExtensionFiles, bool) {
+	normalizedName := strings.ToLower(name)
+	control, ok := builtinExtensionShims[normalizedName]
+	if !ok {
+		return nil, false
+	}
+	return &pg_extension.ExtensionFiles{
+		Name:    normalizedName,
+		Control: cloneControl(control),
+	}, true
+}
+
+var builtinExtensionShims = map[string]pg_extension.Control{
+	"btree_gist": {
+		DefaultVersion: pg_extension.ToVersion(1, 7),
+		Superuser:      true,
+		Relocatable:    true,
+	},
+	"citext": {
+		DefaultVersion: pg_extension.ToVersion(1, 6),
+		Superuser:      true,
+		Relocatable:    true,
+	},
+	"plpgsql": {
+		DefaultVersion: pg_extension.ToVersion(1, 0),
+		Superuser:      true,
+		Relocatable:    false,
+		Schema:         "pg_catalog",
+	},
+	"vector": {
+		DefaultVersion: pg_extension.ToVersion(0, 0),
+		Superuser:      true,
+		Relocatable:    true,
+	},
+}
+
+func cloneExtensionFiles(ext *pg_extension.ExtensionFiles) *pg_extension.ExtensionFiles {
+	if ext == nil {
+		return nil
+	}
+	clone := *ext
+	clone.SQLFileNames = append([]string(nil), ext.SQLFileNames...)
+	clone.Control = cloneControl(ext.Control)
+	return &clone
+}
+
+func cloneControl(control pg_extension.Control) pg_extension.Control {
+	control.Requires = append([]string(nil), control.Requires...)
+	control.Extra = maps.Clone(control.Extra)
+	return control
 }
 
 // GetExtensionFunction returns the function inside the extension matching the given names. Returns an error if the

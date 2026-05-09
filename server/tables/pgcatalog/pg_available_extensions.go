@@ -15,10 +15,14 @@
 package pgcatalog
 
 import (
-	"io"
+	"cmp"
+	"slices"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +47,30 @@ func (p PgAvailableExtensionsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAvailableExtensionsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_available_extensions row iter
-	return emptyRowIter()
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	availableExtensions := extensions.GetAvailableExtensions()
+	names := mapsKeys(availableExtensions)
+	slices.Sort(names)
+	rows := make([]sql.Row, 0, len(names))
+	for _, name := range names {
+		ext := availableExtensions[name]
+		var installedVersion any
+		if loaded, err := extCollection.GetLoadedExtension(ctx, id.NewExtension(name)); err != nil {
+			return nil, err
+		} else if loaded.ExtName.IsValid() {
+			installedVersion = loaded.LibIdentifier.Version().String()
+		}
+		rows = append(rows, sql.Row{
+			name,
+			ext.Control.DefaultVersion.String(),
+			installedVersion,
+			nullableString(ext.Control.Comment),
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -63,18 +89,10 @@ var pgAvailableExtensionsSchema = sql.Schema{
 	{Name: "comment", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgAvailableExtensionsName},
 }
 
-// pgAvailableExtensionsRowIter is the sql.RowIter for the pg_available_extensions table.
-type pgAvailableExtensionsRowIter struct {
-}
-
-var _ sql.RowIter = (*pgAvailableExtensionsRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgAvailableExtensionsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgAvailableExtensionsRowIter) Close(ctx *sql.Context) error {
-	return nil
+func mapsKeys[K cmp.Ordered, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }

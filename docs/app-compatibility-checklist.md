@@ -611,6 +611,14 @@ actually exercise.
   this item only covers the no-matview catalog surface that dump
   tools can safely query today. Pinned by
   testing/go/pg_matviews_probe_test.go.
+- [~] Extension availability catalogs -
+  `pg_available_extensions` and `pg_available_extension_versions`
+  list the supported extension shims (`btree_gist`, `citext`,
+  `plpgsql`, `vector`) plus any local PostgreSQL extension files
+  Doltgres can see, and mark installed versions from `pg_extension`.
+  Broader dump/restore coverage for extension-heavy schemas remains
+  tracked by the restore-gate corpus. Pinned by
+  testing/go/available_extensions_probe_test.go.
 - [x] `pg_indexes` - prove index existence checks and conditional DDL.
   testing/go/migration_tool_introspect_test.go now installs and runs
   the real `pg` Node driver (the same driver Drizzle Kit, Prisma,

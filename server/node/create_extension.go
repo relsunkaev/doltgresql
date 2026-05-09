@@ -92,7 +92,7 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		}
 		return nil, errors.Errorf(`extension "%s" already exists`, c.Name)
 	}
-	ext, err := getExtensionFiles(c.Name)
+	ext, err := extensions.GetExtensionFiles(c.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -171,57 +171,6 @@ func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *ex
 		Relocatable:   ext.Control.Relocatable,
 		LibIdentifier: extensions.CreateLibraryIdentifier(c.Name, ext.Control.DefaultVersion),
 	})
-}
-
-func getExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
-	ext, err := extensions.GetExtension(name)
-	if err == nil {
-		return ext, nil
-	}
-	if shim, ok := builtinExtensionShim(name); ok {
-		return shim, nil
-	}
-	return nil, err
-}
-
-func builtinExtensionShim(name string) (*pg_extension.ExtensionFiles, bool) {
-	switch strings.ToLower(name) {
-	case "btree_gist":
-		return &pg_extension.ExtensionFiles{
-			Name: name,
-			Control: pg_extension.Control{
-				DefaultVersion: pg_extension.ToVersion(1, 7),
-				Relocatable:    true,
-			},
-		}, true
-	case "citext":
-		return &pg_extension.ExtensionFiles{
-			Name: name,
-			Control: pg_extension.Control{
-				DefaultVersion: pg_extension.ToVersion(1, 6),
-				Relocatable:    true,
-			},
-		}, true
-	case "plpgsql":
-		return &pg_extension.ExtensionFiles{
-			Name: name,
-			Control: pg_extension.Control{
-				DefaultVersion: pg_extension.ToVersion(1, 0),
-				Relocatable:    false,
-				Schema:         "pg_catalog",
-			},
-		}, true
-	case "vector":
-		return &pg_extension.ExtensionFiles{
-			Name: name,
-			Control: pg_extension.Control{
-				DefaultVersion: pg_extension.ToVersion(0, 0),
-				Relocatable:    true,
-			},
-		}, true
-	default:
-		return nil, false
-	}
 }
 
 func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_extension.ExtensionFiles) (id.Namespace, error) {
