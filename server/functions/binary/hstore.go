@@ -42,6 +42,9 @@ func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_hstore)
 	framework.RegisterFunction(hstore_slice)
+	framework.RegisterFunction(hstore_akeys)
+	framework.RegisterFunction(hstore_avals)
+	framework.RegisterFunction(hstore_to_array)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -111,6 +114,72 @@ var hstore_slice = framework.Function2{
 			}
 		}
 		return formatHstore(sliced), nil
+	},
+}
+
+var hstore_akeys = framework.Function1{
+	Name:       "akeys",
+	Return:     pgtypes.TextArray,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreSortedKeys(pairs)
+		values := make([]any, len(keys))
+		for i, key := range keys {
+			values[i] = key
+		}
+		return values, nil
+	},
+}
+
+var hstore_avals = framework.Function1{
+	Name:       "avals",
+	Return:     pgtypes.TextArray,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreSortedKeys(pairs)
+		values := make([]any, len(keys))
+		for i, key := range keys {
+			value := pairs[key]
+			if value != nil {
+				values[i] = *value
+			}
+		}
+		return values, nil
+	},
+}
+
+var hstore_to_array = framework.Function1{
+	Name:       "hstore_to_array",
+	Return:     pgtypes.TextArray,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreSortedKeys(pairs)
+		values := make([]any, 0, len(keys)*2)
+		for _, key := range keys {
+			values = append(values, key)
+			value := pairs[key]
+			if value == nil {
+				values = append(values, nil)
+			} else {
+				values = append(values, *value)
+			}
+		}
+		return values, nil
 	},
 }
 
@@ -495,11 +564,7 @@ func formatHstore(pairs map[string]*string) string {
 	if len(pairs) == 0 {
 		return ""
 	}
-	keys := make([]string, 0, len(pairs))
-	for key := range pairs {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	keys := hstoreSortedKeys(pairs)
 	parts := make([]string, len(keys))
 	for i, key := range keys {
 		value := pairs[key]
@@ -510,6 +575,15 @@ func formatHstore(pairs map[string]*string) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+func hstoreSortedKeys(pairs map[string]*string) []string {
+	keys := make([]string, 0, len(pairs))
+	for key := range pairs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func hstoreQuote(value string) string {

@@ -134,8 +134,10 @@ Do not check off an item until it has workload proof:
   including NULL values and NULL key-array entries. `hstore -> text[]`
   / `slice_array` and `slice(hstore, text[])` cover ordered array
   value lookup plus hstore subset extraction for missing keys, SQL NULL
-  hstore values, empty key arrays, and NULL key-array entries. Broader
-  hstore operators, functions, casts, and index parity remain residual risk.
+  hstore values, empty key arrays, and NULL key-array entries. `akeys`,
+  `avals`, and `hstore_to_array` cover sorted key/value array
+  introspection for populated, empty, and SQL NULL hstore inputs.
+  Broader hstore operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
