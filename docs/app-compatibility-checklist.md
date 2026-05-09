@@ -221,13 +221,13 @@ Do not check off an item until it has workload proof:
   path preserves correctness by disabling unsafe raw btree range planning.
 - [ ] Complete hstore index/operator-class parity, including planner use and
   operator-class catalog behavior for hstore comparisons.
-- [ ] ICU nondeterministic collations - `CREATE COLLATION ... provider
-  = icu, deterministic = false` is rejected at the parser
-  (`at or near "collation": syntax error` SQLSTATE 42601). Apps
-  that need case-insensitive equality on string columns must
+- [x] ICU nondeterministic collations - `CREATE COLLATION ... provider
+  = icu, deterministic = false` is explicitly rejected with
+  SQLSTATE `0A000` (`CREATE COLLATION is not yet supported`).
+  Apps that need case-insensitive equality on string columns must
   rewrite to either `lower(col)` expression indexes (covered) or
   a `citext`-style application-level rewrite. Pinned by
-  testing/go/icu_collation_probe_test.go.
+  testing/go/icu_collation_probe_test.go and testing/go/sqlstate_test.go.
 - [x] Explicit query collations - runtime `ORDER BY col COLLATE "C"`
   and `ORDER BY col COLLATE "POSIX"` both run and produce
   byte-order-correct ordering (uppercase before lowercase). Column-

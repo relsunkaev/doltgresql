@@ -27,7 +27,7 @@ import (
 func TestIcuCollationProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        "CREATE COLLATION provider = icu probe",
+			Name:        "CREATE COLLATION provider = icu is explicitly rejected",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -36,7 +36,7 @@ func TestIcuCollationProbe(t *testing.T) {
 						locale = 'und-u-ks-level2',
 						deterministic = false
 					);`,
-					ExpectedErr: "syntax error",
+					ExpectedErr: "CREATE COLLATION is not yet supported",
 				},
 			},
 		},

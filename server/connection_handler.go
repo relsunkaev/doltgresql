@@ -2594,6 +2594,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		if containsCreateEventTrigger(query) {
 			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied to create event trigger")
 		}
+		if containsCreateCollation(query) {
+			return nil, pgerror.New(pgcode.FeatureNotSupported, "CREATE COLLATION is not yet supported")
+		}
 		return nil, err
 	}
 	if len(s) == 0 {
@@ -2623,9 +2626,24 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 }
 
 func containsCreateEventTrigger(query string) bool {
+	return containsKeywordSequence(query, "create", "event", "trigger")
+}
+
+func containsCreateCollation(query string) bool {
+	return containsKeywordSequence(query, "create", "collation")
+}
+
+func containsKeywordSequence(query string, sequence ...string) bool {
 	words := strings.Fields(strings.ToLower(query))
-	for i := 0; i+2 < len(words); i++ {
-		if words[i] == "create" && words[i+1] == "event" && words[i+2] == "trigger" {
+	for i := 0; i+len(sequence) <= len(words); i++ {
+		matches := true
+		for j := range sequence {
+			if words[i+j] != sequence[j] {
+				matches = false
+				break
+			}
+		}
+		if matches {
 			return true
 		}
 	}

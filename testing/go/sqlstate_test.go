@@ -130,6 +130,11 @@ func TestSQLStateCodes(t *testing.T) {
 			sql:  "CREATE EVENT TRIGGER ddl_audit ON ddl_command_end EXECUTE FUNCTION audit_fn();",
 			code: "42501",
 		},
+		{
+			name: "CREATE COLLATION unsupported boundary -> 0A000",
+			sql:  "CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);",
+			code: "0A000",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
