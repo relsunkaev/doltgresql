@@ -401,6 +401,15 @@ func (h *ConnectionHandler) chooseInitialParameters(startupMessage *pgproto3.Sta
 	for name, value := range startupMessage.Parameters {
 		// TODO: handle other parameters defined in StartupMessage
 		switch strings.ToLower(name) {
+		case "application_name":
+			sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+			if err != nil {
+				return err
+			}
+			err = sqlCtx.SetSessionVariable(sqlCtx, "application_name", value)
+			if err != nil {
+				return err
+			}
 		case "datestyle":
 			err := h.doltgresHandler.InitSessionParameterDefault(context.Background(), h.mysqlConn, "DateStyle", value)
 			if err != nil {

@@ -622,8 +622,12 @@ Do not check off an item until it has workload proof:
   testing/go/pg_notify_probe_test.go.
 - [ ] Reader/writer pool topology - define the Doltgres deployment shape
   expected by ORM `withReplicas`-style reader/writer routing.
-- [ ] SSL / SCRAM / auth / client parameters - prove driver pool startup with
-  `application_name`, SSL modes, and SCRAM authentication.
+- [x] SSL / SCRAM / auth / client parameters - pgxpool can start a
+  pooled connection over `sslmode=require`, authenticate with the
+  SCRAM-backed default password role, receive the requested
+  `application_name` through `current_setting`, and run pooled CRUD.
+  Pinned by testing/go/ssl_test.go's
+  TestPooledSSLStartupParametersAndScramAuth.
 - [ ] Secondary clients - prove or scope-bound less common Postgres clients
   (`ts-postgres`, `postgres.js`, and similar) where workloads use them.
 

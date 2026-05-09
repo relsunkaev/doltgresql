@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/vitess/go/mysql"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -112,4 +113,66 @@ func TestSSL(t *testing.T) {
 	readRows, _, err := ReadRows(rows, true)
 	require.NoError(t, err)
 	assert.Equal(t, NormalizeExpectedRow(rows.FieldDescriptions(), []sql.Row{{3645, 37643}}), readRows)
+}
+
+func TestPooledSSLStartupParametersAndScramAuth(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
+		DoltgresConfig: cfgdetails.DoltgresConfig{
+			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
+				PortNumber: &port,
+				HostStr:    ptr("127.0.0.1"),
+			},
+		},
+	}, NewSslListener)
+	require.NoError(t, err)
+
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	ctx := context.Background()
+	dsn := fmt.Sprintf(
+		"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=require&application_name=dg-pool-startup",
+		port,
+	)
+	cfg, err := pgxpool.ParseConfig(dsn)
+	require.NoError(t, err)
+	cfg.MaxConns = 2
+
+	var pool *pgxpool.Pool
+	for i := 0; i < 3; i++ {
+		pool, err = pgxpool.NewWithConfig(ctx, cfg)
+		if err == nil {
+			err = pool.Ping(ctx)
+		}
+		if err == nil {
+			break
+		}
+		if pool != nil {
+			pool.Close()
+			pool = nil
+		}
+		time.Sleep(time.Second)
+	}
+	require.NoError(t, err)
+	defer pool.Close()
+
+	var currentUser string
+	var appName string
+	err = pool.QueryRow(ctx, "SELECT current_user, current_setting('application_name')").Scan(&currentUser, &appName)
+	require.NoError(t, err)
+	require.Equal(t, "postgres", currentUser)
+	require.Equal(t, "dg-pool-startup", appName)
+
+	_, err = pool.Exec(ctx, "CREATE TABLE pooled_ssl_t (id INT PRIMARY KEY, label TEXT)")
+	require.NoError(t, err)
+	_, err = pool.Exec(ctx, "INSERT INTO pooled_ssl_t VALUES (1, 'ready')")
+	require.NoError(t, err)
+	var label string
+	err = pool.QueryRow(ctx, "SELECT label FROM pooled_ssl_t WHERE id = 1").Scan(&label)
+	require.NoError(t, err)
+	require.Equal(t, "ready", label)
 }
