@@ -356,6 +356,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"2", "2", "t"}},
 				},
 				{
+					Query:    `SELECT hstore_to_json('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text, hstore_to_jsonb('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text;`,
+					Expected: []sql.Row{{`{"A":"2","B":"5","empty":null,"quote":"a\"b"}`, `{"A": "2", "B": "5", "empty": null, "quote": "a\"b"}`}},
+				},
+				{
+					Query:    `SELECT hstore_to_json_loose('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore)::text, hstore_to_jsonb_loose('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore)::text;`,
+					Expected: []sql.Row{{`{"n":12,"bad":"12x","str":"012","bool":"true","empty":null,"float":3.5}`, `{"n": 12, "bad": "12x", "str": "012", "bool": "true", "empty": null, "float": 3.5}`}},
+				},
+				{
+					Query:    `SELECT ('"A"=>"2", "empty"=>NULL'::public.hstore)::json::text, ('"A"=>"2", "empty"=>NULL'::public.hstore)::jsonb::text;`,
+					Expected: []sql.Row{{`{"A":"2","empty":null}`, `{"A": "2", "empty": null}`}},
+				},
+				{
 					Query:    `SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;`,
 					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, "t"}},
 				},

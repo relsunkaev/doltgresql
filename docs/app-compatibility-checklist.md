@@ -146,7 +146,11 @@ Do not check off an item until it has workload proof:
   reports the current hstore storage version for valid hstore inputs.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
-  and missing-vs-extra key inequality.
+  and missing-vs-extra key inequality. `hstore_to_json`,
+  `hstore_to_jsonb`, `hstore_to_json_loose`, `hstore_to_jsonb_loose`,
+  and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
+  SQL NULL hstore values as JSON nulls, string escaping, loose numeric
+  promotion, and boolean-looking hstore text remaining JSON strings.
   Broader hstore operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.

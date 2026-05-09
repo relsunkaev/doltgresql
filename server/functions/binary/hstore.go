@@ -15,6 +15,7 @@
 package binary
 
 import (
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -22,12 +23,15 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+	json "github.com/goccy/go-json"
+	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
+var hstoreLooseJsonNumberPattern = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$`)
 
 // initHstore registers operators and functions supplied by the hstore extension.
 func initHstore() {
@@ -48,6 +52,10 @@ func initHstore() {
 	framework.RegisterFunction(hstore_akeys)
 	framework.RegisterFunction(hstore_avals)
 	framework.RegisterFunction(hstore_to_array)
+	framework.RegisterFunction(hstore_to_json)
+	framework.RegisterFunction(hstore_to_json_loose)
+	framework.RegisterFunction(hstore_to_jsonb)
+	framework.RegisterFunction(hstore_to_jsonb_loose)
 	framework.RegisterFunction(hstore_version_diag)
 	framework.RegisterFunction(hstore_tconvert)
 	framework.RegisterFunction(hstore_from_text)
@@ -56,6 +64,16 @@ func initHstore() {
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
+	framework.MustAddExplicitTypeCast(framework.TypeCast{
+		FromType: hstoreType,
+		ToType:   pgtypes.Json,
+		Function: hstoreCastToJson,
+	})
+	framework.MustAddExplicitTypeCast(framework.TypeCast{
+		FromType: hstoreType,
+		ToType:   pgtypes.JsonB,
+		Function: hstoreCastToJsonB,
+	})
 }
 
 var hstore_fetchval = framework.Function2{
@@ -188,6 +206,46 @@ var hstore_to_array = framework.Function1{
 			}
 		}
 		return values, nil
+	},
+}
+
+var hstore_to_json = framework.Function1{
+	Name:       "hstore_to_json",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return hstoreToJsonString(val.(string), false)
+	},
+}
+
+var hstore_to_json_loose = framework.Function1{
+	Name:       "hstore_to_json_loose",
+	Return:     pgtypes.Json,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return hstoreToJsonString(val.(string), true)
+	},
+}
+
+var hstore_to_jsonb = framework.Function1{
+	Name:       "hstore_to_jsonb",
+	Return:     pgtypes.JsonB,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return hstoreToJsonDocument(ctx, val.(string), false)
+	},
+}
+
+var hstore_to_jsonb_loose = framework.Function1{
+	Name:       "hstore_to_jsonb_loose",
+	Return:     pgtypes.JsonB,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return hstoreToJsonDocument(ctx, val.(string), true)
 	},
 }
 
@@ -577,6 +635,93 @@ func hstoreFromTextCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any
 	pairs := make(map[string]*string, 1)
 	hstoreAddTextPair(pairs, val1.(string), val2)
 	return formatHstore(pairs), nil
+}
+
+func hstoreCastToJson(_ *sql.Context, val any, _ *pgtypes.DoltgresType) (any, error) {
+	if val == nil {
+		return nil, nil
+	}
+	return hstoreToJsonString(val.(string), false)
+}
+
+func hstoreCastToJsonB(ctx *sql.Context, val any, _ *pgtypes.DoltgresType) (any, error) {
+	if val == nil {
+		return nil, nil
+	}
+	return hstoreToJsonDocument(ctx, val.(string), false)
+}
+
+func hstoreToJsonString(input string, loose bool) (string, error) {
+	pairs, err := parseHstore(input)
+	if err != nil {
+		return "", err
+	}
+	var builder strings.Builder
+	builder.WriteByte('{')
+	for i, key := range hstoreSortedKeys(pairs) {
+		if i > 0 {
+			builder.WriteByte(',')
+		}
+		if err = hstoreWriteJsonString(&builder, key); err != nil {
+			return "", err
+		}
+		builder.WriteByte(':')
+		value := pairs[key]
+		if value == nil {
+			builder.WriteString("null")
+		} else if loose && hstoreIsLooseJsonNumber(*value) {
+			builder.WriteString(*value)
+		} else if err = hstoreWriteJsonString(&builder, *value); err != nil {
+			return "", err
+		}
+	}
+	builder.WriteByte('}')
+	return builder.String(), nil
+}
+
+func hstoreToJsonDocument(ctx *sql.Context, input string, loose bool) (pgtypes.JsonDocument, error) {
+	pairs, err := parseHstore(input)
+	if err != nil {
+		return pgtypes.JsonDocument{}, err
+	}
+	items := make([]pgtypes.JsonValueObjectItem, 0, len(pairs))
+	for _, key := range hstoreSortedKeys(pairs) {
+		value, err := hstoreJsonValue(ctx, pairs[key], loose)
+		if err != nil {
+			return pgtypes.JsonDocument{}, err
+		}
+		items = append(items, pgtypes.JsonValueObjectItem{Key: key, Value: value})
+	}
+	return pgtypes.JsonDocument{
+		Value: pgtypes.JsonObjectFromItems(items, false),
+	}, nil
+}
+
+func hstoreJsonValue(ctx *sql.Context, value *string, loose bool) (pgtypes.JsonValue, error) {
+	if value == nil {
+		return pgtypes.JsonValueNull(0), nil
+	}
+	if loose && hstoreIsLooseJsonNumber(*value) {
+		number, err := decimal.NewFromString(*value)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonValueNumber(number), nil
+	}
+	return pgtypes.JsonValueFromSQLValue(ctx, pgtypes.Text, *value)
+}
+
+func hstoreIsLooseJsonNumber(value string) bool {
+	return hstoreLooseJsonNumberPattern.MatchString(value)
+}
+
+func hstoreWriteJsonString(builder *strings.Builder, value string) error {
+	encoded, err := json.MarshalWithOption(value, json.DisableHTMLEscape())
+	if err != nil {
+		return err
+	}
+	builder.Write(encoded)
+	return nil
 }
 
 func parseHstore(input string) (map[string]*string, error) {
