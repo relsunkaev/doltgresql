@@ -15,6 +15,7 @@
 package binary
 
 import (
+	"io"
 	"regexp"
 	"sort"
 	"strings"
@@ -35,6 +36,7 @@ var hstoreLooseJsonNumberPattern = regexp.MustCompile(`^-?(?:0|[1-9][0-9]*)(?:\.
 
 // initHstore registers operators and functions supplied by the hstore extension.
 func initHstore() {
+	initHstoreTableFunctions()
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_fetchval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_slice_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, hstore_exist)
@@ -51,6 +53,8 @@ func initHstore() {
 	framework.RegisterFunction(hstore_slice)
 	framework.RegisterFunction(hstore_akeys)
 	framework.RegisterFunction(hstore_avals)
+	framework.RegisterFunction(hstore_skeys)
+	framework.RegisterFunction(hstore_svals)
 	framework.RegisterFunction(hstore_to_array)
 	framework.RegisterFunction(hstore_to_json)
 	framework.RegisterFunction(hstore_to_json_loose)
@@ -181,6 +185,41 @@ var hstore_avals = framework.Function1{
 			}
 		}
 		return values, nil
+	},
+}
+
+var hstore_skeys = framework.Function1{
+	Name:       "skeys",
+	Return:     pgtypes.RowTypeWithReturnType(pgtypes.Text),
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	SRF:        true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		return hstoreKeysRowIter(hstoreSortedKeys(pairs)), nil
+	},
+}
+
+var hstore_svals = framework.Function1{
+	Name:       "svals",
+	Return:     pgtypes.RowTypeWithReturnType(pgtypes.Text),
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	SRF:        true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreSortedKeys(pairs)
+		values := make([]*string, len(keys))
+		for i, key := range keys {
+			values[i] = pairs[key]
+		}
+		return hstoreValuesRowIter(values), nil
 	},
 }
 
@@ -649,6 +688,33 @@ func hstoreCastToJsonB(ctx *sql.Context, val any, _ *pgtypes.DoltgresType) (any,
 		return nil, nil
 	}
 	return hstoreToJsonDocument(ctx, val.(string), false)
+}
+
+func hstoreKeysRowIter(keys []string) *pgtypes.SetReturningFunctionRowIter {
+	var i int
+	return pgtypes.NewSetReturningFunctionRowIter(func(_ *sql.Context) (sql.Row, error) {
+		if i >= len(keys) {
+			return nil, io.EOF
+		}
+		key := keys[i]
+		i++
+		return sql.Row{key}, nil
+	})
+}
+
+func hstoreValuesRowIter(values []*string) *pgtypes.SetReturningFunctionRowIter {
+	var i int
+	return pgtypes.NewSetReturningFunctionRowIter(func(_ *sql.Context) (sql.Row, error) {
+		if i >= len(values) {
+			return nil, io.EOF
+		}
+		value := values[i]
+		i++
+		if value == nil {
+			return sql.Row{nil}, nil
+		}
+		return sql.Row{*value}, nil
+	})
 }
 
 func hstoreToJsonString(input string, loose bool) (string, error) {

@@ -328,6 +328,22 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`, `A|2|B|5|empty|<NULL>`}},
 				},
 				{
+					Query:    `SELECT (SELECT array_to_string(array_agg(k), '|', '<NULL>') FROM skeys('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(k)), (SELECT array_to_string(array_agg(v), '|', '<NULL>') FROM svals('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(v));`,
+					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`}},
+				},
+				{
+					Query:    `SELECT (SELECT count(*)::text FROM skeys(''::public.hstore)), (SELECT count(*)::text FROM svals(''::public.hstore)), (SELECT count(*)::text FROM skeys(NULL::public.hstore)), (SELECT count(*)::text FROM svals(NULL::public.hstore));`,
+					Expected: []sql.Row{{`0`, `0`, `0`, `0`}},
+				},
+				{
+					Query:    `SELECT skeys('"B"=>"5", "A"=>"2"'::public.hstore);`,
+					Expected: []sql.Row{{`A`}, {`B`}},
+				},
+				{
+					Query:    `SELECT svals('"A"=>"2", "empty"=>NULL, "B"=>"5"'::public.hstore);`,
+					Expected: []sql.Row{{`2`}, {`5`}, {nil}},
+				},
+				{
 					Query:    `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`,
 					Expected: []sql.Row{{`"n"=>"12", "bad"=>"12x", "str"=>"012", "bool"=>"true", "empty"=>NULL, "float"=>"3.5"`, `n|12|bad|12x|str|012|bool|true|empty|<NULL>|float|3.5`}},
 				},

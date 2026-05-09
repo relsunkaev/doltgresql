@@ -175,7 +175,7 @@ func nodeSingleColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExp
 	}
 	funcName := singleColumnTableFunctionName(funcExpr)
 	switch funcName {
-	case "generate_series", "unnest":
+	case "generate_series", "skeys", "svals", "unnest":
 	default:
 		return nil, false, nil
 	}
