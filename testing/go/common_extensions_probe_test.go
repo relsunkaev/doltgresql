@@ -231,6 +231,8 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`INSERT INTO vending_machines VALUES (2, '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x"');`,
 				`INSERT INTO vending_machines VALUES (3, '"A"=>"2", "B"=>"5", "empty"=>NULL');`,
 				`CREATE TYPE hstore_person AS (name text, age integer, active boolean, note text);`,
+				`CREATE TYPE hstore_pop_base AS (a int, b text, c bool);`,
+				`CREATE TYPE hstore_pop_row AS (a int, b text[], c hstore_pop_base, j jsonb);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -441,6 +443,42 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "t", "t", "t"}},
 				},
 				{
+					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"5", "b"=>"from hstore", "c"=>"f", "ignored"=>"x"'::public.hstore);`,
+					Expected: []sql.Row{{5, "from hstore", "f"}},
+				},
+				{
+					Query:    `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, '"a"=>"5", "b"=>NULL'::public.hstore);`,
+					Expected: []sql.Row{{5, nil, "t"}},
+				},
+				{
+					Query:    `SELECT * FROM populate_record(ROW(10, 'base', true)::hstore_pop_base, NULL::public.hstore);`,
+					Expected: []sql.Row{{10, "base", "t"}},
+				},
+				{
+					Query:    `SELECT populate_record(NULL::hstore_pop_base, NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"A"=>"5", "b"=>"exact"'::public.hstore);`,
+					Expected: []sql.Row{{nil, "exact", nil}},
+				},
+				{
+					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"b"=>""'::public.hstore);`,
+					Expected: []sql.Row{{nil, "", nil}},
+				},
+				{
+					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'b', 'c', 'j'], ARRAY['1', '{2,"a b"}', '(9,nested,t)', '{"x":2}']));`,
+					Expected: []sql.Row{{1, `{2,"a b"}`, `(9,nested,t)`, `{"x": 2}`}},
+				},
+				{
+					Query:    `SELECT c FROM populate_record(NULL::hstore_pop_row, hstore(ARRAY['a', 'c'], ARRAY['1', '(9,"needs,quote",)']));`,
+					Expected: []sql.Row{{`(9,"needs,quote",)`}},
+				},
+				{
+					Query:    `SELECT (populate_record(NULL::hstore_pop_base, '"a"=>"7", "b"=>"scalar", "c"=>"false"'::public.hstore)).b;`,
+					Expected: []sql.Row{{"scalar"}},
+				},
+				{
 					Query:       `SELECT hstore(ARRAY['A', '1', 'B']::text[]);`,
 					ExpectedErr: `array must have even number of elements`,
 				},
@@ -455,6 +493,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
 					ExpectedErr: `invalid input syntax for type hstore`,
+				},
+				{
+					Query:       `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"not-int"'::public.hstore);`,
+					ExpectedErr: `invalid input syntax`,
 				},
 			},
 		},

@@ -78,6 +78,7 @@ func initHstore() {
 	framework.RegisterFunction(hstore_le)
 	framework.RegisterFunction(hstore_gt)
 	framework.RegisterFunction(hstore_ge)
+	framework.RegisterFunction(hstore_populate_record)
 	framework.MustAddExplicitTypeCast(framework.TypeCast{
 		FromType: hstoreType,
 		ToType:   pgtypes.Json,
@@ -481,6 +482,16 @@ var hstore_ge = framework.Function2{
 	Callable:   hstoreComparePredicate(func(cmp int) bool { return cmp >= 0 }),
 }
 
+var hstore_populate_record = framework.Function2{
+	Name:       "populate_record",
+	Return:     pgtypes.AnyElement,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyElement, hstoreType},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, base any, fromHstore any) (any, error) {
+		return hstorePopulateRecord(ctx, t[2], base, fromHstore)
+	},
+}
+
 var hstore_exist = framework.Function2{
 	Name:       "exist",
 	Return:     pgtypes.Bool,
@@ -868,6 +879,206 @@ func hstoreFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (any
 		pairs[key] = &output
 	}
 	return formatHstore(pairs), nil
+}
+
+func hstorePopulateRecordCompositeType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, error) {
+	compositeType, ok := expr.Type(ctx).(*pgtypes.DoltgresType)
+	if !ok {
+		return nil, errors.New("first argument of populate_record must be a composite type")
+	}
+	compositeType, err := hstoreResolveType(ctx, compositeType)
+	if err != nil {
+		return nil, err
+	}
+	if compositeType == nil || !compositeType.IsCompositeType() || len(compositeType.CompositeAttrs) == 0 {
+		return nil, errors.New("first argument of populate_record must be a composite type")
+	}
+	return compositeType, nil
+}
+
+func hstorePopulateRecord(ctx *sql.Context, compositeType *pgtypes.DoltgresType, base any, fromHstore any) ([]pgtypes.RecordValue, error) {
+	compositeType, err := hstoreResolveType(ctx, compositeType)
+	if err != nil {
+		return nil, err
+	}
+	if compositeType == nil || !compositeType.IsCompositeType() || len(compositeType.CompositeAttrs) == 0 {
+		return nil, errors.New("first argument of populate_record must be a composite type")
+	}
+	baseRecord, err := hstorePopulateRecordBase(ctx, base)
+	if err != nil {
+		return nil, err
+	}
+	resolvedHstore, err := sql.UnwrapAny(ctx, fromHstore)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedHstore == nil {
+		return baseRecord, nil
+	}
+	pairs, err := parseHstore(resolvedHstore.(string))
+	if err != nil {
+		return nil, err
+	}
+	return hstorePopulateRecordFromPairs(ctx, compositeType, baseRecord, pairs)
+}
+
+func hstorePopulateRecordBase(ctx *sql.Context, base any) ([]pgtypes.RecordValue, error) {
+	resolvedBase, err := sql.UnwrapAny(ctx, base)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedBase == nil {
+		return nil, nil
+	}
+	record, ok := resolvedBase.([]pgtypes.RecordValue)
+	if !ok {
+		return nil, errors.Errorf("expected []RecordValue, but got %T", resolvedBase)
+	}
+	return record, nil
+}
+
+func hstorePopulateRecordFromPairs(
+	ctx *sql.Context,
+	compositeType *pgtypes.DoltgresType,
+	baseRecord []pgtypes.RecordValue,
+	pairs map[string]*string,
+) ([]pgtypes.RecordValue, error) {
+	record := make([]pgtypes.RecordValue, len(compositeType.CompositeAttrs))
+	for i, attr := range compositeType.CompositeAttrs {
+		attrType, err := hstoreCompositeAttributeType(ctx, attr)
+		if err != nil {
+			return nil, err
+		}
+		var baseValue any
+		if i < len(baseRecord) {
+			baseValue = baseRecord[i].Value
+		}
+		record[i] = pgtypes.RecordValue{
+			Value: baseValue,
+			Type:  attrType,
+		}
+		if value, ok := pairs[attr.Name]; ok {
+			record[i].Value, err = hstorePopulateValue(ctx, attrType, value)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return record, nil
+}
+
+func hstorePopulateValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, value *string) (any, error) {
+	if value == nil {
+		return nil, nil
+	}
+	if targetType.IsCompositeType() {
+		return hstorePopulateCompositeValue(ctx, targetType, *value)
+	}
+	return targetType.IoInput(ctx, *value)
+}
+
+func hstorePopulateCompositeValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, input string) ([]pgtypes.RecordValue, error) {
+	fields, err := hstoreParseRecordFields(input)
+	if err != nil {
+		return nil, err
+	}
+	if len(fields) != len(targetType.CompositeAttrs) {
+		return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+	}
+	record := make([]pgtypes.RecordValue, len(targetType.CompositeAttrs))
+	for i, attr := range targetType.CompositeAttrs {
+		attrType, err := hstoreCompositeAttributeType(ctx, attr)
+		if err != nil {
+			return nil, err
+		}
+		record[i] = pgtypes.RecordValue{Type: attrType}
+		if fields[i] != nil {
+			record[i].Value, err = hstorePopulateValue(ctx, attrType, fields[i])
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return record, nil
+}
+
+func hstoreParseRecordFields(input string) ([]*string, error) {
+	if len(input) < 2 || input[0] != '(' || input[len(input)-1] != ')' {
+		return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+	}
+	var fields []*string
+	var builder strings.Builder
+	inQuotes := false
+	fieldQuoted := false
+	parenDepth := 0
+	braceDepth := 0
+	for i := 1; i < len(input)-1; i++ {
+		ch := input[i]
+		if inQuotes {
+			switch ch {
+			case '\\':
+				if i+1 >= len(input)-1 {
+					return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+				}
+				i++
+				builder.WriteByte(input[i])
+			case '"':
+				inQuotes = false
+			default:
+				builder.WriteByte(ch)
+			}
+			continue
+		}
+		switch ch {
+		case '"':
+			inQuotes = true
+			fieldQuoted = true
+		case '(':
+			parenDepth++
+			builder.WriteByte(ch)
+		case ')':
+			if parenDepth == 0 {
+				return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+			}
+			parenDepth--
+			builder.WriteByte(ch)
+		case '{':
+			braceDepth++
+			builder.WriteByte(ch)
+		case '}':
+			if braceDepth == 0 {
+				return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+			}
+			braceDepth--
+			builder.WriteByte(ch)
+		case ',':
+			if parenDepth == 0 && braceDepth == 0 {
+				fields = append(fields, hstoreRecordFieldValue(builder.String(), fieldQuoted))
+				builder.Reset()
+				fieldQuoted = false
+				continue
+			}
+			builder.WriteByte(ch)
+		default:
+			builder.WriteByte(ch)
+		}
+	}
+	if inQuotes || parenDepth != 0 || braceDepth != 0 {
+		return nil, errors.Errorf("malformed record literal: \"%s\"", input)
+	}
+	fields = append(fields, hstoreRecordFieldValue(builder.String(), fieldQuoted))
+	return fields, nil
+}
+
+func hstoreRecordFieldValue(value string, quoted bool) *string {
+	if !quoted && value == "" {
+		return nil
+	}
+	return &value
+}
+
+func hstoreCompositeAttributeType(ctx *sql.Context, attr pgtypes.CompositeAttribute) (*pgtypes.DoltgresType, error) {
+	return hstoreResolveType(ctx, pgtypes.NewUnresolvedDoltgresType(attr.TypeID.SchemaName(), attr.TypeID.TypeName()))
 }
 
 func hstoreRecordFieldName(typ *pgtypes.DoltgresType, idx int) string {

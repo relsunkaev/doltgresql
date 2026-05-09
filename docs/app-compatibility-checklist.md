@@ -146,8 +146,13 @@ Do not check off an item until it has workload proof:
   malformed array inputs, named and anonymous record fields, boolean
   record value output, NULL record fields, NULL composite rows, and
   canonical constructor output ordering. `tconvert(text, text)` covers
-  the legacy constructor alias, and `hstore_version_diag` reports the
-  current hstore storage version for valid hstore inputs.
+  the legacy constructor alias. `populate_record(anyelement, hstore)`
+  covers hstore-driven record population in projection and table
+  forms, including ignored keys, exact field-name matching, base-record
+  preservation for omitted keys and SQL NULL hstore inputs, hstore NULL
+  values, scalar field access, array/composite/jsonb text input
+  conversion, and invalid cast propagation. `hstore_version_diag`
+  reports the current hstore storage version for valid hstore inputs.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
   and missing-vs-extra key inequality. `hstore_cmp`, `hstore_lt`,

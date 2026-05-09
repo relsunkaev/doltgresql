@@ -28,12 +28,15 @@ var _ sql.TableFunction = (*hstoreTextTableFunction)(nil)
 var _ sql.ExecSourceRel = (*hstoreTextTableFunction)(nil)
 var _ sql.TableFunction = (*hstoreEachTableFunction)(nil)
 var _ sql.ExecSourceRel = (*hstoreEachTableFunction)(nil)
+var _ sql.TableFunction = (*hstorePopulateRecordTableFunction)(nil)
+var _ sql.ExecSourceRel = (*hstorePopulateRecordTableFunction)(nil)
 
 func initHstoreTableFunctions() {
 	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions,
 		newHstoreTextTableFunction("skeys", false),
 		newHstoreTextTableFunction("svals", true),
 		&hstoreEachTableFunction{},
+		&hstorePopulateRecordTableFunction{},
 	)
 }
 
@@ -287,5 +290,143 @@ func (h *hstoreEachTableFunction) CollationCoercibility(ctx *sql.Context) (colla
 }
 
 func (h *hstoreEachTableFunction) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
+
+type hstorePopulateRecordTableFunction struct {
+	db    sql.Database
+	exprs []sql.Expression
+}
+
+func (h *hstorePopulateRecordTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
+	if len(args) != 2 {
+		return nil, sql.ErrInvalidArgumentNumber.New(h.Name(), 2, len(args))
+	}
+	nt := *h
+	nt.db = db
+	nt.exprs = args
+	return &nt, nil
+}
+
+func (h *hstorePopulateRecordTableFunction) Name() string {
+	return "populate_record"
+}
+
+func (h *hstorePopulateRecordTableFunction) String() string {
+	if len(h.exprs) == 0 {
+		return h.Name() + "()"
+	}
+	args := make([]string, len(h.exprs))
+	for i, expr := range h.exprs {
+		args[i] = expr.String()
+	}
+	return fmt.Sprintf("%s(%s)", h.Name(), strings.Join(args, ", "))
+}
+
+func (h *hstorePopulateRecordTableFunction) Resolved() bool {
+	for _, expr := range h.exprs {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+func (h *hstorePopulateRecordTableFunction) Expressions() []sql.Expression {
+	return h.exprs
+}
+
+func (h *hstorePopulateRecordTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
+	if len(exprs) != 2 {
+		return nil, sql.ErrInvalidChildrenNumber.New(h, len(exprs), 2)
+	}
+	nt := *h
+	nt.exprs = exprs
+	return &nt, nil
+}
+
+func (h *hstorePopulateRecordTableFunction) Database() sql.Database {
+	return h.db
+}
+
+func (h *hstorePopulateRecordTableFunction) WithDatabase(db sql.Database) (sql.Node, error) {
+	nt := *h
+	nt.db = db
+	return &nt, nil
+}
+
+func (h *hstorePopulateRecordTableFunction) IsReadOnly() bool {
+	return true
+}
+
+func (h *hstorePopulateRecordTableFunction) Schema(ctx *sql.Context) sql.Schema {
+	compositeType, err := hstorePopulateRecordCompositeType(ctx, h.exprs[0])
+	if err != nil {
+		return nil
+	}
+	var dbName string
+	if h.db != nil {
+		dbName = h.db.Name()
+	}
+	schema := make(sql.Schema, len(compositeType.CompositeAttrs))
+	for i, attr := range compositeType.CompositeAttrs {
+		attrType, err := hstoreCompositeAttributeType(ctx, attr)
+		if err != nil || attrType == nil {
+			return nil
+		}
+		schema[i] = &sql.Column{
+			DatabaseSource: dbName,
+			Source:         h.Name(),
+			Name:           attr.Name,
+			Type:           attrType,
+			Nullable:       true,
+		}
+	}
+	return schema
+}
+
+func (h *hstorePopulateRecordTableFunction) Children() []sql.Node {
+	return nil
+}
+
+func (h *hstorePopulateRecordTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if len(children) != 0 {
+		return nil, sql.ErrInvalidChildrenNumber.New(h, len(children), 0)
+	}
+	return h, nil
+}
+
+func (h *hstorePopulateRecordTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	compositeType, err := hstorePopulateRecordCompositeType(ctx, h.exprs[0])
+	if err != nil {
+		return nil, err
+	}
+	base, err := h.exprs[0].Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	fromHstore, err := h.exprs[1].Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	record, err := hstorePopulateRecord(ctx, compositeType, base, fromHstore)
+	if err != nil {
+		return nil, err
+	}
+	if record == nil {
+		return sql.RowsToRowIter(make(sql.Row, len(compositeType.CompositeAttrs))), nil
+	}
+	output := make(sql.Row, len(record))
+	for i, value := range record {
+		output[i] = value.Value
+	}
+	return sql.RowsToRowIter(output), nil
+}
+
+func (h *hstorePopulateRecordTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
+	return sql.Collation_binary, 5
+}
+
+func (h *hstorePopulateRecordTableFunction) Collation() sql.CollationID {
 	return sql.Collation_Default
 }
