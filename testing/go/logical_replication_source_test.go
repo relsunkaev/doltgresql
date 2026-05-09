@@ -32,6 +32,66 @@ import (
 	"github.com/dolthub/doltgresql/server/sessionstate"
 )
 
+const electricPublicationValidationQuery = `
+SELECT
+  pg_get_userbyid(p.pubowner) = current_role as can_alter_publication,
+  pubinsert AND pubupdate AND pubdelete AND pubtruncate as publishes_all_operations,
+  CASE WHEN current_setting('server_version_num')::int >= 180000
+      THEN (to_jsonb(p) ->> 'pubgencols') = 's'
+      ELSE FALSE
+  END AS publishes_generated_columns
+FROM pg_publication as p WHERE pubname = $1;`
+
+const electricPublicationRelationsQuery = `
+SELECT
+  pc.oid, (pn.nspname, pc.relname), pc.relreplident
+FROM
+  pg_publication_rel ppr
+JOIN
+  pg_publication pp ON ppr.prpubid = pp.oid
+JOIN
+  pg_class pc ON pc.oid = ppr.prrelid
+JOIN
+  pg_namespace pn ON pc.relnamespace = pn.oid
+WHERE
+  pp.pubname = $1
+ORDER BY
+  pn.nspname, pc.relname`
+
+const electricReplicaIdentityByOIDQuery = `
+SELECT
+  pc.oid, pc.relreplident
+FROM
+  pg_class pc
+WHERE
+  pc.oid = ANY($1::oid[])`
+
+const electricInputRelationDriftQuery = `
+WITH input_relations AS (
+  SELECT
+    UNNEST($1::oid[]) AS oid,
+    UNNEST($2::text[]) AS input_nspname,
+    UNNEST($3::text[]) AS input_relname
+)
+SELECT
+  ir.oid, (ir.input_nspname, ir.input_relname) as input_relation, pc.oid, (pn.nspname, pc.relname)
+FROM input_relations ir
+LEFT JOIN pg_class pc ON pc.oid = ir.oid
+LEFT JOIN pg_namespace pn ON pc.relnamespace = pn.oid
+WHERE pc.oid IS NULL OR (pc.relname != input_relname OR pn.nspname != input_nspname)`
+
+const electricSnapshotLSNQuery = `SELECT pg_current_snapshot(), pg_current_wal_lsn()`
+
+const electricReplicationTelemetryQuery = `
+SELECT
+  (pg_current_wal_lsn() - '0/0' + -9223372036854775808)::int8 AS pg_wal_offset,
+  pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)::int8 AS retained_wal_size,
+  pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)::int8 AS confirmed_flush_lsn_lag
+FROM
+  pg_replication_slots
+WHERE
+  slot_name = $1`
+
 func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -263,6 +323,101 @@ func TestLogicalReplicationConsumerOwnedPublicationAndSlot(t *testing.T) {
 	relation, insert, commit := receiveInsertChange(t, replConn)
 	requireInsertChange(t, relation, insert, "owned_rep_items", "7", "owned")
 	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+}
+
+func TestLogicalReplicationElectricCatalogProbeQueries(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE electric_catalog_items (tenant_id INT PRIMARY KEY, label TEXT NOT NULL);
+		CREATE PUBLICATION electric_publication_default;
+		ALTER PUBLICATION electric_publication_default ADD TABLE electric_catalog_items;
+		ALTER TABLE electric_catalog_items REPLICA IDENTITY FULL;`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	slotName := "electric_slot_default"
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+
+	var canAlterPublication, publishesAllOperations, publishesGeneratedColumns bool
+	require.NoError(t, conn.Current.QueryRow(ctx, electricPublicationValidationQuery, "electric_publication_default").Scan(
+		&canAlterPublication,
+		&publishesAllOperations,
+		&publishesGeneratedColumns,
+	))
+	require.True(t, canAlterPublication)
+	require.True(t, publishesAllOperations)
+	require.False(t, publishesGeneratedColumns)
+
+	var relationOID string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT c.oid::text
+		FROM pg_catalog.pg_class c
+		JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'public' AND c.relname = 'electric_catalog_items'`).Scan(&relationOID))
+
+	rows, err := conn.Current.Query(ctx, electricPublicationRelationsQuery, "electric_publication_default")
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	values, err := rows.Values()
+	require.NoError(t, err)
+	require.Len(t, values, 3)
+	require.Equal(t, relationOID, fmt.Sprint(values[0]))
+	require.Contains(t, pgTextValue(values[1]), "electric_catalog_items")
+	require.Equal(t, "f", pgCharValue(values[2]))
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	rows, err = conn.Current.Query(ctx, electricReplicaIdentityByOIDQuery, []string{relationOID})
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	values, err = rows.Values()
+	require.NoError(t, err)
+	require.Len(t, values, 2)
+	require.Equal(t, relationOID, fmt.Sprint(values[0]))
+	require.Equal(t, "f", pgCharValue(values[1]))
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	rows, err = conn.Current.Query(ctx, electricInputRelationDriftQuery, []string{relationOID}, []string{"public"}, []string{"electric_catalog_items"})
+	require.NoError(t, err)
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	var snapshot, currentLSN string
+	require.NoError(t, conn.Current.QueryRow(ctx, electricSnapshotLSNQuery).Scan(&snapshot, &currentLSN))
+	require.NotEmpty(t, snapshot)
+	require.NotEmpty(t, currentLSN)
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO electric_catalog_items VALUES (1, 'one');")
+	require.NoError(t, err)
+
+	var pgWALOffset, retainedWALSize, confirmedFlushLSNLag int64
+	require.NoError(t, conn.Current.QueryRow(ctx, electricReplicationTelemetryQuery, slotName).Scan(
+		&pgWALOffset,
+		&retainedWALSize,
+		&confirmedFlushLSNLag,
+	))
+	require.NotZero(t, pgWALOffset)
+	require.GreaterOrEqual(t, retainedWALSize, int64(0))
+	require.GreaterOrEqual(t, confirmedFlushLSNLag, int64(0))
 }
 
 func TestLogicalReplicationSourceUpdateIncludesOldTupleForReplicaIdentityFull(t *testing.T) {
@@ -1698,6 +1853,57 @@ func requireDeleteChange(t *testing.T, relation *pglogrepl.RelationMessageV2, de
 	require.Len(t, deleteMessage.OldTuple.Columns, 2)
 	require.Equal(t, tenantID, string(deleteMessage.OldTuple.Columns[0].Data))
 	require.Equal(t, label, string(deleteMessage.OldTuple.Columns[1].Data))
+}
+
+func pgTextValue(value any) string {
+	switch typed := value.(type) {
+	case []byte:
+		return string(typed)
+	case uint8:
+		return string([]byte{typed})
+	default:
+		return fmt.Sprint(typed)
+	}
+}
+
+func pgCharValue(value any) string {
+	switch typed := value.(type) {
+	case int:
+		if typed >= 0 && typed <= 255 {
+			return string(byte(typed))
+		}
+	case int8:
+		return string(byte(typed))
+	case int16:
+		if typed >= 0 && typed <= 255 {
+			return string(byte(typed))
+		}
+	case int32:
+		if typed >= 0 && typed <= 255 {
+			return string(byte(typed))
+		}
+	case int64:
+		if typed >= 0 && typed <= 255 {
+			return string(byte(typed))
+		}
+	case uint:
+		if typed <= 255 {
+			return string(byte(typed))
+		}
+	case uint16:
+		if typed <= 255 {
+			return string(byte(typed))
+		}
+	case uint32:
+		if typed <= 255 {
+			return string(byte(typed))
+		}
+	case uint64:
+		if typed <= 255 {
+			return string(byte(typed))
+		}
+	}
+	return pgTextValue(value)
 }
 
 func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection, slotName string, expectedLSN string) {

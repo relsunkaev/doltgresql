@@ -733,8 +733,18 @@ actually exercise.
   TestLogicalReplicationConsumerOwnedPublicationAndSlot; verified with
   `go test ./testing/go -run
   '^TestLogicalReplicationConsumerOwnedPublicationAndSlot$'` on 2026-05-09.
-- [ ] Pin and test exactly the slot, publication, LSN, and replication-stat
-  catalog queries each consumer issues.
+- [~] Pin and test exactly the slot, publication, LSN, and replication-stat
+  catalog queries each consumer issues. Electric 1.6.2's compiled query
+  literals are pinned through
+  testing/go/logical_replication_source_test.go's
+  TestLogicalReplicationElectricCatalogProbeQueries: publication owner and
+  operation checks, publication relation discovery, replica identity lookup by
+  `oid[]`, relation-drift detection through `UNNEST`, snapshot/current-LSN
+  reads, and replication-slot telemetry based on `pg_wal_lsn_diff`. Verified
+  with `go test ./testing/go -run
+  '^TestLogicalReplicationElectricCatalogProbeQueries$'` on 2026-05-09. Zero,
+  Debezium, and other consumers remain open until their exact query surfaces
+  are captured.
 - [ ] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented.
 - [ ] Cover or reject Aurora / RDS-specific assumptions
