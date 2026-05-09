@@ -503,6 +503,12 @@ func (*Notify) StatementType() StatementType { return Ack }
 func (*Notify) StatementTag() string { return "NOTIFY" }
 
 // StatementType implements the Statement interface.
+func (*DoBlock) StatementType() StatementType { return Ack }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DoBlock) StatementTag() string { return "DO" }
+
+// StatementType implements the Statement interface.
 func (*CreateAggregate) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.

@@ -197,14 +197,13 @@ Do not check off an item until it has workload proof:
   claimed here; unsupported privilege effects are no-oped for
   dump-restore compatibility. Pinned by
   testing/go/privilege_ownership_ddl_probe_test.go.
-- [~] `DO $$` blocks - rejected at the parser today (`at or near "do":
-  syntax error` SQLSTATE 42601). pg_dump uses these for matview /
-  state repair, Alembic upgrade scripts wrap conditional DDL in them,
-  and many ORM init scripts emit the IF-NOT-EXISTS-via-DO pattern;
-  closing this needs DO-block tokenization plus a PL/pgSQL-style
-  executor for the inner block. Pinned by
-  testing/go/do_block_probe_test.go so the rejection contract stays
-  stable until the executor lands.
+- [~] `DO $$` blocks - anonymous `LANGUAGE plpgsql` DO blocks are
+  parsed and executed through the PL/pgSQL interpreter, including the
+  common conditional-DDL shape used by pg_dump repair blocks, Alembic
+  migrations, and IF-NOT-EXISTS init scripts. Other procedural
+  languages are rejected explicitly. Remaining risk follows the
+  existing PL/pgSQL interpreter surface rather than the outer DO
+  statement shape. Pinned by testing/go/do_block_probe_test.go.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

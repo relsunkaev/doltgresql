@@ -253,6 +253,15 @@ func unaryNegation(e tree.Expr) tree.Expr {
 
 // Parse parses a sql statement string and returns a list of Statements.
 func Parse(sql string) (Statements, error) {
+	if doBlock, ok, err := parseDoBlock(sql); ok || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		return Statements{{
+			AST: doBlock,
+			SQL: sql,
+		}}, nil
+	}
 	if reindex, ok, err := parseReindex(sql); ok || err != nil {
 		if err != nil {
 			return nil, err
@@ -273,6 +282,15 @@ func Parse(sql string) (Statements, error) {
 // bits of SQL from other nodes. In general,earwe expect that all
 // user-generated SQL has been run through the ParseWithInt() function.
 func ParseOne(sql string) (Statement, error) {
+	if doBlock, ok, err := parseDoBlock(sql); ok || err != nil {
+		if err != nil {
+			return Statement{}, err
+		}
+		return Statement{
+			AST: doBlock,
+			SQL: sql,
+		}, nil
+	}
 	if reindex, ok, err := parseReindex(sql); ok || err != nil {
 		if err != nil {
 			return Statement{}, err
@@ -284,6 +302,167 @@ func ParseOne(sql string) (Statement, error) {
 	}
 	var p Parser
 	return p.parseOneWithDepth(1, sql)
+}
+
+func parseDoBlock(sql string) (*tree.DoBlock, bool, error) {
+	query := strings.TrimSpace(sql)
+	query = strings.TrimSpace(strings.TrimSuffix(query, ";"))
+	if !hasLeadingKeyword(query, "DO") {
+		return nil, false, nil
+	}
+
+	rest := strings.TrimSpace(query[len("DO"):])
+	if rest == "" {
+		return nil, true, errors.New("DO requires a code block")
+	}
+
+	language := "plpgsql"
+	var ok bool
+	var err error
+	if hasLeadingKeyword(rest, "LANGUAGE") {
+		language, rest, ok, err = parseDoBlockLanguage(rest)
+		if err != nil || !ok {
+			return nil, true, err
+		}
+		rest = strings.TrimSpace(rest)
+	}
+
+	code, remaining, err := parseDoBlockCode(rest)
+	if err != nil {
+		return nil, true, err
+	}
+	remaining = strings.TrimSpace(remaining)
+	if remaining != "" {
+		language, remaining, ok, err = parseDoBlockLanguage(remaining)
+		if err != nil {
+			return nil, true, err
+		}
+		if !ok {
+			return nil, true, errors.Errorf("unexpected DO block trailing input: %s", remaining)
+		}
+		if strings.TrimSpace(remaining) != "" {
+			return nil, true, errors.Errorf("unexpected DO block trailing input: %s", remaining)
+		}
+	}
+
+	return &tree.DoBlock{
+		Code:     code,
+		Language: language,
+	}, true, nil
+}
+
+func parseDoBlockLanguage(input string) (language string, remaining string, ok bool, err error) {
+	if !hasLeadingKeyword(input, "LANGUAGE") {
+		return "", input, false, nil
+	}
+	rest := strings.TrimSpace(input[len("LANGUAGE"):])
+	if rest == "" {
+		return "", "", true, errors.New("DO LANGUAGE requires a language name")
+	}
+	if rest[0] == '"' {
+		language, remaining, err = parseQuotedDoBlockLanguage(rest)
+		if err != nil {
+			return "", "", true, err
+		}
+		return language, remaining, true, nil
+	}
+	language, remaining = splitDoBlockToken(rest)
+	if language == "" {
+		return "", "", true, errors.New("DO LANGUAGE requires a language name")
+	}
+	return normalizeDoBlockLanguage(language), remaining, true, nil
+}
+
+func parseQuotedDoBlockLanguage(input string) (language string, remaining string, err error) {
+	var builder strings.Builder
+	for i := 1; i < len(input); i++ {
+		if input[i] != '"' {
+			builder.WriteByte(input[i])
+			continue
+		}
+		if i+1 < len(input) && input[i+1] == '"' {
+			builder.WriteByte('"')
+			i++
+			continue
+		}
+		return builder.String(), input[i+1:], nil
+	}
+	return "", "", errors.New("unterminated quoted DO LANGUAGE name")
+}
+
+func splitDoBlockToken(input string) (token string, remaining string) {
+	for i, r := range input {
+		if isSQLKeywordBoundary(r) {
+			return input[:i], input[i:]
+		}
+	}
+	return input, ""
+}
+
+func normalizeDoBlockLanguage(language string) string {
+	language = strings.TrimSpace(language)
+	if len(language) >= 2 && language[0] == '"' && language[len(language)-1] == '"' {
+		language = strings.ReplaceAll(language[1:len(language)-1], `""`, `"`)
+	}
+	return language
+}
+
+func parseDoBlockCode(input string) (code string, remaining string, err error) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return "", "", errors.New("DO requires a code block")
+	}
+	switch input[0] {
+	case '$':
+		return parseDollarQuotedDoBlockCode(input)
+	case '\'':
+		return parseSingleQuotedDoBlockCode(input)
+	default:
+		return "", "", errors.New("DO requires a string literal code block")
+	}
+}
+
+func parseDollarQuotedDoBlockCode(input string) (code string, remaining string, err error) {
+	tagEnd := strings.IndexByte(input[1:], '$')
+	if tagEnd < 0 {
+		return "", "", errors.New("unterminated dollar-quoted DO block")
+	}
+	delimiter := input[:tagEnd+2]
+	bodyStart := len(delimiter)
+	bodyEnd := strings.Index(input[bodyStart:], delimiter)
+	if bodyEnd < 0 {
+		return "", "", errors.New("unterminated dollar-quoted DO block")
+	}
+	end := bodyStart + bodyEnd + len(delimiter)
+	return input[:end], input[end:], nil
+}
+
+func parseSingleQuotedDoBlockCode(input string) (code string, remaining string, err error) {
+	for i := 1; i < len(input); i++ {
+		if input[i] != '\'' {
+			continue
+		}
+		if i+1 < len(input) && input[i+1] == '\'' {
+			i++
+			continue
+		}
+		return input[:i+1], input[i+1:], nil
+	}
+	return "", "", errors.New("unterminated string literal DO block")
+}
+
+func hasLeadingKeyword(input string, keyword string) bool {
+	if len(input) < len(keyword) || !strings.EqualFold(input[:len(keyword)], keyword) {
+		return false
+	}
+	if len(input) == len(keyword) {
+		return true
+	}
+	return isSQLKeywordBoundary(rune(input[len(keyword)]))
+}
+
+func isSQLKeywordBoundary(r rune) bool {
+	return !(r == '_' || (r >= '0' && r <= '9') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z'))
 }
 
 func parseReindex(sql string) (*tree.Reindex, bool, error) {

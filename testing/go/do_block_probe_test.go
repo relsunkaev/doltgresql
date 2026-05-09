@@ -16,20 +16,20 @@ package _go
 
 import (
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDoBlockProbe pins where PG `DO $$ ... $$` anonymous code blocks
-// stand in doltgresql today. pg_dump emits these for matview / state
+// stand in doltgresql today. pg_dump emits these for matview/state
 // repair, Alembic upgrade scripts wrap conditional DDL in them, and
-// many ORM init scripts use the IF-NOT-EXISTS pattern through DO. The
-// keyword is rejected at the parser level (`at or near "do": syntax
-// error` SQLSTATE 42601). This pins the rejection so the gap stays
-// visible. Per the Schema/DDL TODO in
+// many ORM init scripts use the IF-NOT-EXISTS pattern through DO. Per
+// the Schema/DDL TODO in
 // docs/app-compatibility-checklist.md.
 func TestDoBlockProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        "DO block with conditional CREATE is rejected at the parser",
+			Name:        "DO block runs conditional CREATE",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -38,21 +38,40 @@ func TestDoBlockProbe(t *testing.T) {
 							IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'created_by_do') THEN
 								CREATE TABLE created_by_do (id INT PRIMARY KEY);
 							END IF;
-						END $$;`,
-					ExpectedErr: `at or near "do": syntax error`,
+						END;
+					$$;`,
+				},
+				{
+					Query: `INSERT INTO created_by_do VALUES (1);`,
+				},
+				{
+					Query:    `SELECT count(*)::text FROM created_by_do;`,
+					Expected: []sql.Row{{"1"}},
 				},
 			},
 		},
 		{
-			Name:        "DO block running RAISE NOTICE is rejected at the parser",
+			Name:        "DO block defaults to plpgsql and can raise notice",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `DO $$
 						BEGIN
 							RAISE NOTICE 'hello from DO block';
-						END $$;`,
-					ExpectedErr: `at or near "do": syntax error`,
+						END;
+					$$;`,
+				},
+			},
+		},
+		{
+			Name:        "DO block rejects unsupported language",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO LANGUAGE sql $$
+						SELECT 1;
+					$$;`,
+					ExpectedErr: `DO only supports LANGUAGE plpgsql`,
 				},
 			},
 		},
