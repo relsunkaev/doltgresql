@@ -137,6 +137,9 @@ Do not check off an item until it has workload proof:
   hstore values, empty key arrays, and NULL key-array entries. `akeys`,
   `avals`, and `hstore_to_array` cover sorted key/value array
   introspection for populated, empty, and SQL NULL hstore inputs.
+  `hstore(text, text)`, `hstore(text[], text[])`, and `hstore(text[])`
+  cover constructor semantics for NULL values, NULL key handling,
+  duplicate-first key handling, empty arrays, and malformed array inputs.
   Broader hstore operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.

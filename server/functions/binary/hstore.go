@@ -20,6 +20,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -45,6 +46,9 @@ func initHstore() {
 	framework.RegisterFunction(hstore_akeys)
 	framework.RegisterFunction(hstore_avals)
 	framework.RegisterFunction(hstore_to_array)
+	framework.RegisterFunction(hstore_from_text)
+	framework.RegisterFunction(hstore_from_arrays)
+	framework.RegisterFunction(hstore_from_array)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -180,6 +184,73 @@ var hstore_to_array = framework.Function1{
 			}
 		}
 		return values, nil
+	},
+}
+
+var hstore_from_text = framework.Function2{
+	Name:       "hstore",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		if val1 == nil {
+			return nil, nil
+		}
+		pairs := make(map[string]*string, 1)
+		hstoreAddTextPair(pairs, val1.(string), val2)
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_from_arrays = framework.Function2{
+	Name:       "hstore",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TextArray, pgtypes.TextArray},
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		if val1 == nil {
+			return nil, nil
+		}
+		keys := val1.([]any)
+		var values []any
+		if val2 != nil {
+			values = val2.([]any)
+			if len(keys) != len(values) {
+				return nil, errors.New("arrays must have same bounds")
+			}
+		}
+		pairs := make(map[string]*string, len(keys))
+		for i, keyValue := range keys {
+			if keyValue == nil {
+				return nil, errors.New("null value not allowed for hstore key")
+			}
+			var value any
+			if values != nil {
+				value = values[i]
+			}
+			hstoreAddTextPair(pairs, keyValue.(string), value)
+		}
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_from_array = framework.Function1{
+	Name:       "hstore",
+	Return:     hstoreType,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		values := val.([]any)
+		if len(values)%2 != 0 {
+			return nil, errors.New("array must have even number of elements")
+		}
+		pairs := make(map[string]*string, len(values)/2)
+		for i := 0; i < len(values); i += 2 {
+			keyValue := values[i]
+			if keyValue == nil {
+				return nil, errors.New("null value not allowed for hstore key")
+			}
+			hstoreAddTextPair(pairs, keyValue.(string), values[i+1])
+		}
+		return formatHstore(pairs), nil
 	},
 }
 
@@ -432,6 +503,18 @@ func hstoreValueEqual(left *string, right *string) bool {
 		return left == right
 	}
 	return *left == *right
+}
+
+func hstoreAddTextPair(pairs map[string]*string, key string, value any) {
+	if _, ok := pairs[key]; ok {
+		return
+	}
+	if value == nil {
+		pairs[key] = nil
+		return
+	}
+	textValue := value.(string)
+	pairs[key] = &textValue
 }
 
 func parseHstore(input string) (map[string]*string, error) {

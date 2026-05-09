@@ -336,6 +336,34 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "t", "t"}},
 				},
 				{
+					Query:    `SELECT hstore('A', '2')::text, hstore('empty', NULL)::text, hstore(NULL, 'x') IS NULL;`,
+					Expected: []sql.Row{{`"A"=>"2"`, `"empty"=>NULL`, "t"}},
+				},
+				{
+					Query:    `SELECT hstore(ARRAY['B', 'A', 'empty'], ARRAY['5', '2', NULL])::text, hstore(ARRAY['A', 'A'], ARRAY['1', '2'])::text, hstore(ARRAY['A'], NULL::text[])::text;`,
+					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, `"A"=>NULL`}},
+				},
+				{
+					Query:    `SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;`,
+					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, "t"}},
+				},
+				{
+					Query:    `SELECT hstore(ARRAY[]::text[])::text, hstore(ARRAY[]::text[], ARRAY[]::text[])::text;`,
+					Expected: []sql.Row{{``, ``}},
+				},
+				{
+					Query:       `SELECT hstore(ARRAY['A', '1', 'B']::text[]);`,
+					ExpectedErr: `array must have even number of elements`,
+				},
+				{
+					Query:       `SELECT hstore(ARRAY['A', NULL], ARRAY['1', '2']);`,
+					ExpectedErr: `null value not allowed for hstore key`,
+				},
+				{
+					Query:       `SELECT hstore(ARRAY['A', 'B'], ARRAY['1']);`,
+					ExpectedErr: `arrays must have same bounds`,
+				},
+				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
 					ExpectedErr: `invalid input syntax for type hstore`,
 				},

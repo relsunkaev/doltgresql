@@ -701,6 +701,21 @@ func (t *DoltgresType) IoInput(ctx *sql.Context, input string) (any, error) {
 
 // IoOutput converts given type value to output string.
 func (t *DoltgresType) IoOutput(ctx *sql.Context, val any) (string, error) {
+	if t.IsUnresolved {
+		if ctx == nil {
+			return "", errors.Errorf("cannot resolve type `%s` without context", t.String())
+		}
+		typesCollection, err := GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return "", err
+		}
+		resolvedType, err := typesCollection.GetType(ctx, t.ID)
+		if err != nil {
+			return "", err
+		}
+		t = resolvedType
+	}
+
 	var o any
 	var err error
 	if t.ModInFunc != 0 || t.IsArrayType() || t.IsCompositeType() {
