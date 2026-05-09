@@ -774,10 +774,13 @@ Do not check off an item until it has workload proof:
   explicit transaction clients. `ts-postgres` also runs through the real
   client package, including startup, explicit `application_name`,
   extended-protocol parameter binding, binary result decoding, explicit
-  prepare/execute/close, transaction commit, and rollback behavior. Pinned by
-  testing/go/postgres_js_client_test.go,
-  testing/go/node_postgres_client_test.go, and
-  testing/go/ts_postgres_client_test.go.
+  prepare/execute/close, transaction commit, and rollback behavior. `psycopg`
+  runs through the real psycopg3 pool, including startup `application_name`,
+  parameter binding, JSONB and array adaptation, concurrent reads, transaction
+  commit, and rollback behavior. Pinned by testing/go/postgres_js_client_test.go,
+  testing/go/node_postgres_client_test.go,
+  testing/go/ts_postgres_client_test.go, and
+  testing/go/psycopg_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
 
@@ -1164,10 +1167,12 @@ typed-exception handling, and client-side query timeouts.
   The pgx smoke harness covers the baseline app schema and transaction
   surface, the node-postgres and postgres.js harnesses cover secondary Node
   pooled-client paths with CRUD, parameters, JSONB, arrays, concurrent reads,
-  commit, and rollback, and the ts-postgres harness covers a binary-result
-  Node client with explicit prepared statements and transactions.
+  commit, and rollback, the ts-postgres harness covers a binary-result
+  Node client with explicit prepared statements and transactions, and the
+  psycopg harness covers the direct Python driver pool with parameters,
+  JSONB/array adaptation, concurrent reads, and transaction boundaries.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, and ts-postgres. Add runnable smoke gates for the
+  postgres.js, ts-postgres, and psycopg. Add runnable smoke gates for the
   advertised client and migration-tool matrix before claiming broad
   client compatibility.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,

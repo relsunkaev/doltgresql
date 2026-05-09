@@ -97,3 +97,23 @@ func TestConvertBindParametersReturnsNilForNoValues(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, bindings)
 }
+
+func TestReceiveBindParameterWidensCompactBinaryIntegers(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	v, err := receiveBindParameter(ctx, pgtypes.Int32, []byte{0x00, 0x01})
+	require.NoError(t, err)
+	require.Equal(t, int32(1), v)
+
+	v, err = receiveBindParameter(ctx, pgtypes.Int32, []byte{0xff, 0xff})
+	require.NoError(t, err)
+	require.Equal(t, int32(-1), v)
+
+	v, err = receiveBindParameter(ctx, pgtypes.Int64, []byte{0x00, 0x00, 0x00, 0x01})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), v)
+
+	v, err = receiveBindParameter(ctx, pgtypes.Int64, []byte{0xff, 0xff})
+	require.NoError(t, err)
+	require.Equal(t, int64(-1), v)
+}

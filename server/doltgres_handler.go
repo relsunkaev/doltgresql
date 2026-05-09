@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	goerrors "errors"
 	"fmt"
 	"io"
@@ -360,7 +361,7 @@ func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32
 				}
 				bindings[bindVariableName(i)] = sqlparser.InjectedExpr{Expression: pgexprs.NewUnsafeLiteral(v, dgType)}
 			} else {
-				v, err := dgType.CallReceive(ctx, values[i])
+				v, err := receiveBindParameter(ctx, dgType, values[i])
 				if err != nil {
 					return nil, err
 				}
@@ -371,6 +372,28 @@ func (h *DoltgresHandler) convertBindParameters(ctx *sql.Context, types []uint32
 		}
 	}
 	return bindings, nil
+}
+
+func receiveBindParameter(ctx *sql.Context, dgType *pgtypes.DoltgresType, value []byte) (any, error) {
+	// psycopg3 can send compact binary integer payloads for small Python
+	// ints even when the server resolves an untyped placeholder to int4
+	// or int8 through an explicit SQL cast. Widen those payloads before
+	// constructing the typed literal so direct psycopg parameters match
+	// PostgreSQL's app-driver behavior.
+	switch dgType.ID.TypeName() {
+	case "int4":
+		if len(value) == 2 {
+			return int32(int16(binary.BigEndian.Uint16(value))), nil
+		}
+	case "int8":
+		switch len(value) {
+		case 2:
+			return int64(int16(binary.BigEndian.Uint16(value))), nil
+		case 4:
+			return int64(int32(binary.BigEndian.Uint32(value))), nil
+		}
+	}
+	return dgType.CallReceive(ctx, value)
 }
 
 func bindVariableName(index int) string {
