@@ -138,12 +138,15 @@ Do not check off an item until it has workload proof:
   default-vs-explicit collation_name assertion). ICU
   nondeterministic collations (`"en_US.utf8"`, etc.) remain a
   separate gap tracked above.
-- [~] Materialized views - `CREATE MATERIALIZED VIEW` is rejected
-  with SQLSTATE 0A000 (`CREATE MATERIALIZED VIEW is not yet
-  supported`). Apps that emit matviews must rewrite to ordinary
-  views (covered) or to a backing table + scheduled refresh job.
-  The pg_matviews catalog view exists and returns zero rows so
-  dump tools skip the matview repair branch cleanly. Pinned by
+- [~] Materialized views - `CREATE MATERIALIZED VIEW ... AS SELECT`
+  creates a table-backed snapshot that can be queried and dropped with
+  `DROP MATERIALIZED VIEW`; later source-table writes do not change the
+  snapshot. This covers schemas that only need restore-time snapshot
+  data. Full PostgreSQL matview semantics are still partial:
+  `REFRESH MATERIALIZED VIEW`, `WITH NO DATA`, materialized-view column
+  lists, and `pg_matviews` metadata rows are not implemented. Apps that
+  need refreshable matviews must still rewrite to ordinary views
+  (covered) or to a backing table + scheduled refresh job. Pinned by
   testing/go/materialized_view_probe_test.go.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...

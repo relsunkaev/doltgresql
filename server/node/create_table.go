@@ -43,6 +43,11 @@ func NewCreateTable(createTable *plan.CreateTable, sequences []*CreateSequence) 
 	}
 }
 
+// GMSCreateTable returns the wrapped go-mysql-server CREATE TABLE node.
+func (c *CreateTable) GMSCreateTable() *plan.CreateTable {
+	return c.gmsCreateTable
+}
+
 // Children implements the interface sql.ExecBuilderNode.
 func (c *CreateTable) Children() []sql.Node {
 	return c.gmsCreateTable.Children()

@@ -16,6 +16,8 @@ package _go
 
 import (
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestMaterializedViewProbe pins where CREATE MATERIALIZED VIEW
@@ -24,17 +26,57 @@ import (
 func TestMaterializedViewProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "CREATE MATERIALIZED VIEW probe",
+			Name: "CREATE MATERIALIZED VIEW snapshot probe",
 			SetUpScript: []string{
 				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
 				`INSERT INTO source VALUES (1, 100), (2, 200);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// PG: creates a populated matview. Today:
-					// SQLSTATE 0A000 feature_not_supported.
-					Query:       `CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;`,
-					ExpectedErr: "CREATE MATERIALIZED VIEW is not yet supported",
+					Query: `CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT id, v FROM source_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+			},
+		},
+		{
+			Name: "DROP MATERIALIZED VIEW snapshot probe",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT id, v FROM source_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `INSERT INTO source VALUES (3, 300);`,
+				},
+				{
+					Query: `SELECT id, v FROM source_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `DROP MATERIALIZED VIEW source_mv;`,
+				},
+				{
+					Query:       `SELECT * FROM source_mv;`,
+					ExpectedErr: "table not found",
 				},
 			},
 		},

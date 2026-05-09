@@ -15,9 +15,11 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // nodeCreateMaterializedView handles *tree.CreateMaterializedView nodes.
@@ -25,6 +27,44 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	if node == nil {
 		return nil, nil
 	}
+	if len(node.ColumnNames) > 0 {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW column names are not yet supported")
+	}
+	if node.Using != "" {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW USING is not yet supported")
+	}
+	if len(node.Params) > 0 {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW storage parameters are not yet supported")
+	}
+	if node.Tablespace != "" {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW TABLESPACE is not yet supported")
+	}
+	if node.CheckOption != tree.ViewCheckOptionUnspecified {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW WITH CHECK OPTION is not yet supported")
+	}
+	if node.WithNoData {
+		return nil, errors.Errorf("CREATE MATERIALIZED VIEW WITH NO DATA is not yet supported")
+	}
 
-	return NotYetSupportedError("CREATE MATERIALIZED VIEW is not yet supported")
+	tableName, err := nodeTableName(ctx, &node.Name)
+	if err != nil {
+		return nil, err
+	}
+	selectStmt, err := nodeSelect(ctx, node.AsSource)
+	if err != nil {
+		return nil, err
+	}
+	return &vitess.DDL{
+		Action:      vitess.CreateStr,
+		Table:       tableName,
+		IfNotExists: node.IfNotExists,
+		OptSelect: &vitess.OptSelect{
+			Select: selectStmt,
+		},
+		Auth: vitess.AuthInformation{
+			AuthType:    auth.AuthType_CREATE,
+			TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
+		},
+	}, nil
 }

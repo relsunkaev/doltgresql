@@ -66,6 +66,7 @@ const (
 	ruleId_AssignRowLevelLocking                                            // assignRowLevelLocking
 	ruleId_SuppressReplicaRoleForeignKeys                                   // suppressReplicaRoleForeignKeys
 	ruleId_SuppressDeferrableForeignKeys                                    // suppressDeferrableForeignKeys
+	ruleId_UnwrapTableCopierCreateTable                                     // unwrapTableCopierCreateTable
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -127,6 +128,7 @@ func Init() {
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
 		analyzer.Rule{Id: ruleId_WrapPrimaryKeyMetadata, Apply: wrapPrimaryKeyMetadata},
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
+		analyzer.Rule{Id: ruleId_UnwrapTableCopierCreateTable, Apply: UnwrapTableCopierCreateTable},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
 		analyzer.Rule{Id: ruleId_ValidateOnConflictArbiter, Apply: ValidateOnConflictArbiter},
 	)

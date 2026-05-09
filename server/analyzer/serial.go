@@ -36,6 +36,7 @@ import (
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -153,7 +154,22 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			OwnerColumn: col.Name,
 		}))
 	}
+	if len(ctSequences) == 0 && !hasDoltgresTableMetadata(createTable.TableOpts) {
+		return node, transform.SameTree, nil
+	}
 	return pgnodes.NewCreateTable(createTable, ctSequences), transform.NewTree, nil
+}
+
+func hasDoltgresTableMetadata(tableOpts map[string]any) bool {
+	if tableOpts == nil {
+		return false
+	}
+	comment, ok := tableOpts["comment"].(string)
+	if !ok {
+		return false
+	}
+	_, ok = tablemetadata.DecodeComment(comment)
+	return ok
 }
 
 // generateSequenceName generates a unique sequence name for a SERIAL column in the table given

@@ -20,6 +20,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // nodeDropView handles *tree.DropView nodes.
@@ -43,7 +44,23 @@ func nodeDropView(ctx *Context, node *tree.DropView) (*vitess.DDL, error) {
 			return nil, err
 		}
 	}
-	//TODO: handle IsMaterialized
+	if node.IsMaterialized {
+		authTableNames := make([]string, 0, len(tableNames)*3)
+		for _, tableName := range tableNames {
+			authTableNames = append(authTableNames,
+				tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String())
+		}
+		return &vitess.DDL{
+			Action:     vitess.DropStr,
+			IfExists:   node.IfExists,
+			FromTables: tableNames,
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_DROPTABLE,
+				TargetType:  auth.AuthTargetType_TableIdentifiers,
+				TargetNames: authTableNames,
+			},
+		}, nil
+	}
 	return &vitess.DDL{
 		Action:    vitess.DropStr,
 		IfExists:  node.IfExists,
