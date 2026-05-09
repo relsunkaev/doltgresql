@@ -343,11 +343,18 @@ Do not check off an item until it has workload proof:
   block. Closing this needs Dolt-side dual-write (writers
   maintain a pending index while the backfill runs); out of
   scope until that primitive lands.
-- [ ] CONCURRENTLY for non-btree index types - GIN, expression,
-  partial, and INCLUDE CONCURRENTLY all route through the
-  existing synchronous AlterTable path. The keyword is accepted
-  so migration tools don't error, but none of the two-phase
-  catalog visibility above applies.
+- [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
+  btree `INCLUDE` indexes and non-unique btree partial indexes now use
+  the same two-phase `pg_index.indisready=false` /
+  `pg_index.indisvalid=false` catalog visibility as plain btree
+  `CREATE INDEX CONCURRENTLY`, then flip to ready/valid after the
+  inter-phase commit. GIN, expression, and partial-unique
+  `CONCURRENTLY` shapes still route through their existing synchronous
+  build paths; migration tools do not error, but those shapes do not
+  expose the two-phase catalog state yet. This does not change the
+  separate non-blocking writer gap above. Pinned by
+  testing/go/create_index_concurrently_test.go and
+  testing/go/create_index_concurrently_contention_test.go.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,
   b)` is accepted at DDL and the index round-trips through
   `pg_indexes`. Coverage in

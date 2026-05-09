@@ -34,12 +34,11 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	// CONCURRENTLY for plain btree is routed through the two-phase
-	// state-machine node below so external sessions can observe the
-	// in-progress build via pg_index.indisready/indisvalid. Edge cases
-	// (GIN, expression indexes, partial indexes, INCLUDE columns)
-	// fall back to a synchronous build that ignores CONCURRENTLY —
-	// migration tooling still gets a successful CREATE.
+	// CONCURRENTLY for btree indexes without expression columns is routed
+	// through the two-phase state-machine node below so external sessions
+	// can observe the in-progress build via pg_index.indisready/indisvalid.
+	// GIN and expression indexes fall back to a synchronous build that ignores
+	// CONCURRENTLY — migration tooling still gets a successful CREATE.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
@@ -194,15 +193,10 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 
 // canRouteConcurrentBtree reports whether a CREATE INDEX CONCURRENTLY
 // statement should be handled by the two-phase state-machine node. The
-// node only knows how to construct a plain btree IndexDef from a
-// vitess.IndexField list; expression columns, INCLUDE columns,
-// partial-index predicates, and the GIN/CONSTRAINT shapes route through
-// the existing synchronous AlterTable path because they need extra
-// build-time machinery the new node doesn't reproduce.
+// node can carry metadata-backed btree shapes such as INCLUDE columns
+// and non-unique partial predicates; expression columns, partial-unique
+// indexes, and GIN shapes route through their existing synchronous paths.
 func canRouteConcurrentBtree(node *tree.CreateIndex, metadata *indexmetadata.Metadata) bool {
-	if node.Predicate != nil || len(node.IndexParams.IncludeColumns) > 0 {
-		return false
-	}
 	for _, column := range node.Columns {
 		if column.Expr != nil {
 			return false

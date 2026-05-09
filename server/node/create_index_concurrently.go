@@ -27,7 +27,8 @@ import (
 )
 
 // CreateIndexConcurrently is the InjectedStatement that drives PostgreSQL's
-// CREATE INDEX CONCURRENTLY two-phase build for plain btree indexes:
+// CREATE INDEX CONCURRENTLY two-phase build for btree indexes that do not
+// require expression-column build support:
 //
 //  1. **Register**: build the index under (indisready=false, indisvalid=false)
 //     so the planner cannot use it and the catalog reflects an in-progress
@@ -48,8 +49,8 @@ import (
 //
 // Edge cases that fall back to a regular synchronous CREATE INDEX (no
 // state-machine wrapping) are handled at the AST level — GIN, expression
-// indexes, partial indexes, INCLUDE columns, and unique-with-expression
-// shapes all keep their existing build path.
+// indexes, partial-unique indexes, and unique-with-expression shapes all keep
+// their existing build path.
 type CreateIndexConcurrently struct {
 	ifNotExists bool
 	schema      string

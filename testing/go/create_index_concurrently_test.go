@@ -123,6 +123,48 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE INDEX CONCURRENTLY metadata-backed btree shapes",
+			SetUpScript: []string{
+				"CREATE TABLE meta_t (id INT PRIMARY KEY, tenant_id INT, amount INT, active BOOL);",
+				"INSERT INTO meta_t VALUES (1, 10, 100, true), (2, 20, 200, false);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX CONCURRENTLY meta_t_tenant_cover_idx ON meta_t (tenant_id) INCLUDE (amount);",
+				},
+				{
+					Query: "CREATE INDEX CONCURRENTLY meta_t_active_idx ON meta_t (tenant_id) WHERE active;",
+				},
+				{
+					Query: `SELECT indexname, indexdef
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'meta_t' AND indexname LIKE 'meta_t_%_idx'
+						ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"meta_t_active_idx", "CREATE INDEX meta_t_active_idx ON public.meta_t USING btree (tenant_id) WHERE active"},
+						{"meta_t_tenant_cover_idx", "CREATE INDEX meta_t_tenant_cover_idx ON public.meta_t USING btree (tenant_id) INCLUDE (amount)"},
+					},
+				},
+				{
+					Query: `SELECT c.relname, i.indisready, i.indisvalid
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
+						WHERE c.relname IN ('meta_t_tenant_cover_idx', 'meta_t_active_idx')
+						ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"meta_t_active_idx", "t", "t"},
+						{"meta_t_tenant_cover_idx", "t", "t"},
+					},
+				},
+				{
+					Query: "SELECT id FROM meta_t WHERE tenant_id = 10 AND active ORDER BY id;",
+					Expected: []sql.Row{
+						{1},
+					},
+				},
+			},
+		},
+		{
 			Name: "DROP INDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE drop_t (id INT PRIMARY KEY, v INT);",
