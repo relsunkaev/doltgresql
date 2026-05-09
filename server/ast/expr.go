@@ -334,7 +334,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		return nil, errors.Errorf("comment on column is not yet supported")
 	case *tree.ComparisonExpr:
 		// We will eventually support operators in other schemas, but for now we only can handle built-ins
-		if len(node.Schema) > 0 && node.Schema != "pg_catalog" {
+		if len(node.Schema) > 0 && node.Schema != "pg_catalog" && !isPublicHstoreComparisonOperator(node.Schema, node.Operator) {
 			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
@@ -478,6 +478,26 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		case tree.JSONPathExists:
 			return vitess.InjectedExpr{
 				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryJSONPathExists),
+				Children:   vitess.Exprs{left, right},
+			}, nil
+		case tree.HstoreLT:
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryHstoreLess),
+				Children:   vitess.Exprs{left, right},
+			}, nil
+		case tree.HstoreLE:
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryHstoreLessOrEqual),
+				Children:   vitess.Exprs{left, right},
+			}, nil
+		case tree.HstoreGT:
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryHstoreGreater),
+				Children:   vitess.Exprs{left, right},
+			}, nil
+		case tree.HstoreGE:
+			return vitess.InjectedExpr{
+				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryHstoreGreaterOrEqual),
 				Children:   vitess.Exprs{left, right},
 			}, nil
 		case tree.Overlaps:
@@ -886,6 +906,18 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		return nil, nil
 	default:
 		return nil, errors.Errorf("unknown expression: `%T`", node)
+	}
+}
+
+func isPublicHstoreComparisonOperator(schema tree.Name, operator tree.ComparisonOperator) bool {
+	if schema != "public" {
+		return false
+	}
+	switch operator {
+	case tree.HstoreLT, tree.HstoreLE, tree.HstoreGT, tree.HstoreGE:
+		return true
+	default:
+		return false
 	}
 }
 

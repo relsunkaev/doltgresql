@@ -728,6 +728,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <*tree.Placeholder> PLACEHOLDER
 %token <str> TYPECAST TYPEANNOTATE DOT_DOT
 %token <str> LESS_EQUALS GREATER_EQUALS NOT_EQUALS
+%token <str> HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
 %token <str> NOT_REGMATCH REGIMATCH NOT_REGIMATCH
 %token <str> TEXTSEARCHMATCH
 %token <str> ERROR
@@ -1453,7 +1454,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %right     NOT
 %nonassoc  IS ISNULL NOTNULL   // IS sets precedence for IS NULL, etc
 %nonassoc  VALUE SCALAR ARRAY OBJECT WITH WITHOUT
-%nonassoc  '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS
+%nonassoc  '<' '>' '=' LESS_EQUALS GREATER_EQUALS NOT_EQUALS HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
 %nonassoc  '~' BETWEEN DEFERRABLE IN LIKE ILIKE SIMILAR NOT_REGMATCH REGIMATCH NOT_REGIMATCH NOT_LA TEXTSEARCHMATCH
 %nonassoc  ESCAPE              // ESCAPE must be just above LIKE/ILIKE/SIMILAR
 %nonassoc  CONTAINS CONTAINED_BY '?' JSON_SOME_EXISTS JSON_ALL_EXISTS JSON_PATH_EXISTS
@@ -13083,6 +13084,22 @@ a_expr:
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.GT, Left: $1.expr(), Right: $3.expr()}
   }
+| a_expr HSTORE_LESS a_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreLT, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr HSTORE_LESS_EQUALS a_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreLE, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr HSTORE_GREATER a_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGT, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr HSTORE_GREATER_EQUALS a_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGE, Left: $1.expr(), Right: $3.expr()}
+  }
 | a_expr '?' a_expr
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.JSONExists, Left: $1.expr(), Right: $3.expr()}
@@ -13606,6 +13623,22 @@ a_expr:
    {
      $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.GE, Left: $1.expr(), Right: $8.expr()}
    }
+ | a_expr OPERATOR '(' schema_name '.' HSTORE_LESS ')' a_expr
+   {
+     $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreLT, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' HSTORE_LESS_EQUALS ')' a_expr
+   {
+     $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreLE, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' HSTORE_GREATER ')' a_expr
+   {
+     $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreGT, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' HSTORE_GREATER_EQUALS ')' a_expr
+   {
+     $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreGE, Left: $1.expr(), Right: $8.expr()}
+   }
  | a_expr OPERATOR '(' schema_name '.' NOT_EQUALS ')' a_expr
    {
      $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.NE, Left: $1.expr(), Right: $8.expr()}
@@ -13707,6 +13740,22 @@ b_expr:
 | b_expr '>' b_expr
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.GT, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr HSTORE_LESS b_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreLT, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr HSTORE_LESS_EQUALS b_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreLE, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr HSTORE_GREATER b_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGT, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr HSTORE_GREATER_EQUALS b_expr
+  {
+    $$.val = &tree.ComparisonExpr{Operator: tree.HstoreGE, Left: $1.expr(), Right: $3.expr()}
   }
 | b_expr '=' b_expr
   {
@@ -14520,6 +14569,10 @@ operator:
 | FETCHTEXT_PATH { $$.val = tree.JSONFetchTextPath }
 | AND_AND { $$.val = tree.Overlaps }
 | TEXTSEARCHMATCH { $$.val = tree.TextSearchMatch }
+| HSTORE_LESS { $$.val = tree.HstoreLT }
+| HSTORE_LESS_EQUALS { $$.val = tree.HstoreLE }
+| HSTORE_GREATER { $$.val = tree.HstoreGT }
+| HSTORE_GREATER_EQUALS { $$.val = tree.HstoreGE }
 
 math_op:
   '+' { $$.val = tree.Plus  }

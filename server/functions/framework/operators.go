@@ -24,36 +24,40 @@ import (
 type Operator byte
 
 const (
-	Operator_BinaryPlus                Operator = iota // +
-	Operator_BinaryMinus                               // -
-	Operator_BinaryMultiply                            // *
-	Operator_BinaryDivide                              // /
-	Operator_BinaryMod                                 // %
-	Operator_BinaryShiftLeft                           // <<
-	Operator_BinaryShiftRight                          // >>
-	Operator_BinaryLessThan                            // <
-	Operator_BinaryGreaterThan                         // >
-	Operator_BinaryLessOrEqual                         // <=
-	Operator_BinaryGreaterOrEqual                      // >=
-	Operator_BinaryEqual                               // =
-	Operator_BinaryNotEqual                            // <> or != (they're equivalent in all cases)
-	Operator_BinaryBitAnd                              // &
-	Operator_BinaryBitOr                               // |
-	Operator_BinaryBitXor                              // ^
-	Operator_BinaryConcatenate                         // ||
-	Operator_BinaryJSONExtractJson                     // ->
-	Operator_BinaryJSONExtractText                     // ->>
-	Operator_BinaryJSONExtractPathJson                 // #>
-	Operator_BinaryJSONExtractPathText                 // #>>
-	Operator_BinaryJSONContainsRight                   // @>
-	Operator_BinaryJSONContainsLeft                    // <@
-	Operator_BinaryJSONTopLevel                        // ?
-	Operator_BinaryJSONTopLevelAny                     // ?|
-	Operator_BinaryJSONTopLevelAll                     // ?&
-	Operator_BinaryJSONPathExists                      // @?
-	Operator_BinaryJSONPathMatch                       // @@
-	Operator_UnaryPlus                                 // +
-	Operator_UnaryMinus                                // -
+	Operator_BinaryPlus                 Operator = iota // +
+	Operator_BinaryMinus                                // -
+	Operator_BinaryMultiply                             // *
+	Operator_BinaryDivide                               // /
+	Operator_BinaryMod                                  // %
+	Operator_BinaryShiftLeft                            // <<
+	Operator_BinaryShiftRight                           // >>
+	Operator_BinaryLessThan                             // <
+	Operator_BinaryGreaterThan                          // >
+	Operator_BinaryLessOrEqual                          // <=
+	Operator_BinaryGreaterOrEqual                       // >=
+	Operator_BinaryEqual                                // =
+	Operator_BinaryNotEqual                             // <> or != (they're equivalent in all cases)
+	Operator_BinaryBitAnd                               // &
+	Operator_BinaryBitOr                                // |
+	Operator_BinaryBitXor                               // ^
+	Operator_BinaryConcatenate                          // ||
+	Operator_BinaryJSONExtractJson                      // ->
+	Operator_BinaryJSONExtractText                      // ->>
+	Operator_BinaryJSONExtractPathJson                  // #>
+	Operator_BinaryJSONExtractPathText                  // #>>
+	Operator_BinaryJSONContainsRight                    // @>
+	Operator_BinaryJSONContainsLeft                     // <@
+	Operator_BinaryJSONTopLevel                         // ?
+	Operator_BinaryJSONTopLevelAny                      // ?|
+	Operator_BinaryJSONTopLevelAll                      // ?&
+	Operator_BinaryJSONPathExists                       // @?
+	Operator_BinaryJSONPathMatch                        // @@
+	Operator_BinaryHstoreLess                           // #<#
+	Operator_BinaryHstoreLessOrEqual                    // #<=#
+	Operator_BinaryHstoreGreater                        // #>#
+	Operator_BinaryHstoreGreaterOrEqual                 // #>=#
+	Operator_UnaryPlus                                  // +
+	Operator_UnaryMinus                                 // -
 	// NOTE: Any new operator should also be added to Operator.String() and GetOperatorFromString() functions.
 )
 
@@ -114,6 +118,20 @@ func RegisterBinaryFunction(operator Operator, f Function2) {
 		panic("non-binary operator: " + operator.String())
 	}
 	RegisterFunction(f)
+	registerBinaryFunctionSignature(operator, f)
+}
+
+// RegisterBinaryOperatorFunction registers the given function as an operator implementation without registering a
+// separate callable SQL function overload. Use this when PostgreSQL exposes the same underlying function by name and
+// also binds it to a nonstandard operator token.
+func RegisterBinaryOperatorFunction(operator Operator, f Function2) {
+	if !operator.IsBinary() {
+		panic("non-binary operator: " + operator.String())
+	}
+	registerBinaryFunctionSignature(operator, f)
+}
+
+func registerBinaryFunctionSignature(operator Operator, f Function2) {
 	sig := binaryFunction{
 		Operator: operator,
 		Left:     f.Parameters[0].ID,
@@ -205,6 +223,14 @@ func (o Operator) String() string {
 		return "@?"
 	case Operator_BinaryJSONPathMatch:
 		return "@@"
+	case Operator_BinaryHstoreLess:
+		return "#<#"
+	case Operator_BinaryHstoreLessOrEqual:
+		return "#<=#"
+	case Operator_BinaryHstoreGreater:
+		return "#>#"
+	case Operator_BinaryHstoreGreaterOrEqual:
+		return "#>=#"
 	default:
 		return "unknown operator"
 	}
@@ -286,6 +312,14 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryJSONPathExists, nil
 	case "@@":
 		return Operator_BinaryJSONPathMatch, nil
+	case "#<#":
+		return Operator_BinaryHstoreLess, nil
+	case "#<=#":
+		return Operator_BinaryHstoreLessOrEqual, nil
+	case "#>#":
+		return Operator_BinaryHstoreGreater, nil
+	case "#>=#":
+		return Operator_BinaryHstoreGreaterOrEqual, nil
 	default:
 		return 0, errors.Errorf("unhandled Operator `%s`", op)
 	}

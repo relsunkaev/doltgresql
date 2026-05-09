@@ -459,6 +459,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "t", "t", "t"}},
 				},
 				{
+					Query:    `SELECT '"A"=>"1"'::public.hstore #<# '"A"=>"2"'::public.hstore, '"A"=>"1"'::public.hstore #<=# '"A"=>"1"'::public.hstore, '"B"=>"1"'::public.hstore #># '"AA"=>"1"'::public.hstore, '"A"=>NULL'::public.hstore #>=# '"A"=>""'::public.hstore;`,
+					Expected: []sql.Row{{"t", "t", "t", "t"}},
+				},
+				{
+					Query:    `SELECT NULL::public.hstore #<# '"A"=>"1"'::public.hstore IS NULL, '"A"=>"1"'::public.hstore #># NULL::public.hstore IS NULL;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT '"A"=>"1"'::public.hstore OPERATOR(public.#<#) '"A"=>"2"'::public.hstore;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
 					Query:    `SELECT * FROM populate_record(NULL::hstore_pop_base, '"a"=>"5", "b"=>"from hstore", "c"=>"f", "ignored"=>"x"'::public.hstore);`,
 					Expected: []sql.Row{{5, "from hstore", "f"}},
 				},

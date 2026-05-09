@@ -397,6 +397,10 @@ const (
 	JSONAllExists
 	JSONPathExists
 	Overlaps
+	HstoreLT
+	HstoreLE
+	HstoreGT
+	HstoreGE
 
 	// The following operators will always be used with an associated SubOperator.
 	// If Go had algebraic data types they would be defined in a self-contained
@@ -450,6 +454,10 @@ var comparisonOpName = [...]string{
 	JSONAllExists:     "?&",
 	JSONPathExists:    "@?",
 	Overlaps:          "&&",
+	HstoreLT:          "#<#",
+	HstoreLE:          "#<=#",
+	HstoreGT:          "#>#",
+	HstoreGE:          "#>=#",
 	Any:               "ANY",
 	Some:              "SOME",
 	All:               "ALL",

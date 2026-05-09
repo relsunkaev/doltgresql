@@ -163,8 +163,10 @@ Do not check off an item until it has workload proof:
   `hstore_le`, `hstore_gt`, and `hstore_ge` cover btree comparison
   helper ordering for lexicographic keys and values, NULL values after
   non-NULL values, and shorter equal-prefix maps before longer maps.
-  Custom comparison operators (`#<#`, `#<=#`, `#>#`, `#>=#`) and
-  index operator-class parity remain residual risk. `hstore_to_json`,
+  Custom comparison operators (`#<#`, `#<=#`, `#>#`, `#>=#`) cover the
+  same ordering semantics, SQL NULL propagation, and extension-qualified
+  `OPERATOR(public.#<#)` syntax. Index operator-class parity remains
+  residual risk. `hstore_to_json`,
   `hstore_to_jsonb`, `hstore_to_json_loose`, `hstore_to_jsonb_loose`,
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
   SQL NULL hstore values as JSON nulls, string escaping, loose numeric

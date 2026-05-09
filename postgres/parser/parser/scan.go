@@ -396,16 +396,40 @@ func (s *scanner) scan(lval *sqlSymType) {
 
 	case '#':
 		switch s.peek() {
-		case '>': // #>
-			if s.peekN(1) == '>' {
-				// #>>
+		case '<': // #<#
+			switch s.peekN(1) {
+			case '#':
+				s.pos += 2
+				lval.id = HSTORE_LESS
+				return
+			case '=': // #<=#
+				if s.peekN(2) == '#' {
+					s.pos += 3
+					lval.id = HSTORE_LESS_EQUALS
+					return
+				}
+			}
+		case '>':
+			switch s.peekN(1) {
+			case '=': // #>=#
+				if s.peekN(2) == '#' {
+					s.pos += 3
+					lval.id = HSTORE_GREATER_EQUALS
+					return
+				}
+			case '#': // #>#
+				s.pos += 2
+				lval.id = HSTORE_GREATER
+				return
+			case '>': // #>>
 				s.pos += 2
 				lval.id = FETCHTEXT_PATH
 				return
+			default: // #>
+				s.pos++
+				lval.id = FETCHVAL_PATH
+				return
 			}
-			s.pos++
-			lval.id = FETCHVAL_PATH
-			return
 		case '-': // #-
 			s.pos++
 			lval.id = REMOVE_PATH
