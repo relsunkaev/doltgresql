@@ -2505,6 +2505,8 @@ func errorResponseCode(err error) string {
 		return pgcode.UndefinedColumn.String()
 	case sql.ErrInvalidValue.Is(err):
 		return pgcode.InvalidTextRepresentation.String()
+	case sql.ErrLockDeadlock.Is(err):
+		return pgcode.SerializationFailure.String()
 	}
 	// castSQLError wraps GMS errors as *mysql.SQLError before they
 	// reach this point, which swallows the kind matchers above. Fall
@@ -2541,6 +2543,11 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):
 		return pgcode.UniqueViolation.String(), true
+	case strings.HasPrefix(msg, "date field value out of range"),
+		strings.HasPrefix(msg, "time field value out of range"),
+		strings.HasPrefix(msg, "date/time field value out of range"),
+		strings.HasPrefix(msg, "timestamp out of range"):
+		return pgcode.DatetimeFieldOverflow.String(), true
 	}
 	return "", false
 }
@@ -2563,6 +2570,8 @@ func mysqlErrnoToSQLState(errno int) (string, bool) {
 		return pgcode.UndefinedTable.String(), true
 	case mysql.ERBadFieldError:
 		return pgcode.UndefinedColumn.String(), true
+	case mysql.ERLockDeadlock:
+		return pgcode.SerializationFailure.String(), true
 	}
 	return "", false
 }

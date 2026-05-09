@@ -1065,7 +1065,8 @@ typed-exception handling, and client-side query timeouts.
   42P07 duplicate_table, 22012 division_by_zero, 22003
   numeric_value_out_of_range, 22001 string_data_right_truncation,
   42601 syntax_error, 42883 undefined_function, 25P02
-  in_failed_sql_transaction, 40P01 deadlock_detected.
+  in_failed_sql_transaction, 40P01 deadlock_detected, 40001
+  serialization_failure, and 22008 datetime_field_overflow.
   Implementation landed in server/connection_handler.go's
   `errorResponseCode` across three layers — GMS error-kind matchers,
   MySQL-errno fallback, and message-prefix sniffing for errors that
@@ -1075,9 +1076,15 @@ typed-exception handling, and client-side query timeouts.
   testing/go/sqlalchemy_sqlstate_test.go which installs SQLAlchemy
   + psycopg3 in a venv and asserts each shape surfaces the right
   SQLAlchemyError subclass with the matching underlying SQLSTATE.
-- [ ] Map remaining driver-visible SQLSTATEs, notably 40001
-  serialization_failure for retry loops and 22008 datetime_field_overflow,
-  instead of falling through to XX000 internal_error.
+- [x] Map the tracked remaining driver-visible SQLSTATEs called out by
+  app/client retry paths: 40001 serialization_failure for Dolt commit
+  conflicts (without remapping PostgreSQL-style row-lock deadlocks away
+  from 40P01) and 22008 datetime_field_overflow for timestamp/date
+  overflow functions. Coverage in testing/go/sqlstate_test.go via pgx
+  protocol assertions; testing/go/select_for_update_deadlock_test.go
+  continues to pin the separate 40P01 deadlock_detected path. Future
+  app-specific XX000 fallthroughs should be added as new concrete entries
+  rather than treating this as full errcode parity.
 - [x] `pg_attribute` index attribute names - the existing
   `indexAttributeName` helper already returns real column names
   for non-expression index attributes (the audit's

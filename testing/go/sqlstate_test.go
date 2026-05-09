@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -133,12 +134,103 @@ func TestSQLStateCodes(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := conn.Exec(ctx, tc.sql)
-			require.Error(t, err, "expected error for %q", tc.sql)
-			var pgErr *pgconn.PgError
-			require.True(t, errors.As(err, &pgErr),
-				"expected *pgconn.PgError, got %T: %v", err, err)
-			require.Equal(t, tc.code, pgErr.Code,
-				"SQLSTATE for %q: got %q (%s), want %q", tc.sql, pgErr.Code, pgErr.Message, tc.code)
+			requireSQLState(t, err, tc.code, tc.sql)
 		})
 	}
+}
+
+func TestSQLStateSerializationFailure(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	dial := func(t *testing.T) *pgx.Conn {
+		t.Helper()
+		conn, err := pgx.Connect(ctx, fmt.Sprintf(
+			"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close(ctx) })
+		return conn
+	}
+
+	_, err = defaultConn.Exec(ctx, `CREATE TABLE sqlstate_retry_t (id INT PRIMARY KEY, v INT);`)
+	require.NoError(t, err)
+	_, err = defaultConn.Exec(ctx, `INSERT INTO sqlstate_retry_t VALUES (1, 1);`)
+	require.NoError(t, err)
+
+	a := dial(t)
+	b := dial(t)
+
+	_, err = a.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	_, err = b.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = a.Exec(context.Background(), `ROLLBACK;`)
+		_, _ = b.Exec(context.Background(), `ROLLBACK;`)
+	})
+
+	_, err = a.Exec(ctx, `INSERT INTO sqlstate_retry_t VALUES (2, 2);`)
+	require.NoError(t, err)
+	_, err = b.Exec(ctx, `INSERT INTO sqlstate_retry_t VALUES (2, 3);`)
+	require.NoError(t, err)
+	_, err = a.Exec(ctx, `COMMIT;`)
+	require.NoError(t, err)
+
+	_, err = b.Exec(ctx, `COMMIT;`)
+	requireSQLState(t, err, "40001", `COMMIT after concurrent conflicting insert`)
+}
+
+func TestSQLStateDatetimeFieldOverflow(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	conn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	for _, tc := range []struct {
+		name string
+		sql  string
+	}{
+		{
+			name: "make_timestamp date field overflow",
+			sql:  `SELECT make_timestamp(0, 1, 1, 0, 0, 0);`,
+		},
+		{
+			name: "make_timestamp time field overflow",
+			sql:  `SELECT make_timestamp(2026, 1, 1, 24, 0, 0);`,
+		},
+		{
+			name: "to_timestamp float8 output overflow",
+			sql:  `SELECT to_timestamp(9223372037.0);`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := conn.Exec(ctx, tc.sql)
+			requireSQLState(t, err, "22008", tc.sql)
+		})
+	}
+}
+
+func requireSQLState(t *testing.T, err error, code string, errContext string) {
+	t.Helper()
+	require.Error(t, err, "expected error for %q", errContext)
+	var pgErr *pgconn.PgError
+	require.True(t, errors.As(err, &pgErr),
+		"expected *pgconn.PgError, got %T: %v", err, err)
+	require.Equal(t, code, pgErr.Code,
+		"SQLSTATE for %q: got %q (%s), want %q", errContext, pgErr.Code, pgErr.Message, code)
 }
