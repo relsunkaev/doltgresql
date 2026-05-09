@@ -242,5 +242,8 @@ func (ext Extension) HashOf(ctx context.Context) (hash.Hash, error) {
 
 // Name implements the interface objinterface.RootObject.
 func (ext Extension) Name() doltdb.TableName {
-	return doltdb.TableName{Name: ext.ExtName.Name()}
+	return doltdb.TableName{
+		Name:   ext.ExtName.Name(),
+		Schema: ext.Namespace.SchemaName(),
+	}
 }

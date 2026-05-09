@@ -16,6 +16,7 @@ package extensions
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -75,7 +76,15 @@ func (pge *Collection) IDToTableName(identifier id.Id) doltdb.TableName {
 	if identifier.Section() != id.Section_Extension {
 		return doltdb.TableName{}
 	}
-	return doltdb.TableName{Name: id.Extension(identifier).Name()}
+	extID := id.Extension(identifier)
+	ext, ok := pge.accessCache[extID]
+	if !ok {
+		return doltdb.TableName{Name: extID.Name()}
+	}
+	return doltdb.TableName{
+		Name:   extID.Name(),
+		Schema: ext.Namespace.SchemaName(),
+	}
 }
 
 // IterAll implements the interface objinterface.Collection.
@@ -121,10 +130,15 @@ func (pge *Collection) RenameRootObject(ctx context.Context, oldName id.Id, newN
 // ResolveName implements the interface objinterface.Collection.
 func (pge *Collection) ResolveName(ctx context.Context, name doltdb.TableName) (doltdb.TableName, id.Id, error) {
 	extID := id.NewExtension(name.Name)
-	if pge.HasLoadedExtension(ctx, extID) {
-		return doltdb.TableName{Name: name.Name}, extID.AsId(), nil
+	ext, ok := pge.accessCache[extID]
+	if !ok {
+		return doltdb.TableName{}, id.Null, nil
 	}
-	return doltdb.TableName{}, id.Null, nil
+	extSchema := ext.Namespace.SchemaName()
+	if name.Schema != "" && !strings.EqualFold(name.Schema, extSchema) {
+		return doltdb.TableName{}, id.Null, nil
+	}
+	return doltdb.TableName{Name: name.Name, Schema: extSchema}, extID.AsId(), nil
 }
 
 // TableNameToID implements the interface objinterface.Collection.

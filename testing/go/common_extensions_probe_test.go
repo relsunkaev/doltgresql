@@ -101,5 +101,26 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "CREATE EXTENSION vector enables built-in pgvector type",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS vector;`,
+				`CREATE TABLE embeddings (id integer primary key, embedding vector(3));`,
+				`INSERT INTO embeddings VALUES (1, '[1,2,3]');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'vector';`,
+					Expected: []sql.Row{{"vector", "public"}},
+				},
+				{
+					Query:    `SELECT embedding FROM embeddings WHERE id = 1;`,
+					Expected: []sql.Row{{"[1,2,3]"}},
+				},
+			},
+		},
 	})
 }

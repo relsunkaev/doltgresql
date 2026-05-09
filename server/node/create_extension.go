@@ -91,7 +91,7 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		}
 		return nil, errors.Errorf(`extension "%s" already exists`, c.Name)
 	}
-	ext, err := extensions.GetExtension(c.Name)
+	ext, err := getExtensionFiles(c.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -169,6 +169,32 @@ func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *ex
 	})
 }
 
+func getExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
+	ext, err := extensions.GetExtension(name)
+	if err == nil {
+		return ext, nil
+	}
+	if shim, ok := builtinExtensionShim(name); ok {
+		return shim, nil
+	}
+	return nil, err
+}
+
+func builtinExtensionShim(name string) (*pg_extension.ExtensionFiles, bool) {
+	switch strings.ToLower(name) {
+	case "vector":
+		return &pg_extension.ExtensionFiles{
+			Name: name,
+			Control: pg_extension.Control{
+				DefaultVersion: pg_extension.ToVersion(0, 0),
+				Relocatable:    true,
+			},
+		}, true
+	default:
+		return nil, false
+	}
+}
+
 func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_extension.ExtensionFiles) (id.Namespace, error) {
 	schemaName := c.SchemaName
 	if len(schemaName) == 0 {
@@ -224,7 +250,7 @@ func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
 
 func createExtensionSkipsSQL(name string) bool {
 	switch strings.ToLower(name) {
-	case "pgcrypto":
+	case "pgcrypto", "vector":
 		return true
 	default:
 		return false

@@ -96,8 +96,10 @@ Do not check off an item until it has workload proof:
   Doltgres does not load pgcrypto's PostgreSQL C library payload
   because it expects server symbols Doltgres does not export.
   `gen_random_uuid()` is registered as a native builtin and returns a
-  36-char UUID, covering the common ORM/default-PK path. `btree_gist`,
-  `citext`, and `pgvector` remain untested. Pinned by
+  36-char UUID, covering the common ORM/default-PK path. `CREATE
+  EXTENSION vector` is accepted through a built-in pgvector shim and
+  the native `vector(n)` type round-trips scalar embeddings. `btree_gist`
+  and `citext` remain untested. Pinned by
   testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser
