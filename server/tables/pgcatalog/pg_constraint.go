@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
@@ -453,6 +454,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				conFkey[i] = parentTableColToIdxMap[expr]
 			}
 
+			timing := deferrable.ForeignKeyTiming(foreignKey.Item)
 			constraint := &pgConstraint{
 				oid:             foreignKey.OID.AsId(),
 				oidNative:       id.Cache().ToOID(foreignKey.OID.AsId()),
@@ -460,6 +462,8 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				conType:         "f",
+				conDeferrable:   timing.Deferrable,
+				conDeferred:     timing.InitiallyDeferred,
 				tableOid:        tableOIDs[schema.OID.AsId()][foreignKey.Item.Table],
 				tableOidNative:  id.Cache().ToOID(tableOIDs[schema.OID.AsId()][foreignKey.Item.Table]),
 				idxOid:          idxOid,
@@ -661,6 +665,8 @@ type pgConstraint struct {
 	schemaOid       id.Id
 	schemaOidNative uint32
 	conType         string // c = check constraint, f = foreign key constraint, p = primary key constraint, u = unique constraint, t = constraint trigger, x = exclusion constraint
+	conDeferrable   bool
+	conDeferred     bool
 	tableOid        id.Id
 	tableOidNative  uint32
 	typeOid         id.Id
@@ -715,32 +721,32 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 	}
 
 	return sql.Row{
-		constraint.oid,          // oid
-		constraint.name,         // conname
-		constraint.schemaOid,    // connamespace
-		constraint.conType,      // contype
-		false,                   // condeferrable
-		false,                   // condeferred
-		true,                    // convalidated
-		constraint.tableOid,     // conrelid
-		constraint.typeOid,      // contypid
-		constraint.idxOid,       // conindid
-		id.Id(id.NewOID(0)),     // conparentid
-		constraint.tableRefOid,  // confrelid
-		constraint.fkUpdateType, // confupdtype
-		constraint.fkDeleteType, // confdeltype
-		constraint.fkMatchType,  // confmatchtype
-		true,                    // conislocal
-		int16(0),                // coninhcount
-		true,                    // connoinherit
-		conKey,                  // conkey
-		conFkey,                 // confkey
-		nil,                     // conpfeqop
-		nil,                     // conppeqop
-		nil,                     // conffeqop
-		nil,                     // confdelsetcols
-		nil,                     // conexclop
-		nil,                     // conbin
+		constraint.oid,           // oid
+		constraint.name,          // conname
+		constraint.schemaOid,     // connamespace
+		constraint.conType,       // contype
+		constraint.conDeferrable, // condeferrable
+		constraint.conDeferred,   // condeferred
+		true,                     // convalidated
+		constraint.tableOid,      // conrelid
+		constraint.typeOid,       // contypid
+		constraint.idxOid,        // conindid
+		id.Id(id.NewOID(0)),      // conparentid
+		constraint.tableRefOid,   // confrelid
+		constraint.fkUpdateType,  // confupdtype
+		constraint.fkDeleteType,  // confdeltype
+		constraint.fkMatchType,   // confmatchtype
+		true,                     // conislocal
+		int16(0),                 // coninhcount
+		true,                     // connoinherit
+		conKey,                   // conkey
+		conFkey,                  // confkey
+		nil,                      // conpfeqop
+		nil,                      // conppeqop
+		nil,                      // conffeqop
+		nil,                      // confdelsetcols
+		nil,                      // conexclop
+		nil,                      // conbin
 		id.NewTable(PgCatalogName, PgConstraintName).AsId(), // tableoid
 	}
 }

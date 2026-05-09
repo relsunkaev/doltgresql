@@ -86,6 +86,14 @@ func BindForeignKey(fk sql.ForeignKeyConstraint) {
 	}
 }
 
+// ForeignKeyTiming returns the DEFERRABLE timing captured for fk from
+// Doltgres-parsed DDL. A zero Timing means NOT DEFERRABLE or unknown.
+func ForeignKeyTiming(fk sql.ForeignKeyConstraint) Timing {
+	registry.Lock()
+	defer registry.Unlock()
+	return registry.timing[foreignKeyKey(fk)]
+}
+
 func Begin(connectionID uint32) {
 	registry.Lock()
 	defer registry.Unlock()

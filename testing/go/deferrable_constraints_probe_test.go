@@ -85,6 +85,50 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "pg_constraint exposes DEFERRABLE timing flags",
+			SetUpScript: []string{
+				`CREATE TABLE parent_catalog (id INT PRIMARY KEY);`,
+				`CREATE TABLE child_deferred_catalog (
+					id INT PRIMARY KEY,
+					parent_id INT,
+					CONSTRAINT child_deferred_catalog_parent_fk
+						FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)
+						DEFERRABLE INITIALLY DEFERRED
+				);`,
+				`CREATE TABLE child_immediate_catalog (
+					id INT PRIMARY KEY,
+					parent_id INT,
+					CONSTRAINT child_immediate_catalog_parent_fk
+						FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)
+						DEFERRABLE INITIALLY IMMEDIATE
+				);`,
+				`CREATE TABLE child_not_deferrable_catalog (
+					id INT PRIMARY KEY,
+					parent_id INT,
+					CONSTRAINT child_not_deferrable_catalog_parent_fk
+						FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)
+						NOT DEFERRABLE
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT conname, condeferrable, condeferred
+						FROM pg_constraint
+						WHERE conname IN (
+							'child_deferred_catalog_parent_fk',
+							'child_immediate_catalog_parent_fk',
+							'child_not_deferrable_catalog_parent_fk'
+						)
+						ORDER BY conname;`,
+					Expected: []sql.Row{
+						{"child_deferred_catalog_parent_fk", "t", "t"},
+						{"child_immediate_catalog_parent_fk", "t", "f"},
+						{"child_not_deferrable_catalog_parent_fk", "f", "f"},
+					},
+				},
+			},
+		},
 	})
 }
 

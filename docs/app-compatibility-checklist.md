@@ -229,12 +229,15 @@ Do not check off an item until it has workload proof:
   transactions: inserting the child before the parent succeeds if the
   parent is inserted before COMMIT, and an unresolved child row fails
   COMMIT with SQLSTATE `23503` and rolls the transaction back.
-  Autocommit violations still reject at the statement boundary. This is
-  still partial PostgreSQL parity: `SET CONSTRAINTS ALL DEFERRED` is
-  accepted as a warning no-op and does not change runtime timing,
-  parent-side NO ACTION delete/update checks are not deferred, and
-  deferrability is not yet durable catalog metadata exposed through
-  `pg_constraint.condeferrable` / `pg_constraint.condeferred`. Pinned by
+  Autocommit violations still reject at the statement boundary.
+  `pg_constraint.condeferrable` / `pg_constraint.condeferred` expose
+  the captured timing for constraints created in the current server
+  process, including `DEFERRABLE INITIALLY DEFERRED`, `DEFERRABLE
+  INITIALLY IMMEDIATE`, and `NOT DEFERRABLE`. This is still partial
+  PostgreSQL parity: `SET CONSTRAINTS ALL DEFERRED` is accepted as a
+  warning no-op and does not change runtime timing, parent-side NO
+  ACTION delete/update checks are not deferred, and deferrability is not
+  durable in the underlying FK storage. Pinned by
   testing/go/deferrable_constraints_probe_test.go.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
