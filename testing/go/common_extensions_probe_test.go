@@ -328,6 +328,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`, `A|2|B|5|empty|<NULL>`}},
 				},
 				{
+					Query:    `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`,
+					Expected: []sql.Row{{`"n"=>"12", "bad"=>"12x", "str"=>"012", "bool"=>"true", "empty"=>NULL, "float"=>"3.5"`, `n|12|bad|12x|str|012|bool|true|empty|<NULL>|float|3.5`}},
+				},
+				{
 					Query:    `SELECT akeys(''::public.hstore)::text, avals(''::public.hstore)::text, hstore_to_array(''::public.hstore)::text;`,
 					Expected: []sql.Row{{`{}`, `{}`, `{}`}},
 				},
@@ -340,8 +344,16 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`"A"=>"2"`, `"empty"=>NULL`, "t"}},
 				},
 				{
+					Query:    `SELECT tconvert('A', '2')::text, tconvert('empty', NULL)::text, tconvert(NULL, 'x') IS NULL;`,
+					Expected: []sql.Row{{`"A"=>"2"`, `"empty"=>NULL`, "t"}},
+				},
+				{
 					Query:    `SELECT hstore(ARRAY['B', 'A', 'empty'], ARRAY['5', '2', NULL])::text, hstore(ARRAY['A', 'A'], ARRAY['1', '2'])::text, hstore(ARRAY['A'], NULL::text[])::text;`,
 					Expected: []sql.Row{{`"A"=>"2", "B"=>"5", "empty"=>NULL`, `"A"=>"1"`, `"A"=>NULL`}},
+				},
+				{
+					Query:    `SELECT hstore_version_diag(''::public.hstore)::text, hstore_version_diag('"A"=>"2"'::public.hstore)::text, hstore_version_diag(NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{"2", "2", "t"}},
 				},
 				{
 					Query:    `SELECT hstore(ARRAY['A', '2', 'B', '5', 'empty', NULL])::text, hstore(ARRAY['A', '1', 'A', '2'])::text, hstore(NULL::text[]) IS NULL;`,

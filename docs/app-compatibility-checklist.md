@@ -136,10 +136,14 @@ Do not check off an item until it has workload proof:
   value lookup plus hstore subset extraction for missing keys, SQL NULL
   hstore values, empty key arrays, and NULL key-array entries. `akeys`,
   `avals`, and `hstore_to_array` cover sorted key/value array
-  introspection for populated, empty, and SQL NULL hstore inputs.
+  introspection for populated, empty, and SQL NULL hstore inputs,
+  including PostgreSQL's length-then-lexicographic hstore key order.
   `hstore(text, text)`, `hstore(text[], text[])`, and `hstore(text[])`
   cover constructor semantics for NULL values, NULL key handling,
-  duplicate-first key handling, empty arrays, and malformed array inputs.
+  duplicate-first key handling, empty arrays, malformed array inputs,
+  and canonical constructor output ordering. `tconvert(text, text)`
+  covers the legacy constructor alias, and `hstore_version_diag`
+  reports the current hstore storage version for valid hstore inputs.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
   and missing-vs-extra key inequality.

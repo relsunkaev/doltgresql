@@ -48,6 +48,8 @@ func initHstore() {
 	framework.RegisterFunction(hstore_akeys)
 	framework.RegisterFunction(hstore_avals)
 	framework.RegisterFunction(hstore_to_array)
+	framework.RegisterFunction(hstore_version_diag)
+	framework.RegisterFunction(hstore_tconvert)
 	framework.RegisterFunction(hstore_from_text)
 	framework.RegisterFunction(hstore_from_arrays)
 	framework.RegisterFunction(hstore_from_array)
@@ -189,18 +191,31 @@ var hstore_to_array = framework.Function1{
 	},
 }
 
+var hstore_version_diag = framework.Function1{
+	Name:       "hstore_version_diag",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if _, err := parseHstore(val.(string)); err != nil {
+			return nil, err
+		}
+		return int32(2), nil
+	},
+}
+
+var hstore_tconvert = framework.Function2{
+	Name:       "tconvert",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable:   hstoreFromTextCallable,
+}
+
 var hstore_from_text = framework.Function2{
 	Name:       "hstore",
 	Return:     hstoreType,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
-	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		if val1 == nil {
-			return nil, nil
-		}
-		pairs := make(map[string]*string, 1)
-		hstoreAddTextPair(pairs, val1.(string), val2)
-		return formatHstore(pairs), nil
-	},
+	Callable:   hstoreFromTextCallable,
 }
 
 var hstore_from_arrays = framework.Function2{
@@ -555,6 +570,15 @@ func hstoreAddTextPair(pairs map[string]*string, key string, value any) {
 	pairs[key] = &textValue
 }
 
+func hstoreFromTextCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	if val1 == nil {
+		return nil, nil
+	}
+	pairs := make(map[string]*string, 1)
+	hstoreAddTextPair(pairs, val1.(string), val2)
+	return formatHstore(pairs), nil
+}
+
 func parseHstore(input string) (map[string]*string, error) {
 	p := hstoreParser{input: input}
 	pairs := make(map[string]*string)
@@ -703,7 +727,12 @@ func hstoreSortedKeys(pairs map[string]*string) []string {
 	for key := range pairs {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	sort.Slice(keys, func(i, j int) bool {
+		if len(keys[i]) != len(keys[j]) {
+			return len(keys[i]) < len(keys[j])
+		}
+		return keys[i] < keys[j]
+	})
 	return keys
 }
 
