@@ -460,13 +460,20 @@ Do not check off an item until it has workload proof:
   `pg_index.indisready=false` / `pg_index.indisvalid=false` catalog
   visibility as plain btree `CREATE INDEX CONCURRENTLY`, then flip to
   ready/valid after the inter-phase commit; partial-unique btree indexes
-  keep predicate-scoped uniqueness after the final flip. Pinned by
+  keep predicate-scoped uniqueness after the final flip. Unique single-
+  expression btree indexes also expose the two-phase catalog state while
+  preserving functional uniqueness semantics. Pinned by
   testing/go/create_index_concurrently_test.go and
   testing/go/create_index_concurrently_contention_test.go.
-- [ ] Route unique expression `CREATE INDEX CONCURRENTLY` through the two-phase
-  catalog state machine. Today that shape still uses the existing synchronous
-  build path, so migration tools do not error but `pg_index` does not expose
-  the intermediate `(indisready=false, indisvalid=false)` state.
+- [x] Route unique expression `CREATE INDEX CONCURRENTLY` through the two-phase
+  catalog state machine. The unique expression path builds through the ordinary
+  functional-index resolver, flips the PostgreSQL readiness metadata before the
+  inter-phase commit, exposes `(indisready=false, indisvalid=false)` to another
+  session, then flips back to ready/valid. Coverage in
+  testing/go/create_index_concurrently_test.go verifies final catalog state,
+  `lower(email)` uniqueness, and duplicate-data cleanup; coverage in
+  testing/go/create_index_concurrently_contention_test.go verifies cross-session
+  phase visibility for the unique expression shape.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,
   b)` is accepted at DDL and the index round-trips through
   `pg_indexes`. Coverage in

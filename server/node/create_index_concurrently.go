@@ -23,12 +23,12 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
 // CreateIndexConcurrently is the InjectedStatement that drives PostgreSQL's
-// CREATE INDEX CONCURRENTLY two-phase build for btree indexes that do not
-// require expression-column build support:
+// CREATE INDEX CONCURRENTLY two-phase build for supported btree indexes:
 //
 //  1. **Register**: build the index under (indisready=false, indisvalid=false)
 //     so the planner cannot use it and the catalog reflects an in-progress
@@ -43,20 +43,22 @@ import (
 // Rails) get observable pg_index state, non-blocking writer behavior during
 // the phase 1 build, and a metadata-only final flip.
 //
-// Edge cases that fall back to a regular synchronous CREATE INDEX (no
-// state-machine wrapping) are handled at the AST level — unique expression
-// indexes keep their existing build path.
+// Unsupported edge cases are rejected at the AST level before this node is
+// constructed.
 type CreateIndexConcurrently struct {
-	ifNotExists bool
-	schema      string
-	table       string
-	indexName   string
-	unique      bool
-	columns     []sql.IndexColumn
-	metadata    indexmetadata.Metadata
+	ifNotExists     bool
+	schema          string
+	table           string
+	indexName       string
+	unique          bool
+	columns         []sql.IndexColumn
+	metadata        indexmetadata.Metadata
+	createStatement string
+	Runner          pgexprs.StatementRunner
 }
 
 var _ sql.ExecSourceRel = (*CreateIndexConcurrently)(nil)
+var _ sql.Expressioner = (*CreateIndexConcurrently)(nil)
 var _ vitess.Injectable = (*CreateIndexConcurrently)(nil)
 
 // testHookBetweenPhases, when non-nil, runs after Phase 1 succeeds and
@@ -85,21 +87,28 @@ func NewCreateIndexConcurrently(
 	unique bool,
 	columns []sql.IndexColumn,
 	metadata indexmetadata.Metadata,
+	createStatement string,
 ) *CreateIndexConcurrently {
 	cols := append([]sql.IndexColumn(nil), columns...)
 	return &CreateIndexConcurrently{
-		ifNotExists: ifNotExists,
-		schema:      schema,
-		table:       table,
-		indexName:   indexName,
-		unique:      unique,
-		columns:     cols,
-		metadata:    metadata,
+		ifNotExists:     ifNotExists,
+		schema:          schema,
+		table:           table,
+		indexName:       indexName,
+		unique:          unique,
+		columns:         cols,
+		metadata:        metadata,
+		createStatement: createStatement,
 	}
 }
 
 // Children implements sql.ExecSourceRel.
 func (c *CreateIndexConcurrently) Children() []sql.Node { return nil }
+
+// Expressions implements sql.Expressioner.
+func (c *CreateIndexConcurrently) Expressions() []sql.Expression {
+	return []sql.Expression{c.Runner}
+}
 
 // IsReadOnly implements sql.ExecSourceRel.
 func (c *CreateIndexConcurrently) IsReadOnly() bool { return false }
@@ -124,6 +133,16 @@ func (c *CreateIndexConcurrently) WithResolvedChildren(_ context.Context, childr
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return c, nil
+}
+
+// WithExpressions implements sql.Expressioner.
+func (c *CreateIndexConcurrently) WithExpressions(_ *sql.Context, expressions ...sql.Expression) (sql.Node, error) {
+	if len(expressions) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(expressions), 1)
+	}
+	newC := *c
+	newC.Runner = expressions[0].(pgexprs.StatementRunner)
+	return &newC, nil
 }
 
 // RowIter executes the two-phase state machine.
@@ -162,6 +181,10 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	alterable, ok := table.(sql.IndexAlterableTable)
 	if !ok {
 		return nil, errors.Errorf(`relation "%s" does not support index alteration`, c.table)
+	}
+
+	if c.createStatement != "" {
+		return c.rowIterWithResolvedCreateStatement(ctx, schemaName)
 	}
 
 	// Phase 1: register-with-Building. The planner skips the index
@@ -226,6 +249,61 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateIndexConcurrently) rowIterWithResolvedCreateStatement(ctx *sql.Context, schemaName string) (sql.RowIter, error) {
+	if c.ifNotExists {
+		_, exists, err := locateIndex(ctx, schemaName, c.table, c.indexName, true)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return sql.RowsToRowIter(), nil
+		}
+	}
+
+	if c.Runner.Runner == nil {
+		return nil, errors.Errorf("statement runner is not available")
+	}
+	if err := c.runCreateStatement(ctx); err != nil {
+		return nil, err
+	}
+
+	pendingMetadata := c.metadata
+	pendingMetadata.NotReady = true
+	pendingMetadata.Invalid = true
+	if err := flipIndexComment(ctx, schemaName, c.table, c.indexName, alteredIndexComment(pendingMetadata)); err != nil {
+		return nil, err
+	}
+
+	if err := commitInterPhaseTransaction(ctx); err != nil {
+		return nil, err
+	}
+	if testHookBetweenPhases != nil {
+		testHookBetweenPhases(ctx)
+	}
+
+	finalMetadata := c.metadata
+	finalMetadata.NotReady = false
+	finalMetadata.Invalid = false
+	if err := flipIndexComment(ctx, schemaName, c.table, c.indexName, alteredIndexComment(finalMetadata)); err != nil {
+		return nil, err
+	}
+	if err := commitInterPhaseTransaction(ctx); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateIndexConcurrently) runCreateStatement(ctx *sql.Context) error {
+	_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+		_, rowIter, _, err := c.Runner.Runner.QueryWithBindings(subCtx, c.createStatement, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		return sql.RowIterToRows(subCtx, rowIter)
+	})
+	return err
 }
 
 // commitInterPhaseTransaction commits the current transaction and

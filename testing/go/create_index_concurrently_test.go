@@ -236,6 +236,61 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE UNIQUE INDEX CONCURRENTLY expression",
+			SetUpScript: []string{
+				"CREATE TABLE unique_expr_concurrent_t (id INT PRIMARY KEY, email TEXT);",
+				"INSERT INTO unique_expr_concurrent_t VALUES (1, 'Alice@X'), (2, 'bob@x');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE UNIQUE INDEX CONCURRENTLY unique_expr_concurrent_lower_email_idx ON unique_expr_concurrent_t ((lower(email)));",
+				},
+				{
+					Query: `SELECT indexdef
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'unique_expr_concurrent_t' AND indexname = 'unique_expr_concurrent_lower_email_idx';`,
+					Expected: []sql.Row{
+						{"CREATE UNIQUE INDEX unique_expr_concurrent_lower_email_idx ON public.unique_expr_concurrent_t USING btree (lower(email))"},
+					},
+				},
+				{
+					Query: `SELECT i.indisready, i.indisvalid
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
+						WHERE c.relname = 'unique_expr_concurrent_lower_email_idx';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+				{
+					Query:       "INSERT INTO unique_expr_concurrent_t VALUES (3, 'ALICE@x');",
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: "INSERT INTO unique_expr_concurrent_t VALUES (3, 'carol@x');",
+				},
+			},
+		},
+		{
+			Name: "CREATE UNIQUE INDEX CONCURRENTLY expression on duplicate data fails cleanly",
+			SetUpScript: []string{
+				"CREATE TABLE unique_expr_dup_t (id INT PRIMARY KEY, email TEXT);",
+				"INSERT INTO unique_expr_dup_t VALUES (1, 'Alice@X'), (2, 'alice@x');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE UNIQUE INDEX CONCURRENTLY unique_expr_dup_lower_email_idx ON unique_expr_dup_t ((lower(email)));",
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: `SELECT COUNT(*) FROM pg_catalog.pg_indexes WHERE indexname = 'unique_expr_dup_lower_email_idx';`,
+					Expected: []sql.Row{
+						{0},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE INDEX CONCURRENTLY JSONB GIN",
 			SetUpScript: []string{
 				"CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB);",

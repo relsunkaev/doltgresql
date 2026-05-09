@@ -165,6 +165,10 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "INSERT INTO expr_t VALUES (1, 'Alice@X'), (2, 'bob@x')")
 	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE TABLE unique_expr_t (id INT PRIMARY KEY, email TEXT)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "INSERT INTO unique_expr_t VALUES (1, 'Alice@X'), (2, 'bob@x')")
+	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB)")
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, `INSERT INTO gin_t VALUES (1, '{"kind":"click"}'), (2, '{"kind":"view"}')`)
@@ -198,6 +202,18 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 		"CREATE INDEX CONCURRENTLY expr_t_lower_email_idx ON expr_t ((lower(email)))",
 		"expr_t_lower_email_idx",
 	)
+	assertConcurrentIndexCrossSessionVisibility(
+		t,
+		ctx,
+		dial,
+		"CREATE UNIQUE INDEX CONCURRENTLY unique_expr_t_lower_email_idx ON unique_expr_t ((lower(email)))",
+		"unique_expr_t_lower_email_idx",
+	)
+	_, err = setup.Exec(ctx, "INSERT INTO unique_expr_t VALUES (3, 'ALICE@x')")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "duplicate")
+	_, err = setup.Exec(ctx, "INSERT INTO unique_expr_t VALUES (3, 'carol@x')")
+	require.NoError(t, err)
 	assertConcurrentIndexCrossSessionVisibility(
 		t,
 		ctx,

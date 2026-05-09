@@ -36,9 +36,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	}
 	// CONCURRENTLY for supported btree indexes is routed through the
 	// two-phase state-machine node below so external sessions can observe
-	// the in-progress build via pg_index.indisready/indisvalid. Unique
-	// expression indexes fall back to a synchronous build that ignores
-	// CONCURRENTLY — migration tooling still gets a successful CREATE.
+	// the in-progress build via pg_index.indisready/indisvalid.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
@@ -153,6 +151,13 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 		if metadata != nil {
 			baseMetadata = *metadata
 		}
+		createStatement := ""
+		if node.Unique && hasIndexExpression(node.Columns) {
+			nonConcurrent := *node
+			nonConcurrent.Concurrently = false
+			nonConcurrent.Name = tree.Name(indexName)
+			createStatement = tree.AsString(&nonConcurrent)
+		}
 		return vitess.InjectedStatement{
 			Statement: pgnodes.NewCreateIndexConcurrently(
 				node.IfNotExists,
@@ -162,6 +167,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 				node.Unique,
 				columns,
 				baseMetadata,
+				createStatement,
 			),
 		}, nil
 	}
@@ -196,14 +202,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 }
 
 // canRouteConcurrentBtree reports whether a CREATE INDEX CONCURRENTLY
-// statement should be handled by the two-phase state-machine node. The
-// node can carry metadata-backed btree shapes such as INCLUDE columns,
-// partial predicates, and non-unique expression indexes. Unique expression
-// indexes route through their existing synchronous paths.
+// statement should be handled by the two-phase state-machine node. Earlier
+// validation rejects unsupported expression combinations before this point.
 func canRouteConcurrentBtree(node *tree.CreateIndex, metadata *indexmetadata.Metadata) bool {
-	if node.Unique && hasIndexExpression(node.Columns) {
-		return false
-	}
 	return true
 }
 
