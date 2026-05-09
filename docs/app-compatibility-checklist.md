@@ -763,11 +763,14 @@ Do not check off an item until it has workload proof:
   package with a pooled connection configuration, prepared tagged-template
   queries, parameter binding, JSONB insertion through `sql.json`, arrays,
   lateral JSONB expansion, concurrent reads across the pool, transaction
-  commit, and rollback-on-error behavior. Pinned by
-  testing/go/postgres_js_client_test.go.
-- [ ] Add `ts-postgres` and other secondary-client smoke gates when workloads
-  require those clients, rather than implying support from the postgres.js
-  harness alone.
+  commit, and rollback-on-error behavior. `ts-postgres` also runs through
+  the real client package, including startup, explicit `application_name`,
+  extended-protocol parameter binding, binary result decoding, explicit
+  prepare/execute/close, transaction commit, and rollback behavior. Pinned by
+  testing/go/postgres_js_client_test.go and
+  testing/go/ts_postgres_client_test.go.
+- [ ] Add other secondary-client smoke gates when workloads require those
+  clients, rather than implying support from the existing Node harnesses alone.
 
 ## Replication and sync TODO
 
@@ -1150,12 +1153,13 @@ typed-exception handling, and client-side query timeouts.
 
 - [~] Basic driver pools and ORM CRUD across the advertised driver matrix.
   The pgx smoke harness covers the baseline app schema and transaction
-  surface, and the postgres.js harness covers a secondary Node pooled-client
+  surface, the postgres.js harness covers a secondary Node pooled-client
   path with CRUD, parameters, JSONB, arrays, concurrent reads, commit, and
-  rollback.
-- [ ] Expand driver/ORM matrix proof beyond pgx and postgres.js. Add runnable
-  smoke gates for the advertised client and migration-tool matrix before
-  claiming broad client compatibility.
+  rollback, and the ts-postgres harness covers a binary-result Node client
+  with explicit prepared statements and transactions.
+- [ ] Expand driver/ORM matrix proof beyond pgx, postgres.js, and
+  ts-postgres. Add runnable smoke gates for the advertised client and
+  migration-tool matrix before claiming broad client compatibility.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
