@@ -122,8 +122,10 @@ Do not check off an item until it has workload proof:
   `hstore` type for dump schemas that declare `public.hstore`
   columns, with `fetchval(hstore, text)` / `hstore -> text` covering
   key lookup, missing-key NULLs, SQL NULL hstore values, and quoted
-  external representation parsing. Broader hstore operators,
-  functions, casts, and index parity remain residual risk.
+  external representation parsing. `hstore ? text`,
+  `exist`/`isexists`, and `defined`/`isdefined` cover key existence
+  and non-NULL value checks. Broader hstore operators, functions,
+  casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.

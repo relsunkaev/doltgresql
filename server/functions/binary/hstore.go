@@ -30,6 +30,10 @@ var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
 // initHstore registers operators and functions supplied by the hstore extension.
 func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_fetchval)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, hstore_exist)
+	framework.RegisterFunction(hstore_isexists)
+	framework.RegisterFunction(hstore_defined)
+	framework.RegisterFunction(hstore_isdefined)
 }
 
 var hstore_fetchval = framework.Function2{
@@ -48,6 +52,56 @@ var hstore_fetchval = framework.Function2{
 		}
 		return *value, nil
 	},
+}
+
+var hstore_exist = framework.Function2{
+	Name:       "exist",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Text},
+	Strict:     true,
+	Callable:   hstoreExistCallable,
+}
+
+var hstore_isexists = framework.Function2{
+	Name:       "isexists",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Text},
+	Strict:     true,
+	Callable:   hstoreExistCallable,
+}
+
+var hstore_defined = framework.Function2{
+	Name:       "defined",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Text},
+	Strict:     true,
+	Callable:   hstoreDefinedCallable,
+}
+
+var hstore_isdefined = framework.Function2{
+	Name:       "isdefined",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Text},
+	Strict:     true,
+	Callable:   hstoreDefinedCallable,
+}
+
+func hstoreExistCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	pairs, err := parseHstore(val1.(string))
+	if err != nil {
+		return nil, err
+	}
+	_, ok := pairs[val2.(string)]
+	return ok, nil
+}
+
+func hstoreDefinedCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	pairs, err := parseHstore(val1.(string))
+	if err != nil {
+		return nil, err
+	}
+	value, ok := pairs[val2.(string)]
+	return ok && value != nil, nil
 }
 
 func parseHstore(input string) (map[string]*string, error) {
