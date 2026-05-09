@@ -923,7 +923,14 @@ rather than only a Go-level harness.
   live pgx client by testing/go/app_compat_smoke_test.go, with broader
   ORM-shape coverage in testing/go/savepoints_test.go and
   testing/go/sqlalchemy_savepoints_test.go.
-- [ ] Source-mode logical replication for the supported `pgoutput` subset.
+- [x] Source-mode logical replication for the supported `pgoutput` subset:
+  pglogrepl can identify the system, create/drop logical `pgoutput`
+  slots, start replication for a publication, receive relation plus
+  insert/update/delete/commit messages, advance confirmed flush LSN via
+  standby status, and observe slot/stat catalog state. Pinned by
+  testing/go/logical_replication_source_test.go's
+  TestLogicalReplicationSourceProtocolAndCatalogs, with
+  REPLICA IDENTITY FULL old-tuple coverage in the same file.
 
 ## Proposed dolt changes
 
