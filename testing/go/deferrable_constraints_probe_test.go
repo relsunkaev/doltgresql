@@ -74,10 +74,9 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 		{
 			// SET CONSTRAINTS ALL DEFERRED is the runtime toggle
 			// applications use to switch deferrable constraints
-			// on/off mid-transaction. Doltgres accepts the statement
-			// for dump and migration compatibility, but the
-			// enforcement mode remains immediate as pinned above.
-			Name:        "SET CONSTRAINTS ALL DEFERRED is accepted as no-op",
+			// on/off mid-transaction. Outside an explicit transaction
+			// it has no lasting effect, but PostgreSQL accepts it.
+			Name:        "SET CONSTRAINTS ALL DEFERRED is accepted outside transaction",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -191,6 +190,13 @@ func TestDeferrableForeignKeyTransactionSemantics(t *testing.T) {
 				FOREIGN KEY (parent_id) REFERENCES parent_deferred(id)
 				DEFERRABLE INITIALLY DEFERRED
 		)`,
+		`CREATE TABLE child_immediate (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_immediate_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_deferred(id)
+				DEFERRABLE INITIALLY IMMEDIATE
+		)`,
 	} {
 		_, err = conn.Exec(ctx, stmt)
 		require.NoError(t, err, stmt)
@@ -221,6 +227,55 @@ func TestDeferrableForeignKeyTransactionSemantics(t *testing.T) {
 	err = conn.QueryRow(ctx, `SELECT count(*) FROM child_deferred`).Scan(&count)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `SET CONSTRAINTS ALL DEFERRED`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_immediate VALUES (1, 40)`)
+	require.NoError(t, err, "SET CONSTRAINTS ALL DEFERRED must defer DEFERRABLE INITIALLY IMMEDIATE checks")
+	_, err = conn.Exec(ctx, `INSERT INTO parent_deferred VALUES (40)`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `COMMIT`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `SET CONSTRAINTS child_immediate_parent_fk DEFERRED`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_immediate VALUES (2, 41)`)
+	require.NoError(t, err, "SET CONSTRAINTS <name> DEFERRED must defer the named FK")
+	_, err = conn.Exec(ctx, `INSERT INTO parent_deferred VALUES (41)`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `COMMIT`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `SET CONSTRAINTS child_deferred_parent_fk IMMEDIATE`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_deferred VALUES (5, 60)`)
+	requireForeignKeyViolation(t, err)
+	_, err = conn.Exec(ctx, `ROLLBACK`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `SET CONSTRAINTS ALL IMMEDIATE`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_deferred VALUES (3, 30)`)
+	requireForeignKeyViolation(t, err)
+	_, err = conn.Exec(ctx, `ROLLBACK`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `INSERT INTO child_deferred VALUES (4, 50)`)
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, `SET CONSTRAINTS ALL IMMEDIATE`)
+	requireForeignKeyViolation(t, err)
+	_, err = conn.Exec(ctx, `ROLLBACK`)
+	require.NoError(t, err)
 
 	_, err = conn.Exec(ctx, `DROP TABLE child_recreated`)
 	require.NoError(t, err)

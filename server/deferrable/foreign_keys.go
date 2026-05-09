@@ -44,7 +44,10 @@ type Check struct {
 type txnState struct {
 	active bool
 	dirty  map[string]sql.ForeignKeyConstraint
+	modes  map[string]bool
 }
+
+const foreignKeyKeySeparator = "\x00"
 
 var registry = struct {
 	sync.Mutex
@@ -100,6 +103,7 @@ func Begin(connectionID uint32) {
 	registry.txns[connectionID] = &txnState{
 		active: true,
 		dirty:  make(map[string]sql.ForeignKeyConstraint),
+		modes:  make(map[string]bool),
 	}
 }
 
@@ -127,8 +131,15 @@ func ShouldDefer(connectionID uint32, fk sql.ForeignKeyConstraint) bool {
 	if state == nil || !state.active {
 		return false
 	}
-	timing := registry.timing[foreignKeyKey(fk)]
-	return timing.Deferrable && timing.InitiallyDeferred
+	key := foreignKeyKey(fk)
+	timing := registry.timing[key]
+	if !timing.Deferrable {
+		return false
+	}
+	if deferred, ok := state.modes[key]; ok {
+		return deferred
+	}
+	return timing.InitiallyDeferred
 }
 
 func MarkDirty(connectionID uint32, fk sql.ForeignKeyConstraint) {
@@ -142,14 +153,59 @@ func MarkDirty(connectionID uint32, fk sql.ForeignKeyConstraint) {
 }
 
 func PendingChecks(connectionID uint32) []Check {
+	return pendingChecksFor(connectionID, nil, true)
+}
+
+func PendingChecksForConstraints(connectionID uint32, names []string, all bool) []Check {
+	return pendingChecksFor(connectionID, names, all)
+}
+
+func ClearPendingChecksForConstraints(connectionID uint32, names []string, all bool) {
+	registry.Lock()
+	defer registry.Unlock()
+	state := registry.txns[connectionID]
+	if state == nil || len(state.dirty) == 0 {
+		return
+	}
+	normalizedNames := normalizeSlice(names)
+	for key, fk := range state.dirty {
+		if foreignKeySelected(fk, normalizedNames, all) {
+			delete(state.dirty, key)
+		}
+	}
+}
+
+func SetConstraints(connectionID uint32, names []string, all bool, deferred bool) {
+	registry.Lock()
+	defer registry.Unlock()
+	state := registry.txns[connectionID]
+	if state == nil || !state.active {
+		return
+	}
+	normalizedNames := normalizeSlice(names)
+	for key, timing := range registry.timing {
+		if !timing.Deferrable {
+			continue
+		}
+		if all || containsString(normalizedNames, foreignKeyNameFromKey(key)) {
+			state.modes[key] = deferred
+		}
+	}
+}
+
+func pendingChecksFor(connectionID uint32, names []string, all bool) []Check {
 	registry.Lock()
 	defer registry.Unlock()
 	state := registry.txns[connectionID]
 	if state == nil || len(state.dirty) == 0 {
 		return nil
 	}
+	normalizedNames := normalizeSlice(names)
 	checks := make([]Check, 0, len(state.dirty))
 	for _, fk := range state.dirty {
+		if !foreignKeySelected(fk, normalizedNames, all) {
+			continue
+		}
 		checks = append(checks, Check{
 			ForeignKey: fk,
 			Query:      validationQuery(fk),
@@ -177,7 +233,19 @@ func foreignKeyKey(fk sql.ForeignKeyConstraint) string {
 		normalize(fk.ParentDatabase),
 		normalize(fk.ParentTable),
 		strings.Join(normalizeSlice(fk.ParentColumns), ","),
-	}, "\x00")
+	}, foreignKeyKeySeparator)
+}
+
+func foreignKeyNameFromKey(key string) string {
+	parts := strings.Split(key, foreignKeyKeySeparator)
+	if len(parts) < 3 {
+		return ""
+	}
+	return parts[2]
+}
+
+func foreignKeySelected(fk sql.ForeignKeyConstraint, normalizedNames []string, all bool) bool {
+	return all || containsString(normalizedNames, normalize(fk.Name))
 }
 
 func validationQuery(fk sql.ForeignKeyConstraint) string {
@@ -233,4 +301,13 @@ func equalStringSlices(left []string, right []string) bool {
 		}
 	}
 	return true
+}
+
+func containsString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
 }

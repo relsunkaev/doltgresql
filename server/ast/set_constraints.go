@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeSetConstraints handles *tree.SetConstraints nodes.
@@ -25,5 +26,7 @@ func nodeSetConstraints(ctx *Context, node *tree.SetConstraints) (vitess.Stateme
 	if node == nil {
 		return nil, nil
 	}
-	return NewNoOp("SET CONSTRAINTS is accepted, but deferrable constraint timing is not yet enforced"), nil
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewSetConstraints(nameListToStrings(node.Names), node.All, node.Deferred),
+	}, nil
 }
