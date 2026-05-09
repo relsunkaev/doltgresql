@@ -147,11 +147,17 @@ Do not check off an item until it has workload proof:
   on the materialized view for restore-time or read-path access.
   Materialized-view column lists now apply PostgreSQL output-alias
   semantics, including shorter alias lists and duplicate-name
-  validation. This covers schemas that only need restore-time snapshot
-  data and indexed reads. Full PostgreSQL matview semantics are still
-  partial: `REFRESH MATERIALIZED VIEW`, `WITH NO DATA`, and
-  refresh-time unique-index requirements are not implemented. Apps that
-  need refreshable matviews must still rewrite to ordinary views
+  validation. Non-concurrent `REFRESH MATERIALIZED VIEW` with default
+  `WITH DATA` semantics reruns the stored SELECT definition into the
+  existing matview columns, preserves indexes, supports schema-qualified
+  refresh targets, and leaves the prior snapshot intact when refresh
+  data violates an existing unique index. This covers schemas that need
+  restore-time snapshot data, indexed reads, and ordinary scheduled
+  refreshes. Full PostgreSQL matview semantics are still partial:
+  `REFRESH MATERIALIZED VIEW CONCURRENTLY`, `WITH NO DATA` / unpopulated
+  matviews, and concurrent-refresh unique-index eligibility validation
+  are not implemented. Apps that need concurrent refreshes or
+  unpopulated matview states must still rewrite to ordinary views
   (covered) or to a backing table + scheduled refresh job. Pinned by
   testing/go/materialized_view_probe_test.go.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS

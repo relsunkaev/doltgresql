@@ -205,5 +205,104 @@ func TestMaterializedViewProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "REFRESH MATERIALIZED VIEW refreshes snapshot data",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+				`CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;`,
+				`CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO source VALUES (3, 300);`,
+				},
+				{
+					Query: `UPDATE source SET v = 250 WHERE id = 2;`,
+				},
+				{
+					Query: `DELETE FROM source WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{2, 250},
+						{3, 300},
+					},
+				},
+				{
+					Query: `SELECT hasindexes::text, ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true", "true"},
+					},
+				},
+				{
+					Query: `UPDATE source SET v = 350 WHERE id = 3;`,
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW public.source_mv WITH DATA;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{2, 250},
+						{3, 350},
+					},
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;`,
+					ExpectedErr: "REFRESH MATERIALIZED VIEW CONCURRENTLY is not yet supported",
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;`,
+					ExpectedErr: "REFRESH MATERIALIZED VIEW WITH NO DATA is not yet supported",
+				},
+				{
+					Query: `CREATE TABLE plain_table (id INT);`,
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW plain_table;`,
+					ExpectedErr: `relation "plain_table" is not a materialized view`,
+				},
+				{
+					Query: `CREATE TABLE dup_source (id INT PRIMARY KEY, grp INT);`,
+				},
+				{
+					Query: `INSERT INTO dup_source VALUES (1, 1), (2, 2);`,
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW dup_mv AS SELECT grp FROM dup_source;`,
+				},
+				{
+					Query: `CREATE UNIQUE INDEX dup_mv_grp_idx ON dup_mv (grp);`,
+				},
+				{
+					Query: `UPDATE dup_source SET grp = 1 WHERE id = 2;`,
+				},
+				{
+					Query:       `REFRESH MATERIALIZED VIEW dup_mv;`,
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query: `SELECT grp FROM dup_mv ORDER BY grp;`,
+					Expected: []sql.Row{
+						{1},
+						{2},
+					},
+				},
+			},
+		},
 	})
 }

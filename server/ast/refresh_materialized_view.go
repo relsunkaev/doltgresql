@@ -18,6 +18,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeRefreshMaterializedView handles *tree.RefreshMaterializedView nodes.
@@ -26,5 +28,22 @@ func nodeRefreshMaterializedView(ctx *Context, node *tree.RefreshMaterializedVie
 		return nil, nil
 	}
 
-	return NotYetSupportedError("REFRESH MATERIALIZED VIEW is not yet supported")
+	tableName, err := nodeUnresolvedObjectName(ctx, node.Name)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewRefreshMaterializedView(
+			node.Name.Object(),
+			node.Name.Schema(),
+			node.Concurrently,
+			node.RefreshDataOption == tree.RefreshDataClear,
+		),
+		Children: nil,
+		Auth: vitess.AuthInformation{
+			AuthType:    auth.AuthType_UPDATE,
+			TargetType:  auth.AuthTargetType_TableIdentifiers,
+			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+		},
+	}, nil
 }
