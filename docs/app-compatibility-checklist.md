@@ -224,11 +224,12 @@ Do not check off an item until it has workload proof:
   columns so dump tools can reconstruct the DDL. Coverage in
   testing/go/generated_columns_probe_test.go.
 - [~] Deferrable constraints - `DEFERRABLE INITIALLY DEFERRED` FK DDL
-  is parsed and accepted. Child-side FK checks for constraints created
-  in the current server process are deferred inside explicit
-  transactions: inserting the child before the parent succeeds if the
-  parent is inserted before COMMIT, and an unresolved child row fails
-  COMMIT with SQLSTATE `23503` and rolls the transaction back.
+  is parsed and accepted. FK checks for constraints created in the
+  current server process are deferred inside explicit transactions:
+  inserting the child before the parent succeeds if the parent is
+  inserted before COMMIT, default/NO ACTION parent-key UPDATEs and
+  DELETEs can be repaired before COMMIT, and unresolved child rows fail
+  COMMIT with SQLSTATE `23503` and roll the transaction back.
   Autocommit violations still reject at the statement boundary.
   `pg_constraint.condeferrable` / `pg_constraint.condeferred` expose
   the captured timing for constraints created in the current server
@@ -239,8 +240,7 @@ Do not check off an item until it has workload proof:
   transaction-local timing for supported child-side FK checks; switching
   to `IMMEDIATE` validates pending deferred rows immediately and raises
   SQLSTATE `23503` on unresolved violations. This is still partial
-  PostgreSQL parity: parent-side NO ACTION delete/update checks are not
-  deferred, and deferrability is not durable in the underlying FK
+  PostgreSQL parity: deferrability is not durable in the underlying FK
   storage. Pinned by testing/go/deferrable_constraints_probe_test.go.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT

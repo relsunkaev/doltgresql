@@ -33,21 +33,43 @@ func SuppressDeferrableForeignKeys(ctx *sql.Context, a *analyzer.Analyzer, node 
 		return node, transform.SameTree, nil
 	}
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
-		fkHandler, ok := node.(*plan.ForeignKeyHandler)
-		if !ok {
-			return node, transform.SameTree, nil
+		if deleteFrom, ok := node.(*plan.DeleteFrom); ok {
+			targets := deleteFrom.GetDeleteTargets()
+			newTargets := make([]sql.Node, len(targets))
+			sameTargets := transform.SameTree
+			for i, target := range targets {
+				newTarget, sameTarget, err := suppressDeferrableForeignKeyNode(connectionID, target)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				if sameTarget == transform.NewTree {
+					sameTargets = transform.NewTree
+				}
+				newTargets[i] = newTarget
+			}
+			if sameTargets == transform.NewTree {
+				return deleteFrom.WithTargets(newTargets), transform.NewTree, nil
+			}
 		}
-		editor, changed := suppressDeferrableEditor(connectionID, fkHandler.Editor)
-		if !changed {
-			return node, transform.SameTree, nil
-		}
-		if len(editor.References) == 0 && len(editor.RefActions) == 0 {
-			return fkHandler.OriginalNode, transform.NewTree, nil
-		}
-		copied := *fkHandler
-		copied.Editor = editor
-		return &copied, transform.NewTree, nil
+		return suppressDeferrableForeignKeyNode(connectionID, node)
 	})
+}
+
+func suppressDeferrableForeignKeyNode(connectionID uint32, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+	fkHandler, ok := node.(*plan.ForeignKeyHandler)
+	if !ok {
+		return node, transform.SameTree, nil
+	}
+	editor, changed := suppressDeferrableEditor(connectionID, fkHandler.Editor)
+	if !changed {
+		return node, transform.SameTree, nil
+	}
+	if len(editor.References) == 0 && len(editor.RefActions) == 0 {
+		return fkHandler.OriginalNode, transform.NewTree, nil
+	}
+	copied := *fkHandler
+	copied.Editor = editor
+	return &copied, transform.NewTree, nil
 }
 
 func suppressDeferrableEditor(connectionID uint32, editor *plan.ForeignKeyEditor) (*plan.ForeignKeyEditor, bool) {
@@ -65,5 +87,24 @@ func suppressDeferrableEditor(connectionID uint32, editor *plan.ForeignKeyEditor
 		}
 		copied.References = append(copied.References, reference)
 	}
+	copied.RefActions = make([]plan.ForeignKeyRefActionData, 0, len(editor.RefActions))
+	for _, refAction := range editor.RefActions {
+		if deferrable.ShouldDefer(connectionID, refAction.ForeignKey) && hasOnlyNoActionParentChecks(refAction.ForeignKey) {
+			deferrable.MarkDirty(connectionID, refAction.ForeignKey)
+			changed = true
+			continue
+		}
+		copied.RefActions = append(copied.RefActions, refAction)
+	}
 	return &copied, changed
+}
+
+func hasOnlyNoActionParentChecks(fk sql.ForeignKeyConstraint) bool {
+	return isNoAction(fk.OnUpdate) && isNoAction(fk.OnDelete)
+}
+
+func isNoAction(action sql.ForeignKeyReferentialAction) bool {
+	return action == sql.ForeignKeyReferentialAction_DefaultAction ||
+		action == sql.ForeignKeyReferentialAction_NoAction ||
+		action == sql.ForeignKeyReferentialAction_Restrict
 }

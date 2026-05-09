@@ -94,7 +94,8 @@ func BindForeignKey(fk sql.ForeignKeyConstraint) {
 func ForeignKeyTiming(fk sql.ForeignKeyConstraint) Timing {
 	registry.Lock()
 	defer registry.Unlock()
-	return registry.timing[foreignKeyKey(fk)]
+	timing, _ := lookupTimingLocked(fk)
+	return timing
 }
 
 func Begin(connectionID uint32) {
@@ -132,7 +133,10 @@ func ShouldDefer(connectionID uint32, fk sql.ForeignKeyConstraint) bool {
 		return false
 	}
 	key := foreignKeyKey(fk)
-	timing := registry.timing[key]
+	timing, ok := lookupTimingLocked(fk)
+	if !ok {
+		return false
+	}
 	if !timing.Deferrable {
 		return false
 	}
@@ -140,6 +144,19 @@ func ShouldDefer(connectionID uint32, fk sql.ForeignKeyConstraint) bool {
 		return deferred
 	}
 	return timing.InitiallyDeferred
+}
+
+func lookupTimingLocked(fk sql.ForeignKeyConstraint) (Timing, bool) {
+	if timing, ok := registry.timing[foreignKeyKey(fk)]; ok {
+		return timing, true
+	}
+	for i := len(registry.parsed) - 1; i >= 0; i-- {
+		parsed := registry.parsed[i]
+		if parsed.matches(fk) {
+			return parsed.Timing, true
+		}
+	}
+	return Timing{}, false
 }
 
 func MarkDirty(connectionID uint32, fk sql.ForeignKeyConstraint) {
