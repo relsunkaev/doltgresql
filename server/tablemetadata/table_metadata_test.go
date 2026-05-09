@@ -43,6 +43,25 @@ func TestMaterializedViewMetadata(t *testing.T) {
 	if got := MaterializedViewDefinition(comment); got != "SELECT id FROM source" {
 		t.Fatalf("expected trimmed materialized view definition, got %q", got)
 	}
+	if !IsMaterializedViewPopulated(comment) {
+		t.Fatalf("expected materialized view metadata to default to populated")
+	}
+
+	comment = SetMaterializedViewDefinitionWithPopulated(comment, " SELECT id FROM source ", false)
+	if !IsMaterializedView(comment) {
+		t.Fatalf("expected unpopulated materialized view metadata")
+	}
+	if IsMaterializedViewPopulated(comment) {
+		t.Fatalf("expected materialized view metadata to be unpopulated")
+	}
+	if got := MaterializedViewDefinition(comment); got != "SELECT id FROM source" {
+		t.Fatalf("expected unpopulated materialized view definition to be preserved, got %q", got)
+	}
+
+	comment = SetMaterializedViewDefinitionWithPopulated(comment, "SELECT id FROM source", true)
+	if !IsMaterializedViewPopulated(comment) {
+		t.Fatalf("expected materialized view metadata to be populated")
+	}
 
 	comment = SetPrimaryKeyConstraintName(comment, "custom_pkey")
 	if got := PrimaryKeyConstraintName(comment); got != "custom_pkey" {

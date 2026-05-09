@@ -206,6 +206,115 @@ func TestMaterializedViewProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE MATERIALIZED VIEW WITH NO DATA stays unpopulated until refresh",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;`,
+				},
+				{
+					Query: `SELECT relkind FROM pg_class WHERE relname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"m"},
+					},
+				},
+				{
+					Query: `SELECT hasindexes::text, ispopulated::text, definition
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"false", "false", "SELECT id, v FROM source"},
+					},
+				},
+				{
+					Query:       `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					ExpectedErr: `materialized view "source_mv" has not been populated`,
+				},
+				{
+					Query: `SELECT attname
+						FROM pg_attribute
+						WHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped
+						ORDER BY attnum;`,
+					Expected: []sql.Row{
+						{"account_id"},
+						{"amount"},
+					},
+				},
+				{
+					Query: `CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);`,
+				},
+				{
+					Query: `SELECT hasindexes::text, ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true", "false"},
+					},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv WITH DATA;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `SELECT ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true"},
+					},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;`,
+				},
+				{
+					Query: `SELECT hasindexes::text, ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true", "false"},
+					},
+				},
+				{
+					Query:       `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					ExpectedErr: `materialized view "source_mv" has not been populated`,
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW paren_mv AS (SELECT id, v FROM source) WITH NO DATA;`,
+				},
+				{
+					Query: `SELECT ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'paren_mv';`,
+					Expected: []sql.Row{
+						{"false"},
+					},
+				},
+				{
+					Query:       `SELECT id, v FROM paren_mv ORDER BY id;`,
+					ExpectedErr: `materialized view "paren_mv" has not been populated`,
+				},
+			},
+		},
+		{
 			Name: "REFRESH MATERIALIZED VIEW refreshes snapshot data",
 			SetUpScript: []string{
 				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
@@ -266,8 +375,29 @@ func TestMaterializedViewProbe(t *testing.T) {
 					ExpectedErr: "REFRESH MATERIALIZED VIEW CONCURRENTLY is not yet supported",
 				},
 				{
-					Query:       `REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;`,
-					ExpectedErr: "REFRESH MATERIALIZED VIEW WITH NO DATA is not yet supported",
+					Query: `REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;`,
+				},
+				{
+					Query: `SELECT ispopulated::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"false"},
+					},
+				},
+				{
+					Query:       `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					ExpectedErr: `materialized view "source_mv" has not been populated`,
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{2, 250},
+						{3, 350},
+					},
 				},
 				{
 					Query: `CREATE TABLE plain_table (id INT);`,

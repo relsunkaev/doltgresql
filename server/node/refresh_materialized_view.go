@@ -79,9 +79,6 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	if r.concurrently {
 		return nil, errors.Errorf("REFRESH MATERIALIZED VIEW CONCURRENTLY is not yet supported")
 	}
-	if r.withNoData {
-		return nil, errors.Errorf("REFRESH MATERIALIZED VIEW WITH NO DATA is not yet supported")
-	}
 	target, err := r.resolveTarget(ctx)
 	if err != nil {
 		return nil, err
@@ -96,7 +93,16 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	if err = r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
 		return nil, err
 	}
+	if r.withNoData {
+		if err = r.setTargetPopulated(ctx, target, definition, false); err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
+	}
 	if err = r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) %s", qualifiedName, columnList, definition)); err != nil {
+		return nil, err
+	}
+	if err = r.setTargetPopulated(ctx, target, definition, true); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
@@ -137,6 +143,7 @@ func (r *RefreshMaterializedView) WithResolvedChildren(ctx context.Context, chil
 
 type refreshMaterializedViewTarget struct {
 	schema string
+	db     sql.Database
 	table  sql.Table
 }
 
@@ -154,6 +161,7 @@ func (r *RefreshMaterializedView) resolveTarget(ctx *sql.Context) (refreshMateri
 			}
 			found = refreshMaterializedViewTarget{
 				schema: schema.Item.SchemaName(),
+				db:     schema.Item,
 				table:  table.Item,
 			}
 			return false, nil
@@ -169,6 +177,11 @@ func (r *RefreshMaterializedView) resolveTarget(ctx *sql.Context) (refreshMateri
 		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" is not a materialized view`, r.name)
 	}
 	return found, nil
+}
+
+func (r *RefreshMaterializedView) setTargetPopulated(ctx *sql.Context, target refreshMaterializedViewTarget, definition string, populated bool) error {
+	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated(tableComment(target.table), definition, populated)
+	return modifyTableComment(ctx, target.db, target.table.Name(), comment)
 }
 
 func (r *RefreshMaterializedView) searchSchemas(ctx *sql.Context) ([]string, error) {

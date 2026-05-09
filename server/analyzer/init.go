@@ -68,6 +68,7 @@ const (
 	ruleId_SuppressDeferrableForeignKeys                                    // suppressDeferrableForeignKeys
 	ruleId_UnwrapTableCopierCreateTable                                     // unwrapTableCopierCreateTable
 	ruleId_PreserveTableMetadata                                            // preserveTableMetadata
+	ruleId_AssignUnpopulatedMatviewScans                                    // assignUnpopulatedMaterializedViewScans
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -120,6 +121,7 @@ func Init() {
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "optimizeJoins", true,
 		analyzer.Rule{Id: ruleId_PreserveLateralLeftJoin, Apply: PreserveLateralLeftJoin},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
+		analyzer.Rule{Id: ruleId_AssignUnpopulatedMatviewScans, Apply: AssignUnpopulatedMaterializedViewScans},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},

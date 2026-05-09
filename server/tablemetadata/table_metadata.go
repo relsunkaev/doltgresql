@@ -24,9 +24,10 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // Metadata stores PostgreSQL table metadata that Dolt's native schema metadata
 // does not currently expose.
 type Metadata struct {
-	PrimaryKeyConstraint       string `json:"primaryKeyConstraint,omitempty"`
-	MaterializedView           bool   `json:"materializedView,omitempty"`
-	MaterializedViewDefinition string `json:"materializedViewDefinition,omitempty"`
+	PrimaryKeyConstraint        string `json:"primaryKeyConstraint,omitempty"`
+	MaterializedView            bool   `json:"materializedView,omitempty"`
+	MaterializedViewDefinition  string `json:"materializedViewDefinition,omitempty"`
+	MaterializedViewUnpopulated bool   `json:"materializedViewUnpopulated,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -75,9 +76,17 @@ func SetPrimaryKeyConstraintName(comment string, name string) string {
 // SetMaterializedViewDefinition marks the table metadata comment as a
 // table-backed materialized view and records the view query definition.
 func SetMaterializedViewDefinition(comment string, definition string) string {
+	return SetMaterializedViewDefinitionWithPopulated(comment, definition, true)
+}
+
+// SetMaterializedViewDefinitionWithPopulated marks the table metadata comment
+// as a table-backed materialized view, records the view query definition, and
+// stores whether the snapshot is currently populated.
+func SetMaterializedViewDefinitionWithPopulated(comment string, definition string, populated bool) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.MaterializedView = true
 	metadata.MaterializedViewDefinition = strings.TrimSpace(definition)
+	metadata.MaterializedViewUnpopulated = !populated
 	return EncodeComment(metadata)
 }
 
@@ -98,8 +107,17 @@ func MaterializedViewDefinition(comment string) string {
 	return metadata.MaterializedViewDefinition
 }
 
+// IsMaterializedViewPopulated returns whether the metadata marks the
+// materialized view as scan-ready. Legacy materialized-view comments predate
+// this flag and are treated as populated.
+func IsMaterializedViewPopulated(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.MaterializedView && !metadata.MaterializedViewUnpopulated
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
-		metadata.MaterializedViewDefinition == ""
+		metadata.MaterializedViewDefinition == "" &&
+		!metadata.MaterializedViewUnpopulated
 }

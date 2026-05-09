@@ -40,9 +40,6 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	if node.CheckOption != tree.ViewCheckOptionUnspecified {
 		return nil, errors.Errorf("CREATE MATERIALIZED VIEW WITH CHECK OPTION is not yet supported")
 	}
-	if node.WithNoData {
-		return nil, errors.Errorf("CREATE MATERIALIZED VIEW WITH NO DATA is not yet supported")
-	}
 
 	tableName, err := nodeTableName(ctx, &node.Name)
 	if err != nil {
@@ -51,6 +48,9 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	selectStmt, err := nodeSelect(ctx, node.AsSource)
 	if err != nil {
 		return nil, err
+	}
+	if node.WithNoData {
+		setMaterializedViewNoDataLimit(selectStmt)
 	}
 	definition := createViewSelectDefinition(ctx, node.AsSource.String())
 	return &vitess.DDL{
@@ -61,7 +61,7 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 			TableOpts: []*vitess.TableOption{
 				{
 					Name:  "comment",
-					Value: tablemetadata.SetMaterializedViewDefinition("", definition),
+					Value: tablemetadata.SetMaterializedViewDefinitionWithPopulated("", definition, !node.WithNoData),
 				},
 			},
 		},
@@ -74,4 +74,12 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
 		},
 	}, nil
+}
+
+func setMaterializedViewNoDataLimit(selectStmt vitess.SelectStatement) {
+	if parenSelect, ok := selectStmt.(*vitess.ParenSelect); ok {
+		setMaterializedViewNoDataLimit(parenSelect.Select)
+		return
+	}
+	selectStmt.SetLimit(&vitess.Limit{Rowcount: vitess.NewIntVal([]byte("0"))})
 }

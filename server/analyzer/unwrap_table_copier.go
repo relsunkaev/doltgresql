@@ -109,7 +109,7 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 		return materializedViewInfo{}, false
 	}
 	return materializedViewInfo{
-		comment:       tablemetadata.SetMaterializedViewDefinition("", node.AsSource.String()),
+		comment:       tablemetadata.SetMaterializedViewDefinitionWithPopulated("", node.AsSource.String(), !node.WithNoData),
 		columnAliases: materializedViewColumnAliases(node.ColumnNames),
 	}, true
 }

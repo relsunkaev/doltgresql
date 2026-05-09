@@ -36,6 +36,10 @@ func materializedViewDefinition(table sql.Table) string {
 	return tablemetadata.MaterializedViewDefinition(tableComment(table))
 }
 
+func materializedViewPopulated(table sql.Table) bool {
+	return tablemetadata.IsMaterializedViewPopulated(tableComment(table))
+}
+
 func tableHasIndexes(ctx *sql.Context, table sql.Table) (bool, error) {
 	indexed, ok := table.(sql.IndexAddressable)
 	if !ok {

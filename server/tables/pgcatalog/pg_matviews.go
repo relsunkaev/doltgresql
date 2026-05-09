@@ -115,7 +115,7 @@ func (iter *pgMatviewsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		"postgres",                            // matviewowner
 		nil,                                   // tablespace
 		hasIndexes,                            // hasindexes
-		true,                                  // ispopulated
+		materializedViewPopulated(row.table),  // ispopulated
 		materializedViewDefinition(row.table), // definition
 	}, nil
 }
