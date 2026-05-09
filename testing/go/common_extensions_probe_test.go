@@ -352,6 +352,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{``, ``}},
 				},
 				{
+					Query:    `SELECT '"A"=>"2", "B"=>"5"'::public.hstore = '"B"=>"5", "A"=>"2"'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>NULL'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>""'::public.hstore;`,
+					Expected: []sql.Row{{"t", "t", "f"}},
+				},
+				{
+					Query:    `SELECT '"A"=>"2"'::public.hstore <> '"A"=>"9"'::public.hstore, '"A"=>"2"'::public.hstore = '"A"=>"2", "B"=>NULL'::public.hstore;`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+				{
 					Query:       `SELECT hstore(ARRAY['A', '1', 'B']::text[]);`,
 					ExpectedErr: `array must have even number of elements`,
 				},

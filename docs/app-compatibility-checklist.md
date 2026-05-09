@@ -140,6 +140,9 @@ Do not check off an item until it has workload proof:
   `hstore(text, text)`, `hstore(text[], text[])`, and `hstore(text[])`
   cover constructor semantics for NULL values, NULL key handling,
   duplicate-first key handling, empty arrays, and malformed array inputs.
+  `hstore = hstore` / `hstore <> hstore` cover order-insensitive
+  equality, SQL NULL value equality, NULL-vs-empty-string inequality,
+  and missing-vs-extra key inequality.
   Broader hstore operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.

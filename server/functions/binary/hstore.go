@@ -42,6 +42,8 @@ func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_hstore)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, hstore_eq)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, hstore_ne)
 	framework.RegisterFunction(hstore_slice)
 	framework.RegisterFunction(hstore_akeys)
 	framework.RegisterFunction(hstore_avals)
@@ -251,6 +253,38 @@ var hstore_from_array = framework.Function1{
 			hstoreAddTextPair(pairs, keyValue.(string), values[i+1])
 		}
 		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_eq = framework.Function2{
+	Name:       "hstore_eq",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		right, err := parseHstore(val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		return hstoreEqual(left, right), nil
+	},
+}
+
+var hstore_ne = framework.Function2{
+	Name:       "hstore_ne",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, resolvedTypes [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		equal, err := hstore_eq.Callable(ctx, resolvedTypes, val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		return !equal.(bool), nil
 	},
 }
 
@@ -496,6 +530,10 @@ func hstoreContains(left map[string]*string, right map[string]*string) bool {
 		}
 	}
 	return true
+}
+
+func hstoreEqual(left map[string]*string, right map[string]*string) bool {
+	return len(left) == len(right) && hstoreContains(left, right)
 }
 
 func hstoreValueEqual(left *string, right *string) bool {
