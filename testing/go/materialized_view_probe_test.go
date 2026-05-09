@@ -134,5 +134,76 @@ func TestMaterializedViewProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "CREATE MATERIALIZED VIEW column aliases",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT account_id, amount FROM renamed_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `SELECT attname
+						FROM pg_attribute
+						WHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped
+						ORDER BY attnum;`,
+					Expected: []sql.Row{
+						{"account_id"},
+						{"amount"},
+					},
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW quoted_alias_mv ("AccountID", amount) AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT "AccountID", amount FROM quoted_alias_mv ORDER BY "AccountID";`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query: `CREATE MATERIALIZED VIEW swapped_alias_mv (v, id) AS SELECT id, v FROM source;`,
+				},
+				{
+					Query: `SELECT v, id FROM swapped_alias_mv ORDER BY v;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query:       `CREATE MATERIALIZED VIEW too_many_mv (account_id, amount, extra) AS SELECT id, v FROM source;`,
+					ExpectedErr: "too many column names were specified",
+				},
+				{
+					Query:       `CREATE MATERIALIZED VIEW duplicate_alias_mv (account_id, account_id) AS SELECT id, v FROM source;`,
+					ExpectedErr: `column "account_id" specified more than once`,
+				},
+				{
+					Query:       `CREATE MATERIALIZED VIEW duplicate_remaining_mv (v) AS SELECT id, v FROM source;`,
+					ExpectedErr: `column "v" specified more than once`,
+				},
+			},
+		},
 	})
 }

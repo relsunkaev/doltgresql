@@ -41,11 +41,21 @@ func UnwrapTableCopierCreateTable(ctx *sql.Context, a *analyzer.Analyzer, node s
 	}
 	copied := *tableCopier
 	copied.Destination = createTable
-	if comment, ok := doltgresCreateTableMetadataComment(createTable.TableOpts); ok {
-		return pgnode.NewTableMetadataApplier(&copied, createTable.Database(), createTable.Name(), comment), transform.NewTree, nil
+	mvInfo, hasMvInfo := createMaterializedViewInfo(ctx, createTable.Name())
+	if hasMvInfo {
+		if err := pgnode.ValidateColumnAliases(createTable.PkSchema().Schema, mvInfo.columnAliases); err != nil {
+			return nil, transform.SameTree, err
+		}
 	}
-	if comment, ok := createMaterializedViewMetadataComment(ctx, createTable.Name()); ok {
-		return pgnode.NewTableMetadataApplier(&copied, createTable.Database(), createTable.Name(), comment), transform.NewTree, nil
+	if comment, ok := doltgresCreateTableMetadataComment(createTable.TableOpts); ok {
+		var columnAliases []string
+		if hasMvInfo {
+			columnAliases = mvInfo.columnAliases
+		}
+		return pgnode.NewTableMetadataApplierWithColumnAliases(&copied, createTable.Database(), createTable.Name(), comment, columnAliases), transform.NewTree, nil
+	}
+	if hasMvInfo {
+		return pgnode.NewTableMetadataApplierWithColumnAliases(&copied, createTable.Database(), createTable.Name(), mvInfo.comment, mvInfo.columnAliases), transform.NewTree, nil
 	}
 	return &copied, transform.NewTree, nil
 }
@@ -77,21 +87,40 @@ func doltgresCreateTableMetadataComment(tableOpts map[string]any) (string, bool)
 	return comment, true
 }
 
-func createMaterializedViewMetadataComment(ctx *sql.Context, tableName string) (string, bool) {
+type materializedViewInfo struct {
+	comment       string
+	columnAliases []string
+}
+
+func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materializedViewInfo, bool) {
 	query := ctx.Query()
 	if strings.TrimSpace(query) == "" {
-		return "", false
+		return materializedViewInfo{}, false
 	}
 	stmts, err := parser.Parse(query)
 	if err != nil || len(stmts) != 1 {
-		return "", false
+		return materializedViewInfo{}, false
 	}
 	node, ok := stmts[0].AST.(*tree.CreateMaterializedView)
 	if !ok {
-		return "", false
+		return materializedViewInfo{}, false
 	}
 	if !strings.EqualFold(string(node.Name.ObjectName), tableName) {
-		return "", false
+		return materializedViewInfo{}, false
 	}
-	return tablemetadata.SetMaterializedViewDefinition("", node.AsSource.String()), true
+	return materializedViewInfo{
+		comment:       tablemetadata.SetMaterializedViewDefinition("", node.AsSource.String()),
+		columnAliases: materializedViewColumnAliases(node.ColumnNames),
+	}, true
+}
+
+func materializedViewColumnAliases(names tree.NameList) []string {
+	if len(names) == 0 {
+		return nil
+	}
+	aliases := make([]string, len(names))
+	for i, name := range names {
+		aliases[i] = string(name)
+	}
+	return aliases
 }

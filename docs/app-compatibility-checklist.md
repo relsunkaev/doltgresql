@@ -144,14 +144,16 @@ Do not check off an item until it has workload proof:
   snapshot. Materialized views are catalogued with `pg_class.relkind =
   'm'`, `pg_matviews` rows report their definition, populated state,
   and index presence, and ordinary/unique btree indexes may be created
-  on the materialized view for restore-time or read-path access. This
-  covers schemas that only need restore-time snapshot data and indexed
-  reads. Full PostgreSQL matview semantics are still partial:
-  `REFRESH MATERIALIZED VIEW`, `WITH NO DATA`, materialized-view column
-  lists, and refresh-time unique-index requirements are not implemented.
-  Apps that need refreshable matviews must still rewrite to ordinary
-  views (covered) or to a backing table + scheduled refresh job. Pinned
-  by testing/go/materialized_view_probe_test.go.
+  on the materialized view for restore-time or read-path access.
+  Materialized-view column lists now apply PostgreSQL output-alias
+  semantics, including shorter alias lists and duplicate-name
+  validation. This covers schemas that only need restore-time snapshot
+  data and indexed reads. Full PostgreSQL matview semantics are still
+  partial: `REFRESH MATERIALIZED VIEW`, `WITH NO DATA`, and
+  refresh-time unique-index requirements are not implemented. Apps that
+  need refreshable matviews must still rewrite to ordinary views
+  (covered) or to a backing table + scheduled refresh job. Pinned by
+  testing/go/materialized_view_probe_test.go.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:

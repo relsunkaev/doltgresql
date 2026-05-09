@@ -28,9 +28,6 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	if node == nil {
 		return nil, nil
 	}
-	if len(node.ColumnNames) > 0 {
-		return nil, errors.Errorf("CREATE MATERIALIZED VIEW column names are not yet supported")
-	}
 	if node.Using != "" {
 		return nil, errors.Errorf("CREATE MATERIALIZED VIEW USING is not yet supported")
 	}

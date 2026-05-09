@@ -15,19 +15,23 @@
 package node
 
 import (
+	"fmt"
 	"io"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
 )
 
-// TableMetadataApplier runs a child DDL node and then reapplies Doltgres table
-// metadata that lower-level table-copy optimizations may overwrite.
+// TableMetadataApplier runs a child DDL node and then applies Doltgres table
+// metadata and output-column aliases that lower-level table-copy optimizations
+// may overwrite or drop.
 type TableMetadataApplier struct {
-	child     sql.Node
-	db        sql.Database
-	tableName string
-	comment   string
+	child         sql.Node
+	db            sql.Database
+	tableName     string
+	comment       string
+	columnAliases []string
 }
 
 var _ sql.DebugStringer = (*TableMetadataApplier)(nil)
@@ -40,6 +44,19 @@ func NewTableMetadataApplier(child sql.Node, db sql.Database, tableName string, 
 		db:        db,
 		tableName: tableName,
 		comment:   comment,
+	}
+}
+
+// NewTableMetadataApplierWithColumnAliases returns a new
+// *TableMetadataApplier that also renames the first N output columns after a
+// successful CREATE TABLE AS copy.
+func NewTableMetadataApplierWithColumnAliases(child sql.Node, db sql.Database, tableName string, comment string, columnAliases []string) *TableMetadataApplier {
+	return &TableMetadataApplier{
+		child:         child,
+		db:            db,
+		tableName:     tableName,
+		comment:       comment,
+		columnAliases: columnAliases,
 	}
 }
 
@@ -73,10 +90,11 @@ func (m *TableMetadataApplier) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuil
 		childIter = sql.RowsToRowIter()
 	}
 	return &tableMetadataApplierIter{
-		childIter: childIter,
-		db:        m.db,
-		tableName: m.tableName,
-		comment:   m.comment,
+		childIter:     childIter,
+		db:            m.db,
+		tableName:     m.tableName,
+		comment:       m.comment,
+		columnAliases: m.columnAliases,
 	}, nil
 }
 
@@ -95,16 +113,19 @@ func (m *TableMetadataApplier) WithChildren(ctx *sql.Context, children ...sql.No
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(m, len(children), 1)
 	}
-	return NewTableMetadataApplier(children[0], m.db, m.tableName, m.comment), nil
+	return NewTableMetadataApplierWithColumnAliases(children[0], m.db, m.tableName, m.comment, m.columnAliases), nil
 }
 
 type tableMetadataApplierIter struct {
-	childIter sql.RowIter
-	db        sql.Database
-	tableName string
-	comment   string
-	done      bool
-	closed    bool
+	childIter     sql.RowIter
+	db            sql.Database
+	tableName     string
+	comment       string
+	columnAliases []string
+	done          bool
+	closed        bool
+	applied       bool
+	childFailed   bool
 }
 
 var _ sql.RowIter = (*tableMetadataApplierIter)(nil)
@@ -123,6 +144,7 @@ func (m *tableMetadataApplierIter) Next(ctx *sql.Context) (sql.Row, error) {
 			break
 		}
 		if err != nil {
+			m.childFailed = true
 			_ = m.closeChild(ctx)
 			return nil, err
 		}
@@ -145,7 +167,18 @@ func (m *tableMetadataApplierIter) Close(ctx *sql.Context) error {
 
 func (m *tableMetadataApplierIter) closeChildAndApply(ctx *sql.Context) error {
 	if err := m.closeChild(ctx); err != nil {
+		m.childFailed = true
 		return err
+	}
+	if m.applied || m.childFailed {
+		return nil
+	}
+	m.applied = true
+	if err := applyTableColumnAliases(ctx, m.db, m.tableName, m.columnAliases); err != nil {
+		return err
+	}
+	if m.comment == "" {
+		return nil
 	}
 	return modifyTableComment(ctx, m.db, m.tableName, m.comment)
 }
@@ -156,4 +189,104 @@ func (m *tableMetadataApplierIter) closeChild(ctx *sql.Context) error {
 	}
 	m.closed = true
 	return m.childIter.Close(ctx)
+}
+
+func applyTableColumnAliases(ctx *sql.Context, db sql.Database, tableName string, aliases []string) error {
+	if len(aliases) == 0 {
+		return nil
+	}
+	db, err := freshDatabase(ctx, db)
+	if err != nil {
+		return err
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, tableName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(tableName)
+	}
+	schema := table.Schema(ctx)
+	if err := ValidateColumnAliases(schema, aliases); err != nil {
+		return err
+	}
+	alterable, ok := table.(sql.AlterableTable)
+	if !ok {
+		return sql.ErrAlterTableNotSupported.New(table.Name())
+	}
+
+	type renameStep struct {
+		index int
+		from  string
+		to    string
+		temp  string
+	}
+	steps := make([]renameStep, 0, len(aliases))
+	reservedNames := make(map[string]struct{}, len(schema)+len(aliases))
+	for i, col := range schema {
+		reservedNames[col.Name] = struct{}{}
+		if i < len(aliases) {
+			reservedNames[aliases[i]] = struct{}{}
+		}
+	}
+	for i, alias := range aliases {
+		from := schema[i].Name
+		if from == alias {
+			continue
+		}
+		temp := uniqueMaterializedViewAliasTempName(reservedNames, i)
+		reservedNames[temp] = struct{}{}
+		steps = append(steps, renameStep{index: i, from: from, to: alias, temp: temp})
+	}
+
+	for _, step := range steps {
+		if err := modifyColumnName(ctx, alterable, schema[step.index], step.from, step.temp); err != nil {
+			return err
+		}
+	}
+	for _, step := range steps {
+		if err := modifyColumnName(ctx, alterable, schema[step.index], step.temp, step.to); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ValidateColumnAliases checks PostgreSQL CREATE MATERIALIZED VIEW column-list
+// semantics: too many aliases are rejected, shorter lists rename the leading
+// columns, and the resulting column set must not contain duplicates.
+func ValidateColumnAliases(schema sql.Schema, aliases []string) error {
+	if len(aliases) == 0 {
+		return nil
+	}
+	if len(aliases) > len(schema) {
+		return errors.Errorf("too many column names were specified")
+	}
+	seen := make(map[string]struct{}, len(schema))
+	for i, col := range schema {
+		name := col.Name
+		if i < len(aliases) {
+			name = aliases[i]
+		}
+		if _, ok := seen[name]; ok {
+			return errors.Errorf(`column "%s" specified more than once`, name)
+		}
+		seen[name] = struct{}{}
+	}
+	return nil
+}
+
+func uniqueMaterializedViewAliasTempName(existing map[string]struct{}, index int) string {
+	for suffix := 0; ; suffix++ {
+		name := fmt.Sprintf("__doltgres_mv_alias_%d_%d", index, suffix)
+		if _, ok := existing[name]; !ok {
+			return name
+		}
+	}
+}
+
+func modifyColumnName(ctx *sql.Context, alterable sql.AlterableTable, original *sql.Column, from string, to string) error {
+	renamed := *original
+	renamed.Name = to
+	return alterable.ModifyColumn(ctx, from, &renamed, nil)
 }
