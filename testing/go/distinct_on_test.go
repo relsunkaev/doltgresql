@@ -137,21 +137,15 @@ func TestDistinctOn(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// NULL forms its own DISTINCT ON group. Per the
-					// "Null ordering in indexes" item in the index/planner
-					// TODO, doltgres currently treats `ORDER BY k`
-					// (default ASC) as NULLS FIRST (MySQL convention)
-					// while PostgreSQL defaults to NULLS LAST. The
-					// grouping behavior tested here is correct
-					// independent of the NULL-ordering choice; the row
-					// order reflects the current default. Use explicit
-					// `NULLS LAST` / `NULLS FIRST` for portable views.
+					// NULL forms its own DISTINCT ON group. PostgreSQL
+					// default ASC ordering places that group after
+					// non-NULL keys.
 					Query: `SELECT DISTINCT ON (k) k, v
 						FROM t
 						ORDER BY k, ts DESC;`,
 					Expected: []sql.Row{
-						{nil, int32(21)},
 						{int32(1), int32(11)},
+						{nil, int32(21)},
 					},
 				},
 			},

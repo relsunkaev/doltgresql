@@ -329,12 +329,13 @@ Do not check off an item until it has workload proof:
   testing/go/pgcatalog_test.go, and
   testing/go/index_benchmark_test.go.
 - [~] Null ordering in indexes - `ASC NULLS LAST` / `DESC NULLS
-  FIRST` is accepted at DDL but the engine emits two warnings —
-  `descending index scan order is not yet supported, preserving
-  metadata only` and `NULLS LAST index ordering is not yet
-  supported, preserving metadata only`. The metadata is preserved
-  through pg_index, but the planner does not yet honour either
-  preference at scan time. DDL acceptance pinned by
+  FIRST` is accepted at DDL and query `ORDER BY` now follows
+  PostgreSQL null placement for defaults (`ASC` => NULLS LAST,
+  `DESC` => NULLS FIRST) plus all explicit NULLS FIRST/LAST
+  combinations. DDL still emits warnings that physical descending
+  and NULLS LAST index scan ordering are metadata-only; the metadata
+  is preserved through pg_index, but index storage/planner preference
+  does not yet model those per-column scan choices. Pinned by
   testing/go/index_opclass_nulls_probe_test.go.
 - [ ] Materialized view indexes - support indexes required for matview refresh
   paths.
@@ -355,10 +356,9 @@ Do not check off an item until it has workload proof:
 - [x] `DISTINCT ON` - "latest row per group" pattern works against both
   single-column and multi-column distinct keys, with WHERE filters and
   across NULL groups. Coverage in testing/go/distinct_on_test.go pins
-  the four shapes real PG views use. Default ASC NULL ordering follows
-  MySQL convention (NULLS FIRST) rather than PG (NULLS LAST); explicit
-  `NULLS LAST` syntax remains a separate gap (see "Null ordering in
-  indexes" above).
+  the four shapes real PG views use. Query-time PostgreSQL NULL
+  ordering is covered separately by the "Null ordering in indexes"
+  item above.
 - [x] Window functions - `lag()`, `lead()`, `count(*) OVER (PARTITION
   BY)`, `count(*) OVER ()`, `first_value()`, and `last_value()` (with
   an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`

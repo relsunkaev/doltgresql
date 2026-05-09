@@ -32,7 +32,7 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 	if len(node) == 0 {
 		return nil, nil
 	}
-	orderBys := make([]*vitess.Order, len(node))
+	orderBys := make([]*vitess.Order, 0, len(node)*2)
 	for i := range node {
 		if node[i].OrderType != tree.OrderByColumn {
 			return nil, errors.Errorf("ORDER BY type is not yet supported")
@@ -48,19 +48,16 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 		default:
 			return nil, errors.Errorf("unknown ORDER BY sorting direction")
 		}
+
+		desiredNullsLast := direction == vitess.AscScr
 		switch node[i].NullsOrder {
 		case tree.DefaultNullsOrder:
-			//TODO: the default NULL order is reversed compared to MySQL, so the default is technically always wrong.
-			// To prevent choking on every ORDER BY, we allow this to proceed (even with incorrect results) for now.
-			// If the NULL order is explicitly declared, then we want to error rather than return incorrect results.
+			// PostgreSQL defaults to ASC NULLS LAST and DESC NULLS FIRST.
+			desiredNullsLast = direction == vitess.AscScr
 		case tree.NullsFirst:
-			if direction != vitess.AscScr {
-				return nil, errors.Errorf("this NULL ordering is not yet supported for this ORDER BY direction")
-			}
+			desiredNullsLast = false
 		case tree.NullsLast:
-			if direction != vitess.DescScr {
-				return nil, errors.Errorf("this NULL ordering is not yet supported for this ORDER BY direction")
-			}
+			desiredNullsLast = true
 		default:
 			return nil, errors.Errorf("unknown NULL ordering in ORDER BY")
 		}
@@ -74,21 +71,49 @@ func nodeOrderBy(ctx *Context, node tree.OrderBy, selectStmt vitess.SelectStatem
 				return nil, err
 			}
 		}
-		// GMS order by is hardcoded to expect vitess.SQLVal for expressions such as `ORDER BY 1`.
-		// In addition, there is the requirement that columns in the order by also need to be referenced somewhere in
-		// the query, which is not a requirement for Postgres. Whenever we add that functionality, we also need to
-		// remove the dependency on vitess.SQLVal. For now, we'll just convert our literals to a vitess.SQLVal.
-		if injectedExpr, ok := expr.(vitess.InjectedExpr); ok {
-			if literal, ok := injectedExpr.Expression.(*expression.Literal); ok {
-				expr = pgexprs.ToVitessLiteral(literal)
+
+		if needsExplicitNullSort(direction, desiredNullsLast) {
+			nullProbeExpr := expr
+			if outputExpr, ok := orderByOutputExpr(selectStmt, node[i].Expr); ok {
+				nullProbeExpr = outputExpr
 			}
+			nullProbeDirection := vitess.AscScr
+			if !desiredNullsLast {
+				nullProbeDirection = vitess.DescScr
+			}
+			orderBys = append(orderBys, &vitess.Order{
+				Expr: &vitess.IsExpr{
+					Expr:     nullProbeExpr,
+					Operator: vitess.IsNullStr,
+				},
+				Direction: nullProbeDirection,
+			})
 		}
-		orderBys[i] = &vitess.Order{
-			Expr:      expr,
+
+		orderBys = append(orderBys, &vitess.Order{
+			Expr:      normalizeOrderByLiteralExpr(expr),
 			Direction: direction,
-		}
+		})
 	}
 	return orderBys, nil
+}
+
+func needsExplicitNullSort(direction string, desiredNullsLast bool) bool {
+	naturalNullsLast := direction == vitess.DescScr
+	return desiredNullsLast != naturalNullsLast
+}
+
+func normalizeOrderByLiteralExpr(expr vitess.Expr) vitess.Expr {
+	// GMS order by is hardcoded to expect vitess.SQLVal for expressions such as `ORDER BY 1`.
+	// In addition, there is the requirement that columns in the order by also need to be referenced somewhere in
+	// the query, which is not a requirement for Postgres. Whenever we add that functionality, we also need to
+	// remove the dependency on vitess.SQLVal. For now, we'll just convert our literals to a vitess.SQLVal.
+	if injectedExpr, ok := expr.(vitess.InjectedExpr); ok {
+		if literal, ok := injectedExpr.Expression.(*expression.Literal); ok {
+			return pgexprs.ToVitessLiteral(literal)
+		}
+	}
+	return expr
 }
 
 func orderByOutputOrdinal(selectStmt vitess.SelectStatement, orderExpr tree.Expr) (int, bool) {
@@ -110,6 +135,61 @@ func orderByOutputOrdinal(selectStmt vitess.SelectStatement, orderExpr tree.Expr
 		ordinal = i + 1
 	}
 	return ordinal, ordinal != 0
+}
+
+func orderByOutputExpr(selectStmt vitess.SelectStatement, orderExpr tree.Expr) (vitess.Expr, bool) {
+	name, ok := orderExpr.(*tree.UnresolvedName)
+	if !ok || name.NumParts != 1 || name.Star {
+		return nil, false
+	}
+	orderName := name.Parts[0]
+	selectExprs := outputSelectExprs(selectStmt)
+	var ret vitess.Expr
+	for _, selectExpr := range selectExprs {
+		outputName, ok := selectExprOutputName(selectExpr)
+		if !ok || !strings.EqualFold(outputName, orderName) {
+			continue
+		}
+		if ret != nil {
+			return nil, false
+		}
+		aliasedExpr, ok := selectExpr.(*vitess.AliasedExpr)
+		if !ok {
+			return nil, false
+		}
+		ret = aliasedExpr.Expr
+	}
+	return ret, ret != nil
+}
+
+func expandDistinctOnForNullOrdering(selectStmt *vitess.Select, orderBy vitess.OrderBy) {
+	if len(selectStmt.QueryOpts.DistinctOn) == 0 || len(orderBy) == 0 {
+		return
+	}
+	expanded := make(vitess.Exprs, 0, len(selectStmt.QueryOpts.DistinctOn)*2)
+	orderIdx := 0
+	for _, distinctExpr := range selectStmt.QueryOpts.DistinctOn {
+		hadNullProbe := false
+		if orderIdx < len(orderBy) && isNullProbeForExpr(orderBy[orderIdx].Expr, distinctExpr) {
+			expanded = append(expanded, orderBy[orderIdx].Expr)
+			orderIdx++
+			hadNullProbe = true
+		}
+		expanded = append(expanded, distinctExpr)
+		if orderIdx < len(orderBy) && (hadNullProbe || sameOrderByExpr(orderBy[orderIdx].Expr, distinctExpr)) {
+			orderIdx++
+		}
+	}
+	selectStmt.QueryOpts.DistinctOn = expanded
+}
+
+func isNullProbeForExpr(candidate vitess.Expr, expr vitess.Expr) bool {
+	isExpr, ok := candidate.(*vitess.IsExpr)
+	return ok && isExpr.Operator == vitess.IsNullStr && sameOrderByExpr(isExpr.Expr, expr)
+}
+
+func sameOrderByExpr(left vitess.Expr, right vitess.Expr) bool {
+	return strings.EqualFold(vitess.String(left), vitess.String(right))
 }
 
 func outputSelectExprs(selectStmt vitess.SelectStatement) vitess.SelectExprs {

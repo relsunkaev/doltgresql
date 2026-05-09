@@ -62,11 +62,17 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 		{
 			// PG planner refers to the column-level NULLS LAST /
 			// NULLS FIRST ordering when picking a covering index for
-			// a sort plan. Pin DDL acceptance so migration tools
-			// don't trip; planner-usage parity is a separate gap.
-			Name: "NULLS LAST / NULLS FIRST DDL acceptance",
+			// a sort plan. Pin both DDL acceptance and query-time
+			// PostgreSQL null placement for ORDER BY paths that may
+			// otherwise be optimized through an index.
+			Name: "NULLS LAST / NULLS FIRST ordering",
 			SetUpScript: []string{
 				`CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);`,
+				`INSERT INTO events VALUES
+					(1, NULL),
+					(2, '2024-01-01 00:00:00'),
+					(3, '2024-01-02 00:00:00'),
+					(4, NULL);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -76,6 +82,30 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 				{
 					Query: `CREATE INDEX events_ts_asc_idx
 						ON events (ts ASC NULLS FIRST);`,
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts ASC, id ASC;`,
+					Expected: []sql.Row{{"2"}, {"3"}, {"1"}, {"4"}},
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts DESC, id ASC;`,
+					Expected: []sql.Row{{"1"}, {"4"}, {"3"}, {"2"}},
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;`,
+					Expected: []sql.Row{{"1"}, {"4"}, {"2"}, {"3"}},
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;`,
+					Expected: []sql.Row{{"2"}, {"3"}, {"1"}, {"4"}},
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts DESC NULLS FIRST, id ASC;`,
+					Expected: []sql.Row{{"1"}, {"4"}, {"3"}, {"2"}},
+				},
+				{
+					Query:    `SELECT id::text FROM events ORDER BY ts DESC NULLS LAST, id ASC;`,
+					Expected: []sql.Row{{"3"}, {"2"}, {"1"}, {"4"}},
 				},
 			},
 		},

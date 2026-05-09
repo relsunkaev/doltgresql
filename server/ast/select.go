@@ -107,6 +107,7 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	case *vitess.ParenSelect:
 		return selectStmt, nil
 	case *vitess.Select:
+		expandDistinctOnForNullOrdering(selectStmt, orderBy)
 		selectStmt.OrderBy = orderBy
 		selectStmt.With = with
 		selectStmt.Limit = limit

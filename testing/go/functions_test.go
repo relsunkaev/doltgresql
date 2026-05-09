@@ -262,11 +262,11 @@ func TestAggregateFunctions(t *testing.T) {
 						{"{Charlie,Alice,Frank,Diana,Bob,Eve}"},
 					},
 				},
-				// ORDER BY with NULL values (NULLS FIRST behavior)
+				// ORDER BY with NULL values (PostgreSQL default ASC NULLS LAST behavior)
 				{
 					Query: `SELECT array_agg(name ORDER BY nullable_field) FROM test_data;`,
 					Expected: []sql.Row{
-						{"{Bob,Diana,Alice,Charlie,Eve,Frank}"},
+						{"{Alice,Charlie,Eve,Frank,Bob,Diana}"},
 					},
 				},
 				// ORDER BY with GROUP BY
