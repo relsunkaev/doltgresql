@@ -77,3 +77,89 @@ func TestDoBlockProbe(t *testing.T) {
 		},
 	})
 }
+
+func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DO block runs declarations loops and DML",
+			SetUpScript: []string{
+				`CREATE TABLE do_loop_log (id INT PRIMARY KEY, label TEXT NOT NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							labels TEXT[] := '{alpha,beta,gamma}';
+							i INT;
+						BEGIN
+							FOR i IN 1..3 LOOP
+								INSERT INTO do_loop_log VALUES (i, labels[i]);
+							END LOOP;
+						END;
+					$$;`,
+				},
+				{
+					Query: `SELECT array_to_string(array_agg(label ORDER BY id), ',') FROM do_loop_log;`,
+					Expected: []sql.Row{
+						{"alpha,beta,gamma"},
+					},
+				},
+			},
+		},
+		{
+			Name: "DO block runs SELECT INTO FOUND query loops and PERFORM",
+			SetUpScript: []string{
+				`CREATE SEQUENCE do_perform_seq;`,
+				`CREATE TABLE do_items (id INT PRIMARY KEY, label TEXT NOT NULL, touched BOOL NOT NULL DEFAULT false);`,
+				`INSERT INTO do_items VALUES (1, 'one', false), (2, 'two', false), (3, 'three', false);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							target_id INT;
+							item RECORD;
+						BEGIN
+							SELECT id INTO target_id FROM do_items WHERE label = 'two';
+							IF FOUND THEN
+								UPDATE do_items SET touched = true WHERE id = target_id;
+							END IF;
+
+							FOR item IN SELECT id FROM do_items WHERE touched = false ORDER BY id LOOP
+								UPDATE do_items SET label = label || '-seen' WHERE id = item.id;
+							END LOOP;
+
+							PERFORM nextval('do_perform_seq');
+						END;
+					$$;`,
+				},
+				{
+					Query: `SELECT id, label, touched FROM do_items ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "one-seen", "f"},
+						{2, "two", "t"},
+						{3, "three-seen", "f"},
+					},
+				},
+				{
+					Query:    `SELECT nextval('do_perform_seq');`,
+					Expected: []sql.Row{{2}},
+				},
+			},
+		},
+		{
+			Name:        "DO block propagates raised exception",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						BEGIN
+							RAISE EXCEPTION 'do block failed: %', 42;
+						END;
+					$$;`,
+					ExpectedErr: `do block failed: 42`,
+				},
+			},
+		},
+	})
+}

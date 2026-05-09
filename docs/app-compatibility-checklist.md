@@ -368,11 +368,15 @@ Do not check off an item until it has workload proof:
 - [~] `DO $$` blocks - anonymous `LANGUAGE plpgsql` DO blocks are
   parsed and executed through the PL/pgSQL interpreter, including the
   common conditional-DDL shape used by pg_dump repair blocks, Alembic
-  migrations, and IF-NOT-EXISTS init scripts. Other procedural
-  languages are rejected explicitly. Pinned by testing/go/do_block_probe_test.go.
-- [ ] Expand anonymous `DO $$` coverage beyond conditional-DDL blocks to the
+  migrations, and IF-NOT-EXISTS init scripts. Coverage also exercises
+  declaration type aliases and arrays, integer loops, `SELECT INTO`
+  plus `FOUND`, query loops over `RECORD`, `PERFORM`, and raised
+  exceptions inside anonymous blocks. Other procedural languages are
+  rejected explicitly. Pinned by testing/go/do_block_probe_test.go and
+  server/plpgsql/parse_test.go.
+- [x] Expand anonymous `DO $$` coverage beyond conditional-DDL blocks to the
   broader PL/pgSQL interpreter surface that application migrations can embed
-  inside DO statements.
+  inside DO statements, without claiming full PL/pgSQL parity.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

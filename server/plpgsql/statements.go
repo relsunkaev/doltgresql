@@ -84,6 +84,11 @@ func (stmt Block) OperationSize() int32 {
 			total++
 		}
 	}
+	for _, record := range stmt.Records {
+		if record.Name != "" {
+			total++
+		}
+	}
 	for _, innerStmt := range stmt.Body {
 		total += innerStmt.OperationSize()
 	}
@@ -128,6 +133,13 @@ func (stmt Block) AppendOperations(ops *[]InterpreterOperation, stack *Interpret
 		var fakeSch sql.Schema
 		for _, fieldName := range record.Fields {
 			fakeSch = append(fakeSch, &sql.Column{Name: fieldName})
+		}
+		if record.Name != "" {
+			*ops = append(*ops, InterpreterOperation{
+				OpCode:      OpCode_Declare,
+				PrimaryData: "record",
+				Target:      record.Name,
+			})
 		}
 		stack.NewRecord(record.Name, fakeSch, nil)
 	}

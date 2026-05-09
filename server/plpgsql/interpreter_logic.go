@@ -62,6 +62,9 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	for i := range vals {
 		stack.NewVariableWithValue(parameterNames[i], parameterTypes[i], vals[i])
 	}
+	if statementsUseFoundVariable(iFunc.GetStatements()) {
+		initFoundVariable(stack)
+	}
 	return call(ctx, iFunc, stack)
 }
 
@@ -78,6 +81,9 @@ func TriggerCall(ctx *sql.Context, iFunc InterpretedFunction, runner sql.Stateme
 			return nil, fmt.Errorf("unknown variable %s for trigger", varName)
 		}
 		stack.NewVariableWithValue(varName, varType, val)
+	}
+	if statementsUseFoundVariable(iFunc.GetStatements()) {
+		initFoundVariable(stack)
 	}
 	return call(ctx, iFunc, stack)
 }
@@ -123,26 +129,10 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				return nil, err
 			}
 
-			// pg_query_go sets PrimaryData for implicit CASE statement variables to
-			// `pg_catalog."integer"`, so we remove double-quotes and extract the schema name.
-			typeName := operation.PrimaryData
-			typeName = strings.ReplaceAll(typeName, `"`, "")
-			schemaName := "pg_catalog"
-			if strings.Contains(typeName, ".") {
-				parts := strings.Split(typeName, ".")
-				schemaName = parts[0]
-				typeName = parts[1]
-				// Check the NonKeyword type names to see if we're looking at
-				// an alias of a type if we're in the pg_catalog schema.
-				// Skip array types (names starting with "_") since their internal
-				// lookup key uses the "_typename" form, not the "typename[]" form
-				// that TypeForNonKeywordTypeName returns.
-				if schemaName == "pg_catalog" && !strings.HasPrefix(typeName, "_") {
-					typ, ok, _ := types.TypeForNonKeywordTypeName(typeName)
-					if ok && typ != nil {
-						typeName = typ.Name()
-					}
-				}
+			schemaName, typeName := normalizeDeclareTypeName(operation.PrimaryData)
+			if (schemaName == "" || schemaName == "pg_catalog") && strings.EqualFold(typeName, "record") {
+				stack.NewRecord(operation.Target, nil, nil)
+				continue
 			}
 			resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
 			if err != nil {
@@ -184,49 +174,57 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			// TODO: implement
 		case OpCode_Execute:
 			if len(operation.Target) > 0 {
+				sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+				if err != nil {
+					return nil, err
+				}
+				found := len(rows) > 0
+				if err = setFoundVariable(ctx, stack, found); err != nil {
+					return nil, err
+				}
+				if len(rows) > 1 {
+					return nil, errors.New("query returned more than one row")
+				}
 				if vars := strings.Split(operation.Target, ","); len(vars) > 1 {
 					// multiple column row result
-					sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
-					if err != nil {
-						return nil, err
-					}
-					if len(rows) > 1 {
-						return nil, errors.New("query returned more than one row")
-					}
-					for i, row := range rows {
-						if len(row) != len(vars) {
+					if !found {
+						for _, variableName := range vars {
+							if err = stack.SetVariable(ctx, variableName, nil); err != nil {
+								return nil, err
+							}
+						}
+					} else {
+						row := rows[0]
+						if len(row) != len(vars) || len(sch) != len(vars) {
 							return nil, errors.New("number of row values does not match number of schema columns")
 						}
-						target := stack.GetVariable(vars[i])
-						if target.Type == nil {
-							return nil, fmt.Errorf("variable `%s` could not be found", operation.Target)
-						}
-						if sch[i].Type.(*pgtypes.DoltgresType).ID != target.Type.ID {
-							return nil, fmt.Errorf("variable type `%s` does not match `%s`", sch[i].Type.String(), target.Type.String())
-						}
-						err = stack.SetVariable(ctx, vars[i], rows[0][i])
-						if err != nil {
-							return nil, err
+						for i, variableName := range vars {
+							if err = assignSQLRowValue(ctx, stack, variableName, sch[i].Type, row[i]); err != nil {
+								return nil, err
+							}
 						}
 					}
 				} else {
 					// single column
-					target := stack.GetVariable(operation.Target)
-					if target.Type == nil {
-						return nil, fmt.Errorf("variable `%s` could not be found", operation.Target)
-					}
-					retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, target.Type, operation.SecondaryData)
-					if err != nil {
-						return nil, err
-					}
-					err = stack.SetVariable(ctx, operation.Target, retVal)
-					if err != nil {
-						return nil, err
+					if !found {
+						if err = stack.SetVariable(ctx, operation.Target, nil); err != nil {
+							return nil, err
+						}
+					} else {
+						if len(rows[0]) != 1 || len(sch) != 1 {
+							return nil, errors.New("expression returned multiple results")
+						}
+						if err = assignSQLRowValue(ctx, stack, operation.Target, sch[0].Type, rows[0][0]); err != nil {
+							return nil, err
+						}
 					}
 				}
 			} else {
-				_, _, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+				_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 				if err != nil {
+					return nil, err
+				}
+				if err = setFoundVariable(ctx, stack, len(rows) > 0); err != nil {
 					return nil, err
 				}
 			}
@@ -266,8 +264,11 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_InsertInto:
 			// TODO: implement
 		case OpCode_Perform:
-			_, _, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+			_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			if err != nil {
+				return nil, err
+			}
+			if err = setFoundVariable(ctx, stack, len(rows) > 0); err != nil {
 				return nil, err
 			}
 		case OpCode_Raise:
@@ -482,6 +483,107 @@ func evaluteNoticeMessage(ctx *sql.Context, iFunc InterpretedFunction,
 		message = strings.Join(parts, "%")
 	}
 	return message, nil
+}
+
+func initFoundVariable(stack InterpreterStack) {
+	stack.NewVariableWithValue("FOUND", pgtypes.Bool, false)
+	stack.NewVariableAlias("found", "FOUND")
+}
+
+func statementsUseFoundVariable(statements []InterpreterOperation) bool {
+	for _, operation := range statements {
+		if strings.EqualFold(operation.Target, "FOUND") {
+			return true
+		}
+		for _, referencedVariable := range operation.SecondaryData {
+			if strings.EqualFold(referencedVariable, "FOUND") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func setFoundVariable(ctx *sql.Context, stack InterpreterStack, found bool) error {
+	if stack.GetVariable("FOUND").Type == nil {
+		return nil
+	}
+	return stack.SetVariable(ctx, "FOUND", found)
+}
+
+func assignSQLRowValue(ctx *sql.Context, stack InterpreterStack, variableName string, fromSqlType sql.Type, value any) error {
+	target := stack.GetVariable(variableName)
+	if target.Type == nil {
+		return fmt.Errorf("variable `%s` could not be found", variableName)
+	}
+	if value == nil {
+		return stack.SetVariable(ctx, variableName, nil)
+	}
+
+	fromDoltgresType, ok := fromSqlType.(*pgtypes.DoltgresType)
+	if !ok {
+		var err error
+		fromDoltgresType, err = pgtypes.FromGmsTypeToDoltgresType(fromSqlType)
+		if err != nil {
+			return err
+		}
+	}
+	if fromDoltgresType.ID == target.Type.ID {
+		return stack.SetVariable(ctx, variableName, value)
+	}
+	str, err := fromDoltgresType.IoOutput(ctx, value)
+	if err != nil {
+		return err
+	}
+	castValue, err := target.Type.IoInput(ctx, str)
+	if err != nil {
+		return err
+	}
+	return stack.SetVariable(ctx, variableName, castValue)
+}
+
+// normalizeDeclareTypeName maps pg_query_go's PL/pgSQL declaration type names
+// to the Doltgres internal pg_catalog lookup keys.
+func normalizeDeclareTypeName(rawTypeName string) (schemaName string, typeName string) {
+	typeName = strings.TrimSpace(strings.ReplaceAll(rawTypeName, `"`, ""))
+	schemaName = "pg_catalog"
+	if strings.Contains(typeName, ".") {
+		parts := strings.SplitN(typeName, ".", 2)
+		schemaName = strings.TrimSpace(parts[0])
+		typeName = strings.TrimSpace(parts[1])
+	}
+	if schemaName == "" {
+		schemaName = "pg_catalog"
+	}
+
+	isArray := strings.HasSuffix(typeName, "[]")
+	if isArray {
+		typeName = strings.TrimSpace(strings.TrimSuffix(typeName, "[]"))
+	}
+
+	if schemaName == "pg_catalog" && !strings.HasPrefix(typeName, "_") {
+		if alias, ok := plpgsqlDeclareTypeAliases[strings.ToLower(typeName)]; ok {
+			typeName = alias
+		} else if typ, ok, _ := types.TypeForNonKeywordTypeName(typeName); ok && typ != nil {
+			typeName = typ.Name()
+		}
+	}
+
+	if isArray && !strings.HasPrefix(typeName, "_") {
+		typeName = "_" + typeName
+	}
+	return schemaName, typeName
+}
+
+var plpgsqlDeclareTypeAliases = map[string]string{
+	"bigint":            "int8",
+	"boolean":           "bool",
+	"character":         "char",
+	"character varying": "varchar",
+	"double precision":  "float8",
+	"int":               "int4",
+	"record":            "record",
+	"smallint":          "int2",
 }
 
 // triggerSpecialVariables are the list of special variables for triggers.
