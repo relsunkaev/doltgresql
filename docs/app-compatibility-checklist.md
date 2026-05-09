@@ -842,14 +842,22 @@ rather than only a Go-level harness.
 ## Lower-risk surfaces still requiring smoke tests
 
 - [ ] Basic driver pools and ORM CRUD across the advertised driver matrix.
-- [ ] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
-  and ordinary btree indexes.
-- [ ] UUID, timestamp / timestamptz, numeric, boolean, text / varchar, and
-  JSONB column storage.
-- [ ] `jsonb_array_elements`, `jsonb_object_keys`, `jsonb_set`, JSON
+- [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
+  and ordinary btree indexes. Pinned through a live pgx client by
+  testing/go/app_compat_smoke_test.go.
+- [x] UUID, timestamp / timestamptz, numeric, boolean, text / varchar, and
+  JSONB column storage. Pinned through a live pgx client by
+  testing/go/app_compat_smoke_test.go.
+- [x] `jsonb_array_elements`, `jsonb_object_keys`, `jsonb_set`, JSON
   aggregates, and the JSONB GIN containment subset Doltgres supports.
-- [ ] Arrays, `ANY`, `array_agg`, and ordinary aggregate behavior.
-- [ ] Basic transactions and simple savepoint nesting.
+  Pinned through a live pgx client by testing/go/app_compat_smoke_test.go
+  and by the JSONB GIN coverage in testing/go/include_jsonb_gin_index_probe_test.go.
+- [x] Arrays, `ANY`, `array_agg`, and ordinary aggregate behavior. Pinned
+  through a live pgx client by testing/go/app_compat_smoke_test.go.
+- [x] Basic transactions and simple savepoint nesting. Pinned through a
+  live pgx client by testing/go/app_compat_smoke_test.go, with broader
+  ORM-shape coverage in testing/go/savepoints_test.go and
+  testing/go/sqlalchemy_savepoints_test.go.
 - [ ] Source-mode logical replication for the supported `pgoutput` subset.
 
 ## Proposed dolt changes
