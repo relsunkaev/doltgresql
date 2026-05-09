@@ -185,13 +185,13 @@ Do not check off an item until it has workload proof:
   parsed and accepted at DDL, the table is created, and the FK
   metadata round-trips. **But FK enforcement is still immediate** —
   the violating row is rejected at INSERT, not at COMMIT, which is
-  wrong for any app that batches related rows in a transaction. And
-  `SET CONSTRAINTS ALL DEFERRED` errors with `unknown statement type
-  encountered: *tree.SetConstraints` (no AST handler). Closing this
-  needs (a) a deferred-violation queue checked at commit time and (b)
-  a SetConstraints AST handler. Pinned by
+  wrong for any app that batches related rows in a transaction.
+  `SET CONSTRAINTS ALL DEFERRED` is accepted as a warning no-op for
+  migration compatibility, but it does not change enforcement timing.
+  Closing this still needs a deferred-violation queue checked at commit
+  time. Pinned by
   testing/go/deferrable_constraints_probe_test.go so the silent
-  immediate-enforcement and the missing-handler cases stay visible.
+  immediate-enforcement case stays visible.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
   PRIVILEGES ...` are accepted so pg_dump's ownership and privilege

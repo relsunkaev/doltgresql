@@ -74,15 +74,14 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 		{
 			// SET CONSTRAINTS ALL DEFERRED is the runtime toggle
 			// applications use to switch deferrable constraints
-			// on/off mid-transaction. Today this falls into the
-			// generic "unknown statement type" path because the
-			// AST handler is missing.
-			Name:        "SET CONSTRAINTS ALL DEFERRED is not yet wired",
+			// on/off mid-transaction. Doltgres accepts the statement
+			// for dump and migration compatibility, but the
+			// enforcement mode remains immediate as pinned above.
+			Name:        "SET CONSTRAINTS ALL DEFERRED is accepted as no-op",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SET CONSTRAINTS ALL DEFERRED;`,
-					ExpectedErr: "unknown statement type encountered",
+					Query: `SET CONSTRAINTS ALL DEFERRED;`,
 				},
 			},
 		},
