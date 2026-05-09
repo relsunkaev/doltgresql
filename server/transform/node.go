@@ -86,11 +86,54 @@ func NodeExprsWithOpaque(ctx *sql.Context, node sql.Node, exprFunc gmstransform.
 	if err != nil {
 		return nil, gmstransform.NewTree, err
 	}
-	node, exprCheck, err := gmstransform.NodeExprsWithOpaque(ctx, node, exprFunc)
+	node, exprCheck, err := gmstransform.NodeExprsWithOpaque(ctx, node, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, gmstransform.TreeIdentity, error) {
+		expr, nodeCheck, err := expressionNodeChildrenWithOpaque(ctx, expr, exprFunc)
+		if err != nil {
+			return nil, gmstransform.NewTree, err
+		}
+		expr, exprCheck, err := exprFunc(ctx, expr)
+		if err != nil {
+			return nil, gmstransform.NewTree, err
+		}
+		return expr, nodeCheck && exprCheck, nil
+	})
 	if err != nil {
 		return nil, gmstransform.NewTree, err
 	}
 	return node, disjointCheck && exprCheck, nil
+}
+
+func expressionNodeChildrenWithOpaque(ctx *sql.Context, expr sql.Expression, exprFunc gmstransform.ExprFunc) (sql.Expression, gmstransform.TreeIdentity, error) {
+	exprWithNodes, ok := expr.(sql.ExpressionWithNodes)
+	if !ok {
+		return expr, gmstransform.SameTree, nil
+	}
+	children := exprWithNodes.NodeChildren()
+	if len(children) == 0 {
+		return expr, gmstransform.SameTree, nil
+	}
+	var newChildren []sql.Node
+	for i, child := range children {
+		newChild, same, err := NodeExprsWithOpaque(ctx, child, exprFunc)
+		if err != nil {
+			return nil, gmstransform.NewTree, err
+		}
+		if !same {
+			if newChildren == nil {
+				newChildren = make([]sql.Node, len(children))
+				copy(newChildren, children)
+			}
+			newChildren[i] = newChild
+		}
+	}
+	if newChildren == nil {
+		return expr, gmstransform.SameTree, nil
+	}
+	newExpr, err := exprWithNodes.WithNodeChildren(ctx, newChildren...)
+	if err != nil {
+		return nil, gmstransform.NewTree, err
+	}
+	return newExpr, gmstransform.NewTree, nil
 }
 
 // NodeExprsWithNodeWithOpaque functions similarly to GMS' NodeExprsWithNodeWithOpaque function, except it also walks

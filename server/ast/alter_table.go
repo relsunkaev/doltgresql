@@ -186,6 +186,16 @@ func nodeAlterTableCmds(
 			return nil, nil, errors.New("This command does not currently support multiple actions in one statement")
 		case *tree.AlterTableSetStatistics:
 			// is unsupported and ignored
+		case *tree.AlterTableColSetStorage:
+			unsupportedWarnings = append(
+				unsupportedWarnings,
+				fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s SET STORAGE is accepted, but storage metadata is not persisted", tableName.String(), bareIdentifier(cmd.Column)),
+			)
+		case *tree.AlterTableSetCompression:
+			unsupportedWarnings = append(
+				unsupportedWarnings,
+				fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s SET COMPRESSION is accepted, but compression metadata is not persisted", tableName.String(), bareIdentifier(cmd.Column)),
+			)
 		case *tree.AlterTableRowLevelSecurity:
 			// is unsupported and ignored
 		default:

@@ -74,14 +74,24 @@ Do not check off an item until it has workload proof:
   explicit-non-goal buckets. The first gate now has an empty skip
   bucket after landing predicate-scoped unique partial indexes for
   the AlexTransit inventory indexes.
-- [ ] Build a minimal-viable schema slice harness that excludes known
+- [x] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
+  testing/go/pg_dump_round_trip_test.go creates a representative
+  UUID/JSONB/FK/index/view schema, dumps it with the real `pg_dump`,
+  restores it through the real `psql`, introspects the restored schema
+  with the real `drizzle-kit introspect` binary, and runs pgx app
+  reads/writes on the restored database.
 - [ ] Run a real-world view rebuild path against Doltgres (CTEs, `LATERAL`,
   `DISTINCT ON`, window functions, JSONB expansion, regex SRFs).
 - [ ] Run Electric and Zero (or equivalent logical-replication consumers)
   against Doltgres with `REPLICA IDENTITY FULL`-marked tables.
-- [ ] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`
-  restore -> ORM introspection -> running app.
+- [~] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`
+  restore -> ORM introspection -> running app. The schema-slice
+  harness in testing/go/pg_dump_round_trip_test.go now proves this
+  path end-to-end with `pg_dump`, `psql`, `drizzle-kit introspect`,
+  and pgx app queries. It remains partial because the dump command
+  excludes Doltgres' internal `dolt` schema and broader external app
+  dump-corpus evidence is still tracked separately.
 
 ## Schema/bootstrap TODO
 

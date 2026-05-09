@@ -81,7 +81,13 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	var result string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		View: func(ctx *sql.Context, sch ItemSchema, view ItemView) (cont bool, err error) {
-			result = selectDefinitionFromCreateViewStatement(view.Item.CreateViewStatement)
+			result, err = schemaQualifiedViewDefinition(view.Item.CreateViewStatement, sch.Item.SchemaName())
+			if err != nil {
+				return false, err
+			}
+			if result == "" {
+				result = selectDefinitionFromCreateViewStatement(view.Item.CreateViewStatement)
+			}
 			if result == "" {
 				result = view.Item.TextDefinition
 			}
@@ -107,6 +113,105 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func schemaQualifiedViewDefinition(createViewStatement string, defaultSchema string) (string, error) {
+	if strings.TrimSpace(createViewStatement) == "" {
+		return "", nil
+	}
+	stmts, err := parser.Parse(createViewStatement)
+	if err != nil {
+		return "", err
+	}
+	if len(stmts) == 0 {
+		return "", errors.Errorf("expected CREATE VIEW statement, got none")
+	}
+	cv, ok := stmts[0].AST.(*tree.CreateView)
+	if !ok {
+		return "", errors.Errorf("expected CREATE VIEW statement, got %s", stmts[0].SQL)
+	}
+	qualifySelectTableNames(cv.AsSource, defaultSchema)
+	return cv.AsSource.String(), nil
+}
+
+func qualifySelectTableNames(sel *tree.Select, defaultSchema string) {
+	if sel == nil {
+		return
+	}
+	cteNames := make(map[string]struct{})
+	if sel.With != nil {
+		for _, cte := range sel.With.CTEList {
+			cteNames[string(cte.Name.Alias)] = struct{}{}
+			if cteSelect, ok := cte.Stmt.(*tree.Select); ok {
+				qualifySelectTableNames(cteSelect, defaultSchema)
+			}
+		}
+	}
+	qualifySelectStatementTableNames(sel.Select, defaultSchema, cteNames)
+}
+
+func qualifySelectStatementTableNames(stmt tree.SelectStatement, defaultSchema string, cteNames map[string]struct{}) {
+	switch s := stmt.(type) {
+	case *tree.SelectClause:
+		for _, tableExpr := range s.From.Tables {
+			qualifyTableExprNames(tableExpr, defaultSchema, cteNames)
+		}
+		qualifySelectExprsSubqueries(s.Exprs, defaultSchema)
+		if s.Where != nil {
+			qualifyExprSubqueries(s.Where.Expr, defaultSchema)
+		}
+		if s.Having != nil {
+			qualifyExprSubqueries(s.Having.Expr, defaultSchema)
+		}
+	case *tree.ParenSelect:
+		qualifySelectTableNames(s.Select, defaultSchema)
+	case *tree.UnionClause:
+		qualifySelectTableNames(s.Left, defaultSchema)
+		qualifySelectTableNames(s.Right, defaultSchema)
+	}
+}
+
+func qualifyTableExprNames(expr tree.TableExpr, defaultSchema string, cteNames map[string]struct{}) {
+	switch e := expr.(type) {
+	case *tree.TableName:
+		if _, ok := cteNames[e.Table()]; ok {
+			return
+		}
+		if !e.ExplicitSchema {
+			e.SchemaName = tree.Name(defaultSchema)
+			e.ExplicitSchema = true
+		}
+	case *tree.AliasedTableExpr:
+		qualifyTableExprNames(e.Expr, defaultSchema, cteNames)
+	case *tree.JoinTableExpr:
+		qualifyTableExprNames(e.Left, defaultSchema, cteNames)
+		qualifyTableExprNames(e.Right, defaultSchema, cteNames)
+		if onCond, ok := e.Cond.(*tree.OnJoinCond); ok {
+			qualifyExprSubqueries(onCond.Expr, defaultSchema)
+		}
+	case *tree.ParenTableExpr:
+		qualifyTableExprNames(e.Expr, defaultSchema, cteNames)
+	case *tree.Subquery:
+		qualifySelectStatementTableNames(e.Select, defaultSchema, cteNames)
+	}
+}
+
+func qualifySelectExprsSubqueries(exprs tree.SelectExprs, defaultSchema string) {
+	for _, expr := range exprs {
+		qualifyExprSubqueries(expr.Expr, defaultSchema)
+	}
+}
+
+func qualifyExprSubqueries(expr tree.Expr, defaultSchema string) {
+	if expr == nil {
+		return
+	}
+	_, _ = tree.SimpleVisit(expr, func(expr tree.Expr) (recurse bool, newExpr tree.Expr, err error) {
+		if subquery, ok := expr.(*tree.Subquery); ok {
+			qualifySelectStatementTableNames(subquery.Select, defaultSchema, map[string]struct{}{})
+		}
+		return true, expr, nil
+	})
 }
 
 func selectDefinitionFromCreateViewStatement(createViewStatement string) string {
