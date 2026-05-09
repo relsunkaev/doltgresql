@@ -111,6 +111,8 @@ Do not check off an item until it has workload proof:
   `CREATE EXTENSION hstore` similarly installs a text-compatible
   `hstore` type for dump schemas that declare `public.hstore`
   columns; hstore operators/functions/index parity remain residual risk.
+  `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
+  and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser

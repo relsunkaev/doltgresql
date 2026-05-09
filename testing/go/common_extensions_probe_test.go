@@ -194,5 +194,23 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "DROP EXTENSION supports dump cleanup prelude",
+			SetUpScript: []string{
+				`DROP EXTENSION IF EXISTS hstore;`,
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+				`DROP EXTENSION hstore;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT extname FROM pg_catalog.pg_extension WHERE extname = 'hstore';`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:       `DROP EXTENSION hstore;`,
+					ExpectedErr: `extension "hstore" does not exist`,
+				},
+			},
+		},
 	})
 }

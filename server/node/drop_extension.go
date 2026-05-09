@@ -21,6 +21,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
+
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 )
 
 // DropExtension implements DROP EXTENSION.
@@ -59,8 +62,25 @@ func (c *DropExtension) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	// TODO: implement this
-	return nil, errors.Errorf("DROP EXTENSION is not yet implemented")
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	extensionsToDrop := make([]id.Extension, 0, len(c.Names))
+	for _, name := range c.Names {
+		extID := id.NewExtension(name)
+		if !extCollection.HasLoadedExtension(ctx, extID) {
+			if c.IfExists {
+				continue
+			}
+			return nil, errors.Errorf(`extension "%s" does not exist`, name)
+		}
+		extensionsToDrop = append(extensionsToDrop, extID)
+	}
+	if err = extCollection.DropLoadedExtension(ctx, extensionsToDrop...); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
 }
 
 // Schema implements the interface sql.ExecSourceRel.
