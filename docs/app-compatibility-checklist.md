@@ -689,8 +689,17 @@ Do not check off an item until it has workload proof:
   (delivery after COMMIT, no delivery before COMMIT or after ROLLBACK,
   duplicate channel/payload pairs folded within a transaction). Pinned by
   testing/go/pg_notify_probe_test.go.
-- [ ] Reader/writer pool topology - define the Doltgres deployment shape
-  expected by ORM `withReplicas`-style reader/writer routing.
+- [x] Reader/writer pool topology - Drizzle ORM's
+  `withReplicas()` reader/writer routing runs against Doltgres with
+  distinct primary and reader URLs. The harness seeds a primary
+  database and a reader database differently, proves ordinary
+  `SELECT` calls use the reader URL, proves `$primary` reads use the
+  primary URL, and proves `INSERT`, `UPDATE`, and `DELETE` route to
+  the primary. This defines the supported topology for ORM-level
+  reader/writer split: Doltgres supplies PostgreSQL-compatible
+  primary and reader endpoints, while physical replication or
+  application-managed catch-up remains outside this routing proof.
+  Pinned by testing/go/drizzle_read_replicas_test.go.
 - [x] SSL / SCRAM / auth / client parameters - pgxpool can start a
   pooled connection over `sslmode=require`, authenticate with the
   SCRAM-backed default password role, receive the requested
