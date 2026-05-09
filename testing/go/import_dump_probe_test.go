@@ -21,11 +21,7 @@ import "testing"
 func TestImportAlexTransitVenderctlProbe(t *testing.T) {
 	RunImportTests(t, []ImportTest{
 		{
-			Name: "AlexTransit/venderctl",
-			SkipQueries: []string{
-				"CREATE UNIQUE INDEX idx_inventory_vmid_not_service",
-				"CREATE UNIQUE INDEX idx_inventory_vmid_service",
-			},
+			Name:        "AlexTransit/venderctl",
 			SQLFilename: "AlexTransit_venderctl.sql",
 		},
 	})

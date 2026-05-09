@@ -148,6 +148,7 @@ type Metadata struct {
 	RelOptions        []string            `json:"relOptions,omitempty"`
 	StatisticsTargets []int16             `json:"statisticsTargets,omitempty"`
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
+	Unique            bool                `json:"unique,omitempty"`
 	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
@@ -362,6 +363,26 @@ func RelOptions(comment string) []string {
 func NullsNotDistinct(comment string) bool {
 	metadata, ok := DecodeComment(comment)
 	return ok && metadata.NullsNotDistinct
+}
+
+// IsUnique returns the PostgreSQL-facing uniqueness of index. Some PostgreSQL
+// shapes, such as partial unique indexes, are stored as non-unique Dolt indexes
+// and enforced by Doltgres wrappers.
+func IsUnique(index sql.Index) bool {
+	return index.IsUnique() || MetadataUnique(index.Comment())
+}
+
+// MetadataUnique returns whether the metadata marks a non-native unique index.
+func MetadataUnique(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.Unique
+}
+
+// IsPartialUnique returns whether the metadata describes a partial unique
+// index whose predicate-scoped uniqueness is enforced outside native storage.
+func IsPartialUnique(index sql.Index) bool {
+	metadata, ok := DecodeComment(index.Comment())
+	return ok && metadata.Unique && metadata.Predicate != ""
 }
 
 // IsReady reports PostgreSQL's pg_index.indisready: writers maintain

@@ -45,9 +45,6 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
 	}
 	if node.Predicate != nil {
-		if node.Unique {
-			return nil, errors.Errorf("unique partial indexes are not yet supported")
-		}
 		if accessMethod != indexmetadata.AccessMethodBtree {
 			return nil, errors.Errorf("partial %s indexes are not yet supported", accessMethod)
 		}
@@ -107,6 +104,30 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 				indexDef.Info.Name.String(),
 				indexDef.Fields[0].Column.String(),
 				metadata.OpClasses[0],
+			),
+		}, nil
+	}
+	if node.Unique && node.Predicate != nil {
+		if !node.NullsDistinct {
+			return nil, errors.Errorf("NULLS NOT DISTINCT partial unique indexes are not yet supported")
+		}
+		if hasIndexExpression(node.Columns) {
+			return nil, errors.Errorf("unique partial expression indexes are not yet supported")
+		}
+		if metadata == nil {
+			metadata = &indexmetadata.Metadata{}
+		}
+		metadata.Unique = true
+		metadata.Constraint = indexmetadata.ConstraintNone
+		columns := indexFieldsToIndexColumns(indexDef.Fields)
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreatePartialUniqueIndex(
+				node.IfNotExists,
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				indexDef.Info.Name.String(),
+				columns,
+				*metadata,
 			),
 		}, nil
 	}

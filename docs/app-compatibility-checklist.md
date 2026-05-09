@@ -1,6 +1,6 @@
 # Real-world application compatibility checklist
 
-Last updated: 2026-05-06
+Last updated: 2026-05-08
 
 This is the workload-prioritized view of `postgresql-parity-issues.md`. The
 parity doc enumerates every known PostgreSQL feature gap, organized by the
@@ -66,12 +66,14 @@ Do not check off an item until it has workload proof:
 - [~] Stand up at least one representative non-trivial PostgreSQL dump as a
   restore-gate corpus, and record the first hard failure for each.
   testing/go/import_dump_probe_test.go now restores the
-  AlexTransit/venderctl pg_dump through `psql`; its remaining skips
-  are the two known unique partial inventory indexes.
+  AlexTransit/venderctl pg_dump through `psql` without skipped
+  statements. The restore still warns that descending scan order is
+  metadata-only, so broader dump-corpus evidence remains before this
+  graduates to done.
 - [~] Triage restore failures into implement, dump-rewrite, skip, and
-  explicit-non-goal buckets. The first gate's skip bucket is limited
-  to `idx_inventory_vmid_not_service` and `idx_inventory_vmid_service`,
-  both covered by the existing unique-partial-index gap below.
+  explicit-non-goal buckets. The first gate now has an empty skip
+  bucket after landing predicate-scoped unique partial indexes for
+  the AlexTransit inventory indexes.
 - [ ] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
 - [ ] Run a real-world view rebuild path against Doltgres (CTEs, `LATERAL`,
@@ -242,21 +244,19 @@ Do not check off an item until it has workload proof:
 - [~] Partial indexes - non-unique partial indexes (e.g. `WHERE column
   IS NOT NULL`, `WHERE active = true`) are accepted at DDL: the index
   is created, round-trips through `pg_indexes`, and queries that match
-  the predicate return the right rows. Partial *UNIQUE* indexes are
-  explicitly rejected with `unique partial indexes are not yet
-  supported` — that's the deeper gap. Dependent: `ON CONFLICT (col)
-  WHERE arbiter_pred` enforcement in the upsert path. Today the
-  arbiter predicate is parsed and accepted but never matched against
-  a candidate index's predicate (see the `ON CONFLICT ... DO UPDATE`
-  entry below) because every unique index is full. When partial
-  unique indexes ship, the arbiter must select the unique index whose
-  predicate is implied by `arbiter_pred`; until then, `ON CONFLICT
-  (col) WHERE pred` silently falls through to full-unique semantics,
-  which is wrong for any app that relied on the predicate to scope the
-  conflict target. DDL-level coverage in
-  testing/go/partial_expression_index_test.go. The
-  AlexTransit/venderctl restore gate skips two such indexes until
-  this lands.
+  the predicate return the right rows. Partial *UNIQUE* indexes now
+  build as non-unique physical indexes with PostgreSQL-visible
+  uniqueness metadata and a DML wrapper that enforces uniqueness only
+  for rows whose predicate evaluates true. The implemented predicate
+  evaluator covers column truthiness/NOT, IS NULL/IS NOT NULL,
+  comparisons, parentheses, AND, and OR, which covers the
+  AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
+  restore path. Residual gap: `ON CONFLICT (col) WHERE arbiter_pred`
+  still does not prove predicate implication against a partial unique
+  index, so upsert-target parity is tracked by the dependent
+  `ON CONFLICT ... DO UPDATE` entry below. DDL and DML coverage in
+  testing/go/partial_expression_index_test.go; real dump proof in
+  testing/go/import_dump_probe_test.go.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match

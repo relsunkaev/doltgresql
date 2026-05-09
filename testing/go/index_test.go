@@ -2000,8 +2000,25 @@ ORDER BY id;`,
 					ExpectedErr: "key column 'missing' doesn't exist in table",
 				},
 				{
-					Query:       "CREATE UNIQUE INDEX btree_partial_unique_idx ON btree_partial_meta (a) WHERE b IS NOT NULL;",
-					ExpectedErr: "unique partial indexes are not yet supported",
+					Query: "CREATE UNIQUE INDEX btree_partial_unique_idx ON btree_partial_meta (a) WHERE b IS NOT NULL;",
+				},
+				{
+					Query: `SELECT
+	i.indisunique,
+	i.indpred IS NOT NULL,
+	pg_catalog.pg_get_expr(i.indpred, i.indrelid),
+	pg_catalog.pg_get_indexdef(i.indexrelid)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'btree_partial_unique_idx';`,
+					Expected: []sql.Row{
+						{
+							"t",
+							"t",
+							"b IS NOT NULL",
+							"CREATE UNIQUE INDEX btree_partial_unique_idx ON public.btree_partial_meta USING btree (a) WHERE b IS NOT NULL",
+						},
+					},
 				},
 			},
 		},

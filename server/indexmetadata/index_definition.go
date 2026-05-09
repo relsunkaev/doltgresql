@@ -71,7 +71,7 @@ func DefinitionForTable(index sql.Index, schema string, table sql.Table, tableSc
 
 func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema, displayName string) string {
 	unique := ""
-	if index.IsUnique() {
+	if IsUnique(index) {
 		unique = " UNIQUE"
 	}
 	definition := fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",

@@ -33,6 +33,7 @@ func TestEncodeDecodeComment(t *testing.T) {
 		OpClasses:         []string{" JSONB_OPS ", "jsonb_path_ops"},
 		RelOptions:        []string{" FILLFACTOR = 70 "},
 		StatisticsTargets: []int16{100, -1},
+		Unique:            true,
 		NullsNotDistinct:  true,
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
@@ -88,6 +89,12 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if !metadata.NullsNotDistinct {
 		t.Fatal("expected NULLS NOT DISTINCT metadata to round-trip")
+	}
+	if !metadata.Unique {
+		t.Fatal("expected unique metadata to round-trip")
+	}
+	if !MetadataUnique(comment) {
+		t.Fatal("expected unique metadata accessor to decode metadata")
 	}
 	if !NullsNotDistinct(comment) {
 		t.Fatal("expected NULLS NOT DISTINCT accessor to decode metadata")

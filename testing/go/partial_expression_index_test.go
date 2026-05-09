@@ -81,21 +81,97 @@ func TestPartialAndExpressionIndexes(t *testing.T) {
 			},
 		},
 		{
-			// Partial UNIQUE indexes are explicitly rejected with a
-			// clear error today. This is the deeper gap behind the
-			// Index/planner TODO entry on partial indexes (also
-			// implicates `ON CONFLICT (col) WHERE arbiter_pred`).
-			// Pin the rejection so the gap stays visible.
-			Name: "partial UNIQUE index DDL is rejected with a clear error",
+			Name: "partial UNIQUE index enforces predicate scoped duplicates",
 			SetUpScript: []string{
 				`CREATE TABLE memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
+				`CREATE UNIQUE INDEX memberships_one_active_idx
+					ON memberships (user_id)
+					WHERE status = 'active';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `CREATE UNIQUE INDEX memberships_one_active_idx
-						ON memberships (user_id)
+					Query: `INSERT INTO memberships VALUES
+						(1, 10, 'inactive'),
+						(2, 10, 'inactive'),
+						(3, 10, 'active');`,
+				},
+				{
+					Query:       `INSERT INTO memberships VALUES (4, 10, 'active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE memberships SET status = 'active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `UPDATE memberships SET status = 'inactive' WHERE id = 3;`,
+				},
+				{
+					Query: `INSERT INTO memberships VALUES (4, 10, 'active');`,
+				},
+				{
+					Query: `INSERT INTO memberships VALUES (5, 10, 'active') ON CONFLICT DO NOTHING;`,
+				},
+				{
+					Query:    `SELECT count(*)::text FROM memberships WHERE user_id = 10 AND status = 'active';`,
+					Expected: []sql.Row{{"1"}},
+				},
+				{
+					Query: `SELECT c.relname, i.indisunique, pg_catalog.pg_get_expr(i.indpred, i.indrelid)
+FROM pg_catalog.pg_index i
+JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+WHERE c.relname = 'memberships_one_active_idx';`,
+					Expected: []sql.Row{
+						{"memberships_one_active_idx", "t", "status = 'active'"},
+					},
+				},
+				{
+					Query: `SELECT indexdef
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'memberships'
+  AND indexname = 'memberships_one_active_idx';`,
+					Expected: []sql.Row{
+						{"CREATE UNIQUE INDEX memberships_one_active_idx ON public.memberships USING btree (user_id) WHERE status = 'active'"},
+					},
+				},
+			},
+		},
+		{
+			Name: "partial UNIQUE index supports boolean predicates",
+			SetUpScript: []string{
+				`CREATE TABLE inventory (id INT PRIMARY KEY, vmid INT, at_service BOOL);`,
+				`CREATE UNIQUE INDEX inventory_vmid_not_service_idx ON inventory (vmid) WHERE NOT at_service;`,
+				`CREATE UNIQUE INDEX inventory_vmid_service_idx ON inventory (vmid) WHERE at_service;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO inventory VALUES (1, 42, false), (2, 42, true);`,
+				},
+				{
+					Query:       `INSERT INTO inventory VALUES (3, 42, false);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `INSERT INTO inventory VALUES (4, 42, true);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO inventory VALUES (5, 42, NULL), (6, 42, NULL);`,
+				},
+			},
+		},
+		{
+			Name: "partial UNIQUE index validates existing rows",
+			SetUpScript: []string{
+				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
+				`INSERT INTO duplicate_memberships VALUES (1, 10, 'active'), (2, 10, 'active'), (3, 10, 'inactive');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE UNIQUE INDEX duplicate_memberships_active_idx
+						ON duplicate_memberships (user_id)
 						WHERE status = 'active';`,
-					ExpectedErr: "unique partial indexes are not yet supported",
+					ExpectedErr: "duplicate unique key given",
 				},
 			},
 		},

@@ -273,27 +273,27 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 	indisvalid := indexmetadata.IsValid(comment)
 	indisready := indexmetadata.IsReady(comment)
 	return sql.Row{
-		index.indexOid,         // indexrelid
-		index.tableOid,         // indrelid
-		index.indnatts,         // indnatts
-		index.indnkeyatts,      // indnkeyatts
-		index.index.IsUnique(), // indisunique
+		index.indexOid,                          // indexrelid
+		index.tableOid,                          // indrelid
+		index.indnatts,                          // indnatts
+		index.indnkeyatts,                       // indnkeyatts
+		indexmetadata.IsUnique(index.index),     // indisunique
 		indexmetadata.NullsNotDistinct(comment), // indnullsnotdistinct
-		index.indisprimary,     // indisprimary
-		false,                  // indisexclusion
-		index.index.IsUnique(), // indimmediate
-		false,                  // indisclustered
-		indisvalid,             // indisvalid
-		false,                  // indcheckxmin
-		indisready,             // indisready
-		true,                   // indislive
-		index.indisreplident,   // indisreplident
-		index.indkey,           // indkey
-		indcollation,           // indcollation
-		indclass,               // indclass
-		indoption,              // indoption
-		index.indexprs,         // indexprs
-		index.indpred,          // indpred
+		index.indisprimary,                      // indisprimary
+		false,                                   // indisexclusion
+		indexmetadata.IsUnique(index.index),     // indimmediate
+		false,                                   // indisclustered
+		indisvalid,                              // indisvalid
+		false,                                   // indcheckxmin
+		indisready,                              // indisready
+		true,                                    // indislive
+		index.indisreplident,                    // indisreplident
+		index.indkey,                            // indkey
+		indcollation,                            // indcollation
+		indclass,                                // indclass
+		indoption,                               // indoption
+		index.indexprs,                          // indexprs
+		index.indpred,                           // indpred
 	}
 }
 
@@ -354,7 +354,7 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				indkey:         indKey,
 				indnatts:       int16(len(indKey)),
 				indnkeyatts:    int16(len(indexColumns)),
-				indisunique:    index.Item.IsUnique(),
+				indisunique:    indexmetadata.IsUnique(index.Item),
 				indisprimary:   strings.ToLower(index.Item.ID()) == "primary",
 				indcollation:   indCollation,
 				indclass:       indClass,

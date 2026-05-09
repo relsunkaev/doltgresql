@@ -25,13 +25,12 @@ import (
 )
 
 // AssignNullsNotDistinctUniqueChecks wraps DML target tables with PostgreSQL
-// NULLS NOT DISTINCT uniqueness checks when those targets have matching index
-// metadata.
+// uniqueness checks that native Dolt indexes do not enforce directly.
 func AssignNullsNotDistinctUniqueChecks(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		switch node := node.(type) {
 		case *plan.InsertInto:
-			destination, same, err := wrapNullsNotDistinctUniqueTables(ctx, node.Destination)
+			destination, same, err := wrapPostgresUniqueTables(ctx, node.Destination)
 			if err != nil || same == transform.SameTree {
 				return node, same, err
 			}
@@ -41,7 +40,7 @@ func AssignNullsNotDistinctUniqueChecks(ctx *sql.Context, a *analyzer.Analyzer, 
 			}
 			return newNode, transform.NewTree, nil
 		case *plan.Update:
-			child, same, err := wrapNullsNotDistinctUniqueTables(ctx, node.Child)
+			child, same, err := wrapPostgresUniqueTables(ctx, node.Child)
 			if err != nil || same == transform.SameTree {
 				return node, same, err
 			}
@@ -56,17 +55,34 @@ func AssignNullsNotDistinctUniqueChecks(ctx *sql.Context, a *analyzer.Analyzer, 
 	})
 }
 
-func wrapNullsNotDistinctUniqueTables(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+func wrapPostgresUniqueTables(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
 		resolvedTable, ok := node.(*plan.ResolvedTable)
 		if !ok {
 			return node, transform.SameTree, nil
 		}
-		wrappedTable, wrapped, err := pgnodes.WrapNullsNotDistinctUniqueTable(ctx, resolvedTable.Table)
-		if err != nil || !wrapped {
+		table := resolvedTable.Table
+		changed := false
+		wrappedTable, wrapped, err := pgnodes.WrapPartialUniqueTable(ctx, table)
+		if err != nil {
 			return node, transform.SameTree, err
 		}
-		newNode, err := resolvedTable.ReplaceTable(ctx, wrappedTable)
+		if wrapped {
+			table = wrappedTable
+			changed = true
+		}
+		wrappedTable, wrapped, err = pgnodes.WrapNullsNotDistinctUniqueTable(ctx, table)
+		if err != nil {
+			return node, transform.SameTree, err
+		}
+		if wrapped {
+			table = wrappedTable
+			changed = true
+		}
+		if !changed {
+			return node, transform.SameTree, nil
+		}
+		newNode, err := resolvedTable.ReplaceTable(ctx, table)
 		if err != nil {
 			return nil, transform.NewTree, err
 		}
