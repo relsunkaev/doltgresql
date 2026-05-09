@@ -17,6 +17,8 @@ package tablemetadata
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/dolthub/doltgresql/core/id"
 )
 
 const commentPrefix = "doltgres:table-metadata:v1:"
@@ -28,6 +30,8 @@ type Metadata struct {
 	MaterializedView            bool   `json:"materializedView,omitempty"`
 	MaterializedViewDefinition  string `json:"materializedViewDefinition,omitempty"`
 	MaterializedViewUnpopulated bool   `json:"materializedViewUnpopulated,omitempty"`
+	OfTypeSchema                string `json:"ofTypeSchema,omitempty"`
+	OfTypeName                  string `json:"ofTypeName,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -115,9 +119,31 @@ func IsMaterializedViewPopulated(comment string) bool {
 	return ok && metadata.MaterializedView && !metadata.MaterializedViewUnpopulated
 }
 
+// SetOfType records the composite type referenced by CREATE TABLE ... OF.
+func SetOfType(comment string, typeID id.Type) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.OfTypeSchema = strings.TrimSpace(typeID.SchemaName())
+	metadata.OfTypeName = strings.TrimSpace(typeID.TypeName())
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// OfType returns the composite type referenced by CREATE TABLE ... OF.
+func OfType(comment string) (id.Type, bool) {
+	metadata, ok := DecodeComment(comment)
+	if !ok || metadata.OfTypeName == "" {
+		return id.NullType, false
+	}
+	return id.NewType(metadata.OfTypeSchema, metadata.OfTypeName), true
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
 		metadata.MaterializedViewDefinition == "" &&
-		!metadata.MaterializedViewUnpopulated
+		!metadata.MaterializedViewUnpopulated &&
+		metadata.OfTypeSchema == "" &&
+		metadata.OfTypeName == ""
 }

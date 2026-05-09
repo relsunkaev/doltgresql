@@ -21,10 +21,11 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeCreateTable handles *tree.CreateTable nodes.
-func nodeCreateTable(ctx *Context, node *tree.CreateTable) (*vitess.DDL, error) {
+func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -57,7 +58,35 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (*vitess.DDL, error) 
 		return nil, errors.Errorf("TABLESPACE is not yet supported")
 	}
 	if node.OfType != nil {
-		return nil, errors.Errorf("CREATE TABLE OF is not yet supported")
+		if node.AsSource != nil {
+			return nil, errors.Errorf("CREATE TABLE OF cannot use AS")
+		}
+		if len(node.Inherits) > 0 {
+			return nil, errors.Errorf("CREATE TABLE OF cannot use INHERITS")
+		}
+		if len(node.Defs) > 0 {
+			return nil, errors.Errorf("CREATE TABLE OF column definitions are not yet supported")
+		}
+		typeName, err := nodeUnresolvedObjectName(ctx, node.OfType)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreateTypedTable(
+				node.IfNotExists,
+				isTemporary,
+				tableName.DbQualifier.String(),
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				typeName.SchemaQualifier.String(),
+				typeName.Name.String(),
+			),
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_CREATE,
+				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
+			},
+		}, nil
 	}
 	if node.AsSource != nil {
 		selectStmt, err := nodeSelect(ctx, node.AsSource)

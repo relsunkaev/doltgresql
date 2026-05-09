@@ -118,19 +118,5 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 				},
 			},
 		},
-		{
-			// Typed tables require pg_class.reloftype plus a table
-			// schema derived from an existing composite type.
-			Name: "CREATE TABLE OF composite type is rejected",
-			SetUpScript: []string{
-				`CREATE TYPE typed_person AS (id INT, name TEXT);`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query:       `CREATE TABLE typed_people OF typed_person;`,
-					ExpectedErr: "CREATE TABLE OF is not yet supported",
-				},
-			},
-		},
 	})
 }

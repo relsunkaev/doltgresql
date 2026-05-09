@@ -27,6 +27,7 @@ import (
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -140,6 +141,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if isMaterializedViewTable(table.Item) {
 				kind = "m"
 			}
+			relOfType := id.Null
+			if typeID, ok := tablemetadata.OfType(tableComment(table.Item)); ok {
+				relOfType = typeID.AsId()
+			}
 			class := &pgClass{
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
@@ -151,6 +156,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name()).Identity.String(),
 				relType:         id.NewType(table.OID.SchemaName(), table.OID.SchemaName()).AsId(),
+				relOfType:       relOfType,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -417,6 +423,7 @@ type pgClass struct {
 	replicaIdentity string
 	kind            string // r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
 	relType         id.Id
+	relOfType       id.Id
 	relam           id.Id
 	reloptions      []any
 }
@@ -481,7 +488,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		class.name,                            // relname
 		class.schemaOid,                       // relnamespace
 		class.relType,                         // reltype
-		id.Null,                               // reloftype
+		class.relOfType,                       // reloftype
 		id.NewId(id.Section_User, "postgres"), // relowner
 		relam,                                 // relam
 		id.Null,                               // relfilenode

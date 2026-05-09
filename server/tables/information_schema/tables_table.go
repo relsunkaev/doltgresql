@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -56,6 +57,16 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 			if isMaterializedViewTable(table.Item) {
 				return true, nil
 			}
+			isTyped := "NO"
+			var userDefinedTypeCatalog any
+			var userDefinedTypeSchema any
+			var userDefinedTypeName any
+			if typeID, ok := typedTableType(table.Item); ok {
+				isTyped = "YES"
+				userDefinedTypeCatalog = schema.Item.Name()
+				userDefinedTypeSchema = typeID.SchemaName()
+				userDefinedTypeName = typeID.TypeName()
+			}
 			// TODO: Foreign and temporary tables.
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // table_catalog
@@ -64,11 +75,11 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 				"BASE TABLE",             // table_type
 				nil,                      // self_referencing_column_name
 				nil,                      // reference_generation
-				nil,                      // user_defined_type_catalog
-				nil,                      // user_defined_type_schema
-				nil,                      // user_defined_type_name
+				userDefinedTypeCatalog,   // user_defined_type_catalog
+				userDefinedTypeSchema,    // user_defined_type_schema
+				userDefinedTypeName,      // user_defined_type_name
 				"YES",                    // is_insertable_into
-				"NO",                     // is_typed
+				isTyped,                  // is_typed
 				nil,                      // commit_action
 			})
 			return true, nil
@@ -100,6 +111,17 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 }
 
 func isMaterializedViewTable(table sql.Table) bool {
+	return tablemetadata.IsMaterializedView(tableComment(table))
+}
+
+func typedTableType(table sql.Table) (id.Type, bool) {
+	return tablemetadata.OfType(tableComment(table))
+}
+
+func tableComment(table sql.Table) string {
 	commented, ok := table.(sql.CommentedTable)
-	return ok && tablemetadata.IsMaterializedView(commented.Comment())
+	if !ok {
+		return ""
+	}
+	return commented.Comment()
 }

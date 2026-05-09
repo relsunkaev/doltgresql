@@ -14,7 +14,11 @@
 
 package tablemetadata
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/doltgresql/core/id"
+)
 
 func TestPrimaryKeyConstraintNameMetadata(t *testing.T) {
 	comment := SetPrimaryKeyConstraintName("", " custom_pkey ")
@@ -70,6 +74,28 @@ func TestMaterializedViewMetadata(t *testing.T) {
 	comment = SetPrimaryKeyConstraintName(comment, "")
 	if !IsMaterializedView(comment) {
 		t.Fatalf("expected clearing primary-key metadata to preserve materialized view metadata")
+	}
+}
+
+func TestOfTypeMetadata(t *testing.T) {
+	typeID := id.NewType("public", "typed_person")
+	comment := SetOfType("", typeID)
+
+	got, ok := OfType(comment)
+	if !ok {
+		t.Fatalf("expected typed-table metadata")
+	}
+	if got != typeID {
+		t.Fatalf("expected type ID %q, got %q", typeID, got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "typed_people_pkey")
+	got, ok = OfType(comment)
+	if !ok || got != typeID {
+		t.Fatalf("expected typed-table metadata to be preserved, got %q, %v", got, ok)
+	}
+	if got := PrimaryKeyConstraintName(comment); got != "typed_people_pkey" {
+		t.Fatalf("expected primary-key metadata to be preserved, got %q", got)
 	}
 }
 

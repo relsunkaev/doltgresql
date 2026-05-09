@@ -60,7 +60,6 @@ func TestSQLStateCodes(t *testing.T) {
 		`CREATE TABLE parent (id INT PRIMARY KEY, name TEXT NOT NULL);`,
 		`CREATE TABLE child  (id INT PRIMARY KEY, parent_id INT REFERENCES parent(id));`,
 		`CREATE TABLE udq    (id INT PRIMARY KEY, email TEXT UNIQUE, age INT CHECK (age >= 0));`,
-		`CREATE TYPE typed_person AS (id INT, name TEXT);`,
 		`INSERT INTO parent VALUES (1, 'p1'), (2, 'p2');`,
 		`INSERT INTO child  VALUES (1, 2);`,
 		`INSERT INTO udq    VALUES (1, 'a@x.com', 5);`,
@@ -130,11 +129,6 @@ func TestSQLStateCodes(t *testing.T) {
 			name: "CREATE EVENT TRIGGER unsupported boundary -> 42501",
 			sql:  "CREATE EVENT TRIGGER ddl_audit ON ddl_command_end EXECUTE FUNCTION audit_fn();",
 			code: "42501",
-		},
-		{
-			name: "CREATE TABLE OF typed table unsupported boundary -> 0A000",
-			sql:  "CREATE TABLE typed_people OF typed_person;",
-			code: "0A000",
 		},
 	}
 	for _, tc := range cases {
