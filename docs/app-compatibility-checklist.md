@@ -317,13 +317,17 @@ Do not check off an item until it has workload proof:
   PostgreSQL only supports TRUNCATE at statement level. Pinned by
   testing/go/trigger_test.go (TestStatementTriggerTransitionTables and
   the TRUNCATE statement trigger probe), including zero-row UPDATE transition
-  sets.
+  sets and plain AFTER statement trigger self-queries against the target table.
 - [ ] Support PostgreSQL row-level transition-table triggers. Today row-level
   transition-table declarations are rejected with SQLSTATE 0A000. Tracked by
   dg-7ug.7.
-- [ ] Fix plain AFTER statement trigger self-query visibility against the
-  target table. This still inherits the existing AFTER-trigger target-table
-  visibility limitation. Tracked by dg-7ug.7.
+- [x] Plain AFTER statement trigger self-query visibility against the target
+  table - AFTER INSERT/UPDATE/DELETE statement triggers now close the DML
+  source before firing trigger functions, so self-queries observe the
+  post-statement table state. Pinned by
+  testing/go/trigger_test.go's
+  TestStatementTriggerTransitionTables/AFTER statement trigger self-query sees
+  post-statement target state.
 - [x] Trigger catalog introspection - `pg_trigger` now walks the
   persisted trigger collection and exposes created triggers with
   stable trigger OIDs, `tgrelid`, `tgfoid`, `tgtype`, `tgenabled`,

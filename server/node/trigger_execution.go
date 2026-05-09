@@ -200,6 +200,7 @@ type triggerExecutionIter struct {
 	tgOp                     string
 	timing                   triggers.TriggerTiming
 	insertDefaultProjections []sql.Expression
+	sourceClosed             bool
 	oldRows                  []sql.Row
 	newRows                  []sql.Row
 }
@@ -309,6 +310,9 @@ func (t *triggerExecutionIter) nextStatement(ctx *sql.Context) (sql.Row, error) 
 	}
 	if t.timing == triggers.TriggerTiming_After && !t.statementFired {
 		t.statementFired = true
+		if closeErr := t.closeSource(ctx); closeErr != nil {
+			return nil, closeErr
+		}
 		if fireErr := t.fireStatementTriggers(ctx); fireErr != nil {
 			return nil, fireErr
 		}
@@ -425,5 +429,13 @@ func cloneRow(row sql.Row) sql.Row {
 
 // Close implements the interface sql.RowIter.
 func (t *triggerExecutionIter) Close(ctx *sql.Context) error {
+	return t.closeSource(ctx)
+}
+
+func (t *triggerExecutionIter) closeSource(ctx *sql.Context) error {
+	if t.sourceClosed {
+		return nil
+	}
+	t.sourceClosed = true
 	return t.source.Close(ctx)
 }

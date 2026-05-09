@@ -937,5 +937,56 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "AFTER statement trigger self-query sees post-statement target state",
+			SetUpScript: []string{
+				`CREATE TABLE self_query_target (id INT PRIMARY KEY, v INT);`,
+				`CREATE TABLE self_query_audit (
+					seq SERIAL PRIMARY KEY,
+					op TEXT,
+					row_count BIGINT,
+					value_sum BIGINT
+				);`,
+				`CREATE FUNCTION audit_self_query_statement() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO self_query_audit (op, row_count, value_sum)
+						VALUES (
+							TG_OP,
+							(SELECT count(*) FROM self_query_target),
+							(SELECT coalesce(sum(v), 0) FROM self_query_target)
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER self_query_after_insert
+					AFTER INSERT ON self_query_target
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_self_query_statement();`,
+				`CREATE TRIGGER self_query_after_update
+					AFTER UPDATE ON self_query_target
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_self_query_statement();`,
+				`CREATE TRIGGER self_query_after_delete
+					AFTER DELETE ON self_query_target
+					FOR EACH STATEMENT EXECUTE FUNCTION audit_self_query_statement();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO self_query_target VALUES (1, 10), (2, 20), (3, 30);`,
+				},
+				{
+					Query: `UPDATE self_query_target SET v = v + 1 WHERE id IN (1, 2);`,
+				},
+				{
+					Query: `DELETE FROM self_query_target WHERE id = 3;`,
+				},
+				{
+					Query: `SELECT op, row_count, value_sum FROM self_query_audit ORDER BY seq;`,
+					Expected: []sql.Row{
+						{"INSERT", int64(3), int64(60)},
+						{"UPDATE", int64(3), int64(62)},
+						{"DELETE", int64(2), int64(32)},
+					},
+				},
+			},
+		},
 	})
 }
