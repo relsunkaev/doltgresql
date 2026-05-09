@@ -745,8 +745,15 @@ actually exercise.
   '^TestLogicalReplicationElectricCatalogProbeQueries$'` on 2026-05-09. Zero,
   Debezium, and other consumers remain open until their exact query surfaces
   are captured.
-- [ ] Document Doltgres as source-only unless live subscriber/apply behavior
-  is implemented.
+- [x] Document Doltgres as source-only unless live subscriber/apply behavior
+  is implemented. docs/electric-compatibility.md now states that Doltgres is a
+  logical replication source for Electric, does not run subscription apply
+  workers, initial table sync, remote slot creation, or incoming `pgoutput`
+  apply, and only supports metadata-only `CREATE SUBSCRIPTION` round trips with
+  `connect=false`. Pinned by testing/go/publication_subscription_test.go's
+  TestSubscriptionDDLAndCatalogs, which rejects a default publisher connection
+  and verifies disabled metadata in `pg_subscription` and
+  `pg_stat_subscription_stats`.
 - [ ] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
   Proxy) that real-world stacks expose.

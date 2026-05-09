@@ -71,6 +71,14 @@ without the Electric container:
 
 These are not claimed as Electric-supported:
 
+- Subscriber/apply-worker behavior. Doltgres is a logical replication source for
+  Electric in the pinned suite; it does not run PostgreSQL subscription workers,
+  perform initial table synchronization from a remote publisher, create remote
+  subscription slots, or apply incoming `pgoutput` changes into local tables.
+  `CREATE SUBSCRIPTION` is metadata-only and must use `connect=false` for any
+  supported round trip. `TestSubscriptionDDLAndCatalogs` pins this by rejecting
+  a default publisher connection while allowing disabled `connect=false`
+  metadata to appear in `pg_subscription` and `pg_stat_subscription_stats`.
 - Emitting pgoutput stream-start/stream-commit messages for in-progress
   transaction streaming. Clients may request `streaming 'true'`, but Doltgres
   publishes complete transactions only.
