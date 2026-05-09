@@ -754,9 +754,16 @@ actually exercise.
   TestSubscriptionDDLAndCatalogs, which rejects a default publisher connection
   and verifies disabled metadata in `pg_subscription` and
   `pg_stat_subscription_stats`.
-- [ ] Cover or reject Aurora / RDS-specific assumptions
+- [x] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
-  Proxy) that real-world stacks expose.
+  Proxy) that real-world stacks expose. docs/replication-provider-boundaries.md
+  records the boundary: `rds.logical_replication` is absent, optional
+  `current_setting(..., true)` probes return NULL, `track_commit_timestamp` is
+  off/read-only, `pglogical` is explicitly rejected because apply workers and
+  subscriber-side synchronization are not implemented, and RDS Proxy remains an
+  AWS control-plane/proxy layer outside the Doltgres engine. Pinned by
+  testing/go/provider_replication_boundary_test.go's
+  TestProviderSpecificReplicationBoundaries.
 - [ ] Cover the rest of the replication feature surface in
   `postgresql-parity-issues.md` once consumers exercise it.
 

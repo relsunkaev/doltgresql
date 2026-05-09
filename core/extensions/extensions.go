@@ -89,6 +89,9 @@ func GetExtension(name string) (_ *pg_extension.ExtensionFiles, err error) {
 // preferring Doltgres' builtin compatibility shims for surfaces Doltgres
 // implements directly.
 func GetExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
+	if reason, ok := unsupportedExtensionReasons[strings.ToLower(name)]; ok {
+		return nil, errors.Errorf(`extension "%s" is not supported by Doltgres: %s`, name, reason)
+	}
 	if shim, ok := BuiltinExtensionShim(name); ok {
 		return shim, nil
 	}
@@ -97,6 +100,10 @@ func GetExtensionFiles(name string) (*pg_extension.ExtensionFiles, error) {
 		return ext, nil
 	}
 	return nil, err
+}
+
+var unsupportedExtensionReasons = map[string]string{
+	"pglogical": "logical replication apply workers and subscriber-side synchronization are not implemented",
 }
 
 // GetAvailableExtensions returns all local PostgreSQL extensions Doltgres can
