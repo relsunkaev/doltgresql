@@ -703,17 +703,24 @@ pipelines. The full replication feature surface lives in
 `postgresql-parity-issues.md`; this section tracks what real consumers
 actually exercise.
 
-- [x] Run `electricsql/electric` against Doltgres. The Docker-backed
-  harness starts `electricsql/electric:1.6.2` with Doltgres as the upstream
-  PostgreSQL source, creates an Electric-managed logical replication slot,
-  serves a shape for a `REPLICA IDENTITY FULL` table, observes insert/update/
-  delete operations through the shape endpoint, advances
-  `confirmed_flush_lsn`, and reconnects after a Doltgres restart. Pinned by
-  testing/go/electric_sync_test.go's TestElectricSyncSmoke; verified with
-  `DOLTGRES_ELECTRIC_SMOKE=1 go test ./testing/go -run '^TestElectricSyncSmoke$'`
-  on 2026-05-09.
-- [ ] Prove Electric shape API behavior with `replica: "full"` and
-  `REPLICA IDENTITY FULL` tables.
+- [x] Run `electricsql/electric` with
+  `ELECTRIC_WRITE_TO_PG_MODE=logical_replication` against Doltgres. The
+  Docker-backed harness starts `electricsql/electric:1.6.2` with Doltgres as
+  the upstream PostgreSQL source, creates an Electric-managed logical
+  replication slot, serves a shape for a `REPLICA IDENTITY FULL` table,
+  observes insert/update/delete operations through the shape endpoint,
+  advances `confirmed_flush_lsn`, and reconnects after a Doltgres restart.
+  Pinned by testing/go/electric_sync_test.go's TestElectricSyncSmoke; verified
+  with `DOLTGRES_ELECTRIC_SMOKE=1 go test ./testing/go -run
+  '^TestElectricSyncSmoke$'` on 2026-05-09.
+- [x] Prove Electric shape API behavior with `replica: "full"` and
+  `REPLICA IDENTITY FULL` tables. TestElectricReplicaFullShapeAPI requests the
+  shape endpoint with `replica=full`, updates one column on a
+  `REPLICA IDENTITY FULL` table, and asserts Electric emits the full updated
+  row including the unchanged non-key column. Pinned by
+  testing/go/electric_sync_test.go; verified with
+  `DOLTGRES_ELECTRIC_SMOKE=1 go test ./testing/go -run
+  '^(TestElectricSyncSmoke|TestElectricReplicaFullShapeAPI)$'` on 2026-05-09.
 - [ ] Run Zero with `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, and
   `ZERO_CHANGE_STREAMER_MODE=discover` against Doltgres.
 - [ ] Prove publication-ownership flows where the consumer creates and owns

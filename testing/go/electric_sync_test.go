@@ -265,6 +265,58 @@ func TestElectricQualifiedSchemaTablePublication(t *testing.T) {
 	})
 }
 
+func TestElectricReplicaFullShapeAPI(t *testing.T) {
+	runForEachElectricImage(t, func(t *testing.T, image string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+
+		dbDir := t.TempDir()
+		port, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		electricPort, err := sql.GetEmptyPort()
+		require.NoError(t, err)
+		baseURL := fmt.Sprintf("http://127.0.0.1:%d", electricPort)
+
+		serverCtx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+		defer func() {
+			conn.Close(serverCtx)
+			controller.Stop()
+			require.NoError(t, controller.WaitForStop())
+		}()
+
+		const tableName = "electric_replica_full_items"
+		_, err = conn.Current.Exec(serverCtx, `
+			CREATE TABLE electric_replica_full_items (id INT PRIMARY KEY, label TEXT NOT NULL, note TEXT NOT NULL);
+			CREATE PUBLICATION electric_publication_default;
+			ALTER PUBLICATION electric_publication_default ADD TABLE electric_replica_full_items;
+			ALTER TABLE electric_replica_full_items REPLICA IDENTITY FULL;`)
+		require.NoError(t, err)
+
+		containerName := fmt.Sprintf("dg-electric-replica-full-%d", time.Now().UnixNano())
+		startElectricContainer(t, ctx, electricContainerConfig{
+			name:         containerName,
+			image:        image,
+			doltgresPort: port,
+			electricPort: electricPort,
+		})
+
+		shape := waitForElectricShapeUpToDateWithReplica(t, ctx, baseURL, tableName, "full")
+		waitForReplicationSlot(t, serverCtx, conn)
+		waitForReplicationSlotActive(t, serverCtx, conn, true)
+
+		_, err = conn.Current.Exec(serverCtx, "INSERT INTO electric_replica_full_items VALUES (1, 'before', 'unchanged');")
+		require.NoError(t, err)
+		shape = waitForElectricOperationsWithinWithReplica(t, ctx, baseURL, tableName, shape, 60*time.Second, "full",
+			electricExpectedOperation{operation: "insert", id: "1"})
+
+		_, err = conn.Current.Exec(serverCtx, "UPDATE electric_replica_full_items SET label = 'after' WHERE id = 1;")
+		require.NoError(t, err)
+		message := waitForElectricReplicaFullUpdate(t, ctx, baseURL, tableName, shape)
+		require.Equal(t, "after", electricValueString(message.Value, "label"))
+		require.Equal(t, "unchanged", electricValueString(message.Value, "note"))
+	})
+}
+
 func TestElectricDropColumnShapeRefetch(t *testing.T) {
 	runForEachElectricImage(t, func(t *testing.T, image string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -529,6 +581,7 @@ func startElectricContainer(t *testing.T, ctx context.Context, cfg electricConta
 		"-e", "DATABASE_URL="+databaseURL,
 		"-e", "ELECTRIC_INSECURE=true",
 		"-e", "ELECTRIC_MANUAL_TABLE_PUBLISHING=true",
+		"-e", "ELECTRIC_WRITE_TO_PG_MODE=logical_replication",
 		"-e", "ELECTRIC_SHAPE_DB_STORAGE_DIR="+shapeStorageDir,
 		"-e", "ELECTRIC_SHAPE_DB_EXCLUSIVE_MODE=true",
 		"-e", "ELECTRIC_USAGE_REPORTING=false",
@@ -558,12 +611,17 @@ func removeElectricContainer(t *testing.T, containerName string) {
 
 func waitForElectricShapeUpToDate(t *testing.T, ctx context.Context, baseURL string, table string) electricShapeState {
 	t.Helper()
+	return waitForElectricShapeUpToDateWithReplica(t, ctx, baseURL, table, "")
+}
+
+func waitForElectricShapeUpToDateWithReplica(t *testing.T, ctx context.Context, baseURL string, table string, replica string) electricShapeState {
+	t.Helper()
 	state := electricShapeState{Offset: "-1"}
 	deadline := time.Now().Add(60 * time.Second)
 	var lastErr error
 	var lastBody string
 	for time.Now().Before(deadline) {
-		next, messages, status, body, err := requestElectricShape(ctx, baseURL, table, state, false)
+		next, messages, status, body, err := requestElectricShapeWithReplica(ctx, baseURL, table, state, false, replica)
 		lastBody = body
 		if err != nil {
 			lastErr = err
@@ -594,6 +652,11 @@ func waitForElectricOperations(t *testing.T, ctx context.Context, baseURL string
 
 func waitForElectricOperationsWithin(t *testing.T, ctx context.Context, baseURL string, table string, state electricShapeState, wait time.Duration, expected ...electricExpectedOperation) electricShapeState {
 	t.Helper()
+	return waitForElectricOperationsWithinWithReplica(t, ctx, baseURL, table, state, wait, "", expected...)
+}
+
+func waitForElectricOperationsWithinWithReplica(t *testing.T, ctx context.Context, baseURL string, table string, state electricShapeState, wait time.Duration, replica string, expected ...electricExpectedOperation) electricShapeState {
+	t.Helper()
 	pending := make(map[electricExpectedOperation]struct{}, len(expected))
 	for _, op := range expected {
 		pending[op] = struct{}{}
@@ -601,7 +664,7 @@ func waitForElectricOperationsWithin(t *testing.T, ctx context.Context, baseURL 
 	deadline := time.Now().Add(wait)
 	var lastBody string
 	for time.Now().Before(deadline) {
-		next, messages, status, body, err := requestElectricShape(ctx, baseURL, table, state, true)
+		next, messages, status, body, err := requestElectricShapeWithReplica(ctx, baseURL, table, state, true, replica)
 		lastBody = body
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
@@ -632,6 +695,36 @@ func waitForElectricOperationsWithin(t *testing.T, ctx context.Context, baseURL 
 	}
 	require.FailNowf(t, "Electric operations were not observed", "pending=%v last body=%s", pending, lastBody)
 	return electricShapeState{}
+}
+
+func waitForElectricReplicaFullUpdate(t *testing.T, ctx context.Context, baseURL string, table string, state electricShapeState) electricShapeMessage {
+	t.Helper()
+	deadline := time.Now().Add(60 * time.Second)
+	var lastBody string
+	for time.Now().Before(deadline) {
+		next, messages, status, body, err := requestElectricShapeWithReplica(ctx, baseURL, table, state, true, "full")
+		lastBody = body
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		if status == http.StatusNoContent {
+			continue
+		}
+		if status == http.StatusConflict && electricResponseMustRefetch(messages, body) {
+			state = electricShapeState{Offset: "-1"}
+			continue
+		}
+		require.Equalf(t, http.StatusOK, status, "unexpected Electric status body: %s", body)
+		state = next
+		for _, message := range messages {
+			if electricHeaderString(message.Headers, "operation") == "update" && electricValueString(message.Value, "id") == "1" {
+				return message
+			}
+		}
+	}
+	require.FailNowf(t, "Electric replica=full update was not observed", "last body=%s", lastBody)
+	return electricShapeMessage{}
 }
 
 func readElectricShapeRows(t *testing.T, ctx context.Context, baseURL string, table string) map[string]map[string]string {
@@ -692,6 +785,10 @@ func waitForElectricRows(t *testing.T, ctx context.Context, baseURL string, tabl
 }
 
 func requestElectricShape(ctx context.Context, baseURL string, table string, state electricShapeState, live bool) (electricShapeState, []electricShapeMessage, int, string, error) {
+	return requestElectricShapeWithReplica(ctx, baseURL, table, state, live, "")
+}
+
+func requestElectricShapeWithReplica(ctx context.Context, baseURL string, table string, state electricShapeState, live bool, replica string) (electricShapeState, []electricShapeMessage, int, string, error) {
 	requestURL, err := url.Parse(baseURL + "/v1/shape")
 	if err != nil {
 		return state, nil, 0, "", err
@@ -707,6 +804,9 @@ func requestElectricShape(ctx context.Context, baseURL string, table string, sta
 	}
 	if live {
 		query.Set("live", "true")
+	}
+	if replica != "" {
+		query.Set("replica", replica)
 	}
 	requestURL.RawQuery = query.Encode()
 
