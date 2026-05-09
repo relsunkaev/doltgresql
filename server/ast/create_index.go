@@ -34,10 +34,10 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	// CONCURRENTLY for btree indexes without expression columns is routed
-	// through the two-phase state-machine node below so external sessions
-	// can observe the in-progress build via pg_index.indisready/indisvalid.
-	// Expression indexes fall back to a synchronous build that ignores
+	// CONCURRENTLY for supported btree indexes is routed through the
+	// two-phase state-machine node below so external sessions can observe
+	// the in-progress build via pg_index.indisready/indisvalid. Unique
+	// expression indexes fall back to a synchronous build that ignores
 	// CONCURRENTLY — migration tooling still gets a successful CREATE.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
@@ -68,7 +68,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if err != nil {
 		return nil, err
 	}
-	if accessMethod == indexmetadata.AccessMethodBtree && requiresMetadataBackedBtreeIndex(node.Columns) {
+	needsMetadataBackedBtree := requiresMetadataBackedBtreeIndex(node.Columns)
+	if accessMethod == indexmetadata.AccessMethodBtree &&
+		(needsMetadataBackedBtree || (!node.Unique && node.Concurrently && hasIndexExpression(node.Columns))) {
 		if node.Unique {
 			return nil, errors.Errorf("unique mixed expression indexes are not yet supported")
 		}
@@ -195,31 +197,14 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 
 // canRouteConcurrentBtree reports whether a CREATE INDEX CONCURRENTLY
 // statement should be handled by the two-phase state-machine node. The
-// node can carry metadata-backed btree shapes such as INCLUDE columns
-// and non-unique partial predicates; expression columns route through
-// their existing synchronous paths.
+// node can carry metadata-backed btree shapes such as INCLUDE columns,
+// partial predicates, and non-unique expression indexes. Unique expression
+// indexes route through their existing synchronous paths.
 func canRouteConcurrentBtree(node *tree.CreateIndex, metadata *indexmetadata.Metadata) bool {
-	for _, column := range node.Columns {
-		if column.Expr != nil {
-			return false
-		}
-	}
-	if metadata == nil {
-		return true
-	}
-	if len(metadata.Columns) > 0 || len(metadata.StorageColumns) > 0 || hasTrueExpressionColumns(metadata.ExpressionColumns) {
+	if node.Unique && hasIndexExpression(node.Columns) {
 		return false
 	}
 	return true
-}
-
-func hasTrueExpressionColumns(values []bool) bool {
-	for _, value := range values {
-		if value {
-			return true
-		}
-	}
-	return false
 }
 
 // indexFieldsToIndexColumns converts the vitess.IndexField slice the AST

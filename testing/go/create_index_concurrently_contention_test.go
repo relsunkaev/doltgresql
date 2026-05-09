@@ -158,6 +158,10 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "INSERT INTO partial_unique_t VALUES (1, 10, true), (2, 10, false)")
 	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE TABLE expr_t (id INT PRIMARY KEY, email TEXT)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "INSERT INTO expr_t VALUES (1, 'Alice@X'), (2, 'bob@x')")
+	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB)")
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, `INSERT INTO gin_t VALUES (1, '{"kind":"click"}'), (2, '{"kind":"view"}')`)
@@ -183,6 +187,13 @@ func TestCreateIndexConcurrentlyMetadataBackedCrossSessionVisibility(t *testing.
 		dial,
 		"CREATE UNIQUE INDEX CONCURRENTLY partial_unique_t_tenant_active_idx ON partial_unique_t (tenant_id) WHERE active",
 		"partial_unique_t_tenant_active_idx",
+	)
+	assertConcurrentIndexCrossSessionVisibility(
+		t,
+		ctx,
+		dial,
+		"CREATE INDEX CONCURRENTLY expr_t_lower_email_idx ON expr_t ((lower(email)))",
+		"expr_t_lower_email_idx",
 	)
 	assertConcurrentIndexCrossSessionVisibility(
 		t,

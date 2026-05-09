@@ -344,16 +344,16 @@ Do not check off an item until it has workload proof:
   maintain a pending index while the backfill runs); out of
   scope until that primitive lands.
 - [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
-  btree `INCLUDE`, non-unique btree partial, and supported JSONB GIN
-  indexes now use the same two-phase `pg_index.indisready=false` /
-  `pg_index.indisvalid=false` catalog visibility as plain btree
-  `CREATE INDEX CONCURRENTLY`, then flip to ready/valid after the
-  inter-phase commit; partial-unique btree indexes keep
-  predicate-scoped uniqueness after the final flip. Expression
-  `CONCURRENTLY` shapes still route through their existing synchronous
-  build path; migration tools do not error, but that shape does not
-  expose the two-phase catalog state yet. This does not change the
-  separate non-blocking writer gap above. Pinned by
+  btree `INCLUDE`, non-unique btree partial, supported JSONB GIN, and
+  non-unique btree expression indexes now use the same two-phase
+  `pg_index.indisready=false` / `pg_index.indisvalid=false` catalog
+  visibility as plain btree `CREATE INDEX CONCURRENTLY`, then flip to
+  ready/valid after the inter-phase commit; partial-unique btree indexes
+  keep predicate-scoped uniqueness after the final flip. Unique
+  expression `CONCURRENTLY` shapes still route through their existing
+  synchronous build path; migration tools do not error, but that shape
+  does not expose the two-phase catalog state yet. This does not change
+  the separate non-blocking writer gap above. Pinned by
   testing/go/create_index_concurrently_test.go and
   testing/go/create_index_concurrently_contention_test.go.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,

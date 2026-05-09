@@ -201,6 +201,41 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE INDEX CONCURRENTLY expression",
+			SetUpScript: []string{
+				"CREATE TABLE expr_concurrent_t (id INT PRIMARY KEY, email TEXT);",
+				"INSERT INTO expr_concurrent_t VALUES (1, 'Alice@X'), (2, 'bob@x');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "CREATE INDEX CONCURRENTLY expr_concurrent_lower_email_idx ON expr_concurrent_t ((lower(email)));",
+				},
+				{
+					Query: `SELECT indexdef
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'expr_concurrent_t' AND indexname = 'expr_concurrent_lower_email_idx';`,
+					Expected: []sql.Row{
+						{"CREATE INDEX expr_concurrent_lower_email_idx ON public.expr_concurrent_t USING btree (lower(email))"},
+					},
+				},
+				{
+					Query: `SELECT i.indisready, i.indisvalid
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON i.indexrelid = c.oid
+						WHERE c.relname = 'expr_concurrent_lower_email_idx';`,
+					Expected: []sql.Row{
+						{"t", "t"},
+					},
+				},
+				{
+					Query: "SELECT id FROM expr_concurrent_t WHERE lower(email) = 'bob@x';",
+					Expected: []sql.Row{
+						{2},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE INDEX CONCURRENTLY JSONB GIN",
 			SetUpScript: []string{
 				"CREATE TABLE gin_t (id INT PRIMARY KEY, doc JSONB);",
