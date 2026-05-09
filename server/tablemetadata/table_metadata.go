@@ -24,7 +24,9 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // Metadata stores PostgreSQL table metadata that Dolt's native schema metadata
 // does not currently expose.
 type Metadata struct {
-	PrimaryKeyConstraint string `json:"primaryKeyConstraint,omitempty"`
+	PrimaryKeyConstraint       string `json:"primaryKeyConstraint,omitempty"`
+	MaterializedView           bool   `json:"materializedView,omitempty"`
+	MaterializedViewDefinition string `json:"materializedViewDefinition,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -44,6 +46,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 		return Metadata{}, false
 	}
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
+	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
 	return metadata, true
 }
 
@@ -63,8 +66,40 @@ func PrimaryKeyConstraintName(comment string) string {
 func SetPrimaryKeyConstraintName(comment string, name string) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(name)
-	if metadata.PrimaryKeyConstraint == "" {
+	if metadata.empty() {
 		return ""
 	}
 	return EncodeComment(metadata)
+}
+
+// SetMaterializedViewDefinition marks the table metadata comment as a
+// table-backed materialized view and records the view query definition.
+func SetMaterializedViewDefinition(comment string, definition string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.MaterializedView = true
+	metadata.MaterializedViewDefinition = strings.TrimSpace(definition)
+	return EncodeComment(metadata)
+}
+
+// IsMaterializedView returns whether the comment marks a table-backed
+// materialized view.
+func IsMaterializedView(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.MaterializedView
+}
+
+// MaterializedViewDefinition returns the stored materialized view query
+// definition, if any.
+func MaterializedViewDefinition(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || !metadata.MaterializedView {
+		return ""
+	}
+	return metadata.MaterializedViewDefinition
+}
+
+func (metadata Metadata) empty() bool {
+	return metadata.PrimaryKeyConstraint == "" &&
+		!metadata.MaterializedView &&
+		metadata.MaterializedViewDefinition == ""
 }

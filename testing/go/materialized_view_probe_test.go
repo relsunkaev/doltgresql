@@ -42,6 +42,60 @@ func TestMaterializedViewProbe(t *testing.T) {
 						{2, 200},
 					},
 				},
+				{
+					Query: `SELECT relkind FROM pg_class WHERE relname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"m"},
+					},
+				},
+				{
+					Query: `SELECT schemaname, matviewname, hasindexes::text, ispopulated::text, definition
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"public", "source_mv", "false", "true", "SELECT id, v FROM source"},
+					},
+				},
+				{
+					Query:    `SELECT count(*)::text FROM pg_tables WHERE schemaname = 'public' AND tablename = 'source_mv';`,
+					Expected: []sql.Row{{"0"}},
+				},
+				{
+					Query: `SELECT table_type
+						FROM information_schema.tables
+						WHERE table_schema = 'public' AND table_name = 'source_mv';`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (id);`,
+				},
+				{
+					Query: `CREATE INDEX source_mv_v_idx ON source_mv (v);`,
+				},
+				{
+					Query: `SELECT indexname, indexdef
+						FROM pg_indexes
+						WHERE tablename = 'source_mv'
+						ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"source_mv_id_idx", "CREATE UNIQUE INDEX source_mv_id_idx ON public.source_mv USING btree (id)"},
+						{"source_mv_v_idx", "CREATE INDEX source_mv_v_idx ON public.source_mv USING btree (v)"},
+					},
+				},
+				{
+					Query: `SELECT relhasindex::text FROM pg_class WHERE relname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true"},
+					},
+				},
+				{
+					Query: `SELECT hasindexes::text
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"true"},
+					},
+				},
 			},
 		},
 		{

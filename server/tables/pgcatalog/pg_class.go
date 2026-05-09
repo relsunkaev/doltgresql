@@ -136,13 +136,17 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			_, hasIndexes := tableHasIndexes[id.Cache().ToOID(table.OID.AsId())]
 			_, hasTriggers := tableHasTriggers[id.Cache().ToOID(table.OID.AsId())]
+			kind := "r"
+			if isMaterializedViewTable(table.Item) {
+				kind = "m"
+			}
 			class := &pgClass{
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
 				name:            table.Item.Name(),
 				hasIndexes:      hasIndexes,
 				hasTriggers:     hasTriggers,
-				kind:            "r",
+				kind:            kind,
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name()).Identity.String(),
@@ -467,7 +471,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		} else {
 			relam = id.NewAccessMethod("btree").AsId()
 		}
-	} else if class.kind == "r" || class.kind == "t" {
+	} else if class.kind == "r" || class.kind == "m" || class.kind == "t" {
 		relam = id.NewAccessMethod("heap").AsId()
 	}
 

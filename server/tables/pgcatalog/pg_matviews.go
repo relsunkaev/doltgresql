@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,25 @@ func (p PgMatviewsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgMatviewsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_matviews row iter
-	return emptyRowIter()
+	var rows []pgMatviewsRow
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			if !isMaterializedViewTable(table.Item) {
+				return true, nil
+			}
+			rows = append(rows, pgMatviewsRow{
+				schema: schema.Item.SchemaName(),
+				table:  table.Item,
+			})
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &pgMatviewsRowIter{
+		rows: rows,
+	}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,13 +86,38 @@ var pgMatviewsSchema = sql.Schema{
 
 // pgMatviewsRowIter is the sql.RowIter for the pg_matviews table.
 type pgMatviewsRowIter struct {
+	rows []pgMatviewsRow
+	idx  int
 }
 
 var _ sql.RowIter = (*pgMatviewsRowIter)(nil)
 
+type pgMatviewsRow struct {
+	schema string
+	table  sql.Table
+}
+
 // Next implements the interface sql.RowIter.
 func (iter *pgMatviewsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.rows) {
+		return nil, io.EOF
+	}
+	row := iter.rows[iter.idx]
+	iter.idx++
+
+	hasIndexes, err := tableHasIndexes(ctx, row.table)
+	if err != nil {
+		return nil, err
+	}
+	return sql.Row{
+		row.schema,                            // schemaname
+		row.table.Name(),                      // matviewname
+		"postgres",                            // matviewowner
+		nil,                                   // tablespace
+		hasIndexes,                            // hasindexes
+		true,                                  // ispopulated
+		materializedViewDefinition(row.table), // definition
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

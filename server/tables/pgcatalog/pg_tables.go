@@ -64,7 +64,7 @@ func (p PgTablesHandler) RowIter(ctx *sql.Context, _ sql.Partition) (sql.RowIter
 		// TODO: However, information schema is currently incorrect for Doltgres, so we exclude it.
 		err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 			Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
-				if schema.Item.SchemaName() != sql.InformationSchemaDatabaseName {
+				if schema.Item.SchemaName() != sql.InformationSchemaDatabaseName && !isMaterializedViewTable(table.Item) {
 					tables = append(tables, pgTableRow{table.Item, schema.Item.SchemaName()})
 				}
 				return true, nil
@@ -125,16 +125,9 @@ func (iter *pgTablesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	schema := iter.tables[iter.idx].TableSchema
 	tableName := table.Name()
 
-	var hasIndexes bool
-	if it, ok := table.(sql.IndexAddressable); ok {
-		idxs, err := it.GetIndexes(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(idxs) > 0 {
-			hasIndexes = true
-		}
+	hasIndexes, err := tableHasIndexes(ctx, table)
+	if err != nil {
+		return nil, err
 	}
 
 	triggerCollection, err := core.GetTriggersCollectionFromContext(ctx, ctx.GetCurrentDatabase())

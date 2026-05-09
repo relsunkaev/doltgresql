@@ -141,13 +141,17 @@ Do not check off an item until it has workload proof:
 - [~] Materialized views - `CREATE MATERIALIZED VIEW ... AS SELECT`
   creates a table-backed snapshot that can be queried and dropped with
   `DROP MATERIALIZED VIEW`; later source-table writes do not change the
-  snapshot. This covers schemas that only need restore-time snapshot
-  data. Full PostgreSQL matview semantics are still partial:
+  snapshot. Materialized views are catalogued with `pg_class.relkind =
+  'm'`, `pg_matviews` rows report their definition, populated state,
+  and index presence, and ordinary/unique btree indexes may be created
+  on the materialized view for restore-time or read-path access. This
+  covers schemas that only need restore-time snapshot data and indexed
+  reads. Full PostgreSQL matview semantics are still partial:
   `REFRESH MATERIALIZED VIEW`, `WITH NO DATA`, materialized-view column
-  lists, and `pg_matviews` metadata rows are not implemented. Apps that
-  need refreshable matviews must still rewrite to ordinary views
-  (covered) or to a backing table + scheduled refresh job. Pinned by
-  testing/go/materialized_view_probe_test.go.
+  lists, and refresh-time unique-index requirements are not implemented.
+  Apps that need refreshable matviews must still rewrite to ordinary
+  views (covered) or to a backing table + scheduled refresh job. Pinned
+  by testing/go/materialized_view_probe_test.go.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
@@ -348,8 +352,13 @@ Do not check off an item until it has workload proof:
   is preserved through pg_index, but index storage/planner preference
   does not yet model those per-column scan choices. Pinned by
   testing/go/index_opclass_nulls_probe_test.go.
-- [ ] Materialized view indexes - support indexes required for matview refresh
-  paths.
+- [~] Materialized view indexes - ordinary and unique btree indexes can be
+  created on table-backed materialized views, round-trip through
+  `pg_indexes`, set `pg_class.relhasindex`, and flip
+  `pg_matviews.hasindexes`. This covers indexed restore-time snapshots
+  and read paths. Remaining gap: `REFRESH MATERIALIZED VIEW` and
+  PostgreSQL's refresh-time unique-index validation are still unsupported.
+  Pinned by testing/go/materialized_view_probe_test.go.
 
 ## View/query TODO
 

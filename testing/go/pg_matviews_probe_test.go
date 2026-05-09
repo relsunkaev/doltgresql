@@ -20,13 +20,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestPgMatviewsProbe pins the pg_matviews catalog surface dump tools
-// query during matview repair. Materialized views themselves are not
-// yet supported (separate item in the Schema/DDL TODO), so the
-// expected shape today is "the catalog view exists and returns zero
-// rows" — that's what dump tools need to skip the matview repair
-// branch cleanly. Per the Dump/admin/tooling TODO in
-// docs/app-compatibility-checklist.md.
+// TestPgMatviewsProbe pins the empty pg_matviews catalog surface dump
+// tools query before a schema creates any materialized views. Populated
+// pg_matviews rows are covered by TestMaterializedViewProbe.
 func TestPgMatviewsProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

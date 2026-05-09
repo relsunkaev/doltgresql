@@ -20,6 +20,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // nodeCreateMaterializedView handles *tree.CreateMaterializedView nodes.
@@ -54,10 +55,19 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	if err != nil {
 		return nil, err
 	}
+	definition := createViewSelectDefinition(ctx, node.AsSource.String())
 	return &vitess.DDL{
 		Action:      vitess.CreateStr,
 		Table:       tableName,
 		IfNotExists: node.IfNotExists,
+		TableSpec: &vitess.TableSpec{
+			TableOpts: []*vitess.TableOption{
+				{
+					Name:  "comment",
+					Value: tablemetadata.SetMaterializedViewDefinition("", definition),
+				},
+			},
+		},
 		OptSelect: &vitess.OptSelect{
 			Select: selectStmt,
 		},

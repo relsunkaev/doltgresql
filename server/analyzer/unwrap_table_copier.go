@@ -15,12 +15,17 @@
 package analyzer
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnode "github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // UnwrapTableCopierCreateTable keeps CREATE TABLE AS SELECT destinations in
@@ -36,6 +41,12 @@ func UnwrapTableCopierCreateTable(ctx *sql.Context, a *analyzer.Analyzer, node s
 	}
 	copied := *tableCopier
 	copied.Destination = createTable
+	if comment, ok := doltgresCreateTableMetadataComment(createTable.TableOpts); ok {
+		return pgnode.NewTableMetadataApplier(&copied, createTable.Database(), createTable.Name(), comment), transform.NewTree, nil
+	}
+	if comment, ok := createMaterializedViewMetadataComment(ctx, createTable.Name()); ok {
+		return pgnode.NewTableMetadataApplier(&copied, createTable.Database(), createTable.Name(), comment), transform.NewTree, nil
+	}
 	return &copied, transform.NewTree, nil
 }
 
@@ -50,4 +61,37 @@ func unwrapCreateTableDestination(node sql.Node) (*plan.CreateTable, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func doltgresCreateTableMetadataComment(tableOpts map[string]any) (string, bool) {
+	if tableOpts == nil {
+		return "", false
+	}
+	comment, ok := tableOpts["comment"].(string)
+	if !ok {
+		return "", false
+	}
+	if _, ok = tablemetadata.DecodeComment(comment); !ok {
+		return "", false
+	}
+	return comment, true
+}
+
+func createMaterializedViewMetadataComment(ctx *sql.Context, tableName string) (string, bool) {
+	query := ctx.Query()
+	if strings.TrimSpace(query) == "" {
+		return "", false
+	}
+	stmts, err := parser.Parse(query)
+	if err != nil || len(stmts) != 1 {
+		return "", false
+	}
+	node, ok := stmts[0].AST.(*tree.CreateMaterializedView)
+	if !ok {
+		return "", false
+	}
+	if !strings.EqualFold(string(node.Name.ObjectName), tableName) {
+		return "", false
+	}
+	return tablemetadata.SetMaterializedViewDefinition("", node.AsSource.String()), true
 }

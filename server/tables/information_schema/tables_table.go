@@ -19,6 +19,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
 
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // newTablesTable returns a InformationSchemaTable for MySQL.
@@ -52,6 +53,9 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			if isMaterializedViewTable(table.Item) {
+				return true, nil
+			}
 			// TODO: Foreign and temporary tables.
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // table_catalog
@@ -93,4 +97,9 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 	}
 
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func isMaterializedViewTable(table sql.Table) bool {
+	commented, ok := table.(sql.CommentedTable)
+	return ok && tablemetadata.IsMaterializedView(commented.Comment())
 }

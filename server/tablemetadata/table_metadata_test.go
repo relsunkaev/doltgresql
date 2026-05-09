@@ -35,11 +35,33 @@ func TestPrimaryKeyConstraintNameMetadata(t *testing.T) {
 	}
 }
 
+func TestMaterializedViewMetadata(t *testing.T) {
+	comment := SetMaterializedViewDefinition("", " SELECT id FROM source ")
+	if !IsMaterializedView(comment) {
+		t.Fatalf("expected materialized view metadata")
+	}
+	if got := MaterializedViewDefinition(comment); got != "SELECT id FROM source" {
+		t.Fatalf("expected trimmed materialized view definition, got %q", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "custom_pkey")
+	if got := PrimaryKeyConstraintName(comment); got != "custom_pkey" {
+		t.Fatalf("expected primary key metadata to be preserved, got %q", got)
+	}
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	if !IsMaterializedView(comment) {
+		t.Fatalf("expected clearing primary-key metadata to preserve materialized view metadata")
+	}
+}
+
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("plain table comment"); ok {
 		t.Fatalf("expected plain comments to be ignored")
 	}
 	if got := PrimaryKeyConstraintName("plain table comment"); got != "" {
 		t.Fatalf("expected no primary key constraint name for plain comments, got %q", got)
+	}
+	if IsMaterializedView("plain table comment") {
+		t.Fatalf("expected no materialized view metadata for plain comments")
 	}
 }
