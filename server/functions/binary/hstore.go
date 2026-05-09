@@ -15,6 +15,7 @@
 package binary
 
 import (
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -35,6 +36,10 @@ func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAll, hstore_exists_all)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsRight, hstore_contains)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsLeft, hstore_contained)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, hstore_concat)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_array)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryMinus, hstore_delete_hstore)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -142,6 +147,84 @@ var hstore_contained = framework.Function2{
 	},
 }
 
+var hstore_concat = framework.Function2{
+	Name:       "hs_concat",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		right, err := parseHstore(val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		for key, value := range right {
+			left[key] = value
+		}
+		return formatHstore(left), nil
+	},
+}
+
+var hstore_delete = framework.Function2{
+	Name:       "delete",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.Text},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		pairs, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		delete(pairs, val2.(string))
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_delete_array = framework.Function2{
+	Name:       "delete",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		pairs, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		for _, key := range hstoreTextArrayValues(val2) {
+			if key != nil {
+				delete(pairs, *key)
+			}
+		}
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_delete_hstore = framework.Function2{
+	Name:       "delete",
+	Return:     hstoreType,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, err := parseHstore(val1.(string))
+		if err != nil {
+			return nil, err
+		}
+		right, err := parseHstore(val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		for key, rightValue := range right {
+			if hstoreValueEqual(left[key], rightValue) {
+				delete(left, key)
+			}
+		}
+		return formatHstore(left), nil
+	},
+}
+
 func hstoreExistCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 	pairs, err := parseHstore(val1.(string))
 	if err != nil {
@@ -222,6 +305,13 @@ func hstoreContains(left map[string]*string, right map[string]*string) bool {
 		}
 	}
 	return true
+}
+
+func hstoreValueEqual(left *string, right *string) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	return *left == *right
 }
 
 func parseHstore(input string) (map[string]*string, error) {
@@ -348,4 +438,40 @@ func (p *hstoreParser) parseBareToken() (string, bool) {
 
 func invalidHstoreInput(input string) error {
 	return pgtypes.ErrInvalidSyntaxForType.New("hstore", input)
+}
+
+func formatHstore(pairs map[string]*string) string {
+	if len(pairs) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(pairs))
+	for key := range pairs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	parts := make([]string, len(keys))
+	for i, key := range keys {
+		value := pairs[key]
+		if value == nil {
+			parts[i] = hstoreQuote(key) + "=>NULL"
+		} else {
+			parts[i] = hstoreQuote(key) + "=>" + hstoreQuote(*value)
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+func hstoreQuote(value string) string {
+	var builder strings.Builder
+	builder.Grow(len(value) + 2)
+	builder.WriteByte('"')
+	for i := 0; i < len(value); i++ {
+		switch value[i] {
+		case '\\', '"':
+			builder.WriteByte('\\')
+		}
+		builder.WriteByte(value[i])
+	}
+	builder.WriteByte('"')
+	return builder.String()
 }

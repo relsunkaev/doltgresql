@@ -123,6 +123,27 @@ func newCompiledFunctionInternal(
 		}
 	}
 	returnType := fn.GetReturn()
+	if returnType.IsUnresolved {
+		for i, paramType := range overload.params.paramTypes {
+			if paramType.ID == returnType.ID && i < len(originalTypes) {
+				returnType = originalTypes[i]
+				break
+			}
+		}
+		if returnType.IsUnresolved && ctx != nil {
+			typesCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+			if err != nil {
+				c.stashedErr = err
+				return c
+			}
+			resolvedReturnType, err := typesCollection.GetType(ctx, returnType.ID)
+			if err != nil {
+				c.stashedErr = err
+				return c
+			}
+			returnType = resolvedReturnType
+		}
+	}
 	c.callResolved[len(c.callResolved)-1] = returnType
 	if returnType.IsPolymorphicType() {
 		if hasPolymorphicParam {

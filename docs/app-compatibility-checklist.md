@@ -128,7 +128,10 @@ Do not check off an item until it has workload proof:
   `exists_any`, and `exists_all` cover any/all key existence checks,
   including PostgreSQL's NULL/empty key-array behavior. `hstore @>
   hstore`, `hstore <@ hstore`, `hs_contains`, and `hs_contained`
-  cover containment with SQL NULL value equality. Broader hstore
+  cover containment with SQL NULL value equality. `hstore || hstore`
+  / `hs_concat` and `delete(hstore, text|text[]|hstore)` / the
+  corresponding `-` operators cover overwrite and deletion semantics,
+  including NULL values and NULL key-array entries. Broader hstore
   operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.

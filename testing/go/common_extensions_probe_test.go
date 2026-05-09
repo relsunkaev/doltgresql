@@ -287,6 +287,22 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "t"}},
 				},
 				{
+					Query:    `SELECT (inventory || '"B"=>"9", "C"=>NULL'::public.hstore)::text, hs_concat(inventory, '"A"=>NULL'::public.hstore)::text FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{`"A"=>"2", "B"=>"9", "C"=>NULL`, `"A"=>NULL, "B"=>"5"`}},
+				},
+				{
+					Query:    `SELECT delete(inventory, 'A')::text, (inventory - 'B'::text)::text FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{`"B"=>"5"`, `"A"=>"2"`}},
+				},
+				{
+					Query:    `SELECT delete('"A"=>"2", "B"=>"5", "C"=>"6"'::public.hstore, ARRAY['A', 'C'])::text, ('"A"=>"2", "B"=>"5"'::public.hstore - ARRAY[NULL]::text[])::text;`,
+					Expected: []sql.Row{{`"B"=>"5"`, `"A"=>"2", "B"=>"5"`}},
+				},
+				{
+					Query:    `SELECT ('"A"=>"2", "B"=>"5"'::public.hstore - '"A"=>"9", "B"=>"5"'::public.hstore)::text, delete('"empty"=>NULL, "quoted key"=>"a,b=>c"'::public.hstore, '"empty"=>NULL'::public.hstore)::text;`,
+					Expected: []sql.Row{{`"A"=>"2"`, `"quoted key"=>"a,b=>c"`}},
+				},
+				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
 					ExpectedErr: `invalid input syntax for type hstore`,
 				},
