@@ -124,8 +124,10 @@ Do not check off an item until it has workload proof:
   key lookup, missing-key NULLs, SQL NULL hstore values, and quoted
   external representation parsing. `hstore ? text`,
   `exist`/`isexists`, and `defined`/`isdefined` cover key existence
-  and non-NULL value checks. Broader hstore operators, functions,
-  casts, and index parity remain residual risk.
+  and non-NULL value checks. `hstore ?| text[]`, `hstore ?& text[]`,
+  `exists_any`, and `exists_all` cover any/all key existence checks,
+  including PostgreSQL's NULL/empty key-array behavior. Broader hstore
+  operators, functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.

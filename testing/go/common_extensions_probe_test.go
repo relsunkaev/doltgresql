@@ -263,6 +263,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"t", "f", "t", "t"}},
 				},
 				{
+					Query:    `SELECT inventory ?| ARRAY['missing', 'B'], inventory ?| ARRAY['missing', 'other'], inventory ?& ARRAY['A', 'B'], inventory ?& ARRAY['A', 'missing'] FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"t", "f", "t", "f"}},
+				},
+				{
+					Query:    `SELECT exists_any(inventory, ARRAY['missing', 'quoted key']), exists_all(inventory, ARRAY['empty', 'quoted key']) FROM vending_machines WHERE id = 2;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT inventory ?| ARRAY[NULL]::text[], inventory ?& ARRAY[NULL]::text[], inventory ?| ARRAY[]::text[], inventory ?& ARRAY[]::text[] FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"f", "t", "f", "t"}},
+				},
+				{
 					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
 					ExpectedErr: `invalid input syntax for type hstore`,
 				},

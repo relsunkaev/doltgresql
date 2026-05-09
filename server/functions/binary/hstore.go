@@ -31,6 +31,8 @@ var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
 func initHstore() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONExtractJson, hstore_fetchval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevel, hstore_exist)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAny, hstore_exists_any)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONTopLevelAll, hstore_exists_all)
 	framework.RegisterFunction(hstore_isexists)
 	framework.RegisterFunction(hstore_defined)
 	framework.RegisterFunction(hstore_isdefined)
@@ -86,6 +88,22 @@ var hstore_isdefined = framework.Function2{
 	Callable:   hstoreDefinedCallable,
 }
 
+var hstore_exists_any = framework.Function2{
+	Name:       "exists_any",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.TextArray},
+	Strict:     true,
+	Callable:   hstoreExistsAnyCallable,
+}
+
+var hstore_exists_all = framework.Function2{
+	Name:       "exists_all",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{hstoreType, pgtypes.TextArray},
+	Strict:     true,
+	Callable:   hstoreExistsAllCallable,
+}
+
 func hstoreExistCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 	pairs, err := parseHstore(val1.(string))
 	if err != nil {
@@ -102,6 +120,51 @@ func hstoreDefinedCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any,
 	}
 	value, ok := pairs[val2.(string)]
 	return ok && value != nil, nil
+}
+
+func hstoreExistsAnyCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	pairs, err := parseHstore(val1.(string))
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range hstoreTextArrayValues(val2) {
+		if key == nil {
+			continue
+		}
+		if _, ok := pairs[*key]; ok {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func hstoreExistsAllCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	pairs, err := parseHstore(val1.(string))
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range hstoreTextArrayValues(val2) {
+		if key == nil {
+			continue
+		}
+		if _, ok := pairs[*key]; !ok {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func hstoreTextArrayValues(val any) []*string {
+	values := val.([]any)
+	keys := make([]*string, len(values))
+	for i, value := range values {
+		if value == nil {
+			continue
+		}
+		key := value.(string)
+		keys[i] = &key
+	}
+	return keys
 }
 
 func parseHstore(input string) (map[string]*string, error) {
