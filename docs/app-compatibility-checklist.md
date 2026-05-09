@@ -1,6 +1,6 @@
 # Real-world application compatibility checklist
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 This is the workload-prioritized view of `postgresql-parity-issues.md`. The
 parity doc enumerates every known PostgreSQL feature gap, organized by the
@@ -135,11 +135,15 @@ Do not check off an item until it has workload proof:
   / `slice_array` and `slice(hstore, text[])` cover ordered array
   value lookup plus hstore subset extraction for missing keys, SQL NULL
   hstore values, empty key arrays, and NULL key-array entries. `akeys`,
-  `avals`, `skeys`, `svals`, `each`, and `hstore_to_array` cover
-  sorted key/value introspection for populated, empty, and SQL NULL
-  hstore inputs, including PostgreSQL's length-then-lexicographic
-  hstore key order, NULL hstore values, and projection/table-function
-  forms with table column aliases.
+  `avals`, `skeys`, `svals`, `each`, `hstore_to_array`, and
+  `hstore_to_matrix` cover sorted key/value introspection for populated,
+  empty, and SQL NULL hstore inputs, including PostgreSQL's
+  length-then-lexicographic hstore key order, NULL hstore values, quoted
+  values and empty strings, flat key/value arrays, two-dimensional
+  key/value matrices, row-major `array_to_string` flattening, and matrix
+  dimension reporting through `array_length` / `array_upper`; `skeys`,
+  `svals`, and `each` also cover projection/table-function forms with
+  table column aliases.
   `hstore(text, text)`, `hstore(text[], text[])`, `hstore(text[])`,
   and `hstore(record)` cover constructor semantics for NULL values,
   NULL key handling, duplicate-first key handling, empty arrays,

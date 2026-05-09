@@ -35,17 +35,9 @@ var array_upper_anyarray_int32 = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		array := val1.([]any)
 		dimension := val2.(int32)
-
-		// PostgreSQL arrays are 1-dimensional in this implementation
-		// For dimension 1, return the upper bound (length of array)
-		if dimension == 1 {
-			if len(array) == 0 {
-				return nil, nil
-			}
-			return int32(len(array)), nil
+		if upper, ok := arrayDimensionLength(array, dimension); ok {
+			return upper, nil
 		}
-
-		// For dimensions other than 1, return null (multi-dimensional arrays not fully supported)
 		return nil, nil
 	},
 }

@@ -146,26 +146,39 @@ func sqlString(ctx *sql.Context, t *DoltgresType, val any) (string, error) {
 // boolean result of "true" to "t" if the function is `Type.SQL()`.
 func ArrToString(ctx *sql.Context, arr []any, baseType *DoltgresType, trimBool bool) (string, error) {
 	sb := strings.Builder{}
+	if err := writeArrayToString(ctx, &sb, arr, baseType, trimBool); err != nil {
+		return "", err
+	}
+	return sb.String(), nil
+}
+
+func writeArrayToString(ctx *sql.Context, sb *strings.Builder, arr []any, baseType *DoltgresType, trimBool bool) error {
 	sb.WriteRune('{')
 	for i, v := range arr {
 		if i > 0 {
 			sb.WriteString(",")
 		}
-		if v != nil {
-			str, err := baseType.IoOutput(ctx, v)
-			if err != nil {
-				return "", err
-			}
-			if baseType.ID == Bool.ID && trimBool {
-				str = string(str[0])
-			}
-			sb.WriteString(quoteString(str))
-		} else {
+		if v == nil {
 			sb.WriteString("NULL")
+			continue
 		}
+		if nested, ok := v.([]any); ok {
+			if err := writeArrayToString(ctx, sb, nested, baseType, trimBool); err != nil {
+				return err
+			}
+			continue
+		}
+		str, err := baseType.IoOutput(ctx, v)
+		if err != nil {
+			return err
+		}
+		if baseType.ID == Bool.ID && trimBool {
+			str = string(str[0])
+		}
+		sb.WriteString(quoteString(str))
 	}
 	sb.WriteRune('}')
-	return sb.String(), nil
+	return nil
 }
 
 // RecordToString is used for the record_out function, to serialize record values for wire transfer.

@@ -68,16 +68,31 @@ var array_to_string_anyarray_text_text = framework.Function3{
 func getStringArrFromAnyArray(ctx *sql.Context, arrType *pgtypes.DoltgresType, arr []any, delimiter string, nullEntry any) (string, error) {
 	baseType := arrType.ArrayBaseType()
 	strs := make([]string, 0)
-	for _, el := range arr {
-		if el != nil {
-			v, err := baseType.IoOutput(ctx, el)
-			if err != nil {
-				return "", err
-			}
-			strs = append(strs, v)
-		} else if nullEntry != nil {
-			strs = append(strs, nullEntry.(string))
-		}
+	if err := appendStringArrFromAnyArray(ctx, baseType, arr, nullEntry, &strs); err != nil {
+		return "", err
 	}
 	return strings.Join(strs, delimiter), nil
+}
+
+func appendStringArrFromAnyArray(ctx *sql.Context, baseType *pgtypes.DoltgresType, arr []any, nullEntry any, strs *[]string) error {
+	for _, el := range arr {
+		if el == nil {
+			if nullEntry != nil {
+				*strs = append(*strs, nullEntry.(string))
+			}
+			continue
+		}
+		if nested, ok := el.([]any); ok {
+			if err := appendStringArrFromAnyArray(ctx, baseType, nested, nullEntry, strs); err != nil {
+				return err
+			}
+			continue
+		}
+		v, err := baseType.IoOutput(ctx, el)
+		if err != nil {
+			return err
+		}
+		*strs = append(*strs, v)
+	}
+	return nil
 }

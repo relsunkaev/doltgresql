@@ -35,21 +35,35 @@ var array_length_anyarray_int32 = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		array := val1.([]any)
 		dimension := val2.(int32)
-
-		// PostgreSQL arrays are 1-dimensional in this implementation
-		// Dimension 0 is invalid, dimensions > 1 return null for 1D arrays
-		if dimension <= 0 {
-			return nil, nil
+		if length, ok := arrayDimensionLength(array, dimension); ok {
+			return length, nil
 		}
-
-		if dimension == 1 {
-			if len(array) == 0 {
-				return nil, nil
-			}
-			return int32(len(array)), nil
-		}
-
-		// For dimensions other than 1, return null (multi-dimensional arrays not fully supported)
 		return nil, nil
 	},
+}
+
+func arrayDimensionLength(array []any, dimension int32) (int32, bool) {
+	if dimension <= 0 || len(array) == 0 {
+		return 0, false
+	}
+	if dimension == 1 {
+		return int32(len(array)), true
+	}
+	var length int32
+	for _, value := range array {
+		nested, ok := value.([]any)
+		if !ok {
+			return 0, false
+		}
+		nestedLength, ok := arrayDimensionLength(nested, dimension-1)
+		if !ok {
+			return 0, false
+		}
+		if length == 0 {
+			length = nestedLength
+		} else if length != nestedLength {
+			return 0, false
+		}
+	}
+	return length, true
 }

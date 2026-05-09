@@ -331,6 +331,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`, `A|2|B|5|empty|<NULL>`}},
 				},
 				{
+					Query:    `SELECT hstore_to_matrix(inventory)::text, array_to_string(hstore_to_matrix(inventory), '|', '<NULL>') FROM vending_machines WHERE id = 3;`,
+					Expected: []sql.Row{{`{{A,2},{B,5},{empty,NULL}}`, `A|2|B|5|empty|<NULL>`}},
+				},
+				{
+					Query:    `SELECT array_length(hstore_to_matrix(inventory), 1), array_length(hstore_to_matrix(inventory), 2), array_upper(hstore_to_matrix(inventory), 1), array_upper(hstore_to_matrix(inventory), 2) FROM vending_machines WHERE id = 3;`,
+					Expected: []sql.Row{{3, 2, 3, 2}},
+				},
+				{
+					Query:    `SELECT hstore_to_matrix('"quote"=>"a,b", "emptystr"=>""'::public.hstore)::text;`,
+					Expected: []sql.Row{{`{{quote,"a,b"},{emptystr,""}}`}},
+				},
+				{
 					Query:    `SELECT (SELECT array_to_string(array_agg(k), '|', '<NULL>') FROM skeys('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(k)), (SELECT array_to_string(array_agg(v), '|', '<NULL>') FROM svals('"A"=>"2", "B"=>"5", "empty"=>NULL'::public.hstore) AS t(v));`,
 					Expected: []sql.Row{{`A|B|empty`, `2|5|<NULL>`}},
 				},
@@ -375,8 +387,12 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`{}`, `{}`, `{}`}},
 				},
 				{
-					Query:    `SELECT akeys(NULL::public.hstore) IS NULL, avals(NULL::public.hstore) IS NULL, hstore_to_array(NULL::public.hstore) IS NULL;`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+					Query:    `SELECT hstore_to_matrix(''::public.hstore)::text, hstore_to_matrix(NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{`{}`, "t"}},
+				},
+				{
+					Query:    `SELECT akeys(NULL::public.hstore) IS NULL, avals(NULL::public.hstore) IS NULL, hstore_to_array(NULL::public.hstore) IS NULL, hstore_to_matrix(NULL::public.hstore) IS NULL;`,
+					Expected: []sql.Row{{"t", "t", "t", "t"}},
 				},
 				{
 					Query:    `SELECT hstore('A', '2')::text, hstore('empty', NULL)::text, hstore(NULL, 'x') IS NULL;`,

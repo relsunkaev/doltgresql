@@ -60,6 +60,7 @@ func initHstore() {
 	framework.RegisterFunction(hstore_svals)
 	framework.RegisterFunction(hstore_each)
 	framework.RegisterFunction(hstore_to_array)
+	framework.RegisterFunction(hstore_to_matrix)
 	framework.RegisterFunction(hstore_to_json)
 	framework.RegisterFunction(hstore_to_json_loose)
 	framework.RegisterFunction(hstore_to_jsonb)
@@ -269,6 +270,30 @@ var hstore_to_array = framework.Function1{
 			} else {
 				values = append(values, *value)
 			}
+		}
+		return values, nil
+	},
+}
+
+var hstore_to_matrix = framework.Function1{
+	Name:       "hstore_to_matrix",
+	Return:     pgtypes.TextArray,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		keys := hstoreSortedKeys(pairs)
+		values := make([]any, 0, len(keys))
+		for _, key := range keys {
+			value := pairs[key]
+			var itemValue any
+			if value != nil {
+				itemValue = *value
+			}
+			values = append(values, []any{key, itemValue})
 		}
 		return values, nil
 	},
