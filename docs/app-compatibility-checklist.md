@@ -778,10 +778,13 @@ Do not check off an item until it has workload proof:
   prepare/execute/close, transaction commit, and rollback behavior. `psycopg`
   runs through the real psycopg3 pool, including startup `application_name`,
   parameter binding, JSONB and array adaptation, concurrent reads, transaction
-  commit, and rollback behavior. Pinned by testing/go/postgres_js_client_test.go,
+  commit, and rollback behavior. Ruby `pg` runs through a real PG::Connection,
+  including startup `application_name`, typed parameters, JSONB and text[]
+  values, prepared statements, concurrent reads, commit, and rollback. Pinned
+  by testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
-  testing/go/ts_postgres_client_test.go, and
-  testing/go/psycopg_client_test.go.
+  testing/go/ts_postgres_client_test.go, testing/go/psycopg_client_test.go,
+  and testing/go/ruby_pg_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
 
@@ -1169,12 +1172,15 @@ typed-exception handling, and client-side query timeouts.
   surface, the node-postgres and postgres.js harnesses cover secondary Node
   pooled-client paths with CRUD, parameters, JSONB, arrays, concurrent reads,
   commit, and rollback, the ts-postgres harness covers a binary-result
-  Node client with explicit prepared statements and transactions, and the
+  Node client with explicit prepared statements and transactions, the
   psycopg harness covers the direct Python driver pool with parameters,
-  JSONB/array adaptation, concurrent reads, and transaction boundaries.
+  JSONB/array adaptation, concurrent reads, and transaction boundaries, and
+  the Ruby `pg` harness covers the native Ruby client with parameters, prepared
+  statements, JSONB/text[] values, concurrent reads, and transaction
+  boundaries.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, and psycopg. Add runnable smoke gates for the
-  advertised client and migration-tool matrix before claiming broad
+  postgres.js, ts-postgres, psycopg, and Ruby `pg`. Add runnable smoke gates
+  for the advertised client and migration-tool matrix before claiming broad
   client compatibility.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
