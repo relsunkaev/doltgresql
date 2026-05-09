@@ -791,11 +791,14 @@ Do not check off an item until it has workload proof:
   values, prepared statements, concurrent reads, commit, and rollback. libpq
   runs through a compiled C probe with startup `application_name`, typed
   parameters, JSONB and text[] values, prepared statements, multiple
-  connections, commit, and rollback. Pinned by
+  connections, commit, and rollback. Rust `sqlx` runs through the existing
+  async pool fixture with startup, parameter binding, catalog `EXISTS` queries,
+  UUID binding/decoding, and chrono timestamptz/date decoding. Pinned by
   testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
   testing/go/ts_postgres_client_test.go, testing/go/psycopg_client_test.go,
-  testing/go/ruby_pg_client_test.go, and testing/go/libpq_client_test.go.
+  testing/go/ruby_pg_client_test.go, testing/go/libpq_client_test.go, and
+  testing/go/rust_sqlx_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.
@@ -1191,11 +1194,12 @@ typed-exception handling, and client-side query timeouts.
   statements, JSONB/text[] values, concurrent reads, and transaction
   boundaries, while the libpq harness compiles a C probe for typed parameters,
   prepared statements, JSONB/text[] values, multiple connections, and
-  transaction boundaries.
+  transaction boundaries, and the Rust `sqlx` harness covers async pool usage,
+  parameters, UUIDs, and chrono timestamp/date decoding.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, psycopg, Ruby `pg`, and libpq. Add runnable smoke
-  gates for the advertised client and migration-tool matrix before claiming
-  broad client compatibility. Tracked by dg-7ug.10.
+  postgres.js, ts-postgres, psycopg, Ruby `pg`, libpq, and Rust `sqlx`. Add
+  runnable smoke gates for the advertised client and migration-tool matrix
+  before claiming broad client compatibility. Tracked by dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
