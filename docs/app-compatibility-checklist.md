@@ -171,6 +171,9 @@ Do not check off an item until it has workload proof:
   residual risk. `hstore_hash` and `hstore_hash_extended` cover
   PostgreSQL-compatible hashes for empty, populated, NULL-valued, escaped,
   order-independent, duplicate-key-normalized, SQL NULL, and seeded inputs.
+  `hstore_in`, `hstore_out`, `hstore_recv`, and `hstore_send` cover
+  canonical text IO, PostgreSQL-compatible binary payloads, malformed
+  receive headers, empty, populated, NULL-valued, escaped, and SQL NULL inputs.
   `hstore_to_json`,
   `hstore_to_jsonb`, `hstore_to_json_loose`, `hstore_to_jsonb_loose`,
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,

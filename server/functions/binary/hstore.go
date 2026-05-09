@@ -34,6 +34,7 @@ import (
 	pgfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
+	"github.com/dolthub/doltgresql/utils"
 )
 
 var hstoreType = pgtypes.NewUnresolvedDoltgresType("public", "hstore")
@@ -82,6 +83,10 @@ func initHstore() {
 	framework.RegisterFunction(hstore_to_jsonb)
 	framework.RegisterFunction(hstore_to_jsonb_loose)
 	framework.RegisterFunction(hstore_version_diag)
+	framework.RegisterFunction(hstore_in)
+	framework.RegisterFunction(hstore_out)
+	framework.RegisterFunction(hstore_recv)
+	framework.RegisterFunction(hstore_send)
 	framework.RegisterFunction(hstore_hash)
 	framework.RegisterFunction(hstore_hash_extended)
 	framework.RegisterFunction(hstore_tconvert)
@@ -367,6 +372,68 @@ var hstore_version_diag = framework.Function1{
 			return nil, err
 		}
 		return int32(2), nil
+	},
+}
+
+var hstore_in = framework.Function1{
+	Name:       "hstore_in",
+	Return:     hstoreType,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cstring},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_out = framework.Function1{
+	Name:       "hstore_out",
+	Return:     pgtypes.Cstring,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		return formatHstore(pairs), nil
+	},
+}
+
+var hstore_recv = framework.Function1{
+	Name:       "hstore_recv",
+	Return:     hstoreType,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Internal},
+	Strict:     true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		data := val.([]byte)
+		if data == nil {
+			return nil, nil
+		}
+		return hstoreFromWirePayload(data)
+	},
+}
+
+var hstore_send = framework.Function1{
+	Name:       "hstore_send",
+	Return:     pgtypes.Bytea,
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if wrapper, ok := val.(sql.AnyWrapper); ok {
+			var err error
+			val, err = wrapper.UnwrapAny(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if val == nil {
+				return nil, nil
+			}
+		}
+		return hstoreWirePayload(val.(string))
 	},
 }
 
@@ -1534,6 +1601,63 @@ func hstoreHashPayload(input string) ([]byte, error) {
 		stringOffset += len(*value)
 	}
 	return payload, nil
+}
+
+func hstoreWirePayload(input string) ([]byte, error) {
+	pairs, err := parseHstore(input)
+	if err != nil {
+		return nil, err
+	}
+	keys := hstoreSortedKeys(pairs)
+	writer := utils.NewWireWriter()
+	writer.Reserve(uint64(hstoreWirePayloadLen(keys, pairs)))
+	writer.WriteInt32(int32(len(keys)))
+	for _, key := range keys {
+		writer.WriteInt32(int32(len(key)))
+		writer.WriteString(key)
+		value := pairs[key]
+		if value == nil {
+			writer.WriteInt32(-1)
+			continue
+		}
+		writer.WriteInt32(int32(len(*value)))
+		writer.WriteString(*value)
+	}
+	return writer.BufferData(), nil
+}
+
+func hstoreWirePayloadLen(keys []string, pairs map[string]*string) int {
+	total := 4
+	for _, key := range keys {
+		total += 8 + len(key)
+		if value := pairs[key]; value != nil {
+			total += len(*value)
+		}
+	}
+	return total
+}
+
+func hstoreFromWirePayload(data []byte) (string, error) {
+	reader := utils.NewWireReader(data)
+	count := reader.ReadInt32()
+	if count < 0 {
+		return "", errors.New("number of pairs cannot be negative")
+	}
+	pairs := make(map[string]*string, count)
+	for i := int32(0); i < count; i++ {
+		keyLen := reader.ReadInt32()
+		if keyLen < 0 {
+			return "", errors.New("null value not allowed for hstore key")
+		}
+		key := reader.ReadString(uint32(keyLen))
+		valueLen := reader.ReadInt32()
+		if valueLen < 0 {
+			hstoreAddTextPair(pairs, key, nil)
+			continue
+		}
+		hstoreAddTextPair(pairs, key, reader.ReadString(uint32(valueLen)))
+	}
+	return formatHstore(pairs), nil
 }
 
 func hstorePayloadStringLen(keys []string, pairs map[string]*string) (int, error) {
