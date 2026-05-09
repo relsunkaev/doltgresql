@@ -40,6 +40,7 @@ func initBinaryEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, bpchareq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, byteaeq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, chareq)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, citext_eq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, date_eq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, date_eq_timestamp)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, date_eq_timestamptz)

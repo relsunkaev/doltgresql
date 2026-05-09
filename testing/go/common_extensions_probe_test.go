@@ -165,11 +165,12 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
-			Name: "CREATE EXTENSION citext installs text-compatible type",
+			Name: "CREATE EXTENSION citext installs case-insensitive text type",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;`,
-				`CREATE TABLE app_users (id integer primary key, email public.citext);`,
+				`CREATE TABLE app_users (id integer primary key, email public.citext UNIQUE);`,
 				`INSERT INTO app_users VALUES (1, 'Alice@Example.com');`,
+				`INSERT INTO app_users VALUES (2, 'bob@example.com');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -182,6 +183,42 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT email::text FROM app_users WHERE id = 1;`,
 					Expected: []sql.Row{{"Alice@Example.com"}},
+				},
+				{
+					Query:    `SELECT ('Alice@Example.com'::public.citext = 'alice@example.com'::public.citext)::text;`,
+					Expected: []sql.Row{{"true"}},
+				},
+				{
+					Query:    `SELECT ('Alice@Example.com'::public.citext <> 'alice@example.com'::public.citext)::text, ('bob@example.com'::public.citext > 'ALICE@example.com'::public.citext)::text;`,
+					Expected: []sql.Row{{"false", "true"}},
+				},
+				{
+					Query: `EXPLAIN SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [app_users.id]"},
+						{" └─ Filter"},
+						{"     ├─ app_users.email = 'alice@example.com'"},
+						{"     └─ Table"},
+						{"         ├─ name: app_users"},
+						{"         └─ columns: [id email]"},
+					},
+				},
+				{
+					Query:    `SELECT id FROM app_users WHERE email = 'alice@example.com'::public.citext;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT id FROM app_users WHERE email > 'alice@example.com'::public.citext ORDER BY id;`,
+					Expected: []sql.Row{{2}},
+				},
+				{
+					Query:       `UPDATE app_users SET email = 'BOB@example.com' WHERE id = 1;`,
+					ExpectedErr: "duplicate",
+				},
+				{
+					Query:       `INSERT INTO app_users VALUES (3, 'alice@example.com');`,
+					ExpectedErr: "duplicate",
 				},
 			},
 		},

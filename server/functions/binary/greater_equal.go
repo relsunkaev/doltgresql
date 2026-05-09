@@ -40,6 +40,7 @@ func initBinaryGreaterOrEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, bpcharge)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, byteage)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, charge)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, citext_ge)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, date_ge)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, date_ge_timestamp)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, date_ge_timestamptz)

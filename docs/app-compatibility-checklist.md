@@ -112,9 +112,12 @@ Do not check off an item until it has workload proof:
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
   for dump restore; actual GiST operator classes and indexes remain
   tracked under the GiST item below. `CREATE EXTENSION citext`
-  installs a text-compatible `citext` type in the target schema so
-  dump schemas using `public.citext` can load and round-trip values;
-  full case-insensitive operator/index parity remains residual risk.
+  installs a case-insensitive text type in the target schema so dump
+  schemas using `public.citext` can load, round-trip values, compare
+  case-insensitively, and enforce case-insensitive `UNIQUE` checks on
+  insert/update. Unsafe raw btree range planning over `citext` columns
+  is disabled; performant PostgreSQL-style btree seek parity remains
+  residual risk until physical citext index keys/opclasses are modeled.
   `CREATE EXTENSION hstore` similarly installs a text-compatible
   `hstore` type for dump schemas that declare `public.hstore`
   columns; hstore operators/functions/index parity remain residual risk.

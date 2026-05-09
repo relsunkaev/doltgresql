@@ -40,6 +40,7 @@ func initBinaryLessThan() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, bpcharlt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, bytealt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, charlt)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, citext_lt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, date_lt)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, date_lt_timestamp)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, date_lt_timestamptz)

@@ -19,6 +19,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/sqlutil"
 	"github.com/dolthub/go-mysql-server/sql"
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 
@@ -40,6 +41,10 @@ type btreePatternOpLookup struct {
 
 var _ sql.Table = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.DatabaseSchemaTable = (*BtreePlannerBoundaryTable)(nil)
+var _ sql.InsertableTable = (*BtreePlannerBoundaryTable)(nil)
+var _ sql.ReplaceableTable = (*BtreePlannerBoundaryTable)(nil)
+var _ sql.UpdatableTable = (*BtreePlannerBoundaryTable)(nil)
+var _ sql.DeletableTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexAddressableTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexedTable = (*BtreePlannerBoundaryTable)(nil)
 var _ sql.IndexSearchableTable = (*BtreePlannerBoundaryTable)(nil)
@@ -59,14 +64,15 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	}
 	needsWrap := false
 	patternOpLookups := make([]btreePatternOpLookup, 0)
+	tableSchema := table.Schema(ctx)
 	for _, index := range indexes {
 		if hidePlannerIndex(index) {
 			needsWrap = true
 			continue
 		}
-		if unsafeBtreePlannerIndex(index) {
+		if unsafeBtreePlannerIndex(index, tableSchema) {
 			needsWrap = true
-			if lookup, ok := patternOpClassLookup(ctx, index, table.Schema(ctx)); ok {
+			if lookup, ok := patternOpClassLookup(ctx, index, tableSchema); ok {
 				patternOpLookups = append(patternOpLookups, lookup)
 			}
 			continue
@@ -131,11 +137,40 @@ func (t *BtreePlannerBoundaryTable) DatabaseSchema() sql.DatabaseSchema {
 	return nil
 }
 
-func (t *BtreePlannerBoundaryTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
-	if indexAddressable, ok := t.underlying.(sql.IndexAddressable); ok {
-		return indexAddressable.IndexedAccess(ctx, lookup)
+func (t *BtreePlannerBoundaryTable) Inserter(ctx *sql.Context) sql.RowInserter {
+	insertable, ok := t.underlying.(sql.InsertableTable)
+	if !ok {
+		return sqlutil.NewStaticErrorEditor(planErr("table %s is not insertable", t.Name()))
 	}
-	return nil
+	return insertable.Inserter(ctx)
+}
+
+func (t *BtreePlannerBoundaryTable) Replacer(ctx *sql.Context) sql.RowReplacer {
+	replaceable, ok := t.underlying.(sql.ReplaceableTable)
+	if !ok {
+		return sqlutil.NewStaticErrorEditor(planErr("table %s is not replaceable", t.Name()))
+	}
+	return replaceable.Replacer(ctx)
+}
+
+func (t *BtreePlannerBoundaryTable) Updater(ctx *sql.Context) sql.RowUpdater {
+	updatable, ok := t.underlying.(sql.UpdatableTable)
+	if !ok {
+		return sqlutil.NewStaticErrorEditor(planErr("table %s is not updatable", t.Name()))
+	}
+	return updatable.Updater(ctx)
+}
+
+func (t *BtreePlannerBoundaryTable) Deleter(ctx *sql.Context) sql.RowDeleter {
+	deletable, ok := t.underlying.(sql.DeletableTable)
+	if !ok {
+		return sqlutil.NewStaticErrorEditor(planErr("table %s is not deletable", t.Name()))
+	}
+	return deletable.Deleter(ctx)
+}
+
+func (t *BtreePlannerBoundaryTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
+	return indexedAccessWithMutableWrappers(ctx, t.underlying, lookup)
 }
 
 func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, error) {
@@ -152,7 +187,7 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 		if hidePlannerIndex(index) {
 			continue
 		}
-		if unsafeBtreePlannerIndex(index) {
+		if unsafeBtreePlannerIndex(index, t.Schema(ctx)) {
 			continue
 		}
 		filtered = append(filtered, index)
@@ -183,6 +218,25 @@ func (t *BtreePlannerBoundaryTable) PreciseMatch() bool {
 		return indexAddressable.PreciseMatch()
 	}
 	return false
+}
+
+func indexedAccessWithMutableWrappers(ctx *sql.Context, table sql.Table, lookup sql.IndexLookup) sql.IndexedTable {
+	if wrapper, ok := table.(sql.MutableTableWrapper); ok {
+		indexed := indexedAccessWithMutableWrappers(ctx, wrapper.Underlying(), lookup)
+		if indexed == nil {
+			return nil
+		}
+		wrapped := wrapper.WithUnderlying(indexed)
+		indexedWrapped, ok := wrapped.(sql.IndexedTable)
+		if !ok {
+			return nil
+		}
+		return indexedWrapped
+	}
+	if indexAddressable, ok := table.(sql.IndexAddressable); ok {
+		return indexAddressable.IndexedAccess(ctx, lookup)
+	}
+	return nil
 }
 
 func (t *BtreePlannerBoundaryTable) SkipIndexCosting() bool {
@@ -281,13 +335,25 @@ func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Sch
 	return btreePatternOpLookup{}, false
 }
 
-func unsafeBtreePlannerIndex(index sql.Index) bool {
+func unsafeBtreePlannerIndex(index sql.Index, tableSchema sql.Schema) bool {
 	metadata, ok := indexmetadata.DecodeComment(index.Comment())
 	if !ok {
-		return false
+		metadata = indexmetadata.Metadata{}
 	}
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return false
+	}
+	for _, column := range indexmetadata.LogicalColumns(index, tableSchema) {
+		if column.Expression {
+			continue
+		}
+		columnIndex := tableSchema.IndexOfColName(column.StorageName)
+		if columnIndex < 0 {
+			continue
+		}
+		if isCitextType(tableSchema[columnIndex].Type) {
+			return true
+		}
 	}
 	for _, collation := range metadata.Collations {
 		if strings.TrimSpace(collation) != "" {

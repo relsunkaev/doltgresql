@@ -39,6 +39,7 @@ func initBinaryNotEqual() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, bpcharne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, byteane)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, charne)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, citext_ne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, date_ne)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, date_ne_timestamp)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryNotEqual, date_ne_timestamptz)
