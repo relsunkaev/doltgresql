@@ -790,7 +790,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %token <str> LANGUAGE LARGE LAST LATERAL LATEST LC_CTYPE LC_COLLATE
 %token <str> LEADING LEAKPROOF LEASE LEAST LEFT LESS LEVEL LIKE LIMIT
-%token <str> LINESTRING LINESTRINGM LINESTRINGZ LINESTRINGZM LIST
+%token <str> LINESTRING LINESTRINGM LINESTRINGZ LINESTRINGZM LIST LISTEN
 %token <str> LOCAL LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCK LOCKED LOGGED LOGIN LOOKUP LOW LSHIFT
 
 %token <str> MAIN MATCH MATERIALIZED MAXVALUE MERGE METHOD MODE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
@@ -832,7 +832,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> TRANSACTION TRANSACTIONS TRANSFORM TREAT TRIGGER TRIM TRUE
 %token <str> TRUNCATE TRUSTED TYPE TYPES TYPMOD_IN TYPMOD_OUT
 
-%token <str> UNBOUNDED UNCOMMITTED UNION UNIQUE UNKNOWN UNLOGGED UNSAFE UNSPLIT
+%token <str> UNBOUNDED UNCOMMITTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED UNSAFE UNSPLIT
 %token <str> UPDATE UPSERT UNTIL USAGE USE USER USERS USING UUID
 
 %token <str> VACUUM VALID VALIDATE VALIDATOR VALUE VALUES VERBOSE
@@ -1095,6 +1095,8 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> declare_cursor_stmt
 %type <tree.Statement> reindex_stmt
 %type <tree.Statement> lock_stmt
+%type <tree.Statement> listen_stmt
+%type <tree.Statement> unlisten_stmt
 
 %type <tree.Statement> vacuum_stmt
 %type <*tree.VacuumOption> vacuum_option legacy_vacuum_option
@@ -1537,6 +1539,7 @@ non_transaction_stmt:
 | deallocate_stmt   // EXTEND WITH HELP: DEALLOCATE
 | discard_stmt      // EXTEND WITH HELP: DISCARD
 | grant_stmt        // EXTEND WITH HELP: GRANT
+| listen_stmt
 | notify_stmt
 | prepare_stmt      // EXTEND WITH HELP: PREPARE
 | revoke_stmt       // EXTEND WITH HELP: REVOKE
@@ -1548,6 +1551,7 @@ non_transaction_stmt:
 | declare_cursor_stmt
 | reindex_stmt
 | lock_stmt
+| unlisten_stmt
 | vacuum_stmt
 
 stmt_list:
@@ -3907,6 +3911,22 @@ notify_stmt:
   {
     payload := $4
     $$.val = &tree.Notify{Channel: tree.Name($2), Payload: &payload}
+  }
+
+listen_stmt:
+  LISTEN name
+  {
+    $$.val = &tree.Listen{Channel: tree.Name($2)}
+  }
+
+unlisten_stmt:
+  UNLISTEN name
+  {
+    $$.val = &tree.Unlisten{Channel: tree.Name($2)}
+  }
+| UNLISTEN '*'
+  {
+    $$.val = &tree.Unlisten{All: true}
   }
 
 // %Help: CANCEL
@@ -15630,6 +15650,7 @@ unreserved_keyword:
 | LEVEL
 | LINESTRING
 | LIST
+| LISTEN
 | LOCAL
 | LOCALE
 | LOCALE_PROVIDER
@@ -15881,6 +15902,7 @@ unreserved_keyword:
 | UNBOUNDED
 | UNCOMMITTED
 | UNKNOWN
+| UNLISTEN
 | UNLOGGED
 | UNSAFE
 | UNSPLIT

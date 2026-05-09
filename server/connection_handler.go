@@ -57,6 +57,7 @@ import (
 	"github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/notifications"
 	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -215,6 +216,10 @@ func (h *ConnectionHandler) HandleConnection() {
 		returnErr = err
 		return
 	}
+	notifications.Register(h.mysqlConn.ConnectionID, func(message *pgproto3.NotificationResponse) error {
+		return h.send(message)
+	})
+	defer notifications.Unregister(h.mysqlConn.ConnectionID)
 
 	// Main session loop: read messages one at a time off the connection until we receive a |Terminate| message, in
 	// which case we hang up, or the connection is closed by the client, which generates an io.EOF from the connection.
@@ -483,6 +488,9 @@ func (h *ConnectionHandler) receiveMessage() (bool, error) {
 	var stop bool
 	stop, endOfMessages, err = h.handleMessage(msg)
 	if err != nil {
+		if !h.inTransaction {
+			notifications.Rollback(h.mysqlConn.ConnectionID)
+		}
 		if !endOfMessages && h.waitForSync {
 			if syncErr := h.discardToSync(); syncErr != nil {
 				fmt.Println(syncErr.Error())
@@ -669,6 +677,12 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 			return true, true, h.prepareSQLStatement(injectedStmt, query)
 		case node.ExecuteStatement:
 			return true, true, h.executeSQLStatement(injectedStmt)
+		case node.ListenStatement:
+			return true, true, h.listen(injectedStmt, query)
+		case node.UnlistenStatement:
+			return true, true, h.unlisten(injectedStmt, query)
+		case node.NotifyStatement:
+			return true, true, h.notify(injectedStmt, query)
 		case node.PrepareTransaction:
 			return true, true, h.prepareTransaction(injectedStmt, query)
 		case node.CommitPrepared:
@@ -699,11 +713,36 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
 		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.PrepareTransaction,
-			node.CommitPrepared, node.RollbackPrepared, *node.CopyFrom, *node.CopyTo:
+			node.CommitPrepared, node.RollbackPrepared, node.ListenStatement, node.UnlistenStatement,
+			node.NotifyStatement, *node.CopyFrom, *node.CopyTo:
 			return true
 		}
 	}
 	return false
+}
+
+func (h *ConnectionHandler) listen(stmt node.ListenStatement, query ConvertedQuery) error {
+	notifications.Listen(h.mysqlConn.ConnectionID, stmt.Channel)
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
+func (h *ConnectionHandler) unlisten(stmt node.UnlistenStatement, query ConvertedQuery) error {
+	if stmt.All {
+		notifications.UnlistenAll(h.mysqlConn.ConnectionID)
+	} else {
+		notifications.Unlisten(h.mysqlConn.ConnectionID, stmt.Channel)
+	}
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
+func (h *ConnectionHandler) notify(stmt node.NotifyStatement, query ConvertedQuery) error {
+	if err := notifications.Queue(h.mysqlConn.ConnectionID, stmt.Channel, stmt.Payload); err != nil {
+		return err
+	}
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
 }
 
 func (h *ConnectionHandler) prepareTransaction(stmt node.PrepareTransaction, query ConvertedQuery) error {
@@ -1426,7 +1465,7 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	// plans for subsequent SELECTs against the same table.
 	h.invalidatePreparedPlanCacheIfNeeded(query)
 	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
-	return nil
+	return h.finishNotifications(query)
 }
 
 func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) error {
@@ -2175,7 +2214,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 
 	h.invalidatePreparedPlanCacheIfNeeded(query)
 	h.sendBuffered(makeCommandComplete(query.StatementTag, rowsAffected))
-	return nil
+	return h.finishNotifications(query)
 }
 
 func isCommitQuery(query ConvertedQuery) bool {
@@ -2183,9 +2222,29 @@ func isCommitQuery(query ConvertedQuery) bool {
 	return ok
 }
 
+func isBeginQuery(query ConvertedQuery) bool {
+	_, ok := query.AST.(*sqlparser.Begin)
+	return ok
+}
+
 func isRollbackQuery(query ConvertedQuery) bool {
 	_, ok := query.AST.(*sqlparser.Rollback)
 	return ok
+}
+
+func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
+	connectionID := h.mysqlConn.ConnectionID
+	switch {
+	case isBeginQuery(query):
+		notifications.Begin(connectionID)
+	case isCommitQuery(query):
+		return notifications.Commit(connectionID)
+	case isRollbackQuery(query):
+		notifications.Rollback(connectionID)
+	case !h.inTransaction:
+		return notifications.Commit(connectionID)
+	}
+	return nil
 }
 
 func (h *ConnectionHandler) prepareReplicationChangeQuery(query ConvertedQuery) (*replicationChangeCapture, ConvertedQuery, bool, error) {

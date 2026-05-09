@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/notifications"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -26,14 +27,17 @@ func initPgNotify() {
 	framework.RegisterFunction(pg_notify_text_text)
 }
 
-// pg_notify_text_text accepts PostgreSQL's notification call shape. Delivery
-// to LISTEN clients is not implemented, so this is intentionally a no-op.
+// pg_notify_text_text queues a PostgreSQL notification for delivery at the
+// current transaction boundary.
 var pg_notify_text_text = framework.Function2{
 	Name:       "pg_notify",
 	Return:     pgtypes.Void,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, channel any, payload any) (any, error) {
+		if err := notifications.Queue(ctx.Session.ID(), channel.(string), payload.(string)); err != nil {
+			return nil, err
+		}
 		return "", nil
 	},
 }

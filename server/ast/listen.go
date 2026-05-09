@@ -21,16 +21,14 @@ import (
 	"github.com/dolthub/doltgresql/server/node"
 )
 
-// nodeNotify handles *tree.Notify nodes.
-func nodeNotify(ctx *Context, notify *tree.Notify) (vitess.Statement, error) {
-	var payload string
-	if notify.Payload != nil {
-		payload = *notify.Payload
-	}
+func nodeListen(ctx *Context, listen *tree.Listen) (vitess.Statement, error) {
 	return vitess.InjectedStatement{
-		Statement: node.NotifyStatement{
-			Channel: string(notify.Channel),
-			Payload: payload,
-		},
+		Statement: node.ListenStatement{Channel: string(listen.Channel)},
+	}, nil
+}
+
+func nodeUnlisten(ctx *Context, unlisten *tree.Unlisten) (vitess.Statement, error) {
+	return vitess.InjectedStatement{
+		Statement: node.UnlistenStatement{Channel: string(unlisten.Channel), All: unlisten.All},
 	}, nil
 }

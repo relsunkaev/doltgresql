@@ -550,12 +550,13 @@ Do not check off an item until it has workload proof:
   (commit-commit, nested rollback, two-deep nesting with mixed
   rollback, outer rollback discarding nested commits) against a
   live Doltgres instance.
-- [~] `pg_notify` / `NOTIFY` - `NOTIFY my_channel, 'payload'` and
-  `pg_notify('chan', 'payload')` are accepted as no-ops so migration
-  scripts and write paths do not fail on the call shape. Doltgres does
-  not implement asynchronous delivery to `LISTEN` clients, so apps that
-  depend on cache-invalidation fanout or listener queues still need an
-  external pub/sub bus or a polled notification table. Pinned by
+- [x] `LISTEN` / `UNLISTEN` / `pg_notify` / `NOTIFY` - notification
+  channels work through the PostgreSQL wire protocol: listeners receive
+  asynchronous `NotificationResponse` messages from both `NOTIFY` and
+  `pg_notify`, `UNLISTEN channel` and `UNLISTEN *` remove registrations,
+  and transaction boundaries match PostgreSQL's observable behavior
+  (delivery after COMMIT, no delivery before COMMIT or after ROLLBACK,
+  duplicate channel/payload pairs folded within a transaction). Pinned by
   testing/go/pg_notify_probe_test.go.
 - [ ] Reader/writer pool topology - define the Doltgres deployment shape
   expected by ORM `withReplicas`-style reader/writer routing.

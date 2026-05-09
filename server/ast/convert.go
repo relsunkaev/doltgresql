@@ -187,6 +187,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeImport(ctx, stmt)
 	case *tree.Insert:
 		return nodeInsert(ctx, stmt)
+	case *tree.Listen:
+		return nodeListen(ctx, stmt)
 	case *tree.LockTable:
 		return nodeLockTable(ctx, stmt)
 	case *tree.Notify:
@@ -319,6 +321,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeTruncate(ctx, stmt)
 	case *tree.UnionClause:
 		return nodeUnionClause(ctx, stmt)
+	case *tree.Unlisten:
+		return nodeUnlisten(ctx, stmt)
 	case *tree.Unsplit:
 		return nodeUnsplit(ctx, stmt)
 	case *tree.Update:
