@@ -287,11 +287,12 @@ Do not check off an item until it has workload proof:
   analysis, so columns omitted from the original INSERT can still be
   written by the BEFORE trigger. Pinned by the partial-column subtest
   of testing/go/plpgsql_trigger_function_probe_test.go.
-- [ ] Event triggers - `CREATE EVENT TRIGGER` is rejected at the
-  parser today (`at or near "event": syntax error`). DMS-style
-  intercept triggers must be stripped from the dump before import.
-  Pinned by testing/go/unsupported_ddl_probes_test.go.
-- [ ] `CREATE AGGREGATE` - rejected with SQLSTATE 0A000 (`CREATE
+- [x] Event triggers - `CREATE EVENT TRIGGER` is rejected with
+  PostgreSQL's event-trigger privilege boundary, SQLSTATE 42501
+  (`permission denied to create event trigger`). DMS-style intercept
+  triggers must be stripped from the dump before import. Pinned by
+  testing/go/unsupported_ddl_probes_test.go and testing/go/sqlstate_test.go.
+- [x] `CREATE AGGREGATE` - rejected with SQLSTATE 0A000 (`CREATE
   AGGREGATE is not yet supported`). Apps that depend on custom
   aggregates must rewrite to scalar UDFs / window functions.
   Pinned by testing/go/unsupported_ddl_probes_test.go.
@@ -490,7 +491,7 @@ Do not check off an item until it has workload proof:
   `@>` containment subset (`payload @> '{"kind": "click"}'`) returns
   the correct rows. Coverage in
   testing/go/include_jsonb_gin_index_probe_test.go.
-- [ ] GiST indexes - rejected with SQLSTATE 0A000 `index method
+- [x] GiST indexes - rejected with SQLSTATE 0A000 `index method
   gist is not yet supported`. Apps that need GiST (geometry, range
   non-overlap, btree_gist composite uniqueness) must rewrite to
   btree with a custom unique key, or strip the USING gist suffix
