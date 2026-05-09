@@ -80,8 +80,16 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	fromType, ok := c.sqlChild.Type(ctx).(*pgtypes.DoltgresType)
-	if !ok {
+	var fromType *pgtypes.DoltgresType
+	if newVal, ok, err := castFunctionValue(ctx, val, c.sqlChild); ok {
+		if err != nil {
+			return nil, err
+		}
+		val = newVal
+		fromType, _ = FunctionDoltgresType(ctx, c.sqlChild)
+	} else if exprType, ok := c.sqlChild.Type(ctx).(*pgtypes.DoltgresType); ok {
+		fromType = exprType
+	} else {
 		// We'll leverage GMSCast to handle the conversion from a GMS type to a Doltgres type.
 		// Rather than re-evaluating the expression, we put the result in a literal.
 		gmsCast := NewGMSCast(expression.NewLiteral(val, c.sqlChild.Type(ctx)))

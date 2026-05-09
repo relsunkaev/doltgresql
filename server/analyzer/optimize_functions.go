@@ -46,6 +46,9 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		if windowNode, ok := n.(*plan.Window); ok {
 			return rewriteWindowSelectExprCasts(ctx, windowNode)
 		}
+		if groupByNode, ok := n.(*plan.GroupBy); ok {
+			return rewriteGroupByAggregateCasts(ctx, groupByNode)
+		}
 		if sortNode, ok := n.(*plan.Sort); ok {
 			sortNode, sameTree := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
 			return sortNode, sameTree, nil
@@ -151,6 +154,45 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields, err
 	})
+}
+
+func rewriteGroupByAggregateCasts(ctx *sql.Context, groupByNode *plan.GroupBy) (sql.Node, transform.TreeIdentity, error) {
+	selectDeps := make([]sql.Expression, len(groupByNode.SelectDeps))
+	copy(selectDeps, groupByNode.SelectDeps)
+
+	var changed bool
+	for i, expr := range selectDeps {
+		if _, ok := expr.(*pgexprs.AggregationGMSCast); ok {
+			continue
+		}
+		aggregation, ok := expr.(sql.Aggregation)
+		if !ok {
+			continue
+		}
+		if _, ok := expr.(framework.Function); ok {
+			continue
+		}
+		if _, ok := pgexprs.FunctionDoltgresType(ctx, expr); ok {
+			selectDeps[i] = pgexprs.NewAggregationGMSCast(aggregation)
+			changed = true
+			continue
+		}
+		if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); !ok {
+			selectDeps[i] = pgexprs.NewAggregationGMSCast(aggregation)
+			changed = true
+		}
+	}
+	if !changed {
+		return groupByNode, transform.SameTree, nil
+	}
+	exprs := make([]sql.Expression, 0, len(selectDeps)+len(groupByNode.GroupByExprs))
+	exprs = append(exprs, selectDeps...)
+	exprs = append(exprs, groupByNode.GroupByExprs...)
+	newNode, err := groupByNode.WithExpressions(ctx, exprs...)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	return newNode, transform.NewTree, nil
 }
 
 func rewriteWindowSelectExprCasts(ctx *sql.Context, windowNode *plan.Window) (sql.Node, transform.TreeIdentity, error) {

@@ -60,6 +60,22 @@ func NewWindowGMSCast(child sql.WindowAdaptableExpression) *WindowGMSCast {
 	return &WindowGMSCast{GMSCast: NewGMSCast(child)}
 }
 
+// AggregationGMSCast handles GMS-to-Doltgres value conversion for ordinary
+// aggregations. GroupBy execution requires select expressions to implement
+// sql.Aggregation, so a plain GMSCast wrapper would otherwise be evaluated as a
+// non-aggregate first-value expression.
+type AggregationGMSCast struct {
+	*GMSCast
+}
+
+var _ sql.Expression = (*AggregationGMSCast)(nil)
+var _ sql.Aggregation = (*AggregationGMSCast)(nil)
+
+// NewAggregationGMSCast returns a GMS cast that remains executable as an aggregation.
+func NewAggregationGMSCast(child sql.Aggregation) *AggregationGMSCast {
+	return &AggregationGMSCast{GMSCast: NewGMSCast(child)}
+}
+
 // Children implements the sql.Expression interface.
 func (c *GMSCast) Children() []sql.Expression {
 	return []sql.Expression{c.sqlChild}
@@ -72,7 +88,7 @@ func (c *GMSCast) Child() sql.Expression {
 
 // DoltgresType returns the DoltgresType that the cast evaluates to. This is the same value that is returned by Type().
 func (c *GMSCast) DoltgresType(ctx *sql.Context) *pgtypes.DoltgresType {
-	if dt, ok := WindowFunctionDoltgresType(ctx, c.sqlChild); ok {
+	if dt, ok := FunctionDoltgresType(ctx, c.sqlChild); ok {
 		return dt
 	}
 	// GMSCast shouldn't receive a DoltgresType, but we shouldn't error if it happens
@@ -96,7 +112,7 @@ func castGMSExpressionValue(ctx *sql.Context, val any, expr sql.Expression) (any
 	if val == nil {
 		return nil, nil
 	}
-	if newVal, ok, err := castWindowFunctionValue(ctx, val, expr); ok {
+	if newVal, ok, err := castFunctionValue(ctx, val, expr); ok {
 		return newVal, err
 	}
 	// GMSCast shouldn't receive a DoltgresType, but we shouldn't error if it happens
@@ -227,18 +243,18 @@ func castGMSValue(ctx *sql.Context, val any, sqlTyp sql.Type) (any, error) {
 	}
 }
 
-// WindowFunctionDoltgresType returns the PostgreSQL return type for GMS window functions
+// FunctionDoltgresType returns PostgreSQL return types for GMS functions
 // whose runtime values need Doltgres conversion.
-func WindowFunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+func FunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
 	fn, ok := expr.(sql.FunctionExpression)
 	if !ok {
 		return nil, false
 	}
 	switch strings.ToUpper(fn.FunctionName()) {
 	case "AVG":
-		return pgtypes.Numeric, true
+		return avgDoltgresType(ctx, expr)
 	case "SUM":
-		return windowSumDoltgresType(ctx, expr)
+		return sumDoltgresType(ctx, expr)
 	case "ROW_NUMBER", "RANK", "DENSE_RANK":
 		return pgtypes.Int64, true
 	case "NTILE":
@@ -250,7 +266,30 @@ func WindowFunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes
 	}
 }
 
-func windowSumDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+// WindowFunctionDoltgresType returns the PostgreSQL return type for GMS window functions
+// whose runtime values need Doltgres conversion.
+func WindowFunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	return FunctionDoltgresType(ctx, expr)
+}
+
+func avgDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	children := expr.Children()
+	if len(children) < 1 {
+		return nil, false
+	}
+	childType, ok := children[0].Type(ctx).(*pgtypes.DoltgresType)
+	if !ok {
+		childType = pgtypes.FromGmsType(children[0].Type(ctx))
+	}
+	switch {
+	case childType.Equals(pgtypes.Float32), childType.Equals(pgtypes.Float64):
+		return pgtypes.Float64, true
+	default:
+		return pgtypes.Numeric, true
+	}
+}
+
+func sumDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
 	children := expr.Children()
 	if len(children) < 1 {
 		return nil, false
@@ -273,8 +312,8 @@ func windowSumDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.Dolt
 	}
 }
 
-func castWindowFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (any, bool, error) {
-	dt, ok := WindowFunctionDoltgresType(ctx, expr)
+func castFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (any, bool, error) {
+	dt, ok := FunctionDoltgresType(ctx, expr)
 	if !ok {
 		return nil, false, nil
 	}
@@ -387,6 +426,107 @@ func (c *WindowGMSCast) WithChildren(ctx *sql.Context, children ...sql.Expressio
 		return nil, errors.Errorf("GMSCast expected window-compatible child, got `%T`", children[0])
 	}
 	return NewWindowGMSCast(child), nil
+}
+
+func (c *AggregationGMSCast) NewBuffer(ctx *sql.Context) (sql.AggregationBuffer, error) {
+	aggregation, ok := c.sqlChild.(sql.Aggregation)
+	if !ok {
+		return nil, errors.Errorf("GMSCast expected aggregation-compatible child, got `%T`", c.sqlChild)
+	}
+	buffer, err := aggregation.NewBuffer(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &gmsCastAggregationBuffer{
+		child: c.sqlChild,
+		inner: buffer,
+	}, nil
+}
+
+func (c *AggregationGMSCast) NewWindowFunction(ctx *sql.Context) (sql.WindowFunction, error) {
+	child, ok := c.sqlChild.(sql.WindowAdaptableExpression)
+	if !ok {
+		return nil, errors.Errorf("GMSCast expected window-compatible child, got `%T`", c.sqlChild)
+	}
+	fn, err := child.NewWindowFunction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &gmsCastWindowFunction{
+		child: c.sqlChild,
+		inner: fn,
+	}, nil
+}
+
+func (c *AggregationGMSCast) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
+	child, ok := c.sqlChild.(sql.Aggregation)
+	if !ok {
+		return c
+	}
+	windowChild := child.WithWindow(ctx, window)
+	aggregationChild, ok := windowChild.(sql.Aggregation)
+	if !ok {
+		return c
+	}
+	return NewAggregationGMSCast(aggregationChild)
+}
+
+func (c *AggregationGMSCast) Window() *sql.WindowDefinition {
+	if child, ok := c.sqlChild.(sql.WindowAdaptableExpression); ok {
+		return child.Window()
+	}
+	return nil
+}
+
+func (c *AggregationGMSCast) Id() sql.ColumnId {
+	if idExpr, ok := c.sqlChild.(sql.IdExpression); ok {
+		return idExpr.Id()
+	}
+	return 0
+}
+
+func (c *AggregationGMSCast) WithId(id sql.ColumnId) sql.IdExpression {
+	idExpr, ok := c.sqlChild.(sql.IdExpression)
+	if !ok {
+		return c
+	}
+	child, ok := idExpr.WithId(id).(sql.Aggregation)
+	if !ok {
+		return c
+	}
+	return NewAggregationGMSCast(child)
+}
+
+func (c *AggregationGMSCast) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
+	if len(children) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(children), 1)
+	}
+	child, ok := children[0].(sql.Aggregation)
+	if !ok {
+		return nil, errors.Errorf("GMSCast expected aggregation-compatible child, got `%T`", children[0])
+	}
+	return NewAggregationGMSCast(child), nil
+}
+
+type gmsCastAggregationBuffer struct {
+	child sql.Expression
+	inner sql.AggregationBuffer
+}
+
+func (b *gmsCastAggregationBuffer) Dispose(ctx *sql.Context) {
+	b.inner.Dispose(ctx)
+}
+
+func (b *gmsCastAggregationBuffer) Update(ctx *sql.Context, row sql.Row) error {
+	return b.inner.Update(ctx, row)
+}
+
+func (b *gmsCastAggregationBuffer) Eval(ctx *sql.Context) (interface{}, error) {
+	val, err := b.inner.Eval(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return castGMSExpressionValue(ctx, val, b.child)
 }
 
 type gmsCastWindowFunction struct {

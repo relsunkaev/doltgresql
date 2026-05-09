@@ -81,8 +81,14 @@ Do not check off an item until it has workload proof:
   restores it through the real `psql`, introspects the restored schema
   with the real `drizzle-kit introspect` binary, and runs pgx app
   reads/writes on the restored database.
-- [ ] Run a real-world view rebuild path against Doltgres (CTEs, `LATERAL`,
+- [x] Run a real-world view rebuild path against Doltgres (CTEs, `LATERAL`,
   `DISTINCT ON`, window functions, JSONB expansion, regex SRFs).
+  testing/go/view_rebuild_workload_test.go creates and then rebuilds
+  an account-event analytical view that combines CTE staging,
+  `JOIN LATERAL` JSONB and regex set-returning functions,
+  `DISTINCT ON` latest-row selection, and partitioned window
+  aggregates; both the initial view and `CREATE OR REPLACE VIEW`
+  output are pinned.
 - [ ] Run Electric and Zero (or equivalent logical-replication consumers)
   against Doltgres with `REPLICA IDENTITY FULL`-marked tables.
 - [~] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`

@@ -242,7 +242,11 @@ var ValuesStatementTests = []ScriptTest{
 			{
 				// AVG on mixed types
 				Query:    `SELECT AVG(n) FROM (VALUES(1),(2),(3),(4)) v(n);`,
-				Expected: []sql.Row{{2.5}},
+				Expected: []sql.Row{{Numeric("2.5")}},
+			},
+			{
+				Query:    `SELECT pg_typeof(AVG(n)) FROM (VALUES(1),(2),(3),(4)) v(n);`,
+				Expected: []sql.Row{{"numeric"}},
 			},
 			{
 				// MIN/MAX on mixed types
