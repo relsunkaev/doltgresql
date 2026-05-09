@@ -19,7 +19,9 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/pgstats"
 )
 
 type pgIndexStatsScope int
@@ -38,16 +40,22 @@ func pgStatIndexRows(ctx *sql.Context, scope pgIndexStatsScope) (sql.RowIter, er
 				return true, nil
 			}
 			indexName := formatIndexNameForTable(index.Item, table.Item)
+			indexOID := id.Cache().ToOID(index.OID.AsId())
+			stats := pgstats.SnapshotIndex(indexOID)
+			var lastIdxScan any
+			if !stats.LastIdxScan.IsZero() {
+				lastIdxScan = stats.LastIdxScan
+			}
 			rows = append(rows, sql.Row{
 				table.OID.AsId(),         // relid
 				index.OID.AsId(),         // indexrelid
 				schema.Item.SchemaName(), // schemaname
 				table.Item.Name(),        // relname
 				indexName,                // indexrelname
-				int64(0),                 // idx_scan
-				nil,                      // last_idx_scan
-				int64(0),                 // idx_tup_read
-				int64(0),                 // idx_tup_fetch
+				stats.IdxScan,            // idx_scan
+				lastIdxScan,              // last_idx_scan
+				stats.IdxTupRead,         // idx_tup_read
+				stats.IdxTupFetch,        // idx_tup_fetch
 			})
 			return true, nil
 		},

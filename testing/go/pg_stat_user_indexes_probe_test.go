@@ -20,21 +20,18 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestPgStatUserIndexesProbe pins what `pg_stat_user_indexes` returns
-// today. PG admin tooling reads idx_scan / idx_tup_read /
-// idx_tup_fetch counters from this view to identify unused indexes
-// and tune planner stats. Doltgres has no live counter
-// instrumentation, so the contract we want is "the view exists,
-// returns rows with the expected columns shape, and counters are
-// either zero or stable" — that lets admin scripts run without
-// branching on missing-view errors. Per the Dump/admin/tooling TODO
-// in docs/app-compatibility-checklist.md.
+// TestPgStatUserIndexesProbe pins pg_stat_user_indexes row shape and live
+// counter behavior for ordinary user index scans. PG admin tooling reads
+// idx_scan / idx_tup_read / idx_tup_fetch to identify unused indexes and tune
+// planner stats. Per the Dump/admin/tooling TODO in
+// docs/app-compatibility-checklist.md.
 func TestPgStatUserIndexesProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "pg_stat_user_indexes returns rows for user indexes with expected columns",
+			Name: "pg_stat_user_indexes returns and updates user index counters",
 			SetUpScript: []string{
 				`CREATE TABLE accounts (id INT PRIMARY KEY, email TEXT);`,
+				`INSERT INTO accounts VALUES (1, 'a@example.com'), (2, 'b@example.com');`,
 				`CREATE INDEX accounts_email_idx ON accounts (email);`,
 			},
 			Assertions: []ScriptTestAssertion{
@@ -56,8 +53,47 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 							SELECT idx_scan, idx_tup_read, idx_tup_fetch
 							FROM pg_stat_user_indexes
 							WHERE relname = 'accounts'
-						) t;`,
+					) t;`,
 					Expected: []sql.Row{{"2"}},
+				},
+				{
+					Query: `SELECT idx_scan::text, (last_idx_scan IS NULL)::text, idx_tup_read::text, idx_tup_fetch::text
+						FROM pg_stat_user_indexes
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
+					Expected: []sql.Row{{"0", "true", "0", "0"}},
+				},
+				{
+					Query: `EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';`,
+					Expected: []sql.Row{
+						{"Project"},
+						{" ├─ columns: [accounts.id]"},
+						{" └─ IndexedTableAccess(accounts)"},
+						{"     ├─ index: [accounts.email]"},
+						{"     ├─ filters: [{[a@example.com, a@example.com]}]"},
+						{"     └─ columns: [id email]"},
+					},
+				},
+				{
+					Query: `SELECT id FROM accounts WHERE email = 'a@example.com';`,
+					Expected: []sql.Row{
+						{1},
+					},
+				},
+				{
+					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
+						FROM pg_stat_user_indexes
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
+					Expected: []sql.Row{{"1", "true", "1", "1"}},
+				},
+				{
+					Query:    `SELECT id FROM accounts WHERE email = 'missing@example.com';`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
+						FROM pg_stat_user_indexes
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
+					Expected: []sql.Row{{"2", "true", "1", "1"}},
 				},
 			},
 		},

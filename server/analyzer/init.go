@@ -69,6 +69,7 @@ const (
 	ruleId_UnwrapTableCopierCreateTable                                     // unwrapTableCopierCreateTable
 	ruleId_PreserveTableMetadata                                            // preserveTableMetadata
 	ruleId_AssignUnpopulatedMatviewScans                                    // assignUnpopulatedMaterializedViewScans
+	ruleId_AssignIndexStats                                                 // assignIndexStats
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -143,6 +144,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_OptimizeFunctions, Apply: OptimizeFunctions},
 		// AddDomainConstraintsToCasts needs to run after 'assignExecIndexes' rule in GMS.
 		analyzer.Rule{Id: ruleId_AddDomainConstraintsToCasts, Apply: AddDomainConstraintsToCasts},
+		analyzer.Rule{Id: ruleId_AssignIndexStats, Apply: AssignIndexStats},
 		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},

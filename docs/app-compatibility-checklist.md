@@ -701,14 +701,12 @@ actually exercise.
   the binary harness (composite-PK and unique-constraint
   introspection) remain disabled — see the pg_constraint
   completeness item below for the dependency.
-- [~] `pg_stat_user_indexes` - the view exists with the expected
-  column shape (relname, idx_scan, idx_tup_read, idx_tup_fetch) and
-  returns one row per user index. Doltgres has no live counter
-  instrumentation, so the counters are not authoritative — admin
-  tooling that uses this view to identify unused indexes should not
-  trust the values until live counters land. The shape is enough
-  for scripts that just enumerate user indexes; pinned by
-  testing/go/pg_stat_user_indexes_probe_test.go.
+- [x] `pg_stat_user_indexes` - the view exists with the expected
+  column shape (relname, idx_scan, last_idx_scan, idx_tup_read,
+  idx_tup_fetch), returns one row per user index, and records live
+  in-process counters for planner-chosen index scans. A lookup that
+  returns no rows still increments idx_scan without inflating tuple
+  counters; pinned by testing/go/pg_stat_user_indexes_probe_test.go.
 - [x] `pg_class` / `pg_index` - low-level catalog inspection used by
   admin scripts and migration tools works end-to-end. The canonical
   "does the table exist?" join (`pg_class JOIN pg_namespace` filtered
