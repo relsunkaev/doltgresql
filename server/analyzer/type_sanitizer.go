@@ -75,6 +75,12 @@ func TypeSanitizer(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 		case sql.FunctionExpression:
 			// Compiled functions are Doltgres functions. We're only concerned with GMS functions.
 			if _, ok := expr.(framework.Function); !ok {
+				if windowExpr, ok := expr.(sql.WindowAdaptableExpression); ok {
+					if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); !ok {
+						return pgexprs.NewWindowGMSCast(windowExpr), transform.NewTree, nil
+					}
+					return expr, transform.SameTree, nil
+				}
 				// Some aggregation functions cannot be wrapped due to expectations in the analyzer, so we exclude them here.
 				switch expr.FunctionName() {
 				case "Count", "CountDistinct", "group_concat", "JSONObjectAgg", "Sum":

@@ -114,5 +114,50 @@ func TestWindowFunctions(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "rank family over partition",
+			SetUpScript: []string{
+				`CREATE TABLE scores (
+					id INT PRIMARY KEY,
+					grp TEXT,
+					score INT
+				);`,
+				`INSERT INTO scores VALUES
+					(1, 'a', 10), (2, 'a', 20), (3, 'a', 20),
+					(4, 'b', 7), (5, 'b', 9), (6, 'b', 9);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, grp, score,
+						row_number() OVER (PARTITION BY grp ORDER BY score DESC, id) AS row_num,
+						rank() OVER (PARTITION BY grp ORDER BY score DESC) AS rank_num,
+						dense_rank() OVER (PARTITION BY grp ORDER BY score DESC) AS dense_rank_num,
+						percent_rank() OVER (PARTITION BY grp ORDER BY score DESC) AS pct_rank,
+						ntile(2) OVER (PARTITION BY grp ORDER BY score DESC, id) AS bucket
+						FROM scores
+						ORDER BY grp, score DESC, id;`,
+					Expected: []sql.Row{
+						{int32(2), "a", int32(20), int64(1), int64(1), int64(1), float64(0), int32(1)},
+						{int32(3), "a", int32(20), int64(2), int64(1), int64(1), float64(0), int32(1)},
+						{int32(1), "a", int32(10), int64(3), int64(3), int64(2), float64(1), int32(2)},
+						{int32(5), "b", int32(9), int64(1), int64(1), int64(1), float64(0), int32(1)},
+						{int32(6), "b", int32(9), int64(2), int64(1), int64(1), float64(0), int32(1)},
+						{int32(4), "b", int32(7), int64(3), int64(3), int64(2), float64(1), int32(2)},
+					},
+				},
+				{
+					Query: `SELECT
+						pg_typeof(row_number() OVER (ORDER BY id)),
+						pg_typeof(rank() OVER (ORDER BY score DESC)),
+						pg_typeof(dense_rank() OVER (ORDER BY score DESC)),
+						pg_typeof(percent_rank() OVER (ORDER BY score DESC)),
+						pg_typeof(ntile(2) OVER (ORDER BY score DESC, id))
+						FROM scores
+						ORDER BY id
+						LIMIT 1;`,
+					Expected: []sql.Row{{"bigint", "bigint", "bigint", "double precision", "integer"}},
+				},
+			},
+		},
 	})
 }

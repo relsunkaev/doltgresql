@@ -16,6 +16,7 @@ package expression
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
@@ -43,6 +44,22 @@ func NewGMSCast(child sql.Expression) *GMSCast {
 	}
 }
 
+// WindowGMSCast handles GMS-to-Doltgres value conversion for window functions.
+// Window execution requires the top-level expression to implement
+// sql.WindowAggregation, so a plain GMSCast wrapper would otherwise force the
+// executor down the ordinary Eval path.
+type WindowGMSCast struct {
+	*GMSCast
+}
+
+var _ sql.Expression = (*WindowGMSCast)(nil)
+var _ sql.WindowAggregation = (*WindowGMSCast)(nil)
+
+// NewWindowGMSCast returns a GMS cast that remains executable as a window aggregation.
+func NewWindowGMSCast(child sql.WindowAdaptableExpression) *WindowGMSCast {
+	return &WindowGMSCast{GMSCast: NewGMSCast(child)}
+}
+
 // Children implements the sql.Expression interface.
 func (c *GMSCast) Children() []sql.Expression {
 	return []sql.Expression{c.sqlChild}
@@ -55,6 +72,9 @@ func (c *GMSCast) Child() sql.Expression {
 
 // DoltgresType returns the DoltgresType that the cast evaluates to. This is the same value that is returned by Type().
 func (c *GMSCast) DoltgresType(ctx *sql.Context) *pgtypes.DoltgresType {
+	if dt, ok := windowFunctionDoltgresType(c.sqlChild); ok {
+		return dt
+	}
 	// GMSCast shouldn't receive a DoltgresType, but we shouldn't error if it happens
 	if t, ok := c.sqlChild.Type(ctx).(*pgtypes.DoltgresType); ok {
 		return t
@@ -69,14 +89,24 @@ func (c *GMSCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	return castGMSExpressionValue(ctx, val, c.sqlChild)
+}
+
+func castGMSExpressionValue(ctx *sql.Context, val any, expr sql.Expression) (any, error) {
 	if val == nil {
 		return nil, nil
 	}
+	if newVal, ok, err := castWindowFunctionValue(ctx, val, expr); ok {
+		return newVal, err
+	}
 	// GMSCast shouldn't receive a DoltgresType, but we shouldn't error if it happens
-	if _, ok := c.sqlChild.Type(ctx).(*pgtypes.DoltgresType); ok {
+	if _, ok := expr.Type(ctx).(*pgtypes.DoltgresType); ok {
 		return val, nil
 	}
-	sqlTyp := c.sqlChild.Type(ctx)
+	return castGMSValue(ctx, val, expr.Type(ctx))
+}
+
+func castGMSValue(ctx *sql.Context, val any, sqlTyp sql.Type) (any, error) {
 	switch sqlTyp.Type() {
 	// Boolean types are a special case because of how they are translated on the wire in Postgres. If we identify a
 	// boolean result, we want to convert it from an int back to a boolean.
@@ -193,8 +223,148 @@ func (c *GMSCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	case query.Type_GEOMETRY:
 		return nil, errors.Errorf("GMS geometry types are not supported")
 	default:
-		return nil, errors.Errorf("GMS type `%s` is not supported", c.sqlChild.Type(ctx).String())
+		return nil, errors.Errorf("GMS type `%s` is not supported", sqlTyp.String())
 	}
+}
+
+func windowFunctionDoltgresType(expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	fn, ok := expr.(sql.FunctionExpression)
+	if !ok {
+		return nil, false
+	}
+	switch strings.ToUpper(fn.FunctionName()) {
+	case "ROW_NUMBER", "RANK", "DENSE_RANK":
+		return pgtypes.Int64, true
+	case "NTILE":
+		return pgtypes.Int32, true
+	case "PERCENT_RANK":
+		return pgtypes.Float64, true
+	default:
+		return nil, false
+	}
+}
+
+func castWindowFunctionValue(ctx *sql.Context, val any, expr sql.Expression) (any, bool, error) {
+	fn, ok := expr.(sql.FunctionExpression)
+	if !ok {
+		return nil, false, nil
+	}
+	switch strings.ToUpper(fn.FunctionName()) {
+	case "ROW_NUMBER", "RANK", "DENSE_RANK":
+		newVal, _, err := types.Int64.Convert(ctx, val)
+		if err != nil {
+			return nil, true, err
+		}
+		if _, ok := newVal.(int64); !ok {
+			return nil, true, errors.Errorf("GMSCast expected type `int64`, got `%T`", val)
+		}
+		return newVal, true, nil
+	case "NTILE":
+		newVal, _, err := types.Int32.Convert(ctx, val)
+		if err != nil {
+			return nil, true, err
+		}
+		if _, ok := newVal.(int32); !ok {
+			return nil, true, errors.Errorf("GMSCast expected type `int32`, got `%T`", val)
+		}
+		return newVal, true, nil
+	case "PERCENT_RANK":
+		newVal, _, err := types.Float64.Convert(ctx, val)
+		if err != nil {
+			return nil, true, err
+		}
+		if _, ok := newVal.(float64); !ok {
+			return nil, true, errors.Errorf("GMSCast expected type `float64`, got `%T`", val)
+		}
+		return newVal, true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
+func (c *WindowGMSCast) Id() sql.ColumnId {
+	if idExpr, ok := c.sqlChild.(sql.IdExpression); ok {
+		return idExpr.Id()
+	}
+	return 0
+}
+
+func (c *WindowGMSCast) WithId(id sql.ColumnId) sql.IdExpression {
+	idExpr, ok := c.sqlChild.(sql.IdExpression)
+	if !ok {
+		return c
+	}
+	child, ok := idExpr.WithId(id).(sql.WindowAdaptableExpression)
+	if !ok {
+		return c
+	}
+	return NewWindowGMSCast(child)
+}
+
+func (c *WindowGMSCast) Window() *sql.WindowDefinition {
+	if child, ok := c.sqlChild.(sql.WindowAdaptableExpression); ok {
+		return child.Window()
+	}
+	return nil
+}
+
+func (c *WindowGMSCast) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
+	child, ok := c.sqlChild.(sql.WindowAdaptableExpression)
+	if !ok {
+		return c
+	}
+	return NewWindowGMSCast(child.WithWindow(ctx, window))
+}
+
+func (c *WindowGMSCast) NewWindowFunction(ctx *sql.Context) (sql.WindowFunction, error) {
+	child, ok := c.sqlChild.(sql.WindowAdaptableExpression)
+	if !ok {
+		return nil, errors.Errorf("GMSCast expected window-compatible child, got `%T`", c.sqlChild)
+	}
+	fn, err := child.NewWindowFunction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &gmsCastWindowFunction{
+		child: c.sqlChild,
+		inner: fn,
+	}, nil
+}
+
+func (c *WindowGMSCast) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
+	if len(children) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(children), 1)
+	}
+	child, ok := children[0].(sql.WindowAdaptableExpression)
+	if !ok {
+		return nil, errors.Errorf("GMSCast expected window-compatible child, got `%T`", children[0])
+	}
+	return NewWindowGMSCast(child), nil
+}
+
+type gmsCastWindowFunction struct {
+	child sql.Expression
+	inner sql.WindowFunction
+}
+
+func (f *gmsCastWindowFunction) Dispose(ctx *sql.Context) {
+	f.inner.Dispose(ctx)
+}
+
+func (f *gmsCastWindowFunction) StartPartition(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) error {
+	return f.inner.StartPartition(ctx, interval, buffer)
+}
+
+func (f *gmsCastWindowFunction) DefaultFramer() sql.WindowFramer {
+	return f.inner.DefaultFramer()
+}
+
+func (f *gmsCastWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) (interface{}, error) {
+	val, err := f.inner.Compute(ctx, interval, buffer)
+	if err != nil {
+		return nil, err
+	}
+	return castGMSExpressionValue(ctx, val, f.child)
 }
 
 // IsNullable implements the sql.Expression interface.

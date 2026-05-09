@@ -55,6 +55,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			return n, transform.SameTree, nil
 		}
 		projectNode, sameProjection := rewriteProjectionsWithProjectedSRFs(ctx, projectNode)
+		projectNode, sameGetFields := rewriteProjectionGetFieldsFromChildSchema(ctx, projectNode)
 
 		hasMultipleExpressionTuples := false
 		hasSRF := false
@@ -143,8 +144,82 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			projectNode = projectNode.WithIncludesNestedIters(true)
 		}
 
-		return projectNode, sameNode && sameExprs && sameProjection, err
+		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields, err
 	})
+}
+
+func rewriteProjectionGetFieldsFromChildSchema(ctx *sql.Context, projectNode *plan.Project) (*plan.Project, transform.TreeIdentity) {
+	childSchema := projectNode.Child.Schema(ctx)
+	projections := make([]sql.Expression, len(projectNode.Projections))
+	copy(projections, projectNode.Projections)
+
+	var changed bool
+	for i, projection := range projections {
+		rewritten, ok := rewriteGetFieldsFromSchema(ctx, childSchema, projection)
+		if !ok {
+			continue
+		}
+		projections[i] = rewritten
+		changed = true
+	}
+	if !changed {
+		return projectNode, transform.SameTree
+	}
+	return copyProjectWithProjections(projectNode, projections), transform.NewTree
+}
+
+func rewriteGetFieldsFromSchema(ctx *sql.Context, schema sql.Schema, expr sql.Expression) (sql.Expression, bool) {
+	if alias, ok := expr.(*expression.Alias); ok {
+		rewrittenChild, changed := rewriteGetFieldsFromSchema(ctx, schema, alias.Child)
+		if !changed {
+			return expr, false
+		}
+		newAlias := expression.NewAlias(alias.Name(), rewrittenChild)
+		if alias.Unreferencable() {
+			newAlias = newAlias.AsUnreferencable()
+		}
+		return newAlias.WithId(alias.Id()).(sql.Expression), true
+	}
+
+	rewritten, same, _ := transform.Expr(ctx, expr, func(ctx *sql.Context, in sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		getField, ok := in.(*expression.GetField)
+		if !ok {
+			return in, transform.SameTree, nil
+		}
+		idx := getField.Index()
+		if idx < 0 || idx >= len(schema) {
+			return in, transform.SameTree, nil
+		}
+		col := schema[idx]
+		if getField.Type(ctx).String() == col.Type.String() && getField.IsNullable(ctx) == col.Nullable {
+			return in, transform.SameTree, nil
+		}
+		rewritten := expression.NewGetFieldWithTable(
+			idx,
+			int(getField.TableID()),
+			col.Type,
+			getField.Database(),
+			getField.Table(),
+			getField.Name(),
+			col.Nullable,
+		)
+		return rewritten.WithId(getField.Id()).(sql.Expression), transform.NewTree, nil
+	})
+	return rewritten, same == transform.NewTree
+}
+
+func copyProjectWithProjections(projectNode *plan.Project, projections []sql.Expression) *plan.Project {
+	newProject := plan.NewProject(projections, projectNode.Child)
+	if projectNode.IncludesNestedIters {
+		newProject = newProject.WithIncludesNestedIters(true)
+	}
+	if projectNode.CanDefer {
+		newProject = newProject.WithCanDefer(true)
+	}
+	if projectNode.AliasDeps != nil {
+		newProject = newProject.WithAliasDeps(projectNode.AliasDeps)
+	}
+	return newProject
 }
 
 func rewriteProjectionsWithProjectedSRFs(ctx *sql.Context, projectNode *plan.Project) (*plan.Project, transform.TreeIdentity) {
@@ -170,17 +245,7 @@ func rewriteProjectionsWithProjectedSRFs(ctx *sql.Context, projectNode *plan.Pro
 	if !changed {
 		return projectNode, transform.SameTree
 	}
-	newProject := plan.NewProject(projections, projectNode.Child)
-	if projectNode.IncludesNestedIters {
-		newProject = newProject.WithIncludesNestedIters(true)
-	}
-	if projectNode.CanDefer {
-		newProject = newProject.WithCanDefer(true)
-	}
-	if projectNode.AliasDeps != nil {
-		newProject = newProject.WithAliasDeps(projectNode.AliasDeps)
-	}
-	return newProject, transform.NewTree
+	return copyProjectWithProjections(projectNode, projections), transform.NewTree
 }
 
 func rewriteSortFieldsWithProjectedSRFs(ctx *sql.Context, sortNode *plan.Sort) (*plan.Sort, transform.TreeIdentity) {
