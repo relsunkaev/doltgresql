@@ -140,12 +140,14 @@ Do not check off an item until it has workload proof:
   hstore inputs, including PostgreSQL's length-then-lexicographic
   hstore key order, NULL hstore values, and projection/table-function
   forms with table column aliases.
-  `hstore(text, text)`, `hstore(text[], text[])`, and `hstore(text[])`
-  cover constructor semantics for NULL values, NULL key handling,
-  duplicate-first key handling, empty arrays, malformed array inputs,
-  and canonical constructor output ordering. `tconvert(text, text)`
-  covers the legacy constructor alias, and `hstore_version_diag`
-  reports the current hstore storage version for valid hstore inputs.
+  `hstore(text, text)`, `hstore(text[], text[])`, `hstore(text[])`,
+  and `hstore(record)` cover constructor semantics for NULL values,
+  NULL key handling, duplicate-first key handling, empty arrays,
+  malformed array inputs, named and anonymous record fields, boolean
+  record value output, NULL record fields, NULL composite rows, and
+  canonical constructor output ordering. `tconvert(text, text)` covers
+  the legacy constructor alias, and `hstore_version_diag` reports the
+  current hstore storage version for valid hstore inputs.
   `hstore = hstore` / `hstore <> hstore` cover order-insensitive
   equality, SQL NULL value equality, NULL-vs-empty-string inequality,
   and missing-vs-extra key inequality. `hstore_to_json`,

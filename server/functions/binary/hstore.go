@@ -15,6 +15,7 @@
 package binary
 
 import (
+	"fmt"
 	"io"
 	"regexp"
 	"sort"
@@ -27,6 +28,8 @@ import (
 	json "github.com/goccy/go-json"
 	"github.com/shopspring/decimal"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -63,6 +66,7 @@ func initHstore() {
 	framework.RegisterFunction(hstore_to_jsonb_loose)
 	framework.RegisterFunction(hstore_version_diag)
 	framework.RegisterFunction(hstore_tconvert)
+	framework.RegisterFunction(hstore_from_record)
 	framework.RegisterFunction(hstore_from_text)
 	framework.RegisterFunction(hstore_from_arrays)
 	framework.RegisterFunction(hstore_from_array)
@@ -322,6 +326,16 @@ var hstore_tconvert = framework.Function2{
 	Return:     hstoreType,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
 	Callable:   hstoreFromTextCallable,
+}
+
+var hstore_from_record = framework.Function1{
+	Name:       "hstore",
+	Return:     hstoreType,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return hstoreFromRecord(ctx, t[0], val)
+	},
 }
 
 var hstore_from_text = framework.Function2{
@@ -690,6 +704,97 @@ func hstoreFromTextCallable(_ *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any
 	pairs := make(map[string]*string, 1)
 	hstoreAddTextPair(pairs, val1.(string), val2)
 	return formatHstore(pairs), nil
+}
+
+func hstoreFromRecord(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (any, error) {
+	resolvedType, err := hstoreResolveType(ctx, typ)
+	if err != nil {
+		return nil, err
+	}
+	resolvedValue, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedValue == nil {
+		if resolvedType == nil || !resolvedType.IsCompositeType() || len(resolvedType.CompositeAttrs) == 0 {
+			return nil, nil
+		}
+		pairs := make(map[string]*string, len(resolvedType.CompositeAttrs))
+		for _, attr := range resolvedType.CompositeAttrs {
+			pairs[attr.Name] = nil
+		}
+		return formatHstore(pairs), nil
+	}
+	record, ok := resolvedValue.([]pgtypes.RecordValue)
+	if !ok {
+		return nil, errors.Errorf("expected record, but got %T", resolvedValue)
+	}
+	pairs := make(map[string]*string, len(record))
+	for i, field := range record {
+		key := hstoreRecordFieldName(resolvedType, i)
+		if field.Value == nil {
+			pairs[key] = nil
+			continue
+		}
+		fieldType, ok := field.Type.(*pgtypes.DoltgresType)
+		if !ok {
+			return nil, errors.Errorf("expected *DoltgresType, but got %T", field.Type)
+		}
+		output, err := fieldType.IoOutput(ctx, field.Value)
+		if err != nil {
+			return nil, err
+		}
+		if fieldType.ID == pgtypes.Bool.ID {
+			output = string(output[0])
+		}
+		pairs[key] = &output
+	}
+	return formatHstore(pairs), nil
+}
+
+func hstoreRecordFieldName(typ *pgtypes.DoltgresType, idx int) string {
+	if typ != nil && idx < len(typ.CompositeAttrs) && typ.CompositeAttrs[idx].Name != "" {
+		return typ.CompositeAttrs[idx].Name
+	}
+	return fmt.Sprintf("f%d", idx+1)
+}
+
+func hstoreResolveType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ == nil || typ.IsResolvedType() {
+		return typ, nil
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := typeCollection.GetType(ctx, typ.ID)
+	if err != nil {
+		return nil, err
+	}
+	if resolved != nil {
+		return resolved, nil
+	}
+	if typ.ID.SchemaName() == "" {
+		schema, err := core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+		resolved, err = typeCollection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolved != nil {
+			return resolved, nil
+		}
+		resolved, err = typeCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolved != nil {
+			return resolved, nil
+		}
+	}
+	return nil, pgtypes.ErrTypeDoesNotExist.New(typ.ID.TypeName())
 }
 
 func hstoreCastToJson(_ *sql.Context, val any, _ *pgtypes.DoltgresType) (any, error) {

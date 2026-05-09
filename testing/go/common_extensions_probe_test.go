@@ -230,6 +230,7 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`INSERT INTO vending_machines VALUES (1, '"A"=>"2", "B"=>"5"');`,
 				`INSERT INTO vending_machines VALUES (2, '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x"');`,
 				`INSERT INTO vending_machines VALUES (3, '"A"=>"2", "B"=>"5", "empty"=>NULL');`,
+				`CREATE TYPE hstore_person AS (name text, age integer, active boolean, note text);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -410,6 +411,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT hstore(ARRAY[]::text[])::text, hstore(ARRAY[]::text[], ARRAY[]::text[])::text;`,
 					Expected: []sql.Row{{``, ``}},
+				},
+				{
+					Query:    `SELECT hstore(ROW('Ada', 42, true, NULL)::hstore_person)::text;`,
+					Expected: []sql.Row{{`"age"=>"42", "name"=>"Ada", "note"=>NULL, "active"=>"t"`}},
+				},
+				{
+					Query:    `SELECT hstore(ROW(1, 'x', NULL))::text, hstore(ROW('needs,quote', 'a"b', false))::text;`,
+					Expected: []sql.Row{{`"f1"=>"1", "f2"=>"x", "f3"=>NULL`, `"f1"=>"needs,quote", "f2"=>"a\"b", "f3"=>"f"`}},
+				},
+				{
+					Query:    `SELECT hstore(NULL::hstore_person)::text;`,
+					Expected: []sql.Row{{`"age"=>NULL, "name"=>NULL, "note"=>NULL, "active"=>NULL`}},
 				},
 				{
 					Query:    `SELECT '"A"=>"2", "B"=>"5"'::public.hstore = '"B"=>"5", "A"=>"2"'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>NULL'::public.hstore, '"A"=>NULL'::public.hstore = '"A"=>""'::public.hstore;`,
