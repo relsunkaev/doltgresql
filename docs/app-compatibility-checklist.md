@@ -120,7 +120,10 @@ Do not check off an item until it has workload proof:
   residual risk until physical citext index keys/opclasses are modeled.
   `CREATE EXTENSION hstore` similarly installs a text-compatible
   `hstore` type for dump schemas that declare `public.hstore`
-  columns; hstore operators/functions/index parity remain residual risk.
+  columns, with `fetchval(hstore, text)` / `hstore -> text` covering
+  key lookup, missing-key NULLs, SQL NULL hstore values, and quoted
+  external representation parsing. Broader hstore operators,
+  functions, casts, and index parity remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.

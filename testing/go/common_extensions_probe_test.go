@@ -228,6 +228,7 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA public;`,
 				`CREATE TABLE vending_machines (id integer primary key, inventory public.hstore);`,
 				`INSERT INTO vending_machines VALUES (1, '"A"=>"2", "B"=>"5"');`,
+				`INSERT INTO vending_machines VALUES (2, '"empty"=>NULL, "quoted key"=>"a,b=>c", "quote\"slash\\"=>"v\"\\x"');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -240,6 +241,22 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT inventory::text FROM vending_machines WHERE id = 1;`,
 					Expected: []sql.Row{{`"A"=>"2", "B"=>"5"`}},
+				},
+				{
+					Query:    `SELECT inventory -> 'A', fetchval(inventory, 'B') FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"2", "5"}},
+				},
+				{
+					Query:    `SELECT (inventory -> 'missing') IS NULL FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT inventory -> 'empty', inventory -> 'quoted key', inventory -> E'quote"slash\\' FROM vending_machines WHERE id = 2;`,
+					Expected: []sql.Row{{nil, "a,b=>c", `v"\x`}},
+				},
+				{
+					Query:       `SELECT 'not hstore'::public.hstore -> 'missing';`,
+					ExpectedErr: `invalid input syntax for type hstore`,
 				},
 			},
 		},
