@@ -53,7 +53,7 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 			newNode := node
 			operation := getTriggerOperation(node)
 			if len(triggerInfo.beforeStatement) > 0 {
-				newNode, err = nodeWithTriggers(ctx, newNode, &pgnodes.TriggerExecution{
+				executionNode := &pgnodes.TriggerExecution{
 					Timing:    triggers.TriggerTiming_Before,
 					Statement: true,
 					Operation: operation,
@@ -63,9 +63,15 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 					Sch:       triggerInfo.sch,
 					Source:    getTriggerSource(newNode),
 					Runner:    pgexprs.StatementRunner{Runner: a.Runner},
-				})
-				if err != nil {
-					return nil, transform.NewTree, err
+				}
+				if _, ok := newNode.(*plan.Truncate); ok {
+					executionNode.Source = newNode
+					newNode = executionNode
+				} else {
+					newNode, err = nodeWithTriggers(ctx, newNode, executionNode)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
 				}
 			}
 			if len(triggerInfo.beforeRow) > 0 {

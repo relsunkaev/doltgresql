@@ -195,14 +195,17 @@ Do not check off an item until it has workload proof:
   STATEMENT` table triggers now execute once per matching
   INSERT/UPDATE/DELETE statement, and AFTER statement triggers may
   declare `REFERENCING OLD TABLE AS ...` / `NEW TABLE AS ...`
-  transition relations that are queryable inside the trigger
-  function. Pinned by testing/go/trigger_test.go
-  (TestStatementTriggerTransitionTables), including zero-row
-  UPDATE transition sets. Remaining gaps: PostgreSQL's row-level
-  transition-table triggers are still rejected with SQLSTATE
-  0A000, TRUNCATE statement triggers are still unsupported, and
-  plain AFTER statement trigger self-queries still inherit the
-  existing AFTER-trigger target-table visibility limitation.
+  transition relations that are queryable inside the trigger function.
+  BEFORE/AFTER TRUNCATE statement triggers now create, introspect via
+  `pg_trigger` / `information_schema.triggers`, and fire with
+  `TG_OP = 'TRUNCATE'`; row-level TRUNCATE triggers are rejected because
+  PostgreSQL only supports TRUNCATE at statement level. Pinned by
+  testing/go/trigger_test.go (TestStatementTriggerTransitionTables and
+  the TRUNCATE statement trigger probe), including zero-row UPDATE
+  transition sets. Remaining gaps: PostgreSQL's row-level
+  transition-table triggers are still rejected with SQLSTATE 0A000, and
+  plain AFTER statement trigger self-queries still inherit the existing
+  AFTER-trigger target-table visibility limitation.
 - [x] Trigger catalog introspection - `pg_trigger` now walks the
   persisted trigger collection and exposes created triggers with
   stable trigger OIDs, `tgrelid`, `tgfoid`, `tgtype`, `tgenabled`,

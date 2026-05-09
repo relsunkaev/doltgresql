@@ -587,6 +587,62 @@ $$ LANGUAGE plpgsql;`,
 			},
 		},
 		{
+			Name: "TRUNCATE statement triggers",
+			SetUpScript: []string{
+				"CREATE TABLE test (pk INT PRIMARY KEY, v1 TEXT);",
+				"CREATE TABLE trigger_log (seq INT, entry TEXT, op TEXT, table_name TEXT);",
+				"INSERT INTO test VALUES (1, 'hi'), (2, 'there');",
+				`CREATE FUNCTION truncate_trigger_func() RETURNS TRIGGER AS $$
+BEGIN
+	INSERT INTO trigger_log VALUES ((SELECT count(*) + 1 FROM trigger_log), TG_WHEN || ' ' || TG_LEVEL, TG_OP, TG_TABLE_NAME);
+	RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER before_truncate BEFORE TRUNCATE ON test FOR EACH STATEMENT EXECUTE FUNCTION truncate_trigger_func();`,
+				`CREATE TRIGGER after_truncate AFTER TRUNCATE ON test FOR EACH STATEMENT EXECUTE FUNCTION truncate_trigger_func();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE TRIGGER row_truncate BEFORE TRUNCATE ON test FOR EACH ROW EXECUTE FUNCTION truncate_trigger_func();`,
+					ExpectedErr: "TRUNCATE triggers must be FOR EACH STATEMENT",
+				},
+				{
+					Query: `SELECT tgname, tgtype::int
+						FROM pg_trigger
+						WHERE tgname IN ('before_truncate', 'after_truncate')
+						ORDER BY tgname;`,
+					Expected: []sql.Row{
+						{"after_truncate", 32},
+						{"before_truncate", 34},
+					},
+				},
+				{
+					Query: `SELECT event_manipulation, action_timing, action_orientation
+						FROM information_schema.triggers
+						WHERE trigger_name IN ('before_truncate', 'after_truncate')
+						ORDER BY trigger_name;`,
+					Expected: []sql.Row{
+						{"TRUNCATE", "AFTER", "STATEMENT"},
+						{"TRUNCATE", "BEFORE", "STATEMENT"},
+					},
+				},
+				{
+					Query: `TRUNCATE test;`,
+				},
+				{
+					Query:    `SELECT * FROM test;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT seq, entry, op, table_name FROM trigger_log ORDER BY seq;`,
+					Expected: []sql.Row{
+						{1, "BEFORE STATEMENT", "TRUNCATE", "test"},
+						{2, "AFTER STATEMENT", "TRUNCATE", "test"},
+					},
+				},
+			},
+		},
+		{
 			Name: "WHEN on BEFORE INSERT",
 			SetUpScript: []string{
 				"CREATE TABLE test (pk INT PRIMARY KEY, v1 TEXT);",

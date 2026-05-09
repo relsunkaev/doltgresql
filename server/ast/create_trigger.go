@@ -77,7 +77,12 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 				Type: triggers.TriggerEventType_Delete,
 			})
 		case tree.TriggerEventTruncate:
-			return NotYetSupportedError("TRUNCATE is not yet supported for CREATE TRIGGER")
+			if node.ForEachRow {
+				return nil, errors.New("TRUNCATE triggers must be FOR EACH STATEMENT")
+			}
+			events = append(events, triggers.TriggerEvent{
+				Type: triggers.TriggerEventType_Truncate,
+			})
 		default:
 			return NotYetSupportedError("UNKNOWN EVENT TYPE is not yet supported for CREATE TRIGGER")
 		}
