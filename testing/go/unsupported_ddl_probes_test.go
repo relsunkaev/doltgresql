@@ -55,7 +55,7 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 						period TEXT,
 						EXCLUDE USING gist (room_id WITH =, period WITH &&)
 					);`,
-					ExpectedErr: "syntax error",
+					ExpectedErr: "EXCLUDE constraints are not yet supported",
 				},
 			},
 		},

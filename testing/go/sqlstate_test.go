@@ -135,6 +135,11 @@ func TestSQLStateCodes(t *testing.T) {
 			sql:  "CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);",
 			code: "0A000",
 		},
+		{
+			name: "EXCLUDE constraint unsupported boundary -> 0A000",
+			sql:  "CREATE TABLE bookings (id INT PRIMARY KEY, room_id INT, period TEXT, EXCLUDE USING gist (room_id WITH =, period WITH &&));",
+			code: "0A000",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

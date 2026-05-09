@@ -296,13 +296,13 @@ Do not check off an item until it has workload proof:
   AGGREGATE is not yet supported`). Apps that depend on custom
   aggregates must rewrite to scalar UDFs / window functions.
   Pinned by testing/go/unsupported_ddl_probes_test.go.
-- [ ] GiST exclusion constraints - the `EXCLUDE USING gist (...)`
-  table constraint is rejected at the parser today (`at or near
-  "&": syntax error` while parsing the WITH-operator block).
-  Apps that emit EXCLUDE constraints (range non-overlap
-  enforcement) must rewrite to either application-level checks or
-  an INSERT trigger that runs the overlap query. Pinned by
-  testing/go/unsupported_ddl_probes_test.go.
+- [x] GiST exclusion constraints - the `EXCLUDE USING gist (...)`
+  table constraint is explicitly rejected with SQLSTATE `0A000`
+  (`EXCLUDE constraints are not yet supported`). Apps that emit
+  EXCLUDE constraints (range non-overlap enforcement) must rewrite
+  to either application-level checks or an INSERT trigger that runs
+  the overlap query. Pinned by testing/go/unsupported_ddl_probes_test.go
+  and testing/go/sqlstate_test.go.
 - [~] Statement triggers and transition tables - `FOR EACH
   STATEMENT` table triggers now execute once per matching
   INSERT/UPDATE/DELETE statement, and AFTER statement triggers may

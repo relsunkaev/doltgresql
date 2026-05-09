@@ -2597,6 +2597,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		if containsCreateCollation(query) {
 			return nil, pgerror.New(pgcode.FeatureNotSupported, "CREATE COLLATION is not yet supported")
 		}
+		if containsExcludeConstraint(query) {
+			return nil, pgerror.New(pgcode.FeatureNotSupported, "EXCLUDE constraints are not yet supported")
+		}
 		return nil, err
 	}
 	if len(s) == 0 {
@@ -2631,6 +2634,10 @@ func containsCreateEventTrigger(query string) bool {
 
 func containsCreateCollation(query string) bool {
 	return containsKeywordSequence(query, "create", "collation")
+}
+
+func containsExcludeConstraint(query string) bool {
+	return containsKeywordSequence(query, "exclude", "using")
 }
 
 func containsKeywordSequence(query string, sequence ...string) bool {
