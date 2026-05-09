@@ -55,6 +55,7 @@ func initHstore() {
 	framework.RegisterFunction(hstore_avals)
 	framework.RegisterFunction(hstore_skeys)
 	framework.RegisterFunction(hstore_svals)
+	framework.RegisterFunction(hstore_each)
 	framework.RegisterFunction(hstore_to_array)
 	framework.RegisterFunction(hstore_to_json)
 	framework.RegisterFunction(hstore_to_json_loose)
@@ -220,6 +221,21 @@ var hstore_svals = framework.Function1{
 			values[i] = pairs[key]
 		}
 		return hstoreValuesRowIter(values), nil
+	},
+}
+
+var hstore_each = framework.Function1{
+	Name:       "each",
+	Return:     pgtypes.RowTypeWithReturnType(pgtypes.Record),
+	Parameters: [1]*pgtypes.DoltgresType{hstoreType},
+	Strict:     true,
+	SRF:        true,
+	Callable: func(_ *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		pairs, err := parseHstore(val.(string))
+		if err != nil {
+			return nil, err
+		}
+		return hstoreEachRecordRowIter(pairs), nil
 	},
 }
 
@@ -714,6 +730,44 @@ func hstoreValuesRowIter(values []*string) *pgtypes.SetReturningFunctionRowIter 
 			return sql.Row{nil}, nil
 		}
 		return sql.Row{*value}, nil
+	})
+}
+
+func hstoreEachRecordRowIter(pairs map[string]*string) *pgtypes.SetReturningFunctionRowIter {
+	keys := hstoreSortedKeys(pairs)
+	var i int
+	return pgtypes.NewSetReturningFunctionRowIter(func(_ *sql.Context) (sql.Row, error) {
+		if i >= len(keys) {
+			return nil, io.EOF
+		}
+		key := keys[i]
+		value := pairs[key]
+		i++
+		var recordValue any
+		if value != nil {
+			recordValue = *value
+		}
+		return sql.Row{[]pgtypes.RecordValue{
+			{Type: pgtypes.Text, Value: key},
+			{Type: pgtypes.Text, Value: recordValue},
+		}}, nil
+	})
+}
+
+func hstoreEachTableRowIter(pairs map[string]*string) *pgtypes.SetReturningFunctionRowIter {
+	keys := hstoreSortedKeys(pairs)
+	var i int
+	return pgtypes.NewSetReturningFunctionRowIter(func(_ *sql.Context) (sql.Row, error) {
+		if i >= len(keys) {
+			return nil, io.EOF
+		}
+		key := keys[i]
+		value := pairs[key]
+		i++
+		if value == nil {
+			return sql.Row{key, nil}, nil
+		}
+		return sql.Row{key, *value}, nil
 	})
 }
 

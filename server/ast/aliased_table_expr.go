@@ -112,7 +112,11 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 				return aliasedExpr, err
 			}
 		}
-		aliasedExpr, ok, err := nodeSingleColumnTableFunctionAlias(ctx, node, expr)
+		aliasedExpr, ok, err := nodeFixedColumnTableFunctionAlias(ctx, node, expr)
+		if err != nil || ok {
+			return aliasedExpr, err
+		}
+		aliasedExpr, ok, err = nodeSingleColumnTableFunctionAlias(ctx, node, expr)
 		if err != nil || ok {
 			return aliasedExpr, err
 		}
@@ -218,6 +222,72 @@ func nodeSingleColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExp
 		As:      vitess.NewTableIdent(string(node.As.Alias)),
 		Lateral: true,
 	}, true, nil
+}
+
+func nodeFixedColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {
+	if len(node.As.Cols) == 0 || len(rowsFromExpr.Items) != 1 {
+		return nil, false, nil
+	}
+	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
+	if !ok {
+		return nil, false, nil
+	}
+	funcName := singleColumnTableFunctionName(funcExpr)
+	sourceColumns, ok := fixedColumnTableFunctionColumns(funcName)
+	if !ok {
+		return nil, false, nil
+	}
+	if len(node.As.Cols) > len(sourceColumns) {
+		return nil, true, errors.Errorf("table function %s only has %d columns", funcName, len(sourceColumns))
+	}
+
+	args, err := nodeExprs(ctx, funcExpr.Exprs)
+	if err != nil {
+		return nil, true, err
+	}
+	tableFuncArgs := make(vitess.SelectExprs, len(args))
+	for i, arg := range args {
+		tableFuncArgs[i] = &vitess.AliasedExpr{Expr: arg}
+	}
+
+	internalAlias := "__doltgres_" + strings.ReplaceAll(funcName, ".", "_")
+	selectExprs := make(vitess.SelectExprs, len(sourceColumns))
+	for i, sourceColumn := range sourceColumns {
+		colName := sourceColumn
+		if i < len(node.As.Cols) {
+			colName = string(node.As.Cols[i])
+		}
+		selectExprs[i] = &vitess.AliasedExpr{
+			Expr: tableFuncColumn(internalAlias, sourceColumn),
+			As:   vitess.NewColIdent(colName),
+		}
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: selectExprs,
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  funcName,
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: true,
+	}, true, nil
+}
+
+func fixedColumnTableFunctionColumns(funcName string) ([]string, bool) {
+	switch funcName {
+	case "each":
+		return []string{"key", "value"}, true
+	default:
+		return nil, false
+	}
 }
 
 func singleColumnTableFunctionName(funcExpr *tree.FuncExpr) string {

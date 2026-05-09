@@ -135,10 +135,11 @@ Do not check off an item until it has workload proof:
   / `slice_array` and `slice(hstore, text[])` cover ordered array
   value lookup plus hstore subset extraction for missing keys, SQL NULL
   hstore values, empty key arrays, and NULL key-array entries. `akeys`,
-  `avals`, `skeys`, `svals`, and `hstore_to_array` cover sorted
-  key/value introspection for populated, empty, and SQL NULL hstore
-  inputs, including PostgreSQL's length-then-lexicographic hstore key
-  order and `skeys`/`svals` projection and table-function forms.
+  `avals`, `skeys`, `svals`, `each`, and `hstore_to_array` cover
+  sorted key/value introspection for populated, empty, and SQL NULL
+  hstore inputs, including PostgreSQL's length-then-lexicographic
+  hstore key order, NULL hstore values, and projection/table-function
+  forms with table column aliases.
   `hstore(text, text)`, `hstore(text[], text[])`, and `hstore(text[])`
   cover constructor semantics for NULL values, NULL key handling,
   duplicate-first key handling, empty arrays, malformed array inputs,

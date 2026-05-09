@@ -344,6 +344,26 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{`2`}, {`5`}, {nil}},
 				},
 				{
+					Query:    `SELECT key, COALESCE(value, '<NULL>') FROM each('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore);`,
+					Expected: []sql.Row{{`A`, `2`}, {`B`, `5`}, {`empty`, `<NULL>`}, {`quote`, `a"b`}},
+				},
+				{
+					Query:    `SELECT k, COALESCE(v, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k, v);`,
+					Expected: []sql.Row{{`A`, `2`}, {`empty`, `<NULL>`}},
+				},
+				{
+					Query:    `SELECT k, COALESCE(value, '<NULL>') FROM each('"A"=>"2", "empty"=>NULL'::public.hstore) AS t(k);`,
+					Expected: []sql.Row{{`A`, `2`}, {`empty`, `<NULL>`}},
+				},
+				{
+					Query:    `SELECT (SELECT count(*)::text FROM each(''::public.hstore)), (SELECT count(*)::text FROM each(NULL::public.hstore));`,
+					Expected: []sql.Row{{`0`, `0`}},
+				},
+				{
+					Query:    `SELECT each('"B"=>"5", "A"=>"2"'::public.hstore);`,
+					Expected: []sql.Row{{[]any{`A`, `2`}}, {[]any{`B`, `5`}}},
+				},
+				{
 					Query:    `SELECT hstore(ARRAY['n', 'float', 'bool', 'str', 'empty', 'bad'], ARRAY['12', '3.5', 'true', '012', NULL, '12x'])::text, array_to_string(hstore_to_array('"n"=>"12", "float"=>"3.5", "bool"=>"true", "str"=>"012", "empty"=>NULL, "bad"=>"12x"'::public.hstore), '|', '<NULL>');`,
 					Expected: []sql.Row{{`"n"=>"12", "bad"=>"12x", "str"=>"012", "bool"=>"true", "empty"=>NULL, "float"=>"3.5"`, `n|12|bad|12x|str|012|bool|true|empty|<NULL>|float|3.5`}},
 				},
