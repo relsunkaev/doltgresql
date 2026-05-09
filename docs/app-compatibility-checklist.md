@@ -703,8 +703,15 @@ pipelines. The full replication feature surface lives in
 `postgresql-parity-issues.md`; this section tracks what real consumers
 actually exercise.
 
-- [ ] Run `electricsql/electric` with
-  `ELECTRIC_WRITE_TO_PG_MODE=logical_replication` against Doltgres.
+- [x] Run `electricsql/electric` against Doltgres. The Docker-backed
+  harness starts `electricsql/electric:1.6.2` with Doltgres as the upstream
+  PostgreSQL source, creates an Electric-managed logical replication slot,
+  serves a shape for a `REPLICA IDENTITY FULL` table, observes insert/update/
+  delete operations through the shape endpoint, advances
+  `confirmed_flush_lsn`, and reconnects after a Doltgres restart. Pinned by
+  testing/go/electric_sync_test.go's TestElectricSyncSmoke; verified with
+  `DOLTGRES_ELECTRIC_SMOKE=1 go test ./testing/go -run '^TestElectricSyncSmoke$'`
+  on 2026-05-09.
 - [ ] Prove Electric shape API behavior with `replica: "full"` and
   `REPLICA IDENTITY FULL` tables.
 - [ ] Run Zero with `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, and
