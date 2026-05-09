@@ -28,16 +28,18 @@ func TestAvailableExtensionsProbe(t *testing.T) {
 			Name: "supported extension metadata is visible",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;`,
+				`CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA public;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT name, default_version, installed_version
 						FROM pg_catalog.pg_available_extensions
-						WHERE name IN ('btree_gist', 'citext', 'plpgsql', 'vector')
+						WHERE name IN ('btree_gist', 'citext', 'hstore', 'plpgsql', 'vector')
 						ORDER BY name;`,
 					Expected: []sql.Row{
 						{"btree_gist", "1.7", nil},
 						{"citext", "1.6", "1.6"},
+						{"hstore", "1.8", "1.8"},
 						{"plpgsql", "1.0", nil},
 						{"vector", "0.0", nil},
 					},
@@ -45,11 +47,12 @@ func TestAvailableExtensionsProbe(t *testing.T) {
 				{
 					Query: `SELECT name, version, installed, relocatable, schema
 						FROM pg_catalog.pg_available_extension_versions
-						WHERE name IN ('btree_gist', 'citext', 'plpgsql', 'vector')
+						WHERE name IN ('btree_gist', 'citext', 'hstore', 'plpgsql', 'vector')
 						ORDER BY name;`,
 					Expected: []sql.Row{
 						{"btree_gist", "1.7", "f", "t", nil},
 						{"citext", "1.6", "t", "t", nil},
+						{"hstore", "1.8", "t", "t", nil},
 						{"plpgsql", "1.0", "f", "f", "pg_catalog"},
 						{"vector", "0.0", "f", "t", nil},
 					},

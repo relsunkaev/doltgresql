@@ -180,7 +180,7 @@ func (t *DoltgresType) BaseType() *DoltgresType {
 // CharacterSet implements the sql.StringType interface.
 func (t *DoltgresType) CharacterSet() sql.CharacterSetID {
 	switch t.ID.TypeName() {
-	case "citext", "varchar", "text", "name":
+	case "citext", "hstore", "varchar", "text", "name":
 		return sql.CharacterSet_binary
 	default:
 		return sql.CharacterSet_Unspecified
@@ -190,7 +190,7 @@ func (t *DoltgresType) CharacterSet() sql.CharacterSetID {
 // Collation implements the sql.StringType interface.
 func (t *DoltgresType) Collation() sql.CollationID {
 	switch t.ID.TypeName() {
-	case "citext", "varchar", "text", "name":
+	case "citext", "hstore", "varchar", "text", "name":
 		return sql.Collation_Default
 	default:
 		return sql.Collation_Unspecified

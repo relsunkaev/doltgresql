@@ -153,6 +153,12 @@ var builtinExtensionShims = map[string]pg_extension.Control{
 		Superuser:      true,
 		Relocatable:    true,
 	},
+	"hstore": {
+		DefaultVersion: pg_extension.ToVersion(1, 8),
+		Comment:        "data type for storing sets of (key, value) pairs",
+		Superuser:      true,
+		Relocatable:    true,
+	},
 	"plpgsql": {
 		DefaultVersion: pg_extension.ToVersion(1, 0),
 		Superuser:      true,

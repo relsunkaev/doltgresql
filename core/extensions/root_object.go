@@ -129,9 +129,10 @@ func (pge *Collection) RenameRootObject(ctx context.Context, oldName id.Id, newN
 
 // ResolveName implements the interface objinterface.Collection.
 func (pge *Collection) ResolveName(ctx context.Context, name doltdb.TableName) (doltdb.TableName, id.Id, error) {
-	// citext installs a type with the same schema-qualified name as the extension.
-	// Generic root-object name resolution must prefer the type for DDL and casts.
-	if strings.EqualFold(name.Name, "citext") {
+	// Some extension shims install a type with the same schema-qualified
+	// name as the extension. Generic root-object name resolution must
+	// prefer the type for DDL and casts.
+	if strings.EqualFold(name.Name, "citext") || strings.EqualFold(name.Name, "hstore") {
 		return doltdb.TableName{}, id.Null, nil
 	}
 	extID := id.NewExtension(name.Name)

@@ -22,7 +22,7 @@ import (
 
 // TestCommonExtensionsProbe pins how far PG's most-emitted extension
 // DDL (`CREATE EXTENSION IF NOT EXISTS uuid-ossp`, `pgcrypto`,
-// `citext`) lands today, plus the runtime function shapes ORMs
+// `citext`, `hstore`) lands today, plus the runtime function shapes ORMs
 // reach for. Per the Schema/DDL TODO in
 // docs/app-compatibility-checklist.md.
 func TestCommonExtensionsProbe(t *testing.T) {
@@ -170,6 +170,27 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT email::text FROM app_users WHERE id = 1;`,
 					Expected: []sql.Row{{"Alice@Example.com"}},
+				},
+			},
+		},
+		{
+			Name: "CREATE EXTENSION hstore installs text-compatible type",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA public;`,
+				`CREATE TABLE vending_machines (id integer primary key, inventory public.hstore);`,
+				`INSERT INTO vending_machines VALUES (1, '"A"=>"2", "B"=>"5"');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'hstore';`,
+					Expected: []sql.Row{{"hstore", "public"}},
+				},
+				{
+					Query:    `SELECT inventory::text FROM vending_machines WHERE id = 1;`,
+					Expected: []sql.Row{{`"A"=>"2", "B"=>"5"`}},
 				},
 			},
 		},

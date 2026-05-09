@@ -198,27 +198,29 @@ func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_exten
 func (c *CreateExtension) installBuiltinExtensionObjects(ctx *sql.Context, namespace id.Namespace) error {
 	switch strings.ToLower(c.Name) {
 	case "citext":
-		return c.installCitextType(ctx, namespace)
+		return c.installTextCompatibleExtensionType(ctx, namespace, "citext", pgtypes.NewCitextType)
+	case "hstore":
+		return c.installTextCompatibleExtensionType(ctx, namespace, "hstore", pgtypes.NewHstoreType)
 	default:
 		return nil
 	}
 }
 
-func (c *CreateExtension) installCitextType(ctx *sql.Context, namespace id.Namespace) error {
+func (c *CreateExtension) installTextCompatibleExtensionType(ctx *sql.Context, namespace id.Namespace, typeName string, newType func(arrayID, typeID id.Type) *pgtypes.DoltgresType) error {
 	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
 	if err != nil {
 		return err
 	}
-	typeID := id.NewType(namespace.SchemaName(), "citext")
-	arrayID := id.NewType(namespace.SchemaName(), "_citext")
+	typeID := id.NewType(namespace.SchemaName(), typeName)
+	arrayID := id.NewType(namespace.SchemaName(), "_"+typeName)
 	if typesCollection.HasType(ctx, typeID) {
 		return nil
 	}
-	citext := pgtypes.NewCitextType(arrayID, typeID)
-	if err = typesCollection.CreateType(ctx, citext); err != nil {
+	extensionType := newType(arrayID, typeID)
+	if err = typesCollection.CreateType(ctx, extensionType); err != nil {
 		return err
 	}
-	return typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(citext))
+	return typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(extensionType))
 }
 
 func (c *CreateExtension) useExtensionSearchPath(ctx *sql.Context, namespace id.Namespace) (func(), error) {
@@ -254,7 +256,7 @@ func schemaExists(ctx *sql.Context, schemaName string) (bool, error) {
 
 func createExtensionSkipsSQL(name string) bool {
 	switch strings.ToLower(name) {
-	case "btree_gist", "citext", "pgcrypto", "plpgsql", "vector":
+	case "btree_gist", "citext", "hstore", "pgcrypto", "plpgsql", "vector":
 		return true
 	default:
 		return false

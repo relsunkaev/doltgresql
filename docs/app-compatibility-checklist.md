@@ -107,8 +107,11 @@ Do not check off an item until it has workload proof:
   tracked under the GiST item below. `CREATE EXTENSION citext`
   installs a text-compatible `citext` type in the target schema so
   dump schemas using `public.citext` can load and round-trip values;
-  full case-insensitive operator/index parity remains residual risk. Pinned by
-  testing/go/common_extensions_probe_test.go.
+  full case-insensitive operator/index parity remains residual risk.
+  `CREATE EXTENSION hstore` similarly installs a text-compatible
+  `hstore` type for dump schemas that declare `public.hstore`
+  columns; hstore operators/functions/index parity remain residual risk.
+  Pinned by testing/go/common_extensions_probe_test.go.
 - [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser
   (`at or near "collation": syntax error` SQLSTATE 42601). Apps
@@ -614,8 +617,8 @@ actually exercise.
 - [~] Extension availability catalogs -
   `pg_available_extensions` and `pg_available_extension_versions`
   list the supported extension shims (`btree_gist`, `citext`,
-  `plpgsql`, `vector`) plus any local PostgreSQL extension files
-  Doltgres can see, and mark installed versions from `pg_extension`.
+  `hstore`, `plpgsql`, `vector`) plus any local PostgreSQL extension
+  files Doltgres can see, and mark installed versions from `pg_extension`.
   Broader dump/restore coverage for extension-heavy schemas remains
   tracked by the restore-gate corpus. Pinned by
   testing/go/available_extensions_probe_test.go.
