@@ -63,17 +63,22 @@ Do not check off an item until it has workload proof:
 
 ## Critical path TODO
 
-- [~] Stand up at least one representative non-trivial PostgreSQL dump as a
+- [x] Stand up at least one representative non-trivial PostgreSQL dump as a
   restore-gate corpus, and record the first hard failure for each.
   testing/go/import_dump_probe_test.go now restores the
   AlexTransit/venderctl pg_dump through `psql` without skipped
-  statements. The restore still warns that descending scan order is
-  metadata-only, so broader dump-corpus evidence remains before this
-  graduates to done.
-- [~] Triage restore failures into implement, dump-rewrite, skip, and
-  explicit-non-goal buckets. The first gate now has an empty skip
-  bucket after landing predicate-scoped unique partial indexes for
-  the AlexTransit inventory indexes.
+  statements.
+- [x] Triage restore failures for the first restore-gate corpus into
+  implement, dump-rewrite, skip, and explicit-non-goal buckets. The first
+  gate now has an empty skip bucket after landing predicate-scoped unique
+  partial indexes for the AlexTransit inventory indexes.
+- [ ] Expand restore-gate corpus beyond AlexTransit/venderctl. Add multiple
+  external non-trivial application dumps, record the first hard failure for
+  each dump, and keep each corpus runnable through the real `psql` restore
+  path.
+- [ ] Triage expanded restore-corpus failures into implement, dump-rewrite,
+  skip, and explicit-non-goal buckets, with each bucket tied to a tracked
+  implementation task, documented rewrite, or documented non-goal.
 - [x] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
   testing/go/pg_dump_round_trip_test.go creates a representative
@@ -98,13 +103,16 @@ Do not check off an item until it has workload proof:
   `REPLICA IDENTITY FULL`, waits for the `pgoutput` slot to become active,
   deploys generated Zero permissions SQL, inserts through Doltgres, and
   verifies `confirmed_flush_lsn` advances.
-- [~] Prove the round-trip dump/restore path: `pg_dump` -> file -> `psql`
+- [x] Prove the schema-slice round-trip path: `pg_dump` -> file -> `psql`
   restore -> ORM introspection -> running app. The schema-slice
   harness in testing/go/pg_dump_round_trip_test.go now proves this
   path end-to-end with `pg_dump`, `psql`, `drizzle-kit introspect`,
-  and pgx app queries. It remains partial because the dump command
-  excludes Doltgres' internal `dolt` schema and broader external app
-  dump-corpus evidence is still tracked separately.
+  and pgx app queries.
+- [ ] Prove round-trip dump/restore for broader external app dumps without
+  relying only on the schema-slice harness. The gate should document whether
+  Doltgres' internal `dolt` schema is excluded, why, and what exact
+  production-like dumps have passed `pg_dump` -> `psql` restore -> ORM
+  introspection -> running app queries.
 
 ## Schema/bootstrap TODO
 
@@ -133,14 +141,12 @@ Do not check off an item until it has workload proof:
   EXTENSION vector` is accepted through a built-in pgvector shim and
   the native `vector(n)` type round-trips scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
-  for dump restore; actual GiST operator classes and indexes remain
-  tracked under the GiST item below. `CREATE EXTENSION citext`
+  for dump restore. `CREATE EXTENSION citext`
   installs a case-insensitive text type in the target schema so dump
   schemas using `public.citext` can load, round-trip values, compare
   case-insensitively, and enforce case-insensitive `UNIQUE` checks on
   insert/update. Unsafe raw btree range planning over `citext` columns
-  is disabled; performant PostgreSQL-style btree seek parity remains
-  residual risk until physical citext index keys/opclasses are modeled.
+  is disabled for correctness.
   `CREATE EXTENSION hstore` similarly installs a text-compatible
   `hstore` type for dump schemas that declare `public.hstore`
   columns, with `fetchval(hstore, text)` / `hstore -> text` covering
@@ -190,9 +196,9 @@ Do not check off an item until it has workload proof:
   non-NULL values, and shorter equal-prefix maps before longer maps.
   Custom comparison operators (`#<#`, `#<=#`, `#>#`, `#>=#`) cover the
   same ordering semantics, SQL NULL propagation, and extension-qualified
-  `OPERATOR(public.#<#)` syntax. Index operator-class parity remains
-  residual risk. `hstore_hash` and `hstore_hash_extended` cover
-  PostgreSQL-compatible hashes for empty, populated, NULL-valued, escaped,
+  `OPERATOR(public.#<#)` syntax. `hstore_hash` and
+  `hstore_hash_extended` cover PostgreSQL-compatible hashes for empty,
+  populated, NULL-valued, escaped,
   order-independent, duplicate-key-normalized, SQL NULL, and seeded inputs.
   `hstore_in`, `hstore_out`, `hstore_recv`, and `hstore_send` cover
   canonical text IO, PostgreSQL-compatible binary payloads, malformed
@@ -202,11 +208,20 @@ Do not check off an item until it has workload proof:
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
   SQL NULL hstore values as JSON nulls, string escaping, loose numeric
   promotion, and boolean-looking hstore text remaining JSON strings.
-  Broader hstore operators, functions, and casts remain residual risk.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
-- [~] ICU nondeterministic collations - `CREATE COLLATION ... provider
+- [ ] Replace common-extension shims with full parity or narrower tested
+  non-goals. Open surfaces include `pgcrypto` beyond the native
+  `gen_random_uuid()` compatibility path, pgvector behavior beyond scalar
+  `vector(n)` round-trips, `btree_gist` operator classes, and hstore
+  operators/functions/casts outside testing/go/common_extensions_probe_test.go.
+- [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
+  for PostgreSQL-style case-insensitive btree seeks. The current compatibility
+  path preserves correctness by disabling unsafe raw btree range planning.
+- [ ] Complete hstore index/operator-class parity, including planner use and
+  operator-class catalog behavior for hstore comparisons.
+- [ ] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is rejected at the parser
   (`at or near "collation": syntax error` SQLSTATE 42601). Apps
   that need case-insensitive equality on string columns must
@@ -220,9 +235,7 @@ Do not check off an item until it has workload proof:
   `information_schema.columns.collation_name`. Coverage in
   testing/go/explicit_collation_probe_test.go (and the existing
   testing/go/info_schema_collation_test.go for the
-  default-vs-explicit collation_name assertion). ICU
-  nondeterministic collations (`"en_US.utf8"`, etc.) remain a
-  separate gap tracked above.
+  default-vs-explicit collation_name assertion).
 - [~] Materialized views - `CREATE MATERIALIZED VIEW ... AS SELECT`
   creates a table-backed snapshot that can be queried and dropped with
   `DROP MATERIALIZED VIEW`; later source-table writes do not change the
@@ -249,12 +262,15 @@ Do not check off an item until it has workload proof:
   populated matviews with at least one usable all-row unique btree
   column index, rejects `WITH NO DATA`, unpopulated matviews, and
   matviews without a usable unique index with PostgreSQL-shaped errors,
-  and preserves the prior snapshot on unique-index refresh failures.
-  Full PostgreSQL matview semantics are still partial: concurrent
-  refresh currently runs through the same synchronous truncate/insert
-  refresh path, so lock-free concurrent writer behavior remains covered
-  by the broader concurrent index/locking gaps. Pinned by
+  and preserves the prior snapshot on unique-index refresh failures. Pinned by
   testing/go/materialized_view_probe_test.go.
+- [ ] Implement lock-free PostgreSQL-style `REFRESH MATERIALIZED VIEW
+  CONCURRENTLY`. The accepted concurrent form currently validates the
+  PostgreSQL preconditions and preserves the prior snapshot on failure, but the
+  refresh itself still runs through the synchronous truncate/insert refresh
+  path.
+- [ ] Add materialized-view refresh performance guardrails for large snapshots,
+  indexed matviews, and unique-index refresh failures.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
@@ -271,15 +287,15 @@ Do not check off an item until it has workload proof:
   analysis, so columns omitted from the original INSERT can still be
   written by the BEFORE trigger. Pinned by the partial-column subtest
   of testing/go/plpgsql_trigger_function_probe_test.go.
-- [~] Event triggers - `CREATE EVENT TRIGGER` is rejected at the
+- [ ] Event triggers - `CREATE EVENT TRIGGER` is rejected at the
   parser today (`at or near "event": syntax error`). DMS-style
   intercept triggers must be stripped from the dump before import.
   Pinned by testing/go/unsupported_ddl_probes_test.go.
-- [~] `CREATE AGGREGATE` - rejected with SQLSTATE 0A000 (`CREATE
+- [ ] `CREATE AGGREGATE` - rejected with SQLSTATE 0A000 (`CREATE
   AGGREGATE is not yet supported`). Apps that depend on custom
   aggregates must rewrite to scalar UDFs / window functions.
   Pinned by testing/go/unsupported_ddl_probes_test.go.
-- [~] GiST exclusion constraints - the `EXCLUDE USING gist (...)`
+- [ ] GiST exclusion constraints - the `EXCLUDE USING gist (...)`
   table constraint is rejected at the parser today (`at or near
   "&": syntax error` while parsing the WITH-operator block).
   Apps that emit EXCLUDE constraints (range non-overlap
@@ -296,11 +312,13 @@ Do not check off an item until it has workload proof:
   `TG_OP = 'TRUNCATE'`; row-level TRUNCATE triggers are rejected because
   PostgreSQL only supports TRUNCATE at statement level. Pinned by
   testing/go/trigger_test.go (TestStatementTriggerTransitionTables and
-  the TRUNCATE statement trigger probe), including zero-row UPDATE
-  transition sets. Remaining gaps: PostgreSQL's row-level
-  transition-table triggers are still rejected with SQLSTATE 0A000, and
-  plain AFTER statement trigger self-queries still inherit the existing
-  AFTER-trigger target-table visibility limitation.
+  the TRUNCATE statement trigger probe), including zero-row UPDATE transition
+  sets.
+- [ ] Support PostgreSQL row-level transition-table triggers. Today row-level
+  transition-table declarations are rejected with SQLSTATE 0A000.
+- [ ] Fix plain AFTER statement trigger self-query visibility against the
+  target table. This still inherits the existing AFTER-trigger target-table
+  visibility limitation.
 - [x] Trigger catalog introspection - `pg_trigger` now walks the
   persisted trigger collection and exposes created triggers with
   stable trigger OIDs, `tgrelid`, `tgfoid`, `tgtype`, `tgenabled`,
@@ -334,9 +352,12 @@ Do not check off an item until it has workload proof:
   `SET CONSTRAINTS ALL|<name> DEFERRED/IMMEDIATE` now updates
   transaction-local timing for supported child-side FK checks; switching
   to `IMMEDIATE` validates pending deferred rows immediately and raises
-  SQLSTATE `23503` on unresolved violations. This is still partial
-  PostgreSQL parity: deferrability is not durable in the underlying FK
-  storage. Pinned by testing/go/deferrable_constraints_probe_test.go.
+  SQLSTATE `23503` on unresolved violations. Pinned by
+  testing/go/deferrable_constraints_probe_test.go.
+- [ ] Persist deferrability metadata in the underlying FK storage so
+  `DEFERRABLE` / `INITIALLY DEFERRED` behavior survives server restart and
+  reaches PostgreSQL parity beyond constraints created in the current server
+  process.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
   PRIVILEGES ...` are accepted so pg_dump's ownership and privilege
@@ -348,9 +369,10 @@ Do not check off an item until it has workload proof:
   parsed and executed through the PL/pgSQL interpreter, including the
   common conditional-DDL shape used by pg_dump repair blocks, Alembic
   migrations, and IF-NOT-EXISTS init scripts. Other procedural
-  languages are rejected explicitly. Remaining risk follows the
-  existing PL/pgSQL interpreter surface rather than the outer DO
-  statement shape. Pinned by testing/go/do_block_probe_test.go.
+  languages are rejected explicitly. Pinned by testing/go/do_block_probe_test.go.
+- [ ] Expand anonymous `DO $$` coverage beyond conditional-DDL blocks to the
+  broader PL/pgSQL interpreter surface that application migrations can embed
+  inside DO statements.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
@@ -381,12 +403,13 @@ Do not check off an item until it has workload proof:
   restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
   exact predicate matches against metadata-backed partial unique
   indexes, and non-target partial-unique conflicts are preserved for
-  multi-unique `DO NOTHING`. Residual gap: predicate implication is
-  exact-string matching today rather than PostgreSQL's broader logical
-  implication rules. DDL and DML coverage in
+  multi-unique `DO NOTHING`. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
+- [ ] Implement PostgreSQL-style partial-index predicate implication. Today
+  predicate matching is exact-shape/exact-string based for the supported
+  partial-index planner and `ON CONFLICT` paths.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
@@ -427,18 +450,23 @@ Do not check off an item until it has workload proof:
   Pinned by testing/go/create_index_concurrently_contention_test.go's
   TestCreateIndexConcurrentlyAllowsWritersDuringPhase1 and by the local Dolt
   hook in third_party/dolt/go/libraries/doltcore/table/editor/creation/index.go.
+- [ ] Add large-table `CREATE INDEX CONCURRENTLY` performance guardrails. The
+  current evidence proves writer progress and correctness, but does not pin
+  Phase 1 build latency, writer latency while Phase 1 is running, or planner
+  behavior on large tables.
 - [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
   btree `INCLUDE`, non-unique btree partial, supported JSONB GIN, and
   non-unique btree expression indexes now use the same two-phase
   `pg_index.indisready=false` / `pg_index.indisvalid=false` catalog
   visibility as plain btree `CREATE INDEX CONCURRENTLY`, then flip to
   ready/valid after the inter-phase commit; partial-unique btree indexes
-  keep predicate-scoped uniqueness after the final flip. Unique
-  expression `CONCURRENTLY` shapes still route through their existing
-  synchronous build path; migration tools do not error, but that shape
-  does not expose the two-phase catalog state yet. Pinned by
+  keep predicate-scoped uniqueness after the final flip. Pinned by
   testing/go/create_index_concurrently_test.go and
   testing/go/create_index_concurrently_contention_test.go.
+- [ ] Route unique expression `CREATE INDEX CONCURRENTLY` through the two-phase
+  catalog state machine. Today that shape still uses the existing synchronous
+  build path, so migration tools do not error but `pg_index` does not expose
+  the intermediate `(indisready=false, indisvalid=false)` state.
 - [x] `INCLUDE` indexes - `CREATE INDEX ... ON t (col) INCLUDE (a,
   b)` is accepted at DDL and the index round-trips through
   `pg_indexes`. Coverage in
@@ -449,7 +477,7 @@ Do not check off an item until it has workload proof:
   `@>` containment subset (`payload @> '{"kind": "click"}'`) returns
   the correct rows. Coverage in
   testing/go/include_jsonb_gin_index_probe_test.go.
-- [~] GiST indexes - rejected with SQLSTATE 0A000 `index method
+- [ ] GiST indexes - rejected with SQLSTATE 0A000 `index method
   gist is not yet supported`. Apps that need GiST (geometry, range
   non-overlap, btree_gist composite uniqueness) must rewrite to
   btree with a custom unique key, or strip the USING gist suffix
@@ -470,9 +498,12 @@ Do not check off an item until it has workload proof:
   `DESC` => NULLS FIRST) plus all explicit NULLS FIRST/LAST
   combinations. DDL still emits warnings that physical descending
   and NULLS LAST index scan ordering are metadata-only; the metadata
-  is preserved through pg_index, but index storage/planner preference
-  does not yet model those per-column scan choices. Pinned by
+  is preserved through pg_index. Pinned by
   testing/go/index_opclass_nulls_probe_test.go.
+- [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
+  index storage and planner preference. Today those per-column scan choices
+  are metadata-preserved but not planned as PostgreSQL-style physical index
+  scans.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip
@@ -481,9 +512,8 @@ Do not check off an item until it has workload proof:
   existing matview indexes, and unique-index violations leave the prior
   snapshot intact. `REFRESH MATERIALIZED VIEW CONCURRENTLY` now validates
   PostgreSQL-style unique-index eligibility for all-row unique btree
-  column indexes and rejects missing or partial unique indexes; lock-free
-  concurrent refresh behavior remains a residual gap.
-  Pinned by testing/go/materialized_view_probe_test.go.
+  column indexes and rejects missing or partial unique indexes. Pinned by
+  testing/go/materialized_view_probe_test.go.
 
 ## View/query TODO
 
@@ -725,8 +755,10 @@ Do not check off an item until it has workload proof:
   queries, parameter binding, JSONB insertion through `sql.json`, arrays,
   lateral JSONB expansion, concurrent reads across the pool, transaction
   commit, and rollback-on-error behavior. Pinned by
-  testing/go/postgres_js_client_test.go. `ts-postgres` and other less common
-  clients remain open until workloads require them.
+  testing/go/postgres_js_client_test.go.
+- [ ] Add `ts-postgres` and other secondary-client smoke gates when workloads
+  require those clients, rather than implying support from the postgres.js
+  harness alone.
 
 ## Replication and sync TODO
 
@@ -792,8 +824,11 @@ actually exercise.
   grammar, `pg_index.indclass = ANY(...)`, `int2vector` / `oidvector`
   slices, zero-shaped published-column catalog CTEs, exported snapshots,
   `pg_logical_emit_message`, `pg_column_size`, `starts_with`, array
-  operators, array subscripts, and JSON output serialization. Debezium and
-  other consumers remain open until their exact query surfaces are captured.
+  operators, array subscripts, and JSON output serialization.
+- [ ] Capture Debezium and other `pgoutput` consumer query surfaces in this
+  checklist. Add executable probes for the exact slot, publication, LSN,
+  snapshot, and replication-stat catalog queries those consumers issue before
+  claiming support for them.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
@@ -810,6 +845,10 @@ actually exercise.
   `pg_stat_subscription`. The subscription catalog boundary was checked
   against `postgres:15-alpine` on 2026-05-09 before updating the Doltgres
   tests.
+- [ ] Implement live subscription/apply behavior or keep rejecting it with
+  executable boundaries. Open work includes subscription apply workers, initial
+  table synchronization from a remote publisher, remote slot creation, and
+  incoming `pgoutput` apply into Doltgres.
 - [x] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
   Proxy) that real-world stacks expose. docs/replication-provider-boundaries.md
@@ -829,9 +868,9 @@ actually exercise.
   metadata-only `connect=false` without apply-worker state; and publication
   DDL covers database-qualified table rejection plus the publication options
   currently claimed through Electric, Zero, and direct `pgoutput` tests.
-  Later PostgreSQL-version features and unobserved consumer-specific surfaces
-  remain tracked in docs/postgresql-parity-issues.md until a real consumer
-  exercises them.
+- [ ] Mirror newly exercised PostgreSQL replication features back into this app
+  checklist when a real consumer needs them, rather than leaving them only in
+  docs/postgresql-parity-issues.md.
 
 ## Dump/admin/tooling TODO
 
@@ -863,14 +902,11 @@ actually exercise.
   expression defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
   testing/go/info_schema_column_order_test.go pins the workload
   shapes.
-- [x] `pg_matviews` - the catalog view exists and returns zero rows
-  (with or without a `schemaname` filter), which is exactly the
-  shape dump tools need to skip the matview repair branch cleanly.
-  Materialized views themselves are not yet supported (tracked as
-  the separate "Materialized views" item in the Schema/DDL TODO);
-  this item only covers the no-matview catalog surface that dump
-  tools can safely query today. Pinned by
-  testing/go/pg_matviews_probe_test.go.
+- [x] `pg_matviews` - the catalog view exists for no-matview databases and
+  reports materialized-view rows once table-backed matviews are created:
+  schemaname, matviewname, definition, populated state, and index presence all
+  round-trip for the currently supported materialized-view surface. Pinned by
+  testing/go/pg_matviews_probe_test.go and testing/go/materialized_view_probe_test.go.
 - [x] Extension availability catalogs -
   `pg_available_extensions` and `pg_available_extension_versions`
   list the supported extension shims (`btree_gist`, `citext`,
@@ -957,11 +993,11 @@ These items track the wire-protocol and catalog-correctness surfaces
 that GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) and ORM
 introspection tools (Drizzle Kit, Prisma db pull, Alembic
 autogenerate) inspect to drive editable result grids, schema diffs,
-typed-exception handling, and client-side query timeouts. The
-residual gap on each item is "real-consumer evidence": running the
-actual GUI / migration binary against a live Doltgres instance
-rather than only a Go-level harness.
+typed-exception handling, and client-side query timeouts.
 
+- [ ] Run actual GUI / migration binaries against a live Doltgres instance for
+  wire-protocol and catalog metadata surfaces that are currently proven only
+  through Go-level harnesses.
 - [x] `RowDescription.TableOID` - populate the source-table OID so
   GUI editors can resolve a result column back to a base table.
   Implementation in server/doltgres_handler.go walks the session
@@ -1032,9 +1068,9 @@ rather than only a Go-level harness.
   testing/go/sqlalchemy_sqlstate_test.go which installs SQLAlchemy
   + psycopg3 in a venv and asserts each shape surfaces the right
   SQLAlchemyError subclass with the matching underlying SQLSTATE.
-  Codes not yet mapped (notably 40001 serialization_failure for
-  retry loops, 22008 datetime_field_overflow) fall through to
-  XX000 internal_error.
+- [ ] Map remaining driver-visible SQLSTATEs, notably 40001
+  serialization_failure for retry loops and 22008 datetime_field_overflow,
+  instead of falling through to XX000 internal_error.
 - [x] `pg_attribute` index attribute names - the existing
   `indexAttributeName` helper already returns real column names
   for non-expression index attributes (the audit's
@@ -1058,9 +1094,10 @@ rather than only a Go-level harness.
   a binary-format round-trip.
 - [x] `pg_class.reloftype=0` for ordinary tables - matches
   PostgreSQL's behavior (reloftype is only nonzero for typed
-  tables created with `CREATE TABLE name OF composite_type`,
-  which Doltgres does not yet support). Pinned by
+  tables created with `CREATE TABLE name OF composite_type`). Pinned by
   testing/go/pg_class_reloftype_test.go.
+- [ ] Support typed tables created with `CREATE TABLE name OF composite_type`
+  or add explicit unsupported coverage for that PostgreSQL table kind.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name
@@ -1094,7 +1131,10 @@ rather than only a Go-level harness.
   The pgx smoke harness covers the baseline app schema and transaction
   surface, and the postgres.js harness covers a secondary Node pooled-client
   path with CRUD, parameters, JSONB, arrays, concurrent reads, commit, and
-  rollback. Broader ORM matrix proof remains open.
+  rollback.
+- [ ] Expand driver/ORM matrix proof beyond pgx and postgres.js. Add runnable
+  smoke gates for the advertised client and migration-tool matrix before
+  claiming broad client compatibility.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
@@ -1122,12 +1162,13 @@ rather than only a Go-level harness.
 
 ## Proposed dolt changes
 
-No open app-compatibility blocker currently needs a Dolt-side patch. The repo
-now uses a local `replace github.com/dolthub/dolt/go => ./third_party/dolt/go`,
-and the remaining `CREATE INDEX CONCURRENTLY` writer-concurrency concern was
-closed with executable evidence rather than a new storage primitive: writers
-can commit while Phase 1 is paused, and Dolt's working-set merge reconciles
-those row changes with the committing schema/index build.
+No open app-compatibility blocker is currently known to require a Dolt storage
+primitive. The repo now uses a local
+`replace github.com/dolthub/dolt/go => ./third_party/dolt/go`, and the
+remaining `CREATE INDEX CONCURRENTLY` writer-concurrency concern was closed
+with executable evidence rather than a new storage primitive: writers can
+commit while Phase 1 is paused, and Dolt's working-set merge reconciles those
+row changes with the committing schema/index build.
 
 - [x] CREATE INDEX CONCURRENTLY phase 4 — non-blocking writes during the index
   backfill. Pinned by
@@ -1136,6 +1177,10 @@ those row changes with the committing schema/index build.
   Dolt secondary-index build and verifies concurrent insert/update/delete
   writers complete before the build resumes and remain visible through the
   final valid/ready index.
+- [ ] Replace the production-compiled local Dolt index-build pause hook with a
+  cleaner test-only seam. The current hook is nil in production and exists only
+  for deterministic SQL-level contention tests, but it is still an exported
+  production-compiled global in the local Dolt submodule.
 
 ## Current support claim
 
