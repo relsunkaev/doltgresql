@@ -37,6 +37,21 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE EXTENSION plpgsql dump compatibility shim",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname, e.extrelocatable, e.extversion
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'plpgsql';`,
+					Expected: []sql.Row{{"plpgsql", "pg_catalog", "f", "1.0"}},
+				},
+			},
+		},
+		{
 			// pgcrypto's catalog install file uses `name OUT type`
 			// parameters in CREATE FUNCTION declarations. This pins
 			// the dump-facing extension load shape, while the

@@ -90,6 +90,9 @@ Do not check off an item until it has workload proof:
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
   "uuid-ossp"` is accepted at DDL, is listed in
   `pg_catalog.pg_extension`, and its core UUID helpers are callable.
+  pg_dump's `CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA
+  pg_catalog` shape is accepted and records the built-in PL/pgSQL
+  runtime in `pg_extension`.
   `CREATE EXTENSION IF NOT EXISTS pgcrypto` is also accepted via a
   compatibility shim, including `WITH SCHEMA` metadata: the parser
   accepts pgcrypto's `name OUT type` CREATE FUNCTION declarations, but
