@@ -1220,6 +1220,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "replace" {
 		return p.evalReplace(ctx, row, expr)
 	}
+	if name == "translate" {
+		return p.evalTranslate(ctx, row, expr)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1432,6 +1435,64 @@ func (p *partialIndexPredicate) evalReplace(ctx *sql.Context, row sql.Row, expr 
 		return predicateValue{value: text}, nil
 	}
 	return predicateValue{value: strings.ReplaceAll(text, fromText, toText)}, nil
+}
+
+func (p *partialIndexPredicate) evalTranslate(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 3 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function translate expects three arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	from, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	to, err := p.evalValue(ctx, row, expr.Exprs[2])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || from.value == nil || to.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function translate does not support %T", str.value)
+	}
+	fromText, ok := from.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function translate does not support %T", from.value)
+	}
+	toText, ok := to.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function translate does not support %T", to.value)
+	}
+	return predicateValue{value: predicateTranslateText(text, fromText, toText)}, nil
+}
+
+func predicateTranslateText(text string, fromText string, toText string) string {
+	if fromText == "" {
+		return text
+	}
+	from := []rune(fromText)
+	to := []rune(toText)
+	toLen := len(to)
+	fromMap := make(map[rune]int, len(from))
+	for i, r := range from {
+		fromMap[r] = i
+	}
+	translated := make([]rune, 0, utf8.RuneCountInString(text))
+	for _, r := range text {
+		if idx, ok := fromMap[r]; ok {
+			if idx < toLen {
+				translated = append(translated, to[idx])
+			}
+			continue
+		}
+		translated = append(translated, r)
+	}
+	return string(translated)
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

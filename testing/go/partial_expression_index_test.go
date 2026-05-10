@@ -513,6 +513,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports translate predicate",
+			SetUpScript: []string{
+				`CREATE TABLE translated_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX translated_codes_user_code_idx
+					ON translated_codes (user_id)
+					WHERE translate(code, '-_', '') = 'activea';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO translated_codes VALUES
+						(1, 10, 'active-a'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO translated_codes VALUES (3, 10, 'active__a');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO translated_codes VALUES (4, 10, 'active.a');`,
+				},
+				{
+					Query:       `UPDATE translated_codes SET code = 'active_a' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -964,6 +991,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	replaceWrongArgumentQuery := `SELECT count(id) FROM partial_planner_replace WHERE tenant = 1 AND replace(code, '_', '') = 'active-a'`
 	assertCountResult(t, ctx, conn, replaceWrongArgumentQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, replaceWrongArgumentQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_translate (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_translate VALUES
+		(1, 1, 'active-a'),
+		(2, 1, 'active__a'),
+		(3, 1, 'active.a'),
+		(4, 2, 'active-a')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_translate_tenant_idx ON partial_planner_translate (tenant) WHERE translate(code, '-_', '') = 'activea'")
+
+	translateImpliedQuery := `SELECT count(id) FROM partial_planner_translate WHERE tenant = 1 AND translate(code, '-_', '') = 'activea'`
+	assertCountResult(t, ctx, conn, translateImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, translateImpliedQuery, true)
+
+	translateWrongArgumentQuery := `SELECT count(id) FROM partial_planner_translate WHERE tenant = 1 AND translate(code, '-.', '') = 'activea'`
+	assertCountResult(t, ctx, conn, translateWrongArgumentQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, translateWrongArgumentQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

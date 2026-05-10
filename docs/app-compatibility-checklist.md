@@ -890,6 +890,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.11.
+- [x] Use deterministic `translate(expr, from, to)` predicates in partial-index
+  implication paths. Three-argument `translate(...)` calls now serialize as
+  comparable predicate keys, planner filters can deparse them, partial unique
+  DML enforcement evaluates the same character mapping and deletion behavior as
+  the runtime function, and `ON CONFLICT` arbiter inference accepts the exact-
+  expression shape; wrong translation arguments, result values, and raw string
+  semantic rewrites remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.12.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

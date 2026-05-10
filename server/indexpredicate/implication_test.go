@@ -478,6 +478,34 @@ func TestImpliesReplaceFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesTranslateFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"translate(code, '-_', '') = 'activea'", "translate(code, '-_', '') = 'activea'"},
+		{"translate(code, '-_', '') IN ('activea', 'pending')", "translate(code, '-_', '') = 'activea'"},
+		{"translate(code, '-_', '') IS NOT NULL", "translate(code, '-_', '') = 'activea'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"translate(code, '-_', '') = 'activea'", "translate(code, '-_', '') = 'pending'"},
+		{"translate(code, '-_', '') = 'activea'", "translate(code, '-.', '') = 'activea'"},
+		{"translate(code, '-_', '') = 'activea'", "translate(code, '-_', 'x') = 'activexa'"},
+		{"translate(code, '-_', '') = 'activea'", "code = 'active-a'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

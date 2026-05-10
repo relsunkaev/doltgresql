@@ -1105,6 +1105,32 @@ ON CONFLICT (user_id) WHERE replace(code, '_', '') = 'active-a' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports translate predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_translate (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_translate_user_idx ON partial_arb_translate (user_id) WHERE translate(code, '-_', '') = 'activea';",
+				"INSERT INTO partial_arb_translate VALUES (1, 10, 'active-a', 'old-active'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_translate VALUES (3, 10, 'active__a', 'translate-upsert')
+ON CONFLICT (user_id) WHERE translate(code, '-_', '') = 'activea' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_translate ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active-a", "translate-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_translate VALUES (4, 10, 'active-a', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",
