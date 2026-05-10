@@ -214,12 +214,20 @@ func pgcryptoRawCipher(data []byte, key []byte, iv []byte, cipherType string, en
 	if err != nil {
 		return nil, err
 	}
-	if config.algorithm != "aes" {
+	var block cipher.Block
+	switch config.algorithm {
+	case "aes":
+		block, err = aes.NewCipher(key)
+		if err != nil {
+			return nil, errors.Errorf("invalid pgcrypto aes key length: %d", len(key))
+		}
+	case "bf":
+		block, err = blowfish.NewCipher(key)
+		if err != nil {
+			return nil, errors.Errorf("invalid pgcrypto bf key length: %d", len(key))
+		}
+	default:
 		return nil, errors.Errorf("unsupported pgcrypto cipher algorithm: %s", config.algorithm)
-	}
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, errors.Errorf("invalid pgcrypto aes key length: %d", len(key))
 	}
 	blockSize := block.BlockSize()
 	input := append([]byte(nil), data...)

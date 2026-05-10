@@ -178,8 +178,24 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					ExpectedErr: `invalid pgcrypto aes key length: 1`,
 				},
 				{
-					Query:       `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf');`,
-					ExpectedErr: `unsupported pgcrypto cipher algorithm: bf`,
+					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
+					Expected: []sql.Row{{`\xa50945ee7031548efa0c256a14547425`}},
+				},
+				{
+					Query:    `SELECT decrypt('\xa50945ee7031548efa0c256a14547425'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x6976697669766976'::bytea, 'bf-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x1a69f0985e7a9c770ead78de6057f4b0`}},
+				},
+				{
+					Query:    `SELECT decrypt_iv('\x1a69f0985e7a9c770ead78de6057f4b0'::bytea, '\x30313233343536373839616263646566'::bytea, '\x6976697669766976'::bytea, 'bf-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:       `SELECT encrypt('\x00'::bytea, '\x'::bytea, 'bf');`,
+					ExpectedErr: `invalid pgcrypto bf key length: 0`,
 				},
 				{
 					Query:       `SELECT gen_salt('bf', 3);`,
