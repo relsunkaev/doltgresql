@@ -20,8 +20,43 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+type jsonConversionContext struct {
+	datumNames map[int32]string
+}
+
+func newJSONConversionContext(datums []datum) jsonConversionContext {
+	conv := jsonConversionContext{
+		datumNames: make(map[int32]string, len(datums)),
+	}
+	for i, d := range datums {
+		datumNumber := int32(i)
+		switch {
+		case d.Record != nil:
+			if d.Record.RefName != "" {
+				conv.datumNames[datumNumber] = d.Record.RefName
+				conv.datumNames[d.Record.DatumNumber] = d.Record.RefName
+			}
+		case d.Row != nil:
+			if d.Row.RefName != "" {
+				conv.datumNames[datumNumber] = d.Row.RefName
+			}
+		case d.Variable != nil:
+			if d.Variable.RefName != "" {
+				conv.datumNames[datumNumber] = d.Variable.RefName
+			}
+		}
+	}
+	return conv
+}
+
+func (conv jsonConversionContext) datumName(datumNumber int32) (string, bool) {
+	name, ok := conv.datumNames[datumNumber]
+	return name, ok
+}
+
 // jsonConvert handles the conversion from the JSON format into a format that is easier to work with.
 func jsonConvert(jsonBlock plpgSQL_block) (Block, error) {
+	conv := newJSONConversionContext(jsonBlock.Datums)
 	block := Block{
 		TriggerNew: jsonBlock.NewVariableNumber,
 		TriggerOld: jsonBlock.OldVariableNumber,
@@ -73,20 +108,20 @@ func jsonConvert(jsonBlock plpgSQL_block) (Block, error) {
 		}
 	}
 	var err error
-	block.Body, err = jsonConvertStatements(jsonBlock.Action.StmtBlock.Body)
+	block.Body, err = conv.convertStatements(jsonBlock.Action.StmtBlock.Body)
 	if err != nil {
 		return Block{}, err
 	}
 	return block, nil
 }
 
-// jsonConvertStatement converts a statement in JSON form to the output form.
-func jsonConvertStatement(stmt statement) (Statement, error) {
+// convertStatement converts a statement in JSON form to the output form.
+func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, error) {
 	switch {
 	case stmt.Assignment != nil:
 		return stmt.Assignment.Convert()
 	case stmt.Block != nil:
-		stmts, err := jsonConvertStatements(stmt.Block.Body)
+		stmts, err := conv.convertStatements(stmt.Block.Body)
 		if err != nil {
 			return Block{}, err
 		}
@@ -96,7 +131,7 @@ func jsonConvertStatement(stmt statement) (Statement, error) {
 	case stmt.Call != nil:
 		return stmt.Call.Convert()
 	case stmt.Case != nil:
-		return stmt.Case.Convert()
+		return stmt.Case.Convert(conv)
 	case stmt.DynExec != nil:
 		return stmt.DynExec.Convert()
 	case stmt.ExecSQL != nil:
@@ -104,13 +139,15 @@ func jsonConvertStatement(stmt statement) (Statement, error) {
 	case stmt.Exit != nil:
 		return stmt.Exit.Convert(), nil
 	case stmt.ForILoop != nil:
-		return stmt.ForILoop.Convert()
+		return stmt.ForILoop.Convert(conv)
 	case stmt.ForSLoop != nil:
-		return stmt.ForSLoop.Convert()
+		return stmt.ForSLoop.Convert(conv)
+	case stmt.GetDiag != nil:
+		return stmt.GetDiag.Convert(conv)
 	case stmt.If != nil:
-		return stmt.If.Convert()
+		return stmt.If.Convert(conv)
 	case stmt.Loop != nil:
-		return stmt.Loop.Convert()
+		return stmt.Loop.Convert(conv)
 	case stmt.Perform != nil:
 		return stmt.Perform.Convert(), nil
 	case stmt.Raise != nil:
@@ -120,18 +157,18 @@ func jsonConvertStatement(stmt statement) (Statement, error) {
 	case stmt.ReturnQuery != nil:
 		return stmt.ReturnQuery.Convert(), nil
 	case stmt.While != nil:
-		return stmt.While.Convert()
+		return stmt.While.Convert(conv)
 	default:
 		return Block{}, errors.Errorf("unhandled statement type: %T", stmt)
 	}
 }
 
-// jsonConvertStatements converts a collection of statements in JSON form to their output form.
-func jsonConvertStatements(stmts []statement) ([]Statement, error) {
+// convertStatements converts a collection of statements in JSON form to their output form.
+func (conv jsonConversionContext) convertStatements(stmts []statement) ([]Statement, error) {
 	newStmts := make([]Statement, len(stmts))
 	for i, stmt := range stmts {
 		var err error
-		newStmts[i], err = jsonConvertStatement(stmt)
+		newStmts[i], err = conv.convertStatement(stmt)
 		if err != nil {
 			return nil, err
 		}

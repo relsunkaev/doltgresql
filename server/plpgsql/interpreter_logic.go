@@ -22,6 +22,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
+	gmstypes "github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/jackc/pgx/v5/pgproto3"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -92,6 +93,7 @@ func TriggerCall(ctx *sql.Context, iFunc InterpretedFunction, runner sql.Stateme
 func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (any, error) {
 	// We increment before accessing, so start at -1
 	counter := -1
+	lastRowCount := int64(0)
 	// Run the statements
 	statements := iFunc.GetStatements()
 	for {
@@ -215,7 +217,8 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if err != nil {
 					return nil, err
 				}
-				found := len(rows) > 0
+				lastRowCount = rowCountFromResultRows(rows)
+				found := lastRowCount > 0
 				if err = setFoundVariable(ctx, stack, found); err != nil {
 					return nil, err
 				}
@@ -265,12 +268,20 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if err != nil {
 					return nil, err
 				}
-				if err = setFoundVariable(ctx, stack, len(rows) > 0); err != nil {
+				lastRowCount = rowCountFromResultRows(rows)
+				if err = setFoundVariable(ctx, stack, lastRowCount > 0); err != nil {
 					return nil, err
 				}
 			}
 		case OpCode_Get:
-			// TODO: implement
+			switch operation.PrimaryData {
+			case "ROW_COUNT":
+				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Int64, lastRowCount); err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("GET DIAGNOSTICS item %s is not supported", operation.PrimaryData)
+			}
 		case OpCode_Goto:
 			// We must compare to the index - 1, so that the increment hits our target
 			if counter <= operation.Index {
@@ -309,7 +320,8 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if err != nil {
 				return nil, err
 			}
-			if err = setFoundVariable(ctx, stack, len(rows) > 0); err != nil {
+			lastRowCount = rowCountFromResultRows(rows)
+			if err = setFoundVariable(ctx, stack, lastRowCount > 0); err != nil {
 				return nil, err
 			}
 		case OpCode_Raise:
@@ -378,6 +390,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if err != nil {
 				return nil, err
 			}
+			lastRowCount = rowCountFromResultRows(rows)
 			stack.InitCursor(operation.Target, schema, rows)
 		case OpCode_ForQueryNext:
 			schema, row, ok := stack.AdvanceCursor(operation.PrimaryData)
@@ -395,6 +408,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if err != nil {
 				return nil, err
 			}
+			lastRowCount = rowCountFromResultRows(rows)
 			records, err := convertRowsToRecords(schema, rows)
 			if err != nil {
 				return nil, err
@@ -414,6 +428,13 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		}
 	}
 	return nil, nil
+}
+
+func rowCountFromResultRows(rows []sql.Row) int64 {
+	if len(rows) == 1 && gmstypes.IsOkResult(rows[0]) {
+		return int64(gmstypes.GetOkResult(rows[0]).RowsAffected)
+	}
+	return int64(len(rows))
 }
 
 // convertRowsToRecords iterates overs |rows| and converts each field in each row

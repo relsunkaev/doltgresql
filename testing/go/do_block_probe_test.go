@@ -294,6 +294,65 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block assigns GET DIAGNOSTICS ROW_COUNT",
+			SetUpScript: []string{
+				`CREATE TABLE do_diag_items (id INT PRIMARY KEY, touched BOOL NOT NULL DEFAULT false);`,
+				`CREATE TABLE do_diag_seen (seq INT PRIMARY KEY, affected INT NOT NULL);`,
+				`INSERT INTO do_diag_items VALUES (1, false), (2, false), (3, false);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							affected INT;
+							affected_again INT;
+						BEGIN
+							UPDATE do_diag_items SET touched = true WHERE id <= 2;
+							GET DIAGNOSTICS affected = ROW_COUNT;
+							INSERT INTO do_diag_seen VALUES (1, affected);
+
+							EXECUTE 'DELETE FROM do_diag_items WHERE id = 3';
+							GET DIAGNOSTICS affected = ROW_COUNT;
+							INSERT INTO do_diag_seen VALUES (2, affected);
+
+							UPDATE do_diag_items SET touched = false WHERE id = 99;
+							GET DIAGNOSTICS affected = ROW_COUNT, affected_again = ROW_COUNT;
+							INSERT INTO do_diag_seen VALUES (3, affected + affected_again);
+
+							PERFORM 1 FROM do_diag_items WHERE touched = true ORDER BY id;
+							GET DIAGNOSTICS affected = ROW_COUNT;
+							INSERT INTO do_diag_seen VALUES (4, affected);
+						END;
+					$$;`,
+				},
+				{
+					Query: `SELECT seq, affected FROM do_diag_seen ORDER BY seq;`,
+					Expected: []sql.Row{
+						{1, 2},
+						{2, 1},
+						{3, 0},
+						{4, 2},
+					},
+				},
+			},
+		},
+		{
+			Name:        "DO block rejects unsupported GET DIAGNOSTICS item",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							context TEXT;
+						BEGIN
+							GET DIAGNOSTICS context = PG_CONTEXT;
+						END;
+					$$;`,
+					ExpectedErr: `GET DIAGNOSTICS item PG_CONTEXT is not supported`,
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

@@ -170,6 +170,24 @@ type plpgSQL_stmt_execsql struct {
 	Target     datum   `json:"target"`
 }
 
+// plpgSQL_stmt_getdiag exists to match the expected JSON format.
+type plpgSQL_stmt_getdiag struct {
+	LineNumber int32             `json:"lineno"`
+	IsStacked  bool              `json:"is_stacked"`
+	DiagItems  []getdiagItemStmt `json:"diag_items"`
+}
+
+// getdiagItemStmt exists to match the expected JSON format.
+type getdiagItemStmt struct {
+	DiagItem plpgSQL_diag_item `json:"PLpgSQL_diag_item"`
+}
+
+// plpgSQL_diag_item exists to match the expected JSON format.
+type plpgSQL_diag_item struct {
+	Kind   string `json:"kind"`
+	Target int32  `json:"target"`
+}
+
 // plpgSQL_stmt_exit exists to match the expected JSON format.
 type plpgSQL_stmt_exit struct {
 	Label      string `json:"label"`
@@ -291,6 +309,7 @@ type statement struct {
 	Exit        *plpgSQL_stmt_exit         `json:"PLpgSQL_stmt_exit"`
 	ForILoop    *plpgSQL_stmt_fori         `json:"PLpgSQL_stmt_fori"`
 	ForSLoop    *plpgSQL_stmt_fors         `json:"PLpgSQL_stmt_fors"`
+	GetDiag     *plpgSQL_stmt_getdiag      `json:"PLpgSQL_stmt_getdiag"`
 	If          *plpgSQL_stmt_if           `json:"PLpgSQL_stmt_if"`
 	Loop        *plpgSQL_stmt_loop         `json:"PLpgSQL_stmt_loop"`
 	Perform     *plpgSQL_stmt_perform      `json:"PLpgSQL_stmt_perform"`
@@ -344,7 +363,7 @@ func (stmt *plpgSQL_stmt_call) Convert() (ExecuteSQL, error) {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_case) Convert() (block Block, err error) {
+func (stmt *plpgSQL_stmt_case) Convert(conv jsonConversionContext) (block Block, err error) {
 	// If the CASE statement has a main expression, start by assigning it to a variable so
 	// we can evaluate it once and only once.
 	if stmt.Expression.Expression.Query != "" {
@@ -377,7 +396,7 @@ func (stmt *plpgSQL_stmt_case) Convert() (block Block, err error) {
 		expressionString := when.Expression.Expression.Query
 		expressionString = strings.ReplaceAll(expressionString, `"`, "")
 
-		convertedWhenBodyStatements, err := jsonConvertStatements(when.Body)
+		convertedWhenBodyStatements, err := conv.convertStatements(when.Body)
 		if err != nil {
 			return Block{}, err
 		}
@@ -402,7 +421,7 @@ func (stmt *plpgSQL_stmt_case) Convert() (block Block, err error) {
 	}
 
 	if stmt.HasElse {
-		convertElseBodyStatements, err := jsonConvertStatements(stmt.Else)
+		convertElseBodyStatements, err := conv.convertStatements(stmt.Else)
 		if err != nil {
 			return Block{}, err
 		}
@@ -483,6 +502,26 @@ func (stmt *plpgSQL_stmt_execsql) Convert() (ExecuteSQL, error) {
 }
 
 // Convert converts the JSON statement into its output form.
+func (stmt *plpgSQL_stmt_getdiag) Convert(conv jsonConversionContext) (GetDiagnostics, error) {
+	if stmt.IsStacked {
+		return GetDiagnostics{}, errors.New("GET STACKED DIAGNOSTICS is not supported")
+	}
+	items := make([]GetDiagnosticsItem, 0, len(stmt.DiagItems))
+	for _, itemStmt := range stmt.DiagItems {
+		item := itemStmt.DiagItem
+		target, ok := conv.datumName(item.Target)
+		if !ok {
+			return GetDiagnostics{}, errors.Errorf("GET DIAGNOSTICS target datum %d could not be resolved", item.Target)
+		}
+		items = append(items, GetDiagnosticsItem{
+			Target: target,
+			Kind:   strings.ToUpper(item.Kind),
+		})
+	}
+	return GetDiagnostics{Items: items}, nil
+}
+
+// Convert converts the JSON statement into its output form.
 func (stmt *plpgSQL_stmt_exit) Convert() Statement {
 	offset := int32(-1)
 	if stmt.IsExit {
@@ -517,7 +556,7 @@ func (stmt *plpgSQL_stmt_exit) Convert() Statement {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_fori) Convert() (block Block, err error) {
+func (stmt *plpgSQL_stmt_fori) Convert(conv jsonConversionContext) (block Block, err error) {
 	block.Label = stmt.Label
 	block.IsLoop = true
 
@@ -552,7 +591,7 @@ func (stmt *plpgSQL_stmt_fori) Convert() (block Block, err error) {
 	}
 
 	// Convert the loop body.
-	convertedBody, err := jsonConvertStatements(stmt.Body)
+	convertedBody, err := conv.convertStatements(stmt.Body)
 	if err != nil {
 		return Block{}, err
 	}
@@ -596,7 +635,7 @@ func (stmt *plpgSQL_stmt_fori) Convert() (block Block, err error) {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_fors) Convert() (block Block, err error) {
+func (stmt *plpgSQL_stmt_fors) Convert(conv jsonConversionContext) (block Block, err error) {
 	block.Label = stmt.Label
 	block.IsLoop = true
 
@@ -621,7 +660,7 @@ func (stmt *plpgSQL_stmt_fors) Convert() (block Block, err error) {
 	cursorName := fmt.Sprintf("__cursor_%s_%d__", varName, stmt.LineNumber)
 	query := stmt.Query.Expression.Query
 
-	convertedBody, err := jsonConvertStatements(stmt.Body)
+	convertedBody, err := conv.convertStatements(stmt.Body)
 	if err != nil {
 		return Block{}, err
 	}
@@ -642,7 +681,7 @@ func (stmt *plpgSQL_stmt_fors) Convert() (block Block, err error) {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_if) Convert() (Block, error) {
+func (stmt *plpgSQL_stmt_if) Convert(conv jsonConversionContext) (Block, error) {
 	// We store all GOTOs that will need to go to the end of the block. Since we can't know that ahead of time, we store
 	// their indexes and set them at the end of the function.
 	type gotoEndIndex struct {
@@ -659,7 +698,7 @@ func (stmt *plpgSQL_stmt_if) Convert() (Block, error) {
 		},
 	}
 	// We'll parse our THEN statements, but we won't add them to the block just yet as we need their operation sizes
-	thenStmts, err := jsonConvertStatements(stmt.Then)
+	thenStmts, err := conv.convertStatements(stmt.Then)
 	if err != nil {
 		return Block{}, err
 	}
@@ -680,7 +719,7 @@ func (stmt *plpgSQL_stmt_if) Convert() (Block, error) {
 			Condition:  elseIf.ElseIf.Condition.Expression.Query,
 			GotoOffset: 2, // Same rules as skipping our THEN statement above
 		})
-		elseIfStmts, err := jsonConvertStatements(elseIf.ElseIf.Then)
+		elseIfStmts, err := conv.convertStatements(elseIf.ElseIf.Then)
 		if err != nil {
 			return Block{}, err
 		}
@@ -694,7 +733,7 @@ func (stmt *plpgSQL_stmt_if) Convert() (Block, error) {
 	}
 	// Finally we handle our ELSE statements. We don't have a condition to check, so we don't have to append any
 	// additional GOTOs.
-	elseStmts, err := jsonConvertStatements(stmt.Else)
+	elseStmts, err := conv.convertStatements(stmt.Else)
 	if err != nil {
 		return Block{}, err
 	}
@@ -708,12 +747,12 @@ func (stmt *plpgSQL_stmt_if) Convert() (Block, error) {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_loop) Convert() (block Block, err error) {
+func (stmt *plpgSQL_stmt_loop) Convert(conv jsonConversionContext) (block Block, err error) {
 	// Set the block's label if one was provided
 	block.Label = stmt.Label
 	block.IsLoop = true
 	// Convert the body of the loop first so we can determine the GOTO offset
-	block.Body, err = jsonConvertStatements(stmt.Body)
+	block.Body, err = conv.convertStatements(stmt.Body)
 	if err != nil {
 		return Block{}, err
 	}
@@ -764,9 +803,9 @@ func (stmt *plpgSQL_stmt_return_query) Convert() ReturnQuery {
 }
 
 // Convert converts the JSON statement into its output form.
-func (stmt *plpgSQL_stmt_while) Convert() (block Block, err error) {
+func (stmt *plpgSQL_stmt_while) Convert(conv jsonConversionContext) (block Block, err error) {
 	// Convert the body of the loop first so we can determine the GOTO offsets
-	convertedLoopBodyStmts, err := jsonConvertStatements(stmt.Body)
+	convertedLoopBodyStmts, err := conv.convertStatements(stmt.Body)
 	if err != nil {
 		return Block{}, err
 	}

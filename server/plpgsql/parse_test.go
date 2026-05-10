@@ -160,3 +160,33 @@ func TestParseDynamicExecuteIntoStrict(t *testing.T) {
 		t.Fatalf("strict option = %q, expected true; op: %#v", executeOp.Options["strict"], executeOp)
 	}
 }
+
+func TestParseGetDiagnosticsRowCount(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			affected INT;
+		BEGIN
+			GET DIAGNOSTICS affected = ROW_COUNT;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var getOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Get {
+			getOp = &ops[i]
+			break
+		}
+	}
+	if getOp == nil {
+		t.Fatalf("expected GET DIAGNOSTICS operation, found %#v", ops)
+	}
+	if getOp.Target != "affected" {
+		t.Fatalf("target = %q, expected affected; op: %#v", getOp.Target, getOp)
+	}
+	if getOp.PrimaryData != "ROW_COUNT" {
+		t.Fatalf("diagnostic item = %q, expected ROW_COUNT; op: %#v", getOp.PrimaryData, getOp)
+	}
+}

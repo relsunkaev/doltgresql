@@ -222,6 +222,36 @@ func (stmt DynamicExecute) AppendOperations(ops *[]InterpreterOperation, stack *
 	return nil
 }
 
+// GetDiagnosticsItem represents one GET DIAGNOSTICS assignment.
+type GetDiagnosticsItem struct {
+	Target string
+	Kind   string
+}
+
+// GetDiagnostics represents a GET DIAGNOSTICS statement.
+type GetDiagnostics struct {
+	Items []GetDiagnosticsItem
+}
+
+var _ Statement = GetDiagnostics{}
+
+// OperationSize implements the interface Statement.
+func (stmt GetDiagnostics) OperationSize() int32 {
+	return int32(len(stmt.Items))
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt GetDiagnostics) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	for _, item := range stmt.Items {
+		*ops = append(*ops, InterpreterOperation{
+			OpCode:      OpCode_Get,
+			PrimaryData: strings.ToUpper(item.Kind),
+			Target:      item.Target,
+		})
+	}
+	return nil
+}
+
 // ForQueryInit executes a SQL query and stores the result set in a named cursor on the stack.
 // It is the first operation emitted for a FOR record IN query LOOP statement.
 type ForQueryInit struct {
