@@ -429,4 +429,29 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	nullSafeNonNullQuery := `SELECT count(id) FROM partial_planner_nullsafe WHERE tenant = 1 AND deleted_at IS NOT DISTINCT FROM '2026-01-01'`
 	assertCountResult(t, ctx, conn, nullSafeNonNullQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, nullSafeNonNullQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_distinct (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_distinct VALUES
+		(1, 1, 'active'),
+		(2, 1, 'archived'),
+		(3, 1, NULL),
+		(4, 2, 'pending'),
+		(5, 2, 'archived')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_distinct_tenant_idx ON partial_planner_distinct (tenant) WHERE status IS DISTINCT FROM 'archived'")
+
+	distinctExactQuery := `SELECT count(id) FROM partial_planner_distinct WHERE tenant = 1 AND status IS DISTINCT FROM 'archived'`
+	assertCountResult(t, ctx, conn, distinctExactQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, distinctExactQuery, true)
+
+	distinctValueQuery := `SELECT count(id) FROM partial_planner_distinct WHERE tenant = 1 AND status = 'active'`
+	assertCountResult(t, ctx, conn, distinctValueQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, distinctValueQuery, true)
+
+	distinctNullQuery := `SELECT count(id) FROM partial_planner_distinct WHERE tenant = 1 AND status IS NULL`
+	assertCountResult(t, ctx, conn, distinctNullQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, distinctNullQuery, true)
+
+	distinctExcludedQuery := `SELECT count(id) FROM partial_planner_distinct WHERE tenant = 1 AND status IS NOT DISTINCT FROM 'archived'`
+	assertCountResult(t, ctx, conn, distinctExcludedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, distinctExcludedQuery, false)
 }

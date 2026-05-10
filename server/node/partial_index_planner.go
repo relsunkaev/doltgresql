@@ -316,6 +316,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 			return "", false
 		}
 		return child + " IS NULL", true
+	case *pgexpression.IsNull:
+		child, ok := plannerPredicateExprSQL(expr.Child)
+		if !ok {
+			return "", false
+		}
+		return child + " IS NULL", true
 	case *pgexpression.IsNotNull:
 		child, ok := plannerPredicateExprSQL(expr.Child)
 		if !ok {
@@ -328,6 +334,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 			return "", false
 		}
 		return binaryPredicateSQL(children[0], "IS NOT DISTINCT FROM", children[1])
+	case *pgexpression.IsDistinctFrom:
+		children := expr.Children()
+		if len(children) != 2 {
+			return "", false
+		}
+		return binaryPredicateSQL(children[0], "IS DISTINCT FROM", children[1])
 	case *gmsexpression.Not:
 		child, ok := plannerPredicateExprSQL(expr.Child)
 		if !ok {

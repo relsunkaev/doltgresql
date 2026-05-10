@@ -686,6 +686,14 @@ Do not check off an item until it has workload proof:
   non-NULL, wrong-column, and `IS DISTINCT FROM NULL` predicates remain
   unsupported. Coverage in server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.8.
+- [x] Use `IS DISTINCT FROM` partial btree indexes for safe same-expression
+  lookups. Exact `expr IS DISTINCT FROM literal`, disjoint equality/IN-list
+  filters, and NULL filters now imply matching null-inclusive
+  `expr IS DISTINCT FROM literal` predicates; `expr IS DISTINCT FROM NULL`
+  is treated as the supported `IS NOT NULL` predicate shape. Conflicting
+  literals and wrong expressions still stay off the indexed path. Coverage in
+  server/indexpredicate/implication_test.go and
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.11.1.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Cross-column proofs, broader expression-level
   semantic implication, and planner deparsing for additional predicate

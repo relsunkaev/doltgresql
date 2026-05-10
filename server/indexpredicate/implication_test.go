@@ -114,3 +114,36 @@ func TestImpliesNullPredicatesFromNullSafeNullComparisons(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesDistinctFromPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status IS DISTINCT FROM 'archived'", "status = 'active'"},
+		{"status IS DISTINCT FROM 'archived'", "status IN ('active', 'pending')"},
+		{"status IS DISTINCT FROM 'archived'", "status IS NULL"},
+		{"deleted_at IS DISTINCT FROM NULL", "deleted_at = '2026-01-01'"},
+		{"deleted_at IS DISTINCT FROM NULL", "deleted_at IS NOT NULL"},
+		{"lower(status) IS DISTINCT FROM 'archived'", "lower(status) = 'active'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status IS DISTINCT FROM 'archived'", "status = 'archived'"},
+		{"status IS DISTINCT FROM 'archived'", "status IN ('active', 'archived')"},
+		{"status IS DISTINCT FROM 'archived'", "status IS NOT DISTINCT FROM 'archived'"},
+		{"status != 'archived'", "status IS NULL"},
+		{"deleted_at IS DISTINCT FROM NULL", "deleted_at IS NULL"},
+		{"status IS DISTINCT FROM 'archived'", "lower(status) = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

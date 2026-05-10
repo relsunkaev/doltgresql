@@ -142,7 +142,14 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	indexExclusions, ok := predicateExclusionSetFromExpr(indexExpr)
 	if ok {
 		queryValues, ok := predicateValueSetFromExpr(queryExpr)
-		return ok && indexExclusions.exprKey == queryValues.exprKey && queryValues.disjointFrom(indexExclusions)
+		if ok {
+			return indexExclusions.exprKey == queryValues.exprKey && queryValues.disjointFrom(indexExclusions)
+		}
+		if !indexExclusions.nullsIncluded {
+			return false
+		}
+		queryNull, ok := nullPredicateExprKey(queryExpr)
+		return ok && queryNull == indexExclusions.exprKey
 	}
 
 	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
@@ -162,11 +169,21 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 }
 
 func notNullPredicateExprKey(expr tree.Expr) (string, bool) {
-	isNotNull, ok := unwrapPredicateParens(expr).(*tree.IsNotNullExpr)
-	if !ok {
+	expr = unwrapPredicateParens(expr)
+	if isNotNull, ok := expr.(*tree.IsNotNullExpr); ok {
+		return predicateComparableExprKey(isNotNull.Expr)
+	}
+	comparison, ok := expr.(*tree.ComparisonExpr)
+	if !ok || comparison.Operator != tree.IsDistinctFrom {
 		return "", false
 	}
-	return predicateComparableExprKey(isNotNull.Expr)
+	if predicateIsNullLiteral(comparison.Right) {
+		return predicateComparableExprKey(comparison.Left)
+	}
+	if predicateIsNullLiteral(comparison.Left) {
+		return predicateComparableExprKey(comparison.Right)
+	}
+	return "", false
 }
 
 func nullPredicateExprKey(expr tree.Expr) (string, bool) {
@@ -248,8 +265,9 @@ type predicateValueSet struct {
 }
 
 type predicateExclusionSet struct {
-	exprKey string
-	values  map[string]struct{}
+	exprKey       string
+	values        map[string]struct{}
+	nullsIncluded bool
 }
 
 func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
@@ -315,15 +333,19 @@ func predicateExclusionSetFromExpr(expr tree.Expr) (predicateExclusionSet, bool)
 		return predicateExclusionSet{}, false
 	}
 	switch comparison.Operator {
-	case tree.NE:
+	case tree.NE, tree.IsDistinctFrom:
+		nullsIncluded := comparison.Operator == tree.IsDistinctFrom
+		if nullsIncluded && (predicateIsNullLiteral(comparison.Left) || predicateIsNullLiteral(comparison.Right)) {
+			return predicateExclusionSet{}, false
+		}
 		if exprKey, ok := predicateComparableExprKey(comparison.Left); ok {
 			if value, ok := predicateLiteralKey(comparison.Right); ok {
-				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}, nullsIncluded: nullsIncluded}, true
 			}
 		}
 		if exprKey, ok := predicateComparableExprKey(comparison.Right); ok {
 			if value, ok := predicateLiteralKey(comparison.Left); ok {
-				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}, nullsIncluded: nullsIncluded}, true
 			}
 		}
 	case tree.NotIn:
