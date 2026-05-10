@@ -690,7 +690,7 @@ Do not check off an item until it has workload proof:
   current conservative subset. Cross-column proofs, broader expression-level
   semantic implication, and planner deparsing for additional predicate
   families remain open.
-  Tracked by dg-7ug.8.
+  Tracked by dg-7ug.8.9, dg-7ug.8.10, and dg-7ug.8.11 under dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
@@ -810,7 +810,8 @@ Do not check off an item until it has workload proof:
 - [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
   index storage and PostgreSQL-style planner preference. Today those
   per-column scan choices are metadata-preserved but not stored as
-  PostgreSQL-style physical index ordering. Tracked by dg-7ug.8.3.
+  PostgreSQL-style physical index ordering. Tracked by dg-7ug.8.3.3,
+  dg-7ug.8.3.4, and dg-7ug.8.3.5 under dg-7ug.8.3.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip
@@ -1109,7 +1110,7 @@ Do not check off an item until it has workload proof:
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
-  Tracked by dg-7ug.10.
+  Tracked by dg-7ug.10.3 under dg-7ug.10.
 
 ## Replication and sync TODO
 
@@ -1195,7 +1196,8 @@ actually exercise.
   optional `pg_replication_slot_advance`, and `CREATE_REPLICATION_SLOT`.
 - [ ] Add executable probes for additional named `pgoutput` consumers when a
   real workload introduces them. This future matrix expansion is intentionally
-  not part of the current Electric / Zero / Debezium boundary.
+  not part of the current Electric / Zero / Debezium boundary. Tracked by
+  dg-7ug.22.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
@@ -1240,7 +1242,8 @@ actually exercise.
 - [ ] Mirror newly exercised PostgreSQL replication features back into this app
   checklist when a real consumer needs them, rather than leaving them only in
   docs/postgresql-parity-issues.md. This remains the standing future-work rule
-  for consumers beyond the current Electric / Zero / Debezium matrix.
+  for consumers beyond the current Electric / Zero / Debezium matrix. Tracked
+  by dg-7ug.23.
 
 ## Dump/admin/tooling TODO
 
@@ -1380,7 +1383,8 @@ typed-exception handling, and client-side query timeouts.
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
   Drizzle Kit, Prisma db pull, Alembic autogenerate, and TablePlus-bundled
-  `pg_dump` 17.0 now have live binary harnesses. Tracked by dg-7ug.10.
+  `pg_dump` 17.0 now have live binary harnesses. Tracked by dg-7ug.10.1 and
+  dg-7ug.10.2 under dg-7ug.10.
 - [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
   testing/go/tableplus_dump_test.go locates
   `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
@@ -1607,7 +1611,7 @@ typed-exception handling, and client-side query timeouts.
   psycopg2, Ruby `pg`, libpq, Go `database/sql` with `github.com/lib/pq`, and
   Java JDBC, and Rust `sqlx`. Add runnable smoke gates for the advertised
   client and migration-tool matrix before claiming broad client compatibility.
-  Tracked by dg-7ug.10.
+  Tracked by dg-7ug.10.3 under dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
