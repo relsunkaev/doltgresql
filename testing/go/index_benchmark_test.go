@@ -142,6 +142,24 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 		t.Fatalf("unexpected top scores from DESC NULLS LAST index scan: %s", topScores)
 	}
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_multicol_desc_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO btree_sort_option_multicol_desc_plan VALUES
+		(1, 1, 10, 'one-low'),
+		(2, 1, 20, 'one-high'),
+		(3, 2, 5, 'two-low'),
+		(4, 2, 30, 'two-high'),
+		(5, 3, 15, 'three-low'),
+		(6, 3, 25, 'three-high')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_multicol_desc_idx ON btree_sort_option_multicol_desc_plan (tenant DESC, score DESC)")
+	allDescOrder := `SELECT tenant::text || ':' || score::text FROM btree_sort_option_multicol_desc_plan ORDER BY tenant DESC, score DESC`
+	assertBenchmarkPlanShape(t, ctx, conn, allDescOrder, true)
+	assertBenchmarkPlanNotContains(t, ctx, conn, allDescOrder, "Sort(")
+	allDescRows := queryBenchmarkString(t, ctx, conn, `SELECT string_agg(row_key, ',') FROM (`+allDescOrder+`) ordered_rows(row_key)`)
+	if allDescRows != "3:25,3:15,2:30,2:5,1:20,1:10" {
+		t.Fatalf("unexpected rows from multi-column DESC index scan: %s", allDescRows)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_option_multicol_desc_plan ORDER BY tenant DESC, score ASC`, false)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_asc_not_null_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
 	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_asc_not_null_plan", 128)
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_asc_not_null_score_idx ON btree_sort_option_asc_not_null_plan (score ASC NULLS FIRST)")

@@ -1350,8 +1350,11 @@ Do not check off an item until it has workload proof:
   and NULLS LAST index scan ordering are metadata-only; the metadata
   is preserved through pg_index. The btree planner boundary now fences
   metadata-only DESC / NULLS sort options from sort-elision unless
-  `NOT NULL` keys or native nullable ordering make the scan shape safe,
-  while still allowing predicate lookup through the same index. Pinned by
+  `NOT NULL` keys or native nullable ordering make the scan shape safe.
+  Redundant PostgreSQL null-probe sort fields are pruned for `NOT NULL`
+  ORDER BY expressions before sort-elision, so matching DESC btree keys can
+  use reverse index scans without a separate sort. Predicate lookup through
+  the same index remains available. Pinned by
   testing/go/index_opclass_nulls_probe_test.go and
   testing/go/index_benchmark_test.go.
 - [x] Fence metadata-only btree sort options from ordered-scan planning.
@@ -1373,11 +1376,19 @@ Do not check off an item until it has workload proof:
   by testing/go/index_benchmark_test.go and
   server/node/btree_planner_boundary_table_test.go. Tracked by
   dg-7ug.8.3.4.1.
-- [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
-  index storage and PostgreSQL-style planner preference. Today those
-  per-column scan choices are metadata-preserved but not stored as
-  PostgreSQL-style physical index ordering. Tracked by dg-7ug.8.3.3,
-  dg-7ug.8.3.4, and dg-7ug.8.3.5 under dg-7ug.8.3.
+- [x] Enable all-column DESC btree sort-option scans for `NOT NULL` keys,
+  including multi-column order prefixes. The planner now prunes redundant
+  `IS NULL` sort probes for `NOT NULL` ORDER BY expressions, uses
+  `IndexedTableAccess` without `Sort(` for `ORDER BY tenant DESC, score DESC`
+  over `(tenant DESC, score DESC)`, returns PostgreSQL ordering, and keeps
+  mixed `DESC` / `ASC` shapes on the table-scan/sort fallback. Pinned by
+  testing/go/index_benchmark_test.go. Tracked by dg-7ug.8.3.3.
+- [ ] Model the remaining nullable NULLS FIRST/LAST index scan ordering and
+  PostgreSQL-style planner preference. Today DESC scan direction is supported
+  for safe `NOT NULL` and native nullable sort-option shapes, but nullable
+  `ASC NULLS LAST` / `DESC NULLS FIRST` physical or logical null placement and
+  final planner preference remain fenced. Tracked by dg-7ug.8.3.4 and
+  dg-7ug.8.3.5 under dg-7ug.8.3.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip

@@ -72,6 +72,7 @@ const (
 	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
 	ruleId_AssignIndexStats                                                       // assignIndexStats
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
+	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -142,6 +143,8 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
 		analyzer.Rule{Id: ruleId_ValidateOnConflictArbiter, Apply: ValidateOnConflictArbiter},
 	)
+	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "replaceIdxSort", true,
+		analyzer.Rule{Id: ruleId_PruneNotNullSortProbes, Apply: PruneNotNullSortProbes})
 
 	// The auto-commit rule writes the contents of the context, so we need to insert our finalizer before that.
 	// We also should optimize functions last, since other rules may change the underlying expressions, potentially changing their return types.
