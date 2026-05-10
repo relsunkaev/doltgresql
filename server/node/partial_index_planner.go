@@ -374,7 +374,7 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 	name := strings.ToLower(expr.FunctionName())
 	switch name {
-	case "lower", "upper", "ltrim", "rtrim":
+	case "lower", "upper", "btrim", "ltrim", "rtrim":
 	default:
 		return "", false
 	}

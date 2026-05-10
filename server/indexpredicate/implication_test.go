@@ -186,6 +186,7 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 	}{
 		{"ltrim(code) = 'active'", "ltrim(code) = 'active'"},
 		{"rtrim(code) IN ('active', 'pending')", "rtrim(code) = 'active'"},
+		{"btrim(code) = 'active'", "btrim(code) = 'active'"},
 		{"ltrim(code) IS NOT NULL", "ltrim(code) = 'active'"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
@@ -199,6 +200,7 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 		{"ltrim(code) = 'active'", "code = 'active'"},
 		{"ltrim(code) = 'active'", "rtrim(code) = 'active'"},
 		{"rtrim(code) IN ('active', 'pending')", "rtrim(code) IN ('active', 'archived')"},
+		{"btrim(code) = 'active'", "btrim(code) = 'archived'"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

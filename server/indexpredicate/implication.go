@@ -471,7 +471,7 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 
 func predicateSupportedUnaryFunction(name string) bool {
 	switch name {
-	case "lower", "upper", "ltrim", "rtrim":
+	case "lower", "upper", "btrim", "ltrim", "rtrim":
 		return true
 	default:
 		return false

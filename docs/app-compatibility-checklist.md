@@ -703,7 +703,7 @@ Do not check off an item until it has workload proof:
   equality shapes stay off the indexed path. Coverage in
   server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.9.1.
-- [x] Use deterministic unary trim-function predicates in partial-index
+- [x] Use deterministic unary `ltrim`/`rtrim` predicates in partial-index
   implication paths. `ltrim(expr)` and `rtrim(expr)` now participate in the
   implication helper, partial unique predicate evaluation, planner predicate
   serialization, and `ON CONFLICT` arbiter inference, while non-equivalent
@@ -711,6 +711,13 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.1.
+- [x] Use deterministic unary `btrim(expr)` predicates in partial-index
+  implication paths. `btrim(expr)` now participates in the implication helper,
+  partial unique predicate evaluation, planner predicate serialization, and
+  `ON CONFLICT` arbiter inference, while non-matching literal predicates stay
+  rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.2.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Broader cross-column/equality-class proofs,
   broader expression-level semantic implication beyond the currently

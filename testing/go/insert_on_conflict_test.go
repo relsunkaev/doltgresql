@@ -818,6 +818,32 @@ ON CONFLICT (code) WHERE rtrim(code) = 'active' DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports btrim predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_btrim (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_btrim_code_idx ON partial_arb_btrim (code) WHERE btrim(code) = 'active';",
+				"INSERT INTO partial_arb_btrim VALUES (1, ' active ', 'old-active'), (2, 'archived', 'old-archived');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_btrim VALUES (3, ' active ', 'btrim-upsert')
+ON CONFLICT (code) WHERE btrim(code) = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_btrim ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, " active ", "btrim-upsert"},
+						{2, "archived", "old-archived"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_btrim VALUES (4, ' active ', 'wrong-predicate')
+ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

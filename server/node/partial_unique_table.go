@@ -1157,6 +1157,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.ToLower(text)}, nil
 	case "upper":
 		return predicateValue{value: strings.ToUpper(text)}, nil
+	case "btrim":
+		return predicateValue{value: strings.TrimFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	case "ltrim":
 		return predicateValue{value: strings.TrimLeftFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	case "rtrim":
