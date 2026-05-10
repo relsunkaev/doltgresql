@@ -125,6 +125,10 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 		return predicateTermImplies(indexExpr, queryAnd.Left) || predicateTermImplies(indexExpr, queryAnd.Right)
 	}
 
+	if indexNotNull, ok := notNullPredicateExprKey(indexExpr); ok {
+		return queryPredicateImpliesNotNull(indexNotNull, queryExpr)
+	}
+
 	indexValues, ok := predicateValueSetFromExpr(indexExpr)
 	if ok {
 		queryValues, ok := predicateValueSetFromExpr(queryExpr)
@@ -145,6 +149,30 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	}
 	queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
 	return ok && strings.EqualFold(indexBool.column, queryBool.column) && indexBool.value == queryBool.value
+}
+
+func notNullPredicateExprKey(expr tree.Expr) (string, bool) {
+	isNotNull, ok := unwrapPredicateParens(expr).(*tree.IsNotNullExpr)
+	if !ok {
+		return "", false
+	}
+	return predicateComparableExprKey(isNotNull.Expr)
+}
+
+func queryPredicateImpliesNotNull(indexExprKey string, queryExpr tree.Expr) bool {
+	if queryNotNull, ok := notNullPredicateExprKey(queryExpr); ok {
+		return queryNotNull == indexExprKey
+	}
+	if queryValues, ok := predicateValueSetFromExpr(queryExpr); ok {
+		return queryValues.exprKey == indexExprKey
+	}
+	if queryRange, ok := numericPredicateRangeFromExpr(queryExpr); ok {
+		return queryRange.bounds.valid() && "column:"+queryRange.column == indexExprKey
+	}
+	if queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr); ok {
+		return "column:"+queryBool.column == indexExprKey
+	}
+	return false
 }
 
 func unwrapPredicateParens(expr tree.Expr) tree.Expr {

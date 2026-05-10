@@ -616,6 +616,14 @@ Do not check off an item until it has workload proof:
   predicate of `score > 0`, while non-implying filters such as `score >= 0`
   stay on the table-scan path. Coverage in
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.2.
+- [x] Use `IS NOT NULL` partial btree indexes for strict lookup predicates.
+  The implication helper now recognizes non-NULL equality / IN-list,
+  numeric-range, and boolean predicates as proving a matching
+  `expr IS NOT NULL` partial-index predicate, including simple
+  `lower(text)` / `upper(text)` expression predicates, while unsafe
+  `IS DISTINCT FROM` and null-only shapes stay unsupported. Coverage in
+  server/indexpredicate/implication_test.go and
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.5.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Cross-column proofs, broader expression-level
   semantic implication, and planner deparsing for more predicate families

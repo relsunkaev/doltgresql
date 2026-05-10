@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 
+	pgexpression "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/indexpredicate"
 )
@@ -273,6 +274,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 			return "", false
 		}
 		return child + " IS NULL", true
+	case *pgexpression.IsNotNull:
+		child, ok := plannerPredicateExprSQL(expr.Child)
+		if !ok {
+			return "", false
+		}
+		return child + " IS NOT NULL", true
 	case *gmsexpression.Not:
 		child, ok := plannerPredicateExprSQL(expr.Child)
 		if !ok {

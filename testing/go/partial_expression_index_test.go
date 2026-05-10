@@ -339,4 +339,21 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	nonImpliedQuery := `SELECT count(id) FROM partial_planner_scores WHERE tenant = 1 AND score >= 0`
 	assertCountResult(t, ctx, conn, nonImpliedQuery, 3)
 	assertBenchmarkPlanShape(t, ctx, conn, nonImpliedQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_contacts (id INTEGER PRIMARY KEY, email TEXT, active BOOL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_contacts VALUES
+		(1, 'ada@example.com', true),
+		(2, 'grace@example.com', false),
+		(3, NULL, true)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_contacts_email_idx ON partial_planner_contacts (email) WHERE email IS NOT NULL")
+
+	notNullImpliedQuery := `SELECT id FROM partial_planner_contacts WHERE email = 'ada@example.com'`
+	assertBenchmarkPlanShape(t, ctx, conn, notNullImpliedQuery, true)
+	if got := queryBenchmarkString(t, ctx, conn, `SELECT id::text FROM partial_planner_contacts WHERE email = 'ada@example.com'`); got != "1" {
+		t.Fatalf("unexpected email lookup result: %s", got)
+	}
+
+	nullQuery := `SELECT count(id) FROM partial_planner_contacts WHERE email IS NULL`
+	assertCountResult(t, ctx, conn, nullQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullQuery, false)
 }

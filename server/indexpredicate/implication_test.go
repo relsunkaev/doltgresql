@@ -24,3 +24,33 @@ func TestImpliesNumericRangeFromConjuncts(t *testing.T) {
 		t.Fatalf("did not expect inclusive lower bound to imply exclusive partial index predicate")
 	}
 }
+
+func TestImpliesIsNotNullFromStrictPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"email IS NOT NULL", "email = 'ada@example.com'"},
+		{"email IS NOT NULL", "email IN ('ada@example.com', 'grace@example.com')"},
+		{"score IS NOT NULL", "score > 10"},
+		{"active IS NOT NULL", "active = true"},
+		{"lower(email) IS NOT NULL", "lower(email) = 'ada@example.com'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"email IS NOT NULL", "email IS DISTINCT FROM 'ada@example.com'"},
+		{"email IS NOT NULL", "email IS NULL"},
+		{"score IS NOT NULL", "score IS DISTINCT FROM 10"},
+		{"email IS NOT NULL", "lower(email) = 'ada@example.com'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
