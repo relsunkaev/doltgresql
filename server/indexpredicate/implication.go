@@ -135,6 +135,12 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 		return ok && indexValues.exprKey == queryValues.exprKey && queryValues.subsetOf(indexValues)
 	}
 
+	indexExclusions, ok := predicateExclusionSetFromExpr(indexExpr)
+	if ok {
+		queryValues, ok := predicateValueSetFromExpr(queryExpr)
+		return ok && indexExclusions.exprKey == queryValues.exprKey && queryValues.disjointFrom(indexExclusions)
+	}
+
 	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
 	if ok {
 		queryRange, ok := numericPredicateRangeFromExpr(queryExpr)
@@ -210,9 +216,23 @@ type predicateValueSet struct {
 	values  map[string]struct{}
 }
 
+type predicateExclusionSet struct {
+	exprKey string
+	values  map[string]struct{}
+}
+
 func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
 	for value := range s.values {
 		if _, ok := other.values[value]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
+	for value := range s.values {
+		if _, ok := other.values[value]; ok {
 			return false
 		}
 	}
@@ -256,6 +276,45 @@ func predicateValueSetFromExpr(expr tree.Expr) (predicateValueSet, bool) {
 		return predicateValueSet{exprKey: exprKey, values: values}, true
 	}
 	return predicateValueSet{}, false
+}
+
+func predicateExclusionSetFromExpr(expr tree.Expr) (predicateExclusionSet, bool) {
+	comparison, ok := unwrapPredicateParens(expr).(*tree.ComparisonExpr)
+	if !ok {
+		return predicateExclusionSet{}, false
+	}
+	switch comparison.Operator {
+	case tree.NE:
+		if exprKey, ok := predicateComparableExprKey(comparison.Left); ok {
+			if value, ok := predicateLiteralKey(comparison.Right); ok {
+				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+		if exprKey, ok := predicateComparableExprKey(comparison.Right); ok {
+			if value, ok := predicateLiteralKey(comparison.Left); ok {
+				return predicateExclusionSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+	case tree.NotIn:
+		exprKey, ok := predicateComparableExprKey(comparison.Left)
+		if !ok {
+			return predicateExclusionSet{}, false
+		}
+		tuple, ok := unwrapPredicateParens(comparison.Right).(*tree.Tuple)
+		if !ok || len(tuple.Exprs) == 0 {
+			return predicateExclusionSet{}, false
+		}
+		values := make(map[string]struct{}, len(tuple.Exprs))
+		for _, expr := range tuple.Exprs {
+			value, ok := predicateLiteralKey(expr)
+			if !ok {
+				return predicateExclusionSet{}, false
+			}
+			values[value] = struct{}{}
+		}
+		return predicateExclusionSet{exprKey: exprKey, values: values}, true
+	}
+	return predicateExclusionSet{}, false
 }
 
 func predicateComparableExprKey(expr tree.Expr) (string, bool) {

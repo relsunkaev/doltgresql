@@ -54,3 +54,35 @@ func TestImpliesIsNotNullFromStrictPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesExclusionPredicatesFromDisjointValues(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status != 'archived'", "status = 'active'"},
+		{"status != 'archived'", "status IN ('active', 'pending')"},
+		{"status NOT IN ('archived', 'deleted')", "status = 'active'"},
+		{"status NOT IN ('archived', 'deleted')", "status IN ('active', 'pending')"},
+		{"lower(email) NOT IN ('blocked@example.com')", "lower(email) = 'ada@example.com'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status != 'archived'", "status = 'archived'"},
+		{"status != 'archived'", "status IN ('active', 'archived')"},
+		{"status NOT IN ('archived', 'deleted')", "status = 'deleted'"},
+		{"status NOT IN ('archived', 'deleted')", "status IN ('active', 'deleted')"},
+		{"status NOT IN ('archived', 'deleted')", "status IS DISTINCT FROM 'archived'"},
+		{"status NOT IN ('archived', 'deleted')", "lower(status) = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

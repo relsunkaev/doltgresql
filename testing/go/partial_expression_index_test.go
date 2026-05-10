@@ -356,4 +356,42 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	nullQuery := `SELECT count(id) FROM partial_planner_contacts WHERE email IS NULL`
 	assertCountResult(t, ctx, conn, nullQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, nullQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_statuses (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_statuses VALUES
+		(1, 1, 'active'),
+		(2, 1, 'pending'),
+		(3, 1, 'archived'),
+		(4, 2, 'deleted'),
+		(5, 2, 'active'),
+		(6, 2, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_statuses_tenant_idx ON partial_planner_statuses (tenant) WHERE status NOT IN ('archived', 'deleted')")
+
+	exclusionImpliedQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status = 'active'`
+	assertCountResult(t, ctx, conn, exclusionImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, exclusionImpliedQuery, true)
+
+	exclusionInListQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status IN ('active', 'pending')`
+	assertCountResult(t, ctx, conn, exclusionInListQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, exclusionInListQuery, true)
+
+	exclusionNonImpliedQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status IN ('active', 'archived')`
+	assertCountResult(t, ctx, conn, exclusionNonImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, exclusionNonImpliedQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_status_ne (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_status_ne VALUES
+		(1, 1, 'active'),
+		(2, 1, 'archived'),
+		(3, 2, 'pending'),
+		(4, 2, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_status_ne_tenant_idx ON partial_planner_status_ne (tenant) WHERE status != 'archived'")
+
+	notEqualImpliedQuery := `SELECT count(id) FROM partial_planner_status_ne WHERE tenant = 1 AND status = 'active'`
+	assertCountResult(t, ctx, conn, notEqualImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, notEqualImpliedQuery, true)
+
+	notEqualNonImpliedQuery := `SELECT count(id) FROM partial_planner_status_ne WHERE tenant = 1 AND status = 'archived'`
+	assertCountResult(t, ctx, conn, notEqualNonImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, notEqualNonImpliedQuery, false)
 }

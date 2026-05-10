@@ -636,6 +636,14 @@ Do not check off an item until it has workload proof:
   `IS DISTINCT FROM` and null-only shapes stay unsupported. Coverage in
   server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.5.
+- [x] Use exclusion-style partial btree predicates for disjoint literal
+  lookups. Equality and IN-list query predicates now imply same-expression
+  partial-index predicates of the form `expr != literal` and
+  `expr NOT IN (literal, ...)` when the query literal set is disjoint from the
+  excluded values, including simple `lower(text)` / `upper(text)` expressions.
+  Null-sensitive shapes such as `IS DISTINCT FROM` remain outside this slice.
+  Coverage in server/indexpredicate/implication_test.go and
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.6.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Cross-column proofs, broader expression-level
   semantic implication, and planner deparsing for more predicate families

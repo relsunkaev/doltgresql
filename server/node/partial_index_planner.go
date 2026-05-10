@@ -254,6 +254,16 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return binaryPredicateSQL(left, opSQL, right)
 	}
 	switch expr := expr.(type) {
+	case gmsexpression.Tuple:
+		parts := make([]string, 0, len(expr))
+		for _, child := range expr {
+			part, ok := plannerPredicateExprSQL(child)
+			if !ok {
+				return "", false
+			}
+			parts = append(parts, part)
+		}
+		return "(" + strings.Join(parts, ", ") + ")", true
 	case *gmsexpression.GetField:
 		return predicateIdentifier(expr.Name()), true
 	case *gmsexpression.Literal:
@@ -315,6 +325,8 @@ func indexScanOpPredicateSQL(op sql.IndexScanOp) (string, bool) {
 		return "=", true
 	case sql.IndexScanOpNullSafeEq:
 		return "IS NOT DISTINCT FROM", true
+	case sql.IndexScanOpInSet:
+		return "IN", true
 	case sql.IndexScanOpGt:
 		return ">", true
 	case sql.IndexScanOpGte:
