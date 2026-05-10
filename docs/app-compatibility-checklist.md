@@ -1391,10 +1391,12 @@ Do not check off an item until it has workload proof:
   explicit nullable null-order combinations now use indexed plans only for
   matching `ORDER BY` shapes and fall back for mismatched null placement. Pinned
   by testing/go/index_benchmark_test.go. Tracked by dg-7ug.8.3.4.
-- [ ] Finish PostgreSQL-style planner preference after DESC/NULLS physical
-  support. The supported ordered-scan shapes are planner-visible, while final
-  costing/preference proof for choosing PostgreSQL-style ordered indexes over
-  competing access paths remains open. Tracked by dg-7ug.8.3.5 under
+- [x] Finish PostgreSQL-style planner preference after DESC/NULLS physical
+  support. PostgreSQL sort-option btree indexes are now preferred before
+  costed filter-index pushdown consumes the table, so a competing selective
+  predicate does not block `ORDER BY score DESC NULLS LAST LIMIT ...` from
+  using the matching ordered index without `Sort(`. Pinned by
+  testing/go/index_benchmark_test.go. Tracked by dg-7ug.8.3.5 under
   dg-7ug.8.3.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through

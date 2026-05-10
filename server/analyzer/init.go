@@ -73,6 +73,7 @@ const (
 	ruleId_AssignIndexStats                                                       // assignIndexStats
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
 	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
+	ruleId_PreferOrderedSortOptionIndexes                                         // preferOrderedSortOptionIndexes
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -133,6 +134,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},
 		analyzer.Rule{Id: ruleId_AssignSelectiveLookupJoinHints, Apply: AssignSelectiveLookupJoinHints},
+		analyzer.Rule{Id: ruleId_PreferOrderedSortOptionIndexes, Apply: PreferOrderedSortOptionIndexes},
 	)
 
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,

@@ -162,6 +162,15 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 		t.Fatalf("unexpected top scores from DESC NULLS LAST index scan: %s", topScores)
 	}
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_preference_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_preference_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_preference_tenant_idx ON btree_sort_option_preference_plan (tenant)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_preference_score_idx ON btree_sort_option_preference_plan (score DESC NULLS LAST)")
+	execBenchmarkSQL(t, ctx, conn, "ANALYZE btree_sort_option_preference_plan")
+	preferredOrderQuery := `SELECT id FROM btree_sort_option_preference_plan WHERE tenant IN (1, 2, 3) ORDER BY score DESC NULLS LAST LIMIT 5`
+	assertBenchmarkPlanContains(t, ctx, conn, preferredOrderQuery, "index: [btree_sort_option_preference_plan.score]")
+	assertBenchmarkPlanNotContains(t, ctx, conn, preferredOrderQuery, "Sort(")
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_multicol_desc_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO btree_sort_option_multicol_desc_plan VALUES
 		(1, 1, 10, 'one-low'),
