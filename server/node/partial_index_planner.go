@@ -300,6 +300,8 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return expr.String(), true
 	case *gmsexpression.Equals:
 		return binaryPredicateSQL(expr.Left(), "=", expr.Right())
+	case *gmsexpression.NullSafeEquals:
+		return binaryPredicateSQL(expr.Left(), "IS NOT DISTINCT FROM", expr.Right())
 	case *gmsexpression.GreaterThan:
 		return binaryPredicateSQL(expr.Left(), ">", expr.Right())
 	case *gmsexpression.GreaterThanOrEqual:
@@ -320,6 +322,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 			return "", false
 		}
 		return child + " IS NOT NULL", true
+	case *pgexpression.IsNotDistinctFrom:
+		children := expr.Children()
+		if len(children) != 2 {
+			return "", false
+		}
+		return binaryPredicateSQL(children[0], "IS NOT DISTINCT FROM", children[1])
 	case *gmsexpression.Not:
 		child, ok := plannerPredicateExprSQL(expr.Child)
 		if !ok {

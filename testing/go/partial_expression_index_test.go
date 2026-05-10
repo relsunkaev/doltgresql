@@ -414,4 +414,19 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	patternUnsafeQuery := `SELECT count(id) FROM partial_planner_pattern WHERE active = true AND name LIKE '%lph%'`
 	assertCountResult(t, ctx, conn, patternUnsafeQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, patternUnsafeQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_nullsafe (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, deleted_at TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_nullsafe VALUES
+		(1, 1, NULL),
+		(2, 1, '2026-01-01'),
+		(3, 2, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_nullsafe_tenant_idx ON partial_planner_nullsafe (tenant) WHERE deleted_at IS NULL")
+
+	nullSafeNullQuery := `SELECT count(id) FROM partial_planner_nullsafe WHERE tenant = 1 AND deleted_at IS NOT DISTINCT FROM NULL`
+	assertCountResult(t, ctx, conn, nullSafeNullQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullSafeNullQuery, true)
+
+	nullSafeNonNullQuery := `SELECT count(id) FROM partial_planner_nullsafe WHERE tenant = 1 AND deleted_at IS NOT DISTINCT FROM '2026-01-01'`
+	assertCountResult(t, ctx, conn, nullSafeNonNullQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullSafeNonNullQuery, false)
 }

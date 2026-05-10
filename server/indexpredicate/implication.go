@@ -128,6 +128,10 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	if indexNotNull, ok := notNullPredicateExprKey(indexExpr); ok {
 		return queryPredicateImpliesNotNull(indexNotNull, queryExpr)
 	}
+	if indexNull, ok := nullPredicateExprKey(indexExpr); ok {
+		queryNull, ok := nullPredicateExprKey(queryExpr)
+		return ok && queryNull == indexNull
+	}
 
 	indexValues, ok := predicateValueSetFromExpr(indexExpr)
 	if ok {
@@ -163,6 +167,33 @@ func notNullPredicateExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	return predicateComparableExprKey(isNotNull.Expr)
+}
+
+func nullPredicateExprKey(expr tree.Expr) (string, bool) {
+	expr = unwrapPredicateParens(expr)
+	if isNull, ok := expr.(*tree.IsNullExpr); ok {
+		return predicateComparableExprKey(isNull.Expr)
+	}
+	comparison, ok := expr.(*tree.ComparisonExpr)
+	if !ok || comparison.Operator != tree.IsNotDistinctFrom {
+		return "", false
+	}
+	if predicateIsNullLiteral(comparison.Right) {
+		if exprKey, ok := predicateComparableExprKey(comparison.Left); ok {
+			return exprKey, true
+		}
+	}
+	if predicateIsNullLiteral(comparison.Left) {
+		if exprKey, ok := predicateComparableExprKey(comparison.Right); ok {
+			return exprKey, true
+		}
+	}
+	return "", false
+}
+
+func predicateIsNullLiteral(expr tree.Expr) bool {
+	expr = unwrapPredicateParens(expr)
+	return expr == tree.DNull
 }
 
 func queryPredicateImpliesNotNull(indexExprKey string, queryExpr tree.Expr) bool {

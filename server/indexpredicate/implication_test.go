@@ -86,3 +86,31 @@ func TestImpliesExclusionPredicatesFromDisjointValues(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesNullPredicatesFromNullSafeNullComparisons(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"deleted_at IS NULL", "deleted_at IS NOT DISTINCT FROM NULL"},
+		{"deleted_at IS NOT DISTINCT FROM NULL", "deleted_at IS NULL"},
+		{"lower(email) IS NULL", "lower(email) IS NOT DISTINCT FROM NULL"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"deleted_at IS NULL", "deleted_at IS NOT DISTINCT FROM '2026-01-01'"},
+		{"deleted_at IS NULL", "archived_at IS NOT DISTINCT FROM NULL"},
+		{"deleted_at IS NULL", "deleted_at IS DISTINCT FROM NULL"},
+		{"lower(email) IS NULL", "email IS NOT DISTINCT FROM NULL"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

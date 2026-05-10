@@ -632,8 +632,9 @@ Do not check off an item until it has workload proof:
   `DO NOTHING`. The btree planner now hides partial indexes from generic
   costing and opts them back in only when the query's scalar filters imply
   the partial-index predicate for simple column lookup shapes, plus safe
-  prefix `LIKE` lookups through partial `text_pattern_ops` indexes. DDL, DML,
-  and planner coverage in
+  prefix `LIKE` lookups through partial `text_pattern_ops` indexes, and
+  same-column null-safe `IS NOT DISTINCT FROM NULL` predicates that prove
+  matching `IS NULL` partial predicates. DDL, DML, and planner coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
@@ -666,6 +667,12 @@ Do not check off an item until it has workload proof:
   partial-index predicate. Non-implying filters and unsafe non-prefix `LIKE`
   patterns stay on the table-scan path. Coverage in
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.7.
+- [x] Use `IS NULL` partial btree indexes for null-safe NULL predicates.
+  Same-column and simple same-expression `expr IS NOT DISTINCT FROM NULL`
+  filters now imply matching `expr IS NULL` partial-index predicates, while
+  non-NULL, wrong-column, and `IS DISTINCT FROM NULL` predicates remain
+  unsupported. Coverage in server/indexpredicate/implication_test.go and
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.8.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Cross-column proofs, broader expression-level
   semantic implication, and planner deparsing for additional predicate
