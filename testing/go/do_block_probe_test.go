@@ -218,6 +218,34 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block assigns dynamic EXECUTE INTO results",
+			SetUpScript: []string{
+				`CREATE TABLE do_dynamic_into_source (id INT PRIMARY KEY, label TEXT);`,
+				`CREATE TABLE do_dynamic_into_seen (id INT PRIMARY KEY, label TEXT);`,
+				`INSERT INTO do_dynamic_into_source VALUES (7, 'from execute into');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							target_table TEXT := 'do_dynamic_into_source';
+							got_id INT;
+							got_label TEXT;
+						BEGIN
+							EXECUTE format('SELECT id, label FROM %I WHERE id = $1', target_table)
+								INTO got_id, got_label
+								USING 7;
+							INSERT INTO do_dynamic_into_seen VALUES (got_id, got_label);
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT label FROM do_dynamic_into_seen WHERE id = 7;`,
+					Expected: []sql.Row{{"from execute into"}},
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
