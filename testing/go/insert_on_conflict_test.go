@@ -1618,6 +1618,32 @@ ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports gcd predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_gcd (id INT PRIMARY KEY, user_id INT, width BIGINT, height BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_gcd_user_idx ON partial_arb_gcd (user_id) WHERE gcd(width, height) = 4;",
+				"INSERT INTO partial_arb_gcd VALUES (1, 10, 8, 12, 'old-gcd'), (2, 10, 9, 6, 'old-other');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_gcd VALUES (3, 10, 12, 16, 'gcd-upsert')
+ON CONFLICT (user_id) WHERE gcd(width, height) = 4 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, width, height, note FROM partial_arb_gcd ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(8), int64(12), "gcd-upsert"},
+						{2, int32(10), int64(9), int64(6), "old-other"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_gcd VALUES (4, 10, 8, 12, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE width = 8 AND height = 12 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports chr predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_chr (id INT PRIMARY KEY, user_id INT, codepoint INT, note TEXT);",

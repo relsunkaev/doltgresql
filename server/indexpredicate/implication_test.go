@@ -933,6 +933,34 @@ func TestImpliesSignFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesGcdFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"gcd(width, height) = 4", "gcd(width, height) = 4"},
+		{"gcd(width, height) IN (2, 4)", "gcd(width, height) = 4"},
+		{"gcd(width, height) IS NOT NULL", "gcd(width, height) = 4"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"gcd(width, height) = 4", "width = 8 AND height = 12"},
+		{"gcd(width, height) = 4", "gcd(height, width) = 4"},
+		{"gcd(width, height) = 4", "gcd(width, height) = 3"},
+		{"gcd(width, height) IN (2, 4)", "gcd(width, height) IN (4, 6)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesChrFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

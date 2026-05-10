@@ -1230,6 +1230,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "repeat" {
 		return p.evalRepeat(ctx, row, expr)
 	}
+	if name == "gcd" {
+		return p.evalGcd(ctx, row, expr)
+	}
 	if name == "concat" {
 		return p.evalConcat(ctx, row, expr)
 	}
@@ -1660,6 +1663,42 @@ func (p *partialIndexPredicate) evalRepeat(ctx *sql.Context, row sql.Row, expr *
 		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat count %d is too large", repeatCount)
 	}
 	return predicateValue{value: strings.Repeat(text, int(repeatCount))}, nil
+}
+
+func (p *partialIndexPredicate) evalGcd(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.New("partial unique index predicate function gcd expects two arguments")
+	}
+	left, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if left.value == nil || right.value == nil {
+		return predicateValue{}, nil
+	}
+	leftInt, ok := predicateSignedIntegerValue(left.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function gcd does not support %T", left.value)
+	}
+	rightInt, ok := predicateSignedIntegerValue(right.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function gcd does not support %T", right.value)
+	}
+	return predicateValue{value: predicateGcdInt64(leftInt, rightInt)}, nil
+}
+
+func predicateGcdInt64(left int64, right int64) int64 {
+	for right != 0 {
+		left, right = right, left%right
+	}
+	if left < 0 {
+		return -left
+	}
+	return left
 }
 
 func (p *partialIndexPredicate) evalConcat(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

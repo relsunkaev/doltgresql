@@ -588,6 +588,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports gcd predicate",
+			SetUpScript: []string{
+				`CREATE TABLE gcd_scores (id INT PRIMARY KEY, user_id INT, width BIGINT, height BIGINT);`,
+				`CREATE UNIQUE INDEX gcd_scores_user_dims_idx
+					ON gcd_scores (user_id)
+					WHERE gcd(width, height) = 4;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO gcd_scores VALUES
+						(1, 10, 8, 12),
+						(2, 10, 9, 6);`,
+				},
+				{
+					Query:       `INSERT INTO gcd_scores VALUES (3, 10, 16, 20);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO gcd_scores VALUES (4, 10, 6, 10);`,
+				},
+				{
+					Query:       `UPDATE gcd_scores SET width = 12, height = 16 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports chr predicate",
 			SetUpScript: []string{
 				`CREATE TABLE chr_codes (id INT PRIMARY KEY, user_id INT, codepoint INT);`,
@@ -1780,6 +1807,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	signNonMatchingQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND sign(delta) = -1`
 	assertCountResult(t, ctx, conn, signNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, signNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_gcd (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, width BIGINT, height BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_gcd VALUES
+		(1, 1, 8, 12),
+		(2, 1, 9, 6),
+		(3, 1, 12, 16),
+		(4, 2, 8, 12)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_gcd_tenant_idx ON partial_planner_gcd (tenant) WHERE gcd(width, height) = 4")
+
+	gcdImpliedQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND gcd(width, height) = 4`
+	assertCountResult(t, ctx, conn, gcdImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, gcdImpliedQuery, true)
+
+	gcdRawSemanticQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND width = 8 AND height = 12`
+	assertCountResult(t, ctx, conn, gcdRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, gcdRawSemanticQuery, false)
+
+	gcdNonMatchingQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND gcd(width, height) = 3`
+	assertCountResult(t, ctx, conn, gcdNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, gcdNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_chr (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, codepoint INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_chr VALUES
