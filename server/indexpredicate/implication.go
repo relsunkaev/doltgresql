@@ -496,6 +496,7 @@ func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
 func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
 	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSignArgumentValueSetImplies(indexValues, queryValues)
 }
 
@@ -575,6 +576,34 @@ func predicateCaseFoldStringLiteralKey(functionName string, value string) (strin
 		return "", false
 	}
 	return prefix + value, true
+}
+
+func predicateAsciiArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "ascii")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	asciiValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		asciiValue, ok := predicateAsciiStringLiteralKey(value)
+		if !ok {
+			return false
+		}
+		asciiValues[asciiValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: asciiValues}.subsetOf(indexValues)
+}
+
+func predicateAsciiStringLiteralKey(value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	text := strings.TrimPrefix(value, prefix)
+	for _, r := range text {
+		return "n:" + strconv.FormatInt(int64(r), 10), true
+	}
+	return "n:0", true
 }
 
 func predicateSignArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

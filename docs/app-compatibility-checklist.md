@@ -1003,10 +1003,19 @@ Do not check off an item until it has workload proof:
   planner filters can deparse them, partial unique DML enforcement evaluates
   empty-string and multibyte first-codepoint behavior aligned with the runtime
   function, and `ON CONFLICT` arbiter inference accepts the exact-expression
-  shape; wrong codepoint values and raw source-string semantic rewrites remain
+  shape; wrong codepoint values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.15.
+- [x] Use raw source-string value-set predicates to imply matching
+  `ascii(...)` partial-index predicates. Text equality and IN-list filters on
+  the argument, such as `code = 'April'` and `code IN ('Admin', 'Alpha')`,
+  now imply `ascii(code)` value-set predicates when every literal's first
+  codepoint, or empty-string zero, is contained in the partial predicate's
+  literal set. Non-matching first codepoints and broader predicates remain
   rejected. Coverage in server/indexpredicate/implication_test.go,
-  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
-  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.15.
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.41.
 - [x] Use deterministic `substr(expr, start[, count])` / `substring(expr,
   start[, count])` predicates in partial-index implication paths. Integer
   start/count substring calls now serialize under a canonical comparable

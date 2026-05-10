@@ -2040,7 +2040,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	asciiRawSourceQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND code = 'Alpha'`
 	assertCountResult(t, ctx, conn, asciiRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, asciiRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, asciiRawSourceQuery, true)
+
+	asciiRawInQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND code IN ('Alpha', 'Admin')`
+	assertCountResult(t, ctx, conn, asciiRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, asciiRawInQuery, true)
+
+	asciiRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND code = 'beta'`
+	assertCountResult(t, ctx, conn, asciiRawNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, asciiRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_substring (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_substring VALUES

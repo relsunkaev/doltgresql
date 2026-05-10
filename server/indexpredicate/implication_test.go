@@ -862,6 +862,8 @@ func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"ascii(code) = 65", "ascii(code) = 65"},
+		{"ascii(code) = 65", "code = 'Active'"},
+		{"ascii(code) IN (65, 66)", "code IN ('Active', 'Beta')"},
 		{"ascii(code) IN (65, 66)", "ascii(code) = 65"},
 		{"ascii(code) IS NOT NULL", "ascii(code) = 65"},
 	} {
@@ -875,7 +877,8 @@ func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 	}{
 		{"ascii(code) = 65", "ascii(code) = 66"},
 		{"ascii(code) = 65", "lower(code) = 'active'"},
-		{"ascii(code) = 65", "code = 'Active'"},
+		{"ascii(code) = 65", "code = 'beta'"},
+		{"ascii(code) = 65", "code IN ('Active', 'beta')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

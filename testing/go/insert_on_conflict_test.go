@@ -1489,8 +1489,30 @@ ON CONFLICT (user_id) WHERE ascii(code) = 65 DO UPDATE SET note = EXCLUDED.note;
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_ascii VALUES (4, 10, 'April', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'April' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_ascii VALUES (4, 10, 'April', 'raw-ascii-upsert')
+ON CONFLICT (user_id) WHERE code = 'April' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_ascii ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Alpha", "raw-ascii-upsert"},
+						{2, 10, "beta", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_ascii VALUES (5, 10, 'Admin', 'raw-ascii-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('Admin', 'Alpha') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_ascii ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Alpha", "raw-ascii-in-upsert"},
+						{2, 10, "beta", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_ascii VALUES (6, 10, 'April', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('April', 'beta') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},
