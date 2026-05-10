@@ -619,6 +619,48 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block matches non data condition class handlers",
+			SetUpScript: []string{
+				`CREATE TABLE do_condition_class_seen (
+					marker TEXT NOT NULL,
+					sqlstate TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							returned_state TEXT;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'missing relation branch'
+									USING ERRCODE = '42P01';
+							EXCEPTION
+								WHEN data_exception THEN
+									INSERT INTO do_condition_class_seen VALUES ('wrong', '22000');
+								WHEN syntax_error_or_access_rule_violation THEN
+									GET STACKED DIAGNOSTICS returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_condition_class_seen VALUES ('syntax', returned_state);
+							END;
+
+							BEGIN
+								RAISE EXCEPTION 'retry branch'
+									USING ERRCODE = '40001';
+							EXCEPTION
+								WHEN transaction_rollback THEN
+									GET STACKED DIAGNOSTICS returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_condition_class_seen VALUES ('transaction', returned_state);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT marker, sqlstate FROM do_condition_class_seen ORDER BY marker;`,
+					Expected: []sql.Row{{"syntax", "42P01"}, {"transaction", "40001"}},
+				},
+			},
+		},
+		{
 			Name: "DO block reads stacked object-name diagnostics",
 			SetUpScript: []string{
 				`CREATE TABLE do_stacked_object_diag_seen (

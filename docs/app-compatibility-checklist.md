@@ -648,6 +648,13 @@ Do not check off an item until it has workload proof:
     `22P02` on the wire outside PL/pgSQL. Pinned by
     testing/go/do_block_probe_test.go and testing/go/sqlstate_test.go.
     Tracked by dg-7ug.20.7.
+  - [x] PL/pgSQL exception handlers match PostgreSQL condition class names
+    across the standard SQLSTATE class prefixes, beyond the data and
+    integrity-constraint categories. Representative handlers for
+    `syntax_error_or_access_rule_violation` and `transaction_rollback` catch
+    explicit class `42` and `40` SQLSTATEs while preserving the exact returned
+    code in stacked diagnostics. Pinned by testing/go/do_block_probe_test.go.
+    Tracked by dg-7ug.20.8.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
