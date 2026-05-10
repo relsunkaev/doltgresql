@@ -358,6 +358,36 @@ func TestImpliesStrposFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesStartsWithFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"starts_with(code, 'active')", "starts_with(code, 'active')"},
+		{"starts_with(code, 'active')", "starts_with(code, 'active') = true"},
+		{"starts_with(code, 'active') = true", "starts_with(code, 'active')"},
+		{"starts_with(code, 'active') IS NOT NULL", "starts_with(code, 'active') = true"},
+		{"starts_with(code, 'active') = false", "NOT starts_with(code, 'active')"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"starts_with(code, 'active')", "starts_with(code, 'pending')"},
+		{"starts_with(code, 'active')", "starts_with(code, 'active') = false"},
+		{"starts_with(code, 'active') = true", "code = 'active-a'"},
+		{"starts_with(code, 'active') = false", "starts_with(code, 'active')"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

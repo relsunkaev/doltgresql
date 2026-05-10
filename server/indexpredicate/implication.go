@@ -143,7 +143,15 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	indexValues, ok := predicateValueSetFromExpr(indexExpr)
 	if ok {
 		queryValues, ok := predicateValueSetFromExpr(queryExpr)
-		return ok && indexValues.exprKey == queryValues.exprKey && queryValues.subsetOf(indexValues)
+		if ok {
+			return indexValues.exprKey == queryValues.exprKey && queryValues.subsetOf(indexValues)
+		}
+		queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
+		if !ok || indexValues.exprKey != queryBool.exprKey {
+			return false
+		}
+		indexBool, ok := indexValues.singleBoolValue()
+		return ok && indexBool == queryBool.value
 	}
 
 	indexExclusions, ok := predicateExclusionSetFromExpr(indexExpr)
@@ -176,7 +184,7 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 		return false
 	}
 	queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
-	return ok && strings.EqualFold(indexBool.column, queryBool.column) && indexBool.value == queryBool.value
+	return ok && indexBool.exprKey == queryBool.exprKey && indexBool.value == queryBool.value
 }
 
 type predicateEquality struct {
@@ -368,7 +376,7 @@ func queryPredicateImpliesNotNull(indexExprKey string, queryExpr tree.Expr) bool
 		return queryRange.bounds.valid() && "column:"+queryRange.column == indexExprKey
 	}
 	if queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr); ok {
-		return "column:"+queryBool.column == indexExprKey
+		return queryBool.exprKey == indexExprKey
 	}
 	return false
 }
@@ -399,8 +407,8 @@ type numericPredicateRange struct {
 }
 
 type booleanPredicateComparison struct {
-	column string
-	value  bool
+	exprKey string
+	value   bool
 }
 
 type predicateValueSet struct {
@@ -421,6 +429,21 @@ func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
 		}
 	}
 	return true
+}
+
+func (s predicateValueSet) singleBoolValue() (bool, bool) {
+	if len(s.values) != 1 {
+		return false, false
+	}
+	for value := range s.values {
+		switch value {
+		case "b:true":
+			return true, true
+		case "b:false":
+			return false, true
+		}
+	}
+	return false, false
 }
 
 func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
@@ -558,6 +581,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	if name == "strpos" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
+	}
+	if name == "starts_with" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
 	if len(fn.Exprs) != 1 {
@@ -734,28 +760,47 @@ func booleanPredicateComparisonFromExpr(expr tree.Expr) (booleanPredicateCompari
 	case *tree.ParenExpr:
 		return booleanPredicateComparisonFromExpr(expr.Expr)
 	case *tree.UnresolvedName:
-		column, ok := predicateColumnName(expr)
-		return booleanPredicateComparison{column: column, value: true}, ok
+		exprKey, ok := predicateBooleanExprKey(expr)
+		return booleanPredicateComparison{exprKey: exprKey, value: true}, ok
+	case *tree.FuncExpr:
+		exprKey, ok := predicateBooleanExprKey(expr)
+		return booleanPredicateComparison{exprKey: exprKey, value: true}, ok
 	case *tree.NotExpr:
-		if column, ok := predicateColumnName(expr.Expr); ok {
-			return booleanPredicateComparison{column: column, value: false}, true
+		if exprKey, ok := predicateBooleanExprKey(expr.Expr); ok {
+			return booleanPredicateComparison{exprKey: exprKey, value: false}, true
 		}
 	case *tree.ComparisonExpr:
 		if expr.Operator != tree.EQ && expr.Operator != tree.IsNotDistinctFrom {
 			return booleanPredicateComparison{}, false
 		}
-		if column, ok := predicateColumnName(expr.Left); ok {
+		if exprKey, ok := predicateBooleanExprKey(expr.Left); ok {
 			if value, ok := predicateBoolConstant(expr.Right); ok {
-				return booleanPredicateComparison{column: column, value: value}, true
+				return booleanPredicateComparison{exprKey: exprKey, value: value}, true
 			}
 		}
-		if column, ok := predicateColumnName(expr.Right); ok {
+		if exprKey, ok := predicateBooleanExprKey(expr.Right); ok {
 			if value, ok := predicateBoolConstant(expr.Left); ok {
-				return booleanPredicateComparison{column: column, value: value}, true
+				return booleanPredicateComparison{exprKey: exprKey, value: value}, true
 			}
 		}
 	}
 	return booleanPredicateComparison{}, false
+}
+
+func predicateBooleanExprKey(expr tree.Expr) (string, bool) {
+	expr = unwrapPredicateParens(expr)
+	if column, ok := predicateColumnName(expr); ok {
+		return "column:" + column, true
+	}
+	fn, ok := expr.(*tree.FuncExpr)
+	if !ok {
+		return "", false
+	}
+	name, ok := predicateFunctionName(fn.Func)
+	if !ok || name != "starts_with" {
+		return "", false
+	}
+	return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 }
 
 func predicateColumnName(expr tree.Expr) (string, bool) {

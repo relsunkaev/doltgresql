@@ -1157,6 +1157,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "strpos" {
 		return p.evalStrpos(ctx, row, expr)
 	}
+	if name == "starts_with" {
+		return p.evalStartsWith(ctx, row, expr)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1226,6 +1229,32 @@ func (p *partialIndexPredicate) evalStrpos(ctx *sql.Context, row sql.Row, expr *
 		return predicateValue{value: int64(0)}, nil
 	}
 	return predicateValue{value: int64(idx + 1)}, nil
+}
+
+func (p *partialIndexPredicate) evalStartsWith(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function starts_with expects two arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	prefix, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || prefix.value == nil {
+		return predicateValue{}, nil
+	}
+	strText, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function starts_with does not support %T", str.value)
+	}
+	prefixText, ok := prefix.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function starts_with does not support %T", prefix.value)
+	}
+	return predicateValue{value: strings.HasPrefix(strText, prefixText)}, nil
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

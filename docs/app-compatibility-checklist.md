@@ -842,6 +842,15 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.8.
+- [x] Use deterministic `starts_with(expr, literal)` predicates in partial-index
+  implication paths. `starts_with(...)` now serializes as a comparable boolean
+  function predicate key, raw boolean predicates imply matching `= true` forms
+  and vice versa, partial unique DML enforcement evaluates text prefixes, and
+  `ON CONFLICT` arbiter inference accepts the same safe prefix shape; wrong
+  prefixes and false predicates remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.9.
 - [x] Use same-expression exclusion-set predicates in partial-index
   implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
   `IS DISTINCT FROM` predicates now compare excluded literal sets, so query
