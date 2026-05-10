@@ -375,9 +375,17 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, exclusionInListQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, exclusionInListQuery, true)
 
+	exclusionNotInSubsetQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status NOT IN ('archived', 'deleted', 'blocked')`
+	assertCountResult(t, ctx, conn, exclusionNotInSubsetQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, exclusionNotInSubsetQuery, true)
+
 	exclusionNonImpliedQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status IN ('active', 'archived')`
 	assertCountResult(t, ctx, conn, exclusionNonImpliedQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, exclusionNonImpliedQuery, false)
+
+	exclusionIncompleteQuery := `SELECT count(id) FROM partial_planner_statuses WHERE tenant = 1 AND status != 'archived'`
+	assertCountResult(t, ctx, conn, exclusionIncompleteQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, exclusionIncompleteQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_status_ne (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_status_ne VALUES

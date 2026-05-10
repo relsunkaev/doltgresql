@@ -87,6 +87,37 @@ func TestImpliesExclusionPredicatesFromDisjointValues(t *testing.T) {
 	}
 }
 
+func TestImpliesExclusionPredicatesFromExclusionSubsets(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status NOT IN ('archived', 'deleted')", "status NOT IN ('archived', 'deleted', 'blocked')"},
+		{"status NOT IN ('archived', 'deleted')", "NOT (status IN ('archived', 'deleted', 'blocked'))"},
+		{"status != 'archived'", "status NOT IN ('archived', 'deleted')"},
+		{"status IS DISTINCT FROM 'archived'", "status != 'archived'"},
+		{"status IS DISTINCT FROM 'archived'", "status NOT IN ('archived', 'deleted')"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"status NOT IN ('archived', 'deleted')", "status != 'archived'"},
+		{"status NOT IN ('archived', 'deleted')", "status IS DISTINCT FROM 'archived'"},
+		{"status != 'archived'", "status IS DISTINCT FROM 'archived'"},
+		{"status NOT IN ('archived', 'deleted')", "status NOT IN ('archived', 'blocked')"},
+		{"status NOT IN ('archived', 'deleted')", "lower(status) NOT IN ('archived', 'deleted')"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesNullPredicatesFromNullSafeNullComparisons(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

@@ -756,6 +756,32 @@ ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports exclusion-set predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_not_in (id INT PRIMARY KEY, user_id INT, status TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_not_in_user_idx ON partial_arb_not_in (user_id) WHERE status NOT IN ('archived', 'deleted');",
+				"INSERT INTO partial_arb_not_in VALUES (1, 10, 'active', 'old-active'), (2, 10, 'archived', 'archived-row');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_not_in VALUES (3, 10, 'active', 'not-in-upsert')
+ON CONFLICT (user_id) WHERE status NOT IN ('archived', 'deleted', 'blocked') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, status, note FROM partial_arb_not_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "not-in-upsert"},
+						{2, 10, "archived", "archived-row"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_not_in VALUES (4, 10, 'active', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE status != 'archived' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports expression value-set predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_expr_in (id INT PRIMARY KEY, email TEXT, note TEXT);",

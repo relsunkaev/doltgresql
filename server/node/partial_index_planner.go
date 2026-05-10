@@ -438,6 +438,8 @@ func indexScanOpPredicateSQL(op sql.IndexScanOp) (string, bool) {
 		return "IS NOT DISTINCT FROM", true
 	case sql.IndexScanOpInSet:
 		return "IN", true
+	case sql.IndexScanOpNotInSet:
+		return "NOT IN", true
 	case sql.IndexScanOpGt:
 		return ">", true
 	case sql.IndexScanOpGte:

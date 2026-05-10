@@ -747,6 +747,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.4.
+- [x] Use same-expression exclusion-set predicates in partial-index
+  implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
+  `IS DISTINCT FROM` predicates now compare excluded literal sets, so query
+  predicates that exclude a safe superset of the partial-index predicate's
+  excluded values can use the partial index while incomplete and wrong-
+  expression exclusions stay rejected. Planner predicate serialization now
+  preserves `NOT IN`, and `ON CONFLICT` arbiter inference accepts the same
+  safe superset shape. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.11.2.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic
