@@ -650,6 +650,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "repeat" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
+	if name == "concat" {
+		return predicateVariadicFunctionCallExprKey(name, fn.Exprs, 1)
+	}
 	if name == "replace" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
 	}
@@ -710,6 +713,17 @@ func predicateVariableArityFunctionCallExprKey(name string, exprs tree.Exprs, mi
 	if len(exprs) < minArgs || len(exprs) > maxArgs {
 		return "", false
 	}
+	return predicateFunctionCallExprKeyParts(name, exprs)
+}
+
+func predicateVariadicFunctionCallExprKey(name string, exprs tree.Exprs, minArgs int) (string, bool) {
+	if len(exprs) < minArgs {
+		return "", false
+	}
+	return predicateFunctionCallExprKeyParts(name, exprs)
+}
+
+func predicateFunctionCallExprKeyParts(name string, exprs tree.Exprs) (string, bool) {
 	parts := make([]string, 0, len(exprs))
 	for _, child := range exprs {
 		childKey, ok := predicateFunctionArgumentExprKey(child)

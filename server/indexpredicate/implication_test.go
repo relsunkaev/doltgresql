@@ -279,6 +279,34 @@ func TestImpliesRepeatFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesConcatFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"concat('acct-', code) = 'acct-active'", "concat('acct-', code) = 'acct-active'"},
+		{"concat(prefix, '-', code) IN ('acct-active', 'acct-pending')", "concat(prefix, '-', code) = 'acct-active'"},
+		{"concat(code, NULL) = 'active'", "concat(code, NULL) = 'active'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"concat('acct-', code) = 'acct-active'", "code = 'active'"},
+		{"concat('acct-', code) = 'acct-active'", "concat('acct:', code) = 'acct:active'"},
+		{"concat(prefix, '-', code) = 'acct-active'", "concat(prefix, code) = 'acctactive'"},
+		{"concat(prefix, '-', code) = 'acct-active'", "concat(prefix, '-', code) = 'acct-pending'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesTextLengthFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

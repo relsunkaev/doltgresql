@@ -1230,6 +1230,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "repeat" {
 		return p.evalRepeat(ctx, row, expr)
 	}
+	if name == "concat" {
+		return p.evalConcat(ctx, row, expr)
+	}
 	if name == "replace" {
 		return p.evalReplace(ctx, row, expr)
 	}
@@ -1651,6 +1654,46 @@ func (p *partialIndexPredicate) evalRepeat(ctx *sql.Context, row sql.Row, expr *
 		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat count %d is too large", repeatCount)
 	}
 	return predicateValue{value: strings.Repeat(text, int(repeatCount))}, nil
+}
+
+func (p *partialIndexPredicate) evalConcat(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) < 1 {
+		return predicateValue{}, errors.New("partial unique index predicate function concat expects at least one argument")
+	}
+	var builder strings.Builder
+	for _, child := range expr.Exprs {
+		value, err := p.evalValue(ctx, row, child)
+		if err != nil {
+			return predicateValue{}, err
+		}
+		if value.value == nil {
+			continue
+		}
+		text, ok := predicateConcatText(value.value)
+		if !ok {
+			return predicateValue{}, errors.Errorf("partial unique index predicate function concat does not support %T", value.value)
+		}
+		builder.WriteString(text)
+	}
+	return predicateValue{value: builder.String()}, nil
+}
+
+func predicateConcatText(value any) (string, bool) {
+	switch value := value.(type) {
+	case string:
+		return value, true
+	case bool:
+		if value {
+			return "t", true
+		}
+		return "f", true
+	default:
+		intValue, ok := predicateSignedIntegerValue(value)
+		if !ok {
+			return "", false
+		}
+		return fmt.Sprintf("%d", intValue), true
+	}
 }
 
 func (p *partialIndexPredicate) evalSubstring(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {

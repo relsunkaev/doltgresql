@@ -1540,6 +1540,32 @@ ON CONFLICT (code) WHERE repeat(code, 3) = 'activeactiveactive' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports concat predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_concat (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_concat_code_idx ON partial_arb_concat (code) WHERE concat('acct-', code) = 'acct-active';",
+				"INSERT INTO partial_arb_concat VALUES (1, 'active', 'old-active'), (2, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_concat VALUES (3, 'active', 'concat-upsert')
+ON CONFLICT (code) WHERE concat('acct-', code) = 'acct-active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_concat ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "active", "concat-upsert"},
+						{2, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_concat VALUES (4, 'active', 'wrong-predicate')
+ON CONFLICT (code) WHERE concat('acct:', code) = 'acct:active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports abs predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_abs (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",

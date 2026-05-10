@@ -533,6 +533,34 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports concat predicate",
+			SetUpScript: []string{
+				`CREATE TABLE concat_codes (id INT PRIMARY KEY, user_id INT, prefix TEXT, code TEXT);`,
+				`CREATE UNIQUE INDEX concat_codes_user_code_idx
+					ON concat_codes (user_id)
+					WHERE concat(prefix, '-', code) = 'acct-active';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO concat_codes VALUES
+						(1, 10, 'acct', 'active'),
+						(2, 10, 'acct', 'pending'),
+						(3, 10, NULL, 'active');`,
+				},
+				{
+					Query:       `INSERT INTO concat_codes VALUES (4, 10, 'acct', 'active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO concat_codes VALUES (5, 10, 'acctactive', '');`,
+				},
+				{
+					Query:       `UPDATE concat_codes SET code = 'active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports left and right predicates",
 			SetUpScript: []string{
 				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1249,6 +1277,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	repeatWrongCountQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND repeat(code, 3) = 'activeactiveactive'`
 	assertCountResult(t, ctx, conn, repeatWrongCountQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, repeatWrongCountQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_concat (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, prefix TEXT, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_concat VALUES
+		(1, 1, 'acct', 'active'),
+		(2, 1, 'acct', 'pending'),
+		(3, 1, 'acctactive', ''),
+		(4, 2, 'acct', 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_concat_tenant_idx ON partial_planner_concat (tenant) WHERE concat(prefix, '-', code) = 'acct-active'")
+
+	concatImpliedQuery := `SELECT count(id) FROM partial_planner_concat WHERE tenant = 1 AND concat(prefix, '-', code) = 'acct-active'`
+	assertCountResult(t, ctx, conn, concatImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, concatImpliedQuery, true)
+
+	concatWrongResultQuery := `SELECT count(id) FROM partial_planner_concat WHERE tenant = 1 AND concat(prefix, '-', code) = 'acct-pending'`
+	assertCountResult(t, ctx, conn, concatWrongResultQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, concatWrongResultQuery, false)
+
+	concatRawSemanticQuery := `SELECT count(id) FROM partial_planner_concat WHERE tenant = 1 AND prefix = 'acct' AND code = 'active'`
+	assertCountResult(t, ctx, conn, concatRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, concatRawSemanticQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_length (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_length VALUES
