@@ -1239,12 +1239,15 @@ Do not check off an item until it has workload proof:
   Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.31.
-- [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
-  current conservative subset. Additional cross-column proof shapes beyond
-  singleton and equality-chain facts, broader expression-level semantic
-  implication beyond the currently supported deterministic unary function
-  families, and planner deparsing for additional predicate families remain open.
-  Tracked by dg-7ug.8.9, dg-7ug.8.10, and dg-7ug.8.11 under dg-7ug.8.
+- [x] Continue PostgreSQL-style partial-index predicate implication beyond the
+  original conservative subset. The documented planner and arbiter inference
+  lane now covers cross-column singleton and equality-chain facts, deterministic
+  expression predicate families, raw argument value-set rewrites where each
+  transformed value is contained by the partial predicate, exclusion/null-safe
+  predicates, boolean predicates, and safe literal-prefix `LIKE` deparsing.
+  Unsupported volatile, broader algebraic, non-equivalent, or unproven shapes
+  remain rejected. Tracked by dg-7ug.8.9, dg-7ug.8.10, and dg-7ug.8.11 under
+  dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match
