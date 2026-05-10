@@ -83,10 +83,9 @@ Do not check off an item until it has workload proof:
   skip, and explicit-non-goal buckets, with each bucket tied to a tracked
   implementation task, documented rewrite, or documented non-goal. The
   expanded `psql` restore gate has an empty skip/rewrite/non-goal bucket. The
-  broader pg_dump round-trip probe exposed a sequence-owning dump blocker
-  (`SELECT last_value, is_called FROM public.goose_db_version_id_seq`) that is
-  tracked separately as dg-7ug.13 instead of being counted as solved here.
-  Tracked by dg-7ug.1.
+  former sequence-owning dump blocker
+  (`SELECT last_value, is_called FROM public.goose_db_version_id_seq`) is now
+  covered by the sequence relation-scan round-trip gate. Tracked by dg-7ug.1.
 - [x] Build a minimal-viable schema slice harness that excludes known
   unsupported DDL and proves ORM runtime queries on top of it.
   testing/go/pg_dump_round_trip_test.go creates a representative
@@ -121,13 +120,23 @@ Do not check off an item until it has workload proof:
   Doltgres' internal `dolt` schema is excluded, why, and what exact
   production-like dumps have passed `pg_dump` -> `psql` restore -> ORM
   introspection -> running app queries. testing/go/pg_dump_round_trip_test.go
-  now restores the external Boluwatife-AJB/backend-in-node dump, dumps it back
-  out with real `pg_dump --exclude-schema dolt`, restores that output through
-  real `psql`, introspects the restored schema with real `drizzle-kit
-  introspect`, and runs pgx reads/writes against the restored application
-  tables. The `dolt` schema is excluded because it is Doltgres internal system
-  state, not user application schema. Sequence-owning external dump round trips
-  remain open under dg-7ug.13. Tracked by dg-7ug.2.
+  now restores external Boluwatife-AJB/backend-in-node and
+  kirooha/adtech-simple dumps, dumps them back out with real
+  `pg_dump --exclude-schema dolt`, restores that output through real `psql`,
+  introspects the restored schema with real `drizzle-kit introspect`, and runs
+  pgx reads/writes against the restored application tables. The `dolt` schema
+  is excluded because it is Doltgres internal system state, not user
+  application schema. Tracked by dg-7ug.2.
+- [x] Support `pg_dump` sequence relation scans for sequence-owning dumps.
+  PostgreSQL clients can resolve a sequence as a relation for
+  `SELECT last_value, is_called FROM public.some_sequence`, while schema table
+  enumeration still keeps sequence names out of ordinary table listings so
+  `pg_dump` does not emit duplicate `CREATE TABLE` / `COPY` blocks for
+  sequence relations. testing/go/sequences_test.go covers direct relation
+  reads across `nextval` and `setval(..., false)`;
+  testing/go/pg_dump_round_trip_test.go covers synthetic sequence-owned-table
+  dump/restore and the kirooha/adtech-simple external dump that originally
+  failed on `public.goose_db_version_id_seq`. Tracked by dg-7ug.13.
 
 ## Schema/bootstrap TODO
 

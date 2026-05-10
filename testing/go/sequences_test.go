@@ -828,6 +828,56 @@ func TestSequences(t *testing.T) {
 			},
 		},
 		{
+			Name: "sequence relation scans",
+			SetUpScript: []string{
+				"CREATE SEQUENCE public.dump_seq START 5 INCREMENT 2;",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "SELECT last_value, is_called FROM public.dump_seq;",
+					Expected: []sql.Row{
+						{5, "f"},
+					},
+				},
+				{
+					Query: "SELECT nextval('public.dump_seq');",
+					Expected: []sql.Row{
+						{5},
+					},
+				},
+				{
+					Query: "SELECT last_value, is_called FROM public.dump_seq;",
+					Expected: []sql.Row{
+						{5, "t"},
+					},
+				},
+				{
+					Query: "SELECT setval('public.dump_seq', 11, false);",
+					Expected: []sql.Row{
+						{11},
+					},
+				},
+				{
+					Query: "SELECT last_value, is_called FROM public.dump_seq;",
+					Expected: []sql.Row{
+						{11, "f"},
+					},
+				},
+				{
+					Query: "SELECT nextval('public.dump_seq');",
+					Expected: []sql.Row{
+						{11},
+					},
+				},
+				{
+					Query: "SELECT last_value, is_called FROM public.dump_seq;",
+					Expected: []sql.Row{
+						{11, "t"},
+					},
+				},
+			},
+		},
+		{
 			Name: "DROP TABLE",
 			SetUpScript: []string{
 				"CREATE TABLE test (pk SERIAL PRIMARY KEY, v1 INTEGER);",

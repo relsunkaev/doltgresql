@@ -238,6 +238,8 @@ func (root *RootValue) DebugString(ctx context.Context, transitive bool) string 
 			buf.WriteString(strconv.FormatInt(seq.Cache, 10))
 			buf.WriteString(" Cycle: ")
 			buf.WriteString(strconv.FormatBool(seq.Cycle))
+			buf.WriteString(" IsCalled: ")
+			buf.WriteString(strconv.FormatBool(seq.IsCalled))
 			buf.WriteString(" DataTypeID: ")
 			buf.WriteString(seq.DataTypeID.AsId().String())
 			buf.WriteString(" DataTypeName: ")

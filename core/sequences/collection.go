@@ -61,6 +61,7 @@ type Sequence struct {
 	Cache       int64
 	Cycle       bool
 	IsAtEnd     bool
+	IsCalled    bool
 	OwnerTable  id.Table
 	OwnerColumn string
 }
@@ -301,6 +302,7 @@ func (pgs *Collection) SetVal(ctx context.Context, name id.Sequence, newValue in
 		_, err := seq.nextValForSequence()
 		return err
 	}
+	seq.IsCalled = false
 	return nil
 }
 
@@ -451,6 +453,7 @@ func (sequence *Sequence) nextValForSequence() (int64, error) {
 	}
 	// We'll return the current value, so everything after this sets the value for the next call
 	valueToReturn := sequence.Current
+	sequence.IsCalled = true
 	// Increment the current value
 	if sequence.Increment > 0 {
 		// Check for overflow or crossing the maximum, meaning we're at the end

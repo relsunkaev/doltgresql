@@ -18,13 +18,15 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/utils"
 )
 
 // Database is a wrapper around Dolt's database object, allowing for functionality specific to Doltgres (such as system
 // tables).
 type Database struct {
-	db sqle.Database
+	sqle.Database
 }
 
 var _ sql.DatabaseSchema = Database{}
@@ -33,25 +35,46 @@ var _ sql.DatabaseSchema = Database{}
 func (d Database) GetTableInsensitive(ctx *sql.Context, tblName string) (sql.Table, bool, error) {
 	// Even though this is named "GetTableInsensitive", due to differences in Postgres and MySQL, this should perform an
 	// exact search.
-	if tableMap, ok := handlers[d.db.Schema()]; ok {
+	if tableMap, ok := handlers[d.Database.Schema()]; ok {
 		if handler, ok := tableMap[tblName]; ok {
-			return NewVirtualTable(handler, d.db), true, nil
+			return NewVirtualTable(handler, d.Database), true, nil
 		}
+	}
+	if table, ok, err := d.Database.GetTableInsensitive(ctx, tblName); err != nil || ok {
+		return table, ok, err
+	}
+	sequenceID := id.NewSequence(d.Database.Schema(), tblName)
+	collection, err := core.GetSequencesCollectionFromContext(ctx, d.Database.Name())
+	if err != nil {
+		return nil, false, err
+	}
+	if collection.HasSequence(ctx, sequenceID) {
+		return newSequenceTable(d, sequenceID), true, nil
 	}
 	return nil, false, nil
 }
 
 // GetTableNames implements the interface sql.DatabaseSchema.
 func (d Database) GetTableNames(ctx *sql.Context) ([]string, error) {
-	tableMap := handlers[d.db.Schema()]
-	return utils.GetMapKeysSorted(tableMap), nil
+	tableNames, err := d.Database.GetTableNames(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tableNameSet := make(map[string]struct{}, len(tableNames))
+	for _, tableName := range tableNames {
+		tableNameSet[tableName] = struct{}{}
+	}
+	for handlerName := range handlers[d.Database.Schema()] {
+		tableNameSet[handlerName] = struct{}{}
+	}
+	return utils.GetMapKeysSorted(tableNameSet), nil
 }
 
 // Name implements the interface sql.DatabaseSchema.
 func (d Database) Name() string {
-	return d.db.Name()
+	return d.Database.Name()
 }
 
 func (d Database) SchemaName() string {
-	return d.db.SchemaName()
+	return d.Database.SchemaName()
 }

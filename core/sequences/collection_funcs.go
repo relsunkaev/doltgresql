@@ -102,6 +102,9 @@ func (*Collection) HandleMerge(ctx context.Context, mro merge.MergeRootObject) (
 			return ourCurrent
 		}
 	})
+	mergedSeq.IsCalled = merge2.ResolveMergeValues(ourSeq.IsCalled, theirSeq.IsCalled, ancSeq.IsCalled, hasAncestor, func(ourCalled, theirCalled bool) bool {
+		return ourCalled || theirCalled
+	})
 	return &mergedSeq, &merge.MergeStats{
 		Operation:            merge.TableModified,
 		Adds:                 0,
