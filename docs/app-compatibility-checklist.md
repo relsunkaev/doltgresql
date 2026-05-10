@@ -814,6 +814,15 @@ Do not check off an item until it has workload proof:
   `abs(expr) = 10`. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.5.
+- [x] Use deterministic unary `octet_length(expr)` predicates in partial-index
+  implication paths. `octet_length(expr)` now serializes as a distinct
+  comparable predicate key, participates in planner predicate serialization,
+  evaluates text and bytea byte lengths for partial unique DML enforcement, and
+  works for `ON CONFLICT` arbiter inference; character-count predicates such as
+  `length(expr)` / `char_length(expr)` remain non-equivalent. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.6.
 - [x] Use same-expression exclusion-set predicates in partial-index
   implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
   `IS DISTINCT FROM` predicates now compare excluded literal sets, so query

@@ -897,6 +897,32 @@ ON CONFLICT (code) WHERE length(code) = 7 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports octet_length predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_octet (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_octet_code_idx ON partial_arb_octet (code) WHERE octet_length(code) = 3;",
+				"INSERT INTO partial_arb_octet VALUES (1, 'abc', 'old-abc'), (2, 'de', 'old-de');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_octet VALUES (3, 'abc', 'octet-upsert')
+ON CONFLICT (code) WHERE octet_length(code) = 3 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_octet ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "abc", "octet-upsert"},
+						{2, "de", "old-de"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_octet VALUES (4, 'abc', 'wrong-predicate')
+ON CONFLICT (code) WHERE length(code) = 3 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

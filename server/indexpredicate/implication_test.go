@@ -274,6 +274,34 @@ func TestImpliesTextLengthFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesOctetLengthFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"octet_length(code) = 6", "octet_length(code) = 6"},
+		{"octet_length(code) IN (6, 7)", "octet_length(code) = 6"},
+		{"octet_length(code) IS NOT NULL", "octet_length(code) = 6"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"octet_length(code) = 6", "octet_length(code) = 7"},
+		{"octet_length(code) = 6", "length(code) = 6"},
+		{"octet_length(code) = 6", "char_length(code) = 6"},
+		{"octet_length(code) IN (6, 7)", "octet_length(code) IN (6, 8)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

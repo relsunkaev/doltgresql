@@ -304,6 +304,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports octet_length bytea predicate",
+			SetUpScript: []string{
+				`CREATE TABLE byte_payloads (id INT PRIMARY KEY, user_id INT, payload BYTEA);`,
+				`CREATE UNIQUE INDEX byte_payloads_user_payload_idx
+					ON byte_payloads (user_id)
+					WHERE octet_length(payload) = 3;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO byte_payloads VALUES
+						(1, 10, '\x010203'),
+						(2, 10, '\x0102');`,
+				},
+				{
+					Query:       `INSERT INTO byte_payloads VALUES (3, 10, '\xAABBCC');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO byte_payloads VALUES (4, 10, '\xAABB');`,
+				},
+				{
+					Query:       `UPDATE byte_payloads SET payload = '\xAABBCC' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -600,6 +627,25 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	lengthNonMatchingQuery := `SELECT count(id) FROM partial_planner_length WHERE tenant = 1 AND length(code) = 8`
 	assertCountResult(t, ctx, conn, lengthNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, lengthNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_octet (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_octet VALUES
+		(1, 1, 'abc'),
+		(2, 1, 'de'),
+		(3, 2, 'xyz')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_octet_tenant_idx ON partial_planner_octet (tenant) WHERE octet_length(code) = 3")
+
+	octetImpliedQuery := `SELECT count(id) FROM partial_planner_octet WHERE tenant = 1 AND octet_length(code) = 3`
+	assertCountResult(t, ctx, conn, octetImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, octetImpliedQuery, true)
+
+	octetLengthNonEquivalentQuery := `SELECT count(id) FROM partial_planner_octet WHERE tenant = 1 AND length(code) = 3`
+	assertCountResult(t, ctx, conn, octetLengthNonEquivalentQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, octetLengthNonEquivalentQuery, false)
+
+	octetNonMatchingQuery := `SELECT count(id) FROM partial_planner_octet WHERE tenant = 1 AND octet_length(code) = 2`
+	assertCountResult(t, ctx, conn, octetNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, octetNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
