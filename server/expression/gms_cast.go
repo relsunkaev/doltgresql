@@ -253,6 +253,8 @@ func FunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.Doltg
 	switch strings.ToUpper(fn.FunctionName()) {
 	case "AVG":
 		return avgDoltgresType(ctx, expr)
+	case "COALESCE":
+		return coalesceDoltgresType(ctx, expr)
 	case "SUM":
 		return sumDoltgresType(ctx, expr)
 	case "ROW_NUMBER", "RANK", "DENSE_RANK":
@@ -263,6 +265,76 @@ func FunctionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.Doltg
 		return pgtypes.Float64, true
 	default:
 		return nil, false
+	}
+}
+
+func coalesceDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	var result *pgtypes.DoltgresType
+	for _, child := range expr.Children() {
+		childType, ok := expressionDoltgresType(ctx, child)
+		if !ok || childType.ID == pgtypes.Unknown.ID {
+			continue
+		}
+		if result == nil {
+			result = childType
+			continue
+		}
+		promoted, ok := promoteCoalesceDoltgresType(result, childType)
+		if !ok {
+			return nil, false
+		}
+		result = promoted
+	}
+	if result == nil {
+		return nil, false
+	}
+	return result, true
+}
+
+func expressionDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresType, bool) {
+	if fnType, ok := FunctionDoltgresType(ctx, expr); ok {
+		return fnType, true
+	}
+	if dt, ok := expr.Type(ctx).(*pgtypes.DoltgresType); ok {
+		return dt, true
+	}
+	if expr.Type(ctx) == types.Null {
+		return pgtypes.Unknown, true
+	}
+	return pgtypes.FromGmsType(expr.Type(ctx)), true
+}
+
+func promoteCoalesceDoltgresType(left *pgtypes.DoltgresType, right *pgtypes.DoltgresType) (*pgtypes.DoltgresType, bool) {
+	if left.ID == pgtypes.Unknown.ID {
+		return right, true
+	}
+	if right.ID == pgtypes.Unknown.ID {
+		return left, true
+	}
+	if left.ID == right.ID {
+		return left, true
+	}
+	if left.TypCategory == pgtypes.TypeCategory_NumericTypes && right.TypCategory == pgtypes.TypeCategory_NumericTypes {
+		return promoteNumericCoalesceDoltgresType(left, right), true
+	}
+	if left.TypCategory == pgtypes.TypeCategory_StringTypes && right.TypCategory == pgtypes.TypeCategory_StringTypes {
+		return pgtypes.Text, true
+	}
+	return nil, false
+}
+
+func promoteNumericCoalesceDoltgresType(left *pgtypes.DoltgresType, right *pgtypes.DoltgresType) *pgtypes.DoltgresType {
+	switch {
+	case left.ID == pgtypes.Float64.ID || right.ID == pgtypes.Float64.ID:
+		return pgtypes.Float64
+	case left.ID == pgtypes.Float32.ID || right.ID == pgtypes.Float32.ID:
+		return pgtypes.Float32
+	case left.ID == pgtypes.Numeric.ID || right.ID == pgtypes.Numeric.ID:
+		return pgtypes.Numeric
+	case left.ID == pgtypes.Int64.ID || right.ID == pgtypes.Int64.ID:
+		return pgtypes.Int64
+	default:
+		return pgtypes.Int32
 	}
 }
 
