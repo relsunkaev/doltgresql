@@ -2017,13 +2017,17 @@ introspection tools (Drizzle Kit, Prisma db pull, Alembic
 autogenerate, Django migrations) inspect to drive editable result grids,
 schema diffs, typed-exception handling, and client-side query timeouts.
 
-- [ ] Run actual GUI binaries, and any remaining migration binaries required by
+- [x] Run actual GUI binaries, and any remaining migration binaries required by
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
   Drizzle Kit, Prisma db pull, Alembic autogenerate, Django migrations, Knex
   migrations, ActiveRecord migrations, TypeORM migrations, and
   TablePlus-bundled `pg_dump` 17.0 now have live binary/framework harnesses.
-  Tracked by dg-7ug.10.1 and dg-7ug.10.2 under dg-7ug.10.
+  The actual TablePlus 6.9.0 macOS GUI was also driven against a live local
+  Doltgres fixture: it connected through the PostgreSQL URL handler, listed the
+  `public` schema objects, and opened `public.gui_accounts` in the workspace.
+  Pinned by docs/tableplus-gui-smoke.md. Tracked by dg-7ug.10.1 and dg-7ug.10.2
+  under dg-7ug.10.
 - [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
   testing/go/tableplus_dump_test.go locates
   `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
