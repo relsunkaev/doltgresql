@@ -586,10 +586,13 @@ Do not check off an item until it has workload proof:
 - [x] PL/pgSQL `PG_CONTEXT` includes nested PL/pgSQL routine frames. A
   `GET DIAGNOSTICS ... PG_CONTEXT` executed inside a function called from
   another PL/pgSQL routine now returns the current routine plus caller routine
-  frames, including anonymous DO-block callers. Caller source-location/action
-  text remains a conservative placeholder until full PostgreSQL call-site
-  parity is implemented. Pinned by testing/go/do_block_probe_test.go. Tracked
-  by dg-7ug.19.
+  frames, including anonymous DO-block callers. Pinned by
+  testing/go/do_block_probe_test.go. Tracked by dg-7ug.19.
+- [x] PL/pgSQL `PG_CONTEXT` caller frames include PostgreSQL-shaped
+  source-location/action text for representative assignment, SQL statement,
+  and anonymous DO-block `PERFORM` call sites, including SQL statement
+  snippets where available. Pinned by testing/go/do_block_probe_test.go.
+  Tracked by dg-7ug.21.
 - [x] PL/pgSQL `GET DIAGNOSTICS ... PG_ROUTINE_OID` - named PL/pgSQL
   functions can assign their current routine OID to an `oid` variable and
   return it as a nonzero routine identity. Anonymous DO blocks return OID zero
@@ -597,9 +600,8 @@ Do not check off an item until it has workload proof:
   testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go. Tracked
   by dg-7ug.18.
 - [ ] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
-  DIAGNOSTICS`, exception diagnostics, and PostgreSQL-exact caller
-  source-location/action text for multi-frame `PG_CONTEXT`) before claiming
-  full diagnostics parity. Tracked by dg-7ug.20 and dg-7ug.21.
+  DIAGNOSTICS` and exception diagnostics) before claiming full diagnostics
+  parity. Tracked by dg-7ug.20.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

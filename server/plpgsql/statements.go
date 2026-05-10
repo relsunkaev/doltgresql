@@ -38,6 +38,7 @@ type Assignment struct {
 	VariableName  string
 	Expression    string
 	VariableIndex int32 // TODO: figure out what this is used for, probably to get around shadowed variables?
+	LineNumber    int32
 }
 
 var _ Statement = Assignment{}
@@ -59,6 +60,7 @@ func (stmt Assignment) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 		PrimaryData:   "SELECT " + expression + ";",
 		SecondaryData: referencedVariables,
 		Target:        stmt.VariableName,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "assignment", ""),
 	})
 	return nil
 }
@@ -158,8 +160,9 @@ func (stmt Block) AppendOperations(ops *[]InterpreterOperation, stack *Interpret
 
 // ExecuteSQL represents a standard SQL statement's execution (including the INTO syntax).
 type ExecuteSQL struct {
-	Statement string
-	Target    string
+	Statement  string
+	Target     string
+	LineNumber int32
 }
 
 var _ Statement = ExecuteSQL{}
@@ -180,16 +183,18 @@ func (stmt ExecuteSQL) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 		PrimaryData:   statementStr,
 		SecondaryData: referencedVariables,
 		Target:        stmt.Target,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "SQL statement", stmt.Statement),
 	})
 	return nil
 }
 
 // DynamicExecute represents a dynamic SQL statement's execution.
 type DynamicExecute struct {
-	Query  string
-	Params []string
-	Target string
-	Strict bool
+	Query      string
+	Params     []string
+	Target     string
+	Strict     bool
+	LineNumber int32
 }
 
 var _ Statement = DynamicExecute{}
@@ -208,16 +213,19 @@ func (stmt DynamicExecute) AppendOperations(ops *[]InterpreterOperation, stack *
 	params := make([]string, 0, len(referencedVariables)+len(stmt.Params))
 	params = append(params, referencedVariables...)
 	params = append(params, stmt.Params...)
+	options := diagnosticStatementOptions(stmt.LineNumber, "EXECUTE", stmt.Query)
+	if options == nil {
+		options = make(map[string]string)
+	}
+	options["dynamic"] = "true"
+	options["queryBindingCount"] = strconv.Itoa(len(referencedVariables))
+	options["strict"] = strconv.FormatBool(stmt.Strict)
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_Execute,
 		PrimaryData:   queryStr,
 		SecondaryData: params,
 		Target:        stmt.Target,
-		Options: map[string]string{
-			"dynamic":           "true",
-			"queryBindingCount": strconv.Itoa(len(referencedVariables)),
-			"strict":            strconv.FormatBool(stmt.Strict),
-		},
+		Options:       options,
 	})
 	return nil
 }
@@ -249,7 +257,7 @@ func (stmt GetDiagnostics) AppendOperations(ops *[]InterpreterOperation, stack *
 			PrimaryData: strings.ToUpper(item.Kind),
 			Target:      item.Target,
 			Options: map[string]string{
-				"lineNumber": strconv.Itoa(int(stmt.LineNumber)),
+				diagnosticOptionLineNumber: strconv.Itoa(int(stmt.LineNumber)),
 			},
 		})
 	}
@@ -387,7 +395,8 @@ func (stmt If) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterS
 
 // Perform represents a PERFORM statement.
 type Perform struct {
-	Statement string
+	Statement  string
+	LineNumber int32
 }
 
 var _ Statement = Perform{}
@@ -408,6 +417,7 @@ func (stmt Perform) AppendOperations(ops *[]InterpreterOperation, stack *Interpr
 		OpCode:        OpCode_Perform,
 		PrimaryData:   statementStr,
 		SecondaryData: referencedVariables,
+		Options:       diagnosticStatementOptions(stmt.LineNumber, "PERFORM", stmt.Statement),
 	})
 	return nil
 }
@@ -515,6 +525,23 @@ func OperationSizeForStatements(stmts []Statement) int32 {
 		total += stmt.OperationSize()
 	}
 	return total
+}
+
+func diagnosticStatementOptions(lineNumber int32, action, statement string) map[string]string {
+	options := make(map[string]string)
+	if lineNumber > 0 {
+		options[diagnosticOptionLineNumber] = strconv.Itoa(int(lineNumber))
+	}
+	if strings.TrimSpace(action) != "" {
+		options[diagnosticOptionAction] = strings.TrimSpace(action)
+	}
+	if strings.TrimSpace(statement) != "" {
+		options[diagnosticOptionStatement] = strings.TrimSpace(statement)
+	}
+	if len(options) == 0 {
+		return nil
+	}
+	return options
 }
 
 // substituteVariableReferences parses the specified |expression| and replaces

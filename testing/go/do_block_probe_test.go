@@ -341,7 +341,7 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE TABLE do_diag_context_items (id INT PRIMARY KEY, touched BOOL NOT NULL DEFAULT false);`,
 				`CREATE TABLE do_diag_context_seen (affected INT NOT NULL, context TEXT NOT NULL);`,
-				`CREATE TABLE do_diag_context_stack_seen (context TEXT NOT NULL);`,
+				`CREATE TABLE do_diag_context_stack_seen (kind TEXT NOT NULL, context TEXT NOT NULL);`,
 				`INSERT INTO do_diag_context_items VALUES (1, false), (2, false);`,
 				`CREATE FUNCTION diag_inner_context() RETURNS TEXT AS $$
 					DECLARE
@@ -356,7 +356,13 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 						context TEXT;
 					BEGIN
 						context := diag_inner_context();
-						INSERT INTO do_diag_context_stack_seen VALUES (context);
+						INSERT INTO do_diag_context_stack_seen VALUES ('assignment', context);
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION diag_sql_context() RETURNS VOID AS $$
+					BEGIN
+						INSERT INTO do_diag_context_stack_seen(kind, context)
+						SELECT 'sql_statement', diag_inner_context();
 					END;
 				$$ LANGUAGE plpgsql;`,
 			},
@@ -383,16 +389,35 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 					Query: `DO $$
 						BEGIN
 							PERFORM diag_outer_context();
+							PERFORM diag_sql_context();
 						END;
 					$$;`,
 				},
 				{
 					Query: `SELECT
 							(context LIKE 'PL/pgSQL function diag_inner_context() line % at GET DIAGNOSTICS%')::text,
-							(position('PL/pgSQL function diag_outer_context()' in context) > 0)::text,
-							(position('PL/pgSQL function inline_code_block' in context) > 0)::text
-						FROM do_diag_context_stack_seen;`,
-					Expected: []sql.Row{{"true", "true", "true"}},
+							(position('PL/pgSQL function diag_outer_context() line ' in context) > 0)::text,
+							(position('PL/pgSQL function diag_outer_context() line 0' in context) = 0)::text,
+							(position(' at assignment' in context) > 0)::text,
+							(position('PL/pgSQL function inline_code_block line ' in context) > 0)::text,
+							(position('PL/pgSQL function inline_code_block line 0' in context) = 0)::text,
+							(position(' at PERFORM' in context) > 0)::text
+						FROM do_diag_context_stack_seen
+						WHERE kind = 'assignment';`,
+					Expected: []sql.Row{{"true", "true", "true", "true", "true", "true", "true"}},
+				},
+				{
+					Query: `SELECT
+							(context LIKE 'PL/pgSQL function diag_inner_context() line % at GET DIAGNOSTICS%')::text,
+							(position('PL/pgSQL function diag_sql_context() line ' in context) > 0)::text,
+							(position('PL/pgSQL function diag_sql_context() line 0' in context) = 0)::text,
+							(position(' at SQL statement' in context) > 0)::text,
+							(context LIKE '%SQL statement "%diag_inner_context()%')::text,
+							(position('PL/pgSQL function inline_code_block line ' in context) > 0)::text,
+							(position(' at PERFORM' in context) > 0)::text
+						FROM do_diag_context_stack_seen
+						WHERE kind = 'sql_statement';`,
+					Expected: []sql.Row{{"true", "true", "true", "true", "true", "true", "true"}},
 				},
 			},
 		},

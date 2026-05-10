@@ -337,6 +337,7 @@ func (stmt *plpgSQL_stmt_assign) Convert() (Assignment, error) {
 		VariableName:  varName,
 		Expression:    query,
 		VariableIndex: stmt.VariableNumber,
+		LineNumber:    stmt.LineNumber,
 	}, nil
 }
 
@@ -357,8 +358,9 @@ func (stmt *plpgSQL_stmt_call) Convert() (ExecuteSQL, error) {
 		}
 	}
 	return ExecuteSQL{
-		Statement: stmt.Expression.Expression.Query,
-		Target:    target,
+		Statement:  stmt.Expression.Expression.Query,
+		Target:     target,
+		LineNumber: stmt.LineNumber,
 	}, nil
 }
 
@@ -472,10 +474,11 @@ func (stmt *plpgSQL_stmt_dynexecute) Convert() (DynamicExecute, error) {
 		}
 	}
 	return DynamicExecute{
-		Query:  stmt.Query.Expression.Query,
-		Params: params,
-		Target: target,
-		Strict: stmt.Strict,
+		Query:      stmt.Query.Expression.Query,
+		Params:     params,
+		Target:     target,
+		Strict:     stmt.Strict,
+		LineNumber: stmt.LineNumber,
 	}, nil
 }
 
@@ -496,8 +499,9 @@ func (stmt *plpgSQL_stmt_execsql) Convert() (ExecuteSQL, error) {
 		}
 	}
 	return ExecuteSQL{
-		Statement: stmt.SQLStmt.Expr.Query,
-		Target:    target,
+		Statement:  stmt.SQLStmt.Expr.Query,
+		Target:     target,
+		LineNumber: stmt.LineNumber,
 	}, nil
 }
 
@@ -764,7 +768,8 @@ func (stmt *plpgSQL_stmt_loop) Convert(conv jsonConversionContext) (block Block,
 // Convert converts the JSON statement into its output form.
 func (stmt *plpgSQL_stmt_perform) Convert() Perform {
 	return Perform{
-		Statement: stmt.Expression.Expression.Query,
+		Statement:  stmt.Expression.Expression.Query,
+		LineNumber: stmt.LineNumber,
 	}
 }
 

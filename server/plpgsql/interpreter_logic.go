@@ -53,6 +53,12 @@ type InterpretedFunction interface {
 // import cycles.
 var GetTypesCollectionFromContext func(ctx *sql.Context) (*typecollection.TypeCollection, error)
 
+const (
+	diagnosticOptionAction     = "pgContextAction"
+	diagnosticOptionLineNumber = "lineNumber"
+	diagnosticOptionStatement  = "pgContextStatement"
+)
+
 // Call runs the contained operations on the given runner.
 func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunner, paramsAndReturn []*pgtypes.DoltgresType, vals []any) (any, error) {
 	// Set up the initial state of the function
@@ -124,7 +130,9 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if iv.Type == nil {
 				return nil, fmt.Errorf("variable `%s` could not be found", operation.Target)
 			}
+			restoreCallSite := pushDiagnosticCallSite(ctx, operation)
 			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, iv.Type, operation.SecondaryData)
+			restoreCallSite()
 			if err != nil {
 				return nil, err
 			}
@@ -217,6 +225,8 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if dynamicUsingScope {
 					defer stack.PopScope()
 				}
+				restoreCallSite := pushDiagnosticCallSite(ctx, operation)
+				defer restoreCallSite()
 				return iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
 			}
 			if len(operation.Target) > 0 {
@@ -331,7 +341,9 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_InsertInto:
 			// TODO: implement
 		case OpCode_Perform:
+			restoreCallSite := pushDiagnosticCallSite(ctx, operation)
 			_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+			restoreCallSite()
 			if err != nil {
 				return nil, err
 			}
@@ -489,6 +501,17 @@ func convertRowsToRecords(schema sql.Schema, rows []sql.Row) ([][]pgtypes.Record
 
 type diagnosticCallFrame struct {
 	functionName string
+	callSite     diagnosticCallSite
+}
+
+type diagnosticCallSite struct {
+	lineNumber string
+	action     string
+	statement  string
+}
+
+type diagnosticCallStack struct {
+	frames []diagnosticCallFrame
 }
 
 type diagnosticCallFrameKey struct{}
@@ -497,26 +520,57 @@ func pushDiagnosticCallFrame(ctx *sql.Context, iFunc InterpretedFunction) func()
 	if ctx == nil || ctx.Context == nil {
 		return func() {}
 	}
+	if stack := diagnosticCallStackFromContext(ctx); stack != nil {
+		previousLength := len(stack.frames)
+		stack.frames = append(stack.frames, diagnosticCallFrame{functionName: diagnosticFunctionName(iFunc)})
+		return func() {
+			stack.frames = stack.frames[:previousLength]
+		}
+	}
+
 	previousContext := ctx.Context
-	frames := diagnosticCallFrames(ctx)
-	nextFrames := make([]diagnosticCallFrame, 0, len(frames)+1)
-	nextFrames = append(nextFrames, frames...)
-	nextFrames = append(nextFrames, diagnosticCallFrame{functionName: diagnosticFunctionName(iFunc)})
-	ctx.Context = context.WithValue(ctx.Context, diagnosticCallFrameKey{}, nextFrames)
+	ctx.Context = context.WithValue(ctx.Context, diagnosticCallFrameKey{}, &diagnosticCallStack{
+		frames: []diagnosticCallFrame{{functionName: diagnosticFunctionName(iFunc)}},
+	})
 	return func() {
 		ctx.Context = previousContext
 	}
 }
 
+func pushDiagnosticCallSite(ctx *sql.Context, operation InterpreterOperation) func() {
+	stack := diagnosticCallStackFromContext(ctx)
+	if stack == nil || len(stack.frames) == 0 {
+		return func() {}
+	}
+	idx := len(stack.frames) - 1
+	previousCallSite := stack.frames[idx].callSite
+	stack.frames[idx].callSite = diagnosticCallSite{
+		lineNumber: diagnosticOperationLineNumber(operation),
+		action:     diagnosticOperationAction(operation),
+		statement:  diagnosticOperationStatement(operation),
+	}
+	return func() {
+		stack.frames[idx].callSite = previousCallSite
+	}
+}
+
 func diagnosticCallFrames(ctx *sql.Context) []diagnosticCallFrame {
+	stack := diagnosticCallStackFromContext(ctx)
+	if stack == nil {
+		return nil
+	}
+	return stack.frames
+}
+
+func diagnosticCallStackFromContext(ctx *sql.Context) *diagnosticCallStack {
 	if ctx == nil || ctx.Context == nil {
 		return nil
 	}
-	frames, ok := ctx.Context.Value(diagnosticCallFrameKey{}).([]diagnosticCallFrame)
+	stack, ok := ctx.Context.Value(diagnosticCallFrameKey{}).(*diagnosticCallStack)
 	if !ok {
 		return nil
 	}
-	return frames
+	return stack
 }
 
 func diagnosticPGContext(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation) string {
@@ -530,10 +584,28 @@ func diagnosticPGContext(ctx *sql.Context, iFunc InterpretedFunction, operation 
 		if i == len(frames)-1 {
 			lines = append(lines, fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", frames[i].functionName, lineNumber))
 		} else {
-			lines = append(lines, fmt.Sprintf("PL/pgSQL function %s line 0 at SQL statement", frames[i].functionName))
+			lines = append(lines, diagnosticCallerContextLines(frames[i])...)
 		}
 	}
 	return strings.Join(lines, "\n")
+}
+
+func diagnosticCallerContextLines(frame diagnosticCallFrame) []string {
+	callSite := frame.callSite
+	lineNumber := strings.TrimSpace(callSite.lineNumber)
+	if lineNumber == "" {
+		lineNumber = "0"
+	}
+	action := strings.TrimSpace(callSite.action)
+	if action == "" {
+		action = "SQL statement"
+	}
+	lines := make([]string, 0, 2)
+	if statement := strings.TrimSpace(callSite.statement); statement != "" && action == "SQL statement" {
+		lines = append(lines, fmt.Sprintf("SQL statement %q", statement))
+	}
+	lines = append(lines, fmt.Sprintf("PL/pgSQL function %s line %s at %s", frame.functionName, lineNumber, action))
+	return lines
 }
 
 func diagnosticFunctionName(iFunc InterpretedFunction) string {
@@ -549,11 +621,23 @@ func diagnosticFunctionName(iFunc InterpretedFunction) string {
 }
 
 func diagnosticOperationLineNumber(operation InterpreterOperation) string {
-	lineNumber := strings.TrimSpace(operation.Options["lineNumber"])
+	lineNumber := strings.TrimSpace(operation.Options[diagnosticOptionLineNumber])
 	if lineNumber == "" {
 		lineNumber = "0"
 	}
 	return lineNumber
+}
+
+func diagnosticOperationAction(operation InterpreterOperation) string {
+	action := strings.TrimSpace(operation.Options[diagnosticOptionAction])
+	if action == "" {
+		action = "SQL statement"
+	}
+	return action
+}
+
+func diagnosticOperationStatement(operation InterpreterOperation) string {
+	return strings.TrimSpace(operation.Options[diagnosticOptionStatement])
 }
 
 func diagnosticPGRoutineOID(iFunc InterpretedFunction) id.Id {
