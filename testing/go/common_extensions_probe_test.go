@@ -469,8 +469,20 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"[5,7,9]", "[-3,-3,-3]", "[4,10,18]", "[1,2,3,4,5,6]"}},
 				},
 				{
+					Query:    `SELECT array_to_string(vector_accum(ARRAY[0]::double precision[], '[1,2,3]'::vector), ','), vector_avg(ARRAY[2,4,6,8]::double precision[])::text, array_to_string(vector_combine(ARRAY[2,4,6]::double precision[], ARRAY[3,9,12]::double precision[]), ',');`,
+					Expected: []sql.Row{{"1,1,2,3", "[2,3,4]", "5,13,18"}},
+				},
+				{
+					Query:    `SELECT vector_avg(ARRAY[0]::double precision[]) IS NULL, array_to_string(vector_combine(ARRAY[0]::double precision[], ARRAY[2,4,6]::double precision[]), ',');`,
+					Expected: []sql.Row{{"t", "2,4,6"}},
+				},
+				{
 					Query:       `SELECT subvector('[1,2,3]'::vector, 2, 0);`,
 					ExpectedErr: `vector must have at least 1 dimension`,
+				},
+				{
+					Query:       `SELECT vector_accum(ARRAY[1,2,3]::double precision[], '[4,5,6]'::vector);`,
+					ExpectedErr: `expected 2 dimensions, not 3`,
 				},
 				{
 					Query:       `SELECT array_to_vector(ARRAY[1,NULL,3]::integer[], -1, false);`,

@@ -44,6 +44,9 @@ func initVector() {
 	framework.RegisterFunction(subvector)
 	framework.RegisterFunction(binary_quantize)
 	framework.RegisterFunction(vector_l2_squared_distance)
+	framework.RegisterFunction(vector_accum)
+	framework.RegisterFunction(vector_avg)
+	framework.RegisterFunction(vector_combine)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, vector_ge)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, vector_gt)
 }
@@ -245,6 +248,104 @@ var vector_l2_squared_distance = framework.Function2{
 	},
 }
 
+var vector_accum = framework.Function2{
+	Name:       "vector_accum",
+	Return:     pgtypes.Float64Array,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Float64Array, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		state, err := vectorStateValues(val1.([]any), "vector_accum")
+		if err != nil {
+			return nil, err
+		}
+		values := val2.([]float32)
+		dimensions := len(state) - 1
+		newState := dimensions == 0
+		if newState {
+			dimensions = len(values)
+		} else if dimensions != len(values) {
+			return nil, errors.Errorf("expected %d dimensions, not %d", dimensions, len(values))
+		}
+
+		result := make([]any, dimensions+1)
+		result[0] = state[0] + 1
+		for i := 0; i < dimensions; i++ {
+			value := float64(values[i])
+			if !newState {
+				value += state[i+1]
+			}
+			if math.IsInf(value, 0) {
+				return nil, errors.Errorf("value out of range: overflow")
+			}
+			result[i+1] = value
+		}
+		return result, nil
+	},
+}
+
+var vector_avg = framework.Function1{
+	Name:       "vector_avg",
+	Return:     pgtypes.Vector,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Float64Array},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		state, err := vectorStateValues(val.([]any), "vector_avg")
+		if err != nil {
+			return nil, err
+		}
+		count := state[0]
+		if count == 0 {
+			return nil, nil
+		}
+		dimensions := len(state) - 1
+		if err := checkVectorDimension(dimensions); err != nil {
+			return nil, err
+		}
+		result := make([]float32, dimensions)
+		for i := 0; i < dimensions; i++ {
+			result[i] = float32(state[i+1] / count)
+		}
+		return validateVectorResult(result)
+	},
+}
+
+var vector_combine = framework.Function2{
+	Name:       "vector_combine",
+	Return:     pgtypes.Float64Array,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Float64Array, pgtypes.Float64Array},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		state1, err := vectorStateValues(val1.([]any), "vector_combine")
+		if err != nil {
+			return nil, err
+		}
+		state2, err := vectorStateValues(val2.([]any), "vector_combine")
+		if err != nil {
+			return nil, err
+		}
+		if state1[0] == 0 {
+			return vectorStateArray(state2), nil
+		}
+		if state2[0] == 0 {
+			return vectorStateArray(state1), nil
+		}
+		dimensions := len(state1) - 1
+		if dimensions != len(state2)-1 {
+			return nil, errors.Errorf("expected %d dimensions, not %d", dimensions, len(state2)-1)
+		}
+		result := make([]any, dimensions+1)
+		result[0] = state1[0] + state2[0]
+		for i := 0; i < dimensions; i++ {
+			value := state1[i+1] + state2[i+1]
+			if math.IsInf(value, 0) {
+				return nil, errors.Errorf("value out of range: overflow")
+			}
+			result[i+1] = value
+		}
+		return result, nil
+	},
+}
+
 var inner_product = framework.Function2{
 	Name:       "inner_product",
 	Return:     pgtypes.Float64,
@@ -386,6 +487,32 @@ func checkVectorDimension(dimensions int) error {
 		return errors.Errorf("vector cannot have more than %d dimensions", pgtypes.MaxVectorDimensions)
 	}
 	return nil
+}
+
+func vectorStateValues(state []any, caller string) ([]float64, error) {
+	if len(state) < 1 {
+		return nil, errors.Errorf("%s: expected state array", caller)
+	}
+	result := make([]float64, len(state))
+	for i, value := range state {
+		if value == nil {
+			return nil, errors.Errorf("%s: expected state array", caller)
+		}
+		floatValue, ok := value.(float64)
+		if !ok {
+			return nil, errors.Errorf("%s: expected state array", caller)
+		}
+		result[i] = floatValue
+	}
+	return result, nil
+}
+
+func vectorStateArray(values []float64) []any {
+	result := make([]any, len(values))
+	for i, value := range values {
+		result[i] = value
+	}
+	return result
 }
 
 func vectorL2SquaredDistance(left []float32, right []float32) float64 {
