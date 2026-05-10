@@ -151,6 +151,11 @@ Do not check off an item until it has workload proof:
   `armor(bytea, text[], text[])`, `dearmor(text)`, and
   `pgp_armor_headers(text)`, including header key/value lines, header
   extraction, CRC24 verification, and corrupt-armor rejection.
+  PGP encryption/decryption and key-inspection routine signatures
+  (`pgp_sym_*`, `pgp_pub_*`, and `pgp_key_id(bytea)`) are registered
+  so dump-style routine ACLs resolve under extension schemas, but
+  non-NULL runtime calls return an explicit feature-not-supported
+  boundary until real PGP packet/key support exists.
   Extension-schema qualified calls such as
   `extensions.digest(...)`, `extensions.crypt(...)`,
   `extensions.armor(...)`, `extensions.dearmor(...)`,
@@ -284,8 +289,9 @@ Do not check off an item until it has workload proof:
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
-  non-goals. Open surfaces include pgcrypto PGP encryption/decryption/key
-  helpers beyond the native UUID,
+  non-goals. Open surfaces include real pgcrypto PGP encryption/decryption/key
+  helper execution beyond the registered unsupported routine boundaries and
+  beyond the native UUID,
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
   ASCII-armor subset, pgvector indexes/opclasses, halfvec and sparsevec
   families, and bit index/opclass surfaces beyond the tested bit Hamming /

@@ -316,6 +316,18 @@ AAAA
 					Query:       `SELECT gen_salt('xdes', 724);`,
 					ExpectedErr: `gen_salt iteration count 724 is outside supported odd range 1..16777215 for xdes`,
 				},
+				{
+					Query:       `SELECT pgp_sym_encrypt('secret', 'passphrase');`,
+					ExpectedErr: `pgcrypto PGP encryption is not yet supported`,
+				},
+				{
+					Query:       `SELECT pgp_sym_decrypt('\x00'::bytea, 'passphrase');`,
+					ExpectedErr: `pgcrypto PGP decryption is not yet supported`,
+				},
+				{
+					Query:       `SELECT pgp_key_id('\x00'::bytea);`,
+					ExpectedErr: `pgcrypto PGP key inspection is not yet supported`,
+				},
 			},
 		},
 		{
@@ -412,6 +424,63 @@ AAAA
 					Query: `GRANT ALL ON FUNCTION extensions.gen_random_uuid() TO ext_user;`,
 				},
 				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_key_id(bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt(text, text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt(bytea, text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt(text, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text) TO ext_user;`,
+				},
+				{
 					Query:    `SELECT extensions.digest('abc', 'sha256')::text;`,
 					Username: `ext_user`,
 					Password: `a`,
@@ -452,6 +521,12 @@ AAAA
 					Username: `ext_user`,
 					Password: `a`,
 					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:       `SELECT extensions.pgp_key_id('\x00'::bytea);`,
+					Username:    `ext_user`,
+					Password:    `a`,
+					ExpectedErr: `pgcrypto PGP key inspection is not yet supported`,
 				},
 			},
 		},
