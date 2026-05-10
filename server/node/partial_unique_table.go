@@ -1150,6 +1150,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return p.evalUnary(ctx, row, expr)
 	case *tree.CoalesceExpr:
 		return p.evalCoalesce(ctx, row, expr)
+	case *tree.NullIfExpr:
+		return p.evalNullIf(ctx, row, expr)
 	case *tree.FuncExpr:
 		return p.evalFunction(ctx, row, expr)
 	case *tree.StrVal:
@@ -1206,6 +1208,28 @@ func (p *partialIndexPredicate) evalCoalesce(ctx *sql.Context, row sql.Row, expr
 		}
 	}
 	return predicateValue{}, nil
+}
+
+func (p *partialIndexPredicate) evalNullIf(ctx *sql.Context, row sql.Row, expr *tree.NullIfExpr) (predicateValue, error) {
+	left, err := p.evalValue(ctx, row, expr.Expr1)
+	if err != nil || left.value == nil {
+		return predicateValue{}, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Expr2)
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if right.value == nil {
+		return left, nil
+	}
+	cmp, err := comparePredicateValues(ctx, left, right)
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if cmp == 0 {
+		return predicateValue{}, nil
+	}
+	return left, nil
 }
 
 func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

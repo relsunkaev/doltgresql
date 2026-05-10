@@ -394,6 +394,13 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 	if name == "coalesce" {
 		return plannerFunctionCallPredicateSQL(name, expr.Children())
 	}
+	if name == "nullif" {
+		children := expr.Children()
+		if len(children) != 2 {
+			return "", false
+		}
+		return plannerFunctionCallPredicateSQL(name, children)
+	}
 	if name == "strpos" {
 		children := expr.Children()
 		if len(children) != 2 {

@@ -879,6 +879,33 @@ func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesNullIfFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"nullif(status, '') = 'active'", "nullif(status, '') = 'active'"},
+		{"nullif(status, '') IN ('active', 'pending')", "nullif(status, '') = 'active'"},
+		{"nullif(status, '') IS NOT NULL", "nullif(status, '') = 'active'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"nullif(status, '') = 'active'", "status = 'active'"},
+		{"nullif(status, '') = 'active'", "nullif(status, '') = 'pending'"},
+		{"nullif(status, '') = 'active'", "nullif(status, 'inactive') = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAbsFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

@@ -624,6 +624,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if coalesce, ok := expr.(*tree.CoalesceExpr); ok {
 		return predicateCoalesceExprKey(coalesce)
 	}
+	if nullif, ok := expr.(*tree.NullIfExpr); ok {
+		return predicateNullIfExprKey(nullif)
+	}
 	fn, ok := expr.(*tree.FuncExpr)
 	if !ok {
 		return "", false
@@ -695,6 +698,18 @@ func predicateCoalesceExprKey(expr *tree.CoalesceExpr) (string, bool) {
 		parts = append(parts, childKey)
 	}
 	return "func:coalesce(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateNullIfExprKey(expr *tree.NullIfExpr) (string, bool) {
+	leftKey, ok := predicateFunctionArgumentExprKey(expr.Expr1)
+	if !ok {
+		return "", false
+	}
+	rightKey, ok := predicateFunctionArgumentExprKey(expr.Expr2)
+	if !ok {
+		return "", false
+	}
+	return "func:nullif(" + leftKey + "," + rightKey + ")", true
 }
 
 func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs int) (string, bool) {

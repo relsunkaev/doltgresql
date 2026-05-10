@@ -871,6 +871,37 @@ ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports NULLIF predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_nullif (id INT PRIMARY KEY, code TEXT, status TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_nullif_code_idx ON partial_arb_nullif (code) WHERE nullif(status, '') = 'active';",
+				"INSERT INTO partial_arb_nullif VALUES (1, 'A', 'active', 'old-active'), (2, 'A', '', 'blank-status');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_nullif VALUES (3, 'A', 'active', 'nullif-upsert')
+ON CONFLICT (code) WHERE nullif(status, '') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, status, note FROM partial_arb_nullif ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "A", "active", "nullif-upsert"},
+						{2, "A", "", "blank-status"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_nullif VALUES (4, 'A', 'active', 'wrong-predicate')
+ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_nullif VALUES (5, 'A', 'active', 'wrong-argument')
+ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports text-length predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_length (id INT PRIMARY KEY, code TEXT, note TEXT);",

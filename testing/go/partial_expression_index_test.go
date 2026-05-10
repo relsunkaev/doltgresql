@@ -277,6 +277,34 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports NULLIF predicate",
+			SetUpScript: []string{
+				`CREATE TABLE nullif_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX nullif_codes_user_idx
+					ON nullif_codes (user_id)
+					WHERE nullif(code, '') = 'active';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO nullif_codes VALUES
+						(1, 10, 'active'),
+						(2, 10, ''),
+						(3, 10, '');`,
+				},
+				{
+					Query:       `INSERT INTO nullif_codes VALUES (4, 10, 'active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE nullif_codes SET code = 'active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO nullif_codes VALUES (5, 10, 'pending');`,
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports abs numeric predicate",
 			SetUpScript: []string{
 				`CREATE TABLE absolute_scores (id INT PRIMARY KEY, user_id INT, delta BIGINT);`,
@@ -2022,6 +2050,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	coalesceSemanticQuery := `SELECT count(id) FROM partial_planner_coalesce WHERE tenant = 1 AND status = 'active'`
 	assertCountResult(t, ctx, conn, coalesceSemanticQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, coalesceSemanticQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_nullif (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_nullif VALUES
+		(1, 1, 'active'),
+		(2, 1, ''),
+		(3, 1, 'pending'),
+		(4, 2, 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_nullif_tenant_idx ON partial_planner_nullif (tenant) WHERE nullif(status, '') = 'active'")
+
+	nullifImpliedQuery := `SELECT count(id) FROM partial_planner_nullif WHERE tenant = 1 AND nullif(status, '') = 'active'`
+	assertCountResult(t, ctx, conn, nullifImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullifImpliedQuery, true)
+
+	nullifRawSourceQuery := `SELECT count(id) FROM partial_planner_nullif WHERE tenant = 1 AND status = 'active'`
+	assertCountResult(t, ctx, conn, nullifRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullifRawSourceQuery, false)
+
+	nullifWrongArgumentQuery := `SELECT count(id) FROM partial_planner_nullif WHERE tenant = 1 AND nullif(status, 'inactive') = 'active'`
+	assertCountResult(t, ctx, conn, nullifWrongArgumentQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, nullifWrongArgumentQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_abs (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_abs VALUES

@@ -817,6 +817,15 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.4.
+- [x] Use same-expression `NULLIF(left, right)` predicates in partial-index
+  implication paths. `NULLIF` now serializes as a comparable predicate key,
+  planner filters can deparse two-argument calls, partial unique DML
+  enforcement returns NULL when the arguments compare equal so those rows stay
+  outside the unique predicate, and `ON CONFLICT` arbiter inference accepts the
+  exact-expression shape; raw source-value predicates and wrong right-hand
+  arguments remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.34.
 - [x] Use deterministic unary numeric `abs(expr)` predicates in partial-index
   implication paths. `abs(expr)` now serializes as a comparable predicate key,
   participates in planner predicate serialization, evaluates signed integer
