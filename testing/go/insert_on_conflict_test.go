@@ -621,6 +621,29 @@ ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports BETWEEN range predicate",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_between (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_between_idx ON partial_arb_between (user_id) WHERE score > 0 AND score < 100;",
+				"INSERT INTO partial_arb_between VALUES (1, 10, 50, 'old');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_between VALUES (2, 10, 60, 'between')
+ON CONFLICT (user_id) WHERE score BETWEEN 10 AND 90 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query:    `SELECT id, user_id, score, note FROM partial_arb_between ORDER BY id;`,
+					Expected: []gms.Row{{1, 10, 50, "between"}},
+				},
+				{
+					Query: `INSERT INTO partial_arb_between VALUES (3, 10, 60, 'not-subset')
+ON CONFLICT (user_id) WHERE score BETWEEN -10 AND 90 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports boolean predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_bool (id INT PRIMARY KEY, user_id INT, active BOOL, note TEXT);",

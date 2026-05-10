@@ -364,13 +364,13 @@ func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
 		return predicateTermImplies(indexExpr, arbiterAnd.Left) || predicateTermImplies(indexExpr, arbiterAnd.Right)
 	}
 
-	indexComparison, ok := numericPredicateComparisonFromExpr(indexExpr)
+	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
 	if ok {
-		arbiterComparison, ok := numericPredicateComparisonFromExpr(arbiterExpr)
-		if !ok || !strings.EqualFold(indexComparison.column, arbiterComparison.column) {
+		arbiterRange, ok := numericPredicateRangeFromExpr(arbiterExpr)
+		if !ok || !strings.EqualFold(indexRange.column, arbiterRange.column) {
 			return false
 		}
-		return numericComparisonRange(arbiterComparison).subsetOf(numericComparisonRange(indexComparison))
+		return arbiterRange.bounds.subsetOf(indexRange.bounds)
 	}
 	indexBool, ok := booleanPredicateComparisonFromExpr(indexExpr)
 	if !ok {
@@ -408,6 +408,52 @@ type numericPredicateRange struct {
 type booleanPredicateComparison struct {
 	column string
 	value  bool
+}
+
+type numericPredicateRangeWithColumn struct {
+	column string
+	bounds numericPredicateRange
+}
+
+func numericPredicateRangeFromExpr(expr tree.Expr) (numericPredicateRangeWithColumn, bool) {
+	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.RangeCond:
+		if expr.Not || expr.Symmetric {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		column, ok := predicateColumnName(expr.Left)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		from, ok := predicateNumericConstant(expr.From)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		to, ok := predicateNumericConstant(expr.To)
+		if !ok || from > to {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		return numericPredicateRangeWithColumn{
+			column: column,
+			bounds: numericPredicateRange{
+				hasLower:       true,
+				lower:          from,
+				lowerInclusive: true,
+				hasUpper:       true,
+				upper:          to,
+				upperInclusive: true,
+			},
+		}, true
+	default:
+		comparison, ok := numericPredicateComparisonFromExpr(expr)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		return numericPredicateRangeWithColumn{
+			column: comparison.column,
+			bounds: numericComparisonRange(comparison),
+		}, true
+	}
 }
 
 func numericPredicateComparisonFromExpr(expr tree.Expr) (numericPredicateComparison, bool) {
