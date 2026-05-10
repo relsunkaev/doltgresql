@@ -25,12 +25,36 @@ import (
 )
 
 func initVector() {
+	framework.RegisterBinaryFunction(framework.Operator_BinaryLessThan, vector_lt)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryLessOrEqual, vector_le)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorL2Distance, l2_distance)
 	framework.RegisterFunction(inner_product)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorNegativeInnerProduct, vector_negative_inner_product)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorCosineDistance, cosine_distance)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorL1Distance, l1_distance)
 	framework.RegisterFunction(vector_l2_squared_distance)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, vector_ge)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, vector_gt)
+}
+
+var vector_lt = framework.Function2{
+	Name:       "vector_lt",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgtypes.CompareVectors(val1.([]float32), val2.([]float32)) < 0, nil
+	},
+}
+
+var vector_le = framework.Function2{
+	Name:       "vector_le",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgtypes.CompareVectors(val1.([]float32), val2.([]float32)) <= 0, nil
+	},
 }
 
 var l2_distance = framework.Function2{
@@ -118,6 +142,26 @@ var l1_distance = framework.Function2{
 			distance += math.Abs(float64(left[i] - right[i]))
 		}
 		return distance, nil
+	},
+}
+
+var vector_ge = framework.Function2{
+	Name:       "vector_ge",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgtypes.CompareVectors(val1.([]float32), val2.([]float32)) >= 0, nil
+	},
+}
+
+var vector_gt = framework.Function2{
+	Name:       "vector_gt",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return pgtypes.CompareVectors(val1.([]float32), val2.([]float32)) > 0, nil
 	},
 }
 

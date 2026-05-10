@@ -234,7 +234,10 @@ Do not check off an item until it has workload proof:
   equality, `l2_distance`, `inner_product`, `vector_negative_inner_product`,
   `cosine_distance`, `l1_distance`, and the dense-vector distance operators
   `<->`, `<#>`, `<=>`, and `<+>`, including extension-qualified
-  `OPERATOR(public.<->)` syntax and dimension-mismatch errors.
+  `OPERATOR(public.<->)` syntax and dimension-mismatch errors. The dense
+  vector ordering functions/operators `vector_lt`, `vector_le`, `vector_ge`,
+  `vector_gt`, `<`, `<=`, `>=`, and `>` use pgvector-compatible
+  lexicographic ordering.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.

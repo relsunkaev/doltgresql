@@ -385,6 +385,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"1", "1"}},
 				},
 				{
+					Query:    `SELECT ('[1,2,3]'::vector < '[1,2,4]'::vector)::text, ('[1,2,3]'::vector <= '[1,2,3]'::vector)::text, ('[1,2,4]'::vector > '[1,2,3]'::vector)::text, ('[1,2,4]'::vector >= '[1,2,4]'::vector)::text;`,
+					Expected: []sql.Row{{"true", "true", "true", "true"}},
+				},
+				{
+					Query:    `SELECT vector_lt('[1,2,3]'::vector, '[1,2,4]'::vector)::text, vector_le('[1,2,3]'::vector, '[1,2,3]'::vector)::text, vector_gt('[1,2,4]'::vector, '[1,2,3]'::vector)::text, vector_ge('[1,2,4]'::vector, '[1,2,4]'::vector)::text;`,
+					Expected: []sql.Row{{"true", "true", "true", "true"}},
+				},
+				{
 					Query:    `SELECT id FROM embeddings ORDER BY embedding <-> '[4,6,3]'::vector, id;`,
 					Expected: []sql.Row{{2}, {1}, {3}},
 				},
