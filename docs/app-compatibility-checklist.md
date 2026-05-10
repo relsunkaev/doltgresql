@@ -832,6 +832,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.7.
+- [x] Use deterministic `strpos(expr, literal)` predicates in partial-index
+  implication paths. `strpos(...)` now serializes as a comparable function
+  predicate key with its needle argument, participates in planner predicate
+  serialization, evaluates PostgreSQL-style one-based text positions for
+  partial unique DML enforcement, and works for `ON CONFLICT` arbiter
+  inference; wrong needles, wrong result values, and broader string semantic
+  rewrites remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.8.
 - [x] Use same-expression exclusion-set predicates in partial-index
   implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
   `IS DISTINCT FROM` predicates now compare excluded literal sets, so query

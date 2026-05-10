@@ -1154,6 +1154,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if !ok {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", expr.Func.String())
 	}
+	if name == "strpos" {
+		return p.evalStrpos(ctx, row, expr)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1193,6 +1196,36 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+func (p *partialIndexPredicate) evalStrpos(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function strpos expects two arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	substring, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || substring.value == nil {
+		return predicateValue{}, nil
+	}
+	strText, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function strpos does not support %T", str.value)
+	}
+	substringText, ok := substring.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function strpos does not support %T", substring.value)
+	}
+	idx := strings.Index(strText, substringText)
+	if idx < 0 {
+		return predicateValue{value: int64(0)}, nil
+	}
+	return predicateValue{value: int64(idx + 1)}, nil
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

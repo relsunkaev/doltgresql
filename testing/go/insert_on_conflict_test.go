@@ -949,6 +949,32 @@ ON CONFLICT (code) WHERE octet_length(code) = 3 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports strpos predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_strpos (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_strpos_user_idx ON partial_arb_strpos (user_id) WHERE strpos(code, 'active') = 1;",
+				"INSERT INTO partial_arb_strpos VALUES (1, 10, 'active-a', 'old-active'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_strpos VALUES (3, 10, 'active-b', 'strpos-upsert')
+ON CONFLICT (user_id) WHERE strpos(code, 'active') = 1 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_strpos ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active-a", "strpos-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_strpos VALUES (4, 10, 'active-c', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE strpos(code, 'pending') = 1 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

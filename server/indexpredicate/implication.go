@@ -554,7 +554,13 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	name, ok := predicateFunctionName(fn.Func)
-	if !ok || len(fn.Exprs) != 1 {
+	if !ok {
+		return "", false
+	}
+	if name == "strpos" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
+	}
+	if len(fn.Exprs) != 1 {
 		return "", false
 	}
 	name, ok = predicateCanonicalUnaryFunction(name)
@@ -581,6 +587,21 @@ func predicateCoalesceExprKey(expr *tree.CoalesceExpr) (string, bool) {
 		parts = append(parts, childKey)
 	}
 	return "func:coalesce(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs int) (string, bool) {
+	if len(exprs) != expectedArgs {
+		return "", false
+	}
+	parts := make([]string, 0, len(exprs))
+	for _, child := range exprs {
+		childKey, ok := predicateFunctionArgumentExprKey(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childKey)
+	}
+	return "func:" + name + "(" + strings.Join(parts, ",") + ")", true
 }
 
 func predicateFunctionArgumentExprKey(expr tree.Expr) (string, bool) {

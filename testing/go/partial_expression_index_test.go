@@ -358,6 +358,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports strpos predicate",
+			SetUpScript: []string{
+				`CREATE TABLE prefixed_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX prefixed_codes_user_code_idx
+					ON prefixed_codes (user_id)
+					WHERE strpos(code, 'active') = 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO prefixed_codes VALUES
+						(1, 10, 'active-a'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO prefixed_codes VALUES (3, 10, 'active-b');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO prefixed_codes VALUES (4, 10, 'inactive');`,
+				},
+				{
+					Query:       `UPDATE prefixed_codes SET code = 'active-c' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -692,6 +719,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	bitNonMatchingQuery := `SELECT count(id) FROM partial_planner_bit WHERE tenant = 1 AND bit_length(code) = 16`
 	assertCountResult(t, ctx, conn, bitNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, bitNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_strpos (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_strpos VALUES
+		(1, 1, 'active-a'),
+		(2, 1, 'inactive'),
+		(3, 1, 'pending'),
+		(4, 2, 'active-b')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_strpos_tenant_idx ON partial_planner_strpos (tenant) WHERE strpos(code, 'active') = 1")
+
+	strposImpliedQuery := `SELECT count(id) FROM partial_planner_strpos WHERE tenant = 1 AND strpos(code, 'active') = 1`
+	assertCountResult(t, ctx, conn, strposImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, strposImpliedQuery, true)
+
+	strposNonMatchingQuery := `SELECT count(id) FROM partial_planner_strpos WHERE tenant = 1 AND strpos(code, 'active') = 3`
+	assertCountResult(t, ctx, conn, strposNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, strposNonMatchingQuery, false)
+
+	strposWrongNeedleQuery := `SELECT count(id) FROM partial_planner_strpos WHERE tenant = 1 AND strpos(code, 'pending') = 1`
+	assertCountResult(t, ctx, conn, strposWrongNeedleQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, strposWrongNeedleQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

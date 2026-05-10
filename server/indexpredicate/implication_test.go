@@ -330,6 +330,34 @@ func TestImpliesBitLengthFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesStrposFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"strpos(code, 'active') = 1", "strpos(code, 'active') = 1"},
+		{"strpos(code, 'active') IN (1, 3)", "strpos(code, 'active') = 1"},
+		{"strpos(code, 'active') IS NOT NULL", "strpos(code, 'active') = 1"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"strpos(code, 'active') = 1", "strpos(code, 'active') = 3"},
+		{"strpos(code, 'active') = 1", "strpos(code, 'pending') = 1"},
+		{"strpos(code, 'active') IN (1, 3)", "strpos(code, 'active') IN (1, 4)"},
+		{"strpos(code, 'active') = 1", "code = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string
