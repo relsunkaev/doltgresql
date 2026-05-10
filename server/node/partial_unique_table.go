@@ -1157,6 +1157,10 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.ToLower(text)}, nil
 	case "upper":
 		return predicateValue{value: strings.ToUpper(text)}, nil
+	case "ltrim":
+		return predicateValue{value: strings.TrimLeftFunc(text, func(r rune) bool { return r == ' ' })}, nil
+	case "rtrim":
+		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}

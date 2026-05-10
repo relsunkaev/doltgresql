@@ -459,7 +459,7 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	name, ok := predicateFunctionName(fn.Func)
-	if !ok || (name != "lower" && name != "upper") || len(fn.Exprs) != 1 {
+	if !ok || !predicateSupportedUnaryFunction(name) || len(fn.Exprs) != 1 {
 		return "", false
 	}
 	argKey, ok := predicateComparableExprKey(fn.Exprs[0])
@@ -467,6 +467,15 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	return "func:" + name + "(" + argKey + ")", true
+}
+
+func predicateSupportedUnaryFunction(name string) bool {
+	switch name {
+	case "lower", "upper", "ltrim", "rtrim":
+		return true
+	default:
+		return false
+	}
 }
 
 func predicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) {

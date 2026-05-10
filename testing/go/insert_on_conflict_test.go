@@ -792,6 +792,32 @@ ON CONFLICT (email) WHERE lower(email) IN ('active@example.com', 'other@example.
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_trim_code_idx ON partial_arb_trim (code) WHERE ltrim(code) = 'active';",
+				"INSERT INTO partial_arb_trim VALUES (1, ' active', 'old-active'), (2, 'archived', 'old-archived');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_trim VALUES (3, ' active', 'trim-upsert')
+ON CONFLICT (code) WHERE ltrim(code) = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_trim ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, " active", "trim-upsert"},
+						{2, "archived", "old-archived"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_trim VALUES (4, ' active', 'wrong-predicate')
+ON CONFLICT (code) WHERE rtrim(code) = 'active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

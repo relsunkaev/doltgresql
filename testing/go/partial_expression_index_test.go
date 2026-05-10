@@ -493,4 +493,20 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	crossColumnNullSafeMismatchQuery := `SELECT count(id) FROM partial_planner_cross_nullsafe WHERE label = 'mismatch' AND tenant = 1 AND owner_tenant = 2`
 	assertCountResult(t, ctx, conn, crossColumnNullSafeMismatchQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeMismatchQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_trim (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_trim VALUES
+		(1, 1, ' active'),
+		(2, 1, 'active '),
+		(3, 1, 'archived'),
+		(4, 2, ' active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_trim_tenant_idx ON partial_planner_trim (tenant) WHERE ltrim(code) = 'active'")
+
+	trimImpliedQuery := `SELECT count(id) FROM partial_planner_trim WHERE tenant = 1 AND ltrim(code) = 'active'`
+	assertCountResult(t, ctx, conn, trimImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, trimImpliedQuery, true)
+
+	trimNonEquivalentQuery := `SELECT count(id) FROM partial_planner_trim WHERE tenant = 1 AND rtrim(code) = 'active'`
+	assertCountResult(t, ctx, conn, trimNonEquivalentQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, trimNonEquivalentQuery, false)
 }

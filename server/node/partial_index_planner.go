@@ -298,6 +298,8 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return predicateIdentifier(expr.Name()), true
 	case *gmsexpression.Literal:
 		return expr.String(), true
+	case sql.FunctionExpression:
+		return plannerFunctionPredicateSQL(expr)
 	case *gmsexpression.Equals:
 		return binaryPredicateSQL(expr.Left(), "=", expr.Right())
 	case *gmsexpression.NullSafeEquals:
@@ -367,6 +369,24 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
+	name := strings.ToLower(expr.FunctionName())
+	switch name {
+	case "lower", "upper", "ltrim", "rtrim":
+	default:
+		return "", false
+	}
+	children := expr.Children()
+	if len(children) != 1 {
+		return "", false
+	}
+	childSQL, ok := plannerPredicateExprSQL(children[0])
+	if !ok {
+		return "", false
+	}
+	return name + "(" + childSQL + ")", true
 }
 
 func indexScanOpPredicateSQL(op sql.IndexScanOp) (string, bool) {
