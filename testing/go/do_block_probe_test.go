@@ -337,18 +337,30 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
-			Name:        "DO block rejects unsupported GET DIAGNOSTICS item",
-			SetUpScript: []string{},
+			Name: "DO block assigns GET DIAGNOSTICS PG_CONTEXT",
+			SetUpScript: []string{
+				`CREATE TABLE do_diag_context_items (id INT PRIMARY KEY, touched BOOL NOT NULL DEFAULT false);`,
+				`CREATE TABLE do_diag_context_seen (affected INT NOT NULL, context TEXT NOT NULL);`,
+				`INSERT INTO do_diag_context_items VALUES (1, false), (2, false);`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `DO $$
 						DECLARE
 							context TEXT;
+							affected INT;
 						BEGIN
-							GET DIAGNOSTICS context = PG_CONTEXT;
+							UPDATE do_diag_context_items SET touched = true WHERE id = 1;
+							GET DIAGNOSTICS affected = ROW_COUNT, context = PG_CONTEXT;
+							INSERT INTO do_diag_context_seen VALUES (affected, context);
 						END;
 					$$;`,
-					ExpectedErr: `GET DIAGNOSTICS item PG_CONTEXT is not supported`,
+				},
+				{
+					Query: `SELECT affected,
+							(context LIKE 'PL/pgSQL function inline_code_block line % at GET DIAGNOSTICS')::text
+						FROM do_diag_context_seen;`,
+					Expected: []sql.Row{{1, "true"}},
 				},
 			},
 		},

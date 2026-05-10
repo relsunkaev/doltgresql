@@ -518,7 +518,7 @@ func (stmt *plpgSQL_stmt_getdiag) Convert(conv jsonConversionContext) (GetDiagno
 			Kind:   strings.ToUpper(item.Kind),
 		})
 	}
-	return GetDiagnostics{Items: items}, nil
+	return GetDiagnostics{LineNumber: stmt.LineNumber, Items: items}, nil
 }
 
 // Convert converts the JSON statement into its output form.

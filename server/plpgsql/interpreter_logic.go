@@ -35,6 +35,7 @@ import (
 // framework package.
 type InterpretedFunction interface {
 	ApplyBindings(ctx *sql.Context, stack InterpreterStack, stmt string, bindings []string, enforceType bool) (newStmt string, varFound bool, err error)
+	GetName() string
 	GetParameters() []*pgtypes.DoltgresType
 	GetParameterNames() []string
 	GetReturn() *pgtypes.DoltgresType
@@ -279,6 +280,10 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Int64, lastRowCount); err != nil {
 					return nil, err
 				}
+			case "PG_CONTEXT":
+				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(iFunc, operation)); err != nil {
+					return nil, err
+				}
 			default:
 				return nil, fmt.Errorf("GET DIAGNOSTICS item %s is not supported", operation.PrimaryData)
 			}
@@ -470,6 +475,22 @@ func convertRowsToRecords(schema sql.Schema, rows []sql.Row) ([][]pgtypes.Record
 	}
 
 	return records, nil
+}
+
+func diagnosticPGContext(iFunc InterpretedFunction, operation InterpreterOperation) string {
+	functionName := iFunc.GetName()
+	if functionName == "__doltgres_do_block" {
+		functionName = "inline_code_block"
+	} else if functionName == "" {
+		functionName = "unknown"
+	} else {
+		functionName += "()"
+	}
+	lineNumber := strings.TrimSpace(operation.Options["lineNumber"])
+	if lineNumber == "" {
+		lineNumber = "0"
+	}
+	return fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", functionName, lineNumber)
 }
 
 func evaluateDynamicExecuteUsingParams(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, params []string) ([]string, error) {

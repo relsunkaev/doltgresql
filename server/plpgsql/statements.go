@@ -230,7 +230,8 @@ type GetDiagnosticsItem struct {
 
 // GetDiagnostics represents a GET DIAGNOSTICS statement.
 type GetDiagnostics struct {
-	Items []GetDiagnosticsItem
+	LineNumber int32
+	Items      []GetDiagnosticsItem
 }
 
 var _ Statement = GetDiagnostics{}
@@ -247,6 +248,9 @@ func (stmt GetDiagnostics) AppendOperations(ops *[]InterpreterOperation, stack *
 			OpCode:      OpCode_Get,
 			PrimaryData: strings.ToUpper(item.Kind),
 			Target:      item.Target,
+			Options: map[string]string{
+				"lineNumber": strconv.Itoa(int(stmt.LineNumber)),
+			},
 		})
 	}
 	return nil

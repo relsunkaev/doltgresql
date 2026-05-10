@@ -190,3 +190,36 @@ func TestParseGetDiagnosticsRowCount(t *testing.T) {
 		t.Fatalf("diagnostic item = %q, expected ROW_COUNT; op: %#v", getOp.PrimaryData, getOp)
 	}
 }
+
+func TestParseGetDiagnosticsPgContext(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			context TEXT;
+		BEGIN
+			GET DIAGNOSTICS context = PG_CONTEXT;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var getOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Get {
+			getOp = &ops[i]
+			break
+		}
+	}
+	if getOp == nil {
+		t.Fatalf("expected GET DIAGNOSTICS operation, found %#v", ops)
+	}
+	if getOp.Target != "context" {
+		t.Fatalf("target = %q, expected context; op: %#v", getOp.Target, getOp)
+	}
+	if getOp.PrimaryData != "PG_CONTEXT" {
+		t.Fatalf("diagnostic item = %q, expected PG_CONTEXT; op: %#v", getOp.PrimaryData, getOp)
+	}
+	if getOp.Options["lineNumber"] == "" {
+		t.Fatalf("expected lineNumber option on PG_CONTEXT operation; op: %#v", getOp)
+	}
+}

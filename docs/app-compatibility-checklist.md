@@ -576,12 +576,17 @@ Do not check off an item until it has workload proof:
 - [x] PL/pgSQL `GET DIAGNOSTICS ... ROW_COUNT` - anonymous DO blocks can
   assign the row count from the most recent SQL command, including regular
   DML, dynamic `EXECUTE` DML, zero-row DML, and `PERFORM` query results.
-  Unsupported diagnostic items such as `PG_CONTEXT` are rejected explicitly
-  rather than silently misreported. Pinned by
-  testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
+  Pinned by testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
+- [x] PL/pgSQL `GET DIAGNOSTICS ... PG_CONTEXT` - anonymous DO blocks can
+  assign PostgreSQL-shaped current-frame context text, including the
+  inline-code-block function name and get-diagnostics line number, and can
+  retrieve it alongside `ROW_COUNT` in the same statement. Pinned by
+  testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go. Tracked
+  by dg-7ug.17.
 - [ ] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
-  DIAGNOSTICS`, `PG_CONTEXT`, exception diagnostics, and any additional
-  PostgreSQL-compatible item typing) before claiming full diagnostics parity.
+  DIAGNOSTICS`, exception diagnostics, multi-frame `PG_CONTEXT` call-stack
+  assembly, and any additional PostgreSQL-compatible item typing) before
+  claiming full diagnostics parity.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
