@@ -150,6 +150,38 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
 				},
 				{
+					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
+					Expected: []sql.Row{{`\xc105fd4a7fae9b39f59ea9a363439e11`}},
+				},
+				{
+					Query:    `SELECT decrypt('\xc105fd4a7fae9b39f59ea9a363439e11'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x07ae2f58e0963a6b89784cff3f2247ed`}},
+				},
+				{
+					Query:    `SELECT decrypt_iv('\x07ae2f58e0963a6b89784cff3f2247ed'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT encrypt('\x31323334353637383930616263646566'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-ecb/pad:none')::text;`,
+					Expected: []sql.Row{{`\x461a5ffd9df79171358e9e0177d84eaa`}},
+				},
+				{
+					Query:       `SELECT encrypt('\x73686f7274'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes-cbc/pad:none');`,
+					ExpectedErr: `data not a multiple of block size`,
+				},
+				{
+					Query:       `SELECT encrypt('\x00'::bytea, '\x00'::bytea, 'aes');`,
+					ExpectedErr: `invalid pgcrypto aes key length: 1`,
+				},
+				{
+					Query:       `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'bf');`,
+					ExpectedErr: `unsupported pgcrypto cipher algorithm: bf`,
+				},
+				{
 					Query:       `SELECT gen_salt('bf', 3);`,
 					ExpectedErr: `gen_salt iteration count 3 is outside allowed inclusive range 4..31 for bf`,
 				},
@@ -211,6 +243,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
 				},
 				{
+					Query:    `SELECT extensions.encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
+					Expected: []sql.Row{{`\xc105fd4a7fae9b39f59ea9a363439e11`}},
+				},
+				{
 					Query:       `SELECT extensions.digest('abc', 'sha256')::text;`,
 					Username:    `ext_user`,
 					Password:    `a`,
@@ -224,6 +260,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				},
 				{
 					Query: `GRANT ALL ON FUNCTION extensions.crypt(text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.encrypt(bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.decrypt(bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.decrypt_iv(bytea, bytea, bytea, text) TO ext_user;`,
 				},
 				{
 					Query: `GRANT ALL ON FUNCTION extensions.gen_random_bytes(integer) TO ext_user;`,
@@ -248,6 +296,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Username: `ext_user`,
 					Password: `a`,
 					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
+				},
+				{
+					Query:    `SELECT extensions.decrypt(extensions.encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, 'aes'), '\x30313233343536373839616263646566'::bytea, 'aes')::text;`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT extensions.decrypt_iv(extensions.encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs'), '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
 				},
 			},
 		},

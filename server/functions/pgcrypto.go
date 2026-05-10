@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/rand"
@@ -49,8 +51,12 @@ var pgcryptoBcryptMagicCipherData = []byte("OrpheanBeholderScryDoubt")
 // initPgCrypto registers the pgcrypto-compatible functions to the catalog.
 func initPgCrypto() {
 	framework.RegisterFunction(pgcrypto_crypt)
+	framework.RegisterFunction(pgcrypto_decrypt)
+	framework.RegisterFunction(pgcrypto_decrypt_iv)
 	framework.RegisterFunction(pgcrypto_digest_text)
 	framework.RegisterFunction(pgcrypto_digest_bytea)
+	framework.RegisterFunction(pgcrypto_encrypt)
+	framework.RegisterFunction(pgcrypto_encrypt_iv)
 	framework.RegisterFunction(pgcrypto_gen_salt)
 	framework.RegisterFunction(pgcrypto_gen_salt_with_count)
 	framework.RegisterFunction(pgcrypto_gen_random_bytes)
@@ -65,6 +71,46 @@ var pgcrypto_crypt = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, password any, salt any) (any, error) {
 		return pgcryptoCrypt(password.(string), salt.(string))
+	},
+}
+
+var pgcrypto_encrypt = framework.Function3{
+	Name:       "encrypt",
+	Return:     pgtypes.Bytea,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Bytea, pgtypes.Bytea, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, data any, key any, cipherType any) (any, error) {
+		return pgcryptoRawCipher(data.([]byte), key.([]byte), nil, cipherType.(string), true)
+	},
+}
+
+var pgcrypto_decrypt = framework.Function3{
+	Name:       "decrypt",
+	Return:     pgtypes.Bytea,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Bytea, pgtypes.Bytea, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, data any, key any, cipherType any) (any, error) {
+		return pgcryptoRawCipher(data.([]byte), key.([]byte), nil, cipherType.(string), false)
+	},
+}
+
+var pgcrypto_encrypt_iv = framework.Function4{
+	Name:       "encrypt_iv",
+	Return:     pgtypes.Bytea,
+	Parameters: [4]*pgtypes.DoltgresType{pgtypes.Bytea, pgtypes.Bytea, pgtypes.Bytea, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, data any, key any, iv any, cipherType any) (any, error) {
+		return pgcryptoRawCipher(data.([]byte), key.([]byte), iv.([]byte), cipherType.(string), true)
+	},
+}
+
+var pgcrypto_decrypt_iv = framework.Function4{
+	Name:       "decrypt_iv",
+	Return:     pgtypes.Bytea,
+	Parameters: [4]*pgtypes.DoltgresType{pgtypes.Bytea, pgtypes.Bytea, pgtypes.Bytea, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, data any, key any, iv any, cipherType any) (any, error) {
+		return pgcryptoRawCipher(data.([]byte), key.([]byte), iv.([]byte), cipherType.(string), false)
 	},
 }
 
@@ -155,6 +201,150 @@ func pgcryptoCrypt(password string, salt string) (string, error) {
 		return "", errors.Errorf("unsupported pgcrypto crypt salt")
 	}
 	return pgcryptoBcryptHash(password, cost, minor, encodedSalt)
+}
+
+type pgcryptoRawCipherConfig struct {
+	algorithm string
+	mode      string
+	padding   string
+}
+
+func pgcryptoRawCipher(data []byte, key []byte, iv []byte, cipherType string, encrypt bool) ([]byte, error) {
+	config, err := pgcryptoParseRawCipherType(cipherType)
+	if err != nil {
+		return nil, err
+	}
+	if config.algorithm != "aes" {
+		return nil, errors.Errorf("unsupported pgcrypto cipher algorithm: %s", config.algorithm)
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, errors.Errorf("invalid pgcrypto aes key length: %d", len(key))
+	}
+	blockSize := block.BlockSize()
+	input := append([]byte(nil), data...)
+	if encrypt {
+		input, err = pgcryptoPad(input, blockSize, config.padding)
+	} else if len(input)%blockSize != 0 {
+		return nil, errors.New("data not a multiple of block size")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([]byte, len(input))
+	switch config.mode {
+	case "cbc":
+		normalizedIV := pgcryptoNormalizeIV(iv, blockSize)
+		if encrypt {
+			cipher.NewCBCEncrypter(block, normalizedIV).CryptBlocks(output, input)
+		} else {
+			cipher.NewCBCDecrypter(block, normalizedIV).CryptBlocks(output, input)
+		}
+	case "ecb":
+		for i := 0; i < len(input); i += blockSize {
+			if encrypt {
+				block.Encrypt(output[i:i+blockSize], input[i:i+blockSize])
+			} else {
+				block.Decrypt(output[i:i+blockSize], input[i:i+blockSize])
+			}
+		}
+	default:
+		return nil, errors.Errorf("unsupported pgcrypto cipher mode: %s", config.mode)
+	}
+	if !encrypt {
+		output, err = pgcryptoUnpad(output, blockSize, config.padding)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return output, nil
+}
+
+func pgcryptoParseRawCipherType(cipherType string) (pgcryptoRawCipherConfig, error) {
+	config := pgcryptoRawCipherConfig{
+		mode:    "cbc",
+		padding: "pkcs",
+	}
+	parts := strings.Split(strings.ToLower(cipherType), "/")
+	cipherParts := strings.Split(parts[0], "-")
+	switch len(cipherParts) {
+	case 1:
+		config.algorithm = cipherParts[0]
+	case 2:
+		config.algorithm = cipherParts[0]
+		config.mode = cipherParts[1]
+	default:
+		return config, errors.Errorf("invalid pgcrypto cipher type: %s", cipherType)
+	}
+	if config.algorithm == "" {
+		return config, errors.Errorf("invalid pgcrypto cipher type: %s", cipherType)
+	}
+	for _, option := range parts[1:] {
+		if strings.HasPrefix(option, "pad:") {
+			config.padding = strings.TrimPrefix(option, "pad:")
+			continue
+		}
+		return config, errors.Errorf("unsupported pgcrypto cipher option: %s", option)
+	}
+	switch config.mode {
+	case "cbc", "ecb":
+	default:
+		return config, errors.Errorf("unsupported pgcrypto cipher mode: %s", config.mode)
+	}
+	switch config.padding {
+	case "pkcs", "none":
+	default:
+		return config, errors.Errorf("unsupported pgcrypto cipher padding: %s", config.padding)
+	}
+	return config, nil
+}
+
+func pgcryptoNormalizeIV(iv []byte, blockSize int) []byte {
+	normalizedIV := make([]byte, blockSize)
+	copy(normalizedIV, iv)
+	return normalizedIV
+}
+
+func pgcryptoPad(data []byte, blockSize int, padding string) ([]byte, error) {
+	switch padding {
+	case "none":
+		if len(data)%blockSize != 0 {
+			return nil, errors.New("data not a multiple of block size")
+		}
+		return data, nil
+	case "pkcs":
+		padLen := blockSize - len(data)%blockSize
+		for i := 0; i < padLen; i++ {
+			data = append(data, byte(padLen))
+		}
+		return data, nil
+	default:
+		return nil, errors.Errorf("unsupported pgcrypto cipher padding: %s", padding)
+	}
+}
+
+func pgcryptoUnpad(data []byte, blockSize int, padding string) ([]byte, error) {
+	switch padding {
+	case "none":
+		return data, nil
+	case "pkcs":
+		if len(data) == 0 || len(data)%blockSize != 0 {
+			return nil, errors.New("invalid padding")
+		}
+		padLen := int(data[len(data)-1])
+		if padLen == 0 || padLen > blockSize || padLen > len(data) {
+			return nil, errors.New("invalid padding")
+		}
+		for _, b := range data[len(data)-padLen:] {
+			if int(b) != padLen {
+				return nil, errors.New("invalid padding")
+			}
+		}
+		return data[:len(data)-padLen], nil
+	default:
+		return nil, errors.Errorf("unsupported pgcrypto cipher padding: %s", padding)
+	}
 }
 
 func pgcryptoDigest(data []byte, algorithm string) ([]byte, error) {

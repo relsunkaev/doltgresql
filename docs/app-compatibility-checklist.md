@@ -154,7 +154,11 @@ Do not check off an item until it has workload proof:
   verification for the common `crypt(password, gen_salt('bf'))` and
   `stored_hash = crypt(password, stored_hash)` app flows, including
   PostgreSQL's `bf` default cost 6 and allowed cost range 4-31; non-`bf`
-  password salt/hash algorithms are explicitly rejected. The
+  password salt/hash algorithms are explicitly rejected. Raw pgcrypto
+  `encrypt`/`decrypt` and `encrypt_iv`/`decrypt_iv` cover the AES
+  `cbc`/`ecb` modes with `pkcs` and `none` padding, including default
+  zero-IV behavior, explicit CBC IVs, and no-padding block-size
+  validation; non-AES raw ciphers are explicitly rejected. The
   `CREATE EXTENSION vector` shim is accepted and the native `vector(n)` type
   round-trips scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
@@ -229,11 +233,11 @@ Do not check off an item until it has workload proof:
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
-  non-goals. Open surfaces include remaining `pgcrypto` encrypt/decrypt,
-  non-`bf` password-hashing algorithms, and advanced random helpers beyond
-  the native UUID, `gen_random_bytes`, and digest/HMAC subset, pgvector
-  behavior beyond scalar `vector(n)` round-trips, `btree_gist` operator
-  classes, and hstore
+  non-goals. Open surfaces include remaining non-AES pgcrypto raw ciphers,
+  PGP encryption/decryption helpers, non-`bf` password-hashing algorithms,
+  and advanced random helpers beyond the native UUID, `gen_random_bytes`,
+  digest/HMAC, and AES raw-encryption subset, pgvector behavior beyond
+  scalar `vector(n)` round-trips, `btree_gist` operator classes, and hstore
   operators/functions/casts outside testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
