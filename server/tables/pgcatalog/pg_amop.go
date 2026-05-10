@@ -53,6 +53,10 @@ func (p PgAmopHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.R
 	if err != nil {
 		return nil, err
 	}
+	amops, err = appendHstoreAmops(ctx, amops)
+	if err != nil {
+		return nil, err
+	}
 	return &pgAmopRowIter{
 		amops: amops,
 		idx:   0,

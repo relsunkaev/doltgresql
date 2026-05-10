@@ -249,6 +249,15 @@ Do not check off an item until it has workload proof:
   `hstore_hash_extended` cover PostgreSQL-compatible hashes for empty,
   populated, NULL-valued, escaped,
   order-independent, duplicate-key-normalized, SQL NULL, and seeded inputs.
+  hstore catalog introspection now exposes extension-scoped
+  `btree_hstore_ops`, `gin_hstore_ops`, `gist_hstore_ops`, and
+  `hash_hstore_ops` rows through `pg_opclass`, `pg_opfamily`,
+  `pg_amop`, and `pg_amproc`, including the comparison, containment,
+  existence, and support-procedure strategies used by dump/catalog
+  clients. Physical hstore index execution remains an explicit
+  unsupported boundary: hstore btree/GIN opclasses are rejected with
+  opclass-specific unsupported errors, while hstore GiST/hash indexes
+  remain rejected by unsupported index-method errors.
   `hstore_in`, `hstore_out`, `hstore_recv`, and `hstore_send` cover
   canonical text IO, PostgreSQL-compatible binary payloads, malformed
   receive headers, empty, populated, NULL-valued, escaped, and SQL NULL inputs.
@@ -308,22 +317,21 @@ Do not check off an item until it has workload proof:
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
   ASCII-armor subset, pgvector ANN index execution plus halfvec and sparsevec
   value IO/functions/operators/casts/opclasses beyond the schema/type-shell
-  boundary, catalog-visible dense-vector and bit opclass boundaries, tested
-  bit Hamming / Jaccard distance functions and operators, and dense-vector IO,
-  equality, distance, ordering, arithmetic, binary quantization, aggregate
-  support functions, aggregate execution, and cast subset,
-  executable `btree_gist` GiST indexes/exclusion semantics, its
+  boundary, executable `btree_gist` GiST indexes/exclusion semantics, its
   internal `gbtreekey*` storage types and `opckeytype` parity, and
   unsupported `btree_gist` type families such as `money`, MAC address,
-  and network-address opclasses, plus hstore operators/functions/casts outside
-  testing/go/common_extensions_probe_test.go.
+  and network-address opclasses.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
   for PostgreSQL-style case-insensitive btree seeks. The current compatibility
   path preserves correctness by disabling unsafe raw btree range planning.
   Tracked by dg-7ug.4.
-- [ ] Complete hstore index/operator-class parity, including planner use and
-  operator-class catalog behavior for hstore comparisons. Tracked by dg-7ug.5.
+- [x] Define the hstore operator-class catalog and physical-index boundary.
+  `CREATE EXTENSION hstore` exposes btree/GIN/GiST/hash
+  opclass/family/operator/procedure catalog rows, while physical hstore
+  btree/GIN/GiST/hash index execution is explicitly unsupported rather
+  than silently claimed. Pinned by testing/go/common_extensions_probe_test.go.
+  Tracked by dg-7ug.5.
 - [x] ICU nondeterministic collations - `CREATE COLLATION ... provider
   = icu, deterministic = false` is explicitly rejected with
   SQLSTATE `0A000` (`CREATE COLLATION is not yet supported`).

@@ -1134,6 +1134,100 @@ ORDER BY amproc.amprocnum;`,
 					Expected: []sql.Row{{"1977219185673256887", "973419178382940312", "-9148714739893068701", "-6475142324932036612", "8123414359138430297", "t"}},
 				},
 				{
+					Query: `SELECT am.amname, opc.opcname, opc.opcdefault, typ.typname, COALESCE(keytyp.typname, '')
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+LEFT JOIN pg_catalog.pg_type keytyp ON keytyp.oid = opc.opckeytype
+WHERE opc.opcname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
+ORDER BY am.amname, opc.opcname;`,
+					Expected: []sql.Row{
+						{"btree", "btree_hstore_ops", "t", "hstore", ""},
+						{"gin", "gin_hstore_ops", "t", "hstore", "text"},
+						{"gist", "gist_hstore_ops", "t", "hstore", ""},
+						{"hash", "hash_hstore_ops", "t", "hstore", ""},
+					},
+				},
+				{
+					Query: `SELECT am.amname, opf.opfname
+FROM pg_catalog.pg_opfamily opf
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE opf.opfname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
+ORDER BY am.amname, opf.opfname;`,
+					Expected: []sql.Row{
+						{"btree", "btree_hstore_ops"},
+						{"gin", "gin_hstore_ops"},
+						{"gist", "gist_hstore_ops"},
+						{"hash", "hash_hstore_ops"},
+					},
+				},
+				{
+					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, opr.oprname, rt.typname
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+JOIN pg_catalog.pg_operator opr ON opr.oid = amop.amopopr
+JOIN pg_catalog.pg_type rt ON rt.oid = amop.amoprighttype
+WHERE opf.opfname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
+ORDER BY am.amname, opf.opfname, amop.amopstrategy;`,
+					Expected: []sql.Row{
+						{"btree", "btree_hstore_ops", int16(1), "#<#", "hstore"},
+						{"btree", "btree_hstore_ops", int16(2), "#<=#", "hstore"},
+						{"btree", "btree_hstore_ops", int16(3), "=", "hstore"},
+						{"btree", "btree_hstore_ops", int16(4), "#>=#", "hstore"},
+						{"btree", "btree_hstore_ops", int16(5), "#>#", "hstore"},
+						{"gin", "gin_hstore_ops", int16(7), "@>", "hstore"},
+						{"gin", "gin_hstore_ops", int16(9), "?", "text"},
+						{"gin", "gin_hstore_ops", int16(10), "?|", "_text"},
+						{"gin", "gin_hstore_ops", int16(11), "?&", "_text"},
+						{"gist", "gist_hstore_ops", int16(7), "@>", "hstore"},
+						{"gist", "gist_hstore_ops", int16(9), "?", "text"},
+						{"gist", "gist_hstore_ops", int16(10), "?|", "_text"},
+						{"gist", "gist_hstore_ops", int16(11), "?&", "_text"},
+						{"gist", "gist_hstore_ops", int16(13), "@", "hstore"},
+						{"hash", "hash_hstore_ops", int16(1), "=", "hstore"},
+					},
+				},
+				{
+					Query: `SELECT am.amname, opf.opfname, amproc.amprocnum, amproc.amproc
+FROM pg_catalog.pg_amproc amproc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE opf.opfname IN ('btree_hstore_ops', 'hash_hstore_ops', 'gist_hstore_ops', 'gin_hstore_ops')
+ORDER BY am.amname, opf.opfname, amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"btree", "btree_hstore_ops", int16(1), "hstore_cmp"},
+						{"gin", "gin_hstore_ops", int16(1), "bttextcmp"},
+						{"gin", "gin_hstore_ops", int16(2), "gin_extract_hstore"},
+						{"gin", "gin_hstore_ops", int16(3), "gin_extract_hstore_query"},
+						{"gin", "gin_hstore_ops", int16(4), "gin_consistent_hstore"},
+						{"gist", "gist_hstore_ops", int16(1), "ghstore_consistent"},
+						{"gist", "gist_hstore_ops", int16(2), "ghstore_union"},
+						{"gist", "gist_hstore_ops", int16(3), "ghstore_compress"},
+						{"gist", "gist_hstore_ops", int16(4), "ghstore_decompress"},
+						{"gist", "gist_hstore_ops", int16(5), "ghstore_penalty"},
+						{"gist", "gist_hstore_ops", int16(6), "ghstore_picksplit"},
+						{"gist", "gist_hstore_ops", int16(7), "ghstore_same"},
+						{"hash", "hash_hstore_ops", int16(1), "hstore_hash"},
+					},
+				},
+				{
+					Query:       `CREATE INDEX vending_inventory_gin_idx ON vending_machines USING gin (inventory gin_hstore_ops);`,
+					ExpectedErr: `operator class gin_hstore_ops is not yet supported for gin indexes`,
+				},
+				{
+					Query:       `CREATE INDEX vending_inventory_btree_idx ON vending_machines USING btree (inventory btree_hstore_ops);`,
+					ExpectedErr: `operator class btree_hstore_ops is not yet supported for btree indexes`,
+				},
+				{
+					Query:       `CREATE INDEX vending_inventory_gist_idx ON vending_machines USING gist (inventory gist_hstore_ops);`,
+					ExpectedErr: `index method gist is not yet supported`,
+				},
+				{
+					Query:       `CREATE INDEX vending_inventory_hash_idx ON vending_machines USING hash (inventory hash_hstore_ops);`,
+					ExpectedErr: `index method hash is not yet supported`,
+				},
+				{
 					Query:    `SELECT hstore_to_json('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text, hstore_to_jsonb('"B"=>"5", "A"=>"2", "empty"=>NULL, "quote"=>"a\"b"'::public.hstore)::text;`,
 					Expected: []sql.Row{{`{"A":"2","B":"5","empty":null,"quote":"a\"b"}`, `{"A": "2", "B": "5", "empty": null, "quote": "a\"b"}`}},
 				},

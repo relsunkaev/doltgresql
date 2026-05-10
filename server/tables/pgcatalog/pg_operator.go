@@ -48,6 +48,10 @@ func (p PgOperatorHandler) RowIter(ctx *sql.Context, partition sql.Partition) (s
 	if err != nil {
 		return nil, err
 	}
+	operators, err = appendHstoreOperators(ctx, operators)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOperatorRowIter{
 		operators: operators,
 		idx:       0,
