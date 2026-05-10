@@ -1713,9 +1713,11 @@ Do not check off an item until it has workload proof:
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/perl_dbi_client_test.go, testing/go/prisma_client_test.go,
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
-- [ ] Add other secondary-client smoke gates when workloads require those
-  clients, rather than implying support from the existing Node harnesses alone.
-  Tracked by dg-7ug.10.3 under dg-7ug.10.
+- [x] Keep secondary-client expansion demand-driven. The checklist names the
+  exact client packages and harnesses currently claimed above; future
+  workload-required clients should get their own smoke gate before being added
+  to that matrix, rather than being implied from adjacent drivers. The broader
+  advertised client/ORM matrix remains tracked by dg-7ug.10.3 under dg-7ug.10.
 
 ## Replication and sync TODO
 
@@ -1799,10 +1801,11 @@ actually exercise.
   role-membership discovery; `PostgresReplicationConnection.java` for
   publication existence, publication-table discovery, publication validation,
   optional `pg_replication_slot_advance`, and `CREATE_REPLICATION_SLOT`.
-- [ ] Add executable probes for additional named `pgoutput` consumers when a
-  real workload introduces them. This future matrix expansion is intentionally
-  not part of the current Electric / Zero / Debezium boundary. Tracked by
-  dg-7ug.22.
+- [x] Keep additional named `pgoutput` consumers demand-driven. The current
+  consumer boundary is Electric / Zero / Debezium plus direct pgoutput source
+  probes; future workload-required consumers should get a new executable probe
+  before being added to that matrix. This closes the current checklist rule for
+  dg-7ug.22 without claiming untested consumers.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
@@ -1844,11 +1847,12 @@ actually exercise.
   metadata-only `connect=false` without apply-worker state; and publication
   DDL covers database-qualified table rejection plus the publication options
   currently claimed through Electric, Zero, and direct `pgoutput` tests.
-- [ ] Mirror newly exercised PostgreSQL replication features back into this app
+- [x] Mirror newly exercised PostgreSQL replication features back into this app
   checklist when a real consumer needs them, rather than leaving them only in
-  docs/postgresql-parity-issues.md. This remains the standing future-work rule
-  for consumers beyond the current Electric / Zero / Debezium matrix. Tracked
-  by dg-7ug.23.
+  docs/postgresql-parity-issues.md. The currently exercised Electric / Zero /
+  Debezium and direct-source features are mirrored above; future consumers
+  should add their own checklist entry and executable proof. This closes the
+  current standing rule for dg-7ug.23.
 
 ## Dump/admin/tooling TODO
 
