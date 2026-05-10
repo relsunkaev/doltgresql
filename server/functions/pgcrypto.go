@@ -51,6 +51,9 @@ const (
 	pgcryptoXDESInputBytes    = 3
 	pgcryptoXDESDefaultRounds = 29 * 25
 	pgcryptoXDESMaxRounds     = 0xFFFFFF
+	pgcryptoArmorLineLength   = 76
+	pgcryptoArmorCRC24Init    = 0x00b704ce
+	pgcryptoArmorCRC24Poly    = 0x01864cfb
 )
 
 var pgcryptoBcryptEncoding = base64.NewEncoding("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").WithPadding(base64.NoPadding)
@@ -61,8 +64,11 @@ var pgcryptoCryptBigEndianEncoding = base64.NewEncoding(string(pgcryptoMD5Encodi
 // initPgCrypto registers the pgcrypto-compatible functions to the catalog.
 func initPgCrypto() {
 	framework.RegisterFunction(pgcrypto_crypt)
+	framework.RegisterFunction(pgcrypto_armor)
+	framework.RegisterFunction(pgcrypto_armor_with_headers)
 	framework.RegisterFunction(pgcrypto_decrypt)
 	framework.RegisterFunction(pgcrypto_decrypt_iv)
+	framework.RegisterFunction(pgcrypto_dearmor)
 	framework.RegisterFunction(pgcrypto_digest_text)
 	framework.RegisterFunction(pgcrypto_digest_bytea)
 	framework.RegisterFunction(pgcrypto_encrypt)
@@ -81,6 +87,40 @@ var pgcrypto_crypt = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, password any, salt any) (any, error) {
 		return pgcryptoCrypt(password.(string), salt.(string))
+	},
+}
+
+var pgcrypto_armor = framework.Function1{
+	Name:       "armor",
+	Return:     pgtypes.Text,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Bytea},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, data any) (any, error) {
+		return pgcryptoArmor(data.([]byte), nil, nil), nil
+	},
+}
+
+var pgcrypto_armor_with_headers = framework.Function3{
+	Name:       "armor",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Bytea, pgtypes.TextArray, pgtypes.TextArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, data any, keys any, values any) (any, error) {
+		headerKeys, headerValues, err := pgcryptoArmorHeaderArrays(ctx, keys, values)
+		if err != nil {
+			return nil, err
+		}
+		return pgcryptoArmor(data.([]byte), headerKeys, headerValues), nil
+	},
+}
+
+var pgcrypto_dearmor = framework.Function1{
+	Name:       "dearmor",
+	Return:     pgtypes.Bytea,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, armored any) (any, error) {
+		return pgcryptoDearmor(armored.(string))
 	},
 }
 
@@ -200,6 +240,174 @@ var pgcrypto_gen_random_bytes = framework.Function1{
 		_, err := rand.Read(ret)
 		return ret, err
 	},
+}
+
+func pgcryptoArmor(data []byte, headerKeys []string, headerValues []string) string {
+	var builder strings.Builder
+	builder.WriteString("-----BEGIN PGP MESSAGE-----\n")
+	for i := range headerKeys {
+		builder.WriteString(headerKeys[i])
+		builder.WriteString(": ")
+		builder.WriteString(headerValues[i])
+		builder.WriteByte('\n')
+	}
+	builder.WriteByte('\n')
+
+	encoded := base64.StdEncoding.EncodeToString(data)
+	for len(encoded) > 0 {
+		lineLength := pgcryptoArmorLineLength
+		if len(encoded) < lineLength {
+			lineLength = len(encoded)
+		}
+		builder.WriteString(encoded[:lineLength])
+		builder.WriteByte('\n')
+		encoded = encoded[lineLength:]
+	}
+
+	builder.WriteByte('=')
+	builder.WriteString(pgcryptoArmorCRC24Base64(data))
+	builder.WriteString("\n-----END PGP MESSAGE-----\n")
+	return builder.String()
+}
+
+func pgcryptoArmorHeaderArrays(ctx *sql.Context, keys any, values any) ([]string, []string, error) {
+	keyValues, err := textArrayArg(ctx, keys)
+	if err != nil {
+		return nil, nil, err
+	}
+	valueValues, err := textArrayArg(ctx, values)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(keyValues) != len(valueValues) {
+		return nil, nil, errors.Errorf("mismatched array dimensions")
+	}
+	headerKeys := make([]string, len(keyValues))
+	headerValues := make([]string, len(valueValues))
+	for i := range keyValues {
+		if keyValues[i] == nil || valueValues[i] == nil {
+			return nil, nil, errors.Errorf("armor header arrays must not contain nulls")
+		}
+		key, ok := keyValues[i].(string)
+		if !ok {
+			return nil, nil, errors.Errorf("expected text armor header key, got %T", keyValues[i])
+		}
+		value, ok := valueValues[i].(string)
+		if !ok {
+			return nil, nil, errors.Errorf("expected text armor header value, got %T", valueValues[i])
+		}
+		headerKeys[i] = key
+		headerValues[i] = value
+	}
+	return headerKeys, headerValues, nil
+}
+
+func pgcryptoDearmor(armored string) ([]byte, error) {
+	lines := pgcryptoArmorLines(armored)
+	begin := -1
+	for i, line := range lines {
+		if strings.HasPrefix(line, "-----BEGIN") {
+			begin = i
+			break
+		}
+	}
+	if begin < 0 || !pgcryptoArmorHeaderLine(lines[begin], "BEGIN") {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+
+	end := -1
+	for i := begin + 1; i < len(lines); i++ {
+		if strings.HasPrefix(lines[i], "-----END") {
+			end = i
+			break
+		}
+	}
+	if end < 0 || !pgcryptoArmorHeaderLine(lines[end], "END") {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+
+	base64Start := begin + 1
+	for base64Start < end && strings.TrimSpace(lines[base64Start]) != "" {
+		base64Start++
+	}
+	if base64Start >= end {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+	base64Start++
+
+	crcLine := -1
+	for i := end - 1; i >= base64Start; i-- {
+		if strings.HasPrefix(strings.TrimSpace(lines[i]), "=") {
+			crcLine = i
+			break
+		}
+	}
+	if crcLine < 0 {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+
+	expectedCRC, err := pgcryptoArmorDecodeCRC24(strings.TrimSpace(lines[crcLine]))
+	if err != nil {
+		return nil, err
+	}
+	encoded := strings.Builder{}
+	for _, line := range lines[base64Start:crcLine] {
+		encoded.WriteString(strings.TrimSpace(line))
+	}
+	decoded, err := base64.StdEncoding.DecodeString(encoded.String())
+	if err != nil {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+	if pgcryptoArmorCRC24(decoded) != expectedCRC {
+		return nil, errors.Errorf("Corrupt ascii-armor")
+	}
+	return decoded, nil
+}
+
+func pgcryptoArmorLines(armored string) []string {
+	normalized := strings.ReplaceAll(armored, "\r\n", "\n")
+	normalized = strings.ReplaceAll(normalized, "\r", "\n")
+	return strings.Split(normalized, "\n")
+}
+
+func pgcryptoArmorHeaderLine(line string, marker string) bool {
+	if !strings.HasPrefix(line, "-----"+marker) {
+		return false
+	}
+	rest := strings.TrimPrefix(line, "-----"+marker)
+	rest = strings.TrimSpace(rest)
+	return strings.HasSuffix(rest, "-----")
+}
+
+func pgcryptoArmorDecodeCRC24(line string) (uint32, error) {
+	if len(line) != 5 || line[0] != '=' {
+		return 0, errors.Errorf("Corrupt ascii-armor")
+	}
+	decoded, err := base64.StdEncoding.DecodeString(line[1:])
+	if err != nil || len(decoded) != 3 {
+		return 0, errors.Errorf("Corrupt ascii-armor")
+	}
+	return uint32(decoded[0])<<16 | uint32(decoded[1])<<8 | uint32(decoded[2]), nil
+}
+
+func pgcryptoArmorCRC24Base64(data []byte) string {
+	crc := pgcryptoArmorCRC24(data)
+	crcBytes := []byte{byte(crc >> 16), byte(crc >> 8), byte(crc)}
+	return base64.StdEncoding.EncodeToString(crcBytes)
+}
+
+func pgcryptoArmorCRC24(data []byte) uint32 {
+	crc := uint32(pgcryptoArmorCRC24Init)
+	for _, b := range data {
+		crc ^= uint32(b) << 16
+		for i := 0; i < 8; i++ {
+			crc <<= 1
+			if crc&0x1000000 != 0 {
+				crc ^= pgcryptoArmorCRC24Poly
+			}
+		}
+	}
+	return crc & 0xffffff
 }
 
 func pgcryptoCrypt(password string, salt string) (string, error) {

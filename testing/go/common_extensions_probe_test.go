@@ -144,6 +144,27 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					ExpectedErr: `Length not in range`,
 				},
 				{
+					Query:    `SELECT dearmor(armor('\x68656c6c6f20706763727970746f'::bytea))::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT (armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]) LIKE '%Comment: Doltgres%')::text;`,
+					Expected: []sql.Row{{"true"}},
+				},
+				{
+					Query:       `SELECT armor('\x00'::bytea, ARRAY['Comment']::text[], ARRAY[]::text[]);`,
+					ExpectedErr: `mismatched array dimensions`,
+				},
+				{
+					Query: `SELECT dearmor('-----BEGIN PGP MESSAGE-----
+
+AAAA
+=AAAA
+-----END PGP MESSAGE-----
+');`,
+					ExpectedErr: `Corrupt ascii-armor`,
+				},
+				{
 					Query:    `SELECT left(gen_salt('bf'), 7), length(gen_salt('bf'))::text, left(gen_salt('bf', 4), 7), length(gen_salt('bf', 4))::text;`,
 					Expected: []sql.Row{{"$2a$06$", "29", "$2a$04$", "29"}},
 				},
@@ -362,6 +383,12 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query: `GRANT ALL ON FUNCTION extensions.decrypt(bytea, bytea, text) TO ext_user;`,
 				},
 				{
+					Query: `GRANT ALL ON FUNCTION extensions.armor(bytea) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.dearmor(text) TO ext_user;`,
+				},
+				{
 					Query: `GRANT ALL ON FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text) TO ext_user;`,
 				},
 				{
@@ -396,6 +423,12 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Username: `ext_user`,
 					Password: `a`,
 					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT extensions.dearmor(extensions.armor('\x68656c6c6f'::bytea))::text;`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{`\x68656c6c6f`}},
 				},
 				{
 					Query:    `SELECT extensions.decrypt_iv(extensions.encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs'), '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
