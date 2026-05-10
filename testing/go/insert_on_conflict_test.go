@@ -913,6 +913,15 @@ ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`,
 				"CREATE TABLE partial_arb_arithmetic_mult (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
 				"CREATE UNIQUE INDEX partial_arb_arithmetic_mult_code_idx ON partial_arb_arithmetic_mult (code) WHERE score * 2 = 14;",
 				"INSERT INTO partial_arb_arithmetic_mult VALUES (1, 'C', 7, 'old-mult'), (2, 'C', 8, 'outside-mult');",
+				"CREATE TABLE partial_arb_arithmetic_commuted_plus (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_commuted_plus_code_idx ON partial_arb_arithmetic_commuted_plus (code) WHERE score + 1 = 8;",
+				"INSERT INTO partial_arb_arithmetic_commuted_plus VALUES (1, 'D', 7, 'old-commuted-plus'), (2, 'D', 8, 'outside-commuted-plus');",
+				"CREATE TABLE partial_arb_arithmetic_commuted_mult (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_commuted_mult_code_idx ON partial_arb_arithmetic_commuted_mult (code) WHERE score * 2 = 14;",
+				"INSERT INTO partial_arb_arithmetic_commuted_mult VALUES (1, 'E', 7, 'old-commuted-mult'), (2, 'E', 8, 'outside-commuted-mult');",
+				"CREATE TABLE partial_arb_arithmetic_commuted_minus (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_commuted_minus_code_idx ON partial_arb_arithmetic_commuted_minus (code) WHERE score - 1 = 6;",
+				"INSERT INTO partial_arb_arithmetic_commuted_minus VALUES (1, 'F', 7, 'old-commuted-minus'), (2, 'F', 8, 'outside-commuted-minus');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -949,6 +958,28 @@ ON CONFLICT (code) WHERE score * 2 = 14 DO UPDATE SET note = EXCLUDED.note;`,
 					},
 				},
 				{
+					Query: `INSERT INTO partial_arb_arithmetic_commuted_plus VALUES (3, 'D', 7, 'commuted-plus-upsert')
+ON CONFLICT (code) WHERE 1 + score = 8 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_commuted_plus ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "D", 7, "commuted-plus-upsert"},
+						{2, "D", 8, "outside-commuted-plus"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_commuted_mult VALUES (3, 'E', 7, 'commuted-mult-upsert')
+ON CONFLICT (code) WHERE 2 * score = 14 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_commuted_mult ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "E", 7, "commuted-mult-upsert"},
+						{2, "E", 8, "outside-commuted-mult"},
+					},
+				},
+				{
 					Query: `INSERT INTO partial_arb_arithmetic_plus VALUES (4, 'A', 7, 'raw-predicate')
 ON CONFLICT (code) WHERE score = 7 DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
@@ -956,6 +987,11 @@ ON CONFLICT (code) WHERE score = 7 DO NOTHING;`,
 				{
 					Query: `INSERT INTO partial_arb_arithmetic_plus VALUES (5, 'A', 7, 'wrong-expression')
 ON CONFLICT (code) WHERE score + 2 = 8 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_commuted_minus VALUES (3, 'F', 7, 'reversed-minus')
+ON CONFLICT (code) WHERE 1 - score = 6 DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

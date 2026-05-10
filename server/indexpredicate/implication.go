@@ -728,7 +728,14 @@ func predicateBinaryExprKey(expr *tree.BinaryExpr) (string, bool) {
 	if !ok {
 		return "", false
 	}
+	if predicateCommutativeArithmeticOperator(op) && rightKey < leftKey {
+		leftKey, rightKey = rightKey, leftKey
+	}
 	return "binary:" + op + "(" + leftKey + "," + rightKey + ")", true
+}
+
+func predicateCommutativeArithmeticOperator(op string) bool {
+	return op == "+" || op == "*"
 }
 
 func predicateArithmeticBinaryOperator(op tree.BinaryOperator) (string, bool) {

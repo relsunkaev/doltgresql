@@ -837,6 +837,17 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.35.
+- [x] Canonicalize commutative arithmetic predicate operands for partial-index
+  implication. Exact signed-integer `+` and `*` predicates now match when a
+  query or arbiter writes operands in the opposite order, such as
+  `1 + score = 8` implying an index predicate `score + 1 = 8`; `-` remains
+  order-sensitive.
+  Planner implication, partial unique DML evaluation for literal-left
+  predicates, and `ON CONFLICT` arbiter inference are pinned with positive
+  commuted `+` / `*` cases and negative reversed-`-` coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.36.
 - [x] Use deterministic unary numeric `abs(expr)` predicates in partial-index
   implication paths. `abs(expr)` now serializes as a comparable predicate key,
   participates in planner predicate serialization, evaluates signed integer

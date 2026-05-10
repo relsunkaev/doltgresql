@@ -914,6 +914,8 @@ func TestImpliesArithmeticExpressionPredicates(t *testing.T) {
 		{"score + 1 = 8", "score + 1 = 8"},
 		{"score - 1 = 6", "score - 1 = 6"},
 		{"score * 2 = 14", "score * 2 = 14"},
+		{"score + 1 = 8", "1 + score = 8"},
+		{"score * 2 = 14", "2 * score = 14"},
 		{"score + 1 IN (8, 9)", "score + 1 = 8"},
 		{"score + 1 IS NOT NULL", "score + 1 = 8"},
 		{"score + 1 = 8", "(tenant = 1) AND ((score + 1) = 8)"},
@@ -929,6 +931,7 @@ func TestImpliesArithmeticExpressionPredicates(t *testing.T) {
 		{"score + 1 = 8", "score = 7"},
 		{"score + 1 = 8", "score + 2 = 8"},
 		{"score + 1 = 8", "score - 1 = 8"},
+		{"score - 1 = 6", "1 - score = 6"},
 		{"score * 2 = 14", "score * 2 = 16"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {

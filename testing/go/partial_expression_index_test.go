@@ -319,6 +319,14 @@ WHERE tablename = 'memberships'
 				`CREATE UNIQUE INDEX arithmetic_mult_scores_user_idx
 					ON arithmetic_mult_scores (user_id)
 					WHERE score * 2 = 14;`,
+				`CREATE TABLE arithmetic_commuted_plus_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX arithmetic_commuted_plus_scores_user_idx
+					ON arithmetic_commuted_plus_scores (user_id)
+					WHERE 1 + score = 8;`,
+				`CREATE TABLE arithmetic_commuted_mult_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX arithmetic_commuted_mult_scores_user_idx
+					ON arithmetic_commuted_mult_scores (user_id)
+					WHERE 2 * score = 14;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -354,6 +362,24 @@ WHERE tablename = 'memberships'
 				},
 				{
 					Query:       `INSERT INTO arithmetic_mult_scores VALUES (3, 30, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO arithmetic_commuted_plus_scores VALUES
+						(1, 40, 7),
+						(2, 40, 8);`,
+				},
+				{
+					Query:       `INSERT INTO arithmetic_commuted_plus_scores VALUES (3, 40, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO arithmetic_commuted_mult_scores VALUES
+						(1, 50, 7),
+						(2, 50, 8);`,
+				},
+				{
+					Query:       `INSERT INTO arithmetic_commuted_mult_scores VALUES (3, 50, 7);`,
 					ExpectedErr: "duplicate unique key given",
 				},
 			},
@@ -2136,6 +2162,10 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, arithmeticPlusImpliedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusImpliedQuery, true)
 
+	arithmeticPlusCommutedQuery := `SELECT count(id) FROM partial_planner_arithmetic_plus WHERE tenant = 1 AND 1 + score = 8`
+	assertCountResult(t, ctx, conn, arithmeticPlusCommutedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusCommutedQuery, true)
+
 	arithmeticPlusRawSourceQuery := `SELECT count(id) FROM partial_planner_arithmetic_plus WHERE tenant = 1 AND score = 7`
 	assertCountResult(t, ctx, conn, arithmeticPlusRawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusRawSourceQuery, false)
@@ -2155,6 +2185,10 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, arithmeticMinusImpliedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMinusImpliedQuery, true)
 
+	arithmeticMinusReversedQuery := `SELECT count(id) FROM partial_planner_arithmetic_minus WHERE tenant = 1 AND 1 - score = 6`
+	assertCountResult(t, ctx, conn, arithmeticMinusReversedQuery, 0)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMinusReversedQuery, false)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_arithmetic_mult (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_arithmetic_mult VALUES
 		(1, 1, 7),
@@ -2165,6 +2199,10 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	arithmeticMultImpliedQuery := `SELECT count(id) FROM partial_planner_arithmetic_mult WHERE tenant = 1 AND score * 2 = 14`
 	assertCountResult(t, ctx, conn, arithmeticMultImpliedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMultImpliedQuery, true)
+
+	arithmeticMultCommutedQuery := `SELECT count(id) FROM partial_planner_arithmetic_mult WHERE tenant = 1 AND 2 * score = 14`
+	assertCountResult(t, ctx, conn, arithmeticMultCommutedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMultCommutedQuery, true)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_abs (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_abs VALUES
