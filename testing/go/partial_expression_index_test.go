@@ -565,4 +565,19 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	lengthNonMatchingQuery := `SELECT count(id) FROM partial_planner_length WHERE tenant = 1 AND length(code) = 8`
 	assertCountResult(t, ctx, conn, lengthNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, lengthNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
+		(1, 1, 'active'),
+		(2, 1, NULL),
+		(3, 2, 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_coalesce_tenant_idx ON partial_planner_coalesce (tenant) WHERE coalesce(status, 'inactive') = 'active'")
+
+	coalesceImpliedQuery := `SELECT count(id) FROM partial_planner_coalesce WHERE tenant = 1 AND coalesce(status, 'inactive') = 'active'`
+	assertCountResult(t, ctx, conn, coalesceImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, coalesceImpliedQuery, true)
+
+	coalesceSemanticQuery := `SELECT count(id) FROM partial_planner_coalesce WHERE tenant = 1 AND status = 'active'`
+	assertCountResult(t, ctx, conn, coalesceSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, coalesceSemanticQuery, false)
 }

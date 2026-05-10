@@ -386,6 +386,9 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 
 func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 	name := strings.ToLower(expr.FunctionName())
+	if name == "coalesce" {
+		return plannerFunctionCallPredicateSQL(name, expr.Children())
+	}
 	name, ok := plannerCanonicalFunctionPredicateName(name)
 	if !ok {
 		return "", false
@@ -399,6 +402,21 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 		return "", false
 	}
 	return name + "(" + childSQL + ")", true
+}
+
+func plannerFunctionCallPredicateSQL(name string, children []sql.Expression) (string, bool) {
+	if len(children) == 0 {
+		return "", false
+	}
+	parts := make([]string, 0, len(children))
+	for _, child := range children {
+		childSQL, ok := plannerPredicateExprSQL(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childSQL)
+	}
+	return name + "(" + strings.Join(parts, ", ") + ")", true
 }
 
 func plannerCanonicalFunctionPredicateName(name string) (string, bool) {

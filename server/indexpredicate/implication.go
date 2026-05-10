@@ -515,6 +515,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if column, ok := predicateColumnName(expr); ok {
 		return "column:" + column, true
 	}
+	if coalesce, ok := expr.(*tree.CoalesceExpr); ok {
+		return predicateCoalesceExprKey(coalesce)
+	}
 	fn, ok := expr.(*tree.FuncExpr)
 	if !ok {
 		return "", false
@@ -532,6 +535,34 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 		return "", false
 	}
 	return "func:" + name + "(" + argKey + ")", true
+}
+
+func predicateCoalesceExprKey(expr *tree.CoalesceExpr) (string, bool) {
+	if len(expr.Exprs) == 0 {
+		return "", false
+	}
+	parts := make([]string, 0, len(expr.Exprs))
+	for _, child := range expr.Exprs {
+		childKey, ok := predicateFunctionArgumentExprKey(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childKey)
+	}
+	return "func:coalesce(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateFunctionArgumentExprKey(expr tree.Expr) (string, bool) {
+	if exprKey, ok := predicateComparableExprKey(expr); ok {
+		return exprKey, true
+	}
+	if literalKey, ok := predicateLiteralKey(expr); ok {
+		return "literal:" + literalKey, true
+	}
+	if predicateIsNullLiteral(expr) {
+		return "literal:null", true
+	}
+	return "", false
 }
 
 func predicateCanonicalUnaryFunction(name string) (string, bool) {

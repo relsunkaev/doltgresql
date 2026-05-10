@@ -737,6 +737,16 @@ Do not check off an item until it has workload proof:
   length literals. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.3.
+- [x] Use same-expression `coalesce(...)` predicates in partial-index
+  implication paths. `COALESCE` expressions with column and literal fallback
+  arguments now serialize as comparable predicate keys, participate in planner
+  predicate serialization, evaluate for partial unique DML enforcement, and
+  work for `ON CONFLICT` arbiter inference; broader semantic inference such as
+  `status = 'active'` implying `coalesce(status, 'inactive') = 'active'`
+  remains intentionally unsupported. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.4.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

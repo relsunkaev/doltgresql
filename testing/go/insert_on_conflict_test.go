@@ -819,6 +819,32 @@ ON CONFLICT (user_id) WHERE tenant IS NOT DISTINCT FROM workspace_tenant AND wor
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports coalesce predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_coalesce (id INT PRIMARY KEY, code TEXT, status TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_coalesce_code_idx ON partial_arb_coalesce (code) WHERE coalesce(status, 'inactive') = 'active';",
+				"INSERT INTO partial_arb_coalesce VALUES (1, 'A', 'active', 'old-active'), (2, 'A', NULL, 'null-status');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_coalesce VALUES (3, 'A', 'active', 'coalesce-upsert')
+ON CONFLICT (code) WHERE coalesce(status, 'inactive') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, status, note FROM partial_arb_coalesce ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "A", "active", "coalesce-upsert"},
+						{2, "A", nil, "null-status"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_coalesce VALUES (4, 'A', 'active', 'wrong-predicate')
+ON CONFLICT (code) WHERE status = 'active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports text-length predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_length (id INT PRIMARY KEY, code TEXT, note TEXT);",

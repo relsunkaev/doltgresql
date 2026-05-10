@@ -1107,6 +1107,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return predicateValue{value: expr.FormattedString()}, nil
 	case *tree.ParenExpr:
 		return p.evalValue(ctx, row, expr.Expr)
+	case *tree.CoalesceExpr:
+		return p.evalCoalesce(ctx, row, expr)
 	case *tree.FuncExpr:
 		return p.evalFunction(ctx, row, expr)
 	case *tree.StrVal:
@@ -1132,6 +1134,19 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate expression %T is not yet supported", expr)
 	}
+}
+
+func (p *partialIndexPredicate) evalCoalesce(ctx *sql.Context, row sql.Row, expr *tree.CoalesceExpr) (predicateValue, error) {
+	for _, child := range expr.Exprs {
+		value, err := p.evalValue(ctx, row, child)
+		if err != nil {
+			return predicateValue{}, err
+		}
+		if value.value != nil {
+			return value, nil
+		}
+	}
+	return predicateValue{}, nil
 }
 
 func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

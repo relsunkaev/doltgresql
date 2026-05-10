@@ -242,3 +242,29 @@ func TestImpliesTextLengthFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"coalesce(status, 'inactive') = 'active'", "coalesce(status, 'inactive') = 'active'"},
+		{"coalesce(status, 'inactive') IS NOT NULL", "coalesce(status, 'inactive') = 'active'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"coalesce(status, 'inactive') = 'active'", "status = 'active'"},
+		{"coalesce(status, 'inactive') = 'active'", "coalesce(status, 'inactive') = 'pending'"},
+		{"coalesce(status, 'inactive') = 'active'", "coalesce(status, 'archived') = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
