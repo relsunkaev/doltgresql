@@ -104,6 +104,11 @@ func TestSQLStateCodes(t *testing.T) {
 			code: "23514",
 		},
 		{
+			name: "invalid text representation -> 22P02",
+			sql:  "SELECT 'not_an_integer'::int;",
+			code: "22P02",
+		},
+		{
 			name: "undefined table -> 42P01",
 			sql:  "SELECT * FROM nope_nope_nope;",
 			code: "42P01",

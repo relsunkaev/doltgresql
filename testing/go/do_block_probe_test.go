@@ -787,6 +787,36 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block catches native SQL data exception category",
+			SetUpScript: []string{
+				`CREATE TABLE do_native_data_category_seen (
+					sqlstate TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							returned_state TEXT;
+							casted_value INT;
+						BEGIN
+							BEGIN
+								SELECT 'not_an_integer'::int INTO casted_value;
+							EXCEPTION
+								WHEN data_exception THEN
+									GET STACKED DIAGNOSTICS returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_native_data_category_seen VALUES (returned_state);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT sqlstate FROM do_native_data_category_seen;`,
+					Expected: []sql.Row{{"22P02"}},
+				},
+			},
+		},
+		{
 			Name: "DO block propagates unmatched native SQL unique violation",
 			SetUpScript: []string{
 				`CREATE TABLE do_native_unmatched_items (

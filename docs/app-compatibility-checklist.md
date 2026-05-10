@@ -641,6 +641,13 @@ Do not check off an item until it has workload proof:
     violation while `GET STACKED DIAGNOSTICS` preserves the specific
     `RETURNED_SQLSTATE`. Pinned by testing/go/do_block_probe_test.go. Tracked
     by dg-7ug.20.6.
+  - [x] PL/pgSQL exception handlers match PostgreSQL data-exception category
+    names for native cast failures. `WHEN data_exception` catches an invalid
+    text-to-int cast while stacked diagnostics preserve
+    `RETURNED_SQLSTATE = 22P02`; the same native cast error also reports
+    `22P02` on the wire outside PL/pgSQL. Pinned by
+    testing/go/do_block_probe_test.go and testing/go/sqlstate_test.go.
+    Tracked by dg-7ug.20.7.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
