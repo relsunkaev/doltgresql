@@ -198,6 +198,50 @@ WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports unique options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_unique_task AS (id INT, code TEXT, note TEXT);`,
+				`CREATE TABLE typed_unique_tasks OF typed_unique_task (
+					UNIQUE (code),
+					note WITH OPTIONS UNIQUE
+				);`,
+				`INSERT INTO typed_unique_tasks VALUES (1, 'A', 'first');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO typed_unique_tasks VALUES (2, 'B', 'second');`,
+				},
+				{
+					Query:       `INSERT INTO typed_unique_tasks VALUES (3, 'A', 'third');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query:       `INSERT INTO typed_unique_tasks VALUES (4, 'C', 'second');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query: `SELECT constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_name = 'typed_unique_tasks' AND constraint_type = 'UNIQUE'
+ORDER BY constraint_name;`,
+					Expected: []sql.Row{
+						{"typed_unique_tasks_code_key", "UNIQUE"},
+						{"typed_unique_tasks_note_key", "UNIQUE"},
+					},
+				},
+				{
+					Query: `SELECT indexname
+FROM pg_catalog.pg_indexes
+WHERE tablename = 'typed_unique_tasks'
+ORDER BY indexname;`,
+					Expected: []sql.Row{
+						{"typed_unique_tasks_code_key"},
+						{"typed_unique_tasks_note_key"},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF rejects unsupported table-definition options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_options AS (id INT, code TEXT);`,
@@ -210,6 +254,22 @@ WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`,
 				{
 					Query:       `CREATE TABLE typed_default OF typed_options (code WITH OPTIONS DEFAULT 'new');`,
 					ExpectedErr: `CREATE TABLE OF column defaults are not yet supported`,
+				},
+				{
+					Query:       `CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));`,
+					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
+				},
+				{
+					Query:       `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`,
+					ExpectedErr: `column "code" appears twice in unique constraint`,
+				},
+				{
+					Query:       `CREATE TABLE typed_unique_nulls_not_distinct OF typed_options (UNIQUE NULLS NOT DISTINCT (code));`,
+					ExpectedErr: `CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported`,
+				},
+				{
+					Query:       `CREATE TEMP TABLE typed_temp_unique_options OF typed_options (code WITH OPTIONS UNIQUE);`,
+					ExpectedErr: `CREATE TEMP TABLE OF UNIQUE constraints are not yet supported`,
 				},
 			},
 		},

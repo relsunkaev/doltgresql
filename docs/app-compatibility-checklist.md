@@ -1212,10 +1212,14 @@ typed-exception handling, and client-side query timeouts.
   existing temporary typed table. PostgreSQL's typed-table options now support
   table-level `PRIMARY KEY (...)` plus column-level `WITH OPTIONS NULL`, `WITH
   OPTIONS NOT NULL`, and `WITH OPTIONS PRIMARY KEY`; those options drive
-  nullable metadata, primary-key metadata, and insert-time enforcement. Still
-  open: typed-table defaults, UNIQUE, CHECK, FOREIGN KEY, generated columns,
-  index options/opclasses, and other table-definition/options surface. Pinned by
-  testing/go/pg_class_reloftype_test.go.
+  nullable metadata, primary-key metadata, and insert-time enforcement.
+  For permanent typed tables, table-level `UNIQUE (...)` and column-level `WITH
+  OPTIONS UNIQUE` now create unique indexes, expose
+  `information_schema.table_constraints` / `pg_indexes`, and enforce duplicate
+  inserts. Still open: temporary typed-table UNIQUE enforcement, typed-table
+  defaults, CHECK, FOREIGN KEY, generated columns, UNIQUE NULLS NOT DISTINCT,
+  index options/opclasses, and other table-definition/options surface. Pinned
+  by testing/go/pg_class_reloftype_test.go.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name

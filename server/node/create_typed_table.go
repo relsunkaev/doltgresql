@@ -51,6 +51,7 @@ var _ vitess.Injectable = (*CreateTypedTable)(nil)
 type TypedTableOptions struct {
 	ColumnOptions     []TypedTableColumnOptions
 	PrimaryKeyColumns []string
+	UniqueConstraints []TypedTableUniqueConstraint
 }
 
 type TypedTableColumnOptions struct {
@@ -58,6 +59,13 @@ type TypedTableColumnOptions struct {
 	NullableSet bool
 	Nullable    bool
 	PrimaryKey  bool
+	UniqueName  string
+	Unique      bool
+}
+
+type TypedTableUniqueConstraint struct {
+	Name    string
+	Columns []string
 }
 
 // NewCreateTypedTable returns a new CREATE TABLE OF execution node.
@@ -144,6 +152,9 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	}
 
 	if c.Temporary {
+		if len(typedTableUniqueConstraints(c.Options)) > 0 {
+			return nil, errors.Errorf("CREATE TEMP TABLE OF UNIQUE constraints are not yet supported")
+		}
 		tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TemporaryTableCreator)
 		if !ok {
 			return nil, sql.ErrTemporaryTableNotSupported.New()
@@ -154,6 +165,9 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return sql.RowsToRowIter(), nil
 		}
 		if err != nil {
+			return nil, err
+		}
+		if err = c.createUniqueConstraints(ctx, db); err != nil {
 			return nil, err
 		}
 		return sql.RowsToRowIter(), nil
@@ -173,7 +187,57 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	if err != nil {
 		return nil, err
 	}
+	if err = c.createUniqueConstraints(ctx, db); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Database) error {
+	constraints := typedTableUniqueConstraints(c.Options)
+	if len(constraints) == 0 {
+		return nil
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, c.TableName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(c.TableName)
+	}
+	indexAlterable, ok := table.(sql.IndexAlterableTable)
+	if !ok {
+		return errors.Errorf("CREATE TABLE OF UNIQUE constraints are not supported by this table")
+	}
+	for _, constraint := range constraints {
+		indexColumns := make([]sql.IndexColumn, len(constraint.Columns))
+		for i, column := range constraint.Columns {
+			indexColumns[i] = sql.IndexColumn{Name: column}
+		}
+		if err = indexAlterable.CreateIndex(ctx, sql.IndexDef{
+			Name:       constraint.Name,
+			Columns:    indexColumns,
+			Constraint: sql.IndexConstraint_Unique,
+			Storage:    sql.IndexUsing_BTree,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func typedTableUniqueConstraints(options TypedTableOptions) []TypedTableUniqueConstraint {
+	constraints := make([]TypedTableUniqueConstraint, 0, len(options.UniqueConstraints)+len(options.ColumnOptions))
+	constraints = append(constraints, options.UniqueConstraints...)
+	for _, option := range options.ColumnOptions {
+		if option.Unique {
+			constraints = append(constraints, TypedTableUniqueConstraint{
+				Name:    option.UniqueName,
+				Columns: []string{option.Name},
+			})
+		}
+	}
+	return constraints
 }
 
 func temporaryTypedTableExists(ctx *sql.Context, databaseName string, tableName string) bool {
@@ -309,6 +373,25 @@ func applyTypedTableOptions(schema sql.Schema, typ *pgtypes.DoltgresType, option
 		seenPrimary[key] = struct{}{}
 		schema[idx].PrimaryKey = true
 		schema[idx].Nullable = false
+	}
+	seenUniqueNames := make(map[string]struct{}, len(options.UniqueConstraints)+len(options.ColumnOptions))
+	for _, unique := range typedTableUniqueConstraints(options) {
+		key := strings.ToLower(unique.Name)
+		if _, ok := seenUniqueNames[key]; ok {
+			return errors.Errorf(`constraint "%s" specified more than once`, unique.Name)
+		}
+		seenUniqueNames[key] = struct{}{}
+		seenUniqueColumns := make(map[string]struct{}, len(unique.Columns))
+		for _, columnName := range unique.Columns {
+			if typedTableColumnIndex(schema, columnName) < 0 {
+				return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+			}
+			columnKey := strings.ToLower(columnName)
+			if _, ok := seenUniqueColumns[columnKey]; ok {
+				return errors.Errorf(`column "%s" appears twice in unique constraint`, columnName)
+			}
+			seenUniqueColumns[columnKey] = struct{}{}
+		}
 	}
 	return nil
 }
