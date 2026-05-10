@@ -1668,8 +1668,11 @@ Do not check off an item until it has workload proof:
   and rollback. Go `database/sql` with `github.com/jackc/pgx/v5/stdlib` covers
   the pgx stdlib adapter path with startup `application_name`, prepared
   statements, typed parameters, JSONB/text[] values, pooled concurrent reads,
-  commit, and rollback. Java JDBC runs through the upstream PostgreSQL JDBC
-  driver with startup `application_name`, prepared statements, typed parameters,
+  commit, and rollback. GORM runs through the real PostgreSQL dialect with
+  `AutoMigrate`, associations, JSONB/text[] values, raw named-parameter
+  binding, pooled reads, commit, and rollback. Java JDBC runs through the
+  upstream PostgreSQL JDBC driver with startup `application_name`, prepared
+  statements, typed parameters,
   `createArrayOf` text[] adaptation, JSONB values, multiple connections,
   commit, and rollback. Rust `sqlx` runs through the existing async pool
   fixture with startup, parameter binding,
@@ -1695,7 +1698,7 @@ Do not check off an item until it has workload proof:
   testing/go/sqlalchemy_client_test.go, testing/go/ruby_pg_client_test.go,
   testing/go/active_record_client_test.go, testing/go/php_client_test.go,
   testing/go/libpq_client_test.go, testing/go/go_sql_pq_client_test.go,
-  testing/go/go_sql_pgx_stdlib_client_test.go,
+  testing/go/go_sql_pgx_stdlib_client_test.go, testing/go/gorm_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/perl_dbi_client_test.go, testing/go/prisma_client_test.go,
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
@@ -2222,10 +2225,13 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   transaction boundaries. The Go `database/sql` +
   `github.com/jackc/pgx/v5/stdlib` harness covers the pgx stdlib adapter with
   startup parameters, prepared statements, typed parameters, JSONB/text[]
-  values, pooled reads, and transaction boundaries. The Java JDBC harness
-  covers the upstream PostgreSQL JDBC driver with prepared statements, typed
-  parameters, `createArrayOf` text[] adaptation, JSONB values, multiple
-  connections, and transaction boundaries. The Rust `sqlx` harness covers
+  values, pooled reads, and transaction boundaries. The GORM harness covers the
+  PostgreSQL dialect with `AutoMigrate`, associations, JSONB/text[] values, raw
+  named-parameter binding, pooled reads, and transaction boundaries. The Java
+  JDBC harness covers the upstream PostgreSQL JDBC driver with prepared
+  statements, typed parameters, `createArrayOf` text[] adaptation, JSONB
+  values, multiple connections, and transaction boundaries. The Rust `sqlx`
+  harness covers
   async pool usage, parameters, UUIDs, and chrono timestamp/date decoding.
   The Perl DBI/DBD::Pg harness
   covers startup parameters, prepared statements, typed parameters,
@@ -2244,8 +2250,8 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
   Prisma Client, psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`,
   ActiveRecord, PHP `ext-pgsql`, libpq, Go `database/sql` with
-  `github.com/lib/pq` and `github.com/jackc/pgx/v5/stdlib`, Java JDBC, Rust
-  `sqlx`, and Perl DBI/DBD::Pg. Add runnable smoke gates for the advertised
+  `github.com/lib/pq` and `github.com/jackc/pgx/v5/stdlib`, GORM, Java JDBC,
+  Rust `sqlx`, and Perl DBI/DBD::Pg. Add runnable smoke gates for the advertised
   client and
   migration-tool matrix before claiming broad
   client compatibility.
