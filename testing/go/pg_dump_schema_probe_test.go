@@ -89,7 +89,7 @@ func TestPgDumpSchemaOnly(t *testing.T) {
 		"id uuid DEFAULT gen_random_uuid() NOT NULL",
 		"created_at timestamp without time zone DEFAULT now()",
 		"CREATE VIEW public.pg_dump_recent_orders",
-		"WHERE o.status <> 'archived';",
+		"WHERE o.status != 'archived';",
 		"CREATE INDEX pg_dump_orders_customer_idx",
 		"FOREIGN KEY (customer_id) REFERENCES public.pg_dump_customers(id)",
 	} {

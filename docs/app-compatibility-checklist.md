@@ -1309,8 +1309,15 @@ typed-exception handling, and client-side query timeouts.
 - [ ] Run actual GUI binaries, and any remaining migration binaries required by
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
-  Drizzle Kit, Prisma db pull, and Alembic autogenerate now have live binary
-  harnesses. Tracked by dg-7ug.10.
+  Drizzle Kit, Prisma db pull, Alembic autogenerate, and TablePlus-bundled
+  `pg_dump` 17.0 now have live binary harnesses. Tracked by dg-7ug.10.
+- [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
+  testing/go/tableplus_dump_test.go locates
+  `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
+  app resource library path, verifies the bundled PostgreSQL 17.0 binary, and
+  runs `--schema-only` against a UUID/JSONB/FK/index/view schema.
+  This covers one TablePlus-distributed PostgreSQL tooling binary; full GUI
+  editor workflows remain tracked by dg-7ug.10.
 - [x] `RowDescription.TableOID` - populate the source-table OID so
   GUI editors can resolve a result column back to a base table.
   Implementation in server/doltgres_handler.go walks the session
