@@ -62,6 +62,8 @@ const (
 	Operator_BinaryVectorNegativeInnerProduct                 // <#>
 	Operator_BinaryVectorCosineDistance                       // <=>
 	Operator_BinaryVectorL1Distance                           // <+>
+	Operator_BinaryVectorHammingDistance                      // <~>
+	Operator_BinaryVectorJaccardDistance                      // <%>
 	Operator_UnaryPlus                                        // +
 	Operator_UnaryMinus                                       // -
 	Operator_UnaryHstoreToArray                               // %%
@@ -265,6 +267,10 @@ func (o Operator) String() string {
 		return "<=>"
 	case Operator_BinaryVectorL1Distance:
 		return "<+>"
+	case Operator_BinaryVectorHammingDistance:
+		return "<~>"
+	case Operator_BinaryVectorJaccardDistance:
+		return "<%>"
 	case Operator_UnaryHstoreToArray:
 		return "%%"
 	case Operator_UnaryHstoreToMatrix:
@@ -370,6 +376,10 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryVectorCosineDistance, nil
 	case "<+>":
 		return Operator_BinaryVectorL1Distance, nil
+	case "<~>":
+		return Operator_BinaryVectorHammingDistance, nil
+	case "<%>":
+		return Operator_BinaryVectorJaccardDistance, nil
 	case "%%":
 		return Operator_UnaryHstoreToArray, nil
 	case "%#":

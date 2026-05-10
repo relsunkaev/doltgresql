@@ -285,6 +285,18 @@ func (s *scanner) scan(lval *sqlSymType) {
 				lval.id = VECTOR_L1_DISTANCE
 				return
 			}
+		case '~': // <~>
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_HAMMING_DISTANCE
+				return
+			}
+		case '%': // <%>
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_JACCARD_DISTANCE
+				return
+			}
 		case '<': // <<
 			s.pos++
 			switch s.peek() {

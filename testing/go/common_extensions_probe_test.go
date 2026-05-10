@@ -513,6 +513,14 @@ AAAA
 					Expected: []sql.Row{{"0011", "000"}},
 				},
 				{
+					Query:    `SELECT hamming_distance(B'1010', B'1110')::text, (B'1010' <~> B'1110')::text, jaccard_distance(B'1010', B'1100')::text, (B'1010' <%> B'1100')::text, jaccard_distance(B'000', B'000')::text;`,
+					Expected: []sql.Row{{"1", "1", "0.6666666666666667", "0.6666666666666667", "1"}},
+				},
+				{
+					Query:    `SELECT (B'1010' OPERATOR(public.<~>) B'1110')::text;`,
+					Expected: []sql.Row{{"1"}},
+				},
+				{
 					Query:    `SELECT embedding FROM vector_casts WHERE id = 1;`,
 					Expected: []sql.Row{{"[1,2,3]"}},
 				},
@@ -583,6 +591,10 @@ AAAA
 				{
 					Query:       `SELECT l2_distance('[1,2]'::vector, '[1,2,3]'::vector);`,
 					ExpectedErr: `different vector dimensions 2 and 3`,
+				},
+				{
+					Query:       `SELECT hamming_distance(B'101', B'1010');`,
+					ExpectedErr: `different bit lengths 3 and 4`,
 				},
 			},
 		},

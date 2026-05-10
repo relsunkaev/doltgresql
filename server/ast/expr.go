@@ -208,6 +208,10 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			operator = framework.Operator_BinaryVectorCosineDistance
 		case tree.VectorL1Distance:
 			operator = framework.Operator_BinaryVectorL1Distance
+		case tree.VectorHammingDistance:
+			operator = framework.Operator_BinaryVectorHammingDistance
+		case tree.VectorJaccardDistance:
+			operator = framework.Operator_BinaryVectorJaccardDistance
 		default:
 			return nil, errors.Errorf("the binary operator used is not yet supported")
 		}
@@ -971,7 +975,7 @@ func isPublicVectorBinaryOperator(schema tree.Name, operator tree.BinaryOperator
 		return false
 	}
 	switch operator {
-	case tree.VectorL2Distance, tree.VectorNegativeInnerProduct, tree.VectorCosineDistance, tree.VectorL1Distance:
+	case tree.VectorL2Distance, tree.VectorNegativeInnerProduct, tree.VectorCosineDistance, tree.VectorL1Distance, tree.VectorHammingDistance, tree.VectorJaccardDistance:
 		return true
 	default:
 		return false

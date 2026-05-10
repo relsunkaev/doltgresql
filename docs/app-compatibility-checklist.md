@@ -264,6 +264,10 @@ Do not check off an item until it has workload proof:
   `vector_dims`, `vector_norm`, `l2_normalize`, `subvector`,
   `binary_quantize`, `vector_add`, `vector_sub`, `vector_mul`,
   `vector_concat`, and the `+`, `-`, `*`, and `||` vector operators.
+  The pgvector bit distance surface covers
+  `hamming_distance(bit, bit)`, `jaccard_distance(bit, bit)`, and the
+  `<~>` / `<%>` operators, including same-length validation and the
+  zero-intersection Jaccard boundary.
   Dense vector aggregate support functions cover `vector_accum`,
   `vector_avg`, and `vector_combine`, including PostgreSQL's count-plus-sums
   state shape, empty-state average NULLs, zero-state combine behavior, and
@@ -283,10 +287,11 @@ Do not check off an item until it has workload proof:
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption/key
   helpers beyond the native UUID,
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
-  ASCII-armor subset, pgvector indexes/opclasses, and non-dense vector
-  families beyond the tested dense-vector IO, equality, distance, ordering,
-  arithmetic, binary quantization, aggregate support functions, aggregate
-  execution, and cast subset,
+  ASCII-armor subset, pgvector indexes/opclasses, halfvec and sparsevec
+  families, and bit index/opclass surfaces beyond the tested bit Hamming /
+  Jaccard distance functions and operators plus dense-vector IO, equality,
+  distance, ordering, arithmetic, binary quantization, aggregate support
+  functions, aggregate execution, and cast subset,
   executable `btree_gist` GiST indexes/exclusion semantics, its
   internal `gbtreekey*` storage types and `opckeytype` parity, and
   unsupported `btree_gist` type families such as `money`, MAC address,

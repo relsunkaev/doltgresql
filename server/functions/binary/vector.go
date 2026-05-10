@@ -37,6 +37,8 @@ func initVector() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorNegativeInnerProduct, vector_negative_inner_product)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorCosineDistance, cosine_distance)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorL1Distance, l1_distance)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorHammingDistance, hamming_distance)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorJaccardDistance, jaccard_distance)
 	framework.RegisterFunction(vector_spherical_distance)
 	framework.RegisterFunction(vector_dims)
 	framework.RegisterFunction(vector_norm)
@@ -231,6 +233,54 @@ var binary_quantize = framework.Function1{
 			}
 		}
 		return result.String(), nil
+	},
+}
+
+var hamming_distance = framework.Function2{
+	Name:       "hamming_distance",
+	Return:     pgtypes.Float64,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.Bit},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, right, err := bitDistanceInputs(val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		var distance float64
+		for i := range left {
+			if left[i] != right[i] {
+				distance++
+			}
+		}
+		return distance, nil
+	},
+}
+
+var jaccard_distance = framework.Function2{
+	Name:       "jaccard_distance",
+	Return:     pgtypes.Float64,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.Bit},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, right, err := bitDistanceInputs(val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		var intersection, union float64
+		for i := range left {
+			leftSet := left[i] == '1'
+			rightSet := right[i] == '1'
+			if leftSet && rightSet {
+				intersection++
+			}
+			if leftSet || rightSet {
+				union++
+			}
+		}
+		if intersection == 0 {
+			return float64(1), nil
+		}
+		return 1 - intersection/union, nil
 	},
 }
 
@@ -451,6 +501,15 @@ func vectorDistanceInputs(val1 any, val2 any) ([]float32, []float32, error) {
 	right := val2.([]float32)
 	if len(left) != len(right) {
 		return nil, nil, errors.Errorf("different vector dimensions %d and %d", len(left), len(right))
+	}
+	return left, right, nil
+}
+
+func bitDistanceInputs(val1 any, val2 any) (string, string, error) {
+	left := val1.(string)
+	right := val2.(string)
+	if len(left) != len(right) {
+		return "", "", errors.Errorf("different bit lengths %d and %d", len(left), len(right))
 	}
 	return left, right, nil
 }
