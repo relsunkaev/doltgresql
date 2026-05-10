@@ -196,6 +196,28 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name:        "DO block runs dynamic EXECUTE format DDL",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							target_table TEXT := 'do_dynamic_ddl_target';
+						BEGIN
+							EXECUTE format('CREATE TABLE %I (id INT PRIMARY KEY, label TEXT)', target_table);
+						END;
+					$$;`,
+				},
+				{
+					Query: `INSERT INTO do_dynamic_ddl_target VALUES (1, 'created by dynamic ddl');`,
+				},
+				{
+					Query:    `SELECT label FROM do_dynamic_ddl_target WHERE id = 1;`,
+					Expected: []sql.Row{{"created by dynamic ddl"}},
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
