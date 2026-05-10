@@ -1218,6 +1218,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "starts_with" {
 		return p.evalStartsWith(ctx, row, expr)
 	}
+	if name == "btrim" || name == "ltrim" || name == "rtrim" {
+		return p.evalTrim(ctx, row, expr, name)
+	}
 	if name == "left" || name == "right" {
 		return p.evalLeftRight(ctx, row, expr, name)
 	}
@@ -1337,6 +1340,74 @@ func predicateAsciiText(text string) int64 {
 		return int64(r)
 	}
 	return 0
+}
+
+func (p *partialIndexPredicate) evalTrim(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {
+	if len(expr.Exprs) != 1 && len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one or two arguments", name)
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, str.value)
+	}
+	characters := " "
+	if len(expr.Exprs) == 2 {
+		chars, err := p.evalValue(ctx, row, expr.Exprs[1])
+		if err != nil {
+			return predicateValue{}, err
+		}
+		if chars.value == nil {
+			return predicateValue{}, nil
+		}
+		characters, ok = chars.value.(string)
+		if !ok {
+			return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, chars.value)
+		}
+	}
+	switch name {
+	case "btrim":
+		return predicateValue{value: predicateTrimText(text, characters, true, true)}, nil
+	case "ltrim":
+		return predicateValue{value: predicateTrimText(text, characters, true, false)}, nil
+	case "rtrim":
+		return predicateValue{value: predicateTrimText(text, characters, false, true)}, nil
+	default:
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func predicateTrimText(text string, characters string, left bool, right bool) string {
+	runes := []rune(text)
+	trimChars := make(map[rune]struct{}, utf8.RuneCountInString(characters))
+	for _, char := range characters {
+		trimChars[char] = struct{}{}
+	}
+	start := 0
+	if left {
+		for start < len(runes) {
+			if _, ok := trimChars[runes[start]]; !ok {
+				break
+			}
+			start++
+		}
+	}
+	end := len(runes)
+	if right {
+		for end > start {
+			if _, ok := trimChars[runes[end-1]]; !ok {
+				break
+			}
+			end--
+		}
+	}
+	return string(runes[start:end])
 }
 
 func (p *partialIndexPredicate) evalStrpos(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

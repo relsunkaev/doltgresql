@@ -439,6 +439,73 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports custom trim predicates",
+			SetUpScript: []string{
+				`CREATE TABLE custom_ltrim_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX custom_ltrim_codes_user_code_idx
+					ON custom_ltrim_codes (user_id)
+					WHERE ltrim(code, '0_') = 'active';`,
+				`CREATE TABLE custom_rtrim_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX custom_rtrim_codes_user_code_idx
+					ON custom_rtrim_codes (user_id)
+					WHERE rtrim(code, '_') = 'active';`,
+				`CREATE TABLE custom_btrim_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX custom_btrim_codes_user_code_idx
+					ON custom_btrim_codes (user_id)
+					WHERE btrim(code, 'x_') = 'active';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO custom_ltrim_codes VALUES
+						(1, 10, '_0active'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO custom_ltrim_codes VALUES (3, 10, '00active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO custom_ltrim_codes VALUES (4, 10, '-active');`,
+				},
+				{
+					Query:       `UPDATE custom_ltrim_codes SET code = '0_active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO custom_rtrim_codes VALUES
+						(1, 20, 'active__'),
+						(2, 20, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO custom_rtrim_codes VALUES (3, 20, 'active_');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO custom_rtrim_codes VALUES (4, 20, 'active-');`,
+				},
+				{
+					Query:       `UPDATE custom_rtrim_codes SET code = 'active_' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO custom_btrim_codes VALUES
+						(1, 30, 'x_active_'),
+						(2, 30, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO custom_btrim_codes VALUES (3, 30, '_activex');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO custom_btrim_codes VALUES (4, 30, 'yactive');`,
+				},
+				{
+					Query:       `UPDATE custom_btrim_codes SET code = 'xactivex' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports left and right predicates",
 			SetUpScript: []string{
 				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1118,6 +1185,27 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	btrimNonMatchingQuery := `SELECT count(id) FROM partial_planner_btrim WHERE tenant = 1 AND btrim(code) = 'archived'`
 	assertCountResult(t, ctx, conn, btrimNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, btrimNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_custom_trim (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_custom_trim VALUES
+		(1, 1, '_0active'),
+		(2, 1, 'active--'),
+		(3, 1, 'x_active_'),
+		(4, 1, 'pending'),
+		(5, 2, '_active_')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_custom_trim_tenant_idx ON partial_planner_custom_trim (tenant) WHERE btrim(code, 'x_') = 'active'")
+
+	customTrimImpliedQuery := `SELECT count(id) FROM partial_planner_custom_trim WHERE tenant = 1 AND btrim(code, 'x_') = 'active'`
+	assertCountResult(t, ctx, conn, customTrimImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, customTrimImpliedQuery, true)
+
+	customTrimWrongCharsQuery := `SELECT count(id) FROM partial_planner_custom_trim WHERE tenant = 1 AND btrim(code, '_') = 'x_active'`
+	assertCountResult(t, ctx, conn, customTrimWrongCharsQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, customTrimWrongCharsQuery, false)
+
+	customLtrimQuery := `SELECT count(id) FROM partial_planner_custom_trim WHERE tenant = 1 AND ltrim(code, '0_') = 'active'`
+	assertCountResult(t, ctx, conn, customLtrimQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, customLtrimQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_length (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_length VALUES

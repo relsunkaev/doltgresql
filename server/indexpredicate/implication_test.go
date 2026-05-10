@@ -225,6 +225,9 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 		{"rtrim(code) IN ('active', 'pending')", "rtrim(code) = 'active'"},
 		{"btrim(code) = 'active'", "btrim(code) = 'active'"},
 		{"ltrim(code) IS NOT NULL", "ltrim(code) = 'active'"},
+		{"ltrim(code, '0_') = 'active'", "ltrim(code, '0_') = 'active'"},
+		{"rtrim(code, '_') IN ('active', 'pending')", "rtrim(code, '_') = 'active'"},
+		{"btrim(code, 'x_') = 'active'", "btrim(code, 'x_') = 'active'"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -238,6 +241,10 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 		{"ltrim(code) = 'active'", "rtrim(code) = 'active'"},
 		{"rtrim(code) IN ('active', 'pending')", "rtrim(code) IN ('active', 'archived')"},
 		{"btrim(code) = 'active'", "btrim(code) = 'archived'"},
+		{"ltrim(code, '0_') = 'active'", "ltrim(code, '_') = 'active'"},
+		{"ltrim(code, '0_') = 'active'", "ltrim(code) = 'active'"},
+		{"rtrim(code, '_') = 'active'", "rtrim(code, '-') = 'active'"},
+		{"btrim(code, 'x_') = 'active'", "btrim(code, 'x') = 'active_'"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

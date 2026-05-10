@@ -1469,6 +1469,51 @@ ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports custom trim predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_custom_ltrim (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_custom_ltrim_code_idx ON partial_arb_custom_ltrim (code) WHERE ltrim(code, '0_') = 'active';",
+				"INSERT INTO partial_arb_custom_ltrim VALUES (1, '_0active', 'old-active'), (2, 'pending', 'old-pending');",
+				"CREATE TABLE partial_arb_custom_btrim (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_custom_btrim_code_idx ON partial_arb_custom_btrim (code) WHERE btrim(code, 'x_') = 'active';",
+				"INSERT INTO partial_arb_custom_btrim VALUES (1, 'x_active_', 'old-active'), (2, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_custom_ltrim VALUES (3, '_0active', 'custom-ltrim-upsert')
+ON CONFLICT (code) WHERE ltrim(code, '0_') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_custom_ltrim ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "_0active", "custom-ltrim-upsert"},
+						{2, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_custom_ltrim VALUES (4, '_0active', 'wrong-predicate')
+ON CONFLICT (code) WHERE ltrim(code, '_') = '0active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_custom_btrim VALUES (3, 'x_active_', 'custom-btrim-upsert')
+ON CONFLICT (code) WHERE btrim(code, 'x_') = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_custom_btrim ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "x_active_", "custom-btrim-upsert"},
+						{2, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_custom_btrim VALUES (4, 'x_active_', 'wrong-predicate')
+ON CONFLICT (code) WHERE btrim(code, '_') = 'x_active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports abs predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_abs (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",

@@ -638,6 +638,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "starts_with" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
+	if name == "btrim" || name == "ltrim" || name == "rtrim" {
+		return predicateVariableArityFunctionCallExprKey(name, fn.Exprs, 1, 2)
+	}
 	if name == "left" || name == "right" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}

@@ -787,6 +787,17 @@ Do not check off an item until it has workload proof:
   rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.2.
+- [x] Use deterministic custom-character `ltrim(expr, chars)`,
+  `rtrim(expr, chars)`, and `btrim(expr, chars)` predicates in partial-index
+  implication paths. Two-argument trim calls now serialize as comparable
+  predicate keys, planner filters can deparse them, partial unique DML
+  enforcement evaluates the same rune-set trimming behavior as the runtime
+  functions, and `ON CONFLICT` arbiter inference accepts the exact-expression
+  shape; wrong trim character sets, non-equivalent trim directions, and raw
+  source-string semantic rewrites remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.23.
 - [x] Use deterministic unary text-length predicates in partial-index
   implication paths. `length(expr)`, `char_length(expr)`, and
   `character_length(expr)` now canonicalize to the same text-length expression
