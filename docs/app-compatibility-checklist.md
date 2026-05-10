@@ -377,9 +377,13 @@ Do not check off an item until it has workload proof:
   testing/go/materialized_view_probe_test.go.
 - [ ] Implement lock-free PostgreSQL-style `REFRESH MATERIALIZED VIEW
   CONCURRENTLY`. The accepted concurrent form currently validates the
-  PostgreSQL preconditions and preserves the prior snapshot on failure, but the
-  refresh itself still runs through the synchronous truncate/insert refresh
-  path. Tracked by dg-7ug.6.
+  PostgreSQL preconditions, preserves the prior snapshot on failure, and
+  builds replacement rows into a session-local staging table before touching
+  the target matview, so readers keep seeing the old snapshot while the
+  rebuild is in flight. The final target swap still uses the synchronous
+  truncate/insert refresh path. Pinned by
+  testing/go/materialized_view_concurrently_contention_test.go. Tracked by
+  dg-7ug.6.
 - [ ] Add materialized-view refresh performance guardrails for large snapshots,
   indexed matviews, and unique-index refresh failures. Tracked by dg-7ug.6.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS

@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync/atomic"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -44,6 +45,21 @@ type RefreshMaterializedView struct {
 var _ sql.ExecSourceRel = (*RefreshMaterializedView)(nil)
 var _ sql.Expressioner = (*RefreshMaterializedView)(nil)
 var _ vitess.Injectable = (*RefreshMaterializedView)(nil)
+
+var materializedViewRefreshTempCounter uint64
+
+// testHookAfterConcurrentRefreshBuild, when non-nil, runs after a
+// CONCURRENTLY refresh has built its replacement snapshot and before it
+// starts the target swap. It lets cross-session tests deterministically
+// inspect the old materialized view while the refresh is mid-flight.
+var testHookAfterConcurrentRefreshBuild func(ctx *sql.Context)
+
+// SetTestHookAfterConcurrentRefreshBuild installs a hook that fires between
+// the build and swap phases of REFRESH MATERIALIZED VIEW CONCURRENTLY. The
+// intended caller is the cross-session integration test in testing/go.
+func SetTestHookAfterConcurrentRefreshBuild(hook func(ctx *sql.Context)) {
+	testHookAfterConcurrentRefreshBuild = hook
+}
 
 // NewRefreshMaterializedView returns a new *RefreshMaterializedView.
 func NewRefreshMaterializedView(name string, schema string, concurrently bool, withNoData bool) *RefreshMaterializedView {
@@ -104,24 +120,69 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, errors.Errorf(`materialized view "%s" does not have a stored definition`, target.table.Name())
 	}
 
-	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
-	columnList := quoteColumnList(target.table.Schema(ctx))
-	if err = r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
-		return nil, err
-	}
 	if r.withNoData {
-		if err = r.setTargetPopulated(ctx, target, definition, false); err != nil {
+		if err = r.refreshWithNoData(ctx, target, definition); err != nil {
 			return nil, err
 		}
 		return sql.RowsToRowIter(), nil
 	}
-	if err = r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) %s", qualifiedName, columnList, definition)); err != nil {
-		return nil, err
+	if r.concurrently {
+		if err = r.refreshConcurrently(ctx, target, definition); err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
 	}
-	if err = r.setTargetPopulated(ctx, target, definition, true); err != nil {
+	if err = r.refreshSynchronously(ctx, target, definition); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (r *RefreshMaterializedView) refreshWithNoData(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
+	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
+	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+		return err
+	}
+	return r.setTargetPopulated(ctx, target, definition, false)
+}
+
+func (r *RefreshMaterializedView) refreshSynchronously(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
+	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
+	columnList := quoteColumnList(target.table.Schema(ctx))
+	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+		return err
+	}
+	if err := r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) %s", qualifiedName, columnList, definition)); err != nil {
+		return err
+	}
+	return r.setTargetPopulated(ctx, target, definition, true)
+}
+
+func (r *RefreshMaterializedView) refreshConcurrently(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
+	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
+	columnList := quoteColumnList(target.table.Schema(ctx))
+	tempName := fmt.Sprintf("__doltgres_refresh_%d", atomic.AddUint64(&materializedViewRefreshTempCounter, 1))
+	quotedTempName := quoteIdentifier(tempName)
+	stagedDefinition := fmt.Sprintf("SELECT * FROM (%s) AS refresh_rows (%s)", definition, columnList)
+
+	if err := r.runRefreshStatement(ctx, fmt.Sprintf("CREATE TEMPORARY TABLE %s AS %s", quotedTempName, stagedDefinition)); err != nil {
+		return err
+	}
+	defer func() {
+		_ = r.runRefreshStatement(ctx, "DROP TABLE IF EXISTS "+quotedTempName)
+	}()
+
+	if testHookAfterConcurrentRefreshBuild != nil {
+		testHookAfterConcurrentRefreshBuild(ctx)
+	}
+
+	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+		return err
+	}
+	if err := r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", qualifiedName, columnList, columnList, quotedTempName)); err != nil {
+		return err
+	}
+	return r.setTargetPopulated(ctx, target, definition, true)
 }
 
 // Schema implements the interface sql.ExecSourceRel.
