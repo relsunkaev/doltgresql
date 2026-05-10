@@ -715,6 +715,44 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block reports native SQL exception context",
+			SetUpScript: []string{
+				`CREATE TABLE do_native_context_items (
+					id INT PRIMARY KEY,
+					label TEXT UNIQUE
+				);`,
+				`CREATE TABLE do_native_context_seen (
+					has_statement TEXT NOT NULL,
+					has_plpgsql_frame TEXT NOT NULL
+				);`,
+				`INSERT INTO do_native_context_items VALUES (1, 'existing');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							context_text TEXT;
+						BEGIN
+							BEGIN
+								INSERT INTO do_native_context_items VALUES (2, 'existing');
+							EXCEPTION
+								WHEN unique_violation THEN
+									GET STACKED DIAGNOSTICS context_text = PG_EXCEPTION_CONTEXT;
+									INSERT INTO do_native_context_seen VALUES (
+										(position('SQL statement "INSERT INTO do_native_context_items' in context_text) > 0)::text,
+										(context_text LIKE '%PL/pgSQL function inline_code_block line % at SQL statement%')::text
+									);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT has_statement, has_plpgsql_frame FROM do_native_context_seen;`,
+					Expected: []sql.Row{{"true", "true"}},
+				},
+			},
+		},
+		{
 			Name: "DO block propagates unmatched native SQL unique violation",
 			SetUpScript: []string{
 				`CREATE TABLE do_native_unmatched_items (

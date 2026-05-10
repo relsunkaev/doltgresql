@@ -63,9 +63,10 @@ const (
 )
 
 type interpreterExecutionState struct {
-	statements         []InterpreterOperation
-	lastRowCount       int64
-	stackedDiagnostics *plpgsqlExceptionDiagnostics
+	statements           []InterpreterOperation
+	lastRowCount         int64
+	lastExceptionContext string
+	stackedDiagnostics   *plpgsqlExceptionDiagnostics
 }
 
 type plpgsqlExceptionDiagnostics struct {
@@ -177,6 +178,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, iv.Type, operation.SecondaryData)
 			restoreCallSite()
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			err = stack.SetVariable(ctx, operation.Target, retVal)
@@ -238,10 +240,14 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			ret, returned, err := runOperations(ctx, iFunc, stack, state, counter+1, operation.Index)
 			if err != nil {
 				diagnostics := plpgsqlExceptionDiagnosticsFromError(err)
+				if diagnostics.Context == "" {
+					diagnostics.Context = state.lastExceptionContext
+				}
 				handler, ok := matchingExceptionHandler(handlers, diagnostics)
 				if !ok {
 					return nil, false, err
 				}
+				state.lastExceptionContext = ""
 				priorDiagnostics := state.stackedDiagnostics
 				state.stackedDiagnostics = &diagnostics
 				ret, returned, err = runOperations(ctx, iFunc, stack, state, handler.start, handler.end)
@@ -272,6 +278,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				bindings = bindings[queryBindingCount:]
 				queryVal, err := iFunc.QuerySingleReturn(ctx, stack, "SELECT "+statement, pgtypes.Text, queryBindings)
 				if err != nil {
+					state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 					return nil, false, err
 				}
 				if queryVal == nil {
@@ -294,7 +301,11 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				}
 				restoreCallSite := pushDiagnosticCallSite(ctx, operation)
 				defer restoreCallSite()
-				return iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+				sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+				if err != nil {
+					state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
+				}
+				return sch, rows, err
 			}
 			if len(operation.Target) > 0 {
 				sch, rows, err := queryMultiReturn()
@@ -411,6 +422,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_If:
 			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, pgtypes.Bool, operation.SecondaryData)
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			if retVal.(bool) {
@@ -425,6 +437,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			restoreCallSite()
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
@@ -493,6 +506,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				return sql.RowsToRowIter(sql.Row{val}), true, nil
 			}
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			return val, true, nil
@@ -500,6 +514,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_ForQueryInit:
 			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
@@ -518,6 +533,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_ReturnQuery:
 			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			if err != nil {
+				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
 			state.lastRowCount = rowCountFromResultRows(rows)
@@ -935,6 +951,23 @@ func diagnosticPGContext(ctx *sql.Context, iFunc InterpretedFunction, operation 
 		} else {
 			lines = append(lines, diagnosticCallerContextLines(frames[i])...)
 		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func diagnosticPGExceptionContext(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation) string {
+	currentFrame := diagnosticCallFrame{
+		functionName: diagnosticFunctionName(iFunc),
+		callSite: diagnosticCallSite{
+			lineNumber: diagnosticOperationLineNumber(operation),
+			action:     diagnosticOperationAction(operation),
+			statement:  diagnosticOperationStatement(operation),
+		},
+	}
+	lines := diagnosticCallerContextLines(currentFrame)
+	frames := diagnosticCallFrames(ctx)
+	for i := len(frames) - 2; i >= 0; i-- {
+		lines = append(lines, diagnosticCallerContextLines(frames[i])...)
 	}
 	return strings.Join(lines, "\n")
 }

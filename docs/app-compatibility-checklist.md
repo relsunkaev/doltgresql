@@ -630,6 +630,11 @@ Do not check off an item until it has workload proof:
     DIAGNOSTICS` reports `RETURNED_SQLSTATE = 23505` in the active handler.
     Unmatched native SQL errors still propagate. Pinned by
     testing/go/do_block_probe_test.go. Tracked by dg-7ug.20.4.
+  - [x] Native SQL errors raised inside PL/pgSQL blocks populate
+    `PG_EXCEPTION_CONTEXT` with a PostgreSQL-shaped failing SQL statement
+    frame for `GET STACKED DIAGNOSTICS`, without wrapping the underlying
+    native error used for unmatched propagation. Pinned by
+    testing/go/do_block_probe_test.go. Tracked by dg-7ug.20.5.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
