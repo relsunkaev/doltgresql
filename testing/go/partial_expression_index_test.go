@@ -675,6 +675,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports to_hex predicate",
+			SetUpScript: []string{
+				`CREATE TABLE hex_codes (id INT PRIMARY KEY, user_id INT, account_id INT);`,
+				`CREATE UNIQUE INDEX hex_codes_user_account_idx
+					ON hex_codes (user_id)
+					WHERE to_hex(account_id) = 'a';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO hex_codes VALUES
+						(1, 10, 10),
+						(2, 10, 11);`,
+				},
+				{
+					Query:       `INSERT INTO hex_codes VALUES (3, 10, 10);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO hex_codes VALUES (4, 10, 12);`,
+				},
+				{
+					Query:       `UPDATE hex_codes SET account_id = 10 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1226,6 +1253,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	reverseRawSourceQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND code = 'Admin'`
 	assertCountResult(t, ctx, conn, reverseRawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, reverseRawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_to_hex (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, account_id INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_to_hex VALUES
+		(1, 1, 10),
+		(2, 1, 11),
+		(3, 1, 12),
+		(4, 2, 10)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_to_hex_tenant_idx ON partial_planner_to_hex (tenant) WHERE to_hex(account_id) = 'a'")
+
+	toHexImpliedQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND to_hex(account_id) = 'a'`
+	assertCountResult(t, ctx, conn, toHexImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, toHexImpliedQuery, true)
+
+	toHexRawSourceQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND account_id = 10`
+	assertCountResult(t, ctx, conn, toHexRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, toHexRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

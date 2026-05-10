@@ -1261,6 +1261,32 @@ ON CONFLICT (user_id) WHERE code = 'Admin' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports to_hex predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_to_hex (id INT PRIMARY KEY, user_id INT, account_id INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_to_hex_user_idx ON partial_arb_to_hex (user_id) WHERE to_hex(account_id) = 'a';",
+				"INSERT INTO partial_arb_to_hex VALUES (1, 10, 10, 'old-hex'), (2, 10, 11, 'old-other');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_to_hex VALUES (3, 10, 10, 'hex-upsert')
+ON CONFLICT (user_id) WHERE to_hex(account_id) = 'a' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, account_id, note FROM partial_arb_to_hex ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, 10, "hex-upsert"},
+						{2, 10, 11, "old-other"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_to_hex VALUES (4, 10, 10, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE account_id = 10 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

@@ -1249,6 +1249,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "octet_length" {
 		return predicateOctetLengthValue(arg.value)
 	}
+	if name == "to_hex" {
+		return predicateToHexValue(arg.value)
+	}
 	text, ok := arg.value.(string)
 	if !ok {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
@@ -1698,6 +1701,14 @@ func predicateAbsValue(value any) (predicateValue, error) {
 		intValue = -intValue
 	}
 	return predicateValue{value: intValue}, nil
+}
+
+func predicateToHexValue(value any) (predicateValue, error) {
+	intValue, ok := predicateSignedIntegerValue(value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function to_hex does not support %T", value)
+	}
+	return predicateValue{value: fmt.Sprintf("%x", uint64(intValue))}, nil
 }
 
 func predicateSignedIntegerValue(value any) (int64, bool) {

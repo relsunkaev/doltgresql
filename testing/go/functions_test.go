@@ -555,6 +555,18 @@ func TestFunctionsMath(t *testing.T) {
 			},
 		},
 		{
+			Name:        "to_hex",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT to_hex(10::int4), to_hex(255::int8);`,
+					Expected: []sql.Row{
+						{"a", "ff"},
+					},
+				},
+			},
+		},
+		{
 			Name: "power",
 			Assertions: []ScriptTestAssertion{
 				{

@@ -949,6 +949,15 @@ Do not check off an item until it has workload proof:
   Coverage in server/indexpredicate/implication_test.go,
   testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
   and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.17.
+- [x] Use deterministic `to_hex(expr)` predicates in partial-index implication
+  paths. Unary `to_hex(...)` calls now serialize as comparable predicate keys,
+  planner filters can deparse them, partial unique DML enforcement evaluates
+  integer-to-hex text output aligned with the runtime function, and
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
+  hex values and raw numeric semantic rewrites remain rejected. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.18.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

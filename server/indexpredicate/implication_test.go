@@ -619,6 +619,33 @@ func TestImpliesReverseFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesToHexFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"to_hex(account_id) = 'a'", "to_hex(account_id) = 'a'"},
+		{"to_hex(account_id) IN ('a', 'b')", "to_hex(account_id) = 'a'"},
+		{"to_hex(account_id) IS NOT NULL", "to_hex(account_id) = 'a'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"to_hex(account_id) = 'a'", "to_hex(account_id) = 'b'"},
+		{"to_hex(account_id) = 'a'", "abs(account_id) = 10"},
+		{"to_hex(account_id) = 'a'", "account_id = 10"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string
