@@ -30,6 +30,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -1281,9 +1282,39 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: cases.Title(language.English).String(text)}, nil
 	case "quote_literal":
 		return predicateValue{value: predicateQuoteLiteralText(text)}, nil
+	case "quote_ident":
+		return predicateValue{value: predicateQuoteIdentifierText(text)}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+func predicateQuoteIdentifierText(text string) string {
+	if predicateCanUseBareIdentifier(text) {
+		return text
+	}
+	return `"` + strings.ReplaceAll(text, `"`, `""`) + `"`
+}
+
+func predicateCanUseBareIdentifier(text string) bool {
+	if len(text) == 0 {
+		return false
+	}
+	for i, r := range text {
+		if i == 0 {
+			if r != '_' && (r < 'a' || r > 'z') {
+				return false
+			}
+			continue
+		}
+		if r != '_' && r != '$' && (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+	if category, ok := lex.KeywordsCategories[text]; ok && category == "R" {
+		return false
+	}
+	return true
 }
 
 func predicateQuoteLiteralText(text string) string {

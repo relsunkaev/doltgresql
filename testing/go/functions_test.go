@@ -4103,6 +4103,10 @@ func TestStringFunction(t *testing.T) {
 					Query:    `select quote_ident('hi"b"ye');`,
 					Expected: []sql.Row{{`"hi""b""ye"`}},
 				},
+				{
+					Query:    `select quote_ident('admin user'), quote_ident('select');`,
+					Expected: []sql.Row{{`"admin user"`, `"select"`}},
+				},
 			},
 		},
 		{

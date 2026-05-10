@@ -756,6 +756,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports quote_ident predicate",
+			SetUpScript: []string{
+				`CREATE TABLE quote_ident_roles (id INT PRIMARY KEY, user_id INT, role TEXT);`,
+				`CREATE UNIQUE INDEX quote_ident_roles_user_role_idx
+					ON quote_ident_roles (user_id)
+					WHERE quote_ident(role) = '"admin user"';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO quote_ident_roles VALUES
+						(1, 10, 'admin user'),
+						(2, 10, 'regular user');`,
+				},
+				{
+					Query:       `INSERT INTO quote_ident_roles VALUES (3, 10, 'admin user');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO quote_ident_roles VALUES (4, 10, 'billing user');`,
+				},
+				{
+					Query:       `UPDATE quote_ident_roles SET role = 'admin user' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1355,6 +1382,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	quoteLiteralRawSourceQuery := `SELECT count(id) FROM partial_planner_quote_literal WHERE tenant = 1 AND role = 'admin user'`
 	assertCountResult(t, ctx, conn, quoteLiteralRawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, quoteLiteralRawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_quote_ident (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, role TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_quote_ident VALUES
+		(1, 1, 'admin user'),
+		(2, 1, 'regular user'),
+		(3, 1, 'billing user'),
+		(4, 2, 'admin user')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_quote_ident_tenant_idx ON partial_planner_quote_ident (tenant) WHERE quote_ident(role) = '\"admin user\"'")
+
+	quoteIdentImpliedQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND quote_ident(role) = '"admin user"'`
+	assertCountResult(t, ctx, conn, quoteIdentImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentImpliedQuery, true)
+
+	quoteIdentRawSourceQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND role = 'admin user'`
+	assertCountResult(t, ctx, conn, quoteIdentRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
