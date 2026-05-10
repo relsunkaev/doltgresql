@@ -46,6 +46,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query:    `SELECT length(uuid_generate_v4()::text)::text;`,
 					Expected: []sql.Row{{"36"}},
 				},
+				{
+					Query:    `SELECT uuid_nil()::text, uuid_ns_dns()::text, uuid_ns_url()::text, uuid_ns_oid()::text, uuid_ns_x500()::text;`,
+					Expected: []sql.Row{{"00000000-0000-0000-0000-000000000000", "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "6ba7b811-9dad-11d1-80b4-00c04fd430c8", "6ba7b812-9dad-11d1-80b4-00c04fd430c8", "6ba7b814-9dad-11d1-80b4-00c04fd430c8"}},
+				},
+				{
+					Query:    `SELECT uuid_generate_v3(uuid_ns_dns(), 'www.example.com')::text, uuid_generate_v5(uuid_ns_dns(), 'www.example.com')::text;`,
+					Expected: []sql.Row{{"5df41881-3aed-3515-88a7-2f4a814cf09e", "2ed6657d-e927-568b-95e1-2665a8aea6a2"}},
+				},
+				{
+					Query:    `SELECT length(uuid_generate_v1()::text)::text, substr(uuid_generate_v1()::text, 15, 1), length(uuid_generate_v1mc()::text)::text, substr(uuid_generate_v1mc()::text, 15, 1);`,
+					Expected: []sql.Row{{"36", "1", "36", "1"}},
+				},
 			},
 		},
 		{

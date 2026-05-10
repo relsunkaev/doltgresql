@@ -128,8 +128,11 @@ Do not check off an item until it has workload proof:
   the separate schema-output and restore-path items.
 - [~] Common extensions - `CREATE EXTENSION IF NOT EXISTS
   "uuid-ossp"` is accepted at DDL, is listed in
-  `pg_catalog.pg_extension`, and `uuid_generate_v4()` is callable for
-  UUID primary-key defaults.
+  `pg_catalog.pg_extension`, and the common runtime functions
+  `uuid_nil`, `uuid_ns_dns`, `uuid_ns_url`, `uuid_ns_oid`,
+  `uuid_ns_x500`, `uuid_generate_v1`, `uuid_generate_v1mc`,
+  `uuid_generate_v3`, `uuid_generate_v4`, and `uuid_generate_v5` are
+  callable for UUID defaults and deterministic namespace UUID generation.
   pg_dump's `CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA
   pg_catalog` shape is accepted and records the built-in PL/pgSQL
   runtime in `pg_extension`.
