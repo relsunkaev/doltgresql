@@ -1383,20 +1383,23 @@ Do not check off an item until it has workload proof:
   and text[] adaptation, prepared statements, concurrent reads, commit, and
   rollback behavior. `asyncpg` runs through the real async Python pool,
   including startup `application_name`, typed parameters, JSONB/text[] values,
-  prepared statements, pooled concurrent reads, commit, and rollback. Ruby `pg`
-  runs through a real PG::Connection,
-  including startup `application_name`, typed parameters, JSONB and text[]
-  values, prepared statements, concurrent reads, commit, and rollback. libpq
-  runs through a compiled C probe with startup `application_name`, typed
-  parameters, JSONB and text[] values, prepared statements, multiple
-  connections, commit, and rollback. Go `database/sql` with `github.com/lib/pq`
-  runs through the real Go driver wrapper with startup `application_name`,
-  prepared statements, typed parameters, JSONB/text[] values, `pq.Array`
-  adaptation, pooled concurrent reads, commit, and rollback. Java JDBC runs
-  through the upstream PostgreSQL JDBC driver with startup `application_name`,
-  prepared statements, typed parameters, `createArrayOf` text[] adaptation,
-  JSONB values, multiple connections, commit, and rollback. Rust `sqlx` runs
-  through the existing async pool fixture with startup, parameter binding,
+  prepared statements, pooled concurrent reads, commit, and rollback.
+  SQLAlchemy runs over the PostgreSQL psycopg dialect, covering `create_all`
+  metadata introspection, ORM mapping, relationship loading, JSONB/ARRAY
+  columns, pooled reads, commit, and rollback. Ruby `pg` runs through a real
+  PG::Connection, including startup `application_name`, typed parameters,
+  JSONB and text[] values, prepared statements, concurrent reads, commit, and
+  rollback. libpq runs through a compiled C probe with startup
+  `application_name`, typed parameters, JSONB and text[] values, prepared
+  statements, multiple connections, commit, and rollback. Go `database/sql`
+  with `github.com/lib/pq` runs through the real Go driver wrapper with
+  startup `application_name`, prepared statements, typed parameters,
+  JSONB/text[] values, `pq.Array` adaptation, pooled concurrent reads, commit,
+  and rollback. Java JDBC runs through the upstream PostgreSQL JDBC driver
+  with startup `application_name`, prepared statements, typed parameters,
+  `createArrayOf` text[] adaptation, JSONB values, multiple connections,
+  commit, and rollback. Rust `sqlx` runs through the existing async pool
+  fixture with startup, parameter binding,
   catalog `EXISTS` queries, UUID binding/decoding, and chrono
   timestamptz/date decoding. TypeORM runs a
   real `DataSource` over the `pg` driver, including schema synchronization,
@@ -1410,7 +1413,8 @@ Do not check off an item until it has workload proof:
   testing/go/ts_postgres_client_test.go, testing/go/knex_client_test.go,
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
   testing/go/psycopg2_client_test.go, testing/go/asyncpg_client_test.go,
-  testing/go/ruby_pg_client_test.go, testing/go/libpq_client_test.go,
+  testing/go/sqlalchemy_client_test.go, testing/go/ruby_pg_client_test.go,
+  testing/go/libpq_client_test.go,
   testing/go/go_sql_pq_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
@@ -1902,7 +1906,10 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   JSONB/array adaptation, prepared statements, concurrent reads, and
   transaction boundaries, the asyncpg harness covers the async Python pool
   with startup options, typed parameters, JSONB/text[] values, prepared
-  statements, pooled concurrent reads, and transaction boundaries, and
+  statements, pooled concurrent reads, and transaction boundaries, the
+  SQLAlchemy harness covers the PostgreSQL psycopg dialect with `create_all`
+  introspection, ORM mapping, relationship loading, JSONB/ARRAY values, pooled
+  reads, and transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
   boundaries. The libpq harness compiles a C probe for typed parameters,
@@ -1924,8 +1931,8 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
-  psycopg, psycopg2, asyncpg, Ruby `pg`, libpq, Go `database/sql` with
-  `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add runnable smoke gates
+  psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`, libpq, Go `database/sql`
+  with `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add runnable smoke gates
   for the advertised client and migration-tool matrix before claiming broad
   client compatibility.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
