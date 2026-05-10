@@ -755,6 +755,43 @@ ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports expression value-set predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_expr_in (id INT PRIMARY KEY, email TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_expr_in_email_idx ON partial_arb_expr_in (email) WHERE lower(email) IN ('active@example.com', 'admin@example.com');",
+				"INSERT INTO partial_arb_expr_in VALUES (1, 'active@example.com', 'old-active'), (2, 'admin@example.com', 'old-admin');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_expr_in VALUES (3, 'active@example.com', 'active-upsert')
+ON CONFLICT (email) WHERE lower(email) = 'active@example.com' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "active@example.com", "active-upsert"},
+						{2, "admin@example.com", "old-admin"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_expr_in VALUES (4, 'admin@example.com', 'admin-upsert')
+ON CONFLICT (email) WHERE lower(email) IN ('admin@example.com', 'active@example.com') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, email, note FROM partial_arb_expr_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "active@example.com", "active-upsert"},
+						{2, "admin@example.com", "admin-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_expr_in VALUES (5, 'active@example.com', 'wrong-predicate')
+ON CONFLICT (email) WHERE lower(email) IN ('active@example.com', 'other@example.com') DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

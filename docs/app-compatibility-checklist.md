@@ -507,7 +507,8 @@ Do not check off an item until it has workload proof:
   for rows whose predicate evaluates true. The implemented predicate
   evaluator covers column truthiness/NOT, IS NULL/IS NOT NULL,
   comparisons, IN / NOT IN lists, BETWEEN / NOT BETWEEN / BETWEEN SYMMETRIC,
-  parentheses, AND, and OR, which covers the
+  simple `lower(text)` / `upper(text)` calls, parentheses, AND, and OR,
+  which covers the
   AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
   restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
   exact predicate matches and simple conjunctive arbiter predicates that imply
@@ -517,9 +518,10 @@ Do not check off an item until it has workload proof:
   describe a subset of the partial index predicate (for example `score > 10`
   targeting an index predicate `score > 0`, or `score BETWEEN 10 AND 90`
   targeting `score > 0 AND score < 100`), same-column equality/IN-list
-  value-set subsets, and simple OR implication where the arbiter predicate
-  implies one index-predicate disjunct or every reordered arbiter disjunct
-  implies the index predicate;
+  value-set subsets, same-expression `lower(text)` / `upper(text)`
+  equality/IN-list value-set subsets, and simple OR implication where the
+  arbiter predicate implies one index-predicate disjunct or every reordered
+  arbiter disjunct implies the index predicate;
   non-target partial-unique conflicts are preserved for multi-unique
   `DO NOTHING`. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
@@ -530,8 +532,10 @@ Do not check off an item until it has workload proof:
   exact matches, conjunctions where the arbiter predicate contains every
   index-predicate term, simple boolean equivalence, and simple same-column
   numeric range implication including `BETWEEN`, same-column equality/IN-list
-  subset implication, plus simple boolean/numeric/exact-term OR implication.
-  Cross-column and expression-level semantic implication remain open.
+  subset implication, same-expression `lower(text)` / `upper(text)` equality
+  and IN-list subset implication, plus simple boolean/numeric/exact-term OR
+  implication. Cross-column and broader expression-level semantic implication
+  remain open.
   Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is

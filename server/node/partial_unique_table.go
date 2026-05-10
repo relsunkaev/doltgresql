@@ -735,6 +735,12 @@ func (p *partialIndexPredicate) validateColumns(expr tree.Expr) error {
 			return err
 		}
 		return p.validateColumns(expr.Right)
+	case *tree.FuncExpr:
+		for _, fnExpr := range expr.Exprs {
+			if err := p.validateColumns(fnExpr); err != nil {
+				return err
+			}
+		}
 	case *tree.IsNotNullExpr:
 		return p.validateColumns(expr.Expr)
 	case *tree.IsNullExpr:
@@ -1100,6 +1106,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return predicateValue{value: expr.FormattedString()}, nil
 	case *tree.ParenExpr:
 		return p.evalValue(ctx, row, expr.Expr)
+	case *tree.FuncExpr:
+		return p.evalFunction(ctx, row, expr)
 	case *tree.StrVal:
 		return predicateValue{value: expr.RawString()}, nil
 	case *tree.UnresolvedName:
@@ -1122,6 +1130,49 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return predicateValue{}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate expression %T is not yet supported", expr)
+	}
+}
+
+func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	name, ok := partialPredicateFunctionName(expr.Func)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", expr.Func.String())
+	}
+	if len(expr.Exprs) != 1 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
+	}
+	arg, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if arg.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := arg.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
+	}
+	switch name {
+	case "lower":
+		return predicateValue{value: strings.ToLower(text)}, nil
+	case "upper":
+		return predicateValue{value: strings.ToUpper(text)}, nil
+	default:
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func partialPredicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) {
+	switch fn := ref.FunctionReference.(type) {
+	case *tree.UnresolvedName:
+		if fn.Star || fn.NumParts == 0 {
+			return "", false
+		}
+		return strings.ToLower(strings.Trim(fn.Parts[0], `"`)), true
+	case *tree.FunctionDefinition:
+		return strings.ToLower(strings.Trim(fn.Name, `"`)), true
+	default:
+		return "", false
 	}
 }
 

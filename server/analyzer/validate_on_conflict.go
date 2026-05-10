@@ -367,7 +367,7 @@ func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
 	indexValues, ok := predicateValueSetFromExpr(indexExpr)
 	if ok {
 		arbiterValues, ok := predicateValueSetFromExpr(arbiterExpr)
-		return ok && strings.EqualFold(indexValues.column, arbiterValues.column) && arbiterValues.subsetOf(indexValues)
+		return ok && indexValues.exprKey == arbiterValues.exprKey && arbiterValues.subsetOf(indexValues)
 	}
 
 	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
@@ -417,8 +417,8 @@ type booleanPredicateComparison struct {
 }
 
 type predicateValueSet struct {
-	column string
-	values map[string]struct{}
+	exprKey string
+	values  map[string]struct{}
 }
 
 func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
@@ -437,18 +437,18 @@ func predicateValueSetFromExpr(expr tree.Expr) (predicateValueSet, bool) {
 	}
 	switch comparison.Operator {
 	case tree.EQ, tree.IsNotDistinctFrom:
-		if column, ok := predicateColumnName(comparison.Left); ok {
+		if exprKey, ok := predicateComparableExprKey(comparison.Left); ok {
 			if value, ok := predicateLiteralKey(comparison.Right); ok {
-				return predicateValueSet{column: column, values: map[string]struct{}{value: {}}}, true
+				return predicateValueSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
 			}
 		}
-		if column, ok := predicateColumnName(comparison.Right); ok {
+		if exprKey, ok := predicateComparableExprKey(comparison.Right); ok {
 			if value, ok := predicateLiteralKey(comparison.Left); ok {
-				return predicateValueSet{column: column, values: map[string]struct{}{value: {}}}, true
+				return predicateValueSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
 			}
 		}
 	case tree.In:
-		column, ok := predicateColumnName(comparison.Left)
+		exprKey, ok := predicateComparableExprKey(comparison.Left)
 		if !ok {
 			return predicateValueSet{}, false
 		}
@@ -464,9 +464,43 @@ func predicateValueSetFromExpr(expr tree.Expr) (predicateValueSet, bool) {
 			}
 			values[value] = struct{}{}
 		}
-		return predicateValueSet{column: column, values: values}, true
+		return predicateValueSet{exprKey: exprKey, values: values}, true
 	}
 	return predicateValueSet{}, false
+}
+
+func predicateComparableExprKey(expr tree.Expr) (string, bool) {
+	expr = unwrapPredicateParens(expr)
+	if column, ok := predicateColumnName(expr); ok {
+		return "column:" + column, true
+	}
+	fn, ok := expr.(*tree.FuncExpr)
+	if !ok {
+		return "", false
+	}
+	name, ok := predicateFunctionName(fn.Func)
+	if !ok || (name != "lower" && name != "upper") || len(fn.Exprs) != 1 {
+		return "", false
+	}
+	argKey, ok := predicateComparableExprKey(fn.Exprs[0])
+	if !ok {
+		return "", false
+	}
+	return "func:" + name + "(" + argKey + ")", true
+}
+
+func predicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) {
+	switch fn := ref.FunctionReference.(type) {
+	case *tree.UnresolvedName:
+		if fn.Star || fn.NumParts == 0 {
+			return "", false
+		}
+		return strings.ToLower(strings.Trim(fn.Parts[0], `"`)), true
+	case *tree.FunctionDefinition:
+		return strings.ToLower(strings.Trim(fn.Name, `"`)), true
+	default:
+		return "", false
+	}
 }
 
 func predicateLiteralKey(expr tree.Expr) (string, bool) {

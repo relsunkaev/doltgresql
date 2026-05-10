@@ -250,6 +250,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports lower text predicate",
+			SetUpScript: []string{
+				`CREATE TABLE case_folded_accounts (id INT PRIMARY KEY, email TEXT);`,
+				`CREATE UNIQUE INDEX case_folded_accounts_active_idx
+					ON case_folded_accounts (email)
+					WHERE lower(email) IN ('active@example.com', 'admin@example.com');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO case_folded_accounts VALUES
+						(1, 'Active@Example.com'),
+						(2, 'other@example.com');`,
+				},
+				{
+					Query:       `INSERT INTO case_folded_accounts VALUES (3, 'Active@Example.com');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO case_folded_accounts VALUES (4, 'Other@Example.com');`,
+				},
+				{
+					Query:       `UPDATE case_folded_accounts SET email = 'Active@Example.com' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
