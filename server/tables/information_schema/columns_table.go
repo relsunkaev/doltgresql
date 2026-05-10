@@ -304,6 +304,9 @@ func getDataAndUdtType(colType sql.Type, colName string) (string, string) {
 	dgType, ok := colType.(*pgtypes.DoltgresType)
 	if ok {
 		udtName = dgType.Name()
+		if dgType.IsArrayType() {
+			return "ARRAY", udtName
+		}
 		if t, ok := partypes.OidToType[oid.Oid(id.Cache().ToOID(dgType.ID.AsId()))]; ok {
 			dataType = t.SQLStandardName()
 		}

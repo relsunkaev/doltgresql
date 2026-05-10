@@ -970,10 +970,12 @@ actually exercise.
   `is_nullable` reports YES/NO accurately for NOT NULL constraints
   and PK columns, `data_type` emits PG type names (`integer`,
   `text`, `numeric`, `timestamp without time zone`, `character
-  varying`), and `column_default` surfaces both literal and
-  expression defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
-  testing/go/info_schema_column_order_test.go pins the workload
-  shapes.
+  varying`) plus PostgreSQL's `ARRAY` / `_element` split for array
+  columns, and `column_default` surfaces both literal and expression
+  defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
+  testing/go/info_schema_column_order_test.go pins the workload shapes;
+  testing/go/prisma_db_pull_test.go verifies Prisma uses that array
+  metadata to recover `String[]`.
 - [x] `pg_matviews` - the catalog view exists for no-matview databases and
   reports materialized-view rows once table-backed matviews are created:
   schemaname, matviewname, definition, populated state, and index presence all
@@ -1043,10 +1045,13 @@ actually exercise.
   runs end-to-end against Doltgres through the real `pg` Node driver
   and emits `schema.ts` for a schema slice with primary keys, a
   composite primary key, a unique constraint, non-unique indexes, and
-  a foreign key. This covers one real migration-tool path; Prisma db
-  pull and Alembic autogenerate remain useful future broadening but
-  are no longer required to prove the checklist item. Covered by
-  testing/go/drizzle_kit_introspect_test.go.
+  a foreign key. Prisma `db pull --print` also runs end-to-end against
+  a live Doltgres instance and recovers primary keys, a composite primary key,
+  unique constraints, non-unique indexes, JSONB, text arrays, decimals, and
+  relations. Alembic autogenerate remains useful future broadening but is no
+  longer required to prove the checklist item. Covered by
+  testing/go/drizzle_kit_introspect_test.go and
+  testing/go/prisma_db_pull_test.go.
 - [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
   is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
   TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,

@@ -112,6 +112,29 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 			},
 		},
 		{
+			Name: "array columns report ARRAY data type and array udt name",
+			SetUpScript: []string{
+				`CREATE TABLE array_shapes (
+					id INT PRIMARY KEY,
+					tags TEXT[],
+					scores INT[]
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT column_name, data_type, udt_name
+						FROM information_schema.columns
+						WHERE table_name = 'array_shapes'
+						ORDER BY ordinal_position;`,
+					Expected: []sql.Row{
+						{"id", "integer", "int4"},
+						{"tags", "ARRAY", "_text"},
+						{"scores", "ARRAY", "_int4"},
+					},
+				},
+			},
+		},
+		{
 			// pg_dump and Alembic autogenerate inspect column_default
 			// to reconstruct DEFAULT clauses. Constants and
 			// expression defaults must be visible.
