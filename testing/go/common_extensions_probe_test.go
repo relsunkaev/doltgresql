@@ -393,6 +393,22 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"true", "true", "true", "true"}},
 				},
 				{
+					Query:    `SELECT vector_dims('[3,4,0]'::vector), vector_norm('[3,4,0]'::vector)::text, l2_normalize('[3,4,0]'::vector)::text, subvector('[1,2,3,4]'::vector, 2, 2)::text;`,
+					Expected: []sql.Row{{3, "5", "[0.6,0.8,0]", "[2,3]"}},
+				},
+				{
+					Query:    `SELECT ('[1,2,3]'::vector + '[4,5,6]'::vector)::text, ('[1,2,3]'::vector - '[4,5,6]'::vector)::text, ('[1,2,3]'::vector * '[4,5,6]'::vector)::text, ('[1,2,3]'::vector || '[4,5,6]'::vector)::text;`,
+					Expected: []sql.Row{{"[5,7,9]", "[-3,-3,-3]", "[4,10,18]", "[1,2,3,4,5,6]"}},
+				},
+				{
+					Query:    `SELECT vector_add('[1,2,3]'::vector, '[4,5,6]'::vector)::text, vector_sub('[1,2,3]'::vector, '[4,5,6]'::vector)::text, vector_mul('[1,2,3]'::vector, '[4,5,6]'::vector)::text, vector_concat('[1,2,3]'::vector, '[4,5,6]'::vector)::text;`,
+					Expected: []sql.Row{{"[5,7,9]", "[-3,-3,-3]", "[4,10,18]", "[1,2,3,4,5,6]"}},
+				},
+				{
+					Query:       `SELECT subvector('[1,2,3]'::vector, 2, 0);`,
+					ExpectedErr: `vector must have at least 1 dimension`,
+				},
+				{
 					Query:    `SELECT id FROM embeddings ORDER BY embedding <-> '[4,6,3]'::vector, id;`,
 					Expected: []sql.Row{{2}, {1}, {3}},
 				},

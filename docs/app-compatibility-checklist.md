@@ -237,7 +237,10 @@ Do not check off an item until it has workload proof:
   `OPERATOR(public.<->)` syntax and dimension-mismatch errors. The dense
   vector ordering functions/operators `vector_lt`, `vector_le`, `vector_ge`,
   `vector_gt`, `<`, `<=`, `>=`, and `>` use pgvector-compatible
-  lexicographic ordering.
+  lexicographic ordering. Dense vector helpers and arithmetic cover
+  `vector_dims`, `vector_norm`, `l2_normalize`, `subvector`, `vector_add`,
+  `vector_sub`, `vector_mul`, `vector_concat`, and the `+`, `-`, `*`, and
+  `||` vector operators.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
@@ -246,9 +249,9 @@ Do not check off an item until it has workload proof:
   non-`bf` password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
-  non-dense vector families, and helper functions beyond the tested
-  dense-vector IO/equality/distance subset, `btree_gist` operator classes,
-  and hstore operators/functions/casts outside
+  non-dense vector families, and helper/cast functions beyond the tested
+  dense-vector IO/equality/distance/ordering/arithmetic subset,
+  `btree_gist` operator classes, and hstore operators/functions/casts outside
   testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
