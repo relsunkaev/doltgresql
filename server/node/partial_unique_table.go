@@ -1251,6 +1251,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
 	}
 	switch name {
+	case "ascii":
+		return predicateValue{value: predicateAsciiText(text)}, nil
 	case "char_length", "character_length", "length":
 		return predicateValue{value: int64(utf8.RuneCountInString(text))}, nil
 	case "lower":
@@ -1268,6 +1270,13 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+func predicateAsciiText(text string) int64 {
+	for _, r := range text {
+		return int64(r)
+	}
+	return 0
 }
 
 func (p *partialIndexPredicate) evalStrpos(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

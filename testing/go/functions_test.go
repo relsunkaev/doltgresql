@@ -4026,6 +4026,10 @@ func TestStringFunction(t *testing.T) {
 					Expected: []sql.Row{{110}},
 				},
 				{
+					Query:    `SELECT ascii(''::text), ascii('åctive'::text);`,
+					Expected: []sql.Row{{0, 229}},
+				},
+				{
 					Query:    "SELECT bit_length('name'::name);",
 					Expected: []sql.Row{{32}},
 				},

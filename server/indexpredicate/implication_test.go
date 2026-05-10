@@ -563,6 +563,33 @@ func TestImpliesSplitPartFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesAsciiFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"ascii(code) = 65", "ascii(code) = 65"},
+		{"ascii(code) IN (65, 66)", "ascii(code) = 65"},
+		{"ascii(code) IS NOT NULL", "ascii(code) = 65"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"ascii(code) = 65", "ascii(code) = 66"},
+		{"ascii(code) = 65", "lower(code) = 'active'"},
+		{"ascii(code) = 65", "code = 'Active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

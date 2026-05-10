@@ -920,6 +920,15 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go, testing/go/functions_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.14.
+- [x] Use deterministic `ascii(expr)` predicates in partial-index implication
+  paths. Unary `ascii(...)` calls now serialize as comparable predicate keys,
+  planner filters can deparse them, partial unique DML enforcement evaluates
+  empty-string and multibyte first-codepoint behavior aligned with the runtime
+  function, and `ON CONFLICT` arbiter inference accepts the exact-expression
+  shape; wrong codepoint values and raw source-string semantic rewrites remain
+  rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.15.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

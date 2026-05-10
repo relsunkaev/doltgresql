@@ -1183,6 +1183,32 @@ ON CONFLICT (user_id) WHERE split_part(email, '.', 2) = 'com' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports ascii predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_ascii (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_ascii_user_idx ON partial_arb_ascii (user_id) WHERE ascii(code) = 65;",
+				"INSERT INTO partial_arb_ascii VALUES (1, 10, 'Alpha', 'old-active'), (2, 10, 'beta', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_ascii VALUES (3, 10, 'Admin', 'ascii-upsert')
+ON CONFLICT (user_id) WHERE ascii(code) = 65 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_ascii ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Alpha", "ascii-upsert"},
+						{2, 10, "beta", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_ascii VALUES (4, 10, 'April', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code = 'April' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

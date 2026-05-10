@@ -594,6 +594,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports ascii predicate",
+			SetUpScript: []string{
+				`CREATE TABLE ascii_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX ascii_codes_user_code_idx
+					ON ascii_codes (user_id)
+					WHERE ascii(code) = 65;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO ascii_codes VALUES
+						(1, 10, 'Alpha'),
+						(2, 10, 'beta');`,
+				},
+				{
+					Query:       `INSERT INTO ascii_codes VALUES (3, 10, 'Admin');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO ascii_codes VALUES (4, 10, 'alpha');`,
+				},
+				{
+					Query:       `UPDATE ascii_codes SET code = 'April' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1093,6 +1120,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	splitPartWrongArgumentQuery := `SELECT count(id) FROM partial_planner_split_part WHERE tenant = 1 AND split_part(email, '.', 2) = 'com'`
 	assertCountResult(t, ctx, conn, splitPartWrongArgumentQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, splitPartWrongArgumentQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_ascii (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_ascii VALUES
+		(1, 1, 'Alpha'),
+		(2, 1, 'beta'),
+		(3, 1, 'Admin'),
+		(4, 2, 'Active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_ascii_tenant_idx ON partial_planner_ascii (tenant) WHERE ascii(code) = 65")
+
+	asciiImpliedQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND ascii(code) = 65`
+	assertCountResult(t, ctx, conn, asciiImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, asciiImpliedQuery, true)
+
+	asciiRawSourceQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND code = 'Alpha'`
+	assertCountResult(t, ctx, conn, asciiRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, asciiRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
