@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
@@ -41,13 +42,26 @@ type CreateTypedTable struct {
 
 	TypeSchemaName string
 	TypeName       string
+	Options        TypedTableOptions
 }
 
 var _ sql.ExecSourceRel = (*CreateTypedTable)(nil)
 var _ vitess.Injectable = (*CreateTypedTable)(nil)
 
+type TypedTableOptions struct {
+	ColumnOptions     []TypedTableColumnOptions
+	PrimaryKeyColumns []string
+}
+
+type TypedTableColumnOptions struct {
+	Name        string
+	NullableSet bool
+	Nullable    bool
+	PrimaryKey  bool
+}
+
 // NewCreateTypedTable returns a new CREATE TABLE OF execution node.
-func NewCreateTypedTable(ifNotExists bool, temporary bool, databaseName string, schemaName string, tableName string, typeSchemaName string, typeName string) *CreateTypedTable {
+func NewCreateTypedTable(ifNotExists bool, temporary bool, databaseName string, schemaName string, tableName string, typeSchemaName string, typeName string, options TypedTableOptions) *CreateTypedTable {
 	return &CreateTypedTable{
 		IfNotExists:    ifNotExists,
 		Temporary:      temporary,
@@ -56,6 +70,7 @@ func NewCreateTypedTable(ifNotExists bool, temporary bool, databaseName string, 
 		TableName:      tableName,
 		TypeSchemaName: typeSchemaName,
 		TypeName:       typeName,
+		Options:        options,
 	}
 }
 
@@ -123,7 +138,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, errors.Errorf(`type "%s" is not a composite type`, c.typeDisplayName())
 	}
 
-	tableSchema, err := typedTableSchema(ctx, typeCollection, c.TableName, db.Name(), compositeType)
+	tableSchema, err := typedTableSchema(ctx, typeCollection, c.TableName, db.Name(), compositeType, c.Options)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +241,7 @@ type typeResolver interface {
 	GetType(ctx context.Context, name id.Type) (*pgtypes.DoltgresType, error)
 }
 
-func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName string, databaseName string, typ *pgtypes.DoltgresType) (sql.Schema, error) {
+func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName string, databaseName string, typ *pgtypes.DoltgresType, options TypedTableOptions) (sql.Schema, error) {
 	schema := make(sql.Schema, len(typ.CompositeAttrs))
 	for i, attr := range typ.CompositeAttrs {
 		attrType, err := typeCollection.GetType(ctx, attr.TypeID)
@@ -244,7 +259,67 @@ func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName s
 			Nullable:       true,
 		}
 	}
+	if err := applyTypedTableOptions(schema, typ, options); err != nil {
+		return nil, err
+	}
 	return schema, nil
+}
+
+func applyTypedTableOptions(schema sql.Schema, typ *pgtypes.DoltgresType, options TypedTableOptions) error {
+	columnOptions := make(map[string]TypedTableColumnOptions, len(options.ColumnOptions))
+	for _, option := range options.ColumnOptions {
+		key := strings.ToLower(option.Name)
+		if _, ok := columnOptions[key]; ok {
+			return errors.Errorf(`column "%s" specified more than once`, option.Name)
+		}
+		columnOptions[key] = option
+	}
+
+	primaryKeyColumns := make([]string, 0, len(options.PrimaryKeyColumns)+1)
+	primaryKeyColumns = append(primaryKeyColumns, options.PrimaryKeyColumns...)
+	for _, option := range options.ColumnOptions {
+		idx := typedTableColumnIndex(schema, option.Name)
+		if idx < 0 {
+			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, option.Name, typ.ID.TypeName())
+		}
+		if option.NullableSet {
+			schema[idx].Nullable = option.Nullable
+		}
+		if option.PrimaryKey {
+			primaryKeyColumns = append(primaryKeyColumns, option.Name)
+		}
+	}
+	if len(options.PrimaryKeyColumns) > 0 && len(primaryKeyColumns) > len(options.PrimaryKeyColumns) {
+		return errors.Errorf("multiple primary keys for table are not allowed")
+	}
+	if len(options.PrimaryKeyColumns) == 0 && len(primaryKeyColumns) > 1 {
+		return errors.Errorf("multiple primary keys for table are not allowed")
+	}
+
+	seenPrimary := make(map[string]struct{}, len(primaryKeyColumns))
+	for _, columnName := range primaryKeyColumns {
+		idx := typedTableColumnIndex(schema, columnName)
+		if idx < 0 {
+			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+		}
+		key := strings.ToLower(columnName)
+		if _, ok := seenPrimary[key]; ok {
+			return errors.Errorf(`column "%s" appears twice in primary key constraint`, columnName)
+		}
+		seenPrimary[key] = struct{}{}
+		schema[idx].PrimaryKey = true
+		schema[idx].Nullable = false
+	}
+	return nil
+}
+
+func typedTableColumnIndex(schema sql.Schema, name string) int {
+	for i, col := range schema {
+		if strings.EqualFold(col.Name, name) {
+			return i
+		}
+	}
+	return -1
 }
 
 func databaseForSchema(ctx *sql.Context, db sql.Database, schemaName string) (sql.Database, error) {

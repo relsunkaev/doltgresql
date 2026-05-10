@@ -1203,8 +1203,12 @@ typed-exception handling, and client-side query timeouts.
   plus the user-defined type schema/name. Temporary `CREATE TABLE name OF
   composite_type` now derives the same schema for a session-local table,
   supports ordinary INSERT/SELECT, and treats `IF NOT EXISTS` as a no-op for an
-  existing temporary typed table. Still open: PostgreSQL's typed-table
-  table-definition/options surface. Pinned by
+  existing temporary typed table. PostgreSQL's typed-table options now support
+  table-level `PRIMARY KEY (...)` plus column-level `WITH OPTIONS NULL`, `WITH
+  OPTIONS NOT NULL`, and `WITH OPTIONS PRIMARY KEY`; those options drive
+  nullable metadata, primary-key metadata, and insert-time enforcement. Still
+  open: typed-table defaults, UNIQUE, CHECK, FOREIGN KEY, generated columns,
+  index options/opclasses, and other table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,

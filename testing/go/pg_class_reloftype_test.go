@@ -155,5 +155,63 @@ WHERE table_schema = 'app' AND table_name = 'addresses';`,
 				},
 			},
 		},
+		{
+			Name: "CREATE TABLE OF supports primary key and column options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_task AS (id INT, code TEXT, note TEXT);`,
+				`CREATE TABLE typed_tasks OF typed_task (
+					PRIMARY KEY (id),
+					code WITH OPTIONS NOT NULL
+				);`,
+				`INSERT INTO typed_tasks (id, code) VALUES (1, 'A');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, code, note FROM typed_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), "A", nil},
+					},
+				},
+				{
+					Query: `SELECT column_name, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'typed_tasks' AND column_name IN ('id', 'code', 'note')
+ORDER BY ordinal_position;`,
+					Expected: []sql.Row{
+						{"id", "NO"},
+						{"code", "NO"},
+						{"note", "YES"},
+					},
+				},
+				{
+					Query: `SELECT constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_name = 'typed_tasks' AND constraint_type = 'PRIMARY KEY';`,
+					Expected: []sql.Row{
+						{"typed_tasks_pkey", "PRIMARY KEY"},
+					},
+				},
+				{
+					Query:       `INSERT INTO typed_tasks (id, code) VALUES (2, NULL);`,
+					ExpectedErr: `non-nullable`,
+				},
+			},
+		},
+		{
+			Name: "CREATE TABLE OF rejects unsupported table-definition options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_options AS (id INT, code TEXT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE TABLE typed_unknown OF typed_options (missing WITH OPTIONS NOT NULL);`,
+					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
+				},
+				{
+					Query:       `CREATE TABLE typed_default OF typed_options (code WITH OPTIONS DEFAULT 'new');`,
+					ExpectedErr: `CREATE TABLE OF column defaults are not yet supported`,
+				},
+			},
+		},
 	})
 }
