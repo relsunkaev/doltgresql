@@ -82,30 +82,6 @@ func TestUnsupportedDdlProbes(t *testing.T) {
 			},
 		},
 		{
-			// PostgreSQL also supports transition tables on row-level
-			// AFTER triggers. Keep this shape rejected until the row
-			// trigger executor can provide statement-wide transition
-			// relations to each row firing.
-			Name: "row-level transition table trigger is rejected",
-			SetUpScript: []string{
-				`CREATE TABLE t (id INT PRIMARY KEY, v INT);`,
-				`CREATE FUNCTION audit_fn() RETURNS trigger AS $$
-					BEGIN
-						RETURN NULL;
-					END;
-				$$ LANGUAGE plpgsql;`,
-			},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE TRIGGER tg
-						AFTER INSERT ON t
-						REFERENCING NEW TABLE AS new_rows
-						FOR EACH ROW EXECUTE FUNCTION audit_fn();`,
-					ExpectedErr: "row-level transition tables are not yet supported for CREATE TRIGGER",
-				},
-			},
-		},
-		{
 			// Event triggers fire on DDL statements.
 			Name:        "CREATE EVENT TRIGGER is rejected",
 			SetUpScript: []string{},

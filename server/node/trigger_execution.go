@@ -203,6 +203,9 @@ type triggerExecutionIter struct {
 	sourceClosed             bool
 	oldRows                  []sql.Row
 	newRows                  []sql.Row
+	pendingRows              []sql.Row
+	pendingRowIdx            int
+	afterRowsDrained         bool
 }
 
 var _ sql.RowIter = (*triggerExecutionIter)(nil)
@@ -212,11 +215,46 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 	if t.statement {
 		return t.nextStatement(ctx)
 	}
+	if t.hasAfterRowTransitionTables() {
+		return t.nextAfterRowWithTransitionTables(ctx)
+	}
 
 	nextRow, err := t.source.Next(ctx)
 	if err != nil {
 		return nextRow, err
 	}
+	return t.fireRowTriggers(ctx, nextRow)
+}
+
+func (t *triggerExecutionIter) nextAfterRowWithTransitionTables(ctx *sql.Context) (sql.Row, error) {
+	if !t.afterRowsDrained {
+		for {
+			nextRow, err := t.source.Next(ctx)
+			if err == nil {
+				t.collectTransitionRows(nextRow)
+				t.pendingRows = append(t.pendingRows, cloneRow(nextRow))
+				continue
+			}
+			if err != io.EOF {
+				return nextRow, err
+			}
+			t.afterRowsDrained = true
+			if closeErr := t.closeSource(ctx); closeErr != nil {
+				return nil, closeErr
+			}
+			break
+		}
+	}
+	if t.pendingRowIdx >= len(t.pendingRows) {
+		return nil, io.EOF
+	}
+	nextRow := t.pendingRows[t.pendingRowIdx]
+	t.pendingRowIdx++
+	return t.fireRowTriggers(ctx, nextRow)
+}
+
+func (t *triggerExecutionIter) fireRowTriggers(ctx *sql.Context, nextRow sql.Row) (sql.Row, error) {
+	var err error
 	oldRow, newRow := splitTriggerRow(t.split, t.sch, nextRow)
 	if len(t.insertDefaultProjections) > 0 {
 		newRow, err = rowexec.ProjectRow(ctx, t.insertDefaultProjections, newRow)
@@ -228,9 +266,17 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 	for funcIdx, trigger := range t.triggers {
 		function := t.functions[funcIdx]
 		triggerVars := t.triggerVars(trigger, "ROW")
+		restore, err := t.installRowTransitionTables(ctx, trigger)
+		if err != nil {
+			return nil, err
+		}
 		if t.whens[funcIdx].ID.IsValid() {
 			whenValue, err := plpgsql.TriggerCall(ctx, t.whens[funcIdx], t.runner, t.sch, oldRow, newRow, triggerVars)
 			if err != nil {
+				restoreErr := restore()
+				if restoreErr != nil {
+					return nil, restoreErr
+				}
 				if strings.Contains(err.Error(), "no valid cast for return value") {
 					// TODO: this error should technically be caught during parsing, but interpreted functions don't
 					//  have the ability to determine types during parsing yet (also applies to the same error below)
@@ -240,16 +286,27 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 			}
 			whenBool, ok := whenValue.(bool)
 			if !ok {
+				restoreErr := restore()
+				if restoreErr != nil {
+					return nil, restoreErr
+				}
 				return nil, fmt.Errorf("argument of WHEN must be type boolean")
 			}
 			if !whenBool {
+				if err = restore(); err != nil {
+					return nil, err
+				}
 				continue
 			}
 		}
 
 		returnedValue, err := plpgsql.TriggerCall(ctx, function, t.runner, t.sch, oldRow, newRow, triggerVars)
+		restoreErr := restore()
 		if err != nil {
 			return nil, err
+		}
+		if restoreErr != nil {
+			return nil, restoreErr
 		}
 
 		if returnedValue == nil {
@@ -290,6 +347,25 @@ func (t *triggerExecutionIter) Next(ctx *sql.Context) (sql.Row, error) {
 	default:
 		return nextRow, nil
 	}
+}
+
+func (t *triggerExecutionIter) hasAfterRowTransitionTables() bool {
+	if t.timing != triggers.TriggerTiming_After {
+		return false
+	}
+	for _, trigger := range t.triggers {
+		if len(trigger.OldTransitionName) > 0 || len(trigger.NewTransitionName) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *triggerExecutionIter) installRowTransitionTables(ctx *sql.Context, trigger triggers.Trigger) (func() error, error) {
+	if len(trigger.OldTransitionName) == 0 && len(trigger.NewTransitionName) == 0 {
+		return func() error { return nil }, nil
+	}
+	return installTransitionTables(ctx, trigger, t.sch, t.oldRows, t.newRows)
 }
 
 func (t *triggerExecutionIter) nextStatement(ctx *sql.Context) (sql.Row, error) {

@@ -419,16 +419,25 @@ Do not check off an item until it has workload proof:
   INSERT/UPDATE/DELETE statement, and AFTER statement triggers may
   declare `REFERENCING OLD TABLE AS ...` / `NEW TABLE AS ...`
   transition relations that are queryable inside the trigger function.
+  AFTER row-level INSERT/UPDATE/DELETE triggers may also declare those
+  transition relations; each row firing receives its per-row `OLD` /
+  `NEW` value while the transition relation contains the full
+  statement-wide affected row set.
   BEFORE/AFTER TRUNCATE statement triggers now create, introspect via
   `pg_trigger` / `information_schema.triggers`, and fire with
   `TG_OP = 'TRUNCATE'`; row-level TRUNCATE triggers are rejected because
   PostgreSQL only supports TRUNCATE at statement level. Pinned by
   testing/go/trigger_test.go (TestStatementTriggerTransitionTables and
   the TRUNCATE statement trigger probe), including zero-row UPDATE transition
-  sets and plain AFTER statement trigger self-queries against the target table.
-- [ ] Support PostgreSQL row-level transition-table triggers. Today row-level
-  transition-table declarations are rejected with SQLSTATE 0A000. Tracked by
-  dg-7ug.7.
+  sets, row-level transition-table triggers, and plain AFTER statement trigger
+  self-queries against the target table.
+- [x] Support PostgreSQL row-level transition-table triggers. AFTER
+  INSERT/UPDATE/DELETE `FOR EACH ROW` triggers now accept `REFERENCING`
+  transition-table declarations and expose the full statement-wide OLD/NEW row
+  sets to each row firing. Pinned by
+  testing/go/trigger_test.go's
+  TestStatementTriggerTransitionTables/AFTER row triggers see statement
+  transition tables. Tracked by dg-7ug.7.
 - [x] Plain AFTER statement trigger self-query visibility against the target
   table - AFTER INSERT/UPDATE/DELETE statement triggers now close the DML
   source before firing trigger functions, so self-queries observe the

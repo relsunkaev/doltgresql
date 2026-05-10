@@ -44,9 +44,6 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 	if node.Deferrable != tree.TriggerNotDeferrable {
 		return NotYetSupportedError("DEFERRABLE is not yet supported for CREATE TRIGGER")
 	}
-	if len(node.Relations) > 0 && node.ForEachRow {
-		return NotYetSupportedError("row-level transition tables are not yet supported for CREATE TRIGGER")
-	}
 	funcName := node.FuncName.ToTableName()
 	var timing triggers.TriggerTiming
 	switch node.Time {

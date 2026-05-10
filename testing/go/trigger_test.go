@@ -988,5 +988,93 @@ func TestStatementTriggerTransitionTables(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "AFTER row triggers see statement transition tables",
+			SetUpScript: []string{
+				`CREATE TABLE row_transition_target (id INT PRIMARY KEY, v INT);`,
+				`CREATE TABLE row_transition_audit (
+					seq SERIAL PRIMARY KEY,
+					op TEXT,
+					row_id INT,
+					old_count BIGINT,
+					new_count BIGINT,
+					old_sum BIGINT,
+					new_sum BIGINT
+				);`,
+				`CREATE FUNCTION audit_insert_row_transition() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO row_transition_audit (
+							op, row_id, old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_OP, NEW.id,
+							0, (SELECT count(*) FROM new_rows),
+							0, (SELECT coalesce(sum(v), 0) FROM new_rows)
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION audit_update_row_transition() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO row_transition_audit (
+							op, row_id, old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_OP, NEW.id,
+							(SELECT count(*) FROM old_rows),
+							(SELECT count(*) FROM new_rows),
+							(SELECT coalesce(sum(v), 0) FROM old_rows),
+							(SELECT coalesce(sum(v), 0) FROM new_rows)
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION audit_delete_row_transition() RETURNS trigger AS $$
+					BEGIN
+						INSERT INTO row_transition_audit (
+							op, row_id, old_count, new_count, old_sum, new_sum
+						) VALUES (
+							TG_OP, OLD.id,
+							(SELECT count(*) FROM old_rows), 0,
+							(SELECT coalesce(sum(v), 0) FROM old_rows), 0
+						);
+						RETURN NULL;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER row_audit_insert
+					AFTER INSERT ON row_transition_target
+					REFERENCING NEW TABLE AS new_rows
+					FOR EACH ROW EXECUTE FUNCTION audit_insert_row_transition();`,
+				`CREATE TRIGGER row_audit_update
+					AFTER UPDATE ON row_transition_target
+					REFERENCING OLD TABLE AS old_rows NEW TABLE AS new_rows
+					FOR EACH ROW EXECUTE FUNCTION audit_update_row_transition();`,
+				`CREATE TRIGGER row_audit_delete
+					AFTER DELETE ON row_transition_target
+					REFERENCING OLD TABLE AS old_rows
+					FOR EACH ROW EXECUTE FUNCTION audit_delete_row_transition();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO row_transition_target VALUES (1, 10), (2, 20), (3, 30);`,
+				},
+				{
+					Query: `UPDATE row_transition_target SET v = v + 1 WHERE id IN (1, 2);`,
+				},
+				{
+					Query: `DELETE FROM row_transition_target WHERE id = 3;`,
+				},
+				{
+					Query: `SELECT op, row_id, old_count, new_count, old_sum, new_sum
+						FROM row_transition_audit ORDER BY seq;`,
+					Expected: []sql.Row{
+						{"INSERT", 1, int64(0), int64(3), int64(0), int64(60)},
+						{"INSERT", 2, int64(0), int64(3), int64(0), int64(60)},
+						{"INSERT", 3, int64(0), int64(3), int64(0), int64(60)},
+						{"UPDATE", 1, int64(2), int64(2), int64(30), int64(32)},
+						{"UPDATE", 2, int64(2), int64(2), int64(30), int64(32)},
+						{"DELETE", 3, int64(1), int64(0), int64(30), int64(0)},
+					},
+				},
+			},
+		},
 	})
 }
