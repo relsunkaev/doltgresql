@@ -32,7 +32,9 @@ func nodeForeignKeyConstraintTableDef(ctx *Context, childTable string, node *tre
 	case tree.MatchSimple:
 		// This is the default behavior
 	case tree.MatchFull:
-		return nil, errors.Errorf("MATCH FULL is not yet supported")
+		if len(node.FromCols) > 1 {
+			return nil, errors.Errorf("MATCH FULL on composite foreign keys is not yet supported")
+		}
 	case tree.MatchPartial:
 		return nil, errors.Errorf("MATCH PARTIAL is not yet supported")
 	default:

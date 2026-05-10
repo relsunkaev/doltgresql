@@ -51,6 +51,23 @@ func TestAlterTable(t *testing.T) {
 					ExpectedErr: "Foreign key violation",
 				},
 				{
+					Query:    "ALTER TABLE parent ADD CONSTRAINT match_full_single FOREIGN KEY (c1) REFERENCES child (pk) MATCH FULL;",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:       "INSERT INTO parent VALUES (20, 20, 20);",
+					ExpectedErr: "Foreign key violation",
+				},
+				{
+					// Single-column MATCH FULL has the same null behavior as MATCH SIMPLE.
+					Query:    "INSERT INTO parent VALUES (20, NULL, 20);",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH FULL;",
+					ExpectedErr: "MATCH FULL on composite foreign keys is not yet supported",
+				},
+				{
 					// Unsupported syntax: MATCH PARTIAL
 					Query:       "ALTER TABLE parent ADD FOREIGN KEY (c1, c2) REFERENCES child (pk, c1) MATCH PARTIAL;",
 					ExpectedErr: "MATCH PARTIAL is not yet supported",
