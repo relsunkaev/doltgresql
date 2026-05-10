@@ -32,6 +32,7 @@ type BtreePlannerBoundaryTable struct {
 	patternOpLookup  []btreePatternOpLookup
 	citextLookup     []citextBtreeLookup
 	partialLookup    []partialBtreeLookup
+	partialPattern   []partialBtreePatternLookup
 	preserveFullRows bool
 }
 
@@ -40,6 +41,11 @@ type btreePatternOpLookup struct {
 	columnName string
 	expression string
 	typ        sql.Type
+}
+
+type partialBtreePatternLookup struct {
+	btreePatternOpLookup
+	predicate string
 }
 
 type citextBtreeLookup struct {
@@ -83,6 +89,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	patternOpLookups := make([]btreePatternOpLookup, 0)
 	citextLookups := make([]citextBtreeLookup, 0)
 	partialLookups := make([]partialBtreeLookup, 0)
+	partialPatternLookups := make([]partialBtreePatternLookup, 0)
 	preserveFullRows := false
 	tableSchema := table.Schema(ctx)
 	for _, index := range indexes {
@@ -90,10 +97,16 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 			needsWrap = true
 			continue
 		}
-		if indexmetadata.Predicate(index.Comment()) != "" {
+		if predicate := indexmetadata.Predicate(index.Comment()); predicate != "" {
 			needsWrap = true
 			if lookup, ok := partialBtreeIndexLookup(ctx, index, tableSchema); ok {
 				partialLookups = append(partialLookups, lookup)
+			}
+			if lookup, ok := patternOpClassLookup(ctx, index, tableSchema); ok {
+				partialPatternLookups = append(partialPatternLookups, partialBtreePatternLookup{
+					btreePatternOpLookup: lookup,
+					predicate:            predicate,
+				})
 			}
 			continue
 		}
@@ -115,7 +128,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	if !needsWrap {
 		return table, false, nil
 	}
-	if len(patternOpLookups) == 0 && len(citextLookups) == 0 && len(partialLookups) == 0 {
+	if len(patternOpLookups) == 0 && len(citextLookups) == 0 && len(partialLookups) == 0 && len(partialPatternLookups) == 0 {
 		return &BtreePlannerBoundaryTable{underlying: table, preserveFullRows: preserveFullRows}, true, nil
 	}
 	return &BtreePlannerBoundaryTable{
@@ -123,6 +136,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 		patternOpLookup:  patternOpLookups,
 		citextLookup:     citextLookups,
 		partialLookup:    partialLookups,
+		partialPattern:   partialPatternLookups,
 		preserveFullRows: preserveFullRows,
 	}, true, nil
 }
@@ -150,6 +164,7 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 			patternOpLookup:  t.patternOpLookup,
 			citextLookup:     t.citextLookup,
 			partialLookup:    t.partialLookup,
+			partialPattern:   t.partialPattern,
 			preserveFullRows: t.preserveFullRows,
 		}, nil
 	}
@@ -166,6 +181,7 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 		patternOpLookup:  t.patternOpLookup,
 		citextLookup:     t.citextLookup,
 		partialLookup:    t.partialLookup,
+		partialPattern:   t.partialPattern,
 		preserveFullRows: t.preserveFullRows,
 	}, nil
 }
@@ -323,6 +339,10 @@ func (t *BtreePlannerBoundaryTable) LookupForExpressions(ctx *sql.Context, exprs
 	if err != nil || ok {
 		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
 	}
+	lookup, ok, err = t.lookupForPartialPatternLike(ctx, exprs...)
+	if err != nil || ok {
+		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
+	}
 	lookup, ok, err = t.lookupForCitextComparisons(ctx, exprs...)
 	if err != nil || ok {
 		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
@@ -384,44 +404,16 @@ func (t *BtreePlannerBoundaryTable) lookupForCitextComparisons(ctx *sql.Context,
 }
 
 func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr sql.Expression) (sql.IndexLookup, bool, error) {
-	expr = unwrapGMSCast(expr)
-	like, ok := expr.(*gmsexpression.Like)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	field, ok := unwrapGMSCast(like.Left()).(*gmsexpression.GetField)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	patternLiteral, ok := unwrapGMSCast(like.Right()).(*gmsexpression.Literal)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	pattern, ok := patternLiteral.Value().(string)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	escape, ok := literalLikeEscape(like)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	prefix, ok := textPatternPrefix(pattern, escape)
-	if !ok {
-		return sql.IndexLookup{}, false, nil
-	}
-	upper, ok := nextTextPatternPrefix(prefix)
+	fieldName, prefix, upper, ok := prefixLikeLookupBounds(expr)
 	if !ok {
 		return sql.IndexLookup{}, false, nil
 	}
 
 	for _, cached := range t.patternOpLookup {
-		if !strings.EqualFold(cached.columnName, field.Name()) {
+		if !strings.EqualFold(cached.columnName, fieldName) {
 			continue
 		}
-		builder := sql.NewMySQLIndexBuilder(ctx, cached.index)
-		builder.GreaterOrEqual(ctx, cached.expression, cached.typ, prefix)
-		builder.LessThan(ctx, cached.expression, cached.typ, upper)
-		lookup, err := builder.Build(ctx)
+		lookup, err := buildPatternLookup(ctx, cached, prefix, upper)
 		if err != nil {
 			return sql.IndexLookup{}, false, err
 		}
@@ -431,6 +423,46 @@ func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr 
 		return lookup, true, nil
 	}
 	return sql.IndexLookup{}, false, nil
+}
+
+func prefixLikeLookupBounds(expr sql.Expression) (fieldName string, prefix string, upper string, ok bool) {
+	expr = unwrapGMSCast(expr)
+	like, ok := expr.(*gmsexpression.Like)
+	if !ok {
+		return "", "", "", false
+	}
+	field, ok := unwrapGMSCast(like.Left()).(*gmsexpression.GetField)
+	if !ok {
+		return "", "", "", false
+	}
+	patternLiteral, ok := unwrapGMSCast(like.Right()).(*gmsexpression.Literal)
+	if !ok {
+		return "", "", "", false
+	}
+	pattern, ok := patternLiteral.Value().(string)
+	if !ok {
+		return "", "", "", false
+	}
+	escape, ok := literalLikeEscape(like)
+	if !ok {
+		return "", "", "", false
+	}
+	prefix, ok = textPatternPrefix(pattern, escape)
+	if !ok {
+		return "", "", "", false
+	}
+	upper, ok = nextTextPatternPrefix(prefix)
+	if !ok {
+		return "", "", "", false
+	}
+	return field.Name(), prefix, upper, true
+}
+
+func buildPatternLookup(ctx *sql.Context, cached btreePatternOpLookup, prefix string, upper string) (sql.IndexLookup, error) {
+	builder := sql.NewMySQLIndexBuilder(ctx, cached.index)
+	builder.GreaterOrEqual(ctx, cached.expression, cached.typ, prefix)
+	builder.LessThan(ctx, cached.expression, cached.typ, upper)
+	return builder.Build(ctx)
 }
 
 type citextComparisonLookup struct {

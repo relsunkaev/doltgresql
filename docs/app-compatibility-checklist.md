@@ -626,8 +626,9 @@ Do not check off an item until it has workload proof:
   non-target partial-unique conflicts are preserved for multi-unique
   `DO NOTHING`. The btree planner now hides partial indexes from generic
   costing and opts them back in only when the query's scalar filters imply
-  the partial-index predicate for simple column lookup shapes. DDL, DML, and
-  planner coverage in
+  the partial-index predicate for simple column lookup shapes, plus safe
+  prefix `LIKE` lookups through partial `text_pattern_ops` indexes. DDL, DML,
+  and planner coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
@@ -653,10 +654,17 @@ Do not check off an item until it has workload proof:
   Null-sensitive shapes such as `IS DISTINCT FROM` remain outside this slice.
   Coverage in server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.6.
+- [x] Use partial pattern-opclass btree indexes for prefix `LIKE` lookups.
+  Partial `text_pattern_ops` indexes now remain hidden from generic costing
+  but are opted back in when the query includes a safe fixed-prefix `LIKE`
+  predicate on the indexed column and separate scalar filters imply the
+  partial-index predicate. Non-implying filters and unsafe non-prefix `LIKE`
+  patterns stay on the table-scan path. Coverage in
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.7.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Cross-column proofs, broader expression-level
-  semantic implication, and planner deparsing for more predicate families
-  remain open.
+  semantic implication, and planner deparsing for additional predicate
+  families remain open.
   Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is

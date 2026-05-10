@@ -394,4 +394,24 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	notEqualNonImpliedQuery := `SELECT count(id) FROM partial_planner_status_ne WHERE tenant = 1 AND status = 'archived'`
 	assertCountResult(t, ctx, conn, notEqualNonImpliedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, notEqualNonImpliedQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_pattern (id INTEGER PRIMARY KEY, name TEXT NOT NULL, active BOOL NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_pattern VALUES
+		(1, 'alpha', true),
+		(2, 'alphabet', true),
+		(3, 'alpine', false),
+		(4, 'beta', true)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_pattern_name_idx ON partial_planner_pattern (name text_pattern_ops) WHERE active")
+
+	patternImpliedQuery := `SELECT count(id) FROM partial_planner_pattern WHERE active = true AND name LIKE 'alph%'`
+	assertCountResult(t, ctx, conn, patternImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, patternImpliedQuery, true)
+
+	patternNonImpliedQuery := `SELECT count(id) FROM partial_planner_pattern WHERE active = false AND name LIKE 'alp%'`
+	assertCountResult(t, ctx, conn, patternNonImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, patternNonImpliedQuery, false)
+
+	patternUnsafeQuery := `SELECT count(id) FROM partial_planner_pattern WHERE active = true AND name LIKE '%lph%'`
+	assertCountResult(t, ctx, conn, patternUnsafeQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, patternUnsafeQuery, false)
 }

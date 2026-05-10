@@ -121,6 +121,36 @@ func (t *BtreePlannerBoundaryTable) lookupForPartialIndexes(ctx *sql.Context, ex
 	return sql.IndexLookup{}, false, nil
 }
 
+func (t *BtreePlannerBoundaryTable) lookupForPartialPatternLike(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, bool, error) {
+	if len(t.partialPattern) == 0 {
+		return sql.IndexLookup{}, false, nil
+	}
+	queryPredicate, ok := plannerPredicateSQL(exprs)
+	if !ok {
+		return sql.IndexLookup{}, false, nil
+	}
+	for _, expr := range exprs {
+		fieldName, prefix, upper, ok := prefixLikeLookupBounds(expr)
+		if !ok {
+			continue
+		}
+		for _, cached := range t.partialPattern {
+			if !strings.EqualFold(cached.columnName, fieldName) || !indexpredicate.Implies(cached.predicate, queryPredicate) {
+				continue
+			}
+			lookup, err := buildPatternLookup(ctx, cached.btreePatternOpLookup, prefix, upper)
+			if err != nil {
+				return sql.IndexLookup{}, false, err
+			}
+			if lookup.IsEmpty() {
+				continue
+			}
+			return lookup, true, nil
+		}
+	}
+	return sql.IndexLookup{}, false, nil
+}
+
 func (p partialBtreeLookup) lookup(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, bool, error) {
 	builder := sql.NewMySQLIndexBuilder(ctx, p.index)
 	matched := false
