@@ -17,12 +17,15 @@ package _go
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dolthub/doltgresql/server/deferrable"
 )
 
 // TestDeferrableConstraintsProbe pins how DEFERRABLE FK DDL behaves
@@ -323,6 +326,150 @@ func TestDeferrableForeignKeyTransactionSemantics(t *testing.T) {
 	requireForeignKeyViolation(t, err)
 	_, err = conn.Exec(ctx, `ROLLBACK`)
 	require.NoError(t, err)
+}
+
+func TestDeferrableForeignKeyTimingSurvivesRestart(t *testing.T) {
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+	defer os.RemoveAll(dbDir)
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	for _, stmt := range []string{
+		`CREATE TABLE parent_restart (id INT PRIMARY KEY)`,
+		`CREATE TABLE child_restart_deferred (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_restart_deferred_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_restart(id)
+				DEFERRABLE INITIALLY DEFERRED
+		)`,
+		`CREATE TABLE child_restart_immediate (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_restart_immediate_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_restart(id)
+				DEFERRABLE INITIALLY IMMEDIATE
+		)`,
+		`SELECT DOLT_COMMIT('-Am', 'deferrable fk timing restart')`,
+	} {
+		_, err = conn.Current.Exec(ctx, stmt)
+		require.NoError(t, err, stmt)
+	}
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	deferrable.ResetForTests()
+
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	rows, err := conn.Current.Query(ctx, `
+		SELECT conname, condeferrable, condeferred, pg_get_constraintdef(oid)
+		FROM pg_constraint
+		WHERE conname IN (
+			'child_restart_deferred_parent_fk',
+			'child_restart_immediate_parent_fk'
+		)
+		ORDER BY conname;`)
+	require.NoError(t, err)
+	actual, _, err := ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []sql.Row{
+		{
+			"child_restart_deferred_parent_fk",
+			"t",
+			"t",
+			"FOREIGN KEY (parent_id) REFERENCES parent_restart(id) DEFERRABLE INITIALLY DEFERRED",
+		},
+		{
+			"child_restart_immediate_parent_fk",
+			"t",
+			"f",
+			"FOREIGN KEY (parent_id) REFERENCES parent_restart(id) DEFERRABLE",
+		},
+	}, actual)
+
+	_, err = conn.Current.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `INSERT INTO child_restart_deferred VALUES (1, 10)`)
+	require.NoError(t, err, "DEFERRABLE INITIALLY DEFERRED timing must survive restart")
+	_, err = conn.Current.Exec(ctx, `INSERT INTO parent_restart VALUES (10)`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `COMMIT`)
+	require.NoError(t, err)
+
+	_, err = conn.Current.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `SET CONSTRAINTS ALL DEFERRED`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `INSERT INTO child_restart_immediate VALUES (1, 20)`)
+	require.NoError(t, err, "DEFERRABLE INITIALLY IMMEDIATE timing must remain switchable after restart")
+	_, err = conn.Current.Exec(ctx, `INSERT INTO parent_restart VALUES (20)`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `COMMIT`)
+	require.NoError(t, err)
+
+	_, err = conn.Current.Exec(ctx, `BEGIN`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `INSERT INTO child_restart_immediate VALUES (2, 30)`)
+	requireForeignKeyViolation(t, err)
+	_, err = conn.Current.Exec(ctx, `ROLLBACK`)
+	require.NoError(t, err)
+}
+
+func TestFailedDeferrableForeignKeyDDLDoesNotPersistTiming(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalWithPort(t, "postgres", port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	for _, stmt := range []string{
+		`CREATE TABLE parent_failed_ddl (id INT PRIMARY KEY)`,
+		`CREATE TABLE child_failed_ddl (
+			id INT PRIMARY KEY,
+			parent_id INT,
+			CONSTRAINT child_failed_ddl_parent_fk
+				FOREIGN KEY (parent_id) REFERENCES parent_failed_ddl(id)
+		)`,
+	} {
+		_, err = conn.Current.Exec(ctx, stmt)
+		require.NoError(t, err, stmt)
+	}
+
+	_, err = conn.Current.Exec(ctx, `CREATE TABLE child_failed_ddl (
+		id INT PRIMARY KEY,
+		parent_id INT,
+		CONSTRAINT child_failed_ddl_parent_fk
+			FOREIGN KEY (parent_id) REFERENCES parent_failed_ddl(id)
+			DEFERRABLE INITIALLY DEFERRED
+	)`)
+	require.Error(t, err)
+
+	rows, err := conn.Current.Query(ctx, `
+		SELECT condeferrable, condeferred, pg_get_constraintdef(oid)
+		FROM pg_constraint
+		WHERE conname = 'child_failed_ddl_parent_fk';`)
+	require.NoError(t, err)
+	actual, _, err := ReadRows(rows, true)
+	require.NoError(t, err)
+	require.Equal(t, []sql.Row{{
+		"f",
+		"f",
+		"FOREIGN KEY (parent_id) REFERENCES parent_failed_ddl(id)",
+	}}, actual)
 }
 
 func requireForeignKeyViolation(t *testing.T, err error) {

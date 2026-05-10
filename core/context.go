@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/fkmetadata"
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/core/publications"
@@ -39,7 +40,8 @@ import (
 // and may be refreshed at any point, including during the middle of a query. Callers should not assume that
 // data stored in contextValues is persisted, and other types of data should not be added to contextValues.
 type contextValues struct {
-	seqs map[string]*sequences.Collection
+	seqs   map[string]*sequences.Collection
+	fkMeta map[string]*fkmetadata.Collection
 	// TODO: all these collection fields need to be mapped by database name as seqs above
 	types          *typecollection.TypeCollection
 	funcs          *functions.Collection
@@ -281,6 +283,30 @@ func GetExtensionsCollectionFromContext(ctx *sql.Context, database string) (*ext
 	return cv.exts, nil
 }
 
+// GetForeignKeyMetadataCollectionFromContext returns the foreign-key metadata collection from the context for the
+// database named. If no database is provided, the context's current database is used.
+// Will always return a collection if no error is returned.
+func GetForeignKeyMetadataCollectionFromContext(ctx *sql.Context, database string) (*fkmetadata.Collection, error) {
+	cv, err := getContextValues(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if cv.fkMeta == nil {
+		cv.fkMeta = make(map[string]*fkmetadata.Collection)
+	}
+	if cv.fkMeta[database] == nil {
+		_, root, err := getRootFromContextForDatabase(ctx, database)
+		if err != nil {
+			return nil, err
+		}
+		cv.fkMeta[database], err = fkmetadata.LoadMetadata(ctx, root)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return cv.fkMeta[database], nil
+}
+
 // GetFunctionsCollectionFromContext returns the functions collection from the given context. Will always return a
 // collection if no error is returned.
 func GetFunctionsCollectionFromContext(ctx *sql.Context) (*functions.Collection, error) {
@@ -489,6 +515,15 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		delete(cv.seqs, db)
 	}
 
+	if cv.fkMeta != nil && cv.fkMeta[db] != nil && cv.fkMeta[db].DiffersFrom(ctx, root) {
+		retRoot, err := cv.fkMeta[db].UpdateRoot(ctx, newRoot)
+		if err != nil {
+			return err
+		}
+		newRoot = retRoot.(*RootValue)
+		delete(cv.fkMeta, db)
+	}
+
 	if cv.funcs != nil && cv.funcs.DiffersFrom(ctx, root) {
 		retRoot, err := cv.funcs.UpdateRoot(ctx, newRoot)
 		if err != nil {
@@ -601,6 +636,11 @@ func databasesInContext(ctx *sql.Context, cv *contextValues) []string {
 			dbs[db] = struct{}{}
 		}
 	}
+	if cv.fkMeta != nil {
+		for db := range cv.fkMeta {
+			dbs[db] = struct{}{}
+		}
+	}
 	dbs[ctx.GetCurrentDatabase()] = struct{}{}
 
 	return slices.Sorted(maps.Keys(dbs))
@@ -629,6 +669,8 @@ func (cv *contextValues) clear(objID objinterface.RootObjectID) {
 		cv.pubs = nil
 	case objinterface.RootObjectID_Subscriptions:
 		cv.subs = nil
+	case objinterface.RootObjectID_ForeignKeyMetadata:
+		cv.fkMeta = nil
 	default:
 		panic("unhandled context clear object ID")
 	}

@@ -95,7 +95,10 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				parentTableName,
 				getColumnNamesString(fk.Item.ParentColumns),
 			)
-			timing := deferrable.ForeignKeyTiming(fk.Item)
+			timing, err := deferrable.ForeignKeyTimingForID(ctx, fk.OID, fk.Item)
+			if err != nil {
+				return false, err
+			}
 			if timing.Deferrable {
 				result += " DEFERRABLE"
 			}

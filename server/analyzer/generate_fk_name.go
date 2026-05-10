@@ -59,7 +59,9 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 				if fkForTiming.Table == "" {
 					fkForTiming.Table = n.Name()
 				}
-				deferrable.BindForeignKey(fkForTiming)
+				if err := deferrable.BindForeignKey(ctx, fkForTiming); err != nil {
+					return nil, transform.SameTree, err
+				}
 			}
 			if changedForeignKey {
 				newCreateTable := plan.NewCreateTable(n.Db, n.Name(), n.IfNotExists(), n.Temporary(), &plan.TableSpec{
@@ -83,13 +85,17 @@ func generateForeignKeyName(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					return nil, transform.SameTree, err
 				}
 				copiedFk.Name = generatedName
-				deferrable.BindForeignKey(copiedFk)
+				if err := deferrable.BindForeignKey(ctx, copiedFk); err != nil {
+					return nil, transform.SameTree, err
+				}
 				return &plan.CreateForeignKey{
 					DbProvider: n.DbProvider,
 					FkDef:      &copiedFk,
 				}, transform.NewTree, nil
 			} else {
-				deferrable.BindForeignKey(*n.FkDef)
+				if err := deferrable.BindForeignKey(ctx, *n.FkDef); err != nil {
+					return nil, transform.SameTree, err
+				}
 				return n, transform.SameTree, nil
 			}
 

@@ -40,6 +40,7 @@ const (
 	RootObjectID_Procedures
 	RootObjectID_Publications
 	RootObjectID_Subscriptions
+	RootObjectID_ForeignKeyMetadata
 )
 
 const (

@@ -45,6 +45,8 @@ table RootValue {
   publications:[ubyte]; // Serialized AddressMap.
 
   subscriptions:[ubyte]; // Serialized AddressMap.
+
+  foreign_key_metadata:[ubyte]; // Serialized AddressMap.
 }
 
 table DatabaseSchema {

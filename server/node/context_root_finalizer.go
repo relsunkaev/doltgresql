@@ -15,9 +15,12 @@
 package node
 
 import (
+	"io"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/deferrable"
 )
 
 // ContextRootFinalizer is a node that finalizes any changes persisted within the context.
@@ -64,6 +67,8 @@ func (rf *ContextRootFinalizer) Resolved() bool {
 func (rf *ContextRootFinalizer) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
 	childIter, err := b.Build(ctx, rf.child, r)
 	if err != nil {
+		deferrable.DiscardPendingForeignKeys(ctx)
+		core.ClearContextValues(ctx)
 		return nil, err
 	}
 	if childIter == nil {
@@ -93,20 +98,35 @@ func (rf *ContextRootFinalizer) WithChildren(ctx *sql.Context, children ...sql.N
 // rootFinalizerIter is the iterator for *ContextRootFinalizer that finalizes the context.
 type rootFinalizerIter struct {
 	childIter sql.RowIter
+	hadErr    bool
 }
 
 var _ sql.MutableRowIter = (*rootFinalizerIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (r *rootFinalizerIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return r.childIter.Next(ctx)
+	row, err := r.childIter.Next(ctx)
+	if err != nil && err != io.EOF {
+		r.hadErr = true
+	}
+	return row, err
 }
 
 // Close implements the interface sql.RowIter.
 func (r *rootFinalizerIter) Close(ctx *sql.Context) error {
 	err := r.childIter.Close(ctx)
+	if r.hadErr {
+		deferrable.DiscardPendingForeignKeys(ctx)
+		core.ClearContextValues(ctx)
+		return err
+	}
 	if err != nil {
+		_ = deferrable.FlushPendingForeignKeys(ctx)
 		_ = core.CloseContextRootFinalizer(ctx)
+		return err
+	}
+	if err := deferrable.FlushPendingForeignKeys(ctx); err != nil {
+		core.ClearContextValues(ctx)
 		return err
 	}
 	return core.CloseContextRootFinalizer(ctx)

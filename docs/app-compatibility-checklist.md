@@ -354,19 +354,21 @@ Do not check off an item until it has workload proof:
   COMMIT with SQLSTATE `23503` and roll the transaction back.
   Autocommit violations still reject at the statement boundary.
   `pg_constraint.condeferrable` / `pg_constraint.condeferred` expose
-  the captured timing for constraints created in the current server
-  process, including `DEFERRABLE INITIALLY DEFERRED`, `DEFERRABLE
-  INITIALLY IMMEDIATE`, and `NOT DEFERRABLE`; `pg_get_constraintdef()`
-  deparses the same timing metadata using PostgreSQL's suffix shape.
+  the captured timing for persisted constraints, including
+  `DEFERRABLE INITIALLY DEFERRED`, `DEFERRABLE INITIALLY IMMEDIATE`,
+  and `NOT DEFERRABLE`; `pg_get_constraintdef()` deparses the same
+  timing metadata using PostgreSQL's suffix shape.
   `SET CONSTRAINTS ALL|<name> DEFERRED/IMMEDIATE` now updates
   transaction-local timing for supported child-side FK checks; switching
   to `IMMEDIATE` validates pending deferred rows immediately and raises
   SQLSTATE `23503` on unresolved violations. Pinned by
   testing/go/deferrable_constraints_probe_test.go.
-- [ ] Persist deferrability metadata in the underlying FK storage so
-  `DEFERRABLE` / `INITIALLY DEFERRED` behavior survives server restart and
-  reaches PostgreSQL parity beyond constraints created in the current server
-  process. Tracked by dg-980.
+- [x] Persist deferrability metadata in Doltgres-owned root metadata so
+  `DEFERRABLE` / `INITIALLY DEFERRED` behavior survives server restart,
+  keeps `pg_constraint` / `pg_get_constraintdef()` output stable after
+  reopening the database, and preserves `SET CONSTRAINTS` transaction
+  behavior after the in-memory registry is cleared. Pinned by
+  `TestDeferrableForeignKeyTimingSurvivesRestart`.
 - [x] Privilege and ownership DDL - `ALTER TABLE OWNER TO <role>`,
   `GRANT/REVOKE SELECT ON <table> TO <role>`, and `ALTER DEFAULT
   PRIVILEGES ...` are accepted so pg_dump's ownership and privilege

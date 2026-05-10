@@ -25,6 +25,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/conflicts"
 	"github.com/dolthub/doltgresql/core/extensions"
+	"github.com/dolthub/doltgresql/core/fkmetadata"
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
@@ -50,8 +51,14 @@ var (
 		&procedures.Collection{},
 		&publications.Collection{},
 		&subscriptions.Collection{},
+		&fkmetadata.Collection{},
 	}
 )
+
+func isVisibleRootObjectID(objID objinterface.RootObjectID) bool {
+	return objID != objinterface.RootObjectID_Conflicts &&
+		objID != objinterface.RootObjectID_ForeignKeyMetadata
+}
 
 // CreateConflict creates a conflict on the given root for the two root objects.
 func CreateConflict(ctx context.Context, rightSrc doltdb.Rootish, o doltdb.RootObject, t doltdb.RootObject, a doltdb.RootObject) (doltdb.RootObject, *merge.MergeStats, error) {
@@ -398,7 +405,7 @@ func HandleMerge(ctx context.Context, mro merge.MergeRootObject) (doltdb.RootObj
 func LoadAllCollections(ctx context.Context, root objinterface.RootValue) ([]objinterface.Collection, error) {
 	colls := make([]objinterface.Collection, 0, len(globalCollections))
 	for i, emptyColl := range globalCollections {
-		if emptyColl == nil || i == int(objinterface.RootObjectID_Conflicts) {
+		if emptyColl == nil || !isVisibleRootObjectID(objinterface.RootObjectID(i)) {
 			continue
 		}
 		coll, err := emptyColl.LoadCollection(ctx, root)
@@ -526,7 +533,7 @@ func ResolveName(ctx context.Context, root objinterface.RootValue, name doltdb.T
 	resolvedObjID := objinterface.RootObjectID_None
 
 	for i, emptyColl := range globalCollections {
-		if emptyColl == nil || i == int(objinterface.RootObjectID_Conflicts) {
+		if emptyColl == nil || !isVisibleRootObjectID(objinterface.RootObjectID(i)) {
 			continue
 		}
 		coll, err := emptyColl.LoadCollection(ctx, root)
@@ -559,7 +566,7 @@ func resolveNameFromObjects(ctx context.Context, name doltdb.TableName, rootObje
 	resolvedRawID := id.Null
 
 	for i, emptyColl := range globalCollections {
-		if emptyColl == nil || i == int(objinterface.RootObjectID_Conflicts) {
+		if emptyColl == nil || !isVisibleRootObjectID(objinterface.RootObjectID(i)) {
 			continue
 		}
 		rName, rID, err := emptyColl.ResolveNameFromObjects(ctx, name, rootObjects)

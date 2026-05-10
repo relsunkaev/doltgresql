@@ -454,7 +454,10 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				conFkey[i] = parentTableColToIdxMap[expr]
 			}
 
-			timing := deferrable.ForeignKeyTiming(foreignKey.Item)
+			timing, err := deferrable.ForeignKeyTimingForID(ctx, foreignKey.OID, foreignKey.Item)
+			if err != nil {
+				return false, err
+			}
 			constraint := &pgConstraint{
 				oid:             foreignKey.OID.AsId(),
 				oidNative:       id.Cache().ToOID(foreignKey.OID.AsId()),
