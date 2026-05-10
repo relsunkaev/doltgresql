@@ -1008,6 +1008,16 @@ Do not check off an item until it has workload proof:
   remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.22.
+- [x] Use deterministic `repeat(expr, count)` predicates in partial-index
+  implication paths. Two-argument repeat calls now serialize as comparable
+  predicate keys, planner filters can deparse them, partial unique DML
+  enforcement evaluates PostgreSQL-style non-positive repeat counts as an empty
+  string, and `ON CONFLICT` arbiter inference accepts the exact-expression
+  shape; wrong repeat counts, result values, and raw source-string semantic
+  rewrites remain rejected. Runtime `repeat(text, int)` also no longer panics
+  on negative counts. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.24.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

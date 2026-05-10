@@ -35,6 +35,10 @@ var repeat_text_int32 = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, str any, num any) (any, error) {
-		return strings.Repeat(str.(string), int(num.(int32))), nil
+		count := int(num.(int32))
+		if count <= 0 {
+			return "", nil
+		}
+		return strings.Repeat(str.(string), count), nil
 	},
 }

@@ -1227,6 +1227,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "lpad" || name == "rpad" {
 		return p.evalPad(ctx, row, expr, name)
 	}
+	if name == "repeat" {
+		return p.evalRepeat(ctx, row, expr)
+	}
 	if name == "replace" {
 		return p.evalReplace(ctx, row, expr)
 	}
@@ -1616,6 +1619,38 @@ func predicateRpadText(text string, length int64, fill string) string {
 		result = result[:length]
 	}
 	return string(result)
+}
+
+func (p *partialIndexPredicate) evalRepeat(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat expects two arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	count, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || count.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat does not support %T", str.value)
+	}
+	repeatCount, ok := predicateSignedIntegerValue(count.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat does not support %T", count.value)
+	}
+	if repeatCount <= 0 {
+		return predicateValue{value: ""}, nil
+	}
+	if repeatCount > int64(int(^uint(0)>>1)) {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function repeat count %d is too large", repeatCount)
+	}
+	return predicateValue{value: strings.Repeat(text, int(repeatCount))}, nil
 }
 
 func (p *partialIndexPredicate) evalSubstring(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {

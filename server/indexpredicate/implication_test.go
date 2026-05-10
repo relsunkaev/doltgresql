@@ -252,6 +252,33 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesRepeatFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"repeat(code, 2) = 'activeactive'", "repeat(code, 2) = 'activeactive'"},
+		{"repeat(code, 2) IN ('activeactive', 'pendingpending')", "repeat(code, 2) = 'activeactive'"},
+		{"repeat(code, 0) = ''", "repeat(code, 0) = ''"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"repeat(code, 2) = 'activeactive'", "code = 'active'"},
+		{"repeat(code, 2) = 'activeactive'", "repeat(code, 3) = 'activeactiveactive'"},
+		{"repeat(code, 2) = 'activeactive'", "repeat(code, 2) = 'pendingpending'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesTextLengthFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

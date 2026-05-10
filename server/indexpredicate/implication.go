@@ -647,6 +647,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "lpad" || name == "rpad" {
 		return predicateVariableArityFunctionCallExprKey(name, fn.Exprs, 2, 3)
 	}
+	if name == "repeat" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
+	}
 	if name == "replace" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
 	}

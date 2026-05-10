@@ -1514,6 +1514,32 @@ ON CONFLICT (code) WHERE btrim(code, '_') = 'x_active' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports repeat predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_repeat (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_repeat_code_idx ON partial_arb_repeat (code) WHERE repeat(code, 2) = 'activeactive';",
+				"INSERT INTO partial_arb_repeat VALUES (1, 'active', 'old-active'), (2, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_repeat VALUES (3, 'active', 'repeat-upsert')
+ON CONFLICT (code) WHERE repeat(code, 2) = 'activeactive' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_repeat ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "active", "repeat-upsert"},
+						{2, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_repeat VALUES (4, 'active', 'wrong-predicate')
+ON CONFLICT (code) WHERE repeat(code, 3) = 'activeactiveactive' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports abs predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_abs (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",

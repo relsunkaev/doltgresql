@@ -506,6 +506,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports repeat predicate",
+			SetUpScript: []string{
+				`CREATE TABLE repeat_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX repeat_codes_user_code_idx
+					ON repeat_codes (user_id)
+					WHERE repeat(code, 2) = 'activeactive';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO repeat_codes VALUES
+						(1, 10, 'active'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO repeat_codes VALUES (3, 10, 'active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO repeat_codes VALUES (4, 10, 'activeactive');`,
+				},
+				{
+					Query:       `UPDATE repeat_codes SET code = 'active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports left and right predicates",
 			SetUpScript: []string{
 				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1206,6 +1233,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	customLtrimQuery := `SELECT count(id) FROM partial_planner_custom_trim WHERE tenant = 1 AND ltrim(code, '0_') = 'active'`
 	assertCountResult(t, ctx, conn, customLtrimQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, customLtrimQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_repeat (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_repeat VALUES
+		(1, 1, 'active'),
+		(2, 1, 'pending'),
+		(3, 1, 'activeactive'),
+		(4, 2, 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_repeat_tenant_idx ON partial_planner_repeat (tenant) WHERE repeat(code, 2) = 'activeactive'")
+
+	repeatImpliedQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND repeat(code, 2) = 'activeactive'`
+	assertCountResult(t, ctx, conn, repeatImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, repeatImpliedQuery, true)
+
+	repeatWrongCountQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND repeat(code, 3) = 'activeactiveactive'`
+	assertCountResult(t, ctx, conn, repeatWrongCountQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, repeatWrongCountQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_length (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_length VALUES

@@ -4078,6 +4078,10 @@ func TestStringFunction(t *testing.T) {
 					Expected: []sql.Row{{"***name"}},
 				},
 				{
+					Query:    "SELECT repeat('Pg'::text, 4), repeat('Pg'::text, 0), repeat('Pg'::text, -4);",
+					Expected: []sql.Row{{"PgPgPgPg", "", ""}},
+				},
+				{
 					Query:    "SELECT starts_with('profile', 'p'), starts_with('profile', 'x'), starts_with('profile', ''), starts_with(NULL::text, 'p');",
 					Expected: []sql.Row{{"t", "f", "t", nil}},
 				},
