@@ -402,7 +402,7 @@ Do not check off an item until it has workload proof:
   plus `FOUND`, query loops over `RECORD`, `PERFORM`, and raised
   exceptions inside anonymous blocks. Dynamic `EXECUTE` supports
   `format(...)` command strings for DDL and DML, including scalar
-  `USING` expressions evaluated at runtime and basic `EXECUTE ... INTO`
+  `USING` expressions evaluated at runtime and `EXECUTE ... INTO`
   variable assignment. Other procedural
   languages are rejected explicitly. Pinned by
   testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
@@ -415,8 +415,10 @@ Do not check off an item until it has workload proof:
 - [x] Expand anonymous `DO $$` coverage beyond conditional-DDL blocks to the
   broader PL/pgSQL interpreter surface that application migrations can embed
   inside DO statements, without claiming full PL/pgSQL parity.
-- [ ] Complete dynamic PL/pgSQL `EXECUTE INTO` edge cases for `STRICT`,
-  no-row, and multi-row semantics. Tracked by dg-7ug.11.
+- [x] Dynamic PL/pgSQL `EXECUTE INTO` row-count semantics - non-`STRICT`
+  assignment keeps the first row from multi-row results, while `INTO STRICT`
+  raises on no-row and multi-row results. Pinned by
+  testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

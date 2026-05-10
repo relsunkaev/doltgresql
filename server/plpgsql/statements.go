@@ -189,6 +189,7 @@ type DynamicExecute struct {
 	Query  string
 	Params []string
 	Target string
+	Strict bool
 }
 
 var _ Statement = DynamicExecute{}
@@ -215,6 +216,7 @@ func (stmt DynamicExecute) AppendOperations(ops *[]InterpreterOperation, stack *
 		Options: map[string]string{
 			"dynamic":           "true",
 			"queryBindingCount": strconv.Itoa(len(referencedVariables)),
+			"strict":            strconv.FormatBool(stmt.Strict),
 		},
 	})
 	return nil

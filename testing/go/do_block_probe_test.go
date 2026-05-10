@@ -246,6 +246,54 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block handles dynamic EXECUTE INTO row count semantics",
+			SetUpScript: []string{
+				`CREATE TABLE do_dynamic_into_many (id INT PRIMARY KEY, label TEXT);`,
+				`CREATE TABLE do_dynamic_into_many_seen (id INT PRIMARY KEY, label TEXT);`,
+				`INSERT INTO do_dynamic_into_many VALUES (1, 'first row'), (2, 'second row');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							got_id INT;
+							got_label TEXT;
+						BEGIN
+							EXECUTE 'SELECT id, label FROM do_dynamic_into_many ORDER BY id'
+								INTO got_id, got_label;
+							INSERT INTO do_dynamic_into_many_seen VALUES (got_id, got_label);
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT label FROM do_dynamic_into_many_seen WHERE id = 1;`,
+					Expected: []sql.Row{{"first row"}},
+				},
+				{
+					Query: `DO $$
+						DECLARE
+							got_id INT;
+						BEGIN
+							EXECUTE 'SELECT id FROM do_dynamic_into_many WHERE id = 99'
+								INTO STRICT got_id;
+						END;
+					$$;`,
+					ExpectedErr: `query returned no rows`,
+				},
+				{
+					Query: `DO $$
+						DECLARE
+							got_id INT;
+						BEGIN
+							EXECUTE 'SELECT id FROM do_dynamic_into_many ORDER BY id'
+								INTO STRICT got_id;
+						END;
+					$$;`,
+					ExpectedErr: `query returned more than one row`,
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

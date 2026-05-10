@@ -149,6 +149,7 @@ type plpgSQL_stmt_case struct {
 type plpgSQL_stmt_dynexecute struct {
 	LineNumber int32     `json:"lineno"`
 	Into       bool      `json:"into"`
+	Strict     bool      `json:"strict"`
 	Query      expr      `json:"query"`
 	Target     datum     `json:"target"`
 	Params     []sqlstmt `json:"params"`
@@ -455,6 +456,7 @@ func (stmt *plpgSQL_stmt_dynexecute) Convert() (DynamicExecute, error) {
 		Query:  stmt.Query.Expression.Query,
 		Params: params,
 		Target: target,
+		Strict: stmt.Strict,
 	}, nil
 }
 

@@ -219,7 +219,11 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if err = setFoundVariable(ctx, stack, found); err != nil {
 					return nil, err
 				}
-				if len(rows) > 1 {
+				strict := operation.Options["strict"] == "true"
+				if strict && !found {
+					return nil, errors.New("query returned no rows")
+				}
+				if strict && len(rows) > 1 {
 					return nil, errors.New("query returned more than one row")
 				}
 				if vars := strings.Split(operation.Target, ","); len(vars) > 1 {

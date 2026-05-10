@@ -130,3 +130,33 @@ func TestParseDynamicExecuteExpressionBindings(t *testing.T) {
 		t.Fatalf("secondary data = %#v", executeOp.SecondaryData)
 	}
 }
+
+func TestParseDynamicExecuteIntoStrict(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			got_id INT;
+		BEGIN
+			EXECUTE 'SELECT 1' INTO STRICT got_id;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var executeOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Execute {
+			executeOp = &ops[i]
+			break
+		}
+	}
+	if executeOp == nil {
+		t.Fatalf("expected dynamic execute operation, found %#v", ops)
+	}
+	if executeOp.Target != "got_id" {
+		t.Fatalf("target = %q", executeOp.Target)
+	}
+	if executeOp.Options["strict"] != "true" {
+		t.Fatalf("strict option = %q, expected true; op: %#v", executeOp.Options["strict"], executeOp)
+	}
+}
