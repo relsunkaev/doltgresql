@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/types"
 
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
@@ -118,6 +119,80 @@ func TestBtreePlannerBoundaryFiltersInvalidIndex(t *testing.T) {
 	}
 }
 
+func TestPlannerSafeSortOptionIndex(t *testing.T) {
+	tableSchema := sql.Schema{
+		{Name: "nullable_score", Type: types.Int32, Nullable: true},
+		{Name: "required_score", Type: types.Int32, Nullable: false},
+	}
+	tests := []struct {
+		name     string
+		metadata indexmetadata.Metadata
+		want     bool
+	}{
+		{
+			name: "nullable_asc_nulls_first_matches_native_order",
+			metadata: sortOptionTestMetadata("nullable_score", false, indexmetadata.IndexColumnOption{
+				NullsOrder: indexmetadata.NullsOrderFirst,
+			}),
+			want: true,
+		},
+		{
+			name: "nullable_desc_nulls_last_matches_reverse_native_order",
+			metadata: sortOptionTestMetadata("nullable_score", false, indexmetadata.IndexColumnOption{
+				Direction:  indexmetadata.SortDirectionDesc,
+				NullsOrder: indexmetadata.NullsOrderLast,
+			}),
+			want: true,
+		},
+		{
+			name: "nullable_desc_default_nulls_first_stays_fenced",
+			metadata: sortOptionTestMetadata("nullable_score", false, indexmetadata.IndexColumnOption{
+				Direction: indexmetadata.SortDirectionDesc,
+			}),
+			want: false,
+		},
+		{
+			name: "nullable_asc_nulls_last_stays_fenced",
+			metadata: sortOptionTestMetadata("nullable_score", false, indexmetadata.IndexColumnOption{
+				NullsOrder: indexmetadata.NullsOrderLast,
+			}),
+			want: false,
+		},
+		{
+			name: "not_null_desc_default_is_safe",
+			metadata: sortOptionTestMetadata("required_score", false, indexmetadata.IndexColumnOption{
+				Direction: indexmetadata.SortDirectionDesc,
+			}),
+			want: true,
+		},
+		{
+			name: "expression_index_stays_fenced",
+			metadata: sortOptionTestMetadata("lower(nullable_score::text)", true, indexmetadata.IndexColumnOption{
+				NullsOrder: indexmetadata.NullsOrderFirst,
+			}),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idx := stubIndex{comment: indexmetadata.EncodeComment(tt.metadata)}
+			if got := plannerSafeSortOptionIndex(idx, tableSchema); got != tt.want {
+				t.Fatalf("plannerSafeSortOptionIndex got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func sortOptionTestMetadata(column string, expression bool, option indexmetadata.IndexColumnOption) indexmetadata.Metadata {
+	return indexmetadata.Metadata{
+		AccessMethod:      indexmetadata.AccessMethodBtree,
+		Columns:           []string{column},
+		StorageColumns:    []string{column},
+		ExpressionColumns: []bool{expression},
+		SortOptions:       []indexmetadata.IndexColumnOption{option},
+	}
+}
+
 // stubIndexedTable is a sql.Table + sql.IndexAddressable backed by a
 // fixed slice of sql.Index, used for unit-testing the planner-boundary
 // wrapper without standing up real Dolt storage.
@@ -128,15 +203,17 @@ type stubIndexedTable struct {
 var _ sql.Table = (*stubIndexedTable)(nil)
 var _ sql.IndexAddressable = (*stubIndexedTable)(nil)
 
-func (t *stubIndexedTable) Name() string                                                          { return "stub" }
-func (t *stubIndexedTable) String() string                                                        { return "stub" }
-func (t *stubIndexedTable) Schema(*sql.Context) sql.Schema                                        { return nil }
-func (t *stubIndexedTable) Collation() sql.CollationID                                            { return sql.Collation_Default }
-func (t *stubIndexedTable) Partitions(*sql.Context) (sql.PartitionIter, error)                    { return nil, nil }
-func (t *stubIndexedTable) PartitionRows(*sql.Context, sql.Partition) (sql.RowIter, error)        { return nil, nil }
-func (t *stubIndexedTable) GetIndexes(*sql.Context) ([]sql.Index, error)                          { return t.indexes, nil }
-func (t *stubIndexedTable) IndexedAccess(*sql.Context, sql.IndexLookup) sql.IndexedTable          { return nil }
-func (t *stubIndexedTable) PreciseMatch() bool                                                    { return false }
+func (t *stubIndexedTable) Name() string                                       { return "stub" }
+func (t *stubIndexedTable) String() string                                     { return "stub" }
+func (t *stubIndexedTable) Schema(*sql.Context) sql.Schema                     { return nil }
+func (t *stubIndexedTable) Collation() sql.CollationID                         { return sql.Collation_Default }
+func (t *stubIndexedTable) Partitions(*sql.Context) (sql.PartitionIter, error) { return nil, nil }
+func (t *stubIndexedTable) PartitionRows(*sql.Context, sql.Partition) (sql.RowIter, error) {
+	return nil, nil
+}
+func (t *stubIndexedTable) GetIndexes(*sql.Context) ([]sql.Index, error)                 { return t.indexes, nil }
+func (t *stubIndexedTable) IndexedAccess(*sql.Context, sql.IndexLookup) sql.IndexedTable { return nil }
+func (t *stubIndexedTable) PreciseMatch() bool                                           { return false }
 
 // stubIndex is a minimal sql.Index used by build-state filter tests.
 // Only Comment is meaningful; the other accessors return zero values
@@ -147,18 +224,18 @@ type stubIndex struct {
 
 var _ sql.Index = stubIndex{}
 
-func (s stubIndex) ID() string                                                 { return "stub" }
-func (s stubIndex) Database() string                                           { return "" }
-func (s stubIndex) Table() string                                              { return "" }
-func (s stubIndex) Expressions() []string                                      { return nil }
-func (s stubIndex) IsUnique() bool                                             { return false }
-func (s stubIndex) IsSpatial() bool                                            { return false }
-func (s stubIndex) IsFullText() bool                                           { return false }
-func (s stubIndex) IsVector() bool                                             { return false }
-func (s stubIndex) Comment() string                                            { return s.comment }
-func (s stubIndex) IndexType() string                                          { return "BTREE" }
-func (s stubIndex) IsGenerated() bool                                          { return false }
+func (s stubIndex) ID() string                                                    { return "stub" }
+func (s stubIndex) Database() string                                              { return "" }
+func (s stubIndex) Table() string                                                 { return "" }
+func (s stubIndex) Expressions() []string                                         { return nil }
+func (s stubIndex) IsUnique() bool                                                { return false }
+func (s stubIndex) IsSpatial() bool                                               { return false }
+func (s stubIndex) IsFullText() bool                                              { return false }
+func (s stubIndex) IsVector() bool                                                { return false }
+func (s stubIndex) Comment() string                                               { return s.comment }
+func (s stubIndex) IndexType() string                                             { return "BTREE" }
+func (s stubIndex) IsGenerated() bool                                             { return false }
 func (s stubIndex) ColumnExpressionTypes(*sql.Context) []sql.ColumnExpressionType { return nil }
-func (s stubIndex) CanSupport(*sql.Context, ...sql.Range) bool                 { return false }
-func (s stubIndex) CanSupportOrderBy(sql.Expression) bool                      { return false }
-func (s stubIndex) PrefixLengths() []uint16                                    { return nil }
+func (s stubIndex) CanSupport(*sql.Context, ...sql.Range) bool                    { return false }
+func (s stubIndex) CanSupportOrderBy(sql.Expression) bool                         { return false }
+func (s stubIndex) PrefixLengths() []uint16                                       { return nil }

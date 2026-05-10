@@ -110,7 +110,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 			}
 			continue
 		}
-		if metadataOnlySortOptionIndex(index, tableSchema) {
+		if btreeSortOptionIndex(index) {
 			needsWrap = true
 			preserveFullRows = true
 		}

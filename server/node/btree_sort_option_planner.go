@@ -49,13 +49,18 @@ func (i metadataOnlyOrderedIndex) ExtendedColumnExpressionTypes(ctx *sql.Context
 }
 
 func metadataOnlySortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
+	return btreeSortOptionIndex(index) && !plannerSafeSortOptionIndex(index, tableSchema)
+}
+
+func btreeSortOptionIndex(index sql.Index) bool {
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return false
 	}
-	if plannerSafeSortOptionIndex(index, tableSchema) {
-		return false
-	}
-	for _, option := range indexmetadata.SortOptions(index.Comment()) {
+	return hasSortOption(indexmetadata.SortOptions(index.Comment()))
+}
+
+func hasSortOption(sortOptions []indexmetadata.IndexColumnOption) bool {
+	for _, option := range sortOptions {
 		if strings.TrimSpace(option.Direction) != "" || strings.TrimSpace(option.NullsOrder) != "" {
 			return true
 		}
@@ -65,7 +70,7 @@ func metadataOnlySortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
 
 func plannerSafeSortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
 	sortOptions := indexmetadata.SortOptions(index.Comment())
-	if len(sortOptions) == 0 || tableSchema == nil {
+	if !hasSortOption(sortOptions) || tableSchema == nil {
 		return false
 	}
 	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
@@ -84,11 +89,25 @@ func plannerSafeSortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
 			return false
 		}
 		schemaIndex := tableSchema.IndexOfColName(column.StorageName)
-		if schemaIndex < 0 || tableSchema[schemaIndex].Nullable {
+		if schemaIndex < 0 {
 			return false
 		}
+		if !tableSchema[schemaIndex].Nullable {
+			continue
+		}
+		if nativeNullableSortOption(option) {
+			continue
+		}
+		return false
 	}
 	return true
+}
+
+func nativeNullableSortOption(option indexmetadata.IndexColumnOption) bool {
+	direction := strings.ToLower(strings.TrimSpace(option.Direction))
+	nullsOrder := strings.ToLower(strings.TrimSpace(option.NullsOrder))
+	return (direction == "" && nullsOrder == indexmetadata.NullsOrderFirst) ||
+		(direction == indexmetadata.SortDirectionDesc && nullsOrder == indexmetadata.NullsOrderLast)
 }
 
 func metadataOnlySortOptionIndexColumnsAvailable(index sql.Index, tableSchema sql.Schema) bool {

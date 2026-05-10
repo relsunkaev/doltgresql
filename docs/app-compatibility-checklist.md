@@ -1328,8 +1328,9 @@ Do not check off an item until it has workload proof:
   combinations. DDL still emits warnings that physical descending
   and NULLS LAST index scan ordering are metadata-only; the metadata
   is preserved through pg_index. The btree planner boundary now fences
-  metadata-only DESC / NULLS sort options from sort-elision while still
-  allowing predicate lookup through the same index. Pinned by
+  metadata-only DESC / NULLS sort options from sort-elision unless
+  `NOT NULL` keys or native nullable ordering make the scan shape safe,
+  while still allowing predicate lookup through the same index. Pinned by
   testing/go/index_opclass_nulls_probe_test.go and
   testing/go/index_benchmark_test.go.
 - [x] Fence metadata-only btree sort options from ordered-scan planning.
@@ -1343,6 +1344,14 @@ Do not check off an item until it has workload proof:
   option shapes because null placement cannot change the physical order, while
   nullable keys remain fenced. Pinned by testing/go/index_benchmark_test.go.
   Tracked by dg-7ug.8.3.2.
+- [x] Enable ordered-scan planning for nullable btree sort-option indexes whose
+  explicit null placement matches the current iterator's native nullable order
+  or its reverse. `ASC NULLS FIRST` and `DESC NULLS LAST` indexes now stay
+  planner-visible and return correct nullable ordering; `ASC NULLS LAST` and
+  `DESC NULLS FIRST` nullable physical-ordering support remains fenced. Pinned
+  by testing/go/index_benchmark_test.go and
+  server/node/btree_planner_boundary_table_test.go. Tracked by
+  dg-7ug.8.3.4.1.
 - [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
   index storage and PostgreSQL-style planner preference. Today those
   per-column scan choices are metadata-preserved but not stored as
