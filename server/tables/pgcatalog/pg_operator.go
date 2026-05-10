@@ -44,8 +44,12 @@ func (p PgOperatorHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOperatorHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	operators, err := appendVectorOperators(ctx, defaultPostgresOperators)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOperatorRowIter{
-		operators: defaultPostgresOperators,
+		operators: operators,
 		idx:       0,
 	}, nil
 }

@@ -552,6 +552,83 @@ AAAA
 					Expected: []sql.Row{{"vector", "public"}},
 				},
 				{
+					Query: `SELECT amname, amtype::text
+FROM pg_catalog.pg_am
+WHERE amname IN ('hnsw', 'ivfflat')
+ORDER BY amname;`,
+					Expected: []sql.Row{
+						{"hnsw", "i"},
+						{"ivfflat", "i"},
+					},
+				},
+				{
+					Query: `SELECT am.amname, opc.opcname, typ.typname, opc.opcdefault
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+WHERE (am.amname = 'btree' AND opc.opcname = 'vector_ops')
+	OR (am.amname IN ('hnsw', 'ivfflat')
+		AND opc.opcname IN ('vector_l2_ops', 'vector_ip_ops', 'vector_cosine_ops', 'vector_l1_ops', 'bit_hamming_ops', 'bit_jaccard_ops'))
+ORDER BY am.amname, opc.opcname;`,
+					Expected: []sql.Row{
+						{"btree", "vector_ops", "vector", "t"},
+						{"hnsw", "bit_hamming_ops", "bit", "f"},
+						{"hnsw", "bit_jaccard_ops", "bit", "f"},
+						{"hnsw", "vector_cosine_ops", "vector", "f"},
+						{"hnsw", "vector_ip_ops", "vector", "f"},
+						{"hnsw", "vector_l1_ops", "vector", "f"},
+						{"hnsw", "vector_l2_ops", "vector", "f"},
+						{"ivfflat", "bit_hamming_ops", "bit", "f"},
+						{"ivfflat", "vector_cosine_ops", "vector", "f"},
+						{"ivfflat", "vector_ip_ops", "vector", "f"},
+						{"ivfflat", "vector_l2_ops", "vector", "t"},
+					},
+				},
+				{
+					Query: `SELECT oprname
+FROM pg_catalog.pg_operator
+WHERE oprname IN ('<->', '<~>', '<%>')
+ORDER BY oprname;`,
+					Expected: []sql.Row{
+						{"<%>"},
+						{"<->"},
+						{"<~>"},
+					},
+				},
+				{
+					Query: `SELECT am.amname, opf.opfname, amop.amopstrategy, amop.amoppurpose, sort_opf.opfname
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+JOIN pg_catalog.pg_opfamily sort_opf ON sort_opf.oid = amop.amopsortfamily
+WHERE am.amname = 'hnsw'
+	AND opf.opfname = 'vector_l2_ops'
+	AND amop.amopstrategy = 1;`,
+					Expected: []sql.Row{{"hnsw", "vector_l2_ops", int16(1), "o", "float_ops"}},
+				},
+				{
+					Query: `SELECT am.amname, opf.opfname, array_to_string(array_agg(amproc.amprocnum::text || ':' || amproc.amproc ORDER BY amproc.amprocnum), ',')
+FROM pg_catalog.pg_amproc amproc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE (am.amname = 'ivfflat' AND opf.opfname = 'vector_cosine_ops')
+	OR (am.amname = 'hnsw' AND opf.opfname = 'bit_jaccard_ops')
+GROUP BY am.amname, opf.opfname
+ORDER BY am.amname, opf.opfname;`,
+					Expected: []sql.Row{
+						{"hnsw", "bit_jaccard_ops", "1:jaccard_distance,3:hnsw_bit_support"},
+						{"ivfflat", "vector_cosine_ops", "1:vector_negative_inner_product,2:vector_norm,3:vector_spherical_distance,4:vector_norm"},
+					},
+				},
+				{
+					Query:       `CREATE INDEX embeddings_hnsw_idx ON embeddings USING hnsw (embedding vector_l2_ops);`,
+					ExpectedErr: `index method hnsw is not yet supported`,
+				},
+				{
+					Query:       `CREATE INDEX embeddings_ivfflat_idx ON embeddings USING ivfflat (embedding vector_l2_ops);`,
+					ExpectedErr: `index method ivfflat is not yet supported`,
+				},
+				{
 					Query:    `SELECT embedding FROM embeddings WHERE id = 1;`,
 					Expected: []sql.Row{{"[1,2,3]"}},
 				},

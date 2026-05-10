@@ -49,6 +49,10 @@ func (p PgAmprocHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql
 	if err != nil {
 		return nil, err
 	}
+	amprocs, err = appendVectorAmprocs(ctx, amprocs)
+	if err != nil {
+		return nil, err
+	}
 	return &pgAmprocRowIter{
 		amprocs: amprocs,
 		idx:     0,

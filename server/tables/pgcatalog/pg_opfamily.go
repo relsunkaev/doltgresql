@@ -49,6 +49,10 @@ func (p PgOpfamilyHandler) RowIter(ctx *sql.Context, partition sql.Partition) (s
 	if err != nil {
 		return nil, err
 	}
+	opfamilies, err = appendVectorOpfamilies(ctx, opfamilies)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOpfamilyRowIter{
 		opfamilies: opfamilies,
 		idx:        0,

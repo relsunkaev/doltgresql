@@ -49,6 +49,10 @@ func (p PgOpclassHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sq
 	if err != nil {
 		return nil, err
 	}
+	opclasses, err = appendVectorOpclasses(ctx, opclasses)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOpclassRowIter{
 		opclasses: opclasses,
 		idx:       0,

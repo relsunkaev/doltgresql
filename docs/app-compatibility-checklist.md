@@ -285,6 +285,15 @@ Do not check off an item until it has workload proof:
   explicit casts from those array types to `vector(n)`, implicit and explicit
   casts from `vector` to `real[]`, NULL-array rejection, and typmod dimension
   mismatch errors.
+  pgvector catalog introspection now exposes the extension-created `hnsw` and
+  `ivfflat` access methods, dense-vector `vector_l2_ops`, `vector_ip_ops`,
+  `vector_cosine_ops`, HNSW-only `vector_l1_ops`, bit `bit_hamming_ops` /
+  `bit_jaccard_ops`, btree `vector_ops`, and their `pg_opfamily`,
+  `pg_amop`, `pg_amproc`, and distance-operator rows after
+  `CREATE EXTENSION vector`. Actual ANN index execution remains an explicit
+  unsupported boundary: `CREATE INDEX ... USING hnsw` and
+  `CREATE INDEX ... USING ivfflat` still return SQLSTATE `0A000`
+  (`index method ... is not yet supported`).
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
@@ -293,11 +302,12 @@ Do not check off an item until it has workload proof:
   helper execution beyond the registered unsupported routine boundaries and
   beyond the native UUID,
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
-  ASCII-armor subset, pgvector indexes/opclasses, halfvec and sparsevec
-  families, and bit index/opclass surfaces beyond the tested bit Hamming /
-  Jaccard distance functions and operators plus dense-vector IO, equality,
-  distance, ordering, arithmetic, binary quantization, aggregate support
-  functions, aggregate execution, and cast subset,
+  ASCII-armor subset, pgvector ANN index execution plus halfvec and sparsevec
+  families beyond the catalog-visible dense-vector and bit opclass boundaries
+  and beyond the tested bit Hamming / Jaccard distance functions and operators
+  plus dense-vector IO, equality, distance, ordering, arithmetic, binary
+  quantization, aggregate support functions, aggregate execution, and cast
+  subset,
   executable `btree_gist` GiST indexes/exclusion semantics, its
   internal `gbtreekey*` storage types and `opckeytype` parity, and
   unsupported `btree_gist` type families such as `money`, MAC address,
