@@ -1270,9 +1270,19 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	case "md5":
 		return predicateValue{value: fmt.Sprintf("%x", md5.Sum([]byte(text)))}, nil
+	case "reverse":
+		return predicateValue{value: predicateReverseText(text)}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+func predicateReverseText(text string) string {
+	runes := []rune(text)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 func predicateAsciiText(text string) int64 {

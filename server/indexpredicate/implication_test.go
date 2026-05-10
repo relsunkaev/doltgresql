@@ -592,6 +592,33 @@ func TestImpliesSubstringFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesReverseFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"reverse(code) = 'nimdA'", "reverse(code) = 'nimdA'"},
+		{"reverse(code) IN ('nimdA', 'ahplA')", "reverse(code) = 'nimdA'"},
+		{"reverse(code) IS NOT NULL", "reverse(code) = 'nimdA'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"reverse(code) = 'nimdA'", "reverse(code) = 'larimdA'"},
+		{"reverse(code) = 'nimdA'", "lower(code) = 'admin'"},
+		{"reverse(code) = 'nimdA'", "code = 'Admin'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

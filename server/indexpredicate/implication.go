@@ -738,7 +738,7 @@ func predicateCanonicalUnaryFunction(name string) (string, bool) {
 		return name, true
 	case "octet_length":
 		return name, true
-	case "ascii", "lower", "upper", "btrim", "ltrim", "rtrim", "md5":
+	case "ascii", "lower", "upper", "btrim", "ltrim", "rtrim", "md5", "reverse":
 		return name, true
 	case "char_length", "character_length", "length":
 		return "length", true

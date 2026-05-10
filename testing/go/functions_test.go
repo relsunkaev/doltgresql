@@ -4146,6 +4146,16 @@ func TestStringFunction(t *testing.T) {
 			},
 		},
 		{
+			Name:        "reverse",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT reverse('Admin'), reverse('åctive');`,
+					Expected: []sql.Row{{"nimdA", "evitcå"}},
+				},
+			},
+		},
+		{
 			Name:        "split_part",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

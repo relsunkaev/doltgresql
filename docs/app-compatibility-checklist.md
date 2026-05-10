@@ -940,6 +940,15 @@ Do not check off an item until it has workload proof:
   rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
   and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.16.
+- [x] Use deterministic `reverse(expr)` predicates in partial-index implication
+  paths. Unary `reverse(...)` calls now serialize as comparable predicate
+  keys, planner filters can deparse them, partial unique DML enforcement
+  evaluates rune-order reversal aligned with the runtime function, and
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
+  reversed values and raw source-string semantic rewrites remain rejected.
+  Coverage in server/indexpredicate/implication_test.go,
+  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.17.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

@@ -648,6 +648,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports reverse predicate",
+			SetUpScript: []string{
+				`CREATE TABLE reverse_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX reverse_codes_user_code_idx
+					ON reverse_codes (user_id)
+					WHERE reverse(code) = 'nimdA';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO reverse_codes VALUES
+						(1, 10, 'Admin'),
+						(2, 10, 'Alpha');`,
+				},
+				{
+					Query:       `INSERT INTO reverse_codes VALUES (3, 10, 'Admin');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO reverse_codes VALUES (4, 10, 'admin');`,
+				},
+				{
+					Query:       `UPDATE reverse_codes SET code = 'Admin' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1183,6 +1210,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	substringWrongCountQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND substring(code, 1, 2) = 'Ad'`
 	assertCountResult(t, ctx, conn, substringWrongCountQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, substringWrongCountQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_reverse (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_reverse VALUES
+		(1, 1, 'Admin'),
+		(2, 1, 'Alpha'),
+		(3, 1, 'Admiral'),
+		(4, 2, 'Admin')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_reverse_tenant_idx ON partial_planner_reverse (tenant) WHERE reverse(code) = 'nimdA'")
+
+	reverseImpliedQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND reverse(code) = 'nimdA'`
+	assertCountResult(t, ctx, conn, reverseImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, reverseImpliedQuery, true)
+
+	reverseRawSourceQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND code = 'Admin'`
+	assertCountResult(t, ctx, conn, reverseRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, reverseRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
