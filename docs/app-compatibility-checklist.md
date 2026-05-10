@@ -870,6 +870,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.11.4.
+- [x] Use deterministic `left(expr, int)` and `right(expr, int)` predicates in
+  partial-index implication paths. These two-argument text functions now
+  serialize as comparable predicate keys, planner filters can deparse them,
+  runtime and partial unique DML enforcement count characters for positive and
+  negative lengths, and `ON CONFLICT` arbiter inference accepts the same exact-
+  expression shape; mismatched functions, lengths, result values, and raw
+  string semantic rewrites remain rejected. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.10.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

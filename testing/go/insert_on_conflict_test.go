@@ -1027,6 +1027,58 @@ ON CONFLICT (user_id) WHERE code LIKE 'pending%' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports left predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_left (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_left_user_idx ON partial_arb_left (user_id) WHERE left(code, 2) = 'åc';",
+				"INSERT INTO partial_arb_left VALUES (1, 10, 'åctive-a', 'old-active'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_left VALUES (3, 10, 'åctor', 'left-upsert')
+ON CONFLICT (user_id) WHERE left(code, 2) = 'åc' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_left ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "åctive-a", "left-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_left VALUES (4, 10, 'åction', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE left(code, 4) = 'åcti' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT partial unique index supports right predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_right (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_right_user_idx ON partial_arb_right (user_id) WHERE right(code, -1) = 'ctive';",
+				"INSERT INTO partial_arb_right VALUES (1, 20, 'åctive', 'old-active'), (2, 20, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_right VALUES (3, 20, 'bctive', 'right-upsert')
+ON CONFLICT (user_id) WHERE right(code, -1) = 'ctive' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_right ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 20, "åctive", "right-upsert"},
+						{2, 20, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_right VALUES (4, 20, 'cctive', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE right(code, 2) = 've' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

@@ -439,6 +439,53 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports left and right predicates",
+			SetUpScript: []string{
+				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX left_codes_user_code_idx
+					ON left_codes (user_id)
+					WHERE left(code, 2) = 'åc';`,
+				`CREATE TABLE right_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX right_codes_user_code_idx
+					ON right_codes (user_id)
+					WHERE right(code, -1) = 'ctive';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO left_codes VALUES
+						(1, 10, 'åctive'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO left_codes VALUES (3, 10, 'åctor');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO left_codes VALUES (4, 10, 'archive');`,
+				},
+				{
+					Query:       `UPDATE left_codes SET code = 'åction' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO right_codes VALUES
+						(1, 20, 'åctive'),
+						(2, 20, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO right_codes VALUES (3, 20, 'bctive');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO right_codes VALUES (4, 20, 'inactive');`,
+				},
+				{
+					Query:       `UPDATE right_codes SET code = 'cctive' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -837,6 +884,43 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	likePrefixUnsafeQuery := `SELECT count(id) FROM partial_planner_like_prefix WHERE tenant = 1 AND code LIKE 'act_ve%'`
 	assertCountResult(t, ctx, conn, likePrefixUnsafeQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, likePrefixUnsafeQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_left (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_left VALUES
+		(1, 1, 'åctive-a'),
+		(2, 1, 'åctor'),
+		(3, 1, 'archive'),
+		(4, 2, 'åctive-b')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_left_tenant_idx ON partial_planner_left (tenant) WHERE left(code, 2) = 'åc'")
+
+	leftImpliedQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND left(code, 2) = 'åc'`
+	assertCountResult(t, ctx, conn, leftImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, leftImpliedQuery, true)
+
+	leftWrongLengthQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND left(code, 4) = 'åcti'`
+	assertCountResult(t, ctx, conn, leftWrongLengthQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, leftWrongLengthQuery, false)
+
+	leftSemanticQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND code = 'åctive-a'`
+	assertCountResult(t, ctx, conn, leftSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, leftSemanticQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_right (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_right VALUES
+		(1, 1, 'active'),
+		(2, 1, 'bctive'),
+		(3, 1, 'inactive'),
+		(4, 1, 'åctive'),
+		(5, 2, 'cctive')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_right_tenant_idx ON partial_planner_right (tenant) WHERE right(code, -1) = 'ctive'")
+
+	rightImpliedQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND right(code, -1) = 'ctive'`
+	assertCountResult(t, ctx, conn, rightImpliedQuery, 3)
+	assertBenchmarkPlanShape(t, ctx, conn, rightImpliedQuery, true)
+
+	rightWrongLengthQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND right(code, 2) = 've'`
+	assertCountResult(t, ctx, conn, rightWrongLengthQuery, 4)
+	assertBenchmarkPlanShape(t, ctx, conn, rightWrongLengthQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

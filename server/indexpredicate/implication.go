@@ -638,6 +638,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "starts_with" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
+	if name == "left" || name == "right" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
+	}
 	if len(fn.Exprs) != 1 {
 		return "", false
 	}
@@ -925,6 +928,15 @@ func predicateNumericConstant(expr tree.Expr) (float64, bool) {
 	switch expr := expr.(type) {
 	case *tree.ParenExpr:
 		return predicateNumericConstant(expr.Expr)
+	case *tree.UnaryExpr:
+		if expr.Operator != tree.UnaryMinus {
+			return 0, false
+		}
+		value, ok := predicateNumericConstant(expr.Expr)
+		if !ok {
+			return 0, false
+		}
+		return -value, true
 	case *tree.DInt:
 		return float64(*expr), true
 	case *tree.NumVal:

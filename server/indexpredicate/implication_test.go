@@ -420,6 +420,36 @@ func TestImpliesPrefixLikePredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesLeftRightFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"left(code, 3) = 'act'", "left(code, 3) = 'act'"},
+		{"left(code, 3) IN ('act', 'run')", "left(code, 3) = 'act'"},
+		{"right(code, 2) IS NOT NULL", "right(code, 2) = 'ok'"},
+		{"right(code, -1) = 'ctive'", "right(code, -1) = 'ctive'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"left(code, 3) = 'act'", "left(code, 3) = 'run'"},
+		{"left(code, 3) = 'act'", "left(code, 4) = 'acti'"},
+		{"left(code, 3) = 'act'", "right(code, 3) = 'act'"},
+		{"right(code, 2) = 'ok'", "right(code, -2) = 'ok'"},
+		{"left(code, 3) = 'act'", "code = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

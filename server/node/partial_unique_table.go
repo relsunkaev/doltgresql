@@ -1141,6 +1141,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return predicateValue{value: expr.FormattedString()}, nil
 	case *tree.ParenExpr:
 		return p.evalValue(ctx, row, expr.Expr)
+	case *tree.UnaryExpr:
+		return p.evalUnary(ctx, row, expr)
 	case *tree.CoalesceExpr:
 		return p.evalCoalesce(ctx, row, expr)
 	case *tree.FuncExpr:
@@ -1170,6 +1172,24 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 	}
 }
 
+func (p *partialIndexPredicate) evalUnary(ctx *sql.Context, row sql.Row, expr *tree.UnaryExpr) (predicateValue, error) {
+	if expr.Operator != tree.UnaryMinus {
+		return predicateValue{}, errors.Errorf("partial unique index predicate unary operator %s is not yet supported", expr.Operator.String())
+	}
+	value, err := p.evalValue(ctx, row, expr.Expr)
+	if err != nil || value.value == nil {
+		return predicateValue{}, err
+	}
+	intValue, ok := predicateSignedIntegerValue(value.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate unary minus does not support %T", value.value)
+	}
+	if intValue == -1<<63 {
+		return predicateValue{}, errors.New("partial unique index predicate unary minus overflowed int64")
+	}
+	return predicateValue{value: -intValue}, nil
+}
+
 func (p *partialIndexPredicate) evalCoalesce(ctx *sql.Context, row sql.Row, expr *tree.CoalesceExpr) (predicateValue, error) {
 	for _, child := range expr.Exprs {
 		value, err := p.evalValue(ctx, row, child)
@@ -1193,6 +1213,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	}
 	if name == "starts_with" {
 		return p.evalStartsWith(ctx, row, expr)
+	}
+	if name == "left" || name == "right" {
+		return p.evalLeftRight(ctx, row, expr, name)
 	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
@@ -1289,6 +1312,86 @@ func (p *partialIndexPredicate) evalStartsWith(ctx *sql.Context, row sql.Row, ex
 		return predicateValue{}, errors.Errorf("partial unique index predicate function starts_with does not support %T", prefix.value)
 	}
 	return predicateValue{value: strings.HasPrefix(strText, prefixText)}, nil
+}
+
+func (p *partialIndexPredicate) evalLeftRight(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects two arguments", name)
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	count, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || count.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, str.value)
+	}
+	n, ok := predicateSignedIntegerValue(count.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, count.value)
+	}
+	switch name {
+	case "left":
+		return predicateValue{value: predicateLeftText(text, n)}, nil
+	case "right":
+		return predicateValue{value: predicateRightText(text, n)}, nil
+	default:
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func predicateLeftText(text string, n int64) string {
+	runeCount := int64(utf8.RuneCountInString(text))
+	if n >= 0 {
+		if n >= runeCount {
+			return text
+		}
+		return text[:predicateByteIndexAfterRunes(text, n)]
+	}
+	keep := runeCount + n
+	if keep <= 0 {
+		return ""
+	}
+	return text[:predicateByteIndexAfterRunes(text, keep)]
+}
+
+func predicateRightText(text string, n int64) string {
+	runeCount := int64(utf8.RuneCountInString(text))
+	if n >= 0 {
+		if n >= runeCount {
+			return text
+		}
+		return text[predicateByteIndexAfterRunes(text, runeCount-n):]
+	}
+	if n == -1<<63 {
+		return ""
+	}
+	skip := -n
+	if skip >= runeCount {
+		return ""
+	}
+	return text[predicateByteIndexAfterRunes(text, skip):]
+}
+
+func predicateByteIndexAfterRunes(text string, count int64) int {
+	if count <= 0 {
+		return 0
+	}
+	seen := int64(0)
+	for idx := range text {
+		if seen == count {
+			return idx
+		}
+		seen++
+	}
+	return len(text)
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

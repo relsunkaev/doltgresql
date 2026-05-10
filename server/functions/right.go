@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"unicode/utf8"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -35,16 +37,24 @@ var right_text_int32 = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, strInt any, nInt any) (any, error) {
 		str := strInt.(string)
 		n := nInt.(int32)
-		if n >= 0 {
-			if len(str)-int(n) < 0 {
-				return str, nil
-			}
-			return str[len(str)-int(n):], nil
-		} else {
-			if int(-n) > len(str) {
-				return "", nil
-			}
-			return str[int(-n):], nil
-		}
+		return rightText(str, int64(n)), nil
 	},
+}
+
+func rightText(str string, n int64) string {
+	runeCount := int64(utf8.RuneCountInString(str))
+	if n >= 0 {
+		if n >= runeCount {
+			return str
+		}
+		return str[byteIndexAfterRunes(str, runeCount-n):]
+	}
+	if n == -1<<63 {
+		return ""
+	}
+	skip := -n
+	if skip >= runeCount {
+		return ""
+	}
+	return str[byteIndexAfterRunes(str, skip):]
 }

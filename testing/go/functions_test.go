@@ -4042,6 +4042,10 @@ func TestStringFunction(t *testing.T) {
 					Expected: []sql.Row{{"na"}},
 				},
 				{
+					Query:    "SELECT left('åctive'::text, 1), left('åctive'::text, -5), right('åctive'::text, 5), right('åctive'::text, -1);",
+					Expected: []sql.Row{{"å", "å", "ctive", "ctive"}},
+				},
+				{
 					Query:    "SELECT length('name'::name);",
 					Expected: []sql.Row{{4}},
 				},
