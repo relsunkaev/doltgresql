@@ -244,6 +244,12 @@ Do not check off an item until it has workload proof:
   `vector_dims`, `vector_norm`, `l2_normalize`, `subvector`,
   `binary_quantize`, `vector_add`, `vector_sub`, `vector_mul`,
   `vector_concat`, and the `+`, `-`, `*`, and `||` vector operators.
+  Dense vector casts cover
+  `array_to_vector(integer[]|real[]|double precision[]|numeric[], integer,
+  boolean)`, `vector_to_float4(vector, integer, boolean)`, assignment and
+  explicit casts from those array types to `vector(n)`, implicit and explicit
+  casts from `vector` to `real[]`, NULL-array rejection, and typmod dimension
+  mismatch errors.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
@@ -252,9 +258,9 @@ Do not check off an item until it has workload proof:
   DES/xDES-style password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
-  non-dense vector families, and helper/cast functions beyond the tested
-  dense-vector IO/equality/distance/ordering/arithmetic/binary-quantization
-  subset,
+  non-dense vector families, and aggregate/private helper functions beyond
+  the tested dense-vector IO, equality, distance, ordering, arithmetic,
+  binary quantization, and cast subset,
   `btree_gist` operator classes, and hstore operators/functions/casts outside
   testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.

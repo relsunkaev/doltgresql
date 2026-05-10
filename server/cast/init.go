@@ -48,6 +48,7 @@ func Init() {
 	initTimeTZ()
 	initVarBit()
 	initVarChar()
+	initVector()
 
 	// This is a hack to get around import cycles. The types package needs these references for type conversions in
 	// some contexts

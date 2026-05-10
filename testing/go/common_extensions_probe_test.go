@@ -377,6 +377,8 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`INSERT INTO embeddings VALUES (1, '[1,2,3]');`,
 				`INSERT INTO embeddings VALUES (2, '[4,6,3]');`,
 				`INSERT INTO embeddings VALUES (3, '[1,0,0]');`,
+				`CREATE TABLE vector_casts (id integer primary key, embedding vector(3));`,
+				`INSERT INTO vector_casts VALUES (1, ARRAY[1,2,3]::integer[]);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -419,6 +421,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"0011", "000"}},
 				},
 				{
+					Query:    `SELECT embedding FROM vector_casts WHERE id = 1;`,
+					Expected: []sql.Row{{"[1,2,3]"}},
+				},
+				{
+					Query:    `SELECT array_to_vector(ARRAY[1,2,3]::integer[], 3, true)::text, array_to_vector(ARRAY[1.5,2.25]::real[], -1, false)::text, array_to_vector(ARRAY[1.25,2.5]::double precision[], -1, false)::text, array_to_vector(ARRAY[1.75,2.125]::numeric[], -1, false)::text;`,
+					Expected: []sql.Row{{"[1,2,3]", "[1.5,2.25]", "[1.25,2.5]", "[1.75,2.125]"}},
+				},
+				{
+					Query:    `SELECT array_to_string(vector_to_float4('[1.5,2.25]'::vector, -1, false), ','), array_to_string(('[3,4,5]'::vector)::real[], ','), (ARRAY[6,7,8]::integer[]::vector(3))::text;`,
+					Expected: []sql.Row{{"1.5,2.25", "3,4,5", "[6,7,8]"}},
+				},
+				{
 					Query:    `SELECT ('[1,2,3]'::vector + '[4,5,6]'::vector)::text, ('[1,2,3]'::vector - '[4,5,6]'::vector)::text, ('[1,2,3]'::vector * '[4,5,6]'::vector)::text, ('[1,2,3]'::vector || '[4,5,6]'::vector)::text;`,
 					Expected: []sql.Row{{"[5,7,9]", "[-3,-3,-3]", "[4,10,18]", "[1,2,3,4,5,6]"}},
 				},
@@ -429,6 +443,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:       `SELECT subvector('[1,2,3]'::vector, 2, 0);`,
 					ExpectedErr: `vector must have at least 1 dimension`,
+				},
+				{
+					Query:       `SELECT array_to_vector(ARRAY[1,NULL,3]::integer[], -1, false);`,
+					ExpectedErr: `array must not contain nulls`,
+				},
+				{
+					Query:       `SELECT ARRAY[1,2]::integer[]::vector(3);`,
+					ExpectedErr: `expected 3 dimensions, not 2`,
 				},
 				{
 					Query:    `SELECT id FROM embeddings ORDER BY embedding <-> '[4,6,3]'::vector, id;`,

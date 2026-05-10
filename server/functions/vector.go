@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -33,6 +34,11 @@ func initVector() {
 	framework.RegisterFunction(vector_typmod_in)
 	framework.RegisterFunction(vector_typmod_out)
 	framework.RegisterFunction(vector_cmp)
+	framework.RegisterFunction(array_to_vector_int32)
+	framework.RegisterFunction(array_to_vector_float32)
+	framework.RegisterFunction(array_to_vector_float64)
+	framework.RegisterFunction(array_to_vector_numeric)
+	framework.RegisterFunction(vector_to_float4)
 }
 
 // vector_in represents the PostgreSQL function of vector type IO input.
@@ -150,4 +156,61 @@ var vector_cmp = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
 		return int32(pgtypes.CompareVectors(val1.([]float32), val2.([]float32))), nil
 	},
+}
+
+var array_to_vector_int32 = framework.Function3{
+	Name:       "array_to_vector",
+	Return:     pgtypes.Vector,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Int32Array, pgtypes.Int32, pgtypes.Bool},
+	Strict:     true,
+	Callable: arrayToVectorCallable(func(val any) (float32, error) {
+		return float32(val.(int32)), nil
+	}),
+}
+
+var array_to_vector_float32 = framework.Function3{
+	Name:       "array_to_vector",
+	Return:     pgtypes.Vector,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Float32Array, pgtypes.Int32, pgtypes.Bool},
+	Strict:     true,
+	Callable: arrayToVectorCallable(func(val any) (float32, error) {
+		return val.(float32), nil
+	}),
+}
+
+var array_to_vector_float64 = framework.Function3{
+	Name:       "array_to_vector",
+	Return:     pgtypes.Vector,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Float64Array, pgtypes.Int32, pgtypes.Bool},
+	Strict:     true,
+	Callable: arrayToVectorCallable(func(val any) (float32, error) {
+		return float32(val.(float64)), nil
+	}),
+}
+
+var array_to_vector_numeric = framework.Function3{
+	Name:       "array_to_vector",
+	Return:     pgtypes.Vector,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.NumericArray, pgtypes.Int32, pgtypes.Bool},
+	Strict:     true,
+	Callable: arrayToVectorCallable(func(val any) (float32, error) {
+		f, _ := val.(decimal.Decimal).Float64()
+		return float32(f), nil
+	}),
+}
+
+var vector_to_float4 = framework.Function3{
+	Name:       "vector_to_float4",
+	Return:     pgtypes.Float32Array,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Int32, pgtypes.Bool},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+		return pgtypes.VectorToFloat32Array(val1.([]float32)), nil
+	},
+}
+
+func arrayToVectorCallable(convert func(any) (float32, error)) func(*sql.Context, [4]*pgtypes.DoltgresType, any, any, any) (any, error) {
+	return func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+		return pgtypes.VectorFromArrayValues(val1.([]any), val2.(int32), convert)
+	}
 }

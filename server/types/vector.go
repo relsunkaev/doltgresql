@@ -150,6 +150,57 @@ func ValidateVectorDimensions(values []float32, typmod int32) error {
 	return nil
 }
 
+// ValidateVectorElements checks pgvector's element-level finite-value boundary.
+func ValidateVectorElements(values []float32) error {
+	for _, value := range values {
+		if math.IsNaN(float64(value)) {
+			return errors.Errorf("NaN not allowed in vector")
+		}
+		if math.IsInf(float64(value), 0) {
+			return errors.Errorf("infinite value not allowed in vector")
+		}
+	}
+	return nil
+}
+
+// VectorFromArrayValues converts a one-dimensional PostgreSQL array value to a dense vector.
+func VectorFromArrayValues(values []any, typmod int32, convert func(any) (float32, error)) ([]float32, error) {
+	dimensions := len(values)
+	if dimensions < 1 {
+		return nil, errors.Errorf("vector must have at least 1 dimension")
+	}
+	if dimensions > MaxVectorDimensions {
+		return nil, errors.Errorf("vector cannot have more than %d dimensions", MaxVectorDimensions)
+	}
+	if typmod != -1 && dimensions != int(typmod) {
+		return nil, errors.Errorf("expected %d dimensions, not %d", typmod, dimensions)
+	}
+	result := make([]float32, dimensions)
+	for i, value := range values {
+		if value == nil {
+			return nil, errors.Errorf("array must not contain nulls")
+		}
+		converted, err := convert(value)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = converted
+	}
+	if err := ValidateVectorElements(result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// VectorToFloat32Array converts a dense vector to a PostgreSQL real[] value.
+func VectorToFloat32Array(values []float32) []any {
+	result := make([]any, len(values))
+	for i, value := range values {
+		result[i] = value
+	}
+	return result
+}
+
 // CompareVectors lexicographically compares two vectors. This supports Dolt storage keys and equality operators.
 func CompareVectors(left, right []float32) int {
 	minLength := len(left)
