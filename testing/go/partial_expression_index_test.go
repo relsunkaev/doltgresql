@@ -540,6 +540,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports md5 predicate",
+			SetUpScript: []string{
+				`CREATE TABLE hashed_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX hashed_codes_user_code_idx
+					ON hashed_codes (user_id)
+					WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO hashed_codes VALUES
+						(1, 10, 'active'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO hashed_codes VALUES (3, 10, 'active');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO hashed_codes VALUES (4, 10, 'ACTIVE');`,
+				},
+				{
+					Query:       `UPDATE hashed_codes SET code = 'active' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1007,6 +1034,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	translateWrongArgumentQuery := `SELECT count(id) FROM partial_planner_translate WHERE tenant = 1 AND translate(code, '-.', '') = 'activea'`
 	assertCountResult(t, ctx, conn, translateWrongArgumentQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, translateWrongArgumentQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_md5 (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_md5 VALUES
+		(1, 1, 'active'),
+		(2, 1, 'pending'),
+		(3, 1, 'ACTIVE'),
+		(4, 2, 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_md5_tenant_idx ON partial_planner_md5 (tenant) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79'")
+
+	md5ImpliedQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND md5(code) = 'c76a5e84e4bdee527e274ea30c680d79'`
+	assertCountResult(t, ctx, conn, md5ImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, md5ImpliedQuery, true)
+
+	md5RawSourceQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code = 'active'`
+	assertCountResult(t, ctx, conn, md5RawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, md5RawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

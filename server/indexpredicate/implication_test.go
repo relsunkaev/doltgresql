@@ -506,6 +506,35 @@ func TestImpliesTranslateFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesMd5FunctionPredicates(t *testing.T) {
+	activeHash := "c76a5e84e4bdee527e274ea30c680d79"
+	pendingHash := "7c6c2e5d48ab37a007cbf70d3ea25fa4"
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"md5(code) = '" + activeHash + "'", "md5(code) = '" + activeHash + "'"},
+		{"md5(code) IN ('" + activeHash + "', '" + pendingHash + "')", "md5(code) = '" + activeHash + "'"},
+		{"md5(code) IS NOT NULL", "md5(code) = '" + activeHash + "'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"md5(code) = '" + activeHash + "'", "md5(code) = '" + pendingHash + "'"},
+		{"md5(code) = '" + activeHash + "'", "lower(code) = 'active'"},
+		{"md5(code) = '" + activeHash + "'", "code = 'active'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

@@ -1131,6 +1131,32 @@ ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports md5 predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_md5 (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_md5_user_idx ON partial_arb_md5 (user_id) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79';",
+				"INSERT INTO partial_arb_md5 VALUES (1, 10, 'active', 'old-active'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_md5 VALUES (3, 10, 'active', 'md5-upsert')
+ON CONFLICT (user_id) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "md5-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_md5 VALUES (4, 10, 'active', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code = 'active' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

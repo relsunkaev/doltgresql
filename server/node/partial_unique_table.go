@@ -15,6 +15,7 @@
 package node
 
 import (
+	"crypto/md5"
 	"fmt"
 	"go/constant"
 	"io"
@@ -1259,6 +1260,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.TrimLeftFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	case "rtrim":
 		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
+	case "md5":
+		return predicateValue{value: fmt.Sprintf("%x", md5.Sum([]byte(text)))}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
