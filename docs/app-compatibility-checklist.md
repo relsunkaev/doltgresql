@@ -635,6 +635,12 @@ Do not check off an item until it has workload proof:
     frame for `GET STACKED DIAGNOSTICS`, without wrapping the underlying
     native error used for unmatched propagation. Pinned by
     testing/go/do_block_probe_test.go. Tracked by dg-7ug.20.5.
+  - [x] PL/pgSQL exception handlers match PostgreSQL condition category names
+    for integrity constraint failures. `WHEN integrity_constraint_violation`
+    catches native SQLSTATE class `23` constraint errors such as a unique
+    violation while `GET STACKED DIAGNOSTICS` preserves the specific
+    `RETURNED_SQLSTATE`. Pinned by testing/go/do_block_probe_test.go. Tracked
+    by dg-7ug.20.6.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

@@ -792,11 +792,29 @@ func exceptionHandlerMatches(conditions string, diagnostics plpgsqlExceptionDiag
 		if condition == "others" {
 			return true
 		}
-		if plpgsqlNormalizeConditionSQLState(condition) == diagnostics.ReturnedSQLState {
+		if plpgsqlConditionMatchesSQLState(condition, diagnostics.ReturnedSQLState) {
 			return true
 		}
 	}
 	return false
+}
+
+func plpgsqlConditionMatchesSQLState(condition string, sqlState string) bool {
+	if plpgsqlNormalizeConditionSQLState(condition) == sqlState {
+		return true
+	}
+	if prefix, ok := plpgsqlConditionClassPrefixes[plpgsqlNormalizeConditionName(condition)]; ok {
+		return strings.HasPrefix(sqlState, prefix)
+	}
+	return false
+}
+
+func plpgsqlNormalizeConditionName(condition string) string {
+	condition = strings.TrimSpace(condition)
+	if len(condition) >= len("sqlstate ") && strings.EqualFold(condition[:len("sqlstate ")], "sqlstate ") {
+		condition = strings.TrimSpace(condition[len("sqlstate "):])
+	}
+	return strings.ToLower(plpgsqlRaiseOptionText(condition))
 }
 
 func plpgsqlNormalizeConditionSQLState(condition string) string {
@@ -827,6 +845,10 @@ var plpgsqlConditionNameSQLStates = map[string]string{
 	"raise_exception":             "P0001",
 	"too_many_rows":               "P0003",
 	"unique_violation":            "23505",
+}
+
+var plpgsqlConditionClassPrefixes = map[string]string{
+	"integrity_constraint_violation": "23",
 }
 
 // convertRowsToRecords iterates overs |rows| and converts each field in each row

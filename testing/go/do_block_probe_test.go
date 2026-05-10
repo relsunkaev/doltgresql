@@ -753,6 +753,40 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block catches native SQL integrity constraint category",
+			SetUpScript: []string{
+				`CREATE TABLE do_native_category_items (
+					id INT PRIMARY KEY,
+					label TEXT UNIQUE
+				);`,
+				`CREATE TABLE do_native_category_seen (
+					sqlstate TEXT NOT NULL
+				);`,
+				`INSERT INTO do_native_category_items VALUES (1, 'existing');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							returned_state TEXT;
+						BEGIN
+							BEGIN
+								INSERT INTO do_native_category_items VALUES (2, 'existing');
+							EXCEPTION
+								WHEN integrity_constraint_violation THEN
+									GET STACKED DIAGNOSTICS returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_native_category_seen VALUES (returned_state);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT sqlstate FROM do_native_category_seen;`,
+					Expected: []sql.Row{{"23505"}},
+				},
+			},
+		},
+		{
 			Name: "DO block propagates unmatched native SQL unique violation",
 			SetUpScript: []string{
 				`CREATE TABLE do_native_unmatched_items (
