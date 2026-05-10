@@ -122,6 +122,7 @@ func Init() {
 	initExtract()
 	initFactorial()
 	initFloor()
+	initFormat()
 	initFormatType()
 	initGcd()
 	initGenRandomUuid()

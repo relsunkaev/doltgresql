@@ -91,3 +91,42 @@ func TestParseReturnQueryOperations(t *testing.T) {
 		t.Fatalf("RETURN QUERY bindings = %#v, expected n", ops[1].SecondaryData)
 	}
 }
+
+func TestParseDynamicExecuteExpressionBindings(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			target_table TEXT := 'do_dynamic_target';
+			target_id INT := 7;
+			new_label TEXT := 'made by execute';
+		BEGIN
+			EXECUTE format('UPDATE %I SET label = $2 WHERE id = $1 OR id = $1', target_table)
+				USING target_id, new_label;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var executeOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Execute {
+			executeOp = &ops[i]
+			break
+		}
+	}
+	if executeOp == nil {
+		t.Fatalf("expected dynamic execute operation, found %#v", ops)
+	}
+	if executeOp.Options["dynamic"] != "true" {
+		t.Fatalf("dynamic option = %q, expected true; op: %#v", executeOp.Options["dynamic"], executeOp)
+	}
+	if executeOp.Options["queryBindingCount"] != "1" {
+		t.Fatalf("queryBindingCount = %q, expected 1; op: %#v", executeOp.Options["queryBindingCount"], executeOp)
+	}
+	if executeOp.PrimaryData != "format ( 'UPDATE %I SET label = $2 WHERE id = $1 OR id = $1' , $1 ) " {
+		t.Fatalf("primary data = %q", executeOp.PrimaryData)
+	}
+	if len(executeOp.SecondaryData) != 3 || executeOp.SecondaryData[0] != "target_table" || executeOp.SecondaryData[1] != "target_id" || executeOp.SecondaryData[2] != "new_label" {
+		t.Fatalf("secondary data = %#v", executeOp.SecondaryData)
+	}
+}

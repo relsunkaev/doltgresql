@@ -16,6 +16,7 @@ package plpgsql
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -199,11 +200,22 @@ func (DynamicExecute) OperationSize() int32 {
 
 // AppendOperations implements the interface Statement.
 func (stmt DynamicExecute) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	queryStr, referencedVariables, err := substituteVariableReferences(stmt.Query, stack)
+	if err != nil {
+		return err
+	}
+	params := make([]string, 0, len(referencedVariables)+len(stmt.Params))
+	params = append(params, referencedVariables...)
+	params = append(params, stmt.Params...)
 	*ops = append(*ops, InterpreterOperation{
 		OpCode:        OpCode_Execute,
-		PrimaryData:   stmt.Query,
-		SecondaryData: stmt.Params,
+		PrimaryData:   queryStr,
+		SecondaryData: params,
 		Target:        stmt.Target,
+		Options: map[string]string{
+			"dynamic":           "true",
+			"queryBindingCount": strconv.Itoa(len(referencedVariables)),
+		},
 	})
 	return nil
 }

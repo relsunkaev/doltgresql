@@ -15,9 +15,6 @@
 package functions
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -36,6 +33,6 @@ var quote_ident_text = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return fmt.Sprintf(`"%s"`, strings.Replace(val.(string), "\"", "\"\"", -1)), nil
+		return pgQuoteIdentifier(val.(string)), nil
 	},
 }

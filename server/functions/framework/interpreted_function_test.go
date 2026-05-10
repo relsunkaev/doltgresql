@@ -33,7 +33,6 @@ import (
 //
 // See https://github.com/dolthub/doltgresql/issues/1142.
 func TestApplyBindings_RendersRegclassVariableThroughSessionContext(t *testing.T) {
-	t.Parallel()
 	functions.Init()
 	framework.Initialize()
 	ctx := sql.NewEmptyContext()
@@ -43,4 +42,16 @@ func TestApplyBindings_RendersRegclassVariableThroughSessionContext(t *testing.T
 	require.NotPanics(t, func() {
 		_, _, _ = framework.InterpretedFunction{}.ApplyBindings(ctx, stack, "SELECT $1", []string{"rel"}, false)
 	})
+}
+
+func TestApplyBindings_IgnoresDollarPlaceholdersInsideStringLiterals(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	stack := plpgsql.NewInterpreterStack(nil)
+	stack.NewVariableWithValue("target_table", pgtypes.Text, "do_dynamic_target")
+
+	stmt := "SELECT format('UPDATE %I SET label = $2 WHERE id = $1', $1)"
+	actual, found, err := framework.InterpretedFunction{}.ApplyBindings(ctx, stack, stmt, []string{"target_table"}, true)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "SELECT format('UPDATE %I SET label = $2 WHERE id = $1', (('do_dynamic_target')::text))", actual)
 }

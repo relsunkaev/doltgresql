@@ -4082,6 +4082,40 @@ func TestStringFunction(t *testing.T) {
 			},
 		},
 		{
+			Name:        "format",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT format('Hello %s, %1$s', 'World');`,
+					Expected: []sql.Row{{"Hello World, World"}},
+				},
+				{
+					Query:    `SELECT format('Testing %s, %s, %s, %%', 'one', 'two', 'three');`,
+					Expected: []sql.Row{{"Testing one, two, three, %"}},
+				},
+				{
+					Query:    `SELECT format('INSERT INTO %I VALUES(%L)', 'Foo bar', 'O''Reilly');`,
+					Expected: []sql.Row{{`INSERT INTO "Foo bar" VALUES('O''Reilly')`}},
+				},
+				{
+					Query:    `SELECT format('ALTER TABLE %I ADD COLUMN %I text', 'accounts', 'display name');`,
+					Expected: []sql.Row{{`ALTER TABLE accounts ADD COLUMN "display name" text`}},
+				},
+				{
+					Query:    `SELECT format('%3$s, %2$s, %s', 'one', 'two', 'three');`,
+					Expected: []sql.Row{{"three, two, three"}},
+				},
+				{
+					Query:    `SELECT format('|%10s|%-10s|', 'left', 'right');`,
+					Expected: []sql.Row{{"|      left|right     |"}},
+				},
+				{
+					Query:    `SELECT format('%s/%I/%L', NULL::text, 'needs space', NULL::text);`,
+					Expected: []sql.Row{{`/"needs space"/NULL`}},
+				},
+			},
+		},
+		{
 			Name:        "translate",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

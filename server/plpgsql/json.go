@@ -451,9 +451,8 @@ func (stmt *plpgSQL_stmt_dynexecute) Convert() (DynamicExecute, error) {
 			return DynamicExecute{}, errors.Errorf("unhandled datum type: %T", stmt.Target)
 		}
 	}
-	query := strings.TrimSuffix(strings.TrimPrefix(stmt.Query.Expression.Query, "'"), "'")
 	return DynamicExecute{
-		Query:  query,
+		Query:  stmt.Query.Expression.Query,
 		Params: params,
 		Target: target,
 	}, nil

@@ -148,6 +148,31 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block runs dynamic EXECUTE format with USING parameters",
+			SetUpScript: []string{
+				`CREATE TABLE do_dynamic_target (id INT PRIMARY KEY, label TEXT);`,
+				`INSERT INTO do_dynamic_target VALUES (7, 'before execute');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							target_table TEXT := 'do_dynamic_target';
+							target_id INT := 7;
+							new_label TEXT := 'made by execute';
+						BEGIN
+							EXECUTE format('UPDATE %I SET label = $2 WHERE id = $1 OR id = $1', target_table)
+								USING target_id, new_label;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT label FROM do_dynamic_target WHERE id = 7;`,
+					Expected: []sql.Row{{"made by execute"}},
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

@@ -15,8 +15,6 @@
 package functions
 
 import (
-	"strings"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -33,7 +31,6 @@ var quote_literal_text = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		escaped := strings.ReplaceAll(val.(string), `'`, `''`)
-		return "'" + escaped + "'", nil
+		return pgQuoteLiteral(val.(string)), nil
 	},
 }

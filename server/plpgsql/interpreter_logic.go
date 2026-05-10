@@ -173,8 +173,29 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_Exception:
 			// TODO: implement
 		case OpCode_Execute:
+			statement := operation.PrimaryData
+			bindings := operation.SecondaryData
+			if operation.Options["dynamic"] == "true" {
+				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
+				if err != nil {
+					return nil, err
+				}
+				if queryBindingCount > len(bindings) {
+					return nil, errors.New("dynamic execute query binding count exceeds available bindings")
+				}
+				queryBindings := bindings[:queryBindingCount]
+				bindings = bindings[queryBindingCount:]
+				queryVal, err := iFunc.QuerySingleReturn(ctx, stack, "SELECT "+statement, pgtypes.Text, queryBindings)
+				if err != nil {
+					return nil, err
+				}
+				if queryVal == nil {
+					return nil, errors.New("query string argument of EXECUTE is null")
+				}
+				statement = queryVal.(string)
+			}
 			if len(operation.Target) > 0 {
-				sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+				sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
 				if err != nil {
 					return nil, err
 				}
@@ -220,7 +241,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					}
 				}
 			} else {
-				_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
+				_, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
 				if err != nil {
 					return nil, err
 				}

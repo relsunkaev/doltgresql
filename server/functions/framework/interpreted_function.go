@@ -21,6 +21,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+	pg_query "github.com/dolthub/pg_query_go/v6"
 	"github.com/lib/pq"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -228,12 +229,44 @@ func (InterpretedFunction) ApplyBindings(ctx *sql.Context, stack plpgsql.Interpr
 			formattedVar = "NULL"
 		}
 		if enforceType {
-			newStmt = strings.Replace(newStmt, "$"+strconv.Itoa(i+1), fmt.Sprintf(`((%s)::%s)`, formattedVar, variable.Type.String()), 1)
+			formattedVar = fmt.Sprintf(`((%s)::%s)`, formattedVar, variable.Type.String())
+		}
+		var replaced bool
+		newStmt, replaced, err = replaceSQLParameter(newStmt, "$"+strconv.Itoa(i+1), formattedVar)
+		if err != nil {
+			return newStmt, true, err
+		}
+		if !replaced {
+			return newStmt, false, fmt.Errorf("parameter `$%d` could not be found", i+1)
 		} else {
-			newStmt = strings.Replace(newStmt, "$"+strconv.Itoa(i+1), formattedVar, 1)
+			varFound = true
 		}
 	}
-	return newStmt, true, nil
+	return newStmt, varFound, nil
+}
+
+func replaceSQLParameter(stmt string, placeholder string, replacement string) (string, bool, error) {
+	scanResult, err := pg_query.Scan(stmt)
+	if err != nil {
+		return "", false, err
+	}
+	var builder strings.Builder
+	var lastOffset int32
+	replaced := false
+	for _, token := range scanResult.Tokens {
+		if stmt[token.Start:token.End] != placeholder {
+			continue
+		}
+		builder.WriteString(stmt[lastOffset:token.Start])
+		builder.WriteString(replacement)
+		lastOffset = token.End
+		replaced = true
+	}
+	if !replaced {
+		return stmt, false, nil
+	}
+	builder.WriteString(stmt[lastOffset:])
+	return builder.String(), true, nil
 }
 
 // enforceInterfaceInheritance implements the interface FunctionInterface.
