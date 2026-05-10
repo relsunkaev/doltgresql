@@ -153,8 +153,11 @@ Do not check off an item until it has workload proof:
   `crypt(text, text)` cover bcrypt/Blowfish password-hash generation and
   verification for the common `crypt(password, gen_salt('bf'))` and
   `stored_hash = crypt(password, stored_hash)` app flows, including
-  PostgreSQL's `bf` default cost 6 and allowed cost range 4-31; non-`bf`
-  password salt/hash algorithms are explicitly rejected. Raw pgcrypto
+  PostgreSQL's `bf` default cost 6 and allowed cost range 4-31.
+  `gen_salt('md5'[, int4])` and `crypt(text, '$1$...')` cover
+  PostgreSQL-compatible MD5-crypt salt generation, the supported md5 round
+  count, explicit bad-round rejection, stored-salt verification, salt
+  truncation to eight characters, and wrong-password rejection. Raw pgcrypto
   `encrypt`/`decrypt` and `encrypt_iv`/`decrypt_iv` cover the AES,
   Blowfish (`bf`), DES, and 3DES `cbc`/`ecb` modes with `pkcs` and
   `none` padding, including default zero-IV behavior, explicit CBC IVs,
@@ -246,7 +249,7 @@ Do not check off an item until it has workload proof:
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption helpers,
-  non-`bf` password-hashing algorithms,
+  DES/xDES-style password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
   non-dense vector families, and helper/cast functions beyond the tested

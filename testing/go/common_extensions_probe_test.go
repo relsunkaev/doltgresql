@@ -226,12 +226,30 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					ExpectedErr: `gen_salt iteration count 3 is outside allowed inclusive range 4..31 for bf`,
 				},
 				{
-					Query:       `SELECT gen_salt('md5');`,
-					ExpectedErr: `unsupported pgcrypto gen_salt type: md5`,
+					Query:    `SELECT left(gen_salt('md5'), 3), length(gen_salt('md5'))::text;`,
+					Expected: []sql.Row{{"$1$", "11"}},
 				},
 				{
-					Query:       `SELECT crypt('password', '$1$saltstring');`,
-					ExpectedErr: `unsupported pgcrypto crypt salt`,
+					Query:    `SELECT left(gen_salt('md5', 1000), 3), length(gen_salt('md5', 1000))::text;`,
+					Expected: []sql.Row{{"$1$", "11"}},
+				},
+				{
+					Query:       `SELECT gen_salt('md5', 999);`,
+					ExpectedErr: `gen_salt iteration count 999 is unsupported for md5`,
+				},
+				{
+					Query: `WITH hashed AS (
+						SELECT crypt('correct horse battery staple', gen_salt('md5')) AS password_hash
+					)
+					SELECT length(password_hash)::text, left(password_hash, 3),
+						password_hash = crypt('correct horse battery staple', password_hash),
+						password_hash = crypt('wrong password', password_hash)
+					FROM hashed;`,
+					Expected: []sql.Row{{"34", "$1$", "t", "f"}},
+				},
+				{
+					Query:    `SELECT crypt('password', '$1$saltstring');`,
+					Expected: []sql.Row{{"$1$saltstri$qQY4WxjABChYG1ccLpfkz/"}},
 				},
 			},
 		},

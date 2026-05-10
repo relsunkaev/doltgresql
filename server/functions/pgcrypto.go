@@ -44,10 +44,12 @@ const (
 	pgcryptoBcryptMaxCost     = 31
 	pgcryptoBcryptSaltBytes   = 16
 	pgcryptoBcryptSaltLength  = 29
+	pgcryptoMD5SaltBytes      = 6
 )
 
 var pgcryptoBcryptEncoding = base64.NewEncoding("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").WithPadding(base64.NoPadding)
 var pgcryptoBcryptMagicCipherData = []byte("OrpheanBeholderScryDoubt")
+var pgcryptoMD5Encoding = []byte("./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
 // initPgCrypto registers the pgcrypto-compatible functions to the catalog.
 func initPgCrypto() {
@@ -162,7 +164,7 @@ var pgcrypto_gen_salt = framework.Function1{
 	Strict:             true,
 	IsNonDeterministic: true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, saltType any) (any, error) {
-		return pgcryptoGenSalt(saltType.(string), pgcryptoBcryptDefaultCost)
+		return pgcryptoGenSalt(saltType.(string), 0, false)
 	},
 }
 
@@ -173,7 +175,7 @@ var pgcrypto_gen_salt_with_count = framework.Function2{
 	Strict:             true,
 	IsNonDeterministic: true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, saltType any, iterCount any) (any, error) {
-		return pgcryptoGenSalt(saltType.(string), int(iterCount.(int32)))
+		return pgcryptoGenSalt(saltType.(string), int(iterCount.(int32)), true)
 	},
 }
 
@@ -194,6 +196,9 @@ var pgcrypto_gen_random_bytes = framework.Function1{
 }
 
 func pgcryptoCrypt(password string, salt string) (string, error) {
+	if md5Salt, ok := pgcryptoMD5SaltParts(salt); ok {
+		return pgcryptoMD5Crypt(password, md5Salt), nil
+	}
 	cost, encodedSalt, minor, ok, err := pgcryptoBcryptSaltParts(salt)
 	if err != nil {
 		return "", err
@@ -376,21 +381,33 @@ func pgcryptoDigest(data []byte, algorithm string) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func pgcryptoGenSalt(saltType string, iterCount int) (string, error) {
+func pgcryptoGenSalt(saltType string, iterCount int, hasIterCount bool) (string, error) {
 	switch strings.ToLower(saltType) {
 	case "bf":
+		if !hasIterCount {
+			iterCount = pgcryptoBcryptDefaultCost
+		}
+		if iterCount < pgcryptoBcryptMinCost || iterCount > pgcryptoBcryptMaxCost {
+			return "", errors.Errorf("gen_salt iteration count %d is outside allowed inclusive range %d..%d for bf", iterCount, pgcryptoBcryptMinCost, pgcryptoBcryptMaxCost)
+		}
+		rawSalt := make([]byte, pgcryptoBcryptSaltBytes)
+		if _, err := rand.Read(rawSalt); err != nil {
+			return "", err
+		}
+		encodedSalt := pgcryptoBcryptEncoding.EncodeToString(rawSalt)
+		return fmt.Sprintf("$2a$%02d$%s", iterCount, encodedSalt), nil
+	case "md5":
+		if hasIterCount && iterCount != 1000 {
+			return "", errors.Errorf("gen_salt iteration count %d is unsupported for md5", iterCount)
+		}
+		rawSalt := make([]byte, pgcryptoMD5SaltBytes)
+		if _, err := rand.Read(rawSalt); err != nil {
+			return "", err
+		}
+		return pgcryptoMD5Salt(rawSalt), nil
 	default:
 		return "", errors.Errorf("unsupported pgcrypto gen_salt type: %s", saltType)
 	}
-	if iterCount < pgcryptoBcryptMinCost || iterCount > pgcryptoBcryptMaxCost {
-		return "", errors.Errorf("gen_salt iteration count %d is outside allowed inclusive range %d..%d for bf", iterCount, pgcryptoBcryptMinCost, pgcryptoBcryptMaxCost)
-	}
-	rawSalt := make([]byte, pgcryptoBcryptSaltBytes)
-	if _, err := rand.Read(rawSalt); err != nil {
-		return "", err
-	}
-	encodedSalt := pgcryptoBcryptEncoding.EncodeToString(rawSalt)
-	return fmt.Sprintf("$2a$%02d$%s", iterCount, encodedSalt), nil
 }
 
 func pgcryptoHMAC(data []byte, key []byte, algorithm string) ([]byte, error) {
@@ -460,6 +477,106 @@ func pgcryptoBcryptPasswordBytes(password string) []byte {
 		passwordBytes = passwordBytes[:72]
 	}
 	return passwordBytes
+}
+
+func pgcryptoMD5SaltParts(salt string) (string, bool) {
+	const magic = "$1$"
+	if !strings.HasPrefix(salt, magic) {
+		return "", false
+	}
+	salt = salt[len(magic):]
+	if end := strings.IndexByte(salt, '$'); end >= 0 {
+		salt = salt[:end]
+	}
+	if len(salt) > 8 {
+		salt = salt[:8]
+	}
+	return salt, true
+}
+
+func pgcryptoMD5Salt(input []byte) string {
+	var builder strings.Builder
+	builder.WriteString("$1$")
+	value := uint32(input[0]) | uint32(input[1])<<8 | uint32(input[2])<<16
+	pgcryptoMD5To64(&builder, value, 4)
+	value = uint32(input[3]) | uint32(input[4])<<8 | uint32(input[5])<<16
+	pgcryptoMD5To64(&builder, value, 4)
+	return builder.String()
+}
+
+func pgcryptoMD5Crypt(password string, salt string) string {
+	const magic = "$1$"
+	passwordBytes := []byte(password)
+	saltBytes := []byte(salt)
+
+	alternate := md5.New()
+	_, _ = alternate.Write(passwordBytes)
+	_, _ = alternate.Write(saltBytes)
+	_, _ = alternate.Write(passwordBytes)
+	final := alternate.Sum(nil)
+
+	ctx := md5.New()
+	_, _ = ctx.Write(passwordBytes)
+	_, _ = ctx.Write([]byte(magic))
+	_, _ = ctx.Write(saltBytes)
+	for passwordLen := len(passwordBytes); passwordLen > 0; passwordLen -= md5.Size {
+		chunkLen := passwordLen
+		if chunkLen > md5.Size {
+			chunkLen = md5.Size
+		}
+		_, _ = ctx.Write(final[:chunkLen])
+	}
+	for i := range final {
+		final[i] = 0
+	}
+	for i := len(passwordBytes); i > 0; i >>= 1 {
+		if i&1 == 1 {
+			_, _ = ctx.Write(final[:1])
+		} else {
+			_, _ = ctx.Write(passwordBytes[:1])
+		}
+	}
+	final = ctx.Sum(nil)
+
+	for i := 0; i < 1000; i++ {
+		round := md5.New()
+		if i&1 == 1 {
+			_, _ = round.Write(passwordBytes)
+		} else {
+			_, _ = round.Write(final)
+		}
+		if i%3 != 0 {
+			_, _ = round.Write(saltBytes)
+		}
+		if i%7 != 0 {
+			_, _ = round.Write(passwordBytes)
+		}
+		if i&1 == 1 {
+			_, _ = round.Write(final)
+		} else {
+			_, _ = round.Write(passwordBytes)
+		}
+		final = round.Sum(nil)
+	}
+
+	var builder strings.Builder
+	builder.WriteString(magic)
+	builder.WriteString(salt)
+	builder.WriteByte('$')
+	pgcryptoMD5To64(&builder, uint32(final[0])<<16|uint32(final[6])<<8|uint32(final[12]), 4)
+	pgcryptoMD5To64(&builder, uint32(final[1])<<16|uint32(final[7])<<8|uint32(final[13]), 4)
+	pgcryptoMD5To64(&builder, uint32(final[2])<<16|uint32(final[8])<<8|uint32(final[14]), 4)
+	pgcryptoMD5To64(&builder, uint32(final[3])<<16|uint32(final[9])<<8|uint32(final[15]), 4)
+	pgcryptoMD5To64(&builder, uint32(final[4])<<16|uint32(final[10])<<8|uint32(final[5]), 4)
+	pgcryptoMD5To64(&builder, uint32(final[11]), 2)
+	return builder.String()
+}
+
+func pgcryptoMD5To64(builder *strings.Builder, value uint32, count int) {
+	for i := 0; i < count; i++ {
+		builder.WriteByte(pgcryptoMD5Encoding[value&0x3f])
+		value >>= 6
+	}
 }
 
 func pgcryptoHash(algorithm string) (func() hash.Hash, error) {
