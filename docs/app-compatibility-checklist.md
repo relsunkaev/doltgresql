@@ -820,6 +820,9 @@ Do not check off an item until it has workload proof:
   UUID binding/decoding, and chrono timestamptz/date decoding. TypeORM runs a
   real `DataSource` over the `pg` driver, including schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, commit, and rollback.
+  Sequelize runs over the real `pg` driver too, covering startup timezone GUCs,
+  `sync({ force: true })` schema management, model CRUD, associations,
+  JSONB/text[] values, pooled reads, managed commit, and managed rollback.
   Pinned by
   testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
@@ -827,7 +830,7 @@ Do not check off an item until it has workload proof:
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
   testing/go/psycopg2_client_test.go, testing/go/ruby_pg_client_test.go,
   testing/go/libpq_client_test.go, testing/go/rust_sqlx_client_test.go, and
-  testing/go/typeorm_client_test.go.
+  testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.
@@ -1246,12 +1249,14 @@ typed-exception handling, and client-side query timeouts.
   parameters, UUIDs, and chrono timestamp/date decoding, and the TypeORM
   harness covers a real ORM `DataSource` over `pg` with schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, and transaction
-  boundaries.
+  boundaries. The Sequelize harness covers another real ORM over `pg` with
+  `sync({ force: true })`, model CRUD, associations, JSONB/text[] values,
+  pooled reads, and managed transactions.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, Knex, pg-promise, TypeORM, psycopg, psycopg2, Ruby
-  `pg`, libpq, and Rust `sqlx`. Add runnable smoke gates for the advertised
-  client and migration-tool matrix before claiming broad client compatibility.
-  Tracked by dg-7ug.10.
+  postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, psycopg,
+  psycopg2, Ruby `pg`, libpq, and Rust `sqlx`. Add runnable smoke gates for
+  the advertised client and migration-tool matrix before claiming broad client
+  compatibility. Tracked by dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.

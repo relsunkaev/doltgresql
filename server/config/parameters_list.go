@@ -3540,48 +3540,7 @@ var postgresConfigParameters = map[string]sql.SystemVariable{
 		ValidateFunc: func(_, new any) (any, bool) {
 			switch v := new.(type) {
 			case string:
-				v = strings.TrimSpace(v)
-				vplus := "+" + v // This allows for 10:00:00 to match since we'd expect +10:00:00 for a time zone
-				if strings.ToLower(v) == "local" {
-					// TODO: this should be the IANA name, not whatever Go decides to use
-					//   https://pkg.go.dev/github.com/thlib/go-timezone-local/tzlocal seems useful in this case.
-					return time.Local.String(), true
-				} else {
-					if strings.ToLower(v) == "utc" {
-						v = "UTC"
-					}
-					loc, err := time.LoadLocation(v)
-					if err == nil {
-						return loc.String(), true
-					}
-					_, err = TzOffsetToDuration(v)
-					if err == nil {
-						return v, true
-					}
-					for _, layout := range []string{
-						"-07",
-						"-0700",
-						"-070000",
-						"-07:00",
-						"-07:00:00",
-						"UTC-07",
-						"UTC-0700",
-						"UTC-070000",
-						"UTC-07:00",
-						"UTC-07:00:00",
-						"MST",
-					} {
-						parsed, err := time.Parse(layout, v)
-						if err == nil {
-							return parsed.Format("-07:00:00"), true
-						}
-						parsed, err = time.Parse(layout, vplus)
-						if err == nil {
-							return parsed.Format("-07:00:00"), true
-						}
-					}
-					return nil, false
-				}
+				return validateTimezoneString(v)
 			}
 			return new, true
 		},

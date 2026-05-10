@@ -279,3 +279,47 @@ func TzOffsetToDuration(d string) (time.Duration, error) {
 		return -1, cerrors.Errorf("error: unable to process time")
 	}
 }
+
+func validateTimezoneString(value string) (any, bool) {
+	value = strings.TrimSpace(value)
+	valueWithSign := "+" + value // Allows 10:00:00 to match since PostgreSQL accepts unsigned offsets.
+	if strings.ToLower(value) == "local" {
+		// TODO: this should be the IANA name, not whatever Go decides to use
+		//   https://pkg.go.dev/github.com/thlib/go-timezone-local/tzlocal seems useful in this case.
+		return time.Local.String(), true
+	}
+	if strings.ToLower(value) == "utc" {
+		value = "UTC"
+	}
+	loc, err := time.LoadLocation(value)
+	if err == nil {
+		return loc.String(), true
+	}
+	_, err = TzOffsetToDuration(value)
+	if err == nil {
+		return value, true
+	}
+	for _, layout := range []string{
+		"-07",
+		"-0700",
+		"-070000",
+		"-07:00",
+		"-07:00:00",
+		"UTC-07",
+		"UTC-0700",
+		"UTC-070000",
+		"UTC-07:00",
+		"UTC-07:00:00",
+		"MST",
+	} {
+		parsed, err := time.Parse(layout, value)
+		if err == nil {
+			return parsed.Format("-07:00:00"), true
+		}
+		parsed, err = time.Parse(layout, valueWithSign)
+		if err == nil {
+			return parsed.Format("-07:00:00"), true
+		}
+	}
+	return nil, false
+}

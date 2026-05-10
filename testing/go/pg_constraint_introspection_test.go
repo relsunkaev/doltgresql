@@ -105,5 +105,59 @@ ORDER BY c.column_name;`,
 				},
 			},
 		},
+		{
+			Name: "table_constraints exposes Sequelize FK catalog columns",
+			SetUpScript: []string{
+				`CREATE TABLE seq_accounts (id INT PRIMARY KEY);`,
+				`CREATE TABLE seq_items (
+					id INT PRIMARY KEY,
+					account_id INT NOT NULL,
+					CONSTRAINT seq_items_account_id_fkey
+						FOREIGN KEY (account_id)
+						REFERENCES seq_accounts(id)
+						DEFERRABLE INITIALLY DEFERRED
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT DISTINCT
+  tc.constraint_name,
+  tc.constraint_schema,
+  tc.constraint_catalog,
+  tc.table_name,
+  tc.table_schema,
+  tc.table_catalog,
+  tc.initially_deferred,
+  tc.is_deferrable,
+  kcu.column_name,
+  ccu.table_schema AS referenced_table_schema,
+  ccu.table_catalog AS referenced_table_catalog,
+  ccu.table_name AS referenced_table_name,
+  ccu.column_name AS referenced_column_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY'
+  AND tc.table_name = 'seq_items'
+  AND tc.table_catalog = 'postgres'
+ORDER BY tc.constraint_name, kcu.column_name;`,
+					Expected: []sql.Row{{
+						"seq_items_account_id_fkey",
+						"public",
+						"postgres",
+						"seq_items",
+						"public",
+						"postgres",
+						"YES",
+						"YES",
+						"account_id",
+						"public",
+						"postgres",
+						"seq_accounts",
+						"id",
+					}},
+				},
+			},
+		},
 	})
 }

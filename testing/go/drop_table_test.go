@@ -66,6 +66,20 @@ func TestDropTable(t *testing.T) {
 			},
 		},
 		{
+			Name:        "DROP TABLE CASCADE keyword without dependent objects",
+			SetUpScript: []string{`CREATE TABLE cascade_ok (pk INT4 PRIMARY KEY);`},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `DROP TABLE IF EXISTS missing_cascade_ok CASCADE;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `DROP TABLE cascade_ok CASCADE;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
 			Name: "DROP TABLE on table type on procedure parameter",
 			SetUpScript: []string{
 				`CREATE TABLE test1 (pk INT4 PRIMARY KEY, v1 TEXT);`,

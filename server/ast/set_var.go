@@ -106,6 +106,15 @@ func nodeSetVar(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 		expr = &vitess.ColName{
 			Name: vitess.NewColIdent(strings.Join(vals, ", ")),
 		}
+	} else if strings.EqualFold(node.Name, "timezone") {
+		if interval, ok := node.Values[0].(*tree.DInterval); ok {
+			expr = &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(interval.Duration.String())}
+		} else {
+			expr, err = nodeExpr(ctx, node.Values[0])
+			if err != nil {
+				return nil, err
+			}
+		}
 	} else {
 		expr, err = nodeExpr(ctx, node.Values[0])
 		if err != nil {

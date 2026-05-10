@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
 
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
@@ -47,9 +48,12 @@ var tableConstraintsSchema = sql.Schema{
 	{Name: "constraint_catalog", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
 	{Name: "constraint_schema", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
 	{Name: "constraint_name", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
+	{Name: "table_catalog", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
 	{Name: "table_schema", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
 	{Name: "table_name", Type: sql_identifier, Default: nil, Nullable: true, Source: TableConstraintsViewName},
 	{Name: "constraint_type", Type: character_data, Default: nil, Nullable: false, Source: TableConstraintsViewName},
+	{Name: "is_deferrable", Type: yes_or_no, Default: nil, Nullable: false, Source: TableConstraintsViewName},
+	{Name: "initially_deferred", Type: yes_or_no, Default: nil, Nullable: false, Source: TableConstraintsViewName},
 	{Name: "enforced", Type: yes_or_no, Default: nil, Nullable: false, Source: TableConstraintsViewName},
 }
 
@@ -68,24 +72,42 @@ func tableConstraintsRowIter(ctx *sql.Context, _ sql.Catalog) (sql.RowIter, erro
 				return true, nil
 			}
 			rows = append(rows, sql.Row{
-				schema.Item.Name(),                                       // constraint_catalog
-				schema.Item.SchemaName(),                                 // constraint_schema
+				schema.Item.Name(),       // constraint_catalog
+				schema.Item.SchemaName(), // constraint_schema
 				indexmetadata.DisplayNameForTable(index.Item, table.Item), // constraint_name
-				schema.Item.SchemaName(),                                 // table_schema
-				table.Item.Name(),                                        // table_name
-				constraintType,                                           // constraint_type
-				"YES",                                                    // enforced
+				schema.Item.Name(),       // table_catalog
+				schema.Item.SchemaName(), // table_schema
+				table.Item.Name(),        // table_name
+				constraintType,           // constraint_type
+				"NO",                     // is_deferrable
+				"NO",                     // initially_deferred
+				"YES",                    // enforced
 			})
 			return true, nil
 		},
 		ForeignKey: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, fk functions.ItemForeignKey) (cont bool, err error) {
+			timing, err := deferrable.ForeignKeyTimingForID(ctx, fk.OID, fk.Item)
+			if err != nil {
+				return false, err
+			}
+			isDeferrable := "NO"
+			if timing.Deferrable {
+				isDeferrable = "YES"
+			}
+			initiallyDeferred := "NO"
+			if timing.InitiallyDeferred {
+				initiallyDeferred = "YES"
+			}
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // constraint_catalog
 				schema.Item.SchemaName(), // constraint_schema
 				fk.Item.Name,             // constraint_name
+				schema.Item.Name(),       // table_catalog
 				schema.Item.SchemaName(), // table_schema
 				table.Item.Name(),        // table_name
 				"FOREIGN KEY",            // constraint_type
+				isDeferrable,             // is_deferrable
+				initiallyDeferred,        // initially_deferred
 				"YES",                    // enforced
 			})
 			return true, nil
@@ -99,9 +121,12 @@ func tableConstraintsRowIter(ctx *sql.Context, _ sql.Catalog) (sql.RowIter, erro
 				schema.Item.Name(),       // constraint_catalog
 				schema.Item.SchemaName(), // constraint_schema
 				check.Item.Name,          // constraint_name
+				schema.Item.Name(),       // table_catalog
 				schema.Item.SchemaName(), // table_schema
 				table.Item.Name(),        // table_name
 				"CHECK",                  // constraint_type
+				"NO",                     // is_deferrable
+				"NO",                     // initially_deferred
 				enforced,                 // enforced
 			})
 			return true, nil

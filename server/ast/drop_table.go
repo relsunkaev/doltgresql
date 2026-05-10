@@ -34,7 +34,9 @@ func nodeDropTable(ctx *Context, node *tree.DropTable) (*vitess.DDL, error) {
 	case tree.DropRestrict:
 		return nil, errors.Errorf("RESTRICT is not yet supported")
 	case tree.DropCascade:
-		return nil, errors.Errorf("CASCADE is not yet supported")
+		// Accept the keyword for migration/ORM tools. The DropTable executor still
+		// enforces dependency errors; full PostgreSQL dependency cascading is not
+		// implemented here.
 	}
 	tableNames := make([]vitess.TableName, len(node.Names))
 	authTableNames := make([]string, 0, len(node.Names)*3)
