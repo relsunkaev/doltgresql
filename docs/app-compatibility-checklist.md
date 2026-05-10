@@ -1389,6 +1389,9 @@ Do not check off an item until it has workload proof:
   columns, pooled reads, commit, and rollback. Ruby `pg` runs through a real
   PG::Connection, including startup `application_name`, typed parameters,
   JSONB and text[] values, prepared statements, concurrent reads, commit, and
+  rollback. PHP `ext-pgsql` runs from the official PHP CLI container with
+  startup `application_name`, server-side prepared statements, typed
+  parameters, JSONB/text[] values, repeated connections, commit, and
   rollback. libpq runs through a compiled C probe with startup
   `application_name`, typed parameters, JSONB and text[] values, prepared
   statements, multiple connections, commit, and rollback. Go `database/sql`
@@ -1414,7 +1417,7 @@ Do not check off an item until it has workload proof:
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
   testing/go/psycopg2_client_test.go, testing/go/asyncpg_client_test.go,
   testing/go/sqlalchemy_client_test.go, testing/go/ruby_pg_client_test.go,
-  testing/go/libpq_client_test.go,
+  testing/go/php_client_test.go, testing/go/libpq_client_test.go,
   testing/go/go_sql_pq_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
@@ -1912,8 +1915,11 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   reads, and transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
-  boundaries. The libpq harness compiles a C probe for typed parameters,
-  prepared statements, JSONB/text[] values, multiple connections, and
+  boundaries. The PHP `ext-pgsql` harness covers startup parameters,
+  server-side prepared statements, typed parameters, JSONB/text[] values,
+  repeated connections, and transaction boundaries. The libpq harness compiles
+  a C probe for typed parameters, prepared statements, JSONB/text[] values,
+  multiple connections, and
   transaction boundaries. The Go `database/sql` + `github.com/lib/pq` harness
   covers the real Go driver wrapper with prepared statements, typed
   parameters, JSONB/text[] values, `pq.Array` adaptation, pooled reads, and
@@ -1931,9 +1937,10 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
-  psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`, libpq, Go `database/sql`
-  with `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add runnable smoke gates
-  for the advertised client and migration-tool matrix before claiming broad
+  psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`, PHP `ext-pgsql`, libpq,
+  Go `database/sql` with `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add
+  runnable smoke gates for the advertised client and migration-tool matrix
+  before claiming broad
   client compatibility.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
