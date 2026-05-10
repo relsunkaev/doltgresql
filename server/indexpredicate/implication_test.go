@@ -592,6 +592,43 @@ func TestImpliesSubstringFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesPadFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lpad(code, 6, '0') = '00ABCD'", "lpad(code, 6, '0') = '00ABCD'"},
+		{"lpad(code, 6, '0') IN ('00ABCD', '000XYZ')", "lpad(code, 6, '0') = '00ABCD'"},
+		{"lpad(code, 6) = '  ABCD'", "lpad(code, 6) = '  ABCD'"},
+		{"lpad(code, 6, '0') IS NOT NULL", "lpad(code, 6, '0') = '00ABCD'"},
+		{"rpad(code, 6, '_') = 'ABCD__'", "rpad(code, 6, '_') = 'ABCD__'"},
+		{"rpad(code, 6, '_') IN ('ABCD__', 'XYZ___')", "rpad(code, 6, '_') = 'ABCD__'"},
+		{"rpad(code, 6) = 'ABCD  '", "rpad(code, 6) = 'ABCD  '"},
+		{"rpad(code, 6, '_') IS NOT NULL", "rpad(code, 6, '_') = 'ABCD__'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lpad(code, 6, '0') = '00ABCD'", "lpad(code, 6, '_') = '__ABCD'"},
+		{"lpad(code, 6, '0') = '00ABCD'", "lpad(code, 5, '0') = '0ABCD'"},
+		{"lpad(code, 6, '0') = '00ABCD'", "rpad(code, 6, '0') = 'ABCD00'"},
+		{"lpad(code, 6, '0') = '00ABCD'", "code = 'ABCD'"},
+		{"rpad(code, 6, '_') = 'ABCD__'", "rpad(code, 6, '-') = 'ABCD--'"},
+		{"rpad(code, 6, '_') = 'ABCD__'", "rpad(code, 5, '_') = 'ABCD_'"},
+		{"rpad(code, 6, '_') = 'ABCD__'", "lpad(code, 6, '_') = '__ABCD'"},
+		{"rpad(code, 6, '_') = 'ABCD__'", "code = 'ABCD'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesReverseFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

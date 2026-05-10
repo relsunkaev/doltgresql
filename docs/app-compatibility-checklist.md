@@ -987,6 +987,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go, testing/go/functions_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.21.
+- [x] Use deterministic `lpad(expr, length[, fill])` and
+  `rpad(expr, length[, fill])` predicates in partial-index implication paths.
+  Two- and three-argument pad calls now serialize as comparable predicate keys,
+  planner filters can deparse them, partial unique DML enforcement evaluates
+  the same text padding/truncation behavior for supported non-empty fill strings,
+  and `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
+  fill strings, lengths, pad directions, and raw source-string semantic rewrites
+  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.22.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

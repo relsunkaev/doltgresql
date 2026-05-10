@@ -1221,6 +1221,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "left" || name == "right" {
 		return p.evalLeftRight(ctx, row, expr, name)
 	}
+	if name == "lpad" || name == "rpad" {
+		return p.evalPad(ctx, row, expr, name)
+	}
 	if name == "replace" {
 		return p.evalReplace(ctx, row, expr)
 	}
@@ -1456,6 +1459,92 @@ func predicateRightText(text string, n int64) string {
 		return ""
 	}
 	return text[predicateByteIndexAfterRunes(text, skip):]
+}
+
+func (p *partialIndexPredicate) evalPad(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {
+	if len(expr.Exprs) != 2 && len(expr.Exprs) != 3 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects two or three arguments", name)
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	length, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || length.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, str.value)
+	}
+	padLength, ok := predicateSignedIntegerValue(length.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, length.value)
+	}
+	fillText := " "
+	if len(expr.Exprs) == 3 {
+		fill, err := p.evalValue(ctx, row, expr.Exprs[2])
+		if err != nil {
+			return predicateValue{}, err
+		}
+		if fill.value == nil {
+			return predicateValue{}, nil
+		}
+		fillText, ok = fill.value.(string)
+		if !ok {
+			return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, fill.value)
+		}
+	}
+	switch name {
+	case "lpad":
+		return predicateValue{value: predicateLpadText(text, padLength, fillText)}, nil
+	case "rpad":
+		return predicateValue{value: predicateRpadText(text, padLength, fillText)}, nil
+	default:
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func predicateLpadText(text string, length int64, fill string) string {
+	if length <= 0 {
+		return ""
+	}
+	textRunes := []rune(text)
+	if int64(len(textRunes)) >= length {
+		return string(textRunes[:length])
+	}
+	result := make([]rune, 0, length)
+	fillRunes := []rune(fill)
+	fillTarget := length - int64(len(textRunes))
+	if len(fillRunes) > 0 {
+		for int64(len(result)) < fillTarget {
+			result = append(result, fillRunes...)
+		}
+		result = result[:fillTarget]
+	}
+	result = append(result, textRunes...)
+	return string(result)
+}
+
+func predicateRpadText(text string, length int64, fill string) string {
+	if length <= 0 {
+		return ""
+	}
+	result := []rune(text)
+	if int64(len(result)) >= length {
+		return string(result[:length])
+	}
+	fillRunes := []rune(fill)
+	if len(fillRunes) > 0 {
+		for int64(len(result)) < length {
+			result = append(result, fillRunes...)
+		}
+		result = result[:length]
+	}
+	return string(result)
 }
 
 func (p *partialIndexPredicate) evalSubstring(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {

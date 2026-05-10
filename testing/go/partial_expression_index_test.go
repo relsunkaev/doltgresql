@@ -648,6 +648,60 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports lpad predicate",
+			SetUpScript: []string{
+				`CREATE TABLE lpad_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX lpad_codes_user_code_idx
+					ON lpad_codes (user_id)
+					WHERE lpad(code, 6, '0') = '00ABCD';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO lpad_codes VALUES
+						(1, 10, 'ABCD'),
+						(2, 10, 'XYZ');`,
+				},
+				{
+					Query:       `INSERT INTO lpad_codes VALUES (3, 10, 'ABCD');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO lpad_codes VALUES (4, 10, 'AXYZ');`,
+				},
+				{
+					Query:       `UPDATE lpad_codes SET code = 'ABCD' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
+			Name: "partial UNIQUE index supports rpad predicate",
+			SetUpScript: []string{
+				`CREATE TABLE rpad_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX rpad_codes_user_code_idx
+					ON rpad_codes (user_id)
+					WHERE rpad(code, 6, '_') = 'ABCD__';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rpad_codes VALUES
+						(1, 10, 'ABCD'),
+						(2, 10, 'XYZ');`,
+				},
+				{
+					Query:       `INSERT INTO rpad_codes VALUES (3, 10, 'ABCD');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO rpad_codes VALUES (4, 10, 'AXYZ');`,
+				},
+				{
+					Query:       `UPDATE rpad_codes SET code = 'ABCD' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports reverse predicate",
 			SetUpScript: []string{
 				`CREATE TABLE reverse_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1318,6 +1372,46 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	substringWrongCountQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND substring(code, 1, 2) = 'Ad'`
 	assertCountResult(t, ctx, conn, substringWrongCountQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, substringWrongCountQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_lpad (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_lpad VALUES
+		(1, 1, 'ABCD'),
+		(2, 1, 'XYZ'),
+		(3, 1, 'ABXY'),
+		(4, 2, 'ABCD')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_lpad_tenant_idx ON partial_planner_lpad (tenant) WHERE lpad(code, 6, '0') = '00ABCD'")
+
+	lpadImpliedQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND lpad(code, 6, '0') = '00ABCD'`
+	assertCountResult(t, ctx, conn, lpadImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadImpliedQuery, true)
+
+	lpadWrongFillQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND lpad(code, 6, '_') = '__ABCD'`
+	assertCountResult(t, ctx, conn, lpadWrongFillQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadWrongFillQuery, false)
+
+	lpadRawSourceQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND code = 'ABCD'`
+	assertCountResult(t, ctx, conn, lpadRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadRawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_rpad (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_rpad VALUES
+		(1, 1, 'ABCD'),
+		(2, 1, 'XYZ'),
+		(3, 1, 'ABXY'),
+		(4, 2, 'ABCD')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_rpad_tenant_idx ON partial_planner_rpad (tenant) WHERE rpad(code, 6, '_') = 'ABCD__'")
+
+	rpadImpliedQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND rpad(code, 6, '_') = 'ABCD__'`
+	assertCountResult(t, ctx, conn, rpadImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadImpliedQuery, true)
+
+	rpadWrongFillQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND rpad(code, 6, '-') = 'ABCD--'`
+	assertCountResult(t, ctx, conn, rpadWrongFillQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadWrongFillQuery, false)
+
+	rpadRawSourceQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND code = 'ABCD'`
+	assertCountResult(t, ctx, conn, rpadRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_reverse (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_reverse VALUES

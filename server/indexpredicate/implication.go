@@ -641,6 +641,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "left" || name == "right" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
+	if name == "lpad" || name == "rpad" {
+		return predicateVariableArityFunctionCallExprKey(name, fn.Exprs, 2, 3)
+	}
 	if name == "replace" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
 	}
@@ -684,6 +687,21 @@ func predicateCoalesceExprKey(expr *tree.CoalesceExpr) (string, bool) {
 
 func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs int) (string, bool) {
 	if len(exprs) != expectedArgs {
+		return "", false
+	}
+	parts := make([]string, 0, len(exprs))
+	for _, child := range exprs {
+		childKey, ok := predicateFunctionArgumentExprKey(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childKey)
+	}
+	return "func:" + name + "(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateVariableArityFunctionCallExprKey(name string, exprs tree.Exprs, minArgs int, maxArgs int) (string, bool) {
+	if len(exprs) < minArgs || len(exprs) > maxArgs {
 		return "", false
 	}
 	parts := make([]string, 0, len(exprs))
