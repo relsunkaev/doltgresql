@@ -721,12 +721,20 @@ Do not check off an item until it has workload proof:
   `DESC` => NULLS FIRST) plus all explicit NULLS FIRST/LAST
   combinations. DDL still emits warnings that physical descending
   and NULLS LAST index scan ordering are metadata-only; the metadata
-  is preserved through pg_index. Pinned by
-  testing/go/index_opclass_nulls_probe_test.go.
+  is preserved through pg_index. The btree planner boundary now fences
+  metadata-only DESC / NULLS sort options from sort-elision while still
+  allowing predicate lookup through the same index. Pinned by
+  testing/go/index_opclass_nulls_probe_test.go and
+  testing/go/index_benchmark_test.go.
+- [x] Fence metadata-only btree sort options from ordered-scan planning.
+  Indexes with preserved PostgreSQL DESC / NULLS FIRST/LAST options now
+  report `IndexOrderNone` to sort-elision rules until physical storage can
+  honor those options; ordinary btree ordered scans and predicate lookup on
+  the fenced index stay covered. Tracked by dg-7ug.8.3.1.
 - [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
-  index storage and planner preference. Today those per-column scan choices
-  are metadata-preserved but not planned as PostgreSQL-style physical index
-  scans. Tracked by dg-7ug.8.
+  index storage and PostgreSQL-style planner preference. Today those
+  per-column scan choices are metadata-preserved but not stored as
+  PostgreSQL-style physical index ordering. Tracked by dg-7ug.8.3.
 - [~] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip

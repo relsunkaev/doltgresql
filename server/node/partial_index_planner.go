@@ -45,18 +45,13 @@ func (i partialPlannerHiddenIndex) CanSupport(*sql.Context, ...sql.Range) bool {
 	return false
 }
 
-type partialIndexLookupUnwrapper struct {
-	sql.IndexedTable
-}
-
-func (t partialIndexLookupUnwrapper) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
-	unwrapped, _ := unwrapPartialPlannerLookup(lookup)
-	return t.IndexedTable.LookupPartitions(ctx, unwrapped)
-}
-
-func unwrapPartialPlannerLookup(lookup sql.IndexLookup) (sql.IndexLookup, bool) {
+func unwrapPlannerIndexLookup(lookup sql.IndexLookup) (sql.IndexLookup, bool) {
 	if hidden, ok := lookup.Index.(partialPlannerHiddenIndex); ok {
 		lookup.Index = hidden.Index
+		return lookup, true
+	}
+	if ordered, ok := lookup.Index.(metadataOnlyOrderedIndex); ok {
+		lookup.Index = ordered.Index
 		return lookup, true
 	}
 	return lookup, false

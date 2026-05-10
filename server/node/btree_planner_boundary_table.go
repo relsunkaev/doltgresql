@@ -28,10 +28,11 @@ import (
 )
 
 type BtreePlannerBoundaryTable struct {
-	underlying      sql.Table
-	patternOpLookup []btreePatternOpLookup
-	citextLookup    []citextBtreeLookup
-	partialLookup   []partialBtreeLookup
+	underlying       sql.Table
+	patternOpLookup  []btreePatternOpLookup
+	citextLookup     []citextBtreeLookup
+	partialLookup    []partialBtreeLookup
+	preserveFullRows bool
 }
 
 type btreePatternOpLookup struct {
@@ -82,6 +83,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	patternOpLookups := make([]btreePatternOpLookup, 0)
 	citextLookups := make([]citextBtreeLookup, 0)
 	partialLookups := make([]partialBtreeLookup, 0)
+	preserveFullRows := false
 	tableSchema := table.Schema(ctx)
 	for _, index := range indexes {
 		if hidePlannerIndex(index) {
@@ -94,6 +96,10 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 				partialLookups = append(partialLookups, lookup)
 			}
 			continue
+		}
+		if metadataOnlySortOptionIndex(index) {
+			needsWrap = true
+			preserveFullRows = true
 		}
 		if unsafeBtreePlannerIndex(index, tableSchema) {
 			needsWrap = true
@@ -110,13 +116,14 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 		return table, false, nil
 	}
 	if len(patternOpLookups) == 0 && len(citextLookups) == 0 && len(partialLookups) == 0 {
-		return &BtreePlannerBoundaryTable{underlying: table}, true, nil
+		return &BtreePlannerBoundaryTable{underlying: table, preserveFullRows: preserveFullRows}, true, nil
 	}
 	return &BtreePlannerBoundaryTable{
-		underlying:      table,
-		patternOpLookup: patternOpLookups,
-		citextLookup:    citextLookups,
-		partialLookup:   partialLookups,
+		underlying:       table,
+		patternOpLookup:  patternOpLookups,
+		citextLookup:     citextLookups,
+		partialLookup:    partialLookups,
+		preserveFullRows: preserveFullRows,
 	}, true, nil
 }
 
@@ -137,6 +144,15 @@ func (t *BtreePlannerBoundaryTable) Collation() sql.CollationID {
 }
 
 func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames []string) (sql.Table, error) {
+	if t.preserveFullRows {
+		return &BtreePlannerBoundaryTable{
+			underlying:       t.underlying,
+			patternOpLookup:  t.patternOpLookup,
+			citextLookup:     t.citextLookup,
+			partialLookup:    t.partialLookup,
+			preserveFullRows: t.preserveFullRows,
+		}, nil
+	}
 	projected, ok := t.underlying.(sql.ProjectedTable)
 	if !ok {
 		return nil, errors.Errorf("table %s does not support projections", t.Name())
@@ -146,10 +162,11 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 		return nil, err
 	}
 	return &BtreePlannerBoundaryTable{
-		underlying:      table,
-		patternOpLookup: t.patternOpLookup,
-		citextLookup:    t.citextLookup,
-		partialLookup:   t.partialLookup,
+		underlying:       table,
+		patternOpLookup:  t.patternOpLookup,
+		citextLookup:     t.citextLookup,
+		partialLookup:    t.partialLookup,
+		preserveFullRows: t.preserveFullRows,
 	}, nil
 }
 
@@ -208,15 +225,15 @@ func (t *BtreePlannerBoundaryTable) Deleter(ctx *sql.Context) sql.RowDeleter {
 }
 
 func (t *BtreePlannerBoundaryTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
-	unwrapped, hidden := unwrapPartialPlannerLookup(lookup)
+	unwrapped, wrappedIndex := unwrapPlannerIndexLookup(lookup)
 	indexed := indexedAccessWithMutableWrappers(ctx, t.underlying, unwrapped)
 	if indexed == nil {
 		return nil
 	}
-	if !hidden {
+	if !wrappedIndex {
 		return indexed
 	}
-	return partialIndexLookupUnwrapper{IndexedTable: indexed}
+	return &BtreePlannerBoundaryTable{underlying: indexed}
 }
 
 func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, error) {
@@ -240,6 +257,13 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 		if unsafeBtreePlannerIndex(index, t.Schema(ctx)) {
 			continue
 		}
+		if metadataOnlySortOptionIndex(index) {
+			if !metadataOnlySortOptionIndexColumnsAvailable(index, t.Schema(ctx)) {
+				continue
+			}
+			filtered = append(filtered, metadataOnlyOrderedIndex{Index: index})
+			continue
+		}
 		filtered = append(filtered, index)
 	}
 	return filtered, nil
@@ -258,7 +282,7 @@ func hidePlannerIndex(index sql.Index) bool {
 
 func (t *BtreePlannerBoundaryTable) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
 	if indexedTable, ok := t.underlying.(sql.IndexedTable); ok {
-		unwrapped, _ := unwrapPartialPlannerLookup(lookup)
+		unwrapped, _ := unwrapPlannerIndexLookup(lookup)
 		return indexedTable.LookupPartitions(ctx, unwrapped)
 	}
 	return nil, errors.Errorf("table %s is not indexed", t.Name())

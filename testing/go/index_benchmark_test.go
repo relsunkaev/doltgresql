@@ -87,6 +87,32 @@ func TestBtreeIndexPlannerShape(t *testing.T) {
 	}
 }
 
+func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_plain_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_sort_plain_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_plain_score_idx ON btree_sort_plain_plan (score)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_plain_plan ORDER BY score ASC NULLS FIRST`, true)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_score_idx ON btree_sort_option_plan (score DESC NULLS LAST)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_option_plan ORDER BY score DESC NULLS LAST`, false)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE label = 'label-1'`, 8)
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE score = 17`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE score = 17`, 2)
+	execBenchmarkSQL(t, ctx, conn, `UPDATE btree_sort_option_plan SET label = 'hit' WHERE score = 17`)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE label = 'hit'`, 2)
+}
+
 func TestBtreeStatsBackedIndexChoice(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {
