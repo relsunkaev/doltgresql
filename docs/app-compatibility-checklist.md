@@ -1243,7 +1243,8 @@ typed-exception handling, and client-side query timeouts.
   inserts. Still open: temporary typed-table UNIQUE enforcement, typed-table
   defaults, CHECK, FOREIGN KEY, generated columns, UNIQUE NULLS NOT DISTINCT,
   index options/opclasses, and other table-definition/options surface. Pinned
-  by testing/go/pg_class_reloftype_test.go.
+  by testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked
+  by dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name
