@@ -21,10 +21,16 @@ import (
 	"sync/atomic"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb/durable"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/writer"
+	"github.com/dolthub/dolt/go/libraries/doltcore/table/editor"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -59,6 +65,15 @@ var testHookAfterConcurrentRefreshBuild func(ctx *sql.Context)
 // intended caller is the cross-session integration test in testing/go.
 func SetTestHookAfterConcurrentRefreshBuild(hook func(ctx *sql.Context)) {
 	testHookAfterConcurrentRefreshBuild = hook
+}
+
+var testHookBeforeConcurrentRefreshSwap func(ctx *sql.Context) error
+
+// SetTestHookBeforeConcurrentRefreshSwap installs a hook immediately before
+// REFRESH MATERIALIZED VIEW CONCURRENTLY publishes staged rows to the target.
+// The intended caller is the cross-session integration test in testing/go.
+func SetTestHookBeforeConcurrentRefreshSwap(hook func(ctx *sql.Context) error) {
+	testHookBeforeConcurrentRefreshSwap = hook
 }
 
 // NewRefreshMaterializedView returns a new *RefreshMaterializedView.
@@ -159,7 +174,6 @@ func (r *RefreshMaterializedView) refreshSynchronously(ctx *sql.Context, target 
 }
 
 func (r *RefreshMaterializedView) refreshConcurrently(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
-	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
 	columnList := quoteColumnList(target.table.Schema(ctx))
 	tempName := fmt.Sprintf("__doltgres_refresh_%d", atomic.AddUint64(&materializedViewRefreshTempCounter, 1))
 	quotedTempName := quoteIdentifier(tempName)
@@ -176,13 +190,154 @@ func (r *RefreshMaterializedView) refreshConcurrently(ctx *sql.Context, target r
 		testHookAfterConcurrentRefreshBuild(ctx)
 	}
 
-	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+	replacement, err := r.buildConcurrentRefreshReplacement(ctx, target, quotedTempName, columnList)
+	if err != nil {
 		return err
 	}
-	if err := r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", qualifiedName, columnList, columnList, quotedTempName)); err != nil {
+	return r.swapConcurrentRefreshReplacement(ctx, target, replacement)
+}
+
+func (r *RefreshMaterializedView) buildConcurrentRefreshReplacement(
+	ctx *sql.Context,
+	target refreshMaterializedViewTarget,
+	quotedTempName string,
+	columnList string,
+) (*doltdb.Table, error) {
+	targetDoltTable, err := sqlTableDoltTable(ctx, target.table)
+	if err != nil {
+		return nil, err
+	}
+	emptyTargetTable, err := emptyMaterializedViewTable(ctx, targetDoltTable)
+	if err != nil {
+		return nil, err
+	}
+	_, root, err := core.GetRootFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tableName := targetDoltTableName(target)
+	buildRoot, err := root.PutTable(ctx, tableName, emptyTargetTable)
+	if err != nil {
+		return nil, err
+	}
+
+	session := dsess.DSessFromSess(ctx.Session)
+	dbName := ctx.GetCurrentDatabase()
+	currentWorkingSet, err := session.WorkingSet(ctx, dbName)
+	if err != nil {
+		return nil, err
+	}
+	buildWorkingSet := currentWorkingSet.WithWorkingRoot(buildRoot).WithStagedRoot(buildRoot)
+	autoIncrementTracker, err := dsess.NewAutoIncrementTracker(ctx, dbName, buildWorkingSet)
+	if err != nil {
+		return nil, err
+	}
+	defer autoIncrementTracker.Close()
+
+	writeSession := writer.NewWriteSession(buildWorkingSet, autoIncrementTracker, editor.Options{})
+	tableWriter, err := writeSession.GetTableWriter(ctx, tableName, dbName, func(*sql.Context, string, doltdb.RootValue) error {
+		return nil
+	}, false)
+	if err != nil {
+		return nil, err
+	}
+
+	replacementRows, err := r.runRefreshQuery(ctx, fmt.Sprintf("SELECT %s FROM %s", columnList, quotedTempName))
+	if err != nil {
+		return nil, err
+	}
+	tableWriter.StatementBegin(ctx)
+	for _, row := range replacementRows {
+		if err = tableWriter.Insert(ctx, row); err != nil {
+			_ = tableWriter.DiscardChanges(ctx, err)
+			return nil, err
+		}
+	}
+	if err = tableWriter.StatementComplete(ctx); err != nil {
+		_ = tableWriter.DiscardChanges(ctx, err)
+		return nil, err
+	}
+	flushedWorkingSet, err := writeSession.Flush(ctx)
+	if err != nil {
+		return nil, err
+	}
+	replacementTable, ok, err := flushedWorkingSet.WorkingRoot().GetTable(ctx, tableName)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.Errorf(`materialized view "%s" replacement table was not built`, target.table.Name())
+	}
+	return replacementTable, nil
+}
+
+func (r *RefreshMaterializedView) swapConcurrentRefreshReplacement(ctx *sql.Context, target refreshMaterializedViewTarget, replacement *doltdb.Table) error {
+	if testHookBeforeConcurrentRefreshSwap != nil {
+		if err := testHookBeforeConcurrentRefreshSwap(ctx); err != nil {
+			return err
+		}
+	}
+	session, root, err := core.GetRootFromContext(ctx)
+	if err != nil {
 		return err
 	}
-	return r.setTargetPopulated(ctx, target, definition, true)
+	newRoot, err := root.PutTable(ctx, targetDoltTableName(target), replacement)
+	if err != nil {
+		return err
+	}
+	return session.SetWorkingRoot(ctx, ctx.GetCurrentDatabase(), newRoot)
+}
+
+func sqlTableDoltTable(ctx *sql.Context, table sql.Table) (*doltdb.Table, error) {
+	doltTable := core.SQLTableToDoltTable(table)
+	if doltTable == nil {
+		return nil, errors.Errorf(`materialized view "%s" is not backed by a Dolt table`, table.Name())
+	}
+	return doltTable.DoltTable(ctx)
+}
+
+func emptyMaterializedViewTable(ctx *sql.Context, table *doltdb.Table) (*doltdb.Table, error) {
+	tableSchema, err := table.GetSchema(ctx)
+	if err != nil {
+		return nil, err
+	}
+	indexSet, err := table.GetIndexSet(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, index := range tableSchema.Indexes().AllIndexes() {
+		emptyIndex, err := durable.NewEmptyIndexFromTableSchema(ctx, table.ValueReadWriter(), table.NodeStore(), index, tableSchema)
+		if err != nil {
+			return nil, err
+		}
+		indexSet, err = indexSet.PutIndex(ctx, index.Name(), emptyIndex)
+		if err != nil {
+			return nil, err
+		}
+	}
+	emptyRows, err := durable.NewEmptyPrimaryIndex(ctx, table.ValueReadWriter(), table.NodeStore(), tableSchema)
+	if err != nil {
+		return nil, err
+	}
+	emptyTable, err := doltdb.NewTable(ctx, table.ValueReadWriter(), table.NodeStore(), tableSchema, emptyRows, indexSet, nil)
+	if err != nil {
+		return nil, err
+	}
+	artifacts, err := table.GetArtifacts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return emptyTable.SetArtifacts(ctx, artifacts)
+}
+
+func targetDoltTableName(target refreshMaterializedViewTarget) doltdb.TableName {
+	schemaName := target.schema
+	if schemaTable, ok := target.table.(sql.DatabaseSchemaTable); ok {
+		if databaseSchema := schemaTable.DatabaseSchema(); databaseSchema != nil {
+			schemaName = databaseSchema.SchemaName()
+		}
+	}
+	return doltdb.TableName{Name: target.table.Name(), Schema: schemaName}
 }
 
 // Schema implements the interface sql.ExecSourceRel.
@@ -269,17 +424,21 @@ func (r *RefreshMaterializedView) searchSchemas(ctx *sql.Context) ([]string, err
 }
 
 func (r *RefreshMaterializedView) runRefreshStatement(ctx *sql.Context, query string) error {
+	_, err := r.runRefreshQuery(ctx, query)
+	return err
+}
+
+func (r *RefreshMaterializedView) runRefreshQuery(ctx *sql.Context, query string) ([]sql.Row, error) {
 	if r.Runner.Runner == nil {
-		return errors.Errorf("statement runner is not available")
+		return nil, errors.Errorf("statement runner is not available")
 	}
-	_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+	return sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
 		_, rowIter, _, err := r.Runner.Runner.QueryWithBindings(subCtx, query, nil, nil, nil)
 		if err != nil {
 			return nil, err
 		}
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
-	return err
 }
 
 func hasUsableConcurrentRefreshUniqueIndex(ctx *sql.Context, table sql.Table) (bool, error) {

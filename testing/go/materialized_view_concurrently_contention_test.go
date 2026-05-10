@@ -16,6 +16,7 @@ package _go
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -55,6 +56,8 @@ func TestRefreshMaterializedViewConcurrentlyReadsOldSnapshotDuringBuild(t *testi
 	_, err = setup.Exec(ctx, "CREATE MATERIALIZED VIEW mv_snapshot (account_id, amount) AS SELECT id, v FROM mv_source")
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "CREATE UNIQUE INDEX mv_snapshot_account_id_idx ON mv_snapshot (account_id)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE INDEX mv_snapshot_amount_idx ON mv_snapshot (amount)")
 	require.NoError(t, err)
 	_, err = setup.Exec(ctx, "UPDATE mv_source SET v = 200 WHERE id = 2")
 	require.NoError(t, err)
@@ -128,4 +131,78 @@ func TestRefreshMaterializedViewConcurrentlyReadsOldSnapshotDuringBuild(t *testi
 	require.NoError(t, rows.Err())
 	rows.Close()
 	require.Equal(t, [][2]int{{1, 10}, {2, 200}, {3, 30}}, refreshedRows)
+
+	indexRows, err := sessionB.Query(ctx, `
+		SELECT indexname, indexdef
+		FROM pg_indexes
+		WHERE tablename = 'mv_snapshot'
+		ORDER BY indexname`)
+	require.NoError(t, err)
+	var indexes [][2]string
+	for indexRows.Next() {
+		var name, def string
+		require.NoError(t, indexRows.Scan(&name, &def))
+		indexes = append(indexes, [2]string{name, def})
+	}
+	require.NoError(t, indexRows.Err())
+	indexRows.Close()
+	require.Equal(t, [][2]string{
+		{"mv_snapshot_account_id_idx", "CREATE UNIQUE INDEX mv_snapshot_account_id_idx ON public.mv_snapshot USING btree (account_id)"},
+		{"mv_snapshot_amount_idx", "CREATE INDEX mv_snapshot_amount_idx ON public.mv_snapshot USING btree (amount)"},
+	}, indexes)
+}
+
+func TestRefreshMaterializedViewConcurrentlySwapFailurePreservesOldSnapshot(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	dial := func(t *testing.T) *pgx.Conn {
+		t.Helper()
+		conn, err := pgx.Connect(ctx, fmt.Sprintf(
+			"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+		require.NoError(t, err)
+		return conn
+	}
+
+	setup := dial(t)
+	defer setup.Close(ctx)
+	_, err = setup.Exec(ctx, "CREATE TABLE swap_source (id INT PRIMARY KEY, v INT)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "INSERT INTO swap_source VALUES (1, 10), (2, 20)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE MATERIALIZED VIEW swap_snapshot (account_id, amount) AS SELECT id, v FROM swap_source")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "CREATE UNIQUE INDEX swap_snapshot_account_id_idx ON swap_snapshot (account_id)")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "UPDATE swap_source SET v = 200 WHERE id = 2")
+	require.NoError(t, err)
+	_, err = setup.Exec(ctx, "INSERT INTO swap_source VALUES (3, 30)")
+	require.NoError(t, err)
+
+	pgnodes.SetTestHookBeforeConcurrentRefreshSwap(func(_ *gms.Context) error {
+		return errors.New("forced concurrent refresh swap failure")
+	})
+	t.Cleanup(func() { pgnodes.SetTestHookBeforeConcurrentRefreshSwap(nil) })
+
+	_, err = setup.Exec(ctx, "REFRESH MATERIALIZED VIEW CONCURRENTLY swap_snapshot")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "forced concurrent refresh swap failure")
+
+	rows, err := setup.Query(ctx, "SELECT account_id, amount FROM swap_snapshot ORDER BY account_id")
+	require.NoError(t, err)
+	var preservedRows [][2]int
+	for rows.Next() {
+		var accountID, amount int
+		require.NoError(t, rows.Scan(&accountID, &amount))
+		preservedRows = append(preservedRows, [2]int{accountID, amount})
+	}
+	require.NoError(t, rows.Err())
+	rows.Close()
+	require.Equal(t, [][2]int{{1, 10}, {2, 20}}, preservedRows)
 }
