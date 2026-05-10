@@ -97,7 +97,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 			}
 			continue
 		}
-		if metadataOnlySortOptionIndex(index) {
+		if metadataOnlySortOptionIndex(index, tableSchema) {
 			needsWrap = true
 			preserveFullRows = true
 		}
@@ -257,7 +257,7 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 		if unsafeBtreePlannerIndex(index, t.Schema(ctx)) {
 			continue
 		}
-		if metadataOnlySortOptionIndex(index) {
+		if metadataOnlySortOptionIndex(index, t.Schema(ctx)) {
 			if !metadataOnlySortOptionIndexColumnsAvailable(index, t.Schema(ctx)) {
 				continue
 			}

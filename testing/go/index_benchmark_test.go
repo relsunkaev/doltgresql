@@ -102,7 +102,7 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_plain_score_idx ON btree_sort_plain_plan (score)")
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_plain_plan ORDER BY score ASC NULLS FIRST`, true)
 
-	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER, label TEXT NOT NULL)")
 	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_plan", 128)
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_score_idx ON btree_sort_option_plan (score DESC NULLS LAST)")
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_option_plan ORDER BY score DESC NULLS LAST`, false)
@@ -111,6 +111,24 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE score = 17`, 2)
 	execBenchmarkSQL(t, ctx, conn, `UPDATE btree_sort_option_plan SET label = 'hit' WHERE score = 17`)
 	assertCountResult(t, ctx, conn, `SELECT count(id) FROM btree_sort_option_plan WHERE label = 'hit'`, 2)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_not_null_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_not_null_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_not_null_score_idx ON btree_sort_option_not_null_plan (score DESC NULLS LAST)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_option_not_null_plan ORDER BY score DESC NULLS LAST`, true)
+	topScores := queryBenchmarkString(t, ctx, conn, `SELECT string_agg(score::text, ',' ORDER BY score DESC) FROM (SELECT score FROM btree_sort_option_not_null_plan ORDER BY score DESC NULLS LAST LIMIT 5) ordered_scores`)
+	if topScores != "63,63,62,62,61" {
+		t.Fatalf("unexpected top scores from DESC NULLS LAST index scan: %s", topScores)
+	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_asc_not_null_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
+	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_asc_not_null_plan", 128)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_asc_not_null_score_idx ON btree_sort_option_asc_not_null_plan (score ASC NULLS FIRST)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT id FROM btree_sort_option_asc_not_null_plan ORDER BY score ASC NULLS FIRST`, true)
+	bottomScores := queryBenchmarkString(t, ctx, conn, `SELECT string_agg(score::text, ',' ORDER BY score ASC) FROM (SELECT score FROM btree_sort_option_asc_not_null_plan ORDER BY score ASC NULLS FIRST LIMIT 5) ordered_scores`)
+	if bottomScores != "0,0,1,1,2" {
+		t.Fatalf("unexpected bottom scores from ASC NULLS FIRST index scan: %s", bottomScores)
+	}
 }
 
 func TestBtreeStatsBackedIndexChoice(t *testing.T) {

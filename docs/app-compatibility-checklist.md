@@ -731,6 +731,12 @@ Do not check off an item until it has workload proof:
   report `IndexOrderNone` to sort-elision rules until physical storage can
   honor those options; ordinary btree ordered scans and predicate lookup on
   the fenced index stay covered. Tracked by dg-7ug.8.3.1.
+- [x] Enable ordered-scan planning for btree sort-option indexes whose affected
+  key columns are real `NOT NULL` table columns. The planner can safely use
+  these indexes for matching `ORDER BY ... DESC NULLS LAST` / explicit null
+  option shapes because null placement cannot change the physical order, while
+  nullable keys remain fenced. Pinned by testing/go/index_benchmark_test.go.
+  Tracked by dg-7ug.8.3.2.
 - [ ] Model physical descending and NULLS FIRST/LAST index scan ordering in
   index storage and PostgreSQL-style planner preference. Today those
   per-column scan choices are metadata-preserved but not stored as

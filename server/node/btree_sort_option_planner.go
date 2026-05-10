@@ -48,8 +48,11 @@ func (i metadataOnlyOrderedIndex) ExtendedColumnExpressionTypes(ctx *sql.Context
 	return i.ColumnExpressionTypes(ctx)
 }
 
-func metadataOnlySortOptionIndex(index sql.Index) bool {
+func metadataOnlySortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+		return false
+	}
+	if plannerSafeSortOptionIndex(index, tableSchema) {
 		return false
 	}
 	for _, option := range indexmetadata.SortOptions(index.Comment()) {
@@ -58,6 +61,34 @@ func metadataOnlySortOptionIndex(index sql.Index) bool {
 		}
 	}
 	return false
+}
+
+func plannerSafeSortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
+	sortOptions := indexmetadata.SortOptions(index.Comment())
+	if len(sortOptions) == 0 || tableSchema == nil {
+		return false
+	}
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+	if len(logicalColumns) == 0 {
+		return false
+	}
+	for i, option := range sortOptions {
+		if strings.TrimSpace(option.Direction) == "" && strings.TrimSpace(option.NullsOrder) == "" {
+			continue
+		}
+		if i >= len(logicalColumns) {
+			return false
+		}
+		column := logicalColumns[i]
+		if column.Expression {
+			return false
+		}
+		schemaIndex := tableSchema.IndexOfColName(column.StorageName)
+		if schemaIndex < 0 || tableSchema[schemaIndex].Nullable {
+			return false
+		}
+	}
+	return true
 }
 
 func metadataOnlySortOptionIndexColumnsAvailable(index sql.Index, tableSchema sql.Schema) bool {
