@@ -24,10 +24,13 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	gmstypes "github.com/dolthub/go-mysql-server/sql/types"
+	"github.com/dolthub/vitess/go/mysql"
 	"github.com/jackc/pgx/v5/pgproto3"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/typecollection"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -589,8 +592,90 @@ func plpgsqlExceptionDiagnosticsFromError(err error) plpgsqlExceptionDiagnostics
 	}
 	return plpgsqlExceptionDiagnostics{
 		MessageText:      err.Error(),
-		ReturnedSQLState: "XX000",
+		ReturnedSQLState: plpgsqlExceptionSQLStateFromError(err),
 	}
+}
+
+func plpgsqlExceptionSQLStateFromError(err error) string {
+	if code := pgerror.GetPGCode(err); code != pgcode.Uncategorized {
+		return code.String()
+	}
+	switch {
+	case sql.ErrPrimaryKeyViolation.Is(err),
+		sql.ErrUniqueKeyViolation.Is(err):
+		return pgcode.UniqueViolation.String()
+	case sql.ErrForeignKeyChildViolation.Is(err),
+		sql.ErrForeignKeyParentViolation.Is(err):
+		return pgcode.ForeignKeyViolation.String()
+	case sql.ErrInsertIntoNonNullableProvidedNull.Is(err),
+		sql.ErrInsertIntoNonNullableDefaultNullColumn.Is(err):
+		return pgcode.NotNullViolation.String()
+	case sql.ErrCheckConstraintViolated.Is(err):
+		return pgcode.CheckViolation.String()
+	case sql.ErrTableNotFound.Is(err):
+		return pgcode.UndefinedTable.String()
+	case sql.ErrColumnNotFound.Is(err):
+		return pgcode.UndefinedColumn.String()
+	case sql.ErrInvalidValue.Is(err):
+		return pgcode.InvalidTextRepresentation.String()
+	case sql.ErrLockDeadlock.Is(err):
+		return pgcode.SerializationFailure.String()
+	}
+	var mysqlErr *mysql.SQLError
+	if errors.As(err, &mysqlErr) {
+		if code, ok := plpgsqlMysqlErrnoSQLState(mysqlErr.Number()); ok {
+			return code
+		}
+		if code, ok := plpgsqlErrorMessageSQLState(mysqlErr.Message); ok {
+			return code
+		}
+	}
+	if code, ok := plpgsqlErrorMessageSQLState(err.Error()); ok {
+		return code
+	}
+	return "XX000"
+}
+
+func plpgsqlErrorMessageSQLState(msg string) (string, bool) {
+	switch {
+	case strings.HasPrefix(msg, "Check constraint "):
+		return pgcode.CheckViolation.String(), true
+	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
+		return pgcode.UndefinedColumn.String(), true
+	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
+		return pgcode.UniqueViolation.String(), true
+	case strings.Contains(msg, "Unique Key Constraint Violation"):
+		return pgcode.UniqueViolation.String(), true
+	case strings.HasPrefix(msg, "duplicate primary key given"),
+		strings.HasPrefix(msg, "duplicate unique key given"):
+		return pgcode.UniqueViolation.String(), true
+	case strings.HasPrefix(msg, "date field value out of range"),
+		strings.HasPrefix(msg, "time field value out of range"),
+		strings.HasPrefix(msg, "date/time field value out of range"),
+		strings.HasPrefix(msg, "timestamp out of range"):
+		return pgcode.DatetimeFieldOverflow.String(), true
+	}
+	return "", false
+}
+
+func plpgsqlMysqlErrnoSQLState(errno int) (string, bool) {
+	switch errno {
+	case mysql.ERDupEntry:
+		return pgcode.UniqueViolation.String(), true
+	case mysql.ErNoReferencedRow2, mysql.ERNoReferencedRow:
+		return pgcode.ForeignKeyViolation.String(), true
+	case mysql.ERRowIsReferenced2, mysql.ERRowIsReferenced:
+		return pgcode.ForeignKeyViolation.String(), true
+	case mysql.ERBadNullError:
+		return pgcode.NotNullViolation.String(), true
+	case mysql.ERNoSuchTable:
+		return pgcode.UndefinedTable.String(), true
+	case mysql.ERBadFieldError:
+		return pgcode.UndefinedColumn.String(), true
+	case mysql.ERLockDeadlock:
+		return pgcode.SerializationFailure.String(), true
+	}
+	return "", false
 }
 
 func plpgsqlRaiseOptionText(value string) string {

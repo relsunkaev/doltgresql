@@ -1,6 +1,6 @@
 # Real-world application compatibility checklist
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 This is the workload-prioritized view of `postgresql-parity-issues.md`. The
 parity doc enumerates every known PostgreSQL feature gap, organized by the
@@ -624,6 +624,12 @@ Do not check off an item until it has workload proof:
     `CONSTRAINT_NAME`, `PG_DATATYPE_NAME`, `TABLE_NAME`, and `SCHEMA_NAME`
     inside the matching handler. Pinned by testing/go/do_block_probe_test.go
     and server/plpgsql/parse_test.go. Tracked by dg-7ug.20.3.
+  - [x] Native SQL errors raised inside PL/pgSQL blocks preserve enough
+    PostgreSQL SQLSTATE classification for exception handlers to catch
+    unique-violation failures by condition name, and `GET STACKED
+    DIAGNOSTICS` reports `RETURNED_SQLSTATE = 23505` in the active handler.
+    Unmatched native SQL errors still propagate. Pinned by
+    testing/go/do_block_probe_test.go. Tracked by dg-7ug.20.4.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

@@ -674,6 +674,72 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block catches native SQL unique violation by condition name",
+			SetUpScript: []string{
+				`CREATE TABLE do_native_sqlstate_items (
+					id INT PRIMARY KEY,
+					label TEXT UNIQUE
+				);`,
+				`CREATE TABLE do_native_sqlstate_seen (
+					sqlstate TEXT NOT NULL,
+					has_message TEXT NOT NULL
+				);`,
+				`INSERT INTO do_native_sqlstate_items VALUES (1, 'existing');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							returned_state TEXT;
+							message TEXT;
+						BEGIN
+							BEGIN
+								INSERT INTO do_native_sqlstate_items VALUES (2, 'existing');
+							EXCEPTION
+								WHEN unique_violation THEN
+									GET STACKED DIAGNOSTICS
+										returned_state = RETURNED_SQLSTATE,
+										message = MESSAGE_TEXT;
+									INSERT INTO do_native_sqlstate_seen VALUES (
+										returned_state,
+										(length(message) > 0)::text
+									);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT sqlstate, has_message FROM do_native_sqlstate_seen;`,
+					Expected: []sql.Row{{"23505", "true"}},
+				},
+			},
+		},
+		{
+			Name: "DO block propagates unmatched native SQL unique violation",
+			SetUpScript: []string{
+				`CREATE TABLE do_native_unmatched_items (
+					id INT PRIMARY KEY,
+					label TEXT UNIQUE
+				);`,
+				`INSERT INTO do_native_unmatched_items VALUES (1, 'existing');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						BEGIN
+							BEGIN
+								INSERT INTO do_native_unmatched_items VALUES (2, 'existing');
+							EXCEPTION
+								WHEN division_by_zero THEN
+									RAISE NOTICE 'wrong handler';
+							END;
+						END;
+					$$;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name:        "DO block multiple exception handlers propagate when unmatched",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
