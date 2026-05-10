@@ -144,9 +144,14 @@ Do not check off an item until it has workload proof:
   MD5, SHA1, SHA224, SHA256, SHA384, and SHA512, with unsupported
   algorithms rejected explicitly; `gen_random_bytes(int4)` returns
   cryptographic random `bytea` payloads for lengths 1-1024 and rejects
-  out-of-range requests. `CREATE EXTENSION vector` is accepted through
-  a built-in pgvector shim and the native `vector(n)` type round-trips
-  scalar embeddings.
+  out-of-range requests. `gen_salt('bf'[, int4])` and
+  `crypt(text, text)` cover bcrypt/Blowfish password-hash generation and
+  verification for the common `crypt(password, gen_salt('bf'))` and
+  `stored_hash = crypt(password, stored_hash)` app flows, including
+  PostgreSQL's `bf` default cost 6 and allowed cost range 4-31; non-`bf`
+  password salt/hash algorithms are explicitly rejected. The
+  `CREATE EXTENSION vector` shim is accepted and the native `vector(n)` type
+  round-trips scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
   for dump restore. `CREATE EXTENSION citext`
   installs a case-insensitive text type in the target schema so dump
@@ -220,9 +225,10 @@ Do not check off an item until it has workload proof:
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
   non-goals. Open surfaces include remaining `pgcrypto` encrypt/decrypt,
-  password-hashing, and advanced random helpers beyond the native UUID,
-  `gen_random_bytes`, and digest/HMAC subset, pgvector behavior beyond
-  scalar `vector(n)` round-trips, `btree_gist` operator classes, and hstore
+  non-`bf` password-hashing algorithms, and advanced random helpers beyond
+  the native UUID, `gen_random_bytes`, and digest/HMAC subset, pgvector
+  behavior beyond scalar `vector(n)` round-trips, `btree_gist` operator
+  classes, and hstore
   operators/functions/casts outside testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
