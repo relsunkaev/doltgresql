@@ -40,6 +40,7 @@ type InterpretedFunction interface {
 	GetParameterNames() []string
 	GetReturn() *pgtypes.DoltgresType
 	GetStatements() []InterpreterOperation
+	InternalID() id.Id
 	QueryMultiReturn(ctx *sql.Context, stack InterpreterStack, stmt string, bindings []string) (schema sql.Schema, rows []sql.Row, err error)
 	QuerySingleReturn(ctx *sql.Context, stack InterpreterStack, stmt string, targetType *pgtypes.DoltgresType, bindings []string) (val any, err error)
 	// IsSRF returns whether the function is a set returning function, meaning whether the
@@ -284,6 +285,10 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(iFunc, operation)); err != nil {
 					return nil, err
 				}
+			case "PG_ROUTINE_OID":
+				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Oid, diagnosticPGRoutineOID(iFunc)); err != nil {
+					return nil, err
+				}
 			default:
 				return nil, fmt.Errorf("GET DIAGNOSTICS item %s is not supported", operation.PrimaryData)
 			}
@@ -491,6 +496,13 @@ func diagnosticPGContext(iFunc InterpretedFunction, operation InterpreterOperati
 		lineNumber = "0"
 	}
 	return fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", functionName, lineNumber)
+}
+
+func diagnosticPGRoutineOID(iFunc InterpretedFunction) id.Id {
+	if iFunc.GetName() == "__doltgres_do_block" {
+		return id.NewOID(0).AsId()
+	}
+	return iFunc.InternalID()
 }
 
 func evaluateDynamicExecuteUsingParams(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, params []string) ([]string, error) {

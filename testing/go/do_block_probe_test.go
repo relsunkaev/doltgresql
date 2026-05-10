@@ -365,6 +365,42 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "PL/pgSQL function assigns GET DIAGNOSTICS PG_ROUTINE_OID",
+			SetUpScript: []string{
+				`CREATE TABLE do_diag_routine_oid_seen (routine_oid_text TEXT NOT NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							routine_oid oid;
+						BEGIN
+							GET DIAGNOSTICS routine_oid = PG_ROUTINE_OID;
+							INSERT INTO do_diag_routine_oid_seen VALUES (routine_oid::text);
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT routine_oid_text FROM do_diag_routine_oid_seen;`,
+					Expected: []sql.Row{{"0"}},
+				},
+				{
+					Query: `CREATE FUNCTION diag_routine_oid() RETURNS oid AS $$
+						DECLARE
+							routine_oid oid;
+						BEGIN
+							GET DIAGNOSTICS routine_oid = PG_ROUTINE_OID;
+							RETURN routine_oid;
+						END;
+					$$ LANGUAGE plpgsql;`,
+				},
+				{
+					Query:    `SELECT (diag_routine_oid()::text <> '0')::text;`,
+					Expected: []sql.Row{{"true"}},
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

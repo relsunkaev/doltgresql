@@ -583,10 +583,15 @@ Do not check off an item until it has workload proof:
   retrieve it alongside `ROW_COUNT` in the same statement. Pinned by
   testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go. Tracked
   by dg-7ug.17.
+- [x] PL/pgSQL `GET DIAGNOSTICS ... PG_ROUTINE_OID` - named PL/pgSQL
+  functions can assign their current routine OID to an `oid` variable and
+  return it as a nonzero routine identity. Anonymous DO blocks return OID zero
+  because they do not have a `pg_proc` routine entry. Pinned by
+  testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go. Tracked
+  by dg-7ug.18.
 - [ ] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
-  DIAGNOSTICS`, exception diagnostics, multi-frame `PG_CONTEXT` call-stack
-  assembly, and any additional PostgreSQL-compatible item typing) before
-  claiming full diagnostics parity.
+  DIAGNOSTICS`, exception diagnostics, and multi-frame `PG_CONTEXT`
+  call-stack assembly) before claiming full diagnostics parity.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

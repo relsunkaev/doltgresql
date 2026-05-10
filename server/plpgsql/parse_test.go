@@ -223,3 +223,36 @@ func TestParseGetDiagnosticsPgContext(t *testing.T) {
 		t.Fatalf("expected lineNumber option on PG_CONTEXT operation; op: %#v", getOp)
 	}
 }
+
+func TestParseGetDiagnosticsPgRoutineOid(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			routine_oid oid;
+		BEGIN
+			GET DIAGNOSTICS routine_oid = PG_ROUTINE_OID;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var getOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Get {
+			getOp = &ops[i]
+			break
+		}
+	}
+	if getOp == nil {
+		t.Fatalf("expected GET DIAGNOSTICS operation, found %#v", ops)
+	}
+	if getOp.Target != "routine_oid" {
+		t.Fatalf("target = %q, expected routine_oid; op: %#v", getOp.Target, getOp)
+	}
+	if getOp.PrimaryData != "PG_ROUTINE_OID" {
+		t.Fatalf("diagnostic item = %q, expected PG_ROUTINE_OID; op: %#v", getOp.PrimaryData, getOp)
+	}
+	if getOp.Options["lineNumber"] == "" {
+		t.Fatalf("expected lineNumber option on PG_ROUTINE_OID operation; op: %#v", getOp)
+	}
+}
