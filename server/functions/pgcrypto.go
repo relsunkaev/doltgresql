@@ -78,6 +78,7 @@ func initPgCrypto() {
 	framework.RegisterFunction(pgcrypto_gen_random_bytes)
 	framework.RegisterFunction(pgcrypto_hmac_text)
 	framework.RegisterFunction(pgcrypto_hmac_bytea)
+	framework.RegisterFunction(pgcrypto_pgp_armor_headers)
 }
 
 var pgcrypto_crypt = framework.Function2{

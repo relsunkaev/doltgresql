@@ -148,11 +148,13 @@ Do not check off an item until it has workload proof:
   algorithms rejected explicitly; `gen_random_bytes(int4)` returns
   cryptographic random `bytea` payloads for lengths 1-1024 and rejects
   out-of-range requests. ASCII armor helpers cover `armor(bytea)`,
-  `armor(bytea, text[], text[])`, and `dearmor(text)`, including header
-  key/value lines, CRC24 verification, and corrupt-armor rejection.
+  `armor(bytea, text[], text[])`, `dearmor(text)`, and
+  `pgp_armor_headers(text)`, including header key/value lines, header
+  extraction, CRC24 verification, and corrupt-armor rejection.
   Extension-schema qualified calls such as
   `extensions.digest(...)`, `extensions.crypt(...)`,
   `extensions.armor(...)`, `extensions.dearmor(...)`,
+  `extensions.pgp_armor_headers(...)`,
   `extensions.gen_random_bytes(...)`, and
   `extensions.gen_random_uuid()` honor dump-style `GRANT ALL ON FUNCTION`
   routine ACLs instead of bypassing them as unqualified builtins.
@@ -279,7 +281,7 @@ Do not check off an item until it has workload proof:
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption/key
-  helpers and `pgp_armor_headers(text)` beyond the native UUID,
+  helpers beyond the native UUID,
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
   ASCII-armor subset, pgvector indexes/opclasses, and non-dense vector
   families beyond the tested dense-vector IO, equality, distance, ordering,

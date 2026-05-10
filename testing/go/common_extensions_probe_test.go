@@ -152,6 +152,14 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"true"}},
 				},
 				{
+					Query:    `SELECT key, value FROM pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment','Version']::text[], ARRAY['Doltgres','1']::text[])) ORDER BY key;`,
+					Expected: []sql.Row{{"Comment", "Doltgres"}, {"Version", "1"}},
+				},
+				{
+					Query:    `SELECT pgp_armor_headers(armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]));`,
+					Expected: []sql.Row{{[]any{"Comment", "Doltgres"}}},
+				},
+				{
 					Query:       `SELECT armor('\x00'::bytea, ARRAY['Comment']::text[], ARRAY[]::text[]);`,
 					ExpectedErr: `mismatched array dimensions`,
 				},
@@ -389,6 +397,9 @@ AAAA
 					Query: `GRANT ALL ON FUNCTION extensions.dearmor(text) TO ext_user;`,
 				},
 				{
+					Query: `GRANT ALL ON FUNCTION extensions.pgp_armor_headers(text) TO ext_user;`,
+				},
+				{
 					Query: `GRANT ALL ON FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text) TO ext_user;`,
 				},
 				{
@@ -429,6 +440,12 @@ AAAA
 					Username: `ext_user`,
 					Password: `a`,
 					Expected: []sql.Row{{`\x68656c6c6f`}},
+				},
+				{
+					Query:    `SELECT extensions.pgp_armor_headers(extensions.armor('\x68656c6c6f'::bytea, ARRAY['Comment']::text[], ARRAY['Doltgres']::text[]));`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{[]any{"Comment", "Doltgres"}}},
 				},
 				{
 					Query:    `SELECT extensions.decrypt_iv(extensions.encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs'), '\x30313233343536373839616263646566'::bytea, '\x69766976697669766976697669766976'::bytea, 'aes-cbc/pad:pkcs')::text;`,
