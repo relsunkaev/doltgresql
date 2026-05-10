@@ -26,3 +26,35 @@ func TestImportAlexTransitVenderctlProbe(t *testing.T) {
 		},
 	})
 }
+
+// TestImportExpandedRestoreGateProbe keeps a small external application dump
+// corpus on the always-runnable restore path.
+func TestImportExpandedRestoreGateProbe(t *testing.T) {
+	RunImportTests(t, []ImportTest{
+		{
+			Name: "Boluwatife-AJB/backend-in-node",
+			SetUpScript: []string{
+				`CREATE USER "USER" WITH SUPERUSER PASSWORD 'password';`,
+			},
+			SQLFilename: "Boluwatife-AJB_backend-in-node.sql",
+		},
+		{
+			Name: "linvivian7/fe-react-16-demo",
+			SetUpScript: []string{
+				`CREATE USER "Admin" WITH SUPERUSER PASSWORD 'password';`,
+			},
+			SQLFilename: "linvivian7_fe-react-16-demo.sql",
+		},
+		{
+			Name:        "kirooha/adtech-simple",
+			SQLFilename: "kirooha_adtech-simple.sql",
+		},
+		{
+			Name: "bartr/agency",
+			SetUpScript: []string{
+				`CREATE USER root WITH SUPERUSER PASSWORD 'password';`,
+			},
+			SQLFilename: "bartr_agency.sql",
+		},
+	})
+}

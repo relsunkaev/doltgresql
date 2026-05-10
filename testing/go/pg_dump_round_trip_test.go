@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 
@@ -214,7 +215,120 @@ func TestPgDumpPsqlRestoreDrizzleRoundTrip(t *testing.T) {
 	requireRoundTripAppQueries(t, ctx, restorePort)
 }
 
+func TestPgDumpPsqlRestoreExternalAppDumpRoundTrip(t *testing.T) {
+	pgDump, err := exec.LookPath("pg_dump")
+	if err != nil {
+		t.Skip("pg_dump not available; install PostgreSQL client tools to enable this harness")
+	}
+	psql, err := exec.LookPath("psql")
+	if err != nil {
+		t.Skip("psql not available; install PostgreSQL client tools to enable this harness")
+	}
+	if _, err = exec.LookPath("npm"); err != nil {
+		t.Skip("npm not available; install Node.js to enable the drizzle-kit introspection step")
+	}
+	if testing.Short() {
+		t.Skip("round-trip harness installs drizzle-kit; skipped under -short")
+	}
+
+	ctx := context.Background()
+	sourcePort, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	sourceCtx, sourceConn, sourceController := CreateServerWithPort(t, "postgres", sourcePort)
+	var stopSourceOnce sync.Once
+	stopSource := func() {
+		stopSourceOnce.Do(func() {
+			sourceConn.Close(sourceCtx)
+			sourceController.Stop()
+			require.NoError(t, sourceController.WaitForStop())
+		})
+	}
+	t.Cleanup(func() {
+		stopSource()
+	})
+
+	_, err = sourceConn.Exec(sourceCtx, `CREATE USER "USER" WITH SUPERUSER PASSWORD 'password';`)
+	require.NoError(t, err)
+	restoreSQLDumpWithPsql(t, ctx, psql, sourcePort, testingDumpSQLPath(t, "Boluwatife-AJB_backend-in-node.sql"))
+
+	work := t.TempDir()
+	dumpPath := filepath.Join(work, "boluwatife-roundtrip.sql")
+	sourceURL := fmt.Sprintf("postgresql://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", sourcePort)
+	dumpCmd := exec.CommandContext(ctx, pgDump,
+		"--no-owner",
+		"--no-privileges",
+		"--exclude-schema", "dolt",
+		"--dbname", sourceURL,
+		"--file", dumpPath,
+	)
+	dumpCmd.Env = append(os.Environ(), "NO_COLOR=1", "PGPASSWORD=password")
+	out, err := dumpCmd.CombinedOutput()
+	require.NoError(t, err, "pg_dump external app dump failed:\n%s", string(out))
+	stopSource()
+
+	restorePort, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	restoreCtx, restoreConn, restoreController := CreateServerWithPort(t, "postgres", restorePort)
+	t.Cleanup(func() {
+		restoreConn.Close(restoreCtx)
+		restoreController.Stop()
+		require.NoError(t, restoreController.WaitForStop())
+	})
+
+	restoreSQLDumpWithPsql(t, ctx, psql, restorePort, dumpPath)
+	runDrizzleKitExternalDumpIntrospect(t, ctx, restorePort)
+	requireExternalAppRoundTripQueries(t, ctx, restorePort)
+}
+
+func restoreSQLDumpWithPsql(t *testing.T, ctx context.Context, psql string, port int, dumpPath string) {
+	t.Helper()
+	restoreURL := fmt.Sprintf("postgresql://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port)
+	restoreCmd := exec.CommandContext(ctx, psql,
+		"--no-psqlrc",
+		"--set", "ON_ERROR_STOP=1",
+		"--dbname", restoreURL,
+		"--file", dumpPath,
+	)
+	restoreCmd.Env = append(os.Environ(), "NO_COLOR=1", "PGPASSWORD=password")
+	out, err := restoreCmd.CombinedOutput()
+	if err != nil {
+		dumpBytes, dumpErr := os.ReadFile(dumpPath)
+		require.NoError(t, dumpErr)
+		require.NoError(t, err, "psql restore failed:\n%s\nDump:\n%s", string(out), string(dumpBytes))
+	}
+}
+
+func testingDumpSQLPath(t *testing.T, filename string) string {
+	t.Helper()
+	_, currentFileLocation, _, ok := runtime.Caller(0)
+	require.True(t, ok, "unable to find the folder where the dump files are located")
+	return filepath.Clean(filepath.Join(filepath.Dir(currentFileLocation), "../dumps/sql", filename))
+}
+
 func runDrizzleKitRoundTripIntrospect(t *testing.T, ctx context.Context, port int) {
+	t.Helper()
+	schema := runDrizzleKitIntrospect(t, ctx, port)
+	for _, tbl := range []string{"roundtrip_accounts", "roundtrip_projects"} {
+		require.Contains(t, schema, fmt.Sprintf(`pgTable("%s",`, tbl),
+			"introspected schema is missing restored table %q\nschema:\n%s", tbl, schema)
+	}
+	require.Contains(t, schema, `index("roundtrip_projects_account_idx")`)
+	require.Contains(t, schema, `index("roundtrip_projects_status_idx")`)
+	require.Contains(t, schema, "foreignKey")
+	requireContainsAny(t, schema, []string{`.unique()`, `.unique(`, `unique(`}, "unique constraint on roundtrip_accounts.email")
+}
+
+func runDrizzleKitExternalDumpIntrospect(t *testing.T, ctx context.Context, port int) {
+	t.Helper()
+	schema := runDrizzleKitIntrospect(t, ctx, port)
+	for _, tbl := range []string{"companies", "employees"} {
+		require.Contains(t, schema, fmt.Sprintf(`pgTable("%s",`, tbl),
+			"introspected schema is missing restored external table %q\nschema:\n%s", tbl, schema)
+	}
+	requireContainsAny(t, schema, []string{`.primaryKey()`, `primaryKey({`}, "external dump primary keys")
+}
+
+func runDrizzleKitIntrospect(t *testing.T, ctx context.Context, port int) string {
 	t.Helper()
 	work := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(work, "package.json"), []byte(`{
@@ -248,15 +362,7 @@ func runDrizzleKitRoundTripIntrospect(t *testing.T, ctx context.Context, port in
 
 	schemaBytes, err := os.ReadFile(filepath.Join(work, "drizzle", "schema.ts"))
 	require.NoError(t, err, "drizzle-kit did not produce drizzle/schema.ts")
-	schema := string(schemaBytes)
-	for _, tbl := range []string{"roundtrip_accounts", "roundtrip_projects"} {
-		require.Contains(t, schema, fmt.Sprintf(`pgTable("%s",`, tbl),
-			"introspected schema is missing restored table %q\nschema:\n%s", tbl, schema)
-	}
-	require.Contains(t, schema, `index("roundtrip_projects_account_idx")`)
-	require.Contains(t, schema, `index("roundtrip_projects_status_idx")`)
-	require.Contains(t, schema, "foreignKey")
-	requireContainsAny(t, schema, []string{`.unique()`, `.unique(`, `unique(`}, "unique constraint on roundtrip_accounts.email")
+	return string(schemaBytes)
 }
 
 func requireRoundTripAppQueries(t *testing.T, ctx context.Context, port int) {
@@ -307,4 +413,42 @@ func requireRoundTripAppQueries(t *testing.T, ctx context.Context, port int) {
 		WHERE email IN ('ada@example.com', 'grace@example.com')
 	`).Scan(&projectCount))
 	require.Equal(t, 2, projectCount)
+}
+
+func requireExternalAppRoundTripQueries(t *testing.T, ctx context.Context, port int) {
+	t.Helper()
+	conn, err := pgx.Connect(ctx, fmt.Sprintf("postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Close(context.Background()))
+	})
+
+	var companyCount, employeeCount int
+	require.NoError(t, conn.QueryRow(ctx, `SELECT count(*) FROM companies`).Scan(&companyCount))
+	require.Equal(t, 2, companyCount)
+	require.NoError(t, conn.QueryRow(ctx, `SELECT count(*) FROM employees`).Scan(&employeeCount))
+	require.Equal(t, 2, employeeCount)
+
+	_, err = conn.Exec(ctx, `
+		INSERT INTO companies (id, name)
+		VALUES ('00000000-0000-0000-0000-000000000201'::uuid, 'roundtrip co')
+	`)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `
+		INSERT INTO employees (id, first_name, last_name, email)
+		VALUES ('00000000-0000-0000-0000-000000000202'::uuid, 'Round', 'Trip', 'roundtrip@example.com')
+	`)
+	require.NoError(t, err)
+
+	var restoredCompany, restoredEmail string
+	require.NoError(t, conn.QueryRow(ctx, `
+		SELECT c.name, e.email
+		FROM companies c
+		CROSS JOIN employees e
+		WHERE c.id = '00000000-0000-0000-0000-000000000201'::uuid
+			AND e.id = '00000000-0000-0000-0000-000000000202'::uuid
+	`).Scan(&restoredCompany, &restoredEmail))
+	require.Equal(t, "roundtrip co", restoredCompany)
+	require.Equal(t, "roundtrip@example.com", restoredEmail)
 }
