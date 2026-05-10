@@ -1272,7 +1272,11 @@ typed-exception handling, and client-side query timeouts.
   opclasses, collation, sort direction, and NULL ordering for column-only
   constraints; expression index elements and index parameters such as
   `INCLUDE`, storage parameters, and index tablespaces remain unsupported.
-  Still open: other table-definition/options surface. Pinned by
+  Remaining typed-table DDL boundaries are explicit rejections for temporary
+  foreign keys, `LIKE`, standalone table indexes, `EXCLUDE`, `PARTITION BY`,
+  `PARTITION OF`, and the generic unsupported `CREATE TABLE` options that also
+  apply outside typed tables (`UNLOGGED`, storage parameters, `ON COMMIT`,
+  `USING`, and `TABLESPACE`). Pinned by
   testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
   dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL

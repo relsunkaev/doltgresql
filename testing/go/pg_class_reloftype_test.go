@@ -617,6 +617,14 @@ WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
 					ExpectedErr: `CREATE TABLE OF unique constraint INCLUDE columns are not yet supported`,
 				},
 				{
+					Query:       `CREATE TABLE typed_partitioned OF typed_options PARTITION BY LIST (id);`,
+					ExpectedErr: `CREATE TABLE OF cannot use PARTITION BY`,
+				},
+				{
+					Query:       `CREATE TABLE typed_exclude OF typed_options (EXCLUDE USING gist (id WITH =));`,
+					ExpectedErr: `CREATE TABLE OF exclude constraints are not supported`,
+				},
+				{
 					Query:       `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`,
 					ExpectedErr: `temporary tables do not support foreign keys`,
 				},

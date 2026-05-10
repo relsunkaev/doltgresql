@@ -67,6 +67,12 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if len(node.Inherits) > 0 {
 			return nil, errors.Errorf("CREATE TABLE OF cannot use INHERITS")
 		}
+		if node.PartitionBy != nil {
+			return nil, errors.Errorf("CREATE TABLE OF cannot use PARTITION BY")
+		}
+		if node.PartitionOf.Table() != "" {
+			return nil, errors.Errorf("CREATE TABLE OF cannot use PARTITION OF")
+		}
 		typedTableOptions, typedTableChildren, err := nodeTypedTableOptions(ctx, tableName.Name.String(), node.Defs)
 		if err != nil {
 			return nil, err
@@ -217,6 +223,8 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				return options, children, err
 			}
 			options.ForeignKeyConstraints = append(options.ForeignKeyConstraints, foreignKey)
+		case *tree.ExcludeConstraintTableDef:
+			return options, children, errors.Errorf("CREATE TABLE OF exclude constraints are not supported")
 		case *tree.IndexTableDef:
 			return options, children, errors.Errorf("CREATE TABLE OF indexes are not yet supported")
 		case *tree.LikeTableDef:
