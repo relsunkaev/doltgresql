@@ -1071,3 +1071,34 @@ func TestImpliesHashTextFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesFloorCeilFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"floor(score) = 7", "floor(score) = 7"},
+		{"floor(score) IN (7, 8)", "floor(score) = 7"},
+		{"floor(score) IS NOT NULL", "floor(score) = 7"},
+		{"ceil(score) = 7", "ceiling(score) = 7"},
+		{"ceiling(score) = 7", "ceil(score) = 7"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"floor(score) = 7", "score = 7"},
+		{"floor(score) = 7", "floor(other_score) = 7"},
+		{"floor(score) = 7", "floor(score) = 8"},
+		{"floor(score) IN (7, 8)", "floor(score) IN (8, 9)"},
+		{"ceil(score) = 7", "floor(score) = 7"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

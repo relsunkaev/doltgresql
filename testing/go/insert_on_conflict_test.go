@@ -1183,6 +1183,32 @@ ON CONFLICT (user_id) WHERE code = 'abc' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports ceil predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_ceil (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_ceil_user_idx ON partial_arb_ceil (user_id) WHERE ceiling(score) = 7;",
+				"INSERT INTO partial_arb_ceil VALUES (1, 10, 7, 'old-seven'), (2, 10, 8, 'old-eight');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_ceil VALUES (3, 10, 7, 'ceil-upsert')
+ON CONFLICT (user_id) WHERE ceil(score) = 7 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, score, note FROM partial_arb_ceil ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, 7, "ceil-upsert"},
+						{2, 10, 8, "old-eight"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_ceil VALUES (4, 10, 7, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports split_part predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_split_part (id INT PRIMARY KEY, user_id INT, email TEXT, note TEXT);",

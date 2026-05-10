@@ -775,6 +775,10 @@ func predicateCanonicalUnaryFunction(name string) (string, bool) {
 	switch name {
 	case "abs":
 		return name, true
+	case "floor":
+		return name, true
+	case "ceil", "ceiling":
+		return "ceil", true
 	case "sign":
 		return name, true
 	case "bit_length":

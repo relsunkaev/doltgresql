@@ -859,6 +859,47 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports floor and ceiling predicates",
+			SetUpScript: []string{
+				`CREATE TABLE rounded_floor_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX rounded_floor_scores_user_idx
+					ON rounded_floor_scores (user_id)
+					WHERE floor(score) = 7;`,
+				`CREATE TABLE rounded_ceiling_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX rounded_ceiling_scores_user_idx
+					ON rounded_ceiling_scores (user_id)
+					WHERE ceiling(score) = 9;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rounded_floor_scores VALUES
+						(1, 10, 7),
+						(2, 10, 8);`,
+				},
+				{
+					Query:       `INSERT INTO rounded_floor_scores VALUES (3, 10, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE rounded_floor_scores SET score = 7 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO rounded_ceiling_scores VALUES
+						(1, 20, 9),
+						(2, 20, 10);`,
+				},
+				{
+					Query:       `INSERT INTO rounded_ceiling_scores VALUES (3, 20, 9);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE rounded_ceiling_scores SET score = 9 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports split_part predicate",
 			SetUpScript: []string{
 				`CREATE TABLE email_domains (id INT PRIMARY KEY, user_id INT, email TEXT);`,
@@ -1689,6 +1730,36 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	hashtextNonMatchingQuery := `SELECT count(id) FROM partial_planner_hashtext WHERE tenant = 1 AND hashtext(code) = 1425101999`
 	assertCountResult(t, ctx, conn, hashtextNonMatchingQuery, 0)
 	assertBenchmarkPlanShape(t, ctx, conn, hashtextNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_floor (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_floor VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_floor_tenant_idx ON partial_planner_floor (tenant) WHERE floor(score) = 7")
+
+	floorImpliedQuery := `SELECT count(id) FROM partial_planner_floor WHERE tenant = 1 AND floor(score) = 7`
+	assertCountResult(t, ctx, conn, floorImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, floorImpliedQuery, true)
+
+	floorRawSourceQuery := `SELECT count(id) FROM partial_planner_floor WHERE tenant = 1 AND score = 7`
+	assertCountResult(t, ctx, conn, floorRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, floorRawSourceQuery, false)
+
+	floorNonMatchingQuery := `SELECT count(id) FROM partial_planner_floor WHERE tenant = 1 AND floor(score) = 8`
+	assertCountResult(t, ctx, conn, floorNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, floorNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_ceil (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_ceil VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_ceil_tenant_idx ON partial_planner_ceil (tenant) WHERE ceiling(score) = 7")
+
+	ceilImpliedQuery := `SELECT count(id) FROM partial_planner_ceil WHERE tenant = 1 AND ceil(score) = 7`
+	assertCountResult(t, ctx, conn, ceilImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, ceilImpliedQuery, true)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_split_part (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_split_part VALUES
