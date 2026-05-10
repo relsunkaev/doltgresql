@@ -1233,6 +1233,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "gcd" {
 		return p.evalGcd(ctx, row, expr)
 	}
+	if name == "lcm" {
+		return p.evalLcm(ctx, row, expr)
+	}
 	if name == "concat" {
 		return p.evalConcat(ctx, row, expr)
 	}
@@ -1699,6 +1702,54 @@ func predicateGcdInt64(left int64, right int64) int64 {
 		return -left
 	}
 	return left
+}
+
+func (p *partialIndexPredicate) evalLcm(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.New("partial unique index predicate function lcm expects two arguments")
+	}
+	left, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if left.value == nil || right.value == nil {
+		return predicateValue{}, nil
+	}
+	leftInt, ok := predicateSignedIntegerValue(left.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function lcm does not support %T", left.value)
+	}
+	rightInt, ok := predicateSignedIntegerValue(right.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function lcm does not support %T", right.value)
+	}
+	return predicateLcmInt64(leftInt, rightInt)
+}
+
+func predicateLcmInt64(left int64, right int64) (predicateValue, error) {
+	if left == right {
+		return predicateValue{value: predicateAbsInt64(left)}, nil
+	}
+	gcd := predicateGcdInt64(left, right)
+	if gcd == 0 {
+		return predicateValue{value: int64(0)}, nil
+	}
+	result := left * right
+	if right != 0 && result/right != left {
+		return predicateValue{}, errors.New("bigint out of range")
+	}
+	return predicateValue{value: predicateAbsInt64(result / gcd)}, nil
+}
+
+func predicateAbsInt64(value int64) int64 {
+	if value < 0 {
+		return -value
+	}
+	return value
 }
 
 func (p *partialIndexPredicate) evalConcat(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

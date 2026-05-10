@@ -1054,6 +1054,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.28.
+- [x] Use deterministic `lcm(left, right)` predicates in partial-index
+  implication paths. Two-argument `lcm(...)` calls now serialize as comparable
+  predicate keys, planner filters can deparse them, partial unique DML
+  enforcement evaluates signed-integer LCM output with existing bigint overflow
+  behavior, and `ON CONFLICT` arbiter inference accepts the exact-expression
+  shape; raw arithmetic predicates, argument reordering, wrong LCM values, and
+  overflow rows remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.29.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

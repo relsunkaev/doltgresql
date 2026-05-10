@@ -961,6 +961,34 @@ func TestImpliesGcdFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesLcmFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lcm(width, height) = 12", "lcm(width, height) = 12"},
+		{"lcm(width, height) IN (12, 24)", "lcm(width, height) = 12"},
+		{"lcm(width, height) IS NOT NULL", "lcm(width, height) = 12"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lcm(width, height) = 12", "width = 3 AND height = 4"},
+		{"lcm(width, height) = 12", "lcm(height, width) = 12"},
+		{"lcm(width, height) = 12", "lcm(width, height) = 24"},
+		{"lcm(width, height) IN (12, 24)", "lcm(width, height) IN (24, 36)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesChrFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

@@ -615,6 +615,37 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports lcm predicate",
+			SetUpScript: []string{
+				`CREATE TABLE lcm_scores (id INT PRIMARY KEY, user_id INT, width BIGINT, height BIGINT);`,
+				`CREATE UNIQUE INDEX lcm_scores_user_dims_idx
+					ON lcm_scores (user_id)
+					WHERE lcm(width, height) = 12;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO lcm_scores VALUES
+						(1, 10, 3, 4),
+						(2, 10, 5, 6);`,
+				},
+				{
+					Query:       `INSERT INTO lcm_scores VALUES (3, 10, 4, 6);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO lcm_scores VALUES (4, 10, 5, 10);`,
+				},
+				{
+					Query:       `UPDATE lcm_scores SET width = 6, height = 12 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `INSERT INTO lcm_scores VALUES (5, 11, 9223372036854775807, 9223372036854775806);`,
+					ExpectedErr: "bigint out of range",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports chr predicate",
 			SetUpScript: []string{
 				`CREATE TABLE chr_codes (id INT PRIMARY KEY, user_id INT, codepoint INT);`,
@@ -1827,6 +1858,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	gcdNonMatchingQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND gcd(width, height) = 3`
 	assertCountResult(t, ctx, conn, gcdNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, gcdNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_lcm (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, width BIGINT, height BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_lcm VALUES
+		(1, 1, 3, 4),
+		(2, 1, 5, 6),
+		(3, 1, 4, 6),
+		(4, 2, 3, 4)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_lcm_tenant_idx ON partial_planner_lcm (tenant) WHERE lcm(width, height) = 12")
+
+	lcmImpliedQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND lcm(width, height) = 12`
+	assertCountResult(t, ctx, conn, lcmImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, lcmImpliedQuery, true)
+
+	lcmRawSemanticQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND width = 3 AND height = 4`
+	assertCountResult(t, ctx, conn, lcmRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lcmRawSemanticQuery, false)
+
+	lcmNonMatchingQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND lcm(width, height) = 30`
+	assertCountResult(t, ctx, conn, lcmNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lcmNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_chr (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, codepoint INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_chr VALUES
