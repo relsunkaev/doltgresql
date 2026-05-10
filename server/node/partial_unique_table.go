@@ -1274,6 +1274,12 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "ceil" || name == "ceiling" {
 		return predicateCeilValue(arg.value)
 	}
+	if name == "round" {
+		return predicateRoundValue(arg.value)
+	}
+	if name == "trunc" {
+		return predicateTruncValue(arg.value)
+	}
 	if name == "sign" {
 		return predicateSignValue(arg.value)
 	}
@@ -2131,6 +2137,22 @@ func predicateCeilValue(value any) (predicateValue, error) {
 	intValue, ok := predicateSignedIntegerValue(value)
 	if !ok {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function ceil does not support %T", value)
+	}
+	return predicateValue{value: intValue}, nil
+}
+
+func predicateRoundValue(value any) (predicateValue, error) {
+	intValue, ok := predicateSignedIntegerValue(value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function round does not support %T", value)
+	}
+	return predicateValue{value: intValue}, nil
+}
+
+func predicateTruncValue(value any) (predicateValue, error) {
+	intValue, ok := predicateSignedIntegerValue(value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function trunc does not support %T", value)
 	}
 	return predicateValue{value: intValue}, nil
 }

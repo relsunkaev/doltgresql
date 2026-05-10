@@ -516,6 +516,10 @@ func plannerCanonicalFunctionPredicateName(name string) (string, bool) {
 		return name, true
 	case "ceil", "ceiling":
 		return "ceil", true
+	case "round":
+		return name, true
+	case "trunc":
+		return name, true
 	case "sign":
 		return name, true
 	case "bit_length":

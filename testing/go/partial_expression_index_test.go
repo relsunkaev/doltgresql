@@ -900,6 +900,47 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports round and trunc predicates",
+			SetUpScript: []string{
+				`CREATE TABLE rounded_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX rounded_scores_user_idx
+					ON rounded_scores (user_id)
+					WHERE round(score) = 7;`,
+				`CREATE TABLE truncated_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX truncated_scores_user_idx
+					ON truncated_scores (user_id)
+					WHERE trunc(score) = 9;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rounded_scores VALUES
+						(1, 10, 7),
+						(2, 10, 8);`,
+				},
+				{
+					Query:       `INSERT INTO rounded_scores VALUES (3, 10, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE rounded_scores SET score = 7 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO truncated_scores VALUES
+						(1, 20, 9),
+						(2, 20, 10);`,
+				},
+				{
+					Query:       `INSERT INTO truncated_scores VALUES (3, 20, 9);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE truncated_scores SET score = 9 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports split_part predicate",
 			SetUpScript: []string{
 				`CREATE TABLE email_domains (id INT PRIMARY KEY, user_id INT, email TEXT);`,
@@ -1760,6 +1801,40 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	ceilImpliedQuery := `SELECT count(id) FROM partial_planner_ceil WHERE tenant = 1 AND ceil(score) = 7`
 	assertCountResult(t, ctx, conn, ceilImpliedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, ceilImpliedQuery, true)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_round (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_round VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_round_tenant_idx ON partial_planner_round (tenant) WHERE round(score) = 7")
+
+	roundImpliedQuery := `SELECT count(id) FROM partial_planner_round WHERE tenant = 1 AND round(score) = 7`
+	assertCountResult(t, ctx, conn, roundImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, roundImpliedQuery, true)
+
+	roundRawSourceQuery := `SELECT count(id) FROM partial_planner_round WHERE tenant = 1 AND score = 7`
+	assertCountResult(t, ctx, conn, roundRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, roundRawSourceQuery, false)
+
+	roundNonMatchingQuery := `SELECT count(id) FROM partial_planner_round WHERE tenant = 1 AND round(score) = 8`
+	assertCountResult(t, ctx, conn, roundNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, roundNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_trunc (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_trunc VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_trunc_tenant_idx ON partial_planner_trunc (tenant) WHERE trunc(score) = 7")
+
+	truncImpliedQuery := `SELECT count(id) FROM partial_planner_trunc WHERE tenant = 1 AND trunc(score) = 7`
+	assertCountResult(t, ctx, conn, truncImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, truncImpliedQuery, true)
+
+	truncRawSourceQuery := `SELECT count(id) FROM partial_planner_trunc WHERE tenant = 1 AND score = 7`
+	assertCountResult(t, ctx, conn, truncRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, truncRawSourceQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_split_part (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_split_part VALUES

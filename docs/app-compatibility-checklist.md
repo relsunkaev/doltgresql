@@ -834,6 +834,16 @@ Do not check off an item until it has workload proof:
   remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.32.
+- [x] Use deterministic unary numeric `round(expr)` / `trunc(expr)` predicates
+  in partial-index implication paths. Unary `round(...)` and `trunc(...)` now
+  serialize as comparable predicate keys, planner filters can deparse them,
+  partial unique DML enforcement evaluates signed integer inputs, and
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape; raw
+  source-value predicates, wrong rounded/truncated values, and two-argument
+  scale forms remain outside this proof. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.33.
 - [x] Use deterministic unary `octet_length(expr)` predicates in partial-index
   implication paths. `octet_length(expr)` now serializes as a distinct
   comparable predicate key, participates in planner predicate serialization,

@@ -1209,6 +1209,51 @@ ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports round and trunc predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_round (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_round_user_idx ON partial_arb_round (user_id) WHERE round(score) = 7;",
+				"INSERT INTO partial_arb_round VALUES (1, 10, 7, 'old-seven'), (2, 10, 8, 'old-eight');",
+				"CREATE TABLE partial_arb_trunc (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_trunc_user_idx ON partial_arb_trunc (user_id) WHERE trunc(score) = 9;",
+				"INSERT INTO partial_arb_trunc VALUES (1, 20, 9, 'old-nine'), (2, 20, 10, 'old-ten');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_round VALUES (3, 10, 7, 'round-upsert')
+ON CONFLICT (user_id) WHERE round(score) = 7 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, score, note FROM partial_arb_round ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, 7, "round-upsert"},
+						{2, 10, 8, "old-eight"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_trunc VALUES (3, 20, 9, 'trunc-upsert')
+ON CONFLICT (user_id) WHERE trunc(score) = 9 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, score, note FROM partial_arb_trunc ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 20, 9, "trunc-upsert"},
+						{2, 20, 10, "old-ten"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_round VALUES (4, 10, 7, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE score = 7 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_trunc VALUES (4, 20, 9, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE score = 9 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports split_part predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_split_part (id INT PRIMARY KEY, user_id INT, email TEXT, note TEXT);",

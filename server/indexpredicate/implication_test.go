@@ -1102,3 +1102,34 @@ func TestImpliesFloorCeilFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesRoundTruncFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"round(score) = 7", "round(score) = 7"},
+		{"round(score) IN (7, 8)", "round(score) = 7"},
+		{"round(score) IS NOT NULL", "round(score) = 7"},
+		{"trunc(score) = 7", "trunc(score) = 7"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"round(score) = 7", "score = 7"},
+		{"round(score) = 7", "round(other_score) = 7"},
+		{"round(score) = 7", "round(score) = 8"},
+		{"round(score) IN (7, 8)", "round(score) IN (8, 9)"},
+		{"trunc(score) = 7", "score = 7"},
+		{"trunc(score) = 7", "round(score) = 7"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
