@@ -162,6 +162,7 @@ assert item.payload == {"kind": "invoice", "lines": [1, 2]}
 with transaction.atomic():
     Account.objects.create(id=3, name="committed", active=True)
 assert Account.objects.get(id=3).name == "committed"
+assert Account.objects.filter(name="committed").count() == 1
 
 try:
     with transaction.atomic():
@@ -169,6 +170,7 @@ try:
         raise RuntimeError("force rollback")
 except RuntimeError:
     pass
+assert not Account.objects.filter(id=4).exists()
 accounts = [(account.id, account.name) for account in Account.objects.order_by("id")]
 assert accounts == [(1, "acme"), (2, "beta"), (3, "committed")], accounts
 

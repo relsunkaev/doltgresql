@@ -15,6 +15,7 @@
 package analyzer
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -78,9 +79,46 @@ func TestSchemaAwareStatsProviderUsesSchemaQualifiedDoltStats(t *testing.T) {
 	require.Equal(t, uint64(6), dataLength)
 }
 
+func TestSchemaAwareStatsProviderFallsBackForProjectedIndexStats(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	table := projectedStatsProviderTestTable{
+		schema: sql.Schema{
+			{Name: "name", Source: "django_account", Type: types.Text, Nullable: false},
+		},
+		indexes: []sql.Index{
+			statsProviderTestIndex{id: "PRIMARY", expr: "id", typ: types.Int64, unique: true},
+			statsProviderTestIndex{id: "app_account_name_key", expr: "name", typ: types.Text, unique: true},
+		},
+	}
+	base := &fakeBranchStatsProvider{
+		tableStatsErr: errors.New("column not found on table during stats building: id"),
+		rowCount:      3,
+	}
+	provider := newSchemaAwareStatsProvider(base)
+
+	tableStats, err := provider.GetTableStats(ctx, "postgres", table)
+	require.NoError(t, err)
+	require.Len(t, tableStats, 2)
+
+	byIndex := make(map[string]sql.Statistic)
+	for _, stat := range tableStats {
+		byIndex[stat.Qualifier().Index()] = stat
+		require.Empty(t, stat.Qualifier().Database)
+		require.Equal(t, "public", stat.Qualifier().Schema())
+		require.Equal(t, "django_account", stat.Qualifier().Table())
+		require.NotNil(t, stat.FuncDeps())
+		require.False(t, stat.ColSet().Empty())
+		require.Equal(t, uint64(3), stat.RowCount())
+	}
+	require.Equal(t, []string{"id"}, byIndex["primary"].Columns())
+	require.Equal(t, []string{"name"}, byIndex["app_account_name_key"].Columns())
+}
+
 type fakeBranchStatsProvider struct {
-	stats      []*stats.Statistic
-	lastSchema string
+	stats         []*stats.Statistic
+	tableStatsErr error
+	rowCount      uint64
+	lastSchema    string
 }
 
 var _ sql.StatsProvider = (*fakeBranchStatsProvider)(nil)
@@ -91,7 +129,7 @@ func (p *fakeBranchStatsProvider) GetTableDoltStats(_ *sql.Context, _, _, schema
 }
 
 func (p *fakeBranchStatsProvider) GetTableStats(*sql.Context, string, sql.Table) ([]sql.Statistic, error) {
-	return nil, nil
+	return nil, p.tableStatsErr
 }
 
 func (p *fakeBranchStatsProvider) AnalyzeTable(*sql.Context, sql.Table, string) error {
@@ -115,7 +153,7 @@ func (p *fakeBranchStatsProvider) DropDbStats(*sql.Context, string, bool) error 
 }
 
 func (p *fakeBranchStatsProvider) RowCount(*sql.Context, string, sql.Table) (uint64, error) {
-	return 0, nil
+	return p.rowCount, nil
 }
 
 func (p *fakeBranchStatsProvider) DataLength(*sql.Context, string, sql.Table) (uint64, error) {
@@ -133,6 +171,10 @@ func (statsProviderTestTable) Name() string {
 
 func (statsProviderTestTable) String() string {
 	return "stats_provider_costing"
+}
+
+func (statsProviderTestTable) Database() string {
+	return "postgres"
 }
 
 func (statsProviderTestTable) Schema(*sql.Context) sql.Schema {
@@ -173,4 +215,122 @@ func (statsProviderTestSchema) GetTableInsensitive(*sql.Context, string) (sql.Ta
 
 func (statsProviderTestSchema) GetTableNames(*sql.Context) ([]string, error) {
 	return nil, nil
+}
+
+type projectedStatsProviderTestTable struct {
+	schema  sql.Schema
+	indexes []sql.Index
+}
+
+var _ sql.Table = projectedStatsProviderTestTable{}
+var _ sql.DatabaseSchemaTable = projectedStatsProviderTestTable{}
+var _ sql.IndexAddressable = projectedStatsProviderTestTable{}
+
+func (projectedStatsProviderTestTable) Name() string {
+	return "django_account"
+}
+
+func (projectedStatsProviderTestTable) String() string {
+	return "django_account"
+}
+
+func (t projectedStatsProviderTestTable) Schema(*sql.Context) sql.Schema {
+	return t.schema
+}
+
+func (projectedStatsProviderTestTable) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
+
+func (projectedStatsProviderTestTable) Partitions(*sql.Context) (sql.PartitionIter, error) {
+	return nil, nil
+}
+
+func (projectedStatsProviderTestTable) PartitionRows(*sql.Context, sql.Partition) (sql.RowIter, error) {
+	return nil, nil
+}
+
+func (projectedStatsProviderTestTable) DatabaseSchema() sql.DatabaseSchema {
+	return statsProviderTestSchema{}
+}
+
+func (t projectedStatsProviderTestTable) GetIndexes(*sql.Context) ([]sql.Index, error) {
+	return t.indexes, nil
+}
+
+func (projectedStatsProviderTestTable) IndexedAccess(*sql.Context, sql.IndexLookup) sql.IndexedTable {
+	return nil
+}
+
+func (projectedStatsProviderTestTable) PreciseMatch() bool {
+	return false
+}
+
+type statsProviderTestIndex struct {
+	id     string
+	expr   string
+	typ    sql.Type
+	unique bool
+}
+
+var _ sql.Index = statsProviderTestIndex{}
+
+func (i statsProviderTestIndex) ID() string {
+	return i.id
+}
+
+func (statsProviderTestIndex) Database() string {
+	return "postgres"
+}
+
+func (statsProviderTestIndex) Table() string {
+	return "django_account"
+}
+
+func (i statsProviderTestIndex) Expressions() []string {
+	return []string{i.expr}
+}
+
+func (i statsProviderTestIndex) IsUnique() bool {
+	return i.unique
+}
+
+func (statsProviderTestIndex) IsSpatial() bool {
+	return false
+}
+
+func (statsProviderTestIndex) IsFullText() bool {
+	return false
+}
+
+func (statsProviderTestIndex) IsVector() bool {
+	return false
+}
+
+func (statsProviderTestIndex) Comment() string {
+	return ""
+}
+
+func (statsProviderTestIndex) IndexType() string {
+	return "BTREE"
+}
+
+func (statsProviderTestIndex) IsGenerated() bool {
+	return false
+}
+
+func (i statsProviderTestIndex) ColumnExpressionTypes(*sql.Context) []sql.ColumnExpressionType {
+	return []sql.ColumnExpressionType{{Expression: i.expr, Type: i.typ}}
+}
+
+func (statsProviderTestIndex) CanSupport(*sql.Context, ...sql.Range) bool {
+	return true
+}
+
+func (statsProviderTestIndex) CanSupportOrderBy(sql.Expression) bool {
+	return false
+}
+
+func (statsProviderTestIndex) PrefixLengths() []uint16 {
+	return nil
 }

@@ -1661,9 +1661,8 @@ actually exercise.
   `manage.py makemigrations` / `manage.py migrate` commands run against
   Doltgres through the PostgreSQL backend, then the Django ORM verifies
   startup `application_name`, migrated models with FK / JSONB / text[] /
-  numeric fields, relation reads, commit, and rollback with full-row ORM
-  reads; projected `QuerySet.count()` / `exists()` stats planning remains
-  tracked separately by dg-7ug.10.3.1. Covered by
+  numeric fields, relation reads, commit, rollback, and projected
+  `QuerySet.count()` / `exists()` filters. Covered by
   testing/go/drizzle_kit_introspect_test.go,
   testing/go/prisma_db_pull_test.go,
   testing/go/alembic_autogenerate_test.go, and
@@ -1916,7 +1915,7 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   true })`, model CRUD, associations, JSONB/text[] values, pooled reads, and
   managed transactions. Django's PostgreSQL backend covers real migration
   commands, model CRUD, JSONB/text[] values, relation reads, and transaction
-  boundaries, with projected count/exists planning tracked by dg-7ug.10.3.1.
+  boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
   psycopg, psycopg2, Ruby `pg`, libpq, Go `database/sql` with

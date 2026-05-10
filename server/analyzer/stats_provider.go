@@ -16,6 +16,7 @@ package analyzer
 
 import (
 	"strings"
+	"time"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/env"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
@@ -60,11 +61,30 @@ func newSchemaAwareStatsProvider(provider sql.StatsProvider) sql.StatsProvider {
 }
 
 func (p *schemaAwareStatsProvider) GetTableStats(ctx *sql.Context, db string, table sql.Table) ([]sql.Statistic, error) {
+	qualifierDb := tableStatisticQualifierDatabase(table)
 	tableStats, err := p.StatsProvider.GetTableStats(ctx, db, table)
-	if err != nil || len(tableStats) > 0 {
-		return schemaQualifyTableStats(tableStats, db, table), err
+	if err != nil {
+		tableStats = schemaQualifyTableStats(tableStats, qualifierDb, table)
+		if !isProjectedStatsBuildError(err) {
+			return tableStats, err
+		}
+		schemaStats, schemaErr := p.getSchemaTableStats(ctx, db, table)
+		if schemaErr != nil {
+			return tableStats, schemaErr
+		}
+		if len(schemaStats) > 0 {
+			tableStats = schemaQualifyTableStats(schemaStats, qualifierDb, table)
+		}
+		return p.withSyntheticMissingIndexStats(ctx, qualifierDb, table, tableStats)
 	}
-	return p.getSchemaTableStats(ctx, db, table)
+	if len(tableStats) > 0 {
+		return p.withSyntheticMissingIndexStats(ctx, qualifierDb, table, schemaQualifyTableStats(tableStats, qualifierDb, table))
+	}
+	tableStats, err = p.getSchemaTableStats(ctx, db, table)
+	if err != nil || len(tableStats) > 0 {
+		return p.withSyntheticMissingIndexStats(ctx, qualifierDb, table, schemaQualifyTableStats(tableStats, qualifierDb, table))
+	}
+	return p.withSyntheticMissingIndexStats(ctx, qualifierDb, table, nil)
 }
 
 func (p *schemaAwareStatsProvider) GetStats(ctx *sql.Context, qual sql.StatQualifier, cols []string) (sql.Statistic, bool) {
@@ -146,6 +166,135 @@ func (p *schemaAwareStatsProvider) getSchemaTableStatsForName(ctx *sql.Context, 
 	return ret, nil
 }
 
+func (p *schemaAwareStatsProvider) withSyntheticMissingIndexStats(ctx *sql.Context, db string, table sql.Table, tableStats []sql.Statistic) ([]sql.Statistic, error) {
+	indexAddressable, ok := table.(sql.IndexAddressable)
+	if !ok {
+		return tableStats, nil
+	}
+	indexes, err := indexAddressable.GetIndexes(ctx)
+	if err != nil || len(indexes) == 0 {
+		return tableStats, err
+	}
+	db = strings.ToLower(db)
+	schemaName := tableSchemaName(table)
+	tableName := strings.ToLower(table.Name())
+	existing := make(map[sql.StatQualifier]struct{}, len(tableStats))
+	for _, stat := range tableStats {
+		existing[stat.Qualifier()] = struct{}{}
+	}
+	missing := make([]sql.Index, 0)
+	for _, index := range indexes {
+		qualifier := sql.NewStatQualifier(db, schemaName, tableName, strings.ToLower(index.ID()))
+		if _, ok := existing[qualifier]; !ok {
+			missing = append(missing, index)
+		}
+	}
+	if len(missing) == 0 {
+		return tableStats, nil
+	}
+	rowCount, _ := p.StatsProvider.RowCount(ctx, db, table)
+	if rowCount == 0 {
+		if statsTable, ok := table.(sql.StatisticsTable); ok {
+			if count, _, err := statsTable.RowCount(ctx); err != nil {
+				return nil, err
+			} else {
+				rowCount = count
+			}
+		}
+	}
+	ret := append([]sql.Statistic(nil), tableStats...)
+	for _, index := range missing {
+		columns, types := indexStatisticColumns(ctx, index, tableName)
+		var class sql.IndexClass = sql.IndexClassDefault
+		if index.IsSpatial() {
+			class = sql.IndexClassSpatial
+		} else if index.IsFullText() {
+			class = sql.IndexClassFulltext
+		}
+		qualifier := sql.NewStatQualifier(strings.ToLower(db), schemaName, tableName, strings.ToLower(index.ID()))
+		stat := stats.NewStatistic(rowCount, rowCount, 0, 0, time.Now(), qualifier, columns, types, nil, class, nil)
+		fds, idxCols := syntheticIndexFuncDeps(ctx, table, tableName, index)
+		ret = append(ret, stat.WithFuncDeps(fds).WithColSet(idxCols))
+	}
+	return ret, nil
+}
+
+func syntheticIndexFuncDeps(ctx *sql.Context, table sql.Table, tableName string, index sql.Index) (*sql.FuncDepSet, sql.ColSet) {
+	schema := tableSchemaForStats(ctx, table)
+	schema = append(sql.Schema(nil), schema...)
+
+	var idxCols sql.ColSet
+	for _, columnType := range index.ColumnExpressionTypes(ctx) {
+		columnName := indexStatisticColumnName(columnType.Expression, tableName)
+		ordinal := schema.IndexOfColName(columnName)
+		if ordinal < 0 {
+			schema = append(schema, &sql.Column{
+				Name:     columnName,
+				Source:   tableName,
+				Type:     columnType.Type,
+				Nullable: true,
+			})
+			ordinal = len(schema) - 1
+		}
+		idxCols.Add(sql.ColumnId(ordinal + 1))
+	}
+
+	var all sql.ColSet
+	var notNull sql.ColSet
+	for i, column := range schema {
+		columnID := sql.ColumnId(i + 1)
+		all.Add(columnID)
+		if !column.Nullable {
+			notNull.Add(columnID)
+		}
+	}
+
+	var strictKeys []sql.ColSet
+	var laxKeys []sql.ColSet
+	if index.IsUnique() && !idxCols.Empty() {
+		strict := true
+		for columnID, ok := idxCols.Next(1); ok; columnID, ok = idxCols.Next(columnID + 1) {
+			if !notNull.Contains(columnID) {
+				strict = false
+				break
+			}
+		}
+		if strict {
+			strictKeys = append(strictKeys, idxCols)
+		} else {
+			laxKeys = append(laxKeys, idxCols)
+		}
+	}
+
+	return sql.NewTablescanFDs(all, strictKeys, laxKeys, notNull), idxCols
+}
+
+func isProjectedStatsBuildError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "column not found on table during stats building")
+}
+
+func tableSchemaForStats(ctx *sql.Context, table sql.Table) sql.Schema {
+	if primaryKeyTable, ok := table.(sql.PrimaryKeyTable); ok {
+		return primaryKeyTable.PrimaryKeySchema(ctx).Schema
+	}
+	return table.Schema(ctx)
+}
+
+func indexStatisticColumns(ctx *sql.Context, index sql.Index, tableName string) ([]string, []sql.Type) {
+	columnTypes := index.ColumnExpressionTypes(ctx)
+	columns := make([]string, 0, len(columnTypes))
+	types := make([]sql.Type, 0, len(columnTypes))
+	for _, columnType := range columnTypes {
+		columns = append(columns, indexStatisticColumnName(columnType.Expression, tableName))
+		types = append(types, columnType.Type)
+	}
+	return columns, types
+}
+
+func indexStatisticColumnName(expression string, tableName string) string {
+	return strings.TrimPrefix(strings.ToLower(expression), tableName+".")
+}
+
 func schemaQualifyStatistic(stat sql.Statistic, db, schema, table string) sql.Statistic {
 	if stat == nil {
 		return nil
@@ -180,6 +329,18 @@ func tableSchemaName(table sql.Table) string {
 		return ""
 	}
 	return strings.ToLower(databaseSchema.SchemaName())
+}
+
+func tableStatisticQualifierDatabase(table sql.Table) string {
+	if databaseTable, ok := table.(sql.Databaseable); ok {
+		return strings.ToLower(databaseTable.Database())
+	}
+	if databaser, ok := table.(sql.Databaser); ok {
+		if database := databaser.Database(); database != nil {
+			return strings.ToLower(database.Name())
+		}
+	}
+	return ""
 }
 
 func currentStatsBranch(ctx *sql.Context) string {
