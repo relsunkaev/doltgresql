@@ -54,6 +54,7 @@ const (
 	NoticeOptionTypeMessage    NoticeOptionType = 1
 	NoticeOptionTypeDetail     NoticeOptionType = 2
 	NoticeOptionTypeHint       NoticeOptionType = 3
+	NoticeOptionTypeColumn     NoticeOptionType = 4
 	NoticeOptionTypeConstraint NoticeOptionType = 5
 	NoticeOptionTypeDataType   NoticeOptionType = 6
 	NoticeOptionTypeTable      NoticeOptionType = 7

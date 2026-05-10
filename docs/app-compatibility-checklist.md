@@ -618,6 +618,12 @@ Do not check off an item until it has workload proof:
     stacked diagnostics and handler matching. Pinned by
     testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
     Tracked by dg-7ug.20.2.
+  - [x] PL/pgSQL stacked object-name diagnostics. `RAISE EXCEPTION ... USING`
+    can populate `COLUMN`, `CONSTRAINT`, `DATATYPE`, `TABLE`, and `SCHEMA`
+    metadata, and `GET STACKED DIAGNOSTICS` can assign `COLUMN_NAME`,
+    `CONSTRAINT_NAME`, `PG_DATATYPE_NAME`, `TABLE_NAME`, and `SCHEMA_NAME`
+    inside the matching handler. Pinned by testing/go/do_block_probe_test.go
+    and server/plpgsql/parse_test.go. Tracked by dg-7ug.20.3.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

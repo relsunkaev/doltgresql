@@ -68,6 +68,11 @@ type interpreterExecutionState struct {
 type plpgsqlExceptionDiagnostics struct {
 	MessageText      string
 	ReturnedSQLState string
+	ColumnName       string
+	ConstraintName   string
+	DataTypeName     string
+	TableName        string
+	SchemaName       string
 	Detail           string
 	Hint             string
 	Context          string
@@ -562,6 +567,16 @@ func plpgsqlExceptionDiagnosticsFromRaise(ctx *sql.Context, iFunc InterpretedFun
 			diagnostics.Detail = value
 		case NoticeOptionTypeHint:
 			diagnostics.Hint = value
+		case NoticeOptionTypeColumn:
+			diagnostics.ColumnName = value
+		case NoticeOptionTypeConstraint:
+			diagnostics.ConstraintName = value
+		case NoticeOptionTypeDataType:
+			diagnostics.DataTypeName = value
+		case NoticeOptionTypeTable:
+			diagnostics.TableName = value
+		case NoticeOptionTypeSchema:
+			diagnostics.SchemaName = value
 		}
 	}
 	return diagnostics
@@ -593,6 +608,16 @@ func stackedDiagnosticValue(diagnostics plpgsqlExceptionDiagnostics, kind string
 		return diagnostics.MessageText, true
 	case "RETURNED_SQLSTATE":
 		return diagnostics.ReturnedSQLState, true
+	case "COLUMN_NAME":
+		return diagnostics.ColumnName, true
+	case "CONSTRAINT_NAME":
+		return diagnostics.ConstraintName, true
+	case "PG_DATATYPE_NAME":
+		return diagnostics.DataTypeName, true
+	case "TABLE_NAME":
+		return diagnostics.TableName, true
+	case "SCHEMA_NAME":
+		return diagnostics.SchemaName, true
 	case "PG_EXCEPTION_DETAIL":
 		return diagnostics.Detail, true
 	case "PG_EXCEPTION_HINT":
@@ -934,6 +959,8 @@ func applyNoticeOptions(ctx *sql.Context, noticeResponse *pgproto3.NoticeRespons
 			noticeResponse.Detail = value
 		case NoticeOptionTypeHint:
 			noticeResponse.Hint = value
+		case NoticeOptionTypeColumn:
+			noticeResponse.ColumnName = value
 		case NoticeOptionTypeConstraint:
 			noticeResponse.ConstraintName = value
 		case NoticeOptionTypeDataType:

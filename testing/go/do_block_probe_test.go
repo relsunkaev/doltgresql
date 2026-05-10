@@ -619,6 +619,61 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block reads stacked object-name diagnostics",
+			SetUpScript: []string{
+				`CREATE TABLE do_stacked_object_diag_seen (
+					column_name TEXT NOT NULL,
+					constraint_name TEXT NOT NULL,
+					datatype_name TEXT NOT NULL,
+					table_name TEXT NOT NULL,
+					schema_name TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							column_name_text TEXT;
+							constraint_name_text TEXT;
+							datatype_name_text TEXT;
+							table_name_text TEXT;
+							schema_name_text TEXT;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'object metadata'
+									USING ERRCODE = 'check_violation',
+										COLUMN = 'amount',
+										CONSTRAINT = 'amount_positive',
+										DATATYPE = 'numeric',
+										TABLE = 'invoice_lines',
+										SCHEMA = 'public';
+							EXCEPTION
+								WHEN check_violation THEN
+									GET STACKED DIAGNOSTICS
+										column_name_text = COLUMN_NAME,
+										constraint_name_text = CONSTRAINT_NAME,
+										datatype_name_text = PG_DATATYPE_NAME,
+										table_name_text = TABLE_NAME,
+										schema_name_text = SCHEMA_NAME;
+									INSERT INTO do_stacked_object_diag_seen VALUES (
+										column_name_text,
+										constraint_name_text,
+										datatype_name_text,
+										table_name_text,
+										schema_name_text
+									);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query: `SELECT column_name, constraint_name, datatype_name, table_name, schema_name
+						FROM do_stacked_object_diag_seen;`,
+					Expected: []sql.Row{{"amount", "amount_positive", "numeric", "invoice_lines", "public"}},
+				},
+			},
+		},
+		{
 			Name:        "DO block multiple exception handlers propagate when unmatched",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

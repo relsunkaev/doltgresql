@@ -346,3 +346,44 @@ func TestParseExceptionBlockMultipleHandlers(t *testing.T) {
 		t.Fatalf("third handler conditions = %q, expected others", exceptionOp.Options["handlerConditions.2"])
 	}
 }
+
+func TestParseExceptionBlockStackedObjectDiagnostics(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			column_name_text TEXT;
+			constraint_name_text TEXT;
+			datatype_name_text TEXT;
+			table_name_text TEXT;
+			schema_name_text TEXT;
+		BEGIN
+			RAISE EXCEPTION 'object metadata'
+				USING COLUMN = 'amount',
+					CONSTRAINT = 'amount_positive',
+					DATATYPE = 'numeric',
+					TABLE = 'invoice_lines',
+					SCHEMA = 'public';
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				column_name_text = COLUMN_NAME,
+				constraint_name_text = CONSTRAINT_NAME,
+				datatype_name_text = PG_DATATYPE_NAME,
+				table_name_text = TABLE_NAME,
+				schema_name_text = SCHEMA_NAME;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stackedItems := map[string]bool{}
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Get && ops[i].Options["stacked"] == "true" {
+			stackedItems[ops[i].PrimaryData] = true
+		}
+	}
+	for _, item := range []string{"COLUMN_NAME", "CONSTRAINT_NAME", "PG_DATATYPE_NAME", "TABLE_NAME", "SCHEMA_NAME"} {
+		if !stackedItems[item] {
+			t.Fatalf("missing stacked object diagnostic item %s; ops: %#v", item, ops)
+		}
+	}
+}
