@@ -673,6 +673,33 @@ func TestImpliesInitcapFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesQuoteLiteralFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"quote_literal(role) = '''admin user'''", "quote_literal(role) = '''admin user'''"},
+		{"quote_literal(role) IN ('''admin user''', '''billing user''')", "quote_literal(role) = '''admin user'''"},
+		{"quote_literal(role) IS NOT NULL", "quote_literal(role) = '''admin user'''"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"quote_literal(role) = '''admin user'''", "quote_literal(role) = '''billing user'''"},
+		{"quote_literal(role) = '''admin user'''", "lower(role) = 'admin user'"},
+		{"quote_literal(role) = '''admin user'''", "role = 'admin user'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

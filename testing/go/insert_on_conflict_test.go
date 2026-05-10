@@ -1313,6 +1313,32 @@ ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports quote_literal predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_quote_literal (id INT PRIMARY KEY, user_id INT, role TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_quote_literal_user_idx ON partial_arb_quote_literal (user_id) WHERE quote_literal(role) = '''admin user''';",
+				"INSERT INTO partial_arb_quote_literal VALUES (1, 10, 'admin user', 'old-admin'), (2, 10, 'regular user', 'old-regular');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_quote_literal VALUES (3, 10, 'admin user', 'quote-literal-upsert')
+ON CONFLICT (user_id) WHERE quote_literal(role) = '''admin user''' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, role, note FROM partial_arb_quote_literal ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "admin user", "quote-literal-upsert"},
+						{2, 10, "regular user", "old-regular"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_quote_literal VALUES (4, 10, 'admin user', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

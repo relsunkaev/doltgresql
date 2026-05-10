@@ -1279,9 +1279,15 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: predicateReverseText(text)}, nil
 	case "initcap":
 		return predicateValue{value: cases.Title(language.English).String(text)}, nil
+	case "quote_literal":
+		return predicateValue{value: predicateQuoteLiteralText(text)}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}
+}
+
+func predicateQuoteLiteralText(text string) string {
+	return "'" + strings.ReplaceAll(text, `'`, `''`) + "'"
 }
 
 func predicateReverseText(text string) string {

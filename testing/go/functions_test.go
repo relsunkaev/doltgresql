@@ -4106,6 +4106,20 @@ func TestStringFunction(t *testing.T) {
 			},
 		},
 		{
+			Name:        "quote_literal",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `select quote_literal('O''Reilly');`,
+					Expected: []sql.Row{{`'O''Reilly'`}},
+				},
+				{
+					Query:    `select quote_literal('admin user');`,
+					Expected: []sql.Row{{`'admin user'`}},
+				},
+			},
+		},
+		{
 			Name:        "format",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
