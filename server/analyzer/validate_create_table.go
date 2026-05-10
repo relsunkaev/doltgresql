@@ -27,6 +27,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	pgexpression "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -338,6 +339,12 @@ func resolveAlterColumn(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, scop
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
+			if normalizedAlterIndex, ok := n.(*plan.AlterIndex); ok {
+				n, sch, err = normalizeNullableSortOptionAlterIndex(ctx, normalizedAlterIndex, sch)
+				if err != nil {
+					return nil, transform.SameTree, err
+				}
+			}
 
 			keyedColumns = updateKeyedColumnsForAlterIndexNode(keyedColumns, n)
 			return n, transform.NewTree, nil
@@ -516,6 +523,135 @@ func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Sc
 	block := plan.NewBlock(nodes)
 	block.SetSchema(ai.Schema(ctx))
 	return block, normalizedSchema, nil
+}
+
+func normalizeNullableSortOptionAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema) (sql.Node, sql.Schema, error) {
+	if ai.Action != plan.IndexAction_Create ||
+		ai.Constraint == sql.IndexConstraint_Primary ||
+		(ai.Using != sql.IndexUsing_Default && ai.Using != sql.IndexUsing_BTree) {
+		return ai, sch, nil
+	}
+
+	metadata, ok := indexmetadata.DecodeComment(ai.Comment)
+	if !ok || indexmetadata.NormalizeAccessMethod(metadata.AccessMethod) != indexmetadata.AccessMethodBtree {
+		return ai, sch, nil
+	}
+	if len(metadata.SortOptions) == 0 || len(ai.Columns) == 0 {
+		return ai, sch, nil
+	}
+
+	columns := append([]sql.IndexColumn(nil), ai.Columns...)
+	metadata.Columns = ensureStringMetadataLength(metadata.Columns, len(columns))
+	metadata.StorageColumns = ensureStringMetadataLength(metadata.StorageColumns, len(columns))
+	metadata.ExpressionColumns = ensureBoolMetadataLength(metadata.ExpressionColumns, len(columns))
+	metadata.SortOptions = ensureIndexColumnOptionMetadataLength(metadata.SortOptions, len(columns))
+
+	probeColumnIndexes := make(map[int]int)
+	for i, column := range columns {
+		if column.Expression != nil || column.Name == "" {
+			return ai, sch, nil
+		}
+		if metadata.Columns[i] == "" {
+			metadata.Columns[i] = column.Name
+		}
+		if metadata.StorageColumns[i] == "" {
+			metadata.StorageColumns[i] = column.Name
+		}
+		columnIndex := sch.IndexOfColName(column.Name)
+		if columnIndex < 0 {
+			return ai, sch, nil
+		}
+		if !sch[columnIndex].Nullable || !nullableSortOptionNeedsNullProbe(metadata.SortOptions[i]) {
+			continue
+		}
+		probeColumnIndexes[i] = columnIndex
+	}
+	if len(probeColumnIndexes) == 0 {
+		return ai, sch, nil
+	}
+
+	resolvedTable, ok := ai.Table.(*plan.ResolvedTable)
+	if !ok {
+		return nil, sch, errors.Errorf("alter index: table is not a resolved table: %T", ai.Table)
+	}
+
+	normalizedSchema := sch.Copy()
+	normalizedColumns := make([]sql.IndexColumn, 0, len(columns)+len(probeColumnIndexes))
+	nodes := make([]sql.Node, 0, len(probeColumnIndexes)+1)
+	for logicalIndex, column := range columns {
+		if columnIndex, ok := probeColumnIndexes[logicalIndex]; ok {
+			expr := pgexpression.NewIsNull(gmsexpression.NewGetField(columnIndex, sch[columnIndex].Type, sch[columnIndex].Name, sch[columnIndex].Nullable))
+			hiddenColumn, err := newHiddenSystemNullableSortIndexColumn(ctx, ai, normalizedSchema, len(normalizedColumns), expr)
+			if err != nil {
+				return nil, sch, err
+			}
+			addColumn := plan.NewAddColumnResolved(resolvedTable, *hiddenColumn, nil)
+			addNode, err := addColumn.WithTargetSchema(normalizedSchema.Copy())
+			if err != nil {
+				return nil, sch, err
+			}
+			nodes = append(nodes, addNode)
+			normalizedSchema = append(normalizedSchema, hiddenColumn)
+			normalizedColumns = append(normalizedColumns, sql.IndexColumn{Name: hiddenColumn.Name})
+		}
+		normalizedColumns = append(normalizedColumns, column)
+	}
+
+	metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	normalized := *ai
+	normalized.Columns = normalizedColumns
+	normalized.Comment = indexmetadata.EncodeComment(metadata)
+	alterNode, err := (&normalized).WithTargetSchema(normalizedSchema.Copy())
+	if err != nil {
+		return nil, sch, err
+	}
+	nodes = append(nodes, alterNode)
+	block := plan.NewBlock(nodes)
+	block.SetSchema(ai.Schema(ctx))
+	return block, normalizedSchema, nil
+}
+
+func nullableSortOptionNeedsNullProbe(option indexmetadata.IndexColumnOption) bool {
+	direction := strings.ToLower(strings.TrimSpace(option.Direction))
+	nullsOrder := strings.ToLower(strings.TrimSpace(option.NullsOrder))
+	if direction == "" && nullsOrder == "" {
+		return false
+	}
+	return !((direction == "" && nullsOrder == indexmetadata.NullsOrderFirst) ||
+		(direction == indexmetadata.SortDirectionDesc && nullsOrder == indexmetadata.NullsOrderLast))
+}
+
+func newHiddenSystemNullableSortIndexColumn(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema, columnIndex int, expr sql.Expression) (*sql.Column, error) {
+	databaseName := ""
+	if ai.Db != nil {
+		databaseName = ai.Db.Name()
+	}
+	columnDefaultValue, err := sql.NewColumnDefaultValue(expr, expr.Type(ctx), false, true, true)
+	if err != nil {
+		return nil, err
+	}
+	hiddenColumnName := hiddenSystemNullableSortIndexColumnName(sch, ai.IndexName, columnIndex)
+	return &sql.Column{
+		Type:           expr.Type(ctx),
+		Generated:      columnDefaultValue,
+		Name:           hiddenColumnName,
+		Source:         ai.Table.Name(),
+		DatabaseSource: databaseName,
+		Nullable:       false,
+		Virtual:        true,
+		HiddenSystem:   true,
+	}, nil
+}
+
+func hiddenSystemNullableSortIndexColumnName(sch sql.Schema, indexName string, columnIndex int) string {
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(strings.ToLower(indexName)))
+	baseName := fmt.Sprintf("__doltgres_nullsort_%08x_%d", hasher.Sum32(), columnIndex)
+	name := baseName
+	for suffix := 1; sch.IndexOfColName(name) >= 0; suffix++ {
+		name = fmt.Sprintf("%s_%d", baseName, suffix)
+	}
+	return name
 }
 
 func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema) (*plan.CreateTable, bool, error) {
@@ -769,6 +905,24 @@ func ensureStringMetadataLength(values []string, length int) []string {
 		return values
 	}
 	next := make([]string, length)
+	copy(next, values)
+	return next
+}
+
+func ensureBoolMetadataLength(values []bool, length int) []bool {
+	if len(values) >= length {
+		return values
+	}
+	next := make([]bool, length)
+	copy(next, values)
+	return next
+}
+
+func ensureIndexColumnOptionMetadataLength(values []indexmetadata.IndexColumnOption, length int) []indexmetadata.IndexColumnOption {
+	if len(values) >= length {
+		return values
+	}
+	next := make([]indexmetadata.IndexColumnOption, length)
 	copy(next, values)
 	return next
 }

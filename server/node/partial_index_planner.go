@@ -56,6 +56,10 @@ func unwrapPlannerIndexLookup(lookup sql.IndexLookup) (sql.IndexLookup, bool) {
 		lookup.Index = ordered.Index
 		return lookup, true
 	}
+	if nullableNullProbe, ok := lookup.Index.(nullableNullProbeOrderedIndex); ok {
+		lookup.Index = nullableNullProbe.Index
+		return lookup, true
+	}
 	return lookup, false
 }
 

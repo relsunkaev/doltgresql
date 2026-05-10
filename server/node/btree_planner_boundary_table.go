@@ -273,6 +273,10 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 		if unsafeBtreePlannerIndex(index, t.Schema(ctx)) {
 			continue
 		}
+		if nullableNullProbeIndex, ok := nullableNullProbeSortOptionPlannerIndex(ctx, index, t.Schema(ctx)); ok {
+			filtered = append(filtered, nullableNullProbeIndex)
+			continue
+		}
 		if metadataOnlySortOptionIndex(index, t.Schema(ctx)) {
 			if !metadataOnlySortOptionIndexColumnsAvailable(index, t.Schema(ctx)) {
 				continue

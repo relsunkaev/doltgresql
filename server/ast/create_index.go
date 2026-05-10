@@ -350,10 +350,8 @@ func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, er
 			sortOptions[i].NullsOrder = indexmetadata.NullsOrderFirst
 			hasMetadata = true
 		case tree.NullsLast:
-			if column.Direction == tree.Descending {
-				sortOptions[i].NullsOrder = indexmetadata.NullsOrderLast
-				hasMetadata = true
-			}
+			sortOptions[i].NullsOrder = indexmetadata.NullsOrderLast
+			hasMetadata = true
 		default:
 			return nil, errors.Errorf("unknown NULL ordering for index")
 		}

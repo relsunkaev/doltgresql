@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 type metadataOnlyOrderedIndex struct {
@@ -50,6 +51,153 @@ func (i metadataOnlyOrderedIndex) ExtendedColumnExpressionTypes(ctx *sql.Context
 
 func metadataOnlySortOptionIndex(index sql.Index, tableSchema sql.Schema) bool {
 	return btreeSortOptionIndex(index) && !plannerSafeSortOptionIndex(index, tableSchema)
+}
+
+type nullableNullProbeOrderedIndex struct {
+	sql.Index
+	expressions           []string
+	columnExpressionTypes []sql.ColumnExpressionType
+}
+
+func (i nullableNullProbeOrderedIndex) Expressions() []string {
+	return append([]string(nil), i.expressions...)
+}
+
+func (i nullableNullProbeOrderedIndex) ColumnExpressionTypes(*sql.Context) []sql.ColumnExpressionType {
+	return append([]sql.ColumnExpressionType(nil), i.columnExpressionTypes...)
+}
+
+func (i nullableNullProbeOrderedIndex) Order(ctx *sql.Context) sql.IndexOrder {
+	if ordered, ok := i.Index.(sql.OrderedIndex); ok {
+		return ordered.Order(ctx)
+	}
+	return sql.IndexOrderNone
+}
+
+func (i nullableNullProbeOrderedIndex) Reversible(ctx *sql.Context) bool {
+	if ordered, ok := i.Index.(sql.OrderedIndex); ok {
+		return ordered.Reversible(ctx)
+	}
+	return false
+}
+
+func (i nullableNullProbeOrderedIndex) ExtendedExpressions(ctx *sql.Context) []string {
+	expressions := append([]string(nil), i.expressions...)
+	if extended, ok := i.Index.(sql.ExtendedIndex); ok {
+		underlyingExpressions := i.Index.Expressions()
+		underlyingExtended := extended.ExtendedExpressions(ctx)
+		if len(underlyingExtended) > len(underlyingExpressions) {
+			return append(expressions, underlyingExtended[len(underlyingExpressions):]...)
+		}
+		return append(expressions, underlyingExtended...)
+	}
+	return expressions
+}
+
+func (i nullableNullProbeOrderedIndex) ExtendedColumnExpressionTypes(ctx *sql.Context) []sql.ColumnExpressionType {
+	columnExpressionTypes := append([]sql.ColumnExpressionType(nil), i.columnExpressionTypes...)
+	if extended, ok := i.Index.(sql.ExtendedIndex); ok {
+		underlyingTypes := i.Index.ColumnExpressionTypes(ctx)
+		underlyingExtended := extended.ExtendedColumnExpressionTypes(ctx)
+		if len(underlyingExtended) > len(underlyingTypes) {
+			return append(columnExpressionTypes, underlyingExtended[len(underlyingTypes):]...)
+		}
+		return append(columnExpressionTypes, underlyingExtended...)
+	}
+	return columnExpressionTypes
+}
+
+func nullableNullProbeSortOptionPlannerIndex(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (sql.Index, bool) {
+	if !btreeSortOptionIndex(index) || tableSchema == nil {
+		return nil, false
+	}
+	sortOptions := indexmetadata.SortOptions(index.Comment())
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+	if len(logicalColumns) == 0 || len(sortOptions) == 0 {
+		return nil, false
+	}
+
+	physicalExpressions := index.Expressions()
+	physicalTypes := index.ColumnExpressionTypes(ctx)
+	expressions := make([]string, 0, len(physicalExpressions))
+	columnExpressionTypes := make([]sql.ColumnExpressionType, 0, len(physicalTypes))
+	physicalIndex := 0
+	insertedProbe := false
+	for logicalIndex, logicalColumn := range logicalColumns {
+		if logicalIndex >= len(sortOptions) || logicalColumn.Expression {
+			return nil, false
+		}
+		schemaIndex := tableSchema.IndexOfColName(logicalColumn.StorageName)
+		if schemaIndex < 0 {
+			return nil, false
+		}
+		schemaColumn := tableSchema[schemaIndex]
+		qualifiedColumn := index.Table() + "." + schemaColumn.Name
+		if schemaColumn.Nullable && nullableSortOptionNeedsNullProbeForPlanner(sortOptions[logicalIndex]) {
+			if physicalIndex >= len(physicalExpressions) ||
+				!isHiddenNullableSortProbeColumn(physicalExpressions[physicalIndex], tableSchema, schemaColumn.Name) {
+				return nil, false
+			}
+			probeExpression := qualifiedColumn + " IS NULL"
+			expressions = append(expressions, probeExpression)
+			columnExpressionTypes = append(columnExpressionTypes, sql.ColumnExpressionType{
+				Expression: probeExpression,
+				Type:       pgtypes.Bool,
+			})
+			physicalIndex++
+			insertedProbe = true
+		}
+		if physicalIndex >= len(physicalExpressions) ||
+			!strings.EqualFold(unqualifiedPlannerIndexColumn(physicalExpressions[physicalIndex]), schemaColumn.Name) {
+			return nil, false
+		}
+		expressions = append(expressions, qualifiedColumn)
+		columnExpressionTypes = append(columnExpressionTypes, sql.ColumnExpressionType{
+			Expression: qualifiedColumn,
+			Type:       schemaColumn.Type,
+		})
+		physicalIndex++
+	}
+	if !insertedProbe || physicalIndex != len(physicalExpressions) {
+		return nil, false
+	}
+	return nullableNullProbeOrderedIndex{
+		Index:                 index,
+		expressions:           expressions,
+		columnExpressionTypes: columnExpressionTypes,
+	}, true
+}
+
+func nullableSortOptionNeedsNullProbeForPlanner(option indexmetadata.IndexColumnOption) bool {
+	direction := strings.ToLower(strings.TrimSpace(option.Direction))
+	nullsOrder := strings.ToLower(strings.TrimSpace(option.NullsOrder))
+	if direction == "" && nullsOrder == "" {
+		return false
+	}
+	return !nativeNullableSortOption(option)
+}
+
+func isHiddenNullableSortProbeColumn(physicalExpression string, tableSchema sql.Schema, columnName string) bool {
+	hiddenColumnName := unqualifiedPlannerIndexColumn(physicalExpression)
+	hiddenColumnIndex := tableSchema.IndexOfColName(hiddenColumnName)
+	if hiddenColumnIndex < 0 {
+		return false
+	}
+	hiddenColumn := tableSchema[hiddenColumnIndex]
+	if !hiddenColumn.HiddenSystem || hiddenColumn.Generated == nil || hiddenColumn.Generated.Expr == nil {
+		return false
+	}
+	return nullableSortProbeExpressionKey(hiddenColumn.Generated.Expr.String()) == nullableSortProbeExpressionKey(columnName+" IS NULL")
+}
+
+func nullableSortProbeExpressionKey(expr string) string {
+	expr = strings.ToLower(strings.TrimSpace(expr))
+	for strings.HasPrefix(expr, "(") && strings.HasSuffix(expr, ")") {
+		expr = strings.TrimSpace(expr[1 : len(expr)-1])
+	}
+	expr = strings.ReplaceAll(expr, `"`, "")
+	expr = strings.ReplaceAll(expr, "`", "")
+	return strings.Join(strings.Fields(expr), " ")
 }
 
 func btreeSortOptionIndex(index sql.Index) bool {

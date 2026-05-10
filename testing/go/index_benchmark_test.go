@@ -123,6 +123,16 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 	}
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_desc_plan ORDER BY score ASC NULLS LAST`, false)
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_nullable_nulls_last_plan (id INTEGER PRIMARY KEY, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_sort_option_nullable_nulls_last_plan VALUES (1, NULL), (2, 10), (3, 5), (4, NULL), (5, 20)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_nullable_nulls_last_score_idx ON btree_sort_option_nullable_nulls_last_plan (score ASC NULLS LAST)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_nulls_last_plan ORDER BY score ASC NULLS LAST`, true)
+	nullableAscNullsLastScores := queryBenchmarkString(t, ctx, conn, `SELECT string_agg(coalesce(score::text, 'NULL'), ',') FROM (SELECT score FROM btree_sort_option_nullable_nulls_last_plan ORDER BY score ASC NULLS LAST) ordered_scores`)
+	if nullableAscNullsLastScores != "5,10,20,NULL,NULL" {
+		t.Fatalf("unexpected nullable scores from ASC NULLS LAST index scan: %s", nullableAscNullsLastScores)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_nulls_last_plan ORDER BY score ASC NULLS FIRST`, false)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_nullable_asc_plan (id INTEGER PRIMARY KEY, score INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_sort_option_nullable_asc_plan VALUES (1, NULL), (2, 10), (3, 5), (4, NULL), (5, 20)")
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_nullable_asc_score_idx ON btree_sort_option_nullable_asc_plan (score ASC NULLS FIRST)")
@@ -132,6 +142,16 @@ func TestBtreeSortOptionPlannerBoundary(t *testing.T) {
 		t.Fatalf("unexpected nullable scores from ASC NULLS FIRST index scan: %s", nullableAscScores)
 	}
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_asc_plan ORDER BY score DESC NULLS FIRST`, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_nullable_desc_nulls_first_plan (id INTEGER PRIMARY KEY, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO btree_sort_option_nullable_desc_nulls_first_plan VALUES (1, NULL), (2, 10), (3, 5), (4, NULL), (5, 20)")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX btree_sort_option_nullable_desc_nulls_first_score_idx ON btree_sort_option_nullable_desc_nulls_first_plan (score DESC NULLS FIRST)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_desc_nulls_first_plan ORDER BY score DESC NULLS FIRST`, true)
+	nullableDescNullsFirstScores := queryBenchmarkString(t, ctx, conn, `SELECT string_agg(coalesce(score::text, 'NULL'), ',') FROM (SELECT score FROM btree_sort_option_nullable_desc_nulls_first_plan ORDER BY score DESC NULLS FIRST) ordered_scores`)
+	if nullableDescNullsFirstScores != "NULL,NULL,20,10,5" {
+		t.Fatalf("unexpected nullable scores from DESC NULLS FIRST index scan: %s", nullableDescNullsFirstScores)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT score FROM btree_sort_option_nullable_desc_nulls_first_plan ORDER BY score DESC NULLS LAST`, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE btree_sort_option_not_null_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL, label TEXT NOT NULL)")
 	insertBtreePlanRows(t, ctx, conn, "btree_sort_option_not_null_plan", 128)
