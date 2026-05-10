@@ -278,6 +278,30 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	if _, err := conn.Exec(ctx, "INSERT INTO citext_unique_concurrent_btree_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
 		t.Fatalf("expected unique concurrent citext index to reject mixed-case duplicate, got %v", err)
 	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_inline_unique_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL UNIQUE)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_inline_unique_plan VALUES (1, 'Alice@example.com')")
+	inlineUniqueIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_inline_unique_plan_email_key'")
+	if !strings.Contains(inlineUniqueIndexDef, "email citext_ops") {
+		t.Fatalf("expected inline unique pg_indexes to preserve citext_ops, got %q", inlineUniqueIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_inline_unique_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_inline_unique_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_inline_unique_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected inline unique citext index to reject mixed-case duplicate, got %v", err)
+	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_table_unique_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL, CONSTRAINT citext_table_unique_plan_email_key UNIQUE (email))")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_table_unique_plan VALUES (1, 'Alice@example.com')")
+	tableUniqueIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_table_unique_plan_email_key'")
+	if !strings.Contains(tableUniqueIndexDef, "email citext_ops") {
+		t.Fatalf("expected table unique pg_indexes to preserve citext_ops, got %q", tableUniqueIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_table_unique_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_table_unique_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_table_unique_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected table unique citext index to reject mixed-case duplicate, got %v", err)
+	}
 }
 
 func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {

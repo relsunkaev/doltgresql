@@ -15,6 +15,8 @@
 package analyzer
 
 import (
+	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -46,6 +48,14 @@ func validateCreateTable(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, sco
 	err = validateIndexes(ctx, sch, idxs)
 	if err != nil {
 		return nil, transform.SameTree, err
+	}
+
+	ct, changed, err := normalizeCitextCreateTableIndexes(ctx, ct, sch)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	if changed {
+		return ct, transform.NewTree, nil
 	}
 
 	return n, transform.SameTree, nil
@@ -454,23 +464,127 @@ func validatePrimaryKey(ctx *sql.Context, initialSch, sch sql.Schema, ai *plan.A
 
 func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema) (*plan.AlterIndex, error) {
 	if ai.Action != plan.IndexAction_Create ||
-		len(ai.Columns) != 1 ||
-		(ai.Using != sql.IndexUsing_Default && ai.Using != sql.IndexUsing_BTree) ||
-		ai.Constraint == sql.IndexConstraint_Fulltext ||
-		ai.Constraint == sql.IndexConstraint_Spatial ||
-		ai.Constraint == sql.IndexConstraint_Vector {
+		ai.Constraint == sql.IndexConstraint_Primary {
 		return ai, nil
 	}
 
-	metadata, ok := indexmetadata.DecodeComment(ai.Comment)
+	columns, comment, changed := normalizeCitextIndexDef(ctx, ai.Columns, ai.Using, ai.Constraint, ai.Comment, sch)
+	if !changed {
+		return ai, nil
+	}
+
+	normalized := *ai
+	normalized.Columns = columns
+	normalized.Comment = comment
+	return &normalized, nil
+}
+
+func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema) (*plan.CreateTable, bool, error) {
+	if ct.Like() != nil {
+		return ct, false, nil
+	}
+	idxDefs := ct.Indexes()
+	normalizedIdxDefs := make(sql.IndexDefs, len(idxDefs))
+	normalizedSchema := ct.PkSchema().Schema.Copy()
+	changed := false
+	for i, idxDef := range idxDefs {
+		if idxDef == nil {
+			continue
+		}
+		normalized := *idxDef
+		if normalized.Name == "" {
+			normalizedIdxDefs[i] = &normalized
+			continue
+		}
+		columns, comment, indexChanged := normalizeCitextIndexDef(ctx, normalized.Columns, normalized.Storage, normalized.Constraint, normalized.Comment, sch)
+		if indexChanged {
+			for columnIndex, column := range columns {
+				if column.Expression == nil {
+					continue
+				}
+				hiddenColumn, err := newHiddenSystemIndexColumn(ctx, ct, normalizedSchema, normalized.Name, columnIndex, column.Expression)
+				if err != nil {
+					return nil, false, err
+				}
+				normalizedSchema = append(normalizedSchema, hiddenColumn)
+				columns[columnIndex].Name = hiddenColumn.Name
+				columns[columnIndex].Expression = nil
+			}
+			normalized.Columns = columns
+			normalized.Comment = comment
+			changed = true
+		}
+		normalizedIdxDefs[i] = &normalized
+	}
+	if !changed {
+		return ct, false, nil
+	}
+	tableSpec := &plan.TableSpec{
+		Schema:    sql.NewPrimaryKeySchema(normalizedSchema),
+		FkDefs:    ct.ForeignKeys(),
+		ChDefs:    ct.Checks(),
+		IdxDefs:   normalizedIdxDefs,
+		Collation: ct.Collation,
+		TableOpts: ct.TableOpts,
+	}
+	if ct.Select() != nil {
+		return plan.NewCreateTableSelect(ct.Db, ct.Name(), ct.IfNotExists(), ct.Temporary(), ct.Select(), tableSpec), true, nil
+	}
+	return plan.NewCreateTable(ct.Db, ct.Name(), ct.IfNotExists(), ct.Temporary(), tableSpec), true, nil
+}
+
+func newHiddenSystemIndexColumn(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema, indexName string, columnIndex int, expr sql.Expression) (*sql.Column, error) {
+	columnDefaultValue, err := sql.NewColumnDefaultValue(expr, expr.Type(ctx), false, true, true)
+	if err != nil {
+		return nil, err
+	}
+	databaseName := ""
+	if ct.Db != nil {
+		databaseName = ct.Db.Name()
+	}
+	hiddenColumnName := hiddenSystemIndexColumnName(sch, indexName, columnIndex)
+	return &sql.Column{
+		Type:           expr.Type(ctx),
+		Generated:      columnDefaultValue,
+		Name:           hiddenColumnName,
+		Source:         ct.Name(),
+		DatabaseSource: databaseName,
+		Nullable:       true,
+		Virtual:        true,
+		HiddenSystem:   true,
+	}, nil
+}
+
+func hiddenSystemIndexColumnName(sch sql.Schema, indexName string, columnIndex int) string {
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(strings.ToLower(indexName)))
+	baseName := fmt.Sprintf("__doltgres_citext_%08x_%d", hasher.Sum32(), columnIndex)
+	name := baseName
+	for suffix := 1; sch.IndexOfColName(name) >= 0; suffix++ {
+		name = fmt.Sprintf("%s_%d", baseName, suffix)
+	}
+	return name
+}
+
+func normalizeCitextIndexDef(ctx *sql.Context, indexColumns []sql.IndexColumn, using sql.IndexUsing, constraint sql.IndexConstraint, comment string, sch sql.Schema) ([]sql.IndexColumn, string, bool) {
+	if len(indexColumns) != 1 ||
+		(using != sql.IndexUsing_Default && using != sql.IndexUsing_BTree) ||
+		constraint == sql.IndexConstraint_Primary ||
+		constraint == sql.IndexConstraint_Fulltext ||
+		constraint == sql.IndexConstraint_Spatial ||
+		constraint == sql.IndexConstraint_Vector {
+		return indexColumns, comment, false
+	}
+
+	metadata, ok := indexmetadata.DecodeComment(comment)
 	if !ok {
 		metadata = indexmetadata.Metadata{AccessMethod: indexmetadata.AccessMethodBtree}
 	}
 	if indexmetadata.NormalizeAccessMethod(metadata.AccessMethod) != indexmetadata.AccessMethodBtree {
-		return ai, nil
+		return indexColumns, comment, false
 	}
 
-	columns := append([]sql.IndexColumn(nil), ai.Columns...)
+	columns := append([]sql.IndexColumn(nil), indexColumns...)
 	metadata.Columns = ensureStringMetadataLength(metadata.Columns, len(columns))
 	metadata.OpClasses = ensureStringMetadataLength(metadata.OpClasses, len(columns))
 
@@ -499,14 +613,11 @@ func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Sc
 		changed = true
 	}
 	if !changed {
-		return ai, nil
+		return indexColumns, comment, false
 	}
 
 	metadata.AccessMethod = indexmetadata.AccessMethodBtree
-	normalized := *ai
-	normalized.Columns = columns
-	normalized.Comment = indexmetadata.EncodeComment(metadata)
-	return &normalized, nil
+	return columns, indexmetadata.EncodeComment(metadata), true
 }
 
 func ensureStringMetadataLength(values []string, length int) []string {
