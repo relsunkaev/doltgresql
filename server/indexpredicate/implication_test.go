@@ -741,6 +741,9 @@ func TestImpliesReverseFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"reverse(code) = 'nimdA'", "reverse(code) = 'nimdA'"},
+		{"reverse(code) = 'nimdA'", "code = 'Admin'"},
+		{"reverse(code) IN ('nimdA', 'ahplA')", "code IN ('Admin', 'Alpha')"},
+		{"reverse(code) = 'evitcå'", "code = 'åctive'"},
 		{"reverse(code) IN ('nimdA', 'ahplA')", "reverse(code) = 'nimdA'"},
 		{"reverse(code) IS NOT NULL", "reverse(code) = 'nimdA'"},
 	} {
@@ -754,7 +757,8 @@ func TestImpliesReverseFunctionPredicates(t *testing.T) {
 	}{
 		{"reverse(code) = 'nimdA'", "reverse(code) = 'larimdA'"},
 		{"reverse(code) = 'nimdA'", "lower(code) = 'admin'"},
-		{"reverse(code) = 'nimdA'", "code = 'Admin'"},
+		{"reverse(code) = 'nimdA'", "code = 'Admiral'"},
+		{"reverse(code) = 'nimdA'", "code IN ('Admin', 'Admiral')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

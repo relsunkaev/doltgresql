@@ -1051,10 +1051,19 @@ Do not check off an item until it has workload proof:
   keys, planner filters can deparse them, partial unique DML enforcement
   evaluates rune-order reversal aligned with the runtime function, and
   `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
-  reversed values and raw source-string semantic rewrites remain rejected.
-  Coverage in server/indexpredicate/implication_test.go,
-  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
-  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.17.
+  reversed values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.17.
+- [x] Use raw source-string value-set predicates to imply matching
+  `reverse(...)` partial-index predicates. Text equality and IN-list filters on
+  the source argument now imply matching reversed literal value-set predicates
+  when every reversed literal is contained in the partial predicate's literal
+  set, including multibyte text. Non-matching transformed values and broader
+  predicates remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.42.
 - [x] Use deterministic `to_hex(expr)` predicates in partial-index implication
   paths. Unary `to_hex(...)` calls now serialize as comparable predicate keys,
   planner filters can deparse them, partial unique DML enforcement evaluates

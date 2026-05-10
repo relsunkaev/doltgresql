@@ -2148,7 +2148,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'Alpha'),
 		(3, 1, 'Admiral'),
 		(4, 2, 'Admin')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_reverse_tenant_idx ON partial_planner_reverse (tenant) WHERE reverse(code) = 'nimdA'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_reverse_tenant_idx ON partial_planner_reverse (tenant) WHERE reverse(code) IN ('nimdA', 'ahplA')")
 
 	reverseImpliedQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND reverse(code) = 'nimdA'`
 	assertCountResult(t, ctx, conn, reverseImpliedQuery, 1)
@@ -2156,7 +2156,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	reverseRawSourceQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND code = 'Admin'`
 	assertCountResult(t, ctx, conn, reverseRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, reverseRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, reverseRawSourceQuery, true)
+
+	reverseRawInQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND code IN ('Admin', 'Alpha')`
+	assertCountResult(t, ctx, conn, reverseRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, reverseRawInQuery, true)
+
+	reverseRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_reverse WHERE tenant = 1 AND code IN ('Admin', 'Admiral')`
+	assertCountResult(t, ctx, conn, reverseRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, reverseRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_to_hex (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, account_id INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_to_hex VALUES

@@ -1691,8 +1691,45 @@ ON CONFLICT (user_id) WHERE reverse(code) = 'nimdA' DO UPDATE SET note = EXCLUDE
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_reverse VALUES (4, 10, 'Admin', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'Admin' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_reverse VALUES (4, 10, 'Admin', 'raw-reverse-upsert')
+ON CONFLICT (user_id) WHERE code = 'Admin' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_reverse ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Admin", "raw-reverse-upsert"},
+						{2, 10, "Alpha", "old-alpha"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_reverse VALUES (5, 10, 'Admin', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('Admin', 'Admiral') DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT partial unique index supports reverse IN-list source implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_reverse_in (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_reverse_in_user_idx ON partial_arb_reverse_in (user_id) WHERE reverse(code) IN ('nimdA', 'ahplA');",
+				"INSERT INTO partial_arb_reverse_in VALUES (1, 10, 'Admin', 'old-admin'), (2, 20, 'Alpha', 'old-alpha');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_reverse_in VALUES (3, 10, 'Alpha', 'raw-reverse-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('Admin', 'Alpha') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_reverse_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Admin", "raw-reverse-in-upsert"},
+						{2, 20, "Alpha", "old-alpha"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_reverse_in VALUES (4, 20, 'Admin', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('Admin', 'Admiral') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

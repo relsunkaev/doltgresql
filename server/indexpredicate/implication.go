@@ -496,6 +496,7 @@ func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
 func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
 	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateReverseArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateLeftRightArgumentValueSetImplies(indexValues, queryValues) ||
@@ -543,6 +544,22 @@ func predicateCaseFoldArgumentExprKey(exprKey string) (string, string, bool) {
 	return "", "", false
 }
 
+func predicateReverseArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "reverse")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	reversedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		reversedValue, ok := predicateReverseStringLiteralKey(value)
+		if !ok {
+			return false
+		}
+		reversedValues[reversedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: reversedValues}.subsetOf(indexValues)
+}
+
 func predicateUnaryFunctionArgumentExprKey(exprKey string, functionName string) (string, bool) {
 	prefix := "func:" + functionName + "("
 	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
@@ -578,6 +595,22 @@ func predicateCaseFoldStringLiteralKey(functionName string, value string) (strin
 		return "", false
 	}
 	return prefix + value, true
+}
+
+func predicateReverseStringLiteralKey(value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	return prefix + predicateReverseText(strings.TrimPrefix(value, prefix)), true
+}
+
+func predicateReverseText(text string) string {
+	runes := []rune(text)
+	for left, right := 0, len(runes)-1; left < right; left, right = left+1, right-1 {
+		runes[left], runes[right] = runes[right], runes[left]
+	}
+	return string(runes)
 }
 
 func predicateAsciiArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
