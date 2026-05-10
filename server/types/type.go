@@ -657,7 +657,7 @@ func oidAliasBase(t *DoltgresType) (bool, bool) {
 
 func isOidAliasTypeName(typeName string) bool {
 	switch typeName {
-	case "oid", "regclass", "regnamespace", "regproc", "regtype":
+	case "oid", "regclass", "regnamespace", "regproc", "regprocedure", "regtype":
 		return true
 	default:
 		return false

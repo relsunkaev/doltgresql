@@ -1653,7 +1653,10 @@ Do not check off an item until it has workload proof:
   columns, pooled reads, commit, and rollback. Ruby `pg` runs through a real
   PG::Connection, including startup `application_name`, typed parameters,
   JSONB and text[] values, prepared statements, concurrent reads, commit, and
-  rollback. PHP `ext-pgsql` runs from the official PHP CLI container with
+  rollback. ActiveRecord runs through Rails' PostgreSQL adapter with schema DSL
+  DDL, model CRUD, JSONB/text[] values, relation reads, raw parameter binding,
+  connection-pool reads, commit, and rollback. PHP `ext-pgsql` runs from the
+  official PHP CLI container with
   startup `application_name`, server-side prepared statements, typed
   parameters, JSONB/text[] values, repeated connections, commit, and
   rollback. libpq runs through a compiled C probe with startup
@@ -1690,8 +1693,8 @@ Do not check off an item until it has workload proof:
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
   testing/go/psycopg2_client_test.go, testing/go/asyncpg_client_test.go,
   testing/go/sqlalchemy_client_test.go, testing/go/ruby_pg_client_test.go,
-  testing/go/php_client_test.go, testing/go/libpq_client_test.go,
-  testing/go/go_sql_pq_client_test.go,
+  testing/go/active_record_client_test.go, testing/go/php_client_test.go,
+  testing/go/libpq_client_test.go, testing/go/go_sql_pq_client_test.go,
   testing/go/go_sql_pgx_stdlib_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/perl_dbi_client_test.go, testing/go/prisma_client_test.go,
@@ -2190,7 +2193,10 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   reads, and transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
-  boundaries. The PHP `ext-pgsql` harness covers startup parameters,
+  boundaries. The ActiveRecord harness covers Rails' PostgreSQL adapter with
+  schema DSL DDL, model CRUD, JSONB/text[] values, relation reads, raw
+  parameter binding, connection-pool reads, and transaction boundaries. The
+  PHP `ext-pgsql` harness covers startup parameters,
   server-side prepared statements, typed parameters, JSONB/text[] values,
   repeated connections, and transaction boundaries. The libpq harness compiles
   a C probe for typed parameters, prepared statements, JSONB/text[] values,
@@ -2222,9 +2228,10 @@ schema diffs, typed-exception handling, and client-side query timeouts.
 - [ ] Expand driver/ORM matrix proof beyond pgx, pgx stdlib, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
   Prisma Client, psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`,
-  PHP `ext-pgsql`, libpq, Go `database/sql` with `github.com/lib/pq` and
-  `github.com/jackc/pgx/v5/stdlib`, Java JDBC, Rust `sqlx`, and Perl
-  DBI/DBD::Pg. Add runnable smoke gates for the advertised client and
+  ActiveRecord, PHP `ext-pgsql`, libpq, Go `database/sql` with
+  `github.com/lib/pq` and `github.com/jackc/pgx/v5/stdlib`, Java JDBC, Rust
+  `sqlx`, and Perl DBI/DBD::Pg. Add runnable smoke gates for the advertised
+  client and
   migration-tool matrix before claiming broad
   client compatibility.
   Tracked by dg-7ug.10.3 under dg-7ug.10.

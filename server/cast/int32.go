@@ -119,6 +119,16 @@ func int32Implicit() {
 	})
 	framework.MustAddImplicitTypeCast(framework.TypeCast{
 		FromType: pgtypes.Int32,
+		ToType:   pgtypes.Regprocedure,
+		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
+			if internalID := id.Cache().ToInternal(uint32(val.(int32))); internalID.IsValid() {
+				return internalID, nil
+			}
+			return id.NewOID(uint32(val.(int32))).AsId(), nil
+		},
+	})
+	framework.MustAddImplicitTypeCast(framework.TypeCast{
+		FromType: pgtypes.Int32,
 		ToType:   pgtypes.Regtype,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if internalID := id.Cache().ToInternal(uint32(val.(int32))); internalID.IsValid() {

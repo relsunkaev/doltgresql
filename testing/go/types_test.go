@@ -2668,6 +2668,44 @@ var typesTests = []ScriptTest{
 		},
 	},
 	{
+		Name: "Regprocedure type",
+		Assertions: []ScriptTestAssertion{
+			{
+				Query: `SELECT 'array_in(cstring,oid,integer)'::regprocedure;`,
+				Expected: []sql.Row{
+					{"array_in(cstring,oid,integer)"},
+				},
+			},
+			{
+				Query: `SELECT 'array_in(cstring, oid, int4)'::regprocedure::oid = (SELECT typinput::oid FROM pg_catalog.pg_type WHERE typname = '_int4');`,
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: `SELECT EXISTS (
+					SELECT 1
+					FROM pg_catalog.pg_type t
+					WHERE t.typname = '_int4'
+					  AND t.typinput = 'array_in(cstring,oid,integer)'::regprocedure
+				);`,
+				Expected: []sql.Row{
+					{"t"},
+				},
+			},
+			{
+				Query: `SELECT 4294967295::regprocedure;`,
+				Expected: []sql.Row{
+					{"4294967295"},
+				},
+			},
+			{
+				Query:       `SELECT 'array_in(cstring,oid,does_not_exist)'::regprocedure;`,
+				ExpectedErr: "type \"does_not_exist\" does not exist",
+			},
+		},
+	},
+	{
 		Name: "Regtype type",
 		Assertions: []ScriptTestAssertion{
 			{
