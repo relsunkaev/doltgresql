@@ -728,6 +728,15 @@ Do not check off an item until it has workload proof:
   rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.2.
+- [x] Use deterministic unary text-length predicates in partial-index
+  implication paths. `length(expr)`, `char_length(expr)`, and
+  `character_length(expr)` now canonicalize to the same text-length expression
+  key for implication and planner predicate serialization, partial unique
+  predicate evaluation counts text characters, and `ON CONFLICT` arbiter
+  inference accepts alias-equivalent predicates while rejecting non-matching
+  length literals. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.3.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

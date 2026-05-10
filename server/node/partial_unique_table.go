@@ -20,6 +20,7 @@ import (
 	"io"
 	"reflect"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/cockroachdb/errors"
 	doltsqle "github.com/dolthub/dolt/go/libraries/doltcore/sqle"
@@ -1153,6 +1154,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
 	}
 	switch name {
+	case "char_length", "character_length", "length":
+		return predicateValue{value: int64(utf8.RuneCountInString(text))}, nil
 	case "lower":
 		return predicateValue{value: strings.ToLower(text)}, nil
 	case "upper":

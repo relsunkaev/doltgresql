@@ -819,6 +819,32 @@ ON CONFLICT (user_id) WHERE tenant IS NOT DISTINCT FROM workspace_tenant AND wor
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports text-length predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_length (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_length_code_idx ON partial_arb_length (code) WHERE length(code) = 6;",
+				"INSERT INTO partial_arb_length VALUES (1, 'active', 'old-active'), (2, 'archived', 'old-archived');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_length VALUES (3, 'active', 'length-upsert')
+ON CONFLICT (code) WHERE char_length(code) = 6 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_length ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "active", "length-upsert"},
+						{2, "archived", "old-archived"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_length VALUES (4, 'active', 'wrong-predicate')
+ON CONFLICT (code) WHERE length(code) = 7 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

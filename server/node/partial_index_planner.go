@@ -386,9 +386,8 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 
 func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 	name := strings.ToLower(expr.FunctionName())
-	switch name {
-	case "lower", "upper", "btrim", "ltrim", "rtrim":
-	default:
+	name, ok := plannerCanonicalFunctionPredicateName(name)
+	if !ok {
 		return "", false
 	}
 	children := expr.Children()
@@ -400,6 +399,17 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 		return "", false
 	}
 	return name + "(" + childSQL + ")", true
+}
+
+func plannerCanonicalFunctionPredicateName(name string) (string, bool) {
+	switch name {
+	case "lower", "upper", "btrim", "ltrim", "rtrim":
+		return name, true
+	case "char_length", "character_length", "length":
+		return "length", true
+	default:
+		return "", false
+	}
 }
 
 func indexScanOpPredicateSQL(op sql.IndexScanOp) (string, bool) {

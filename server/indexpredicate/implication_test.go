@@ -213,3 +213,32 @@ func TestImpliesTrimFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesTextLengthFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"length(code) = 6", "length(code) = 6"},
+		{"length(code) = 6", "char_length(code) = 6"},
+		{"char_length(code) IN (6, 7)", "length(code) = 6"},
+		{"length(code) IS NOT NULL", "char_length(code) = 6"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"length(code) = 6", "length(code) = 7"},
+		{"length(code) = 6", "code = 'active'"},
+		{"length(code) = 6", "octet_length(code) = 6"},
+		{"char_length(code) IN (6, 7)", "length(code) IN (6, 8)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
