@@ -588,6 +588,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports chr predicate",
+			SetUpScript: []string{
+				`CREATE TABLE chr_codes (id INT PRIMARY KEY, user_id INT, codepoint INT);`,
+				`CREATE UNIQUE INDEX chr_codes_user_code_idx
+					ON chr_codes (user_id)
+					WHERE chr(codepoint) = 'A';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO chr_codes VALUES
+						(1, 10, 65),
+						(2, 10, 66);`,
+				},
+				{
+					Query:       `INSERT INTO chr_codes VALUES (3, 10, 65);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO chr_codes VALUES (4, 10, 67);`,
+				},
+				{
+					Query:       `UPDATE chr_codes SET codepoint = 65 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports left and right predicates",
 			SetUpScript: []string{
 				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1753,4 +1780,24 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	signNonMatchingQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND sign(delta) = -1`
 	assertCountResult(t, ctx, conn, signNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, signNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_chr (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, codepoint INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_chr VALUES
+		(1, 1, 65),
+		(2, 1, 66),
+		(3, 1, 67),
+		(4, 2, 65)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_chr_tenant_idx ON partial_planner_chr (tenant) WHERE chr(codepoint) = 'A'")
+
+	chrImpliedQuery := `SELECT count(id) FROM partial_planner_chr WHERE tenant = 1 AND chr(codepoint) = 'A'`
+	assertCountResult(t, ctx, conn, chrImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, chrImpliedQuery, true)
+
+	chrRawSemanticQuery := `SELECT count(id) FROM partial_planner_chr WHERE tenant = 1 AND codepoint = 65`
+	assertCountResult(t, ctx, conn, chrRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, chrRawSemanticQuery, false)
+
+	chrNonMatchingQuery := `SELECT count(id) FROM partial_planner_chr WHERE tenant = 1 AND chr(codepoint) = 'B'`
+	assertCountResult(t, ctx, conn, chrNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, chrNonMatchingQuery, false)
 }

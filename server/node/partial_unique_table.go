@@ -1270,6 +1270,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "to_hex" {
 		return predicateToHexValue(arg.value)
 	}
+	if name == "chr" {
+		return predicateChrValue(arg.value)
+	}
 	text, ok := arg.value.(string)
 	if !ok {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
@@ -2005,6 +2008,27 @@ func predicateToHexValue(value any) (predicateValue, error) {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function to_hex does not support %T", value)
 	}
 	return predicateValue{value: fmt.Sprintf("%x", uint64(intValue))}, nil
+}
+
+func predicateChrValue(value any) (predicateValue, error) {
+	intValue, ok := predicateSignedIntegerValue(value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function chr does not support %T", value)
+	}
+	if intValue == 0 {
+		return predicateValue{}, errors.New("null character not permitted")
+	}
+	if intValue < 0 {
+		return predicateValue{}, errors.New("character number must be positive")
+	}
+	if intValue > int64(utf8.MaxRune) {
+		return predicateValue{}, errors.New("requested character too large for encoding")
+	}
+	r := rune(intValue)
+	if !utf8.ValidRune(r) {
+		return predicateValue{}, errors.New("requested character too large for encoding")
+	}
+	return predicateValue{value: string(r)}, nil
 }
 
 func predicateSignedIntegerValue(value any) (int64, bool) {

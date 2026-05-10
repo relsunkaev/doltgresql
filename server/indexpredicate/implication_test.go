@@ -932,3 +932,30 @@ func TestImpliesSignFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesChrFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"chr(codepoint) = 'A'", "chr(codepoint) = 'A'"},
+		{"chr(codepoint) IN ('A', 'B')", "chr(codepoint) = 'A'"},
+		{"chr(codepoint) IS NOT NULL", "chr(codepoint) = 'A'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"chr(codepoint) = 'A'", "codepoint = 65"},
+		{"chr(codepoint) = 'A'", "chr(codepoint) = 'B'"},
+		{"chr(codepoint) IN ('A', 'B')", "chr(codepoint) IN ('A', 'C')"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

@@ -1036,6 +1036,15 @@ Do not check off an item until it has workload proof:
   remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.26.
+- [x] Use deterministic `chr(expr)` predicates in partial-index implication
+  paths. Unary `chr(...)` calls now serialize as comparable predicate keys,
+  planner filters can deparse them, partial unique DML enforcement evaluates
+  PostgreSQL-style integer codepoint output and errors for invalid codepoints,
+  and `ON CONFLICT` arbiter inference accepts the exact-expression shape; raw
+  codepoint predicates and wrong character values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.27.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

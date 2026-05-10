@@ -1617,6 +1617,32 @@ ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports chr predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_chr (id INT PRIMARY KEY, user_id INT, codepoint INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_chr_user_idx ON partial_arb_chr (user_id) WHERE chr(codepoint) = 'A';",
+				"INSERT INTO partial_arb_chr VALUES (1, 10, 65, 'old-a'), (2, 10, 66, 'old-b');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_chr VALUES (3, 10, 65, 'chr-upsert')
+ON CONFLICT (user_id) WHERE chr(codepoint) = 'A' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, codepoint, note FROM partial_arb_chr ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int32(65), "chr-upsert"},
+						{2, int32(10), int32(66), "old-b"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_chr VALUES (4, 10, 65, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE codepoint = 65 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 
