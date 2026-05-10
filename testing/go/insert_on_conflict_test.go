@@ -1591,6 +1591,32 @@ ON CONFLICT (user_id) WHERE delta = 10 DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports sign predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_sign (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_sign_user_idx ON partial_arb_sign (user_id) WHERE sign(delta) = 1;",
+				"INSERT INTO partial_arb_sign VALUES (1, 10, 5, 'old-positive'), (2, 10, -5, 'negative');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_sign VALUES (3, 10, 20, 'sign-upsert')
+ON CONFLICT (user_id) WHERE sign(delta) = 1 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(5), "sign-upsert"},
+						{2, int32(10), int64(-5), "negative"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_sign VALUES (4, 10, 20, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

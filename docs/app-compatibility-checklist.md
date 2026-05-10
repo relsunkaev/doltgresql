@@ -1028,6 +1028,14 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.25.
+- [x] Use deterministic `sign(expr)` predicates in partial-index implication
+  paths. Unary `sign(...)` calls now serialize as comparable predicate keys,
+  planner filters can deparse them, partial unique DML enforcement evaluates
+  signed-integer sign output, and `ON CONFLICT` arbiter inference accepts the
+  exact-expression shape; raw positive-range predicates and wrong sign values
+  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.26.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

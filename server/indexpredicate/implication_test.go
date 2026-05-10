@@ -905,3 +905,30 @@ func TestImpliesAbsFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesSignFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"sign(delta) = 1", "sign(delta) = 1"},
+		{"sign(delta) IN (-1, 1)", "sign(delta) = 1"},
+		{"sign(delta) IS NOT NULL", "sign(delta) = 1"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"sign(delta) = 1", "delta > 0"},
+		{"sign(delta) = 1", "sign(delta) = -1"},
+		{"sign(delta) IN (-1, 1)", "sign(delta) IN (0, 1)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

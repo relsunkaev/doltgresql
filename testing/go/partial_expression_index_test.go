@@ -561,6 +561,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports sign predicate",
+			SetUpScript: []string{
+				`CREATE TABLE signed_scores (id INT PRIMARY KEY, user_id INT, delta BIGINT);`,
+				`CREATE UNIQUE INDEX signed_scores_user_delta_idx
+					ON signed_scores (user_id)
+					WHERE sign(delta) = 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO signed_scores VALUES
+						(1, 10, 5),
+						(2, 10, -5);`,
+				},
+				{
+					Query:       `INSERT INTO signed_scores VALUES (3, 10, 20);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO signed_scores VALUES (4, 10, 0);`,
+				},
+				{
+					Query:       `UPDATE signed_scores SET delta = 1 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports left and right predicates",
 			SetUpScript: []string{
 				`CREATE TABLE left_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
@@ -1706,4 +1733,24 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	absNonMatchingQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND abs(delta) = 5`
 	assertCountResult(t, ctx, conn, absNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, absNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_sign (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_sign VALUES
+		(1, 1, 5),
+		(2, 1, -5),
+		(3, 1, 0),
+		(4, 2, 10)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_sign_tenant_idx ON partial_planner_sign (tenant) WHERE sign(delta) = 1")
+
+	signImpliedQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND sign(delta) = 1`
+	assertCountResult(t, ctx, conn, signImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signImpliedQuery, true)
+
+	signRawSemanticQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND delta > 0`
+	assertCountResult(t, ctx, conn, signRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signRawSemanticQuery, false)
+
+	signNonMatchingQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND sign(delta) = -1`
+	assertCountResult(t, ctx, conn, signNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signNonMatchingQuery, false)
 }

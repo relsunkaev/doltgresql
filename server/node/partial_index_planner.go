@@ -505,6 +505,8 @@ func plannerCanonicalFunctionPredicateName(name string) (string, bool) {
 	switch name {
 	case "abs":
 		return name, true
+	case "sign":
+		return name, true
 	case "bit_length":
 		return name, true
 	case "octet_length":
