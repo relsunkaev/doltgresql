@@ -117,3 +117,19 @@ func TestReceiveBindParameterWidensCompactBinaryIntegers(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(-1), v)
 }
+
+func TestReceiveBindParameterUnknownUsesRawBinaryPayload(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	v, err := receiveBindParameter(ctx, pgtypes.Unknown, []byte("p"))
+	require.NoError(t, err)
+	require.Equal(t, "p", v)
+
+	v, err = receiveBindParameter(ctx, pgtypes.Unknown, []byte{0x22, 0x7f, 0x47, 0x08})
+	require.NoError(t, err)
+	require.Equal(t, "578766600", v)
+
+	v, err = receiveBindParameter(ctx, pgtypes.Unknown, []byte{0x01})
+	require.NoError(t, err)
+	require.Equal(t, "true", v)
+}

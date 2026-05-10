@@ -29,6 +29,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/cockroachdb/errors"
 	sqle "github.com/dolthub/go-mysql-server"
@@ -381,6 +383,8 @@ func receiveBindParameter(ctx *sql.Context, dgType *pgtypes.DoltgresType, value 
 	// constructing the typed literal so direct psycopg parameters match
 	// PostgreSQL's app-driver behavior.
 	switch dgType.ID.TypeName() {
+	case "unknown":
+		return unknownBinaryBindLiteral(value), nil
 	case "int4":
 		if len(value) == 2 {
 			return int32(int16(binary.BigEndian.Uint16(value))), nil
@@ -394,6 +398,47 @@ func receiveBindParameter(ctx *sql.Context, dgType *pgtypes.DoltgresType, value 
 		}
 	}
 	return dgType.CallReceive(ctx, value)
+}
+
+func unknownBinaryBindLiteral(value []byte) string {
+	// Untyped binary parameters still flow through later SQL context, such as
+	// explicit casts or function resolution. Preserve text as-is, and decode the
+	// compact scalar payloads common PostgreSQL drivers send for typed Python
+	// values so that downstream casts receive a PostgreSQL-readable literal.
+	if printableUTF8(value) {
+		return string(value)
+	}
+	switch len(value) {
+	case 1:
+		switch value[0] {
+		case 0:
+			return "false"
+		case 1:
+			return "true"
+		default:
+			return string(value)
+		}
+	case 2:
+		return strconv.FormatInt(int64(int16(binary.BigEndian.Uint16(value))), 10)
+	case 4:
+		return strconv.FormatInt(int64(int32(binary.BigEndian.Uint32(value))), 10)
+	case 8:
+		return strconv.FormatInt(int64(binary.BigEndian.Uint64(value)), 10)
+	default:
+		return string(value)
+	}
+}
+
+func printableUTF8(value []byte) bool {
+	if !utf8.Valid(value) {
+		return false
+	}
+	for _, r := range string(value) {
+		if !unicode.IsPrint(r) && !unicode.IsSpace(r) {
+			return false
+		}
+	}
+	return true
 }
 
 func bindVariableName(index int) string {

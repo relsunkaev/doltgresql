@@ -975,7 +975,10 @@ actually exercise.
   defaults (e.g. `CURRENT_TIMESTAMP`). Coverage in
   testing/go/info_schema_column_order_test.go pins the workload shapes;
   testing/go/prisma_db_pull_test.go verifies Prisma uses that array
-  metadata to recover `String[]`.
+  metadata to recover `String[]`, and
+  testing/go/alembic_autogenerate_test.go verifies SQLAlchemy/Alembic
+  can inspect the same column metadata without proposing spurious
+  migrations.
 - [x] `pg_matviews` - the catalog view exists for no-matview databases and
   reports materialized-view rows once table-backed matviews are created:
   schemaname, matviewname, definition, populated state, and index presence all
@@ -1048,10 +1051,13 @@ actually exercise.
   a foreign key. Prisma `db pull --print` also runs end-to-end against
   a live Doltgres instance and recovers primary keys, a composite primary key,
   unique constraints, non-unique indexes, JSONB, text arrays, decimals, and
-  relations. Alembic autogenerate remains useful future broadening but is no
-  longer required to prove the checklist item. Covered by
+  relations. Alembic `revision --autogenerate` runs through the real
+  Alembic + SQLAlchemy + psycopg path against a live Doltgres instance and
+  emits an empty migration for the matching schema slice instead of spurious
+  table, column, index, or foreign-key operations. Covered by
   testing/go/drizzle_kit_introspect_test.go and
-  testing/go/prisma_db_pull_test.go.
+  testing/go/prisma_db_pull_test.go, and
+  testing/go/alembic_autogenerate_test.go.
 - [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
   is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
   TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,
@@ -1072,9 +1078,11 @@ introspection tools (Drizzle Kit, Prisma db pull, Alembic
 autogenerate) inspect to drive editable result grids, schema diffs,
 typed-exception handling, and client-side query timeouts.
 
-- [ ] Run actual GUI / migration binaries against a live Doltgres instance for
-  wire-protocol and catalog metadata surfaces that are currently proven only
-  through Go-level harnesses. Tracked by dg-7ug.10.
+- [ ] Run actual GUI binaries, and any remaining migration binaries required by
+  workloads, against a live Doltgres instance for wire-protocol and catalog
+  metadata surfaces that are currently proven only through Go-level harnesses.
+  Drizzle Kit, Prisma db pull, and Alembic autogenerate now have live binary
+  harnesses. Tracked by dg-7ug.10.
 - [x] `RowDescription.TableOID` - populate the source-table OID so
   GUI editors can resolve a result column back to a base table.
   Implementation in server/doltgres_handler.go walks the session
