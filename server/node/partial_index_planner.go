@@ -436,6 +436,13 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 		}
 		return plannerFunctionCallPredicateSQL(name, children)
 	}
+	if name == "substr" || name == "substring" {
+		children := expr.Children()
+		if len(children) != 2 && len(children) != 3 {
+			return "", false
+		}
+		return plannerFunctionCallPredicateSQL("substring", children)
+	}
 	name, ok := plannerCanonicalFunctionPredicateName(name)
 	if !ok {
 		return "", false

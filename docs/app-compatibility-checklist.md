@@ -929,6 +929,17 @@ Do not check off an item until it has workload proof:
   rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
   and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.15.
+- [x] Use deterministic `substr(expr, start[, count])` / `substring(expr,
+  start[, count])` predicates in partial-index implication paths. Integer
+  start/count substring calls now serialize under a canonical comparable
+  predicate key, planner filters deparse `substr(...)` as the PostgreSQL
+  `substring(...)` equivalent, partial unique DML enforcement evaluates the
+  same 1-indexed and multibyte behavior as the runtime function, and
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
+  start/count/result values and raw source-string semantic rewrites remain
+  rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.16.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

@@ -1209,6 +1209,32 @@ ON CONFLICT (user_id) WHERE code = 'April' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports substring predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_substring (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_substring_user_idx ON partial_arb_substring (user_id) WHERE substr(code, 1, 3) = 'Adm';",
+				"INSERT INTO partial_arb_substring VALUES (1, 10, 'Admin', 'old-admin'), (2, 10, 'Alpha', 'old-alpha');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_substring VALUES (3, 10, 'Admiral', 'substring-upsert')
+ON CONFLICT (user_id) WHERE substring(code, 1, 3) = 'Adm' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_substring ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Admin", "substring-upsert"},
+						{2, 10, "Alpha", "old-alpha"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_substring VALUES (4, 10, 'Admire', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code = 'Admire' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

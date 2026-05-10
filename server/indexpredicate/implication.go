@@ -650,6 +650,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "split_part" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
 	}
+	if name == "substr" || name == "substring" {
+		return predicateSubstringExprKey(name, fn.Exprs)
+	}
 	if len(fn.Exprs) != 1 {
 		return "", false
 	}
@@ -692,6 +695,26 @@ func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs in
 		parts = append(parts, childKey)
 	}
 	return "func:" + name + "(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateSubstringExprKey(name string, exprs tree.Exprs) (string, bool) {
+	if len(exprs) != 2 && len(exprs) != 3 {
+		return "", false
+	}
+	parts := make([]string, 0, len(exprs))
+	for i, child := range exprs {
+		if i > 0 {
+			if literalKey, ok := predicateLiteralKey(child); ok && strings.HasPrefix(literalKey, "s:") {
+				return "", false
+			}
+		}
+		childKey, ok := predicateFunctionArgumentExprKey(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childKey)
+	}
+	return "func:substring(" + strings.Join(parts, ",") + ")", true
 }
 
 func predicateFunctionArgumentExprKey(expr tree.Expr) (string, bool) {

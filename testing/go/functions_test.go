@@ -4193,6 +4193,10 @@ func TestStringFunction(t *testing.T) {
 					Query:    `SELECT substring('hello', 2, 3)`,
 					Expected: []sql.Row{{"ell"}},
 				},
+				{
+					Query:    `SELECT substring('åctive', 1, 1), substr('åctive', 2, 3);`,
+					Expected: []sql.Row{{"å", "cti"}},
+				},
 			},
 		},
 		{

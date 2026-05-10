@@ -1227,6 +1227,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "split_part" {
 		return p.evalSplitPart(ctx, row, expr)
 	}
+	if name == "substr" || name == "substring" {
+		return p.evalSubstring(ctx, row, expr, name)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1399,6 +1402,88 @@ func predicateRightText(text string, n int64) string {
 		return ""
 	}
 	return text[predicateByteIndexAfterRunes(text, skip):]
+}
+
+func (p *partialIndexPredicate) evalSubstring(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr, name string) (predicateValue, error) {
+	if len(expr.Exprs) != 2 && len(expr.Exprs) != 3 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects two or three arguments", name)
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	start, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || start.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, str.value)
+	}
+	startInt, ok := predicateSignedIntegerValue(start.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, start.value)
+	}
+	if len(expr.Exprs) == 2 {
+		result, err := predicateSubstringText(text, startInt, 0, false)
+		if err != nil {
+			return predicateValue{}, err
+		}
+		return predicateValue{value: result}, nil
+	}
+	count, err := p.evalValue(ctx, row, expr.Exprs[2])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if count.value == nil {
+		return predicateValue{}, nil
+	}
+	countInt, ok := predicateSignedIntegerValue(count.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, count.value)
+	}
+	result, err := predicateSubstringText(text, startInt, countInt, true)
+	if err != nil {
+		return predicateValue{}, err
+	}
+	return predicateValue{value: result}, nil
+}
+
+func predicateSubstringText(text string, start int64, count int64, hasCount bool) (string, error) {
+	runeCount := int64(utf8.RuneCountInString(text))
+	if !hasCount {
+		if start < 1 {
+			start = 1
+		}
+		start--
+		if start >= runeCount {
+			return "", nil
+		}
+		return text[predicateByteIndexAfterRunes(text, start):], nil
+	}
+	if count < 0 {
+		return "", errors.New("negative substring length not allowed")
+	}
+	start--
+	if start < 0 {
+		count += start
+		start = 0
+	}
+	if count <= 0 {
+		return "", nil
+	}
+	if start >= runeCount {
+		return "", nil
+	}
+	if count > runeCount-start {
+		return text[predicateByteIndexAfterRunes(text, start):], nil
+	}
+	startByte := predicateByteIndexAfterRunes(text, start)
+	endByte := predicateByteIndexAfterRunes(text, start+count)
+	return text[startByte:endByte], nil
 }
 
 func predicateByteIndexAfterRunes(text string, count int64) int {

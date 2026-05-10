@@ -563,6 +563,35 @@ func TestImpliesSplitPartFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesSubstringFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"substring(code, 1, 3) = 'Adm'", "substring(code, 1, 3) = 'Adm'"},
+		{"substr(code, 1, 3) IN ('Adm', 'Alp')", "substring(code, 1, 3) = 'Adm'"},
+		{"substring(code, 2) = 'dmin'", "substr(code, 2) = 'dmin'"},
+		{"substring(code, 1, 3) IS NOT NULL", "substr(code, 1, 3) = 'Adm'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"substring(code, 1, 3) = 'Adm'", "substring(code, 1, 2) = 'Ad'"},
+		{"substring(code, 1, 3) = 'Adm'", "substring(code, 2, 3) = 'dmi'"},
+		{"substring(code, 2) = 'dmin'", "substr(code, 3) = 'min'"},
+		{"substring(code, 1, 3) = 'Adm'", "code = 'Admin'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAsciiFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

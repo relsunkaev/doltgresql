@@ -621,6 +621,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports substring predicate",
+			SetUpScript: []string{
+				`CREATE TABLE substring_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX substring_codes_user_prefix_idx
+					ON substring_codes (user_id)
+					WHERE substring(code, 1, 3) = 'Adm';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO substring_codes VALUES
+						(1, 10, 'Admin'),
+						(2, 10, 'Alpha');`,
+				},
+				{
+					Query:       `INSERT INTO substring_codes VALUES (3, 10, 'Admiral');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO substring_codes VALUES (4, 10, 'admin');`,
+				},
+				{
+					Query:       `UPDATE substring_codes SET code = 'Admire' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1136,6 +1163,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	asciiRawSourceQuery := `SELECT count(id) FROM partial_planner_ascii WHERE tenant = 1 AND code = 'Alpha'`
 	assertCountResult(t, ctx, conn, asciiRawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, asciiRawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_substring (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_substring VALUES
+		(1, 1, 'Admin'),
+		(2, 1, 'Alpha'),
+		(3, 1, 'Admiral'),
+		(4, 2, 'Admire')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_substring_tenant_idx ON partial_planner_substring (tenant) WHERE substring(code, 1, 3) = 'Adm'")
+
+	substringImpliedQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND substr(code, 1, 3) = 'Adm'`
+	assertCountResult(t, ctx, conn, substringImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, substringImpliedQuery, true)
+
+	substringRawSourceQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND code = 'Admin'`
+	assertCountResult(t, ctx, conn, substringRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, substringRawSourceQuery, false)
+
+	substringWrongCountQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND substring(code, 1, 2) = 'Ad'`
+	assertCountResult(t, ctx, conn, substringWrongCountQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, substringWrongCountQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
