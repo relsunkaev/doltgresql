@@ -4142,6 +4142,28 @@ func TestStringFunction(t *testing.T) {
 			},
 		},
 		{
+			Name:        "split_part",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT split_part('first@example.com', '@', 2);`,
+					Expected: []sql.Row{{"example.com"}},
+				},
+				{
+					Query:    `SELECT split_part('a/b/c', '/', -1), split_part('a/b/c', '/', 4);`,
+					Expected: []sql.Row{{"c", ""}},
+				},
+				{
+					Query:    `SELECT split_part('abc', '', 1), split_part('abc', '', -1);`,
+					Expected: []sql.Row{{"abc", "abc"}},
+				},
+				{
+					Query:       `SELECT split_part('a/b/c', '/', 0);`,
+					ExpectedErr: "field position must not be zero",
+				},
+			},
+		},
+		{
 			Name:        "substring with integer arg",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

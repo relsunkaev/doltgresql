@@ -1157,6 +1157,32 @@ ON CONFLICT (user_id) WHERE code = 'active' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports split_part predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_split_part (id INT PRIMARY KEY, user_id INT, email TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_split_part_user_idx ON partial_arb_split_part (user_id) WHERE split_part(email, '@', 2) = 'example.com';",
+				"INSERT INTO partial_arb_split_part VALUES (1, 10, 'first@example.com', 'old-active'), (2, 10, 'second@example.org', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_split_part VALUES (3, 10, 'other@example.com', 'split-part-upsert')
+ON CONFLICT (user_id) WHERE split_part(email, '@', 2) = 'example.com' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, email, note FROM partial_arb_split_part ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "first@example.com", "split-part-upsert"},
+						{2, 10, "second@example.org", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_split_part VALUES (4, 10, 'another@example.com', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE split_part(email, '.', 2) = 'com' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

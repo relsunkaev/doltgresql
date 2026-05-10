@@ -647,6 +647,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "translate" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
 	}
+	if name == "split_part" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
+	}
 	if len(fn.Exprs) != 1 {
 		return "", false
 	}

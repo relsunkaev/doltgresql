@@ -535,6 +535,34 @@ func TestImpliesMd5FunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesSplitPartFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"split_part(email, '@', 2) = 'example.com'", "split_part(email, '@', 2) = 'example.com'"},
+		{"split_part(email, '@', 2) IN ('example.com', 'example.org')", "split_part(email, '@', 2) = 'example.com'"},
+		{"split_part(email, '/', -1) IS NOT NULL", "split_part(email, '/', -1) = 'profile'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"split_part(email, '@', 2) = 'example.com'", "split_part(email, '@', 2) = 'example.org'"},
+		{"split_part(email, '@', 2) = 'example.com'", "split_part(email, '.', 2) = 'com'"},
+		{"split_part(email, '@', 2) = 'example.com'", "split_part(email, '@', 1) = 'first'"},
+		{"split_part(email, '@', 2) = 'example.com'", "email = 'first@example.com'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

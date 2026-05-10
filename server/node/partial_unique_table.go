@@ -1224,6 +1224,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "translate" {
 		return p.evalTranslate(ctx, row, expr)
 	}
+	if name == "split_part" {
+		return p.evalSplitPart(ctx, row, expr)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1496,6 +1499,65 @@ func predicateTranslateText(text string, fromText string, toText string) string 
 		translated = append(translated, r)
 	}
 	return string(translated)
+}
+
+func (p *partialIndexPredicate) evalSplitPart(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 3 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function split_part expects three arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	delimiter, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	field, err := p.evalValue(ctx, row, expr.Exprs[2])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || delimiter.value == nil || field.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function split_part does not support %T", str.value)
+	}
+	delimiterText, ok := delimiter.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function split_part does not support %T", delimiter.value)
+	}
+	n, ok := predicateSignedIntegerValue(field.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function split_part does not support %T", field.value)
+	}
+	result, err := predicateSplitPartText(text, delimiterText, n)
+	if err != nil {
+		return predicateValue{}, err
+	}
+	return predicateValue{value: result}, nil
+}
+
+func predicateSplitPartText(text string, delimiter string, n int64) (string, error) {
+	if n == 0 {
+		return "", errors.New("field position must not be zero")
+	}
+	parts := []string{text}
+	if delimiter != "" {
+		parts = strings.Split(text, delimiter)
+	}
+	if n > 0 {
+		if n > int64(len(parts)) {
+			return "", nil
+		}
+		return parts[n-1], nil
+	}
+	idx := int64(len(parts)) + n
+	if idx < 0 {
+		return "", nil
+	}
+	return parts[idx], nil
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

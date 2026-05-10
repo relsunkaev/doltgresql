@@ -567,6 +567,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports split_part predicate",
+			SetUpScript: []string{
+				`CREATE TABLE email_domains (id INT PRIMARY KEY, user_id INT, email TEXT);`,
+				`CREATE UNIQUE INDEX email_domains_user_domain_idx
+					ON email_domains (user_id)
+					WHERE split_part(email, '@', 2) = 'example.com';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO email_domains VALUES
+						(1, 10, 'first@example.com'),
+						(2, 10, 'second@example.org');`,
+				},
+				{
+					Query:       `INSERT INTO email_domains VALUES (3, 10, 'other@example.com');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO email_domains VALUES (4, 10, 'missing-domain');`,
+				},
+				{
+					Query:       `UPDATE email_domains SET email = 'third@example.com' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -1050,6 +1077,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	md5RawSourceQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code = 'active'`
 	assertCountResult(t, ctx, conn, md5RawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, md5RawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_split_part (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_split_part VALUES
+		(1, 1, 'first@example.com'),
+		(2, 1, 'second@example.org'),
+		(3, 1, 'missing-domain'),
+		(4, 2, 'other@example.com')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_split_part_tenant_idx ON partial_planner_split_part (tenant) WHERE split_part(email, '@', 2) = 'example.com'")
+
+	splitPartImpliedQuery := `SELECT count(id) FROM partial_planner_split_part WHERE tenant = 1 AND split_part(email, '@', 2) = 'example.com'`
+	assertCountResult(t, ctx, conn, splitPartImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, splitPartImpliedQuery, true)
+
+	splitPartWrongArgumentQuery := `SELECT count(id) FROM partial_planner_split_part WHERE tenant = 1 AND split_part(email, '.', 2) = 'com'`
+	assertCountResult(t, ctx, conn, splitPartWrongArgumentQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, splitPartWrongArgumentQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES
