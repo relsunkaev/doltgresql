@@ -647,6 +647,54 @@ ON CONFLICT (user_id) WHERE active = false DO UPDATE SET note = EXCLUDED.note;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports OR predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_or (id INT PRIMARY KEY, user_id INT, active BOOL, archived BOOL, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_or_visible_idx ON partial_arb_or (user_id) WHERE active OR archived;",
+				"INSERT INTO partial_arb_or VALUES (1, 10, true, false, 'old-visible'), (2, 10, false, false, 'hidden');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_or VALUES (3, 10, true, false, 'active-upsert')
+ON CONFLICT (user_id) WHERE active DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "t", "f", "active-upsert"},
+						{2, 10, "f", "f", "hidden"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_or VALUES (4, 10, false, true, 'archived-upsert')
+ON CONFLICT (user_id) WHERE archived = true DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "t", "f", "archived-upsert"},
+						{2, 10, "f", "f", "hidden"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_or VALUES (5, 10, true, false, 'reordered-or')
+ON CONFLICT (user_id) WHERE archived OR active DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, active, archived, note FROM partial_arb_or ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "t", "f", "reordered-or"},
+						{2, 10, "f", "f", "hidden"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_or VALUES (6, 10, true, false, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE active = false DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

@@ -345,6 +345,25 @@ func anyPredicateTermImplies(indexExpr tree.Expr, arbiterTerms map[string]tree.E
 }
 
 func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
+	indexExpr = unwrapPredicateParens(indexExpr)
+	arbiterExpr = unwrapPredicateParens(arbiterExpr)
+	if strings.TrimSpace(tree.AsString(indexExpr)) == strings.TrimSpace(tree.AsString(arbiterExpr)) {
+		return true
+	}
+
+	if arbiterOr, ok := arbiterExpr.(*tree.OrExpr); ok {
+		return predicateTermImplies(indexExpr, arbiterOr.Left) && predicateTermImplies(indexExpr, arbiterOr.Right)
+	}
+	if indexOr, ok := indexExpr.(*tree.OrExpr); ok {
+		return predicateTermImplies(indexOr.Left, arbiterExpr) || predicateTermImplies(indexOr.Right, arbiterExpr)
+	}
+	if indexAnd, ok := indexExpr.(*tree.AndExpr); ok {
+		return predicateTermImplies(indexAnd.Left, arbiterExpr) && predicateTermImplies(indexAnd.Right, arbiterExpr)
+	}
+	if arbiterAnd, ok := arbiterExpr.(*tree.AndExpr); ok {
+		return predicateTermImplies(indexExpr, arbiterAnd.Left) || predicateTermImplies(indexExpr, arbiterAnd.Right)
+	}
+
 	indexComparison, ok := numericPredicateComparisonFromExpr(indexExpr)
 	if ok {
 		arbiterComparison, ok := numericPredicateComparisonFromExpr(arbiterExpr)
@@ -359,6 +378,16 @@ func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
 	}
 	arbiterBool, ok := booleanPredicateComparisonFromExpr(arbiterExpr)
 	return ok && strings.EqualFold(indexBool.column, arbiterBool.column) && indexBool.value == arbiterBool.value
+}
+
+func unwrapPredicateParens(expr tree.Expr) tree.Expr {
+	for {
+		paren, ok := expr.(*tree.ParenExpr)
+		if !ok {
+			return expr
+		}
+		expr = paren.Expr
+	}
 }
 
 type numericPredicateComparison struct {
