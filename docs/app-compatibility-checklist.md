@@ -823,6 +823,15 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.6.
+- [x] Use deterministic unary `bit_length(expr)` predicates in partial-index
+  implication paths. `bit_length(expr)` now serializes as a distinct
+  comparable predicate key, participates in planner predicate serialization,
+  evaluates text and bytea bit lengths for partial unique DML enforcement, and
+  works for `ON CONFLICT` arbiter inference; byte-count predicates such as
+  `octet_length(expr)` remain non-equivalent. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.7.
 - [x] Use same-expression exclusion-set predicates in partial-index
   implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
   `IS DISTINCT FROM` predicates now compare excluded literal sets, so query

@@ -923,6 +923,32 @@ ON CONFLICT (code) WHERE length(code) = 3 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports bit_length predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_bit (id INT PRIMARY KEY, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_bit_code_idx ON partial_arb_bit (code) WHERE bit_length(code) = 24;",
+				"INSERT INTO partial_arb_bit VALUES (1, 'abc', 'old-abc'), (2, 'de', 'old-de');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_bit VALUES (3, 'abc', 'bit-upsert')
+ON CONFLICT (code) WHERE bit_length(code) = 24 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, note FROM partial_arb_bit ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "abc", "bit-upsert"},
+						{2, "de", "old-de"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_bit VALUES (4, 'abc', 'wrong-predicate')
+ON CONFLICT (code) WHERE octet_length(code) = 3 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

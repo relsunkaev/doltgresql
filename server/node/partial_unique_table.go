@@ -1167,6 +1167,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "abs" {
 		return predicateAbsValue(arg.value)
 	}
+	if name == "bit_length" {
+		return predicateBitLengthValue(arg.value)
+	}
 	if name == "octet_length" {
 		return predicateOctetLengthValue(arg.value)
 	}
@@ -1189,6 +1192,17 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func predicateBitLengthValue(value any) (predicateValue, error) {
+	switch value := value.(type) {
+	case string:
+		return predicateValue{value: int64(len(value)) * 8}, nil
+	case []byte:
+		return predicateValue{value: int64(len(value)) * 8}, nil
+	default:
+		return predicateValue{}, errors.Errorf("partial unique index predicate function bit_length does not support %T", value)
 	}
 }
 

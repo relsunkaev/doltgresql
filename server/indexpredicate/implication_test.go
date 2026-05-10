@@ -302,6 +302,34 @@ func TestImpliesOctetLengthFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesBitLengthFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"bit_length(code) = 24", "bit_length(code) = 24"},
+		{"bit_length(code) IN (24, 32)", "bit_length(code) = 24"},
+		{"bit_length(code) IS NOT NULL", "bit_length(code) = 24"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"bit_length(code) = 24", "bit_length(code) = 16"},
+		{"bit_length(code) = 24", "octet_length(code) = 3"},
+		{"bit_length(code) = 24", "length(code) = 3"},
+		{"bit_length(code) IN (24, 32)", "bit_length(code) IN (24, 40)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string
