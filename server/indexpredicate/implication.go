@@ -641,6 +641,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "left" || name == "right" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
+	if name == "replace" {
+		return predicateFunctionCallExprKey(name, fn.Exprs, 3)
+	}
 	if len(fn.Exprs) != 1 {
 		return "", false
 	}

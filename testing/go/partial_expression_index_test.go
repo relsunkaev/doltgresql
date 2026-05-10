@@ -486,6 +486,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports replace predicate",
+			SetUpScript: []string{
+				`CREATE TABLE normalized_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX normalized_codes_user_code_idx
+					ON normalized_codes (user_id)
+					WHERE replace(code, '-', '') = 'activea';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO normalized_codes VALUES
+						(1, 10, 'active-a'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO normalized_codes VALUES (3, 10, 'active--a');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO normalized_codes VALUES (4, 10, 'active_a');`,
+				},
+				{
+					Query:       `UPDATE normalized_codes SET code = 'active-a' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -921,6 +948,22 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	rightWrongLengthQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND right(code, 2) = 've'`
 	assertCountResult(t, ctx, conn, rightWrongLengthQuery, 4)
 	assertBenchmarkPlanShape(t, ctx, conn, rightWrongLengthQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_replace (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_replace VALUES
+		(1, 1, 'active-a'),
+		(2, 1, 'active--a'),
+		(3, 1, 'active_b'),
+		(4, 2, 'active-a')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_replace_tenant_idx ON partial_planner_replace (tenant) WHERE replace(code, '-', '') = 'activea'")
+
+	replaceImpliedQuery := `SELECT count(id) FROM partial_planner_replace WHERE tenant = 1 AND replace(code, '-', '') = 'activea'`
+	assertCountResult(t, ctx, conn, replaceImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, replaceImpliedQuery, true)
+
+	replaceWrongArgumentQuery := `SELECT count(id) FROM partial_planner_replace WHERE tenant = 1 AND replace(code, '_', '') = 'active-a'`
+	assertCountResult(t, ctx, conn, replaceWrongArgumentQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, replaceWrongArgumentQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

@@ -1217,6 +1217,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "left" || name == "right" {
 		return p.evalLeftRight(ctx, row, expr, name)
 	}
+	if name == "replace" {
+		return p.evalReplace(ctx, row, expr)
+	}
 	if len(expr.Exprs) != 1 {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s expects one argument", name)
 	}
@@ -1392,6 +1395,43 @@ func predicateByteIndexAfterRunes(text string, count int64) int {
 		seen++
 	}
 	return len(text)
+}
+
+func (p *partialIndexPredicate) evalReplace(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 3 {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function replace expects three arguments")
+	}
+	str, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	from, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	to, err := p.evalValue(ctx, row, expr.Exprs[2])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if str.value == nil || from.value == nil || to.value == nil {
+		return predicateValue{}, nil
+	}
+	text, ok := str.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function replace does not support %T", str.value)
+	}
+	fromText, ok := from.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function replace does not support %T", from.value)
+	}
+	toText, ok := to.value.(string)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function replace does not support %T", to.value)
+	}
+	if fromText == "" {
+		return predicateValue{value: text}, nil
+	}
+	return predicateValue{value: strings.ReplaceAll(text, fromText, toText)}, nil
 }
 
 func predicateBitLengthValue(value any) (predicateValue, error) {

@@ -415,6 +415,13 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 		}
 		return plannerFunctionCallPredicateSQL(name, children)
 	}
+	if name == "replace" {
+		children := expr.Children()
+		if len(children) != 3 {
+			return "", false
+		}
+		return plannerFunctionCallPredicateSQL(name, children)
+	}
 	name, ok := plannerCanonicalFunctionPredicateName(name)
 	if !ok {
 		return "", false

@@ -450,6 +450,34 @@ func TestImpliesLeftRightFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesReplaceFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"replace(code, '-', '') = 'activea'", "replace(code, '-', '') = 'activea'"},
+		{"replace(code, '-', '') IN ('activea', 'pending')", "replace(code, '-', '') = 'activea'"},
+		{"replace(code, '-', '') IS NOT NULL", "replace(code, '-', '') = 'activea'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"replace(code, '-', '') = 'activea'", "replace(code, '-', '') = 'pending'"},
+		{"replace(code, '-', '') = 'activea'", "replace(code, '_', '') = 'activea'"},
+		{"replace(code, '-', '') = 'activea'", "replace(code, '-', '_') = 'activea'"},
+		{"replace(code, '-', '') = 'activea'", "code = 'active-a'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string
