@@ -43,7 +43,7 @@ func Implies(indexPredicate string, queryPredicate string) bool {
 		if _, ok = queryTerms[term]; ok {
 			continue
 		}
-		if !anyPredicateTermImplies(indexExpr, queryTerms) {
+		if !predicateTermImpliedByQueryTerms(indexExpr, queryTerms) {
 			return false
 		}
 	}
@@ -103,6 +103,13 @@ func anyPredicateTermImplies(indexExpr tree.Expr, queryTerms map[string]tree.Exp
 		}
 	}
 	return false
+}
+
+func predicateTermImpliedByQueryTerms(indexExpr tree.Expr, queryTerms map[string]tree.Expr) bool {
+	if anyPredicateTermImplies(indexExpr, queryTerms) {
+		return true
+	}
+	return queryTermsImplyEquality(indexExpr, queryTerms)
 }
 
 func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
@@ -166,6 +173,78 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	}
 	queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
 	return ok && strings.EqualFold(indexBool.column, queryBool.column) && indexBool.value == queryBool.value
+}
+
+type predicateEquality struct {
+	leftKey  string
+	rightKey string
+	nullSafe bool
+}
+
+type predicateQueryFacts struct {
+	values map[string]string
+	nulls  map[string]struct{}
+}
+
+func queryTermsImplyEquality(indexExpr tree.Expr, queryTerms map[string]tree.Expr) bool {
+	equality, ok := predicateEqualityFromExpr(indexExpr)
+	if !ok {
+		return false
+	}
+	facts := predicateQueryFactsFromTerms(queryTerms)
+	if leftValue, ok := facts.values[equality.leftKey]; ok {
+		if rightValue, ok := facts.values[equality.rightKey]; ok && leftValue == rightValue {
+			return true
+		}
+	}
+	if !equality.nullSafe {
+		return false
+	}
+	_, leftNull := facts.nulls[equality.leftKey]
+	_, rightNull := facts.nulls[equality.rightKey]
+	return leftNull && rightNull
+}
+
+func predicateEqualityFromExpr(expr tree.Expr) (predicateEquality, bool) {
+	comparison, ok := unwrapPredicateParens(expr).(*tree.ComparisonExpr)
+	if !ok || (comparison.Operator != tree.EQ && comparison.Operator != tree.IsNotDistinctFrom) {
+		return predicateEquality{}, false
+	}
+	leftKey, ok := predicateComparableExprKey(comparison.Left)
+	if !ok {
+		return predicateEquality{}, false
+	}
+	rightKey, ok := predicateComparableExprKey(comparison.Right)
+	if !ok || leftKey == rightKey {
+		return predicateEquality{}, false
+	}
+	return predicateEquality{
+		leftKey:  leftKey,
+		rightKey: rightKey,
+		nullSafe: comparison.Operator == tree.IsNotDistinctFrom,
+	}, true
+}
+
+func predicateQueryFactsFromTerms(queryTerms map[string]tree.Expr) predicateQueryFacts {
+	facts := predicateQueryFacts{
+		values: make(map[string]string),
+		nulls:  make(map[string]struct{}),
+	}
+	for _, queryExpr := range queryTerms {
+		if values, ok := predicateValueSetFromExpr(queryExpr); ok && len(values.values) == 1 {
+			for value := range values.values {
+				if existingValue, ok := facts.values[values.exprKey]; !ok || existingValue == value {
+					facts.values[values.exprKey] = value
+				} else {
+					delete(facts.values, values.exprKey)
+				}
+			}
+		}
+		if exprKey, ok := nullPredicateExprKey(queryExpr); ok {
+			facts.nulls[exprKey] = struct{}{}
+		}
+	}
+	return facts
 }
 
 func notNullPredicateExprKey(expr tree.Expr) (string, bool) {

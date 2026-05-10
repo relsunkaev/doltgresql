@@ -147,3 +147,34 @@ func TestImpliesDistinctFromPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesCrossColumnEqualityPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"tenant_id = owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 1"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 1"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id IS NULL AND owner_tenant_id IS NULL"},
+		{"lower(email) = canonical_email", "lower(email) = 'ada@example.com' AND canonical_email = 'ada@example.com'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"tenant_id = owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 2"},
+		{"tenant_id = owner_tenant_id", "tenant_id IS NULL AND owner_tenant_id IS NULL"},
+		{"tenant_id = owner_tenant_id", "tenant_id = 1"},
+		{"tenant_id = owner_tenant_id", "tenant_id IN (1, 2) AND owner_tenant_id IN (1, 2)"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 2"},
+		{"lower(email) = canonical_email", "email = 'ada@example.com' AND canonical_email = 'ada@example.com'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

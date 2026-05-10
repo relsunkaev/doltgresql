@@ -696,10 +696,17 @@ Do not check off an item until it has workload proof:
   literals and wrong expressions still stay off the indexed path. Coverage in
   server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.11.1.
+- [x] Use cross-column equality partial btree indexes when query conjuncts
+  safely prove the equality predicate by binding both sides to the same
+  singleton literal value. Null-safe equality predicates also accept paired
+  `IS NULL` facts, while mismatched, incomplete, multi-value, and SQL-null
+  equality shapes stay off the indexed path. Coverage in
+  server/indexpredicate/implication_test.go and
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.9.1.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
-  current conservative subset. Cross-column proofs, broader expression-level
-  semantic implication, and planner deparsing for additional predicate
-  families remain open.
+  current conservative subset. Broader cross-column/equality-class proofs,
+  broader expression-level semantic implication, and planner deparsing for
+  additional predicate families remain open.
   Tracked by dg-7ug.8.9, dg-7ug.8.10, and dg-7ug.8.11 under dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is

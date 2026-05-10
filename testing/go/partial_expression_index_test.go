@@ -454,4 +454,43 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	distinctExcludedQuery := `SELECT count(id) FROM partial_planner_distinct WHERE tenant = 1 AND status IS NOT DISTINCT FROM 'archived'`
 	assertCountResult(t, ctx, conn, distinctExcludedQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, distinctExcludedQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_cross (id INTEGER PRIMARY KEY, tenant INTEGER, owner_tenant INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_cross VALUES
+		(1, 1, 1),
+		(2, 1, 2),
+		(3, 2, 2),
+		(4, NULL, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_cross_tenant_idx ON partial_planner_cross (tenant) WHERE tenant = owner_tenant")
+
+	crossColumnImpliedQuery := `SELECT count(id) FROM partial_planner_cross WHERE tenant = 1 AND owner_tenant = 1`
+	assertCountResult(t, ctx, conn, crossColumnImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnImpliedQuery, true)
+
+	crossColumnMismatchQuery := `SELECT count(id) FROM partial_planner_cross WHERE tenant = 1 AND owner_tenant = 2`
+	assertCountResult(t, ctx, conn, crossColumnMismatchQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnMismatchQuery, false)
+
+	crossColumnNullableEqualityQuery := `SELECT count(id) FROM partial_planner_cross WHERE tenant IS NULL AND owner_tenant IS NULL`
+	assertCountResult(t, ctx, conn, crossColumnNullableEqualityQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullableEqualityQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_cross_nullsafe (id INTEGER PRIMARY KEY, label TEXT NOT NULL, tenant INTEGER, owner_tenant INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_cross_nullsafe VALUES
+		(1, 'same-value', 1, 1),
+		(2, 'mismatch', 1, 2),
+		(3, 'same-null', NULL, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_cross_nullsafe_label_idx ON partial_planner_cross_nullsafe (label) WHERE tenant IS NOT DISTINCT FROM owner_tenant")
+
+	crossColumnNullSafeValueQuery := `SELECT count(id) FROM partial_planner_cross_nullsafe WHERE label = 'same-value' AND tenant = 1 AND owner_tenant = 1`
+	assertCountResult(t, ctx, conn, crossColumnNullSafeValueQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeValueQuery, true)
+
+	crossColumnNullSafeNullQuery := `SELECT count(id) FROM partial_planner_cross_nullsafe WHERE label = 'same-null' AND tenant IS NULL AND owner_tenant IS NULL`
+	assertCountResult(t, ctx, conn, crossColumnNullSafeNullQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeNullQuery, true)
+
+	crossColumnNullSafeMismatchQuery := `SELECT count(id) FROM partial_planner_cross_nullsafe WHERE label = 'mismatch' AND tenant = 1 AND owner_tenant = 2`
+	assertCountResult(t, ctx, conn, crossColumnNullSafeMismatchQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeMismatchQuery, false)
 }
