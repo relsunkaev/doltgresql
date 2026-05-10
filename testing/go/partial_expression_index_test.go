@@ -161,6 +161,57 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports BETWEEN predicates",
+			SetUpScript: []string{
+				`CREATE TABLE quota_windows (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX quota_windows_user_score_idx ON quota_windows (user_id) WHERE score BETWEEN 1 AND 100;`,
+				`CREATE TABLE quota_not_windows (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX quota_not_windows_user_score_idx ON quota_not_windows (user_id) WHERE score NOT BETWEEN 1 AND 100;`,
+				`CREATE TABLE quota_symmetric_windows (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX quota_symmetric_windows_user_score_idx ON quota_symmetric_windows (user_id) WHERE score BETWEEN SYMMETRIC 100 AND 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO quota_windows VALUES (1, 10, 50), (2, 10, 0), (3, 10, 101);`,
+				},
+				{
+					Query:       `INSERT INTO quota_windows VALUES (4, 10, 60);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE quota_windows SET score = 75 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `UPDATE quota_windows SET score = 101 WHERE id = 1;`,
+				},
+				{
+					Query: `INSERT INTO quota_windows VALUES (4, 10, 60);`,
+				},
+				{
+					Query:    `SELECT id, score FROM quota_windows WHERE user_id = 10 ORDER BY id;`,
+					Expected: []sql.Row{{int32(1), int32(101)}, {int32(2), int32(0)}, {int32(3), int32(101)}, {int32(4), int32(60)}},
+				},
+				{
+					Query: `INSERT INTO quota_not_windows VALUES (1, 20, 0), (2, 20, 50);`,
+				},
+				{
+					Query:       `INSERT INTO quota_not_windows VALUES (3, 20, 101);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO quota_not_windows VALUES (4, 20, 60);`,
+				},
+				{
+					Query: `INSERT INTO quota_symmetric_windows VALUES (1, 30, 50), (2, 30, 0), (3, 30, 101);`,
+				},
+				{
+					Query:       `INSERT INTO quota_symmetric_windows VALUES (4, 30, 60);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,

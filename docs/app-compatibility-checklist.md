@@ -420,7 +420,8 @@ Do not check off an item until it has workload proof:
   uniqueness metadata and a DML wrapper that enforces uniqueness only
   for rows whose predicate evaluates true. The implemented predicate
   evaluator covers column truthiness/NOT, IS NULL/IS NOT NULL,
-  comparisons, parentheses, AND, and OR, which covers the
+  comparisons, BETWEEN / NOT BETWEEN / BETWEEN SYMMETRIC, parentheses, AND,
+  and OR, which covers the
   AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
   restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
   exact predicate matches and simple conjunctive arbiter predicates that imply

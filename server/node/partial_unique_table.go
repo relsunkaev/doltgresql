@@ -748,6 +748,14 @@ func (p *partialIndexPredicate) validateColumns(expr tree.Expr) error {
 		return p.validateColumns(expr.Right)
 	case *tree.ParenExpr:
 		return p.validateColumns(expr.Expr)
+	case *tree.RangeCond:
+		if err := p.validateColumns(expr.Left); err != nil {
+			return err
+		}
+		if err := p.validateColumns(expr.From); err != nil {
+			return err
+		}
+		return p.validateColumns(expr.To)
 	case *tree.UnresolvedName:
 		name, err := p.columnName(expr)
 		if err != nil {
@@ -819,12 +827,81 @@ func (p *partialIndexPredicate) evalBool(ctx *sql.Context, row sql.Row, expr tre
 		return predicateUnknown, nil
 	case *tree.ParenExpr:
 		return p.evalBool(ctx, row, expr.Expr)
+	case *tree.RangeCond:
+		return p.evalRangeCond(ctx, row, expr)
 	default:
 		value, err := p.evalValue(ctx, row, expr)
 		if err != nil {
 			return predicateUnknown, err
 		}
 		return predicateTruthFromValue(value.value)
+	}
+}
+
+func (p *partialIndexPredicate) evalRangeCond(ctx *sql.Context, row sql.Row, expr *tree.RangeCond) (predicateTruth, error) {
+	left, err := p.evalValue(ctx, row, expr.Left)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	from, err := p.evalValue(ctx, row, expr.From)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	to, err := p.evalValue(ctx, row, expr.To)
+	if err != nil {
+		return predicateUnknown, err
+	}
+
+	truth, err := predicateBetween(ctx, left, from, to)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	if expr.Symmetric {
+		reverse, err := predicateBetween(ctx, left, to, from)
+		if err != nil {
+			return predicateUnknown, err
+		}
+		truth = predicateOr(truth, reverse)
+	}
+	if expr.Not {
+		truth = predicateNot(truth)
+	}
+	return truth, nil
+}
+
+func predicateBetween(ctx *sql.Context, left predicateValue, from predicateValue, to predicateValue) (predicateTruth, error) {
+	if left.value == nil || from.value == nil || to.value == nil {
+		return predicateUnknown, nil
+	}
+	lowerCmp, err := comparePredicateValues(ctx, left, from)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	upperCmp, err := comparePredicateValues(ctx, left, to)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	return predicateTruthFromBool(lowerCmp >= 0 && upperCmp <= 0), nil
+}
+
+func predicateOr(left predicateTruth, right predicateTruth) predicateTruth {
+	if left == predicateTrue || right == predicateTrue {
+		return predicateTrue
+	}
+	if left == predicateFalse && right == predicateFalse {
+		return predicateFalse
+	}
+	return predicateUnknown
+}
+
+func predicateNot(truth predicateTruth) predicateTruth {
+	switch truth {
+	case predicateTrue:
+		return predicateFalse
+	case predicateFalse:
+		return predicateTrue
+	default:
+		return predicateUnknown
 	}
 }
 
