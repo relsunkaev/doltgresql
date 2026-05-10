@@ -177,6 +177,65 @@ func TestMaterializedViewProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "ALTER MATERIALIZED VIEW RENAME COLUMN preserves metadata and refresh",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+				`CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);`,
+				`CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;`,
+				},
+				{
+					Query: `SELECT id, amount FROM source_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query:       `SELECT v FROM source_mv;`,
+					ExpectedErr: `column "v" could not be found`,
+				},
+				{
+					Query: `SELECT relkind FROM pg_class WHERE relname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"m"},
+					},
+				},
+				{
+					Query: `SELECT matviewname, ispopulated::text, definition
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+					Expected: []sql.Row{
+						{"source_mv", "true", "SELECT id, v FROM source"},
+					},
+				},
+				{
+					Query: `UPDATE source SET v = v + 1;`,
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW source_mv;`,
+				},
+				{
+					Query: `SELECT id, amount FROM source_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 101},
+						{2, 201},
+					},
+				},
+				{
+					Query:       `ALTER MATERIALIZED VIEW ordinary_table RENAME COLUMN v TO amount;`,
+					ExpectedErr: `relation "ordinary_table" is not a materialized view`,
+				},
+				{
+					Query: `ALTER MATERIALIZED VIEW IF EXISTS missing_mv RENAME COLUMN v TO amount;`,
+				},
+			},
+		},
+		{
 			Name: "CREATE MATERIALIZED VIEW column aliases",
 			SetUpScript: []string{
 				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,

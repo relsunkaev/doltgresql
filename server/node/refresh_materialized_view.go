@@ -378,15 +378,19 @@ type refreshMaterializedViewTarget struct {
 }
 
 func (r *RefreshMaterializedView) resolveTarget(ctx *sql.Context) (refreshMaterializedViewTarget, error) {
-	searchSchemas, err := r.searchSchemas(ctx)
+	return resolveMaterializedViewTarget(ctx, r.name, r.schema)
+}
+
+func findMaterializedViewRelation(ctx *sql.Context, name string, schema string) (refreshMaterializedViewTarget, bool, error) {
+	searchSchemas, err := materializedViewSearchSchemas(ctx, schema)
 	if err != nil {
-		return refreshMaterializedViewTarget{}, err
+		return refreshMaterializedViewTarget{}, false, err
 	}
 	var found refreshMaterializedViewTarget
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		SearchSchemas: searchSchemas,
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
-			if table.Item.Name() != r.name {
+			if table.Item.Name() != name {
 				return true, nil
 			}
 			found = refreshMaterializedViewTarget{
@@ -398,13 +402,24 @@ func (r *RefreshMaterializedView) resolveTarget(ctx *sql.Context) (refreshMateri
 		},
 	})
 	if err != nil {
-		return refreshMaterializedViewTarget{}, err
+		return refreshMaterializedViewTarget{}, false, err
 	}
 	if found.table == nil {
-		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" does not exist`, r.name)
+		return refreshMaterializedViewTarget{}, false, nil
+	}
+	return found, true, nil
+}
+
+func resolveMaterializedViewTarget(ctx *sql.Context, name string, schema string) (refreshMaterializedViewTarget, error) {
+	found, ok, err := findMaterializedViewRelation(ctx, name, schema)
+	if err != nil {
+		return refreshMaterializedViewTarget{}, err
+	}
+	if !ok {
+		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" does not exist`, name)
 	}
 	if !tablemetadata.IsMaterializedView(tableComment(found.table)) {
-		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" is not a materialized view`, r.name)
+		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" is not a materialized view`, name)
 	}
 	return found, nil
 }
@@ -414,9 +429,9 @@ func (r *RefreshMaterializedView) setTargetPopulated(ctx *sql.Context, target re
 	return modifyTableComment(ctx, target.db, target.table.Name(), comment)
 }
 
-func (r *RefreshMaterializedView) searchSchemas(ctx *sql.Context) ([]string, error) {
-	if r.schema != "" {
-		return []string{r.schema}, nil
+func materializedViewSearchSchemas(ctx *sql.Context, schema string) ([]string, error) {
+	if schema != "" {
+		return []string{schema}, nil
 	}
 	return settings.GetCurrentSchemas(ctx)
 }

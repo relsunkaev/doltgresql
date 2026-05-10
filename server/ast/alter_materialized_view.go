@@ -18,6 +18,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterMaterializedView handles *tree.AlterMaterializedView nodes.
@@ -26,5 +28,35 @@ func nodeAlterMaterializedView(ctx *Context, node *tree.AlterMaterializedView) (
 		return nil, nil
 	}
 
-	return NotYetSupportedError("ALTER MATERIALIZED VIEW is not yet supported")
+	if node.Extension != "" {
+		return NotYetSupportedError("ALTER MATERIALIZED VIEW DEPENDS ON EXTENSION is not yet supported")
+	}
+	if len(node.Cmds) != 1 {
+		return NotYetSupportedError("ALTER MATERIALIZED VIEW with multiple commands is not yet supported")
+	}
+
+	switch cmd := node.Cmds[0].(type) {
+	case *tree.AlterTableRenameColumn:
+		tableName, err := nodeUnresolvedObjectName(ctx, node.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterMaterializedViewRenameColumn(
+				node.Name.Object(),
+				node.Name.Schema(),
+				bareIdentifier(cmd.Column),
+				bareIdentifier(cmd.NewName),
+				node.IfExists,
+			),
+			Children: nil,
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_UPDATE,
+				TargetType:  auth.AuthTargetType_TableIdentifiers,
+				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+			},
+		}, nil
+	default:
+		return NotYetSupportedError("ALTER MATERIALIZED VIEW command is not yet supported")
+	}
 }
