@@ -1674,6 +1674,9 @@ Do not check off an item until it has workload proof:
   timestamptz/date decoding. Perl DBI with DBD::Pg runs from the official Perl
   container with startup `application_name`, prepared statements, typed
   parameters, JSONB/text[] values, repeated connections, commit, and rollback.
+  Prisma Client runs a generated client over its real query engine with startup
+  `application_name`, generated model CRUD, Decimal/JSONB/text[] values,
+  relation reads, raw parameter binding, concurrent reads, commit, and rollback.
   TypeORM runs a
   real `DataSource` over the `pg` driver, including schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, commit, and rollback.
@@ -1691,8 +1694,8 @@ Do not check off an item until it has workload proof:
   testing/go/go_sql_pq_client_test.go,
   testing/go/go_sql_pgx_stdlib_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
-  testing/go/perl_dbi_client_test.go, testing/go/typeorm_client_test.go, and
-  testing/go/sequelize_client_test.go.
+  testing/go/perl_dbi_client_test.go, testing/go/prisma_client_test.go,
+  testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
@@ -2206,6 +2209,9 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   The Perl DBI/DBD::Pg harness
   covers startup parameters, prepared statements, typed parameters,
   JSONB/text[] values, repeated connections, and transaction boundaries. The
+  Prisma Client harness covers a generated client over Prisma's real query
+  engine with model CRUD, Decimal/JSONB/text[] values, relation reads, raw
+  parameter binding, concurrent reads, and transaction boundaries. The
   TypeORM harness covers a real ORM `DataSource` over `pg` with schema
   synchronization, repository CRUD, JSONB/text[] values, relation joins, and
   transaction boundaries. The Sequelize harness covers another real ORM over
@@ -2215,8 +2221,8 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   reads, and transaction boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, pgx stdlib, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
-  psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`, PHP `ext-pgsql`, libpq,
-  Go `database/sql` with `github.com/lib/pq` and
+  Prisma Client, psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`,
+  PHP `ext-pgsql`, libpq, Go `database/sql` with `github.com/lib/pq` and
   `github.com/jackc/pgx/v5/stdlib`, Java JDBC, Rust `sqlx`, and Perl
   DBI/DBD::Pg. Add runnable smoke gates for the advertised client and
   migration-tool matrix before claiming broad
