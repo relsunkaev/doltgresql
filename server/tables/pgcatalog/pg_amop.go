@@ -45,8 +45,12 @@ func (p PgAmopHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAmopHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	amops, err := appendBtreeGistAmops(ctx, defaultPostgresAmops)
+	if err != nil {
+		return nil, err
+	}
 	return &pgAmopRowIter{
-		amops: defaultPostgresAmops,
+		amops: amops,
 		idx:   0,
 	}, nil
 }
@@ -88,16 +92,25 @@ func (iter *pgAmopRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	iter.idx++
 	amop := iter.amops[iter.idx-1]
 
+	purpose := amop.purpose
+	if purpose == "" {
+		purpose = "s"
+	}
+	sortFamily := amop.sortFamily
+	if !sortFamily.IsValid() {
+		sortFamily = zeroOID()
+	}
+
 	return sql.Row{
 		amop.oid,       // oid
 		amop.family,    // amopfamily
 		amop.leftType,  // amoplefttype
 		amop.rightType, // amoprighttype
 		amop.strategy,  // amopstrategy
-		"s",            // amoppurpose
+		purpose,        // amoppurpose
 		amop.operator,  // amopopr
 		amop.method,    // amopmethod
-		zeroOID(),      // amopsortfamily
+		sortFamily,     // amopsortfamily
 	}, nil
 }
 
@@ -107,13 +120,15 @@ func (iter *pgAmopRowIter) Close(ctx *sql.Context) error {
 }
 
 type amop struct {
-	oid       id.Id
-	family    id.Id
-	leftType  id.Id
-	rightType id.Id
-	strategy  int16
-	operator  id.Id
-	method    id.Id
+	oid        id.Id
+	family     id.Id
+	leftType   id.Id
+	rightType  id.Id
+	strategy   int16
+	operator   id.Id
+	method     id.Id
+	purpose    string
+	sortFamily id.Id
 }
 
 var defaultPostgresAmops = func() []amop {

@@ -45,8 +45,12 @@ func (p PgOpclassHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOpclassHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	opclasses, err := appendBtreeGistOpclasses(ctx, defaultPostgresOpclasses)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOpclassRowIter{
-		opclasses: defaultPostgresOpclasses,
+		opclasses: opclasses,
 		idx:       0,
 	}, nil
 }

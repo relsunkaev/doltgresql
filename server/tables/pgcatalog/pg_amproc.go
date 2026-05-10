@@ -45,8 +45,12 @@ func (p PgAmprocHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAmprocHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	amprocs, err := appendBtreeGistAmprocs(ctx, defaultPostgresAmprocs)
+	if err != nil {
+		return nil, err
+	}
 	return &pgAmprocRowIter{
-		amprocs: defaultPostgresAmprocs,
+		amprocs: amprocs,
 		idx:     0,
 	}, nil
 }

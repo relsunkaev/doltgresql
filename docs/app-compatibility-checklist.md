@@ -166,7 +166,12 @@ Do not check off an item until it has workload proof:
   `CREATE EXTENSION vector` shim is accepted and the native `vector(n)` type
   round-trips scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
-  for dump restore. `CREATE EXTENSION citext`
+  for dump restore and exposes extension-scoped `pg_opclass`,
+  `pg_opfamily`, `pg_amop`, and `pg_amproc` rows for supported
+  built-in scalar GiST opclasses (`oid`, integer, float, timestamp,
+  time, date, interval, text, `bpchar`, `bytea`, `numeric`, bit,
+  varbit, UUID, enum, and boolean families), while `CREATE INDEX ...
+  USING gist` remains explicitly rejected. `CREATE EXTENSION citext`
   installs a case-insensitive text type in the target schema so dump
   schemas using `public.citext` can load, round-trip values, compare
   case-insensitively, and enforce case-insensitive `UNIQUE` checks on
@@ -262,7 +267,10 @@ Do not check off an item until it has workload proof:
   non-dense vector families, and aggregates plus aggregate helper functions
   beyond the tested dense-vector IO, equality, distance, ordering,
   arithmetic, binary quantization, and cast subset,
-  `btree_gist` operator classes, and hstore operators/functions/casts outside
+  executable `btree_gist` GiST indexes/exclusion semantics, its
+  internal `gbtreekey*` storage types and `opckeytype` parity, and
+  unsupported `btree_gist` type families such as `money`, MAC address,
+  and network-address opclasses, plus hstore operators/functions/casts outside
   testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail

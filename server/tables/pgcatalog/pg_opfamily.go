@@ -45,8 +45,12 @@ func (p PgOpfamilyHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgOpfamilyHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
+	opfamilies, err := appendBtreeGistOpfamilies(ctx, defaultPostgresOpfamilies)
+	if err != nil {
+		return nil, err
+	}
 	return &pgOpfamilyRowIter{
-		opfamilies: defaultPostgresOpfamilies,
+		opfamilies: opfamilies,
 		idx:        0,
 	}, nil
 }

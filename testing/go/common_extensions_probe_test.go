@@ -483,6 +483,70 @@ func TestCommonExtensionsProbe(t *testing.T) {
 						WHERE e.extname = 'btree_gist';`,
 					Expected: []sql.Row{{"btree_gist", "public", "t", "1.7"}},
 				},
+				{
+					Query: `SELECT opc.opcname, opf.opfname, typ.typname, n.nspname, opc.opcdefault
+FROM pg_catalog.pg_opclass opc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = opc.opcfamily
+JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+JOIN pg_catalog.pg_namespace n ON n.oid = opc.opcnamespace
+WHERE am.amname = 'gist'
+	AND opc.opcname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
+ORDER BY opc.opcname;`,
+					Expected: []sql.Row{
+						{"gist_bool_ops", "gist_bool_ops", "bool", "public", "t"},
+						{"gist_int4_ops", "gist_int4_ops", "int4", "public", "t"},
+						{"gist_text_ops", "gist_text_ops", "text", "public", "t"},
+						{"gist_uuid_ops", "gist_uuid_ops", "uuid", "public", "t"},
+					},
+				},
+				{
+					Query: `SELECT opf.opfname, n.nspname, COUNT(*)
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+JOIN pg_catalog.pg_namespace n ON n.oid = opf.opfnamespace
+WHERE am.amname = 'gist'
+	AND opf.opfname IN ('gist_bool_ops', 'gist_int4_ops', 'gist_text_ops', 'gist_uuid_ops')
+GROUP BY opf.opfname, n.nspname
+ORDER BY opf.opfname;`,
+					Expected: []sql.Row{
+						{"gist_bool_ops", "public", 6},
+						{"gist_int4_ops", "public", 7},
+						{"gist_text_ops", "public", 6},
+						{"gist_uuid_ops", "public", 6},
+					},
+				},
+				{
+					Query: `SELECT opf.opfname, amop.amopstrategy, amop.amoppurpose, btree_opf.opfname
+FROM pg_catalog.pg_amop amop
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily
+JOIN pg_catalog.pg_opfamily btree_opf ON btree_opf.oid = amop.amopsortfamily
+JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+WHERE am.amname = 'gist'
+	AND opf.opfname = 'gist_int4_ops'
+	AND amop.amopstrategy = 15;`,
+					Expected: []sql.Row{{"gist_int4_ops", int16(15), "o", "integer_ops"}},
+				},
+				{
+					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc
+FROM pg_catalog.pg_amproc amproc
+JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+WHERE am.amname = 'gist'
+	AND opf.opfname = 'gist_int4_ops'
+	AND amproc.amprocnum IN (1, 8, 9)
+ORDER BY amproc.amprocnum;`,
+					Expected: []sql.Row{
+						{"gist_int4_ops", int16(1), "gbt_int4_consistent"},
+						{"gist_int4_ops", int16(8), "gbt_int4_distance"},
+						{"gist_int4_ops", int16(9), "gbt_int4_fetch"},
+					},
+				},
+				{
+					Query:       `CREATE TABLE btree_gist_probe (id integer primary key, v integer); CREATE INDEX btree_gist_probe_v_idx ON btree_gist_probe USING gist (v);`,
+					ExpectedErr: `index method gist is not yet supported`,
+				},
 			},
 		},
 		{
