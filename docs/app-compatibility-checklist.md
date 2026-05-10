@@ -424,16 +424,20 @@ Do not check off an item until it has workload proof:
   AlexTransit/venderctl `WHERE at_service` and `WHERE NOT at_service`
   restore path. `ON CONFLICT (col) WHERE arbiter_pred` now resolves
   exact predicate matches and simple conjunctive arbiter predicates that imply
-  the metadata-backed partial unique index predicate; non-target partial-unique
-  conflicts are preserved for multi-unique `DO NOTHING`. DDL and DML coverage in
+  the metadata-backed partial unique index predicate, plus same-column numeric
+  inequality arbiters that describe a subset of the partial index predicate
+  (for example `score > 10` targeting an index predicate `score > 0`);
+  non-target partial-unique conflicts are preserved for multi-unique
+  `DO NOTHING`. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
 - [ ] Implement PostgreSQL-style partial-index predicate implication. Today
   the partial-index planner is exact-shape based, and `ON CONFLICT` only covers
-  exact matches plus conjunctions where the arbiter predicate contains every
-  index-predicate term. Broader inequality, OR, and semantic implication remain
-  open. Tracked by dg-7ug.8.
+  exact matches, conjunctions where the arbiter predicate contains every
+  index-predicate term, and simple same-column numeric inequality implication.
+  Broader inequality composition, OR, and semantic implication remain open.
+  Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is
   created, round-trips through `pg_indexes`, and queries that match

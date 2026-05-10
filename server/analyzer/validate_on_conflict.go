@@ -15,6 +15,8 @@
 package analyzer
 
 import (
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -284,20 +286,23 @@ func predicateImplies(indexPredicate string, arbiterPredicate string) bool {
 	if !ok {
 		return false
 	}
-	for term := range indexTerms {
-		if _, ok = arbiterTerms[term]; !ok {
+	for term, indexExpr := range indexTerms {
+		if _, ok = arbiterTerms[term]; ok {
+			continue
+		}
+		if !anyPredicateTermImplies(indexExpr, arbiterTerms) {
 			return false
 		}
 	}
 	return true
 }
 
-func predicateConjuncts(predicate string) (map[string]struct{}, bool) {
+func predicateConjuncts(predicate string) (map[string]tree.Expr, bool) {
 	expr, ok := parsePredicateExpr(predicate)
 	if !ok {
 		return nil, false
 	}
-	terms := make(map[string]struct{})
+	terms := make(map[string]tree.Expr)
 	collectPredicateConjuncts(expr, terms)
 	return terms, true
 }
@@ -318,7 +323,7 @@ func parsePredicateExpr(predicate string) (tree.Expr, bool) {
 	return selectClause.Where.Expr, true
 }
 
-func collectPredicateConjuncts(expr tree.Expr, terms map[string]struct{}) {
+func collectPredicateConjuncts(expr tree.Expr, terms map[string]tree.Expr) {
 	switch expr := expr.(type) {
 	case *tree.AndExpr:
 		collectPredicateConjuncts(expr.Left, terms)
@@ -326,8 +331,164 @@ func collectPredicateConjuncts(expr tree.Expr, terms map[string]struct{}) {
 	case *tree.ParenExpr:
 		collectPredicateConjuncts(expr.Expr, terms)
 	default:
-		terms[strings.TrimSpace(tree.AsString(expr))] = struct{}{}
+		terms[strings.TrimSpace(tree.AsString(expr))] = expr
 	}
+}
+
+func anyPredicateTermImplies(indexExpr tree.Expr, arbiterTerms map[string]tree.Expr) bool {
+	for _, arbiterExpr := range arbiterTerms {
+		if predicateTermImplies(indexExpr, arbiterExpr) {
+			return true
+		}
+	}
+	return false
+}
+
+func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
+	indexComparison, ok := numericPredicateComparisonFromExpr(indexExpr)
+	if !ok {
+		return false
+	}
+	arbiterComparison, ok := numericPredicateComparisonFromExpr(arbiterExpr)
+	if !ok || !strings.EqualFold(indexComparison.column, arbiterComparison.column) {
+		return false
+	}
+	return numericComparisonRange(arbiterComparison).subsetOf(numericComparisonRange(indexComparison))
+}
+
+type numericPredicateComparison struct {
+	column string
+	op     tree.ComparisonOperator
+	value  float64
+}
+
+type numericPredicateRange struct {
+	hasLower       bool
+	lower          float64
+	lowerInclusive bool
+	hasUpper       bool
+	upper          float64
+	upperInclusive bool
+}
+
+func numericPredicateComparisonFromExpr(expr tree.Expr) (numericPredicateComparison, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return numericPredicateComparisonFromExpr(expr.Expr)
+	case *tree.ComparisonExpr:
+		if column, ok := predicateColumnName(expr.Left); ok {
+			if value, ok := predicateNumericConstant(expr.Right); ok {
+				return numericPredicateComparison{column: column, op: expr.Operator, value: value}, true
+			}
+		}
+		if column, ok := predicateColumnName(expr.Right); ok {
+			if value, ok := predicateNumericConstant(expr.Left); ok {
+				return numericPredicateComparison{column: column, op: reverseComparisonOperator(expr.Operator), value: value}, true
+			}
+		}
+	}
+	return numericPredicateComparison{}, false
+}
+
+func predicateColumnName(expr tree.Expr) (string, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateColumnName(expr.Expr)
+	case *tree.UnresolvedName:
+		return strings.ToLower(strings.Trim(tree.AsString(expr), `"`)), true
+	}
+	return "", false
+}
+
+func predicateNumericConstant(expr tree.Expr) (float64, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateNumericConstant(expr.Expr)
+	case *tree.DInt:
+		return float64(*expr), true
+	case *tree.NumVal:
+		value, err := strconv.ParseFloat(expr.FormattedString(), 64)
+		return value, err == nil
+	}
+	return 0, false
+}
+
+func reverseComparisonOperator(op tree.ComparisonOperator) tree.ComparisonOperator {
+	switch op {
+	case tree.LT:
+		return tree.GT
+	case tree.LE:
+		return tree.GE
+	case tree.GT:
+		return tree.LT
+	case tree.GE:
+		return tree.LE
+	default:
+		return op
+	}
+}
+
+func numericComparisonRange(comparison numericPredicateComparison) numericPredicateRange {
+	switch comparison.op {
+	case tree.EQ:
+		return numericPredicateRange{
+			hasLower:       true,
+			lower:          comparison.value,
+			lowerInclusive: true,
+			hasUpper:       true,
+			upper:          comparison.value,
+			upperInclusive: true,
+		}
+	case tree.GT:
+		return numericPredicateRange{hasLower: true, lower: comparison.value}
+	case tree.GE:
+		return numericPredicateRange{hasLower: true, lower: comparison.value, lowerInclusive: true}
+	case tree.LT:
+		return numericPredicateRange{hasUpper: true, upper: comparison.value}
+	case tree.LE:
+		return numericPredicateRange{hasUpper: true, upper: comparison.value, upperInclusive: true}
+	default:
+		return numericPredicateRange{}
+	}
+}
+
+func (r numericPredicateRange) subsetOf(other numericPredicateRange) bool {
+	if !r.valid() || !other.valid() {
+		return false
+	}
+	if other.hasLower {
+		if !r.hasLower {
+			return false
+		}
+		if r.lower < other.lower {
+			return false
+		}
+		if r.lower == other.lower && r.lowerInclusive && !other.lowerInclusive {
+			return false
+		}
+	}
+	if other.hasUpper {
+		if !r.hasUpper {
+			return false
+		}
+		if r.upper > other.upper {
+			return false
+		}
+		if r.upper == other.upper && r.upperInclusive && !other.upperInclusive {
+			return false
+		}
+	}
+	return true
+}
+
+func (r numericPredicateRange) valid() bool {
+	if r.hasLower && math.IsNaN(r.lower) {
+		return false
+	}
+	if r.hasUpper && math.IsNaN(r.upper) {
+		return false
+	}
+	return r.hasLower || r.hasUpper
 }
 
 func indexPredicateDefinition(predicate tree.Expr) string {

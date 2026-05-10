@@ -566,6 +566,60 @@ ON CONFLICT (id) DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports stronger inequality predicate",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_score (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_score_positive_idx ON partial_arb_score (user_id) WHERE score > 0;",
+				"INSERT INTO partial_arb_score VALUES (1, 10, 5, 'old');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_score VALUES (2, 10, 11, 'stronger')
+ON CONFLICT (user_id) WHERE score > 10 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query:    `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`,
+					Expected: []gms.Row{{1, 10, 5, "stronger"}},
+				},
+				{
+					Query: `INSERT INTO partial_arb_score VALUES (3, 10, 20, 'stronger-or-equal')
+ON CONFLICT (user_id) WHERE score >= 10 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query:    `SELECT id, user_id, score, note FROM partial_arb_score ORDER BY id;`,
+					Expected: []gms.Row{{1, 10, 5, "stronger-or-equal"}},
+				},
+				{
+					Query: `INSERT INTO partial_arb_score VALUES (4, 10, 1, 'not-strong-enough')
+ON CONFLICT (user_id) WHERE score >= 0 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT partial unique index supports bounded numeric subset predicate",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_window (id INT PRIMARY KEY, user_id INT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_window_idx ON partial_arb_window (user_id) WHERE score > 0 AND score < 100;",
+				"INSERT INTO partial_arb_window VALUES (1, 10, 50, 'old');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_window VALUES (2, 10, 60, 'bounded')
+ON CONFLICT (user_id) WHERE score > 10 AND score < 90 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query:    `SELECT id, user_id, score, note FROM partial_arb_window ORDER BY id;`,
+					Expected: []gms.Row{{1, 10, 50, "bounded"}},
+				},
+				{
+					Query: `INSERT INTO partial_arb_window VALUES (3, 10, 80, 'upper-not-subset')
+ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 
