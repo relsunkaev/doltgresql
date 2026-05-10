@@ -195,6 +195,63 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "pgcrypto functions support extension schema qualification and routine ACLs",
+			SetUpScript: []string{
+				`CREATE USER ext_user PASSWORD 'a';`,
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT extensions.digest('abc', 'sha256')::text;`,
+					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
+				},
+				{
+					Query:    `SELECT extensions.crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`,
+					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
+				},
+				{
+					Query:       `SELECT extensions.digest('abc', 'sha256')::text;`,
+					Username:    `ext_user`,
+					Password:    `a`,
+					ExpectedErr: `denied`,
+				},
+				{
+					Query: `GRANT USAGE ON SCHEMA extensions TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.digest(text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.crypt(text, text) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.gen_random_bytes(integer) TO ext_user;`,
+				},
+				{
+					Query: `GRANT ALL ON FUNCTION extensions.gen_random_uuid() TO ext_user;`,
+				},
+				{
+					Query:    `SELECT extensions.digest('abc', 'sha256')::text;`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
+				},
+				{
+					Query:    `SELECT length(extensions.gen_random_bytes(4)::text)::text, left(extensions.gen_random_uuid()::text, 1) IS NOT NULL;`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{"10", "t"}},
+				},
+				{
+					Query:    `SELECT extensions.crypt('allmine', '$2a$10$XajjQvNhvvRt5GSeFk1xFe');`,
+					Username: `ext_user`,
+					Password: `a`,
+					Expected: []sql.Row{{"$2a$10$XajjQvNhvvRt5GSeFk1xFeyqRrsxkhBkUiQeg0dt.wU1qD4aFDcga"}},
+				},
+			},
+		},
+		{
 			Name: "CREATE EXTENSION vector enables built-in pgvector type",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS vector;`,

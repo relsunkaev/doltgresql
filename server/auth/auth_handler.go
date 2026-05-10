@@ -385,8 +385,8 @@ func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, sc
 		if !HasRoutinePrivilege(roleRoutineKey, privilege) && !HasRoutinePrivilege(publicRoutineKey, privilege) {
 			// check if it's system function
 			_, ok := framework.Catalog[strings.ToLower(routineName)]
-			if ok && schemaName == "" {
-				// TODO: for now we don't check privilege for pg_catalog tables as it's granted for PUBLIC by default
+			if ok && (schemaName == "" || strings.EqualFold(schName, "pg_catalog")) {
+				// TODO: for now we don't check privilege for pg_catalog functions as it's granted for PUBLIC by default
 				//  need to fix it when we support 'REVOKE privileges FROM PUBLIC'
 				return nil
 			}

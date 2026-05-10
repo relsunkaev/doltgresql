@@ -58,6 +58,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			return nil, err
 		}
 
+		qualifier = colName.Qualifier.Name
 		name = colName.Name
 	default:
 		return nil, errors.Errorf("unknown function reference")

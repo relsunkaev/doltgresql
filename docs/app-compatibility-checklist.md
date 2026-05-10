@@ -144,7 +144,12 @@ Do not check off an item until it has workload proof:
   MD5, SHA1, SHA224, SHA256, SHA384, and SHA512, with unsupported
   algorithms rejected explicitly; `gen_random_bytes(int4)` returns
   cryptographic random `bytea` payloads for lengths 1-1024 and rejects
-  out-of-range requests. `gen_salt('bf'[, int4])` and
+  out-of-range requests. Extension-schema qualified calls such as
+  `extensions.digest(...)`, `extensions.crypt(...)`,
+  `extensions.gen_random_bytes(...)`, and
+  `extensions.gen_random_uuid()` honor dump-style `GRANT ALL ON FUNCTION`
+  routine ACLs instead of bypassing them as unqualified builtins.
+  `gen_salt('bf'[, int4])` and
   `crypt(text, text)` cover bcrypt/Blowfish password-hash generation and
   verification for the common `crypt(password, gen_salt('bf'))` and
   `stored_hash = crypt(password, stored_hash)` app flows, including
