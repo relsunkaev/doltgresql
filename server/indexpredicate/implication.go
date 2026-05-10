@@ -22,6 +22,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
@@ -502,6 +503,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
 		predicatePadArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateMd5ArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateQuoteArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateToHexArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
@@ -711,6 +713,31 @@ func predicateMd5ArgumentValueSetImplies(indexValues predicateValueSet, queryVal
 	return predicateValueSet{exprKey: indexValues.exprKey, values: digestValues}.subsetOf(indexValues)
 }
 
+func predicateQuoteArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	functionName, argumentKey, ok := predicateQuoteArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	quotedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		quotedValue, ok := predicateQuoteStringLiteralKey(functionName, value)
+		if !ok {
+			return false
+		}
+		quotedValues[quotedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: quotedValues}.subsetOf(indexValues)
+}
+
+func predicateQuoteArgumentExprKey(exprKey string) (string, string, bool) {
+	for _, functionName := range []string{"quote_literal", "quote_ident"} {
+		if argumentKey, ok := predicateUnaryFunctionArgumentExprKey(exprKey, functionName); ok {
+			return functionName, argumentKey, true
+		}
+	}
+	return "", "", false
+}
+
 func predicateUnaryFunctionArgumentExprKey(exprKey string, functionName string) (string, bool) {
 	prefix := "func:" + functionName + "("
 	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
@@ -784,6 +811,46 @@ func predicateMd5StringLiteralKey(value string) (string, bool) {
 		return "", false
 	}
 	return prefix + fmt.Sprintf("%x", md5.Sum([]byte(strings.TrimPrefix(value, prefix)))), true
+}
+
+func predicateQuoteStringLiteralKey(functionName string, value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	text := strings.TrimPrefix(value, prefix)
+	switch functionName {
+	case "quote_literal":
+		return prefix + "'" + strings.ReplaceAll(text, `'`, `''`) + "'", true
+	case "quote_ident":
+		if predicateCanUseBareIdentifier(text) {
+			return prefix + text, true
+		}
+		return prefix + `"` + strings.ReplaceAll(text, `"`, `""`) + `"`, true
+	default:
+		return "", false
+	}
+}
+
+func predicateCanUseBareIdentifier(value string) bool {
+	if len(value) == 0 {
+		return false
+	}
+	for i, r := range value {
+		if i == 0 {
+			if r != '_' && (r < 'a' || r > 'z') {
+				return false
+			}
+			continue
+		}
+		if r != '_' && r != '$' && (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+	if category, ok := lex.KeywordsCategories[value]; ok && category == "R" {
+		return false
+	}
+	return true
 }
 
 func predicateToHexArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

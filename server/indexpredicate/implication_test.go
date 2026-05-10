@@ -845,6 +845,8 @@ func TestImpliesQuoteLiteralFunctionPredicates(t *testing.T) {
 		{"quote_literal(role) = '''admin user'''", "quote_literal(role) = '''admin user'''"},
 		{"quote_literal(role) IN ('''admin user''', '''billing user''')", "quote_literal(role) = '''admin user'''"},
 		{"quote_literal(role) IS NOT NULL", "quote_literal(role) = '''admin user'''"},
+		{"quote_literal(role) = '''admin user'''", "role = 'admin user'"},
+		{"quote_literal(role) IN ('''admin user''', '''billing user''')", "role IN ('admin user', 'billing user')"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -856,7 +858,8 @@ func TestImpliesQuoteLiteralFunctionPredicates(t *testing.T) {
 	}{
 		{"quote_literal(role) = '''admin user'''", "quote_literal(role) = '''billing user'''"},
 		{"quote_literal(role) = '''admin user'''", "lower(role) = 'admin user'"},
-		{"quote_literal(role) = '''admin user'''", "role = 'admin user'"},
+		{"quote_literal(role) = '''admin user'''", "role = 'billing user'"},
+		{"quote_literal(role) = '''admin user'''", "role IN ('admin user', 'billing user')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -872,6 +875,10 @@ func TestImpliesQuoteIdentFunctionPredicates(t *testing.T) {
 		{"quote_ident(role) = '\"admin user\"'", "quote_ident(role) = '\"admin user\"'"},
 		{"quote_ident(role) IN ('\"admin user\"', '\"billing user\"')", "quote_ident(role) = '\"admin user\"'"},
 		{"quote_ident(role) IS NOT NULL", "quote_ident(role) = '\"admin user\"'"},
+		{"quote_ident(role) = '\"admin user\"'", "role = 'admin user'"},
+		{"quote_ident(role) IN ('\"admin user\"', '\"billing user\"')", "role IN ('admin user', 'billing user')"},
+		{"quote_ident(role) = 'admin_user'", "role = 'admin_user'"},
+		{"quote_ident(role) = '\"select\"'", "role = 'select'"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -883,7 +890,8 @@ func TestImpliesQuoteIdentFunctionPredicates(t *testing.T) {
 	}{
 		{"quote_ident(role) = '\"admin user\"'", "quote_ident(role) = '\"billing user\"'"},
 		{"quote_ident(role) = '\"admin user\"'", "lower(role) = 'admin user'"},
-		{"quote_ident(role) = '\"admin user\"'", "role = 'admin user'"},
+		{"quote_ident(role) = '\"admin user\"'", "role = 'billing user'"},
+		{"quote_ident(role) = '\"admin user\"'", "role IN ('admin user', 'billing user')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

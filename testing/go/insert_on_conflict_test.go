@@ -1845,24 +1845,35 @@ ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports quote_literal predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_quote_literal (id INT PRIMARY KEY, user_id INT, role TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_quote_literal_user_idx ON partial_arb_quote_literal (user_id) WHERE quote_literal(role) = '''admin user''';",
-				"INSERT INTO partial_arb_quote_literal VALUES (1, 10, 'admin user', 'old-admin'), (2, 10, 'regular user', 'old-regular');",
+				"CREATE UNIQUE INDEX partial_arb_quote_literal_user_idx ON partial_arb_quote_literal (user_id) WHERE quote_literal(role) IN ('''admin user''', '''billing user''');",
+				"INSERT INTO partial_arb_quote_literal VALUES (1, 10, 'admin user', 'old-admin'), (2, 11, 'billing user', 'old-billing');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_arb_quote_literal VALUES (3, 10, 'admin user', 'quote-literal-upsert')
-ON CONFLICT (user_id) WHERE quote_literal(role) = '''admin user''' DO UPDATE SET note = EXCLUDED.note;`,
+ON CONFLICT (user_id) WHERE role = 'admin user' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
 					Query: `SELECT id, user_id, role, note FROM partial_arb_quote_literal ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "admin user", "quote-literal-upsert"},
-						{2, 10, "regular user", "old-regular"},
+						{2, 11, "billing user", "old-billing"},
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_quote_literal VALUES (4, 10, 'admin user', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_quote_literal VALUES (4, 11, 'billing user', 'quote-literal-in-upsert')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'billing user') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, role, note FROM partial_arb_quote_literal ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "admin user", "quote-literal-upsert"},
+						{2, 11, "billing user", "quote-literal-in-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_quote_literal VALUES (5, 10, 'admin user', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'regular user') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},
@@ -1871,24 +1882,35 @@ ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports quote_ident predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_quote_ident (id INT PRIMARY KEY, user_id INT, role TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_quote_ident_user_idx ON partial_arb_quote_ident (user_id) WHERE quote_ident(role) = '\"admin user\"';",
-				"INSERT INTO partial_arb_quote_ident VALUES (1, 10, 'admin user', 'old-admin'), (2, 10, 'regular user', 'old-regular');",
+				"CREATE UNIQUE INDEX partial_arb_quote_ident_user_idx ON partial_arb_quote_ident (user_id) WHERE quote_ident(role) IN ('\"admin user\"', '\"billing user\"');",
+				"INSERT INTO partial_arb_quote_ident VALUES (1, 10, 'admin user', 'old-admin'), (2, 11, 'billing user', 'old-billing');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_arb_quote_ident VALUES (3, 10, 'admin user', 'quote-ident-upsert')
-ON CONFLICT (user_id) WHERE quote_ident(role) = '"admin user"' DO UPDATE SET note = EXCLUDED.note;`,
+ON CONFLICT (user_id) WHERE role = 'admin user' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
 					Query: `SELECT id, user_id, role, note FROM partial_arb_quote_ident ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "admin user", "quote-ident-upsert"},
-						{2, 10, "regular user", "old-regular"},
+						{2, 11, "billing user", "old-billing"},
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_quote_ident VALUES (4, 10, 'admin user', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_quote_ident VALUES (4, 11, 'billing user', 'quote-ident-in-upsert')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'billing user') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, role, note FROM partial_arb_quote_ident ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "admin user", "quote-ident-upsert"},
+						{2, 11, "billing user", "quote-ident-in-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_quote_ident VALUES (5, 10, 'admin user', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'regular user') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

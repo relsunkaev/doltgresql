@@ -2248,7 +2248,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'regular user'),
 		(3, 1, 'billing user'),
 		(4, 2, 'admin user')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_quote_literal_tenant_idx ON partial_planner_quote_literal (tenant) WHERE quote_literal(role) = '''admin user'''")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_quote_literal_tenant_idx ON partial_planner_quote_literal (tenant) WHERE quote_literal(role) IN ('''admin user''', '''billing user''')")
 
 	quoteLiteralImpliedQuery := `SELECT count(id) FROM partial_planner_quote_literal WHERE tenant = 1 AND quote_literal(role) = '''admin user'''`
 	assertCountResult(t, ctx, conn, quoteLiteralImpliedQuery, 1)
@@ -2256,7 +2256,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	quoteLiteralRawSourceQuery := `SELECT count(id) FROM partial_planner_quote_literal WHERE tenant = 1 AND role = 'admin user'`
 	assertCountResult(t, ctx, conn, quoteLiteralRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, quoteLiteralRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteLiteralRawSourceQuery, true)
+
+	quoteLiteralRawInQuery := `SELECT count(id) FROM partial_planner_quote_literal WHERE tenant = 1 AND role IN ('admin user', 'billing user')`
+	assertCountResult(t, ctx, conn, quoteLiteralRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteLiteralRawInQuery, true)
+
+	quoteLiteralRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_quote_literal WHERE tenant = 1 AND role IN ('admin user', 'regular user')`
+	assertCountResult(t, ctx, conn, quoteLiteralRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteLiteralRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_quote_ident (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, role TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_quote_ident VALUES
@@ -2264,7 +2272,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'regular user'),
 		(3, 1, 'billing user'),
 		(4, 2, 'admin user')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_quote_ident_tenant_idx ON partial_planner_quote_ident (tenant) WHERE quote_ident(role) = '\"admin user\"'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_quote_ident_tenant_idx ON partial_planner_quote_ident (tenant) WHERE quote_ident(role) IN ('\"admin user\"', '\"billing user\"')")
 
 	quoteIdentImpliedQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND quote_ident(role) = '"admin user"'`
 	assertCountResult(t, ctx, conn, quoteIdentImpliedQuery, 1)
@@ -2272,7 +2280,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	quoteIdentRawSourceQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND role = 'admin user'`
 	assertCountResult(t, ctx, conn, quoteIdentRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentRawSourceQuery, true)
+
+	quoteIdentRawInQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND role IN ('admin user', 'billing user')`
+	assertCountResult(t, ctx, conn, quoteIdentRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentRawInQuery, true)
+
+	quoteIdentRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_quote_ident WHERE tenant = 1 AND role IN ('admin user', 'regular user')`
+	assertCountResult(t, ctx, conn, quoteIdentRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, quoteIdentRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

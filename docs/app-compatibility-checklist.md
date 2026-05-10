@@ -1098,21 +1098,28 @@ Do not check off an item until it has workload proof:
   comparable predicate keys, planner filters can deparse them, partial unique
   DML enforcement evaluates PostgreSQL-style quoted text output aligned with
   the runtime function, and `ON CONFLICT` arbiter inference accepts the
-  exact-expression shape; wrong quoted values and raw source-string semantic
-  rewrites remain rejected. Coverage in
+  exact-expression shape. Raw source-string equality and IN-list filters now
+  imply matching quoted-literal predicates when every quoted output is
+  contained in the partial predicate value set; wrong quoted values and
+  non-contained raw source values remain rejected. Coverage in
   server/indexpredicate/implication_test.go, testing/go/functions_test.go,
   testing/go/partial_expression_index_test.go, and
-  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.20.
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.20 and
+  dg-7ug.8.10.47.
 - [x] Use deterministic `quote_ident(expr)` predicates in partial-index
   implication paths. Unary `quote_ident(...)` calls now serialize as
   comparable predicate keys, planner filters can deparse them, partial unique
   DML enforcement evaluates PostgreSQL-style quoted identifier text output
   aligned with the runtime function, and `ON CONFLICT` arbiter inference accepts
-  the exact-expression shape; wrong quoted identifier values and raw
-  source-string semantic rewrites remain rejected. Coverage in
+  the exact-expression shape. Raw source-string equality and IN-list filters now
+  imply matching quoted-identifier predicates when every quoted output is
+  contained in the partial predicate value set, including bare identifiers and
+  reserved-keyword quoting; wrong quoted identifier values and non-contained raw
+  source values remain rejected. Coverage in
   server/indexpredicate/implication_test.go, testing/go/functions_test.go,
   testing/go/partial_expression_index_test.go, and
-  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.21.
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.21 and
+  dg-7ug.8.10.47.
 - [x] Use deterministic `lpad(expr, length[, fill])` and
   `rpad(expr, length[, fill])` predicates in partial-index implication paths.
   Two- and three-argument pad calls now serialize as comparable predicate keys,
