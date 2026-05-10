@@ -332,6 +332,53 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports expression column defaults",
+			SetUpScript: []string{
+				`CREATE TYPE typed_expr_default_task AS (id INT, code TEXT, priority INT);`,
+				`CREATE TABLE typed_expr_default_tasks OF typed_expr_default_task (
+						code WITH OPTIONS DEFAULT lower('NEW'),
+						priority WITH OPTIONS DEFAULT (2 + 3)
+					);`,
+				`INSERT INTO typed_expr_default_tasks (id) VALUES (1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, code, priority FROM typed_expr_default_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), "new", int32(5)},
+					},
+				},
+				{
+					Query: `SELECT column_name, (column_default IS NOT NULL)::text
+	FROM information_schema.columns
+	WHERE table_name = 'typed_expr_default_tasks' AND column_name IN ('code', 'priority')
+	ORDER BY ordinal_position;`,
+					Expected: []sql.Row{
+						{"code", "true"},
+						{"priority", "true"},
+					},
+				},
+			},
+		},
+		{
+			Name: "CREATE TEMP TABLE OF supports expression column defaults",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_expr_default_task AS (id INT, code TEXT);`,
+				`CREATE TEMP TABLE typed_temp_expr_default_tasks OF typed_temp_expr_default_task (
+						code WITH OPTIONS DEFAULT upper('temp')
+					);`,
+				`INSERT INTO typed_temp_expr_default_tasks (id) VALUES (1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, code FROM typed_temp_expr_default_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), "TEMP"},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF supports check constraints",
 			SetUpScript: []string{
 				`CREATE TYPE typed_check_task AS (id INT, code TEXT, priority INT);`,
@@ -395,10 +442,6 @@ ORDER BY indexname;`,
 				{
 					Query:       `CREATE TABLE typed_unknown OF typed_options (missing WITH OPTIONS NOT NULL);`,
 					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
-				},
-				{
-					Query:       `CREATE TABLE typed_default_expr OF typed_options (code WITH OPTIONS DEFAULT lower('new'));`,
-					ExpectedErr: `CREATE TABLE OF non-literal column defaults are not yet supported`,
 				},
 				{
 					Query:       `CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));`,

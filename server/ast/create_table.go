@@ -229,16 +229,14 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 	var defaultExpr vitess.Expr
 	checks := make([]pgnodes.TypedTableCheckConstraint, 0, len(def.CheckExprs))
 	if def.HasDefaultExpr() {
-		if !typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr) {
-			return option, nil, nil, errors.Errorf("CREATE TABLE OF non-literal column defaults are not yet supported")
-		}
 		var err error
 		defaultExpr, err = nodeExpr(ctx, def.DefaultExpr.Expr)
 		if err != nil {
 			return option, nil, nil, err
 		}
 		option.HasDefault = true
-		option.DefaultLiteral = true
+		option.DefaultLiteral = typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr)
+		option.DefaultParenthesized = typedTableDefaultExprIsParenthesized(def.DefaultExpr.Expr)
 		option.DefaultChildIndex = defaultChildIndex
 	}
 	for _, checkExpr := range def.CheckExprs {
@@ -307,6 +305,11 @@ func typedTableDefaultExprIsLiteral(expr tree.Expr) bool {
 	default:
 		return false
 	}
+}
+
+func typedTableDefaultExprIsParenthesized(expr tree.Expr) bool {
+	_, ok := expr.(*tree.ParenExpr)
+	return ok
 }
 
 func typedTableDefaultExprIsNumericLiteral(expr tree.Expr) bool {
