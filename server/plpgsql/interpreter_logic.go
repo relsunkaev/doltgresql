@@ -175,6 +175,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_Execute:
 			statement := operation.PrimaryData
 			bindings := operation.SecondaryData
+			dynamicUsingScope := false
 			if operation.Options["dynamic"] == "true" {
 				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
 				if err != nil {
@@ -193,9 +194,24 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					return nil, errors.New("query string argument of EXECUTE is null")
 				}
 				statement = queryVal.(string)
+				if len(bindings) > 0 {
+					stack.PushScope()
+					dynamicUsingScope = true
+					bindings, err = evaluateDynamicExecuteUsingParams(ctx, iFunc, stack, bindings)
+					if err != nil {
+						stack.PopScope()
+						return nil, err
+					}
+				}
+			}
+			queryMultiReturn := func() (sql.Schema, []sql.Row, error) {
+				if dynamicUsingScope {
+					defer stack.PopScope()
+				}
+				return iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
 			}
 			if len(operation.Target) > 0 {
-				sch, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+				sch, rows, err := queryMultiReturn()
 				if err != nil {
 					return nil, err
 				}
@@ -241,7 +257,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					}
 				}
 			} else {
-				_, rows, err := iFunc.QueryMultiReturn(ctx, stack, statement, bindings)
+				_, rows, err := queryMultiReturn()
 				if err != nil {
 					return nil, err
 				}
@@ -431,6 +447,37 @@ func convertRowsToRecords(schema sql.Schema, rows []sql.Row) ([][]pgtypes.Record
 	return records, nil
 }
 
+func evaluateDynamicExecuteUsingParams(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, params []string) ([]string, error) {
+	bindings := make([]string, len(params))
+	for i, param := range params {
+		expression, referencedVariables, err := substituteVariableReferences(param, &stack)
+		if err != nil {
+			return nil, err
+		}
+		schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, "SELECT "+expression, referencedVariables)
+		if err != nil {
+			return nil, err
+		}
+		if len(schema) != 1 {
+			return nil, errors.New("USING expression does not result in a single value")
+		}
+		if len(rows) != 1 {
+			return nil, errors.New("USING expression returned multiple result sets")
+		}
+		if len(rows[0]) != 1 {
+			return nil, errors.New("USING expression returned multiple results")
+		}
+		expressionType, err := doltgresTypeFromSQLType(schema[0].Type)
+		if err != nil {
+			return nil, err
+		}
+		bindingName := fmt.Sprintf("\tdynamic_execute_param_%d", i+1)
+		stack.NewVariableWithValue(bindingName, expressionType, rows[0][0])
+		bindings[i] = bindingName
+	}
+	return bindings, nil
+}
+
 // applyNoticeOptions adds the specified |options| to the |noticeResponse|.
 func applyNoticeOptions(ctx *sql.Context, noticeResponse *pgproto3.NoticeResponse, options map[string]string) error {
 	for key, value := range options {
@@ -541,13 +588,9 @@ func assignSQLRowValue(ctx *sql.Context, stack InterpreterStack, variableName st
 		return stack.SetVariable(ctx, variableName, nil)
 	}
 
-	fromDoltgresType, ok := fromSqlType.(*pgtypes.DoltgresType)
-	if !ok {
-		var err error
-		fromDoltgresType, err = pgtypes.FromGmsTypeToDoltgresType(fromSqlType)
-		if err != nil {
-			return err
-		}
+	fromDoltgresType, err := doltgresTypeFromSQLType(fromSqlType)
+	if err != nil {
+		return err
 	}
 	if fromDoltgresType.ID == target.Type.ID {
 		return stack.SetVariable(ctx, variableName, value)
@@ -561,6 +604,13 @@ func assignSQLRowValue(ctx *sql.Context, stack InterpreterStack, variableName st
 		return err
 	}
 	return stack.SetVariable(ctx, variableName, castValue)
+}
+
+func doltgresTypeFromSQLType(sqlType sql.Type) (*pgtypes.DoltgresType, error) {
+	if doltgresType, ok := sqlType.(*pgtypes.DoltgresType); ok {
+		return doltgresType, nil
+	}
+	return pgtypes.FromGmsTypeToDoltgresType(sqlType)
 }
 
 // normalizeDeclareTypeName maps pg_query_go's PL/pgSQL declaration type names

@@ -401,10 +401,10 @@ Do not check off an item until it has workload proof:
   declaration type aliases and arrays, integer loops, `SELECT INTO`
   plus `FOUND`, query loops over `RECORD`, `PERFORM`, and raised
   exceptions inside anonymous blocks, plus `EXECUTE format(...) ...
-  USING` DML statements where the dynamic command expression is
-  evaluated at runtime. Other procedural languages are rejected
-  explicitly. Pinned by testing/go/do_block_probe_test.go and
-  server/plpgsql/parse_test.go.
+  USING` DML statements where the dynamic command expression and scalar
+  `USING` expressions are evaluated at runtime. Other procedural
+  languages are rejected explicitly. Pinned by
+  testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
 - [x] SQL string-construction helpers used by dynamic migration blocks -
   native `format(text, variadic any)` supports the common `%s`, `%I`,
   `%L`, `%%`, positional-argument, numeric-width, and left-justify
@@ -414,9 +414,8 @@ Do not check off an item until it has workload proof:
 - [x] Expand anonymous `DO $$` coverage beyond conditional-DDL blocks to the
   broader PL/pgSQL interpreter surface that application migrations can embed
   inside DO statements, without claiming full PL/pgSQL parity.
-- [ ] Complete dynamic PL/pgSQL `EXECUTE` parity for generated DDL, literal
-  `USING` expression evaluation, and `EXECUTE INTO` edge cases. Tracked by
-  dg-7ug.11.
+- [ ] Complete dynamic PL/pgSQL `EXECUTE` parity for generated DDL and
+  `EXECUTE INTO` edge cases. Tracked by dg-7ug.11.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
