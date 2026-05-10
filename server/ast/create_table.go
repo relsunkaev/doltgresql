@@ -396,6 +396,9 @@ func typedTableDefaultExprIsNumericLiteral(expr tree.Expr) bool {
 }
 
 func nodeTypedTableConstraintColumns(def *tree.UniqueConstraintTableDef, constraintKind string) ([]string, error) {
+	if len(def.IndexParams.IncludeColumns) > 0 {
+		return nil, errors.Errorf("CREATE TABLE OF %s INCLUDE columns are not yet supported", constraintKind)
+	}
 	if len(def.IndexParams.StorageParams) > 0 {
 		return nil, errors.Errorf("STORAGE parameters not yet supported for indexes")
 	}
@@ -406,9 +409,6 @@ func nodeTypedTableConstraintColumns(def *tree.UniqueConstraintTableDef, constra
 	for i, column := range def.Columns {
 		if column.Expr != nil || column.Column == "" {
 			return nil, errors.Errorf("CREATE TABLE OF %s expressions are not yet supported", constraintKind)
-		}
-		if column.Collation != "" || column.OpClass != nil || column.Direction != tree.DefaultDirection || column.NullsOrder != tree.DefaultNullsOrder {
-			return nil, errors.Errorf("CREATE TABLE OF %s index options are not yet supported", constraintKind)
 		}
 		columns[i] = string(column.Column)
 	}

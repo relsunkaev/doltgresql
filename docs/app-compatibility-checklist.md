@@ -1267,8 +1267,12 @@ typed-exception handling, and client-side query timeouts.
   columns declared with `WITH OPTIONS GENERATED ALWAYS AS (...) STORED`,
   including insert-time materialization for omitted generated columns;
   permanent generated columns also report `ALWAYS` through
-  `information_schema.columns`. Still open: index options/opclasses and other
-  table-definition/options surface. Pinned by
+  `information_schema.columns`. Table-level typed-table `PRIMARY KEY` and
+  `UNIQUE` constraints now accept column index-element options such as
+  opclasses, collation, sort direction, and NULL ordering for column-only
+  constraints; expression index elements and index parameters such as
+  `INCLUDE`, storage parameters, and index tablespaces remain unsupported.
+  Still open: other table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
   dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL

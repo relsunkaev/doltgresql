@@ -280,6 +280,30 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF accepts unique index element options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_index_option_task AS (id INT, code TEXT);`,
+				`CREATE TABLE typed_index_option_tasks OF typed_index_option_task (
+					CONSTRAINT typed_index_option_code_key UNIQUE (code text_pattern_ops DESC NULLS LAST)
+				);`,
+				`INSERT INTO typed_index_option_tasks VALUES (1, 'A');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_index_option_tasks VALUES (2, 'A');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query: `SELECT constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_name = 'typed_index_option_tasks' AND constraint_type = 'UNIQUE';`,
+					Expected: []sql.Row{
+						{"typed_index_option_code_key", "UNIQUE"},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF supports unique nulls not distinct options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_unique_nnd_task AS (id INT, code TEXT, note TEXT);`,
@@ -587,6 +611,10 @@ ORDER BY indexname;`,
 				{
 					Query:       `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`,
 					ExpectedErr: `column "code" appears twice in unique constraint`,
+				},
+				{
+					Query:       `CREATE TABLE typed_unique_include OF typed_options (UNIQUE (code) INCLUDE (id));`,
+					ExpectedErr: `CREATE TABLE OF unique constraint INCLUDE columns are not yet supported`,
 				},
 				{
 					Query:       `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`,
