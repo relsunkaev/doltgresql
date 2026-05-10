@@ -1951,11 +1951,16 @@ actually exercise.
   Doltgres through the PostgreSQL backend, then the Django ORM verifies
   startup `application_name`, migrated models with FK / JSONB / text[] /
   numeric fields, relation reads, commit, rollback, and projected
-  `QuerySet.count()` / `exists()` filters. Covered by
+  `QuerySet.count()` / `exists()` filters. Knex's real migration CLI runs
+  `migrate:latest` against Doltgres with migration metadata tables, schema
+  DSL-created FK / JSONB / text[] / decimal columns, an index, and post-migrate
+  CRUD / transaction verification. Covered by
   testing/go/drizzle_kit_introspect_test.go,
   testing/go/prisma_db_pull_test.go,
-  testing/go/alembic_autogenerate_test.go, and
-  testing/go/django_migration_test.go. Tracked by dg-7ug.10.2.1.
+  testing/go/alembic_autogenerate_test.go,
+  testing/go/django_migration_test.go, and
+  testing/go/knex_migration_test.go. Tracked by dg-7ug.10.2.1 and
+  dg-7ug.10.2.2.
 - [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
   is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
   TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,
@@ -1979,9 +1984,9 @@ schema diffs, typed-exception handling, and client-side query timeouts.
 - [ ] Run actual GUI binaries, and any remaining migration binaries required by
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
-  Drizzle Kit, Prisma db pull, Alembic autogenerate, Django migrations, and
-  TablePlus-bundled `pg_dump` 17.0 now have live binary harnesses. Tracked by
-  dg-7ug.10.1 and dg-7ug.10.2 under dg-7ug.10.
+  Drizzle Kit, Prisma db pull, Alembic autogenerate, Django migrations, Knex
+  migrations, and TablePlus-bundled `pg_dump` 17.0 now have live binary
+  harnesses. Tracked by dg-7ug.10.1 and dg-7ug.10.2 under dg-7ug.10.
 - [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
   testing/go/tableplus_dump_test.go locates
   `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
