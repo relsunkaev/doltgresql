@@ -815,9 +815,13 @@ Do not check off an item until it has workload proof:
   values, prepared statements, concurrent reads, commit, and rollback. libpq
   runs through a compiled C probe with startup `application_name`, typed
   parameters, JSONB and text[] values, prepared statements, multiple
-  connections, commit, and rollback. Rust `sqlx` runs through the existing
-  async pool fixture with startup, parameter binding, catalog `EXISTS` queries,
-  UUID binding/decoding, and chrono timestamptz/date decoding. TypeORM runs a
+  connections, commit, and rollback. Go `database/sql` with `github.com/lib/pq`
+  runs through the real Go driver wrapper with startup `application_name`,
+  prepared statements, typed parameters, JSONB/text[] values, `pq.Array`
+  adaptation, pooled concurrent reads, commit, and rollback. Rust `sqlx` runs
+  through the existing async pool fixture with startup, parameter binding,
+  catalog `EXISTS` queries, UUID binding/decoding, and chrono
+  timestamptz/date decoding. TypeORM runs a
   real `DataSource` over the `pg` driver, including schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, commit, and rollback.
   Sequelize runs over the real `pg` driver too, covering startup timezone GUCs,
@@ -829,8 +833,9 @@ Do not check off an item until it has workload proof:
   testing/go/ts_postgres_client_test.go, testing/go/knex_client_test.go,
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
   testing/go/psycopg2_client_test.go, testing/go/ruby_pg_client_test.go,
-  testing/go/libpq_client_test.go, testing/go/rust_sqlx_client_test.go, and
-  testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
+  testing/go/libpq_client_test.go, testing/go/go_sql_pq_client_test.go,
+  testing/go/rust_sqlx_client_test.go, testing/go/typeorm_client_test.go, and
+  testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.
@@ -1243,9 +1248,12 @@ typed-exception handling, and client-side query timeouts.
   transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
-  boundaries, while the libpq harness compiles a C probe for typed parameters,
+  boundaries. The libpq harness compiles a C probe for typed parameters,
   prepared statements, JSONB/text[] values, multiple connections, and
-  transaction boundaries, the Rust `sqlx` harness covers async pool usage,
+  transaction boundaries. The Go `database/sql` + `github.com/lib/pq` harness
+  covers the real Go driver wrapper with prepared statements, typed
+  parameters, JSONB/text[] values, `pq.Array` adaptation, pooled reads, and
+  transaction boundaries. The Rust `sqlx` harness covers async pool usage,
   parameters, UUIDs, and chrono timestamp/date decoding, and the TypeORM
   harness covers a real ORM `DataSource` over `pg` with schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, and transaction
@@ -1254,9 +1262,10 @@ typed-exception handling, and client-side query timeouts.
   pooled reads, and managed transactions.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, psycopg,
-  psycopg2, Ruby `pg`, libpq, and Rust `sqlx`. Add runnable smoke gates for
-  the advertised client and migration-tool matrix before claiming broad client
-  compatibility. Tracked by dg-7ug.10.
+  psycopg2, Ruby `pg`, libpq, Go `database/sql` with `github.com/lib/pq`, and
+  Rust `sqlx`. Add runnable smoke gates for the advertised client and
+  migration-tool matrix before claiming broad client compatibility. Tracked by
+  dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
