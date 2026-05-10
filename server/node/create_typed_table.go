@@ -52,6 +52,7 @@ type TypedTableOptions struct {
 	ColumnOptions     []TypedTableColumnOptions
 	PrimaryKeyColumns []string
 	UniqueConstraints []TypedTableUniqueConstraint
+	CheckConstraints  []TypedTableCheckConstraint
 }
 
 type TypedTableColumnOptions struct {
@@ -71,6 +72,11 @@ type TypedTableColumnOptions struct {
 type TypedTableUniqueConstraint struct {
 	Name    string
 	Columns []string
+}
+
+type TypedTableCheckConstraint struct {
+	Name       string
+	Expression string
 }
 
 // NewCreateTypedTable returns a new CREATE TABLE OF execution node.
@@ -169,7 +175,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if err != nil {
 			return nil, err
 		}
-		if err = c.createTemporaryUniqueConstraints(ctx, db); err != nil {
+		if err = c.applyTemporaryTypedTableOptions(ctx, db); err != nil {
 			return nil, err
 		}
 		return sql.RowsToRowIter(), nil
@@ -192,12 +198,16 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	if err = c.createUniqueConstraints(ctx, db); err != nil {
 		return nil, err
 	}
+	if err = c.createCheckConstraints(ctx, db); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreateTypedTable) createTemporaryUniqueConstraints(ctx *sql.Context, db sql.Database) error {
+func (c *CreateTypedTable) applyTemporaryTypedTableOptions(ctx *sql.Context, db sql.Database) error {
 	constraints := typedTableUniqueConstraints(c.Options)
-	if len(constraints) == 0 {
+	checks := c.Options.CheckConstraints
+	if len(constraints) == 0 && len(checks) == 0 {
 		return nil
 	}
 	session := dsess.DSessFromSess(ctx.Session)
@@ -205,7 +215,7 @@ func (c *CreateTypedTable) createTemporaryUniqueConstraints(ctx *sql.Context, db
 	if !ok {
 		return sql.ErrTableNotFound.New(c.TableName)
 	}
-	session.AddTemporaryTable(ctx, db.Name(), newTypedTableUniqueTempTable(table, constraints))
+	session.AddTemporaryTable(ctx, db.Name(), newTypedTableUniqueTempTable(table, constraints, checks))
 	return nil
 }
 
@@ -240,6 +250,60 @@ func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Data
 		}
 	}
 	return nil
+}
+
+func (c *CreateTypedTable) createCheckConstraints(ctx *sql.Context, db sql.Database) error {
+	if len(c.Options.CheckConstraints) == 0 {
+		return nil
+	}
+
+	var table sql.Table
+	if c.Temporary {
+		session := dsess.DSessFromSess(ctx.Session)
+		var ok bool
+		table, ok = session.GetTemporaryTable(ctx, db.Name(), c.TableName)
+		if !ok {
+			return sql.ErrTableNotFound.New(c.TableName)
+		}
+	} else {
+		var ok bool
+		var err error
+		table, ok, err = db.GetTableInsensitive(ctx, c.TableName)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return sql.ErrTableNotFound.New(c.TableName)
+		}
+	}
+
+	checkAlterable, ok := typedTableCheckAlterable(table)
+	if !ok {
+		return errors.Errorf("CREATE TABLE OF CHECK constraints are not supported by this table")
+	}
+	for _, constraint := range c.Options.CheckConstraints {
+		if err := checkAlterable.CreateCheck(ctx, &sql.CheckDefinition{
+			Name:            constraint.Name,
+			CheckExpression: constraint.Expression,
+			Enforced:        true,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func typedTableCheckAlterable(table sql.Table) (sql.CheckAlterableTable, bool) {
+	if checkAlterable, ok := table.(sql.CheckAlterableTable); ok {
+		return checkAlterable, true
+	}
+	if table == nil {
+		return nil, false
+	}
+	if checkAlterable, ok := sql.GetUnderlyingTable(table).(sql.CheckAlterableTable); ok {
+		return checkAlterable, true
+	}
+	return nil, false
 }
 
 func typedTableUniqueConstraints(options TypedTableOptions) []TypedTableUniqueConstraint {

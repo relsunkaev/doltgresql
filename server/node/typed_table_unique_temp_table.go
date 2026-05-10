@@ -25,6 +25,7 @@ import (
 type typedTableUniqueTempTable struct {
 	sql.Table
 	constraints []TypedTableUniqueConstraint
+	checks      []TypedTableCheckConstraint
 }
 
 var _ sql.TableWrapper = (*typedTableUniqueTempTable)(nil)
@@ -35,11 +36,14 @@ var _ sql.DeletableTable = (*typedTableUniqueTempTable)(nil)
 var _ sql.PrimaryKeyTable = (*typedTableUniqueTempTable)(nil)
 var _ sql.IndexAddressableTable = (*typedTableUniqueTempTable)(nil)
 var _ sql.IndexAlterableTable = (*typedTableUniqueTempTable)(nil)
+var _ sql.CheckTable = (*typedTableUniqueTempTable)(nil)
+var _ sql.CheckAlterableTable = (*typedTableUniqueTempTable)(nil)
 
-func newTypedTableUniqueTempTable(table sql.Table, constraints []TypedTableUniqueConstraint) *typedTableUniqueTempTable {
+func newTypedTableUniqueTempTable(table sql.Table, constraints []TypedTableUniqueConstraint, checks []TypedTableCheckConstraint) *typedTableUniqueTempTable {
 	return &typedTableUniqueTempTable{
 		Table:       table,
 		constraints: append([]TypedTableUniqueConstraint(nil), constraints...),
+		checks:      append([]TypedTableCheckConstraint(nil), checks...),
 	}
 }
 
@@ -107,6 +111,47 @@ func (t *typedTableUniqueTempTable) DropIndex(ctx *sql.Context, indexName string
 
 func (t *typedTableUniqueTempTable) RenameIndex(ctx *sql.Context, fromIndexName string, toIndexName string) error {
 	return t.Table.(sql.IndexAlterableTable).RenameIndex(ctx, fromIndexName, toIndexName)
+}
+
+func (t *typedTableUniqueTempTable) GetChecks(ctx *sql.Context) ([]sql.CheckDefinition, error) {
+	definitions := make([]sql.CheckDefinition, 0, len(t.checks))
+	if checkTable, ok := t.Table.(sql.CheckTable); ok {
+		checks, err := checkTable.GetChecks(ctx)
+		if err != nil {
+			return nil, err
+		}
+		definitions = append(definitions, checks...)
+	}
+	for _, check := range t.checks {
+		definitions = append(definitions, sql.CheckDefinition{
+			Name:            check.Name,
+			CheckExpression: check.Expression,
+			Enforced:        true,
+		})
+	}
+	return definitions, nil
+}
+
+func (t *typedTableUniqueTempTable) CreateCheck(ctx *sql.Context, check *sql.CheckDefinition) error {
+	t.checks = append(t.checks, TypedTableCheckConstraint{
+		Name:       check.Name,
+		Expression: check.CheckExpression,
+	})
+	return nil
+}
+
+func (t *typedTableUniqueTempTable) DropCheck(ctx *sql.Context, chName string) error {
+	for i, check := range t.checks {
+		if strings.EqualFold(check.Name, chName) {
+			t.checks = append(t.checks[:i], t.checks[i+1:]...)
+			return nil
+		}
+	}
+	checkAlterable, ok := typedTableCheckAlterable(t.Table)
+	if !ok {
+		return fmt.Errorf("CREATE TABLE OF CHECK constraints are not supported by this table")
+	}
+	return checkAlterable.DropCheck(ctx, chName)
 }
 
 func (t *typedTableUniqueTempTable) checkUniqueConstraints(ctx *sql.Context, candidate sql.Row, ignore sql.Row, pending []sql.Row) error {

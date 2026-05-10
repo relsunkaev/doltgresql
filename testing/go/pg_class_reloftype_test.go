@@ -332,6 +332,61 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports check constraints",
+			SetUpScript: []string{
+				`CREATE TYPE typed_check_task AS (id INT, code TEXT, priority INT);`,
+				`CREATE TABLE typed_check_tasks OF typed_check_task (
+						CONSTRAINT typed_check_priority CHECK (priority > 0),
+						code WITH OPTIONS CONSTRAINT typed_check_code CHECK (code <> '')
+					);`,
+				`INSERT INTO typed_check_tasks VALUES (1, 'A', 5);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_check_tasks VALUES (2, 'B', 0);`,
+					ExpectedErr: `Check constraint "typed_check_priority" violated`,
+				},
+				{
+					Query:       `INSERT INTO typed_check_tasks VALUES (3, '', 5);`,
+					ExpectedErr: `Check constraint "typed_check_code" violated`,
+				},
+				{
+					Query:       `UPDATE typed_check_tasks SET priority = -1 WHERE id = 1;`,
+					ExpectedErr: `Check constraint "typed_check_priority" violated`,
+				},
+				{
+					Query: `SELECT constraint_name, constraint_type
+	FROM information_schema.table_constraints
+	WHERE table_name = 'typed_check_tasks' AND constraint_type = 'CHECK'
+	ORDER BY constraint_name;`,
+					Expected: []sql.Row{
+						{"typed_check_code", "CHECK"},
+						{"typed_check_priority", "CHECK"},
+					},
+				},
+			},
+		},
+		{
+			Name: "CREATE TEMP TABLE OF supports check constraints",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_check_task AS (id INT, priority INT);`,
+				`CREATE TEMP TABLE typed_temp_check_tasks OF typed_temp_check_task (
+						CONSTRAINT typed_temp_check_priority CHECK (priority > 0)
+					);`,
+				`INSERT INTO typed_temp_check_tasks VALUES (1, 5);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_temp_check_tasks VALUES (2, 0);`,
+					ExpectedErr: `Check constraint "typed_temp_check_priority" violated`,
+				},
+				{
+					Query:       `UPDATE typed_temp_check_tasks SET priority = 0 WHERE id = 1;`,
+					ExpectedErr: `Check constraint "typed_temp_check_priority" violated`,
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF rejects unsupported table-definition options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_options AS (id INT, code TEXT);`,

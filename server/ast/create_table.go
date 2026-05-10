@@ -173,7 +173,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				return options, children, errors.Errorf(`column "%s" specified more than once`, name)
 			}
 			seenColumns[columnKey] = struct{}{}
-			columnOption, defaultExpr, err := nodeTypedTableColumnOptions(ctx, tableName, def, len(children))
+			columnOption, defaultExpr, checks, err := nodeTypedTableColumnOptions(ctx, tableName, def, len(children))
 			if err != nil {
 				return options, children, err
 			}
@@ -181,6 +181,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				children = append(children, defaultExpr)
 			}
 			options.ColumnOptions = append(options.ColumnOptions, columnOption)
+			options.CheckConstraints = append(options.CheckConstraints, checks...)
 		case *tree.UniqueConstraintTableDef:
 			constraintKind := "unique constraint"
 			if def.PrimaryKey {
@@ -205,7 +206,11 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				})
 			}
 		case *tree.CheckConstraintTableDef:
-			return options, children, errors.Errorf("CREATE TABLE OF CHECK constraints are not yet supported")
+			check, err := nodeTypedTableCheckConstraint(ctx, string(def.Name), def.Expr, def.NoInherit)
+			if err != nil {
+				return options, children, err
+			}
+			options.CheckConstraints = append(options.CheckConstraints, check)
 		case *tree.ForeignKeyConstraintTableDef:
 			return options, children, errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not yet supported")
 		case *tree.IndexTableDef:
@@ -219,37 +224,42 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 	return options, children, nil
 }
 
-func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, error) {
+func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, []pgnodes.TypedTableCheckConstraint, error) {
 	option := pgnodes.TypedTableColumnOptions{Name: string(def.Name)}
 	var defaultExpr vitess.Expr
+	checks := make([]pgnodes.TypedTableCheckConstraint, 0, len(def.CheckExprs))
 	if def.HasDefaultExpr() {
 		if !typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr) {
-			return option, nil, errors.Errorf("CREATE TABLE OF non-literal column defaults are not yet supported")
+			return option, nil, nil, errors.Errorf("CREATE TABLE OF non-literal column defaults are not yet supported")
 		}
 		var err error
 		defaultExpr, err = nodeExpr(ctx, def.DefaultExpr.Expr)
 		if err != nil {
-			return option, nil, err
+			return option, nil, nil, err
 		}
 		option.HasDefault = true
 		option.DefaultLiteral = true
 		option.DefaultChildIndex = defaultChildIndex
 	}
-	if len(def.CheckExprs) > 0 {
-		return option, nil, errors.Errorf("CREATE TABLE OF column CHECK constraints are not yet supported")
+	for _, checkExpr := range def.CheckExprs {
+		check, err := nodeTypedTableCheckConstraint(ctx, string(checkExpr.ConstraintName), checkExpr.Expr, checkExpr.NoInherit)
+		if err != nil {
+			return option, nil, nil, err
+		}
+		checks = append(checks, check)
 	}
 	if def.References.Table != nil {
-		return option, nil, errors.Errorf("CREATE TABLE OF column FOREIGN KEY constraints are not yet supported")
+		return option, nil, nil, errors.Errorf("CREATE TABLE OF column FOREIGN KEY constraints are not yet supported")
 	}
 	if def.Unique && !def.PrimaryKey.IsPrimaryKey {
 		if def.UniqueNullsNotDistinct {
-			return option, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
+			return option, nil, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
 		}
 		option.Unique = true
 		option.UniqueName = typedTableConstraintName(def.UniqueConstraintName, defaultUniqueConstraintNameFromNames(tableName, []string{option.Name}))
 	}
 	if def.Computed.Computed {
-		return option, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
+		return option, nil, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
 	}
 	switch def.Nullable.Nullability {
 	case tree.NotNull:
@@ -260,10 +270,23 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		option.Nullable = true
 	case tree.SilentNull:
 	default:
-		return option, nil, errors.Errorf("unknown NULL type encountered")
+		return option, nil, nil, errors.Errorf("unknown NULL type encountered")
 	}
 	option.PrimaryKey = def.PrimaryKey.IsPrimaryKey
-	return option, defaultExpr, nil
+	return option, defaultExpr, checks, nil
+}
+
+func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, noInherit bool) (pgnodes.TypedTableCheckConstraint, error) {
+	if noInherit {
+		return pgnodes.TypedTableCheckConstraint{}, errors.Errorf("NO INHERIT is not yet supported for check constraints")
+	}
+	if _, err := nodeExpr(ctx, expr); err != nil {
+		return pgnodes.TypedTableCheckConstraint{}, err
+	}
+	return pgnodes.TypedTableCheckConstraint{
+		Name:       name,
+		Expression: tree.AsStringWithFlags(expr, tree.FmtParsable),
+	}, nil
 }
 
 func typedTableDefaultExprIsLiteral(expr tree.Expr) bool {
