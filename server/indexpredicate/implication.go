@@ -1,0 +1,489 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package indexpredicate
+
+import (
+	"math"
+	"strconv"
+	"strings"
+
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+)
+
+// Implies reports whether queryPredicate is strong enough to satisfy
+// indexPredicate. It intentionally handles a conservative subset of PostgreSQL
+// predicate implication shapes; unsupported expressions return false.
+func Implies(indexPredicate string, queryPredicate string) bool {
+	if indexPredicate == queryPredicate {
+		return true
+	}
+
+	indexTerms, ok := predicateConjuncts(indexPredicate)
+	if !ok {
+		return false
+	}
+	queryTerms, ok := predicateConjuncts(queryPredicate)
+	if !ok {
+		return false
+	}
+	for term, indexExpr := range indexTerms {
+		if _, ok = queryTerms[term]; ok {
+			continue
+		}
+		if !anyPredicateTermImplies(indexExpr, queryTerms) {
+			return false
+		}
+	}
+	return true
+}
+
+// Definition returns a normalized predicate expression string.
+func Definition(predicate tree.Expr) string {
+	if predicate == nil {
+		return ""
+	}
+	return strings.TrimSpace(tree.AsString(predicate))
+}
+
+func predicateConjuncts(predicate string) (map[string]tree.Expr, bool) {
+	expr, ok := parsePredicateExpr(predicate)
+	if !ok {
+		return nil, false
+	}
+	terms := make(map[string]tree.Expr)
+	collectPredicateConjuncts(expr, terms)
+	return terms, true
+}
+
+func parsePredicateExpr(predicate string) (tree.Expr, bool) {
+	statements, err := parser.Parse("SELECT 1 WHERE " + predicate)
+	if err != nil || len(statements) != 1 {
+		return nil, false
+	}
+	selectStatement, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return nil, false
+	}
+	selectClause, ok := selectStatement.Select.(*tree.SelectClause)
+	if !ok || selectClause.Where == nil {
+		return nil, false
+	}
+	return selectClause.Where.Expr, true
+}
+
+func collectPredicateConjuncts(expr tree.Expr, terms map[string]tree.Expr) {
+	switch expr := expr.(type) {
+	case *tree.AndExpr:
+		collectPredicateConjuncts(expr.Left, terms)
+		collectPredicateConjuncts(expr.Right, terms)
+	case *tree.ParenExpr:
+		collectPredicateConjuncts(expr.Expr, terms)
+	default:
+		terms[strings.TrimSpace(tree.AsString(expr))] = expr
+	}
+}
+
+func anyPredicateTermImplies(indexExpr tree.Expr, queryTerms map[string]tree.Expr) bool {
+	for _, queryExpr := range queryTerms {
+		if predicateTermImplies(indexExpr, queryExpr) {
+			return true
+		}
+	}
+	return false
+}
+
+func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
+	indexExpr = unwrapPredicateParens(indexExpr)
+	queryExpr = unwrapPredicateParens(queryExpr)
+	if strings.TrimSpace(tree.AsString(indexExpr)) == strings.TrimSpace(tree.AsString(queryExpr)) {
+		return true
+	}
+
+	if queryOr, ok := queryExpr.(*tree.OrExpr); ok {
+		return predicateTermImplies(indexExpr, queryOr.Left) && predicateTermImplies(indexExpr, queryOr.Right)
+	}
+	if indexOr, ok := indexExpr.(*tree.OrExpr); ok {
+		return predicateTermImplies(indexOr.Left, queryExpr) || predicateTermImplies(indexOr.Right, queryExpr)
+	}
+	if indexAnd, ok := indexExpr.(*tree.AndExpr); ok {
+		return predicateTermImplies(indexAnd.Left, queryExpr) && predicateTermImplies(indexAnd.Right, queryExpr)
+	}
+	if queryAnd, ok := queryExpr.(*tree.AndExpr); ok {
+		return predicateTermImplies(indexExpr, queryAnd.Left) || predicateTermImplies(indexExpr, queryAnd.Right)
+	}
+
+	indexValues, ok := predicateValueSetFromExpr(indexExpr)
+	if ok {
+		queryValues, ok := predicateValueSetFromExpr(queryExpr)
+		return ok && indexValues.exprKey == queryValues.exprKey && queryValues.subsetOf(indexValues)
+	}
+
+	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
+	if ok {
+		queryRange, ok := numericPredicateRangeFromExpr(queryExpr)
+		if !ok || !strings.EqualFold(indexRange.column, queryRange.column) {
+			return false
+		}
+		return queryRange.bounds.subsetOf(indexRange.bounds)
+	}
+	indexBool, ok := booleanPredicateComparisonFromExpr(indexExpr)
+	if !ok {
+		return false
+	}
+	queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
+	return ok && strings.EqualFold(indexBool.column, queryBool.column) && indexBool.value == queryBool.value
+}
+
+func unwrapPredicateParens(expr tree.Expr) tree.Expr {
+	for {
+		paren, ok := expr.(*tree.ParenExpr)
+		if !ok {
+			return expr
+		}
+		expr = paren.Expr
+	}
+}
+
+type numericPredicateComparison struct {
+	column string
+	op     tree.ComparisonOperator
+	value  float64
+}
+
+type numericPredicateRange struct {
+	hasLower       bool
+	lower          float64
+	lowerInclusive bool
+	hasUpper       bool
+	upper          float64
+	upperInclusive bool
+}
+
+type booleanPredicateComparison struct {
+	column string
+	value  bool
+}
+
+type predicateValueSet struct {
+	exprKey string
+	values  map[string]struct{}
+}
+
+func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
+	for value := range s.values {
+		if _, ok := other.values[value]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func predicateValueSetFromExpr(expr tree.Expr) (predicateValueSet, bool) {
+	comparison, ok := unwrapPredicateParens(expr).(*tree.ComparisonExpr)
+	if !ok {
+		return predicateValueSet{}, false
+	}
+	switch comparison.Operator {
+	case tree.EQ, tree.IsNotDistinctFrom:
+		if exprKey, ok := predicateComparableExprKey(comparison.Left); ok {
+			if value, ok := predicateLiteralKey(comparison.Right); ok {
+				return predicateValueSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+		if exprKey, ok := predicateComparableExprKey(comparison.Right); ok {
+			if value, ok := predicateLiteralKey(comparison.Left); ok {
+				return predicateValueSet{exprKey: exprKey, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+	case tree.In:
+		exprKey, ok := predicateComparableExprKey(comparison.Left)
+		if !ok {
+			return predicateValueSet{}, false
+		}
+		tuple, ok := unwrapPredicateParens(comparison.Right).(*tree.Tuple)
+		if !ok || len(tuple.Exprs) == 0 {
+			return predicateValueSet{}, false
+		}
+		values := make(map[string]struct{}, len(tuple.Exprs))
+		for _, expr := range tuple.Exprs {
+			value, ok := predicateLiteralKey(expr)
+			if !ok {
+				return predicateValueSet{}, false
+			}
+			values[value] = struct{}{}
+		}
+		return predicateValueSet{exprKey: exprKey, values: values}, true
+	}
+	return predicateValueSet{}, false
+}
+
+func predicateComparableExprKey(expr tree.Expr) (string, bool) {
+	expr = unwrapPredicateParens(expr)
+	if column, ok := predicateColumnName(expr); ok {
+		return "column:" + column, true
+	}
+	fn, ok := expr.(*tree.FuncExpr)
+	if !ok {
+		return "", false
+	}
+	name, ok := predicateFunctionName(fn.Func)
+	if !ok || (name != "lower" && name != "upper") || len(fn.Exprs) != 1 {
+		return "", false
+	}
+	argKey, ok := predicateComparableExprKey(fn.Exprs[0])
+	if !ok {
+		return "", false
+	}
+	return "func:" + name + "(" + argKey + ")", true
+}
+
+func predicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) {
+	switch fn := ref.FunctionReference.(type) {
+	case *tree.UnresolvedName:
+		if fn.Star || fn.NumParts == 0 {
+			return "", false
+		}
+		return strings.ToLower(strings.Trim(fn.Parts[0], `"`)), true
+	case *tree.FunctionDefinition:
+		return strings.ToLower(strings.Trim(fn.Name, `"`)), true
+	default:
+		return "", false
+	}
+}
+
+func predicateLiteralKey(expr tree.Expr) (string, bool) {
+	if value, ok := predicateNumericConstant(expr); ok {
+		return "n:" + strconv.FormatFloat(value, 'g', -1, 64), true
+	}
+	if value, ok := predicateBoolConstant(expr); ok {
+		return "b:" + strconv.FormatBool(value), true
+	}
+	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.DString:
+		return "s:" + string(*expr), true
+	case *tree.StrVal:
+		return "s:" + expr.RawString(), true
+	}
+	return "", false
+}
+
+type numericPredicateRangeWithColumn struct {
+	column string
+	bounds numericPredicateRange
+}
+
+func numericPredicateRangeFromExpr(expr tree.Expr) (numericPredicateRangeWithColumn, bool) {
+	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.RangeCond:
+		if expr.Not || expr.Symmetric {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		column, ok := predicateColumnName(expr.Left)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		from, ok := predicateNumericConstant(expr.From)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		to, ok := predicateNumericConstant(expr.To)
+		if !ok || from > to {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		return numericPredicateRangeWithColumn{
+			column: column,
+			bounds: numericPredicateRange{
+				hasLower:       true,
+				lower:          from,
+				lowerInclusive: true,
+				hasUpper:       true,
+				upper:          to,
+				upperInclusive: true,
+			},
+		}, true
+	default:
+		comparison, ok := numericPredicateComparisonFromExpr(expr)
+		if !ok {
+			return numericPredicateRangeWithColumn{}, false
+		}
+		return numericPredicateRangeWithColumn{
+			column: comparison.column,
+			bounds: numericComparisonRange(comparison),
+		}, true
+	}
+}
+
+func numericPredicateComparisonFromExpr(expr tree.Expr) (numericPredicateComparison, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return numericPredicateComparisonFromExpr(expr.Expr)
+	case *tree.ComparisonExpr:
+		if column, ok := predicateColumnName(expr.Left); ok {
+			if value, ok := predicateNumericConstant(expr.Right); ok {
+				return numericPredicateComparison{column: column, op: expr.Operator, value: value}, true
+			}
+		}
+		if column, ok := predicateColumnName(expr.Right); ok {
+			if value, ok := predicateNumericConstant(expr.Left); ok {
+				return numericPredicateComparison{column: column, op: reverseComparisonOperator(expr.Operator), value: value}, true
+			}
+		}
+	}
+	return numericPredicateComparison{}, false
+}
+
+func booleanPredicateComparisonFromExpr(expr tree.Expr) (booleanPredicateComparison, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return booleanPredicateComparisonFromExpr(expr.Expr)
+	case *tree.UnresolvedName:
+		column, ok := predicateColumnName(expr)
+		return booleanPredicateComparison{column: column, value: true}, ok
+	case *tree.NotExpr:
+		if column, ok := predicateColumnName(expr.Expr); ok {
+			return booleanPredicateComparison{column: column, value: false}, true
+		}
+	case *tree.ComparisonExpr:
+		if expr.Operator != tree.EQ && expr.Operator != tree.IsNotDistinctFrom {
+			return booleanPredicateComparison{}, false
+		}
+		if column, ok := predicateColumnName(expr.Left); ok {
+			if value, ok := predicateBoolConstant(expr.Right); ok {
+				return booleanPredicateComparison{column: column, value: value}, true
+			}
+		}
+		if column, ok := predicateColumnName(expr.Right); ok {
+			if value, ok := predicateBoolConstant(expr.Left); ok {
+				return booleanPredicateComparison{column: column, value: value}, true
+			}
+		}
+	}
+	return booleanPredicateComparison{}, false
+}
+
+func predicateColumnName(expr tree.Expr) (string, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateColumnName(expr.Expr)
+	case *tree.UnresolvedName:
+		if expr.Star || expr.NumParts == 0 {
+			return "", false
+		}
+		return strings.ToLower(strings.Trim(expr.Parts[0], `"`)), true
+	}
+	return "", false
+}
+
+func predicateBoolConstant(expr tree.Expr) (bool, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateBoolConstant(expr.Expr)
+	case *tree.DBool:
+		return bool(*expr), true
+	}
+	return false, false
+}
+
+func predicateNumericConstant(expr tree.Expr) (float64, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateNumericConstant(expr.Expr)
+	case *tree.DInt:
+		return float64(*expr), true
+	case *tree.NumVal:
+		value, err := strconv.ParseFloat(expr.FormattedString(), 64)
+		return value, err == nil
+	}
+	return 0, false
+}
+
+func reverseComparisonOperator(op tree.ComparisonOperator) tree.ComparisonOperator {
+	switch op {
+	case tree.LT:
+		return tree.GT
+	case tree.LE:
+		return tree.GE
+	case tree.GT:
+		return tree.LT
+	case tree.GE:
+		return tree.LE
+	default:
+		return op
+	}
+}
+
+func numericComparisonRange(comparison numericPredicateComparison) numericPredicateRange {
+	switch comparison.op {
+	case tree.EQ:
+		return numericPredicateRange{
+			hasLower:       true,
+			lower:          comparison.value,
+			lowerInclusive: true,
+			hasUpper:       true,
+			upper:          comparison.value,
+			upperInclusive: true,
+		}
+	case tree.GT:
+		return numericPredicateRange{hasLower: true, lower: comparison.value}
+	case tree.GE:
+		return numericPredicateRange{hasLower: true, lower: comparison.value, lowerInclusive: true}
+	case tree.LT:
+		return numericPredicateRange{hasUpper: true, upper: comparison.value}
+	case tree.LE:
+		return numericPredicateRange{hasUpper: true, upper: comparison.value, upperInclusive: true}
+	default:
+		return numericPredicateRange{}
+	}
+}
+
+func (r numericPredicateRange) subsetOf(other numericPredicateRange) bool {
+	if !r.valid() || !other.valid() {
+		return false
+	}
+	if other.hasLower {
+		if !r.hasLower {
+			return false
+		}
+		if r.lower < other.lower {
+			return false
+		}
+		if r.lower == other.lower && r.lowerInclusive && !other.lowerInclusive {
+			return false
+		}
+	}
+	if other.hasUpper {
+		if !r.hasUpper {
+			return false
+		}
+		if r.upper > other.upper {
+			return false
+		}
+		if r.upper == other.upper && r.upperInclusive && !other.upperInclusive {
+			return false
+		}
+	}
+	return true
+}
+
+func (r numericPredicateRange) valid() bool {
+	if r.hasLower && math.IsNaN(r.lower) {
+		return false
+	}
+	if r.hasUpper && math.IsNaN(r.upper) {
+		return false
+	}
+	return r.hasLower || r.hasUpper
+}

@@ -31,6 +31,7 @@ type BtreePlannerBoundaryTable struct {
 	underlying      sql.Table
 	patternOpLookup []btreePatternOpLookup
 	citextLookup    []citextBtreeLookup
+	partialLookup   []partialBtreeLookup
 }
 
 type btreePatternOpLookup struct {
@@ -80,10 +81,18 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	needsWrap := false
 	patternOpLookups := make([]btreePatternOpLookup, 0)
 	citextLookups := make([]citextBtreeLookup, 0)
+	partialLookups := make([]partialBtreeLookup, 0)
 	tableSchema := table.Schema(ctx)
 	for _, index := range indexes {
 		if hidePlannerIndex(index) {
 			needsWrap = true
+			continue
+		}
+		if indexmetadata.Predicate(index.Comment()) != "" {
+			needsWrap = true
+			if lookup, ok := partialBtreeIndexLookup(ctx, index, tableSchema); ok {
+				partialLookups = append(partialLookups, lookup)
+			}
 			continue
 		}
 		if unsafeBtreePlannerIndex(index, tableSchema) {
@@ -100,13 +109,14 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	if !needsWrap {
 		return table, false, nil
 	}
-	if len(patternOpLookups) == 0 && len(citextLookups) == 0 {
+	if len(patternOpLookups) == 0 && len(citextLookups) == 0 && len(partialLookups) == 0 {
 		return &BtreePlannerBoundaryTable{underlying: table}, true, nil
 	}
 	return &BtreePlannerBoundaryTable{
 		underlying:      table,
 		patternOpLookup: patternOpLookups,
 		citextLookup:    citextLookups,
+		partialLookup:   partialLookups,
 	}, true, nil
 }
 
@@ -135,7 +145,12 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 	if err != nil {
 		return nil, err
 	}
-	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: t.patternOpLookup, citextLookup: t.citextLookup}, nil
+	return &BtreePlannerBoundaryTable{
+		underlying:      table,
+		patternOpLookup: t.patternOpLookup,
+		citextLookup:    t.citextLookup,
+		partialLookup:   t.partialLookup,
+	}, nil
 }
 
 func (t *BtreePlannerBoundaryTable) Projections() []string {
@@ -193,7 +208,15 @@ func (t *BtreePlannerBoundaryTable) Deleter(ctx *sql.Context) sql.RowDeleter {
 }
 
 func (t *BtreePlannerBoundaryTable) IndexedAccess(ctx *sql.Context, lookup sql.IndexLookup) sql.IndexedTable {
-	return indexedAccessWithMutableWrappers(ctx, t.underlying, lookup)
+	unwrapped, hidden := unwrapPartialPlannerLookup(lookup)
+	indexed := indexedAccessWithMutableWrappers(ctx, t.underlying, unwrapped)
+	if indexed == nil {
+		return nil
+	}
+	if !hidden {
+		return indexed
+	}
+	return partialIndexLookupUnwrapper{IndexedTable: indexed}
 }
 
 func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, error) {
@@ -208,6 +231,10 @@ func (t *BtreePlannerBoundaryTable) GetIndexes(ctx *sql.Context) ([]sql.Index, e
 	filtered := make([]sql.Index, 0, len(indexes))
 	for _, index := range indexes {
 		if hidePlannerIndex(index) {
+			continue
+		}
+		if indexmetadata.Predicate(index.Comment()) != "" {
+			filtered = append(filtered, partialPlannerHiddenIndex{Index: index})
 			continue
 		}
 		if unsafeBtreePlannerIndex(index, t.Schema(ctx)) {
@@ -231,7 +258,8 @@ func hidePlannerIndex(index sql.Index) bool {
 
 func (t *BtreePlannerBoundaryTable) LookupPartitions(ctx *sql.Context, lookup sql.IndexLookup) (sql.PartitionIter, error) {
 	if indexedTable, ok := t.underlying.(sql.IndexedTable); ok {
-		return indexedTable.LookupPartitions(ctx, lookup)
+		unwrapped, _ := unwrapPartialPlannerLookup(lookup)
+		return indexedTable.LookupPartitions(ctx, unwrapped)
 	}
 	return nil, errors.Errorf("table %s is not indexed", t.Name())
 }
@@ -267,7 +295,11 @@ func (t *BtreePlannerBoundaryTable) SkipIndexCosting() bool {
 }
 
 func (t *BtreePlannerBoundaryTable) LookupForExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, *sql.FuncDepSet, sql.Expression, bool, error) {
-	lookup, ok, err := t.lookupForCitextComparisons(ctx, exprs...)
+	lookup, ok, err := t.lookupForPartialIndexes(ctx, exprs...)
+	if err != nil || ok {
+		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
+	}
+	lookup, ok, err = t.lookupForCitextComparisons(ctx, exprs...)
 	if err != nil || ok {
 		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
 	}

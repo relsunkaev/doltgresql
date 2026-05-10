@@ -311,3 +311,32 @@ WHERE tablename = 'memberships'
 		},
 	})
 }
+
+func TestPartialIndexPlannerImplication(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_scores (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_scores VALUES
+		(1, 1, 50),
+		(2, 1, -1),
+		(3, 1, 5),
+		(4, 1, 0),
+		(5, 2, 20),
+		(6, 2, -3)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_scores_tenant_idx ON partial_planner_scores (tenant) WHERE score > 0")
+
+	impliedQuery := `SELECT count(id) FROM partial_planner_scores WHERE tenant = 1 AND score > 10`
+	assertCountResult(t, ctx, conn, impliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, impliedQuery, true)
+
+	nonImpliedQuery := `SELECT count(id) FROM partial_planner_scores WHERE tenant = 1 AND score >= 0`
+	assertCountResult(t, ctx, conn, nonImpliedQuery, 3)
+	assertBenchmarkPlanShape(t, ctx, conn, nonImpliedQuery, false)
+}

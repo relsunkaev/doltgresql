@@ -603,18 +603,22 @@ Do not check off an item until it has workload proof:
   arbiter predicate implies one index-predicate disjunct or every reordered
   arbiter disjunct implies the index predicate;
   non-target partial-unique conflicts are preserved for multi-unique
-  `DO NOTHING`. DDL and DML coverage in
+  `DO NOTHING`. The btree planner now hides partial indexes from generic
+  costing and opts them back in only when the query's scalar filters imply
+  the partial-index predicate for simple column lookup shapes. DDL, DML, and
+  planner coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
   testing/go/import_dump_probe_test.go; upsert coverage in
   testing/go/insert_on_conflict_test.go.
-- [ ] Implement PostgreSQL-style partial-index predicate implication. Today
-  the partial-index planner is exact-shape based, and `ON CONFLICT` only covers
-  exact matches, conjunctions where the arbiter predicate contains every
-  index-predicate term, simple boolean equivalence, and simple same-column
-  numeric range implication including `BETWEEN`, same-column equality/IN-list
-  subset implication, same-expression `lower(text)` / `upper(text)` equality
-  and IN-list subset implication, plus simple boolean/numeric/exact-term OR
-  implication. Cross-column and broader expression-level semantic implication
+- [x] Broaden partial-index planner implication beyond exact-shape matching.
+  Simple btree lookup plans now use partial indexes when scalar query filters
+  imply the stored predicate, for example `score > 10` proving an index
+  predicate of `score > 0`, while non-implying filters such as `score >= 0`
+  stay on the table-scan path. Coverage in
+  testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.2.
+- [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
+  current conservative subset. Cross-column proofs, broader expression-level
+  semantic implication, and planner deparsing for more predicate families
   remain open.
   Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
