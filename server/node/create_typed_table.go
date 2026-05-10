@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/mysql_db"
 	"github.com/dolthub/go-mysql-server/sql/plan"
@@ -75,10 +76,6 @@ func (c *CreateTypedTable) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	if c.Temporary {
-		return nil, errors.Errorf("temporary typed tables are not yet supported")
-	}
-
 	db, err := core.GetSqlDatabaseFromContext(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err
@@ -96,7 +93,12 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 
-	if c.IfNotExists {
+	if c.IfNotExists && c.Temporary {
+		if temporaryTypedTableExists(ctx, db.Name(), c.TableName) {
+			return sql.RowsToRowIter(), nil
+		}
+	}
+	if c.IfNotExists && !c.Temporary {
 		_, ok, err := db.GetTableInsensitive(ctx, c.TableName)
 		if err != nil {
 			return nil, err
@@ -126,6 +128,22 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 
+	if c.Temporary {
+		tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TemporaryTableCreator)
+		if !ok {
+			return nil, sql.ErrTemporaryTableNotSupported.New()
+		}
+		err = tableCreator.CreateTemporaryTable(ctx, c.TableName, sql.NewPrimaryKeySchema(tableSchema), plan.GetDatabaseCollation(ctx, db))
+		tableExists := sql.ErrTableAlreadyExists.Is(err)
+		if tableExists && c.IfNotExists {
+			return sql.RowsToRowIter(), nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
+	}
+
 	tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TableCreator)
 	if !ok {
 		return nil, sql.ErrCreateTableNotSupported.New(db.Name())
@@ -141,6 +159,12 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func temporaryTypedTableExists(ctx *sql.Context, databaseName string, tableName string) bool {
+	session := dsess.DSessFromSess(ctx.Session)
+	_, ok := session.GetTemporaryTable(ctx, databaseName, tableName)
+	return ok
 }
 
 // Schema implements the interface sql.ExecSourceRel.

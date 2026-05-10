@@ -129,5 +129,31 @@ WHERE table_schema = 'app' AND table_name = 'addresses';`,
 				},
 			},
 		},
+		{
+			Name: "CREATE TEMP TABLE OF derives columns for session-local table",
+			SetUpScript: []string{
+				`CREATE TYPE typed_scratch AS (id INT, note TEXT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CREATE TEMP TABLE typed_scratch_rows OF typed_scratch;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO typed_scratch_rows VALUES (1, 'temp row');`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT id, note FROM typed_scratch_rows;`,
+					Expected: []sql.Row{
+						{int32(1), "temp row"},
+					},
+				},
+				{
+					Query:    `CREATE TEMP TABLE IF NOT EXISTS typed_scratch_rows OF missing_type;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
 	})
 }

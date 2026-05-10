@@ -1200,8 +1200,11 @@ typed-exception handling, and client-side query timeouts.
   the table schema from the referenced composite type, supports ordinary
   INSERT/SELECT, stores the referenced type in durable table metadata, reports
   nonzero `pg_class.reloftype`, and surfaces `information_schema.tables.is_typed`
-  plus the user-defined type schema/name. Still open: temporary typed tables and
-  PostgreSQL's typed-table table-definition/options surface. Pinned by
+  plus the user-defined type schema/name. Temporary `CREATE TABLE name OF
+  composite_type` now derives the same schema for a session-local table,
+  supports ordinary INSERT/SELECT, and treats `IF NOT EXISTS` as a no-op for an
+  existing temporary typed table. Still open: PostgreSQL's typed-table
+  table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
