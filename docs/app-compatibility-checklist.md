@@ -1957,14 +1957,19 @@ actually exercise.
   CRUD / transaction verification. ActiveRecord's migration framework runs
   `MigrationContext` over real migration files, records `schema_migrations`,
   creates FK / JSONB / text[] / decimal schema through migration DSL, and
-  verifies ORM CRUD plus commit / rollback afterward. Covered by
+  verifies ORM CRUD plus commit / rollback afterward. TypeORM's real migration
+  CLI runs `migration:run` against Doltgres using
+  `QueryRunner` schema-builder migration files, records its migration metadata
+  table, creates FK / JSONB / text[] / decimal schema plus indexes, and
+  verifies post-migrate CRUD plus commit / rollback. Covered by
   testing/go/drizzle_kit_introspect_test.go,
   testing/go/prisma_db_pull_test.go,
   testing/go/alembic_autogenerate_test.go,
-  testing/go/django_migration_test.go, and
-  testing/go/knex_migration_test.go, and
-  testing/go/active_record_migration_test.go. Tracked by dg-7ug.10.2.1,
-  dg-7ug.10.2.2, and dg-7ug.10.2.3.
+  testing/go/django_migration_test.go,
+  testing/go/knex_migration_test.go,
+  testing/go/active_record_migration_test.go, and
+  testing/go/typeorm_migration_test.go. Tracked by dg-7ug.10.2.1,
+  dg-7ug.10.2.2, dg-7ug.10.2.3, and dg-7ug.10.2.4.
 - [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
   is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
   TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,
@@ -1989,9 +1994,9 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
   Drizzle Kit, Prisma db pull, Alembic autogenerate, Django migrations, Knex
-  migrations, ActiveRecord migrations, and TablePlus-bundled `pg_dump` 17.0
-  now have live binary/framework harnesses. Tracked by dg-7ug.10.1 and
-  dg-7ug.10.2 under dg-7ug.10.
+  migrations, ActiveRecord migrations, TypeORM migrations, and
+  TablePlus-bundled `pg_dump` 17.0 now have live binary/framework harnesses.
+  Tracked by dg-7ug.10.1 and dg-7ug.10.2 under dg-7ug.10.
 - [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
   testing/go/tableplus_dump_test.go locates
   `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
