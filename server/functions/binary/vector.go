@@ -16,6 +16,7 @@ package binary
 
 import (
 	"math"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -40,6 +41,7 @@ func initVector() {
 	framework.RegisterFunction(vector_norm)
 	framework.RegisterFunction(l2_normalize)
 	framework.RegisterFunction(subvector)
+	framework.RegisterFunction(binary_quantize)
 	framework.RegisterFunction(vector_l2_squared_distance)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterOrEqual, vector_ge)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryGreaterThan, vector_gt)
@@ -205,6 +207,26 @@ var subvector = framework.Function3{
 		result := make([]float32, dimensions)
 		copy(result, values[start-1:start-1+int32(dimensions)])
 		return result, nil
+	},
+}
+
+var binary_quantize = framework.Function1{
+	Name:       "binary_quantize",
+	Return:     pgtypes.Bit,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		values := val.([]float32)
+		var result strings.Builder
+		result.Grow(len(values))
+		for _, value := range values {
+			if value > 0 {
+				result.WriteByte('1')
+			} else {
+				result.WriteByte('0')
+			}
+		}
+		return result.String(), nil
 	},
 }
 

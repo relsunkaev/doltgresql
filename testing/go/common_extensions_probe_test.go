@@ -415,6 +415,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{3, "5", "[0.6,0.8,0]", "[2,3]"}},
 				},
 				{
+					Query:    `SELECT binary_quantize('[-1,0,0.5,2]'::vector)::text, binary_quantize('[-2,0,-0.1]'::vector)::text;`,
+					Expected: []sql.Row{{"0011", "000"}},
+				},
+				{
 					Query:    `SELECT ('[1,2,3]'::vector + '[4,5,6]'::vector)::text, ('[1,2,3]'::vector - '[4,5,6]'::vector)::text, ('[1,2,3]'::vector * '[4,5,6]'::vector)::text, ('[1,2,3]'::vector || '[4,5,6]'::vector)::text;`,
 					Expected: []sql.Row{{"[5,7,9]", "[-3,-3,-3]", "[4,10,18]", "[1,2,3,4,5,6]"}},
 				},
