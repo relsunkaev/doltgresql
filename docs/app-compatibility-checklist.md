@@ -953,11 +953,20 @@ Do not check off an item until it has workload proof:
   serialize as comparable predicate keys, planner filters can deparse them,
   runtime and partial unique DML enforcement count characters for positive and
   negative lengths, and `ON CONFLICT` arbiter inference accepts the same exact-
-  expression shape; mismatched functions, lengths, result values, and raw
-  string semantic rewrites remain rejected. Coverage in
-  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  expression shape; mismatched functions, lengths, and result values remain
+  rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.10.
+- [x] Use raw source-string value-set predicates to imply matching
+  `left(...)` and `right(...)` partial-index predicates. Text equality and
+  IN-list filters on the source argument now imply fixed-count `left(...)` /
+  `right(...)` value-set predicates when every transformed literal is contained
+  in the partial predicate's literal set, including multibyte text and negative
+  count behavior. Non-matching transformed values, wrong functions/counts, and
+  broader predicates remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
-  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.10.
+  testing/go/insert_on_conflict_test.go. Tracked by dg-xip.
 - [x] Use deterministic `replace(expr, from, to)` predicates in partial-index
   implication paths. Three-argument `replace(...)` calls now serialize as
   comparable predicate keys, planner filters can deparse them, partial unique

@@ -1859,7 +1859,19 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	leftSemanticQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND code = 'åctive-a'`
 	assertCountResult(t, ctx, conn, leftSemanticQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, leftSemanticQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, leftSemanticQuery, true)
+
+	leftRawInQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND code IN ('åctive-a', 'åctor')`
+	assertCountResult(t, ctx, conn, leftRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, leftRawInQuery, true)
+
+	leftRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND code IN ('åctive-a', 'archive')`
+	assertCountResult(t, ctx, conn, leftRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, leftRawNonMatchingQuery, false)
+
+	leftRawWrongPrefixQuery := `SELECT count(id) FROM partial_planner_left WHERE tenant = 1 AND code = 'archive'`
+	assertCountResult(t, ctx, conn, leftRawWrongPrefixQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, leftRawWrongPrefixQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_right (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_right VALUES
@@ -1877,6 +1889,18 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	rightWrongLengthQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND right(code, 2) = 've'`
 	assertCountResult(t, ctx, conn, rightWrongLengthQuery, 4)
 	assertBenchmarkPlanShape(t, ctx, conn, rightWrongLengthQuery, false)
+
+	rightRawQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND code = 'active'`
+	assertCountResult(t, ctx, conn, rightRawQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, rightRawQuery, true)
+
+	rightRawInQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND code IN ('active', 'bctive')`
+	assertCountResult(t, ctx, conn, rightRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, rightRawInQuery, true)
+
+	rightRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_right WHERE tenant = 1 AND code IN ('active', 'inactive')`
+	assertCountResult(t, ctx, conn, rightRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, rightRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_replace (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_replace VALUES

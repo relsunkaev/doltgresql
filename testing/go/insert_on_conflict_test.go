@@ -1236,7 +1236,34 @@ ON CONFLICT (user_id) WHERE left(code, 2) = 'åc' DO UPDATE SET note = EXCLUDED.
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_left VALUES (4, 10, 'åction', 'wrong-predicate')
+					Query: `INSERT INTO partial_arb_left VALUES (4, 10, 'åction', 'raw-left-upsert')
+ON CONFLICT (user_id) WHERE code = 'åction' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_left ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "åctive-a", "raw-left-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_left VALUES (5, 10, 'åctor', 'raw-left-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('åction', 'åctor') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_left ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "åctive-a", "raw-left-in-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_left VALUES (6, 10, 'åction', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('åction', 'archive') DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_left VALUES (7, 10, 'åction', 'wrong-count')
 ON CONFLICT (user_id) WHERE left(code, 4) = 'åcti' DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
@@ -1262,7 +1289,34 @@ ON CONFLICT (user_id) WHERE right(code, -1) = 'ctive' DO UPDATE SET note = EXCLU
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_right VALUES (4, 20, 'cctive', 'wrong-predicate')
+					Query: `INSERT INTO partial_arb_right VALUES (4, 20, 'cctive', 'raw-right-upsert')
+ON CONFLICT (user_id) WHERE code = 'cctive' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_right ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 20, "åctive", "raw-right-upsert"},
+						{2, 20, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_right VALUES (5, 20, 'active', 'raw-right-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('active', 'bctive') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_right ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 20, "åctive", "raw-right-in-upsert"},
+						{2, 20, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_right VALUES (6, 20, 'cctive', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('cctive', 'inactive') DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_right VALUES (7, 20, 'cctive', 'wrong-count')
 ON CONFLICT (user_id) WHERE right(code, 2) = 've' DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},

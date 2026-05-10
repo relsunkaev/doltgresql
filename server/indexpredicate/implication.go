@@ -498,6 +498,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateLeftRightArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSignArgumentValueSetImplies(indexValues, queryValues)
 }
 
@@ -705,6 +706,101 @@ func predicateSubstringText(text string, start int64, count int64, hasCount bool
 		return string(runes[start:]), true
 	}
 	return string(runes[start : start+count]), true
+}
+
+func predicateLeftRightArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	functionName, argumentKey, count, ok := predicateLeftRightArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	transformedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		transformedValue, ok := predicateLeftRightStringLiteralKey(functionName, value, count)
+		if !ok {
+			return false
+		}
+		transformedValues[transformedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: transformedValues}.subsetOf(indexValues)
+}
+
+func predicateLeftRightArgumentExprKey(exprKey string) (string, string, int64, bool) {
+	for _, functionName := range []string{"left", "right"} {
+		if argumentKey, count, ok := predicateIntegerArgumentFunctionExprKey(exprKey, functionName); ok {
+			return functionName, argumentKey, count, true
+		}
+	}
+	return "", "", 0, false
+}
+
+func predicateIntegerArgumentFunctionExprKey(exprKey string, functionName string) (string, int64, bool) {
+	prefix := "func:" + functionName + "("
+	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
+		return "", 0, false
+	}
+	inner := strings.TrimSuffix(strings.TrimPrefix(exprKey, prefix), ")")
+	const marker = ",literal:n:"
+	idx := strings.LastIndex(inner, marker)
+	if idx < 0 {
+		return "", 0, false
+	}
+	count, ok := predicateIntegerFunctionArgumentKey("literal:n:" + inner[idx+len(marker):])
+	if !ok {
+		return "", 0, false
+	}
+	return inner[:idx], count, true
+}
+
+func predicateLeftRightStringLiteralKey(functionName string, value string, count int64) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	text := strings.TrimPrefix(value, prefix)
+	switch functionName {
+	case "left":
+		text = predicateLeftText(text, count)
+	case "right":
+		text = predicateRightText(text, count)
+	default:
+		return "", false
+	}
+	return prefix + text, true
+}
+
+func predicateLeftText(text string, count int64) string {
+	runes := []rune(text)
+	runeCount := int64(len(runes))
+	if count >= 0 {
+		if count >= runeCount {
+			return text
+		}
+		return string(runes[:count])
+	}
+	keep := runeCount + count
+	if keep <= 0 {
+		return ""
+	}
+	return string(runes[:keep])
+}
+
+func predicateRightText(text string, count int64) string {
+	runes := []rune(text)
+	runeCount := int64(len(runes))
+	if count >= 0 {
+		if count >= runeCount {
+			return text
+		}
+		return string(runes[runeCount-count:])
+	}
+	if count == -1<<63 {
+		return ""
+	}
+	skip := -count
+	if skip >= runeCount {
+		return ""
+	}
+	return string(runes[skip:])
 }
 
 func predicateSignArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

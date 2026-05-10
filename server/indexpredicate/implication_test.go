@@ -518,9 +518,15 @@ func TestImpliesLeftRightFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"left(code, 3) = 'act'", "left(code, 3) = 'act'"},
+		{"left(code, 3) = 'act'", "code = 'active'"},
+		{"left(code, 3) IN ('act', 'run')", "code IN ('active', 'runner')"},
+		{"left(code, -1) = 'activ'", "code = 'active'"},
 		{"left(code, 3) IN ('act', 'run')", "left(code, 3) = 'act'"},
 		{"right(code, 2) IS NOT NULL", "right(code, 2) = 'ok'"},
+		{"right(code, 2) = 've'", "code = 'active'"},
+		{"right(code, 2) IN ('ve', 'go')", "code IN ('active', 'cargo')"},
 		{"right(code, -1) = 'ctive'", "right(code, -1) = 'ctive'"},
+		{"right(code, -1) = 'ctive'", "code = 'active'"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -534,7 +540,11 @@ func TestImpliesLeftRightFunctionPredicates(t *testing.T) {
 		{"left(code, 3) = 'act'", "left(code, 4) = 'acti'"},
 		{"left(code, 3) = 'act'", "right(code, 3) = 'act'"},
 		{"right(code, 2) = 'ok'", "right(code, -2) = 'ok'"},
-		{"left(code, 3) = 'act'", "code = 'active'"},
+		{"left(code, 3) = 'act'", "code = 'runner'"},
+		{"left(code, 3) = 'act'", "code IN ('active', 'runner')"},
+		{"left(code, -1) = 'activ'", "code = 'runner'"},
+		{"right(code, -1) = 'ctive'", "code = 'pending'"},
+		{"right(code, 2) = 've'", "code IN ('active', 'go')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
