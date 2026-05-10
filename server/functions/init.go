@@ -150,6 +150,7 @@ func Init() {
 	initPgEncodingToChar()
 	initPgBackendPid()
 	initPgColumnSize()
+	initPgCrypto()
 	initPgDropReplicationSlot()
 	initPgFunctionIsVisible()
 	initPgGetConstraintdef()

@@ -98,6 +98,42 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "pgcrypto digest hmac and random-byte runtime calls",
+			SetUpScript: []string{
+				`CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT digest('abc', 'sha256')::text;`,
+					Expected: []sql.Row{{`\xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`}},
+				},
+				{
+					Query:    `SELECT digest('\x616263'::bytea, 'sha1')::text;`,
+					Expected: []sql.Row{{`\xa9993e364706816aba3e25717850c26c9cd0d89d`}},
+				},
+				{
+					Query:    `SELECT hmac('what do ya want for nothing?', 'Jefe', 'md5')::text;`,
+					Expected: []sql.Row{{`\x750c783e6ab0b503eaa86e310a5db738`}},
+				},
+				{
+					Query:    `SELECT hmac('\x7768617420646f2079612077616e7420666f72206e6f7468696e673f'::bytea, '\x4a656665'::bytea, 'md5')::text;`,
+					Expected: []sql.Row{{`\x750c783e6ab0b503eaa86e310a5db738`}},
+				},
+				{
+					Query:       `SELECT digest('abc', 'unknown');`,
+					ExpectedErr: `unsupported pgcrypto digest algorithm: unknown`,
+				},
+				{
+					Query:    `SELECT length(gen_random_bytes(16)::text)::text, left(gen_random_bytes(4)::text, 2);`,
+					Expected: []sql.Row{{"34", `\x`}},
+				},
+				{
+					Query:       `SELECT gen_random_bytes(1025);`,
+					ExpectedErr: `Length not in range`,
+				},
+			},
+		},
+		{
 			Name: "loaded extension appears in pg_extension",
 			SetUpScript: []string{
 				`CREATE EXTENSION "uuid-ossp";`,

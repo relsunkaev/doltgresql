@@ -138,9 +138,15 @@ Do not check off an item until it has workload proof:
   Doltgres does not load pgcrypto's PostgreSQL C library payload
   because it expects server symbols Doltgres does not export.
   `gen_random_uuid()` is registered as a native builtin and returns a
-  36-char UUID, covering the common ORM/default-PK path. `CREATE
-  EXTENSION vector` is accepted through a built-in pgvector shim and
-  the native `vector(n)` type round-trips scalar embeddings.
+  36-char UUID, covering the common ORM/default-PK path. Native
+  pgcrypto `digest(text, text)`, `digest(bytea, text)`,
+  `hmac(text, text, text)`, and `hmac(bytea, bytea, text)` cover
+  MD5, SHA1, SHA224, SHA256, SHA384, and SHA512, with unsupported
+  algorithms rejected explicitly; `gen_random_bytes(int4)` returns
+  cryptographic random `bytea` payloads for lengths 1-1024 and rejects
+  out-of-range requests. `CREATE EXTENSION vector` is accepted through
+  a built-in pgvector shim and the native `vector(n)` type round-trips
+  scalar embeddings.
   `CREATE EXTENSION btree_gist` is accepted as a catalog-only shim
   for dump restore. `CREATE EXTENSION citext`
   installs a case-insensitive text type in the target schema so dump
@@ -213,9 +219,10 @@ Do not check off an item until it has workload proof:
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
-  non-goals. Open surfaces include `pgcrypto` beyond the native
-  `gen_random_uuid()` compatibility path, pgvector behavior beyond scalar
-  `vector(n)` round-trips, `btree_gist` operator classes, and hstore
+  non-goals. Open surfaces include remaining `pgcrypto` encrypt/decrypt,
+  password-hashing, and advanced random helpers beyond the native UUID,
+  `gen_random_bytes`, and digest/HMAC subset, pgvector behavior beyond
+  scalar `vector(n)` round-trips, `btree_gist` operator classes, and hstore
   operators/functions/casts outside testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
