@@ -17,6 +17,7 @@ package functions
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/des"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/rand"
@@ -225,6 +226,16 @@ func pgcryptoRawCipher(data []byte, key []byte, iv []byte, cipherType string, en
 		block, err = blowfish.NewCipher(key)
 		if err != nil {
 			return nil, errors.Errorf("invalid pgcrypto bf key length: %d", len(key))
+		}
+	case "des":
+		block, err = des.NewCipher(key)
+		if err != nil {
+			return nil, errors.Errorf("invalid pgcrypto des key length: %d", len(key))
+		}
+	case "3des":
+		block, err = des.NewTripleDESCipher(key)
+		if err != nil {
+			return nil, errors.Errorf("invalid pgcrypto 3des key length: %d", len(key))
 		}
 	default:
 		return nil, errors.Errorf("unsupported pgcrypto cipher algorithm: %s", config.algorithm)

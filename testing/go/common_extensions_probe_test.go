@@ -198,6 +198,30 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					ExpectedErr: `invalid pgcrypto bf key length: 0`,
 				},
 				{
+					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x3031323334353637'::bytea, 'des')::text;`,
+					Expected: []sql.Row{{`\x479c97a9a5e66d627eb30c9715f6aee7`}},
+				},
+				{
+					Query:    `SELECT decrypt('\x479c97a9a5e66d627eb30c9715f6aee7'::bytea, '\x3031323334353637'::bytea, 'des')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:    `SELECT encrypt('\x68656c6c6f20706763727970746f'::bytea, '\x303132333435363738396162636465663031323334353637'::bytea, '3des')::text;`,
+					Expected: []sql.Row{{`\xc4aa8daa2d432d02d5bf4fe0dac71441`}},
+				},
+				{
+					Query:    `SELECT encrypt_iv('\x68656c6c6f20706763727970746f'::bytea, '\x303132333435363738396162636465663031323334353637'::bytea, '\x6976697669766976'::bytea, '3des-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x66c67f410cc4d89d332c04d3ae345ed2`}},
+				},
+				{
+					Query:    `SELECT decrypt_iv('\x66c67f410cc4d89d332c04d3ae345ed2'::bytea, '\x303132333435363738396162636465663031323334353637'::bytea, '\x6976697669766976'::bytea, '3des-cbc/pad:pkcs')::text;`,
+					Expected: []sql.Row{{`\x68656c6c6f20706763727970746f`}},
+				},
+				{
+					Query:       `SELECT encrypt('\x00'::bytea, '\x00'::bytea, '3des');`,
+					ExpectedErr: `invalid pgcrypto 3des key length: 1`,
+				},
+				{
 					Query:       `SELECT gen_salt('bf', 3);`,
 					ExpectedErr: `gen_salt iteration count 3 is outside allowed inclusive range 4..31 for bf`,
 				},
