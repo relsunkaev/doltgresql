@@ -346,14 +346,19 @@ func anyPredicateTermImplies(indexExpr tree.Expr, arbiterTerms map[string]tree.E
 
 func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
 	indexComparison, ok := numericPredicateComparisonFromExpr(indexExpr)
+	if ok {
+		arbiterComparison, ok := numericPredicateComparisonFromExpr(arbiterExpr)
+		if !ok || !strings.EqualFold(indexComparison.column, arbiterComparison.column) {
+			return false
+		}
+		return numericComparisonRange(arbiterComparison).subsetOf(numericComparisonRange(indexComparison))
+	}
+	indexBool, ok := booleanPredicateComparisonFromExpr(indexExpr)
 	if !ok {
 		return false
 	}
-	arbiterComparison, ok := numericPredicateComparisonFromExpr(arbiterExpr)
-	if !ok || !strings.EqualFold(indexComparison.column, arbiterComparison.column) {
-		return false
-	}
-	return numericComparisonRange(arbiterComparison).subsetOf(numericComparisonRange(indexComparison))
+	arbiterBool, ok := booleanPredicateComparisonFromExpr(arbiterExpr)
+	return ok && strings.EqualFold(indexBool.column, arbiterBool.column) && indexBool.value == arbiterBool.value
 }
 
 type numericPredicateComparison struct {
@@ -369,6 +374,11 @@ type numericPredicateRange struct {
 	hasUpper       bool
 	upper          float64
 	upperInclusive bool
+}
+
+type booleanPredicateComparison struct {
+	column string
+	value  bool
 }
 
 func numericPredicateComparisonFromExpr(expr tree.Expr) (numericPredicateComparison, bool) {
@@ -390,6 +400,35 @@ func numericPredicateComparisonFromExpr(expr tree.Expr) (numericPredicateCompari
 	return numericPredicateComparison{}, false
 }
 
+func booleanPredicateComparisonFromExpr(expr tree.Expr) (booleanPredicateComparison, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return booleanPredicateComparisonFromExpr(expr.Expr)
+	case *tree.UnresolvedName:
+		column, ok := predicateColumnName(expr)
+		return booleanPredicateComparison{column: column, value: true}, ok
+	case *tree.NotExpr:
+		if column, ok := predicateColumnName(expr.Expr); ok {
+			return booleanPredicateComparison{column: column, value: false}, true
+		}
+	case *tree.ComparisonExpr:
+		if expr.Operator != tree.EQ && expr.Operator != tree.IsNotDistinctFrom {
+			return booleanPredicateComparison{}, false
+		}
+		if column, ok := predicateColumnName(expr.Left); ok {
+			if value, ok := predicateBoolConstant(expr.Right); ok {
+				return booleanPredicateComparison{column: column, value: value}, true
+			}
+		}
+		if column, ok := predicateColumnName(expr.Right); ok {
+			if value, ok := predicateBoolConstant(expr.Left); ok {
+				return booleanPredicateComparison{column: column, value: value}, true
+			}
+		}
+	}
+	return booleanPredicateComparison{}, false
+}
+
 func predicateColumnName(expr tree.Expr) (string, bool) {
 	switch expr := expr.(type) {
 	case *tree.ParenExpr:
@@ -398,6 +437,16 @@ func predicateColumnName(expr tree.Expr) (string, bool) {
 		return strings.ToLower(strings.Trim(tree.AsString(expr), `"`)), true
 	}
 	return "", false
+}
+
+func predicateBoolConstant(expr tree.Expr) (bool, bool) {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return predicateBoolConstant(expr.Expr)
+	case *tree.DBool:
+		return bool(*expr), true
+	}
+	return false, false
 }
 
 func predicateNumericConstant(expr tree.Expr) (float64, bool) {

@@ -620,6 +620,33 @@ ON CONFLICT (user_id) WHERE score > 10 AND score <= 100 DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports boolean predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_bool (id INT PRIMARY KEY, user_id INT, active BOOL, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_bool_active_idx ON partial_arb_bool (user_id) WHERE active;",
+				"CREATE UNIQUE INDEX partial_arb_bool_inactive_idx ON partial_arb_bool (user_id) WHERE NOT active;",
+				"INSERT INTO partial_arb_bool VALUES (1, 10, true, 'old-active'), (2, 10, false, 'old-inactive'), (3, 10, NULL, 'unknown');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_bool VALUES (4, 10, true, 'new-active')
+ON CONFLICT (user_id) WHERE active = true DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `INSERT INTO partial_arb_bool VALUES (5, 10, false, 'new-inactive')
+ON CONFLICT (user_id) WHERE active = false DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, active, note FROM partial_arb_bool ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "t", "new-active"},
+						{2, 10, "f", "new-inactive"},
+						{3, 10, nil, "unknown"},
+					},
+				},
+			},
+		},
 	})
 }
 
