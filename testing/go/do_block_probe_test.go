@@ -547,6 +547,99 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block chooses first matching exception handler",
+			SetUpScript: []string{
+				`CREATE TABLE do_multi_handler_seen (
+					marker TEXT NOT NULL,
+					message TEXT NOT NULL,
+					sqlstate TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							message TEXT;
+							returned_state TEXT;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'duplicate key branch'
+									USING ERRCODE = 'unique_violation';
+							EXCEPTION
+								WHEN division_by_zero THEN
+									INSERT INTO do_multi_handler_seen VALUES ('wrong', 'division', '22012');
+								WHEN unique_violation THEN
+									GET STACKED DIAGNOSTICS
+										message = MESSAGE_TEXT,
+										returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_multi_handler_seen VALUES ('matched', message, returned_state);
+								WHEN OTHERS THEN
+									INSERT INTO do_multi_handler_seen VALUES ('wrong', 'others', 'XX000');
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT marker, message, sqlstate FROM do_multi_handler_seen;`,
+					Expected: []sql.Row{{"matched", "duplicate key branch", "23505"}},
+				},
+			},
+		},
+		{
+			Name: "DO block matches SQLSTATE exception handler",
+			SetUpScript: []string{
+				`CREATE TABLE do_sqlstate_handler_seen (
+					marker TEXT NOT NULL,
+					sqlstate TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							returned_state TEXT;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'sqlstate branch'
+									USING ERRCODE = 'P0001';
+							EXCEPTION
+								WHEN SQLSTATE '23505' THEN
+									INSERT INTO do_sqlstate_handler_seen VALUES ('wrong', '23505');
+								WHEN SQLSTATE 'P0001' THEN
+									GET STACKED DIAGNOSTICS returned_state = RETURNED_SQLSTATE;
+									INSERT INTO do_sqlstate_handler_seen VALUES ('matched', returned_state);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT marker, sqlstate FROM do_sqlstate_handler_seen;`,
+					Expected: []sql.Row{{"matched", "P0001"}},
+				},
+			},
+		},
+		{
+			Name:        "DO block multiple exception handlers propagate when unmatched",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'uncaught branch';
+							EXCEPTION
+								WHEN division_by_zero THEN
+									RAISE NOTICE 'wrong handler';
+								WHEN unique_violation THEN
+									RAISE NOTICE 'wrong handler';
+							END;
+						END;
+					$$;`,
+					ExpectedErr: "uncaught branch",
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

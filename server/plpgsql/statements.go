@@ -296,15 +296,14 @@ func (stmt ExceptionBlock) OperationSize() int32 {
 
 // AppendOperations implements the interface Statement.
 func (stmt ExceptionBlock) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
-	if len(stmt.Handlers) != 1 {
-		return errors.New("PL/pgSQL exception blocks currently support exactly one handler")
+	if len(stmt.Handlers) == 0 {
+		return errors.New("PL/pgSQL exception block requires at least one handler")
 	}
-	handler := stmt.Handlers[0]
 	markerIndex := len(*ops)
 	*ops = append(*ops, InterpreterOperation{
 		OpCode: OpCode_Exception,
 		Options: map[string]string{
-			"handlerConditions": strings.Join(handler.Conditions, ","),
+			"handlerCount": strconv.Itoa(len(stmt.Handlers)),
 		},
 	})
 	for _, innerStmt := range stmt.Body {
@@ -313,14 +312,30 @@ func (stmt ExceptionBlock) AppendOperations(ops *[]InterpreterOperation, stack *
 		}
 	}
 	bodyEnd := len(*ops)
-	for _, innerStmt := range handler.Body {
-		if err := innerStmt.AppendOperations(ops, stack); err != nil {
-			return err
+	for i, handler := range stmt.Handlers {
+		handlerStart := len(*ops)
+		conditionKey := fmt.Sprintf("handlerConditions.%d", i)
+		startKey := fmt.Sprintf("handlerStart.%d", i)
+		endKey := fmt.Sprintf("handlerEnd.%d", i)
+		(*ops)[markerIndex].Options[conditionKey] = strings.Join(handler.Conditions, ",")
+		(*ops)[markerIndex].Options[startKey] = strconv.Itoa(handlerStart)
+		if i == 0 {
+			(*ops)[markerIndex].Options["handlerConditions"] = (*ops)[markerIndex].Options[conditionKey]
+			(*ops)[markerIndex].Options["handlerStart"] = (*ops)[markerIndex].Options[startKey]
+		}
+		for _, innerStmt := range handler.Body {
+			if err := innerStmt.AppendOperations(ops, stack); err != nil {
+				return err
+			}
+		}
+		handlerEnd := len(*ops)
+		(*ops)[markerIndex].Options[endKey] = strconv.Itoa(handlerEnd)
+		if i == 0 {
+			(*ops)[markerIndex].Options["handlerEnd"] = (*ops)[markerIndex].Options[endKey]
 		}
 	}
 	handlerEnd := len(*ops)
 	(*ops)[markerIndex].Index = bodyEnd
-	(*ops)[markerIndex].Options["handlerStart"] = strconv.Itoa(bodyEnd)
 	(*ops)[markerIndex].Options["handlerEnd"] = strconv.Itoa(handlerEnd)
 	return nil
 }

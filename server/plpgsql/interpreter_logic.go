@@ -223,23 +223,20 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_DeleteInto:
 			// TODO: implement
 		case OpCode_Exception:
-			handlerStart, err := strconv.Atoi(operation.Options["handlerStart"])
-			if err != nil {
-				return nil, false, err
-			}
-			handlerEnd, err := strconv.Atoi(operation.Options["handlerEnd"])
+			handlers, handlerEnd, err := exceptionHandlersFromOperation(operation)
 			if err != nil {
 				return nil, false, err
 			}
 			ret, returned, err := runOperations(ctx, iFunc, stack, state, counter+1, operation.Index)
 			if err != nil {
 				diagnostics := plpgsqlExceptionDiagnosticsFromError(err)
-				if !exceptionHandlerMatches(operation.Options["handlerConditions"], diagnostics) {
+				handler, ok := matchingExceptionHandler(handlers, diagnostics)
+				if !ok {
 					return nil, false, err
 				}
 				priorDiagnostics := state.stackedDiagnostics
 				state.stackedDiagnostics = &diagnostics
-				ret, returned, err = runOperations(ctx, iFunc, stack, state, handlerStart, handlerEnd)
+				ret, returned, err = runOperations(ctx, iFunc, stack, state, handler.start, handler.end)
 				state.stackedDiagnostics = priorDiagnostics
 				if err != nil {
 					return nil, false, err
@@ -558,7 +555,7 @@ func plpgsqlExceptionDiagnosticsFromRaise(ctx *sql.Context, iFunc InterpretedFun
 		value = plpgsqlRaiseOptionText(value)
 		switch NoticeOptionType(i) {
 		case NoticeOptionTypeErrCode:
-			diagnostics.ReturnedSQLState = value
+			diagnostics.ReturnedSQLState = plpgsqlNormalizeConditionSQLState(value)
 		case NoticeOptionTypeMessage:
 			diagnostics.MessageText = value
 		case NoticeOptionTypeDetail:
@@ -607,18 +604,103 @@ func stackedDiagnosticValue(diagnostics plpgsqlExceptionDiagnostics, kind string
 	}
 }
 
+type exceptionHandlerOperation struct {
+	conditions string
+	start      int
+	end        int
+}
+
+func exceptionHandlersFromOperation(operation InterpreterOperation) ([]exceptionHandlerOperation, int, error) {
+	handlerCount := 1
+	if countText := operation.Options["handlerCount"]; countText != "" {
+		count, err := strconv.Atoi(countText)
+		if err != nil {
+			return nil, 0, err
+		}
+		handlerCount = count
+	}
+	handlers := make([]exceptionHandlerOperation, 0, handlerCount)
+	handlerEnd := 0
+	for i := 0; i < handlerCount; i++ {
+		conditionsKey := "handlerConditions"
+		startKey := "handlerStart"
+		endKey := "handlerEnd"
+		if operation.Options["handlerCount"] != "" {
+			conditionsKey = fmt.Sprintf("handlerConditions.%d", i)
+			startKey = fmt.Sprintf("handlerStart.%d", i)
+			endKey = fmt.Sprintf("handlerEnd.%d", i)
+		}
+		handlerStart, err := strconv.Atoi(operation.Options[startKey])
+		if err != nil {
+			return nil, 0, err
+		}
+		currentHandlerEnd, err := strconv.Atoi(operation.Options[endKey])
+		if err != nil {
+			return nil, 0, err
+		}
+		handlers = append(handlers, exceptionHandlerOperation{
+			conditions: operation.Options[conditionsKey],
+			start:      handlerStart,
+			end:        currentHandlerEnd,
+		})
+		handlerEnd = currentHandlerEnd
+	}
+	return handlers, handlerEnd, nil
+}
+
+func matchingExceptionHandler(handlers []exceptionHandlerOperation, diagnostics plpgsqlExceptionDiagnostics) (exceptionHandlerOperation, bool) {
+	for _, handler := range handlers {
+		if exceptionHandlerMatches(handler.conditions, diagnostics) {
+			return handler, true
+		}
+	}
+	return exceptionHandlerOperation{}, false
+}
+
 func exceptionHandlerMatches(conditions string, diagnostics plpgsqlExceptionDiagnostics) bool {
 	for _, condition := range strings.Split(conditions, ",") {
-		switch strings.ToLower(strings.TrimSpace(condition)) {
-		case "others":
+		condition = strings.ToLower(strings.TrimSpace(condition))
+		if condition == "" {
+			continue
+		}
+		if condition == "others" {
 			return true
-		case "raise_exception":
-			if diagnostics.ReturnedSQLState == "P0001" {
-				return true
-			}
+		}
+		if plpgsqlNormalizeConditionSQLState(condition) == diagnostics.ReturnedSQLState {
+			return true
 		}
 	}
 	return false
+}
+
+func plpgsqlNormalizeConditionSQLState(condition string) string {
+	condition = strings.TrimSpace(condition)
+	if len(condition) >= len("sqlstate ") && strings.EqualFold(condition[:len("sqlstate ")], "sqlstate ") {
+		condition = strings.TrimSpace(condition[len("sqlstate "):])
+	}
+	condition = plpgsqlRaiseOptionText(condition)
+	conditionName := strings.ToLower(condition)
+	if sqlState, ok := plpgsqlConditionNameSQLStates[conditionName]; ok {
+		return sqlState
+	}
+	if len(condition) == 5 {
+		return strings.ToUpper(condition)
+	}
+	return condition
+}
+
+var plpgsqlConditionNameSQLStates = map[string]string{
+	"case_not_found":              "20000",
+	"check_violation":             "23514",
+	"division_by_zero":            "22012",
+	"exclusion_violation":         "23P01",
+	"foreign_key_violation":       "23503",
+	"invalid_text_representation": "22P02",
+	"no_data_found":               "P0002",
+	"not_null_violation":          "23502",
+	"raise_exception":             "P0001",
+	"too_many_rows":               "P0003",
+	"unique_violation":            "23505",
 }
 
 // convertRowsToRecords iterates overs |rows| and converts each field in each row

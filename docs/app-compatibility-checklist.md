@@ -610,6 +610,14 @@ Do not check off an item until it has workload proof:
     rejected outside an exception handler. Pinned by
     testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
     Tracked by dg-7ug.20.1.
+  - [x] Multiple PL/pgSQL `EXCEPTION` handlers execute the first branch whose
+    named condition or `SQLSTATE` literal matches the raised SQLSTATE, while
+    later handlers are skipped and unmatched exceptions propagate. `RAISE
+    EXCEPTION ... USING ERRCODE = '<condition name>'` now normalizes common
+    PostgreSQL condition names such as `unique_violation` to their SQLSTATE for
+    stacked diagnostics and handler matching. Pinned by
+    testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
+    Tracked by dg-7ug.20.2.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

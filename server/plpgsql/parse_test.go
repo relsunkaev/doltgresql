@@ -297,3 +297,52 @@ func TestParseExceptionBlockStackedDiagnostics(t *testing.T) {
 		}
 	}
 }
+
+func TestParseExceptionBlockMultipleHandlers(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			message TEXT;
+		BEGIN
+			RAISE EXCEPTION 'custom exception'
+				USING ERRCODE = 'unique_violation';
+		EXCEPTION
+			WHEN division_by_zero THEN
+				message := 'wrong handler';
+			WHEN unique_violation THEN
+				GET STACKED DIAGNOSTICS message = MESSAGE_TEXT;
+			WHEN OTHERS THEN
+				message := 'fallback handler';
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var exceptionOp *InterpreterOperation
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Exception {
+			exceptionOp = &ops[i]
+			break
+		}
+	}
+	if exceptionOp == nil {
+		t.Fatalf("expected exception operation, found %#v", ops)
+	}
+	if exceptionOp.Options["handlerCount"] != "3" {
+		t.Fatalf("handler count = %q, expected 3; op: %#v", exceptionOp.Options["handlerCount"], exceptionOp)
+	}
+	for _, key := range []string{"handlerConditions.0", "handlerConditions.1", "handlerConditions.2"} {
+		if exceptionOp.Options[key] == "" {
+			t.Fatalf("missing %s; op: %#v", key, exceptionOp)
+		}
+	}
+	if exceptionOp.Options["handlerConditions.0"] != "division_by_zero" {
+		t.Fatalf("first handler conditions = %q, expected division_by_zero", exceptionOp.Options["handlerConditions.0"])
+	}
+	if exceptionOp.Options["handlerConditions.1"] != "unique_violation" {
+		t.Fatalf("second handler conditions = %q, expected unique_violation", exceptionOp.Options["handlerConditions.1"])
+	}
+	if exceptionOp.Options["handlerConditions.2"] != "others" {
+		t.Fatalf("third handler conditions = %q, expected others", exceptionOp.Options["handlerConditions.2"])
+	}
+}
