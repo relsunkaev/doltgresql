@@ -212,6 +212,44 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports IN predicates",
+			SetUpScript: []string{
+				`CREATE TABLE workflow_states (id INT PRIMARY KEY, user_id INT, status TEXT);`,
+				`CREATE UNIQUE INDEX workflow_states_open_idx ON workflow_states (user_id) WHERE status IN ('active', 'pending');`,
+				`CREATE TABLE workflow_not_states (id INT PRIMARY KEY, user_id INT, status TEXT);`,
+				`CREATE UNIQUE INDEX workflow_not_states_open_idx ON workflow_not_states (user_id) WHERE status NOT IN ('archived', 'deleted');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO workflow_states VALUES (1, 10, 'active'), (2, 10, 'archived');`,
+				},
+				{
+					Query:       `INSERT INTO workflow_states VALUES (3, 10, 'pending');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE workflow_states SET status = 'pending' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `UPDATE workflow_states SET status = 'archived' WHERE id = 1;`,
+				},
+				{
+					Query: `INSERT INTO workflow_states VALUES (3, 10, 'pending');`,
+				},
+				{
+					Query: `INSERT INTO workflow_not_states VALUES (1, 20, 'active'), (2, 20, 'archived');`,
+				},
+				{
+					Query:       `INSERT INTO workflow_not_states VALUES (3, 20, 'pending');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO workflow_not_states VALUES (4, 20, 'deleted');`,
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,

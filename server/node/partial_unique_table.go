@@ -756,6 +756,12 @@ func (p *partialIndexPredicate) validateColumns(expr tree.Expr) error {
 			return err
 		}
 		return p.validateColumns(expr.To)
+	case *tree.Tuple:
+		for _, tupleExpr := range expr.Exprs {
+			if err := p.validateColumns(tupleExpr); err != nil {
+				return err
+			}
+		}
 	case *tree.UnresolvedName:
 		name, err := p.columnName(expr)
 		if err != nil {
@@ -906,6 +912,10 @@ func predicateNot(truth predicateTruth) predicateTruth {
 }
 
 func (p *partialIndexPredicate) evalComparison(ctx *sql.Context, row sql.Row, expr *tree.ComparisonExpr) (predicateTruth, error) {
+	if expr.Operator == tree.In || expr.Operator == tree.NotIn {
+		return p.evalInComparison(ctx, row, expr)
+	}
+
 	left, err := p.evalValue(ctx, row, expr.Left)
 	if err != nil {
 		return predicateUnknown, err
@@ -947,6 +957,51 @@ func (p *partialIndexPredicate) evalComparison(ctx *sql.Context, row sql.Row, ex
 	default:
 		return predicateUnknown, errors.Errorf("partial unique index predicate operator %s is not yet supported", expr.Operator.String())
 	}
+}
+
+func (p *partialIndexPredicate) evalInComparison(ctx *sql.Context, row sql.Row, expr *tree.ComparisonExpr) (predicateTruth, error) {
+	left, err := p.evalValue(ctx, row, expr.Left)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	if left.value == nil {
+		return predicateUnknown, nil
+	}
+	tuple, ok := tree.StripParens(expr.Right).(*tree.Tuple)
+	if !ok {
+		return predicateUnknown, errors.Errorf("partial unique index predicate IN expression %T is not yet supported", expr.Right)
+	}
+
+	sawUnknown := false
+	for _, tupleExpr := range tuple.Exprs {
+		right, err := p.evalValue(ctx, row, tupleExpr)
+		if err != nil {
+			return predicateUnknown, err
+		}
+		if right.value == nil {
+			sawUnknown = true
+			continue
+		}
+		cmp, err := comparePredicateValues(ctx, left, right)
+		if err != nil {
+			return predicateUnknown, err
+		}
+		if cmp == 0 {
+			truth := predicateTrue
+			if expr.Operator == tree.NotIn {
+				truth = predicateFalse
+			}
+			return truth, nil
+		}
+	}
+	if sawUnknown {
+		return predicateUnknown, nil
+	}
+	truth := predicateFalse
+	if expr.Operator == tree.NotIn {
+		truth = predicateTrue
+	}
+	return truth, nil
 }
 
 func comparePredicateDistinct(ctx *sql.Context, left predicateValue, right predicateValue) (bool, error) {
