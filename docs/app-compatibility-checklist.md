@@ -1657,10 +1657,17 @@ actually exercise.
   relations. Alembic `revision --autogenerate` runs through the real
   Alembic + SQLAlchemy + psycopg path against a live Doltgres instance and
   emits an empty migration for the matching schema slice instead of spurious
-  table, column, index, or foreign-key operations. Covered by
-  testing/go/drizzle_kit_introspect_test.go and
-  testing/go/prisma_db_pull_test.go, and
-  testing/go/alembic_autogenerate_test.go.
+  table, column, index, or foreign-key operations. Django 5.2's real
+  `manage.py makemigrations` / `manage.py migrate` commands run against
+  Doltgres through the PostgreSQL backend, then the Django ORM verifies
+  startup `application_name`, migrated models with FK / JSONB / text[] /
+  numeric fields, relation reads, commit, and rollback with full-row ORM
+  reads; projected `QuerySet.count()` / `exists()` stats planning remains
+  tracked separately by dg-7ug.10.3.1. Covered by
+  testing/go/drizzle_kit_introspect_test.go,
+  testing/go/prisma_db_pull_test.go,
+  testing/go/alembic_autogenerate_test.go, and
+  testing/go/django_migration_test.go. Tracked by dg-7ug.10.2.1.
 - [x] Authorization-policy deployment - Zero `.permissions.sql` now loads and
   is interpreted through the real Zero 1.4.0 CLI path. The Docker-backed
   TestZeroDiscoverModeSmoke writes a Zero `schema.ts`/permissions module,
@@ -1678,15 +1685,15 @@ actually exercise.
 These items track the wire-protocol and catalog-correctness surfaces
 that GUI editors (TablePlus, DataGrip, DBeaver, pgAdmin) and ORM
 introspection tools (Drizzle Kit, Prisma db pull, Alembic
-autogenerate) inspect to drive editable result grids, schema diffs,
-typed-exception handling, and client-side query timeouts.
+autogenerate, Django migrations) inspect to drive editable result grids,
+schema diffs, typed-exception handling, and client-side query timeouts.
 
 - [ ] Run actual GUI binaries, and any remaining migration binaries required by
   workloads, against a live Doltgres instance for wire-protocol and catalog
   metadata surfaces that are currently proven only through Go-level harnesses.
-  Drizzle Kit, Prisma db pull, Alembic autogenerate, and TablePlus-bundled
-  `pg_dump` 17.0 now have live binary harnesses. Tracked by dg-7ug.10.1 and
-  dg-7ug.10.2 under dg-7ug.10.
+  Drizzle Kit, Prisma db pull, Alembic autogenerate, Django migrations, and
+  TablePlus-bundled `pg_dump` 17.0 now have live binary harnesses. Tracked by
+  dg-7ug.10.1 and dg-7ug.10.2 under dg-7ug.10.
 - [x] Run the TablePlus-bundled PostgreSQL dump binary against live Doltgres.
   testing/go/tableplus_dump_test.go locates
   `/Applications/TablePlus.app/Contents/Resources/dump_pg_17.0`, sets the
@@ -1907,12 +1914,15 @@ typed-exception handling, and client-side query timeouts.
   JSONB/text[] values, relation joins, and transaction boundaries. The
   Sequelize harness covers another real ORM over `pg` with `sync({ force:
   true })`, model CRUD, associations, JSONB/text[] values, pooled reads, and
-  managed transactions.
+  managed transactions. Django's PostgreSQL backend covers real migration
+  commands, model CRUD, JSONB/text[] values, relation reads, and transaction
+  boundaries, with projected count/exists planning tracked by dg-7ug.10.3.1.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, psycopg,
-  psycopg2, Ruby `pg`, libpq, Go `database/sql` with `github.com/lib/pq`, and
-  Java JDBC, and Rust `sqlx`. Add runnable smoke gates for the advertised
-  client and migration-tool matrix before claiming broad client compatibility.
+  postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
+  psycopg, psycopg2, Ruby `pg`, libpq, Go `database/sql` with
+  `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add runnable smoke gates
+  for the advertised client and migration-tool matrix before claiming broad
+  client compatibility.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
