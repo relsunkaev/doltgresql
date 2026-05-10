@@ -1164,6 +1164,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if arg.value == nil {
 		return predicateValue{}, nil
 	}
+	if name == "abs" {
+		return predicateAbsValue(arg.value)
+	}
 	text, ok := arg.value.(string)
 	if !ok {
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s does not support %T", name, arg.value)
@@ -1183,6 +1186,37 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
+	}
+}
+
+func predicateAbsValue(value any) (predicateValue, error) {
+	intValue, ok := predicateSignedIntegerValue(value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function abs does not support %T", value)
+	}
+	if intValue == -1<<63 {
+		return predicateValue{}, errors.New("partial unique index predicate function abs overflowed int64")
+	}
+	if intValue < 0 {
+		intValue = -intValue
+	}
+	return predicateValue{value: intValue}, nil
+}
+
+func predicateSignedIntegerValue(value any) (int64, bool) {
+	switch value := value.(type) {
+	case int:
+		return int64(value), true
+	case int8:
+		return int64(value), true
+	case int16:
+		return int64(value), true
+	case int32:
+		return int64(value), true
+	case int64:
+		return value, true
+	default:
+		return 0, false
 	}
 }
 

@@ -299,3 +299,30 @@ func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesAbsFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"abs(delta) = 10", "abs(delta) = 10"},
+		{"abs(delta) IN (10, 20)", "abs(delta) = 10"},
+		{"abs(delta) IS NOT NULL", "abs(delta) = 10"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"abs(delta) = 10", "delta = 10"},
+		{"abs(delta) = 10", "abs(delta) = 11"},
+		{"abs(delta) IN (10, 20)", "abs(delta) IN (10, 30)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

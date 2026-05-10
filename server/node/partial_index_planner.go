@@ -421,6 +421,8 @@ func plannerFunctionCallPredicateSQL(name string, children []sql.Expression) (st
 
 func plannerCanonicalFunctionPredicateName(name string) (string, bool) {
 	switch name {
+	case "abs":
+		return name, true
 	case "lower", "upper", "btrim", "ltrim", "rtrim":
 		return name, true
 	case "char_length", "character_length", "length":

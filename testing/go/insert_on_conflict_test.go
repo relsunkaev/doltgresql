@@ -948,6 +948,32 @@ ON CONFLICT (code) WHERE btrim(code) = 'archived' DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports abs predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_abs (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_abs_user_idx ON partial_arb_abs (user_id) WHERE abs(delta) = 10;",
+				"INSERT INTO partial_arb_abs VALUES (1, 10, -10, 'old-active'), (2, 10, 5, 'small-delta');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_abs VALUES (3, 10, 10, 'abs-upsert')
+ON CONFLICT (user_id) WHERE abs(delta) = 10 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_abs ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(-10), "abs-upsert"},
+						{2, int32(10), int64(5), "small-delta"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_abs VALUES (4, 10, 10, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE delta = 10 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

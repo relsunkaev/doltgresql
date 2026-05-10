@@ -277,6 +277,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports abs numeric predicate",
+			SetUpScript: []string{
+				`CREATE TABLE absolute_scores (id INT PRIMARY KEY, user_id INT, delta BIGINT);`,
+				`CREATE UNIQUE INDEX absolute_scores_user_delta_idx
+					ON absolute_scores (user_id)
+					WHERE abs(delta) = 10;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO absolute_scores VALUES
+						(1, 10, -10),
+						(2, 10, 5);`,
+				},
+				{
+					Query:       `INSERT INTO absolute_scores VALUES (3, 10, 10);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO absolute_scores VALUES (4, 10, -5);`,
+				},
+				{
+					Query:       `UPDATE absolute_scores SET delta = 10 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -588,4 +615,24 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	coalesceSemanticQuery := `SELECT count(id) FROM partial_planner_coalesce WHERE tenant = 1 AND status = 'active'`
 	assertCountResult(t, ctx, conn, coalesceSemanticQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, coalesceSemanticQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_abs (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_abs VALUES
+		(1, 1, -10),
+		(2, 1, 10),
+		(3, 1, 5),
+		(4, 2, -10)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_abs_tenant_idx ON partial_planner_abs (tenant) WHERE abs(delta) = 10")
+
+	absImpliedQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND abs(delta) = 10`
+	assertCountResult(t, ctx, conn, absImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, absImpliedQuery, true)
+
+	absSignSensitiveQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta = 10`
+	assertCountResult(t, ctx, conn, absSignSensitiveQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, absSignSensitiveQuery, false)
+
+	absNonMatchingQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND abs(delta) = 5`
+	assertCountResult(t, ctx, conn, absNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, absNonMatchingQuery, false)
 }

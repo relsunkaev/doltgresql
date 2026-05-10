@@ -755,6 +755,14 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.4.
+- [x] Use deterministic unary numeric `abs(expr)` predicates in partial-index
+  implication paths. `abs(expr)` now serializes as a comparable predicate key,
+  participates in planner predicate serialization, evaluates signed integer
+  values for partial unique DML enforcement, and works for `ON CONFLICT`
+  arbiter inference; sign-sensitive predicates such as `expr = 10` do not imply
+  `abs(expr) = 10`. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.5.
 - [x] Use same-expression exclusion-set predicates in partial-index
   implication paths. `NOT IN`, `NOT (expr IN (...))`, `!=`, and
   `IS DISTINCT FROM` predicates now compare excluded literal sets, so query
