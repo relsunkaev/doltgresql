@@ -27,6 +27,8 @@ import (
 	doltsqle "github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/sqlutil"
 	"github.com/dolthub/go-mysql-server/sql"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -1275,6 +1277,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: fmt.Sprintf("%x", md5.Sum([]byte(text)))}, nil
 	case "reverse":
 		return predicateValue{value: predicateReverseText(text)}, nil
+	case "initcap":
+		return predicateValue{value: cases.Title(language.English).String(text)}, nil
 	default:
 		return predicateValue{}, errors.Errorf("partial unique index predicate function %s is not yet supported", name)
 	}

@@ -4054,6 +4054,10 @@ func TestStringFunction(t *testing.T) {
 					Expected: []sql.Row{{"Name"}},
 				},
 				{
+					Query:    "SELECT initcap('admin user'::text);",
+					Expected: []sql.Row{{"Admin User"}},
+				},
+				{
 					Query:    "SELECT left('name'::name, 2);",
 					Expected: []sql.Row{{"na"}},
 				},
