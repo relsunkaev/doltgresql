@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -205,4 +206,110 @@ func TestRefreshMaterializedViewConcurrentlySwapFailurePreservesOldSnapshot(t *t
 	require.NoError(t, rows.Err())
 	rows.Close()
 	require.Equal(t, [][2]int{{1, 10}, {2, 20}}, preservedRows)
+}
+
+func TestRefreshMaterializedViewConcurrentlyGuardrails(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	dial := func(t *testing.T) *pgx.Conn {
+		t.Helper()
+		conn, err := pgx.Connect(ctx, fmt.Sprintf(
+			"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+		require.NoError(t, err)
+		return conn
+	}
+
+	conn := dial(t)
+	defer conn.Close(ctx)
+	_, err = conn.Exec(ctx, "CREATE TABLE large_source (id INT PRIMARY KEY, v INT)")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "INSERT INTO large_source VALUES "+largeSourceValues(1, 512, 10))
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "CREATE MATERIALIZED VIEW large_snapshot (account_id, amount) AS SELECT id, v FROM large_source")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "CREATE UNIQUE INDEX large_snapshot_account_id_idx ON large_snapshot (account_id)")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "CREATE INDEX large_snapshot_amount_idx ON large_snapshot (amount)")
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, "UPDATE large_source SET v = v + 1 WHERE id <= 128")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "DELETE FROM large_source WHERE id > 500")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "INSERT INTO large_source VALUES "+largeSourceValues(513, 540, 10))
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "REFRESH MATERIALIZED VIEW CONCURRENTLY large_snapshot")
+	require.NoError(t, err)
+
+	var count int
+	var total int64
+	err = conn.QueryRow(ctx, "SELECT count(*), sum(amount)::bigint FROM large_snapshot").Scan(&count, &total)
+	require.NoError(t, err)
+	require.Equal(t, 528, count)
+	require.Equal(t, int64(1400048), total)
+
+	indexRows, err := conn.Query(ctx, `
+		SELECT indexname
+		FROM pg_indexes
+		WHERE tablename = 'large_snapshot'
+		ORDER BY indexname`)
+	require.NoError(t, err)
+	var indexNames []string
+	for indexRows.Next() {
+		var name string
+		require.NoError(t, indexRows.Scan(&name))
+		indexNames = append(indexNames, name)
+	}
+	require.NoError(t, indexRows.Err())
+	indexRows.Close()
+	require.Equal(t, []string{"large_snapshot_account_id_idx", "large_snapshot_amount_idx"}, indexNames)
+
+	_, err = conn.Exec(ctx, "CREATE TABLE duplicate_source (id INT PRIMARY KEY, grp INT)")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "INSERT INTO duplicate_source VALUES (1, 1), (2, 2)")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "CREATE MATERIALIZED VIEW duplicate_snapshot AS SELECT grp FROM duplicate_source")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "CREATE UNIQUE INDEX duplicate_snapshot_grp_idx ON duplicate_snapshot (grp)")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "UPDATE duplicate_source SET grp = 1 WHERE id = 2")
+	require.NoError(t, err)
+	_, err = conn.Exec(ctx, "REFRESH MATERIALIZED VIEW CONCURRENTLY duplicate_snapshot")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "duplicate")
+
+	dupRows, err := conn.Query(ctx, "SELECT grp FROM duplicate_snapshot ORDER BY grp")
+	require.NoError(t, err)
+	var preservedGroups []int
+	for dupRows.Next() {
+		var grp int
+		require.NoError(t, dupRows.Scan(&grp))
+		preservedGroups = append(preservedGroups, grp)
+	}
+	require.NoError(t, dupRows.Err())
+	dupRows.Close()
+	require.Equal(t, []int{1, 2}, preservedGroups)
+
+	var stagingTables int
+	err = conn.QueryRow(ctx, "SELECT count(*) FROM pg_class WHERE relname LIKE '__doltgres_refresh_%'").Scan(&stagingTables)
+	require.NoError(t, err)
+	require.Equal(t, 0, stagingTables)
+}
+
+func largeSourceValues(start int, end int, multiplier int) string {
+	var builder strings.Builder
+	for id := start; id <= end; id++ {
+		if id > start {
+			builder.WriteString(", ")
+		}
+		fmt.Fprintf(&builder, "(%d, %d)", id, id*multiplier)
+	}
+	return builder.String()
 }

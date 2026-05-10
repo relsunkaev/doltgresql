@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync/atomic"
 
@@ -242,16 +243,13 @@ func (r *RefreshMaterializedView) buildConcurrentRefreshReplacement(
 		return nil, err
 	}
 
-	replacementRows, err := r.runRefreshQuery(ctx, fmt.Sprintf("SELECT %s FROM %s", columnList, quotedTempName))
-	if err != nil {
-		return nil, err
-	}
 	tableWriter.StatementBegin(ctx)
-	for _, row := range replacementRows {
-		if err = tableWriter.Insert(ctx, row); err != nil {
-			_ = tableWriter.DiscardChanges(ctx, err)
-			return nil, err
-		}
+	err = r.streamRefreshQuery(ctx, fmt.Sprintf("SELECT %s FROM %s", columnList, quotedTempName), func(row sql.Row) error {
+		return tableWriter.Insert(ctx, row)
+	})
+	if err != nil {
+		_ = tableWriter.DiscardChanges(ctx, err)
+		return nil, err
 	}
 	if err = tableWriter.StatementComplete(ctx); err != nil {
 		_ = tableWriter.DiscardChanges(ctx, err)
@@ -439,6 +437,32 @@ func (r *RefreshMaterializedView) runRefreshQuery(ctx *sql.Context, query string
 		}
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
+}
+
+func (r *RefreshMaterializedView) streamRefreshQuery(ctx *sql.Context, query string, consume func(sql.Row) error) error {
+	if r.Runner.Runner == nil {
+		return errors.Errorf("statement runner is not available")
+	}
+	_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+		_, rowIter, _, err := r.Runner.Runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer rowIter.Close(subCtx)
+		for {
+			row, err := rowIter.Next(subCtx)
+			if err == io.EOF {
+				return nil, nil
+			}
+			if err != nil {
+				return nil, err
+			}
+			if err = consume(row); err != nil {
+				return nil, err
+			}
+		}
+	})
+	return err
 }
 
 func hasUsableConcurrentRefreshUniqueIndex(ctx *sql.Context, table sql.Table) (bool, error) {

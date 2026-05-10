@@ -385,8 +385,14 @@ Do not check off an item until it has workload proof:
   there, and publishes it with a single root-level table replacement. Pinned by
   testing/go/materialized_view_concurrently_contention_test.go. Tracked by
   dg-7ug.6.1.
-- [ ] Add materialized-view refresh performance guardrails for large snapshots,
-  indexed matviews, and unique-index refresh failures. Tracked by dg-7ug.6.
+- [x] Add materialized-view refresh performance guardrails for large snapshots,
+  indexed matviews, and unique-index refresh failures. Concurrent refreshes
+  stream staged rows into the off-root replacement builder instead of
+  materializing a second full row slice in Go, preserve target indexes after
+  larger refreshes, leave the old snapshot intact on duplicate-key refresh
+  failures, and drop staging tables on errors. Pinned by
+  testing/go/materialized_view_concurrently_contention_test.go. Tracked by
+  dg-7ug.6.2.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:
