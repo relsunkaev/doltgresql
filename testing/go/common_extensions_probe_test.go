@@ -415,6 +415,8 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				`INSERT INTO embeddings VALUES (3, '[1,0,0]');`,
 				`CREATE TABLE vector_casts (id integer primary key, embedding vector(3));`,
 				`INSERT INTO vector_casts VALUES (1, ARRAY[1,2,3]::integer[]);`,
+				`CREATE TABLE vector_agg_mixed (id integer primary key, embedding vector);`,
+				`INSERT INTO vector_agg_mixed VALUES (1, '[1,2]'), (2, '[1,2,3]');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -485,6 +487,18 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"1,1,2,3", "[2,3,4]", "5,13,18"}},
 				},
 				{
+					Query:    `SELECT sum(embedding)::text, avg(embedding)::text FROM embeddings WHERE id IN (1, 2);`,
+					Expected: []sql.Row{{"[5,8,6]", "[2.5,4,3]"}},
+				},
+				{
+					Query:    `SELECT sum(embedding) IS NULL, avg(embedding) IS NULL FROM embeddings WHERE false;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query:    `SELECT sum(NULL::vector) IS NULL, avg(NULL::vector) IS NULL;`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
 					Query:    `SELECT vector_avg(ARRAY[0]::double precision[]) IS NULL, array_to_string(vector_combine(ARRAY[0]::double precision[], ARRAY[2,4,6]::double precision[]), ',');`,
 					Expected: []sql.Row{{"t", "2,4,6"}},
 				},
@@ -495,6 +509,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:       `SELECT vector_accum(ARRAY[1,2,3]::double precision[], '[4,5,6]'::vector);`,
 					ExpectedErr: `expected 2 dimensions, not 3`,
+				},
+				{
+					Query:       `SELECT sum(embedding)::text FROM vector_agg_mixed;`,
+					ExpectedErr: `different vector dimensions 2 and 3`,
 				},
 				{
 					Query:       `SELECT array_to_vector(ARRAY[1,NULL,3]::integer[], -1, false);`,

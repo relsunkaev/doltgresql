@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
+	gmsaggregation "github.com/dolthub/go-mysql-server/sql/expression/function/aggregation"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/transform"
@@ -47,7 +48,12 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			return rewriteWindowSelectExprCasts(ctx, windowNode)
 		}
 		if groupByNode, ok := n.(*plan.GroupBy); ok {
-			return rewriteGroupByAggregateCasts(ctx, groupByNode)
+			groupByNode, sameVectorAggregates, err := rewriteGroupByVectorAggregates(ctx, groupByNode)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			node, sameAggregateCasts, err := rewriteGroupByAggregateCasts(ctx, groupByNode)
+			return node, sameVectorAggregates && sameAggregateCasts, err
 		}
 		if sortNode, ok := n.(*plan.Sort); ok {
 			sortNode, sameTree := rewriteSortFieldsWithProjectedSRFs(ctx, sortNode)
@@ -157,6 +163,54 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 
 		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields, err
 	})
+}
+
+func rewriteGroupByVectorAggregates(ctx *sql.Context, groupByNode *plan.GroupBy) (*plan.GroupBy, transform.TreeIdentity, error) {
+	selectDeps, sameExprs, err := transform.Exprs(ctx, groupByNode.SelectDeps, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		switch agg := expr.(type) {
+		case *gmsaggregation.Sum:
+			child := agg.Children()[0]
+			if !expressionTypeIsVector(ctx, child) {
+				return expr, transform.SameTree, nil
+			}
+			return vectorAggregateWithID(pgexprs.NewVectorSum(child), agg), transform.NewTree, nil
+		case *gmsaggregation.Avg:
+			child := agg.Children()[0]
+			if !expressionTypeIsVector(ctx, child) {
+				return expr, transform.SameTree, nil
+			}
+			return vectorAggregateWithID(pgexprs.NewVectorAvg(child), agg), transform.NewTree, nil
+		default:
+			return expr, transform.SameTree, nil
+		}
+	})
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	if sameExprs {
+		return groupByNode, transform.SameTree, nil
+	}
+	exprs := make([]sql.Expression, 0, len(selectDeps)+len(groupByNode.GroupByExprs))
+	exprs = append(exprs, selectDeps...)
+	exprs = append(exprs, groupByNode.GroupByExprs...)
+	newNode, err := groupByNode.WithExpressions(ctx, exprs...)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	newGroupByNode, ok := newNode.(*plan.GroupBy)
+	if !ok {
+		return nil, transform.SameTree, errors.Errorf("expected GroupBy, got %T", newNode)
+	}
+	return newGroupByNode, transform.NewTree, nil
+}
+
+func expressionTypeIsVector(ctx *sql.Context, expr sql.Expression) bool {
+	dt, ok := expr.Type(ctx).(*pgtypes.DoltgresType)
+	return ok && dt.ID == pgtypes.Vector.ID
+}
+
+func vectorAggregateWithID(newAgg sql.IdExpression, oldAgg sql.IdExpression) sql.Expression {
+	return newAgg.WithId(oldAgg.Id())
 }
 
 func rewriteGroupByAggregateCasts(ctx *sql.Context, groupByNode *plan.GroupBy) (sql.Node, transform.TreeIdentity, error) {

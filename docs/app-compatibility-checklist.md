@@ -261,7 +261,9 @@ Do not check off an item until it has workload proof:
   Dense vector aggregate support functions cover `vector_accum`,
   `vector_avg`, and `vector_combine`, including PostgreSQL's count-plus-sums
   state shape, empty-state average NULLs, zero-state combine behavior, and
-  state/vector dimension mismatch rejection.
+  state/vector dimension mismatch rejection. Dense vector aggregate execution
+  covers `sum(vector)` and `avg(vector)`, including empty/all-NULL NULL
+  results and dimension mismatch rejection for unconstrained `vector` columns.
   Dense vector casts cover
   `array_to_vector(integer[]|real[]|double precision[]|numeric[], integer,
   boolean)`, `vector_to_float4(vector, integer, boolean)`, assignment and
@@ -275,9 +277,9 @@ Do not check off an item until it has workload proof:
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption helpers,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
-  non-dense vector families, and `avg(vector)` / `sum(vector)` aggregate
-  execution beyond the tested dense-vector IO, equality, distance, ordering,
-  arithmetic, binary quantization, aggregate support functions, and cast subset,
+  and non-dense vector families beyond the tested dense-vector IO, equality,
+  distance, ordering, arithmetic, binary quantization, aggregate support
+  functions, aggregate execution, and cast subset,
   executable `btree_gist` GiST indexes/exclusion semantics, its
   internal `gbtreekey*` storage types and `opckeytype` parity, and
   unsupported `btree_gist` type families such as `money`, MAC address,
