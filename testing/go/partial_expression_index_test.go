@@ -2128,7 +2128,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'XYZ'),
 		(3, 1, 'ABXY'),
 		(4, 2, 'ABCD')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_lpad_tenant_idx ON partial_planner_lpad (tenant) WHERE lpad(code, 6, '0') = '00ABCD'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_lpad_tenant_idx ON partial_planner_lpad (tenant) WHERE lpad(code, 6, '0') IN ('00ABCD', '000XYZ')")
 
 	lpadImpliedQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND lpad(code, 6, '0') = '00ABCD'`
 	assertCountResult(t, ctx, conn, lpadImpliedQuery, 1)
@@ -2140,7 +2140,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	lpadRawSourceQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND code = 'ABCD'`
 	assertCountResult(t, ctx, conn, lpadRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, lpadRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadRawSourceQuery, true)
+
+	lpadRawInQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND code IN ('ABCD', 'XYZ')`
+	assertCountResult(t, ctx, conn, lpadRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadRawInQuery, true)
+
+	lpadRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_lpad WHERE tenant = 1 AND code IN ('ABCD', 'ABXY')`
+	assertCountResult(t, ctx, conn, lpadRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, lpadRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_rpad (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_rpad VALUES
@@ -2148,7 +2156,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'XYZ'),
 		(3, 1, 'ABXY'),
 		(4, 2, 'ABCD')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_rpad_tenant_idx ON partial_planner_rpad (tenant) WHERE rpad(code, 6, '_') = 'ABCD__'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_rpad_tenant_idx ON partial_planner_rpad (tenant) WHERE rpad(code, 6, '_') IN ('ABCD__', 'XYZ___')")
 
 	rpadImpliedQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND rpad(code, 6, '_') = 'ABCD__'`
 	assertCountResult(t, ctx, conn, rpadImpliedQuery, 1)
@@ -2160,7 +2168,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	rpadRawSourceQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND code = 'ABCD'`
 	assertCountResult(t, ctx, conn, rpadRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, rpadRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadRawSourceQuery, true)
+
+	rpadRawInQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND code IN ('ABCD', 'XYZ')`
+	assertCountResult(t, ctx, conn, rpadRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadRawInQuery, true)
+
+	rpadRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_rpad WHERE tenant = 1 AND code IN ('ABCD', 'ABXY')`
+	assertCountResult(t, ctx, conn, rpadRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, rpadRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_reverse (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_reverse VALUES

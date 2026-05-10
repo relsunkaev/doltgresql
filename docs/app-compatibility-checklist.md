@@ -1118,11 +1118,14 @@ Do not check off an item until it has workload proof:
   Two- and three-argument pad calls now serialize as comparable predicate keys,
   planner filters can deparse them, partial unique DML enforcement evaluates
   the same text padding/truncation behavior for supported non-empty fill strings,
-  and `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
-  fill strings, lengths, pad directions, and raw source-string semantic rewrites
-  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  and `ON CONFLICT` arbiter inference accepts the exact-expression shape. Raw
+  source-string equality and IN-list filters now imply matching fixed-length
+  pad predicates when every padded output is contained in the partial predicate
+  value set; wrong fill strings, lengths, pad directions, and non-contained raw
+  source values remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
-  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.22.
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.22 and
+  dg-7ug.8.10.46.
 - [x] Use deterministic `repeat(expr, count)` predicates in partial-index
   implication paths. Two-argument repeat calls now serialize as comparable
   predicate keys, planner filters can deparse them, partial unique DML

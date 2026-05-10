@@ -500,6 +500,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateReverseArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
+		predicatePadArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateMd5ArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateToHexArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
@@ -579,6 +580,119 @@ func predicateRepeatArgumentValueSetImplies(indexValues predicateValueSet, query
 		repeatedValues[repeatedValue] = struct{}{}
 	}
 	return predicateValueSet{exprKey: indexValues.exprKey, values: repeatedValues}.subsetOf(indexValues)
+}
+
+func predicatePadArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	functionName, argumentKey, length, fill, ok := predicatePadArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	paddedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		paddedValue, ok := predicatePadStringLiteralKey(functionName, value, length, fill)
+		if !ok {
+			return false
+		}
+		paddedValues[paddedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: paddedValues}.subsetOf(indexValues)
+}
+
+func predicatePadArgumentExprKey(exprKey string) (string, string, int64, string, bool) {
+	for _, functionName := range []string{"lpad", "rpad"} {
+		prefix := "func:" + functionName + "("
+		if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
+			continue
+		}
+		inner := strings.TrimSuffix(strings.TrimPrefix(exprKey, prefix), ")")
+		fill := " "
+		const fillMarker = ",literal:s:"
+		if idx := strings.LastIndex(inner, fillMarker); idx >= 0 {
+			fill = inner[idx+len(fillMarker):]
+			inner = inner[:idx]
+		}
+		const lengthMarker = ",literal:n:"
+		idx := strings.LastIndex(inner, lengthMarker)
+		if idx < 0 {
+			return "", "", 0, "", false
+		}
+		length, ok := predicateIntegerFunctionArgumentKey("literal:n:" + inner[idx+len(lengthMarker):])
+		if !ok {
+			return "", "", 0, "", false
+		}
+		return functionName, inner[:idx], length, fill, true
+	}
+	return "", "", 0, "", false
+}
+
+func predicatePadStringLiteralKey(functionName string, value string, length int64, fill string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	text := strings.TrimPrefix(value, prefix)
+	switch functionName {
+	case "lpad":
+		text, ok := predicateLpadText(text, length, fill)
+		if !ok {
+			return "", false
+		}
+		return prefix + text, true
+	case "rpad":
+		text, ok := predicateRpadText(text, length, fill)
+		if !ok {
+			return "", false
+		}
+		return prefix + text, true
+	default:
+		return "", false
+	}
+}
+
+func predicateLpadText(text string, length int64, fill string) (string, bool) {
+	if length <= 0 {
+		return "", true
+	}
+	if length > int64(int(^uint(0)>>1)) {
+		return "", false
+	}
+	textRunes := []rune(text)
+	if int64(len(textRunes)) >= length {
+		return string(textRunes[:length]), true
+	}
+	fillRunes := []rune(fill)
+	if len(fillRunes) == 0 {
+		return "", false
+	}
+	result := make([]rune, 0, int(length))
+	fillTarget := length - int64(len(textRunes))
+	for int64(len(result)) < fillTarget {
+		result = append(result, fillRunes...)
+	}
+	result = result[:fillTarget]
+	result = append(result, textRunes...)
+	return string(result), true
+}
+
+func predicateRpadText(text string, length int64, fill string) (string, bool) {
+	if length <= 0 {
+		return "", true
+	}
+	if length > int64(int(^uint(0)>>1)) {
+		return "", false
+	}
+	result := []rune(text)
+	if int64(len(result)) >= length {
+		return string(result[:length]), true
+	}
+	fillRunes := []rune(fill)
+	if len(fillRunes) == 0 {
+		return "", false
+	}
+	for int64(len(result)) < length {
+		result = append(result, fillRunes...)
+	}
+	return string(result[:length]), true
 }
 
 func predicateMd5ArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

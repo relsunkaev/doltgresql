@@ -1645,24 +1645,35 @@ ON CONFLICT (user_id) WHERE code IN ('Admire', 'Alpha') DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports lpad predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_lpad (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_lpad_user_idx ON partial_arb_lpad (user_id) WHERE lpad(code, 6, '0') = '00ABCD';",
-				"INSERT INTO partial_arb_lpad VALUES (1, 10, 'ABCD', 'old-pad'), (2, 10, 'XYZ', 'old-other');",
+				"CREATE UNIQUE INDEX partial_arb_lpad_user_idx ON partial_arb_lpad (user_id) WHERE lpad(code, 6, '0') IN ('00ABCD', '000XYZ');",
+				"INSERT INTO partial_arb_lpad VALUES (1, 10, 'ABCD', 'old-pad'), (2, 11, 'XYZ', 'old-other');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_arb_lpad VALUES (3, 10, 'ABCD', 'lpad-upsert')
-ON CONFLICT (user_id) WHERE lpad(code, 6, '0') = '00ABCD' DO UPDATE SET note = EXCLUDED.note;`,
+ON CONFLICT (user_id) WHERE code = 'ABCD' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
 					Query: `SELECT id, user_id, code, note FROM partial_arb_lpad ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "ABCD", "lpad-upsert"},
-						{2, 10, "XYZ", "old-other"},
+						{2, 11, "XYZ", "old-other"},
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_lpad VALUES (4, 10, 'ABCD', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'ABCD' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_lpad VALUES (4, 11, 'XYZ', 'lpad-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('ABCD', 'XYZ') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_lpad ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "ABCD", "lpad-upsert"},
+						{2, 11, "XYZ", "lpad-in-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_lpad VALUES (5, 10, 'ABCD', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('ABCD', 'ABXY') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},
@@ -1671,24 +1682,35 @@ ON CONFLICT (user_id) WHERE code = 'ABCD' DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports rpad predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_rpad (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_rpad_user_idx ON partial_arb_rpad (user_id) WHERE rpad(code, 6, '_') = 'ABCD__';",
-				"INSERT INTO partial_arb_rpad VALUES (1, 10, 'ABCD', 'old-pad'), (2, 10, 'XYZ', 'old-other');",
+				"CREATE UNIQUE INDEX partial_arb_rpad_user_idx ON partial_arb_rpad (user_id) WHERE rpad(code, 6, '_') IN ('ABCD__', 'XYZ___');",
+				"INSERT INTO partial_arb_rpad VALUES (1, 10, 'ABCD', 'old-pad'), (2, 11, 'XYZ', 'old-other');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_arb_rpad VALUES (3, 10, 'ABCD', 'rpad-upsert')
-ON CONFLICT (user_id) WHERE rpad(code, 6, '_') = 'ABCD__' DO UPDATE SET note = EXCLUDED.note;`,
+ON CONFLICT (user_id) WHERE code = 'ABCD' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
 					Query: `SELECT id, user_id, code, note FROM partial_arb_rpad ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "ABCD", "rpad-upsert"},
-						{2, 10, "XYZ", "old-other"},
+						{2, 11, "XYZ", "old-other"},
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_rpad VALUES (4, 10, 'ABCD', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'ABCD' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_rpad VALUES (4, 11, 'XYZ', 'rpad-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('ABCD', 'XYZ') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_rpad ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "ABCD", "rpad-upsert"},
+						{2, 11, "XYZ", "rpad-in-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_rpad VALUES (5, 10, 'ABCD', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('ABCD', 'ABXY') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},
