@@ -2192,7 +2192,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 11),
 		(3, 1, 12),
 		(4, 2, 10)`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_to_hex_tenant_idx ON partial_planner_to_hex (tenant) WHERE to_hex(account_id) = 'a'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_to_hex_tenant_idx ON partial_planner_to_hex (tenant) WHERE to_hex(account_id) IN ('a', 'b')")
 
 	toHexImpliedQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND to_hex(account_id) = 'a'`
 	assertCountResult(t, ctx, conn, toHexImpliedQuery, 1)
@@ -2200,7 +2200,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	toHexRawSourceQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND account_id = 10`
 	assertCountResult(t, ctx, conn, toHexRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, toHexRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, toHexRawSourceQuery, true)
+
+	toHexRawInQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND account_id IN (10, 11)`
+	assertCountResult(t, ctx, conn, toHexRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, toHexRawInQuery, true)
+
+	toHexRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_to_hex WHERE tenant = 1 AND account_id IN (10, 12)`
+	assertCountResult(t, ctx, conn, toHexRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, toHexRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_initcap (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, role TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_initcap VALUES

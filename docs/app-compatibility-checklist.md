@@ -1075,11 +1075,15 @@ Do not check off an item until it has workload proof:
   paths. Unary `to_hex(...)` calls now serialize as comparable predicate keys,
   planner filters can deparse them, partial unique DML enforcement evaluates
   integer-to-hex text output aligned with the runtime function, and
-  `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
-  hex values and raw numeric semantic rewrites remain rejected. Coverage in
-  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape. Raw
+  non-negative integer equality and IN-list filters on the source expression
+  now imply matching `to_hex(...)` partial-index predicates when every hex
+  output is contained in the partial predicate value set; wrong hex values,
+  negative values, and non-integral numeric rewrites remain rejected. Coverage
+  in server/indexpredicate/implication_test.go, testing/go/functions_test.go,
   testing/go/partial_expression_index_test.go, and
-  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.18.
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.18 and
+  dg-7ug.8.10.45.
 - [x] Use deterministic `initcap(expr)` predicates in partial-index
   implication paths. Unary `initcap(...)` calls now serialize as comparable
   predicate keys, planner filters can deparse them, partial unique DML

@@ -501,6 +501,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateReverseArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateMd5ArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateToHexArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateLeftRightArgumentValueSetImplies(indexValues, queryValues) ||
@@ -669,6 +670,34 @@ func predicateMd5StringLiteralKey(value string) (string, bool) {
 		return "", false
 	}
 	return prefix + fmt.Sprintf("%x", md5.Sum([]byte(strings.TrimPrefix(value, prefix)))), true
+}
+
+func predicateToHexArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "to_hex")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	hexValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		hexValue, ok := predicateToHexNumericLiteralKey(value)
+		if !ok {
+			return false
+		}
+		hexValues[hexValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: hexValues}.subsetOf(indexValues)
+}
+
+func predicateToHexNumericLiteralKey(value string) (string, bool) {
+	const numericPrefix = "n:"
+	if !strings.HasPrefix(value, numericPrefix) {
+		return "", false
+	}
+	number, err := strconv.ParseInt(strings.TrimPrefix(value, numericPrefix), 10, 64)
+	if err != nil || number < 0 {
+		return "", false
+	}
+	return "s:" + strconv.FormatUint(uint64(number), 16), true
 }
 
 func predicateAsciiArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

@@ -781,6 +781,8 @@ func TestImpliesToHexFunctionPredicates(t *testing.T) {
 		{"to_hex(account_id) = 'a'", "to_hex(account_id) = 'a'"},
 		{"to_hex(account_id) IN ('a', 'b')", "to_hex(account_id) = 'a'"},
 		{"to_hex(account_id) IS NOT NULL", "to_hex(account_id) = 'a'"},
+		{"to_hex(account_id) = 'a'", "account_id = 10"},
+		{"to_hex(account_id) IN ('a', 'b')", "account_id IN (10, 11)"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -792,7 +794,9 @@ func TestImpliesToHexFunctionPredicates(t *testing.T) {
 	}{
 		{"to_hex(account_id) = 'a'", "to_hex(account_id) = 'b'"},
 		{"to_hex(account_id) = 'a'", "abs(account_id) = 10"},
-		{"to_hex(account_id) = 'a'", "account_id = 10"},
+		{"to_hex(account_id) = 'a'", "account_id = -1"},
+		{"to_hex(account_id) = 'a'", "account_id = 10.5"},
+		{"to_hex(account_id) IN ('a', 'b')", "account_id IN (10, 12)"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
