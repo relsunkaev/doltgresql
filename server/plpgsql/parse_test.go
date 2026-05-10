@@ -256,3 +256,44 @@ func TestParseGetDiagnosticsPgRoutineOid(t *testing.T) {
 		t.Fatalf("expected lineNumber option on PG_ROUTINE_OID operation; op: %#v", getOp)
 	}
 }
+
+func TestParseExceptionBlockStackedDiagnostics(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
+		DECLARE
+			message TEXT;
+			detail TEXT;
+		BEGIN
+			RAISE EXCEPTION 'custom exception'
+				USING DETAIL = 'some detail';
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS
+				message = MESSAGE_TEXT,
+				detail = PG_EXCEPTION_DETAIL;
+		END;
+	$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var exceptionOp *InterpreterOperation
+	stackedItems := map[string]bool{}
+	for i := range ops {
+		if ops[i].OpCode == OpCode_Exception {
+			exceptionOp = &ops[i]
+		}
+		if ops[i].OpCode == OpCode_Get && ops[i].Options["stacked"] == "true" {
+			stackedItems[ops[i].PrimaryData] = true
+		}
+	}
+	if exceptionOp == nil {
+		t.Fatalf("expected exception operation, found %#v", ops)
+	}
+	if exceptionOp.Options["handlerConditions"] != "others" {
+		t.Fatalf("handler conditions = %q, expected others; op: %#v", exceptionOp.Options["handlerConditions"], exceptionOp)
+	}
+	for _, item := range []string{"MESSAGE_TEXT", "PG_EXCEPTION_DETAIL"} {
+		if !stackedItems[item] {
+			t.Fatalf("missing stacked diagnostic item %s; ops: %#v", item, ops)
+		}
+	}
+}

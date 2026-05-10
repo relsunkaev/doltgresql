@@ -240,6 +240,7 @@ type GetDiagnosticsItem struct {
 type GetDiagnostics struct {
 	LineNumber int32
 	Items      []GetDiagnosticsItem
+	Stacked    bool
 }
 
 var _ Statement = GetDiagnostics{}
@@ -258,9 +259,69 @@ func (stmt GetDiagnostics) AppendOperations(ops *[]InterpreterOperation, stack *
 			Target:      item.Target,
 			Options: map[string]string{
 				diagnosticOptionLineNumber: strconv.Itoa(int(stmt.LineNumber)),
+				"stacked":                  strconv.FormatBool(stmt.Stacked),
 			},
 		})
 	}
+	return nil
+}
+
+// ExceptionHandler represents one EXCEPTION WHEN branch.
+type ExceptionHandler struct {
+	Conditions []string
+	Body       []Statement
+}
+
+// ExceptionBlock represents a block body protected by EXCEPTION handlers.
+type ExceptionBlock struct {
+	Body     []Statement
+	Handlers []ExceptionHandler
+}
+
+var _ Statement = ExceptionBlock{}
+
+// OperationSize implements the interface Statement.
+func (stmt ExceptionBlock) OperationSize() int32 {
+	total := int32(1)
+	for _, innerStmt := range stmt.Body {
+		total += innerStmt.OperationSize()
+	}
+	for _, handler := range stmt.Handlers {
+		for _, innerStmt := range handler.Body {
+			total += innerStmt.OperationSize()
+		}
+	}
+	return total
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt ExceptionBlock) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	if len(stmt.Handlers) != 1 {
+		return errors.New("PL/pgSQL exception blocks currently support exactly one handler")
+	}
+	handler := stmt.Handlers[0]
+	markerIndex := len(*ops)
+	*ops = append(*ops, InterpreterOperation{
+		OpCode: OpCode_Exception,
+		Options: map[string]string{
+			"handlerConditions": strings.Join(handler.Conditions, ","),
+		},
+	})
+	for _, innerStmt := range stmt.Body {
+		if err := innerStmt.AppendOperations(ops, stack); err != nil {
+			return err
+		}
+	}
+	bodyEnd := len(*ops)
+	for _, innerStmt := range handler.Body {
+		if err := innerStmt.AppendOperations(ops, stack); err != nil {
+			return err
+		}
+	}
+	handlerEnd := len(*ops)
+	(*ops)[markerIndex].Index = bodyEnd
+	(*ops)[markerIndex].Options["handlerStart"] = strconv.Itoa(bodyEnd)
+	(*ops)[markerIndex].Options["handlerEnd"] = strconv.Itoa(handlerEnd)
 	return nil
 }
 
@@ -424,10 +485,11 @@ func (stmt Perform) AppendOperations(ops *[]InterpreterOperation, stack *Interpr
 
 // Raise represents a RAISE statement
 type Raise struct {
-	Level   string
-	Message string
-	Params  []string
-	Options map[string]string
+	Level      string
+	Message    string
+	Params     []string
+	Options    map[string]string
+	LineNumber int32
 }
 
 var _ Statement = Raise{}
@@ -443,7 +505,7 @@ func (r Raise) AppendOperations(ops *[]InterpreterOperation, _ *InterpreterStack
 		OpCode:        OpCode_Raise,
 		PrimaryData:   r.Level,
 		SecondaryData: append([]string{r.Message}, r.Params...),
-		Options:       r.Options,
+		Options:       mergeDiagnosticStatementOptions(r.Options, r.LineNumber, "RAISE", ""),
 	})
 	return nil
 }
@@ -540,6 +602,20 @@ func diagnosticStatementOptions(lineNumber int32, action, statement string) map[
 	}
 	if len(options) == 0 {
 		return nil
+	}
+	return options
+}
+
+func mergeDiagnosticStatementOptions(options map[string]string, lineNumber int32, action, statement string) map[string]string {
+	diagnosticOptions := diagnosticStatementOptions(lineNumber, action, statement)
+	if len(diagnosticOptions) == 0 {
+		return options
+	}
+	if options == nil {
+		options = make(map[string]string, len(diagnosticOptions))
+	}
+	for key, value := range diagnosticOptions {
+		options[key] = value
 	}
 	return options
 }

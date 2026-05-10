@@ -458,6 +458,95 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name: "DO block catches raised exception with stacked diagnostics",
+			SetUpScript: []string{
+				`CREATE TABLE do_stacked_diag_seen (
+					kind TEXT NOT NULL,
+					message TEXT NOT NULL,
+					sqlstate TEXT NOT NULL,
+					detail TEXT NOT NULL,
+					hint TEXT NOT NULL,
+					has_context TEXT NOT NULL
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							message TEXT;
+							returned_state TEXT;
+							detail TEXT;
+							hint TEXT;
+							context TEXT;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'custom exception %', 7
+									USING DETAIL = 'some detail', HINT = 'some hint';
+							EXCEPTION WHEN OTHERS THEN
+								GET STACKED DIAGNOSTICS
+									message = MESSAGE_TEXT,
+									returned_state = RETURNED_SQLSTATE,
+									detail = PG_EXCEPTION_DETAIL,
+									hint = PG_EXCEPTION_HINT,
+									context = PG_EXCEPTION_CONTEXT;
+								INSERT INTO do_stacked_diag_seen VALUES (
+									'do',
+									message,
+									returned_state,
+									detail,
+									hint,
+									(length(context) > 0)::text
+								);
+							END;
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT kind, message, sqlstate, detail, hint, has_context FROM do_stacked_diag_seen;`,
+					Expected: []sql.Row{{"do", "custom exception 7", "P0001", "some detail", "some hint", "true"}},
+				},
+			},
+		},
+		{
+			Name: "PL/pgSQL function catches raised exception with stacked diagnostics",
+			SetUpScript: []string{
+				`CREATE FUNCTION diag_catch_raise() RETURNS TEXT AS $$
+					DECLARE
+						message TEXT;
+					BEGIN
+						BEGIN
+							RAISE EXCEPTION 'function failed';
+						EXCEPTION WHEN OTHERS THEN
+							GET STACKED DIAGNOSTICS message = MESSAGE_TEXT;
+							RETURN message;
+						END;
+					END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT diag_catch_raise();`,
+					Expected: []sql.Row{{"function failed"}},
+				},
+			},
+		},
+		{
+			Name:        "GET STACKED DIAGNOSTICS requires exception handler",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							message TEXT;
+						BEGIN
+							GET STACKED DIAGNOSTICS message = MESSAGE_TEXT;
+						END;
+					$$;`,
+					ExpectedErr: `GET STACKED DIAGNOSTICS cannot be used outside an exception handler`,
+				},
+			},
+		},
+		{
 			Name:        "DO block propagates raised exception",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{

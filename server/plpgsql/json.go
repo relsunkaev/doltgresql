@@ -120,9 +120,10 @@ type plpgSQL_stmt_assign struct {
 
 // plpgSQL_stmt_block exists to match the expected JSON format.
 type plpgSQL_stmt_block struct {
-	Body       []statement `json:"body"`
-	Label      string      `json:"label"`
-	LineNumber int32       `json:"lineno"`
+	Body       []statement                `json:"body"`
+	Exceptions *plpgSQL_exception_wrapper `json:"exceptions"`
+	Label      string                     `json:"label"`
+	LineNumber int32                      `json:"lineno"`
 }
 
 // plpgSQL_stmt_call exists to match the expected JSON format.
@@ -160,6 +161,37 @@ type plpgSQL_case_when struct {
 	LineNumber int32       `json:"lineno"`
 	Expression expr        `json:"expr"`
 	Body       []statement `json:"stmts"`
+}
+
+// plpgSQL_exception_wrapper exists to match the expected JSON format.
+type plpgSQL_exception_wrapper struct {
+	ExceptionBlock plpgSQL_exception_block `json:"PLpgSQL_exception_block"`
+}
+
+// plpgSQL_exception_block exists to match the expected JSON format.
+type plpgSQL_exception_block struct {
+	ExceptionList []plpgSQL_exception_wrapper_stmt `json:"exc_list"`
+}
+
+// plpgSQL_exception_wrapper_stmt exists to match the expected JSON format.
+type plpgSQL_exception_wrapper_stmt struct {
+	Exception plpgSQL_exception `json:"PLpgSQL_exception"`
+}
+
+// plpgSQL_exception exists to match the expected JSON format.
+type plpgSQL_exception struct {
+	Conditions []plpgSQL_condition_wrapper `json:"conditions"`
+	Action     []statement                 `json:"action"`
+}
+
+// plpgSQL_condition_wrapper exists to match the expected JSON format.
+type plpgSQL_condition_wrapper struct {
+	Condition plpgSQL_condition `json:"PLpgSQL_condition"`
+}
+
+// plpgSQL_condition exists to match the expected JSON format.
+type plpgSQL_condition struct {
+	ConditionName string `json:"condname"`
 }
 
 // plpgSQL_stmt_execsql exists to match the expected JSON format.
@@ -507,9 +539,6 @@ func (stmt *plpgSQL_stmt_execsql) Convert() (ExecuteSQL, error) {
 
 // Convert converts the JSON statement into its output form.
 func (stmt *plpgSQL_stmt_getdiag) Convert(conv jsonConversionContext) (GetDiagnostics, error) {
-	if stmt.IsStacked {
-		return GetDiagnostics{}, errors.New("GET STACKED DIAGNOSTICS is not supported")
-	}
 	items := make([]GetDiagnosticsItem, 0, len(stmt.DiagItems))
 	for _, itemStmt := range stmt.DiagItems {
 		item := itemStmt.DiagItem
@@ -522,7 +551,7 @@ func (stmt *plpgSQL_stmt_getdiag) Convert(conv jsonConversionContext) (GetDiagno
 			Kind:   strings.ToUpper(item.Kind),
 		})
 	}
-	return GetDiagnostics{LineNumber: stmt.LineNumber, Items: items}, nil
+	return GetDiagnostics{LineNumber: stmt.LineNumber, Items: items, Stacked: stmt.IsStacked}, nil
 }
 
 // Convert converts the JSON statement into its output form.
@@ -786,10 +815,11 @@ func (stmt *plpgSQL_stmt_raise) Convert() Raise {
 	}
 
 	return Raise{
-		Level:   NoticeLevel(uint8(stmt.ELogLevel)).String(),
-		Message: stmt.Message,
-		Params:  params,
-		Options: options,
+		Level:      NoticeLevel(uint8(stmt.ELogLevel)).String(),
+		Message:    stmt.Message,
+		Params:     params,
+		Options:    options,
+		LineNumber: stmt.LineNumber,
 	}
 }
 

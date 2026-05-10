@@ -108,11 +108,40 @@ func jsonConvert(jsonBlock plpgSQL_block) (Block, error) {
 		}
 	}
 	var err error
-	block.Body, err = conv.convertStatements(jsonBlock.Action.StmtBlock.Body)
+	block.Body, err = conv.convertBlockBody(jsonBlock.Action.StmtBlock)
 	if err != nil {
 		return Block{}, err
 	}
 	return block, nil
+}
+
+func (conv jsonConversionContext) convertBlockBody(stmt plpgSQL_stmt_block) ([]Statement, error) {
+	body, err := conv.convertStatements(stmt.Body)
+	if err != nil {
+		return nil, err
+	}
+	if stmt.Exceptions == nil {
+		return body, nil
+	}
+	handlers := make([]ExceptionHandler, 0, len(stmt.Exceptions.ExceptionBlock.ExceptionList))
+	for _, exceptionStmt := range stmt.Exceptions.ExceptionBlock.ExceptionList {
+		handlerBody, err := conv.convertStatements(exceptionStmt.Exception.Action)
+		if err != nil {
+			return nil, err
+		}
+		conditions := make([]string, 0, len(exceptionStmt.Exception.Conditions))
+		for _, condition := range exceptionStmt.Exception.Conditions {
+			conditions = append(conditions, strings.ToLower(condition.Condition.ConditionName))
+		}
+		handlers = append(handlers, ExceptionHandler{
+			Conditions: conditions,
+			Body:       handlerBody,
+		})
+	}
+	return []Statement{ExceptionBlock{
+		Body:     body,
+		Handlers: handlers,
+	}}, nil
 }
 
 // convertStatement converts a statement in JSON form to the output form.
@@ -121,7 +150,7 @@ func (conv jsonConversionContext) convertStatement(stmt statement) (Statement, e
 	case stmt.Assignment != nil:
 		return stmt.Assignment.Convert()
 	case stmt.Block != nil:
-		stmts, err := conv.convertStatements(stmt.Block.Body)
+		stmts, err := conv.convertBlockBody(*stmt.Block)
 		if err != nil {
 			return Block{}, err
 		}

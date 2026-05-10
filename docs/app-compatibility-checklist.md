@@ -602,6 +602,14 @@ Do not check off an item until it has workload proof:
 - [ ] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
   DIAGNOSTICS` and exception diagnostics) before claiming full diagnostics
   parity. Tracked by dg-7ug.20.
+  - [x] `WHEN OTHERS` handlers can catch PL/pgSQL `RAISE EXCEPTION` failures
+    in anonymous DO blocks and named PL/pgSQL functions, and
+    `GET STACKED DIAGNOSTICS` can assign `MESSAGE_TEXT`,
+    `RETURNED_SQLSTATE`, `PG_EXCEPTION_DETAIL`, `PG_EXCEPTION_HINT`, and
+    `PG_EXCEPTION_CONTEXT` inside the active handler. The same statement is
+    rejected outside an exception handler. Pinned by
+    testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
+    Tracked by dg-7ug.20.1.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load

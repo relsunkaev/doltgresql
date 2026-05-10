@@ -59,6 +59,28 @@ const (
 	diagnosticOptionStatement  = "pgContextStatement"
 )
 
+type interpreterExecutionState struct {
+	statements         []InterpreterOperation
+	lastRowCount       int64
+	stackedDiagnostics *plpgsqlExceptionDiagnostics
+}
+
+type plpgsqlExceptionDiagnostics struct {
+	MessageText      string
+	ReturnedSQLState string
+	Detail           string
+	Hint             string
+	Context          string
+}
+
+type plpgsqlExceptionError struct {
+	diagnostics plpgsqlExceptionDiagnostics
+}
+
+func (e plpgsqlExceptionError) Error() string {
+	return e.diagnostics.MessageText
+}
+
 // Call runs the contained operations on the given runner.
 func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunner, paramsAndReturn []*pgtypes.DoltgresType, vals []any) (any, error) {
 	// Set up the initial state of the function
@@ -104,14 +126,27 @@ func TriggerCall(ctx *sql.Context, iFunc InterpretedFunction, runner sql.Stateme
 
 // call runs the contained operations on the given runner.
 func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (any, error) {
+	state := &interpreterExecutionState{
+		statements: iFunc.GetStatements(),
+	}
+	ret, returned, err := runOperations(ctx, iFunc, stack, state, 0, len(state.statements))
+	if err != nil {
+		return nil, err
+	}
+	if returned {
+		return ret, nil
+	}
+	return nil, nil
+}
+
+func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack, state *interpreterExecutionState, start, end int) (any, bool, error) {
 	// We increment before accessing, so start at -1
-	counter := -1
-	lastRowCount := int64(0)
+	counter := start - 1
 	// Run the statements
-	statements := iFunc.GetStatements()
+	statements := state.statements
 	for {
 		counter++
-		if counter >= len(statements) {
+		if counter >= end {
 			break
 		} else if counter < 0 {
 			panic("negative function counter")
@@ -122,28 +157,28 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_Alias:
 			iv := stack.GetVariable(operation.PrimaryData)
 			if iv.Type == nil {
-				return nil, fmt.Errorf("variable `%s` could not be found", operation.PrimaryData)
+				return nil, false, fmt.Errorf("variable `%s` could not be found", operation.PrimaryData)
 			}
 			stack.NewVariableAlias(operation.Target, operation.PrimaryData)
 		case OpCode_Assign:
 			iv := stack.GetVariable(operation.Target)
 			if iv.Type == nil {
-				return nil, fmt.Errorf("variable `%s` could not be found", operation.Target)
+				return nil, false, fmt.Errorf("variable `%s` could not be found", operation.Target)
 			}
 			restoreCallSite := pushDiagnosticCallSite(ctx, operation)
 			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, iv.Type, operation.SecondaryData)
 			restoreCallSite()
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			err = stack.SetVariable(ctx, operation.Target, retVal)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 		case OpCode_Declare:
 			typeCollection, err := GetTypesCollectionFromContext(ctx)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 
 			schemaName, typeName := normalizeDeclareTypeName(operation.PrimaryData)
@@ -153,10 +188,10 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			}
 			resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typeName))
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			if resolvedType == nil {
-				return nil, pgtypes.ErrTypeDoesNotExist.New(operation.PrimaryData)
+				return nil, false, pgtypes.ErrTypeDoesNotExist.New(operation.PrimaryData)
 			}
 			if len(operation.SecondaryData) != 0 {
 				defVal := operation.SecondaryData[0]
@@ -178,7 +213,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				} else {
 					val, err := resolvedType.IoInput(ctx, strings.Trim(operation.SecondaryData[0], "'"))
 					if err != nil {
-						return nil, err
+						return nil, false, err
 					}
 					stack.NewVariableWithValue(operation.Target, resolvedType, val)
 				}
@@ -188,7 +223,34 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_DeleteInto:
 			// TODO: implement
 		case OpCode_Exception:
-			// TODO: implement
+			handlerStart, err := strconv.Atoi(operation.Options["handlerStart"])
+			if err != nil {
+				return nil, false, err
+			}
+			handlerEnd, err := strconv.Atoi(operation.Options["handlerEnd"])
+			if err != nil {
+				return nil, false, err
+			}
+			ret, returned, err := runOperations(ctx, iFunc, stack, state, counter+1, operation.Index)
+			if err != nil {
+				diagnostics := plpgsqlExceptionDiagnosticsFromError(err)
+				if !exceptionHandlerMatches(operation.Options["handlerConditions"], diagnostics) {
+					return nil, false, err
+				}
+				priorDiagnostics := state.stackedDiagnostics
+				state.stackedDiagnostics = &diagnostics
+				ret, returned, err = runOperations(ctx, iFunc, stack, state, handlerStart, handlerEnd)
+				state.stackedDiagnostics = priorDiagnostics
+				if err != nil {
+					return nil, false, err
+				}
+				if returned {
+					return ret, true, nil
+				}
+			} else if returned {
+				return ret, true, nil
+			}
+			counter = handlerEnd - 1
 		case OpCode_Execute:
 			statement := operation.PrimaryData
 			bindings := operation.SecondaryData
@@ -196,19 +258,19 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if operation.Options["dynamic"] == "true" {
 				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
 				if queryBindingCount > len(bindings) {
-					return nil, errors.New("dynamic execute query binding count exceeds available bindings")
+					return nil, false, errors.New("dynamic execute query binding count exceeds available bindings")
 				}
 				queryBindings := bindings[:queryBindingCount]
 				bindings = bindings[queryBindingCount:]
 				queryVal, err := iFunc.QuerySingleReturn(ctx, stack, "SELECT "+statement, pgtypes.Text, queryBindings)
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
 				if queryVal == nil {
-					return nil, errors.New("query string argument of EXECUTE is null")
+					return nil, false, errors.New("query string argument of EXECUTE is null")
 				}
 				statement = queryVal.(string)
 				if len(bindings) > 0 {
@@ -217,7 +279,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					bindings, err = evaluateDynamicExecuteUsingParams(ctx, iFunc, stack, bindings)
 					if err != nil {
 						stack.PopScope()
-						return nil, err
+						return nil, false, err
 					}
 				}
 			}
@@ -232,36 +294,36 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			if len(operation.Target) > 0 {
 				sch, rows, err := queryMultiReturn()
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
-				lastRowCount = rowCountFromResultRows(rows)
-				found := lastRowCount > 0
+				state.lastRowCount = rowCountFromResultRows(rows)
+				found := state.lastRowCount > 0
 				if err = setFoundVariable(ctx, stack, found); err != nil {
-					return nil, err
+					return nil, false, err
 				}
 				strict := operation.Options["strict"] == "true"
 				if strict && !found {
-					return nil, errors.New("query returned no rows")
+					return nil, false, errors.New("query returned no rows")
 				}
 				if strict && len(rows) > 1 {
-					return nil, errors.New("query returned more than one row")
+					return nil, false, errors.New("query returned more than one row")
 				}
 				if vars := strings.Split(operation.Target, ","); len(vars) > 1 {
 					// multiple column row result
 					if !found {
 						for _, variableName := range vars {
 							if err = stack.SetVariable(ctx, variableName, nil); err != nil {
-								return nil, err
+								return nil, false, err
 							}
 						}
 					} else {
 						row := rows[0]
 						if len(row) != len(vars) || len(sch) != len(vars) {
-							return nil, errors.New("number of row values does not match number of schema columns")
+							return nil, false, errors.New("number of row values does not match number of schema columns")
 						}
 						for i, variableName := range vars {
 							if err = assignSQLRowValue(ctx, stack, variableName, sch[i].Type, row[i]); err != nil {
-								return nil, err
+								return nil, false, err
 							}
 						}
 					}
@@ -269,43 +331,56 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					// single column
 					if !found {
 						if err = stack.SetVariable(ctx, operation.Target, nil); err != nil {
-							return nil, err
+							return nil, false, err
 						}
 					} else {
 						if len(rows[0]) != 1 || len(sch) != 1 {
-							return nil, errors.New("expression returned multiple results")
+							return nil, false, errors.New("expression returned multiple results")
 						}
 						if err = assignSQLRowValue(ctx, stack, operation.Target, sch[0].Type, rows[0][0]); err != nil {
-							return nil, err
+							return nil, false, err
 						}
 					}
 				}
 			} else {
 				_, rows, err := queryMultiReturn()
 				if err != nil {
-					return nil, err
+					return nil, false, err
 				}
-				lastRowCount = rowCountFromResultRows(rows)
-				if err = setFoundVariable(ctx, stack, lastRowCount > 0); err != nil {
-					return nil, err
+				state.lastRowCount = rowCountFromResultRows(rows)
+				if err = setFoundVariable(ctx, stack, state.lastRowCount > 0); err != nil {
+					return nil, false, err
 				}
 			}
 		case OpCode_Get:
-			switch operation.PrimaryData {
-			case "ROW_COUNT":
-				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Int64, lastRowCount); err != nil {
-					return nil, err
+			if operation.Options["stacked"] == "true" {
+				if state.stackedDiagnostics == nil {
+					return nil, false, errors.New("GET STACKED DIAGNOSTICS cannot be used outside an exception handler")
 				}
-			case "PG_CONTEXT":
-				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(ctx, iFunc, operation)); err != nil {
-					return nil, err
+				value, ok := stackedDiagnosticValue(*state.stackedDiagnostics, operation.PrimaryData)
+				if !ok {
+					return nil, false, fmt.Errorf("GET STACKED DIAGNOSTICS item %s is not supported", operation.PrimaryData)
 				}
-			case "PG_ROUTINE_OID":
-				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Oid, diagnosticPGRoutineOID(iFunc)); err != nil {
-					return nil, err
+				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, value); err != nil {
+					return nil, false, err
 				}
-			default:
-				return nil, fmt.Errorf("GET DIAGNOSTICS item %s is not supported", operation.PrimaryData)
+			} else {
+				switch operation.PrimaryData {
+				case "ROW_COUNT":
+					if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Int64, state.lastRowCount); err != nil {
+						return nil, false, err
+					}
+				case "PG_CONTEXT":
+					if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(ctx, iFunc, operation)); err != nil {
+						return nil, false, err
+					}
+				case "PG_ROUTINE_OID":
+					if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Oid, diagnosticPGRoutineOID(iFunc)); err != nil {
+						return nil, false, err
+					}
+				default:
+					return nil, false, fmt.Errorf("GET DIAGNOSTICS item %s is not supported", operation.PrimaryData)
+				}
 			}
 		case OpCode_Goto:
 			// We must compare to the index - 1, so that the increment hits our target
@@ -331,7 +406,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 		case OpCode_If:
 			retVal, err := iFunc.QuerySingleReturn(ctx, stack, operation.PrimaryData, pgtypes.Bool, operation.SecondaryData)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			if retVal.(bool) {
 				// We're never changing the scope, so we can just assign it directly.
@@ -345,11 +420,11 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			_, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			restoreCallSite()
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
-			lastRowCount = rowCountFromResultRows(rows)
-			if err = setFoundVariable(ctx, stack, lastRowCount > 0); err != nil {
-				return nil, err
+			state.lastRowCount = rowCountFromResultRows(rows)
+			if err = setFoundVariable(ctx, stack, state.lastRowCount > 0); err != nil {
+				return nil, false, err
 			}
 		case OpCode_Raise:
 			// TODO: Use the client_min_messages config param to determine which
@@ -358,19 +433,21 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 
 			message, err := evaluteNoticeMessage(ctx, iFunc, operation, stack)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 
 			if operation.PrimaryData == "EXCEPTION" {
 				// TODO: Notices at the EXCEPTION level should also abort the current tx.
-				return nil, errors.New(message)
+				return nil, false, plpgsqlExceptionError{
+					diagnostics: plpgsqlExceptionDiagnosticsFromRaise(ctx, iFunc, operation, message),
+				}
 			} else {
 				noticeResponse := &pgproto3.NoticeResponse{
 					Severity: operation.PrimaryData,
 					Message:  message,
 				}
 				if err = applyNoticeOptions(ctx, noticeResponse, operation.Options); err != nil {
-					return nil, err
+					return nil, false, err
 				}
 				sess := dsess.DSessFromSess(ctx.Session)
 				sess.Notice(noticeResponse)
@@ -385,11 +462,11 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					rows[i] = sql.Row{record}
 				}
 
-				return sql.RowsToRowIter(rows...), nil
+				return sql.RowsToRowIter(rows...), true, nil
 			}
 
 			if len(operation.PrimaryData) == 0 {
-				return nil, nil
+				return nil, true, nil
 			}
 
 			// TODO: handle record types properly, we'll special case triggers for now
@@ -397,9 +474,9 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				normalized := strings.ReplaceAll(strings.ToLower(operation.PrimaryData), " ", "")
 				if normalized == "select$1;" {
 					if strings.EqualFold(operation.SecondaryData[0], "new") {
-						return *stack.GetVariable("NEW").Value, nil
+						return *stack.GetVariable("NEW").Value, true, nil
 					} else if strings.EqualFold(operation.SecondaryData[0], "old") {
-						return *stack.GetVariable("OLD").Value, nil
+						return *stack.GetVariable("OLD").Value, true, nil
 					}
 				}
 			}
@@ -408,16 +485,19 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			// If this is a set returning function, then we need to return a RowIter and wrap
 			// the composite value in a sql.Row.
 			if iFunc.IsSRF() {
-				return sql.RowsToRowIter(sql.Row{val}), nil
+				return sql.RowsToRowIter(sql.Row{val}), true, nil
 			}
-			return val, err
+			if err != nil {
+				return nil, false, err
+			}
+			return val, true, nil
 
 		case OpCode_ForQueryInit:
 			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
-			lastRowCount = rowCountFromResultRows(rows)
+			state.lastRowCount = rowCountFromResultRows(rows)
 			stack.InitCursor(operation.Target, schema, rows)
 		case OpCode_ForQueryNext:
 			schema, row, ok := stack.AdvanceCursor(operation.PrimaryData)
@@ -427,18 +507,18 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 				counter = operation.Index - 1
 			} else {
 				if err := stack.UpdateRecord(operation.Target, schema, row); err != nil {
-					return nil, err
+					return nil, false, err
 				}
 			}
 		case OpCode_ReturnQuery:
 			schema, rows, err := iFunc.QueryMultiReturn(ctx, stack, operation.PrimaryData, operation.SecondaryData)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
-			lastRowCount = rowCountFromResultRows(rows)
+			state.lastRowCount = rowCountFromResultRows(rows)
 			records, err := convertRowsToRecords(schema, rows)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			stack.BufferReturnQueryResults(records)
 
@@ -454,7 +534,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 			panic("unimplemented opcode")
 		}
 	}
-	return nil, nil
+	return nil, false, nil
 }
 
 func rowCountFromResultRows(rows []sql.Row) int64 {
@@ -462,6 +542,83 @@ func rowCountFromResultRows(rows []sql.Row) int64 {
 		return int64(gmstypes.GetOkResult(rows[0]).RowsAffected)
 	}
 	return int64(len(rows))
+}
+
+func plpgsqlExceptionDiagnosticsFromRaise(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation, message string) plpgsqlExceptionDiagnostics {
+	diagnostics := plpgsqlExceptionDiagnostics{
+		MessageText:      message,
+		ReturnedSQLState: "P0001",
+		Context:          diagnosticPGContext(ctx, iFunc, operation),
+	}
+	for key, value := range operation.Options {
+		i, err := strconv.Atoi(key)
+		if err != nil {
+			continue
+		}
+		value = plpgsqlRaiseOptionText(value)
+		switch NoticeOptionType(i) {
+		case NoticeOptionTypeErrCode:
+			diagnostics.ReturnedSQLState = value
+		case NoticeOptionTypeMessage:
+			diagnostics.MessageText = value
+		case NoticeOptionTypeDetail:
+			diagnostics.Detail = value
+		case NoticeOptionTypeHint:
+			diagnostics.Hint = value
+		}
+	}
+	return diagnostics
+}
+
+func plpgsqlExceptionDiagnosticsFromError(err error) plpgsqlExceptionDiagnostics {
+	var exceptionErr plpgsqlExceptionError
+	if errors.As(err, &exceptionErr) {
+		return exceptionErr.diagnostics
+	}
+	return plpgsqlExceptionDiagnostics{
+		MessageText:      err.Error(),
+		ReturnedSQLState: "XX000",
+	}
+}
+
+func plpgsqlRaiseOptionText(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) >= 2 && value[0] == '\'' && value[len(value)-1] == '\'' {
+		value = value[1 : len(value)-1]
+		value = strings.ReplaceAll(value, "''", "'")
+	}
+	return value
+}
+
+func stackedDiagnosticValue(diagnostics plpgsqlExceptionDiagnostics, kind string) (string, bool) {
+	switch kind {
+	case "MESSAGE_TEXT":
+		return diagnostics.MessageText, true
+	case "RETURNED_SQLSTATE":
+		return diagnostics.ReturnedSQLState, true
+	case "PG_EXCEPTION_DETAIL":
+		return diagnostics.Detail, true
+	case "PG_EXCEPTION_HINT":
+		return diagnostics.Hint, true
+	case "PG_EXCEPTION_CONTEXT":
+		return diagnostics.Context, true
+	default:
+		return "", false
+	}
+}
+
+func exceptionHandlerMatches(conditions string, diagnostics plpgsqlExceptionDiagnostics) bool {
+	for _, condition := range strings.Split(conditions, ",") {
+		switch strings.ToLower(strings.TrimSpace(condition)) {
+		case "others":
+			return true
+		case "raise_exception":
+			if diagnostics.ReturnedSQLState == "P0001" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // convertRowsToRecords iterates overs |rows| and converts each field in each row
@@ -683,7 +840,7 @@ func applyNoticeOptions(ctx *sql.Context, noticeResponse *pgproto3.NoticeRespons
 	for key, value := range options {
 		i, err := strconv.Atoi(key)
 		if err != nil {
-			return err
+			continue
 		}
 
 		switch NoticeOptionType(i) {
