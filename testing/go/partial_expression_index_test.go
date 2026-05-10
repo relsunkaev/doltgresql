@@ -2316,11 +2316,55 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	signRawSemanticQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND delta > 0`
 	assertCountResult(t, ctx, conn, signRawSemanticQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, signRawSemanticQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, signRawSemanticQuery, true)
+
+	signRawValueQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND delta = 5`
+	assertCountResult(t, ctx, conn, signRawValueQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signRawValueQuery, true)
+
+	signRawInQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND delta IN (5, 10)`
+	assertCountResult(t, ctx, conn, signRawInQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signRawInQuery, true)
+
+	signRawCrossingQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND delta >= 0`
+	assertCountResult(t, ctx, conn, signRawCrossingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, signRawCrossingQuery, false)
 
 	signNonMatchingQuery := `SELECT count(id) FROM partial_planner_sign WHERE tenant = 1 AND sign(delta) = -1`
 	assertCountResult(t, ctx, conn, signNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, signNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_sign_negative (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_sign_negative VALUES
+		(1, 1, -5),
+		(2, 1, 5),
+		(3, 1, 0),
+		(4, 2, -10)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_sign_negative_tenant_idx ON partial_planner_sign_negative (tenant) WHERE sign(delta) = -1")
+
+	signNegativeRawRangeQuery := `SELECT count(id) FROM partial_planner_sign_negative WHERE tenant = 1 AND delta < 0`
+	assertCountResult(t, ctx, conn, signNegativeRawRangeQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signNegativeRawRangeQuery, true)
+
+	signNegativeCrossingQuery := `SELECT count(id) FROM partial_planner_sign_negative WHERE tenant = 1 AND delta <= 0`
+	assertCountResult(t, ctx, conn, signNegativeCrossingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, signNegativeCrossingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_sign_zero (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_sign_zero VALUES
+		(1, 1, 0),
+		(2, 1, 5),
+		(3, 1, -5),
+		(4, 2, 0)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_sign_zero_tenant_idx ON partial_planner_sign_zero (tenant) WHERE sign(delta) = 0")
+
+	signZeroRawValueQuery := `SELECT count(id) FROM partial_planner_sign_zero WHERE tenant = 1 AND delta = 0`
+	assertCountResult(t, ctx, conn, signZeroRawValueQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signZeroRawValueQuery, true)
+
+	signZeroCrossingQuery := `SELECT count(id) FROM partial_planner_sign_zero WHERE tenant = 1 AND delta BETWEEN -1 AND 1`
+	assertCountResult(t, ctx, conn, signZeroCrossingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, signZeroCrossingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_gcd (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, width BIGINT, height BIGINT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_gcd VALUES

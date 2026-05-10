@@ -161,6 +161,9 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 			}
 			return predicateTransformedArgumentValueSetImplies(indexValues, queryValues)
 		}
+		if queryRange, ok := numericPredicateRangeFromExpr(queryExpr); ok {
+			return predicateSignArgumentRangeImplies(indexValues, queryRange)
+		}
 		queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
 		if !ok || indexValues.exprKey != queryBool.exprKey {
 			return false
@@ -492,7 +495,8 @@ func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
 
 func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
 	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
-		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues)
+		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateSignArgumentValueSetImplies(indexValues, queryValues)
 }
 
 func predicateAbsArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
@@ -571,6 +575,74 @@ func predicateCaseFoldStringLiteralKey(functionName string, value string) (strin
 		return "", false
 	}
 	return prefix + value, true
+}
+
+func predicateSignArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "sign")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	signValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		signValue, ok := predicateSignNumericLiteralKey(value)
+		if !ok {
+			return false
+		}
+		signValues[signValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: signValues}.subsetOf(indexValues)
+}
+
+func predicateSignArgumentRangeImplies(indexValues predicateValueSet, queryRange numericPredicateRangeWithColumn) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "sign")
+	if !ok || argumentKey != "column:"+queryRange.column {
+		return false
+	}
+	signValues, ok := predicateSignRangeLiteralKeys(queryRange.bounds)
+	if !ok {
+		return false
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: signValues}.subsetOf(indexValues)
+}
+
+func predicateSignNumericLiteralKey(value string) (string, bool) {
+	const prefix = "n:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	number, err := strconv.ParseFloat(strings.TrimPrefix(value, prefix), 64)
+	if err != nil {
+		return "", false
+	}
+	return predicateSignLiteralKey(number), true
+}
+
+func predicateSignRangeLiteralKeys(bounds numericPredicateRange) (map[string]struct{}, bool) {
+	if !bounds.valid() {
+		return nil, false
+	}
+	if bounds.hasLower && (bounds.lower > 0 || (bounds.lower == 0 && !bounds.lowerInclusive)) {
+		return map[string]struct{}{predicateSignLiteralKey(1): {}}, true
+	}
+	if bounds.hasUpper && (bounds.upper < 0 || (bounds.upper == 0 && !bounds.upperInclusive)) {
+		return map[string]struct{}{predicateSignLiteralKey(-1): {}}, true
+	}
+	if bounds.hasLower && bounds.hasUpper && bounds.lower == 0 && bounds.upper == 0 &&
+		bounds.lowerInclusive && bounds.upperInclusive {
+		return map[string]struct{}{predicateSignLiteralKey(0): {}}, true
+	}
+	return nil, false
+}
+
+func predicateSignLiteralKey(number float64) string {
+	switch {
+	case number > 0:
+		return "n:1"
+	case number < 0:
+		return "n:-1"
+	default:
+		return "n:0"
+	}
 }
 
 func (s predicateExclusionSet) implies(other predicateExclusionSet) bool {

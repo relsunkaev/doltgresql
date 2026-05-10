@@ -1010,7 +1010,16 @@ func TestImpliesSignFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"sign(delta) = 1", "sign(delta) = 1"},
+		{"sign(delta) = 1", "delta = 5"},
+		{"sign(delta) = 1", "delta IN (5, 10)"},
+		{"sign(delta) = 1", "delta > 0"},
+		{"sign(delta) = 1", "delta >= 1"},
+		{"sign(delta) = -1", "delta = -5"},
+		{"sign(delta) = -1", "delta < 0"},
+		{"sign(delta) = -1", "delta <= -1"},
+		{"sign(delta) = 0", "delta = 0"},
 		{"sign(delta) IN (-1, 1)", "sign(delta) = 1"},
+		{"sign(delta) IN (-1, 1)", "delta IN (-5, 5)"},
 		{"sign(delta) IS NOT NULL", "sign(delta) = 1"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
@@ -1021,9 +1030,14 @@ func TestImpliesSignFunctionPredicates(t *testing.T) {
 		indexPredicate string
 		queryPredicate string
 	}{
-		{"sign(delta) = 1", "delta > 0"},
+		{"sign(delta) = 1", "delta >= 0"},
+		{"sign(delta) = 1", "delta IN (0, 5)"},
+		{"sign(delta) = 1", "delta < 0"},
+		{"sign(delta) = -1", "delta <= 0"},
+		{"sign(delta) = 0", "delta BETWEEN -1 AND 1"},
 		{"sign(delta) = 1", "sign(delta) = -1"},
 		{"sign(delta) IN (-1, 1)", "sign(delta) IN (0, 1)"},
+		{"sign(delta) IN (-1, 1)", "delta IN (-5, 0, 5)"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

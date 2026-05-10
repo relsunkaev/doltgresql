@@ -1902,8 +1902,71 @@ ON CONFLICT (user_id) WHERE sign(delta) = 1 DO UPDATE SET note = EXCLUDED.note;`
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_sign VALUES (4, 10, 20, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_sign VALUES (4, 10, 20, 'raw-positive-upsert')
+ON CONFLICT (user_id) WHERE delta > 0 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(5), "raw-positive-upsert"},
+						{2, int32(10), int64(-5), "negative"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_sign VALUES (5, 10, 20, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE delta >= 0 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT partial unique index supports negative sign raw predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_sign_negative (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_sign_negative_user_idx ON partial_arb_sign_negative (user_id) WHERE sign(delta) = -1;",
+				"INSERT INTO partial_arb_sign_negative VALUES (1, 10, -5, 'old-negative'), (2, 10, 5, 'positive');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_sign_negative VALUES (3, 10, -20, 'raw-negative-upsert')
+ON CONFLICT (user_id) WHERE delta < 0 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign_negative ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(-5), "raw-negative-upsert"},
+						{2, int32(10), int64(5), "positive"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_sign_negative VALUES (4, 10, -20, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE delta <= 0 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
+			Name: "ON CONFLICT partial unique index supports zero sign raw predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_sign_zero (id INT PRIMARY KEY, user_id INT, delta BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_sign_zero_user_idx ON partial_arb_sign_zero (user_id) WHERE sign(delta) = 0;",
+				"INSERT INTO partial_arb_sign_zero VALUES (1, 10, 0, 'old-zero'), (2, 10, 5, 'positive');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_sign_zero VALUES (3, 10, 0, 'raw-zero-upsert')
+ON CONFLICT (user_id) WHERE delta = 0 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, delta, note FROM partial_arb_sign_zero ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(0), "raw-zero-upsert"},
+						{2, int32(10), int64(5), "positive"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_sign_zero VALUES (4, 10, 0, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE delta BETWEEN -1 AND 1 DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

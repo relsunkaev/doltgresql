@@ -1099,10 +1099,19 @@ Do not check off an item until it has workload proof:
   paths. Unary `sign(...)` calls now serialize as comparable predicate keys,
   planner filters can deparse them, partial unique DML enforcement evaluates
   signed-integer sign output, and `ON CONFLICT` arbiter inference accepts the
-  exact-expression shape; raw positive-range predicates and wrong sign values
-  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  exact-expression shape; wrong sign values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.26.
+- [x] Use raw argument value-set and single-sign range predicates to imply
+  matching `sign(...)` partial-index predicates. Numeric equality, IN-list,
+  strictly positive/negative ranges, and exact-zero predicates on the argument
+  now imply matching `sign(...)` value-set predicates when every possible sign
+  output is contained in the partial predicate's literal set. Zero-crossing
+  ranges such as `delta >= 0`, `delta <= 0`, and `delta BETWEEN -1 AND 1`
+  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.40.
 - [x] Use deterministic `chr(expr)` predicates in partial-index implication
   paths. Unary `chr(...)` calls now serialize as comparable predicate keys,
   planner filters can deparse them, partial unique DML enforcement evaluates
