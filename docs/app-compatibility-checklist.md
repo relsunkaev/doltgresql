@@ -658,10 +658,14 @@ Do not check off an item until it has workload proof:
   TestCreateIndexConcurrentlyAllowsWritersDuringPhase1, with the local Dolt
   pause point kept unexported and installed only by the SQL test binary through
   testing/go/create_index_concurrently_test_hooks_test.go.
-- [ ] Add large-table `CREATE INDEX CONCURRENTLY` performance guardrails. The
-  current evidence proves writer progress and correctness, but does not pin
-  Phase 1 build latency, writer latency while Phase 1 is running, or planner
-  behavior on large tables. Tracked by dg-7ug.8.
+- [x] Add large-table `CREATE INDEX CONCURRENTLY` performance guardrails. The
+  guardrail builds a secondary btree index over an 8k-row table with a
+  deterministic Phase 1 pause, proves insert/update/delete writers complete
+  under a timeout while the build is in progress, bounds the post-release build
+  path, and verifies the final planner uses `IndexedTableAccess` for a row
+  written during the build. Pinned by
+  testing/go/create_index_concurrently_contention_test.go. Tracked by
+  dg-7ug.8.4.
 - [~] CONCURRENTLY for metadata-backed and non-btree index shapes -
   btree `INCLUDE`, non-unique btree partial, supported JSONB GIN, and
   non-unique btree expression indexes now use the same two-phase

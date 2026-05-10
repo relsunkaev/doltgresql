@@ -318,6 +318,125 @@ func TestCreateIndexConcurrentlyAllowsWritersDuringPhase1(t *testing.T) {
 	require.Contains(t, plan.String(), "IndexedTableAccess")
 }
 
+func TestCreateIndexConcurrentlyLargeTableGuardrail(t *testing.T) {
+	port, err := gms.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, defaultConn, controller := CreateServerWithPort(t, "postgres", port)
+	t.Cleanup(func() {
+		defaultConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	})
+
+	dial := func(t *testing.T) *pgx.Conn {
+		t.Helper()
+		conn, err := pgx.Connect(ctx, fmt.Sprintf(
+			"postgres://postgres:password@127.0.0.1:%d/postgres?sslmode=disable", port))
+		require.NoError(t, err)
+		return conn
+	}
+
+	setup := dial(t)
+	defer setup.Close(ctx)
+	_, err = setup.Exec(ctx, "CREATE TABLE large_concurrent_t (id INT PRIMARY KEY, v INT)")
+	require.NoError(t, err)
+	insertLargeConcurrentRows(t, ctx, setup, "large_concurrent_t", 8192)
+
+	paused := make(chan struct{})
+	resume := make(chan struct{})
+	setCreationTestHookBeforeBuildSecondaryIndex(t, func(_ *gms.Context) {
+		close(paused)
+		<-resume
+	})
+	var resumeOnce sync.Once
+	releaseBuild := func() {
+		resumeOnce.Do(func() { close(resume) })
+	}
+	defer releaseBuild()
+
+	sessionA := dial(t)
+	defer sessionA.Close(ctx)
+	createDone := make(chan error, 1)
+	go func() {
+		_, execErr := sessionA.Exec(ctx, "CREATE INDEX CONCURRENTLY large_concurrent_t_v_idx ON large_concurrent_t (v)")
+		createDone <- execErr
+	}()
+
+	select {
+	case <-paused:
+	case execErr := <-createDone:
+		require.NoError(t, execErr)
+		t.Fatal("large-table CREATE INDEX CONCURRENTLY completed before reaching the Phase 1 build hook")
+	case <-time.After(15 * time.Second):
+		t.Fatal("large-table CREATE INDEX CONCURRENTLY never reached the Phase 1 build hook")
+	}
+
+	sessionB := dial(t)
+	defer sessionB.Close(ctx)
+	writeCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	writeStart := time.Now()
+	_, err = sessionB.Exec(writeCtx, "INSERT INTO large_concurrent_t VALUES (9001, 777777)")
+	require.NoError(t, err, "large-table writer should not block while CONCURRENTLY is in Phase 1")
+	_, err = sessionB.Exec(writeCtx, "UPDATE large_concurrent_t SET v = 888888 WHERE id = 4000")
+	require.NoError(t, err, "large-table updater should not block while CONCURRENTLY is in Phase 1")
+	_, err = sessionB.Exec(writeCtx, "DELETE FROM large_concurrent_t WHERE id = 1")
+	require.NoError(t, err, "large-table deleter should not block while CONCURRENTLY is in Phase 1")
+	require.Less(t, time.Since(writeStart), 2*time.Second, "large-table phase-1 writers should stay timeout-bounded")
+
+	buildStart := time.Now()
+	releaseBuild()
+	select {
+	case execErr := <-createDone:
+		require.NoError(t, execErr)
+	case <-time.After(15 * time.Second):
+		t.Fatal("large-table CREATE INDEX CONCURRENTLY never finished after releasing the Phase 1 build hook")
+	}
+	require.Less(t, time.Since(buildStart), 10*time.Second, "large-table index build should not regress into a very slow path")
+
+	var count int
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT count(*) FROM large_concurrent_t WHERE v = 777777").Scan(&count))
+	require.Equal(t, 1, count)
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT count(*) FROM large_concurrent_t WHERE v = 888888").Scan(&count))
+	require.Equal(t, 1, count)
+	require.NoError(t, sessionB.QueryRow(ctx, "SELECT count(*) FROM large_concurrent_t WHERE id = 1").Scan(&count))
+	require.Equal(t, 0, count)
+
+	rows, err := sessionB.Query(ctx, "EXPLAIN SELECT id FROM large_concurrent_t WHERE v = 777777")
+	require.NoError(t, err)
+	defer rows.Close()
+	var plan strings.Builder
+	for rows.Next() {
+		var line string
+		require.NoError(t, rows.Scan(&line))
+		plan.WriteString(line)
+		plan.WriteByte('\n')
+	}
+	require.NoError(t, rows.Err())
+	require.Contains(t, plan.String(), "IndexedTableAccess")
+}
+
+func insertLargeConcurrentRows(t *testing.T, ctx context.Context, conn *pgx.Conn, table string, count int) {
+	t.Helper()
+	const batchSize = 512
+	for start := 1; start <= count; start += batchSize {
+		end := start + batchSize - 1
+		if end > count {
+			end = count
+		}
+		var query strings.Builder
+		_, _ = fmt.Fprintf(&query, "INSERT INTO %s VALUES ", table)
+		for id := start; id <= end; id++ {
+			if id > start {
+				query.WriteString(", ")
+			}
+			_, _ = fmt.Fprintf(&query, "(%d, %d)", id, id%1024)
+		}
+		_, err := conn.Exec(ctx, query.String())
+		require.NoError(t, err)
+	}
+}
+
 func assertConcurrentIndexCrossSessionVisibility(
 	t *testing.T,
 	ctx context.Context,
