@@ -1254,9 +1254,13 @@ typed-exception handling, and client-side query timeouts.
   typed tables also support named table-level `CHECK` constraints and
   column-level `WITH OPTIONS ... CHECK` constraints with insert/update
   enforcement; permanent typed-table CHECK constraints are also visible through
-  `information_schema.table_constraints`. Still open: FOREIGN KEY, generated
-  columns, UNIQUE NULLS NOT DISTINCT, index options/opclasses, and other
-  table-definition/options surface. Pinned by
+  `information_schema.table_constraints`. Permanent typed tables now support
+  table-level `FOREIGN KEY (...) REFERENCES ...` constraints and column-level
+  `WITH OPTIONS ... REFERENCES ...` constraints, including insert-time
+  enforcement and `information_schema.table_constraints` visibility; temporary
+  typed-table foreign keys remain rejected by the engine's temporary-table FK
+  boundary. Still open: generated columns, UNIQUE NULLS NOT DISTINCT, index
+  options/opclasses, and other table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
   dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL

@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -49,10 +51,11 @@ var _ sql.ExecSourceRel = (*CreateTypedTable)(nil)
 var _ vitess.Injectable = (*CreateTypedTable)(nil)
 
 type TypedTableOptions struct {
-	ColumnOptions     []TypedTableColumnOptions
-	PrimaryKeyColumns []string
-	UniqueConstraints []TypedTableUniqueConstraint
-	CheckConstraints  []TypedTableCheckConstraint
+	ColumnOptions         []TypedTableColumnOptions
+	PrimaryKeyColumns     []string
+	UniqueConstraints     []TypedTableUniqueConstraint
+	CheckConstraints      []TypedTableCheckConstraint
+	ForeignKeyConstraints []TypedTableForeignKeyConstraint
 }
 
 type TypedTableColumnOptions struct {
@@ -77,6 +80,17 @@ type TypedTableUniqueConstraint struct {
 type TypedTableCheckConstraint struct {
 	Name       string
 	Expression string
+}
+
+type TypedTableForeignKeyConstraint struct {
+	Name               string
+	Columns            []string
+	ParentDatabaseName string
+	ParentSchemaName   string
+	ParentTableName    string
+	ParentColumns      []string
+	OnUpdate           sql.ForeignKeyReferentialAction
+	OnDelete           sql.ForeignKeyReferentialAction
 }
 
 // NewCreateTypedTable returns a new CREATE TABLE OF execution node.
@@ -163,6 +177,9 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	}
 
 	if c.Temporary {
+		if len(c.Options.ForeignKeyConstraints) > 0 {
+			return nil, sql.ErrTemporaryTablesForeignKeySupport.New()
+		}
 		tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TemporaryTableCreator)
 		if !ok {
 			return nil, sql.ErrTemporaryTableNotSupported.New()
@@ -196,6 +213,9 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 	if err = c.createUniqueConstraints(ctx, db); err != nil {
+		return nil, err
+	}
+	if err = c.createForeignKeyConstraints(ctx, db, schemaName); err != nil {
 		return nil, err
 	}
 	if err = c.createCheckConstraints(ctx, db); err != nil {
@@ -246,6 +266,91 @@ func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Data
 			Constraint: sql.IndexConstraint_Unique,
 			Storage:    sql.IndexUsing_BTree,
 		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *CreateTypedTable) createForeignKeyConstraints(ctx *sql.Context, db sql.Database, schemaName string) error {
+	if len(c.Options.ForeignKeyConstraints) == 0 {
+		return nil
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, c.TableName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(c.TableName)
+	}
+	foreignKeyTable, ok := typedTableForeignKeyTable(table)
+	if !ok {
+		return errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not supported by this table")
+	}
+	fkChecks, err := ctx.GetSessionVariable(ctx, "foreign_key_checks")
+	if err != nil {
+		return err
+	}
+	generatedNames := make(map[string]struct{}, len(c.Options.ForeignKeyConstraints))
+	for _, constraint := range c.Options.ForeignKeyConstraints {
+		foreignKey := sql.ForeignKeyConstraint{
+			Name:           constraint.Name,
+			Database:       db.Name(),
+			SchemaName:     schemaName,
+			Table:          table.Name(),
+			ParentDatabase: db.Name(),
+			ParentSchema:   schemaName,
+			ParentTable:    constraint.ParentTableName,
+			OnUpdate:       constraint.OnUpdate,
+			OnDelete:       constraint.OnDelete,
+			Columns:        append([]string(nil), constraint.Columns...),
+			ParentColumns:  append([]string(nil), constraint.ParentColumns...),
+		}
+		if foreignKey.Name == "" {
+			foreignKey.Name = typedTableForeignKeyName(table.Name(), foreignKey.Columns, generatedNames)
+		}
+		generatedNames[strings.ToLower(foreignKey.Name)] = struct{}{}
+
+		if constraint.ParentDatabaseName != "" {
+			foreignKey.ParentDatabase = constraint.ParentDatabaseName
+		}
+		parentDb := db
+		if constraint.ParentSchemaName != "" {
+			rootDb, err := core.GetSqlDatabaseFromContext(ctx, c.DatabaseName)
+			if err != nil {
+				return err
+			}
+			parentDb, err = databaseForSchema(ctx, rootDb, constraint.ParentSchemaName)
+			if err != nil {
+				return err
+			}
+			if schemaDb, ok := parentDb.(sql.DatabaseSchema); ok {
+				foreignKey.ParentSchema = schemaDb.SchemaName()
+			} else {
+				foreignKey.ParentSchema = constraint.ParentSchemaName
+			}
+			foreignKey.ParentDatabase = parentDb.Name()
+		}
+
+		if err := deferrable.BindForeignKey(ctx, foreignKey); err != nil {
+			return err
+		}
+		if fkChecks.(int8) == 1 {
+			parentTable, ok, err := parentDb.GetTableInsensitive(ctx, constraint.ParentTableName)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return sql.ErrTableNotFound.New(constraint.ParentTableName)
+			}
+			parentForeignKeyTable, ok := typedTableForeignKeyTable(parentTable)
+			if !ok {
+				return errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not supported by parent table")
+			}
+			if err := plan.ResolveForeignKey(ctx, foreignKeyTable, parentForeignKeyTable, foreignKey, true, true, true); err != nil {
+				return err
+			}
+		} else if err := plan.ResolveForeignKey(ctx, foreignKeyTable, nil, foreignKey, true, false, false); err != nil {
 			return err
 		}
 	}
@@ -304,6 +409,30 @@ func typedTableCheckAlterable(table sql.Table) (sql.CheckAlterableTable, bool) {
 		return checkAlterable, true
 	}
 	return nil, false
+}
+
+func typedTableForeignKeyTable(table sql.Table) (sql.ForeignKeyTable, bool) {
+	if foreignKeyTable, ok := table.(sql.ForeignKeyTable); ok {
+		return foreignKeyTable, true
+	}
+	if table == nil {
+		return nil, false
+	}
+	if foreignKeyTable, ok := sql.GetUnderlyingTable(table).(sql.ForeignKeyTable); ok {
+		return foreignKeyTable, true
+	}
+	return nil, false
+}
+
+func typedTableForeignKeyName(tableName string, columns []string, used map[string]struct{}) string {
+	baseName := fmt.Sprintf("%s_%s_fkey", tableName, strings.Join(columns, "_"))
+	name := baseName
+	for i := 0; ; i++ {
+		if _, ok := used[strings.ToLower(name)]; !ok {
+			return name
+		}
+		name = fmt.Sprintf("%s%d", baseName, i+1)
+	}
 }
 
 func typedTableUniqueConstraints(options TypedTableOptions) []TypedTableUniqueConstraint {

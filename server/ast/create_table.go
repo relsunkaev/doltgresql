@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
@@ -173,7 +174,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				return options, children, errors.Errorf(`column "%s" specified more than once`, name)
 			}
 			seenColumns[columnKey] = struct{}{}
-			columnOption, defaultExpr, checks, err := nodeTypedTableColumnOptions(ctx, tableName, def, len(children))
+			columnOption, defaultExpr, checks, foreignKeys, err := nodeTypedTableColumnOptions(ctx, tableName, def, len(children))
 			if err != nil {
 				return options, children, err
 			}
@@ -182,6 +183,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 			}
 			options.ColumnOptions = append(options.ColumnOptions, columnOption)
 			options.CheckConstraints = append(options.CheckConstraints, checks...)
+			options.ForeignKeyConstraints = append(options.ForeignKeyConstraints, foreignKeys...)
 		case *tree.UniqueConstraintTableDef:
 			constraintKind := "unique constraint"
 			if def.PrimaryKey {
@@ -212,7 +214,11 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 			}
 			options.CheckConstraints = append(options.CheckConstraints, check)
 		case *tree.ForeignKeyConstraintTableDef:
-			return options, children, errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not yet supported")
+			foreignKey, err := nodeTypedTableForeignKeyConstraint(ctx, tableName, def)
+			if err != nil {
+				return options, children, err
+			}
+			options.ForeignKeyConstraints = append(options.ForeignKeyConstraints, foreignKey)
 		case *tree.IndexTableDef:
 			return options, children, errors.Errorf("CREATE TABLE OF indexes are not yet supported")
 		case *tree.LikeTableDef:
@@ -224,15 +230,16 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 	return options, children, nil
 }
 
-func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, []pgnodes.TypedTableCheckConstraint, error) {
+func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, []pgnodes.TypedTableCheckConstraint, []pgnodes.TypedTableForeignKeyConstraint, error) {
 	option := pgnodes.TypedTableColumnOptions{Name: string(def.Name)}
 	var defaultExpr vitess.Expr
 	checks := make([]pgnodes.TypedTableCheckConstraint, 0, len(def.CheckExprs))
+	var foreignKeys []pgnodes.TypedTableForeignKeyConstraint
 	if def.HasDefaultExpr() {
 		var err error
 		defaultExpr, err = nodeExpr(ctx, def.DefaultExpr.Expr)
 		if err != nil {
-			return option, nil, nil, err
+			return option, nil, nil, nil, err
 		}
 		option.HasDefault = true
 		option.DefaultLiteral = typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr)
@@ -242,22 +249,38 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 	for _, checkExpr := range def.CheckExprs {
 		check, err := nodeTypedTableCheckConstraint(ctx, string(checkExpr.ConstraintName), checkExpr.Expr, checkExpr.NoInherit)
 		if err != nil {
-			return option, nil, nil, err
+			return option, nil, nil, nil, err
 		}
 		checks = append(checks, check)
 	}
 	if def.References.Table != nil {
-		return option, nil, nil, errors.Errorf("CREATE TABLE OF column FOREIGN KEY constraints are not yet supported")
+		if len(def.References.Col) == 0 {
+			return option, nil, nil, nil, errors.Errorf("implicit primary key matching on column foreign key is not yet supported")
+		}
+		foreignKey, err := nodeTypedTableForeignKeyConstraint(ctx, tableName, &tree.ForeignKeyConstraintTableDef{
+			Name:       def.References.ConstraintName,
+			Table:      *def.References.Table,
+			FromCols:   tree.NameList{def.Name},
+			ToCols:     tree.NameList{def.References.Col},
+			Actions:    def.References.Actions,
+			Match:      def.References.Match,
+			Deferrable: def.References.Deferrable,
+			Initially:  def.References.Initially,
+		})
+		if err != nil {
+			return option, nil, nil, nil, err
+		}
+		foreignKeys = append(foreignKeys, foreignKey)
 	}
 	if def.Unique && !def.PrimaryKey.IsPrimaryKey {
 		if def.UniqueNullsNotDistinct {
-			return option, nil, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
+			return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
 		}
 		option.Unique = true
 		option.UniqueName = typedTableConstraintName(def.UniqueConstraintName, defaultUniqueConstraintNameFromNames(tableName, []string{option.Name}))
 	}
 	if def.Computed.Computed {
-		return option, nil, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
+		return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
 	}
 	switch def.Nullable.Nullability {
 	case tree.NotNull:
@@ -268,10 +291,10 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		option.Nullable = true
 	case tree.SilentNull:
 	default:
-		return option, nil, nil, errors.Errorf("unknown NULL type encountered")
+		return option, nil, nil, nil, errors.Errorf("unknown NULL type encountered")
 	}
 	option.PrimaryKey = def.PrimaryKey.IsPrimaryKey
-	return option, defaultExpr, checks, nil
+	return option, defaultExpr, checks, foreignKeys, nil
 }
 
 func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, noInherit bool) (pgnodes.TypedTableCheckConstraint, error) {
@@ -285,6 +308,51 @@ func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, no
 		Name:       name,
 		Expression: tree.AsStringWithFlags(expr, tree.FmtParsable),
 	}, nil
+}
+
+func nodeTypedTableForeignKeyConstraint(ctx *Context, tableName string, def *tree.ForeignKeyConstraintTableDef) (pgnodes.TypedTableForeignKeyConstraint, error) {
+	foreignKey, err := nodeForeignKeyConstraintTableDef(ctx, tableName, def)
+	if err != nil {
+		return pgnodes.TypedTableForeignKeyConstraint{}, err
+	}
+	if len(foreignKey.ReferencedColumns) == 0 {
+		return pgnodes.TypedTableForeignKeyConstraint{}, errors.Errorf("implicit primary key matching on foreign key is not yet supported")
+	}
+	return pgnodes.TypedTableForeignKeyConstraint{
+		Name:               string(def.Name),
+		Columns:            typedTableColIdentsToStrings(foreignKey.Source),
+		ParentDatabaseName: foreignKey.ReferencedTable.DbQualifier.String(),
+		ParentSchemaName:   foreignKey.ReferencedTable.SchemaQualifier.String(),
+		ParentTableName:    foreignKey.ReferencedTable.Name.String(),
+		ParentColumns:      typedTableColIdentsToStrings(foreignKey.ReferencedColumns),
+		OnDelete:           typedTableForeignKeyAction(foreignKey.OnDelete),
+		OnUpdate:           typedTableForeignKeyAction(foreignKey.OnUpdate),
+	}, nil
+}
+
+func typedTableForeignKeyAction(action vitess.ReferenceAction) sql.ForeignKeyReferentialAction {
+	switch action {
+	case vitess.Restrict:
+		return sql.ForeignKeyReferentialAction_Restrict
+	case vitess.Cascade:
+		return sql.ForeignKeyReferentialAction_Cascade
+	case vitess.NoAction:
+		return sql.ForeignKeyReferentialAction_NoAction
+	case vitess.SetNull:
+		return sql.ForeignKeyReferentialAction_SetNull
+	case vitess.SetDefault:
+		return sql.ForeignKeyReferentialAction_SetDefault
+	default:
+		return sql.ForeignKeyReferentialAction_DefaultAction
+	}
+}
+
+func typedTableColIdentsToStrings(cols []vitess.ColIdent) []string {
+	strings := make([]string, len(cols))
+	for i, col := range cols {
+		strings[i] = col.String()
+	}
+	return strings
 }
 
 func typedTableDefaultExprIsLiteral(expr tree.Expr) bool {

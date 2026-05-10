@@ -434,9 +434,43 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports foreign key constraints",
+			SetUpScript: []string{
+				`CREATE TABLE typed_fk_parent (id INT PRIMARY KEY);`,
+				`INSERT INTO typed_fk_parent VALUES (1);`,
+				`CREATE TYPE typed_fk_task AS (id INT, parent_id INT, owner_id INT);`,
+				`CREATE TABLE typed_fk_tasks OF typed_fk_task (
+						CONSTRAINT typed_fk_tasks_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES typed_fk_parent(id),
+						owner_id WITH OPTIONS CONSTRAINT typed_fk_tasks_owner_id_fkey REFERENCES typed_fk_parent(id)
+					);`,
+				`INSERT INTO typed_fk_tasks VALUES (1, 1, 1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_fk_tasks VALUES (2, 2, 1);`,
+					ExpectedErr: `Foreign key violation`,
+				},
+				{
+					Query:       `INSERT INTO typed_fk_tasks VALUES (3, 1, 3);`,
+					ExpectedErr: `Foreign key violation`,
+				},
+				{
+					Query: `SELECT constraint_name, constraint_type
+	FROM information_schema.table_constraints
+	WHERE table_name = 'typed_fk_tasks' AND constraint_type = 'FOREIGN KEY'
+	ORDER BY constraint_name;`,
+					Expected: []sql.Row{
+						{"typed_fk_tasks_owner_id_fkey", "FOREIGN KEY"},
+						{"typed_fk_tasks_parent_id_fkey", "FOREIGN KEY"},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF rejects unsupported table-definition options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_options AS (id INT, code TEXT);`,
+				`CREATE TABLE typed_options_parent (id INT PRIMARY KEY);`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -454,6 +488,10 @@ ORDER BY indexname;`,
 				{
 					Query:       `CREATE TABLE typed_unique_nulls_not_distinct OF typed_options (UNIQUE NULLS NOT DISTINCT (code));`,
 					ExpectedErr: `CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported`,
+				},
+				{
+					Query:       `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`,
+					ExpectedErr: `temporary tables do not support foreign keys`,
 				},
 			},
 		},
