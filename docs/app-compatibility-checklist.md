@@ -430,9 +430,10 @@ Do not check off an item until it has workload proof:
   `WHERE active = false`, plus same-column numeric inequality arbiters that
   describe a subset of the partial index predicate (for example `score > 10`
   targeting an index predicate `score > 0`, or `score BETWEEN 10 AND 90`
-  targeting `score > 0 AND score < 100`), and simple OR implication where the
-  arbiter predicate implies one index-predicate disjunct or every reordered
-  arbiter disjunct implies the index predicate;
+  targeting `score > 0 AND score < 100`), same-column equality/IN-list
+  value-set subsets, and simple OR implication where the arbiter predicate
+  implies one index-predicate disjunct or every reordered arbiter disjunct
+  implies the index predicate;
   non-target partial-unique conflicts are preserved for multi-unique
   `DO NOTHING`. DDL and DML coverage in
   testing/go/partial_expression_index_test.go; real dump proof in
@@ -442,9 +443,9 @@ Do not check off an item until it has workload proof:
   the partial-index planner is exact-shape based, and `ON CONFLICT` only covers
   exact matches, conjunctions where the arbiter predicate contains every
   index-predicate term, simple boolean equivalence, and simple same-column
-  numeric range implication including `BETWEEN`, plus simple
-  boolean/numeric/exact-term OR implication. Cross-column and expression-level
-  semantic implication remain open.
+  numeric range implication including `BETWEEN`, same-column equality/IN-list
+  subset implication, plus simple boolean/numeric/exact-term OR implication.
+  Cross-column and expression-level semantic implication remain open.
   Tracked by dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is

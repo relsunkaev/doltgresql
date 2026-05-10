@@ -718,6 +718,43 @@ ON CONFLICT (user_id) WHERE active = false DO NOTHING;`,
 				},
 			},
 		},
+		{
+			Name: "ON CONFLICT partial unique index supports IN-list predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_in (id INT PRIMARY KEY, user_id INT, status TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_in_open_idx ON partial_arb_in (user_id) WHERE status IN ('active', 'pending');",
+				"INSERT INTO partial_arb_in VALUES (1, 10, 'active', 'old-open'), (2, 10, 'archived', 'closed');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_in VALUES (3, 10, 'pending', 'pending-upsert')
+ON CONFLICT (user_id) WHERE status = 'pending' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "pending-upsert"},
+						{2, 10, "archived", "closed"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_in VALUES (4, 10, 'active', 'in-list-upsert')
+ON CONFLICT (user_id) WHERE status IN ('pending', 'active') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, status, note FROM partial_arb_in ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "in-list-upsert"},
+						{2, 10, "archived", "closed"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_in VALUES (5, 10, 'active', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE status IN ('active', 'archived') DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
 	})
 }
 

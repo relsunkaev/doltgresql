@@ -364,6 +364,12 @@ func predicateTermImplies(indexExpr tree.Expr, arbiterExpr tree.Expr) bool {
 		return predicateTermImplies(indexExpr, arbiterAnd.Left) || predicateTermImplies(indexExpr, arbiterAnd.Right)
 	}
 
+	indexValues, ok := predicateValueSetFromExpr(indexExpr)
+	if ok {
+		arbiterValues, ok := predicateValueSetFromExpr(arbiterExpr)
+		return ok && strings.EqualFold(indexValues.column, arbiterValues.column) && arbiterValues.subsetOf(indexValues)
+	}
+
 	indexRange, ok := numericPredicateRangeFromExpr(indexExpr)
 	if ok {
 		arbiterRange, ok := numericPredicateRangeFromExpr(arbiterExpr)
@@ -408,6 +414,75 @@ type numericPredicateRange struct {
 type booleanPredicateComparison struct {
 	column string
 	value  bool
+}
+
+type predicateValueSet struct {
+	column string
+	values map[string]struct{}
+}
+
+func (s predicateValueSet) subsetOf(other predicateValueSet) bool {
+	for value := range s.values {
+		if _, ok := other.values[value]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func predicateValueSetFromExpr(expr tree.Expr) (predicateValueSet, bool) {
+	comparison, ok := unwrapPredicateParens(expr).(*tree.ComparisonExpr)
+	if !ok {
+		return predicateValueSet{}, false
+	}
+	switch comparison.Operator {
+	case tree.EQ, tree.IsNotDistinctFrom:
+		if column, ok := predicateColumnName(comparison.Left); ok {
+			if value, ok := predicateLiteralKey(comparison.Right); ok {
+				return predicateValueSet{column: column, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+		if column, ok := predicateColumnName(comparison.Right); ok {
+			if value, ok := predicateLiteralKey(comparison.Left); ok {
+				return predicateValueSet{column: column, values: map[string]struct{}{value: {}}}, true
+			}
+		}
+	case tree.In:
+		column, ok := predicateColumnName(comparison.Left)
+		if !ok {
+			return predicateValueSet{}, false
+		}
+		tuple, ok := unwrapPredicateParens(comparison.Right).(*tree.Tuple)
+		if !ok || len(tuple.Exprs) == 0 {
+			return predicateValueSet{}, false
+		}
+		values := make(map[string]struct{}, len(tuple.Exprs))
+		for _, expr := range tuple.Exprs {
+			value, ok := predicateLiteralKey(expr)
+			if !ok {
+				return predicateValueSet{}, false
+			}
+			values[value] = struct{}{}
+		}
+		return predicateValueSet{column: column, values: values}, true
+	}
+	return predicateValueSet{}, false
+}
+
+func predicateLiteralKey(expr tree.Expr) (string, bool) {
+	if value, ok := predicateNumericConstant(expr); ok {
+		return "n:" + strconv.FormatFloat(value, 'g', -1, 64), true
+	}
+	if value, ok := predicateBoolConstant(expr); ok {
+		return "b:" + strconv.FormatBool(value), true
+	}
+	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.DString:
+		return "s:" + string(*expr), true
+	case *tree.StrVal:
+		return "s:" + expr.RawString(), true
+	}
+	return "", false
 }
 
 type numericPredicateRangeWithColumn struct {
