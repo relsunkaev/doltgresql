@@ -238,9 +238,22 @@ func withResolvedTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtype
 	if typmod == -1 {
 		return resolvedTyp, nil
 	}
-	if resolvedTyp.ID == pgtypes.Vector.ID {
+	switch resolvedTyp.ID {
+	case pgtypes.Vector.ID:
 		var err error
 		typmod, err = pgtypes.GetTypmodFromVectorDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	case pgtypes.Halfvec.ID:
+		var err error
+		typmod, err = pgtypes.GetTypmodFromHalfvecDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	case pgtypes.Sparsevec.ID:
+		var err error
+		typmod, err = pgtypes.GetTypmodFromSparsevecDimensions(typmod)
 		if err != nil {
 			return nil, err
 		}

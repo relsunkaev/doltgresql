@@ -794,7 +794,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> GEOMETRYCOLLECTION GEOMETRYCOLLECTIONM GEOMETRYCOLLECTIONZ GEOMETRYCOLLECTIONZM
 %token <str> GLOBAL GRANT GRANTED GRANTS GREATEST GROUP GROUPING GROUPS
 
-%token <str> HANDLER HASH HAVING HIGH HISTOGRAM HOUR HYPOTHETICAL
+%token <str> HALFVEC HANDLER HASH HAVING HIGH HISTOGRAM HOUR HYPOTHETICAL
 
 %token <str> ICU_LOCALE ICU_RULES IDENTITY
 %token <str> IF IFERROR IFNULL IGNORE_FOREIGN_KEYS ILIKE IMMEDIATE IMMUTABLE IMPORT
@@ -842,7 +842,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> SERIALFUNC SERIALIZABLE SERVER SESSION SESSIONS SESSION_USER SET SETOF SETTING SETTINGS SEQUENCE SEQUENCES SFUNC
 %token <str> SHARE SHAREABLE SHOW SIMILAR SIMPLE SKIP SKIP_LOCKED SKIP_DATABASE_STATS SKIP_MISSING_FOREIGN_KEYS
 %token <str> SKIP_MISSING_SEQUENCES SKIP_MISSING_SEQUENCE_OWNERS SKIP_MISSING_VIEWS SMALLINT SMALLSERIAL SNAPSHOT SOME
-%token <str> SORTOP SPLIT SQL SQRT SSPACE STABLE START STATEMENT STATISTICS STATUS STDIN STDOUT STRATEGY STRICT STRING
+%token <str> SORTOP SPARSEVEC SPLIT SQL SQRT SSPACE STABLE START STATEMENT STATISTICS STATUS STDIN STDOUT STRATEGY STRICT STRING
 %token <str> STORAGE STORE STORED STYPE SUBSCRIPT SUBSCRIPTION SUBSTRING SUBTYPE SUBTYPE_DIFF SUBTYPE_OPCLASS
 %token <str> SUPERUSER SUPPORT SYMMETRIC SYNTAX SYSID SYSTEM
 
@@ -12501,6 +12501,34 @@ simple_typename:
   {
     $$.val = $1.typeReference()
   }
+| HALFVEC
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"halfvec"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = typ
+  }
+| HALFVEC '(' iconst32 ')'
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"halfvec"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = &tree.TypeReferenceWithModifiers{Type: typ, Modifiers: []int32{$3.int32()}}
+  }
+| SPARSEVEC
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"sparsevec"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = typ
+  }
+| SPARSEVEC '(' iconst32 ')'
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"sparsevec"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = &tree.TypeReferenceWithModifiers{Type: typ, Modifiers: []int32{$3.int32()}}
+  }
 | VECTOR
   {
     aIdx := sqllex.(*lexer).NewAnnotation()
@@ -16164,6 +16192,7 @@ col_name_keyword:
 | GEOMETRY
 | GREATEST
 | GROUPING
+| HALFVEC
 | HINT
 | IF
 | IFERROR
@@ -16187,6 +16216,7 @@ col_name_keyword:
 | ROW
 | SETOF
 | SMALLINT
+| SPARSEVEC
 | STRING
 | SUBSTRING
 | TIME

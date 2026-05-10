@@ -629,6 +629,40 @@ ORDER BY am.amname, opf.opfname;`,
 					ExpectedErr: `index method ivfflat is not yet supported`,
 				},
 				{
+					Query:    `CREATE TABLE halfvec_schema_probe (id integer primary key, embedding halfvec(3));`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `CREATE TABLE sparsevec_schema_probe (id integer primary key, embedding sparsevec(3));`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO halfvec_schema_probe VALUES (1, NULL);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO sparsevec_schema_probe VALUES (1, NULL);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT typname
+FROM pg_catalog.pg_type
+WHERE typname IN ('halfvec', 'sparsevec')
+ORDER BY typname;`,
+					Expected: []sql.Row{
+						{"halfvec"},
+						{"sparsevec"},
+					},
+				},
+				{
+					Query:       `INSERT INTO halfvec_schema_probe VALUES (2, '[1,2,3]');`,
+					ExpectedErr: `pgvector halfvec values are not yet supported`,
+				},
+				{
+					Query:       `INSERT INTO sparsevec_schema_probe VALUES (2, '{1:1}/3');`,
+					ExpectedErr: `pgvector sparsevec values are not yet supported`,
+				},
+				{
 					Query:    `SELECT embedding FROM embeddings WHERE id = 1;`,
 					Expected: []sql.Row{{"[1,2,3]"}},
 				},

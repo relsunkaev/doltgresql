@@ -294,6 +294,10 @@ Do not check off an item until it has workload proof:
   unsupported boundary: `CREATE INDEX ... USING hnsw` and
   `CREATE INDEX ... USING ivfflat` still return SQLSTATE `0A000`
   (`index method ... is not yet supported`).
+  pgvector non-dense type shells now cover `halfvec(n)` and `sparsevec(n)`
+  schema declarations and `pg_type` introspection. Non-NULL halfvec/sparsevec
+  value IO remains an explicit unsupported boundary
+  (`pgvector ... values are not yet supported`).
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
@@ -303,11 +307,11 @@ Do not check off an item until it has workload proof:
   beyond the native UUID,
   `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
   ASCII-armor subset, pgvector ANN index execution plus halfvec and sparsevec
-  families beyond the catalog-visible dense-vector and bit opclass boundaries
-  and beyond the tested bit Hamming / Jaccard distance functions and operators
-  plus dense-vector IO, equality, distance, ordering, arithmetic, binary
-  quantization, aggregate support functions, aggregate execution, and cast
-  subset,
+  value IO/functions/operators/casts/opclasses beyond the schema/type-shell
+  boundary, catalog-visible dense-vector and bit opclass boundaries, tested
+  bit Hamming / Jaccard distance functions and operators, and dense-vector IO,
+  equality, distance, ordering, arithmetic, binary quantization, aggregate
+  support functions, aggregate execution, and cast subset,
   executable `btree_gist` GiST indexes/exclusion semantics, its
   internal `gbtreekey*` storage types and `opckeytype` parity, and
   unsupported `btree_gist` type families such as `money`, MAC address,

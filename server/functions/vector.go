@@ -17,6 +17,7 @@ package functions
 import (
 	"strconv"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/shopspring/decimal"
 
@@ -33,6 +34,18 @@ func initVector() {
 	framework.RegisterFunction(vector_send)
 	framework.RegisterFunction(vector_typmod_in)
 	framework.RegisterFunction(vector_typmod_out)
+	framework.RegisterFunction(halfvec_in)
+	framework.RegisterFunction(halfvec_out)
+	framework.RegisterFunction(halfvec_recv)
+	framework.RegisterFunction(halfvec_send)
+	framework.RegisterFunction(halfvec_typmod_in)
+	framework.RegisterFunction(halfvec_typmod_out)
+	framework.RegisterFunction(sparsevec_in)
+	framework.RegisterFunction(sparsevec_out)
+	framework.RegisterFunction(sparsevec_recv)
+	framework.RegisterFunction(sparsevec_send)
+	framework.RegisterFunction(sparsevec_typmod_in)
+	framework.RegisterFunction(sparsevec_typmod_out)
 	framework.RegisterFunction(vector_cmp)
 	framework.RegisterFunction(array_to_vector_int32)
 	framework.RegisterFunction(array_to_vector_float32)
@@ -115,25 +128,117 @@ var vector_send = framework.Function1{
 	},
 }
 
+var halfvec_in = pgvectorUnsupportedInput("halfvec", pgtypes.Halfvec)
+var halfvec_out = pgvectorUnsupportedOutput("halfvec", pgtypes.Halfvec)
+var halfvec_recv = pgvectorUnsupportedReceive("halfvec", pgtypes.Halfvec)
+var halfvec_send = pgvectorUnsupportedSend("halfvec", pgtypes.Halfvec)
+var halfvec_typmod_in = pgvectorTypmodInput("halfvec", pgtypes.GetTypmodFromHalfvecDimensions)
+var halfvec_typmod_out = pgvectorTypmodOutput("halfvec")
+
+var sparsevec_in = pgvectorUnsupportedInput("sparsevec", pgtypes.Sparsevec)
+var sparsevec_out = pgvectorUnsupportedOutput("sparsevec", pgtypes.Sparsevec)
+var sparsevec_recv = pgvectorUnsupportedReceive("sparsevec", pgtypes.Sparsevec)
+var sparsevec_send = pgvectorUnsupportedSend("sparsevec", pgtypes.Sparsevec)
+var sparsevec_typmod_in = pgvectorTypmodInput("sparsevec", pgtypes.GetTypmodFromSparsevecDimensions)
+var sparsevec_typmod_out = pgvectorTypmodOutput("sparsevec")
+
 // vector_typmod_in represents the PostgreSQL function of vector type typmod input.
 var vector_typmod_in = framework.Function1{
 	Name:       "vector_typmod_in",
 	Return:     pgtypes.Int32,
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.CstringArray},
 	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+	Callable:   pgvectorTypmodInCallable("vector", pgtypes.GetTypmodFromVectorDimensions),
+}
+
+func pgvectorUnsupportedValues(typeName string) error {
+	return errors.Errorf("pgvector %s values are not yet supported", typeName)
+}
+
+func pgvectorUnsupportedInput(typeName string, typ *pgtypes.DoltgresType) framework.Function3 {
+	return framework.Function3{
+		Name:       typeName + "_in",
+		Return:     typ,
+		Parameters: [3]*pgtypes.DoltgresType{pgtypes.Cstring, pgtypes.Oid, pgtypes.Int32},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+			return nil, pgvectorUnsupportedValues(typeName)
+		},
+	}
+}
+
+func pgvectorUnsupportedOutput(typeName string, typ *pgtypes.DoltgresType) framework.Function1 {
+	return framework.Function1{
+		Name:       typeName + "_out",
+		Return:     pgtypes.Cstring,
+		Parameters: [1]*pgtypes.DoltgresType{typ},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+			return nil, pgvectorUnsupportedValues(typeName)
+		},
+	}
+}
+
+func pgvectorUnsupportedReceive(typeName string, typ *pgtypes.DoltgresType) framework.Function3 {
+	return framework.Function3{
+		Name:       typeName + "_recv",
+		Return:     typ,
+		Parameters: [3]*pgtypes.DoltgresType{pgtypes.Internal, pgtypes.Oid, pgtypes.Int32},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+			return nil, pgvectorUnsupportedValues(typeName)
+		},
+	}
+}
+
+func pgvectorUnsupportedSend(typeName string, typ *pgtypes.DoltgresType) framework.Function1 {
+	return framework.Function1{
+		Name:       typeName + "_send",
+		Return:     pgtypes.Bytea,
+		Parameters: [1]*pgtypes.DoltgresType{typ},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+			return nil, pgvectorUnsupportedValues(typeName)
+		},
+	}
+}
+
+func pgvectorTypmodInput(typeName string, validate func(int32) (int32, error)) framework.Function1 {
+	return framework.Function1{
+		Name:       typeName + "_typmod_in",
+		Return:     pgtypes.Int32,
+		Parameters: [1]*pgtypes.DoltgresType{pgtypes.CstringArray},
+		Strict:     true,
+		Callable:   pgvectorTypmodInCallable(typeName, validate),
+	}
+}
+
+func pgvectorTypmodInCallable(typeName string, validate func(int32) (int32, error)) func(*sql.Context, [2]*pgtypes.DoltgresType, any) (any, error) {
+	return func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		arr := val.([]any)
 		if len(arr) == 0 {
 			return nil, pgtypes.ErrTypmodArrayMustBe1D.New()
 		} else if len(arr) > 1 {
-			return nil, pgtypes.ErrInvalidTypMod.New("vector")
+			return nil, pgtypes.ErrInvalidTypMod.New(typeName)
 		}
 		dimensions, err := strconv.ParseInt(arr[0].(string), 10, 32)
 		if err != nil {
 			return nil, err
 		}
-		return pgtypes.GetTypmodFromVectorDimensions(int32(dimensions))
-	},
+		return validate(int32(dimensions))
+	}
+}
+
+func pgvectorTypmodOutput(typeName string) framework.Function1 {
+	return framework.Function1{
+		Name:       typeName + "_typmod_out",
+		Return:     pgtypes.Cstring,
+		Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int32},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+			return pgtypes.VectorTypmodOut(val.(int32)), nil
+		},
+	}
 }
 
 // vector_typmod_out represents the PostgreSQL function of vector type typmod output.

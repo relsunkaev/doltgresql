@@ -16,3 +16,9 @@ package types
 
 // VectorArray is the array variant of Vector.
 var VectorArray = CreateArrayTypeFromBaseType(Vector)
+
+// HalfvecArray is the array variant of Halfvec.
+var HalfvecArray = CreateArrayTypeFromBaseType(Halfvec)
+
+// SparsevecArray is the array variant of Sparsevec.
+var SparsevecArray = CreateArrayTypeFromBaseType(Sparsevec)

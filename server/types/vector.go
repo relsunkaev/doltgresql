@@ -30,6 +30,45 @@ import (
 // MaxVectorDimensions is the maximum dimension count accepted by pgvector.
 const MaxVectorDimensions = 16000
 
+func newPgvectorUnsupportedType(typeName string) *DoltgresType {
+	return &DoltgresType{
+		ID:                  toInternal(typeName),
+		TypLength:           int16(-1),
+		PassedByVal:         false,
+		TypType:             TypeType_Base,
+		TypCategory:         TypeCategory_UserDefinedTypes,
+		IsPreferred:         false,
+		IsDefined:           true,
+		Delimiter:           ",",
+		RelID:               id.Null,
+		SubscriptFunc:       toFuncID("-"),
+		Elem:                id.NullType,
+		Array:               toInternal("_" + typeName),
+		InputFunc:           toFuncID(typeName+"_in", toInternal("cstring"), toInternal("oid"), toInternal("int4")),
+		OutputFunc:          toFuncID(typeName+"_out", toInternal(typeName)),
+		ReceiveFunc:         toFuncID(typeName+"_recv", toInternal("internal"), toInternal("oid"), toInternal("int4")),
+		SendFunc:            toFuncID(typeName+"_send", toInternal(typeName)),
+		ModInFunc:           toFuncID(typeName+"_typmod_in", toInternal("_cstring")),
+		ModOutFunc:          toFuncID(typeName+"_typmod_out", toInternal("int4")),
+		AnalyzeFunc:         toFuncID("-"),
+		Align:               TypeAlignment_Int,
+		Storage:             TypeStorage_External,
+		NotNull:             false,
+		BaseTypeID:          id.NullType,
+		TypMod:              -1,
+		NDims:               0,
+		TypCollation:        id.NullCollation,
+		DefaulBin:           "",
+		Default:             "",
+		Acl:                 nil,
+		Checks:              nil,
+		attTypMod:           -1,
+		CompareFunc:         toFuncID("-"),
+		SerializationFunc:   nil,
+		DeserializationFunc: nil,
+	}
+}
+
 // Vector is a pgvector-compatible float4 vector. Doltgres provides the scalar
 // storage, text IO, binary IO, and equality surface needed by PgDog shard keys.
 var Vector = &DoltgresType{
@@ -69,10 +108,32 @@ var Vector = &DoltgresType{
 	DeserializationFunc: deserializeTypeVector,
 }
 
+// Halfvec is a pgvector-compatible type shell. Doltgres accepts schema
+// declarations for restore/introspection but does not yet implement values.
+var Halfvec = newPgvectorUnsupportedType("halfvec")
+
+// Sparsevec is a pgvector-compatible type shell. Doltgres accepts schema
+// declarations for restore/introspection but does not yet implement values.
+var Sparsevec = newPgvectorUnsupportedType("sparsevec")
+
 // GetTypmodFromVectorDimensions returns the type modifier for a vector dimension count.
 func GetTypmodFromVectorDimensions(dimensions int32) (int32, error) {
+	return getTypmodFromPgvectorDimensions("vector", dimensions)
+}
+
+// GetTypmodFromHalfvecDimensions returns the type modifier for a halfvec dimension count.
+func GetTypmodFromHalfvecDimensions(dimensions int32) (int32, error) {
+	return getTypmodFromPgvectorDimensions("halfvec", dimensions)
+}
+
+// GetTypmodFromSparsevecDimensions returns the type modifier for a sparsevec dimension count.
+func GetTypmodFromSparsevecDimensions(dimensions int32) (int32, error) {
+	return getTypmodFromPgvectorDimensions("sparsevec", dimensions)
+}
+
+func getTypmodFromPgvectorDimensions(typeName string, dimensions int32) (int32, error) {
 	if dimensions < 1 || dimensions > MaxVectorDimensions {
-		return 0, errors.Errorf("dimensions for type vector must be between 1 and %d", MaxVectorDimensions)
+		return 0, errors.Errorf("dimensions for type %s must be between 1 and %d", typeName, MaxVectorDimensions)
 	}
 	return dimensions, nil
 }
