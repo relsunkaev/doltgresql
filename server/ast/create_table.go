@@ -199,12 +199,10 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				}
 				options.PrimaryKeyColumns = columns
 			} else {
-				if def.NullsNotDistinct {
-					return options, children, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
-				}
 				options.UniqueConstraints = append(options.UniqueConstraints, pgnodes.TypedTableUniqueConstraint{
-					Name:    typedTableConstraintName(def.Name, defaultUniqueConstraintNameFromNames(tableName, columns)),
-					Columns: columns,
+					Name:             typedTableConstraintName(def.Name, defaultUniqueConstraintNameFromNames(tableName, columns)),
+					Columns:          columns,
+					NullsNotDistinct: def.NullsNotDistinct,
 				})
 			}
 		case *tree.CheckConstraintTableDef:
@@ -273,11 +271,9 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		foreignKeys = append(foreignKeys, foreignKey)
 	}
 	if def.Unique && !def.PrimaryKey.IsPrimaryKey {
-		if def.UniqueNullsNotDistinct {
-			return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
-		}
 		option.Unique = true
 		option.UniqueName = typedTableConstraintName(def.UniqueConstraintName, defaultUniqueConstraintNameFromNames(tableName, []string{option.Name}))
+		option.UniqueNullsNotDistinct = def.UniqueNullsNotDistinct
 	}
 	if def.Computed.Computed {
 		return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")

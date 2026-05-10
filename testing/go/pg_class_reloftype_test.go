@@ -280,6 +280,61 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports unique nulls not distinct options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_unique_nnd_task AS (id INT, code TEXT, note TEXT);`,
+				`CREATE TABLE typed_unique_nnd_tasks OF typed_unique_nnd_task (
+					UNIQUE NULLS NOT DISTINCT (code),
+					note WITH OPTIONS UNIQUE NULLS NOT DISTINCT
+				);`,
+				`INSERT INTO typed_unique_nnd_tasks VALUES (1, NULL, 'first');`,
+				`INSERT INTO typed_unique_nnd_tasks VALUES (2, 'A', NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_unique_nnd_tasks VALUES (3, NULL, 'second');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query:       `INSERT INTO typed_unique_nnd_tasks VALUES (4, 'B', NULL);`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query: `SELECT c.relname, i.indnullsnotdistinct
+	FROM pg_catalog.pg_class c
+	JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
+	WHERE c.relname IN ('typed_unique_nnd_tasks_code_key', 'typed_unique_nnd_tasks_note_key')
+	ORDER BY c.relname;`,
+					Expected: []sql.Row{
+						{"typed_unique_nnd_tasks_code_key", "t"},
+						{"typed_unique_nnd_tasks_note_key", "t"},
+					},
+				},
+			},
+		},
+		{
+			Name: "CREATE TEMP TABLE OF supports unique nulls not distinct options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_unique_nnd_task AS (id INT, code TEXT, note TEXT);`,
+				`CREATE TEMP TABLE typed_temp_unique_nnd_tasks OF typed_temp_unique_nnd_task (
+					UNIQUE NULLS NOT DISTINCT (code),
+					note WITH OPTIONS UNIQUE NULLS NOT DISTINCT
+				);`,
+				`INSERT INTO typed_temp_unique_nnd_tasks VALUES (1, NULL, 'first');`,
+				`INSERT INTO typed_temp_unique_nnd_tasks VALUES (2, 'A', NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_temp_unique_nnd_tasks VALUES (3, NULL, 'second');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query:       `INSERT INTO typed_temp_unique_nnd_tasks VALUES (4, 'B', NULL);`,
+					ExpectedErr: `duplicate unique key`,
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF supports literal column defaults",
 			SetUpScript: []string{
 				`CREATE TYPE typed_default_task AS (id INT, code TEXT, active BOOLEAN, priority INT);`,
@@ -484,10 +539,6 @@ ORDER BY indexname;`,
 				{
 					Query:       `CREATE TABLE typed_unique_duplicate OF typed_options (UNIQUE (code, code));`,
 					ExpectedErr: `column "code" appears twice in unique constraint`,
-				},
-				{
-					Query:       `CREATE TABLE typed_unique_nulls_not_distinct OF typed_options (UNIQUE NULLS NOT DISTINCT (code));`,
-					ExpectedErr: `CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported`,
 				},
 				{
 					Query:       `CREATE TEMP TABLE typed_temp_fk OF typed_options (CONSTRAINT typed_temp_fk_parent FOREIGN KEY (id) REFERENCES typed_options_parent(id));`,

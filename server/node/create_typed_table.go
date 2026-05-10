@@ -29,6 +29,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/deferrable"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -59,22 +60,24 @@ type TypedTableOptions struct {
 }
 
 type TypedTableColumnOptions struct {
-	Name                 string
-	NullableSet          bool
-	Nullable             bool
-	PrimaryKey           bool
-	UniqueName           string
-	Unique               bool
-	HasDefault           bool
-	DefaultExpr          sql.Expression
-	DefaultLiteral       bool
-	DefaultParenthesized bool
-	DefaultChildIndex    int
+	Name                   string
+	NullableSet            bool
+	Nullable               bool
+	PrimaryKey             bool
+	UniqueName             string
+	Unique                 bool
+	UniqueNullsNotDistinct bool
+	HasDefault             bool
+	DefaultExpr            sql.Expression
+	DefaultLiteral         bool
+	DefaultParenthesized   bool
+	DefaultChildIndex      int
 }
 
 type TypedTableUniqueConstraint struct {
-	Name    string
-	Columns []string
+	Name             string
+	Columns          []string
+	NullsNotDistinct bool
 }
 
 type TypedTableCheckConstraint struct {
@@ -260,8 +263,16 @@ func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Data
 		for i, column := range constraint.Columns {
 			indexColumns[i] = sql.IndexColumn{Name: column}
 		}
+		var comment string
+		if constraint.NullsNotDistinct {
+			comment = indexmetadata.EncodeComment(indexmetadata.Metadata{
+				AccessMethod:     indexmetadata.AccessMethodBtree,
+				NullsNotDistinct: true,
+			})
+		}
 		if err = indexAlterable.CreateIndex(ctx, sql.IndexDef{
 			Name:       constraint.Name,
+			Comment:    comment,
 			Columns:    indexColumns,
 			Constraint: sql.IndexConstraint_Unique,
 			Storage:    sql.IndexUsing_BTree,
@@ -441,8 +452,9 @@ func typedTableUniqueConstraints(options TypedTableOptions) []TypedTableUniqueCo
 	for _, option := range options.ColumnOptions {
 		if option.Unique {
 			constraints = append(constraints, TypedTableUniqueConstraint{
-				Name:    option.UniqueName,
-				Columns: []string{option.Name},
+				Name:             option.UniqueName,
+				Columns:          []string{option.Name},
+				NullsNotDistinct: option.UniqueNullsNotDistinct,
 			})
 		}
 	}

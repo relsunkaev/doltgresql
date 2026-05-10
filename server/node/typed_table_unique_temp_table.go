@@ -161,7 +161,7 @@ func (t *typedTableUniqueTempTable) checkUniqueConstraints(ctx *sql.Context, can
 		if err != nil {
 			return err
 		}
-		if typedTableUniqueHasNull(candidate, indexes) {
+		if !constraint.NullsNotDistinct && typedTableUniqueHasNull(candidate, indexes) {
 			continue
 		}
 		for _, pendingRow := range pending {
