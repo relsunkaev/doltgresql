@@ -405,6 +405,10 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Expected: []sql.Row{{"1", "1"}},
 				},
 				{
+					Query:    `SELECT vector_spherical_distance('[1,0]'::vector, '[1,0]'::vector)::text, vector_spherical_distance('[1,0]'::vector, '[0,1]'::vector)::text, vector_spherical_distance('[1,0]'::vector, '[-1,0]'::vector)::text;`,
+					Expected: []sql.Row{{"0", "0.5", "1"}},
+				},
+				{
 					Query:    `SELECT ('[1,2,3]'::vector < '[1,2,4]'::vector)::text, ('[1,2,3]'::vector <= '[1,2,3]'::vector)::text, ('[1,2,4]'::vector > '[1,2,3]'::vector)::text, ('[1,2,4]'::vector >= '[1,2,4]'::vector)::text;`,
 					Expected: []sql.Row{{"true", "true", "true", "true"}},
 				},

@@ -37,6 +37,7 @@ func initVector() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorNegativeInnerProduct, vector_negative_inner_product)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorCosineDistance, cosine_distance)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryVectorL1Distance, l1_distance)
+	framework.RegisterFunction(vector_spherical_distance)
 	framework.RegisterFunction(vector_dims)
 	framework.RegisterFunction(vector_norm)
 	framework.RegisterFunction(l2_normalize)
@@ -283,6 +284,26 @@ var cosine_distance = framework.Function2{
 			return nil, err
 		}
 		return vectorCosineDistance(left, right), nil
+	},
+}
+
+var vector_spherical_distance = framework.Function2{
+	Name:       "vector_spherical_distance",
+	Return:     pgtypes.Float64,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Vector, pgtypes.Vector},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left, right, err := vectorDistanceInputs(val1, val2)
+		if err != nil {
+			return nil, err
+		}
+		distance := vectorInnerProduct(left, right)
+		if distance > 1 {
+			distance = 1
+		} else if distance < -1 {
+			distance = -1
+		}
+		return math.Acos(distance) / math.Pi, nil
 	},
 }
 

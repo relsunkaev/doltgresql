@@ -235,8 +235,9 @@ Do not check off an item until it has workload proof:
   promotion, and boolean-looking hstore text remaining JSON strings.
   `CREATE EXTENSION vector` covers dense `vector(n)` storage, text IO,
   equality, `l2_distance`, `inner_product`, `vector_negative_inner_product`,
-  `cosine_distance`, `l1_distance`, and the dense-vector distance operators
-  `<->`, `<#>`, `<=>`, and `<+>`, including extension-qualified
+  `cosine_distance`, `vector_spherical_distance`, `l1_distance`, and the
+  dense-vector distance operators `<->`, `<#>`, `<=>`, and `<+>`,
+  including extension-qualified
   `OPERATOR(public.<->)` syntax and dimension-mismatch errors. The dense
   vector ordering functions/operators `vector_lt`, `vector_le`, `vector_ge`,
   `vector_gt`, `<`, `<=`, `>=`, and `>` use pgvector-compatible
@@ -258,9 +259,9 @@ Do not check off an item until it has workload proof:
   DES/xDES-style password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
-  non-dense vector families, and aggregate/private helper functions beyond
-  the tested dense-vector IO, equality, distance, ordering, arithmetic,
-  binary quantization, and cast subset,
+  non-dense vector families, and aggregates plus aggregate helper functions
+  beyond the tested dense-vector IO, equality, distance, ordering,
+  arithmetic, binary quantization, and cast subset,
   `btree_gist` operator classes, and hstore operators/functions/casts outside
   testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
