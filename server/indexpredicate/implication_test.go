@@ -1000,6 +1000,7 @@ func TestImpliesGcdFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"gcd(width, height) = 4", "gcd(width, height) = 4"},
+		{"gcd(width, height) = 4", "gcd(height, width) = 4"},
 		{"gcd(width, height) IN (2, 4)", "gcd(width, height) = 4"},
 		{"gcd(width, height) IS NOT NULL", "gcd(width, height) = 4"},
 	} {
@@ -1012,7 +1013,6 @@ func TestImpliesGcdFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"gcd(width, height) = 4", "width = 8 AND height = 12"},
-		{"gcd(width, height) = 4", "gcd(height, width) = 4"},
 		{"gcd(width, height) = 4", "gcd(width, height) = 3"},
 		{"gcd(width, height) IN (2, 4)", "gcd(width, height) IN (4, 6)"},
 	} {
@@ -1028,6 +1028,7 @@ func TestImpliesLcmFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"lcm(width, height) = 12", "lcm(width, height) = 12"},
+		{"lcm(width, height) = 12", "lcm(height, width) = 12"},
 		{"lcm(width, height) IN (12, 24)", "lcm(width, height) = 12"},
 		{"lcm(width, height) IS NOT NULL", "lcm(width, height) = 12"},
 	} {
@@ -1040,7 +1041,6 @@ func TestImpliesLcmFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"lcm(width, height) = 12", "width = 3 AND height = 4"},
-		{"lcm(width, height) = 12", "lcm(height, width) = 12"},
 		{"lcm(width, height) = 12", "lcm(width, height) = 24"},
 		{"lcm(width, height) IN (12, 24)", "lcm(width, height) IN (24, 36)"},
 	} {

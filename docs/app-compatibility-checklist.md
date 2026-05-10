@@ -1099,8 +1099,8 @@ Do not check off an item until it has workload proof:
   implication paths. Two-argument `gcd(...)` calls now serialize as comparable
   predicate keys, planner filters can deparse them, partial unique DML
   enforcement evaluates signed-integer GCD output, and `ON CONFLICT` arbiter
-  inference accepts the exact-expression shape; raw arithmetic predicates,
-  argument reordering, and wrong GCD values remain rejected. Coverage in
+  inference accepts the exact-expression shape; raw arithmetic predicates and
+  wrong GCD values remain rejected. Coverage in
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.28.
@@ -1109,11 +1109,20 @@ Do not check off an item until it has workload proof:
   predicate keys, planner filters can deparse them, partial unique DML
   enforcement evaluates signed-integer LCM output with existing bigint overflow
   behavior, and `ON CONFLICT` arbiter inference accepts the exact-expression
-  shape; raw arithmetic predicates, argument reordering, wrong LCM values, and
-  overflow rows remain rejected. Coverage in
+  shape; raw arithmetic predicates, wrong LCM values, and overflow rows remain
+  rejected. Coverage in
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.29.
+- [x] Canonicalize commutative `gcd(...)` and `lcm(...)` predicate arguments in
+  partial-index implication paths. Query and arbiter predicates that write
+  `gcd(height, width)` or `lcm(height, width)` now imply partial indexes
+  declared as `gcd(width, height)` / `lcm(width, height)`, while raw
+  arithmetic/value predicates, wrong result values, and non-commutative
+  functions such as `mod(...)` remain order-sensitive. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.37.
 - [x] Use deterministic `mod(left, right)` predicates in partial-index
   implication paths. Two-argument `mod(...)` calls now serialize as comparable
   predicate keys, planner filters can deparse them, partial unique DML

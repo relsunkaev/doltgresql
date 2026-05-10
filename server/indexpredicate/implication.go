@@ -656,7 +656,10 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "repeat" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
-	if name == "gcd" || name == "lcm" || name == "mod" {
+	if name == "gcd" || name == "lcm" {
+		return predicateCommutativeFunctionCallExprKey(name, fn.Exprs, 2)
+	}
+	if name == "mod" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
 	if name == "concat" {
@@ -762,6 +765,24 @@ func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs in
 			return "", false
 		}
 		parts = append(parts, childKey)
+	}
+	return "func:" + name + "(" + strings.Join(parts, ",") + ")", true
+}
+
+func predicateCommutativeFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs int) (string, bool) {
+	if len(exprs) != expectedArgs {
+		return "", false
+	}
+	parts := make([]string, 0, len(exprs))
+	for _, child := range exprs {
+		childKey, ok := predicateFunctionArgumentExprKey(child)
+		if !ok {
+			return "", false
+		}
+		parts = append(parts, childKey)
+	}
+	if len(parts) == 2 && parts[1] < parts[0] {
+		parts[0], parts[1] = parts[1], parts[0]
 	}
 	return "func:" + name + "(" + strings.Join(parts, ",") + ")", true
 }

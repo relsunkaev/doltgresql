@@ -1853,9 +1853,13 @@ ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE gcd(width, height) = 4 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
+					Query: `INSERT INTO partial_arb_gcd VALUES (5, 10, 20, 24, 'gcd-commuted-upsert')
+ON CONFLICT (user_id) WHERE gcd(height, width) = 4 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
 					Query: `SELECT id, user_id, width, height, note FROM partial_arb_gcd ORDER BY id;`,
 					Expected: []gms.Row{
-						{1, int32(10), int64(8), int64(12), "gcd-upsert"},
+						{1, int32(10), int64(8), int64(12), "gcd-commuted-upsert"},
 						{2, int32(10), int64(9), int64(6), "old-other"},
 					},
 				},
@@ -1879,9 +1883,13 @@ ON CONFLICT (user_id) WHERE width = 8 AND height = 12 DO NOTHING;`,
 ON CONFLICT (user_id) WHERE lcm(width, height) = 12 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
+					Query: `INSERT INTO partial_arb_lcm VALUES (5, 10, 6, 4, 'lcm-commuted-upsert')
+ON CONFLICT (user_id) WHERE lcm(height, width) = 12 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
 					Query: `SELECT id, user_id, width, height, note FROM partial_arb_lcm ORDER BY id;`,
 					Expected: []gms.Row{
-						{1, int32(10), int64(3), int64(4), "lcm-upsert"},
+						{1, int32(10), int64(3), int64(4), "lcm-commuted-upsert"},
 						{2, int32(10), int64(5), int64(6), "old-other"},
 					},
 				},

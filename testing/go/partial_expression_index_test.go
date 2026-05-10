@@ -702,6 +702,10 @@ WHERE tablename = 'memberships'
 				`CREATE UNIQUE INDEX gcd_scores_user_dims_idx
 					ON gcd_scores (user_id)
 					WHERE gcd(width, height) = 4;`,
+				`CREATE TABLE gcd_commuted_scores (id INT PRIMARY KEY, user_id INT, width BIGINT, height BIGINT);`,
+				`CREATE UNIQUE INDEX gcd_commuted_scores_user_dims_idx
+					ON gcd_commuted_scores (user_id)
+					WHERE gcd(height, width) = 4;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -720,6 +724,15 @@ WHERE tablename = 'memberships'
 					Query:       `UPDATE gcd_scores SET width = 12, height = 16 WHERE id = 2;`,
 					ExpectedErr: "duplicate unique key given",
 				},
+				{
+					Query: `INSERT INTO gcd_commuted_scores VALUES
+						(1, 20, 8, 12),
+						(2, 20, 9, 6);`,
+				},
+				{
+					Query:       `INSERT INTO gcd_commuted_scores VALUES (3, 20, 16, 20);`,
+					ExpectedErr: "duplicate unique key given",
+				},
 			},
 		},
 		{
@@ -729,6 +742,10 @@ WHERE tablename = 'memberships'
 				`CREATE UNIQUE INDEX lcm_scores_user_dims_idx
 					ON lcm_scores (user_id)
 					WHERE lcm(width, height) = 12;`,
+				`CREATE TABLE lcm_commuted_scores (id INT PRIMARY KEY, user_id INT, width BIGINT, height BIGINT);`,
+				`CREATE UNIQUE INDEX lcm_commuted_scores_user_dims_idx
+					ON lcm_commuted_scores (user_id)
+					WHERE lcm(height, width) = 12;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -750,6 +767,15 @@ WHERE tablename = 'memberships'
 				{
 					Query:       `INSERT INTO lcm_scores VALUES (5, 11, 9223372036854775807, 9223372036854775806);`,
 					ExpectedErr: "bigint out of range",
+				},
+				{
+					Query: `INSERT INTO lcm_commuted_scores VALUES
+						(1, 20, 3, 4),
+						(2, 20, 5, 6);`,
+				},
+				{
+					Query:       `INSERT INTO lcm_commuted_scores VALUES (3, 20, 4, 6);`,
+					ExpectedErr: "duplicate unique key given",
 				},
 			},
 		},
@@ -2256,6 +2282,10 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, gcdImpliedQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, gcdImpliedQuery, true)
 
+	gcdCommutedQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND gcd(height, width) = 4`
+	assertCountResult(t, ctx, conn, gcdCommutedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, gcdCommutedQuery, true)
+
 	gcdRawSemanticQuery := `SELECT count(id) FROM partial_planner_gcd WHERE tenant = 1 AND width = 8 AND height = 12`
 	assertCountResult(t, ctx, conn, gcdRawSemanticQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, gcdRawSemanticQuery, false)
@@ -2275,6 +2305,10 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	lcmImpliedQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND lcm(width, height) = 12`
 	assertCountResult(t, ctx, conn, lcmImpliedQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, lcmImpliedQuery, true)
+
+	lcmCommutedQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND lcm(height, width) = 12`
+	assertCountResult(t, ctx, conn, lcmCommutedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, lcmCommutedQuery, true)
 
 	lcmRawSemanticQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND width = 3 AND height = 4`
 	assertCountResult(t, ctx, conn, lcmRawSemanticQuery, 1)
