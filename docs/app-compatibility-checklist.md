@@ -1462,7 +1462,10 @@ Do not check off an item until it has workload proof:
   commit, and rollback. Rust `sqlx` runs through the existing async pool
   fixture with startup, parameter binding,
   catalog `EXISTS` queries, UUID binding/decoding, and chrono
-  timestamptz/date decoding. TypeORM runs a
+  timestamptz/date decoding. Perl DBI with DBD::Pg runs from the official Perl
+  container with startup `application_name`, prepared statements, typed
+  parameters, JSONB/text[] values, repeated connections, commit, and rollback.
+  TypeORM runs a
   real `DataSource` over the `pg` driver, including schema synchronization,
   repository CRUD, JSONB/text[] values, relation joins, commit, and rollback.
   Sequelize runs over the real `pg` driver too, covering startup timezone GUCs,
@@ -1478,7 +1481,8 @@ Do not check off an item until it has workload proof:
   testing/go/php_client_test.go, testing/go/libpq_client_test.go,
   testing/go/go_sql_pq_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
-  testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
+  testing/go/perl_dbi_client_test.go, testing/go/typeorm_client_test.go, and
+  testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
@@ -1985,20 +1989,22 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   JDBC driver with prepared statements, typed parameters, `createArrayOf`
   text[] adaptation, JSONB values, multiple connections, and transaction
   boundaries. The Rust `sqlx` harness covers async pool usage, parameters,
-  UUIDs, and chrono timestamp/date decoding, and the TypeORM harness covers a
-  real ORM `DataSource` over `pg` with schema synchronization, repository CRUD,
-  JSONB/text[] values, relation joins, and transaction boundaries. The
-  Sequelize harness covers another real ORM over `pg` with `sync({ force:
-  true })`, model CRUD, associations, JSONB/text[] values, pooled reads, and
-  managed transactions. Django's PostgreSQL backend covers real migration
-  commands, model CRUD, JSONB/text[] values, relation reads, and transaction
-  boundaries, including projected count/exists filters.
+  UUIDs, and chrono timestamp/date decoding. The Perl DBI/DBD::Pg harness
+  covers startup parameters, prepared statements, typed parameters,
+  JSONB/text[] values, repeated connections, and transaction boundaries. The
+  TypeORM harness covers a real ORM `DataSource` over `pg` with schema
+  synchronization, repository CRUD, JSONB/text[] values, relation joins, and
+  transaction boundaries. The Sequelize harness covers another real ORM over
+  `pg` with `sync({ force: true })`, model CRUD, associations, JSONB/text[]
+  values, pooled reads, and managed transactions. Django's PostgreSQL backend
+  covers real migration commands, model CRUD, JSONB/text[] values, relation
+  reads, and transaction boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
   psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`, PHP `ext-pgsql`, libpq,
-  Go `database/sql` with `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add
-  runnable smoke gates for the advertised client and migration-tool matrix
-  before claiming broad
+  Go `database/sql` with `github.com/lib/pq`, Java JDBC, Rust `sqlx`, and Perl
+  DBI/DBD::Pg. Add runnable smoke gates for the advertised client and
+  migration-tool matrix before claiming broad
   client compatibility.
   Tracked by dg-7ug.10.3 under dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
