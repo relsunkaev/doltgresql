@@ -242,6 +242,44 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TEMP TABLE OF supports unique options",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_unique_task AS (id INT, code TEXT, note TEXT);`,
+				`CREATE TEMP TABLE typed_temp_unique_tasks OF typed_temp_unique_task (
+					UNIQUE (code),
+					note WITH OPTIONS UNIQUE
+				);`,
+				`INSERT INTO typed_temp_unique_tasks VALUES (1, 'A', 'first');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (2, 'B', 'second');`,
+				},
+				{
+					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (3, 'A', 'third');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (4, 'C', 'second');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (5, NULL, NULL);`,
+				},
+				{
+					Query: `INSERT INTO typed_temp_unique_tasks VALUES (6, NULL, NULL);`,
+				},
+				{
+					Query:       `UPDATE typed_temp_unique_tasks SET code = 'B' WHERE id = 1;`,
+					ExpectedErr: `duplicate unique key`,
+				},
+				{
+					Query:       `INSERT INTO typed_temp_unique_tasks VALUES (7, 'D', 'fourth'), (8, 'D', 'fifth');`,
+					ExpectedErr: `duplicate unique key`,
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF rejects unsupported table-definition options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_options AS (id INT, code TEXT);`,
@@ -266,10 +304,6 @@ ORDER BY indexname;`,
 				{
 					Query:       `CREATE TABLE typed_unique_nulls_not_distinct OF typed_options (UNIQUE NULLS NOT DISTINCT (code));`,
 					ExpectedErr: `CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported`,
-				},
-				{
-					Query:       `CREATE TEMP TABLE typed_temp_unique_options OF typed_options (code WITH OPTIONS UNIQUE);`,
-					ExpectedErr: `CREATE TEMP TABLE OF UNIQUE constraints are not yet supported`,
 				},
 			},
 		},

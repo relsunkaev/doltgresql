@@ -1244,11 +1244,14 @@ typed-exception handling, and client-side query timeouts.
   For permanent typed tables, table-level `UNIQUE (...)` and column-level `WITH
   OPTIONS UNIQUE` now create unique indexes, expose
   `information_schema.table_constraints` / `pg_indexes`, and enforce duplicate
-  inserts. Still open: temporary typed-table UNIQUE enforcement, typed-table
-  defaults, CHECK, FOREIGN KEY, generated columns, UNIQUE NULLS NOT DISTINCT,
-  index options/opclasses, and other table-definition/options surface. Pinned
-  by testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked
-  by dg-7ug.12.
+  inserts. Temporary typed tables with the same UNIQUE options now enforce
+  duplicate inserts and updates, including duplicates within one multi-row
+  INSERT, while preserving PostgreSQL's ordinary UNIQUE behavior that permits
+  repeated NULL values. Still open: typed-table defaults, CHECK, FOREIGN KEY,
+  generated columns, UNIQUE NULLS NOT DISTINCT, index options/opclasses, and
+  other table-definition/options surface. Pinned by
+  testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
+  dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name

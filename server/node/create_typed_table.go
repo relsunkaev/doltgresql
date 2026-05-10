@@ -152,9 +152,6 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	}
 
 	if c.Temporary {
-		if len(typedTableUniqueConstraints(c.Options)) > 0 {
-			return nil, errors.Errorf("CREATE TEMP TABLE OF UNIQUE constraints are not yet supported")
-		}
 		tableCreator, ok := unwrapPrivilegedDatabase(db).(sql.TemporaryTableCreator)
 		if !ok {
 			return nil, sql.ErrTemporaryTableNotSupported.New()
@@ -167,7 +164,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if err != nil {
 			return nil, err
 		}
-		if err = c.createUniqueConstraints(ctx, db); err != nil {
+		if err = c.createTemporaryUniqueConstraints(ctx, db); err != nil {
 			return nil, err
 		}
 		return sql.RowsToRowIter(), nil
@@ -191,6 +188,20 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateTypedTable) createTemporaryUniqueConstraints(ctx *sql.Context, db sql.Database) error {
+	constraints := typedTableUniqueConstraints(c.Options)
+	if len(constraints) == 0 {
+		return nil
+	}
+	session := dsess.DSessFromSess(ctx.Session)
+	table, ok := session.GetTemporaryTable(ctx, db.Name(), c.TableName)
+	if !ok {
+		return sql.ErrTableNotFound.New(c.TableName)
+	}
+	session.AddTemporaryTable(ctx, db.Name(), newTypedTableUniqueTempTable(table, constraints))
+	return nil
 }
 
 func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Database) error {
