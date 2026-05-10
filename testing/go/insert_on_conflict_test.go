@@ -1819,24 +1819,35 @@ ON CONFLICT (user_id) WHERE account_id IN (10, 12) DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports initcap predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_initcap (id INT PRIMARY KEY, user_id INT, role TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_initcap_user_idx ON partial_arb_initcap (user_id) WHERE initcap(role) = 'Admin User';",
-				"INSERT INTO partial_arb_initcap VALUES (1, 10, 'admin user', 'old-admin'), (2, 10, 'regular user', 'old-regular');",
+				"CREATE UNIQUE INDEX partial_arb_initcap_user_idx ON partial_arb_initcap (user_id) WHERE initcap(role) IN ('Admin User', 'Billing User');",
+				"INSERT INTO partial_arb_initcap VALUES (1, 10, 'admin user', 'old-admin'), (2, 11, 'billing user', 'old-billing');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO partial_arb_initcap VALUES (3, 10, 'admin user', 'initcap-upsert')
-ON CONFLICT (user_id) WHERE initcap(role) = 'Admin User' DO UPDATE SET note = EXCLUDED.note;`,
+ON CONFLICT (user_id) WHERE role = 'admin user' DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
 					Query: `SELECT id, user_id, role, note FROM partial_arb_initcap ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "admin user", "initcap-upsert"},
-						{2, 10, "regular user", "old-regular"},
+						{2, 11, "billing user", "old-billing"},
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_initcap VALUES (4, 10, 'admin user', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE role = 'admin user' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_initcap VALUES (4, 11, 'billing user', 'initcap-in-upsert')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'billing user') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, role, note FROM partial_arb_initcap ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "admin user", "initcap-upsert"},
+						{2, 11, "billing user", "initcap-in-upsert"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_initcap VALUES (5, 10, 'admin user', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE role IN ('admin user', 'regular user') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

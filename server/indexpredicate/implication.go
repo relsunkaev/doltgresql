@@ -25,6 +25,8 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Implies reports whether queryPredicate is strong enough to satisfy
@@ -503,6 +505,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
 		predicatePadArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateMd5ArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateInitcapArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateQuoteArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateToHexArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
@@ -713,6 +716,22 @@ func predicateMd5ArgumentValueSetImplies(indexValues predicateValueSet, queryVal
 	return predicateValueSet{exprKey: indexValues.exprKey, values: digestValues}.subsetOf(indexValues)
 }
 
+func predicateInitcapArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "initcap")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	titleValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		titleValue, ok := predicateInitcapStringLiteralKey(value)
+		if !ok {
+			return false
+		}
+		titleValues[titleValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: titleValues}.subsetOf(indexValues)
+}
+
 func predicateQuoteArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
 	functionName, argumentKey, ok := predicateQuoteArgumentExprKey(indexValues.exprKey)
 	if !ok || queryValues.exprKey != argumentKey {
@@ -811,6 +830,14 @@ func predicateMd5StringLiteralKey(value string) (string, bool) {
 		return "", false
 	}
 	return prefix + fmt.Sprintf("%x", md5.Sum([]byte(strings.TrimPrefix(value, prefix)))), true
+}
+
+func predicateInitcapStringLiteralKey(value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	return prefix + cases.Title(language.English).String(strings.TrimPrefix(value, prefix)), true
 }
 
 func predicateQuoteStringLiteralKey(functionName string, value string) (string, bool) {

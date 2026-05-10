@@ -818,6 +818,8 @@ func TestImpliesInitcapFunctionPredicates(t *testing.T) {
 		{"initcap(role) = 'Admin User'", "initcap(role) = 'Admin User'"},
 		{"initcap(role) IN ('Admin User', 'Billing User')", "initcap(role) = 'Admin User'"},
 		{"initcap(role) IS NOT NULL", "initcap(role) = 'Admin User'"},
+		{"initcap(role) = 'Admin User'", "role = 'admin user'"},
+		{"initcap(role) IN ('Admin User', 'Billing User')", "role IN ('admin user', 'billing user')"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -829,7 +831,8 @@ func TestImpliesInitcapFunctionPredicates(t *testing.T) {
 	}{
 		{"initcap(role) = 'Admin User'", "initcap(role) = 'Billing User'"},
 		{"initcap(role) = 'Admin User'", "lower(role) = 'admin user'"},
-		{"initcap(role) = 'Admin User'", "role = 'admin user'"},
+		{"initcap(role) = 'Admin User'", "role = 'billing user'"},
+		{"initcap(role) = 'Admin User'", "role IN ('admin user', 'billing user')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

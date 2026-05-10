@@ -1089,10 +1089,14 @@ Do not check off an item until it has workload proof:
   predicate keys, planner filters can deparse them, partial unique DML
   enforcement evaluates title-case text output aligned with the runtime
   function, and `ON CONFLICT` arbiter inference accepts the exact-expression
-  shape; wrong title-cased values and raw source-string semantic rewrites remain
-  rejected. Coverage in server/indexpredicate/implication_test.go,
+  shape. Raw source-string equality and IN-list filters now imply matching
+  `initcap(...)` partial-index predicates when every title-cased output is
+  contained in the partial predicate value set; wrong title-cased values and
+  non-contained raw source values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
   testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
-  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.19.
+  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.19 and
+  dg-7ug.8.10.48.
 - [x] Use deterministic `quote_literal(expr)` predicates in partial-index
   implication paths. Unary `quote_literal(...)` calls now serialize as
   comparable predicate keys, planner filters can deparse them, partial unique
