@@ -230,6 +230,11 @@ Do not check off an item until it has workload proof:
   and explicit `hstore` casts to `json`/`jsonb` cover sorted key output,
   SQL NULL hstore values as JSON nulls, string escaping, loose numeric
   promotion, and boolean-looking hstore text remaining JSON strings.
+  `CREATE EXTENSION vector` covers dense `vector(n)` storage, text IO,
+  equality, `l2_distance`, `inner_product`, `vector_negative_inner_product`,
+  `cosine_distance`, `l1_distance`, and the dense-vector distance operators
+  `<->`, `<#>`, `<=>`, and `<+>`, including extension-qualified
+  `OPERATOR(public.<->)` syntax and dimension-mismatch errors.
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
@@ -237,9 +242,11 @@ Do not check off an item until it has workload proof:
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption helpers,
   non-`bf` password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
-  digest/HMAC, and raw-encryption subset, pgvector behavior beyond
-  scalar `vector(n)` round-trips, `btree_gist` operator classes, and hstore
-  operators/functions/casts outside testing/go/common_extensions_probe_test.go.
+  digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
+  non-dense vector families, and helper functions beyond the tested
+  dense-vector IO/equality/distance subset, `btree_gist` operator classes,
+  and hstore operators/functions/casts outside
+  testing/go/common_extensions_probe_test.go.
   Tracked by dg-7ug.3.
 - [ ] Model physical `citext` index keys/opclasses and add a benchmark guardrail
   for PostgreSQL-style case-insensitive btree seeks. The current compatibility

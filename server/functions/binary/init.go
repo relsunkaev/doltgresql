@@ -36,4 +36,5 @@ func Init() {
 	initBinaryShiftRight()
 	initHstore()
 	initJSON()
+	initVector()
 }

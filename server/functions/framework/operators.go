@@ -24,44 +24,48 @@ import (
 type Operator byte
 
 const (
-	Operator_BinaryPlus                 Operator = iota // +
-	Operator_BinaryMinus                                // -
-	Operator_BinaryMultiply                             // *
-	Operator_BinaryDivide                               // /
-	Operator_BinaryMod                                  // %
-	Operator_BinaryShiftLeft                            // <<
-	Operator_BinaryShiftRight                           // >>
-	Operator_BinaryLessThan                             // <
-	Operator_BinaryGreaterThan                          // >
-	Operator_BinaryLessOrEqual                          // <=
-	Operator_BinaryGreaterOrEqual                       // >=
-	Operator_BinaryEqual                                // =
-	Operator_BinaryNotEqual                             // <> or != (they're equivalent in all cases)
-	Operator_BinaryBitAnd                               // &
-	Operator_BinaryBitOr                                // |
-	Operator_BinaryBitXor                               // ^
-	Operator_BinaryConcatenate                          // ||
-	Operator_BinaryJSONExtractJson                      // ->
-	Operator_BinaryJSONExtractText                      // ->>
-	Operator_BinaryJSONExtractPathJson                  // #>
-	Operator_BinaryJSONExtractPathText                  // #>>
-	Operator_BinaryJSONContainsRight                    // @>
-	Operator_BinaryJSONContainsLeft                     // <@
-	Operator_BinaryJSONTopLevel                         // ?
-	Operator_BinaryJSONTopLevelAny                      // ?|
-	Operator_BinaryJSONTopLevelAll                      // ?&
-	Operator_BinaryJSONPathExists                       // @?
-	Operator_BinaryJSONPathMatch                        // @@
-	Operator_BinaryOverlaps                             // &&
-	Operator_BinaryHstoreLess                           // #<#
-	Operator_BinaryHstoreLessOrEqual                    // #<=#
-	Operator_BinaryHstoreGreater                        // #>#
-	Operator_BinaryHstoreGreaterOrEqual                 // #>=#
-	Operator_BinaryHstorePopulate                       // #=
-	Operator_UnaryPlus                                  // +
-	Operator_UnaryMinus                                 // -
-	Operator_UnaryHstoreToArray                         // %%
-	Operator_UnaryHstoreToMatrix                        // %#
+	Operator_BinaryPlus                       Operator = iota // +
+	Operator_BinaryMinus                                      // -
+	Operator_BinaryMultiply                                   // *
+	Operator_BinaryDivide                                     // /
+	Operator_BinaryMod                                        // %
+	Operator_BinaryShiftLeft                                  // <<
+	Operator_BinaryShiftRight                                 // >>
+	Operator_BinaryLessThan                                   // <
+	Operator_BinaryGreaterThan                                // >
+	Operator_BinaryLessOrEqual                                // <=
+	Operator_BinaryGreaterOrEqual                             // >=
+	Operator_BinaryEqual                                      // =
+	Operator_BinaryNotEqual                                   // <> or != (they're equivalent in all cases)
+	Operator_BinaryBitAnd                                     // &
+	Operator_BinaryBitOr                                      // |
+	Operator_BinaryBitXor                                     // ^
+	Operator_BinaryConcatenate                                // ||
+	Operator_BinaryJSONExtractJson                            // ->
+	Operator_BinaryJSONExtractText                            // ->>
+	Operator_BinaryJSONExtractPathJson                        // #>
+	Operator_BinaryJSONExtractPathText                        // #>>
+	Operator_BinaryJSONContainsRight                          // @>
+	Operator_BinaryJSONContainsLeft                           // <@
+	Operator_BinaryJSONTopLevel                               // ?
+	Operator_BinaryJSONTopLevelAny                            // ?|
+	Operator_BinaryJSONTopLevelAll                            // ?&
+	Operator_BinaryJSONPathExists                             // @?
+	Operator_BinaryJSONPathMatch                              // @@
+	Operator_BinaryOverlaps                                   // &&
+	Operator_BinaryHstoreLess                                 // #<#
+	Operator_BinaryHstoreLessOrEqual                          // #<=#
+	Operator_BinaryHstoreGreater                              // #>#
+	Operator_BinaryHstoreGreaterOrEqual                       // #>=#
+	Operator_BinaryHstorePopulate                             // #=
+	Operator_BinaryVectorL2Distance                           // <->
+	Operator_BinaryVectorNegativeInnerProduct                 // <#>
+	Operator_BinaryVectorCosineDistance                       // <=>
+	Operator_BinaryVectorL1Distance                           // <+>
+	Operator_UnaryPlus                                        // +
+	Operator_UnaryMinus                                       // -
+	Operator_UnaryHstoreToArray                               // %%
+	Operator_UnaryHstoreToMatrix                              // %#
 	// NOTE: Any new operator should also be added to Operator.String() and GetOperatorFromString() functions.
 )
 
@@ -253,6 +257,14 @@ func (o Operator) String() string {
 		return "#>=#"
 	case Operator_BinaryHstorePopulate:
 		return "#="
+	case Operator_BinaryVectorL2Distance:
+		return "<->"
+	case Operator_BinaryVectorNegativeInnerProduct:
+		return "<#>"
+	case Operator_BinaryVectorCosineDistance:
+		return "<=>"
+	case Operator_BinaryVectorL1Distance:
+		return "<+>"
 	case Operator_UnaryHstoreToArray:
 		return "%%"
 	case Operator_UnaryHstoreToMatrix:
@@ -350,6 +362,14 @@ func GetOperatorFromString(op string) (Operator, error) {
 		return Operator_BinaryHstoreGreaterOrEqual, nil
 	case "#=":
 		return Operator_BinaryHstorePopulate, nil
+	case "<->":
+		return Operator_BinaryVectorL2Distance, nil
+	case "<#>":
+		return Operator_BinaryVectorNegativeInnerProduct, nil
+	case "<=>":
+		return Operator_BinaryVectorCosineDistance, nil
+	case "<+>":
+		return Operator_BinaryVectorL1Distance, nil
 	case "%%":
 		return Operator_UnaryHstoreToArray, nil
 	case "%#":

@@ -352,11 +352,13 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
-			Name: "CREATE EXTENSION vector enables built-in pgvector type",
+			Name: "CREATE EXTENSION vector enables built-in pgvector type and dense distance operators",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS vector;`,
 				`CREATE TABLE embeddings (id integer primary key, embedding vector(3));`,
 				`INSERT INTO embeddings VALUES (1, '[1,2,3]');`,
+				`INSERT INTO embeddings VALUES (2, '[4,6,3]');`,
+				`INSERT INTO embeddings VALUES (3, '[1,0,0]');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -369,6 +371,30 @@ func TestCommonExtensionsProbe(t *testing.T) {
 				{
 					Query:    `SELECT embedding FROM embeddings WHERE id = 1;`,
 					Expected: []sql.Row{{"[1,2,3]"}},
+				},
+				{
+					Query:    `SELECT l2_distance('[1,2,3]'::vector, '[4,6,3]'::vector)::text, inner_product('[1,2,3]'::vector, '[4,6,3]'::vector)::text, vector_negative_inner_product('[1,2,3]'::vector, '[4,6,3]'::vector)::text, l1_distance('[1,2,3]'::vector, '[4,6,3]'::vector)::text;`,
+					Expected: []sql.Row{{"5", "25", "-25", "7"}},
+				},
+				{
+					Query:    `SELECT (embedding <-> '[4,6,3]'::vector)::text, (embedding <#> '[4,6,3]'::vector)::text, (embedding <+> '[4,6,3]'::vector)::text FROM embeddings WHERE id = 1;`,
+					Expected: []sql.Row{{"5", "-25", "7"}},
+				},
+				{
+					Query:    `SELECT ('[1,0,0]'::vector <=> '[0,1,0]'::vector)::text, cosine_distance('[1,0,0]'::vector, '[0,1,0]'::vector)::text;`,
+					Expected: []sql.Row{{"1", "1"}},
+				},
+				{
+					Query:    `SELECT id FROM embeddings ORDER BY embedding <-> '[4,6,3]'::vector, id;`,
+					Expected: []sql.Row{{2}, {1}, {3}},
+				},
+				{
+					Query:    `SELECT (embedding OPERATOR(public.<->) '[4,6,3]'::vector)::text FROM embeddings WHERE id = 1;`,
+					Expected: []sql.Row{{"5"}},
+				},
+				{
+					Query:       `SELECT l2_distance('[1,2]'::vector, '[1,2,3]'::vector);`,
+					ExpectedErr: `different vector dimensions 2 and 3`,
 				},
 			},
 		},

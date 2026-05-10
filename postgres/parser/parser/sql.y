@@ -746,6 +746,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> LESS_EQUALS GREATER_EQUALS NOT_EQUALS
 %token <str> HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
 %token <str> HSTORE_TO_ARRAY HSTORE_TO_MATRIX HSTORE_POPULATE
+%token <str> VECTOR_L2_DISTANCE VECTOR_NEGATIVE_INNER_PRODUCT VECTOR_COSINE_DISTANCE VECTOR_L1_DISTANCE
 %token <str> NOT_REGMATCH REGIMATCH NOT_REGIMATCH
 %token <str> TEXTSEARCHMATCH
 %token <str> ERROR
@@ -1503,7 +1504,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 // funny behavior of UNBOUNDED on the SQL standard, though.
 %nonassoc  UNBOUNDED         // ideally should have same precedence as IDENT
 %nonassoc  IDENT NULL PARTITION RANGE ROWS GROUPS PRECEDING FOLLOWING CUBE ROLLUP
-%left      CONCAT FETCHVAL FETCHTEXT FETCHVAL_PATH FETCHTEXT_PATH REMOVE_PATH  // multi-character ops
+%left      CONCAT FETCHVAL FETCHTEXT FETCHVAL_PATH FETCHTEXT_PATH REMOVE_PATH VECTOR_L2_DISTANCE VECTOR_NEGATIVE_INNER_PRODUCT VECTOR_COSINE_DISTANCE VECTOR_L1_DISTANCE  // multi-character ops
 %left      '|'
 %left      '#'
 %left      '&'
@@ -13157,6 +13158,22 @@ a_expr:
   {
     $$.val = &tree.BinaryExpr{Operator: tree.HstorePopulate, Left: $1.expr(), Right: $3.expr()}
   }
+| a_expr VECTOR_L2_DISTANCE a_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorL2Distance, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr VECTOR_NEGATIVE_INNER_PRODUCT a_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorNegativeInnerProduct, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr VECTOR_COSINE_DISTANCE a_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorCosineDistance, Left: $1.expr(), Right: $3.expr()}
+  }
+| a_expr VECTOR_L1_DISTANCE a_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorL1Distance, Left: $1.expr(), Right: $3.expr()}
+  }
 | a_expr '?' a_expr
   {
     $$.val = &tree.ComparisonExpr{Operator: tree.JSONExists, Left: $1.expr(), Right: $3.expr()}
@@ -13684,7 +13701,7 @@ a_expr:
    {
      $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreLT, Left: $1.expr(), Right: $8.expr()}
    }
- | a_expr OPERATOR '(' schema_name '.' HSTORE_LESS_EQUALS ')' a_expr
+| a_expr OPERATOR '(' schema_name '.' HSTORE_LESS_EQUALS ')' a_expr
    {
      $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreLE, Left: $1.expr(), Right: $8.expr()}
    }
@@ -13695,6 +13712,22 @@ a_expr:
  | a_expr OPERATOR '(' schema_name '.' HSTORE_GREATER_EQUALS ')' a_expr
    {
      $$.val = &tree.ComparisonExpr{Schema: tree.Name($4), Operator: tree.HstoreGE, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' VECTOR_L2_DISTANCE ')' a_expr
+   {
+     $$.val = &tree.BinaryExpr{Schema: tree.Name($4), Operator: tree.VectorL2Distance, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' VECTOR_NEGATIVE_INNER_PRODUCT ')' a_expr
+   {
+     $$.val = &tree.BinaryExpr{Schema: tree.Name($4), Operator: tree.VectorNegativeInnerProduct, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' VECTOR_COSINE_DISTANCE ')' a_expr
+   {
+     $$.val = &tree.BinaryExpr{Schema: tree.Name($4), Operator: tree.VectorCosineDistance, Left: $1.expr(), Right: $8.expr()}
+   }
+ | a_expr OPERATOR '(' schema_name '.' VECTOR_L1_DISTANCE ')' a_expr
+   {
+     $$.val = &tree.BinaryExpr{Schema: tree.Name($4), Operator: tree.VectorL1Distance, Left: $1.expr(), Right: $8.expr()}
    }
  | a_expr OPERATOR '(' schema_name '.' NOT_EQUALS ')' a_expr
    {
@@ -13817,6 +13850,22 @@ b_expr:
 | b_expr HSTORE_POPULATE b_expr
   {
     $$.val = &tree.BinaryExpr{Operator: tree.HstorePopulate, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr VECTOR_L2_DISTANCE b_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorL2Distance, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr VECTOR_NEGATIVE_INNER_PRODUCT b_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorNegativeInnerProduct, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr VECTOR_COSINE_DISTANCE b_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorCosineDistance, Left: $1.expr(), Right: $3.expr()}
+  }
+| b_expr VECTOR_L1_DISTANCE b_expr
+  {
+    $$.val = &tree.BinaryExpr{Operator: tree.VectorL1Distance, Left: $1.expr(), Right: $3.expr()}
   }
 | b_expr '=' b_expr
   {
@@ -14654,6 +14703,10 @@ math_op:
 | GREATER_EQUALS { $$.val = tree.GE }
 | NOT_EQUALS     { $$.val = tree.NE }
 | '@' { $$.val = tree.UnaryAbsolute }
+| VECTOR_L2_DISTANCE { $$.val = tree.VectorL2Distance }
+| VECTOR_NEGATIVE_INNER_PRODUCT { $$.val = tree.VectorNegativeInnerProduct }
+| VECTOR_COSINE_DISTANCE { $$.val = tree.VectorCosineDistance }
+| VECTOR_L1_DISTANCE { $$.val = tree.VectorL1Distance }
 
 subquery_op:
   math_op

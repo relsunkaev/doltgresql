@@ -258,6 +258,33 @@ func (s *scanner) scan(lval *sqlSymType) {
 
 	case '<':
 		switch s.peek() {
+		case '-': // <->
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_L2_DISTANCE
+				return
+			}
+		case '#': // <#>
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_NEGATIVE_INNER_PRODUCT
+				return
+			}
+		case '=': // <= or <=>
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_COSINE_DISTANCE
+				return
+			}
+			s.pos++
+			lval.id = LESS_EQUALS
+			return
+		case '+': // <+>
+			if s.peekN(1) == '>' {
+				s.pos += 2
+				lval.id = VECTOR_L1_DISTANCE
+				return
+			}
 		case '<': // <<
 			s.pos++
 			switch s.peek() {
@@ -271,10 +298,6 @@ func (s *scanner) scan(lval *sqlSymType) {
 		case '>': // <>
 			s.pos++
 			lval.id = NOT_EQUALS
-			return
-		case '=': // <=
-			s.pos++
-			lval.id = LESS_EQUALS
 			return
 		case '@': // <@
 			s.pos++

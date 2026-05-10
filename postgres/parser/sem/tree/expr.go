@@ -1112,6 +1112,10 @@ const (
 	JSONFetchValPath
 	JSONFetchTextPath
 	HstorePopulate
+	VectorL2Distance
+	VectorNegativeInnerProduct
+	VectorCosineDistance
+	VectorL1Distance
 
 	NumBinaryOperators
 )
@@ -1119,24 +1123,28 @@ const (
 var _ = NumBinaryOperators
 
 var binaryOpName = [...]string{
-	Bitand:            "&",
-	Bitor:             "|",
-	Bitxor:            "#",
-	Plus:              "+",
-	Minus:             "-",
-	Mult:              "*",
-	Div:               "/",
-	FloorDiv:          "//",
-	Mod:               "%",
-	Pow:               "^",
-	Concat:            "||",
-	LShift:            "<<",
-	RShift:            ">>",
-	JSONFetchVal:      "->",
-	JSONFetchText:     "->>",
-	JSONFetchValPath:  "#>",
-	JSONFetchTextPath: "#>>",
-	HstorePopulate:    "#=",
+	Bitand:                     "&",
+	Bitor:                      "|",
+	Bitxor:                     "#",
+	Plus:                       "+",
+	Minus:                      "-",
+	Mult:                       "*",
+	Div:                        "/",
+	FloorDiv:                   "//",
+	Mod:                        "%",
+	Pow:                        "^",
+	Concat:                     "||",
+	LShift:                     "<<",
+	RShift:                     ">>",
+	JSONFetchVal:               "->",
+	JSONFetchText:              "->>",
+	JSONFetchValPath:           "#>",
+	JSONFetchTextPath:          "#>>",
+	HstorePopulate:             "#=",
+	VectorL2Distance:           "<->",
+	VectorNegativeInnerProduct: "<#>",
+	VectorCosineDistance:       "<=>",
+	VectorL1Distance:           "<+>",
 }
 
 // binaryOpPrio follows the precedence order in the grammar. Used for pretty-printing.
@@ -1149,6 +1157,7 @@ var binaryOpPrio = [...]int{
 	Bitxor: 6,
 	Bitor:  7,
 	Concat: 8, JSONFetchVal: 8, JSONFetchText: 8, JSONFetchValPath: 8, JSONFetchTextPath: 8, HstorePopulate: 8,
+	VectorL2Distance: 8, VectorNegativeInnerProduct: 8, VectorCosineDistance: 8, VectorL1Distance: 8,
 }
 
 // binaryOpFullyAssoc indicates whether an operator is fully associative.
@@ -1162,6 +1171,7 @@ var binaryOpFullyAssoc = [...]bool{
 	Bitxor: true,
 	Bitor:  true,
 	Concat: true, JSONFetchVal: false, JSONFetchText: false, JSONFetchValPath: false, JSONFetchTextPath: false, HstorePopulate: false,
+	VectorL2Distance: false, VectorNegativeInnerProduct: false, VectorCosineDistance: false, VectorL1Distance: false,
 }
 
 func (i BinaryOperator) isPadded() bool {

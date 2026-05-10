@@ -148,7 +148,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		}, nil
 	case *tree.BinaryExpr:
 		// We will eventually support operators in other schemas, but for now we only can handle built-ins
-		if len(node.Schema) > 0 && node.Schema != "pg_catalog" {
+		if len(node.Schema) > 0 && node.Schema != "pg_catalog" && !isPublicVectorBinaryOperator(node.Schema, node.Operator) {
 			return nil, errors.Errorf("schema %q not allowed in OPERATOR syntax", node.Schema)
 		}
 
@@ -200,6 +200,14 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			operator = framework.Operator_BinaryJSONExtractPathText
 		case tree.HstorePopulate:
 			operator = framework.Operator_BinaryHstorePopulate
+		case tree.VectorL2Distance:
+			operator = framework.Operator_BinaryVectorL2Distance
+		case tree.VectorNegativeInnerProduct:
+			operator = framework.Operator_BinaryVectorNegativeInnerProduct
+		case tree.VectorCosineDistance:
+			operator = framework.Operator_BinaryVectorCosineDistance
+		case tree.VectorL1Distance:
+			operator = framework.Operator_BinaryVectorL1Distance
 		default:
 			return nil, errors.Errorf("the binary operator used is not yet supported")
 		}
@@ -952,6 +960,18 @@ func isPublicHstoreComparisonOperator(schema tree.Name, operator tree.Comparison
 	}
 	switch operator {
 	case tree.HstoreLT, tree.HstoreLE, tree.HstoreGT, tree.HstoreGE:
+		return true
+	default:
+		return false
+	}
+}
+
+func isPublicVectorBinaryOperator(schema tree.Name, operator tree.BinaryOperator) bool {
+	if schema != "public" {
+		return false
+	}
+	switch operator {
+	case tree.VectorL2Distance, tree.VectorNegativeInnerProduct, tree.VectorCosineDistance, tree.VectorL1Distance:
 		return true
 	default:
 		return false
