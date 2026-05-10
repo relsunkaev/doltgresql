@@ -434,6 +434,54 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports generated columns",
+			SetUpScript: []string{
+				`CREATE TYPE typed_generated_task AS (id INT, width INT, height INT, area INT);`,
+				`CREATE TABLE typed_generated_tasks OF typed_generated_task (
+						area WITH OPTIONS GENERATED ALWAYS AS (width * height) STORED
+					);`,
+				`INSERT INTO typed_generated_tasks (id, width, height) VALUES (1, 4, 5);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO typed_generated_tasks (id, width, height, area) VALUES (2, 4, 5, 99);`,
+					ExpectedErr: `The value specified for generated column "area" in table "typed_generated_tasks" is not allowed.`,
+				},
+				{
+					Query: `SELECT id, area FROM typed_generated_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), int32(20)},
+					},
+				},
+				{
+					Query: `SELECT column_name, is_generated
+	FROM information_schema.columns
+	WHERE table_name = 'typed_generated_tasks' AND column_name = 'area';`,
+					Expected: []sql.Row{
+						{"area", "ALWAYS"},
+					},
+				},
+			},
+		},
+		{
+			Name: "CREATE TEMP TABLE OF supports generated columns",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_generated_task AS (id INT, width INT, height INT, area INT);`,
+				`CREATE TEMP TABLE typed_temp_generated_tasks OF typed_temp_generated_task (
+						area WITH OPTIONS GENERATED ALWAYS AS (width * height) STORED
+					);`,
+				`INSERT INTO typed_temp_generated_tasks (id, width, height) VALUES (1, 6, 7);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, area FROM typed_temp_generated_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), int32(42)},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF supports check constraints",
 			SetUpScript: []string{
 				`CREATE TYPE typed_check_task AS (id INT, code TEXT, priority INT);`,

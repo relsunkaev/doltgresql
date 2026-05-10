@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/mysql_db"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
@@ -46,9 +47,11 @@ type CreateTypedTable struct {
 	TypeSchemaName string
 	TypeName       string
 	Options        TypedTableOptions
+	overrides      sql.EngineOverrides
 }
 
 var _ sql.ExecSourceRel = (*CreateTypedTable)(nil)
+var _ sql.NodeOverriding = (*CreateTypedTable)(nil)
 var _ vitess.Injectable = (*CreateTypedTable)(nil)
 
 type TypedTableOptions struct {
@@ -72,6 +75,8 @@ type TypedTableColumnOptions struct {
 	DefaultLiteral         bool
 	DefaultParenthesized   bool
 	DefaultChildIndex      int
+	HasGenerated           bool
+	GeneratedExprString    string
 }
 
 type TypedTableUniqueConstraint struct {
@@ -174,7 +179,7 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, errors.Errorf(`type "%s" is not a composite type`, c.typeDisplayName())
 	}
 
-	tableSchema, err := typedTableSchema(ctx, typeCollection, c.TableName, db.Name(), compositeType, c.Options)
+	tableSchema, err := typedTableSchema(ctx, typeCollection, c.TableName, db.Name(), compositeType, c.Options, c.overrides)
 	if err != nil {
 		return nil, err
 	}
@@ -482,6 +487,12 @@ func (c *CreateTypedTable) WithChildren(ctx *sql.Context, children ...sql.Node) 
 	return plan.NillaryWithChildren(c, children...)
 }
 
+// WithOverrides implements the interface sql.NodeOverriding.
+func (c *CreateTypedTable) WithOverrides(overrides sql.EngineOverrides) sql.Node {
+	c.overrides = overrides
+	return c
+}
+
 // WithResolvedChildren implements vitess.Injectable.
 func (c *CreateTypedTable) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
 	expectedChildren := 0
@@ -552,7 +563,7 @@ type typeResolver interface {
 	GetType(ctx context.Context, name id.Type) (*pgtypes.DoltgresType, error)
 }
 
-func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName string, databaseName string, typ *pgtypes.DoltgresType, options TypedTableOptions) (sql.Schema, error) {
+func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName string, databaseName string, typ *pgtypes.DoltgresType, options TypedTableOptions, overrides sql.EngineOverrides) (sql.Schema, error) {
 	schema := make(sql.Schema, len(typ.CompositeAttrs))
 	for i, attr := range typ.CompositeAttrs {
 		attrType, err := typeCollection.GetType(ctx, attr.TypeID)
@@ -573,7 +584,37 @@ func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName s
 	if err := applyTypedTableOptions(ctx, schema, typ, options); err != nil {
 		return nil, err
 	}
+	if typedTableHasGeneratedColumns(options) {
+		var err error
+		schema, err = resolveTypedTableGeneratedExpressions(ctx, schema, databaseName, tableName, overrides)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return schema, nil
+}
+
+func typedTableHasGeneratedColumns(options TypedTableOptions) bool {
+	for _, option := range options.ColumnOptions {
+		if option.HasGenerated {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveTypedTableGeneratedExpressions(ctx *sql.Context, schema sql.Schema, databaseName string, tableName string, overrides sql.EngineOverrides) (resolvedSchema sql.Schema, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if recoveredErr, ok := r.(error); ok {
+				err = recoveredErr
+				return
+			}
+			panic(r)
+		}
+	}()
+	builder := planbuilder.NewBuilderForColumnDefaultResolution(ctx, overrides)
+	return builder.ResolveSchemaDefaults(databaseName, tableName, schema), nil
 }
 
 func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.DoltgresType, options TypedTableOptions) error {
@@ -617,6 +658,18 @@ func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.Do
 				return err
 			}
 			schema[idx].Default = defaultValue
+		}
+		if option.HasGenerated {
+			if option.GeneratedExprString == "" {
+				return errors.Errorf(`missing generation expression for column "%s"`, option.Name)
+			}
+			generatedValue := sql.NewUnresolvedColumnDefaultValue(option.GeneratedExprString)
+			generatedValue.OutType = schema[idx].Type
+			generatedValue.ReturnNil = schema[idx].Nullable
+			generatedValue.Parenthesized = true
+			generatedValue.Literal = false
+			schema[idx].Generated = generatedValue
+			schema[idx].Virtual = false
 		}
 	}
 	if len(options.PrimaryKeyColumns) > 0 && len(primaryKeyColumns) > len(options.PrimaryKeyColumns) {

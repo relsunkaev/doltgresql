@@ -1263,7 +1263,11 @@ typed-exception handling, and client-side query timeouts.
   `WITH OPTIONS ... REFERENCES ...` constraints, including insert-time
   enforcement and `information_schema.table_constraints` visibility; temporary
   typed-table foreign keys remain rejected by the engine's temporary-table FK
-  boundary. Still open: generated columns, index options/opclasses, and other
+  boundary. Permanent and temporary typed tables now support stored generated
+  columns declared with `WITH OPTIONS GENERATED ALWAYS AS (...) STORED`,
+  including insert-time materialization for omitted generated columns;
+  permanent generated columns also report `ALWAYS` through
+  `information_schema.columns`. Still open: index options/opclasses and other
   table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
   dg-7ug.12.

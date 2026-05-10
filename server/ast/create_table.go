@@ -228,7 +228,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 	return options, children, nil
 }
 
-func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, []pgnodes.TypedTableCheckConstraint, []pgnodes.TypedTableForeignKeyConstraint, error) {
+func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, childIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, []pgnodes.TypedTableCheckConstraint, []pgnodes.TypedTableForeignKeyConstraint, error) {
 	option := pgnodes.TypedTableColumnOptions{Name: string(def.Name)}
 	var defaultExpr vitess.Expr
 	checks := make([]pgnodes.TypedTableCheckConstraint, 0, len(def.CheckExprs))
@@ -242,7 +242,8 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		option.HasDefault = true
 		option.DefaultLiteral = typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr)
 		option.DefaultParenthesized = typedTableDefaultExprIsParenthesized(def.DefaultExpr.Expr)
-		option.DefaultChildIndex = defaultChildIndex
+		option.DefaultChildIndex = childIndex
+		childIndex++
 	}
 	for _, checkExpr := range def.CheckExprs {
 		check, err := nodeTypedTableCheckConstraint(ctx, string(checkExpr.ConstraintName), checkExpr.Expr, checkExpr.NoInherit)
@@ -276,7 +277,14 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		option.UniqueNullsNotDistinct = def.UniqueNullsNotDistinct
 	}
 	if def.Computed.Computed {
-		return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
+		if def.Computed.Expr == nil {
+			return option, nil, nil, nil, errors.Errorf("CREATE TABLE OF identity columns are not supported")
+		}
+		if def.HasDefaultExpr() {
+			return option, nil, nil, nil, errors.Errorf(`both default and generation expression specified for column "%s"`, def.Name)
+		}
+		option.HasGenerated = true
+		option.GeneratedExprString = tree.AsString(def.Computed.Expr)
 	}
 	switch def.Nullable.Nullability {
 	case tree.NotNull:
