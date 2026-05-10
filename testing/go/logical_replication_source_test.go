@@ -92,6 +92,20 @@ FROM
 WHERE
   slot_name = $1`
 
+const debeziumSlotStateQuery = `select * from pg_replication_slots where slot_name = $1 and database = $2 and plugin = $3`
+
+const debeziumCurrentXLogLocationQuery = `select (case pg_is_in_recovery() when 't' then pg_last_wal_receive_lsn() else pg_current_wal_lsn() end) AS pg_current_wal_lsn`
+
+const debeziumServerInfoQuery = `SELECT version(), current_user, current_database()`
+
+const debeziumRoleMembershipQuery = `SELECT oid, rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolreplication FROM pg_roles WHERE pg_has_role('postgres', oid, 'member')`
+
+const debeziumPublicationExistsQuery = `SELECT puballtables FROM pg_publication WHERE pubname = 'debezium_publication'`
+
+const debeziumCurrentPublicationTablesQuery = `SELECT schemaname, tablename FROM pg_publication_tables WHERE pubname = 'debezium_publication'`
+
+const debeziumPublicationValidationQuery = `SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname=$1`
+
 func TestLogicalReplicationSourceProtocolAndCatalogs(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -479,6 +493,108 @@ func TestLogicalReplicationElectricCatalogProbeQueries(t *testing.T) {
 	require.NotZero(t, pgWALOffset)
 	require.GreaterOrEqual(t, retainedWALSize, int64(0))
 	require.GreaterOrEqual(t, confirmedFlushLSNLag, int64(0))
+}
+
+func TestLogicalReplicationDebeziumCatalogProbeQueries(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE debezium_catalog_items (tenant_id INT PRIMARY KEY, label TEXT NOT NULL);
+		CREATE PUBLICATION debezium_publication FOR TABLE debezium_catalog_items;
+		ALTER TABLE debezium_catalog_items REPLICA IDENTITY FULL;`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	slotName := "debezium_slot"
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+
+	rows, err := conn.Current.Query(ctx, debeziumSlotStateQuery, slotName, "postgres", "pgoutput")
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	values, err := rows.Values()
+	require.NoError(t, err)
+	slotColumns := rowValuesByFieldName(t, rows.FieldDescriptions(), values)
+	require.Equal(t, slotName, pgTextValue(slotColumns["slot_name"]))
+	require.Equal(t, "pgoutput", pgTextValue(slotColumns["plugin"]))
+	require.Equal(t, "logical", pgTextValue(slotColumns["slot_type"]))
+	require.Equal(t, "postgres", pgTextValue(slotColumns["database"]))
+	require.False(t, slotColumns["active"].(bool))
+	require.Contains(t, slotColumns, "catalog_xmin")
+	require.Contains(t, slotColumns, "restart_lsn")
+	require.Contains(t, slotColumns, "confirmed_flush_lsn")
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	var pubAllTables bool
+	require.NoError(t, conn.Current.QueryRow(ctx, debeziumPublicationExistsQuery).Scan(&pubAllTables))
+	require.False(t, pubAllTables)
+
+	rows, err = conn.Current.Query(ctx, debeziumCurrentPublicationTablesQuery)
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	values, err = rows.Values()
+	require.NoError(t, err)
+	require.Equal(t, []any{"public", "debezium_catalog_items"}, values)
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	rows, err = conn.Current.Query(ctx, debeziumPublicationValidationQuery, "debezium_publication")
+	require.NoError(t, err)
+	require.True(t, rows.Next())
+	values, err = rows.Values()
+	require.NoError(t, err)
+	require.Equal(t, []any{"public", "debezium_catalog_items"}, values)
+	require.False(t, rows.Next())
+	require.NoError(t, rows.Err())
+	rows.Close()
+
+	var currentLSN string
+	require.NoError(t, conn.Current.QueryRow(ctx, debeziumCurrentXLogLocationQuery).Scan(&currentLSN))
+	require.NotEmpty(t, currentLSN)
+
+	var version, currentUser, currentDatabase string
+	require.NoError(t, conn.Current.QueryRow(ctx, debeziumServerInfoQuery).Scan(&version, &currentUser, &currentDatabase))
+	require.NotEmpty(t, version)
+	require.Equal(t, "postgres", currentUser)
+	require.Equal(t, "postgres", currentDatabase)
+
+	rows, err = conn.Current.Query(ctx, debeziumRoleMembershipQuery)
+	require.NoError(t, err)
+	foundPostgresRole := false
+	for rows.Next() {
+		values, err = rows.Values()
+		require.NoError(t, err)
+		require.Len(t, values, 8)
+		if pgTextValue(values[1]) != "postgres" {
+			continue
+		}
+		foundPostgresRole = true
+		require.True(t, values[2].(bool))
+		require.True(t, values[3].(bool))
+		require.True(t, values[4].(bool))
+		require.True(t, values[5].(bool))
+		require.True(t, values[6].(bool))
+		require.False(t, values[7].(bool))
+	}
+	require.True(t, foundPostgresRole)
+	require.NoError(t, rows.Err())
+	rows.Close()
 }
 
 func TestLogicalReplicationSourceUpdateIncludesOldTupleForReplicaIdentityFull(t *testing.T) {
@@ -1985,6 +2101,16 @@ func pgCharValue(value any) string {
 		}
 	}
 	return pgTextValue(value)
+}
+
+func rowValuesByFieldName(t *testing.T, fields []pgconn.FieldDescription, values []any) map[string]any {
+	t.Helper()
+	require.Len(t, values, len(fields))
+	row := make(map[string]any, len(fields))
+	for idx, field := range fields {
+		row[field.Name] = values[idx]
+	}
+	return row
 }
 
 func waitForReplicationState(t *testing.T, ctx context.Context, conn *Connection, slotName string, expectedLSN string) {

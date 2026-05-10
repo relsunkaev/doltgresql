@@ -1020,11 +1020,27 @@ actually exercise.
   grammar, `pg_index.indclass = ANY(...)`, `int2vector` / `oidvector`
   slices, zero-shaped published-column catalog CTEs, exported snapshots,
   `pg_logical_emit_message`, `pg_column_size`, `starts_with`, array
-  operators, array subscripts, and JSON output serialization.
-- [ ] Capture Debezium and other `pgoutput` consumer query surfaces in this
-  checklist. Add executable probes for the exact slot, publication, LSN,
-  snapshot, and replication-stat catalog queries those consumers issue before
-  claiming support for them. Tracked by dg-7ug.9.
+  operators, array subscripts, and JSON output serialization. Debezium's
+  source-derived startup and publication probes are pinned through
+  TestLogicalReplicationDebeziumCatalogProbeQueries against Debezium main
+  commit 09592e3f9a6e1fa518940343cb1d37a8ef8e76c6: slot lookup via
+  `pg_replication_slots`, `pg_is_in_recovery()` / current-WAL-LSN discovery,
+  `version()` / `current_user` / `current_database()` server info,
+  `pg_roles` membership through `pg_has_role`, publication existence checks,
+  and `pg_publication_tables` discovery/validation. Debezium's optional
+  `pg_replication_slot_advance` seek path remains outside the claimed surface;
+  upstream Debezium treats an undefined function there as a non-fatal old-server
+  boundary.
+- [x] Capture Debezium's `pgoutput` consumer query surface in this checklist.
+  The executable probe uses the exact source query shapes with JDBC parameter
+  markers translated to pgx `$n` markers for the Go harness. Source references:
+  `PostgresConnection.java` for slot lookup, WAL location, server info, and
+  role-membership discovery; `PostgresReplicationConnection.java` for
+  publication existence, publication-table discovery, publication validation,
+  optional `pg_replication_slot_advance`, and `CREATE_REPLICATION_SLOT`.
+- [ ] Add executable probes for additional named `pgoutput` consumers when a
+  real workload introduces them. This future matrix expansion is intentionally
+  not part of the current Electric / Zero / Debezium boundary.
 - [x] Document Doltgres as source-only unless live subscriber/apply behavior
   is implemented. docs/electric-compatibility.md now states that Doltgres is a
   logical replication source for Electric, does not run subscription apply
@@ -1041,10 +1057,12 @@ actually exercise.
   `pg_stat_subscription`. The subscription catalog boundary was checked
   against `postgres:15-alpine` on 2026-05-09 before updating the Doltgres
   tests.
-- [ ] Implement live subscription/apply behavior or keep rejecting it with
-  executable boundaries. Open work includes subscription apply workers, initial
-  table synchronization from a remote publisher, remote slot creation, and
-  incoming `pgoutput` apply into Doltgres. Tracked by dg-7ug.9.
+- [x] Keep live subscription/apply behavior rejected with executable
+  boundaries. Subscription apply workers, initial table synchronization from a
+  remote publisher, remote slot creation, and incoming `pgoutput` apply into
+  Doltgres are not part of the source-consumer compatibility target; the
+  metadata-only `connect=false` boundary remains pinned by
+  TestSubscriptionDDLAndCatalogs.
 - [x] Cover or reject Aurora / RDS-specific assumptions
   (`rds.logical_replication`, `pglogical`, `track_commit_timestamp`, RDS
   Proxy) that real-world stacks expose. docs/replication-provider-boundaries.md
@@ -1066,7 +1084,8 @@ actually exercise.
   currently claimed through Electric, Zero, and direct `pgoutput` tests.
 - [ ] Mirror newly exercised PostgreSQL replication features back into this app
   checklist when a real consumer needs them, rather than leaving them only in
-  docs/postgresql-parity-issues.md. Tracked by dg-7ug.9.
+  docs/postgresql-parity-issues.md. This remains the standing future-work rule
+  for consumers beyond the current Electric / Zero / Debezium matrix.
 
 ## Dump/admin/tooling TODO
 
