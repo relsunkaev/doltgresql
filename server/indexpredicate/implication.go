@@ -156,7 +156,10 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	if ok {
 		queryValues, ok := predicateValueSetFromExpr(queryExpr)
 		if ok {
-			return indexValues.exprKey == queryValues.exprKey && queryValues.subsetOf(indexValues)
+			if indexValues.exprKey == queryValues.exprKey {
+				return queryValues.subsetOf(indexValues)
+			}
+			return predicateAbsArgumentValueSetImplies(indexValues, queryValues)
 		}
 		queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
 		if !ok || indexValues.exprKey != queryBool.exprKey {
@@ -485,6 +488,42 @@ func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
 		}
 	}
 	return true
+}
+
+func predicateAbsArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateAbsArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	absoluteValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		absoluteValue, ok := predicateAbsNumericLiteralKey(value)
+		if !ok {
+			return false
+		}
+		absoluteValues[absoluteValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: absoluteValues}.subsetOf(indexValues)
+}
+
+func predicateAbsArgumentExprKey(exprKey string) (string, bool) {
+	const prefix = "func:abs("
+	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
+		return "", false
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(exprKey, prefix), ")"), true
+}
+
+func predicateAbsNumericLiteralKey(value string) (string, bool) {
+	const prefix = "n:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	number, err := strconv.ParseFloat(strings.TrimPrefix(value, prefix), 64)
+	if err != nil {
+		return "", false
+	}
+	return prefix + strconv.FormatFloat(math.Abs(number), 'g', -1, 64), true
 }
 
 func (s predicateExclusionSet) implies(other predicateExclusionSet) bool {

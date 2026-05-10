@@ -1801,15 +1801,19 @@ ON CONFLICT (code) WHERE concat('acct:', code) = 'acct:active' DO NOTHING;`,
 ON CONFLICT (user_id) WHERE abs(delta) = 10 DO UPDATE SET note = EXCLUDED.note;`,
 				},
 				{
+					Query: `INSERT INTO partial_arb_abs VALUES (5, 10, 10, 'abs-raw-upsert')
+ON CONFLICT (user_id) WHERE delta = 10 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
 					Query: `SELECT id, user_id, delta, note FROM partial_arb_abs ORDER BY id;`,
 					Expected: []gms.Row{
-						{1, int32(10), int64(-10), "abs-upsert"},
+						{1, int32(10), int64(-10), "abs-raw-upsert"},
 						{2, int32(10), int64(5), "small-delta"},
 					},
 				},
 				{
 					Query: `INSERT INTO partial_arb_abs VALUES (4, 10, 10, 'wrong-predicate')
-ON CONFLICT (user_id) WHERE delta = 10 DO NOTHING;`,
+ON CONFLICT (user_id) WHERE delta > 0 DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

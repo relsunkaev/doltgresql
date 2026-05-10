@@ -946,6 +946,11 @@ func TestImpliesAbsFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"abs(delta) = 10", "abs(delta) = 10"},
+		{"abs(delta) = 10", "delta = 10"},
+		{"abs(delta) = 10", "delta = -10"},
+		{"abs(delta) = 10", "delta IN (-10, 10)"},
+		{"abs(delta) IN (10, 20)", "delta = -20"},
+		{"abs(delta) IN (10, 20)", "delta IN (-20, 10)"},
 		{"abs(delta) IN (10, 20)", "abs(delta) = 10"},
 		{"abs(delta) IS NOT NULL", "abs(delta) = 10"},
 	} {
@@ -957,7 +962,9 @@ func TestImpliesAbsFunctionPredicates(t *testing.T) {
 		indexPredicate string
 		queryPredicate string
 	}{
-		{"abs(delta) = 10", "delta = 10"},
+		{"abs(delta) = 10", "delta = 11"},
+		{"abs(delta) = 10", "delta IN (-10, 11)"},
+		{"abs(delta) = 10", "delta > 0"},
 		{"abs(delta) = 10", "abs(delta) = 11"},
 		{"abs(delta) IN (10, 20)", "abs(delta) IN (10, 30)"},
 	} {

@@ -852,10 +852,18 @@ Do not check off an item until it has workload proof:
   implication paths. `abs(expr)` now serializes as a comparable predicate key,
   participates in planner predicate serialization, evaluates signed integer
   values for partial unique DML enforcement, and works for `ON CONFLICT`
-  arbiter inference; sign-sensitive predicates such as `expr = 10` do not imply
-  `abs(expr) = 10`. Coverage in server/indexpredicate/implication_test.go,
+  arbiter inference. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.5.
+- [x] Use raw argument value-set predicates to imply matching `abs(...)`
+  partial-index predicates. Numeric equality and IN-list filters on the
+  argument, such as `delta = -10` and `delta IN (-10, 10)`, now imply
+  `abs(delta)` value-set predicates when every absolute value is contained in
+  the partial predicate's literal set. Non-matching raw values and broader
+  range predicates such as `delta > 0` remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.38.
 - [x] Use deterministic unary numeric `floor(expr)` / `ceil(expr)` predicates
   in partial-index implication paths. `floor(...)`, `ceil(...)`, and the
   PostgreSQL alias `ceiling(...)` now serialize as comparable predicate keys,

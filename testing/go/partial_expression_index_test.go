@@ -2242,9 +2242,21 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, absImpliedQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, absImpliedQuery, true)
 
-	absSignSensitiveQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta = 10`
-	assertCountResult(t, ctx, conn, absSignSensitiveQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, absSignSensitiveQuery, false)
+	absRawPositiveQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta = 10`
+	assertCountResult(t, ctx, conn, absRawPositiveQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, absRawPositiveQuery, true)
+
+	absRawNegativeQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta = -10`
+	assertCountResult(t, ctx, conn, absRawNegativeQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, absRawNegativeQuery, true)
+
+	absRawInQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta IN (-10, 10)`
+	assertCountResult(t, ctx, conn, absRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, absRawInQuery, true)
+
+	absRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND delta = 11`
+	assertCountResult(t, ctx, conn, absRawNonMatchingQuery, 0)
+	assertBenchmarkPlanShape(t, ctx, conn, absRawNonMatchingQuery, false)
 
 	absNonMatchingQuery := `SELECT count(id) FROM partial_planner_abs WHERE tenant = 1 AND abs(delta) = 5`
 	assertCountResult(t, ctx, conn, absNonMatchingQuery, 1)
