@@ -788,7 +788,10 @@ Do not check off an item until it has workload proof:
   prepare/execute/close, transaction commit, and rollback behavior. `psycopg`
   runs through the real psycopg3 pool, including startup `application_name`,
   parameter binding, JSONB and array adaptation, concurrent reads, transaction
-  commit, and rollback behavior. Ruby `pg` runs through a real PG::Connection,
+  commit, and rollback behavior. `psycopg2` runs through the legacy Python
+  client pool, including startup `application_name`, typed parameters, JSONB
+  and text[] adaptation, prepared statements, concurrent reads, commit, and
+  rollback behavior. Ruby `pg` runs through a real PG::Connection,
   including startup `application_name`, typed parameters, JSONB and text[]
   values, prepared statements, concurrent reads, commit, and rollback. libpq
   runs through a compiled C probe with startup `application_name`, typed
@@ -799,8 +802,8 @@ Do not check off an item until it has workload proof:
   testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
   testing/go/ts_postgres_client_test.go, testing/go/psycopg_client_test.go,
-  testing/go/ruby_pg_client_test.go, testing/go/libpq_client_test.go, and
-  testing/go/rust_sqlx_client_test.go.
+  testing/go/psycopg2_client_test.go, testing/go/ruby_pg_client_test.go,
+  testing/go/libpq_client_test.go, and testing/go/rust_sqlx_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
   clients, rather than implying support from the existing Node harnesses alone.
   Tracked by dg-7ug.10.
@@ -1191,7 +1194,10 @@ typed-exception handling, and client-side query timeouts.
   commit, and rollback, the ts-postgres harness covers a binary-result
   Node client with explicit prepared statements and transactions, the
   psycopg harness covers the direct Python driver pool with parameters,
-  JSONB/array adaptation, concurrent reads, and transaction boundaries, and
+  JSONB/array adaptation, concurrent reads, and transaction boundaries, the
+  psycopg2 harness covers the legacy Python driver pool with parameters,
+  JSONB/array adaptation, prepared statements, concurrent reads, and
+  transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
   boundaries, while the libpq harness compiles a C probe for typed parameters,
@@ -1199,9 +1205,10 @@ typed-exception handling, and client-side query timeouts.
   transaction boundaries, and the Rust `sqlx` harness covers async pool usage,
   parameters, UUIDs, and chrono timestamp/date decoding.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
-  postgres.js, ts-postgres, psycopg, Ruby `pg`, libpq, and Rust `sqlx`. Add
-  runnable smoke gates for the advertised client and migration-tool matrix
-  before claiming broad client compatibility. Tracked by dg-7ug.10.
+  postgres.js, ts-postgres, psycopg, psycopg2, Ruby `pg`, libpq, and Rust
+  `sqlx`. Add runnable smoke gates for the advertised client and
+  migration-tool matrix before claiming broad client compatibility. Tracked by
+  dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
