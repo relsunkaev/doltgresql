@@ -1043,3 +1043,31 @@ func TestImpliesChrFunctionPredicates(t *testing.T) {
 		}
 	}
 }
+
+func TestImpliesHashTextFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"hashtext(code) = -785388649", "hashtext(code) = -785388649"},
+		{"hashtext(code) IN (-785388649, 1425101999)", "hashtext(code) = -785388649"},
+		{"hashtext(code) IS NOT NULL", "hashtext(code) = -785388649"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"hashtext(code) = -785388649", "code = 'abc'"},
+		{"hashtext(code) = -785388649", "hashtext(name) = -785388649"},
+		{"hashtext(code) = -785388649", "hashtext(code) = 1425101999"},
+		{"hashtext(code) IN (-785388649, 1425101999)", "hashtext(code) IN (1425101999, 0)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}

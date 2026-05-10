@@ -832,6 +832,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports hashtext predicate",
+			SetUpScript: []string{
+				`CREATE TABLE hashtext_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX hashtext_codes_user_code_idx
+					ON hashtext_codes (user_id)
+					WHERE hashtext(code) = -785388649;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO hashtext_codes VALUES
+						(1, 10, 'abc'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO hashtext_codes VALUES (3, 10, 'abc');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO hashtext_codes VALUES (4, 10, 'ABC');`,
+				},
+				{
+					Query:       `UPDATE hashtext_codes SET code = 'abc' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports split_part predicate",
 			SetUpScript: []string{
 				`CREATE TABLE email_domains (id INT PRIMARY KEY, user_id INT, email TEXT);`,
@@ -1642,6 +1669,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	md5RawSourceQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code = 'active'`
 	assertCountResult(t, ctx, conn, md5RawSourceQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, md5RawSourceQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_hashtext (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_hashtext VALUES
+		(1, 1, 'abc'),
+		(2, 1, 'pending'),
+		(3, 1, 'ABC'),
+		(4, 2, 'abc')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_hashtext_tenant_idx ON partial_planner_hashtext (tenant) WHERE hashtext(code) = -785388649")
+
+	hashtextImpliedQuery := `SELECT count(id) FROM partial_planner_hashtext WHERE tenant = 1 AND hashtext(code) = -785388649`
+	assertCountResult(t, ctx, conn, hashtextImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, hashtextImpliedQuery, true)
+
+	hashtextRawSourceQuery := `SELECT count(id) FROM partial_planner_hashtext WHERE tenant = 1 AND code = 'abc'`
+	assertCountResult(t, ctx, conn, hashtextRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, hashtextRawSourceQuery, false)
+
+	hashtextNonMatchingQuery := `SELECT count(id) FROM partial_planner_hashtext WHERE tenant = 1 AND hashtext(code) = 1425101999`
+	assertCountResult(t, ctx, conn, hashtextNonMatchingQuery, 0)
+	assertBenchmarkPlanShape(t, ctx, conn, hashtextNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_split_part (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_split_part VALUES

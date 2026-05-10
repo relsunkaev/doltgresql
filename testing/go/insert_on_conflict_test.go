@@ -1157,6 +1157,32 @@ ON CONFLICT (user_id) WHERE code = 'active' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports hashtext predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_hashtext (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_hashtext_user_idx ON partial_arb_hashtext (user_id) WHERE hashtext(code) = -785388649;",
+				"INSERT INTO partial_arb_hashtext VALUES (1, 10, 'abc', 'old-abc'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_hashtext VALUES (3, 10, 'abc', 'hashtext-upsert')
+ON CONFLICT (user_id) WHERE hashtext(code) = -785388649 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_hashtext ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), "abc", "hashtext-upsert"},
+						{2, int32(10), "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_hashtext VALUES (4, 10, 'abc', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code = 'abc' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports split_part predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_split_part (id INT PRIMARY KEY, user_id INT, email TEXT, note TEXT);",

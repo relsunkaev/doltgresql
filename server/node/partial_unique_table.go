@@ -33,6 +33,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
@@ -1303,6 +1304,8 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 		return predicateValue{value: strings.TrimRightFunc(text, func(r rune) bool { return r == ' ' })}, nil
 	case "md5":
 		return predicateValue{value: fmt.Sprintf("%x", md5.Sum([]byte(text)))}, nil
+	case "hashtext":
+		return predicateValue{value: int64(int32(functions.PgHashBytes([]byte(text))))}, nil
 	case "reverse":
 		return predicateValue{value: predicateReverseText(text)}, nil
 	case "initcap":

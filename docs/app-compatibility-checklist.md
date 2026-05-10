@@ -1074,6 +1074,15 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.30.
+- [x] Use deterministic `hashtext(expr)` predicates in partial-index
+  implication paths. Unary `hashtext(...)` calls now serialize as comparable
+  predicate keys, planner filters can deparse them, partial unique DML
+  enforcement evaluates PostgreSQL-compatible signed 32-bit text hashes, and
+  `ON CONFLICT` arbiter inference accepts the exact-expression shape; raw text
+  predicates, wrong hash values, and overlapping hash sets remain rejected.
+  Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.31.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic
