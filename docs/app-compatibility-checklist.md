@@ -703,6 +703,16 @@ Do not check off an item until it has workload proof:
   equality shapes stay off the indexed path. Coverage in
   server/indexpredicate/implication_test.go and
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.9.1.
+- [x] Use partial btree indexes when query equality classes transitively prove
+  a cross-column predicate. SQL `=` chains and null-safe
+  `IS NOT DISTINCT FROM` chains now imply matching partial-index predicates
+  across the implication helper, planner lookup path, and `ON CONFLICT`
+  arbiter inference, while null-safe-only chains still do not imply SQL `=`
+  predicates. Field-to-field query predicates are left as residual filters
+  instead of being treated as constant lookup bounds. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.9.2.
 - [x] Use deterministic unary `ltrim`/`rtrim` predicates in partial-index
   implication paths. `ltrim(expr)` and `rtrim(expr)` now participate in the
   implication helper, partial unique predicate evaluation, planner predicate
@@ -719,10 +729,10 @@ Do not check off an item until it has workload proof:
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.2.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
-  current conservative subset. Broader cross-column/equality-class proofs,
-  broader expression-level semantic implication beyond the currently
-  supported deterministic unary function families, and planner deparsing for
-  additional predicate families remain open.
+  current conservative subset. Additional cross-column proof shapes beyond
+  singleton and equality-chain facts, broader expression-level semantic
+  implication beyond the currently supported deterministic unary function
+  families, and planner deparsing for additional predicate families remain open.
   Tracked by dg-7ug.8.9, dg-7ug.8.10, and dg-7ug.8.11 under dg-7ug.8.
 - [x] Expression indexes - `CREATE INDEX ... ON t ((expr(col)))` works
   end-to-end for the common `lower(email)` shape: the index is

@@ -242,7 +242,7 @@ func partialLookupFieldMatches(expr sql.Expression, columnName string) bool {
 }
 
 func constantLookupValue(ctx *sql.Context, expr sql.Expression) (any, bool, error) {
-	if !expr.Resolved() {
+	if !expr.Resolved() || plannerExpressionReferencesField(expr) {
 		return nil, false, nil
 	}
 	value, err := expr.Eval(ctx, nil)
@@ -254,6 +254,19 @@ func constantLookupValue(ctx *sql.Context, expr sql.Expression) (any, bool, erro
 		return nil, false, err
 	}
 	return value, true, nil
+}
+
+func plannerExpressionReferencesField(expr sql.Expression) bool {
+	expr = unwrapGMSCast(expr)
+	if _, ok := expr.(*gmsexpression.GetField); ok {
+		return true
+	}
+	for _, child := range expr.Children() {
+		if plannerExpressionReferencesField(child) {
+			return true
+		}
+	}
+	return false
 }
 
 func plannerPredicateSQL(exprs []sql.Expression) (string, bool) {

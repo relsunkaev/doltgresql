@@ -793,6 +793,32 @@ ON CONFLICT (email) WHERE lower(email) IN ('active@example.com', 'other@example.
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports equality-chain predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_cross_chain (id INT PRIMARY KEY, user_id INT, tenant INT, workspace_tenant INT, owner_tenant INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_cross_chain_user_idx ON partial_arb_cross_chain (user_id) WHERE tenant = owner_tenant;",
+				"INSERT INTO partial_arb_cross_chain VALUES (1, 10, 1, 1, 1, 'old-same'), (2, 10, NULL, NULL, NULL, 'null-row');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_cross_chain VALUES (3, 10, 1, 1, 1, 'chain-upsert')
+ON CONFLICT (user_id) WHERE tenant = workspace_tenant AND workspace_tenant = owner_tenant DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, tenant, workspace_tenant, owner_tenant, note FROM partial_arb_cross_chain ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, 1, 1, 1, "chain-upsert"},
+						{2, 10, nil, nil, nil, "null-row"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_cross_chain VALUES (4, 10, 1, 1, 1, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE tenant IS NOT DISTINCT FROM workspace_tenant AND workspace_tenant IS NOT DISTINCT FROM owner_tenant DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",

@@ -182,8 +182,10 @@ type predicateEquality struct {
 }
 
 type predicateQueryFacts struct {
-	values map[string]string
-	nulls  map[string]struct{}
+	values             map[string]string
+	nulls              map[string]struct{}
+	strongEqualities   map[string]map[string]struct{}
+	nullSafeEqualities map[string]map[string]struct{}
 }
 
 func queryTermsImplyEquality(indexExpr tree.Expr, queryTerms map[string]tree.Expr) bool {
@@ -192,17 +194,31 @@ func queryTermsImplyEquality(indexExpr tree.Expr, queryTerms map[string]tree.Exp
 		return false
 	}
 	facts := predicateQueryFactsFromTerms(queryTerms)
-	if leftValue, ok := facts.values[equality.leftKey]; ok {
-		if rightValue, ok := facts.values[equality.rightKey]; ok && leftValue == rightValue {
-			return true
-		}
+	if facts.implyStrongEquality(equality.leftKey, equality.rightKey) {
+		return true
 	}
 	if !equality.nullSafe {
 		return false
 	}
-	_, leftNull := facts.nulls[equality.leftKey]
-	_, rightNull := facts.nulls[equality.rightKey]
-	return leftNull && rightNull
+	return facts.implyNullSafeEquality(equality.leftKey, equality.rightKey)
+}
+
+func (f predicateQueryFacts) implyStrongEquality(leftKey string, rightKey string) bool {
+	if leftValue, ok := f.values[leftKey]; ok {
+		if rightValue, ok := f.values[rightKey]; ok && leftValue == rightValue {
+			return true
+		}
+	}
+	return predicateEqualityReachable(f.strongEqualities, leftKey, rightKey)
+}
+
+func (f predicateQueryFacts) implyNullSafeEquality(leftKey string, rightKey string) bool {
+	_, leftNull := f.nulls[leftKey]
+	_, rightNull := f.nulls[rightKey]
+	if leftNull && rightNull {
+		return true
+	}
+	return predicateEqualityReachable(f.nullSafeEqualities, leftKey, rightKey)
 }
 
 func predicateEqualityFromExpr(expr tree.Expr) (predicateEquality, bool) {
@@ -227,8 +243,10 @@ func predicateEqualityFromExpr(expr tree.Expr) (predicateEquality, bool) {
 
 func predicateQueryFactsFromTerms(queryTerms map[string]tree.Expr) predicateQueryFacts {
 	facts := predicateQueryFacts{
-		values: make(map[string]string),
-		nulls:  make(map[string]struct{}),
+		values:             make(map[string]string),
+		nulls:              make(map[string]struct{}),
+		strongEqualities:   make(map[string]map[string]struct{}),
+		nullSafeEqualities: make(map[string]map[string]struct{}),
 	}
 	for _, queryExpr := range queryTerms {
 		if values, ok := predicateValueSetFromExpr(queryExpr); ok && len(values.values) == 1 {
@@ -243,8 +261,51 @@ func predicateQueryFactsFromTerms(queryTerms map[string]tree.Expr) predicateQuer
 		if exprKey, ok := nullPredicateExprKey(queryExpr); ok {
 			facts.nulls[exprKey] = struct{}{}
 		}
+		if equality, ok := predicateEqualityFromExpr(queryExpr); ok {
+			if !equality.nullSafe {
+				predicateAddEqualityEdge(facts.strongEqualities, equality.leftKey, equality.rightKey)
+			}
+			predicateAddEqualityEdge(facts.nullSafeEqualities, equality.leftKey, equality.rightKey)
+		}
 	}
 	return facts
+}
+
+func predicateAddEqualityEdge(graph map[string]map[string]struct{}, leftKey string, rightKey string) {
+	if graph[leftKey] == nil {
+		graph[leftKey] = make(map[string]struct{})
+	}
+	if graph[rightKey] == nil {
+		graph[rightKey] = make(map[string]struct{})
+	}
+	graph[leftKey][rightKey] = struct{}{}
+	graph[rightKey][leftKey] = struct{}{}
+}
+
+func predicateEqualityReachable(graph map[string]map[string]struct{}, leftKey string, rightKey string) bool {
+	if leftKey == rightKey {
+		return true
+	}
+	if len(graph[leftKey]) == 0 || len(graph[rightKey]) == 0 {
+		return false
+	}
+	seen := map[string]struct{}{leftKey: {}}
+	queue := []string{leftKey}
+	for len(queue) > 0 {
+		key := queue[0]
+		queue = queue[1:]
+		for next := range graph[key] {
+			if next == rightKey {
+				return true
+			}
+			if _, ok := seen[next]; ok {
+				continue
+			}
+			seen[next] = struct{}{}
+			queue = append(queue, next)
+		}
+	}
+	return false
 }
 
 func notNullPredicateExprKey(expr tree.Expr) (string, bool) {

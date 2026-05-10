@@ -494,6 +494,32 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, crossColumnNullSafeMismatchQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeMismatchQuery, false)
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_cross_chain (id INTEGER PRIMARY KEY, tenant INTEGER, workspace_tenant INTEGER, owner_tenant INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_cross_chain VALUES
+		(1, 1, 1, 1),
+		(2, 1, 1, 2),
+		(3, NULL, NULL, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_cross_chain_tenant_idx ON partial_planner_cross_chain (tenant) WHERE tenant = owner_tenant")
+
+	crossColumnChainQuery := `SELECT count(id) FROM partial_planner_cross_chain WHERE tenant = 1 AND tenant = workspace_tenant AND workspace_tenant = owner_tenant`
+	assertCountResult(t, ctx, conn, crossColumnChainQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnChainQuery, true)
+
+	crossColumnNullSafeChainQuery := `SELECT count(id) FROM partial_planner_cross_chain WHERE tenant IS NULL AND tenant IS NOT DISTINCT FROM workspace_tenant AND workspace_tenant IS NOT DISTINCT FROM owner_tenant`
+	assertCountResult(t, ctx, conn, crossColumnNullSafeChainQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeChainQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_cross_chain_nullsafe (id INTEGER PRIMARY KEY, label TEXT NOT NULL, tenant INTEGER, workspace_tenant INTEGER, owner_tenant INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_cross_chain_nullsafe VALUES
+		(1, 'same-value', 1, 1, 1),
+		(2, 'mismatch', 1, 1, 2),
+		(3, 'same-null', NULL, NULL, NULL)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_cross_chain_nullsafe_label_idx ON partial_planner_cross_chain_nullsafe (label) WHERE tenant IS NOT DISTINCT FROM owner_tenant")
+
+	crossColumnNullSafeChainImpliedQuery := `SELECT count(id) FROM partial_planner_cross_chain_nullsafe WHERE label = 'same-null' AND tenant IS NOT DISTINCT FROM workspace_tenant AND workspace_tenant IS NOT DISTINCT FROM owner_tenant`
+	assertCountResult(t, ctx, conn, crossColumnNullSafeChainImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, crossColumnNullSafeChainImpliedQuery, true)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_trim (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_trim VALUES
 		(1, 1, ' active'),

@@ -156,7 +156,11 @@ func TestImpliesCrossColumnEqualityPredicates(t *testing.T) {
 		{"tenant_id = owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 1"},
 		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 1"},
 		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id IS NULL AND owner_tenant_id IS NULL"},
+		{"tenant_id = owner_tenant_id", "tenant_id = workspace_tenant_id AND workspace_tenant_id = owner_tenant_id"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = workspace_tenant_id AND workspace_tenant_id = owner_tenant_id"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id IS NOT DISTINCT FROM workspace_tenant_id AND workspace_tenant_id IS NOT DISTINCT FROM owner_tenant_id"},
 		{"lower(email) = canonical_email", "lower(email) = 'ada@example.com' AND canonical_email = 'ada@example.com'"},
+		{"lower(email) = canonical_email", "lower(email) = alias_email AND alias_email = canonical_email"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
@@ -170,6 +174,8 @@ func TestImpliesCrossColumnEqualityPredicates(t *testing.T) {
 		{"tenant_id = owner_tenant_id", "tenant_id IS NULL AND owner_tenant_id IS NULL"},
 		{"tenant_id = owner_tenant_id", "tenant_id = 1"},
 		{"tenant_id = owner_tenant_id", "tenant_id IN (1, 2) AND owner_tenant_id IN (1, 2)"},
+		{"tenant_id = owner_tenant_id", "tenant_id IS NOT DISTINCT FROM workspace_tenant_id AND workspace_tenant_id IS NOT DISTINCT FROM owner_tenant_id"},
+		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = workspace_tenant_id"},
 		{"tenant_id IS NOT DISTINCT FROM owner_tenant_id", "tenant_id = 1 AND owner_tenant_id = 2"},
 		{"lower(email) = canonical_email", "email = 'ada@example.com' AND canonical_email = 'ada@example.com'"},
 	} {
