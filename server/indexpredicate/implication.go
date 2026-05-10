@@ -627,6 +627,9 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if nullif, ok := expr.(*tree.NullIfExpr); ok {
 		return predicateNullIfExprKey(nullif)
 	}
+	if binary, ok := expr.(*tree.BinaryExpr); ok {
+		return predicateBinaryExprKey(binary)
+	}
 	fn, ok := expr.(*tree.FuncExpr)
 	if !ok {
 		return "", false
@@ -710,6 +713,35 @@ func predicateNullIfExprKey(expr *tree.NullIfExpr) (string, bool) {
 		return "", false
 	}
 	return "func:nullif(" + leftKey + "," + rightKey + ")", true
+}
+
+func predicateBinaryExprKey(expr *tree.BinaryExpr) (string, bool) {
+	op, ok := predicateArithmeticBinaryOperator(expr.Operator)
+	if !ok {
+		return "", false
+	}
+	leftKey, ok := predicateFunctionArgumentExprKey(expr.Left)
+	if !ok {
+		return "", false
+	}
+	rightKey, ok := predicateFunctionArgumentExprKey(expr.Right)
+	if !ok {
+		return "", false
+	}
+	return "binary:" + op + "(" + leftKey + "," + rightKey + ")", true
+}
+
+func predicateArithmeticBinaryOperator(op tree.BinaryOperator) (string, bool) {
+	switch op {
+	case tree.Plus:
+		return "+", true
+	case tree.Minus:
+		return "-", true
+	case tree.Mult:
+		return "*", true
+	default:
+		return "", false
+	}
 }
 
 func predicateFunctionCallExprKey(name string, exprs tree.Exprs, expectedArgs int) (string, bool) {

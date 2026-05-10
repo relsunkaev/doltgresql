@@ -305,6 +305,60 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports arithmetic expression predicates",
+			SetUpScript: []string{
+				`CREATE TABLE arithmetic_plus_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX arithmetic_plus_scores_user_idx
+					ON arithmetic_plus_scores (user_id)
+					WHERE score + 1 = 8;`,
+				`CREATE TABLE arithmetic_minus_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX arithmetic_minus_scores_user_idx
+					ON arithmetic_minus_scores (user_id)
+					WHERE score - 1 = 6;`,
+				`CREATE TABLE arithmetic_mult_scores (id INT PRIMARY KEY, user_id INT, score INT);`,
+				`CREATE UNIQUE INDEX arithmetic_mult_scores_user_idx
+					ON arithmetic_mult_scores (user_id)
+					WHERE score * 2 = 14;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO arithmetic_plus_scores VALUES
+						(1, 10, 7),
+						(2, 10, 8),
+						(3, 10, NULL);`,
+				},
+				{
+					Query:       `INSERT INTO arithmetic_plus_scores VALUES (4, 10, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `UPDATE arithmetic_plus_scores SET score = 7 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO arithmetic_plus_scores VALUES (5, 10, 9);`,
+				},
+				{
+					Query: `INSERT INTO arithmetic_minus_scores VALUES
+						(1, 20, 7),
+						(2, 20, 8);`,
+				},
+				{
+					Query:       `INSERT INTO arithmetic_minus_scores VALUES (3, 20, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO arithmetic_mult_scores VALUES
+						(1, 30, 7),
+						(2, 30, 8);`,
+				},
+				{
+					Query:       `INSERT INTO arithmetic_mult_scores VALUES (3, 30, 7);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports abs numeric predicate",
 			SetUpScript: []string{
 				`CREATE TABLE absolute_scores (id INT PRIMARY KEY, user_id INT, delta BIGINT);`,
@@ -2070,6 +2124,47 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	nullifWrongArgumentQuery := `SELECT count(id) FROM partial_planner_nullif WHERE tenant = 1 AND nullif(status, 'inactive') = 'active'`
 	assertCountResult(t, ctx, conn, nullifWrongArgumentQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, nullifWrongArgumentQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_arithmetic_plus (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_arithmetic_plus VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_arithmetic_plus_tenant_idx ON partial_planner_arithmetic_plus (tenant) WHERE score + 1 = 8")
+
+	arithmeticPlusImpliedQuery := `SELECT count(id) FROM partial_planner_arithmetic_plus WHERE tenant = 1 AND score + 1 = 8`
+	assertCountResult(t, ctx, conn, arithmeticPlusImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusImpliedQuery, true)
+
+	arithmeticPlusRawSourceQuery := `SELECT count(id) FROM partial_planner_arithmetic_plus WHERE tenant = 1 AND score = 7`
+	assertCountResult(t, ctx, conn, arithmeticPlusRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusRawSourceQuery, false)
+
+	arithmeticPlusWrongExpressionQuery := `SELECT count(id) FROM partial_planner_arithmetic_plus WHERE tenant = 1 AND score + 2 = 8`
+	assertCountResult(t, ctx, conn, arithmeticPlusWrongExpressionQuery, 0)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticPlusWrongExpressionQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_arithmetic_minus (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_arithmetic_minus VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_arithmetic_minus_tenant_idx ON partial_planner_arithmetic_minus (tenant) WHERE score - 1 = 6")
+
+	arithmeticMinusImpliedQuery := `SELECT count(id) FROM partial_planner_arithmetic_minus WHERE tenant = 1 AND score - 1 = 6`
+	assertCountResult(t, ctx, conn, arithmeticMinusImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMinusImpliedQuery, true)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_arithmetic_mult (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, score INTEGER)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_arithmetic_mult VALUES
+		(1, 1, 7),
+		(2, 1, 8),
+		(3, 2, 7)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_arithmetic_mult_tenant_idx ON partial_planner_arithmetic_mult (tenant) WHERE score * 2 = 14")
+
+	arithmeticMultImpliedQuery := `SELECT count(id) FROM partial_planner_arithmetic_mult WHERE tenant = 1 AND score * 2 = 14`
+	assertCountResult(t, ctx, conn, arithmeticMultImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, arithmeticMultImpliedQuery, true)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_abs (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, delta BIGINT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_abs VALUES

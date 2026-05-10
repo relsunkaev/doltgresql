@@ -826,6 +826,17 @@ Do not check off an item until it has workload proof:
   arguments remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.34.
+- [x] Use exact signed-integer `+`, `-`, and `*` expression predicates in
+  partial-index implication paths. Arithmetic binary expressions now serialize
+  as comparable predicate keys, planner filters deparse Doltgres and GMS
+  arithmetic nodes, partial unique DML enforcement evaluates signed integer
+  arithmetic with NULL propagation and overflow rejection, and `ON CONFLICT`
+  arbiter inference accepts exact-expression predicates; division, broader
+  algebraic rewrites such as `score = 7` implying `score + 1 = 8`, raw source
+  predicates, wrong operators, and wrong operands remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.35.
 - [x] Use deterministic unary numeric `abs(expr)` predicates in partial-index
   implication paths. `abs(expr)` now serializes as a comparable predicate key,
   participates in planner predicate serialization, evaluates signed integer

@@ -22,6 +22,7 @@ import (
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/indexpredicate"
 )
@@ -285,6 +286,11 @@ func plannerPredicateSQL(exprs []sql.Expression) (string, bool) {
 
 func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 	expr = unwrapGMSCast(expr)
+	if binary, ok := expr.(*pgexpression.BinaryOperator); ok {
+		if op, ok := plannerArithmeticBinaryOperator(binary.Operator()); ok {
+			return binaryPredicateSQL(binary.Left(), op, binary.Right())
+		}
+	}
 	if comparison, ok := expr.(sql.IndexComparisonExpression); ok {
 		op, left, right, ok := comparison.IndexScanOperation()
 		if !ok {
@@ -311,6 +317,12 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return predicateIdentifier(expr.Name()), true
 	case *gmsexpression.Literal:
 		return expr.String(), true
+	case *gmsexpression.Arithmetic:
+		op := expr.Operator()
+		if op != "+" && op != "-" && op != "*" {
+			return "", false
+		}
+		return binaryPredicateSQL(expr.LeftChild, op, expr.RightChild)
 	case sql.FunctionExpression:
 		return plannerFunctionPredicateSQL(expr)
 	case *gmsexpression.Equals:
@@ -384,6 +396,19 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 			return "", false
 		}
 		return "(" + value + " BETWEEN " + lower + " AND " + upper + ")", true
+	default:
+		return "", false
+	}
+}
+
+func plannerArithmeticBinaryOperator(op framework.Operator) (string, bool) {
+	switch op {
+	case framework.Operator_BinaryPlus:
+		return "+", true
+	case framework.Operator_BinaryMinus:
+		return "-", true
+	case framework.Operator_BinaryMultiply:
+		return "*", true
 	default:
 		return "", false
 	}

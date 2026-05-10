@@ -906,6 +906,37 @@ func TestImpliesNullIfFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesArithmeticExpressionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"score + 1 = 8", "score + 1 = 8"},
+		{"score - 1 = 6", "score - 1 = 6"},
+		{"score * 2 = 14", "score * 2 = 14"},
+		{"score + 1 IN (8, 9)", "score + 1 = 8"},
+		{"score + 1 IS NOT NULL", "score + 1 = 8"},
+		{"score + 1 = 8", "(tenant = 1) AND ((score + 1) = 8)"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"score + 1 = 8", "score = 7"},
+		{"score + 1 = 8", "score + 2 = 8"},
+		{"score + 1 = 8", "score - 1 = 8"},
+		{"score * 2 = 14", "score * 2 = 16"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesAbsFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

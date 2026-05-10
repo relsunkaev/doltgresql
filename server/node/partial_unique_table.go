@@ -1148,6 +1148,8 @@ func (p *partialIndexPredicate) evalValue(ctx *sql.Context, row sql.Row, expr tr
 		return p.evalValue(ctx, row, expr.Expr)
 	case *tree.UnaryExpr:
 		return p.evalUnary(ctx, row, expr)
+	case *tree.BinaryExpr:
+		return p.evalBinary(ctx, row, expr)
 	case *tree.CoalesceExpr:
 		return p.evalCoalesce(ctx, row, expr)
 	case *tree.NullIfExpr:
@@ -1195,6 +1197,58 @@ func (p *partialIndexPredicate) evalUnary(ctx *sql.Context, row sql.Row, expr *t
 		return predicateValue{}, errors.New("partial unique index predicate unary minus overflowed int64")
 	}
 	return predicateValue{value: -intValue}, nil
+}
+
+func (p *partialIndexPredicate) evalBinary(ctx *sql.Context, row sql.Row, expr *tree.BinaryExpr) (predicateValue, error) {
+	if expr.Operator != tree.Plus && expr.Operator != tree.Minus && expr.Operator != tree.Mult {
+		return predicateValue{}, errors.Errorf("partial unique index predicate binary operator %s is not yet supported", expr.Operator.String())
+	}
+	left, err := p.evalValue(ctx, row, expr.Left)
+	if err != nil || left.value == nil {
+		return predicateValue{}, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Right)
+	if err != nil || right.value == nil {
+		return predicateValue{}, err
+	}
+	leftInt, ok := predicateSignedIntegerValue(left.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate binary operator %s does not support %T", expr.Operator.String(), left.value)
+	}
+	rightInt, ok := predicateSignedIntegerValue(right.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate binary operator %s does not support %T", expr.Operator.String(), right.value)
+	}
+	result, ok := predicateArithmeticIntegerValue(expr.Operator, leftInt, rightInt)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate binary operator %s overflowed int64", expr.Operator.String())
+	}
+	return predicateValue{value: result}, nil
+}
+
+func predicateArithmeticIntegerValue(op tree.BinaryOperator, left int64, right int64) (int64, bool) {
+	switch op {
+	case tree.Plus:
+		result := left + right
+		if (right > 0 && result < left) || (right < 0 && result > left) {
+			return 0, false
+		}
+		return result, true
+	case tree.Minus:
+		result := left - right
+		if (right > 0 && result > left) || (right < 0 && result < left) {
+			return 0, false
+		}
+		return result, true
+	case tree.Mult:
+		result := left * right
+		if left != 0 && result/left != right {
+			return 0, false
+		}
+		return result, true
+	default:
+		return 0, false
+	}
 }
 
 func (p *partialIndexPredicate) evalCoalesce(ctx *sql.Context, row sql.Row, expr *tree.CoalesceExpr) (predicateValue, error) {

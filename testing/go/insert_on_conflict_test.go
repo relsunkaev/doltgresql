@@ -902,6 +902,65 @@ ON CONFLICT (code) WHERE nullif(status, 'inactive') = 'active' DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports arithmetic predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_arithmetic_plus (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_plus_code_idx ON partial_arb_arithmetic_plus (code) WHERE score + 1 = 8;",
+				"INSERT INTO partial_arb_arithmetic_plus VALUES (1, 'A', 7, 'old-plus'), (2, 'A', 8, 'outside-plus');",
+				"CREATE TABLE partial_arb_arithmetic_minus (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_minus_code_idx ON partial_arb_arithmetic_minus (code) WHERE score - 1 = 6;",
+				"INSERT INTO partial_arb_arithmetic_minus VALUES (1, 'B', 7, 'old-minus'), (2, 'B', 8, 'outside-minus');",
+				"CREATE TABLE partial_arb_arithmetic_mult (id INT PRIMARY KEY, code TEXT, score INT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_arithmetic_mult_code_idx ON partial_arb_arithmetic_mult (code) WHERE score * 2 = 14;",
+				"INSERT INTO partial_arb_arithmetic_mult VALUES (1, 'C', 7, 'old-mult'), (2, 'C', 8, 'outside-mult');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_plus VALUES (3, 'A', 7, 'plus-upsert')
+ON CONFLICT (code) WHERE score + 1 = 8 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_plus ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "A", 7, "plus-upsert"},
+						{2, "A", 8, "outside-plus"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_minus VALUES (3, 'B', 7, 'minus-upsert')
+ON CONFLICT (code) WHERE score - 1 = 6 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_minus ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "B", 7, "minus-upsert"},
+						{2, "B", 8, "outside-minus"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_mult VALUES (3, 'C', 7, 'mult-upsert')
+ON CONFLICT (code) WHERE score * 2 = 14 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, code, score, note FROM partial_arb_arithmetic_mult ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, "C", 7, "mult-upsert"},
+						{2, "C", 8, "outside-mult"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_plus VALUES (4, 'A', 7, 'raw-predicate')
+ON CONFLICT (code) WHERE score = 7 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_arithmetic_plus VALUES (5, 'A', 7, 'wrong-expression')
+ON CONFLICT (code) WHERE score + 2 = 8 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports text-length predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_length (id INT PRIMARY KEY, code TEXT, note TEXT);",
