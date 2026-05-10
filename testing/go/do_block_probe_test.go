@@ -547,6 +547,27 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			},
 		},
 		{
+			Name:        "GET STACKED DIAGNOSTICS rejects unsupported items",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							routine_oid oid;
+						BEGIN
+							BEGIN
+								RAISE EXCEPTION 'unsupported stacked diagnostic';
+							EXCEPTION
+								WHEN OTHERS THEN
+									GET STACKED DIAGNOSTICS routine_oid = PG_ROUTINE_OID;
+							END;
+						END;
+					$$;`,
+					ExpectedErr: `diagnostics item PG_ROUTINE_OID is not allowed in GET STACKED DIAGNOSTICS`,
+				},
+			},
+		},
+		{
 			Name: "DO block chooses first matching exception handler",
 			SetUpScript: []string{
 				`CREATE TABLE do_multi_handler_seen (

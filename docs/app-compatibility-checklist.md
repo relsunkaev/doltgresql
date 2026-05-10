@@ -599,7 +599,7 @@ Do not check off an item until it has workload proof:
   because they do not have a `pg_proc` routine entry. Pinned by
   testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go. Tracked
   by dg-7ug.18.
-- [ ] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
+- [x] Implement the remaining PL/pgSQL diagnostics surface (`GET STACKED
   DIAGNOSTICS` and exception diagnostics) before claiming full diagnostics
   parity. Tracked by dg-7ug.20.
   - [x] `WHEN OTHERS` handlers can catch PL/pgSQL `RAISE EXCEPTION` failures
@@ -655,6 +655,12 @@ Do not check off an item until it has workload proof:
     explicit class `42` and `40` SQLSTATEs while preserving the exact returned
     code in stacked diagnostics. Pinned by testing/go/do_block_probe_test.go.
     Tracked by dg-7ug.20.8.
+  - [x] Unsupported `GET STACKED DIAGNOSTICS` items are rejected explicitly
+    inside an active exception handler instead of silently returning empty
+    data. `PG_ROUTINE_OID` remains supported only by non-stacked
+    `GET DIAGNOSTICS`, and stacked use is rejected during PL/pgSQL statement
+    validation. Pinned by testing/go/do_block_probe_test.go. Tracked by
+    dg-7ug.20.9.
 - [x] `session_replication_role` - the GUC is settable and readable
   via SET / SHOW (`replica` and `origin` round-trip). `replica`
   suppresses ordinary FK checks and trigger firing during bulk-load
