@@ -24,6 +24,7 @@ import (
 // initBitLength registers the functions to the catalog.
 func initBitLength() {
 	framework.RegisterFunction(bit_length_text)
+	framework.RegisterFunction(bit_length_bytea)
 }
 
 // bit_length_text represents the PostgreSQL function of the same name, taking the same parameters.
@@ -34,6 +35,21 @@ var bit_length_text = framework.Function1{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val1 any) (any, error) {
 		result, err := octet_length_text.Callable(ctx, t, val1)
+		if err != nil {
+			return nil, err
+		}
+		return result.(int32) * 8, nil
+	},
+}
+
+// bit_length_bytea represents the PostgreSQL function of the same name, taking the same parameters.
+var bit_length_bytea = framework.Function1{
+	Name:       "bit_length",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Bytea},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		result, err := octet_length_bytea.Callable(ctx, t, val1)
 		if err != nil {
 			return nil, err
 		}

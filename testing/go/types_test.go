@@ -397,6 +397,10 @@ var typesTests = []ScriptTest{
 					{4, nil},
 				},
 			},
+			{
+				Query:    "SELECT octet_length(v1), bit_length(v1) FROM t_bytea ORDER BY id;",
+				Expected: []sql.Row{{int32(4), int32(32)}, {int32(3), int32(24)}, {int32(0), int32(0)}, {nil, nil}},
+			},
 		},
 	},
 	{
