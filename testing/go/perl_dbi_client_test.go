@@ -29,20 +29,21 @@ import (
 
 const perlDBIClientImage = "perl:5.38-bookworm"
 
-// TestPerlDBIClientSmoke runs Perl DBI with DBD::Pg from the official Perl
-// container image against Doltgres. This pins the Perl client path for startup
-// options, prepared statements, typed parameters, JSONB/text[] values, repeated
-// connections, commit, and rollback.
+// TestPerlDBIClientSmoke runs Perl DBI with DBD::Pg against Doltgres. It
+// prefers a local Perl runtime when DBI and DBD::Pg are already installed, and
+// otherwise falls back to the official Perl container image. This pins the Perl
+// client path for startup options, prepared statements, typed parameters,
+// JSONB/text[] values, repeated connections, commit, and rollback.
 func TestPerlDBIClientSmoke(t *testing.T) {
-	if _, err := exec.LookPath("docker"); err != nil {
-		t.Skipf("docker is required for the Perl DBI harness: %v", err)
-	}
 	if testing.Short() {
-		t.Skip("Perl DBI harness uses Docker; skipped under -short")
+		t.Skip("Perl DBI harness uses an external Perl runtime; skipped under -short")
 	}
 
+	runner := getPerlDBIRunner(t)
+	t.Logf("using %s runtime for Perl DBI harness", runner.name)
+
 	originalServerHost := serverHost
-	serverHost = "0.0.0.0"
+	serverHost = runner.serverBindHost
 	t.Cleanup(func() {
 		serverHost = originalServerHost
 	})
@@ -62,6 +63,66 @@ func TestPerlDBIClientSmoke(t *testing.T) {
 
 	cmdCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	out, err := runner.run(cmdCtx, scriptPath, port)
+	if err != nil && runner.usesDocker && dockerInfrastructureUnavailable(err, out) {
+		t.Skipf("Docker runtime is unavailable for the Perl DBI harness: %v\n%s", err, string(out))
+	}
+	require.NoError(t, err, "Perl DBI probe failed: %s", string(out))
+	require.Contains(t, string(out), `"ok":true`)
+	require.Contains(t, string(out), `"accounts":"acme,beta,gamma"`)
+}
+
+type perlDBIRunner struct {
+	name           string
+	serverBindHost string
+	usesDocker     bool
+	run            func(context.Context, string, int) ([]byte, error)
+}
+
+func getPerlDBIRunner(t *testing.T) perlDBIRunner {
+	t.Helper()
+
+	if perlPath, ok := localPerlDBIRuntime(); ok {
+		return perlDBIRunner{
+			name:           "local perl",
+			serverBindHost: "127.0.0.1",
+			run: func(ctx context.Context, scriptPath string, port int) ([]byte, error) {
+				dsn := fmt.Sprintf(
+					"dbi:Pg:dbname=postgres;host=127.0.0.1;port=%d;application_name=perl-dbi-harness",
+					port,
+				)
+				cmd := exec.CommandContext(ctx, perlPath, scriptPath)
+				cmd.Env = append(os.Environ(), "DOLTGRES_DSN="+dsn)
+				return cmd.CombinedOutput()
+			},
+		}
+	}
+
+	if _, err := exec.LookPath("docker"); err != nil {
+		t.Skipf("Perl DBI harness requires local perl with DBI/DBD::Pg or docker: %v", err)
+	}
+
+	return perlDBIRunner{
+		name:           "docker",
+		serverBindHost: "0.0.0.0",
+		usesDocker:     true,
+		run:            runDockerPerlDBIProbe,
+	}
+}
+
+func localPerlDBIRuntime() (string, bool) {
+	perlPath, err := exec.LookPath("perl")
+	if err != nil {
+		return "", false
+	}
+	cmd := exec.Command(perlPath, "-MDBI", "-MDBD::Pg", "-e", "1")
+	if err := cmd.Run(); err != nil {
+		return "", false
+	}
+	return perlPath, true
+}
+
+func runDockerPerlDBIProbe(ctx context.Context, scriptPath string, port int) ([]byte, error) {
 	dsn := fmt.Sprintf(
 		"dbi:Pg:dbname=postgres;host=host.docker.internal;port=%d;application_name=perl-dbi-harness",
 		port,
@@ -76,13 +137,7 @@ func TestPerlDBIClientSmoke(t *testing.T) {
 		"sh", "-lc",
 		"apt-get update >/dev/null && apt-get install -y --no-install-recommends libdbd-pg-perl >/dev/null && perl /tmp/dbi_probe.pl",
 	}
-	out, err := exec.CommandContext(cmdCtx, "docker", args...).CombinedOutput()
-	if err != nil && dockerInfrastructureUnavailable(err, out) {
-		t.Skipf("Docker runtime is unavailable for the Perl DBI harness: %v\n%s", err, string(out))
-	}
-	require.NoError(t, err, "Perl DBI probe failed: %s", string(out))
-	require.Contains(t, string(out), `"ok":true`)
-	require.Contains(t, string(out), `"accounts":"acme,beta,gamma"`)
+	return exec.CommandContext(ctx, "docker", args...).CombinedOutput()
 }
 
 func dockerInfrastructureUnavailable(err error, out []byte) bool {

@@ -2274,16 +2274,15 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   values, pooled reads, and managed transactions. Django's PostgreSQL backend
   covers real migration commands, model CRUD, JSONB/text[] values, relation
   reads, and transaction boundaries, including projected count/exists filters.
-- [ ] Expand driver/ORM matrix proof beyond pgx, pgx stdlib, node-postgres,
+- [x] Expand driver/ORM matrix proof beyond pgx, pgx stdlib, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
   Prisma Client, psycopg, psycopg2, asyncpg, SQLAlchemy, Ruby `pg`,
   ActiveRecord, PHP `ext-pgsql`, libpq, Go `database/sql` with
   `github.com/lib/pq` and `github.com/jackc/pgx/v5/stdlib`, GORM, Java JDBC,
-  Rust `sqlx`, and Perl DBI/DBD::Pg. Add runnable smoke gates for the advertised
-  client and
-  migration-tool matrix before claiming broad
-  client compatibility.
-  Tracked by dg-7ug.10.3 under dg-7ug.10.
+  Rust `sqlx`, and Perl DBI/DBD::Pg. The currently advertised driver/ORM
+  matrix has runnable smoke gates; future client claims remain demand-driven
+  and should add runnable gates before being advertised. Tracked by
+  dg-7ug.10.3 under dg-7ug.10.
 - [x] Basic `CREATE TABLE`, enums, regular FKs, simple unique constraints,
   and ordinary btree indexes. Pinned through a live pgx client by
   testing/go/app_compat_smoke_test.go.
