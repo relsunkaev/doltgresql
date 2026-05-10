@@ -718,6 +718,15 @@ Do not check off an item until it has workload proof:
   predicate of `score > 0`, while non-implying filters such as `score >= 0`
   stay on the table-scan path. Coverage in
   testing/go/partial_expression_index_test.go. Tracked by dg-7ug.8.2.
+- [x] Use raw argument value-set predicates to imply matching `lower(...)` and
+  `upper(...)` partial-index predicates. Text equality and IN-list filters on
+  the argument, such as `email = 'Active@Example.com'` and
+  `code IN ('active', 'Admin')`, now imply case-folded value-set predicates
+  when every folded literal is contained in the partial predicate's literal
+  set. Non-matching raw values and broader predicates such as `LIKE` remain
+  rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.39.
 - [x] Use `IS NOT NULL` partial btree indexes for strict lookup predicates.
   The implication helper now recognizes non-NULL equality / IN-list,
   numeric-range, and boolean predicates as proving a matching

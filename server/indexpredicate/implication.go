@@ -159,7 +159,7 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 			if indexValues.exprKey == queryValues.exprKey {
 				return queryValues.subsetOf(indexValues)
 			}
-			return predicateAbsArgumentValueSetImplies(indexValues, queryValues)
+			return predicateTransformedArgumentValueSetImplies(indexValues, queryValues)
 		}
 		queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr)
 		if !ok || indexValues.exprKey != queryBool.exprKey {
@@ -490,8 +490,13 @@ func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
 	return true
 }
 
+func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues)
+}
+
 func predicateAbsArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
-	argumentKey, ok := predicateAbsArgumentExprKey(indexValues.exprKey)
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "abs")
 	if !ok || queryValues.exprKey != argumentKey {
 		return false
 	}
@@ -506,8 +511,33 @@ func predicateAbsArgumentValueSetImplies(indexValues predicateValueSet, queryVal
 	return predicateValueSet{exprKey: indexValues.exprKey, values: absoluteValues}.subsetOf(indexValues)
 }
 
-func predicateAbsArgumentExprKey(exprKey string) (string, bool) {
-	const prefix = "func:abs("
+func predicateCaseFoldArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	functionName, argumentKey, ok := predicateCaseFoldArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	foldedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		foldedValue, ok := predicateCaseFoldStringLiteralKey(functionName, value)
+		if !ok {
+			return false
+		}
+		foldedValues[foldedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: foldedValues}.subsetOf(indexValues)
+}
+
+func predicateCaseFoldArgumentExprKey(exprKey string) (string, string, bool) {
+	for _, functionName := range []string{"lower", "upper"} {
+		if argumentKey, ok := predicateUnaryFunctionArgumentExprKey(exprKey, functionName); ok {
+			return functionName, argumentKey, true
+		}
+	}
+	return "", "", false
+}
+
+func predicateUnaryFunctionArgumentExprKey(exprKey string, functionName string) (string, bool) {
+	prefix := "func:" + functionName + "("
 	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
 		return "", false
 	}
@@ -524,6 +554,23 @@ func predicateAbsNumericLiteralKey(value string) (string, bool) {
 		return "", false
 	}
 	return prefix + strconv.FormatFloat(math.Abs(number), 'g', -1, 64), true
+}
+
+func predicateCaseFoldStringLiteralKey(functionName string, value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	value = strings.TrimPrefix(value, prefix)
+	switch functionName {
+	case "lower":
+		value = strings.ToLower(value)
+	case "upper":
+		value = strings.ToUpper(value)
+	default:
+		return "", false
+	}
+	return prefix + value, true
 }
 
 func (s predicateExclusionSet) implies(other predicateExclusionSet) bool {

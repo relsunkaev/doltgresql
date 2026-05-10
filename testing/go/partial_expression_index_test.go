@@ -1425,6 +1425,46 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	assertCountResult(t, ctx, conn, nullQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, nullQuery, false)
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_lower (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_lower VALUES
+		(1, 1, 'Active@Example.com'),
+		(2, 1, 'ADMIN@EXAMPLE.COM'),
+		(3, 1, 'other@example.com'),
+		(4, 2, 'Active@Example.com')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_lower_tenant_idx ON partial_planner_lower (tenant) WHERE lower(email) IN ('active@example.com', 'admin@example.com')")
+
+	lowerRawEqualQuery := `SELECT count(id) FROM partial_planner_lower WHERE tenant = 1 AND email = 'Active@Example.com'`
+	assertCountResult(t, ctx, conn, lowerRawEqualQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lowerRawEqualQuery, true)
+
+	lowerRawInQuery := `SELECT count(id) FROM partial_planner_lower WHERE tenant = 1 AND email IN ('Active@Example.com', 'ADMIN@EXAMPLE.COM')`
+	assertCountResult(t, ctx, conn, lowerRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, lowerRawInQuery, true)
+
+	lowerRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_lower WHERE tenant = 1 AND email = 'other@example.com'`
+	assertCountResult(t, ctx, conn, lowerRawNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, lowerRawNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_upper (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_upper VALUES
+		(1, 1, 'active'),
+		(2, 1, 'Admin'),
+		(3, 1, 'pending'),
+		(4, 2, 'active')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_upper_tenant_idx ON partial_planner_upper (tenant) WHERE upper(code) IN ('ACTIVE', 'ADMIN')")
+
+	upperRawEqualQuery := `SELECT count(id) FROM partial_planner_upper WHERE tenant = 1 AND code = 'active'`
+	assertCountResult(t, ctx, conn, upperRawEqualQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, upperRawEqualQuery, true)
+
+	upperRawInQuery := `SELECT count(id) FROM partial_planner_upper WHERE tenant = 1 AND code IN ('active', 'Admin')`
+	assertCountResult(t, ctx, conn, upperRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, upperRawInQuery, true)
+
+	upperRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_upper WHERE tenant = 1 AND code = 'pending'`
+	assertCountResult(t, ctx, conn, upperRawNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, upperRawNonMatchingQuery, false)
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_statuses (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_statuses VALUES
 		(1, 1, 'active'),

@@ -55,6 +55,36 @@ func TestImpliesIsNotNullFromStrictPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesCaseFoldFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lower(email) = 'active@example.com'", "email = 'Active@Example.com'"},
+		{"lower(email) IN ('active@example.com', 'admin@example.com')", "email IN ('Active@Example.com', 'ADMIN@EXAMPLE.COM')"},
+		{"upper(code) = 'ACTIVE'", "code = 'active'"},
+		{"upper(code) IN ('ACTIVE', 'ADMIN')", "code IN ('active', 'Admin')"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"lower(email) = 'active@example.com'", "email = 'other@example.com'"},
+		{"lower(email) = 'active@example.com'", "email IN ('Active@Example.com', 'other@example.com')"},
+		{"lower(email) = 'active@example.com'", "email LIKE 'Active%'"},
+		{"upper(code) = 'ACTIVE'", "code = 'pending'"},
+		{"upper(code) = 'ACTIVE'", "code IN ('active', 'pending')"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesExclusionPredicatesFromDisjointValues(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string
