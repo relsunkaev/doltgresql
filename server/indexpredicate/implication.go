@@ -15,6 +15,8 @@
 package indexpredicate
 
 import (
+	"crypto/md5"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -498,6 +500,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateReverseArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateMd5ArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateLeftRightArgumentValueSetImplies(indexValues, queryValues) ||
@@ -577,6 +580,22 @@ func predicateRepeatArgumentValueSetImplies(indexValues predicateValueSet, query
 	return predicateValueSet{exprKey: indexValues.exprKey, values: repeatedValues}.subsetOf(indexValues)
 }
 
+func predicateMd5ArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, ok := predicateUnaryFunctionArgumentExprKey(indexValues.exprKey, "md5")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	digestValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		digestValue, ok := predicateMd5StringLiteralKey(value)
+		if !ok {
+			return false
+		}
+		digestValues[digestValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: digestValues}.subsetOf(indexValues)
+}
+
 func predicateUnaryFunctionArgumentExprKey(exprKey string, functionName string) (string, bool) {
 	prefix := "func:" + functionName + "("
 	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
@@ -642,6 +661,14 @@ func predicateRepeatStringLiteralKey(value string, count int64) (string, bool) {
 		return "", false
 	}
 	return prefix + strings.Repeat(strings.TrimPrefix(value, prefix), int(count)), true
+}
+
+func predicateMd5StringLiteralKey(value string) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	return prefix + fmt.Sprintf("%x", md5.Sum([]byte(strings.TrimPrefix(value, prefix)))), true
 }
 
 func predicateAsciiArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

@@ -992,10 +992,17 @@ Do not check off an item until it has workload proof:
   planner filters can deparse them, partial unique DML enforcement evaluates
   the same text digest behavior as the runtime function, and `ON CONFLICT`
   arbiter inference accepts the exact-expression shape; wrong digest values
-  and raw source-string semantic rewrites remain rejected. Coverage in
-  server/indexpredicate/implication_test.go,
+  remain rejected. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.13.
+- [x] Use raw source-string value-set predicates to imply matching `md5(...)`
+  partial-index predicates. Text equality and IN-list filters on the source
+  argument now imply md5 digest value-set predicates when every computed digest
+  is contained in the partial predicate's literal set. Non-matching digests and
+  broader predicates remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.44.
 - [x] Use deterministic `split_part(expr, delimiter, field)` predicates in
   partial-index implication paths. Three-argument `split_part(...)` calls now
   serialize as comparable predicate keys, planner filters can deparse them,

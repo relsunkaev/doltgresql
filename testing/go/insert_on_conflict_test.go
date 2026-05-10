@@ -1378,8 +1378,8 @@ ON CONFLICT (user_id) WHERE translate(code, '-.', '') = 'activea' DO NOTHING;`,
 			Name: "ON CONFLICT partial unique index supports md5 predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_md5 (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
-				"CREATE UNIQUE INDEX partial_arb_md5_user_idx ON partial_arb_md5 (user_id) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79';",
-				"INSERT INTO partial_arb_md5 VALUES (1, 10, 'active', 'old-active'), (2, 10, 'pending', 'old-pending');",
+				"CREATE UNIQUE INDEX partial_arb_md5_user_idx ON partial_arb_md5 (user_id) WHERE md5(code) IN ('c76a5e84e4bdee527e274ea30c680d79', '7c6c2e5d48ab37a007cbf70d3ea25fa4');",
+				"INSERT INTO partial_arb_md5 VALUES (1, 10, 'active', 'old-active'), (2, 20, 'pending', 'old-pending');",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -1390,13 +1390,35 @@ ON CONFLICT (user_id) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79' DO UP
 					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`,
 					Expected: []gms.Row{
 						{1, 10, "active", "md5-upsert"},
-						{2, 10, "pending", "old-pending"},
+						{2, 20, "pending", "old-pending"},
 					},
 				},
 				{
 					Query: `INSERT INTO partial_arb_md5 VALUES (4, 10, 'active', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'active' DO NOTHING;`,
+ON CONFLICT (user_id) WHERE code IN ('active', 'ACTIVE') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+				{
+					Query: `INSERT INTO partial_arb_md5 VALUES (5, 10, 'active', 'raw-md5-upsert')
+ON CONFLICT (user_id) WHERE code = 'active' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "raw-md5-upsert"},
+						{2, 20, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_md5 VALUES (6, 20, 'pending', 'raw-md5-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('active', 'pending') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_md5 ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active", "raw-md5-upsert"},
+						{2, 20, "pending", "raw-md5-in-upsert"},
+					},
 				},
 			},
 		},

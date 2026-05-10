@@ -620,6 +620,8 @@ func TestImpliesMd5FunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"md5(code) = '" + activeHash + "'", "md5(code) = '" + activeHash + "'"},
+		{"md5(code) = '" + activeHash + "'", "code = 'active'"},
+		{"md5(code) IN ('" + activeHash + "', '" + pendingHash + "')", "code IN ('active', 'pending')"},
 		{"md5(code) IN ('" + activeHash + "', '" + pendingHash + "')", "md5(code) = '" + activeHash + "'"},
 		{"md5(code) IS NOT NULL", "md5(code) = '" + activeHash + "'"},
 	} {
@@ -633,7 +635,8 @@ func TestImpliesMd5FunctionPredicates(t *testing.T) {
 	}{
 		{"md5(code) = '" + activeHash + "'", "md5(code) = '" + pendingHash + "'"},
 		{"md5(code) = '" + activeHash + "'", "lower(code) = 'active'"},
-		{"md5(code) = '" + activeHash + "'", "code = 'active'"},
+		{"md5(code) = '" + activeHash + "'", "code = 'pending'"},
+		{"md5(code) = '" + activeHash + "'", "code IN ('active', 'pending')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

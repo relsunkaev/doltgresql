@@ -1952,7 +1952,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'pending'),
 		(3, 1, 'ACTIVE'),
 		(4, 2, 'active')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_md5_tenant_idx ON partial_planner_md5 (tenant) WHERE md5(code) = 'c76a5e84e4bdee527e274ea30c680d79'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_md5_tenant_idx ON partial_planner_md5 (tenant) WHERE md5(code) IN ('c76a5e84e4bdee527e274ea30c680d79', '7c6c2e5d48ab37a007cbf70d3ea25fa4')")
 
 	md5ImpliedQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND md5(code) = 'c76a5e84e4bdee527e274ea30c680d79'`
 	assertCountResult(t, ctx, conn, md5ImpliedQuery, 1)
@@ -1960,7 +1960,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	md5RawSourceQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code = 'active'`
 	assertCountResult(t, ctx, conn, md5RawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, md5RawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, md5RawSourceQuery, true)
+
+	md5RawInQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code IN ('active', 'pending')`
+	assertCountResult(t, ctx, conn, md5RawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, md5RawInQuery, true)
+
+	md5RawNonMatchingQuery := `SELECT count(id) FROM partial_planner_md5 WHERE tenant = 1 AND code IN ('active', 'ACTIVE')`
+	assertCountResult(t, ctx, conn, md5RawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, md5RawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_hashtext (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_hashtext VALUES
