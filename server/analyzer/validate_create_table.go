@@ -329,16 +329,17 @@ func resolveAlterColumn(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, scop
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
-			indexes, err = validateAlterIndex(ctx, initialSch, sch, n.(*plan.AlterIndex), indexes)
+			alterIndex := n.(*plan.AlterIndex)
+			indexes, err = validateAlterIndex(ctx, initialSch, sch, alterIndex, indexes)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
-			n, err = normalizeCitextAlterIndex(ctx, n.(*plan.AlterIndex), sch)
+			n, sch, err = normalizeCitextAlterIndex(ctx, alterIndex, sch)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
 
-			keyedColumns = analyzer.UpdateKeyedColumns(keyedColumns, n.(*plan.AlterIndex))
+			keyedColumns = updateKeyedColumnsForAlterIndexNode(keyedColumns, n)
 			return n, transform.NewTree, nil
 		case *plan.AlterPK:
 			n, err := nn.WithTargetSchema(sch.Copy())
@@ -462,21 +463,59 @@ func validatePrimaryKey(ctx *sql.Context, initialSch, sch sql.Schema, ai *plan.A
 	}
 }
 
-func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema) (*plan.AlterIndex, error) {
+func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema) (sql.Node, sql.Schema, error) {
 	if ai.Action != plan.IndexAction_Create ||
 		ai.Constraint == sql.IndexConstraint_Primary {
-		return ai, nil
+		return ai, sch, nil
 	}
 
 	columns, comment, changed := normalizeCitextIndexDef(ctx, ai.Columns, ai.Using, ai.Constraint, ai.Comment, sch, false)
 	if !changed {
-		return ai, nil
+		return ai, sch, nil
 	}
 
 	normalized := *ai
 	normalized.Columns = columns
 	normalized.Comment = comment
-	return &normalized, nil
+	if len(columns) == 1 {
+		return &normalized, sch, nil
+	}
+
+	resolvedTable, ok := ai.Table.(*plan.ResolvedTable)
+	if !ok {
+		return nil, sch, errors.Errorf("alter index: table is not a resolved table: %T", ai.Table)
+	}
+
+	normalizedSchema := sch.Copy()
+	nodes := make([]sql.Node, 0, len(columns)+1)
+	for columnIndex, column := range columns {
+		if column.Expression == nil {
+			continue
+		}
+		hiddenColumn, err := newHiddenSystemAlterIndexColumn(ctx, ai, normalizedSchema, columnIndex, column.Expression)
+		if err != nil {
+			return nil, sch, err
+		}
+		addColumn := plan.NewAddColumnResolved(resolvedTable, *hiddenColumn, nil)
+		addNode, err := addColumn.WithTargetSchema(normalizedSchema.Copy())
+		if err != nil {
+			return nil, sch, err
+		}
+		nodes = append(nodes, addNode)
+		normalizedSchema = append(normalizedSchema, hiddenColumn)
+		columns[columnIndex].Name = hiddenColumn.Name
+		columns[columnIndex].Expression = nil
+	}
+
+	normalized.Columns = columns
+	alterNode, err := (&normalized).WithTargetSchema(normalizedSchema.Copy())
+	if err != nil {
+		return nil, sch, err
+	}
+	nodes = append(nodes, alterNode)
+	block := plan.NewBlock(nodes)
+	block.SetSchema(ai.Schema(ctx))
+	return block, normalizedSchema, nil
 }
 
 func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema) (*plan.CreateTable, bool, error) {
@@ -610,20 +649,32 @@ func clearPrimaryKeyForIndexColumn(sch sql.Schema, column sql.IndexColumn) {
 }
 
 func newHiddenSystemIndexColumn(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema, indexName string, columnIndex int, expr sql.Expression, primaryKey bool) (*sql.Column, error) {
-	columnDefaultValue, err := sql.NewColumnDefaultValue(expr, expr.Type(ctx), false, true, true)
-	if err != nil {
-		return nil, err
-	}
 	databaseName := ""
 	if ct.Db != nil {
 		databaseName = ct.Db.Name()
+	}
+	return newHiddenSystemIndexColumnForTable(ctx, ct.Name(), databaseName, sch, indexName, columnIndex, expr, primaryKey)
+}
+
+func newHiddenSystemAlterIndexColumn(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema, columnIndex int, expr sql.Expression) (*sql.Column, error) {
+	databaseName := ""
+	if ai.Db != nil {
+		databaseName = ai.Db.Name()
+	}
+	return newHiddenSystemIndexColumnForTable(ctx, ai.Table.Name(), databaseName, sch, ai.IndexName, columnIndex, expr, false)
+}
+
+func newHiddenSystemIndexColumnForTable(ctx *sql.Context, tableName string, databaseName string, sch sql.Schema, indexName string, columnIndex int, expr sql.Expression, primaryKey bool) (*sql.Column, error) {
+	columnDefaultValue, err := sql.NewColumnDefaultValue(expr, expr.Type(ctx), false, true, true)
+	if err != nil {
+		return nil, err
 	}
 	hiddenColumnName := hiddenSystemIndexColumnName(sch, indexName, columnIndex)
 	return &sql.Column{
 		Type:           expr.Type(ctx),
 		Generated:      columnDefaultValue,
 		Name:           hiddenColumnName,
-		Source:         ct.Name(),
+		Source:         tableName,
 		DatabaseSource: databaseName,
 		PrimaryKey:     primaryKey,
 		Nullable:       !primaryKey,
@@ -644,7 +695,7 @@ func hiddenSystemIndexColumnName(sch sql.Schema, indexName string, columnIndex i
 }
 
 func normalizeCitextIndexDef(ctx *sql.Context, indexColumns []sql.IndexColumn, using sql.IndexUsing, constraint sql.IndexConstraint, comment string, sch sql.Schema, allowPrimary bool) ([]sql.IndexColumn, string, bool) {
-	if len(indexColumns) != 1 ||
+	if len(indexColumns) == 0 ||
 		(using != sql.IndexUsing_Default && using != sql.IndexUsing_BTree) ||
 		(constraint == sql.IndexConstraint_Primary && !allowPrimary) ||
 		constraint == sql.IndexConstraint_Fulltext ||
@@ -695,6 +746,22 @@ func normalizeCitextIndexDef(ctx *sql.Context, indexColumns []sql.IndexColumn, u
 
 	metadata.AccessMethod = indexmetadata.AccessMethodBtree
 	return columns, indexmetadata.EncodeComment(metadata), true
+}
+
+func updateKeyedColumnsForAlterIndexNode(keyedColumns map[string]bool, n sql.Node) map[string]bool {
+	if alterIndex, ok := n.(*plan.AlterIndex); ok {
+		return analyzer.UpdateKeyedColumns(keyedColumns, alterIndex)
+	}
+	block, ok := n.(*plan.Block)
+	if !ok {
+		return keyedColumns
+	}
+	for _, child := range block.Children() {
+		if alterIndex, ok := child.(*plan.AlterIndex); ok {
+			keyedColumns = analyzer.UpdateKeyedColumns(keyedColumns, alterIndex)
+		}
+	}
+	return keyedColumns
 }
 
 func ensureStringMetadataLength(values []string, length int) []string {

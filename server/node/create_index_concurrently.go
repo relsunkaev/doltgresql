@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -262,22 +263,36 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 }
 
 func (c *CreateIndexConcurrently) citextCreateStatement(ctx *sql.Context, schemaName string, table sql.Table) (string, indexmetadata.Metadata, bool) {
-	if len(c.columns) != 1 || c.columns[0].Expression != nil || c.columns[0].Name == "" {
+	if len(c.columns) == 0 {
 		return "", indexmetadata.Metadata{}, false
 	}
 	schema := table.Schema(ctx)
-	columnIndex := schema.IndexOfColName(c.columns[0].Name)
-	if columnIndex < 0 || !isCitextType(schema[columnIndex].Type) {
-		return "", indexmetadata.Metadata{}, false
-	}
-
 	metadata := c.metadata
 	metadata.AccessMethod = indexmetadata.AccessMethodBtree
-	metadata.Columns = ensureMetadataStringLength(metadata.Columns, 1)
-	metadata.OpClasses = ensureMetadataStringLength(metadata.OpClasses, 1)
-	metadata.Columns[0] = c.columns[0].Name
-	if metadata.OpClasses[0] == "" {
-		metadata.OpClasses[0] = indexmetadata.OpClassCitextOps
+	metadata.Columns = ensureMetadataStringLength(metadata.Columns, len(c.columns))
+	metadata.OpClasses = ensureMetadataStringLength(metadata.OpClasses, len(c.columns))
+	quotedColumns := make([]string, len(c.columns))
+	hasCitext := false
+	for i, column := range c.columns {
+		if column.Expression != nil || column.Name == "" {
+			return "", indexmetadata.Metadata{}, false
+		}
+		columnIndex := schema.IndexOfColName(column.Name)
+		if columnIndex < 0 {
+			return "", indexmetadata.Metadata{}, false
+		}
+		quotedColumns[i] = quoteIdentifier(column.Name)
+		metadata.Columns[i] = column.Name
+		if !isCitextType(schema[columnIndex].Type) {
+			continue
+		}
+		hasCitext = true
+		if metadata.OpClasses[i] == "" {
+			metadata.OpClasses[i] = indexmetadata.OpClassCitextOps
+		}
+	}
+	if !hasCitext {
+		return "", indexmetadata.Metadata{}, false
 	}
 
 	unique := ""
@@ -289,16 +304,17 @@ func (c *CreateIndexConcurrently) citextCreateStatement(ctx *sql.Context, schema
 		unique,
 		quoteIdentifier(c.indexName),
 		quoteQualifiedIdentifier(schemaName, c.table),
-		quoteIdentifier(c.columns[0].Name),
+		strings.Join(quotedColumns, ", "),
 	)
 	return createStatement, metadata, true
 }
 
 func ensureMetadataStringLength(values []string, length int) []string {
-	if len(values) >= length {
-		return values
+	nextLength := length
+	if len(values) > nextLength {
+		nextLength = len(values)
 	}
-	next := make([]string, length)
+	next := make([]string, nextLength)
 	copy(next, values)
 	return next
 }

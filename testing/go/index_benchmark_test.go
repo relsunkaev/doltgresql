@@ -257,8 +257,26 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_multi_btree_boundary (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
 	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_btree_boundary VALUES (1, 'Alice@example.com'), (2, 'bob@example.com')")
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX citext_multi_btree_boundary_idx ON citext_multi_btree_boundary (email, id)")
-	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, false)
+	multiIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_multi_btree_boundary_idx'")
+	if !strings.Contains(multiIndexDef, "email citext_ops") {
+		t.Fatalf("expected multi-column pg_indexes to preserve citext_ops, got %q", multiIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, true)
 	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, 1)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_multi_unique_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_unique_plan VALUES (1, 7, 'Alice@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE UNIQUE INDEX citext_multi_unique_plan_idx ON citext_multi_unique_plan (email, tenant)")
+	multiUniqueIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_multi_unique_plan_idx'")
+	if !strings.Contains(multiUniqueIndexDef, "email citext_ops") {
+		t.Fatalf("expected multi-column unique pg_indexes to preserve citext_ops, got %q", multiUniqueIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_unique_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_multi_unique_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_multi_unique_plan VALUES (2, 7, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected multi-column unique citext index to reject mixed-case duplicate, got %v", err)
+	}
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_unique_plan VALUES (3, 8, 'ALICE@example.com')")
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_concurrent_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
 	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_concurrent_btree_plan VALUES (1, 'Alice@example.com'), (2, 'ALICE@example.com'), (3, 'bob@example.com')")
@@ -269,6 +287,16 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	}
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, true)
 	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, 2)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_concurrent_multi_btree_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_concurrent_multi_btree_plan VALUES (1, 7, 'Alice@example.com'), (2, 8, 'bob@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX CONCURRENTLY citext_concurrent_multi_btree_plan_idx ON citext_concurrent_multi_btree_plan (email, tenant)")
+	concurrentMultiIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_concurrent_multi_btree_plan_idx'")
+	if !strings.Contains(concurrentMultiIndexDef, "email citext_ops") {
+		t.Fatalf("expected concurrent multi-column pg_indexes to preserve citext_ops, got %q", concurrentMultiIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_multi_btree_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_multi_btree_plan WHERE email = 'alice@example.com'::public.citext`, 1)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_unique_concurrent_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
 	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_unique_concurrent_btree_plan VALUES (1, 'Alice@example.com')")
@@ -303,6 +331,18 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 		t.Fatalf("expected table unique citext index to reject mixed-case duplicate, got %v", err)
 	}
 
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_inline_multi_unique_plan (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, email public.citext NOT NULL, UNIQUE (email, tenant))")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_inline_multi_unique_plan VALUES (1, 7, 'Alice@example.com')")
+	inlineMultiUniqueIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE tablename = 'citext_inline_multi_unique_plan' AND indexname <> 'citext_inline_multi_unique_plan_pkey' ORDER BY indexname LIMIT 1")
+	if !strings.Contains(inlineMultiUniqueIndexDef, "email citext_ops") {
+		t.Fatalf("expected inline multi-column unique pg_indexes to preserve citext_ops, got %q", inlineMultiUniqueIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_inline_multi_unique_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_inline_multi_unique_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_inline_multi_unique_plan VALUES (2, 7, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected inline multi-column unique citext index to reject mixed-case duplicate, got %v", err)
+	}
+
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_inline_primary_plan (email public.citext PRIMARY KEY, id INTEGER NOT NULL)")
 	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_inline_primary_plan VALUES ('Alice@example.com', 1)")
 	inlinePrimaryIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_inline_primary_plan_pkey'")
@@ -322,6 +362,19 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	if _, err := conn.Exec(ctx, "INSERT INTO citext_inline_primary_plan VALUES ('ALICE@example.com', 2)"); err == nil || !strings.Contains(err.Error(), "duplicate") {
 		t.Fatalf("expected inline primary citext index to reject mixed-case duplicate, got %v", err)
 	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_multi_primary_plan (email public.citext NOT NULL, tenant INTEGER NOT NULL, id INTEGER NOT NULL, PRIMARY KEY (email, tenant))")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_primary_plan VALUES ('Alice@example.com', 7, 1)")
+	multiPrimaryIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_multi_primary_plan_pkey'")
+	if !strings.Contains(multiPrimaryIndexDef, "email citext_ops") {
+		t.Fatalf("expected multi-column primary pg_indexes to preserve citext_ops, got %q", multiPrimaryIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_primary_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_multi_primary_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_multi_primary_plan VALUES ('ALICE@example.com', 7, 2)"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected multi-column primary citext index to reject mixed-case duplicate, got %v", err)
+	}
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_primary_plan VALUES ('ALICE@example.com', 8, 3)")
 }
 
 func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {
