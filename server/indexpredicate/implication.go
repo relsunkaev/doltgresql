@@ -497,6 +497,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateReverseArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateRepeatArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateLeftRightArgumentValueSetImplies(indexValues, queryValues) ||
@@ -560,6 +561,22 @@ func predicateReverseArgumentValueSetImplies(indexValues predicateValueSet, quer
 	return predicateValueSet{exprKey: indexValues.exprKey, values: reversedValues}.subsetOf(indexValues)
 }
 
+func predicateRepeatArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, count, ok := predicateIntegerArgumentFunctionExprKey(indexValues.exprKey, "repeat")
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	repeatedValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		repeatedValue, ok := predicateRepeatStringLiteralKey(value, count)
+		if !ok {
+			return false
+		}
+		repeatedValues[repeatedValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: repeatedValues}.subsetOf(indexValues)
+}
+
 func predicateUnaryFunctionArgumentExprKey(exprKey string, functionName string) (string, bool) {
 	prefix := "func:" + functionName + "("
 	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
@@ -611,6 +628,20 @@ func predicateReverseText(text string) string {
 		runes[left], runes[right] = runes[right], runes[left]
 	}
 	return string(runes)
+}
+
+func predicateRepeatStringLiteralKey(value string, count int64) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	if count <= 0 {
+		return prefix, true
+	}
+	if count > int64(int(^uint(0)>>1)) {
+		return "", false
+	}
+	return prefix + strings.Repeat(strings.TrimPrefix(value, prefix), int(count)), true
 }
 
 func predicateAsciiArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {

@@ -1117,11 +1117,20 @@ Do not check off an item until it has workload proof:
   predicate keys, planner filters can deparse them, partial unique DML
   enforcement evaluates PostgreSQL-style non-positive repeat counts as an empty
   string, and `ON CONFLICT` arbiter inference accepts the exact-expression
-  shape; wrong repeat counts, result values, and raw source-string semantic
-  rewrites remain rejected. Runtime `repeat(text, int)` also no longer panics
-  on negative counts. Coverage in server/indexpredicate/implication_test.go,
-  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
-  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.24.
+  shape; wrong repeat counts and result values remain rejected. Runtime
+  `repeat(text, int)` also no longer panics on negative counts. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.24.
+- [x] Use raw source-string value-set predicates to imply matching
+  `repeat(expr, count)` partial-index predicates. Text equality and IN-list
+  filters on the source argument now imply fixed-count repeat value-set
+  predicates when every repeated literal is contained in the partial predicate's
+  literal set, including non-positive repeat counts that collapse to the empty
+  string. Non-matching transformed values, wrong counts, and broader predicates
+  remain rejected. Coverage in server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.43.
 - [x] Use deterministic same-expression `concat(...)` predicates in
   partial-index implication paths. Variadic concat calls now serialize as
   comparable predicate keys, planner filters can deparse them, partial unique

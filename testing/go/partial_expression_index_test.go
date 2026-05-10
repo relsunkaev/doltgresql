@@ -1694,7 +1694,7 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 		(2, 1, 'pending'),
 		(3, 1, 'activeactive'),
 		(4, 2, 'active')`)
-	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_repeat_tenant_idx ON partial_planner_repeat (tenant) WHERE repeat(code, 2) = 'activeactive'")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_repeat_tenant_idx ON partial_planner_repeat (tenant) WHERE repeat(code, 2) IN ('activeactive', 'pendingpending')")
 
 	repeatImpliedQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND repeat(code, 2) = 'activeactive'`
 	assertCountResult(t, ctx, conn, repeatImpliedQuery, 1)
@@ -1703,6 +1703,18 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	repeatWrongCountQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND repeat(code, 3) = 'activeactiveactive'`
 	assertCountResult(t, ctx, conn, repeatWrongCountQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, repeatWrongCountQuery, false)
+
+	repeatRawSourceQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND code = 'active'`
+	assertCountResult(t, ctx, conn, repeatRawSourceQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, repeatRawSourceQuery, true)
+
+	repeatRawInQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND code IN ('active', 'pending')`
+	assertCountResult(t, ctx, conn, repeatRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, repeatRawInQuery, true)
+
+	repeatRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_repeat WHERE tenant = 1 AND code IN ('active', 'activeactive')`
+	assertCountResult(t, ctx, conn, repeatRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, repeatRawNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_concat (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, prefix TEXT, code TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_concat VALUES
