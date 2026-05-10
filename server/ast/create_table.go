@@ -66,7 +66,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if len(node.Inherits) > 0 {
 			return nil, errors.Errorf("CREATE TABLE OF cannot use INHERITS")
 		}
-		typedTableOptions, err := nodeTypedTableOptions(tableName.Name.String(), node.Defs)
+		typedTableOptions, typedTableChildren, err := nodeTypedTableOptions(ctx, tableName.Name.String(), node.Defs)
 		if err != nil {
 			return nil, err
 		}
@@ -90,6 +90,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
 				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
 			},
+			Children: typedTableChildren,
 		}, nil
 	}
 	if node.AsSource != nil {
@@ -156,24 +157,28 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 	return ddl, nil
 }
 
-func nodeTypedTableOptions(tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, error) {
+func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, vitess.Exprs, error) {
 	var options pgnodes.TypedTableOptions
+	var children vitess.Exprs
 	seenColumns := make(map[string]struct{}, len(defs))
 	for _, def := range defs {
 		switch def := def.(type) {
 		case *tree.ColumnTableDef:
 			if def.Type != nil {
-				return options, errors.Errorf("CREATE TABLE OF cannot redefine column types")
+				return options, children, errors.Errorf("CREATE TABLE OF cannot redefine column types")
 			}
 			name := string(def.Name)
 			columnKey := strings.ToLower(name)
 			if _, ok := seenColumns[columnKey]; ok {
-				return options, errors.Errorf(`column "%s" specified more than once`, name)
+				return options, children, errors.Errorf(`column "%s" specified more than once`, name)
 			}
 			seenColumns[columnKey] = struct{}{}
-			columnOption, err := nodeTypedTableColumnOptions(tableName, def)
+			columnOption, defaultExpr, err := nodeTypedTableColumnOptions(ctx, tableName, def, len(children))
 			if err != nil {
-				return options, err
+				return options, children, err
+			}
+			if defaultExpr != nil {
+				children = append(children, defaultExpr)
 			}
 			options.ColumnOptions = append(options.ColumnOptions, columnOption)
 		case *tree.UniqueConstraintTableDef:
@@ -183,16 +188,16 @@ func nodeTypedTableOptions(tableName string, defs tree.TableDefs) (pgnodes.Typed
 			}
 			columns, err := nodeTypedTableConstraintColumns(def, constraintKind)
 			if err != nil {
-				return options, err
+				return options, children, err
 			}
 			if def.PrimaryKey {
 				if len(options.PrimaryKeyColumns) > 0 {
-					return options, errors.Errorf("multiple primary keys for table are not allowed")
+					return options, children, errors.Errorf("multiple primary keys for table are not allowed")
 				}
 				options.PrimaryKeyColumns = columns
 			} else {
 				if def.NullsNotDistinct {
-					return options, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
+					return options, children, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
 				}
 				options.UniqueConstraints = append(options.UniqueConstraints, pgnodes.TypedTableUniqueConstraint{
 					Name:    typedTableConstraintName(def.Name, defaultUniqueConstraintNameFromNames(tableName, columns)),
@@ -200,40 +205,51 @@ func nodeTypedTableOptions(tableName string, defs tree.TableDefs) (pgnodes.Typed
 				})
 			}
 		case *tree.CheckConstraintTableDef:
-			return options, errors.Errorf("CREATE TABLE OF CHECK constraints are not yet supported")
+			return options, children, errors.Errorf("CREATE TABLE OF CHECK constraints are not yet supported")
 		case *tree.ForeignKeyConstraintTableDef:
-			return options, errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not yet supported")
+			return options, children, errors.Errorf("CREATE TABLE OF FOREIGN KEY constraints are not yet supported")
 		case *tree.IndexTableDef:
-			return options, errors.Errorf("CREATE TABLE OF indexes are not yet supported")
+			return options, children, errors.Errorf("CREATE TABLE OF indexes are not yet supported")
 		case *tree.LikeTableDef:
-			return options, errors.Errorf("CREATE TABLE OF LIKE definitions are not supported")
+			return options, children, errors.Errorf("CREATE TABLE OF LIKE definitions are not supported")
 		default:
-			return options, errors.Errorf("unknown CREATE TABLE OF definition encountered")
+			return options, children, errors.Errorf("unknown CREATE TABLE OF definition encountered")
 		}
 	}
-	return options, nil
+	return options, children, nil
 }
 
-func nodeTypedTableColumnOptions(tableName string, def *tree.ColumnTableDef) (pgnodes.TypedTableColumnOptions, error) {
+func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.ColumnTableDef, defaultChildIndex int) (pgnodes.TypedTableColumnOptions, vitess.Expr, error) {
 	option := pgnodes.TypedTableColumnOptions{Name: string(def.Name)}
+	var defaultExpr vitess.Expr
 	if def.HasDefaultExpr() {
-		return option, errors.Errorf("CREATE TABLE OF column defaults are not yet supported")
+		if !typedTableDefaultExprIsLiteral(def.DefaultExpr.Expr) {
+			return option, nil, errors.Errorf("CREATE TABLE OF non-literal column defaults are not yet supported")
+		}
+		var err error
+		defaultExpr, err = nodeExpr(ctx, def.DefaultExpr.Expr)
+		if err != nil {
+			return option, nil, err
+		}
+		option.HasDefault = true
+		option.DefaultLiteral = true
+		option.DefaultChildIndex = defaultChildIndex
 	}
 	if len(def.CheckExprs) > 0 {
-		return option, errors.Errorf("CREATE TABLE OF column CHECK constraints are not yet supported")
+		return option, nil, errors.Errorf("CREATE TABLE OF column CHECK constraints are not yet supported")
 	}
 	if def.References.Table != nil {
-		return option, errors.Errorf("CREATE TABLE OF column FOREIGN KEY constraints are not yet supported")
+		return option, nil, errors.Errorf("CREATE TABLE OF column FOREIGN KEY constraints are not yet supported")
 	}
 	if def.Unique && !def.PrimaryKey.IsPrimaryKey {
 		if def.UniqueNullsNotDistinct {
-			return option, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
+			return option, nil, errors.Errorf("CREATE TABLE OF UNIQUE NULLS NOT DISTINCT constraints are not yet supported")
 		}
 		option.Unique = true
 		option.UniqueName = typedTableConstraintName(def.UniqueConstraintName, defaultUniqueConstraintNameFromNames(tableName, []string{option.Name}))
 	}
 	if def.Computed.Computed {
-		return option, errors.Errorf("CREATE TABLE OF generated columns are not supported")
+		return option, nil, errors.Errorf("CREATE TABLE OF generated columns are not supported")
 	}
 	switch def.Nullable.Nullability {
 	case tree.NotNull:
@@ -244,10 +260,41 @@ func nodeTypedTableColumnOptions(tableName string, def *tree.ColumnTableDef) (pg
 		option.Nullable = true
 	case tree.SilentNull:
 	default:
-		return option, errors.Errorf("unknown NULL type encountered")
+		return option, nil, errors.Errorf("unknown NULL type encountered")
 	}
 	option.PrimaryKey = def.PrimaryKey.IsPrimaryKey
-	return option, nil
+	return option, defaultExpr, nil
+}
+
+func typedTableDefaultExprIsLiteral(expr tree.Expr) bool {
+	switch expr := expr.(type) {
+	case nil:
+		return false
+	case *tree.ParenExpr:
+		return typedTableDefaultExprIsLiteral(expr.Expr)
+	case *tree.UnaryExpr:
+		if expr.Operator != tree.UnaryMinus {
+			return false
+		}
+		return typedTableDefaultExprIsNumericLiteral(expr.Expr)
+	case *tree.StrVal, *tree.NumVal, *tree.DBool, *tree.DDecimal, *tree.DFloat, *tree.DInt, *tree.DString:
+		return true
+	case tree.NullLiteral:
+		return true
+	default:
+		return false
+	}
+}
+
+func typedTableDefaultExprIsNumericLiteral(expr tree.Expr) bool {
+	switch expr := expr.(type) {
+	case *tree.ParenExpr:
+		return typedTableDefaultExprIsNumericLiteral(expr.Expr)
+	case *tree.NumVal, *tree.DDecimal, *tree.DFloat, *tree.DInt:
+		return true
+	default:
+		return false
+	}
 }
 
 func nodeTypedTableConstraintColumns(def *tree.UniqueConstraintTableDef, constraintKind string) ([]string, error) {

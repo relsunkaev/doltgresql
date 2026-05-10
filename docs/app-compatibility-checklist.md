@@ -1247,9 +1247,12 @@ typed-exception handling, and client-side query timeouts.
   inserts. Temporary typed tables with the same UNIQUE options now enforce
   duplicate inserts and updates, including duplicates within one multi-row
   INSERT, while preserving PostgreSQL's ordinary UNIQUE behavior that permits
-  repeated NULL values. Still open: typed-table defaults, CHECK, FOREIGN KEY,
-  generated columns, UNIQUE NULLS NOT DISTINCT, index options/opclasses, and
-  other table-definition/options surface. Pinned by
+  repeated NULL values. Permanent and temporary typed tables now also support
+  literal column defaults declared with `WITH OPTIONS DEFAULT`, including
+  insert-time materialization for omitted columns and `information_schema.columns`
+  default visibility. Still open: non-literal typed-table default expressions,
+  CHECK, FOREIGN KEY, generated columns, UNIQUE NULLS NOT DISTINCT, index
+  options/opclasses, and other table-definition/options surface. Pinned by
   testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
   dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL

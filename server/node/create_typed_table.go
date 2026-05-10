@@ -55,12 +55,17 @@ type TypedTableOptions struct {
 }
 
 type TypedTableColumnOptions struct {
-	Name        string
-	NullableSet bool
-	Nullable    bool
-	PrimaryKey  bool
-	UniqueName  string
-	Unique      bool
+	Name                 string
+	NullableSet          bool
+	Nullable             bool
+	PrimaryKey           bool
+	UniqueName           string
+	Unique               bool
+	HasDefault           bool
+	DefaultExpr          sql.Expression
+	DefaultLiteral       bool
+	DefaultParenthesized bool
+	DefaultChildIndex    int
 }
 
 type TypedTableUniqueConstraint struct {
@@ -274,10 +279,36 @@ func (c *CreateTypedTable) WithChildren(ctx *sql.Context, children ...sql.Node) 
 
 // WithResolvedChildren implements vitess.Injectable.
 func (c *CreateTypedTable) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
-	if len(children) != 0 {
-		return nil, ErrVitessChildCount.New(0, len(children))
+	expectedChildren := 0
+	for _, option := range c.Options.ColumnOptions {
+		if option.HasDefault {
+			expectedChildren++
+		}
 	}
-	return c, nil
+	if len(children) != expectedChildren {
+		return nil, ErrVitessChildCount.New(expectedChildren, len(children))
+	}
+
+	options := c.Options
+	options.ColumnOptions = append([]TypedTableColumnOptions(nil), c.Options.ColumnOptions...)
+	for i := range options.ColumnOptions {
+		option := &options.ColumnOptions[i]
+		if !option.HasDefault {
+			continue
+		}
+		if option.DefaultChildIndex < 0 || option.DefaultChildIndex >= len(children) {
+			return nil, ErrVitessChildCount.New(expectedChildren, len(children))
+		}
+		expr, ok := children[option.DefaultChildIndex].(sql.Expression)
+		if !ok {
+			return nil, errors.Errorf("invalid vitess child, expected sql.Expression for Default value but got %T", children[option.DefaultChildIndex])
+		}
+		option.DefaultExpr = expr
+	}
+
+	nct := *c
+	nct.Options = options
+	return &nct, nil
 }
 
 func (c *CreateTypedTable) resolveType(ctx *sql.Context, typeCollection typeResolver) (*pgtypes.DoltgresType, error) {
@@ -334,13 +365,13 @@ func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName s
 			Nullable:       true,
 		}
 	}
-	if err := applyTypedTableOptions(schema, typ, options); err != nil {
+	if err := applyTypedTableOptions(ctx, schema, typ, options); err != nil {
 		return nil, err
 	}
 	return schema, nil
 }
 
-func applyTypedTableOptions(schema sql.Schema, typ *pgtypes.DoltgresType, options TypedTableOptions) error {
+func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.DoltgresType, options TypedTableOptions) error {
 	columnOptions := make(map[string]TypedTableColumnOptions, len(options.ColumnOptions))
 	for _, option := range options.ColumnOptions {
 		key := strings.ToLower(option.Name)
@@ -362,6 +393,25 @@ func applyTypedTableOptions(schema sql.Schema, typ *pgtypes.DoltgresType, option
 		}
 		if option.PrimaryKey {
 			primaryKeyColumns = append(primaryKeyColumns, option.Name)
+		}
+		if option.HasDefault {
+			if option.DefaultExpr == nil {
+				return errors.Errorf(`missing default expression for column "%s"`, option.Name)
+			}
+			defaultValue, err := sql.NewColumnDefaultValue(
+				option.DefaultExpr,
+				schema[idx].Type,
+				option.DefaultLiteral,
+				option.DefaultParenthesized,
+				schema[idx].Nullable,
+			)
+			if err != nil {
+				return err
+			}
+			if err = defaultValue.CheckType(ctx); err != nil {
+				return err
+			}
+			schema[idx].Default = defaultValue
 		}
 	}
 	if len(options.PrimaryKeyColumns) > 0 && len(primaryKeyColumns) > len(options.PrimaryKeyColumns) {

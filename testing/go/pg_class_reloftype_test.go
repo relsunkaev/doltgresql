@@ -280,6 +280,58 @@ ORDER BY indexname;`,
 			},
 		},
 		{
+			Name: "CREATE TABLE OF supports literal column defaults",
+			SetUpScript: []string{
+				`CREATE TYPE typed_default_task AS (id INT, code TEXT, active BOOLEAN, priority INT);`,
+				`CREATE TABLE typed_default_tasks OF typed_default_task (
+						code WITH OPTIONS DEFAULT ('new'),
+						active WITH OPTIONS DEFAULT TRUE,
+						priority WITH OPTIONS DEFAULT -7
+					);`,
+				`INSERT INTO typed_default_tasks (id) VALUES (1);`,
+				`INSERT INTO typed_default_tasks (id, code, active, priority) VALUES (2, 'custom', FALSE, 3);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, code, active, priority FROM typed_default_tasks ORDER BY id;`,
+					Expected: []sql.Row{
+						{int32(1), "new", "t", int32(-7)},
+						{int32(2), "custom", "f", int32(3)},
+					},
+				},
+				{
+					Query: `SELECT column_name, (column_default IS NOT NULL)::text
+	FROM information_schema.columns
+	WHERE table_name = 'typed_default_tasks' AND column_name IN ('code', 'active', 'priority')
+	ORDER BY ordinal_position;`,
+					Expected: []sql.Row{
+						{"code", "true"},
+						{"active", "true"},
+						{"priority", "true"},
+					},
+				},
+			},
+		},
+		{
+			Name: "CREATE TEMP TABLE OF supports literal column defaults",
+			SetUpScript: []string{
+				`CREATE TYPE typed_temp_default_task AS (id INT, code TEXT, priority INT);`,
+				`CREATE TEMP TABLE typed_temp_default_tasks OF typed_temp_default_task (
+						code WITH OPTIONS DEFAULT 'temp',
+						priority WITH OPTIONS DEFAULT 5
+					);`,
+				`INSERT INTO typed_temp_default_tasks (id) VALUES (1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, code, priority FROM typed_temp_default_tasks;`,
+					Expected: []sql.Row{
+						{int32(1), "temp", int32(5)},
+					},
+				},
+			},
+		},
+		{
 			Name: "CREATE TABLE OF rejects unsupported table-definition options",
 			SetUpScript: []string{
 				`CREATE TYPE typed_options AS (id INT, code TEXT);`,
@@ -290,8 +342,8 @@ ORDER BY indexname;`,
 					ExpectedErr: `column "missing" does not exist in composite type "typed_options"`,
 				},
 				{
-					Query:       `CREATE TABLE typed_default OF typed_options (code WITH OPTIONS DEFAULT 'new');`,
-					ExpectedErr: `CREATE TABLE OF column defaults are not yet supported`,
+					Query:       `CREATE TABLE typed_default_expr OF typed_options (code WITH OPTIONS DEFAULT lower('new'));`,
+					ExpectedErr: `CREATE TABLE OF non-literal column defaults are not yet supported`,
 				},
 				{
 					Query:       `CREATE TABLE typed_unique_missing OF typed_options (UNIQUE (missing));`,
