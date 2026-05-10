@@ -341,7 +341,24 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 			SetUpScript: []string{
 				`CREATE TABLE do_diag_context_items (id INT PRIMARY KEY, touched BOOL NOT NULL DEFAULT false);`,
 				`CREATE TABLE do_diag_context_seen (affected INT NOT NULL, context TEXT NOT NULL);`,
+				`CREATE TABLE do_diag_context_stack_seen (context TEXT NOT NULL);`,
 				`INSERT INTO do_diag_context_items VALUES (1, false), (2, false);`,
+				`CREATE FUNCTION diag_inner_context() RETURNS TEXT AS $$
+					DECLARE
+						context TEXT;
+					BEGIN
+						GET DIAGNOSTICS context = PG_CONTEXT;
+						RETURN context;
+					END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION diag_outer_context() RETURNS VOID AS $$
+					DECLARE
+						context TEXT;
+					BEGIN
+						context := diag_inner_context();
+						INSERT INTO do_diag_context_stack_seen VALUES (context);
+					END;
+				$$ LANGUAGE plpgsql;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -361,6 +378,21 @@ func TestDoBlockPlpgsqlInterpreterCoverage(t *testing.T) {
 							(context LIKE 'PL/pgSQL function inline_code_block line % at GET DIAGNOSTICS')::text
 						FROM do_diag_context_seen;`,
 					Expected: []sql.Row{{1, "true"}},
+				},
+				{
+					Query: `DO $$
+						BEGIN
+							PERFORM diag_outer_context();
+						END;
+					$$;`,
+				},
+				{
+					Query: `SELECT
+							(context LIKE 'PL/pgSQL function diag_inner_context() line % at GET DIAGNOSTICS%')::text,
+							(position('PL/pgSQL function diag_outer_context()' in context) > 0)::text,
+							(position('PL/pgSQL function inline_code_block' in context) > 0)::text
+						FROM do_diag_context_stack_seen;`,
+					Expected: []sql.Row{{"true", "true", "true"}},
 				},
 			},
 		},

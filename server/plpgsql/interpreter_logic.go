@@ -15,6 +15,7 @@
 package plpgsql
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -68,6 +69,8 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if statementsUseFoundVariable(iFunc.GetStatements()) {
 		initFoundVariable(stack)
 	}
+	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
+	defer restoreDiagnosticContext()
 	return call(ctx, iFunc, stack)
 }
 
@@ -88,6 +91,8 @@ func TriggerCall(ctx *sql.Context, iFunc InterpretedFunction, runner sql.Stateme
 	if statementsUseFoundVariable(iFunc.GetStatements()) {
 		initFoundVariable(stack)
 	}
+	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
+	defer restoreDiagnosticContext()
 	return call(ctx, iFunc, stack)
 }
 
@@ -282,7 +287,7 @@ func call(ctx *sql.Context, iFunc InterpretedFunction, stack InterpreterStack) (
 					return nil, err
 				}
 			case "PG_CONTEXT":
-				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(iFunc, operation)); err != nil {
+				if err := assignSQLRowValue(ctx, stack, operation.Target, pgtypes.Text, diagnosticPGContext(ctx, iFunc, operation)); err != nil {
 					return nil, err
 				}
 			case "PG_ROUTINE_OID":
@@ -482,7 +487,56 @@ func convertRowsToRecords(schema sql.Schema, rows []sql.Row) ([][]pgtypes.Record
 	return records, nil
 }
 
-func diagnosticPGContext(iFunc InterpretedFunction, operation InterpreterOperation) string {
+type diagnosticCallFrame struct {
+	functionName string
+}
+
+type diagnosticCallFrameKey struct{}
+
+func pushDiagnosticCallFrame(ctx *sql.Context, iFunc InterpretedFunction) func() {
+	if ctx == nil || ctx.Context == nil {
+		return func() {}
+	}
+	previousContext := ctx.Context
+	frames := diagnosticCallFrames(ctx)
+	nextFrames := make([]diagnosticCallFrame, 0, len(frames)+1)
+	nextFrames = append(nextFrames, frames...)
+	nextFrames = append(nextFrames, diagnosticCallFrame{functionName: diagnosticFunctionName(iFunc)})
+	ctx.Context = context.WithValue(ctx.Context, diagnosticCallFrameKey{}, nextFrames)
+	return func() {
+		ctx.Context = previousContext
+	}
+}
+
+func diagnosticCallFrames(ctx *sql.Context) []diagnosticCallFrame {
+	if ctx == nil || ctx.Context == nil {
+		return nil
+	}
+	frames, ok := ctx.Context.Value(diagnosticCallFrameKey{}).([]diagnosticCallFrame)
+	if !ok {
+		return nil
+	}
+	return frames
+}
+
+func diagnosticPGContext(ctx *sql.Context, iFunc InterpretedFunction, operation InterpreterOperation) string {
+	lineNumber := diagnosticOperationLineNumber(operation)
+	frames := diagnosticCallFrames(ctx)
+	if len(frames) == 0 {
+		return fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", diagnosticFunctionName(iFunc), lineNumber)
+	}
+	lines := make([]string, 0, len(frames))
+	for i := len(frames) - 1; i >= 0; i-- {
+		if i == len(frames)-1 {
+			lines = append(lines, fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", frames[i].functionName, lineNumber))
+		} else {
+			lines = append(lines, fmt.Sprintf("PL/pgSQL function %s line 0 at SQL statement", frames[i].functionName))
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func diagnosticFunctionName(iFunc InterpretedFunction) string {
 	functionName := iFunc.GetName()
 	if functionName == "__doltgres_do_block" {
 		functionName = "inline_code_block"
@@ -491,11 +545,15 @@ func diagnosticPGContext(iFunc InterpretedFunction, operation InterpreterOperati
 	} else {
 		functionName += "()"
 	}
+	return functionName
+}
+
+func diagnosticOperationLineNumber(operation InterpreterOperation) string {
 	lineNumber := strings.TrimSpace(operation.Options["lineNumber"])
 	if lineNumber == "" {
 		lineNumber = "0"
 	}
-	return fmt.Sprintf("PL/pgSQL function %s line %s at GET DIAGNOSTICS", functionName, lineNumber)
+	return lineNumber
 }
 
 func diagnosticPGRoutineOID(iFunc InterpretedFunction) id.Id {
