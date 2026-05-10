@@ -425,6 +425,11 @@ Do not check off an item until it has workload proof:
   failures, and drop staging tables on errors. Pinned by
   testing/go/materialized_view_concurrently_contention_test.go. Tracked by
   dg-7ug.6.2.
+- [x] Support `ALTER MATERIALIZED VIEW ... RENAME TO ...` for table-backed
+  materialized views. Rename now preserves the materialized-view metadata, keeps
+  the renamed relation queryable, removes the old name, leaves `pg_class.relkind`
+  as `m`, and moves the `pg_matviews` row to the new matview name. Pinned by
+  testing/go/materialized_view_probe_test.go. Tracked by dg-7ug.14.
 - [x] PL/pgSQL trigger functions - `CREATE FUNCTION ... RETURNS
   trigger AS $$ ... $$ LANGUAGE plpgsql;` plus `CREATE TRIGGER ...
   EXECUTE FUNCTION` works end-to-end for two real shapes:

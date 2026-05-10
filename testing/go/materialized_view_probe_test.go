@@ -135,6 +135,48 @@ func TestMaterializedViewProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+			SetUpScript: []string{
+				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,
+				`INSERT INTO source VALUES (1, 100), (2, 200);`,
+				`CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER MATERIALIZED VIEW source_mv RENAME TO renamed_mv;`,
+				},
+				{
+					Query: `SELECT id, v FROM renamed_mv ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 100},
+						{2, 200},
+					},
+				},
+				{
+					Query:       `SELECT count(*)::text FROM source_mv;`,
+					ExpectedErr: `table not found: source_mv`,
+				},
+				{
+					Query: `SELECT relkind FROM pg_class WHERE relname = 'renamed_mv';`,
+					Expected: []sql.Row{
+						{"m"},
+					},
+				},
+				{
+					Query: `SELECT schemaname, matviewname, ispopulated::text, definition
+						FROM pg_matviews
+						WHERE schemaname = 'public' AND matviewname = 'renamed_mv';`,
+					Expected: []sql.Row{
+						{"public", "renamed_mv", "true", "SELECT id, v FROM source"},
+					},
+				},
+				{
+					Query:    `SELECT count(*)::text FROM pg_matviews WHERE matviewname = 'source_mv';`,
+					Expected: []sql.Row{{"0"}},
+				},
+			},
+		},
+		{
 			Name: "CREATE MATERIALIZED VIEW column aliases",
 			SetUpScript: []string{
 				`CREATE TABLE source (id INT PRIMARY KEY, v INT);`,

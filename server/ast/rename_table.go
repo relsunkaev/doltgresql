@@ -30,9 +30,6 @@ func nodeRenameTable(ctx *Context, node *tree.RenameTable) (*vitess.DDL, error) 
 	if node.IsSequence {
 		return nil, errors.Errorf("RENAME SEQUENCE is not yet supported")
 	}
-	if node.IsMaterialized {
-		return nil, errors.Errorf("RENAME MATERIALIZED VIEW is not yet supported")
-	}
 	fromName, err := nodeUnresolvedObjectName(ctx, node.Name)
 	if err != nil {
 		return nil, err
