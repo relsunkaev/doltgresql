@@ -32,6 +32,8 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+	cryptdes "github.com/sergeymakinen/go-crypt/des"
+	cryptdesext "github.com/sergeymakinen/go-crypt/desext"
 	"golang.org/x/crypto/blowfish"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -45,11 +47,16 @@ const (
 	pgcryptoBcryptSaltBytes   = 16
 	pgcryptoBcryptSaltLength  = 29
 	pgcryptoMD5SaltBytes      = 6
+	pgcryptoDESSaltBytes      = 2
+	pgcryptoXDESInputBytes    = 3
+	pgcryptoXDESDefaultRounds = 29 * 25
+	pgcryptoXDESMaxRounds     = 0xFFFFFF
 )
 
 var pgcryptoBcryptEncoding = base64.NewEncoding("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").WithPadding(base64.NoPadding)
 var pgcryptoBcryptMagicCipherData = []byte("OrpheanBeholderScryDoubt")
 var pgcryptoMD5Encoding = []byte("./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+var pgcryptoCryptBigEndianEncoding = base64.NewEncoding(string(pgcryptoMD5Encoding)).WithPadding(base64.NoPadding)
 
 // initPgCrypto registers the pgcrypto-compatible functions to the catalog.
 func initPgCrypto() {
@@ -199,14 +206,20 @@ func pgcryptoCrypt(password string, salt string) (string, error) {
 	if md5Salt, ok := pgcryptoMD5SaltParts(salt); ok {
 		return pgcryptoMD5Crypt(password, md5Salt), nil
 	}
+	if strings.HasPrefix(salt, "_") {
+		return pgcryptoXDESCrypt(password, salt)
+	}
 	cost, encodedSalt, minor, ok, err := pgcryptoBcryptSaltParts(salt)
 	if err != nil {
 		return "", err
 	}
-	if !ok {
+	if ok {
+		return pgcryptoBcryptHash(password, cost, minor, encodedSalt)
+	}
+	if strings.HasPrefix(salt, "$") {
 		return "", errors.Errorf("unsupported pgcrypto crypt salt")
 	}
-	return pgcryptoBcryptHash(password, cost, minor, encodedSalt)
+	return pgcryptoDESCrypt(password, salt)
 }
 
 type pgcryptoRawCipherConfig struct {
@@ -405,6 +418,32 @@ func pgcryptoGenSalt(saltType string, iterCount int, hasIterCount bool) (string,
 			return "", err
 		}
 		return pgcryptoMD5Salt(rawSalt), nil
+	case "des":
+		if hasIterCount && iterCount != 0 && iterCount != 25 {
+			return "", errors.Errorf("gen_salt iteration count %d is unsupported for des", iterCount)
+		}
+		rawSalt := make([]byte, pgcryptoDESSaltBytes)
+		if _, err := rand.Read(rawSalt); err != nil {
+			return "", err
+		}
+		var builder strings.Builder
+		for _, b := range rawSalt {
+			builder.WriteByte(pgcryptoMD5Encoding[b&0x3f])
+		}
+		return builder.String(), nil
+	case "xdes":
+		if !hasIterCount || iterCount == 0 {
+			iterCount = pgcryptoXDESDefaultRounds
+		}
+		if iterCount < 1 || iterCount > pgcryptoXDESMaxRounds || iterCount%2 == 0 {
+			return "", errors.Errorf("gen_salt iteration count %d is outside supported odd range 1..%d for xdes", iterCount, pgcryptoXDESMaxRounds)
+		}
+		rawSalt := make([]byte, pgcryptoXDESInputBytes)
+		if _, err := rand.Read(rawSalt); err != nil {
+			return "", err
+		}
+		saltValue := uint32(rawSalt[0]) | uint32(rawSalt[1])<<8 | uint32(rawSalt[2])<<16
+		return "_" + pgcryptoCryptEncode64(uint32(iterCount), 4) + pgcryptoCryptEncode64(saltValue, 4), nil
 	default:
 		return "", errors.Errorf("unsupported pgcrypto gen_salt type: %s", saltType)
 	}
@@ -477,6 +516,46 @@ func pgcryptoBcryptPasswordBytes(password string) []byte {
 		passwordBytes = passwordBytes[:72]
 	}
 	return passwordBytes
+}
+
+func pgcryptoDESCrypt(password string, salt string) (string, error) {
+	if len(salt) < pgcryptoDESSaltBytes {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	saltBytes := []byte(salt[:pgcryptoDESSaltBytes])
+	if !pgcryptoValidCryptSalt(saltBytes) {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	passwordBytes := []byte(password)
+	if len(passwordBytes) > cryptdes.MaxPasswordLength {
+		passwordBytes = passwordBytes[:cryptdes.MaxPasswordLength]
+	}
+	key, err := cryptdes.Key(passwordBytes, saltBytes)
+	if err != nil {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	return string(saltBytes) + pgcryptoCryptBigEndianEncoding.EncodeToString(key), nil
+}
+
+func pgcryptoXDESCrypt(password string, salt string) (string, error) {
+	const prefixLength = 1 + 4 + 4
+	if len(salt) < prefixLength {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	roundsPart := salt[1:5]
+	saltPart := salt[5:9]
+	if !pgcryptoValidCryptSalt([]byte(roundsPart)) || !pgcryptoValidCryptSalt([]byte(saltPart)) {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	rounds, ok := pgcryptoCryptDecode64(roundsPart)
+	if !ok || rounds < 1 || rounds > pgcryptoXDESMaxRounds {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	key, err := cryptdesext.Key([]byte(password), []byte(saltPart), rounds)
+	if err != nil {
+		return "", errors.Errorf("unsupported pgcrypto crypt salt")
+	}
+	return salt[:prefixLength] + pgcryptoCryptBigEndianEncoding.EncodeToString(key), nil
 }
 
 func pgcryptoMD5SaltParts(salt string) (string, bool) {
@@ -577,6 +656,45 @@ func pgcryptoMD5To64(builder *strings.Builder, value uint32, count int) {
 		builder.WriteByte(pgcryptoMD5Encoding[value&0x3f])
 		value >>= 6
 	}
+}
+
+func pgcryptoCryptEncode64(value uint32, count int) string {
+	var builder strings.Builder
+	for i := 0; i < count; i++ {
+		builder.WriteByte(pgcryptoMD5Encoding[value&0x3f])
+		value >>= 6
+	}
+	return builder.String()
+}
+
+func pgcryptoCryptDecode64(input string) (uint32, bool) {
+	var value uint32
+	for i := 0; i < len(input); i++ {
+		index := pgcryptoCryptEncodingIndex(input[i])
+		if index < 0 {
+			return 0, false
+		}
+		value |= uint32(index) << uint(i*6)
+	}
+	return value, true
+}
+
+func pgcryptoCryptEncodingIndex(b byte) int {
+	for i, candidate := range pgcryptoMD5Encoding {
+		if candidate == b {
+			return i
+		}
+	}
+	return -1
+}
+
+func pgcryptoValidCryptSalt(salt []byte) bool {
+	for _, b := range salt {
+		if pgcryptoCryptEncodingIndex(b) < 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func pgcryptoHash(algorithm string) (func() hash.Hash, error) {

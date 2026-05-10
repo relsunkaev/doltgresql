@@ -251,6 +251,30 @@ func TestCommonExtensionsProbe(t *testing.T) {
 					Query:    `SELECT crypt('password', '$1$saltstring');`,
 					Expected: []sql.Row{{"$1$saltstri$qQY4WxjABChYG1ccLpfkz/"}},
 				},
+				{
+					Query:    `SELECT length(gen_salt('des'))::text, length(gen_salt('des', 25))::text;`,
+					Expected: []sql.Row{{"2", "2"}},
+				},
+				{
+					Query:    `SELECT crypt('password', 'eN'), crypt('password123', 'eN'), crypt('password', 'eNBO0nZMf3rWM');`,
+					Expected: []sql.Row{{"eNBO0nZMf3rWM", "eNBO0nZMf3rWM", "eNBO0nZMf3rWM"}},
+				},
+				{
+					Query:    `SELECT left(gen_salt('xdes'), 1), length(gen_salt('xdes'))::text, left(gen_salt('xdes', 725), 5), length(gen_salt('xdes', 725))::text;`,
+					Expected: []sql.Row{{"_", "9", "_J9..", "9"}},
+				},
+				{
+					Query:    `SELECT crypt('password', '_6C/.yaiu'), crypt('password', '_6C/.yaiu.qYIjNR7X.s'), crypt('test', '_6C/.yaiu.qYIjNR7X.s') = '_6C/.yaiu.qYIjNR7X.s';`,
+					Expected: []sql.Row{{"_6C/.yaiu.qYIjNR7X.s", "_6C/.yaiu.qYIjNR7X.s", "f"}},
+				},
+				{
+					Query:       `SELECT gen_salt('des', 26);`,
+					ExpectedErr: `gen_salt iteration count 26 is unsupported for des`,
+				},
+				{
+					Query:       `SELECT gen_salt('xdes', 724);`,
+					ExpectedErr: `gen_salt iteration count 724 is outside supported odd range 1..16777215 for xdes`,
+				},
 			},
 		},
 		{

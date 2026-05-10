@@ -157,7 +157,12 @@ Do not check off an item until it has workload proof:
   `gen_salt('md5'[, int4])` and `crypt(text, '$1$...')` cover
   PostgreSQL-compatible MD5-crypt salt generation, the supported md5 round
   count, explicit bad-round rejection, stored-salt verification, salt
-  truncation to eight characters, and wrong-password rejection. Raw pgcrypto
+  truncation to eight characters, and wrong-password rejection.
+  `gen_salt('des'[, int4])`, `gen_salt('xdes'[, int4])`, and
+  `crypt(text, text)` cover PostgreSQL-compatible traditional DES and
+  extended DES password hashes, including DES's eight-byte password
+  truncation, xDES's default 725 rounds and odd 1..16777215 round range,
+  stored-salt verification, and wrong-password rejection. Raw pgcrypto
   `encrypt`/`decrypt` and `encrypt_iv`/`decrypt_iv` cover the AES,
   Blowfish (`bf`), DES, and 3DES `cbc`/`ecb` modes with `pkcs` and
   `none` padding, including default zero-IV behavior, explicit CBC IVs,
@@ -261,7 +266,6 @@ Do not check off an item until it has workload proof:
   Pinned by testing/go/common_extensions_probe_test.go.
 - [ ] Replace common-extension shims with full parity or narrower tested
   non-goals. Open surfaces include pgcrypto PGP encryption/decryption helpers,
-  DES/xDES-style password-hashing algorithms,
   and advanced random helpers beyond the native UUID, `gen_random_bytes`,
   digest/HMAC, and raw-encryption subset, pgvector indexes/opclasses,
   non-dense vector families, and aggregates plus aggregate helper functions
