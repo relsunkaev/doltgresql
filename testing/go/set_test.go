@@ -274,6 +274,40 @@ var setStmts = []ScriptTest{
 		},
 	},
 	{
+		Name:        "RESET ALL restores session configuration variables",
+		SetUpScript: []string{},
+		Assertions: []ScriptTestAssertion{
+			{
+				Query:    "SET application_name TO 'changed'",
+				Expected: []sql.Row{},
+			},
+			{
+				Query:    "SET search_path TO postgres",
+				Expected: []sql.Row{},
+			},
+			{
+				Query:    "SET enable_hashjoin TO off",
+				Expected: []sql.Row{},
+			},
+			{
+				Query:    "RESET ALL",
+				Expected: []sql.Row{},
+			},
+			{
+				Query:    "SHOW application_name",
+				Expected: []sql.Row{{"psql"}},
+			},
+			{
+				Query:    "SHOW search_path",
+				Expected: []sql.Row{{"\"$user\", public"}},
+			},
+			{
+				Query:    "SHOW enable_hashjoin",
+				Expected: []sql.Row{{int8(1)}},
+			},
+		},
+	},
+	{
 		Name:        "set 'archive_cleanup_command' configuration variable",
 		SetUpScript: []string{},
 		Assertions: []ScriptTestAssertion{

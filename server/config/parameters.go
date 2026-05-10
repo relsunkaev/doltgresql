@@ -16,6 +16,7 @@ package config
 
 import (
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -58,6 +59,31 @@ func Init() {
 	}
 	sql.SystemVariables.AddSystemVariables(params)
 	sqle.AddDoltSystemVariables()
+}
+
+// ResetAllSessionVariables restores PostgreSQL configuration parameters to
+// their RESET values for the current session.
+func ResetAllSessionVariables(ctx *sql.Context) error {
+	for _, sysVar := range postgresConfigParameters {
+		if sysVar.IsReadOnly() {
+			continue
+		}
+		resetVal := sysVar.GetDefault()
+		defaultVal := resetVal
+		if parameter, ok := sysVar.(*Parameter); ok {
+			resetVal = parameter.ResetVal
+			defaultVal = parameter.Default
+		}
+		if err := ctx.SetSessionVariable(ctx, sysVar.GetName(), resetVal); err != nil {
+			if !reflect.DeepEqual(resetVal, defaultVal) {
+				if defaultErr := ctx.SetSessionVariable(ctx, sysVar.GetName(), defaultVal); defaultErr == nil {
+					continue
+				}
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 var (

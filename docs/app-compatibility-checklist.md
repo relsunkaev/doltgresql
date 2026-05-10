@@ -1381,7 +1381,10 @@ Do not check off an item until it has workload proof:
   commit, and rollback behavior. `psycopg2` runs through the legacy Python
   client pool, including startup `application_name`, typed parameters, JSONB
   and text[] adaptation, prepared statements, concurrent reads, commit, and
-  rollback behavior. Ruby `pg` runs through a real PG::Connection,
+  rollback behavior. `asyncpg` runs through the real async Python pool,
+  including startup `application_name`, typed parameters, JSONB/text[] values,
+  prepared statements, pooled concurrent reads, commit, and rollback. Ruby `pg`
+  runs through a real PG::Connection,
   including startup `application_name`, typed parameters, JSONB and text[]
   values, prepared statements, concurrent reads, commit, and rollback. libpq
   runs through a compiled C probe with startup `application_name`, typed
@@ -1406,8 +1409,9 @@ Do not check off an item until it has workload proof:
   testing/go/node_postgres_client_test.go,
   testing/go/ts_postgres_client_test.go, testing/go/knex_client_test.go,
   testing/go/pg_promise_client_test.go, testing/go/psycopg_client_test.go,
-  testing/go/psycopg2_client_test.go, testing/go/ruby_pg_client_test.go,
-  testing/go/libpq_client_test.go, testing/go/go_sql_pq_client_test.go,
+  testing/go/psycopg2_client_test.go, testing/go/asyncpg_client_test.go,
+  testing/go/ruby_pg_client_test.go, testing/go/libpq_client_test.go,
+  testing/go/go_sql_pq_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
 - [ ] Add other secondary-client smoke gates when workloads require those
@@ -1896,7 +1900,9 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   JSONB/array adaptation, concurrent reads, and transaction boundaries, the
   psycopg2 harness covers the legacy Python driver pool with parameters,
   JSONB/array adaptation, prepared statements, concurrent reads, and
-  transaction boundaries, and
+  transaction boundaries, the asyncpg harness covers the async Python pool
+  with startup options, typed parameters, JSONB/text[] values, prepared
+  statements, pooled concurrent reads, and transaction boundaries, and
   the Ruby `pg` harness covers the native Ruby client with parameters, prepared
   statements, JSONB/text[] values, concurrent reads, and transaction
   boundaries. The libpq harness compiles a C probe for typed parameters,
@@ -1918,7 +1924,7 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   boundaries, including projected count/exists filters.
 - [ ] Expand driver/ORM matrix proof beyond pgx, node-postgres,
   postgres.js, ts-postgres, Knex, pg-promise, TypeORM, Sequelize, Django,
-  psycopg, psycopg2, Ruby `pg`, libpq, Go `database/sql` with
+  psycopg, psycopg2, asyncpg, Ruby `pg`, libpq, Go `database/sql` with
   `github.com/lib/pq`, Java JDBC, and Rust `sqlx`. Add runnable smoke gates
   for the advertised client and migration-tool matrix before claiming broad
   client compatibility.
