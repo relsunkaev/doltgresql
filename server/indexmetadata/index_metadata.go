@@ -582,6 +582,8 @@ func DefaultBtreeOpClassForType(typ sql.Type) (string, bool) {
 		return "bpchar_ops", true
 	case "bytea":
 		return "bytea_ops", true
+	case "citext":
+		return OpClassCitextOps, true
 	case "date":
 		return "date_ops", true
 	case "interval":

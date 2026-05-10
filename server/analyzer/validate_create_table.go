@@ -468,7 +468,7 @@ func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Sc
 		return ai, nil
 	}
 
-	columns, comment, changed := normalizeCitextIndexDef(ctx, ai.Columns, ai.Using, ai.Constraint, ai.Comment, sch)
+	columns, comment, changed := normalizeCitextIndexDef(ctx, ai.Columns, ai.Using, ai.Constraint, ai.Comment, sch, false)
 	if !changed {
 		return ai, nil
 	}
@@ -484,27 +484,39 @@ func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, s
 		return ct, false, nil
 	}
 	idxDefs := ct.Indexes()
-	normalizedIdxDefs := make(sql.IndexDefs, len(idxDefs))
+	normalizedIdxDefs := make(sql.IndexDefs, 0, len(idxDefs)+1)
 	normalizedSchema := ct.PkSchema().Schema.Copy()
 	changed := false
-	for i, idxDef := range idxDefs {
+	hasPrimaryIndexDef := false
+	for _, idxDef := range idxDefs {
 		if idxDef == nil {
+			normalizedIdxDefs = append(normalizedIdxDefs, nil)
 			continue
 		}
 		normalized := *idxDef
+		if normalized.Constraint == sql.IndexConstraint_Primary {
+			hasPrimaryIndexDef = true
+			if normalized.Name == "" {
+				normalized.Name = defaultPrimaryKeyIndexName(ct)
+			}
+		}
 		if normalized.Name == "" {
-			normalizedIdxDefs[i] = &normalized
+			normalizedIdxDefs = append(normalizedIdxDefs, &normalized)
 			continue
 		}
-		columns, comment, indexChanged := normalizeCitextIndexDef(ctx, normalized.Columns, normalized.Storage, normalized.Constraint, normalized.Comment, sch)
+		originalColumns := append([]sql.IndexColumn(nil), normalized.Columns...)
+		columns, comment, indexChanged := normalizeCitextIndexDef(ctx, normalized.Columns, normalized.Storage, normalized.Constraint, normalized.Comment, sch, true)
 		if indexChanged {
 			for columnIndex, column := range columns {
 				if column.Expression == nil {
 					continue
 				}
-				hiddenColumn, err := newHiddenSystemIndexColumn(ctx, ct, normalizedSchema, normalized.Name, columnIndex, column.Expression)
+				hiddenColumn, err := newHiddenSystemIndexColumn(ctx, ct, normalizedSchema, normalized.Name, columnIndex, column.Expression, normalized.Constraint == sql.IndexConstraint_Primary)
 				if err != nil {
 					return nil, false, err
+				}
+				if normalized.Constraint == sql.IndexConstraint_Primary {
+					clearPrimaryKeyForIndexColumn(normalizedSchema, originalColumns[columnIndex])
 				}
 				normalizedSchema = append(normalizedSchema, hiddenColumn)
 				columns[columnIndex].Name = hiddenColumn.Name
@@ -514,7 +526,40 @@ func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, s
 			normalized.Comment = comment
 			changed = true
 		}
-		normalizedIdxDefs[i] = &normalized
+		normalizedIdxDefs = append(normalizedIdxDefs, &normalized)
+	}
+	if !hasPrimaryIndexDef {
+		if primaryColumn, ok := singleCitextPrimaryKeyColumn(sch); ok {
+			primaryIndex := &sql.IndexDef{
+				Name:       defaultPrimaryKeyIndexName(ct),
+				Storage:    sql.IndexUsing_Default,
+				Constraint: sql.IndexConstraint_Primary,
+				Columns: []sql.IndexColumn{{
+					Name: primaryColumn.Name,
+				}},
+			}
+			originalColumns := append([]sql.IndexColumn(nil), primaryIndex.Columns...)
+			columns, comment, indexChanged := normalizeCitextIndexDef(ctx, primaryIndex.Columns, primaryIndex.Storage, primaryIndex.Constraint, primaryIndex.Comment, sch, true)
+			if indexChanged {
+				for columnIndex, column := range columns {
+					if column.Expression == nil {
+						continue
+					}
+					hiddenColumn, err := newHiddenSystemIndexColumn(ctx, ct, normalizedSchema, primaryIndex.Name, columnIndex, column.Expression, true)
+					if err != nil {
+						return nil, false, err
+					}
+					clearPrimaryKeyForIndexColumn(normalizedSchema, originalColumns[columnIndex])
+					normalizedSchema = append(normalizedSchema, hiddenColumn)
+					columns[columnIndex].Name = hiddenColumn.Name
+					columns[columnIndex].Expression = nil
+				}
+				primaryIndex.Columns = columns
+				primaryIndex.Comment = comment
+				normalizedIdxDefs = append(normalizedIdxDefs, primaryIndex)
+				changed = true
+			}
+		}
 	}
 	if !changed {
 		return ct, false, nil
@@ -533,7 +578,38 @@ func normalizeCitextCreateTableIndexes(ctx *sql.Context, ct *plan.CreateTable, s
 	return plan.NewCreateTable(ct.Db, ct.Name(), ct.IfNotExists(), ct.Temporary(), tableSpec), true, nil
 }
 
-func newHiddenSystemIndexColumn(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema, indexName string, columnIndex int, expr sql.Expression) (*sql.Column, error) {
+func defaultPrimaryKeyIndexName(ct *plan.CreateTable) string {
+	return ct.Name() + "_pkey"
+}
+
+func singleCitextPrimaryKeyColumn(sch sql.Schema) (*sql.Column, bool) {
+	var primaryColumn *sql.Column
+	for _, column := range sch {
+		if !column.PrimaryKey {
+			continue
+		}
+		if primaryColumn != nil {
+			return nil, false
+		}
+		primaryColumn = column
+	}
+	if primaryColumn == nil || !isCitextSchemaColumn(primaryColumn) {
+		return nil, false
+	}
+	return primaryColumn, true
+}
+
+func clearPrimaryKeyForIndexColumn(sch sql.Schema, column sql.IndexColumn) {
+	if column.Name == "" {
+		return
+	}
+	columnIndex := sch.IndexOfColName(column.Name)
+	if columnIndex >= 0 {
+		sch[columnIndex].PrimaryKey = false
+	}
+}
+
+func newHiddenSystemIndexColumn(ctx *sql.Context, ct *plan.CreateTable, sch sql.Schema, indexName string, columnIndex int, expr sql.Expression, primaryKey bool) (*sql.Column, error) {
 	columnDefaultValue, err := sql.NewColumnDefaultValue(expr, expr.Type(ctx), false, true, true)
 	if err != nil {
 		return nil, err
@@ -549,8 +625,9 @@ func newHiddenSystemIndexColumn(ctx *sql.Context, ct *plan.CreateTable, sch sql.
 		Name:           hiddenColumnName,
 		Source:         ct.Name(),
 		DatabaseSource: databaseName,
-		Nullable:       true,
-		Virtual:        true,
+		PrimaryKey:     primaryKey,
+		Nullable:       !primaryKey,
+		Virtual:        !primaryKey,
 		HiddenSystem:   true,
 	}, nil
 }
@@ -566,10 +643,10 @@ func hiddenSystemIndexColumnName(sch sql.Schema, indexName string, columnIndex i
 	return name
 }
 
-func normalizeCitextIndexDef(ctx *sql.Context, indexColumns []sql.IndexColumn, using sql.IndexUsing, constraint sql.IndexConstraint, comment string, sch sql.Schema) ([]sql.IndexColumn, string, bool) {
+func normalizeCitextIndexDef(ctx *sql.Context, indexColumns []sql.IndexColumn, using sql.IndexUsing, constraint sql.IndexConstraint, comment string, sch sql.Schema, allowPrimary bool) ([]sql.IndexColumn, string, bool) {
 	if len(indexColumns) != 1 ||
 		(using != sql.IndexUsing_Default && using != sql.IndexUsing_BTree) ||
-		constraint == sql.IndexConstraint_Primary ||
+		(constraint == sql.IndexConstraint_Primary && !allowPrimary) ||
 		constraint == sql.IndexConstraint_Fulltext ||
 		constraint == sql.IndexConstraint_Spatial ||
 		constraint == sql.IndexConstraint_Vector {

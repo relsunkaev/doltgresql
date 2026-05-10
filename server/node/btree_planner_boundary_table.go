@@ -447,16 +447,13 @@ func constantStringValue(ctx *sql.Context, expr sql.Expression) (string, bool, e
 }
 
 func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (btreePatternOpLookup, bool) {
-	metadata, ok := indexmetadata.DecodeComment(index.Comment())
-	if !ok {
-		return btreePatternOpLookup{}, false
-	}
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return btreePatternOpLookup{}, false
 	}
 	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
 	columnTypes := index.ColumnExpressionTypes(ctx)
-	for i, opClass := range metadata.OpClasses {
+	opClasses := indexmetadata.OpClassesForSchema(index, tableSchema)
+	for i, opClass := range opClasses {
 		if i != 0 || !isBtreePatternOpClass(opClass) || i >= len(logicalColumns) || i >= len(columnTypes) {
 			continue
 		}
@@ -475,16 +472,13 @@ func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Sch
 }
 
 func citextBtreeIndexLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (citextBtreeLookup, bool) {
-	metadata, ok := indexmetadata.DecodeComment(index.Comment())
-	if !ok {
-		return citextBtreeLookup{}, false
-	}
 	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
 		return citextBtreeLookup{}, false
 	}
 	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
 	columnTypes := index.ColumnExpressionTypes(ctx)
-	for i, opClass := range metadata.OpClasses {
+	opClasses := indexmetadata.OpClassesForSchema(index, tableSchema)
+	for i, opClass := range opClasses {
 		if indexmetadata.NormalizeOpClass(opClass) != indexmetadata.OpClassCitextOps ||
 			i >= len(logicalColumns) ||
 			i >= len(columnTypes) {

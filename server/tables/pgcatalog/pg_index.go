@@ -410,7 +410,7 @@ func opClassIds(opClasses []string) []any {
 
 func indexOpClassIds(index sql.Index, schema sql.Schema, indexColumns []string) []any {
 	accessMethod := indexmetadata.AccessMethod(index.IndexType(), index.Comment())
-	opClasses := indexmetadata.OpClasses(index.Comment())
+	opClasses := indexmetadata.OpClassesForSchema(index, schema)
 	if len(opClasses) > 0 {
 		return indexOpClassIdsWithDefaults(accessMethod, schema, indexColumns, opClasses)
 	}

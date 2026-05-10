@@ -135,9 +135,23 @@ func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
 	for i, expr := range exprs {
 		definition := unqualifiedIndexExpression(expr)
 		storageName := definition
+		if citextColumn, ok := lowerCitextLogicalColumn(tableSchema, definition); ok {
+			logical[i] = LogicalColumn{
+				Definition:  citextColumn.Name,
+				StorageName: citextColumn.Name,
+			}
+			continue
+		}
 		if col, ok := schemaColumn(tableSchema, definition); ok {
 			storageName = col.Name
 			if col.HiddenSystem && col.Generated != nil && col.Generated.Expr != nil {
+				if citextColumn, ok := hiddenLowerCitextLogicalColumn(tableSchema, col); ok {
+					logical[i] = LogicalColumn{
+						Definition:  citextColumn.Name,
+						StorageName: citextColumn.Name,
+					}
+					continue
+				}
 				definition = unqualifiedIndexExpression(col.Generated.Expr.String())
 				logical[i] = LogicalColumn{
 					Definition:  definition,
@@ -156,6 +170,42 @@ func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
 	return logical
 }
 
+// OpClassesForSchema returns preserved opclasses, plus narrow inferred
+// opclasses for physical hidden-key indexes that cannot carry index comments
+// (currently CREATE TABLE citext primary keys).
+func OpClassesForSchema(index sql.Index, tableSchema sql.Schema) []string {
+	opClasses := OpClasses(index.Comment())
+	if len(opClasses) > 0 {
+		return opClasses
+	}
+	if AccessMethod(index.IndexType(), index.Comment()) != AccessMethodBtree || tableSchema == nil {
+		return nil
+	}
+	exprs := index.Expressions()
+	inferred := make([]string, len(exprs))
+	found := false
+	for i, expr := range exprs {
+		storageName := unqualifiedIndexExpression(expr)
+		if _, ok := lowerCitextLogicalColumn(tableSchema, storageName); ok {
+			inferred[i] = OpClassCitextOps
+			found = true
+			continue
+		}
+		storageColumn, ok := schemaColumn(tableSchema, storageName)
+		if !ok {
+			continue
+		}
+		if _, ok := hiddenLowerCitextLogicalColumn(tableSchema, storageColumn); ok {
+			inferred[i] = OpClassCitextOps
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	return inferred
+}
+
 // ColumnDefinitions returns PostgreSQL-facing indexed column definitions,
 // including any opclass metadata preserved by Doltgres.
 func ColumnDefinitions(index sql.Index) []string {
@@ -172,7 +222,7 @@ func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []strin
 	}
 
 	collations := Collations(index.Comment())
-	opClasses := OpClasses(index.Comment())
+	opClasses := OpClassesForSchema(index, tableSchema)
 	sortOptions := SortOptions(index.Comment())
 	for i := range cols {
 		if i < len(collations) && collations[i] != "" {
@@ -202,6 +252,39 @@ func AttributeDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []st
 	attributes = append(attributes, keyColumns...)
 	attributes = append(attributes, includeColumns...)
 	return attributes
+}
+
+func hiddenLowerCitextLogicalColumn(tableSchema sql.Schema, column *sql.Column) (*sql.Column, bool) {
+	if column == nil || !column.HiddenSystem || column.Generated == nil || column.Generated.Expr == nil {
+		return nil, false
+	}
+	return lowerCitextLogicalColumn(tableSchema, column.Generated.Expr.String())
+}
+
+func lowerCitextLogicalColumn(tableSchema sql.Schema, expr string) (*sql.Column, bool) {
+	columnName, ok := lowerFunctionColumnName(expr)
+	if !ok {
+		return nil, false
+	}
+	logicalColumn, ok := schemaColumn(tableSchema, columnName)
+	if !ok {
+		return nil, false
+	}
+	opClass, ok := DefaultBtreeOpClassForType(logicalColumn.Type)
+	return logicalColumn, ok && opClass == OpClassCitextOps
+}
+
+func lowerFunctionColumnName(expr string) (string, bool) {
+	expr = trimEnclosingParens(unqualifiedIndexExpression(expr))
+	if len(expr) < len("lower()") || !strings.HasPrefix(strings.ToLower(expr), "lower(") || !strings.HasSuffix(expr, ")") {
+		return "", false
+	}
+	arg := strings.TrimSpace(expr[len("lower(") : len(expr)-1])
+	arg = trimEnclosingParens(arg)
+	if arg == "" || strings.ContainsAny(arg, " \t\n\r,()+-*/") {
+		return "", false
+	}
+	return arg, true
 }
 
 // ExpressionDefinitions returns the expressions stored in pg_index.indexprs.

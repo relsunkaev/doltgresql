@@ -302,6 +302,26 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	if _, err := conn.Exec(ctx, "INSERT INTO citext_table_unique_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
 		t.Fatalf("expected table unique citext index to reject mixed-case duplicate, got %v", err)
 	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_inline_primary_plan (email public.citext PRIMARY KEY, id INTEGER NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_inline_primary_plan VALUES ('Alice@example.com', 1)")
+	inlinePrimaryIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_inline_primary_plan_pkey'")
+	if !strings.Contains(inlinePrimaryIndexDef, "email citext_ops") {
+		t.Fatalf("expected inline primary pg_indexes to preserve citext_ops, got %q", inlinePrimaryIndexDef)
+	}
+	inlinePrimaryOpClass := queryBenchmarkString(t, ctx, conn, `SELECT opc.opcname
+		FROM pg_catalog.pg_index idx
+		JOIN pg_catalog.pg_class cls ON cls.oid = idx.indexrelid
+		JOIN pg_catalog.pg_opclass opc ON opc.oid = ANY(idx.indclass)
+		WHERE cls.relname = 'citext_inline_primary_plan_pkey'`)
+	if inlinePrimaryOpClass != "citext_ops" {
+		t.Fatalf("expected inline primary pg_index.indclass to expose citext_ops, got %q", inlinePrimaryOpClass)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_inline_primary_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_inline_primary_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_inline_primary_plan VALUES ('ALICE@example.com', 2)"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected inline primary citext index to reject mixed-case duplicate, got %v", err)
+	}
 }
 
 func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {
