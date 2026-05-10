@@ -46,8 +46,10 @@ type functionRegistry struct {
 	counter    uint32
 	mapping    map[id.Function]uint32
 	revMapping map[uint32]id.Function
-	functions  [256]QuickFunction // Arbitrary number, big enough for now to fit every function in it
+	functions  []QuickFunction
 }
+
+const initialFunctionRegistrySize = 256
 
 // globalFunctionRegistry is the global functionRegistry. Only one needs to exist since we do not yet allow deleting
 // built-in functions.
@@ -56,6 +58,7 @@ var globalFunctionRegistry = functionRegistry{
 	counter:    1,
 	mapping:    map[id.Function]uint32{id.NullFunction: 0},
 	revMapping: map[uint32]id.Function{0: id.NullFunction},
+	functions:  make([]QuickFunction, initialFunctionRegistrySize),
 }
 
 // InternalToRegistryID returns an ID for the given Internal ID.
@@ -65,9 +68,7 @@ func (r *functionRegistry) InternalToRegistryID(functionID id.Function) uint32 {
 	if registryID, ok := r.mapping[functionID]; ok {
 		return registryID
 	}
-	if r.counter >= uint32(len(r.functions)) {
-		panic("max function count reached in static array")
-	}
+	r.ensureFunctionCapacity(r.counter)
 	r.mapping[functionID] = r.counter
 	r.revMapping[r.counter] = functionID
 	r.counter++
@@ -76,14 +77,17 @@ func (r *functionRegistry) InternalToRegistryID(functionID id.Function) uint32 {
 
 // GetFunction returns the associated function for the given ID. This will always return a valid function.
 func (r *functionRegistry) GetFunction(ctx *sql.Context, id uint32) QuickFunction {
+	if id == 0 {
+		return nil
+	}
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+	if id >= uint32(len(r.functions)) {
+		panic(errors.Errorf("cannot find function registry ID: %d", id))
+	}
 	f := r.functions[id]
 	if f != nil {
 		return f
-	}
-	if id == 0 {
-		return nil
 	}
 	f = r.loadFunction(ctx, id)
 	if f == nil {
@@ -91,6 +95,22 @@ func (r *functionRegistry) GetFunction(ctx *sql.Context, id uint32) QuickFunctio
 		panic(errors.Errorf("cannot find function: `%s`", r.revMapping[id]))
 	}
 	return f
+}
+
+func (r *functionRegistry) ensureFunctionCapacity(id uint32) {
+	if id < uint32(len(r.functions)) {
+		return
+	}
+	newLen := len(r.functions)
+	if newLen == 0 {
+		newLen = initialFunctionRegistrySize
+	}
+	for id >= uint32(newLen) {
+		newLen *= 2
+	}
+	grownFunctions := make([]QuickFunction, newLen)
+	copy(grownFunctions, r.functions)
+	r.functions = grownFunctions
 }
 
 // GetInternalID returns the function's Internal ID associated with the given registry ID.

@@ -16,8 +16,10 @@ package types
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,6 +39,27 @@ func TestSerializationConsistency(t *testing.T) {
 			require.Equal(t, typ, dgt)
 		})
 	}
+}
+
+func TestFunctionRegistryGrowsBeyondInitialCapacity(t *testing.T) {
+	registry := functionRegistry{
+		mutex:      &sync.Mutex{},
+		counter:    1,
+		mapping:    map[id.Function]uint32{id.NullFunction: 0},
+		revMapping: map[uint32]id.Function{0: id.NullFunction},
+		functions:  make([]QuickFunction, 1),
+	}
+
+	var lastRegistryID uint32
+	var lastFunctionID id.Function
+	for i := 0; i < initialFunctionRegistrySize+1; i++ {
+		lastFunctionID = id.NewFunction("pg_catalog", fmt.Sprintf("test_registry_fn_%d", i))
+		lastRegistryID = registry.InternalToRegistryID(lastFunctionID)
+	}
+
+	require.Equal(t, uint32(initialFunctionRegistrySize+1), lastRegistryID)
+	require.Equal(t, lastFunctionID, registry.GetInternalID(lastRegistryID))
+	require.Equal(t, "test_registry_fn_256", registry.GetString(lastRegistryID))
 }
 
 // TestJsonValueType operates as a line of defense to prevent accidental changes to JSON type values. If this test
