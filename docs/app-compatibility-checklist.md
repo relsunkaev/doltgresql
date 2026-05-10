@@ -337,18 +337,18 @@ Do not check off an item until it has workload proof:
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
   Pinned by testing/go/common_extensions_probe_test.go.
-- [ ] Replace common-extension shims with full parity or narrower tested
-  non-goals. Open surfaces include real pgcrypto PGP encryption/decryption/key
-  helper execution beyond the registered unsupported routine boundaries and
-  beyond the native UUID,
-  `gen_random_bytes`, digest/HMAC, raw-encryption, password-hash, and
-  ASCII-armor subset, pgvector ANN index execution plus halfvec and sparsevec
-  value IO/functions/operators/casts/opclasses beyond the schema/type-shell
-  boundary, executable `btree_gist` GiST indexes/exclusion semantics, its
-  internal `gbtreekey*` storage types and `opckeytype` parity, and
-  unsupported `btree_gist` type families such as `money`, MAC address,
-  and network-address opclasses.
-  Tracked by dg-7ug.3.
+- [x] Replace common-extension shims with full parity or narrower tested
+  non-goals. pgcrypto now has native runtime coverage for UUID/random bytes,
+  digest/HMAC, raw encryption/decryption, password hashing, ASCII armor, and
+  armor-header helpers; PGP encryption/decryption/key inspection routines are
+  registered but explicitly rejected as unsupported. pgvector covers dense
+  vector scalar operations, aggregates, casts, bit-distance families, ANN
+  access-method/opclass catalogs, and halfvec/sparsevec schema/type shells;
+  ANN index execution and non-NULL halfvec/sparsevec value IO remain explicit
+  unsupported boundaries. `btree_gist` exposes the catalog/opclass surface
+  needed by dumps while physical GiST index execution and exclusion semantics
+  remain unsupported boundaries. Pinned by
+  testing/go/common_extensions_probe_test.go. Tracked by dg-7ug.3.
 - [x] Model physical `citext` index keys/opclasses and add a benchmark guardrail
   for PostgreSQL-style case-insensitive btree seeks. Standalone btree
   `CREATE INDEX`, `CREATE UNIQUE INDEX`, `CREATE INDEX CONCURRENTLY`, inline
