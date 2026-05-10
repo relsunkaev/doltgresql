@@ -34,6 +34,7 @@ const (
 	OpClassTextPatternOps    = "text_pattern_ops"
 	OpClassVarcharPatternOps = "varchar_pattern_ops"
 	OpClassBpcharPatternOps  = "bpchar_pattern_ops"
+	OpClassCitextOps         = "citext_ops"
 
 	CollationDefault  = "default"
 	CollationC        = "C"
@@ -68,6 +69,7 @@ var supportedBtreeOpClasses = map[string]struct{}{
 	"varchar_ops":            {},
 	"bpchar_ops":             {},
 	"bytea_ops":              {},
+	OpClassCitextOps:         {},
 	OpClassTextPatternOps:    {},
 	OpClassVarcharPatternOps: {},
 	OpClassBpcharPatternOps:  {},
@@ -100,6 +102,7 @@ var btreeOpClassInputTypes = map[string]map[string]struct{}{
 	"varchar_ops":            set("text", "varchar"),
 	"bpchar_ops":             set("text", "varchar", "bpchar"),
 	"bytea_ops":              set("bytea"),
+	OpClassCitextOps:         set("citext"),
 	OpClassTextPatternOps:    set("text", "varchar"),
 	OpClassVarcharPatternOps: set("text", "varchar"),
 	OpClassBpcharPatternOps:  set("text", "varchar", "bpchar"),

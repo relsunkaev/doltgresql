@@ -188,6 +188,79 @@ func TestExpressionBtreeIndexPlannerShape(t *testing.T) {
 	}
 }
 
+func TestCitextBtreeIndexPlannerShape(t *testing.T) {
+	ctx, conn, controller := CreateServer(t, "postgres")
+	t.Cleanup(func() {
+		conn.Close(ctx)
+		controller.Stop()
+		if err := controller.WaitForStop(); err != nil {
+			t.Fatalf("error stopping test server: %v", err)
+		}
+	})
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public")
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO citext_btree_plan VALUES
+		(1, 'Alice@example.com'),
+		(2, 'ALICE@example.com'),
+		(3, 'bob@example.com'),
+		(4, 'carol@example.com')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX citext_btree_plan_email_idx ON citext_btree_plan (email)")
+
+	indexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_btree_plan_email_idx'")
+	if !strings.Contains(indexDef, "email citext_ops") {
+		t.Fatalf("expected pg_indexes to preserve citext_ops, got %q", indexDef)
+	}
+
+	queries := []struct {
+		name  string
+		query string
+		want  int64
+	}{
+		{
+			name:  "case_insensitive_equality",
+			query: `SELECT count(id) FROM citext_btree_plan WHERE email = 'alice@example.com'::public.citext`,
+			want:  2,
+		},
+		{
+			name:  "case_insensitive_range",
+			query: `SELECT count(id) FROM citext_btree_plan WHERE email > 'alice@example.com'::public.citext AND email < 'carol@example.com'::public.citext`,
+			want:  1,
+		},
+		{
+			name:  "literal_on_left_range",
+			query: `SELECT count(id) FROM citext_btree_plan WHERE 'carol@example.com'::public.citext > email`,
+			want:  3,
+		},
+	}
+	for _, query := range queries {
+		query := query
+		t.Run(query.name, func(t *testing.T) {
+			assertBenchmarkPlanShape(t, ctx, conn, query.query, true)
+			assertCountResult(t, ctx, conn, query.query, query.want)
+		})
+	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_unique_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_unique_btree_plan VALUES (1, 'Alice@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE UNIQUE INDEX citext_unique_btree_plan_email_idx ON citext_unique_btree_plan (email)")
+	uniqueIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_unique_btree_plan_email_idx'")
+	if !strings.Contains(uniqueIndexDef, "email citext_ops") {
+		t.Fatalf("expected unique pg_indexes to preserve citext_ops, got %q", uniqueIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_unique_btree_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_unique_btree_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_unique_btree_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected unique citext index to reject mixed-case duplicate, got %v", err)
+	}
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_multi_btree_boundary (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_multi_btree_boundary VALUES (1, 'Alice@example.com'), (2, 'bob@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX citext_multi_btree_boundary_idx ON citext_multi_btree_boundary (email, id)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, false)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, 1)
+}
+
 func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {
 	ctx, conn, controller := CreateServer(t, "postgres")
 	t.Cleanup(func() {

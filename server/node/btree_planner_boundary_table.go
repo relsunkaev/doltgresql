@@ -30,9 +30,17 @@ import (
 type BtreePlannerBoundaryTable struct {
 	underlying      sql.Table
 	patternOpLookup []btreePatternOpLookup
+	citextLookup    []citextBtreeLookup
 }
 
 type btreePatternOpLookup struct {
+	index      sql.Index
+	columnName string
+	expression string
+	typ        sql.Type
+}
+
+type citextBtreeLookup struct {
 	index      sql.Index
 	columnName string
 	expression string
@@ -54,6 +62,13 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	if _, ok := table.(*BtreePlannerBoundaryTable); ok {
 		return table, false, nil
 	}
+	if wrapper, ok := table.(sql.MutableTableWrapper); ok {
+		wrappedUnderlying, wrapped, err := WrapBtreePlannerBoundaryTable(ctx, wrapper.Underlying())
+		if err != nil || !wrapped {
+			return table, wrapped, err
+		}
+		return wrapper.WithUnderlying(wrappedUnderlying), true, nil
+	}
 	indexAddressable, ok := table.(sql.IndexAddressable)
 	if !ok {
 		return table, false, nil
@@ -64,6 +79,7 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 	}
 	needsWrap := false
 	patternOpLookups := make([]btreePatternOpLookup, 0)
+	citextLookups := make([]citextBtreeLookup, 0)
 	tableSchema := table.Schema(ctx)
 	for _, index := range indexes {
 		if hidePlannerIndex(index) {
@@ -75,16 +91,23 @@ func WrapBtreePlannerBoundaryTable(ctx *sql.Context, table sql.Table) (sql.Table
 			if lookup, ok := patternOpClassLookup(ctx, index, tableSchema); ok {
 				patternOpLookups = append(patternOpLookups, lookup)
 			}
+			if lookup, ok := citextBtreeIndexLookup(ctx, index, tableSchema); ok {
+				citextLookups = append(citextLookups, lookup)
+			}
 			continue
 		}
 	}
 	if !needsWrap {
 		return table, false, nil
 	}
-	if len(patternOpLookups) == 0 {
+	if len(patternOpLookups) == 0 && len(citextLookups) == 0 {
 		return &BtreePlannerBoundaryTable{underlying: table}, true, nil
 	}
-	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: patternOpLookups}, true, nil
+	return &BtreePlannerBoundaryTable{
+		underlying:      table,
+		patternOpLookup: patternOpLookups,
+		citextLookup:    citextLookups,
+	}, true, nil
 }
 
 func (t *BtreePlannerBoundaryTable) Name() string {
@@ -112,7 +135,7 @@ func (t *BtreePlannerBoundaryTable) WithProjections(ctx *sql.Context, colNames [
 	if err != nil {
 		return nil, err
 	}
-	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: t.patternOpLookup}, nil
+	return &BtreePlannerBoundaryTable{underlying: table, patternOpLookup: t.patternOpLookup, citextLookup: t.citextLookup}, nil
 }
 
 func (t *BtreePlannerBoundaryTable) Projections() []string {
@@ -244,6 +267,10 @@ func (t *BtreePlannerBoundaryTable) SkipIndexCosting() bool {
 }
 
 func (t *BtreePlannerBoundaryTable) LookupForExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, *sql.FuncDepSet, sql.Expression, bool, error) {
+	lookup, ok, err := t.lookupForCitextComparisons(ctx, exprs...)
+	if err != nil || ok {
+		return lookup, nil, gmsexpression.JoinAnd(exprs...), ok, err
+	}
 	for _, expr := range exprs {
 		lookup, ok, err := t.lookupForPatternLike(ctx, expr)
 		if err != nil || !ok {
@@ -255,6 +282,49 @@ func (t *BtreePlannerBoundaryTable) LookupForExpressions(ctx *sql.Context, exprs
 		return lookup, nil, gmsexpression.JoinAnd(exprs...), true, nil
 	}
 	return sql.IndexLookup{}, nil, nil, false, nil
+}
+
+func (t *BtreePlannerBoundaryTable) lookupForCitextComparisons(ctx *sql.Context, exprs ...sql.Expression) (sql.IndexLookup, bool, error) {
+	for _, cached := range t.citextLookup {
+		builder := sql.NewMySQLIndexBuilder(ctx, cached.index)
+		matched := false
+		for _, expr := range exprs {
+			comparison, ok, err := citextLookupComparison(ctx, expr, cached.columnName)
+			if err != nil {
+				return sql.IndexLookup{}, false, err
+			}
+			if !ok {
+				continue
+			}
+			matched = true
+			switch comparison.op {
+			case sql.IndexScanOpEq:
+				builder.Equals(ctx, cached.expression, cached.typ, comparison.value)
+			case sql.IndexScanOpGt:
+				builder.GreaterThan(ctx, cached.expression, cached.typ, comparison.value)
+			case sql.IndexScanOpGte:
+				builder.GreaterOrEqual(ctx, cached.expression, cached.typ, comparison.value)
+			case sql.IndexScanOpLt:
+				builder.LessThan(ctx, cached.expression, cached.typ, comparison.value)
+			case sql.IndexScanOpLte:
+				builder.LessOrEqual(ctx, cached.expression, cached.typ, comparison.value)
+			default:
+				matched = false
+			}
+		}
+		if !matched {
+			continue
+		}
+		lookup, err := builder.Build(ctx)
+		if err != nil {
+			return sql.IndexLookup{}, false, err
+		}
+		if lookup.IsEmpty() {
+			continue
+		}
+		return lookup, true, nil
+	}
+	return sql.IndexLookup{}, false, nil
 }
 
 func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr sql.Expression) (sql.IndexLookup, bool, error) {
@@ -307,6 +377,75 @@ func (t *BtreePlannerBoundaryTable) lookupForPatternLike(ctx *sql.Context, expr 
 	return sql.IndexLookup{}, false, nil
 }
 
+type citextComparisonLookup struct {
+	op    sql.IndexScanOp
+	value string
+}
+
+func citextLookupComparison(ctx *sql.Context, expr sql.Expression, columnName string) (citextComparisonLookup, bool, error) {
+	indexComparison, ok := unwrapGMSCast(expr).(sql.IndexComparisonExpression)
+	if !ok {
+		return citextComparisonLookup{}, false, nil
+	}
+	op, left, right, ok := indexComparison.IndexScanOperation()
+	if !ok || op == sql.IndexScanOpNotEq {
+		return citextComparisonLookup{}, false, nil
+	}
+
+	valueExpr := right
+	if !citextLookupFieldMatches(left, columnName) {
+		if !citextLookupFieldMatches(right, columnName) {
+			return citextComparisonLookup{}, false, nil
+		}
+		op = invertIndexScanOp(op)
+		valueExpr = left
+	}
+	value, ok, err := constantStringValue(ctx, valueExpr)
+	if err != nil || !ok {
+		return citextComparisonLookup{}, false, err
+	}
+	return citextComparisonLookup{
+		op:    op,
+		value: strings.ToLower(value),
+	}, true, nil
+}
+
+func citextLookupFieldMatches(expr sql.Expression, columnName string) bool {
+	field, ok := unwrapGMSCast(expr).(*gmsexpression.GetField)
+	return ok && strings.EqualFold(field.Name(), columnName)
+}
+
+func invertIndexScanOp(op sql.IndexScanOp) sql.IndexScanOp {
+	switch op {
+	case sql.IndexScanOpGt:
+		return sql.IndexScanOpLt
+	case sql.IndexScanOpGte:
+		return sql.IndexScanOpLte
+	case sql.IndexScanOpLt:
+		return sql.IndexScanOpGt
+	case sql.IndexScanOpLte:
+		return sql.IndexScanOpGte
+	default:
+		return op
+	}
+}
+
+func constantStringValue(ctx *sql.Context, expr sql.Expression) (string, bool, error) {
+	if !expr.Resolved() {
+		return "", false, nil
+	}
+	value, err := expr.Eval(ctx, nil)
+	if err != nil || value == nil {
+		return "", false, err
+	}
+	value, err = sql.UnwrapAny(ctx, value)
+	if err != nil || value == nil {
+		return "", false, err
+	}
+	str, ok := value.(string)
+	return str, ok, nil
+}
+
 func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (btreePatternOpLookup, bool) {
 	metadata, ok := indexmetadata.DecodeComment(index.Comment())
 	if !ok {
@@ -333,6 +472,62 @@ func patternOpClassLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Sch
 		}, true
 	}
 	return btreePatternOpLookup{}, false
+}
+
+func citextBtreeIndexLookup(ctx *sql.Context, index sql.Index, tableSchema sql.Schema) (citextBtreeLookup, bool) {
+	metadata, ok := indexmetadata.DecodeComment(index.Comment())
+	if !ok {
+		return citextBtreeLookup{}, false
+	}
+	if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
+		return citextBtreeLookup{}, false
+	}
+	logicalColumns := indexmetadata.LogicalColumns(index, tableSchema)
+	columnTypes := index.ColumnExpressionTypes(ctx)
+	for i, opClass := range metadata.OpClasses {
+		if indexmetadata.NormalizeOpClass(opClass) != indexmetadata.OpClassCitextOps ||
+			i >= len(logicalColumns) ||
+			i >= len(columnTypes) {
+			continue
+		}
+		logicalColumn := logicalColumns[i]
+		if logicalColumn.Expression {
+			continue
+		}
+		columnIndex := tableSchema.IndexOfColName(logicalColumn.StorageName)
+		if columnIndex < 0 || !isCitextType(tableSchema[columnIndex].Type) {
+			continue
+		}
+		expression := columnTypes[i].Expression
+		if !strings.Contains(strings.ToLower(citextPhysicalExpression(expression, tableSchema)), "lower(") {
+			continue
+		}
+		return citextBtreeLookup{
+			index:      index,
+			columnName: logicalColumn.StorageName,
+			expression: expression,
+			typ:        columnTypes[i].Type,
+		}, true
+	}
+	return citextBtreeLookup{}, false
+}
+
+func citextPhysicalExpression(indexExpression string, tableSchema sql.Schema) string {
+	columnName := strings.Trim(strings.TrimSpace(indexExpression), "`\"")
+	columnIndex := tableSchema.IndexOfColName(columnName)
+	if columnIndex < 0 {
+		if dot := strings.LastIndex(columnName, "."); dot >= 0 {
+			columnIndex = tableSchema.IndexOfColName(columnName[dot+1:])
+		}
+	}
+	if columnIndex < 0 {
+		return indexExpression
+	}
+	column := tableSchema[columnIndex]
+	if !column.HiddenSystem || column.Generated == nil || column.Generated.Expr == nil {
+		return indexExpression
+	}
+	return column.Generated.Expr.String()
 }
 
 func unsafeBtreePlannerIndex(index sql.Index, tableSchema sql.Schema) bool {

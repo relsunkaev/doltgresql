@@ -20,10 +20,13 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
+	gmsfunction "github.com/dolthub/go-mysql-server/sql/expression/function"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // validateCreateTable validates that a table can be created as specified
@@ -320,8 +323,12 @@ func resolveAlterColumn(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, scop
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
+			n, err = normalizeCitextAlterIndex(ctx, n.(*plan.AlterIndex), sch)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
 
-			keyedColumns = analyzer.UpdateKeyedColumns(keyedColumns, nn)
+			keyedColumns = analyzer.UpdateKeyedColumns(keyedColumns, n.(*plan.AlterIndex))
 			return n, transform.NewTree, nil
 		case *plan.AlterPK:
 			n, err := nn.WithTargetSchema(sch.Copy())
@@ -443,6 +450,77 @@ func validatePrimaryKey(ctx *sql.Context, initialSch, sch sql.Schema, ai *plan.A
 	default:
 		return sch, nil
 	}
+}
+
+func normalizeCitextAlterIndex(ctx *sql.Context, ai *plan.AlterIndex, sch sql.Schema) (*plan.AlterIndex, error) {
+	if ai.Action != plan.IndexAction_Create ||
+		len(ai.Columns) != 1 ||
+		(ai.Using != sql.IndexUsing_Default && ai.Using != sql.IndexUsing_BTree) ||
+		ai.Constraint == sql.IndexConstraint_Fulltext ||
+		ai.Constraint == sql.IndexConstraint_Spatial ||
+		ai.Constraint == sql.IndexConstraint_Vector {
+		return ai, nil
+	}
+
+	metadata, ok := indexmetadata.DecodeComment(ai.Comment)
+	if !ok {
+		metadata = indexmetadata.Metadata{AccessMethod: indexmetadata.AccessMethodBtree}
+	}
+	if indexmetadata.NormalizeAccessMethod(metadata.AccessMethod) != indexmetadata.AccessMethodBtree {
+		return ai, nil
+	}
+
+	columns := append([]sql.IndexColumn(nil), ai.Columns...)
+	metadata.Columns = ensureStringMetadataLength(metadata.Columns, len(columns))
+	metadata.OpClasses = ensureStringMetadataLength(metadata.OpClasses, len(columns))
+
+	changed := false
+	for i, column := range columns {
+		if metadata.Columns[i] == "" && column.Name != "" {
+			metadata.Columns[i] = column.Name
+		}
+		if column.Expression != nil || column.Name == "" {
+			continue
+		}
+		columnIndex := sch.IndexOfColName(column.Name)
+		if columnIndex < 0 || !isCitextSchemaColumn(sch[columnIndex]) {
+			continue
+		}
+
+		// The stored expression is a normalized text key; the index metadata keeps
+		// the logical citext column/opclass surface.
+		field := gmsexpression.NewGetField(columnIndex, pgtypes.Text, sch[columnIndex].Name, sch[columnIndex].Nullable)
+		columns[i].Name = ""
+		columns[i].Expression = gmsfunction.NewLower(ctx, field)
+		metadata.Columns[i] = column.Name
+		if metadata.OpClasses[i] == "" {
+			metadata.OpClasses[i] = indexmetadata.OpClassCitextOps
+		}
+		changed = true
+	}
+	if !changed {
+		return ai, nil
+	}
+
+	metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	normalized := *ai
+	normalized.Columns = columns
+	normalized.Comment = indexmetadata.EncodeComment(metadata)
+	return &normalized, nil
+}
+
+func ensureStringMetadataLength(values []string, length int) []string {
+	if len(values) >= length {
+		return values
+	}
+	next := make([]string, length)
+	copy(next, values)
+	return next
+}
+
+func isCitextSchemaColumn(column *sql.Column) bool {
+	doltgresType, ok := column.Type.(*pgtypes.DoltgresType)
+	return ok && doltgresType.ID.TypeName() == "citext"
 }
 
 // validateAlterIndex validates the specified column can have an index added, dropped, or renamed. Returns an updated

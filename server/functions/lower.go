@@ -26,6 +26,7 @@ import (
 // initLower registers the functions to the catalog.
 func initLower() {
 	framework.RegisterFunction(lower_text)
+	framework.RegisterFunction(lower_citext)
 }
 
 // lower_text represents the PostgreSQL function of the same name, taking the same parameters.
@@ -33,6 +34,17 @@ var lower_text = framework.Function1{
 	Name:       "lower",
 	Return:     pgtypes.Text,
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		//TODO: this doesn't respect collations
+		return strings.ToLower(val1.(string)), nil
+	},
+}
+
+var lower_citext = framework.Function1{
+	Name:       "lower",
+	Return:     pgtypes.Text,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.NewUnresolvedDoltgresType("public", "citext")},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
 		//TODO: this doesn't respect collations

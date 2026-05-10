@@ -884,6 +884,40 @@ ORDER BY amproc.amprocnum;`,
 					Expected: []sql.Row{{"Alice@Example.com"}},
 				},
 				{
+					Query: `SELECT opc.opcname, am.amname, typ.typname, opc.opcdefault::text
+						FROM pg_catalog.pg_opclass opc
+						JOIN pg_catalog.pg_am am ON am.oid = opc.opcmethod
+						JOIN pg_catalog.pg_type typ ON typ.oid = opc.opcintype
+						WHERE opc.opcname = 'citext_ops';`,
+					Expected: []sql.Row{{"citext_ops", "btree", "citext", "true"}},
+				},
+				{
+					Query: `SELECT opf.opfname, amop.amopstrategy, opr.oprname
+						FROM pg_catalog.pg_amop amop
+						JOIN pg_catalog.pg_opfamily opf ON opf.oid = amop.amopfamily
+						JOIN pg_catalog.pg_am am ON am.oid = amop.amopmethod
+						JOIN pg_catalog.pg_operator opr ON opr.oid = amop.amopopr
+						WHERE am.amname = 'btree'
+							AND opf.opfname = 'citext_ops'
+						ORDER BY amop.amopstrategy;`,
+					Expected: []sql.Row{
+						{"citext_ops", int16(1), "<"},
+						{"citext_ops", int16(2), "<="},
+						{"citext_ops", int16(3), "="},
+						{"citext_ops", int16(4), ">="},
+						{"citext_ops", int16(5), ">"},
+					},
+				},
+				{
+					Query: `SELECT opf.opfname, amproc.amprocnum, amproc.amproc::regproc::text
+						FROM pg_catalog.pg_amproc amproc
+						JOIN pg_catalog.pg_opfamily opf ON opf.oid = amproc.amprocfamily
+						JOIN pg_catalog.pg_am am ON am.oid = opf.opfmethod
+						WHERE am.amname = 'btree'
+							AND opf.opfname = 'citext_ops';`,
+					Expected: []sql.Row{{"citext_ops", int16(1), "citext_cmp"}},
+				},
+				{
 					Query:    `SELECT ('Alice@Example.com'::public.citext = 'alice@example.com'::public.citext)::text;`,
 					Expected: []sql.Row{{"true"}},
 				},

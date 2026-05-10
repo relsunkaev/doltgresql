@@ -23,8 +23,23 @@ import (
 
 var citextType = pgtypes.NewUnresolvedDoltgresType("public", "citext")
 
+func initCitext() {
+	framework.RegisterFunction(citext_cmp)
+}
+
 func citextCompare(ctx *sql.Context, params [3]*pgtypes.DoltgresType, val1 any, val2 any) (int, error) {
 	return params[0].Compare(ctx, val1, val2)
+}
+
+var citext_cmp = framework.Function2{
+	Name:       "citext_cmp",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{citextType, citextType},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, params [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		res, err := citextCompare(ctx, params, val1, val2)
+		return int32(res), err
+	},
 }
 
 var citext_eq = framework.Function2{
