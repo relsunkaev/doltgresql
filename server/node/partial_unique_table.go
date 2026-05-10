@@ -1236,6 +1236,9 @@ func (p *partialIndexPredicate) evalFunction(ctx *sql.Context, row sql.Row, expr
 	if name == "lcm" {
 		return p.evalLcm(ctx, row, expr)
 	}
+	if name == "mod" {
+		return p.evalMod(ctx, row, expr)
+	}
 	if name == "concat" {
 		return p.evalConcat(ctx, row, expr)
 	}
@@ -1750,6 +1753,35 @@ func predicateAbsInt64(value int64) int64 {
 		return -value
 	}
 	return value
+}
+
+func (p *partialIndexPredicate) evalMod(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {
+	if len(expr.Exprs) != 2 {
+		return predicateValue{}, errors.New("partial unique index predicate function mod expects two arguments")
+	}
+	left, err := p.evalValue(ctx, row, expr.Exprs[0])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Exprs[1])
+	if err != nil {
+		return predicateValue{}, err
+	}
+	if left.value == nil || right.value == nil {
+		return predicateValue{}, nil
+	}
+	leftInt, ok := predicateSignedIntegerValue(left.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function mod does not support %T", left.value)
+	}
+	rightInt, ok := predicateSignedIntegerValue(right.value)
+	if !ok {
+		return predicateValue{}, errors.Errorf("partial unique index predicate function mod does not support %T", right.value)
+	}
+	if rightInt == 0 {
+		return predicateValue{}, errors.New("division by zero")
+	}
+	return predicateValue{value: leftInt % rightInt}, nil
 }
 
 func (p *partialIndexPredicate) evalConcat(ctx *sql.Context, row sql.Row, expr *tree.FuncExpr) (predicateValue, error) {

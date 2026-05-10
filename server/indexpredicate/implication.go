@@ -650,7 +650,7 @@ func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	if name == "repeat" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
-	if name == "gcd" || name == "lcm" {
+	if name == "gcd" || name == "lcm" || name == "mod" {
 		return predicateFunctionCallExprKey(name, fn.Exprs, 2)
 	}
 	if name == "concat" {

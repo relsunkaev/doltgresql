@@ -1064,6 +1064,16 @@ Do not check off an item until it has workload proof:
   server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.29.
+- [x] Use deterministic `mod(left, right)` predicates in partial-index
+  implication paths. Two-argument `mod(...)` calls now serialize as comparable
+  predicate keys, planner filters can deparse them, partial unique DML
+  enforcement evaluates signed-integer remainder output with existing
+  division-by-zero behavior, and `ON CONFLICT` arbiter inference accepts the
+  exact-expression shape; raw arithmetic predicates, argument reordering, wrong
+  remainder values, and zero-divisor rows remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.30.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

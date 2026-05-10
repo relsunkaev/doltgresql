@@ -989,6 +989,34 @@ func TestImpliesLcmFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesModFunctionPredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"mod(account_id, shard_count) = 1", "mod(account_id, shard_count) = 1"},
+		{"mod(account_id, shard_count) IN (1, 2)", "mod(account_id, shard_count) = 1"},
+		{"mod(account_id, shard_count) IS NOT NULL", "mod(account_id, shard_count) = 1"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"mod(account_id, shard_count) = 1", "account_id = 7 AND shard_count = 3"},
+		{"mod(account_id, shard_count) = 1", "mod(shard_count, account_id) = 1"},
+		{"mod(account_id, shard_count) = 1", "mod(account_id, shard_count) = 2"},
+		{"mod(account_id, shard_count) IN (1, 2)", "mod(account_id, shard_count) IN (2, 3)"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesChrFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

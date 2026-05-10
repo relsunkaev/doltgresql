@@ -646,6 +646,37 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports mod predicate",
+			SetUpScript: []string{
+				`CREATE TABLE mod_scores (id INT PRIMARY KEY, user_id INT, account_id BIGINT, shard_count BIGINT);`,
+				`CREATE UNIQUE INDEX mod_scores_user_shard_idx
+					ON mod_scores (user_id)
+					WHERE mod(account_id, shard_count) = 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO mod_scores VALUES
+						(1, 10, 7, 3),
+						(2, 10, 8, 3);`,
+				},
+				{
+					Query:       `INSERT INTO mod_scores VALUES (3, 10, 10, 3);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO mod_scores VALUES (4, 10, 11, 3);`,
+				},
+				{
+					Query:       `UPDATE mod_scores SET account_id = 10 WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:       `INSERT INTO mod_scores VALUES (5, 11, 3, 0);`,
+					ExpectedErr: "division by zero",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports chr predicate",
 			SetUpScript: []string{
 				`CREATE TABLE chr_codes (id INT PRIMARY KEY, user_id INT, codepoint INT);`,
@@ -1878,6 +1909,26 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	lcmNonMatchingQuery := `SELECT count(id) FROM partial_planner_lcm WHERE tenant = 1 AND lcm(width, height) = 30`
 	assertCountResult(t, ctx, conn, lcmNonMatchingQuery, 1)
 	assertBenchmarkPlanShape(t, ctx, conn, lcmNonMatchingQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_mod (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, account_id BIGINT, shard_count BIGINT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_mod VALUES
+		(1, 1, 7, 3),
+		(2, 1, 8, 3),
+		(3, 1, 10, 3),
+		(4, 2, 7, 3)`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_mod_tenant_idx ON partial_planner_mod (tenant) WHERE mod(account_id, shard_count) = 1")
+
+	modImpliedQuery := `SELECT count(id) FROM partial_planner_mod WHERE tenant = 1 AND mod(account_id, shard_count) = 1`
+	assertCountResult(t, ctx, conn, modImpliedQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, modImpliedQuery, true)
+
+	modRawSemanticQuery := `SELECT count(id) FROM partial_planner_mod WHERE tenant = 1 AND account_id = 7 AND shard_count = 3`
+	assertCountResult(t, ctx, conn, modRawSemanticQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, modRawSemanticQuery, false)
+
+	modNonMatchingQuery := `SELECT count(id) FROM partial_planner_mod WHERE tenant = 1 AND mod(account_id, shard_count) = 2`
+	assertCountResult(t, ctx, conn, modNonMatchingQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, modNonMatchingQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_chr (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, codepoint INTEGER)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_chr VALUES

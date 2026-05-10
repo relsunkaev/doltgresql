@@ -436,7 +436,7 @@ func plannerFunctionPredicateSQL(expr sql.FunctionExpression) (string, bool) {
 		}
 		return plannerFunctionCallPredicateSQL(name, children)
 	}
-	if name == "gcd" || name == "lcm" {
+	if name == "gcd" || name == "lcm" || name == "mod" {
 		children := expr.Children()
 		if len(children) != 2 {
 			return "", false

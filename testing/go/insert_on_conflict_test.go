@@ -1670,6 +1670,32 @@ ON CONFLICT (user_id) WHERE width = 3 AND height = 4 DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports mod predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_mod (id INT PRIMARY KEY, user_id INT, account_id BIGINT, shard_count BIGINT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_mod_user_idx ON partial_arb_mod (user_id) WHERE mod(account_id, shard_count) = 1;",
+				"INSERT INTO partial_arb_mod VALUES (1, 10, 7, 3, 'old-mod'), (2, 10, 8, 3, 'old-other');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_mod VALUES (3, 10, 10, 3, 'mod-upsert')
+ON CONFLICT (user_id) WHERE mod(account_id, shard_count) = 1 DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, account_id, shard_count, note FROM partial_arb_mod ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, int32(10), int64(7), int64(3), "mod-upsert"},
+						{2, int32(10), int64(8), int64(3), "old-other"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_mod VALUES (4, 10, 7, 3, 'wrong-predicate')
+ON CONFLICT (user_id) WHERE account_id = 7 AND shard_count = 3 DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports chr predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_chr (id INT PRIMARY KEY, user_id INT, codepoint INT, note TEXT);",
