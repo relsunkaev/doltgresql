@@ -922,6 +922,9 @@ func (p *partialIndexPredicate) evalComparison(ctx *sql.Context, row sql.Row, ex
 	if expr.Operator == tree.In || expr.Operator == tree.NotIn {
 		return p.evalInComparison(ctx, row, expr)
 	}
+	if expr.Operator == tree.Like || expr.Operator == tree.NotLike {
+		return p.evalLikeComparison(ctx, row, expr)
+	}
 
 	left, err := p.evalValue(ctx, row, expr.Left)
 	if err != nil {
@@ -1009,6 +1012,37 @@ func (p *partialIndexPredicate) evalInComparison(ctx *sql.Context, row sql.Row, 
 		truth = predicateTrue
 	}
 	return truth, nil
+}
+
+func (p *partialIndexPredicate) evalLikeComparison(ctx *sql.Context, row sql.Row, expr *tree.ComparisonExpr) (predicateTruth, error) {
+	left, err := p.evalValue(ctx, row, expr.Left)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	right, err := p.evalValue(ctx, row, expr.Right)
+	if err != nil {
+		return predicateUnknown, err
+	}
+	if left.value == nil || right.value == nil {
+		return predicateUnknown, nil
+	}
+	text, ok := left.value.(string)
+	if !ok {
+		return predicateUnknown, errors.Errorf("partial unique index predicate operator LIKE does not support %T", left.value)
+	}
+	pattern, ok := right.value.(string)
+	if !ok {
+		return predicateUnknown, errors.Errorf("partial unique index predicate operator LIKE does not support %T", right.value)
+	}
+	prefix, ok := textPatternPrefix(pattern, '\\')
+	if !ok {
+		return predicateUnknown, errors.Errorf("partial unique index predicate operator LIKE only supports literal prefix patterns")
+	}
+	matches := strings.HasPrefix(text, prefix)
+	if expr.Operator == tree.NotLike {
+		matches = !matches
+	}
+	return predicateTruthFromBool(matches), nil
 }
 
 func comparePredicateDistinct(ctx *sql.Context, left predicateValue, right predicateValue) (bool, error) {

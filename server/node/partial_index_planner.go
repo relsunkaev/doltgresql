@@ -325,6 +325,11 @@ func plannerPredicateExprSQL(expr sql.Expression) (string, bool) {
 		return binaryPredicateSQL(expr.Left(), "<", expr.Right())
 	case *gmsexpression.LessThanOrEqual:
 		return binaryPredicateSQL(expr.Left(), "<=", expr.Right())
+	case *gmsexpression.Like:
+		if expr.Escape != nil {
+			return "", false
+		}
+		return binaryPredicateSQL(expr.Left(), "LIKE", expr.Right())
 	case *gmsexpression.IsNull:
 		child, ok := plannerPredicateExprSQL(expr.Child)
 		if !ok {

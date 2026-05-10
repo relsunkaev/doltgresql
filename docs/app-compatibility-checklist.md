@@ -861,6 +861,15 @@ Do not check off an item until it has workload proof:
   safe superset shape. Coverage in server/indexpredicate/implication_test.go,
   testing/go/partial_expression_index_test.go, and
   testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.11.2.
+- [x] Use safe literal prefix `LIKE` predicates in partial-index implication
+  paths. Predicates such as `expr LIKE 'active%'` now compare ASCII literal
+  prefixes, allow narrower query prefixes and matching string equality/IN-list
+  filters, serialize planner `LIKE` filters, evaluate partial unique DML rows,
+  and work for `ON CONFLICT` arbiter inference; wrong prefixes, `_` wildcards,
+  leading `%`, and non-prefix patterns remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.11.4.
 - [ ] Continue PostgreSQL-style partial-index predicate implication beyond the
   current conservative subset. Additional cross-column proof shapes beyond
   singleton and equality-chain facts, broader expression-level semantic

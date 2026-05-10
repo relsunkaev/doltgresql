@@ -18,6 +18,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -138,6 +139,17 @@ func predicateTermImplies(indexExpr tree.Expr, queryExpr tree.Expr) bool {
 	if indexNull, ok := nullPredicateExprKey(indexExpr); ok {
 		queryNull, ok := nullPredicateExprKey(queryExpr)
 		return ok && queryNull == indexNull
+	}
+
+	indexPrefix, ok := predicatePrefixLikeFromExpr(indexExpr)
+	if ok {
+		if queryPrefix, ok := predicatePrefixLikeFromExpr(queryExpr); ok {
+			return indexPrefix.exprKey == queryPrefix.exprKey && strings.HasPrefix(queryPrefix.prefix, indexPrefix.prefix)
+		}
+		if queryValues, ok := predicateValueSetFromExpr(queryExpr); ok {
+			return queryValues.stringsHavePrefix(indexPrefix.exprKey, indexPrefix.prefix)
+		}
+		return false
 	}
 
 	indexValues, ok := predicateValueSetFromExpr(indexExpr)
@@ -378,6 +390,9 @@ func queryPredicateImpliesNotNull(indexExprKey string, queryExpr tree.Expr) bool
 	if queryBool, ok := booleanPredicateComparisonFromExpr(queryExpr); ok {
 		return queryBool.exprKey == indexExprKey
 	}
+	if queryPrefix, ok := predicatePrefixLikeFromExpr(queryExpr); ok {
+		return queryPrefix.exprKey == indexExprKey
+	}
 	return false
 }
 
@@ -409,6 +424,11 @@ type numericPredicateRange struct {
 type booleanPredicateComparison struct {
 	exprKey string
 	value   bool
+}
+
+type predicatePrefixLike struct {
+	exprKey string
+	prefix  string
 }
 
 type predicateValueSet struct {
@@ -444,6 +464,18 @@ func (s predicateValueSet) singleBoolValue() (bool, bool) {
 		}
 	}
 	return false, false
+}
+
+func (s predicateValueSet) stringsHavePrefix(exprKey string, prefix string) bool {
+	if s.exprKey != exprKey || len(s.values) == 0 {
+		return false
+	}
+	for value := range s.values {
+		if !strings.HasPrefix(value, "s:") || !strings.HasPrefix(strings.TrimPrefix(value, "s:"), prefix) {
+			return false
+		}
+	}
+	return true
 }
 
 func (s predicateValueSet) disjointFrom(other predicateExclusionSet) bool {
@@ -564,6 +596,26 @@ func predicateExclusionSetFromInComparison(left tree.Expr, right tree.Expr) (pre
 	return predicateExclusionSet{exprKey: exprKey, values: values}, true
 }
 
+func predicatePrefixLikeFromExpr(expr tree.Expr) (predicatePrefixLike, bool) {
+	comparison, ok := unwrapPredicateParens(expr).(*tree.ComparisonExpr)
+	if !ok || comparison.Operator != tree.Like {
+		return predicatePrefixLike{}, false
+	}
+	exprKey, ok := predicateComparableExprKey(comparison.Left)
+	if !ok {
+		return predicatePrefixLike{}, false
+	}
+	pattern, ok := predicateStringLiteral(comparison.Right)
+	if !ok {
+		return predicatePrefixLike{}, false
+	}
+	prefix, ok := predicateLikePrefix(pattern, '\\')
+	if !ok {
+		return predicatePrefixLike{}, false
+	}
+	return predicatePrefixLike{exprKey: exprKey, prefix: prefix}, true
+}
+
 func predicateComparableExprKey(expr tree.Expr) (string, bool) {
 	expr = unwrapPredicateParens(expr)
 	if column, ok := predicateColumnName(expr); ok {
@@ -674,6 +726,38 @@ func predicateFunctionName(ref tree.ResolvableFunctionReference) (string, bool) 
 	}
 }
 
+func predicateLikePrefix(pattern string, escape byte) (string, bool) {
+	var prefix strings.Builder
+	escaped := false
+	for i := 0; i < len(pattern); i++ {
+		ch := pattern[i]
+		if escaped {
+			prefix.WriteByte(ch)
+			escaped = false
+			continue
+		}
+		if ch == escape {
+			escaped = true
+			continue
+		}
+		switch ch {
+		case '%':
+			if i != len(pattern)-1 || prefix.Len() == 0 {
+				return "", false
+			}
+			return prefix.String(), true
+		case '_':
+			return "", false
+		default:
+			if ch >= utf8.RuneSelf {
+				return "", false
+			}
+			prefix.WriteByte(ch)
+		}
+	}
+	return "", false
+}
+
 func predicateLiteralKey(expr tree.Expr) (string, bool) {
 	if value, ok := predicateNumericConstant(expr); ok {
 		return "n:" + strconv.FormatFloat(value, 'g', -1, 64), true
@@ -688,6 +772,17 @@ func predicateLiteralKey(expr tree.Expr) (string, bool) {
 		return "s:" + expr.RawString(), true
 	}
 	return "", false
+}
+
+func predicateStringLiteral(expr tree.Expr) (string, bool) {
+	switch expr := unwrapPredicateParens(expr).(type) {
+	case *tree.DString:
+		return string(*expr), true
+	case *tree.StrVal:
+		return expr.RawString(), true
+	default:
+		return "", false
+	}
 }
 
 type numericPredicateRangeWithColumn struct {

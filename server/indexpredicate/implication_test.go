@@ -388,6 +388,38 @@ func TestImpliesStartsWithFunctionPredicates(t *testing.T) {
 	}
 }
 
+func TestImpliesPrefixLikePredicates(t *testing.T) {
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"code LIKE 'active%'", "code LIKE 'active-a%'"},
+		{"code LIKE 'active%'", "code = 'active-a'"},
+		{"code LIKE 'active%'", "code IN ('active-a', 'active-b')"},
+		{"lower(code) LIKE 'active%'", "lower(code) LIKE 'active-a%'"},
+		{"code IS NOT NULL", "code LIKE 'active%'"},
+	} {
+		if !Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("expected %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+	for _, tt := range []struct {
+		indexPredicate string
+		queryPredicate string
+	}{
+		{"code LIKE 'active%'", "code LIKE 'pending%'"},
+		{"code LIKE 'active%'", "code LIKE 'act_ve%'"},
+		{"code LIKE 'active%'", "code LIKE '%active%'"},
+		{"code LIKE 'active%'", "code = 'pending'"},
+		{"code LIKE 'active%'", "lower(code) LIKE 'active%'"},
+		{"code LIKE 'active%'", "code NOT LIKE 'pending%'"},
+	} {
+		if Implies(tt.indexPredicate, tt.queryPredicate) {
+			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)
+		}
+	}
+}
+
 func TestImpliesCoalesceFunctionPredicates(t *testing.T) {
 	for _, tt := range []struct {
 		indexPredicate string

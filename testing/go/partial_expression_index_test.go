@@ -412,6 +412,33 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index supports prefix LIKE predicate",
+			SetUpScript: []string{
+				`CREATE TABLE like_prefix_codes (id INT PRIMARY KEY, user_id INT, code TEXT);`,
+				`CREATE UNIQUE INDEX like_prefix_codes_user_code_idx
+					ON like_prefix_codes (user_id)
+					WHERE code LIKE 'active%';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO like_prefix_codes VALUES
+						(1, 10, 'active-a'),
+						(2, 10, 'pending');`,
+				},
+				{
+					Query:       `INSERT INTO like_prefix_codes VALUES (3, 10, 'active-b');`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `INSERT INTO like_prefix_codes VALUES (4, 10, 'inactive');`,
+				},
+				{
+					Query:       `UPDATE like_prefix_codes SET code = 'active-c' WHERE id = 2;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index validates existing rows",
 			SetUpScript: []string{
 				`CREATE TABLE duplicate_memberships (id INT PRIMARY KEY, user_id INT, status TEXT);`,
@@ -786,6 +813,30 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 	startsWithFalseQuery := `SELECT count(id) FROM partial_planner_starts_with WHERE tenant = 1 AND NOT starts_with(code, 'active')`
 	assertCountResult(t, ctx, conn, startsWithFalseQuery, 2)
 	assertBenchmarkPlanShape(t, ctx, conn, startsWithFalseQuery, false)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_like_prefix (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, code TEXT)")
+	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_like_prefix VALUES
+		(1, 1, 'active-a'),
+		(2, 1, 'inactive'),
+		(3, 1, 'pending'),
+		(4, 2, 'active-b')`)
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX partial_planner_like_prefix_tenant_idx ON partial_planner_like_prefix (tenant) WHERE code LIKE 'active%'")
+
+	likePrefixImpliedQuery := `SELECT count(id) FROM partial_planner_like_prefix WHERE tenant = 1 AND code LIKE 'active-a%'`
+	assertCountResult(t, ctx, conn, likePrefixImpliedQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, likePrefixImpliedQuery, true)
+
+	likePrefixEqualityQuery := `SELECT count(id) FROM partial_planner_like_prefix WHERE tenant = 1 AND code = 'active-a'`
+	assertCountResult(t, ctx, conn, likePrefixEqualityQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, likePrefixEqualityQuery, true)
+
+	likePrefixWrongPrefixQuery := `SELECT count(id) FROM partial_planner_like_prefix WHERE tenant = 1 AND code LIKE 'pending%'`
+	assertCountResult(t, ctx, conn, likePrefixWrongPrefixQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, likePrefixWrongPrefixQuery, false)
+
+	likePrefixUnsafeQuery := `SELECT count(id) FROM partial_planner_like_prefix WHERE tenant = 1 AND code LIKE 'act_ve%'`
+	assertCountResult(t, ctx, conn, likePrefixUnsafeQuery, 1)
+	assertBenchmarkPlanShape(t, ctx, conn, likePrefixUnsafeQuery, false)
 
 	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE partial_planner_coalesce (id INTEGER PRIMARY KEY, tenant INTEGER NOT NULL, status TEXT)")
 	execBenchmarkSQL(t, ctx, conn, `INSERT INTO partial_planner_coalesce VALUES

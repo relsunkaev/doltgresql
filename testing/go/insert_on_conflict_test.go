@@ -1001,6 +1001,32 @@ ON CONFLICT (user_id) WHERE starts_with(code, 'pending') DO NOTHING;`,
 			},
 		},
 		{
+			Name: "ON CONFLICT partial unique index supports prefix LIKE predicate implication",
+			SetUpScript: []string{
+				"CREATE TABLE partial_arb_like_prefix (id INT PRIMARY KEY, user_id INT, code TEXT, note TEXT);",
+				"CREATE UNIQUE INDEX partial_arb_like_prefix_user_idx ON partial_arb_like_prefix (user_id) WHERE code LIKE 'active%';",
+				"INSERT INTO partial_arb_like_prefix VALUES (1, 10, 'active-a1', 'old-active'), (2, 10, 'pending', 'old-pending');",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_arb_like_prefix VALUES (3, 10, 'active-a2', 'like-prefix-upsert')
+ON CONFLICT (user_id) WHERE code LIKE 'active-a%' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_like_prefix ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "active-a1", "like-prefix-upsert"},
+						{2, 10, "pending", "old-pending"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_like_prefix VALUES (4, 10, 'active-b', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code LIKE 'pending%' DO NOTHING;`,
+					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
+				},
+			},
+		},
+		{
 			Name: "ON CONFLICT partial unique index supports trim-function predicate implication",
 			SetUpScript: []string{
 				"CREATE TABLE partial_arb_trim (id INT PRIMARY KEY, code TEXT, note TEXT);",
