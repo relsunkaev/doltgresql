@@ -259,6 +259,25 @@ func TestCitextBtreeIndexPlannerShape(t *testing.T) {
 	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX citext_multi_btree_boundary_idx ON citext_multi_btree_boundary (email, id)")
 	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, false)
 	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_multi_btree_boundary WHERE email = 'alice@example.com'::public.citext`, 1)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_concurrent_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_concurrent_btree_plan VALUES (1, 'Alice@example.com'), (2, 'ALICE@example.com'), (3, 'bob@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE INDEX CONCURRENTLY citext_concurrent_btree_plan_email_idx ON citext_concurrent_btree_plan (email)")
+	concurrentIndexDef := queryBenchmarkString(t, ctx, conn, "SELECT indexdef FROM pg_catalog.pg_indexes WHERE indexname = 'citext_concurrent_btree_plan_email_idx'")
+	if !strings.Contains(concurrentIndexDef, "email citext_ops") {
+		t.Fatalf("expected concurrent pg_indexes to preserve citext_ops, got %q", concurrentIndexDef)
+	}
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, 2)
+
+	execBenchmarkSQL(t, ctx, conn, "CREATE TABLE citext_unique_concurrent_btree_plan (id INTEGER PRIMARY KEY, email public.citext NOT NULL)")
+	execBenchmarkSQL(t, ctx, conn, "INSERT INTO citext_unique_concurrent_btree_plan VALUES (1, 'Alice@example.com')")
+	execBenchmarkSQL(t, ctx, conn, "CREATE UNIQUE INDEX CONCURRENTLY citext_unique_concurrent_btree_plan_email_idx ON citext_unique_concurrent_btree_plan (email)")
+	assertBenchmarkPlanShape(t, ctx, conn, `SELECT count(id) FROM citext_unique_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, true)
+	assertCountResult(t, ctx, conn, `SELECT count(id) FROM citext_unique_concurrent_btree_plan WHERE email = 'alice@example.com'::public.citext`, 1)
+	if _, err := conn.Exec(ctx, "INSERT INTO citext_unique_concurrent_btree_plan VALUES (2, 'ALICE@example.com')"); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("expected unique concurrent citext index to reject mixed-case duplicate, got %v", err)
+	}
 }
 
 func TestMixedExpressionBtreeIndexPlannerBoundary(t *testing.T) {

@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -183,6 +184,15 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, errors.Errorf(`relation "%s" does not support index alteration`, c.table)
 	}
 
+	if c.createStatement == "" {
+		if createStatement, metadata, ok := c.citextCreateStatement(ctx, schemaName, table); ok {
+			next := *c
+			next.createStatement = createStatement
+			next.metadata = metadata
+			return next.rowIterWithResolvedCreateStatement(ctx, schemaName)
+		}
+	}
+
 	if c.createStatement != "" {
 		return c.rowIterWithResolvedCreateStatement(ctx, schemaName)
 	}
@@ -249,6 +259,48 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateIndexConcurrently) citextCreateStatement(ctx *sql.Context, schemaName string, table sql.Table) (string, indexmetadata.Metadata, bool) {
+	if len(c.columns) != 1 || c.columns[0].Expression != nil || c.columns[0].Name == "" {
+		return "", indexmetadata.Metadata{}, false
+	}
+	schema := table.Schema(ctx)
+	columnIndex := schema.IndexOfColName(c.columns[0].Name)
+	if columnIndex < 0 || !isCitextType(schema[columnIndex].Type) {
+		return "", indexmetadata.Metadata{}, false
+	}
+
+	metadata := c.metadata
+	metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	metadata.Columns = ensureMetadataStringLength(metadata.Columns, 1)
+	metadata.OpClasses = ensureMetadataStringLength(metadata.OpClasses, 1)
+	metadata.Columns[0] = c.columns[0].Name
+	if metadata.OpClasses[0] == "" {
+		metadata.OpClasses[0] = indexmetadata.OpClassCitextOps
+	}
+
+	unique := ""
+	if c.unique {
+		unique = "UNIQUE "
+	}
+	createStatement := fmt.Sprintf(
+		"CREATE %sINDEX %s ON %s (%s)",
+		unique,
+		quoteIdentifier(c.indexName),
+		quoteQualifiedIdentifier(schemaName, c.table),
+		quoteIdentifier(c.columns[0].Name),
+	)
+	return createStatement, metadata, true
+}
+
+func ensureMetadataStringLength(values []string, length int) []string {
+	if len(values) >= length {
+		return values
+	}
+	next := make([]string, length)
+	copy(next, values)
+	return next
 }
 
 func (c *CreateIndexConcurrently) rowIterWithResolvedCreateStatement(ctx *sql.Context, schemaName string) (sql.RowIter, error) {

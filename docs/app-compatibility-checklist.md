@@ -217,13 +217,12 @@ Do not check off an item until it has workload proof:
   installs a case-insensitive text type in the target schema so dump
   schemas using `public.citext` can load, round-trip values, compare
   case-insensitively, and enforce case-insensitive `UNIQUE` checks on
-  insert/update. Standalone single-column non-concurrent btree `CREATE INDEX` and
-  `CREATE UNIQUE INDEX` statements on `citext` columns store a normalized
-  lower-key physical index while preserving PostgreSQL-facing
+  insert/update. Standalone single-column btree `CREATE INDEX`, `CREATE UNIQUE
+  INDEX`, and `CREATE INDEX CONCURRENTLY` statements on `citext` columns store
+  a normalized lower-key physical index while preserving PostgreSQL-facing
   `citext_ops` metadata; equality and range predicates use indexed access.
-  Inline `citext` constraint indexes, multi-column `citext` indexes, and
-  `CREATE INDEX CONCURRENTLY` still preserve correctness by disabling unsafe
-  raw btree range planning.
+  Inline `citext` constraint indexes and multi-column `citext` indexes still
+  preserve correctness by disabling unsafe raw btree range planning.
   `CREATE EXTENSION hstore` similarly installs a text-compatible
   `hstore` type for dump schemas that declare `public.hstore`
   columns, with `fetchval(hstore, text)` / `hstore -> text` covering
@@ -351,16 +350,16 @@ Do not check off an item until it has workload proof:
   and network-address opclasses.
   Tracked by dg-7ug.3.
 - [~] Model physical `citext` index keys/opclasses and add a benchmark guardrail
-  for PostgreSQL-style case-insensitive btree seeks. Standalone single-column non-concurrent
-  btree `CREATE INDEX` and `CREATE UNIQUE INDEX` statements on `citext`
-  columns now build normalized lower-key physical indexes, preserve logical
-  `citext_ops` catalog metadata, and use `IndexedTableAccess` for equality and
-  range predicates. Pinned by testing/go/index_benchmark_test.go and catalog
-  evidence in testing/go/common_extensions_probe_test.go. Inline `citext`
-  constraint indexes, multi-column `citext` indexes, and `CREATE INDEX
-  CONCURRENTLY` still use the correctness-preserving raw-index planner
-  boundary. Tracked by dg-7ug.4, with remaining child work in dg-7ug.4.1,
-  dg-7ug.4.2, and dg-7ug.4.3.
+  for PostgreSQL-style case-insensitive btree seeks. Standalone single-column
+  btree `CREATE INDEX`, `CREATE UNIQUE INDEX`, and `CREATE INDEX CONCURRENTLY`
+  statements on `citext` columns now build normalized lower-key physical
+  indexes, preserve logical `citext_ops` catalog metadata, and use
+  `IndexedTableAccess` for equality and range predicates. Pinned by
+  testing/go/index_benchmark_test.go and catalog evidence in
+  testing/go/common_extensions_probe_test.go. Inline `citext` constraint
+  indexes and multi-column `citext` indexes still use the
+  correctness-preserving raw-index planner boundary. Tracked by dg-7ug.4, with
+  remaining child work in dg-7ug.4.1 and dg-7ug.4.3.
 - [x] Define the hstore operator-class catalog and physical-index boundary.
   `CREATE EXTENSION hstore` exposes btree/GIN/GiST/hash
   opclass/family/operator/procedure catalog rows, while physical hstore
