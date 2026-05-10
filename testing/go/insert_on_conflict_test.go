@@ -1537,8 +1537,30 @@ ON CONFLICT (user_id) WHERE substring(code, 1, 3) = 'Adm' DO UPDATE SET note = E
 					},
 				},
 				{
-					Query: `INSERT INTO partial_arb_substring VALUES (4, 10, 'Admire', 'wrong-predicate')
-ON CONFLICT (user_id) WHERE code = 'Admire' DO NOTHING;`,
+					Query: `INSERT INTO partial_arb_substring VALUES (4, 10, 'Admire', 'raw-substring-upsert')
+ON CONFLICT (user_id) WHERE code = 'Admire' DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_substring ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Admin", "raw-substring-upsert"},
+						{2, 10, "Alpha", "old-alpha"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_substring VALUES (5, 10, 'Admiral', 'raw-substring-in-upsert')
+ON CONFLICT (user_id) WHERE code IN ('Admin', 'Admiral') DO UPDATE SET note = EXCLUDED.note;`,
+				},
+				{
+					Query: `SELECT id, user_id, code, note FROM partial_arb_substring ORDER BY id;`,
+					Expected: []gms.Row{
+						{1, 10, "Admin", "raw-substring-in-upsert"},
+						{2, 10, "Alpha", "old-alpha"},
+					},
+				},
+				{
+					Query: `INSERT INTO partial_arb_substring VALUES (6, 10, 'Admire', 'wrong-predicate')
+ON CONFLICT (user_id) WHERE code IN ('Admire', 'Alpha') DO NOTHING;`,
 					ExpectedErr: "there is no unique or exclusion constraint matching the ON CONFLICT specification",
 				},
 			},

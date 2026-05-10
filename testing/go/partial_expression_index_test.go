@@ -2064,7 +2064,15 @@ func TestPartialIndexPlannerImplication(t *testing.T) {
 
 	substringRawSourceQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND code = 'Admin'`
 	assertCountResult(t, ctx, conn, substringRawSourceQuery, 1)
-	assertBenchmarkPlanShape(t, ctx, conn, substringRawSourceQuery, false)
+	assertBenchmarkPlanShape(t, ctx, conn, substringRawSourceQuery, true)
+
+	substringRawInQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND code IN ('Admin', 'Admiral')`
+	assertCountResult(t, ctx, conn, substringRawInQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, substringRawInQuery, true)
+
+	substringRawNonMatchingQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND code IN ('Admin', 'Alpha')`
+	assertCountResult(t, ctx, conn, substringRawNonMatchingQuery, 2)
+	assertBenchmarkPlanShape(t, ctx, conn, substringRawNonMatchingQuery, false)
 
 	substringWrongCountQuery := `SELECT count(id) FROM partial_planner_substring WHERE tenant = 1 AND substring(code, 1, 2) = 'Ad'`
 	assertCountResult(t, ctx, conn, substringWrongCountQuery, 2)

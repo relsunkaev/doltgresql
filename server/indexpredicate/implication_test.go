@@ -661,8 +661,11 @@ func TestImpliesSubstringFunctionPredicates(t *testing.T) {
 		queryPredicate string
 	}{
 		{"substring(code, 1, 3) = 'Adm'", "substring(code, 1, 3) = 'Adm'"},
+		{"substring(code, 1, 3) = 'Adm'", "code = 'Admin'"},
+		{"substr(code, 1, 3) IN ('Adm', 'Alp')", "code IN ('Admin', 'Alpha')"},
 		{"substr(code, 1, 3) IN ('Adm', 'Alp')", "substring(code, 1, 3) = 'Adm'"},
 		{"substring(code, 2) = 'dmin'", "substr(code, 2) = 'dmin'"},
+		{"substring(code, 2) = 'dmin'", "code = 'Admin'"},
 		{"substring(code, 1, 3) IS NOT NULL", "substr(code, 1, 3) = 'Adm'"},
 	} {
 		if !Implies(tt.indexPredicate, tt.queryPredicate) {
@@ -676,7 +679,8 @@ func TestImpliesSubstringFunctionPredicates(t *testing.T) {
 		{"substring(code, 1, 3) = 'Adm'", "substring(code, 1, 2) = 'Ad'"},
 		{"substring(code, 1, 3) = 'Adm'", "substring(code, 2, 3) = 'dmi'"},
 		{"substring(code, 2) = 'dmin'", "substr(code, 3) = 'min'"},
-		{"substring(code, 1, 3) = 'Adm'", "code = 'Admin'"},
+		{"substring(code, 1, 3) = 'Adm'", "code = 'Alpha'"},
+		{"substring(code, 1, 3) = 'Adm'", "code IN ('Admin', 'Alpha')"},
 	} {
 		if Implies(tt.indexPredicate, tt.queryPredicate) {
 			t.Fatalf("did not expect %q to imply %q", tt.queryPredicate, tt.indexPredicate)

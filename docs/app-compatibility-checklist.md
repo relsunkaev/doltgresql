@@ -1023,10 +1023,20 @@ Do not check off an item until it has workload proof:
   `substring(...)` equivalent, partial unique DML enforcement evaluates the
   same 1-indexed and multibyte behavior as the runtime function, and
   `ON CONFLICT` arbiter inference accepts the exact-expression shape; wrong
-  start/count/result values and raw source-string semantic rewrites remain
-  rejected. Coverage in server/indexpredicate/implication_test.go,
-  testing/go/functions_test.go, testing/go/partial_expression_index_test.go,
-  and testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.16.
+  start/count/result values remain rejected. Coverage in
+  server/indexpredicate/implication_test.go, testing/go/functions_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-7ug.8.10.16.
+- [x] Use raw source-string value-set predicates to imply matching
+  `substr(...)` / `substring(...)` partial-index predicates. Text equality and
+  IN-list filters on the source argument, such as `code = 'Admire'` and
+  `code IN ('Admin', 'Admiral')`, now imply fixed-start/count substring
+  value-set predicates when every transformed literal is contained in the
+  partial predicate's literal set. Non-matching transformed values, variable
+  substring arguments, and broader predicates remain rejected. Coverage in
+  server/indexpredicate/implication_test.go,
+  testing/go/partial_expression_index_test.go, and
+  testing/go/insert_on_conflict_test.go. Tracked by dg-l6o.
 - [x] Use deterministic `reverse(expr)` predicates in partial-index implication
   paths. Unary `reverse(...)` calls now serialize as comparable predicate
   keys, planner filters can deparse them, partial unique DML enforcement

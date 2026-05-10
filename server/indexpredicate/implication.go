@@ -497,6 +497,7 @@ func predicateTransformedArgumentValueSetImplies(indexValues predicateValueSet, 
 	return predicateAbsArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateCaseFoldArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateAsciiArgumentValueSetImplies(indexValues, queryValues) ||
+		predicateSubstringArgumentValueSetImplies(indexValues, queryValues) ||
 		predicateSignArgumentValueSetImplies(indexValues, queryValues)
 }
 
@@ -604,6 +605,106 @@ func predicateAsciiStringLiteralKey(value string) (string, bool) {
 		return "n:" + strconv.FormatInt(int64(r), 10), true
 	}
 	return "n:0", true
+}
+
+func predicateSubstringArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
+	argumentKey, start, count, hasCount, ok := predicateSubstringArgumentExprKey(indexValues.exprKey)
+	if !ok || queryValues.exprKey != argumentKey {
+		return false
+	}
+	substringValues := make(map[string]struct{}, len(queryValues.values))
+	for value := range queryValues.values {
+		substringValue, ok := predicateSubstringStringLiteralKey(value, start, count, hasCount)
+		if !ok {
+			return false
+		}
+		substringValues[substringValue] = struct{}{}
+	}
+	return predicateValueSet{exprKey: indexValues.exprKey, values: substringValues}.subsetOf(indexValues)
+}
+
+func predicateSubstringArgumentExprKey(exprKey string) (string, int64, int64, bool, bool) {
+	const prefix = "func:substring("
+	if !strings.HasPrefix(exprKey, prefix) || !strings.HasSuffix(exprKey, ")") {
+		return "", 0, 0, false, false
+	}
+	parts := strings.Split(strings.TrimSuffix(strings.TrimPrefix(exprKey, prefix), ")"), ",")
+	if len(parts) != 2 && len(parts) != 3 {
+		return "", 0, 0, false, false
+	}
+	start, ok := predicateIntegerFunctionArgumentKey(parts[1])
+	if !ok {
+		return "", 0, 0, false, false
+	}
+	if len(parts) == 2 {
+		return parts[0], start, 0, false, true
+	}
+	count, ok := predicateIntegerFunctionArgumentKey(parts[2])
+	if !ok {
+		return "", 0, 0, false, false
+	}
+	return parts[0], start, count, true, true
+}
+
+func predicateIntegerFunctionArgumentKey(exprKey string) (int64, bool) {
+	const prefix = "literal:n:"
+	if !strings.HasPrefix(exprKey, prefix) {
+		return 0, false
+	}
+	value, err := strconv.ParseInt(strings.TrimPrefix(exprKey, prefix), 10, 64)
+	return value, err == nil
+}
+
+func predicateSubstringStringLiteralKey(value string, start int64, count int64, hasCount bool) (string, bool) {
+	const prefix = "s:"
+	if !strings.HasPrefix(value, prefix) {
+		return "", false
+	}
+	text, ok := predicateSubstringText(strings.TrimPrefix(value, prefix), start, count, hasCount)
+	if !ok {
+		return "", false
+	}
+	return prefix + text, true
+}
+
+func predicateSubstringText(text string, start int64, count int64, hasCount bool) (string, bool) {
+	runes := []rune(text)
+	runeCount := int64(len(runes))
+	if !hasCount {
+		if start < 1 {
+			start = 1
+		}
+		start--
+		if start >= runeCount {
+			return "", true
+		}
+		return string(runes[start:]), true
+	}
+	if count < 0 {
+		return "", false
+	}
+	if count == 0 {
+		return "", true
+	}
+	if start < 1 {
+		if start <= 1-count {
+			return "", true
+		}
+		count -= 1 - start
+		start = 0
+	} else {
+		start--
+	}
+	if count <= 0 {
+		return "", true
+	}
+	if start >= runeCount {
+		return "", true
+	}
+	if count > runeCount-start {
+		return string(runes[start:]), true
+	}
+	return string(runes[start : start+count]), true
 }
 
 func predicateSignArgumentValueSetImplies(indexValues predicateValueSet, queryValues predicateValueSet) bool {
