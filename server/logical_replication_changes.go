@@ -138,8 +138,15 @@ func tableNameFromTableExprs(exprs vitess.TableExprs) (schema string, table stri
 	if len(exprs) != 1 {
 		return "", "", false
 	}
-	aliased, ok := exprs[0].(*vitess.AliasedTableExpr)
+	return tableNameFromTableExpr(exprs[0])
+}
+
+func tableNameFromTableExpr(expr vitess.TableExpr) (schema string, table string, ok bool) {
+	aliased, ok := expr.(*vitess.AliasedTableExpr)
 	if !ok {
+		if join, ok := expr.(*vitess.JoinTableExpr); ok {
+			return tableNameFromTableExpr(join.RightExpr)
+		}
 		return "", "", false
 	}
 	tableName, ok := aliased.Expr.(vitess.TableName)
@@ -156,14 +163,49 @@ func ensureReturningFullRow(statement vitess.Statement, fullRowColumns []string)
 		}
 		return returning
 	}
+	appendQualifiedFullRow := func(returning vitess.SelectExprs, qualifier string) vitess.SelectExprs {
+		for _, column := range fullRowColumns {
+			colName := vitess.NewColName(column)
+			if qualifier != "" {
+				colName.Qualifier = vitess.TableName{Name: vitess.NewTableIdent(qualifier)}
+			}
+			returning = append(returning, &vitess.AliasedExpr{Expr: colName})
+		}
+		return returning
+	}
 	switch stmt := statement.(type) {
 	case *vitess.Insert:
 		stmt.Returning = appendFullRow(stmt.Returning)
 	case *vitess.Update:
-		stmt.Returning = appendFullRow(stmt.Returning)
+		stmt.Returning = appendQualifiedFullRow(stmt.Returning, targetQualifierFromTableExprs(stmt.TableExprs))
 	case *vitess.Delete:
 		stmt.Returning = appendFullRow(stmt.Returning)
 	}
+}
+
+func targetQualifierFromTableExprs(exprs vitess.TableExprs) string {
+	if len(exprs) != 1 {
+		return ""
+	}
+	return targetQualifierFromTableExpr(exprs[0])
+}
+
+func targetQualifierFromTableExpr(expr vitess.TableExpr) string {
+	aliased, ok := expr.(*vitess.AliasedTableExpr)
+	if !ok {
+		if join, ok := expr.(*vitess.JoinTableExpr); ok {
+			return targetQualifierFromTableExpr(join.RightExpr)
+		}
+		return ""
+	}
+	if !aliased.As.IsEmpty() {
+		return aliased.As.String()
+	}
+	tableName, ok := aliased.Expr.(vitess.TableName)
+	if !ok {
+		return ""
+	}
+	return tableName.Name.String()
 }
 
 func (capture *replicationChangeCapture) appendResultAndTrimClient(ctx *sql.Context, result *Result) (*Result, error) {
