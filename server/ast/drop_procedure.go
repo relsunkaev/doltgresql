@@ -29,9 +29,9 @@ func nodeDropProcedure(ctx *Context, node *tree.DropProcedure) (vitess.Statement
 		return nil, nil
 	}
 
-	if node.DropBehavior == tree.DropCascade {
-		return nil, fmt.Errorf("DROP PROCEDURE with CASCADE is not supported yet")
-	}
+	// CASCADE is accepted for migration tools; procedures are not referenced
+	// by any other catalog object in doltgres so there is nothing to cascade.
+	// RESTRICT is the default dependency policy and is also accepted.
 
 	if len(node.Procedures) == 0 {
 		return nil, fmt.Errorf("no function name specified for DROP PROCEDURE")

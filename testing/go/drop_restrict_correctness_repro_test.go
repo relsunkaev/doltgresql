@@ -252,7 +252,7 @@ func TestDropFunctionCascadeRepro(t *testing.T) {
 
 // TestDropProcedureCascadeRepro reproduces a DDL correctness bug: PostgreSQL
 // accepts explicit CASCADE on DROP PROCEDURE.
-func TestDropProcedureCascadeRepro(t *testing.T) {
+func TestDropProcedureAcceptsCascade(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP PROCEDURE accepts explicit CASCADE",

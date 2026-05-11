@@ -1414,19 +1414,6 @@ artifacts only; no fixes are included here.
   CASCADE is not supported yet`, so valid dependency-dropping function DDL
   cannot be replayed.
 
-### DROP PROCEDURE CASCADE is rejected
-
-- Reproducer: `TestDropProcedureCascadeRepro` in
-  `testing/go/drop_restrict_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestDropProcedureCascadeRepro -count=1`.
-- Expected PostgreSQL behavior: `DROP PROCEDURE name() CASCADE` is accepted and
-  removes the procedure.
-- Observed Doltgres behavior: the statement fails with `DROP PROCEDURE with
-  CASCADE is not supported yet`, so valid explicit-cascade procedure DDL cannot
-  be replayed.
-
 ### RENAME COLUMN leaves dependent views stale
 
 - Reproducer: `TestRenameColumnUsedByViewKeepsViewUsableRepro` in
