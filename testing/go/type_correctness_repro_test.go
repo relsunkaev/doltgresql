@@ -589,6 +589,48 @@ func TestVarcharArrayCatReportsAssignmentTypmodErrorRepro(t *testing.T) {
 	})
 }
 
+// TestCharacterArrayAppendAppliesElementTypmodRepro reproduces array
+// persistence bugs: array_append results assigned into character(n)[] columns
+// must pad shorter appended elements and reject over-length appended elements.
+func TestCharacterArrayAppendAppliesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "character array_append applies element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE character_array_append_typmod_items (
+					id INT PRIMARY KEY,
+					labels CHARACTER(3)[]
+				);`,
+				`INSERT INTO character_array_append_typmod_items
+					VALUES (1, ARRAY['abc']::character(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE character_array_append_typmod_items
+						SET labels = array_append(labels, 'ab')
+						WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT labels::text, octet_length(labels[2]), labels[2] = 'ab '::CHARACTER(3)
+						FROM character_array_append_typmod_items;`,
+					Expected: []sql.Row{{`{abc,"ab "}`, 3, true}},
+				},
+				{
+					Query: `UPDATE character_array_append_typmod_items
+						SET labels = array_append(labels, 'abcd')
+						WHERE id = 1;`,
+					ExpectedErr: `value too long`,
+				},
+				{
+					Query: `SELECT labels::text
+						FROM character_array_append_typmod_items;`,
+					Expected: []sql.Row{{`{abc,"ab "}`}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterArrayTypmodSupportsEqualityRepro reproduces an array
 // correctness bug: PostgreSQL array equality delegates to the element type, so
 // character(n) array elements that differ only by trailing padding spaces

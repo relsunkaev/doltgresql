@@ -16581,6 +16581,24 @@ They are worth keeping, but they are not counted as found bugs.
   element typmod instead of rejecting the write, so an invalid update is
   accepted and persisted.
 
+### `array_append` can persist underpadded or truncated character array elements
+
+- Reproducer: `TestCharacterArrayAppendAppliesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCharacterArrayAppendAppliesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning `array_append(labels, 'ab')` into a
+  `character(3)[]` column pads the appended element so
+  `octet_length(labels[2]) = 3` and it compares equal to
+  `'ab '::character(3)`. A later `array_append(labels, 'abcd')` rejects the
+  update with `value too long`, leaving the stored array unchanged.
+- Observed Doltgres behavior: the short appended element has
+  `octet_length(labels[2]) = 2` and does not compare equal to the padded
+  `character(3)` value. The overlong append also succeeds and extends the
+  stored array to `{abc,"ab ",abc}`, so array mutation can persist character
+  elements with invalid fixed-width semantics.
+
 ### `array_prepend` can persist values outside varchar array element typmods
 
 - Reproducer: `TestVarcharArrayPrependValidatesElementTypmodRepro` in
