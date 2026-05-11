@@ -36,9 +36,10 @@ func TestCreateDatabaseRejectsInvalidEncodingRepro(t *testing.T) {
 	})
 }
 
-// TestCreateDatabaseDefaultTablespaceRepro reproduces a database DDL
-// correctness bug: PostgreSQL accepts TABLESPACE pg_default for new databases.
-func TestCreateDatabaseDefaultTablespaceRepro(t *testing.T) {
+// TestCreateDatabaseDefaultTablespace guards that CREATE DATABASE accepts
+// TABLESPACE pg_default, since that is the only tablespace Doltgres exposes
+// and PostgreSQL allows spelling out the default.
+func TestCreateDatabaseDefaultTablespace(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "CREATE DATABASE with default tablespace",
@@ -48,6 +49,23 @@ func TestCreateDatabaseDefaultTablespaceRepro(t *testing.T) {
 				},
 				{
 					Query: `USE default_tablespace_db;`,
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseUnknownTablespaceErrors guards that CREATE DATABASE
+// targeting a tablespace that does not exist returns PostgreSQL's catalog
+// error rather than silently creating the database in the default tablespace.
+func TestCreateDatabaseUnknownTablespaceErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE rejects unknown tablespace",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE DATABASE bad_tablespace_db TABLESPACE custom_space;`,
+					ExpectedErr: `tablespace "custom_space" does not exist`,
 				},
 			},
 		},

@@ -80,8 +80,11 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, e
 	if len(node.CollationVersion) > 0 {
 		return nil, errors.Errorf("COLLATION_VERSION clause is not yet supported")
 	}
-	if len(node.Tablespace) > 0 {
-		return nil, errors.Errorf("TABLESPACE clause is not yet supported")
+	if len(node.Tablespace) > 0 && !strings.EqualFold(node.Tablespace, "pg_default") {
+		// pg_default is the only tablespace doltgres exposes. Accepting it as
+		// a no-op lets dump/restore scripts that spell out the default run
+		// unchanged; any other target name does not resolve here.
+		return nil, errors.Errorf(`tablespace "%s" does not exist`, node.Tablespace)
 	}
 	// TODO: some clauses have default values in case of not being defined.
 	// ALLOW_CONNECTIONS defaults to TRUE

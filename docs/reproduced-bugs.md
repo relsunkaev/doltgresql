@@ -1020,19 +1020,6 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: the statement succeeds, so invalid encoding
   metadata in schema setup or restore input is accepted instead of rejected.
 
-### CREATE DATABASE TABLESPACE pg_default is rejected
-
-- Reproducer: `TestCreateDatabaseDefaultTablespaceRepro` in
-  `testing/go/create_database_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestCreateDatabaseDefaultTablespaceRepro -count=1`.
-- Expected PostgreSQL behavior: `CREATE DATABASE name TABLESPACE pg_default`
-  succeeds and creates a database using the default tablespace.
-- Observed Doltgres behavior: the statement fails with `TABLESPACE clause is
-  not yet supported`, so valid database DDL that spells out default placement
-  cannot be restored or used.
-
 ### CREATE DATABASE catalog options are rejected
 
 - Reproducer: `TestCreateDatabaseCatalogOptionsRepro` in
