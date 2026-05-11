@@ -646,9 +646,10 @@ func TestAlterTableReloptionsPersistRepro(t *testing.T) {
 	})
 }
 
-// TestAlterTableSetDefaultTablespaceRepro reproduces a DDL correctness bug:
-// PostgreSQL accepts moving an ordinary table to the default tablespace.
-func TestAlterTableSetDefaultTablespaceRepro(t *testing.T) {
+// TestAlterTableSetDefaultTablespace guards that ALTER TABLE SET TABLESPACE
+// pg_default succeeds as a no-op, matching PostgreSQL's behavior for the only
+// tablespace Doltgres exposes.
+func TestAlterTableSetDefaultTablespace(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ALTER TABLE SET TABLESPACE pg_default",
@@ -677,10 +678,33 @@ func TestAlterTableSetDefaultTablespaceRepro(t *testing.T) {
 	})
 }
 
-// TestAlterTableSetHeapAccessMethodRepro reproduces a DDL correctness bug:
-// PostgreSQL accepts changing an ordinary table to the default heap access
-// method.
-func TestAlterTableSetHeapAccessMethodRepro(t *testing.T) {
+// TestAlterTableSetTablespaceUnknownErrors guards that an ALTER TABLE SET
+// TABLESPACE targeting a tablespace that does not exist returns the same
+// "tablespace ... does not exist" error PostgreSQL produces, so migration
+// tools see a real failure rather than a silent no-op.
+func TestAlterTableSetTablespaceUnknownErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET TABLESPACE rejects unknown tablespace",
+			SetUpScript: []string{
+				`CREATE TABLE alter_table_unknown_tablespace_items (
+					id INT PRIMARY KEY
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_table_unknown_tablespace_items
+						SET TABLESPACE custom_space;`,
+					ExpectedErr: `tablespace "custom_space" does not exist`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTableSetHeapAccessMethod guards that ALTER TABLE SET ACCESS METHOD
+// heap succeeds as a no-op, matching PostgreSQL's default table access method.
+func TestAlterTableSetHeapAccessMethod(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ALTER TABLE SET ACCESS METHOD heap",
@@ -703,6 +727,29 @@ func TestAlterTableSetHeapAccessMethodRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM alter_table_access_method_items;`,
 					Expected: []sql.Row{{1, "ok"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTableSetAccessMethodUnknownErrors guards that an ALTER TABLE SET
+// ACCESS METHOD targeting a non-heap access method returns PostgreSQL's
+// "access method ... does not exist" error rather than a silent no-op.
+func TestAlterTableSetAccessMethodUnknownErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET ACCESS METHOD rejects non-heap target",
+			SetUpScript: []string{
+				`CREATE TABLE alter_table_unknown_access_method_items (
+					id INT PRIMARY KEY
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_table_unknown_access_method_items
+						SET ACCESS METHOD btree;`,
+					ExpectedErr: `access method "btree" does not exist`,
 				},
 			},
 		},

@@ -16,6 +16,7 @@ package ast
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -195,6 +196,30 @@ func nodeAlterTableCmds(
 			unsupportedWarnings = append(
 				unsupportedWarnings,
 				fmt.Sprintf("ALTER TABLE %s ALTER COLUMN %s SET COMPRESSION is accepted, but compression metadata is not persisted", tableName.String(), bareIdentifier(cmd.Column)),
+			)
+		case *tree.AlterTableSetTablespace:
+			// PostgreSQL exposes only the default `pg_default` tablespace in
+			// Doltgres; any other target name would not resolve, so we accept
+			// `pg_default` as a no-op and reject anything else with the same
+			// catalog-style error PostgreSQL produces.
+			if !strings.EqualFold(cmd.Tablespace, "pg_default") {
+				return nil, nil, errors.Errorf(`tablespace "%s" does not exist`, cmd.Tablespace)
+			}
+			unsupportedWarnings = append(
+				unsupportedWarnings,
+				fmt.Sprintf("ALTER TABLE %s SET TABLESPACE pg_default is accepted as a no-op", tableName.String()),
+			)
+		case *tree.AlterTableSetAccessMethod:
+			// Doltgres only supports the `heap` table access method, matching
+			// PostgreSQL's default. Accept `heap` (and the explicit DEFAULT
+			// keyword the parser surfaces as an empty string) as a no-op; any
+			// other access method does not exist in this server.
+			if cmd.Method != "" && !strings.EqualFold(cmd.Method, "heap") {
+				return nil, nil, errors.Errorf(`access method "%s" does not exist`, cmd.Method)
+			}
+			unsupportedWarnings = append(
+				unsupportedWarnings,
+				fmt.Sprintf("ALTER TABLE %s SET ACCESS METHOD heap is accepted as a no-op", tableName.String()),
 			)
 		case *tree.AlterTableRowLevelSecurity:
 			// is unsupported and ignored

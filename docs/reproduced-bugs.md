@@ -1848,34 +1848,6 @@ artifacts only; no fixes are included here.
   unsupported command type *tree.AlterTableSetStorage`, so table reloptions
   cannot be changed after creation.
 
-### ALTER TABLE SET TABLESPACE pg_default is rejected
-
-- Reproducer: `TestAlterTableSetDefaultTablespaceRepro` in
-  `testing/go/alter_table_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestAlterTableSetDefaultTablespaceRepro -count=1`.
-- Expected PostgreSQL behavior: `ALTER TABLE name SET TABLESPACE pg_default`
-  succeeds for an ordinary table and leaves the relation usable for later
-  inserts and reads.
-- Observed Doltgres behavior: the statement fails with `ALTER TABLE with
-  unsupported command type *tree.AlterTableSetTablespace`, so valid schema
-  migration DDL that spells out the default table placement cannot run.
-
-### ALTER TABLE SET ACCESS METHOD heap is rejected
-
-- Reproducer: `TestAlterTableSetHeapAccessMethodRepro` in
-  `testing/go/alter_table_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestAlterTableSetHeapAccessMethodRepro -count=1`.
-- Expected PostgreSQL behavior: `ALTER TABLE name SET ACCESS METHOD heap`
-  succeeds for an ordinary table, and the table remains usable for later
-  inserts and reads.
-- Observed Doltgres behavior: the statement fails with `ALTER TABLE with
-  unsupported command type *tree.AlterTableSetAccessMethod`, so valid schema
-  migration DDL that explicitly spells the default access method cannot run.
-
 ### CREATE ACCESS METHOD is rejected before pg_am metadata is persisted
 
 - Reproducer: `TestCreateAccessMethodPersistsPgAmRepro` in
