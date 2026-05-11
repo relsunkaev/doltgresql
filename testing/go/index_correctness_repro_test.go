@@ -286,6 +286,43 @@ func TestUniqueExpressionIndexEnforcesComputedValuesRepro(t *testing.T) {
 	})
 }
 
+// TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard guards that
+// unique expression indexes reject updates whose recomputed expression value
+// conflicts with an existing row.
+func TestUniqueExpressionIndexEnforcesUpdatedComputedValuesGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "unique expression index enforces updated computed values",
+			SetUpScript: []string{
+				`CREATE TABLE unique_expression_update_items (
+					id INT PRIMARY KEY,
+					email TEXT NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX unique_expression_update_lower_email_idx
+					ON unique_expression_update_items ((lower(email)));`,
+				`INSERT INTO unique_expression_update_items VALUES
+					(1, 'User@Example.com'),
+					(2, 'Other@Example.com');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `UPDATE unique_expression_update_items SET email = 'user@example.com' WHERE id = 2;`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT id, email
+						FROM unique_expression_update_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "User@Example.com"},
+						{2, "Other@Example.com"},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestOnConflictUsesUniqueExpressionIndexRepro reproduces an upsert
 // correctness bug: PostgreSQL can infer a unique expression index as an ON
 // CONFLICT arbiter.
