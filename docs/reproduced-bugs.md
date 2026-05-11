@@ -1556,6 +1556,22 @@ artifacts only; no fixes are included here.
   type to `character varying`, and rewrites the stored value from `abcd` to
   `abc`, so a schema change can silently truncate persisted data.
 
+### ALTER COLUMN TYPE character typmod rewrites truncate or underpad values
+
+- Reproducer: `TestAlterColumnTypeCharacterAppliesTypmodRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnTypeCharacterAppliesTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: converting a `text` column containing `abcd` to
+  `character(3)` rejects the rewrite with `value too long for type
+  character(3)`, while converting a `text` value `ab` to `character(3)` stores
+  a padded three-byte value equal to `'ab '::character(3)`.
+- Observed Doltgres behavior: the overlong rewrite succeeds and changes the
+  stored value from `abcd` to a truncated `character` value, while the shorter
+  rewrite stores `ab` with `octet_length = 2` and it does not compare equal to
+  the padded `character(3)` value.
+
 ### ALTER COLUMN TYPE TIMETZ typmod rewrites store unrounded values
 
 - Reproducer: `TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro` in

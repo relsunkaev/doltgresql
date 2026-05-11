@@ -382,6 +382,57 @@ func TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro(t *testing.T) {
 	})
 }
 
+// TestAlterColumnTypeCharacterAppliesTypmodRepro reproduces ALTER TABLE
+// persistence bugs: PostgreSQL rewrites existing rows through character(n)
+// typmods, rejecting overlong values and padding shorter values.
+func TestAlterColumnTypeCharacterAppliesTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER COLUMN TYPE character rejects existing overflow",
+			SetUpScript: []string{
+				`CREATE TABLE alter_type_character_overflow_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO alter_type_character_overflow_items VALUES (1, 'abcd');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_type_character_overflow_items
+						ALTER COLUMN label TYPE CHARACTER(3);`,
+					ExpectedErr: `too long`,
+				},
+				{
+					Query: `SELECT id, label, pg_typeof(label)::text, octet_length(label)
+						FROM alter_type_character_overflow_items;`,
+					Expected: []sql.Row{{1, "abcd", "text", 4}},
+				},
+			},
+		},
+		{
+			Name: "ALTER COLUMN TYPE character pads existing short values",
+			SetUpScript: []string{
+				`CREATE TABLE alter_type_character_padding_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO alter_type_character_padding_items VALUES (1, 'ab');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_type_character_padding_items
+						ALTER COLUMN label TYPE CHARACTER(3);`,
+				},
+				{
+					Query: `SELECT id, label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label)
+						FROM alter_type_character_padding_items;`,
+					Expected: []sql.Row{{1, true, "character", 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro reproduces an
 // ALTER TABLE persistence bug: PostgreSQL rewrites existing timetz values
 // through the new column typmod.
