@@ -1059,6 +1059,41 @@ func TestAddPrimaryKeyRejectsExistingNullsGuard(t *testing.T) {
 	})
 }
 
+// TestAddPrimaryKeyRejectsExistingDuplicatesRepro reproduces a constraint
+// integrity bug: PostgreSQL validates existing rows before adding a primary
+// key, because primary-key values must be unique.
+func TestAddPrimaryKeyRejectsExistingDuplicatesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ADD PRIMARY KEY rejects existing duplicates",
+			SetUpScript: []string{
+				`CREATE TABLE add_primary_key_existing_duplicate_items (
+					id INT,
+					label TEXT
+				);`,
+				`INSERT INTO add_primary_key_existing_duplicate_items VALUES
+					(1, 'a'),
+					(1, 'b');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE add_primary_key_existing_duplicate_items
+						ADD CONSTRAINT add_primary_key_existing_duplicate_items_pkey
+						PRIMARY KEY (id);`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.table_constraints
+						WHERE table_name = 'add_primary_key_existing_duplicate_items'
+							AND constraint_type = 'PRIMARY KEY';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAddNotNullColumnValidatesExistingRowsRepro reproduces a data consistency
 // bug: adding a NOT NULL column without a default to a non-empty table must
 // reject the rewrite instead of persisting nulls in the new constrained column.
