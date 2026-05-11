@@ -15,8 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -29,10 +27,10 @@ func nodeDropTable(ctx *Context, node *tree.DropTable) (*vitess.DDL, error) {
 		return nil, nil
 	}
 	switch node.DropBehavior {
-	case tree.DropDefault:
-		// Default behavior, nothing to do
-	case tree.DropRestrict:
-		return nil, errors.Errorf("RESTRICT is not yet supported")
+	case tree.DropDefault, tree.DropRestrict:
+		// RESTRICT matches the default dependency behavior PostgreSQL uses
+		// when no keyword is given; accept it so migration tools and ORMs
+		// that spell out the default work.
 	case tree.DropCascade:
 		// Accept the keyword for migration/ORM tools. The DropTable executor still
 		// enforces dependency errors; full PostgreSQL dependency cascading is not

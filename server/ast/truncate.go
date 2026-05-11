@@ -29,10 +29,9 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (*vitess.DDL, error) {
 		return nil, nil
 	}
 	switch node.DropBehavior {
-	case tree.DropDefault:
-		// Default behavior, nothing to do
-	case tree.DropRestrict:
-		return nil, errors.Errorf("RESTRICT is not yet supported")
+	case tree.DropDefault, tree.DropRestrict:
+		// RESTRICT matches PostgreSQL's default truncate-dependency policy
+		// (foreign-key references already error); accept the keyword.
 	case tree.DropCascade:
 		return nil, errors.Errorf("CASCADE is not yet supported")
 	}

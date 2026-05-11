@@ -15,7 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -25,12 +24,12 @@ import (
 // nodeDropTrigger handles *tree.DropTrigger nodes.
 func nodeDropTrigger(ctx *Context, node *tree.DropTrigger) (vitess.Statement, error) {
 	switch node.DropBehavior {
-	case tree.DropDefault:
-		// Default behavior, nothing to do
-	case tree.DropRestrict:
-		return nil, errors.Errorf("RESTRICT is not yet supported")
+	case tree.DropDefault, tree.DropRestrict:
+		// RESTRICT matches the default behavior PostgreSQL uses when no
+		// keyword is given; accept it for migration tools that spell it out.
 	case tree.DropCascade:
-		return nil, errors.Errorf("CASCADE is not yet supported")
+		// Triggers are not currently referenced by any other catalog object
+		// in doltgres, so there is nothing to cascade — accept the keyword.
 	}
 	return vitess.InjectedStatement{
 		Statement: pgnodes.NewDropTrigger(

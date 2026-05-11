@@ -29,10 +29,9 @@ func nodeDropView(ctx *Context, node *tree.DropView) (*vitess.DDL, error) {
 		return nil, nil
 	}
 	switch node.DropBehavior {
-	case tree.DropDefault:
-		// Default behavior, nothing to do
-	case tree.DropRestrict:
-		return nil, errors.Errorf("RESTRICT is not yet supported")
+	case tree.DropDefault, tree.DropRestrict:
+		// RESTRICT matches the default behavior — dependents already cause an
+		// error during DROP — so the keyword is accepted without changes.
 	case tree.DropCascade:
 		return nil, errors.Errorf("CASCADE is not yet supported")
 	}

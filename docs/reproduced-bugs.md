@@ -1386,23 +1386,6 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: the materialized view is dropped successfully,
   leaving the dependent view definition stale.
 
-### Explicit RESTRICT is rejected for DROP TABLE, DROP VIEW, DROP MATERIALIZED VIEW, DROP TRIGGER, and TRUNCATE
-
-- Reproducers: `TestDropTableRestrictRepro`, `TestDropViewRestrictRepro`,
-  `TestDropMaterializedViewRestrictRepro`, `TestDropTriggerRestrictRepro`, and
-  `TestTruncateRestrictRepro` in
-  `testing/go/drop_restrict_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run 'Test(DropTableRestrict|DropViewRestrict|DropMaterializedViewRestrict|DropTriggerRestrict|TruncateRestrict)Repro'
-  -count=1`.
-- Expected PostgreSQL behavior: explicit `RESTRICT` is accepted for `DROP TABLE`,
-  `DROP VIEW`, `DROP MATERIALIZED VIEW`, `DROP TRIGGER`, and `TRUNCATE`, where
-  it spells the default dependency behavior.
-- Observed Doltgres behavior: each statement fails with `RESTRICT is not yet
-  supported`, so valid PostgreSQL DDL and dump/restore scripts that include the
-  explicit keyword cannot be replayed.
-
 ### DROP VIEW and DROP MATERIALIZED VIEW CASCADE are rejected
 
 - Reproducers: `TestDropViewCascadeRepro` and
@@ -1416,18 +1399,6 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: both statements fail with `CASCADE is not yet
   supported`, so valid dependency-dropping DDL cannot be replayed and dependent
   views are left behind.
-
-### DROP TRIGGER CASCADE is rejected
-
-- Reproducer: `TestDropTriggerCascadeRepro` in
-  `testing/go/drop_restrict_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestDropTriggerCascadeRepro -count=1`.
-- Expected PostgreSQL behavior: `DROP TRIGGER trigger_name ON table_name CASCADE`
-  is accepted and removes the trigger.
-- Observed Doltgres behavior: the statement fails with `CASCADE is not yet
-  supported`, so valid explicit-cascade trigger DDL cannot be replayed.
 
 ### DROP FUNCTION CASCADE is rejected
 

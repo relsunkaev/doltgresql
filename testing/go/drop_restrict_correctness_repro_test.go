@@ -20,10 +20,10 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestDropTableRestrictRepro reproduces a DDL correctness bug: PostgreSQL
+// TestDropTableAcceptsRestrict guards that PostgreSQL
 // accepts explicit RESTRICT on DROP TABLE, where it is the default dependency
 // behavior.
-func TestDropTableRestrictRepro(t *testing.T) {
+func TestDropTableAcceptsRestrict(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP TABLE accepts explicit RESTRICT",
@@ -43,10 +43,10 @@ func TestDropTableRestrictRepro(t *testing.T) {
 	})
 }
 
-// TestDropViewRestrictRepro reproduces a DDL correctness bug: PostgreSQL
+// TestDropViewAcceptsRestrict guards that PostgreSQL
 // accepts explicit RESTRICT on DROP VIEW, where it is the default dependency
 // behavior.
-func TestDropViewRestrictRepro(t *testing.T) {
+func TestDropViewAcceptsRestrict(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP VIEW accepts explicit RESTRICT",
@@ -65,10 +65,10 @@ func TestDropViewRestrictRepro(t *testing.T) {
 	})
 }
 
-// TestDropMaterializedViewRestrictRepro reproduces a DDL correctness bug:
+// TestDropMaterializedViewAcceptsRestrict guards that
 // PostgreSQL accepts explicit RESTRICT on DROP MATERIALIZED VIEW, where it is
 // the default dependency behavior.
-func TestDropMaterializedViewRestrictRepro(t *testing.T) {
+func TestDropMaterializedViewAcceptsRestrict(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP MATERIALIZED VIEW accepts explicit RESTRICT",
@@ -91,10 +91,10 @@ func TestDropMaterializedViewRestrictRepro(t *testing.T) {
 	})
 }
 
-// TestDropTriggerRestrictRepro reproduces a DDL correctness bug: PostgreSQL
+// TestDropTriggerAcceptsRestrict guards that PostgreSQL
 // accepts explicit RESTRICT on DROP TRIGGER, where it is the default dependency
 // behavior.
-func TestDropTriggerRestrictRepro(t *testing.T) {
+func TestDropTriggerAcceptsRestrict(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP TRIGGER accepts explicit RESTRICT",
@@ -178,9 +178,9 @@ func TestDropMaterializedViewCascadeRepro(t *testing.T) {
 	})
 }
 
-// TestDropTriggerCascadeRepro reproduces a DDL correctness bug: PostgreSQL
+// TestDropTriggerAcceptsCascade guards that PostgreSQL
 // accepts explicit CASCADE on DROP TRIGGER.
-func TestDropTriggerCascadeRepro(t *testing.T) {
+func TestDropTriggerAcceptsCascade(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP TRIGGER accepts explicit CASCADE",
@@ -277,10 +277,10 @@ func TestDropProcedureCascadeRepro(t *testing.T) {
 	})
 }
 
-// TestTruncateRestrictRepro reproduces a DDL correctness bug: PostgreSQL
+// TestTruncateAcceptsRestrict guards that PostgreSQL
 // accepts explicit RESTRICT on TRUNCATE, where it is the default dependency
 // behavior.
-func TestTruncateRestrictRepro(t *testing.T) {
+func TestTruncateAcceptsRestrict(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "TRUNCATE accepts explicit RESTRICT",
