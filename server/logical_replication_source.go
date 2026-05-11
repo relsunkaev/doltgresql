@@ -82,10 +82,14 @@ func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 		return errors.Errorf("logical replication output plugin is required")
 	}
 	plugin := normalizeReplicationIdentifier(fields[idx+1])
-	slot, err := replsource.CreateSlot(slotName, plugin, h.database, temporary)
+	twoPhase, err := h.parseCreateReplicationSlotOptions(fields[idx+2:])
+	if err != nil {
+		return err
+	}
+	slot, err := replsource.CreateSlot(slotName, plugin, h.database, temporary, twoPhase, int32(h.mysqlConn.ConnectionID))
 	if err != nil {
 		existing, ok := replsource.GetSlot(slotName)
-		if !ok || existing.Active || existing.Temporary || temporary || !strings.EqualFold(existing.Plugin, plugin) || existing.Database != h.database {
+		if !ok || existing.Active || existing.Temporary || temporary || !strings.EqualFold(existing.Plugin, plugin) || existing.Database != h.database || existing.TwoPhase != twoPhase {
 			return err
 		}
 		slot = existing
@@ -104,6 +108,24 @@ func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 		}},
 		"CREATE_REPLICATION_SLOT",
 	)
+}
+
+func (h *ConnectionHandler) parseCreateReplicationSlotOptions(options []string) (bool, error) {
+	twoPhase := false
+	for _, option := range options {
+		switch strings.ToUpper(option) {
+		case "EXPORT_SNAPSHOT", "NOEXPORT_SNAPSHOT":
+		case "USE_SNAPSHOT":
+			if !h.inTransaction {
+				return false, errors.Errorf("CREATE_REPLICATION_SLOT USE_SNAPSHOT must be called in a transaction")
+			}
+		case "TWO_PHASE":
+			twoPhase = true
+		default:
+			return false, errors.Errorf("unrecognized CREATE_REPLICATION_SLOT option %q", option)
+		}
+	}
+	return twoPhase, nil
 }
 
 func (h *ConnectionHandler) dropReplicationSlot(statement string) error {

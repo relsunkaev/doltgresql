@@ -38,6 +38,7 @@ type Slot struct {
 	Temporary         bool
 	Active            bool
 	ActivePID         int32
+	OwnerPID          int32
 	RestartLSN        pglogrepl.LSN
 	ConfirmedFlushLSN pglogrepl.LSN
 	TwoPhase          bool
@@ -213,9 +214,12 @@ func ResetForTests() {
 }
 
 // CreateSlot creates a logical replication slot in the local registry.
-func CreateSlot(name string, plugin string, database string, temporary bool) (Slot, error) {
+func CreateSlot(name string, plugin string, database string, temporary bool, twoPhase bool, ownerPID int32) (Slot, error) {
 	if name == "" {
 		return Slot{}, errors.New("replication slot name is required")
+	}
+	if !validSlotName(name) {
+		return Slot{}, errors.Errorf("invalid replication slot name %q", name)
 	}
 	if plugin == "" {
 		plugin = "pgoutput"
@@ -234,8 +238,10 @@ func CreateSlot(name string, plugin string, database string, temporary bool) (Sl
 		Plugin:            plugin,
 		Database:          database,
 		Temporary:         temporary,
+		OwnerPID:          ownerPID,
 		RestartLSN:        defaultRegistry.current,
 		ConfirmedFlushLSN: defaultRegistry.current,
+		TwoPhase:          twoPhase,
 	}
 	defaultRegistry.slots[name] = &slot
 	if !temporary {
@@ -245,6 +251,25 @@ func CreateSlot(name string, plugin string, database string, temporary bool) (Sl
 		}
 	}
 	return slot, nil
+}
+
+func validSlotName(name string) bool {
+	if len(name) == 0 || len(name) > 63 {
+		return false
+	}
+	for _, ch := range name {
+		if ch >= 'a' && ch <= 'z' {
+			continue
+		}
+		if ch >= '0' && ch <= '9' {
+			continue
+		}
+		if ch == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // DropSlot drops an inactive logical replication slot.
@@ -265,6 +290,17 @@ func DropSlot(name string) error {
 		return err
 	}
 	return nil
+}
+
+// DropTemporarySlotsForPID drops temporary slots created by the given connection.
+func DropTemporarySlotsForPID(pid int32) {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	for name, slot := range defaultRegistry.slots {
+		if slot.Temporary && slot.OwnerPID == pid {
+			delete(defaultRegistry.slots, name)
+		}
+	}
 }
 
 // ListSlots returns a stable snapshot of all local logical replication slots.

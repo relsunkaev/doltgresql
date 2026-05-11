@@ -209,6 +209,7 @@ func (h *ConnectionHandler) HandleConnection() {
 	h.doltgresHandler.NewConnection(h.mysqlConn)
 	defer func() {
 		h.closeReplicationSender()
+		replsource.DropTemporarySlotsForPID(int32(h.mysqlConn.ConnectionID))
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
 		globalCancelRegistry.unregister(h.mysqlConn.ConnectionID, h.cancelSecretKey)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
