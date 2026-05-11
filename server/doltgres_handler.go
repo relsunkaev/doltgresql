@@ -590,6 +590,7 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		_ = functions.ReleaseSessionXactLocks(ctx)
 		node.ReleaseSessionRowLocks(c.ConnectionID)
 		_ = functions.ReleaseSessionXactVars(ctx)
+		functions.ReleaseSessionSharedAdvisoryLocks(c.ConnectionID)
 		_, err = h.e.LS.ReleaseAll(ctx)
 		if err != nil {
 			logrus.Errorf("unable to release all locks on session close: %s", err)

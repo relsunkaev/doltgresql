@@ -75,4 +75,34 @@ func TestSharedAdvisoryLocksCoexistAndBlockExclusiveRepro(t *testing.T) {
 
 	require.NoError(t, third.QueryRow(ctx, `SELECT pg_try_advisory_lock(42);`).Scan(&exclusive))
 	require.True(t, exclusive)
+
+	var sharedWhileExclusive bool
+	require.NoError(t, first.QueryRow(ctx, `SELECT pg_try_advisory_lock_shared(42);`).Scan(&sharedWhileExclusive))
+	require.False(t, sharedWhileExclusive)
+
+	var thirdUnlocked bool
+	require.NoError(t, third.QueryRow(ctx, `SELECT pg_advisory_unlock(42);`).Scan(&thirdUnlocked))
+	require.True(t, thirdUnlocked)
+
+	_, err = first.Exec(ctx, `SELECT pg_advisory_lock_shared(10::int4, 20::int4);`)
+	require.NoError(t, err)
+
+	var secondPairShared bool
+	require.NoError(t, second.QueryRow(ctx, `SELECT pg_try_advisory_lock_shared(10::int4, 20::int4);`).Scan(&secondPairShared))
+	require.True(t, secondPairShared)
+
+	require.NoError(t, third.QueryRow(ctx, `SELECT pg_try_advisory_lock(10::int4, 20::int4);`).Scan(&exclusive))
+	require.False(t, exclusive)
+
+	require.NoError(t, first.QueryRow(ctx, `SELECT pg_advisory_unlock_shared(10::int4, 20::int4);`).Scan(&firstUnlocked))
+	require.True(t, firstUnlocked)
+
+	require.NoError(t, second.QueryRow(ctx, `SELECT pg_advisory_unlock_shared(10::int4, 20::int4);`).Scan(&secondUnlocked))
+	require.True(t, secondUnlocked)
+
+	require.NoError(t, third.QueryRow(ctx, `SELECT pg_try_advisory_lock(10::int4, 20::int4);`).Scan(&exclusive))
+	require.True(t, exclusive)
+
+	require.NoError(t, first.QueryRow(ctx, `SELECT pg_try_advisory_lock_shared(10::int4, 20::int4);`).Scan(&sharedWhileExclusive))
+	require.False(t, sharedWhileExclusive)
 }

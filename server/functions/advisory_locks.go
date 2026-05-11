@@ -34,6 +34,12 @@ func initAdvisoryLockFunctions() {
 	framework.RegisterFunction(pg_advisory_lock_int4_int4)
 	framework.RegisterFunction(pg_advisory_unlock_int4_int4)
 	framework.RegisterFunction(pg_try_advisory_lock_int4_int4)
+	framework.RegisterFunction(pg_advisory_lock_shared_bigint)
+	framework.RegisterFunction(pg_advisory_lock_shared_int4_int4)
+	framework.RegisterFunction(pg_try_advisory_lock_shared_bigint)
+	framework.RegisterFunction(pg_try_advisory_lock_shared_int4_int4)
+	framework.RegisterFunction(pg_advisory_unlock_shared_bigint)
+	framework.RegisterFunction(pg_advisory_unlock_shared_int4_int4)
 	framework.RegisterFunction(pg_advisory_xact_lock_bigint)
 	framework.RegisterFunction(pg_advisory_xact_lock_int4_int4)
 	framework.RegisterFunction(pg_try_advisory_xact_lock_bigint)
@@ -238,6 +244,7 @@ var pg_advisory_unlock_all = framework.Function0{
 				}
 			}
 		}
+		ReleaseSessionSharedAdvisoryLocks(uint32(ctx.Session.ID()))
 		return nil, nil
 	},
 }
@@ -278,17 +285,7 @@ func reentrantCountForSession(name string) int {
 // the caller must hold the lock for the lifetime of the surrounding
 // transaction (or autocommit statement).
 func acquireAdvisoryLock(ctx *sql.Context, name string, timeout time.Duration, txn bool) error {
-	ls := getLockSubsystem()
-	if ls == nil {
-		return errors.Errorf("lock subsystem not available")
-	}
-	if err := ls.Lock(ctx, name, timeout); err != nil {
-		return err
-	}
-	if txn {
-		recordXactLock(uint32(ctx.Session.ID()), name)
-	}
-	return nil
+	return acquireExclusiveAdvisoryLock(ctx, name, timeout, txn)
 }
 
 // tryAcquireAdvisoryLock attempts to acquire the named lock without
@@ -296,24 +293,7 @@ func acquireAdvisoryLock(ctx *sql.Context, name string, timeout time.Duration, t
 // is held by another session. Returns a non-nil error only on infrastructure
 // failures (e.g. missing lock subsystem).
 func tryAcquireAdvisoryLock(ctx *sql.Context, name string, txn bool) (bool, error) {
-	ls := getLockSubsystem()
-	if ls == nil {
-		return false, errors.Errorf("lock subsystem not available")
-	}
-	// timeout = 0 makes the LockSubsystem run a single CAS attempt and
-	// return ErrLockTimeout immediately if the lock is held by another
-	// session — matching pg_try_advisory_lock semantics.
-	err := ls.Lock(ctx, name, 0)
-	if sql.ErrLockTimeout.Is(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	if txn {
-		recordXactLock(uint32(ctx.Session.ID()), name)
-	}
-	return true, nil
+	return tryAcquireExclusiveAdvisoryLock(ctx, name, txn)
 }
 
 // releaseAdvisoryLock releases one count of the named session-scope
