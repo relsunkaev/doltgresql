@@ -16434,6 +16434,22 @@ They are worth keeping, but they are not counted as found bugs.
   `function: 'array_replace' not found`, so standard array replacement
   expressions cannot be used in queries, defaults, or writes.
 
+### `array_remove` reports a literal parse error for multidimensional arrays
+
+- Reproducer: `TestArrayRemoveRejectsMultidimensionalArraysRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestArrayRemoveRejectsMultidimensionalArraysRepro -count=1`.
+- Expected PostgreSQL behavior: `array_remove('{{1,2,2},{1,4,3}}'::int[], 2)`
+  parses the accepted multidimensional array literal and then rejects the
+  operation with `removing elements from multidimensional arrays is not
+  supported`.
+- Observed Doltgres behavior: the query fails earlier with
+  `invalid input syntax for type int4: "{1"`, so a valid multidimensional
+  array literal is misparsed before `array_remove` can enforce PostgreSQL's
+  one-dimensional mutation boundary.
+
 ### `string_to_array` is missing for array construction
 
 - Reproducer: `TestStringToArraySplitsTextRepro` in

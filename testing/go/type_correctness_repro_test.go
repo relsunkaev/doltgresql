@@ -1236,6 +1236,23 @@ func TestArrayToStringNullArrayWithNullReplacementRepro(t *testing.T) {
 	})
 }
 
+// TestArrayRemoveRejectsMultidimensionalArraysRepro reproduces an array
+// correctness bug: PostgreSQL parses multidimensional array literals and then
+// reports that array_remove only supports one-dimensional arrays.
+func TestArrayRemoveRejectsMultidimensionalArraysRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "array_remove rejects multidimensional arrays",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT array_remove('{{1,2,2},{1,4,3}}'::int[], 2);`,
+					ExpectedErr: `multidimensional arrays`,
+				},
+			},
+		},
+	})
+}
+
 // TestArrayReplaceReplacesMatchingElementsRepro reproduces an array
 // correctness bug: PostgreSQL supports array_replace for replacing all
 // matching elements, including NULL matches.
