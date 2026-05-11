@@ -977,6 +977,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> create_index_stmt
 %type <tree.Statement> create_role_stmt
 %type <tree.Statement> create_schedule_for_backup_stmt
+%type <tree.Statement> create_access_method_stmt
 %type <tree.Statement> create_extension_stmt
 %type <tree.Statement> create_function_stmt
 %type <tree.Statement> create_language_stmt
@@ -1020,6 +1021,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> drop_publication_stmt
 %type <tree.Statement> drop_sequence_stmt
 %type <tree.Statement> drop_subscription_stmt
+%type <tree.Statement> drop_access_method_stmt
 %type <tree.Statement> drop_extension_stmt
 %type <tree.Statement> drop_language_stmt
 %type <tree.Statement> drop_function_stmt
@@ -1171,6 +1173,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %type <tree.DatabaseOption> opt_database_options
 %type <[]tree.DatabaseOption> opt_database_options_list opt_database_with_options
+%type <str> access_method_type
 
 %type <tree.AlterTableCmd> alter_table_action enable_or_disable_trigger enable_or_disable_rule
 %type <tree.AlterTableCmd> alter_opt_column_options alter_materialized_view_opt_column_options
@@ -4295,9 +4298,30 @@ create_stmt:
 | create_subscription_stmt // EXTEND WITH HELP: CREATE SUBSCRIPTION
 | create_extension_stmt // EXTEND WITH HELP: CREATE EXTENSION
 | create_language_stmt  // EXTEND WITH HELP: CREATE LANGUAGE
+| create_access_method_stmt // EXTEND WITH HELP: CREATE ACCESS METHOD
 | create_aggregate_stmt // EXTEND WITH HELP: CREATE AGGREGATE
 | create_unsupported   {}
 | CREATE error         // SHOW HELP: CREATE
+
+// %Help: CREATE ACCESS METHOD - define a new access method
+// %Category: DDL
+// %Text: CREATE ACCESS METHOD <name> TYPE { INDEX | TABLE } HANDLER <handler>
+create_access_method_stmt:
+  CREATE ACCESS METHOD name TYPE access_method_type HANDLER name
+  {
+    $$.val = &tree.CreateAccessMethod{Name: tree.Name($4), Type: $6, Handler: tree.Name($8)}
+  }
+| CREATE ACCESS METHOD error // SHOW HELP: CREATE ACCESS METHOD
+
+access_method_type:
+  INDEX
+  {
+    $$ = "i"
+  }
+| TABLE
+  {
+    $$ = "t"
+  }
 
 create_unsupported:
   CREATE CAST error { return unimplemented(sqllex, "create cast") }
@@ -5412,9 +5436,23 @@ drop_stmt:
 | drop_domain_stmt   // EXTEND WITH HELP: DROP DOMAIN
 | drop_extension_stmt // EXTEND WITH HELP: DROP EXTENSION
 | drop_language_stmt // EXTEND WITH HELP: DROP LANGUAGE
+| drop_access_method_stmt // EXTEND WITH HELP: DROP ACCESS METHOD
 | drop_aggregate_stmt // EXTEND WITH HELP: DROP AGGREGATE
 | drop_unsupported   {}
 | DROP error         // SHOW HELP: DROP
+
+// %Help: DROP ACCESS METHOD - remove an access method
+// %Category: DDL
+// %Text: DROP ACCESS METHOD [IF EXISTS] <name> [CASCADE | RESTRICT]
+drop_access_method_stmt:
+  DROP ACCESS METHOD name opt_drop_behavior
+  {
+    $$.val = &tree.DropAccessMethod{Names: tree.NameList{tree.Name($4)}, DropBehavior: $5.dropBehavior()}
+  }
+| DROP ACCESS METHOD IF EXISTS name opt_drop_behavior
+  {
+    $$.val = &tree.DropAccessMethod{Names: tree.NameList{tree.Name($6)}, IfExists: true, DropBehavior: $7.dropBehavior()}
+  }
 
 drop_ddl_stmt:
   drop_database_stmt // EXTEND WITH HELP: DROP DATABASE

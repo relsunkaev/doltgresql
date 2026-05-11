@@ -18,8 +18,8 @@ import "testing"
 
 func TestCreateAccessMethod(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("CREATE ACCESS METHOD name TYPE TABLE HANDLER handler_function"),
-		Unimplemented("CREATE ACCESS METHOD name TYPE INDEX HANDLER handler_function"),
+		Converts("CREATE ACCESS METHOD name TYPE TABLE HANDLER handler_function"),
+		Converts("CREATE ACCESS METHOD name TYPE INDEX HANDLER handler_function"),
 	}
 	RunTests(t, tests)
 }

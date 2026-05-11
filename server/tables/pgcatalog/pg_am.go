@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/accessmethod"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -48,6 +49,7 @@ func (p PgAmHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.Row
 	if err != nil {
 		return nil, err
 	}
+	ams = append(ams, userDefinedAccessMethods()...)
 	return &pgAmRowIter{
 		ams: ams,
 		idx: 0,
@@ -117,4 +119,18 @@ var defaultPostgresAms = []accessMethod{
 	{oid: id.NewAccessMethod("gin").AsId(), name: "gin", handler: pgCatalogFunctionID("ginhandler", pgCatalogType("internal")), typ: "i"},
 	{oid: id.NewAccessMethod("spgist").AsId(), name: "spgist", handler: pgCatalogFunctionID("spghandler", pgCatalogType("internal")), typ: "i"},
 	{oid: id.NewAccessMethod("brin").AsId(), name: "brin", handler: pgCatalogFunctionID("brinhandler", pgCatalogType("internal")), typ: "i"},
+}
+
+func userDefinedAccessMethods() []accessMethod {
+	entries := accessmethod.Snapshot()
+	ams := make([]accessMethod, 0, len(entries))
+	for _, entry := range entries {
+		ams = append(ams, accessMethod{
+			oid:     id.NewAccessMethod(entry.Name).AsId(),
+			name:    entry.Name,
+			handler: pgCatalogFunctionID(entry.Handler, pgCatalogType("internal")),
+			typ:     entry.Type,
+		})
+	}
+	return ams
 }

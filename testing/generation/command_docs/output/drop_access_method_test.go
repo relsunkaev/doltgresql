@@ -18,12 +18,12 @@ import "testing"
 
 func TestDropAccessMethod(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("DROP ACCESS METHOD name"),
-		Unimplemented("DROP ACCESS METHOD IF EXISTS name"),
-		Unimplemented("DROP ACCESS METHOD name CASCADE"),
-		Unimplemented("DROP ACCESS METHOD IF EXISTS name CASCADE"),
-		Unimplemented("DROP ACCESS METHOD name RESTRICT"),
-		Unimplemented("DROP ACCESS METHOD IF EXISTS name RESTRICT"),
+		Converts("DROP ACCESS METHOD name"),
+		Converts("DROP ACCESS METHOD IF EXISTS name"),
+		Converts("DROP ACCESS METHOD name CASCADE"),
+		Converts("DROP ACCESS METHOD IF EXISTS name CASCADE"),
+		Converts("DROP ACCESS METHOD name RESTRICT"),
+		Converts("DROP ACCESS METHOD IF EXISTS name RESTRICT"),
 	}
 	RunTests(t, tests)
 }
