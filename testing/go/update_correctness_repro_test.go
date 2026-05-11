@@ -543,6 +543,45 @@ func TestOnConflictUpdateNoopReturningIncludesRowsGuard(t *testing.T) {
 	})
 }
 
+// TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro reproduces an
+// UPSERT consistency bug: PostgreSQL evaluates the ON CONFLICT DO UPDATE WHERE
+// predicate once for the conflicting row, not once per SET assignment.
+func TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT DO UPDATE WHERE volatile predicate evaluates once",
+			SetUpScript: []string{
+				`CREATE SEQUENCE on_conflict_where_volatile_seq;`,
+				`CREATE TABLE on_conflict_where_volatile_items (
+					id INT PRIMARY KEY,
+					a INT NOT NULL,
+					b INT NOT NULL
+				);`,
+				`INSERT INTO on_conflict_where_volatile_items VALUES (1, 0, 0);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO on_conflict_where_volatile_items VALUES (1, 10, 20)
+						ON CONFLICT (id) DO UPDATE
+						SET a = EXCLUDED.a,
+							b = EXCLUDED.b
+						WHERE nextval('on_conflict_where_volatile_seq') = 1
+						RETURNING id, a, b;`,
+					Expected: []sql.Row{{1, 10, 20}},
+				},
+				{
+					Query:    `SELECT id, a, b FROM on_conflict_where_volatile_items;`,
+					Expected: []sql.Row{{1, 10, 20}},
+				},
+				{
+					Query:    `SELECT nextval('on_conflict_where_volatile_seq');`,
+					Expected: []sql.Row{{int64(2)}},
+				},
+			},
+		},
+	})
+}
+
 // TestOnConflictReturningCannotReferenceExcludedGuard guards PostgreSQL's
 // namespace boundary: EXCLUDED is available to the DO UPDATE action, but not
 // to the statement RETURNING list.

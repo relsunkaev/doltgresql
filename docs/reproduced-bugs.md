@@ -3170,6 +3170,23 @@ artifacts only; no fixes are included here.
   assignment, changing `a` from `10` to `2`. A conflict-handling statement
   PostgreSQL rejects can silently mutate stored data.
 
+### ON CONFLICT DO UPDATE WHERE predicates are evaluated once per assignment
+
+- Reproducer: `TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro`
+  in `testing/go/update_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestOnConflictUpdateWhereVolatilePredicateEvaluatesOnceRepro -count=1`.
+- Expected PostgreSQL behavior: the `ON CONFLICT DO UPDATE WHERE` predicate is
+  evaluated once for the conflicting row. With
+  `WHERE nextval('...') = 1`, both `SET` assignments use that accepted row and
+  the next sequence value is `2`.
+- Observed Doltgres behavior: the predicate is evaluated separately for each
+  `SET` assignment. The first assignment stores `a = 10`, the second predicate
+  evaluation consumes another sequence value and leaves `b = 0`, the
+  `RETURNING` list emits no row, and the next sequence value is `3`.
+
 ### ON CONFLICT DO UPDATE cannot pass EXCLUDED columns to functions
 
 - Reproducer: `TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro`
