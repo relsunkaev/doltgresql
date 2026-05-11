@@ -9533,6 +9533,26 @@ artifacts only; no fixes are included here.
   materialized views can persist fixed-width character output without the
   required padding.
 
+### CREATE MATERIALIZED VIEW text-domain typmod outputs store uncoerced base values
+
+- Reproducer:
+  `TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro` in
+  `testing/go/view_ddl_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `CREATE MATERIALIZED VIEW name AS SELECT` over
+  `varchar(3)` and `character(3)` domain expressions materializes the
+  typmod-coerced values and records the output columns as those domain types.
+  `abc   ` stores as `abc`, and `ab` stores as a padded `character(3)` value.
+- Observed Doltgres behavior: the materialized view stores `abc   ` with
+  `length = 6`, stores underpadded `ab` with `octet_length = 2`, and reports the
+  result values as base `character varying` / `character` types. `pg_attribute`
+  also cannot format the output column types, so materialized views can persist
+  text-domain outputs outside their declared base typmods while losing domain
+  type identity.
+
 ### REFRESH MATERIALIZED VIEW TIMETZ typmod output stores unrounded values
 
 - Reproducer:

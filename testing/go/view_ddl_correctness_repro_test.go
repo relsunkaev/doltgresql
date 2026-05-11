@@ -498,6 +498,40 @@ func TestCreateMaterializedViewCharacterTypmodMaterializesPaddedValueRepro(t *te
 	})
 }
 
+// TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro
+// reproduces a materialized-view persistence bug: PostgreSQL materializes
+// text-domain query outputs using the domain base type's typmod and preserves
+// the output domain type.
+func TestCreateMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE MATERIALIZED VIEW text domain typmod materializes coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_matview_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_matview_domain AS character(3);`,
+				`CREATE MATERIALIZED VIEW matview_text_domain_typmod_reader AS
+					SELECT 'abc   '::varchar3_matview_domain AS v,
+						'ab'::char3_matview_domain AS c;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM matview_text_domain_typmod_reader;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_matview_domain", "char3_matview_domain"}},
+				},
+				{
+					Query: `SELECT format_type(atttypid, atttypmod)
+						FROM pg_attribute
+						WHERE attrelid = 'matview_text_domain_typmod_reader'::regclass
+							AND attnum > 0
+						ORDER BY attnum;`,
+					Expected: []sql.Row{{"varchar3_matview_domain"}, {"char3_matview_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRefreshMaterializedViewTimetzTypmodMaterializesRoundedValueRepro
 // reproduces a materialized-view refresh persistence bug: PostgreSQL refreshes
 // typmod-constrained timetz query output using the rounded value and preserves
