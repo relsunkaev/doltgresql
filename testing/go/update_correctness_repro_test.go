@@ -445,6 +445,37 @@ func TestUpdateFromReturningSourceColumnsGuard(t *testing.T) {
 	})
 }
 
+// TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro reproduces an UPSERT
+// correctness bug: PostgreSQL does not return a row when an ON CONFLICT DO
+// UPDATE WHERE predicate rejects the conflicting row.
+func TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT DO UPDATE WHERE false returns no rows",
+			SetUpScript: []string{
+				`CREATE TABLE on_conflict_where_false_returning_items (
+					id INT PRIMARY KEY,
+					v TEXT NOT NULL
+				);`,
+				`INSERT INTO on_conflict_where_false_returning_items VALUES (1, 'old');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO on_conflict_where_false_returning_items VALUES (1, 'new')
+						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v
+						WHERE false
+						RETURNING id, v;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT id, v FROM on_conflict_where_false_returning_items;`,
+					Expected: []sql.Row{{1, "old"}},
+				},
+			},
+		},
+	})
+}
+
 // TestOnConflictReturningCannotReferenceExcludedGuard guards PostgreSQL's
 // namespace boundary: EXCLUDED is available to the DO UPDATE action, but not
 // to the statement RETURNING list.

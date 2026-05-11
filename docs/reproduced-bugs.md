@@ -3162,6 +3162,20 @@ artifacts only; no fixes are included here.
   assignment, changing `a` from `10` to `2`. A conflict-handling statement
   PostgreSQL rejects can silently mutate stored data.
 
+### ON CONFLICT DO UPDATE WHERE false returns the skipped row
+
+- Reproducer: `TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro` in
+  `testing/go/update_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro -count=1`.
+- Expected PostgreSQL behavior: if an `ON CONFLICT DO UPDATE WHERE` predicate
+  rejects the conflicting row, the row is not updated and is not returned by
+  the statement's `RETURNING` list.
+- Observed Doltgres behavior: `WHERE false` leaves the stored row unchanged,
+  but the `RETURNING` list still emits the skipped target row as `(1, 'old')`.
+
 ### ON CONFLICT DO UPDATE cannot pass EXCLUDED columns to functions
 
 - Reproducer: `TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro`
