@@ -213,6 +213,54 @@ func TestBeforeUpdateTriggerMutatedRowChecksConstraintsRepro(t *testing.T) {
 	})
 }
 
+// TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro reproduces an
+// UPSERT/trigger correctness bug: PostgreSQL does not fire row-level UPDATE
+// triggers when the ON CONFLICT DO UPDATE WHERE predicate rejects the
+// conflicting row.
+func TestOnConflictUpdateWhereFalseDoesNotFireUpdateTriggersRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT DO UPDATE WHERE false does not fire UPDATE triggers",
+			SetUpScript: []string{
+				`CREATE TABLE upsert_where_false_trigger_target (
+					id INT PRIMARY KEY,
+					v TEXT NOT NULL
+				);`,
+				`CREATE TABLE upsert_where_false_trigger_audit (
+					id INT,
+					old_v TEXT,
+					new_v TEXT
+				);`,
+				`CREATE FUNCTION audit_upsert_where_false_update() RETURNS TRIGGER AS $$
+				BEGIN
+					INSERT INTO upsert_where_false_trigger_audit VALUES (NEW.id, OLD.v, NEW.v);
+					RETURN NEW;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER upsert_where_false_after_update
+					AFTER UPDATE ON upsert_where_false_trigger_target
+					FOR EACH ROW EXECUTE FUNCTION audit_upsert_where_false_update();`,
+				`INSERT INTO upsert_where_false_trigger_target VALUES (1, 'old');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO upsert_where_false_trigger_target VALUES (1, 'new')
+						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v
+						WHERE false;`,
+				},
+				{
+					Query:    `SELECT count(*) FROM upsert_where_false_trigger_audit;`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+				{
+					Query:    `SELECT id, v FROM upsert_where_false_trigger_target;`,
+					Expected: []sql.Row{{1, "old"}},
+				},
+			},
+		},
+	})
+}
+
 // TestBeforeInsertTriggerSeesEarlierRowsInSameStatementRepro reproduces a
 // trigger correctness bug: row-level triggers in a multi-row INSERT should see
 // rows already inserted earlier in the same statement.
