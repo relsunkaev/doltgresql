@@ -1027,6 +1027,38 @@ func TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro(t
 	})
 }
 
+// TestAddPrimaryKeyRejectsExistingNullsGuard guards that existing NULL values
+// are rejected before adding a primary key.
+func TestAddPrimaryKeyRejectsExistingNullsGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ADD PRIMARY KEY rejects existing NULLs",
+			SetUpScript: []string{
+				`CREATE TABLE add_primary_key_existing_null_items (
+					id INT,
+					label TEXT
+				);`,
+				`INSERT INTO add_primary_key_existing_null_items VALUES (NULL, 'bad');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE add_primary_key_existing_null_items
+						ADD CONSTRAINT add_primary_key_existing_null_items_pkey
+						PRIMARY KEY (id);`,
+					ExpectedErr: `null`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.table_constraints
+						WHERE table_name = 'add_primary_key_existing_null_items'
+							AND constraint_type = 'PRIMARY KEY';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAddNotNullColumnValidatesExistingRowsRepro reproduces a data consistency
 // bug: adding a NOT NULL column without a default to a non-empty table must
 // reject the rewrite instead of persisting nulls in the new constrained column.
