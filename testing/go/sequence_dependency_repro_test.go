@@ -1470,6 +1470,43 @@ func TestOnConflictDoNothingConsumesNextvalDefaultRepro(t *testing.T) {
 	})
 }
 
+// TestOnConflictDoUpdateConsumesNextvalDefaultRepro reproduces a sequence
+// correctness bug: PostgreSQL evaluates INSERT defaults before conflict
+// handling, so a nextval() default is consumed even when ON CONFLICT DO UPDATE
+// updates an existing row instead of inserting the proposed row.
+func TestOnConflictDoUpdateConsumesNextvalDefaultRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT DO UPDATE consumes nextval default",
+			SetUpScript: []string{
+				`CREATE SEQUENCE conflict_update_nextval_seq;`,
+				`CREATE TABLE conflict_update_nextval_items (
+					id INT PRIMARY KEY DEFAULT nextval('conflict_update_nextval_seq'),
+					label TEXT UNIQUE,
+					touched INT NOT NULL DEFAULT 0
+				);`,
+				`INSERT INTO conflict_update_nextval_items (label) VALUES ('kept');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO conflict_update_nextval_items (label)
+						VALUES ('kept')
+						ON CONFLICT (label) DO UPDATE
+						SET touched = conflict_update_nextval_items.touched + 1;`,
+				},
+				{
+					Query:    `SELECT nextval('conflict_update_nextval_seq');`,
+					Expected: []sql.Row{{int64(3)}},
+				},
+				{
+					Query:    `SELECT id, label, touched FROM conflict_update_nextval_items;`,
+					Expected: []sql.Row{{1, "kept", 1}},
+				},
+			},
+		},
+	})
+}
+
 // TestTruncateRestartIdentityResetsOwnedSequenceRepro reproduces a sequence
 // correctness bug: TRUNCATE ... RESTART IDENTITY should reset sequences owned
 // by the truncated table.
