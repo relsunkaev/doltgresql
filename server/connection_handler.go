@@ -1215,6 +1215,13 @@ func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 		h.sendBuffered(&pgproto3.ParseComplete{})
 		return nil
 	}
+	if isTruncateQuery(query) {
+		h.preparedStatements[message.Name] = PreparedStatementData{
+			Query: query,
+		}
+		h.sendBuffered(&pgproto3.ParseComplete{})
+		return nil
+	}
 
 	ctx, err := h.doltgresHandler.sm.NewContextWithQuery(context.Background(), h.mysqlConn, query.String)
 	if err != nil {
@@ -1308,6 +1315,13 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 	}
 
 	if h.queryHandledOutsideEngine(preparedData.Query) {
+		h.portals[message.DestinationPortal] = PortalData{
+			Query: preparedData.Query,
+		}
+		h.sendBuffered(&pgproto3.BindComplete{})
+		return nil
+	}
+	if isTruncateQuery(preparedData.Query) {
 		h.portals[message.DestinationPortal] = PortalData{
 			Query: preparedData.Query,
 		}
@@ -1451,6 +1465,10 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	handled, _, err := h.handleQueryOutsideEngine(query)
 	if handled {
 		return err
+	}
+
+	if isTruncateQuery(query) {
+		return h.query(query)
 	}
 
 	// |rowsAffected| gets altered by the callback below
@@ -2076,6 +2094,18 @@ func copyToSelectQuery(copyTo *node.CopyTo) string {
 }
 
 func quoteCopyIdentifier(identifier string) string {
+	return quoteSQLIdentifier(identifier)
+}
+
+func quoteQualifiedIdentifier(schema string, table string) string {
+	tableName := quoteSQLIdentifier(table)
+	if schema != "" {
+		tableName = quoteSQLIdentifier(schema) + "." + tableName
+	}
+	return tableName
+}
+
+func quoteSQLIdentifier(identifier string) string {
 	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
@@ -2246,6 +2276,9 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 			return err
 		}
 	}
+	if h.inTransaction && isTruncateQuery(query) {
+		return h.executeTransactionalTruncate(query)
+	}
 
 	// |rowsAffected| gets altered by the callback below
 	rowsAffected := int32(0)
@@ -2254,12 +2287,21 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	var capture *replicationChangeCapture
 	var replicationQuery ConvertedQuery
 	var hasReplicationCapture bool
+	var postExecutionCapture *replicationChangeCapture
 	advanceLSN := false
 	var err error
 	if replsource.HasSlots() {
-		capture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(query)
-		if err != nil {
-			return err
+		if statementCapture, ok := replicationChangeCaptureFromStatement(query.AST); ok && !statementCapture.requiresFullRows() {
+			postExecutionCapture = statementCapture
+		} else {
+			capture, replicationQuery, hasReplicationCapture, err = h.prepareReplicationChangeQuery(query)
+			if err != nil {
+				return err
+			}
+			if capture != nil && !capture.requiresFullRows() {
+				postExecutionCapture = capture
+				capture = nil
+			}
 		}
 	} else if _, ok := replicationChangeCaptureFromStatement(query.AST); ok {
 		advanceLSN = true
@@ -2325,6 +2367,10 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 		if err = h.publishOrBufferReplicationCapture(captureCtx, capture); err != nil {
 			return err
 		}
+	} else if postExecutionCapture != nil {
+		if err = h.publishOrBufferReplicationCapture(queryCtx, postExecutionCapture); err != nil {
+			return err
+		}
 	} else if advanceLSN && rowsAffected > 0 {
 		h.advanceOrBufferReplicationLSN()
 	}
@@ -2341,6 +2387,43 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	return h.finishNotifications(query)
 }
 
+func (h *ConnectionHandler) executeTransactionalTruncate(query ConvertedQuery) error {
+	capture, ok := replicationChangeCaptureFromStatement(query.AST)
+	if !ok || capture.action != replicationChangeTruncate {
+		return errors.Errorf("expected TRUNCATE query")
+	}
+	if _, _, err := h.doltgresHandler.ComBind(context.Background(), h.mysqlConn, query.String, query.AST, BindVariables{}, nil); err != nil {
+		return err
+	}
+	deleteSQL := "DELETE FROM " + quoteQualifiedIdentifier(capture.schema, capture.table) + " WHERE EXISTS (SELECT 1) RETURNING *"
+	deleteQueries, err := h.convertQuery(deleteSQL)
+	if err != nil {
+		return err
+	}
+	if len(deleteQueries) != 1 {
+		return errors.Errorf("expected one DELETE query for TRUNCATE execution, got %d", len(deleteQueries))
+	}
+	var rowsAffected uint64
+	var sqlCtx *sql.Context
+	if err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, deleteQueries[0].String, deleteQueries[0].AST, func(ctx *sql.Context, res *Result) error {
+		sqlCtx = ctx
+		rowsAffected += uint64(len(res.Rows))
+		return nil
+	}); err != nil {
+		return err
+	}
+	if replsource.HasSlots() {
+		if err = h.publishOrBufferReplicationCapture(sqlCtx, capture); err != nil {
+			return err
+		}
+	} else if rowsAffected > 0 {
+		h.advanceOrBufferReplicationLSN()
+	}
+	h.invalidatePreparedPlanCacheIfNeeded(query)
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
 func isCommitQuery(query ConvertedQuery) bool {
 	_, ok := query.AST.(*sqlparser.Commit)
 	return ok
@@ -2354,6 +2437,11 @@ func isBeginQuery(query ConvertedQuery) bool {
 func isRollbackQuery(query ConvertedQuery) bool {
 	_, ok := query.AST.(*sqlparser.Rollback)
 	return ok
+}
+
+func isTruncateQuery(query ConvertedQuery) bool {
+	capture, ok := replicationChangeCaptureFromStatement(query.AST)
+	return ok && capture.action == replicationChangeTruncate
 }
 
 func (h *ConnectionHandler) validateDeferredConstraints() error {
@@ -2443,7 +2531,7 @@ func (h *ConnectionHandler) prepareReplicationChangeQuery(query ConvertedQuery) 
 		return nil, ConvertedQuery{}, false, nil
 	}
 	if !capture.requiresFullRows() {
-		return capture, replicationQuery, true, nil
+		return capture, ConvertedQuery{}, false, nil
 	}
 	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
 	if err != nil {

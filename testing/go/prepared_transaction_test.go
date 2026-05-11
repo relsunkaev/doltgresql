@@ -136,6 +136,88 @@ func TestPreparedTransactions(t *testing.T) {
 	})
 }
 
+// TestCommitPreparedRequiresTransactionOwnerRepro reproduces a security bug:
+// Doltgres lets a role commit a prepared transaction that was prepared by a
+// different role.
+func TestCommitPreparedRequiresTransactionOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMIT PREPARED requires prepared transaction owner",
+			SetUpScript: []string{
+				`CREATE USER commit_prepared_owner PASSWORD 'owner';`,
+				`CREATE USER commit_prepared_intruder PASSWORD 'intruder';`,
+				`CREATE TABLE commit_prepared_private (id INT PRIMARY KEY, label TEXT);`,
+				`GRANT USAGE ON SCHEMA public TO commit_prepared_owner, commit_prepared_intruder;`,
+				`GRANT INSERT ON commit_prepared_private TO commit_prepared_owner;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `BEGIN;`,
+					Username: `commit_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:    `INSERT INTO commit_prepared_private VALUES (1, 'owner');`,
+					Username: `commit_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:    `PREPARE TRANSACTION 'dg_commit_requires_owner';`,
+					Username: `commit_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:       `COMMIT PREPARED 'dg_commit_requires_owner';`,
+					ExpectedErr: `permission denied`,
+					Username:    `commit_prepared_intruder`,
+					Password:    `intruder`,
+				},
+			},
+		},
+	})
+}
+
+// TestRollbackPreparedRequiresTransactionOwnerRepro reproduces a security bug:
+// Doltgres lets a role roll back a prepared transaction that was prepared by a
+// different role.
+func TestRollbackPreparedRequiresTransactionOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK PREPARED requires prepared transaction owner",
+			SetUpScript: []string{
+				`CREATE USER rollback_prepared_owner PASSWORD 'owner';`,
+				`CREATE USER rollback_prepared_intruder PASSWORD 'intruder';`,
+				`CREATE TABLE rollback_prepared_private (id INT PRIMARY KEY, label TEXT);`,
+				`GRANT USAGE ON SCHEMA public TO rollback_prepared_owner, rollback_prepared_intruder;`,
+				`GRANT INSERT ON rollback_prepared_private TO rollback_prepared_owner;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `BEGIN;`,
+					Username: `rollback_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:    `INSERT INTO rollback_prepared_private VALUES (1, 'owner');`,
+					Username: `rollback_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:    `PREPARE TRANSACTION 'dg_rollback_requires_owner';`,
+					Username: `rollback_prepared_owner`,
+					Password: `owner`,
+				},
+				{
+					Query:       `ROLLBACK PREPARED 'dg_rollback_requires_owner';`,
+					ExpectedErr: `permission denied`,
+					Username:    `rollback_prepared_intruder`,
+					Password:    `intruder`,
+				},
+			},
+		},
+	})
+}
+
 func TestPreparedTransactionSurvivesRestart(t *testing.T) {
 	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
 	require.NoError(t, err)

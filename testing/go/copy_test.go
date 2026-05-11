@@ -21,9 +21,11 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -430,6 +432,74 @@ func TestCopyToStdout(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "COPY 2", tag.String())
 	require.Equal(t, "id,name,note\n1,alice,one\n2,bob,\n", csvOut.String())
+}
+
+func TestCopyToStdoutRequiresSelectPrivilegeGuard(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, connection, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	for _, stmt := range []string{
+		`CREATE USER copy_reader PASSWORD 'reader';`,
+		`CREATE TABLE copy_private (id INT PRIMARY KEY, secret TEXT);`,
+		`INSERT INTO copy_private VALUES (1, 'alpha'), (2, 'beta');`,
+		`GRANT USAGE ON SCHEMA public TO copy_reader;`,
+	} {
+		_, err = connection.Exec(ctx, stmt)
+		require.NoError(t, err, stmt)
+	}
+
+	readerConn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://copy_reader:reader@127.0.0.1:%d/postgres?sslmode=disable",
+		port,
+	))
+	require.NoError(t, err)
+	defer readerConn.Close(context.Background())
+
+	var out bytes.Buffer
+	tag, err := readerConn.PgConn().CopyTo(ctx, &out, `COPY copy_private (id, secret) TO STDOUT;`)
+	require.Errorf(t, err, "COPY TO should require SELECT privilege; tag=%s output=%q", tag.String(), out.String())
+	require.Contains(t, err.Error(), "denied")
+}
+
+func TestCopyFromStdinRequiresInsertPrivilegeRepro(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, connection, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	for _, stmt := range []string{
+		`CREATE USER copy_writer PASSWORD 'writer';`,
+		`CREATE TABLE copy_from_private (id INT PRIMARY KEY, label TEXT);`,
+		`GRANT USAGE ON SCHEMA public TO copy_writer;`,
+	} {
+		_, err = connection.Exec(ctx, stmt)
+		require.NoError(t, err, stmt)
+	}
+
+	writerConn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://copy_writer:writer@127.0.0.1:%d/postgres?sslmode=disable",
+		port,
+	))
+	require.NoError(t, err)
+	defer writerConn.Close(context.Background())
+
+	tag, err := writerConn.PgConn().CopyFrom(
+		ctx,
+		strings.NewReader("1\talpha\n"),
+		`COPY copy_from_private (id, label) FROM STDIN;`,
+	)
+	require.Errorf(t, err, "COPY FROM should require INSERT privilege; tag=%s", tag.String())
+	require.Contains(t, err.Error(), "denied")
 }
 
 func TestCopyCustomerSyncTypeMatrix(t *testing.T) {

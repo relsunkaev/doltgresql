@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -326,6 +327,87 @@ func TestPgLogicalEmitMessage(t *testing.T) {
 	require.Equal(t, []byte(`{"id":"def"}`), flushed.Content)
 }
 
+func TestPgLogicalEmitTransactionalMessageRollsBackRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	slotName := "dg_emit_transactional_message_slot"
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	var emittedLSNText string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT pg_logical_emit_message(true, 'rolled/back', 'discard me')::text;`).Scan(&emittedLSNText))
+	_, err = conn.Current.Exec(ctx, "ROLLBACK;")
+	require.NoError(t, err)
+
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+}
+
+func TestPgLogicalEmitTransactionalMessageWaitsForCommitRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+
+	slotName := "dg_emit_transactional_commit_slot"
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	var emittedLSNText string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT pg_logical_emit_message(true, 'commit/only', 'after commit')::text;`).Scan(&emittedLSNText))
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	emittedLSN, err := pglogrepl.ParseLSN(emittedLSNText)
+	require.NoError(t, err)
+	emitted := receiveLogicalDecodingMessage(t, replConn)
+	require.Equal(t, emittedLSN, emitted.LSN)
+	require.True(t, emitted.Transactional)
+	require.Equal(t, "commit/only", emitted.Prefix)
+	require.Equal(t, []byte("after commit"), emitted.Content)
+}
+
 func TestLogicalReplicationConsumerOwnedPublicationAndSlot(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -398,6 +480,761 @@ func TestLogicalReplicationConsumerOwnedPublicationAndSlot(t *testing.T) {
 	relation, insert, commit := receiveInsertChange(t, replConn)
 	requireInsertChange(t, relation, insert, "owned_rep_items", "7", "owned")
 	require.Greater(t, commit.CommitLSN, pglogrepl.LSN(0))
+}
+
+func TestLogicalReplicationRequiresReplicationRoleForCreateSlotRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	_, err = conn.Current.Exec(ctx, "CREATE USER ordinary_slot_user WITH LOGIN PASSWORD 'secret';")
+	require.NoError(t, err)
+
+	replConn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://ordinary_slot_user:secret@127.0.0.1:%d/postgres?sslmode=disable&replication=database", port))
+	if err == nil {
+		defer replConn.Close(context.Background())
+		_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, "ordinary_slot_user_slot", "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+			Mode: pglogrepl.LogicalReplication,
+		})
+	}
+	require.Error(t, err, "logical replication slot creation should require a replication-capable role")
+}
+
+func TestLogicalReplicationRequiresReplicationRoleForStartReplicationRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "ordinary_start_replication_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE ordinary_start_replication_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION ordinary_start_replication_pub FOR TABLE ordinary_start_replication_items;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE USER ordinary_repl_reader WITH LOGIN PASSWORD 'secret';")
+	require.NoError(t, err)
+
+	ownerReplConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, ownerReplConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, ownerReplConn.Close(ctx))
+
+	replConn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://ordinary_repl_reader:secret@127.0.0.1:%d/postgres?sslmode=disable&replication=database", port))
+	if err != nil {
+		return
+	}
+	defer replConn.Close(context.Background())
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'ordinary_start_replication_pub'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO ordinary_start_replication_items VALUES (1, 'visible-to-ordinary-role');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"logical replication streaming should require a replication-capable role",
+		"ordinary role received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationRequiresReplicationRoleForDropSlotRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "ordinary_drop_protocol_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE USER ordinary_slot_dropper_protocol WITH LOGIN PASSWORD 'secret';")
+	require.NoError(t, err)
+
+	ownerReplConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, ownerReplConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, ownerReplConn.Close(ctx))
+
+	replConn, err := pgconn.Connect(ctx, fmt.Sprintf("postgres://ordinary_slot_dropper_protocol:secret@127.0.0.1:%d/postgres?sslmode=disable&replication=database", port))
+	if err != nil {
+		return
+	}
+	defer replConn.Close(context.Background())
+	err = pglogrepl.DropReplicationSlot(ctx, replConn, slotName, pglogrepl.DropReplicationSlotOptions{})
+	if err != nil {
+		return
+	}
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Failf(t,
+		"DROP_REPLICATION_SLOT should require a replication-capable role",
+		"ordinary role dropped slot %s through the replication protocol; remaining slot count=%d",
+		slotName,
+		slotCount,
+	)
+}
+
+func TestPgDropReplicationSlotRequiresReplicationRoleRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "ordinary_drop_replication_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE USER ordinary_slot_dropper WITH LOGIN PASSWORD 'secret';")
+	require.NoError(t, err)
+
+	ownerReplConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, ownerReplConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, ownerReplConn.Close(ctx))
+
+	ordinaryConn, err := pgx.Connect(ctx, fmt.Sprintf("postgres://ordinary_slot_dropper:secret@127.0.0.1:%d/postgres?sslmode=disable", port))
+	require.NoError(t, err)
+	defer ordinaryConn.Close(context.Background())
+
+	_, err = ordinaryConn.Exec(ctx, "SELECT pg_drop_replication_slot($1);", slotName)
+	if err != nil {
+		return
+	}
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Failf(t,
+		"pg_drop_replication_slot should require a replication-capable role",
+		"ordinary role dropped slot %s; remaining slot count=%d",
+		slotName,
+		slotCount,
+	)
+}
+
+func TestLogicalReplicationTemporarySlotDropsOnSessionCloseRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "temporary_slot_session_close"
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode:      pglogrepl.LogicalReplication,
+		Temporary: true,
+	})
+	require.NoError(t, err)
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Equal(t, 1, slotCount)
+
+	require.NoError(t, replConn.Close(ctx))
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Equal(t, 0, slotCount, "temporary logical replication slots should be dropped when the creating session closes")
+}
+
+func TestLogicalReplicationRejectsInvalidSlotNameRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "invalid-slot-name"
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	if err != nil {
+		return
+	}
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Failf(t,
+		"logical replication should reject invalid slot names",
+		"created slot %s with invalid replication slot name; catalog count=%d",
+		slotName,
+		slotCount,
+	)
+}
+
+func TestLogicalReplicationCreateSlotTwoPhaseSetsCatalogFlagRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "two_phase_catalog_slot"
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	slot, err := pglogrepl.ParseCreateReplicationSlot(replConn.Exec(ctx, "CREATE_REPLICATION_SLOT "+slotName+" LOGICAL pgoutput TWO_PHASE"))
+	require.NoError(t, err)
+	require.Equal(t, slotName, slot.SlotName)
+
+	var twoPhase bool
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT two_phase FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&twoPhase))
+	require.True(t, twoPhase, "CREATE_REPLICATION_SLOT ... TWO_PHASE should mark the logical slot as two_phase")
+}
+
+func TestLogicalReplicationCreateSlotUseSnapshotRequiresTransactionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "use_snapshot_outside_tx_slot"
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode:           pglogrepl.LogicalReplication,
+		SnapshotAction: "USE_SNAPSHOT",
+	})
+	if err != nil {
+		return
+	}
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Failf(t,
+		"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT should require a transaction",
+		"created slot %s with USE_SNAPSHOT outside a transaction; catalog count=%d",
+		slotName,
+		slotCount,
+	)
+}
+
+func TestLogicalReplicationCreateSlotRejectsUnknownOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "unknown_create_slot_option"
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.ParseCreateReplicationSlot(replConn.Exec(ctx, "CREATE_REPLICATION_SLOT "+slotName+" LOGICAL pgoutput UNKNOWN_OPTION"))
+	if err != nil {
+		return
+	}
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Failf(t,
+		"CREATE_REPLICATION_SLOT should reject unknown options",
+		"created slot %s despite UNKNOWN_OPTION; catalog count=%d",
+		slotName,
+		slotCount,
+	)
+}
+
+func TestLogicalReplicationRequiresPublicationNamesOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "missing_publication_names_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE missing_publication_names_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION missing_publication_names_pub FOR TABLE missing_publication_names_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO missing_publication_names_items VALUES (1, 'visible-without-publication-names');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput START_REPLICATION should require publication_names",
+		"connection without publication_names received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationRejectsMissingPublicationNameRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "missing_publication_name_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE missing_publication_name_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION existing_publication_name_pub FOR TABLE missing_publication_name_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'existing_publication_name_pub,missing_publication_name_pub'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO missing_publication_name_items VALUES (1, 'visible-with-missing-publication');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput START_REPLICATION should reject missing publications",
+		"connection with a missing publication still received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationPublicationNamesAreCaseSensitiveRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "case_sensitive_publication_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE case_sensitive_publication_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `CREATE PUBLICATION "CaseSensitivePublication" FOR TABLE case_sensitive_publication_items;`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'casesensitivepublication'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO case_sensitive_publication_items VALUES (1, 'visible-through-wrong-case');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput publication_names should match publication names case-sensitively",
+		"lower-case publication name received %s.%s row %s:%s from quoted mixed-case publication",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationPublicationNamesAllowQuotedCommasRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "quoted_comma_publication_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE quoted_comma_publication_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `CREATE PUBLICATION "Quoted,Publication" FOR TABLE quoted_comma_publication_items;`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" '"Quoted,Publication"'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO quoted_comma_publication_items VALUES (1, 'visible-through-quoted-comma-publication');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "quoted_comma_publication_items", "1", "visible-through-quoted-comma-publication")
+}
+
+func TestLogicalReplicationRequiresProtoVersionOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "missing_proto_version_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE missing_proto_version_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION missing_proto_version_pub FOR TABLE missing_proto_version_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"publication_names" 'missing_proto_version_pub'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO missing_proto_version_items VALUES (1, 'visible-without-proto-version');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput START_REPLICATION should require proto_version",
+		"connection without proto_version received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationRejectsInvalidProtoVersionOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "invalid_proto_version_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE invalid_proto_version_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION invalid_proto_version_pub FOR TABLE invalid_proto_version_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" 'not-a-number'`,
+			`"publication_names" 'invalid_proto_version_pub'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO invalid_proto_version_items VALUES (1, 'visible-with-invalid-proto-version');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput START_REPLICATION should reject invalid proto_version",
+		"connection with invalid proto_version received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationRejectsUnknownPgoutputOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "unknown_pgoutput_option_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE unknown_pgoutput_option_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION unknown_pgoutput_option_pub FOR TABLE unknown_pgoutput_option_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	err = pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"unknown_pgoutput_option" 'true'`,
+			`"publication_names" 'unknown_pgoutput_option_pub'`,
+		},
+	})
+	if err != nil {
+		return
+	}
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO unknown_pgoutput_option_items VALUES (1, 'visible-with-unknown-option');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Failf(t,
+		"pgoutput START_REPLICATION should reject unknown options",
+		"connection with unknown pgoutput option received %s.%s row %s:%s",
+		relation.Namespace,
+		relation.RelationName,
+		string(insert.Tuple.Columns[0].Data),
+		string(insert.Tuple.Columns[1].Data),
+	)
+}
+
+func TestLogicalReplicationHonorsBinaryOptionRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "binary_option_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE binary_option_items (tenant_id INT PRIMARY KEY, quantity INT NOT NULL);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION binary_option_pub FOR TABLE binary_option_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"binary" 'true'`,
+			`"publication_names" 'binary_option_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO binary_option_items VALUES (1, 42);")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "binary_option_items", relation.RelationName)
+	require.Len(t, insert.Tuple.Columns, 2)
+	for idx, column := range insert.Tuple.Columns {
+		require.Equalf(t,
+			uint8(pglogrepl.TupleDataTypeBinary),
+			column.DataType,
+			"column %d should be sent in binary format when pgoutput binary option is true",
+			idx,
+		)
+	}
+}
+
+func TestLogicalReplicationMessagesFalseSuppressesLogicalMessagesRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "messages_false_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE messages_false_items (tenant_id BIGINT PRIMARY KEY);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION messages_false_pub FOR TABLE messages_false_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"messages" 'false'`,
+			`"publication_names" 'messages_false_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	var emittedLSNText string
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT pg_logical_emit_message(false, 'messages/false', 'should not stream')::text;`).Scan(&emittedLSNText))
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
 }
 
 func TestLogicalReplicationElectricCatalogProbeQueries(t *testing.T) {
@@ -653,6 +1490,252 @@ func TestLogicalReplicationSourceUpdateIncludesOldTupleForReplicaIdentityFull(t 
 	require.Equal(t, "new-label", string(update.NewTuple.Columns[1].Data))
 }
 
+// TestLogicalReplicationSourcePrimaryKeyUpdateIncludesOldKeyTupleRepro
+// reproduces a logical-replication consistency bug: under default replica
+// identity, PostgreSQL includes the old replica-identity key when an UPDATE
+// changes that key.
+func TestLogicalReplicationSourcePrimaryKeyUpdateIncludesOldKeyTupleRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_key_update_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_key_update_items (id INT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_key_update_items VALUES (1, 'old-label');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_key_update_pub FOR TABLE dg_key_update_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_key_update_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_key_update_items SET id = 2, label = 'new-label' WHERE id = 1;")
+	require.NoError(t, err)
+	relation, update, _ := receiveUpdateChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_key_update_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, update.RelationID)
+	require.Equal(t, uint8(pglogrepl.UpdateMessageTupleTypeKey), update.OldTupleType)
+	require.NotNil(t, update.OldTuple)
+	require.Len(t, update.OldTuple.Columns, 1)
+	require.Equal(t, "1", string(update.OldTuple.Columns[0].Data))
+	require.NotNil(t, update.NewTuple)
+	require.Len(t, update.NewTuple.Columns, 2)
+	require.Equal(t, "2", string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, "new-label", string(update.NewTuple.Columns[1].Data))
+}
+
+// TestLogicalReplicationSourceDeleteUsesOldKeyForDefaultReplicaIdentityRepro
+// reproduces a logical-replication correctness bug: under default replica
+// identity, PostgreSQL DELETE messages include only the replica-identity key,
+// not the full deleted row.
+func TestLogicalReplicationSourceDeleteUsesOldKeyForDefaultReplicaIdentityRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_default_delete_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_default_delete_items (id INT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_default_delete_items VALUES (1, 'delete-label');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_default_delete_pub FOR TABLE dg_default_delete_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_default_delete_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_default_delete_items WHERE id = 1;")
+	require.NoError(t, err)
+	relation, deleteMessage, _ := receiveDeleteChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_default_delete_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, deleteMessage.RelationID)
+	require.Equal(t, uint8(pglogrepl.DeleteMessageTupleTypeKey), deleteMessage.OldTupleType)
+	require.NotNil(t, deleteMessage.OldTuple)
+	require.Len(t, deleteMessage.OldTuple.Columns, 1)
+	require.Equal(t, "1", string(deleteMessage.OldTuple.Columns[0].Data))
+}
+
+// TestLogicalReplicationSourceDeleteUsesIndexKeyForReplicaIdentityUsingIndexRepro
+// reproduces a logical-replication correctness bug: REPLICA IDENTITY USING
+// INDEX DELETE messages must send only the configured replica-identity index
+// key, not the full deleted row.
+func TestLogicalReplicationSourceDeleteUsesIndexKeyForReplicaIdentityUsingIndexRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_index_delete_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_index_delete_items (
+			id INT PRIMARY KEY,
+			external_id TEXT NOT NULL,
+			private_label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE UNIQUE INDEX dg_index_delete_external_idx ON dg_index_delete_items (external_id);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ALTER TABLE dg_index_delete_items REPLICA IDENTITY USING INDEX dg_index_delete_external_idx;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_index_delete_items VALUES (1, 'external-1', 'private-delete-label');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_index_delete_pub FOR TABLE dg_index_delete_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_index_delete_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_index_delete_items WHERE id = 1;")
+	require.NoError(t, err)
+	relation, deleteMessage, _ := receiveDeleteChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_index_delete_items", relation.RelationName)
+	require.Equal(t, uint8(0), relation.Columns[0].Flags)
+	require.Equal(t, uint8(1), relation.Columns[1].Flags)
+	require.Equal(t, relation.RelationID, deleteMessage.RelationID)
+	require.Equal(t, uint8(pglogrepl.DeleteMessageTupleTypeKey), deleteMessage.OldTupleType)
+	require.NotNil(t, deleteMessage.OldTuple)
+	require.Len(t, deleteMessage.OldTuple.Columns, 1)
+	require.Equal(t, "external-1", string(deleteMessage.OldTuple.Columns[0].Data))
+}
+
+// TestLogicalReplicationSourceUpdateIncludesOldIndexKeyForReplicaIdentityUsingIndexRepro
+// reproduces a logical-replication consistency bug: when an UPDATE changes a
+// REPLICA IDENTITY USING INDEX key, PostgreSQL includes the old index key so
+// subscribers can locate the previous row.
+func TestLogicalReplicationSourceUpdateIncludesOldIndexKeyForReplicaIdentityUsingIndexRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_index_update_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_index_update_items (
+			id INT PRIMARY KEY,
+			external_id TEXT NOT NULL,
+			label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE UNIQUE INDEX dg_index_update_external_idx ON dg_index_update_items (external_id);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ALTER TABLE dg_index_update_items REPLICA IDENTITY USING INDEX dg_index_update_external_idx;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_index_update_items VALUES (1, 'external-before', 'before-label');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_index_update_pub FOR TABLE dg_index_update_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_index_update_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+		UPDATE dg_index_update_items
+		SET external_id = 'external-after', label = 'after-label'
+		WHERE id = 1;`)
+	require.NoError(t, err)
+	relation, update, _ := receiveUpdateChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_index_update_items", relation.RelationName)
+	require.Equal(t, uint8(0), relation.Columns[0].Flags)
+	require.Equal(t, uint8(1), relation.Columns[1].Flags)
+	require.Equal(t, relation.RelationID, update.RelationID)
+	require.Equal(t, uint8(pglogrepl.UpdateMessageTupleTypeKey), update.OldTupleType)
+	require.NotNil(t, update.OldTuple)
+	require.Len(t, update.OldTuple.Columns, 1)
+	require.Equal(t, "external-before", string(update.OldTuple.Columns[0].Data))
+	require.NotNil(t, update.NewTuple)
+	require.Len(t, update.NewTuple.Columns, 3)
+	require.Equal(t, "1", string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, "external-after", string(update.NewTuple.Columns[1].Data))
+	require.Equal(t, "after-label", string(update.NewTuple.Columns[2].Data))
+}
+
 func TestLogicalReplicationSourceCreateExistingInactiveSlotReturnsExisting(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -751,6 +1834,64 @@ func TestLogicalReplicationSourceTerminateBackendDeactivatesSlot(t *testing.T) {
 	require.False(t, missing)
 }
 
+func TestLogicalReplicationDropSlotWaitWaitsForInactiveSlotRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_drop_slot_wait_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_drop_slot_wait_items (id INT PRIMARY KEY);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_drop_slot_wait_pub FOR TABLE dg_drop_slot_wait_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_drop_slot_wait_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	releaseActiveSlot := make(chan struct{})
+	go func() {
+		defer close(releaseActiveSlot)
+		time.Sleep(100 * time.Millisecond)
+		_, _ = pglogrepl.SendStandbyCopyDone(ctx, replConn)
+		_ = replConn.Close(ctx)
+	}()
+
+	dropConn := connectReplicationConn(t, ctx, port)
+	defer dropConn.Close(context.Background())
+	err = pglogrepl.DropReplicationSlot(ctx, dropConn, slotName, pglogrepl.DropReplicationSlotOptions{Wait: true})
+	<-releaseActiveSlot
+	if err != nil {
+		cleanupConn := connectReplicationConn(t, ctx, port)
+		_ = pglogrepl.DropReplicationSlot(ctx, cleanupConn, slotName, pglogrepl.DropReplicationSlotOptions{})
+		_ = cleanupConn.Close(ctx)
+	}
+	require.NoError(t, err, "DROP_REPLICATION_SLOT WAIT should wait until the active slot becomes inactive and then drop it")
+
+	var slotCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, `
+		SELECT count(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = $1`, slotName).Scan(&slotCount))
+	require.Equal(t, 0, slotCount)
+}
+
 func TestLogicalReplicationSourceRejectsUnsupportedSlotModesAndPlugins(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -843,6 +1984,224 @@ func TestLogicalReplicationSourceFiltersPublicationAndIgnoresClientLSNFeedback(t
 	requireInsertChange(t, relation, insert, "dg_pub_a_items", "2", "right-publication")
 }
 
+// TestLogicalReplicationSourceDoesNotDuplicateOverlappingPublicationsRepro
+// reproduces a logical-replication consistency bug: subscribing to two
+// publications that both include the same table must not publish the same row
+// change twice.
+func TestLogicalReplicationSourceDoesNotDuplicateOverlappingPublicationsRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_overlap_publications_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_overlap_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_overlap_pub_a FOR TABLE dg_overlap_items;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_overlap_pub_b FOR TABLE dg_overlap_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_overlap_pub_a,dg_overlap_pub_b'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_overlap_items VALUES (1, 'published-once');")
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_overlap_items", "1", "published-once")
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+}
+
+// TestLogicalReplicationSourcePublishesUpdateFromRepro reproduces a
+// logical-replication consistency bug: UPDATE ... FROM mutates the target table
+// and must publish the changed target row.
+func TestLogicalReplicationSourcePublishesUpdateFromRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_update_from_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_update_from_items (id INT PRIMARY KEY, source_id INT, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_update_from_source (id INT PRIMARY KEY, new_label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_update_from_items VALUES (1, 10, 'before-update-from');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_update_from_source VALUES (10, 'after-update-from');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_update_from_pub FOR TABLE dg_update_from_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_update_from_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+		UPDATE dg_update_from_items AS i
+		SET label = s.new_label
+		FROM dg_update_from_source AS s
+	WHERE i.source_id = s.id;`)
+	require.NoError(t, err)
+	var label string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT label FROM dg_update_from_items WHERE id = 1;").Scan(&label))
+	require.Equal(t, "after-update-from", label)
+	relation, update, _ := receiveUpdateChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_update_from_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, update.RelationID)
+	require.NotNil(t, update.NewTuple)
+	require.Len(t, update.NewTuple.Columns, 3)
+	require.Equal(t, "1", string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, "10", string(update.NewTuple.Columns[1].Data))
+	require.Equal(t, "after-update-from", string(update.NewTuple.Columns[2].Data))
+}
+
+// TestLogicalReplicationSourcePublishesUpdateForOnConflictDoUpdateRepro
+// reproduces a logical-replication consistency bug: INSERT ... ON CONFLICT DO
+// UPDATE must publish UPDATE when it updates an existing row.
+func TestLogicalReplicationSourcePublishesUpdateForOnConflictDoUpdateRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_upsert_update_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_upsert_update_items (id INT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_upsert_update_items VALUES (1, 'before-upsert');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_upsert_update_pub FOR TABLE dg_upsert_update_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_upsert_update_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+	INSERT INTO dg_upsert_update_items VALUES (1, 'after-upsert')
+	ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label;`)
+	require.NoError(t, err)
+	var label string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT label FROM dg_upsert_update_items WHERE id = 1;").Scan(&label))
+	require.Equal(t, "after-upsert", label)
+	relation, msg, _ := receiveFirstChangeMessage(t, replConn)
+	update, ok := msg.(*pglogrepl.UpdateMessageV2)
+	require.Truef(t, ok, "expected UPDATE logical replication message, got %T", msg)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_upsert_update_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, update.RelationID)
+	require.NotNil(t, update.NewTuple)
+	require.Len(t, update.NewTuple.Columns, 2)
+	require.Equal(t, "1", string(update.NewTuple.Columns[0].Data))
+	require.Equal(t, "after-upsert", string(update.NewTuple.Columns[1].Data))
+}
+
+// TestLogicalReplicationSourcePublishesCopyFromRowsRepro reproduces a
+// logical-replication consistency bug: COPY FROM inserts publisher rows and
+// must publish INSERT messages for those rows.
+func TestLogicalReplicationSourcePublishesCopyFromRowsRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_copy_from_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_copy_from_items (id INT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_copy_from_pub FOR TABLE dg_copy_from_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_copy_from_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	tag, err := conn.Current.PgConn().CopyFrom(ctx, bytes.NewBufferString("1\tcopied-from-stdin\n"), "COPY dg_copy_from_items (id, label) FROM STDIN;")
+	require.NoError(t, err)
+	require.Equal(t, int64(1), tag.RowsAffected())
+	var label string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT label FROM dg_copy_from_items WHERE id = 1;").Scan(&label))
+	require.Equal(t, "copied-from-stdin", label)
+
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	requireInsertChange(t, relation, insert, "dg_copy_from_items", "1", "copied-from-stdin")
+}
+
 func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *testing.T) {
 	replsource.ResetForTests()
 	port, err := sql.GetEmptyPort()
@@ -901,6 +2260,124 @@ func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *test
 	require.Len(t, insert.Tuple.Columns, 2)
 	require.Equal(t, "42", string(insert.Tuple.Columns[0].Data))
 	require.Equal(t, "right-customer", string(insert.Tuple.Columns[1].Data))
+}
+
+// TestLogicalReplicationSourceSupportsRangePublicationRowFilterRepro reproduces
+// a logical-replication correctness bug: PostgreSQL publication row filters use
+// ordinary immutable WHERE expressions, so range comparisons must not make
+// publisher DML fail.
+func TestLogicalReplicationSourceSupportsRangePublicationRowFilterRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_filter_comparison_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_filter_comparison_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_filter_comparison_pub
+		FOR TABLE dg_filter_comparison_items
+		WHERE (customer_id > 40);`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_filter_comparison_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_filter_comparison_items VALUES (1, 42, 'visible-by-range');")
+	require.NoError(t, err)
+
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_filter_comparison_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 3)
+	require.Equal(t, "1", string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, "42", string(insert.Tuple.Columns[1].Data))
+	require.Equal(t, "visible-by-range", string(insert.Tuple.Columns[2].Data))
+}
+
+// TestLogicalReplicationSourceTypeCoercesPublicationRowFilterRepro reproduces a
+// logical-replication consistency bug: publication row filters are SQL
+// expressions, so equality comparisons must use PostgreSQL type coercion rather
+// than textual byte equality.
+func TestLogicalReplicationSourceTypeCoercesPublicationRowFilterRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_filter_coercion_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_filter_coercion_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_filter_coercion_pub
+		FOR TABLE dg_filter_coercion_items
+		WHERE (customer_id = 42.0);`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_filter_coercion_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_filter_coercion_items VALUES (1, 42, 'visible-by-coercion');")
+	require.NoError(t, err)
+
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_filter_coercion_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 3)
+	require.Equal(t, "1", string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, "42", string(insert.Tuple.Columns[1].Data))
+	require.Equal(t, "visible-by-coercion", string(insert.Tuple.Columns[2].Data))
 }
 
 func TestLogicalReplicationSourceHonorsPublicationUpdateDeleteFiltersAndColumnLists(t *testing.T) {
@@ -978,6 +2455,141 @@ func TestLogicalReplicationSourceHonorsPublicationUpdateDeleteFiltersAndColumnLi
 	require.Len(t, deleteMessage.OldTuple.Columns, 2)
 	require.Equal(t, "42", string(deleteMessage.OldTuple.Columns[0].Data))
 	require.Equal(t, "right-updated", string(deleteMessage.OldTuple.Columns[1].Data))
+}
+
+// TestLogicalReplicationSourcePublishesDeleteWhenUpdateLeavesRowFilterRepro
+// reproduces a logical-replication consistency bug: if an UPDATE changes a row
+// from matching a publication row filter to not matching it, PostgreSQL
+// publishes a DELETE for the old visible row.
+func TestLogicalReplicationSourcePublishesDeleteWhenUpdateLeavesRowFilterRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_filter_transition_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_filter_transition_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		INSERT INTO dg_filter_transition_items VALUES
+			(1, 42, 'visible-before');`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_filter_transition_pub
+		FOR TABLE dg_filter_transition_items
+		WHERE (customer_id = 42)
+		WITH (publish = 'update, delete');`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_filter_transition_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+		UPDATE dg_filter_transition_items
+		SET customer_id = 7, label = 'hidden-after'
+		WHERE item_id = 1;`)
+	require.NoError(t, err)
+	relation, deleteMessage, _ := receiveDeleteChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_filter_transition_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, deleteMessage.RelationID)
+	require.NotNil(t, deleteMessage.OldTuple)
+	require.Len(t, deleteMessage.OldTuple.Columns, 3)
+	require.Equal(t, "1", string(deleteMessage.OldTuple.Columns[0].Data))
+	require.Equal(t, "42", string(deleteMessage.OldTuple.Columns[1].Data))
+	require.Equal(t, "visible-before", string(deleteMessage.OldTuple.Columns[2].Data))
+}
+
+// TestLogicalReplicationSourcePublishesInsertWhenUpdateEntersRowFilterRepro
+// reproduces a logical-replication consistency bug: if an UPDATE changes a row
+// from not matching a publication row filter to matching it, PostgreSQL
+// publishes an INSERT for the newly visible row.
+func TestLogicalReplicationSourcePublishesInsertWhenUpdateEntersRowFilterRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_filter_enter_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_filter_enter_items (
+			item_id BIGINT PRIMARY KEY,
+			customer_id BIGINT NOT NULL,
+			label TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		INSERT INTO dg_filter_enter_items VALUES
+			(1, 7, 'hidden-before');`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_filter_enter_pub
+		FOR TABLE dg_filter_enter_items
+		WHERE (customer_id = 42)
+		WITH (publish = 'insert, update');`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_filter_enter_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+		UPDATE dg_filter_enter_items
+		SET customer_id = 42, label = 'visible-after'
+		WHERE item_id = 1;`)
+	require.NoError(t, err)
+	relation, insert, _ := receiveInsertChange(t, replConn)
+
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_filter_enter_items", relation.RelationName)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 3)
+	require.Equal(t, "1", string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, "42", string(insert.Tuple.Columns[1].Data))
+	require.Equal(t, "visible-after", string(insert.Tuple.Columns[2].Data))
 }
 
 func TestLogicalReplicationSourceHonorsPublicationActionFlags(t *testing.T) {
@@ -1080,6 +2692,120 @@ func TestLogicalReplicationSourcePublishesTruncate(t *testing.T) {
 	var rowCount int
 	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_truncate_items;").Scan(&rowCount))
 	require.Equal(t, 0, rowCount)
+}
+
+// TestLogicalReplicationSourceSavepointRollbackRestoresTruncatedRowsRepro
+// reproduces a data consistency bug in the logical-replication capture path:
+// TRUNCATE inside a rolled-back savepoint must restore publisher rows and must
+// not emit a truncate message when the outer transaction commits.
+func TestLogicalReplicationSourceSavepointRollbackRestoresTruncatedRowsRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_savepoint_truncate_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_savepoint_truncate_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_truncate_items VALUES (1, 'one'), (2, 'two');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_savepoint_truncate_pub FOR TABLE dg_savepoint_truncate_items WITH (publish = 'truncate');")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_savepoint_truncate_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "SAVEPOINT dg_truncate_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "TRUNCATE dg_savepoint_truncate_items;")
+	require.NoError(t, err)
+	var rowCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_savepoint_truncate_items;").Scan(&rowCount))
+	require.Equal(t, 0, rowCount)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK TO SAVEPOINT dg_truncate_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_savepoint_truncate_items;").Scan(&rowCount))
+	require.Equal(t, 2, rowCount)
+
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
+}
+
+// TestLogicalReplicationSourceRollbackRestoresTruncatedRowsRepro reproduces a
+// data consistency bug in the logical-replication capture path: TRUNCATE inside
+// a rolled-back explicit transaction must restore publisher rows and must not
+// emit a truncate message.
+func TestLogicalReplicationSourceRollbackRestoresTruncatedRowsRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_rollback_truncate_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_rollback_truncate_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_rollback_truncate_items VALUES (1, 'one'), (2, 'two');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_rollback_truncate_pub FOR TABLE dg_rollback_truncate_items WITH (publish = 'truncate');")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_rollback_truncate_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "TRUNCATE dg_rollback_truncate_items;")
+	require.NoError(t, err)
+	var rowCount int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_rollback_truncate_items;").Scan(&rowCount))
+	require.Equal(t, 0, rowCount)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK;")
+	require.NoError(t, err)
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_rollback_truncate_items;").Scan(&rowCount))
+	require.Equal(t, 2, rowCount)
+
+	requireNoReplicationCopyData(t, replConn, 250*time.Millisecond)
 }
 
 func TestLogicalReplicationSourcePublishesAllTablesAndSchemaPublications(t *testing.T) {
@@ -1200,6 +2926,218 @@ func TestLogicalReplicationSourcePublishesExplicitTransactionAsOnePgoutputTransa
 	require.Equal(t, "fifty", string(txn.inserts[0].Tuple.Columns[1].Data))
 	require.Equal(t, "51", string(txn.inserts[1].Tuple.Columns[0].Data))
 	require.Equal(t, "fifty-one", string(txn.inserts[1].Tuple.Columns[1].Data))
+}
+
+func TestLogicalReplicationSourceSavepointRollbackDropsBufferedChangesRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_savepoint_tx_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_savepoint_tx_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_savepoint_tx_pub FOR TABLE dg_savepoint_tx_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_savepoint_tx_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_tx_items VALUES (50, 'kept-before-savepoint');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_tx_items VALUES (51, 'rolled-back-savepoint');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK TO SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_tx_items VALUES (52, 'kept-after-savepoint');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	var rolledBackRows int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_savepoint_tx_items WHERE tenant_id = 51;").Scan(&rolledBackRows))
+	require.Equal(t, 0, rolledBackRows)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	insertedRows := make([]string, 0, len(txn.inserts))
+	for _, insert := range txn.inserts {
+		require.Len(t, insert.Tuple.Columns, 2)
+		insertedRows = append(insertedRows, fmt.Sprintf("%s:%s",
+			string(insert.Tuple.Columns[0].Data),
+			string(insert.Tuple.Columns[1].Data),
+		))
+	}
+	require.Equal(t, []string{
+		"50:kept-before-savepoint",
+		"52:kept-after-savepoint",
+	}, insertedRows)
+}
+
+func TestLogicalReplicationSourceSavepointRollbackDropsBufferedUpdateRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_savepoint_update_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_savepoint_update_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_update_items VALUES (50, 'before-50'), (51, 'before-51'), (52, 'before-52');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_savepoint_update_pub FOR TABLE dg_savepoint_update_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_savepoint_update_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_savepoint_update_items SET label = 'kept-before-savepoint' WHERE tenant_id = 50;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_savepoint_update_items SET label = 'rolled-back-savepoint' WHERE tenant_id = 51;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK TO SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "UPDATE dg_savepoint_update_items SET label = 'kept-after-savepoint' WHERE tenant_id = 52;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	var rolledBackLabel string
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT label FROM dg_savepoint_update_items WHERE tenant_id = 51;").Scan(&rolledBackLabel))
+	require.Equal(t, "before-51", rolledBackLabel)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	updatedRows := make([]string, 0, len(txn.updates))
+	for _, update := range txn.updates {
+		require.NotNil(t, update.NewTuple)
+		require.Len(t, update.NewTuple.Columns, 2)
+		updatedRows = append(updatedRows, fmt.Sprintf("%s:%s",
+			string(update.NewTuple.Columns[0].Data),
+			string(update.NewTuple.Columns[1].Data),
+		))
+	}
+	require.Equal(t, []string{
+		"50:kept-before-savepoint",
+		"52:kept-after-savepoint",
+	}, updatedRows)
+}
+
+func TestLogicalReplicationSourceSavepointRollbackDropsBufferedDeleteRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_savepoint_delete_slot"
+	_, err = conn.Current.Exec(ctx, "CREATE TABLE dg_savepoint_delete_items (tenant_id BIGINT PRIMARY KEY, label TEXT);")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ALTER TABLE dg_savepoint_delete_items REPLICA IDENTITY FULL;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "INSERT INTO dg_savepoint_delete_items VALUES (50, 'delete-before-savepoint'), (51, 'rolled-back-delete'), (52, 'delete-after-savepoint');")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "CREATE PUBLICATION dg_savepoint_delete_pub FOR TABLE dg_savepoint_delete_items;")
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_savepoint_delete_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, "BEGIN;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_savepoint_delete_items WHERE tenant_id = 50;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_savepoint_delete_items WHERE tenant_id = 51;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "ROLLBACK TO SAVEPOINT dg_sp;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "DELETE FROM dg_savepoint_delete_items WHERE tenant_id = 52;")
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, "COMMIT;")
+	require.NoError(t, err)
+
+	var rolledBackRows int
+	require.NoError(t, conn.Current.QueryRow(ctx, "SELECT count(*) FROM dg_savepoint_delete_items WHERE tenant_id = 51;").Scan(&rolledBackRows))
+	require.Equal(t, 1, rolledBackRows)
+
+	txn := receiveLogicalTransaction(t, replConn)
+	deletedRows := make([]string, 0, len(txn.deletes))
+	for _, deleteMessage := range txn.deletes {
+		require.NotNil(t, deleteMessage.OldTuple)
+		require.Len(t, deleteMessage.OldTuple.Columns, 2)
+		deletedRows = append(deletedRows, fmt.Sprintf("%s:%s",
+			string(deleteMessage.OldTuple.Columns[0].Data),
+			string(deleteMessage.OldTuple.Columns[1].Data),
+		))
+	}
+	require.Equal(t, []string{
+		"50:delete-before-savepoint",
+		"52:delete-after-savepoint",
+	}, deletedRows)
 }
 
 func TestLogicalReplicationSourceToleratesStreamingOptionWithoutStreamMessages(t *testing.T) {
@@ -1880,6 +3818,37 @@ func receiveInsertChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.Relation
 	return nil, nil, nil
 }
 
+func receiveFirstChangeMessage(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, pglogrepl.Message, *pglogrepl.CommitMessage) {
+	t.Helper()
+	var relation *pglogrepl.RelationMessageV2
+	var change pglogrepl.Message
+	var commit *pglogrepl.CommitMessage
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		copyData := receiveReplicationCopyData(t, conn)
+		if copyData.Data[0] != pglogrepl.XLogDataByteID {
+			continue
+		}
+		xld, err := pglogrepl.ParseXLogData(copyData.Data[1:])
+		require.NoError(t, err)
+		msg, err := pglogrepl.ParseV2(xld.WALData, false)
+		require.NoError(t, err)
+		switch typed := msg.(type) {
+		case *pglogrepl.RelationMessageV2:
+			relation = typed
+		case *pglogrepl.InsertMessageV2, *pglogrepl.UpdateMessageV2, *pglogrepl.DeleteMessageV2:
+			change = typed
+		case *pglogrepl.CommitMessage:
+			commit = typed
+		}
+		if relation != nil && change != nil && commit != nil {
+			return relation, change, commit
+		}
+	}
+	require.FailNow(t, "timed out waiting for relation, first change, and commit logical replication messages")
+	return nil, nil, nil
+}
+
 func receiveUpdateChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.RelationMessageV2, *pglogrepl.UpdateMessageV2, *pglogrepl.CommitMessage) {
 	t.Helper()
 	var relation *pglogrepl.RelationMessageV2
@@ -1975,6 +3944,8 @@ func receiveTruncateChange(t *testing.T, conn *pgconn.PgConn) (*pglogrepl.Relati
 
 type logicalTransaction struct {
 	inserts           []*pglogrepl.InsertMessageV2
+	updates           []*pglogrepl.UpdateMessageV2
+	deletes           []*pglogrepl.DeleteMessageV2
 	streamMessageSeen bool
 }
 
@@ -1999,6 +3970,12 @@ func receiveLogicalTransaction(t *testing.T, conn *pgconn.PgConn) logicalTransac
 		case *pglogrepl.InsertMessageV2:
 			require.True(t, beginSeen, "received Insert before Begin")
 			txn.inserts = append(txn.inserts, typed)
+		case *pglogrepl.UpdateMessageV2:
+			require.True(t, beginSeen, "received Update before Begin")
+			txn.updates = append(txn.updates, typed)
+		case *pglogrepl.DeleteMessageV2:
+			require.True(t, beginSeen, "received Delete before Begin")
+			txn.deletes = append(txn.deletes, typed)
 		case *pglogrepl.StreamStartMessageV2, *pglogrepl.StreamStopMessageV2, *pglogrepl.StreamCommitMessageV2, *pglogrepl.StreamAbortMessageV2:
 			txn.streamMessageSeen = true
 		case *pglogrepl.CommitMessage:

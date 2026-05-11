@@ -1,0 +1,48 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package _go
+
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
+
+// TestCreateCastFunctionIsUsedByExplicitCastRepro reproduces a type correctness
+// gap: PostgreSQL lets user-defined casts route explicit casts through a SQL
+// function.
+func TestCreateCastFunctionIsUsedByExplicitCastRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE CAST function is used by explicit casts",
+			SetUpScript: []string{
+				`CREATE TYPE cast_color AS ENUM ('red', 'green');`,
+				`CREATE FUNCTION cast_color_to_int(input_color cast_color)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT CASE WHEN input_color = 'red'::cast_color THEN 1 ELSE 2 END $$;`,
+				`CREATE CAST (cast_color AS INT)
+					WITH FUNCTION cast_color_to_int(cast_color);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ('green'::cast_color)::INT;`,
+					Expected: []sql.Row{{2}},
+				},
+			},
+		},
+	})
+}
