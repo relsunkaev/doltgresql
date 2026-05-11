@@ -495,6 +495,40 @@ func TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro(t *
 	})
 }
 
+// TestCreateUniqueIndexRejectsExistingDuplicatesRepro reproduces an index
+// integrity bug: PostgreSQL validates existing rows when building a unique
+// index and rejects duplicate key values before persisting the index.
+func TestCreateUniqueIndexRejectsExistingDuplicatesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE UNIQUE INDEX rejects existing duplicates",
+			SetUpScript: []string{
+				`CREATE TABLE create_unique_existing_duplicate_items (
+					id INT PRIMARY KEY,
+					code INT
+				);`,
+				`INSERT INTO create_unique_existing_duplicate_items VALUES
+					(1, 10),
+					(2, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE UNIQUE INDEX create_unique_existing_duplicate_code_idx
+						ON create_unique_existing_duplicate_items (code);`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_indexes
+						WHERE tablename = 'create_unique_existing_duplicate_items'
+							AND indexname = 'create_unique_existing_duplicate_code_idx';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestIndexDefinitionsRejectInvalidExpressionsRepro reproduces index
 // correctness bugs where Doltgres accepts expressions PostgreSQL rejects in
 // persisted index definitions.
