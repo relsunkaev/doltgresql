@@ -272,6 +272,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 	messagesByPublication := make(map[string]*publicationMessages)
 	var publicationOrder []string
 	var commitLSN pglogrepl.LSN
+	var beginData []byte
 	advanceOnly := false
 	for _, capture := range captures {
 		if capture == nil {
@@ -294,6 +295,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 			}
 			if commitLSN == 0 {
 				commitLSN = replsource.AdvanceLSN()
+				beginData = encodeBeginMessage(commitLSN)
 			}
 			relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
 			fields, err := schemaToFieldDescriptions(ctx, table.Schema(ctx), nil)
@@ -313,7 +315,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 					pubMessages = &publicationMessages{
 						name: target.name,
 						messages: []replsource.WALMessage{
-							{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
+							{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: beginData},
 						},
 					}
 					messagesByPublication[target.name] = pubMessages
@@ -365,13 +367,14 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 			}
 			if commitLSN == 0 {
 				commitLSN = replsource.AdvanceLSN()
+				beginData = encodeBeginMessage(commitLSN)
 			}
 			pubMessages := messagesByPublication[target.name]
 			if pubMessages == nil {
 				pubMessages = &publicationMessages{
 					name: target.name,
 					messages: []replsource.WALMessage{
-						{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: encodeBeginMessage(commitLSN)},
+						{WALStart: commitLSN, ServerWALEnd: commitLSN, WALData: beginData},
 					},
 				}
 				messagesByPublication[target.name] = pubMessages
@@ -403,18 +406,55 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 		}
 		return nil
 	}
+	type broadcastBatch struct {
+		publications []string
+		messages     []replsource.WALMessage
+	}
+	commitData := encodeCommitMessage(commitLSN)
+	var batches []broadcastBatch
 	for _, publication := range publicationOrder {
 		pubMessages := messagesByPublication[publication]
 		pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 			WALStart:     commitLSN,
 			ServerWALEnd: commitLSN,
-			WALData:      encodeCommitMessage(commitLSN),
+			WALData:      commitData,
 		})
-		if err := replsource.Broadcast([]string{pubMessages.name}, pubMessages.messages); err != nil {
+		matched := false
+		for i := range batches {
+			if walMessagesEqual(batches[i].messages, pubMessages.messages) {
+				batches[i].publications = append(batches[i].publications, pubMessages.name)
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			batches = append(batches, broadcastBatch{
+				publications: []string{pubMessages.name},
+				messages:     pubMessages.messages,
+			})
+		}
+	}
+	for _, batch := range batches {
+		if err := replsource.Broadcast(batch.publications, batch.messages); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func walMessagesEqual(left []replsource.WALMessage, right []replsource.WALMessage) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i].WALStart != right[i].WALStart || left[i].ServerWALEnd != right[i].ServerWALEnd {
+			return false
+		}
+		if !bytes.Equal(left[i].WALData, right[i].WALData) {
+			return false
+		}
+	}
+	return true
 }
 
 func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, schema string) ([]publicationChangeTarget, error) {
