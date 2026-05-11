@@ -51,6 +51,7 @@ type Sender struct {
 	ID              uint64
 	SlotName        string
 	Publications    []string
+	Messages        bool
 	PID             int32
 	User            string
 	ApplicationName string
@@ -70,6 +71,7 @@ type Sender struct {
 type SenderInfo struct {
 	SlotName        string
 	Publications    []string
+	Messages        bool
 	PID             int32
 	User            string
 	ApplicationName string
@@ -341,12 +343,13 @@ func RegisterSender(info SenderInfo) (Sender, <-chan WALMessage, error) {
 	}
 	defaultRegistry.nextID++
 	host, port := splitAddr(info.RemoteAddr)
-	publications := compactLowerStrings(info.Publications)
-	replay, replayTxns, replayBytes := defaultRegistry.replayMessagesLocked(publications, info.StartLSN)
+	publications := compactStrings(info.Publications)
+	replay, replayTxns, replayBytes := defaultRegistry.replayMessagesLocked(publications, info.StartLSN, info.Messages)
 	sender := Sender{
 		ID:              defaultRegistry.nextID,
 		SlotName:        info.SlotName,
 		Publications:    publications,
+		Messages:        info.Messages,
 		PID:             info.PID,
 		User:            info.User,
 		ApplicationName: info.ApplicationName,
@@ -469,8 +472,7 @@ func Broadcast(publications []string, messages []WALMessage) error {
 	if len(messages) == 0 {
 		return nil
 	}
-	publications = compactLowerStrings(publications)
-	totalBytes := replicationMessageBytes(messages)
+	publications = compactStrings(publications)
 	defaultRegistry.mu.Lock()
 	defer defaultRegistry.mu.Unlock()
 	if len(defaultRegistry.slots) > 0 {
@@ -479,24 +481,29 @@ func Broadcast(publications []string, messages []WALMessage) error {
 			Messages:     cloneWALMessages(messages),
 		})
 	}
-	countedSlots := make(map[string]struct{})
+	countedSlotBytes := make(map[string]int64)
 	for senderID, sender := range defaultRegistry.senders {
 		if !publicationSetsOverlap(sender.Publications, publications) {
+			continue
+		}
+		senderMessages := filterWALMessagesForSender(messages, sender.Messages)
+		if len(senderMessages) == 0 {
 			continue
 		}
 		if _, ok := defaultRegistry.queues[senderID]; !ok {
 			continue
 		}
+		totalBytes := replicationMessageBytes(senderMessages)
 		if slot, ok := defaultRegistry.slots[sender.SlotName]; ok {
 			slot.TotalTxns++
 			slot.TotalBytes += totalBytes
-			countedSlots[sender.SlotName] = struct{}{}
+			countedSlotBytes[sender.SlotName] += totalBytes
 		}
 	}
 	if len(defaultRegistry.slots) > 0 {
 		if err := defaultRegistry.persistLocked(); err != nil {
 			defaultRegistry.journal = defaultRegistry.journal[:len(defaultRegistry.journal)-1]
-			for slotName := range countedSlots {
+			for slotName, totalBytes := range countedSlotBytes {
 				if slot, ok := defaultRegistry.slots[slotName]; ok {
 					slot.TotalTxns--
 					slot.TotalBytes -= totalBytes
@@ -509,11 +516,15 @@ func Broadcast(publications []string, messages []WALMessage) error {
 		if !publicationSetsOverlap(sender.Publications, publications) {
 			continue
 		}
+		senderMessages := filterWALMessagesForSender(messages, sender.Messages)
+		if len(senderMessages) == 0 {
+			continue
+		}
 		queue, ok := defaultRegistry.queues[senderID]
 		if !ok {
 			continue
 		}
-		for _, message := range messages {
+		for _, message := range senderMessages {
 			sender.SentLSN = maxLSN(sender.SentLSN, message.ServerWALEnd)
 			select {
 			case queue <- message:
@@ -568,13 +579,13 @@ func minLSN(a pglogrepl.LSN, b pglogrepl.LSN) pglogrepl.LSN {
 	return b
 }
 
-func compactLowerStrings(values []string) []string {
+func compactStrings(values []string) []string {
 	if len(values) == 0 {
 		return nil
 	}
 	ret := make([]string, 0, len(values))
 	for _, value := range values {
-		value = strings.ToLower(strings.TrimSpace(value))
+		value = strings.TrimSpace(value)
 		if value != "" {
 			ret = append(ret, value)
 		}
@@ -593,6 +604,20 @@ func publicationSetsOverlap(senderPublications []string, changePublications []st
 		}
 	}
 	return false
+}
+
+func filterWALMessagesForSender(messages []WALMessage, includeLogicalMessages bool) []WALMessage {
+	if includeLogicalMessages {
+		return messages
+	}
+	ret := make([]WALMessage, 0, len(messages))
+	for _, message := range messages {
+		if len(message.WALData) > 0 && message.WALData[0] == byte(pglogrepl.MessageTypeMessage) {
+			continue
+		}
+		ret = append(ret, message)
+	}
+	return ret
 }
 
 func cloneWALMessages(messages []WALMessage) []WALMessage {
@@ -615,7 +640,7 @@ func replicationMessageBytes(messages []WALMessage) int64 {
 	return total
 }
 
-func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrepl.LSN) ([]WALMessage, int64, int64) {
+func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrepl.LSN, includeLogicalMessages bool) ([]WALMessage, int64, int64) {
 	if len(r.journal) == 0 {
 		return nil, 0, 0
 	}
@@ -629,9 +654,13 @@ func (r *registry) replayMessagesLocked(publications []string, startLSN pglogrep
 		if entryEndLSN(entry) <= startLSN {
 			continue
 		}
+		messages := filterWALMessagesForSender(entry.Messages, includeLogicalMessages)
+		if len(messages) == 0 {
+			continue
+		}
 		txns++
-		bytes += replicationMessageBytes(entry.Messages)
-		replay = append(replay, cloneWALMessages(entry.Messages)...)
+		bytes += replicationMessageBytes(messages)
+		replay = append(replay, cloneWALMessages(messages)...)
 	}
 	return replay, txns, bytes
 }
@@ -706,7 +735,7 @@ func (r *registry) loadLocked() error {
 	r.journal = make([]journalEntry, 0, len(state.Journal))
 	for _, storedEntry := range state.Journal {
 		entry := journalEntry{
-			Publications: compactLowerStrings(storedEntry.Publications),
+			Publications: compactStrings(storedEntry.Publications),
 			Messages:     make([]WALMessage, len(storedEntry.Messages)),
 		}
 		for i, storedMessage := range storedEntry.Messages {

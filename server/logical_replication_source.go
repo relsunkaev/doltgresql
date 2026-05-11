@@ -15,7 +15,9 @@
 package server
 
 import (
+	"context"
 	"encoding/binary"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +25,8 @@ import (
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgproto3"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -158,9 +162,14 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 	if err != nil {
 		return err
 	}
+	options, err := h.parseStartReplicationOptions(statement)
+	if err != nil {
+		return err
+	}
 	sender, queue, err := replsource.RegisterSender(replsource.SenderInfo{
 		SlotName:        slotName,
-		Publications:    replicationPublicationNames(statement),
+		Publications:    options.publications,
+		Messages:        options.messages,
 		PID:             int32(h.mysqlConn.ConnectionID),
 		User:            h.mysqlConn.User,
 		ApplicationName: h.startupParams["application_name"],
@@ -188,6 +197,217 @@ func (h *ConnectionHandler) requireReplicationRole() error {
 		return nil
 	}
 	return errors.Errorf("permission denied to use replication")
+}
+
+type replicationStartOptions struct {
+	publications []string
+	messages     bool
+}
+
+func (h *ConnectionHandler) parseStartReplicationOptions(statement string) (replicationStartOptions, error) {
+	values, err := parseReplicationPluginOptions(statement)
+	if err != nil {
+		return replicationStartOptions{}, err
+	}
+	options := replicationStartOptions{
+		messages: true,
+	}
+	protoVersion, ok := values["proto_version"]
+	if !ok {
+		return replicationStartOptions{}, errors.Errorf("START_REPLICATION requires pgoutput option proto_version")
+	}
+	parsedProtoVersion, err := strconv.Atoi(protoVersion)
+	if err != nil || (parsedProtoVersion != 1 && parsedProtoVersion != 2) {
+		return replicationStartOptions{}, errors.Errorf("invalid pgoutput proto_version %q", protoVersion)
+	}
+	publicationNames, ok := values["publication_names"]
+	if !ok {
+		return replicationStartOptions{}, errors.Errorf("START_REPLICATION requires pgoutput option publication_names")
+	}
+	options.publications, err = parseReplicationPublicationNameList(publicationNames)
+	if err != nil {
+		return replicationStartOptions{}, err
+	}
+	if len(options.publications) == 0 {
+		return replicationStartOptions{}, errors.Errorf("START_REPLICATION requires at least one publication")
+	}
+	if err = h.validateReplicationPublications(options.publications); err != nil {
+		return replicationStartOptions{}, err
+	}
+	for key, value := range values {
+		switch key {
+		case "proto_version", "publication_names":
+		case "binary", "messages", "streaming":
+			parsed, err := parseReplicationBool(value)
+			if err != nil {
+				return replicationStartOptions{}, errors.Errorf("invalid pgoutput %s option %q", key, value)
+			}
+			if key == "messages" {
+				options.messages = parsed
+			}
+		default:
+			return replicationStartOptions{}, errors.Errorf("unrecognized pgoutput option %q", key)
+		}
+	}
+	return options, nil
+}
+
+func (h *ConnectionHandler) validateReplicationPublications(publications []string) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+	if err != nil {
+		return err
+	}
+	collection, err := core.GetPublicationsCollectionFromContext(sqlCtx)
+	if err != nil {
+		return err
+	}
+	for _, publication := range publications {
+		if !collection.HasPublication(sqlCtx, id.NewPublication(publication)) {
+			return errors.Errorf(`publication "%s" does not exist`, publication)
+		}
+	}
+	return nil
+}
+
+func parseReplicationPluginOptions(statement string) (map[string]string, error) {
+	start := strings.Index(statement, "(")
+	end := strings.LastIndex(statement, ")")
+	if start < 0 || end < start {
+		return nil, errors.Errorf("START_REPLICATION requires pgoutput options")
+	}
+	parts, err := splitReplicationOptionList(statement[start+1 : end])
+	if err != nil {
+		return nil, err
+	}
+	options := make(map[string]string, len(parts))
+	for _, part := range parts {
+		key, rest, ok := readReplicationOptionKey(part)
+		if !ok {
+			return nil, errors.Errorf("invalid pgoutput option %q", part)
+		}
+		value, ok := readReplicationOptionValue(strings.TrimSpace(rest))
+		if !ok {
+			return nil, errors.Errorf("invalid pgoutput option value for %q", key)
+		}
+		options[key] = value
+	}
+	return options, nil
+}
+
+func splitReplicationOptionList(value string) ([]string, error) {
+	var parts []string
+	start := 0
+	var quote byte
+	for i := 0; i < len(value); i++ {
+		ch := value[i]
+		if quote != 0 {
+			if ch == quote {
+				if i+1 < len(value) && value[i+1] == quote {
+					i++
+					continue
+				}
+				quote = 0
+			}
+			continue
+		}
+		if ch == '\'' || ch == '"' {
+			quote = ch
+			continue
+		}
+		if ch == ',' {
+			part := strings.TrimSpace(value[start:i])
+			if part != "" {
+				parts = append(parts, part)
+			}
+			start = i + 1
+		}
+	}
+	if quote != 0 {
+		return nil, errors.Errorf("unterminated pgoutput option string")
+	}
+	part := strings.TrimSpace(value[start:])
+	if part != "" {
+		parts = append(parts, part)
+	}
+	return parts, nil
+}
+
+func readReplicationOptionKey(value string) (string, string, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", "", false
+	}
+	if value[0] == '"' {
+		raw, end, ok := readReplicationQuotedToken(value, '"')
+		if !ok {
+			return "", "", false
+		}
+		return strings.ToLower(raw), value[end:], true
+	}
+	for i := 0; i < len(value); i++ {
+		if value[i] == ' ' || value[i] == '\t' || value[i] == '\n' || value[i] == '\r' {
+			return strings.ToLower(value[:i]), value[i:], true
+		}
+	}
+	return "", "", false
+}
+
+func readReplicationOptionValue(value string) (string, bool) {
+	if value == "" {
+		return "", false
+	}
+	if value[0] == '\'' || value[0] == '"' {
+		raw, end, ok := readReplicationQuotedToken(value, value[0])
+		if !ok || strings.TrimSpace(value[end:]) != "" {
+			return "", false
+		}
+		return raw, true
+	}
+	fields := strings.Fields(value)
+	if len(fields) != 1 {
+		return "", false
+	}
+	return fields[0], true
+}
+
+func readReplicationQuotedToken(value string, quote byte) (string, int, bool) {
+	var builder strings.Builder
+	for i := 1; i < len(value); i++ {
+		if value[i] != quote {
+			builder.WriteByte(value[i])
+			continue
+		}
+		if i+1 < len(value) && value[i+1] == quote {
+			builder.WriteByte(quote)
+			i++
+			continue
+		}
+		return builder.String(), i + 1, true
+	}
+	return "", 0, false
+}
+
+func parseReplicationPublicationNameList(value string) ([]string, error) {
+	parts, err := splitReplicationOptionList(value)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(parts))
+	for _, part := range parts {
+		names = append(names, normalizeReplicationIdentifier(strings.TrimSpace(part)))
+	}
+	return names, nil
+}
+
+func parseReplicationBool(value string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "1", "on", "true":
+		return true, nil
+	case "0", "off", "false":
+		return false, nil
+	default:
+		return false, errors.Errorf("invalid boolean %q", value)
+	}
 }
 
 func (h *ConnectionHandler) runReplicationSender(queue <-chan replsource.WALMessage) {
@@ -320,52 +540,6 @@ func replicationSlotSnapshotName(slotName string) string {
 
 func replicationSlotNoExportSnapshot(statement string) bool {
 	return strings.Contains(strings.ToUpper(statement), "NOEXPORT_SNAPSHOT")
-}
-
-func replicationPublicationNames(statement string) []string {
-	lower := strings.ToLower(statement)
-	idx := strings.Index(lower, "publication_names")
-	if idx < 0 {
-		return nil
-	}
-	tail := statement[idx+len("publication_names"):]
-	tail = strings.TrimSpace(tail)
-	if strings.HasPrefix(tail, `"`) {
-		tail = strings.TrimSpace(tail[1:])
-	}
-	if len(tail) == 0 {
-		return nil
-	}
-	quote := tail[0]
-	if quote != '\'' && quote != '"' {
-		return nil
-	}
-	raw, ok := readReplicationOptionString(tail[1:], quote)
-	if !ok {
-		return nil
-	}
-	values := strings.Split(raw, ",")
-	for i := range values {
-		values[i] = normalizeReplicationIdentifier(strings.TrimSpace(values[i]))
-	}
-	return values
-}
-
-func readReplicationOptionString(value string, quote byte) (string, bool) {
-	var builder strings.Builder
-	for i := 0; i < len(value); i++ {
-		if value[i] != quote {
-			builder.WriteByte(value[i])
-			continue
-		}
-		if i+1 < len(value) && value[i+1] == quote {
-			builder.WriteByte(quote)
-			i++
-			continue
-		}
-		return builder.String(), true
-	}
-	return "", false
 }
 
 func formatReplicationLSN(lsn pglogrepl.LSN) string {
