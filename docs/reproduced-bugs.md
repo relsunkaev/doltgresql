@@ -16450,6 +16450,19 @@ They are worth keeping, but they are not counted as found bugs.
   array literal is misparsed before `array_remove` can enforce PostgreSQL's
   one-dimensional mutation boundary.
 
+### Array subscript assignment is rejected instead of updating stored arrays
+
+- Reproducer: `TestArraySubscriptAssignmentPersistsElementRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestArraySubscriptAssignmentPersistsElementRepro -count=1`.
+- Expected PostgreSQL behavior: `UPDATE array_subscript_assignment_items SET
+  values_int[2] = 22 WHERE id = 1` rewrites the second stored array element and
+  persists `{1,22,3}`.
+- Observed Doltgres behavior: the update fails during parsing with `at or near
+  "[": syntax error`, leaving the stored array unchanged as `{1,2,3}`.
+
 ### `string_to_array` is missing for array construction
 
 - Reproducer: `TestStringToArraySplitsTextRepro` in

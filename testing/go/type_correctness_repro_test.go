@@ -1392,6 +1392,36 @@ func TestArrayPositionFindsNullElementsGuard(t *testing.T) {
 	})
 }
 
+// TestArraySubscriptAssignmentPersistsElementRepro reproduces an array
+// persistence bug: PostgreSQL supports updating one element of a stored array
+// with subscript assignment.
+func TestArraySubscriptAssignmentPersistsElementRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "array subscript assignment persists element",
+			SetUpScript: []string{
+				`CREATE TABLE array_subscript_assignment_items (
+					id INT PRIMARY KEY,
+					values_int INT[]
+				);`,
+				`INSERT INTO array_subscript_assignment_items VALUES (1, ARRAY[1, 2, 3]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE array_subscript_assignment_items
+						SET values_int[2] = 22
+						WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT values_int::text
+						FROM array_subscript_assignment_items;`,
+					Expected: []sql.Row{{"{1,22,3}"}},
+				},
+			},
+		},
+	})
+}
+
 // TestStringToArraySplitsTextRepro reproduces an array construction
 // correctness bug: PostgreSQL supports string_to_array, including NULL
 // delimiters and NULL-token replacement.
