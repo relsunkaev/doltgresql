@@ -2858,6 +2858,15 @@ func containsKeywordSequence(query string, sequence ...string) bool {
 
 // discardAll handles the DISCARD ALL command
 func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
+	if h.inTransaction {
+		// PostgreSQL refuses DISCARD ALL inside an explicit transaction block
+		// because the statement resets session state (prepared statements,
+		// temporary tables, sequences, plans) that cannot be safely rolled back
+		// if the surrounding transaction aborts.
+		return pgerror.Newf(pgcode.ActiveSQLTransaction,
+			"DISCARD ALL cannot run inside a transaction block")
+	}
+
 	for name := range h.preparedStatements {
 		delete(h.preparedStatements, name)
 	}

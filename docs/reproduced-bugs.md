@@ -925,18 +925,6 @@ artifacts only; no fixes are included here.
   source `CHECK (amount > 0)`, and rejects duplicate copied `code` values via
   the source unique index.
 
-### DISCARD ALL is allowed inside a transaction block
-
-- Reproducer: `TestDiscardAllInsideTransactionRejectedRepro` in
-  `testing/go/session_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./testing/go -run
-  TestDiscardAllInsideTransactionRejectedRepro -count=1`.
-- Expected PostgreSQL behavior: `DISCARD ALL` inside an open transaction fails
-  with `DISCARD ALL cannot run inside a transaction block`.
-- Observed Doltgres behavior: `DISCARD ALL` succeeds while the transaction is
-  open, allowing session state to be reset in a context PostgreSQL rejects.
-
 ### DISCARD ALL does not clear LISTEN registrations
 
 - Reproducer: `TestDiscardAllUnlistensChannelsRepro` in

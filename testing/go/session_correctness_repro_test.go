@@ -25,10 +25,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestDiscardAllInsideTransactionRejectedRepro reproduces a session-state
-// correctness bug: PostgreSQL rejects DISCARD ALL inside a transaction block,
-// but Doltgres accepts it and resets session state mid-transaction.
-func TestDiscardAllInsideTransactionRejectedRepro(t *testing.T) {
+// TestDiscardAllRejectedInsideTransaction guards that PostgreSQL's
+// transaction-block restriction on DISCARD ALL is enforced: the statement
+// resets session state that cannot be rolled back, so it must not run while
+// a transaction is open.
+func TestDiscardAllRejectedInsideTransaction(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DISCARD ALL inside transaction is rejected",
@@ -39,6 +40,45 @@ func TestDiscardAllInsideTransactionRejectedRepro(t *testing.T) {
 				{
 					Query:       `DISCARD ALL;`,
 					ExpectedErr: `DISCARD ALL cannot run inside a transaction block`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+			},
+		},
+		{
+			Name: "DISCARD ALL outside transaction succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DISCARD ALL;`,
+				},
+			},
+		},
+		{
+			Name: "DISCARD ALL after COMMIT succeeds in fresh session state",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query: `DISCARD ALL;`,
+				},
+			},
+		},
+		{
+			Name: "DISCARD ALL after ROLLBACK succeeds in fresh session state",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `DISCARD ALL;`,
 				},
 			},
 		},
