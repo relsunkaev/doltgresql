@@ -15,6 +15,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -391,7 +392,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 				pubMessages.messages = append(pubMessages.messages, replsource.WALMessage{
 					WALStart:     commitLSN,
 					ServerWALEnd: commitLSN,
-					WALData:      capture.encodeRowMessage(relationID, row, replIdent.Identity == replicaidentity.IdentityFull),
+					WALData:      capture.encodeRowMessage(relationID, row, fields, keyColumns, replIdent.Identity),
 				})
 			}
 		}
@@ -757,7 +758,13 @@ func relationReplicaIdentityColumns(ctx *sql.Context, table sql.Table, setting r
 		}
 		return map[string]struct{}{}, nil
 	default:
-		return nil, nil
+		columns := make(map[string]struct{})
+		for _, column := range table.Schema(ctx) {
+			if column.PrimaryKey {
+				columns[strings.ToLower(column.Name)] = struct{}{}
+			}
+		}
+		return columns, nil
 	}
 }
 
@@ -773,7 +780,7 @@ func logicalReplicationIndexColumnName(expr string) string {
 	return expr[lastDot+1:]
 }
 
-func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row replicationProjectedRow, includeFullOldTuple bool) []byte {
+func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row replicationProjectedRow, fields []pgproto3.FieldDescription, keyColumns map[string]struct{}, identity replicaidentity.Identity) []byte {
 	switch capture.action {
 	case replicationChangeInsert:
 		data := []byte{byte(pglogrepl.MessageTypeInsert)}
@@ -783,20 +790,60 @@ func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row
 	case replicationChangeUpdate:
 		data := []byte{byte(pglogrepl.MessageTypeUpdate)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
-		if includeFullOldTuple && len(row.oldRow.val) > 0 {
+		if identity == replicaidentity.IdentityFull && len(row.oldRow.val) > 0 {
 			data = append(data, 'O')
 			data = appendTupleData(data, row.oldRow.val)
+		} else if len(row.oldRow.val) > 0 && replicaIdentityKeyChanged(row.oldRow.val, row.newRow.val, fields, keyColumns) {
+			data = append(data, 'K')
+			data = appendTupleData(data, replicaIdentityTuple(row.oldRow.val, fields, keyColumns))
 		}
 		data = append(data, 'N')
 		return appendTupleData(data, row.newRow.val)
 	case replicationChangeDelete:
 		data := []byte{byte(pglogrepl.MessageTypeDelete)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
-		data = append(data, 'O')
-		return appendTupleData(data, row.newRow.val)
+		if identity == replicaidentity.IdentityFull {
+			data = append(data, 'O')
+			return appendTupleData(data, row.newRow.val)
+		}
+		data = append(data, 'K')
+		return appendTupleData(data, replicaIdentityTuple(row.newRow.val, fields, keyColumns))
 	default:
 		return nil
 	}
+}
+
+func replicaIdentityKeyChanged(oldValues [][]byte, newValues [][]byte, fields []pgproto3.FieldDescription, keyColumns map[string]struct{}) bool {
+	for i, field := range fields {
+		if _, ok := keyColumns[strings.ToLower(string(field.Name))]; !ok {
+			continue
+		}
+		if i >= len(oldValues) || i >= len(newValues) {
+			return true
+		}
+		if !bytes.Equal(oldValues[i], newValues[i]) {
+			return true
+		}
+	}
+	return false
+}
+
+func replicaIdentityTuple(values [][]byte, fields []pgproto3.FieldDescription, keyColumns map[string]struct{}) [][]byte {
+	if len(keyColumns) == 0 {
+		return nil
+	}
+	ret := make([][]byte, 0, len(keyColumns))
+	for i, field := range fields {
+		if _, ok := keyColumns[strings.ToLower(string(field.Name))]; !ok {
+			continue
+		}
+		if i < len(values) {
+			ret = append(ret, values[i])
+		} else {
+			ret = append(ret, nil)
+		}
+	}
+	return ret
 }
 
 func appendTupleData(data []byte, values [][]byte) []byte {
