@@ -563,6 +563,38 @@ func TestDomainTypmodCheckUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodCheckUsesCoercedValueRepro reproduces a correctness bug:
+// PostgreSQL evaluates text-domain CHECK constraints after applying the domain
+// base-type typmod.
+func TestTextDomainTypmodCheckUsesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain CHECK uses coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_check_domain AS varchar(3)
+					CHECK (length(VALUE) = 3);`,
+				`CREATE DOMAIN char3_check_domain AS character(3)
+					CHECK (octet_length(VALUE) = 3);`,
+				`CREATE TABLE text_domain_check_items (
+					id INT PRIMARY KEY,
+					v varchar3_check_domain,
+					c char3_check_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO text_domain_check_items VALUES (1, 'abc   ', 'ab');`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_check_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypmodTableCheckUsesCoercedValueRepro reproduces a data consistency
 // bug: PostgreSQL evaluates table CHECK constraints over domain-typed columns
 // after applying the domain base-type typmod.
