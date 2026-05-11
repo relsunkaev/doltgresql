@@ -9641,6 +9641,26 @@ artifacts only; no fixes are included here.
   `octet_length(label) = 11`, so refresh can persist fixed-width character
   output with the wrong physical width.
 
+### REFRESH MATERIALIZED VIEW text-domain typmod outputs store empty base values
+
+- Reproducer:
+  `TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro` in
+  `testing/go/view_ddl_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `REFRESH MATERIALIZED VIEW` on a `WITH NO DATA`
+  materialized view whose query casts source text to `varchar(3)` and
+  `character(3)` domains materializes the typmod-coerced values and preserves
+  those domain output types. `abc   ` stores as `abc`, and `ab` stores as a
+  padded `character(3)` value.
+- Observed Doltgres behavior: the materialized-view column metadata formats as
+  `???` before refresh. After refresh, the persisted row contains empty
+  `character varying` / `character` values with `length = 0` and
+  `octet_length = 0`, so refreshed materialized views can corrupt text-domain
+  outputs while losing domain type identity.
+
 ### REFRESH MATERIALIZED VIEW CONCURRENTLY TIMETZ typmod output stores unrounded values
 
 - Reproducer:

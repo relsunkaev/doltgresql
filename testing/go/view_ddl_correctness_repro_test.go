@@ -778,6 +778,51 @@ func TestRefreshMaterializedViewCharacterTypmodMaterializesPaddedValueRepro(t *t
 	})
 }
 
+// TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro
+// reproduces a materialized-view refresh persistence bug: PostgreSQL refreshes
+// text-domain query outputs using the domain base type's typmod and preserves
+// the output domain type.
+func TestRefreshMaterializedViewTextDomainTypmodMaterializesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "REFRESH MATERIALIZED VIEW text domain typmod materializes coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_refresh_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_refresh_domain AS character(3);`,
+				`CREATE TABLE matview_refresh_text_domain_source (
+					v TEXT,
+					c TEXT
+				);`,
+				`CREATE MATERIALIZED VIEW matview_refresh_text_domain_reader AS
+					SELECT v::varchar3_refresh_domain AS v,
+						c::char3_refresh_domain AS c
+					FROM matview_refresh_text_domain_source
+					WITH NO DATA;`,
+				`INSERT INTO matview_refresh_text_domain_source
+					VALUES ('abc   ', 'ab');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT format_type(atttypid, atttypmod)
+						FROM pg_attribute
+						WHERE attrelid = 'matview_refresh_text_domain_reader'::regclass
+							AND attnum > 0
+						ORDER BY attnum;`,
+					Expected: []sql.Row{{"varchar3_refresh_domain"}, {"char3_refresh_domain"}},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW matview_refresh_text_domain_reader;`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM matview_refresh_text_domain_reader;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_refresh_domain", "char3_refresh_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRefreshMaterializedViewConcurrentlyTimetzTypmodMaterializesRoundedValueRepro
 // reproduces a materialized-view concurrent refresh persistence bug:
 // PostgreSQL refreshes typmod-constrained timetz query output using the rounded
