@@ -426,6 +426,39 @@ func TestDomainTypmodGeneratedColumnUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodGeneratedColumnUsesCoercedValueRepro reproduces a data
+// consistency bug: PostgreSQL computes stored generated columns from text
+// domain values after applying the domain base-type typmod.
+func TestTextDomainTypmodGeneratedColumnUsesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain typmod generated columns use coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_generated_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_generated_domain AS character(3);`,
+				`CREATE TABLE text_domain_generated_items (
+					id INT PRIMARY KEY,
+					v varchar3_generated_domain,
+					v_len INT GENERATED ALWAYS AS (length(v)) STORED,
+					c char3_generated_domain,
+					c_octets INT GENERATED ALWAYS AS (octet_length(c)) STORED
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO text_domain_generated_items (id, v, c)
+						VALUES (1, 'abc   ', 'ab');`,
+				},
+				{
+					Query: `SELECT v, v_len, c = 'ab '::CHARACTER(3), c_octets, pg_typeof(v)::text, pg_typeof(c)::text
+						FROM text_domain_generated_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_generated_domain", "char3_generated_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypmodDefaultUsesCoercedValueRepro reproduces a data consistency
 // bug: PostgreSQL applies base-type typmods to domain default values before
 // storing them in domain-typed columns.

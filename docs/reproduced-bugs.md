@@ -2793,6 +2793,22 @@ artifacts only; no fixes are included here.
   keep `123.456`, so stored generated data can be derived from uncoerced domain
   values.
 
+### Text domain typmod generated columns use uncoerced values
+
+- Reproducer: `TestTextDomainTypmodGeneratedColumnUsesCoercedValueRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodGeneratedColumnUsesCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: stored generated columns over `varchar(3)` and
+  `character(3)` domain values are computed from the values after applying the
+  domain base-type typmod, so `length(v)` and `octet_length(c)` both materialize
+  as `3`, and `pg_typeof` reports the domain type.
+- Observed Doltgres behavior: the generated columns materialize `length(v) = 6`
+  and `octet_length(c) = 2`, the `character(3)` domain value compares false
+  against the padded value, and `pg_typeof` reports base text types, so stored
+  generated data is derived from uncoerced text-domain values.
+
 ### Domain typmod defaults store uncoerced values
 
 - Reproducer: `TestDomainTypmodDefaultUsesCoercedValueRepro` in
