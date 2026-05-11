@@ -704,6 +704,35 @@ func TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro(t
 	})
 }
 
+// TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro reproduces an
+// ALTER TABLE persistence bug: PostgreSQL backfills fixed-width character
+// defaults through the new column typmod.
+func TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE ADD character typmod column default pads backfill",
+			SetUpScript: []string{
+				`CREATE TABLE alter_add_character_typmod_default_items (
+					id INT PRIMARY KEY
+				);`,
+				`INSERT INTO alter_add_character_typmod_default_items VALUES (1), (2);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_add_character_typmod_default_items
+						ADD COLUMN label CHARACTER(3) DEFAULT 'ab';`,
+				},
+				{
+					Query: `SELECT label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label), count(*)
+						FROM alter_add_character_typmod_default_items
+						GROUP BY label;`,
+					Expected: []sql.Row{{true, "character", 3, 2}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTableReloptionsPersistRepro reproduces a catalog persistence gap:
 // PostgreSQL persists table reloptions changed with ALTER TABLE ... SET (...).
 func TestAlterTableReloptionsPersistRepro(t *testing.T) {

@@ -1697,6 +1697,24 @@ artifacts only; no fixes are included here.
   `3 days 04:05:06.789`, so adding an interval typmod column with a default can
   persist values outside the new column's declared field/precision.
 
+### ALTER TABLE ADD COLUMN character typmod defaults backfill underpadded values
+
+- Reproducer:
+  `TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ADD COLUMN label CHARACTER(3)
+  DEFAULT 'ab'` backfills existing rows through the new fixed-width typmod, so
+  every existing row stores a three-byte value equal to
+  `'ab '::character(3)`.
+- Observed Doltgres behavior: existing rows are backfilled with `ab` at
+  `octet_length = 2`, and the stored value does not compare equal to the padded
+  `character(3)` value, so adding fixed-width character defaults can persist
+  underpadded data.
+
 ### ALTER TABLE reloptions are rejected
 
 - Reproducer: `TestAlterTableReloptionsPersistRepro` in
