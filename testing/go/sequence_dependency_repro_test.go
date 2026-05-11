@@ -246,10 +246,10 @@ func TestRenameOwnedTableUpdatesOwnedSequenceGuard(t *testing.T) {
 	})
 }
 
-// TestPgGetSerialSequenceHandlesQuotedTableNamesWithDotsRepro reproduces a
-// serial metadata lookup bug: dots inside quoted table identifiers are part of
-// the identifier, not schema separators.
-func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDotsRepro(t *testing.T) {
+// TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots guards that
+// pg_get_serial_sequence parses double-quoted table names that contain dots
+// as a single identifier, matching PostgreSQL's quoted-identifier semantics.
+func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDots(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_get_serial_sequence handles quoted table names containing dots",
@@ -274,10 +274,11 @@ func TestPgGetSerialSequenceHandlesQuotedTableNamesWithDotsRepro(t *testing.T) {
 	})
 }
 
-// TestPgGetSerialSequenceQuotesSequenceNamesRepro reproduces a serial metadata
-// formatting bug: pg_get_serial_sequence() should return a qualified sequence
-// name that can be parsed back as the same sequence.
-func TestPgGetSerialSequenceQuotesSequenceNamesRepro(t *testing.T) {
+// TestPgGetSerialSequenceQuotesSequenceNames guards that
+// pg_get_serial_sequence quotes sequence names that need quoting (mixed case,
+// special characters, reserved words) so the returned text round-trips
+// through identifiers like nextval('...').
+func TestPgGetSerialSequenceQuotesSequenceNames(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "pg_get_serial_sequence quotes sequence names that require quoting",

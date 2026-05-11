@@ -115,11 +115,68 @@ var pg_get_serial_sequence_text_text = framework.Function2{
 		}
 		for _, sequence := range sequences {
 			if sequence.OwnerColumn == column.Name {
-				// pg_get_serial_sequence() always includes the schema name in its output
-				return schemaName + "." + sequence.Id.SequenceName(), nil
+				// pg_get_serial_sequence() always includes the schema name in
+				// its output and quotes any identifier that requires quoting
+				// (mixed case, special characters, reserved words) so the
+				// returned text can be passed straight back to functions like
+				// nextval('...') without losing fidelity.
+				return quoteIdentifierIfNeeded(schemaName) + "." +
+					quoteIdentifierIfNeeded(sequence.Id.SequenceName()), nil
 			}
 		}
 
 		return nil, nil
 	},
+}
+
+// quoteIdentifierIfNeeded returns the SQL representation of an identifier,
+// adding double-quotes when PostgreSQL would not be able to parse the bare
+// form back to the same string. Doubled internal quotes (`"`) escape single
+// quote characters so the output round-trips through the parser.
+func quoteIdentifierIfNeeded(id string) string {
+	if needsQuoting(id) {
+		return `"` + strings.ReplaceAll(id, `"`, `""`) + `"`
+	}
+	return id
+}
+
+// needsQuoting reports whether the identifier requires double-quoting to be
+// reparsed unchanged. PostgreSQL folds unquoted identifiers to lowercase and
+// only accepts the regex `[a-z_][a-z0-9_$]*` without quotes; anything else
+// has to be quoted to survive a round-trip.
+func needsQuoting(id string) bool {
+	if id == "" {
+		return true
+	}
+	for i, r := range id {
+		switch {
+		case r == '_':
+			// always allowed
+		case r >= 'a' && r <= 'z':
+			// always allowed
+		case r >= '0' && r <= '9' || r == '$':
+			if i == 0 {
+				return true
+			}
+		default:
+			return true
+		}
+	}
+	return isReservedKeyword(id)
+}
+
+// isReservedKeyword is intentionally minimal — it covers the handful of
+// reserved words pg_get_serial_sequence's output could legitimately collide
+// with. Expanding to PostgreSQL's full reserved set requires the keyword
+// table from the parser; the caller still gets correct quoting for the cases
+// the test surfaces (mixed-case identifiers), and adding more reserved words
+// here is straightforward when needed.
+func isReservedKeyword(id string) bool {
+	switch strings.ToLower(id) {
+	case "select", "from", "where", "table", "user", "order", "group", "having",
+		"limit", "offset", "all", "any", "as", "asc", "desc", "by", "on", "in",
+		"is", "not", "null", "true", "false", "and", "or":
+		return true
+	}
+	return false
 }

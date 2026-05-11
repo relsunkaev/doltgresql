@@ -68,9 +68,14 @@ var setval_text_int64_boolean = framework.Function3{
 }
 
 // ParseRelationName parses the schema and relation name from a relation name string, including trimming any
-// identifier quotes used in the name. For example, passing in 'public."MyTable"' would return 'public' and 'MyTable'.
+// identifier quotes used in the name. Dots inside double-quoted identifiers are treated as part of the
+// identifier rather than as schema separators, so `"my.table"` parses as a single relation name even though
+// it contains a literal dot. For example, passing in 'public."MyTable"' would return 'public' and 'MyTable'.
 func ParseRelationName(ctx *sql.Context, name string) (schema string, relation string, err error) {
-	pathElems := strings.Split(name, ".")
+	pathElems, err := splitQualifiedIdentifier(name)
+	if err != nil {
+		return "", "", err
+	}
 	switch len(pathElems) {
 	case 1:
 		schema, err = core.GetCurrentSchema(ctx)
@@ -88,10 +93,49 @@ func ParseRelationName(ctx *sql.Context, name string) (schema string, relation s
 	default:
 		return "", "", errors.Errorf(`cannot parse relation: %s`, name)
 	}
-
-	// Trim any quotes from the schema and the relation name
-	schema = strings.Trim(schema, `"`)
-	relation = strings.Trim(relation, `"`)
-
 	return schema, relation, nil
+}
+
+// splitQualifiedIdentifier splits a qualified relation name on unquoted dots,
+// honoring PostgreSQL's double-quoted identifier syntax: a dot inside `"..."`
+// is part of the identifier, and `""` inside a quoted identifier escapes a
+// single quote character. Unquoted identifiers preserve their original case
+// (PostgreSQL would lower-case them at parse time, but the callers of this
+// helper want a faithful round trip of the input string).
+func splitQualifiedIdentifier(name string) ([]string, error) {
+	var parts []string
+	var current strings.Builder
+	inQuote := false
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if inQuote {
+			if c != '"' {
+				current.WriteByte(c)
+				continue
+			}
+			// Closing quote, or `""` doubled-quote escape inside the literal.
+			if i+1 < len(name) && name[i+1] == '"' {
+				current.WriteByte('"')
+				i++
+				continue
+			}
+			inQuote = false
+			continue
+		}
+		if c == '"' {
+			inQuote = true
+			continue
+		}
+		if c == '.' {
+			parts = append(parts, current.String())
+			current.Reset()
+			continue
+		}
+		current.WriteByte(c)
+	}
+	if inQuote {
+		return nil, errors.Errorf(`unterminated quoted identifier in relation: %s`, name)
+	}
+	parts = append(parts, current.String())
+	return parts, nil
 }

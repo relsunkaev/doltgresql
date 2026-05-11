@@ -1159,38 +1159,6 @@ artifacts only; no fixes are included here.
   but `pg_get_serial_sequence('rename_owned_column_sequence_items',
   'renamed_id')` returns `NULL`.
 
-### pg_get_serial_sequence misparses quoted table names containing dots
-
-- Reproducer: `TestPgGetSerialSequenceHandlesQuotedTableNamesWithDotsRepro` in
-  `testing/go/sequence_dependency_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestPgGetSerialSequenceHandlesQuotedTableNamesWithDotsRepro -count=1`.
-- Expected PostgreSQL behavior: dots inside double-quoted identifiers are part
-  of the identifier, so `pg_get_serial_sequence('"pgget.serial.table"', 'id')`
-  and `pg_get_serial_sequence('public."pgget.serial.table"', 'id')` resolve
-  the table named `pgget.serial.table` and return
-  `public.pgget_serial_table_seq`.
-- Observed Doltgres behavior: the unqualified quoted table name is split on
-  the quoted dots and looked up as relation `table` in schema `pgget.serial`;
-  the schema-qualified form fails to parse because the quoted table identifier
-  contains dots.
-
-### pg_get_serial_sequence does not quote sequence names that require quoting
-
-- Reproducer: `TestPgGetSerialSequenceQuotesSequenceNamesRepro` in
-  `testing/go/sequence_dependency_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestPgGetSerialSequenceQuotesSequenceNamesRepro -count=1`.
-- Expected PostgreSQL behavior: `pg_get_serial_sequence` returns a qualified
-  sequence name with identifier quoting when needed, so an owned sequence named
-  `PgGetQuoteSeq` is returned as `public."PgGetQuoteSeq"` and can be passed
-  back to `nextval(...)`.
-- Observed Doltgres behavior: `pg_get_serial_sequence('pgget_quote_items',
-  'id')` returns `public.PgGetQuoteSeq` without quotes, so the result does not
-  round-trip as the original mixed-case sequence name.
-
 ### ALTER SEQUENCE RENAME TO is rejected
 
 - Reproducer: `TestAlterSequenceRenameToRepro` in
