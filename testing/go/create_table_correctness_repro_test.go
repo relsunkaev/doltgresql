@@ -102,9 +102,10 @@ func TestCreateTableReloptionsPersistRepro(t *testing.T) {
 	})
 }
 
-// TestCreateTableDefaultTablespaceRepro reproduces a DDL correctness bug:
-// PostgreSQL accepts TABLESPACE pg_default for ordinary tables.
-func TestCreateTableDefaultTablespaceRepro(t *testing.T) {
+// TestCreateTableDefaultTablespace guards that CREATE TABLE accepts the
+// explicit pg_default tablespace, since that is the only tablespace Doltgres
+// exposes and PostgreSQL allows spelling out the default.
+func TestCreateTableDefaultTablespace(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "CREATE TABLE with default tablespace",
@@ -126,9 +127,29 @@ func TestCreateTableDefaultTablespaceRepro(t *testing.T) {
 	})
 }
 
-// TestCreateTableUsingHeapRepro reproduces a DDL correctness bug: PostgreSQL
-// accepts the default heap table access method when it is spelled explicitly.
-func TestCreateTableUsingHeapRepro(t *testing.T) {
+// TestCreateTableUnknownTablespaceErrors guards that a CREATE TABLE targeting
+// a tablespace that does not exist returns PostgreSQL's catalog-style error
+// rather than silently creating the table in the default tablespace.
+func TestCreateTableUnknownTablespaceErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TABLE rejects unknown tablespace",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE table_unknown_tablespace_items (
+							id INT PRIMARY KEY
+						) TABLESPACE custom_space;`,
+					ExpectedErr: `tablespace "custom_space" does not exist`,
+				},
+			},
+		},
+	})
+}
+
+// TestCreateTableUsingHeap guards that CREATE TABLE accepts the explicit
+// heap access method, matching PostgreSQL's default behavior for ordinary
+// tables.
+func TestCreateTableUsingHeap(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "CREATE TABLE using heap access method",
@@ -144,6 +165,25 @@ func TestCreateTableUsingHeapRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM table_using_heap_items;`,
 					Expected: []sql.Row{{1, "ok"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateTableUsingUnknownAccessMethodErrors guards that CREATE TABLE
+// rejects any access method other than heap with PostgreSQL's
+// "access method ... does not exist" error.
+func TestCreateTableUsingUnknownAccessMethodErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TABLE rejects non-heap access method",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE table_unknown_access_method_items (
+							id INT PRIMARY KEY
+						) USING btree;`,
+					ExpectedErr: `access method "btree" does not exist`,
 				},
 			},
 		},

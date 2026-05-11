@@ -686,34 +686,6 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: setup fails with `storage parameters are not yet
   supported`, so table storage options cannot be declared or persisted.
 
-### CREATE TABLE TABLESPACE pg_default is rejected
-
-- Reproducer: `TestCreateTableDefaultTablespaceRepro` in
-  `testing/go/create_table_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestCreateTableDefaultTablespaceRepro -count=1`.
-- Expected PostgreSQL behavior: `CREATE TABLE name (...) TABLESPACE
-  pg_default` is accepted, creates an ordinary table in the default tablespace,
-  and allows normal inserts and reads.
-- Observed Doltgres behavior: table creation fails with `TABLESPACE is not yet
-  supported`, so valid schemas that spell out the default table placement
-  cannot be restored or used.
-
-### CREATE TABLE USING heap is rejected
-
-- Reproducer: `TestCreateTableUsingHeapRepro` in
-  `testing/go/create_table_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestCreateTableUsingHeapRepro -count=1`.
-- Expected PostgreSQL behavior: `CREATE TABLE name (...) USING heap` is
-  accepted, creates an ordinary heap table, and allows normal inserts and
-  reads.
-- Observed Doltgres behavior: table creation fails with `USING is not yet
-  supported`, so valid schemas that explicitly spell the default table access
-  method cannot be restored or used.
-
 ### CREATE TABLE AS WITH NO DATA is rejected
 
 - Reproducer: `TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro` in

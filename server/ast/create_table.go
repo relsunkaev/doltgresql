@@ -54,11 +54,17 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, errors.Errorf("unknown persistence strategy encountered")
 	}
 	var optSelect *vitess.OptSelect
-	if node.Using != "" {
-		return nil, errors.Errorf("USING is not yet supported")
+	if node.Using != "" && !strings.EqualFold(node.Using, "heap") {
+		// PostgreSQL ships with only heap as the table access method in
+		// stock builds; doltgres has no extension hooks for additional
+		// table AMs, so reject other targets with the same catalog-style
+		// error PostgreSQL produces.
+		return nil, errors.Errorf(`access method "%s" does not exist`, node.Using)
 	}
-	if node.Tablespace != "" {
-		return nil, errors.Errorf("TABLESPACE is not yet supported")
+	if node.Tablespace != "" && !strings.EqualFold(string(node.Tablespace), "pg_default") {
+		// pg_default is the only tablespace doltgres exposes. Spelling
+		// it out is a no-op; any other target name would not resolve.
+		return nil, errors.Errorf(`tablespace "%s" does not exist`, string(node.Tablespace))
 	}
 	if node.OfType != nil {
 		if node.AsSource != nil {
