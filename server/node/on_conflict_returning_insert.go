@@ -17,6 +17,9 @@ package node
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/transform"
+
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // OnConflictReturningInsert fixes PostgreSQL RETURNING semantics for INSERT
@@ -64,15 +67,23 @@ func (i *OnConflictReturningInsert) Resolved() bool {
 func (i *OnConflictReturningInsert) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, row sql.Row) (sql.RowIter, error) {
 	inner := *i.insert
 	inner.Returning = nil
-	child, err := b.Build(ctx, &inner, row)
+	execCtx := ctx
+	var updateWhereState *pgexprs.OnConflictUpdateWhereState
+	if hasOnConflictUpdateWhereMarker(ctx, i.insert.OnDupExprs) {
+		updateWhereState = pgexprs.NewOnConflictUpdateWhereState()
+		execCtx = pgexprs.ContextWithOnConflictUpdateWhereState(ctx, updateWhereState)
+	}
+	child, err := b.Build(execCtx, &inner, row)
 	if err != nil {
 		return nil, err
 	}
 	return &onConflictReturningInsertIter{
 		child:          child,
+		ctx:            execCtx,
 		returning:      i.insert.Returning,
 		destinationLen: len(i.insert.Destination.Schema(ctx)),
 		onDupUpdates:   i.insert.OnDupExprs != nil && i.insert.OnDupExprs.HasUpdates(),
+		updateWhere:    updateWhereState,
 	}, nil
 }
 
@@ -106,9 +117,11 @@ func (i *OnConflictReturningInsert) WithDisjointedChildren(children [][]sql.Node
 
 type onConflictReturningInsertIter struct {
 	child          sql.RowIter
+	ctx            *sql.Context
 	returning      []sql.Expression
 	destinationLen int
 	onDupUpdates   bool
+	updateWhere    *pgexprs.OnConflictUpdateWhereState
 }
 
 var _ sql.RowIter = (*onConflictReturningInsertIter)(nil)
@@ -116,17 +129,24 @@ var _ sql.RowIter = (*onConflictReturningInsertIter)(nil)
 // Next implements the sql.RowIter interface.
 func (i *onConflictReturningInsertIter) Next(ctx *sql.Context) (sql.Row, error) {
 	for {
-		row, err := i.child.Next(ctx)
+		execCtx := i.ctx
+		if execCtx == nil {
+			execCtx = ctx
+		}
+		row, err := i.child.Next(execCtx)
 		if _, ok := err.(sql.IgnorableError); ok {
 			continue
 		}
 		if err != nil {
 			return row, err
 		}
+		if i.updateWhere.ConsumeSkipped() {
+			continue
+		}
 		if i.onDupUpdates && len(row) == i.destinationLen*2 {
 			row = row[i.destinationLen:]
 		}
-		return evalReturning(ctx, row, i.returning)
+		return evalReturning(execCtx, row, i.returning)
 	}
 }
 
@@ -145,4 +165,19 @@ func evalReturning(ctx *sql.Context, row sql.Row, returning []sql.Expression) (s
 		retRow = append(retRow, result)
 	}
 	return retRow, nil
+}
+
+func hasOnConflictUpdateWhereMarker(ctx *sql.Context, exprs *plan.UpdateExprs) bool {
+	if exprs == nil {
+		return false
+	}
+	for _, expr := range exprs.AllExpressions() {
+		if transform.InspectExpr(ctx, expr, func(ctx *sql.Context, expr sql.Expression) bool {
+			_, ok := expr.(*pgexprs.OnConflictUpdateWhere)
+			return ok
+		}) {
+			return true
+		}
+	}
+	return false
 }

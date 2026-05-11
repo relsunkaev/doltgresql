@@ -480,10 +480,10 @@ func TestUpdateFromReturningSourceColumnsGuard(t *testing.T) {
 	})
 }
 
-// TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro reproduces an UPSERT
-// correctness bug: PostgreSQL does not return a row when an ON CONFLICT DO
-// UPDATE WHERE predicate rejects the conflicting row.
-func TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro(t *testing.T) {
+// TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard guards PostgreSQL's
+// UPSERT RETURNING semantics: PostgreSQL does not return a row when an ON
+// CONFLICT DO UPDATE WHERE predicate rejects the conflicting row.
+func TestOnConflictUpdateWhereFalseReturningSkipsRowsGuard(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ON CONFLICT DO UPDATE WHERE false returns no rows",
@@ -504,6 +504,38 @@ func TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro(t *testing.T) {
 				},
 				{
 					Query:    `SELECT id, v FROM on_conflict_where_false_returning_items;`,
+					Expected: []sql.Row{{1, "old"}},
+				},
+			},
+		},
+	})
+}
+
+// TestOnConflictUpdateNoopReturningIncludesRowsGuard guards the neighboring
+// UPSERT RETURNING case: PostgreSQL still returns rows for a DO UPDATE action
+// whose WHERE predicate accepts the row, even if the stored values are
+// unchanged.
+func TestOnConflictUpdateNoopReturningIncludesRowsGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT DO UPDATE no-op returns updated row",
+			SetUpScript: []string{
+				`CREATE TABLE on_conflict_noop_returning_items (
+					id INT PRIMARY KEY,
+					v TEXT NOT NULL
+				);`,
+				`INSERT INTO on_conflict_noop_returning_items VALUES (1, 'old');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO on_conflict_noop_returning_items VALUES (1, 'new')
+						ON CONFLICT (id) DO UPDATE SET v = on_conflict_noop_returning_items.v
+						WHERE true
+						RETURNING id, v;`,
+					Expected: []sql.Row{{1, "old"}},
+				},
+				{
+					Query:    `SELECT id, v FROM on_conflict_noop_returning_items;`,
 					Expected: []sql.Row{{1, "old"}},
 				},
 			},

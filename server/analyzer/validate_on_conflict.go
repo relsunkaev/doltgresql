@@ -55,15 +55,27 @@ func ValidateOnConflictArbiter(ctx *sql.Context, _ *gmsanalyzer.Analyzer, node s
 	}
 
 	conflict, ok := onConflictClauseForInsert(ctx.Query(), nodeName(insert.Destination))
+	changed := transform.SameTree
+	if ok && conflict != nil {
+		var err error
+		var wrapped bool
+		insert, wrapped, err = wrapOnConflictUpdateWhereReturning(ctx, insert, conflict)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		if wrapped {
+			changed = transform.NewTree
+		}
+	}
 	if !ok || conflict == nil || (len(conflict.Columns) == 0 && conflict.Constraint == "") {
-		return node, transform.SameTree, nil
+		return insert, changed, nil
 	}
 	target, err := resolveConflictTarget(ctx, insert.Destination, conflict.Columns, string(conflict.Constraint), conflict.ArbiterPredicate)
 	if err != nil {
 		return nil, transform.NewTree, err
 	}
 	if !target.multipleUniques {
-		return node, transform.SameTree, nil
+		return insert, changed, nil
 	}
 	if !hasOnDuplicateUpdates {
 		// DO NOTHING on a multi-unique table routes through INSERT
@@ -311,6 +323,76 @@ func wrapDestinationForArbiterPreCheck(ctx *sql.Context, insert *plan.InsertInto
 		return nil, err
 	}
 	return out, nil
+}
+
+func wrapOnConflictUpdateWhereReturning(ctx *sql.Context, insert *plan.InsertInto, conflict *tree.OnConflict) (*plan.InsertInto, bool, error) {
+	if conflict == nil || conflict.Where == nil || len(insert.Returning) == 0 || insert.OnDupExprs == nil || !insert.OnDupExprs.HasUpdates() {
+		return insert, false, nil
+	}
+	exprs := insert.OnDupExprs.AllExpressions()
+	if len(exprs) == 0 {
+		return insert, false, nil
+	}
+	newExprs := make([]sql.Expression, len(exprs))
+	changed := false
+	for i, e := range exprs {
+		newExprs[i] = e
+		setField, ok := e.(*expression.SetField)
+		if !ok {
+			continue
+		}
+		wrappedRight, wrapped, err := wrapOnConflictUpdateWhereCase(ctx, setField.RightChild)
+		if err != nil {
+			return nil, false, err
+		}
+		if !wrapped {
+			continue
+		}
+		replaced, err := setField.WithChildren(ctx, setField.LeftChild, wrappedRight)
+		if err != nil {
+			return nil, false, err
+		}
+		newExprs[i] = replaced
+		changed = true
+	}
+	if !changed {
+		return insert, false, nil
+	}
+	updated, err := insert.OnDupExprs.WithExpressions(newExprs)
+	if err != nil {
+		return nil, false, err
+	}
+	out := *insert
+	out.OnDupExprs = updated
+	return &out, true, nil
+}
+
+func wrapOnConflictUpdateWhereCase(ctx *sql.Context, expr sql.Expression) (sql.Expression, bool, error) {
+	switch e := expr.(type) {
+	case *pgexprs.OnConflictUpdateWhere:
+		return e, false, nil
+	case *expression.Case:
+		if e.Expr != nil || len(e.Branches) != 1 || e.Else == nil {
+			return expr, false, nil
+		}
+		return pgexprs.NewOnConflictUpdateWhere(e.Branches[0].Cond, e.Branches[0].Value, e.Else), true, nil
+	case *pgexprs.AssignmentCast, *pgexprs.ImplicitCast:
+		children := expr.Children()
+		if len(children) != 1 {
+			return expr, false, nil
+		}
+		child, wrapped, err := wrapOnConflictUpdateWhereCase(ctx, children[0])
+		if err != nil || !wrapped {
+			return expr, wrapped, err
+		}
+		replaced, err := expr.WithChildren(ctx, child)
+		if err != nil {
+			return nil, false, err
+		}
+		return replaced, true, nil
+	default:
+		return expr, false, nil
+	}
 }
 
 func wrapOnDupForTargetGuard(ctx *sql.Context, insert *plan.InsertInto, target conflictTarget) (sql.Node, error) {
