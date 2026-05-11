@@ -15,8 +15,10 @@
 package functions
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -35,6 +37,9 @@ var pg_drop_replication_slot_name = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if !auth.CanReplicate(currentSQLUser(ctx)) {
+			return nil, errors.Errorf("permission denied to use replication")
+		}
 		return nil, replsource.DropSlot(val.(string))
 	},
 }

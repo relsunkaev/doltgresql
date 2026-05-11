@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pglogrepl"
 	"github.com/jackc/pgx/v5/pgproto3"
 
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -60,6 +61,9 @@ func (h *ConnectionHandler) sendIdentifySystem() error {
 }
 
 func (h *ConnectionHandler) createReplicationSlot(statement string) error {
+	if err := h.requireReplicationRole(); err != nil {
+		return err
+	}
 	fields := strings.Fields(statement)
 	if len(fields) < 3 {
 		return errors.Errorf("invalid CREATE_REPLICATION_SLOT command")
@@ -103,6 +107,9 @@ func (h *ConnectionHandler) createReplicationSlot(statement string) error {
 }
 
 func (h *ConnectionHandler) dropReplicationSlot(statement string) error {
+	if err := h.requireReplicationRole(); err != nil {
+		return err
+	}
 	fields := strings.Fields(statement)
 	if len(fields) < 2 {
 		return errors.Errorf("invalid DROP_REPLICATION_SLOT command")
@@ -114,6 +121,9 @@ func (h *ConnectionHandler) dropReplicationSlot(statement string) error {
 }
 
 func (h *ConnectionHandler) startLogicalReplication(statement string) error {
+	if err := h.requireReplicationRole(); err != nil {
+		return err
+	}
 	fields := strings.Fields(statement)
 	if len(fields) < 5 || !strings.EqualFold(fields[1], "SLOT") {
 		return errors.Errorf("invalid START_REPLICATION command")
@@ -149,6 +159,13 @@ func (h *ConnectionHandler) startLogicalReplication(statement string) error {
 	}
 	go h.runReplicationSender(queue)
 	return nil
+}
+
+func (h *ConnectionHandler) requireReplicationRole() error {
+	if auth.CanReplicate(h.mysqlConn.User) {
+		return nil
+	}
+	return errors.Errorf("permission denied to use replication")
 }
 
 func (h *ConnectionHandler) runReplicationSender(queue <-chan replsource.WALMessage) {

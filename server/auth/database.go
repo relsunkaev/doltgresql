@@ -128,6 +128,16 @@ func IsSuperUser(role RoleID) bool {
 	return globalDatabase.rolesByID[role].IsSuperUser
 }
 
+// CanReplicate returns whether the given role may use replication commands.
+func CanReplicate(roleName string) bool {
+	var canReplicate bool
+	LockRead(func() {
+		role := GetRole(roleName)
+		canReplicate = role.IsValid() && (role.IsSuperUser || role.IsReplicationRole)
+	})
+	return canReplicate
+}
+
 // LockRead takes an anonymous function and runs it while using a read lock. This ensures that the lock is automatically
 // released once the function finishes.
 func LockRead(f func()) {
