@@ -344,6 +344,60 @@ func TestDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodUniqueUsesCoercedValuesRepro reproduces a data
+// consistency bug: PostgreSQL enforces unique constraints over text-domain
+// columns after applying varchar(n) and character(n) base-type typmods.
+func TestTextDomainTypmodUniqueUsesCoercedValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar domain unique constraint uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_unique_domain AS varchar(3);`,
+				`CREATE TABLE varchar_domain_unique_items (
+					id INT PRIMARY KEY,
+					label varchar3_unique_domain UNIQUE
+				);`,
+				`INSERT INTO varchar_domain_unique_items VALUES (1, 'abc');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO varchar_domain_unique_items VALUES (2, 'abc   ');`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT id, label, length(label)
+						FROM varchar_domain_unique_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, "abc", 3}},
+				},
+			},
+		},
+		{
+			Name: "character domain unique constraint uses padded equality",
+			SetUpScript: []string{
+				`CREATE DOMAIN char3_unique_domain AS character(3);`,
+				`CREATE TABLE char_domain_unique_items (
+					id INT PRIMARY KEY,
+					label char3_unique_domain UNIQUE
+				);`,
+				`INSERT INTO char_domain_unique_items VALUES (1, 'a');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO char_domain_unique_items VALUES (2, 'a  ');`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT id, label = 'a  '::CHARACTER(3), octet_length(label)
+						FROM char_domain_unique_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypmodGeneratedColumnUsesCoercedValueRepro reproduces a data
 // consistency bug: PostgreSQL computes stored generated columns from the
 // coerced domain value.

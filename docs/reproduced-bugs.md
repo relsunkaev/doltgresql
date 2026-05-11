@@ -2762,6 +2762,22 @@ artifacts only; no fixes are included here.
   original fractional precision, so unique keys over typmod-constrained domains
   can contain duplicate PostgreSQL-visible values.
 
+### Text domain typmod UNIQUE constraints use uncoerced values
+
+- Reproducer: `TestTextDomainTypmodUniqueUsesCoercedValuesRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodUniqueUsesCoercedValuesRepro -count=1`.
+- Expected PostgreSQL behavior: unique constraints over `varchar(3)` and
+  `character(3)` domain columns are enforced after applying the domain
+  base-type typmod. `abc` conflicts with `abc   ` in a `varchar(3)` domain, and
+  `a` conflicts with `a  ` in a `character(3)` domain.
+- Observed Doltgres behavior: both duplicate inserts succeed. The `varchar`
+  domain stores both `abc` and `abc   `, while the `character` domain stores
+  `a` and `a  ` as distinct values, so unique keys can contain duplicate
+  PostgreSQL-visible text-domain values.
+
 ### Domain typmod generated columns use uncoerced values
 
 - Reproducer: `TestDomainTypmodGeneratedColumnUsesCoercedValueRepro` in
