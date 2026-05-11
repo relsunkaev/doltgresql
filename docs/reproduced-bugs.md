@@ -3280,6 +3280,24 @@ artifacts only; no fixes are included here.
   succeeds on a table that already contains two `NULL` keys, and
   `pg_indexes` reports the invalid unique index as created.
 
+### ALTER TABLE ADD UNIQUE NULLS NOT DISTINCT accepts existing duplicate NULLs
+
+- Reproducer:
+  `TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro`
+  in `testing/go/constraint_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: adding a `UNIQUE NULLS NOT DISTINCT`
+  constraint scans existing rows and rejects duplicate `NULL` keys, leaving no
+  invalid constraint metadata behind.
+- Observed Doltgres behavior: `ALTER TABLE ... ADD CONSTRAINT ... UNIQUE
+  NULLS NOT DISTINCT` succeeds on a table that already contains two `NULL`
+  keys, and `information_schema.table_constraints` reports the invalid
+  constraint as created.
+
 ### Index definitions accept invalid expressions PostgreSQL rejects
 
 - Reproducer: `TestIndexDefinitionsRejectInvalidExpressionsRepro` in

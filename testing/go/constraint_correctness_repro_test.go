@@ -992,6 +992,41 @@ func TestUniqueConstraintNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T
 	})
 }
 
+// TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro
+// reproduces a constraint integrity bug: PostgreSQL validates existing rows
+// when adding a UNIQUE NULLS NOT DISTINCT constraint.
+func TestAddUniqueConstraintNullsNotDistinctRejectsExistingDuplicateNullsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ADD CONSTRAINT UNIQUE NULLS NOT DISTINCT rejects existing duplicate NULLs",
+			SetUpScript: []string{
+				`CREATE TABLE add_nulls_not_distinct_existing_items (
+					id INT PRIMARY KEY,
+					code INT
+				);`,
+				`INSERT INTO add_nulls_not_distinct_existing_items VALUES
+					(1, NULL),
+					(2, NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE add_nulls_not_distinct_existing_items
+						ADD CONSTRAINT add_nulls_not_distinct_existing_code_key
+						UNIQUE NULLS NOT DISTINCT (code);`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.table_constraints
+						WHERE table_name = 'add_nulls_not_distinct_existing_items'
+							AND constraint_name = 'add_nulls_not_distinct_existing_code_key';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAddNotNullColumnValidatesExistingRowsRepro reproduces a data consistency
 // bug: adding a NOT NULL column without a default to a non-empty table must
 // reject the rewrite instead of persisting nulls in the new constrained column.
