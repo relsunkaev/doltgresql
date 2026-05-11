@@ -44,8 +44,7 @@ type QuickFunction interface {
 // shapes that show up after construction:
 //   - the resolveType pass replacing an unresolved DoltgresType ID (empty schema, e.g. "pg_lsn") with the
 //     fully-qualified one ("pg_catalog.pg_lsn");
-//   - a swap from a non-Doltgres GMS type to a DoltgresType (the analyzer rewriting an originally
-//     non-pg expression in a cast that yields the function's expected pg type);
+//   - a swap from a non-Doltgres GMS type to the equivalent DoltgresType;
 //   - a child that is still typed as the unknown placeholder while the surrounding cast is being threaded.
 func quickFunctionTypesMatch(ctx *sql.Context, child, existing sql.Expression) bool {
 	ct := child.Type(ctx)
@@ -55,11 +54,11 @@ func quickFunctionTypesMatch(ctx *sql.Context, child, existing sql.Expression) b
 	}
 	cdt, cok := ct.(*pgtypes.DoltgresType)
 	edt, eok := et.(*pgtypes.DoltgresType)
-	if cok != eok {
-		return true
+	if !cok {
+		cdt = pgtypes.FromGmsType(ct)
 	}
-	if !cok || !eok {
-		return false
+	if !eok {
+		edt = pgtypes.FromGmsType(et)
 	}
 	if cdt.ID == pgtypes.Unknown.ID || edt.ID == pgtypes.Unknown.ID {
 		return true

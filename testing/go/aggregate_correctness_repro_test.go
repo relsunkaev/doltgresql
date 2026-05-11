@@ -37,6 +37,29 @@ func TestBoolAndInfersValuesBooleanTypeGuard(t *testing.T) {
 	})
 }
 
+// TestUnaryMinusOverSumDistinctRepro guards aggregate return type propagation
+// through a parent projection. SUM over int input yields an int8 runtime value,
+// so a stale float8 unary-minus overload must not be reused after aggregate
+// casts have been added.
+func TestUnaryMinusOverSumDistinctRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "unary minus over SUM DISTINCT uses aggregate result type",
+			SetUpScript: []string{
+				`CREATE TABLE unary_sum_items (v INT);`,
+				`INSERT INTO unary_sum_items VALUES (1), (2);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT (- SUM(DISTINCT - - 71))::text
+						FROM unary_sum_items;`,
+					Expected: []sql.Row{{"-71"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateAggregateSqlTransitionFunctionRepro reproduces an aggregate
 // correctness gap: PostgreSQL lets users define aggregates with SQL transition
 // functions and then use those aggregates in ordinary GROUP queries.

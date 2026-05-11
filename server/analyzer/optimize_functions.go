@@ -109,6 +109,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		if !sameNode {
 			projectNode.Child = n
 		}
+		projectNode, sameGetFieldsAfterChildRewrite := rewriteProjectionGetFieldsFromChildSchema(ctx, projectNode)
 
 		// insert node cannot have more than 1 row value if it has set returning function
 		if isInsertNode && hasMultipleExpressionTuples && hasSRF {
@@ -161,7 +162,7 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			projectNode = projectNode.WithIncludesNestedIters(true)
 		}
 
-		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields, err
+		return projectNode, sameNode && sameExprs && sameProjection && sameGetFields && sameGetFieldsAfterChildRewrite, err
 	})
 }
 
