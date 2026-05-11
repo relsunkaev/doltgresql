@@ -322,6 +322,9 @@ func (u *sqlSymUnion) selExprs() tree.SelectExprs {
 func (u *sqlSymUnion) retClause() tree.ReturningClause {
         return u.val.(tree.ReturningClause)
 }
+func (u *sqlSymUnion) insertOverride() tree.InsertOverride {
+    return u.val.(tree.InsertOverride)
+}
 func (u *sqlSymUnion) aliasClause() tree.AliasClause {
     return u.val.(tree.AliasClause)
 }
@@ -822,7 +825,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> NONE NORMAL NOT NOTHING NOTIFY NOTNULL NOVIEWACTIVITY NOWAIT NULL NULLIF NULLS NUMERIC YES
 
 %token <str> OBJECT OF OFF OFFSET OID OIDS OIDVECTOR OLD ON ONLY ONLY_DATABASE_STATS OPT OPTION OPTIONS OR
-%token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OWNED OWNER OPERATOR
+%token <str> ORDER ORDINALITY OTHERS OUT OUTER OUTPUT OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER OPERATOR
 
 %token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
@@ -1279,6 +1282,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*tree.Limit> select_limit opt_select_limit
 %type <tree.TableNames> relation_expr_list
 %type <tree.ReturningClause> returning_clause
+%type <tree.InsertOverride> overriding_clause
 %type <empty> opt_using_clause
 %type <tree.RefreshDataOption> opt_clear_data
 
@@ -10919,13 +10923,35 @@ insert_rest:
   {
     $$.val = &tree.Insert{Rows: $1.slct()}
   }
+| overriding_clause select_stmt
+  {
+    $$.val = &tree.Insert{Override: $1.insertOverride(), Rows: $2.slct()}
+  }
 | '(' insert_column_list ')' select_stmt
   {
     $$.val = &tree.Insert{Columns: $2.nameList(), Rows: $4.slct()}
   }
+| '(' insert_column_list ')' overriding_clause select_stmt
+  {
+    $$.val = &tree.Insert{Columns: $2.nameList(), Override: $4.insertOverride(), Rows: $5.slct()}
+  }
 | DEFAULT VALUES
   {
     $$.val = &tree.Insert{Rows: &tree.Select{}}
+  }
+| overriding_clause DEFAULT VALUES
+  {
+    $$.val = &tree.Insert{Override: $1.insertOverride(), Rows: &tree.Select{}}
+  }
+
+overriding_clause:
+  OVERRIDING SYSTEM VALUE
+  {
+    $$.val = tree.InsertOverrideSystem
+  }
+| OVERRIDING USER VALUE
+  {
+    $$.val = tree.InsertOverrideUser
   }
 
 insert_column_list:
@@ -15964,6 +15990,7 @@ unreserved_keyword:
 | OTHERS
 | OUTPUT
 | OVER
+| OVERRIDING
 | OWNED
 | OWNER
 | PARALLEL

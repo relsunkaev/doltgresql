@@ -963,6 +963,13 @@ func (node *Insert) doc(p *PrettyCfg) pretty.Doc {
 	}
 	items = append(items, p.row("INTO", into))
 
+	switch node.Override {
+	case InsertOverrideSystem:
+		items = append(items, p.row("OVERRIDING", pretty.Keyword("SYSTEM VALUE")))
+	case InsertOverrideUser:
+		items = append(items, p.row("OVERRIDING", pretty.Keyword("USER VALUE")))
+	}
+
 	if node.DefaultValues() {
 		items = append(items, p.row("", pretty.Keyword("DEFAULT VALUES")))
 	} else {

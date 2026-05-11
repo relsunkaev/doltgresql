@@ -32,6 +32,7 @@ const (
 	ruleId_AddDomainConstraints                                                   // addDomainConstraints
 	ruleId_AddDomainConstraintsToCasts                                            // addDomainConstraintsToCasts
 	ruleId_ApplyTablesForAnalyzeAllTables                                         // applyTablesForAnalyzeAllTables
+	ruleId_ApplyIdentityOverride                                                  // applyIdentityOverride
 	ruleId_AssignInsertCasts                                                      // assignInsertCasts
 	ruleId_AssignJsonbGinLookups                                                  // assignJsonbGinLookups
 	ruleId_AssignJsonbGinMaintainers                                              // assignJsonbGinMaintainers
@@ -100,6 +101,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_GenerateForeignKeyName, Apply: generateForeignKeyName},
 		analyzer.Rule{Id: ruleId_AddDomainConstraints, Apply: AddDomainConstraints},
 		analyzer.Rule{Id: ruleId_ValidateColumnDefaults, Apply: ValidateColumnDefaults},
+		analyzer.Rule{Id: ruleId_ApplyIdentityOverride, Apply: ApplyIdentityOverride},
 		analyzer.Rule{Id: ruleId_AssignInsertCasts, Apply: AssignInsertCasts},
 		analyzer.Rule{Id: ruleId_AssignUpdateCasts, Apply: AssignUpdateCasts},
 		analyzer.Rule{Id: ruleId_UseSchemaAwareStatsProvider, Apply: UseSchemaAwareStatsProvider},

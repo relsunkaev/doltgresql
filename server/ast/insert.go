@@ -21,6 +21,7 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgexpression "github.com/dolthub/doltgresql/server/expression"
 )
 
 // nodeInsert handles *tree.Insert nodes.
@@ -121,6 +122,9 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 			}
 		}
 	}
+	if node.Override != tree.InsertOverrideNone {
+		rows = wrapIdentityOverrideRows(rows)
+	}
 	return &vitess.Insert{
 		Action:    vitess.InsertStr,
 		Ignore:    ignore,
@@ -136,6 +140,34 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
 		},
 	}, nil
+}
+
+func wrapIdentityOverrideRows(rows vitess.InsertRows) vitess.InsertRows {
+	values, ok := rows.(*vitess.AliasedValues)
+	if !ok {
+		return rows
+	}
+	wrappedValues := make(vitess.Values, len(values.Values))
+	for i, tuple := range values.Values {
+		wrappedTuple := make(vitess.ValTuple, len(tuple))
+		for j, expr := range tuple {
+			wrappedTuple[j] = wrapIdentityOverrideValue(expr)
+		}
+		wrappedValues[i] = wrappedTuple
+	}
+	wrapped := *values
+	wrapped.Values = wrappedValues
+	return &wrapped
+}
+
+func wrapIdentityOverrideValue(expr vitess.Expr) vitess.Expr {
+	if _, ok := expr.(*vitess.Default); ok {
+		return expr
+	}
+	return vitess.InjectedExpr{
+		Expression: pgexpression.NewIdentityOverrideValue(),
+		Children:   vitess.Exprs{expr},
+	}
 }
 
 // isIgnore returns true if the ON CONFLICT clause provided is equivalent to INSERT IGNORE in GMS

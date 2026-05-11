@@ -38,10 +38,20 @@ type Insert struct {
 	With       *With
 	Table      TableExpr
 	Columns    NameList
+	Override   InsertOverride
 	Rows       *Select
 	OnConflict *OnConflict
 	Returning  ReturningClause
 }
+
+// InsertOverride represents INSERT ... OVERRIDING { SYSTEM | USER } VALUE.
+type InsertOverride int
+
+const (
+	InsertOverrideNone InsertOverride = iota
+	InsertOverrideSystem
+	InsertOverrideUser
+)
 
 // Format implements the NodeFormatter interface.
 func (node *Insert) Format(ctx *FmtCtx) {
@@ -57,6 +67,12 @@ func (node *Insert) Format(ctx *FmtCtx) {
 		ctx.WriteByte('(')
 		ctx.FormatNode(&node.Columns)
 		ctx.WriteByte(')')
+	}
+	switch node.Override {
+	case InsertOverrideSystem:
+		ctx.WriteString(" OVERRIDING SYSTEM VALUE")
+	case InsertOverrideUser:
+		ctx.WriteString(" OVERRIDING USER VALUE")
 	}
 	if node.DefaultValues() {
 		ctx.WriteString(" DEFAULT VALUES")
