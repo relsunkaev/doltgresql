@@ -8719,20 +8719,6 @@ artifacts only; no fixes are included here.
   supported Please file an issue at https://github.com/dolthub/doltgresql/issues`,
   so composite types cannot be evolved after creation.
 
-### ALTER TYPE cannot rename composite attributes
-
-- Reproducer: `TestAlterCompositeTypeRenameAttributeRepro` in
-  `testing/go/alter_type_rename_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestAlterCompositeTypeRenameAttributeRepro -count=1`.
-- Expected PostgreSQL behavior: `ALTER TYPE composite RENAME ATTRIBUTE old TO
-  new` updates the composite row type, and field selection through the new
-  attribute name works.
-- Observed Doltgres behavior: the statement fails with `ALTER TYPE is not yet
-  supported Please file an issue at https://github.com/dolthub/doltgresql/issues`,
-  so composite attributes cannot be renamed in place.
-
 ### CREATE SEQUENCE does not populate pg_sequences
 
 - Reproducer: `TestCreateSequencePopulatesPgSequencesRepro` in

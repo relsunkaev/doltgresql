@@ -43,9 +43,10 @@ func TestAlterEnumRenameValueRepro(t *testing.T) {
 	})
 }
 
-// PostgreSQL can rename composite attributes and exposes the renamed attribute
-// through row-field selection. Doltgres currently rejects the ALTER TYPE form.
-func TestAlterCompositeTypeRenameAttributeRepro(t *testing.T) {
+// TestAlterCompositeTypeRenameAttribute guards that ALTER TYPE RENAME
+// ATTRIBUTE updates the composite attribute name and that the renamed
+// attribute is accessible via row-field selection.
+func TestAlterCompositeTypeRenameAttribute(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ALTER TYPE RENAME ATTRIBUTE updates composite field",
@@ -57,6 +58,122 @@ func TestAlterCompositeTypeRenameAttributeRepro(t *testing.T) {
 				{
 					Query:    `SELECT (ROW(7)::rename_composite_item).new_name;`,
 					Expected: []sql.Row{{7}},
+				},
+				{
+					Query:       `SELECT (ROW(7)::rename_composite_item).old_name;`,
+					ExpectedErr: `old_name`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterCompositeTypeRenameAttributeMultipleFields guards that renaming
+// one attribute on a multi-attribute composite type leaves every other
+// attribute readable under its original name.
+func TestAlterCompositeTypeRenameAttributeMultipleFields(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE preserves siblings",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_multi AS (a INT, b TEXT, c INT);`,
+				`ALTER TYPE rename_attr_multi RENAME ATTRIBUTE b TO renamed_b;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).a;`,
+					Expected: []sql.Row{{int32(1)}},
+				},
+				{
+					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).renamed_b;`,
+					Expected: []sql.Row{{"kept"}},
+				},
+				{
+					Query:    `SELECT (ROW(1, 'kept', 3)::rename_attr_multi).c;`,
+					Expected: []sql.Row{{int32(3)}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterCompositeTypeRenameAttributeMissingErrors guards that renaming a
+// non-existent attribute errors with PostgreSQL's "column does not exist"
+// SQLSTATE.
+func TestAlterCompositeTypeRenameAttributeMissingErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE on missing attribute errors",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_missing AS (a INT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TYPE rename_attr_missing RENAME ATTRIBUTE not_a_field TO new_field;`,
+					ExpectedErr: `column "not_a_field" of relation "rename_attr_missing" does not exist`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterCompositeTypeRenameAttributeCollisionErrors guards that renaming an
+// attribute to a name already used by another attribute on the same composite
+// type errors with PostgreSQL's "already exists" message rather than silently
+// shadowing the existing attribute.
+func TestAlterCompositeTypeRenameAttributeCollisionErrors(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE to existing attribute name errors",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_collision AS (a INT, b INT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TYPE rename_attr_collision RENAME ATTRIBUTE a TO b;`,
+					ExpectedErr: `column "b" of relation "rename_attr_collision" already exists`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterCompositeTypeRenameAttributeNonComposite guards that RENAME
+// ATTRIBUTE is rejected when applied to a non-composite user type (enum here)
+// so that the operation does not silently corrupt enum metadata.
+func TestAlterCompositeTypeRenameAttributeNonComposite(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE on non-composite type errors",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_enum AS ENUM ('a', 'b');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TYPE rename_attr_enum RENAME ATTRIBUTE a TO renamed_a;`,
+					ExpectedErr: `is not a composite type`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterCompositeTypeRenameAttributeSchemaQualified guards that the
+// schema-qualified ALTER TYPE form resolves the type through the search path
+// and renames the attribute in that schema's namespace.
+func TestAlterCompositeTypeRenameAttributeSchemaQualified(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE works with schema-qualified type name",
+			SetUpScript: []string{
+				`CREATE SCHEMA rename_attr_schema;`,
+				`CREATE TYPE rename_attr_schema.qualified_item AS (old_field INT);`,
+				`ALTER TYPE rename_attr_schema.qualified_item RENAME ATTRIBUTE old_field TO new_field;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT (ROW(42)::rename_attr_schema.qualified_item).new_field;`,
+					Expected: []sql.Row{{42}},
 				},
 			},
 		},
