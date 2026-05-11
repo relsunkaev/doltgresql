@@ -536,3 +536,41 @@ func TestOnConflictReturningCannotReferenceExcludedGuard(t *testing.T) {
 		},
 	})
 }
+
+// TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro reproduces an UPDATE
+// consistency bug: PostgreSQL updates a target row at most once even if the
+// UPDATE FROM join produces multiple matching source rows.
+func TestUpdateFromDuplicateSourceRowsUpdatesTargetOnceRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "UPDATE FROM duplicate source rows updates target once",
+			SetUpScript: []string{
+				`CREATE TABLE update_from_duplicate_source_target (
+					id INT PRIMARY KEY,
+					amount INT NOT NULL
+				);`,
+				`CREATE TABLE update_from_duplicate_source_rows (
+					id INT NOT NULL,
+					marker TEXT NOT NULL
+				);`,
+				`INSERT INTO update_from_duplicate_source_target VALUES (1, 10);`,
+				`INSERT INTO update_from_duplicate_source_rows VALUES (1, 'a'), (1, 'b');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE update_from_duplicate_source_target AS t
+						SET amount = amount + 1
+						FROM update_from_duplicate_source_rows AS s
+						WHERE t.id = s.id
+						RETURNING t.id, t.amount;`,
+					Expected: []sql.Row{{1, 11}},
+				},
+				{
+					Query: `SELECT id, amount
+						FROM update_from_duplicate_source_target;`,
+					Expected: []sql.Row{{1, 11}},
+				},
+			},
+		},
+	})
+}
