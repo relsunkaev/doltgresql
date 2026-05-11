@@ -18,9 +18,9 @@ import "testing"
 
 func TestExecute(t *testing.T) {
 	tests := []QueryParses{
-		Parses("EXECUTE name"),
-		Parses("EXECUTE name ( parameter )"),
-		Parses("EXECUTE name ( parameter , parameter )"),
+		Converts("EXECUTE name"),
+		Converts("EXECUTE name ( parameter )"),
+		Converts("EXECUTE name ( parameter , parameter )"),
 	}
 	RunTests(t, tests)
 }

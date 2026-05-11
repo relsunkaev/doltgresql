@@ -18,7 +18,7 @@ import "testing"
 
 func TestCommitPrepared(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("COMMIT PREPARED 'id'"),
+		Converts("COMMIT PREPARED 'id'"),
 	}
 	RunTests(t, tests)
 }

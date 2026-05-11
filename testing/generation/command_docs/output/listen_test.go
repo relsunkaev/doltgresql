@@ -18,7 +18,7 @@ import "testing"
 
 func TestListen(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("LISTEN channel"),
+		Converts("LISTEN channel"),
 	}
 	RunTests(t, tests)
 }

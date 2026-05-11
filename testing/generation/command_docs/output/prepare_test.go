@@ -18,12 +18,12 @@ import "testing"
 
 func TestPrepare(t *testing.T) {
 	tests := []QueryParses{
-		Parses("PREPARE name AS SELECT 1"),
-		Parses("PREPARE name ( data_type ) AS SELECT 1"),
-		Parses("PREPARE name ( data_type , data_type ) AS SELECT 1"),
-		Parses("PREPARE name AS INSERT INTO tablename VALUES ( 1 )"),
-		Parses("PREPARE name ( data_type ) AS INSERT INTO tablename VALUES ( 1 )"),
-		Parses("PREPARE name ( data_type , data_type ) AS INSERT INTO tablename VALUES ( 1 )"),
+		Converts("PREPARE name AS SELECT 1"),
+		Converts("PREPARE name ( data_type ) AS SELECT 1"),
+		Converts("PREPARE name ( data_type , data_type ) AS SELECT 1"),
+		Converts("PREPARE name AS INSERT INTO tablename VALUES ( 1 )"),
+		Converts("PREPARE name ( data_type ) AS INSERT INTO tablename VALUES ( 1 )"),
+		Converts("PREPARE name ( data_type , data_type ) AS INSERT INTO tablename VALUES ( 1 )"),
 	}
 	RunTests(t, tests)
 }

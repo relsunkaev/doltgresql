@@ -18,8 +18,8 @@ import "testing"
 
 func TestUnlisten(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("UNLISTEN channel"),
-		Unimplemented("UNLISTEN *"),
+		Converts("UNLISTEN channel"),
+		Converts("UNLISTEN *"),
 	}
 	RunTests(t, tests)
 }

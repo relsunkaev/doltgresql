@@ -26,10 +26,10 @@ func TestDropView(t *testing.T) {
 		Parses("DROP VIEW IF EXISTS name CASCADE"),
 		Parses("DROP VIEW name , name CASCADE"),
 		Parses("DROP VIEW IF EXISTS name , name CASCADE"),
-		Parses("DROP VIEW name RESTRICT"),
-		Parses("DROP VIEW IF EXISTS name RESTRICT"),
-		Parses("DROP VIEW name , name RESTRICT"),
-		Parses("DROP VIEW IF EXISTS name , name RESTRICT"),
+		Converts("DROP VIEW name RESTRICT"),
+		Converts("DROP VIEW IF EXISTS name RESTRICT"),
+		Converts("DROP VIEW name , name RESTRICT"),
+		Converts("DROP VIEW IF EXISTS name , name RESTRICT"),
 	}
 	RunTests(t, tests)
 }

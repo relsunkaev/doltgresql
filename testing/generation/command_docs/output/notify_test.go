@@ -18,8 +18,8 @@ import "testing"
 
 func TestNotify(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("NOTIFY channel"),
-		Unimplemented("NOTIFY channel , 'payload'"),
+		Converts("NOTIFY channel"),
+		Converts("NOTIFY channel , 'payload'"),
 	}
 	RunTests(t, tests)
 }

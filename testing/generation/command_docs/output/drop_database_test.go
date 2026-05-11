@@ -20,14 +20,14 @@ func TestDropDatabase(t *testing.T) {
 	tests := []QueryParses{
 		Converts("DROP DATABASE name"),
 		Converts("DROP DATABASE IF EXISTS name"),
-		Parses("DROP DATABASE name ( FORCE )"),
-		Parses("DROP DATABASE IF EXISTS name ( FORCE )"),
-		Parses("DROP DATABASE name WITH ( FORCE )"),
-		Parses("DROP DATABASE IF EXISTS name WITH ( FORCE )"),
-		Parses("DROP DATABASE name ( FORCE , FORCE )"),
-		Parses("DROP DATABASE IF EXISTS name ( FORCE , FORCE )"),
-		Parses("DROP DATABASE name WITH ( FORCE , FORCE )"),
-		Parses("DROP DATABASE IF EXISTS name WITH ( FORCE , FORCE )"),
+		Converts("DROP DATABASE name ( FORCE )"),
+		Converts("DROP DATABASE IF EXISTS name ( FORCE )"),
+		Converts("DROP DATABASE name WITH ( FORCE )"),
+		Converts("DROP DATABASE IF EXISTS name WITH ( FORCE )"),
+		Converts("DROP DATABASE name ( FORCE , FORCE )"),
+		Converts("DROP DATABASE IF EXISTS name ( FORCE , FORCE )"),
+		Converts("DROP DATABASE name WITH ( FORCE , FORCE )"),
+		Converts("DROP DATABASE IF EXISTS name WITH ( FORCE , FORCE )"),
 	}
 	RunTests(t, tests)
 }

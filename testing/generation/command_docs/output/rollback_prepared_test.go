@@ -18,7 +18,7 @@ import "testing"
 
 func TestRollbackPrepared(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("ROLLBACK PREPARED 'id'"),
+		Converts("ROLLBACK PREPARED 'id'"),
 	}
 	RunTests(t, tests)
 }

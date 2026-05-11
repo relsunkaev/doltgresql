@@ -18,7 +18,7 @@ import "testing"
 
 func TestPrepareTransaction(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("PREPARE TRANSACTION 'id'"),
+		Converts("PREPARE TRANSACTION 'id'"),
 	}
 	RunTests(t, tests)
 }

@@ -20,10 +20,10 @@ func TestDropTrigger(t *testing.T) {
 	tests := []QueryParses{
 		Converts("DROP TRIGGER name ON table_name"),
 		Converts("DROP TRIGGER IF EXISTS name ON table_name"),
-		Parses("DROP TRIGGER name ON table_name CASCADE"),
-		Parses("DROP TRIGGER IF EXISTS name ON table_name CASCADE"),
-		Parses("DROP TRIGGER name ON table_name RESTRICT"),
-		Parses("DROP TRIGGER IF EXISTS name ON table_name RESTRICT"),
+		Converts("DROP TRIGGER name ON table_name CASCADE"),
+		Converts("DROP TRIGGER IF EXISTS name ON table_name CASCADE"),
+		Converts("DROP TRIGGER name ON table_name RESTRICT"),
+		Converts("DROP TRIGGER IF EXISTS name ON table_name RESTRICT"),
 	}
 	RunTests(t, tests)
 }

@@ -26,10 +26,10 @@ func TestDropMaterializedView(t *testing.T) {
 		Parses("DROP MATERIALIZED VIEW IF EXISTS name CASCADE"),
 		Parses("DROP MATERIALIZED VIEW name , name CASCADE"),
 		Parses("DROP MATERIALIZED VIEW IF EXISTS name , name CASCADE"),
-		Parses("DROP MATERIALIZED VIEW name RESTRICT"),
-		Parses("DROP MATERIALIZED VIEW IF EXISTS name RESTRICT"),
-		Parses("DROP MATERIALIZED VIEW name , name RESTRICT"),
-		Parses("DROP MATERIALIZED VIEW IF EXISTS name , name RESTRICT"),
+		Converts("DROP MATERIALIZED VIEW name RESTRICT"),
+		Converts("DROP MATERIALIZED VIEW IF EXISTS name RESTRICT"),
+		Converts("DROP MATERIALIZED VIEW name , name RESTRICT"),
+		Converts("DROP MATERIALIZED VIEW IF EXISTS name , name RESTRICT"),
 	}
 	RunTests(t, tests)
 }

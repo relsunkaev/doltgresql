@@ -18,7 +18,7 @@ import "testing"
 
 func TestReindex(t *testing.T) {
 	tests := []QueryParses{
-		Unimplemented("REINDEX INDEX name"),
+		Converts("REINDEX INDEX name"),
 		Unimplemented("REINDEX ( CONCURRENTLY ) INDEX name"),
 		Unimplemented("REINDEX ( CONCURRENTLY true ) INDEX name"),
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace ) INDEX name"),
@@ -49,7 +49,7 @@ func TestReindex(t *testing.T) {
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace , VERBOSE true ) INDEX name"),
 		Unimplemented("REINDEX ( VERBOSE , VERBOSE true ) INDEX name"),
 		Unimplemented("REINDEX ( VERBOSE true , VERBOSE true ) INDEX name"),
-		Unimplemented("REINDEX TABLE name"),
+		Converts("REINDEX TABLE name"),
 		Unimplemented("REINDEX ( CONCURRENTLY ) TABLE name"),
 		Unimplemented("REINDEX ( CONCURRENTLY true ) TABLE name"),
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace ) TABLE name"),
@@ -173,7 +173,7 @@ func TestReindex(t *testing.T) {
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace , VERBOSE true ) SYSTEM name"),
 		Unimplemented("REINDEX ( VERBOSE , VERBOSE true ) SYSTEM name"),
 		Unimplemented("REINDEX ( VERBOSE true , VERBOSE true ) SYSTEM name"),
-		Unimplemented("REINDEX INDEX CONCURRENTLY name"),
+		Converts("REINDEX INDEX CONCURRENTLY name"),
 		Unimplemented("REINDEX ( CONCURRENTLY ) INDEX CONCURRENTLY name"),
 		Unimplemented("REINDEX ( CONCURRENTLY true ) INDEX CONCURRENTLY name"),
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace ) INDEX CONCURRENTLY name"),
@@ -204,7 +204,7 @@ func TestReindex(t *testing.T) {
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace , VERBOSE true ) INDEX CONCURRENTLY name"),
 		Unimplemented("REINDEX ( VERBOSE , VERBOSE true ) INDEX CONCURRENTLY name"),
 		Unimplemented("REINDEX ( VERBOSE true , VERBOSE true ) INDEX CONCURRENTLY name"),
-		Unimplemented("REINDEX TABLE CONCURRENTLY name"),
+		Converts("REINDEX TABLE CONCURRENTLY name"),
 		Unimplemented("REINDEX ( CONCURRENTLY ) TABLE CONCURRENTLY name"),
 		Unimplemented("REINDEX ( CONCURRENTLY true ) TABLE CONCURRENTLY name"),
 		Unimplemented("REINDEX ( TABLESPACE new_tablespace ) TABLE CONCURRENTLY name"),
