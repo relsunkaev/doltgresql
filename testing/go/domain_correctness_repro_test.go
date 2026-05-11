@@ -453,6 +453,54 @@ func TestDomainTypmodDefaultUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodDefaultUsesCoercedValueRepro reproduces a data
+// consistency bug: PostgreSQL applies varchar(n) and character(n) base-type
+// typmods to domain default values before storing them.
+func TestTextDomainTypmodDefaultUsesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar domain typmod default uses coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_default_domain AS varchar(3) DEFAULT 'abc   ';`,
+				`CREATE TABLE varchar_domain_default_items (
+					id INT PRIMARY KEY,
+					label varchar3_default_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO varchar_domain_default_items (id) VALUES (1);`,
+				},
+				{
+					Query: `SELECT label, length(label), pg_typeof(label)::text
+						FROM varchar_domain_default_items;`,
+					Expected: []sql.Row{{"abc", 3, "varchar3_default_domain"}},
+				},
+			},
+		},
+		{
+			Name: "character domain typmod default uses padded value",
+			SetUpScript: []string{
+				`CREATE DOMAIN char3_default_domain AS character(3) DEFAULT 'ab';`,
+				`CREATE TABLE char_domain_default_items (
+					id INT PRIMARY KEY,
+					label char3_default_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO char_domain_default_items (id) VALUES (1);`,
+				},
+				{
+					Query: `SELECT label = 'ab '::CHARACTER(3), octet_length(label), pg_typeof(label)::text
+						FROM char_domain_default_items;`,
+					Expected: []sql.Row{{true, 3, "char3_default_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypmodCheckUsesCoercedValueRepro reproduces a data consistency bug:
 // PostgreSQL validates domain CHECK constraints after applying the domain base
 // type's typmod.

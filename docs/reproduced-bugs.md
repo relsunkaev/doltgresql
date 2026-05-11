@@ -2807,6 +2807,23 @@ artifacts only; no fixes are included here.
   stores `123.456`, so implicit writes through domain defaults can persist
   values outside the domain base type's declared typmod.
 
+### Text domain typmod defaults store uncoerced values
+
+- Reproducer: `TestTextDomainTypmodDefaultUsesCoercedValueRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodDefaultUsesCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: defaults declared on `varchar(3)` and
+  `character(3)` domains are coerced through the domain base-type typmod before
+  storage. The `varchar(3)` default `abc   ` stores as `abc`, the
+  `character(3)` default `ab` stores as a padded three-byte value, and
+  `pg_typeof` reports the domain type.
+- Observed Doltgres behavior: default inserts store `abc   ` with
+  `length = 6` and `ab` with `octet_length = 2`, and `pg_typeof` reports the
+  base `character varying` / `character` types, so domain defaults can persist
+  values outside the declared text typmod.
+
 ### Domain defaults that call functions panic during insert
 
 - Reproducer: `TestDomainDefaultFunctionEvaluatesOnInsertRepro` in
