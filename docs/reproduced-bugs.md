@@ -16617,6 +16617,22 @@ They are worth keeping, but they are not counted as found bugs.
   stored array to `{abc,"ab ",abc}`, so array mutation can persist character
   elements with invalid fixed-width semantics.
 
+### `array_cat` fails before character array assignment typmod validation
+
+- Reproducer: `TestCharacterArrayCatResolvesTypmodArrayRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCharacterArrayCatResolvesTypmodArrayRepro -count=1`.
+- Expected PostgreSQL behavior: assigning `array_cat(labels, ARRAY['ab'])` into
+  a `character(3)[]` column resolves the untyped array literal as compatible
+  with the target array, pads the concatenated element, and persists
+  `{abc,"ab "}` with `octet_length(labels[2]) = 3`.
+- Observed Doltgres behavior: the update fails during planning with
+  `function array_cat(bpchar(3)[](3), text[]) does not exist`, so valid
+  `array_cat` writes against fixed-width character arrays are rejected before
+  PostgreSQL-compatible assignment typmod handling can run.
+
 ### `array_prepend` can persist values outside varchar array element typmods
 
 - Reproducer: `TestVarcharArrayPrependValidatesElementTypmodRepro` in

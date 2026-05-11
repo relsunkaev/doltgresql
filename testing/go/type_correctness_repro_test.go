@@ -674,6 +674,37 @@ func TestCharacterArrayPrependAppliesElementTypmodRepro(t *testing.T) {
 	})
 }
 
+// TestCharacterArrayCatResolvesTypmodArrayRepro reproduces an array correctness
+// bug: PostgreSQL resolves array_cat for character(n)[] columns and compatible
+// untyped array literals before applying assignment typmods.
+func TestCharacterArrayCatResolvesTypmodArrayRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "character array_cat resolves typmod array arguments",
+			SetUpScript: []string{
+				`CREATE TABLE character_array_cat_typmod_items (
+					id INT PRIMARY KEY,
+					labels CHARACTER(3)[]
+				);`,
+				`INSERT INTO character_array_cat_typmod_items
+					VALUES (1, ARRAY['abc']::character(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE character_array_cat_typmod_items
+						SET labels = array_cat(labels, ARRAY['ab'])
+						WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT labels::text, octet_length(labels[2]), labels[2] = 'ab '::CHARACTER(3)
+						FROM character_array_cat_typmod_items;`,
+					Expected: []sql.Row{{`{abc,"ab "}`, 3, true}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterArrayTypmodSupportsEqualityRepro reproduces an array
 // correctness bug: PostgreSQL array equality delegates to the element type, so
 // character(n) array elements that differ only by trailing padding spaces
