@@ -502,6 +502,7 @@ func (h *ConnectionHandler) receiveMessage() (bool, error) {
 	if err != nil {
 		if !h.inTransaction {
 			notifications.Rollback(h.mysqlConn.ConnectionID)
+			functions.RollbackSessionLogicalDecodingMessages(h.mysqlConn.ConnectionID)
 		}
 		if !endOfMessages && h.waitForSync {
 			if syncErr := h.discardToSync(); syncErr != nil {
@@ -2147,6 +2148,7 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 		if err := h.validateDeferredConstraints(); err != nil {
 			deferrable.Rollback(h.mysqlConn.ConnectionID)
 			h.clearPendingReplication()
+			functions.RollbackSessionLogicalDecodingMessages(h.mysqlConn.ConnectionID)
 			if rollbackErr := h.rollbackOpenTransactionAfterFailedCommit(); rollbackErr != nil {
 				return fmt.Errorf("%v; rollback failed: %w", err, rollbackErr)
 			}
@@ -2313,11 +2315,18 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
 		deferrable.Commit(connectionID)
+		if err := functions.CommitSessionLogicalDecodingMessages(connectionID); err != nil {
+			return err
+		}
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
 		deferrable.Rollback(connectionID)
+		functions.RollbackSessionLogicalDecodingMessages(connectionID)
 		notifications.Rollback(connectionID)
 	case !h.inTransaction:
+		if err := functions.CommitSessionLogicalDecodingMessages(connectionID); err != nil {
+			return err
+		}
 		return notifications.Commit(connectionID)
 	}
 	return nil

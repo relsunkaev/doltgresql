@@ -18,6 +18,7 @@ import (
 	"cmp"
 	"encoding/binary"
 	"math/big"
+	"sync"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pglogrepl"
@@ -28,6 +29,13 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
+
+var logicalDecodingMessages = struct {
+	sync.Mutex
+	pending map[uint32][]replsource.WALMessage
+}{
+	pending: make(map[uint32][]replsource.WALMessage),
+}
 
 // initPgLsn registers the functions to the catalog.
 func initPgLsn() {
@@ -183,15 +191,63 @@ func emitLogicalDecodingMessage(ctx *sql.Context, transactional any, prefix any,
 
 	lsn := replsource.AdvanceLSN()
 	walData := encodeLogicalDecodingMessage(lsn, transactional.(bool), prefix.(string), []byte(content.(string)))
-	err = replsource.Broadcast(nil, []replsource.WALMessage{{
+	message := replsource.WALMessage{
 		WALStart:     lsn,
 		ServerWALEnd: lsn,
 		WALData:      walData,
-	}})
+	}
+	if transactional.(bool) {
+		queueTransactionalLogicalDecodingMessage(ctx, message)
+		return uint64(lsn), nil
+	}
+	err = replsource.Broadcast(nil, []replsource.WALMessage{message})
 	if err != nil {
 		return nil, err
 	}
 	return uint64(lsn), nil
+}
+
+func queueTransactionalLogicalDecodingMessage(ctx *sql.Context, message replsource.WALMessage) {
+	if ctx == nil {
+		_ = replsource.Broadcast(nil, []replsource.WALMessage{message})
+		return
+	}
+	connectionID := uint32(ctx.Session.ID())
+	logicalDecodingMessages.Lock()
+	defer logicalDecodingMessages.Unlock()
+	logicalDecodingMessages.pending[connectionID] = append(logicalDecodingMessages.pending[connectionID], cloneLogicalDecodingMessage(message))
+}
+
+// CommitSessionLogicalDecodingMessages publishes transactional logical decoding
+// messages queued by pg_logical_emit_message(..., true, ...).
+func CommitSessionLogicalDecodingMessages(connectionID uint32) error {
+	messages := takeSessionLogicalDecodingMessages(connectionID)
+	if len(messages) == 0 {
+		return nil
+	}
+	return replsource.Broadcast(nil, messages)
+}
+
+// RollbackSessionLogicalDecodingMessages discards transactional logical
+// decoding messages queued by pg_logical_emit_message(..., true, ...).
+func RollbackSessionLogicalDecodingMessages(connectionID uint32) {
+	_ = takeSessionLogicalDecodingMessages(connectionID)
+}
+
+func takeSessionLogicalDecodingMessages(connectionID uint32) []replsource.WALMessage {
+	logicalDecodingMessages.Lock()
+	defer logicalDecodingMessages.Unlock()
+	messages := logicalDecodingMessages.pending[connectionID]
+	delete(logicalDecodingMessages.pending, connectionID)
+	return messages
+}
+
+func cloneLogicalDecodingMessage(message replsource.WALMessage) replsource.WALMessage {
+	return replsource.WALMessage{
+		WALStart:     message.WALStart,
+		ServerWALEnd: message.ServerWALEnd,
+		WALData:      append([]byte(nil), message.WALData...),
+	}
 }
 
 func encodeLogicalDecodingMessage(lsn pglogrepl.LSN, transactional bool, prefix string, content []byte) []byte {
