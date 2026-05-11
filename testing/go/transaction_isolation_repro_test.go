@@ -88,10 +88,11 @@ func TestSetTransactionSnapshotValidationRepro(t *testing.T) {
 	})
 }
 
-// TestTxidCurrentReportsNonzeroTransactionIdRepro reproduces a transaction
-// correctness bug: PostgreSQL txid_current() returns the current nonzero
-// transaction ID, stable within the surrounding transaction.
-func TestTxidCurrentReportsNonzeroTransactionIdRepro(t *testing.T) {
+// TestTxidCurrentReportsNonzeroTransactionId guards that txid_current returns
+// a stable nonzero value within a transaction, matching PostgreSQL's contract.
+// The value is derived from the session ID; a real per-transaction allocation
+// is a follow-up.
+func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "txid_current reports a nonzero current transaction ID",
@@ -104,6 +105,32 @@ func TestTxidCurrentReportsNonzeroTransactionIdRepro(t *testing.T) {
 							txid_current() = txid_current(),
 							txid_current() > 0;`,
 					Expected: []sql.Row{{"t", "t"}},
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+			},
+		},
+		{
+			Name: "txid_current outside a transaction is nonzero",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT txid_current() > 0;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+		{
+			Name: "txid_current returns the same value across siblings in a SELECT list",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `SELECT a = b FROM (
+							SELECT txid_current() AS a, txid_current() AS b
+						) AS t;`,
+					Expected: []sql.Row{{"t"}},
 				},
 				{
 					Query: `ROLLBACK;`,

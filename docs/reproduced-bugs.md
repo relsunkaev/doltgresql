@@ -239,19 +239,6 @@ artifacts only; no fixes are included here.
   transaction succeed, so session setup can claim to import a snapshot that
   PostgreSQL would reject.
 
-### txid_current reports zero instead of a current transaction ID
-
-- Reproducer: `TestTxidCurrentReportsNonzeroTransactionIdRepro` in
-  `testing/go/transaction_isolation_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestTxidCurrentReportsNonzeroTransactionIdRepro -count=1`.
-- Expected PostgreSQL behavior: inside a transaction, repeated
-  `txid_current()` calls return the same current transaction ID, and that ID is
-  nonzero.
-- Observed Doltgres behavior: `txid_current() = txid_current()` is true, but
-  `txid_current() > 0` is false because the registered function returns `0`.
-
 ### Shared advisory lock functions are missing
 
 - Reproducer: `TestSharedAdvisoryLocksCoexistAndBlockExclusiveRepro` in

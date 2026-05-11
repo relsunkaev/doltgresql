@@ -26,14 +26,21 @@ func initTxidCurrent() {
 	framework.RegisterFunction(txid_current)
 }
 
-// txid_current represents the PostgreSQL date/time function, taking {interval, timestamp with time zone}
+// txid_current returns a session-stable nonzero transaction identifier so the
+// PostgreSQL contract (`txid_current() = txid_current()` within a transaction,
+// and `txid_current() > 0`) holds. Doltgres does not currently allocate a
+// fresh transaction ID per BEGIN/COMMIT cycle the way PostgreSQL does — the
+// value is derived from the session ID, so a new transaction in the same
+// session reuses the previous identifier. Replacing this with a real
+// per-transaction allocation is a follow-up.
 var txid_current = framework.Function0{
 	Name:               "txid_current",
 	Return:             pgtypes.Int64,
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context) (any, error) {
-		// TODO: current transaction ID
-		return int64(0), nil
+		// +1 keeps the value strictly positive even if the host happens to
+		// assign session ID 0 to the first session.
+		return int64(ctx.Session.ID()) + 1, nil
 	},
 }
