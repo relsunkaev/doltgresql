@@ -3247,6 +3247,22 @@ artifacts only; no fixes are included here.
   though the matching unique expression index exists and is enforced for plain
   inserts.
 
+### ON CONFLICT cannot use NULLS NOT DISTINCT unique indexes for NULL keys
+
+- Reproducer: `TestOnConflictUsesNullsNotDistinctUniqueIndexRepro` in
+  `testing/go/index_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run TestOnConflictUsesNullsNotDistinctUniqueIndexRepro
+  -count=1`.
+- Expected PostgreSQL behavior: a `UNIQUE NULLS NOT DISTINCT` index can be
+  inferred by `ON CONFLICT (code)`, so inserting a second `NULL` key routes to
+  `DO UPDATE` and updates the existing row.
+- Observed Doltgres behavior: the `NULLS NOT DISTINCT` index rejects the
+  duplicate `NULL` as a unique violation, but `ON CONFLICT (code)` does not
+  treat that conflict as its arbiter. The statement fails with `duplicate key
+  value violates unique constraint`, and the original row remains unchanged.
+
 ### Index definitions accept invalid expressions PostgreSQL rejects
 
 - Reproducer: `TestIndexDefinitionsRejectInvalidExpressionsRepro` in

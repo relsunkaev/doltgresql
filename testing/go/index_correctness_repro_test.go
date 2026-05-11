@@ -423,6 +423,43 @@ func TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T) {
 	})
 }
 
+// TestOnConflictUsesNullsNotDistinctUniqueIndexRepro reproduces an ON CONFLICT
+// correctness bug: PostgreSQL can infer a NULLS NOT DISTINCT unique index and
+// route duplicate NULL key values through DO UPDATE.
+func TestOnConflictUsesNullsNotDistinctUniqueIndexRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT uses NULLS NOT DISTINCT unique index",
+			SetUpScript: []string{
+				`CREATE TABLE nulls_not_distinct_upsert_items (
+					id INT PRIMARY KEY,
+					code INT,
+					label TEXT
+				);`,
+				`CREATE UNIQUE INDEX nulls_not_distinct_upsert_code_idx
+					ON nulls_not_distinct_upsert_items (code)
+					NULLS NOT DISTINCT;`,
+				`INSERT INTO nulls_not_distinct_upsert_items VALUES (1, NULL, 'old');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO nulls_not_distinct_upsert_items VALUES (2, NULL, 'new')
+						ON CONFLICT (code) DO UPDATE
+						SET label = EXCLUDED.label
+						RETURNING id, code, label;`,
+					Expected: []sql.Row{{1, nil, "new"}},
+				},
+				{
+					Query: `SELECT id, code, label
+						FROM nulls_not_distinct_upsert_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, nil, "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestIndexDefinitionsRejectInvalidExpressionsRepro reproduces index
 // correctness bugs where Doltgres accepts expressions PostgreSQL rejects in
 // persisted index definitions.
