@@ -1587,6 +1587,22 @@ artifacts only; no fixes are included here.
   rewrite stores `ab` with `octet_length = 2` and it does not compare equal to
   the padded `character(3)` value.
 
+### ALTER COLUMN TYPE character typmod rewrites keep excess trailing spaces
+
+- Reproducer: `TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro -count=1`.
+- Expected PostgreSQL behavior: converting a `text` column containing
+  `abc   ` to `character(3)` succeeds because the excess characters are all
+  spaces, changes the column type to `character`, and rewrites the stored value
+  to a three-byte `character(3)` value equal to `'abc'::character(3)`.
+- Observed Doltgres behavior: the `ALTER TABLE` succeeds and changes the
+  column type, but the stored value keeps `octet_length = 6` and compares false
+  against `'abc'::character(3)`, so a schema rewrite can persist malformed
+  fixed-width character data.
+
 ### ALTER COLUMN TYPE TIMETZ typmod rewrites store unrounded values
 
 - Reproducer: `TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro` in
@@ -1724,6 +1740,23 @@ artifacts only; no fixes are included here.
 - Expected PostgreSQL behavior: `ALTER TABLE ... ADD COLUMN label VARCHAR(3)
   DEFAULT 'abc   '` accepts the default because the excess characters are all
   spaces, then backfills every existing row with `abc` at `length(label) = 3`.
+- Observed Doltgres behavior: the `ALTER TABLE` fails with `value too long for
+  type varying(3): out of range`, so a PostgreSQL-compatible schema change is
+  rejected before the rows can be backfilled with the typmod-coerced value.
+
+### ALTER TABLE ADD COLUMN character typmod defaults reject trailing spaces
+
+- Reproducer:
+  `TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro`
+  in `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ADD COLUMN label CHARACTER(3)
+  DEFAULT 'abc   '` accepts the default because the excess characters are all
+  spaces, then backfills every existing row with a three-byte value equal to
+  `'abc'::character(3)`.
 - Observed Doltgres behavior: the `ALTER TABLE` fails with `value too long for
   type varying(3): out of range`, so a PostgreSQL-compatible schema change is
   rejected before the rows can be backfilled with the typmod-coerced value.
