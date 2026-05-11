@@ -407,6 +407,64 @@ func TestCharacterTypmodTruncatesTrailingSpacesRepro(t *testing.T) {
 	})
 }
 
+// TestVarcharTypmodDefaultTruncatesTrailingSpacesRepro reproduces a varchar
+// typmod correctness bug: PostgreSQL accepts a default whose only excess
+// characters are spaces, truncating the trailing spaces when the default is
+// used.
+func TestVarcharTypmodDefaultTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar typmod default truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE varchar_default_trailing_space_items (
+					id INT PRIMARY KEY,
+					label VARCHAR(3) DEFAULT 'abc   '
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO varchar_default_trailing_space_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT label, length(label), pg_typeof(label)::text
+						FROM varchar_default_trailing_space_items;`,
+					Expected: []sql.Row{{"abc", 3, "character varying"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCharacterTypmodDefaultTruncatesTrailingSpacesRepro reproduces a character
+// typmod correctness bug: PostgreSQL accepts a default whose only excess
+// characters are spaces, truncating the trailing spaces when the default is
+// used.
+func TestCharacterTypmodDefaultTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "character typmod default truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE character_default_trailing_space_items (
+					id INT PRIMARY KEY,
+					label CHARACTER(3) DEFAULT 'abc   '
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO character_default_trailing_space_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text
+						FROM character_default_trailing_space_items;`,
+					Expected: []sql.Row{{true, 3, "character"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro reproduces a
 // character(n) correctness bug: PostgreSQL treats trailing spaces as
 // semantically insignificant for character(n) equality, so unique constraints

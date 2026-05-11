@@ -16408,6 +16408,23 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: both inserts fail with `value too long for type
   varying(3): out of range`, rejecting valid PostgreSQL values.
 
+### `varchar(n)` and `character(n)` defaults reject excess trailing spaces
+
+- Reproducers: `TestVarcharTypmodDefaultTruncatesTrailingSpacesRepro` and
+  `TestCharacterTypmodDefaultTruncatesTrailingSpacesRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run 'Test(Varchar|Character)TypmodDefaultTruncatesTrailingSpacesRepro'
+  -count=1`.
+- Expected PostgreSQL behavior: `CREATE TABLE` accepts `varchar(3)` and
+  `character(3)` defaults of `'abc   '` because the over-length characters are
+  all spaces, and future inserts using those defaults store the coerced
+  three-character value.
+- Observed Doltgres behavior: both `CREATE TABLE` statements fail with `value
+  too long for type varying(3): out of range`, rejecting valid PostgreSQL
+  defaults before rows can be inserted.
+
 ### `character(n)` treats trailing padding spaces as significant for equality and uniqueness
 
 - Reproducer: `TestCharacterTypmodIgnoresTrailingSpacesForUniquenessRepro` in
