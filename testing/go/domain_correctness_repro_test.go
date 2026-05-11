@@ -905,6 +905,69 @@ func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodBulkWritesUseCoercedValuesRepro reproduces data
+// consistency bugs: PostgreSQL applies text-domain base-type typmods on
+// UPDATE ... FROM and COPY FROM assignment paths.
+func TestTextDomainTypmodBulkWritesUseCoercedValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain UPDATE FROM uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_update_from_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_update_from_domain AS character(3);`,
+				`CREATE TABLE text_domain_update_from_source (
+					id INT PRIMARY KEY,
+					new_v TEXT,
+					new_c TEXT
+				);`,
+				`CREATE TABLE text_domain_update_from_items (
+					id INT PRIMARY KEY,
+					v varchar3_update_from_domain,
+					c char3_update_from_domain
+				);`,
+				`INSERT INTO text_domain_update_from_items VALUES (1, 'abc', 'abc');`,
+				`INSERT INTO text_domain_update_from_source VALUES (1, 'abc   ', 'ab');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE text_domain_update_from_items AS t
+						SET v = s.new_v, c = s.new_c
+						FROM text_domain_update_from_source AS s
+						WHERE t.id = s.id;`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_update_from_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+		{
+			Name: "text domain COPY FROM uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_copy_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_copy_domain AS character(3);`,
+				`CREATE TABLE text_domain_copy_items (
+					id INT PRIMARY KEY,
+					v varchar3_copy_domain,
+					c char3_copy_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:             `COPY text_domain_copy_items (id, v, c) FROM STDIN;`,
+					CopyFromStdInFile: "text-domain-typmod-copy.tsv",
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_copy_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainCheckRejectsNonScalarExpressionsRepro reproduces domain
 // correctness bugs if Doltgres accepts CHECK expressions PostgreSQL rejects for
 // domains.

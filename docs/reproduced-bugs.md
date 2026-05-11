@@ -3014,6 +3014,21 @@ artifacts only; no fixes are included here.
   `length = 6` and underpadded `ab` with `octet_length = 2`, so DML can persist
   text-domain values outside their declared base typmods.
 
+### Text domain typmod bulk and joined writes store uncoerced values
+
+- Reproducer: `TestTextDomainTypmodBulkWritesUseCoercedValuesRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodBulkWritesUseCoercedValuesRepro -count=1`.
+- Expected PostgreSQL behavior: `UPDATE ... FROM` and `COPY FROM` writes into
+  `varchar(3)` and `character(3)` domain columns apply the domain base-type
+  typmods before storage. `abc   ` stores as `abc`, and `ab` stores as a padded
+  `character(3)` value.
+- Observed Doltgres behavior: both write paths store `abc   ` with
+  `length = 6` and underpadded `ab` with `octet_length = 2`, so joined and bulk
+  writes can persist text-domain values outside their declared base typmods.
+
 ### Array domains reject or panic on valid values
 
 - Reproducer: `TestArrayDomainAcceptsValidValuesRepro` in
