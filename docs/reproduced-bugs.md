@@ -2747,6 +2747,21 @@ artifacts only; no fixes are included here.
   and `2021-09-15 21:43:56.789`, so SQL function return coercion bypasses
   domain base-type typmods.
 
+### Text domain typmod SQL function returns are uncoerced
+
+- Reproducer: `TestTextDomainTypmodSqlFunctionReturnUsesCoercedValueRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodSqlFunctionReturnUsesCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: SQL functions declared to return `varchar(3)`
+  and `character(3)` domains apply the domain base-type typmod before returning
+  the value. `abc   ` returns as `abc`, `ab` returns as a padded `character(3)`
+  value, and `pg_typeof` reports the domain type.
+- Observed Doltgres behavior: the SQL functions return `abc   ` with
+  `length = 6` and underpadded `ab` with `octet_length = 2`, and `pg_typeof`
+  reports base text types, so SQL function returns bypass text-domain typmods.
+
 ### Domain typmod UNIQUE constraints use uncoerced values
 
 - Reproducer: `TestDomainTypmodUniqueUsesCoercedValuesRepro` in

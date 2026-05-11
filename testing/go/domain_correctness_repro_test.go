@@ -288,6 +288,38 @@ func TestDomainTypmodSqlFunctionReturnUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodSqlFunctionReturnUsesCoercedValueRepro reproduces a
+// correctness bug: PostgreSQL applies varchar(n) and character(n) base-type
+// typmods when a SQL function returns a value declared as that domain.
+func TestTextDomainTypmodSqlFunctionReturnUsesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain SQL function return uses coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_return_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_return_domain AS character(3);`,
+				`CREATE FUNCTION text_domain_return_v()
+					RETURNS varchar3_return_domain
+					LANGUAGE SQL AS $$ SELECT 'abc   ' $$;`,
+				`CREATE FUNCTION text_domain_return_c()
+					RETURNS char3_return_domain
+					LANGUAGE SQL AS $$ SELECT 'ab' $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT text_domain_return_v()::text,
+						length(text_domain_return_v()),
+						text_domain_return_c() = 'ab '::CHARACTER(3),
+						octet_length(text_domain_return_c()),
+						pg_typeof(text_domain_return_v())::text,
+						pg_typeof(text_domain_return_c())::text;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_return_domain", "char3_return_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypmodUniqueUsesCoercedValuesRepro reproduces a data consistency
 // bug: PostgreSQL enforces unique constraints after applying typmods from a
 // domain's base type.
