@@ -47,6 +47,41 @@ func TestCreateTableForeignKeyRequiresReferencesPrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro reproduces
+// a security bug: Doltgres ignores which parent columns were covered by a
+// column-scoped REFERENCES grant when creating a foreign key.
+func TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TABLE with foreign key requires REFERENCES on referenced column",
+			SetUpScript: []string{
+				`CREATE USER fk_column_scope_creator PASSWORD 'creator';`,
+				`CREATE TABLE fk_column_scope_parent_private (
+					id INT PRIMARY KEY,
+					other_id INT UNIQUE
+				);`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO fk_column_scope_creator;`,
+				`GRANT REFERENCES (other_id) ON fk_column_scope_parent_private TO fk_column_scope_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE fk_column_scope_child_private (
+						id INT PRIMARY KEY,
+						parent_id INT REFERENCES fk_column_scope_parent_private(id)
+					);`,
+					ExpectedErr: `permission denied`,
+					Username:    `fk_column_scope_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query:    `SELECT to_regclass('fk_column_scope_child_private')::text;`,
+					Expected: []sql.Row{{nil}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTableAddForeignKeyRequiresReferencesPrivilegeRepro reproduces a
 // security bug: Doltgres does not require REFERENCES privilege on the
 // referenced table when adding a foreign key to an existing table.
@@ -1582,6 +1617,120 @@ func TestCreatePublicationForAllTablesRequiresSuperuserRepro(t *testing.T) {
 					Query: `SELECT count(*)
 						FROM pg_catalog.pg_publication
 						WHERE pubname = 'publication_all_tables_pub';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro reproduces a
+// security bug: PostgreSQL restricts FOR TABLES IN SCHEMA publications to
+// superusers because they implicitly publish all current and future tables in
+// the named schemas.
+func TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE PUBLICATION FOR TABLES IN SCHEMA requires superuser",
+			SetUpScript: []string{
+				`CREATE USER publication_schema_user PASSWORD 'schemapub';`,
+				`CREATE SCHEMA publication_schema_private;`,
+				`CREATE TABLE publication_schema_private.items (id INT PRIMARY KEY);`,
+				`GRANT CREATE ON DATABASE postgres TO publication_schema_user;`,
+				`GRANT USAGE ON SCHEMA publication_schema_private TO publication_schema_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE PUBLICATION publication_schema_pub
+						FOR TABLES IN SCHEMA publication_schema_private;`,
+					ExpectedErr: `superuser`,
+					Username:    `publication_schema_user`,
+					Password:    `schemapub`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_publication
+						WHERE pubname = 'publication_schema_pub';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterPublicationAddTablesInSchemaRequiresSuperuserRepro reproduces a
+// security bug: PostgreSQL restricts adding FOR TABLES IN SCHEMA membership to
+// superusers because it implicitly publishes all current and future tables in
+// the named schemas.
+func TestAlterPublicationAddTablesInSchemaRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER PUBLICATION ADD TABLES IN SCHEMA requires superuser",
+			SetUpScript: []string{
+				`CREATE USER publication_schema_adder PASSWORD 'schemaadder';`,
+				`CREATE SCHEMA publication_schema_add_private;`,
+				`CREATE TABLE publication_schema_add_private.items (id INT PRIMARY KEY);`,
+				`GRANT CREATE ON DATABASE postgres TO publication_schema_adder;`,
+				`GRANT USAGE ON SCHEMA publication_schema_add_private TO publication_schema_adder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CREATE PUBLICATION publication_schema_add_pub;`,
+					Username: `publication_schema_adder`,
+					Password: `schemaadder`,
+				},
+				{
+					Query: `ALTER PUBLICATION publication_schema_add_pub
+						ADD TABLES IN SCHEMA publication_schema_add_private;`,
+					ExpectedErr: `superuser`,
+					Username:    `publication_schema_adder`,
+					Password:    `schemaadder`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_publication_namespace pn
+						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
+						WHERE p.pubname = 'publication_schema_add_pub';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterPublicationSetTablesInSchemaRequiresSuperuserRepro reproduces a
+// security bug: PostgreSQL restricts replacing a publication with FOR TABLES IN
+// SCHEMA membership to superusers because it implicitly publishes all current
+// and future tables in the named schemas.
+func TestAlterPublicationSetTablesInSchemaRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER PUBLICATION SET TABLES IN SCHEMA requires superuser",
+			SetUpScript: []string{
+				`CREATE USER publication_schema_setter PASSWORD 'schemasetter';`,
+				`CREATE SCHEMA publication_schema_set_private;`,
+				`CREATE TABLE publication_schema_set_private.items (id INT PRIMARY KEY);`,
+				`GRANT CREATE ON DATABASE postgres TO publication_schema_setter;`,
+				`GRANT USAGE ON SCHEMA publication_schema_set_private TO publication_schema_setter;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CREATE PUBLICATION publication_schema_set_pub;`,
+					Username: `publication_schema_setter`,
+					Password: `schemasetter`,
+				},
+				{
+					Query: `ALTER PUBLICATION publication_schema_set_pub
+						SET TABLES IN SCHEMA publication_schema_set_private;`,
+					ExpectedErr: `superuser`,
+					Username:    `publication_schema_setter`,
+					Password:    `schemasetter`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_publication_namespace pn
+						JOIN pg_catalog.pg_publication p ON p.oid = pn.pnpubid
+						WHERE p.pubname = 'publication_schema_set_pub';`,
 					Expected: []sql.Row{{0}},
 				},
 			},

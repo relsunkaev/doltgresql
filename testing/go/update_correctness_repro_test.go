@@ -109,6 +109,72 @@ func TestUpdateMultiAssignmentFromSubqueryRepro(t *testing.T) {
 	})
 }
 
+// TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro reproduces an UPDATE
+// correctness bug: PostgreSQL rejects row-valued assignment lists that assign
+// the same target column more than once and leaves the row unchanged.
+func TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "UPDATE multi-assignment rejects duplicate target columns",
+			SetUpScript: []string{
+				`CREATE TABLE update_duplicate_assignment_items (
+					id INT PRIMARY KEY,
+					a INT,
+					b INT
+				);`,
+				`INSERT INTO update_duplicate_assignment_items VALUES (1, 10, 20);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE update_duplicate_assignment_items
+						SET (a, a) = (1, 2)
+						WHERE id = 1;`,
+					ExpectedErr: `multiple assignments to same column`,
+				},
+				{
+					Query: `SELECT a, b
+						FROM update_duplicate_assignment_items
+						WHERE id = 1;`,
+					Expected: []sql.Row{{10, 20}},
+				},
+			},
+		},
+	})
+}
+
+// TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro reproduces an UPDATE
+// correctness bug: PostgreSQL rejects scalar SET lists that assign the same
+// target column more than once and leaves the row unchanged.
+func TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "UPDATE scalar assignment rejects duplicate target columns",
+			SetUpScript: []string{
+				`CREATE TABLE update_duplicate_scalar_items (
+					id INT PRIMARY KEY,
+					a INT,
+					b INT
+				);`,
+				`INSERT INTO update_duplicate_scalar_items VALUES (1, 10, 20);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE update_duplicate_scalar_items
+						SET a = 1, a = 2
+						WHERE id = 1;`,
+					ExpectedErr: `multiple assignments to same column`,
+				},
+				{
+					Query: `SELECT a, b
+						FROM update_duplicate_scalar_items
+						WHERE id = 1;`,
+					Expected: []sql.Row{{10, 20}},
+				},
+			},
+		},
+	})
+}
+
 // TestUpdateSelfReferentialSubqueryUsesStatementSnapshotGuard guards
 // PostgreSQL's statement-snapshot semantics: a subquery reading the target
 // table must see the pre-update rows, not rows already rewritten earlier in the
@@ -170,6 +236,40 @@ func TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro(t *testing.T) {
 				{
 					Query:    `SELECT c1, c2 FROM on_conflict_assignment_items WHERE id = 1;`,
 					Expected: []sql.Row{{"new-c1", "old-c1"}},
+				},
+			},
+		},
+	})
+}
+
+// TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro reproduces an UPSERT
+// correctness bug: PostgreSQL rejects DO UPDATE SET lists that assign the same
+// target column more than once and leaves the conflicting row unchanged.
+func TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ON CONFLICT UPDATE rejects duplicate target columns",
+			SetUpScript: []string{
+				`CREATE TABLE on_conflict_duplicate_assignment_items (
+					id INT PRIMARY KEY,
+					a INT,
+					b INT
+				);`,
+				`INSERT INTO on_conflict_duplicate_assignment_items VALUES (1, 10, 20);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO on_conflict_duplicate_assignment_items
+						VALUES (1, 30, 40)
+						ON CONFLICT (id) DO UPDATE
+						SET a = 1, a = 2;`,
+					ExpectedErr: `multiple assignments to same column`,
+				},
+				{
+					Query: `SELECT a, b
+						FROM on_conflict_duplicate_assignment_items
+						WHERE id = 1;`,
+					Expected: []sql.Row{{10, 20}},
 				},
 			},
 		},

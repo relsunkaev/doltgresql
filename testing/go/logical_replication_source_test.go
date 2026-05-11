@@ -2262,6 +2262,69 @@ func TestLogicalReplicationSourceHonorsPublicationRowFilterAndColumnList(t *test
 	require.Equal(t, "right-customer", string(insert.Tuple.Columns[1].Data))
 }
 
+// TestLogicalReplicationSourceColumnListUsesTableOrderRepro reproduces a
+// logical-replication data-consistency bug: PostgreSQL treats publication
+// column lists as sets and publishes columns in table order, not in the textual
+// order used by CREATE PUBLICATION.
+func TestLogicalReplicationSourceColumnListUsesTableOrderRepro(t *testing.T) {
+	replsource.ResetForTests()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+	defer conn.Close(ctx)
+
+	slotName := "dg_publication_column_order_slot"
+	_, err = conn.Current.Exec(ctx, `
+		CREATE TABLE dg_publication_column_order_items (
+			id INT PRIMARY KEY,
+			alpha TEXT,
+			beta TEXT
+		);`)
+	require.NoError(t, err)
+	_, err = conn.Current.Exec(ctx, `
+		CREATE PUBLICATION dg_publication_column_order_pub
+		FOR TABLE dg_publication_column_order_items (beta, alpha)
+		WITH (publish = 'insert');`)
+	require.NoError(t, err)
+
+	replConn := connectReplicationConn(t, ctx, port)
+	defer replConn.Close(context.Background())
+	_, err = pglogrepl.CreateReplicationSlot(ctx, replConn, slotName, "pgoutput", pglogrepl.CreateReplicationSlotOptions{
+		Mode: pglogrepl.LogicalReplication,
+	})
+	require.NoError(t, err)
+	require.NoError(t, pglogrepl.StartReplication(ctx, replConn, slotName, 0, pglogrepl.StartReplicationOptions{
+		Mode: pglogrepl.LogicalReplication,
+		PluginArgs: []string{
+			`"proto_version" '1'`,
+			`"publication_names" 'dg_publication_column_order_pub'`,
+		},
+	}))
+	keepalive := receiveReplicationCopyData(t, replConn)
+	require.Equal(t, byte(pglogrepl.PrimaryKeepaliveMessageByteID), keepalive.Data[0])
+
+	_, err = conn.Current.Exec(ctx, `
+		INSERT INTO dg_publication_column_order_items
+		VALUES (1, 'alpha-value', 'beta-value');`)
+	require.NoError(t, err)
+
+	relation, insert, _ := receiveInsertChange(t, replConn)
+	require.Equal(t, "public", relation.Namespace)
+	require.Equal(t, "dg_publication_column_order_items", relation.RelationName)
+	require.Equal(t, uint16(2), relation.ColumnNum)
+	require.Equal(t, "alpha", relation.Columns[0].Name)
+	require.Equal(t, "beta", relation.Columns[1].Name)
+	require.Equal(t, relation.RelationID, insert.RelationID)
+	require.Len(t, insert.Tuple.Columns, 2)
+	require.Equal(t, "alpha-value", string(insert.Tuple.Columns[0].Data))
+	require.Equal(t, "beta-value", string(insert.Tuple.Columns[1].Data))
+}
+
 // TestLogicalReplicationSourceSupportsRangePublicationRowFilterRepro reproduces
 // a logical-replication correctness bug: PostgreSQL publication row filters use
 // ordinary immutable WHERE expressions, so range comparisons must not make

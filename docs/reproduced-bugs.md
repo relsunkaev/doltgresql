@@ -3053,6 +3053,33 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: all three table definitions succeed, allowing
   persisted schema definitions with PostgreSQL-invalid non-scalar defaults.
 
+### INSERT duplicate target columns report the wrong error
+
+- Reproducer: `TestInsertRejectsDuplicateTargetColumnsRepro` in
+  `testing/go/insert_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestInsertRejectsDuplicateTargetColumnsRepro -count=1`.
+- Expected PostgreSQL behavior: `INSERT INTO t (id, a, a) VALUES (...)` is
+  rejected with `column "a" specified more than once`, and no row is inserted.
+- Observed Doltgres behavior: the statement is rejected, but reports
+  `column 'a' specified twice` with a MySQL errno and `SQLSTATE XX000`. Clients
+  that rely on PostgreSQL's duplicate-column diagnostic see a non-PostgreSQL
+  error shape.
+
+### COPY FROM STDIN duplicate target columns report the wrong error
+
+- Reproducer: `TestCopyFromStdinRejectsDuplicateTargetColumnsRepro` in
+  `testing/go/copy_atomicity_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCopyFromStdinRejectsDuplicateTargetColumnsRepro -count=1`.
+- Expected PostgreSQL behavior: `COPY t (id, a, a) FROM STDIN` is rejected
+  before ingesting rows with `column "a" specified more than once`.
+- Observed Doltgres behavior: the copy is rejected, but reports
+  `column 'a' specified twice` with `SQLSTATE XX000`. COPY clients see a
+  non-PostgreSQL duplicate-column diagnostic.
+
 ### UPDATE SET expressions use earlier assignments from the same statement
 
 - Reproducer: `TestUpdateAssignmentsUseOriginalRowValuesRepro` in
@@ -3080,6 +3107,33 @@ artifacts only; no fixes are included here.
   found in source: Subquery(...)`, and the target row keeps its original
   values.
 
+### UPDATE row-valued SET reports an internal error for duplicate target columns
+
+- Reproducer: `TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro` in
+  `testing/go/update_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro -count=1`.
+- Expected PostgreSQL behavior: `UPDATE ... SET (a, a) = (1, 2)` is rejected
+  with `multiple assignments to same column "a"` before changing the target
+  row.
+- Observed Doltgres behavior: the statement is rejected with the internal error
+  `ASSIGNMENT_CAST: target is of type integer but expression is of type
+  record: RECORD EXPR` instead of validating the duplicate target column.
+
+### UPDATE scalar SET accepts duplicate target columns
+
+- Reproducer: `TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro` in
+  `testing/go/update_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro -count=1`.
+- Expected PostgreSQL behavior: `UPDATE ... SET a = 1, a = 2` is rejected with
+  `multiple assignments to same column "a"`, and the row remains unchanged.
+- Observed Doltgres behavior: the update succeeds and persists the last
+  assignment, changing `a` from `10` to `2`. A statement PostgreSQL rejects can
+  silently mutate stored data.
+
 ### ON CONFLICT DO UPDATE SET expressions use earlier assignments from the same statement
 
 - Reproducer: `TestOnConflictUpdateAssignmentsUseOriginalRowValuesRepro` in
@@ -3093,6 +3147,20 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: the row persists `c2 = 'new-c1'`, showing that
   the second assignment reads the value assigned earlier in the same `SET`
   list.
+
+### ON CONFLICT DO UPDATE accepts duplicate target columns
+
+- Reproducer: `TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro` in
+  `testing/go/update_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro -count=1`.
+- Expected PostgreSQL behavior: `INSERT ... ON CONFLICT DO UPDATE SET a = 1,
+  a = 2` is rejected with `multiple assignments to same column "a"`, and the
+  conflicting target row remains unchanged.
+- Observed Doltgres behavior: the upsert succeeds and persists the last
+  assignment, changing `a` from `10` to `2`. A conflict-handling statement
+  PostgreSQL rejects can silently mutate stored data.
 
 ### ON CONFLICT DO UPDATE cannot pass EXCLUDED columns to functions
 
@@ -11473,6 +11541,25 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: a role with only `USAGE, CREATE` on the schema
   can create `fk_child_private` referencing `fk_parent_private`.
 
+### CREATE TABLE foreign keys ignore column-scoped REFERENCES privileges
+
+- Reproducer:
+  `TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro` in
+  `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro -count=1`.
+- Expected PostgreSQL behavior: creating a foreign key requires `REFERENCES`
+  privilege on the referenced table or specifically on the referenced parent
+  column. A grant on a different parent column is insufficient, so
+  `REFERENCES (other_id)` must not authorize a foreign key that references
+  `id`.
+- Observed Doltgres behavior: a role granted `REFERENCES (other_id)` on
+  `fk_column_scope_parent_private` can create
+  `fk_column_scope_child_private` referencing `fk_column_scope_parent_private(id)`,
+  and the child table is durably created.
+
 ### ALTER TABLE ADD FOREIGN KEY does not require REFERENCES privilege
 
 - Reproducer: `TestAlterTableAddForeignKeyRequiresReferencesPrivilegeRepro` in
@@ -12086,6 +12173,50 @@ artifacts only; no fixes are included here.
   publication.
 - Observed Doltgres behavior: a normal role with database `CREATE` privilege can
   create a publication that includes all current and future tables.
+
+### CREATE PUBLICATION FOR TABLES IN SCHEMA does not require superuser
+
+- Reproducer: `TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro` in
+  `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreatePublicationForTablesInSchemaRequiresSuperuserRepro -count=1`.
+- Expected PostgreSQL behavior: only superusers can create a `FOR TABLES IN
+  SCHEMA` publication, because it publishes all current and future tables in the
+  named schema.
+- Observed Doltgres behavior: a normal role with database `CREATE` privilege and
+  schema `USAGE` can create the schema-wide publication, and the row persists in
+  `pg_publication`.
+
+### ALTER PUBLICATION ADD TABLES IN SCHEMA does not require superuser
+
+- Reproducer:
+  `TestAlterPublicationAddTablesInSchemaRequiresSuperuserRepro` in
+  `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterPublicationAddTablesInSchemaRequiresSuperuserRepro -count=1`.
+- Expected PostgreSQL behavior: adding `TABLES IN SCHEMA` membership to a
+  publication requires superuser privilege, because it publishes all current and
+  future tables in the named schema.
+- Observed Doltgres behavior: a normal publication owner with database `CREATE`
+  privilege and schema `USAGE` can add the schema-wide membership, and the row
+  persists in `pg_publication_namespace`.
+
+### ALTER PUBLICATION SET TABLES IN SCHEMA does not require superuser
+
+- Reproducer:
+  `TestAlterPublicationSetTablesInSchemaRequiresSuperuserRepro` in
+  `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterPublicationSetTablesInSchemaRequiresSuperuserRepro -count=1`.
+- Expected PostgreSQL behavior: replacing publication membership with `TABLES
+  IN SCHEMA` requires superuser privilege, because it publishes all current and
+  future tables in the named schema.
+- Observed Doltgres behavior: a normal publication owner with database `CREATE`
+  privilege and schema `USAGE` can replace membership with the schema-wide
+  entry, and the row persists in `pg_publication_namespace`.
 
 ### ALTER PUBLICATION does not require publication ownership
 
@@ -14140,6 +14271,20 @@ They are worth keeping, but they are not counted as found bugs.
   references a missing column, so the invalid filter persists into publication
   metadata.
 
+### Publication row filters match quoted columns case-insensitively
+
+- Reproducer: `TestPublicationRowFilterRespectsQuotedColumnCaseRepro` in
+  `testing/go/publication_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPublicationRowFilterRespectsQuotedColumnCaseRepro -count=1`.
+- Expected PostgreSQL behavior: quoted identifiers preserve case in
+  publication row filters, so an unquoted `casecolumn` reference does not match
+  a table column declared as `"CaseColumn"` and the publication is not created.
+- Observed Doltgres behavior: `CREATE PUBLICATION ... WHERE (casecolumn =
+  'visible')` succeeds for a table that only has `"CaseColumn"`, and the
+  invalid row filter persists into publication metadata.
+
 ### ALTER PUBLICATION ADD TABLE row filters accept missing columns
 
 - Reproducer: `TestPublicationAddTableRowFilterRejectsUnknownColumnRepro` in
@@ -14398,6 +14543,22 @@ They are worth keeping, but they are not counted as found bugs.
   and commit messages. The row-filter evaluator appears to compare textual row
   bytes (`"42"`) to the literal bytes (`"42.0"`) instead of applying
   PostgreSQL equality semantics, so a subscriber silently misses matching rows.
+
+### Logical replication preserves publication column-list order
+
+- Reproducer: `TestLogicalReplicationSourceColumnListUsesTableOrderRepro` in
+  `testing/go/logical_replication_source_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationSourceColumnListUsesTableOrderRepro -count=1`.
+- Expected PostgreSQL behavior: publication column-list order is not
+  preserved. A table declared as `(id, alpha, beta)` and published as
+  `(beta, alpha)` exposes and streams the published columns in table order,
+  `alpha, beta`.
+- Observed Doltgres behavior: the relation message preserves the textual
+  publication list order and reports `beta, alpha`; the emitted tuple also
+  follows that order. A subscriber can receive a row shape that does not match
+  PostgreSQL's pgoutput column ordering.
 
 ### Logical replication duplicates changes for overlapping publications
 
@@ -14989,6 +15150,142 @@ They are worth keeping, but they are not counted as found bugs.
   `publication row filter operator "is false" is not supported`. A valid
   row-filtered publication can make ordinary publisher DML fail.
 
+### Logical replication row filters reject IS TRUE at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterIsTrueRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIsTrueRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible IS TRUE)` is valid for a boolean column; matching writes
+  commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter operator "is true" is not supported`. A valid
+  row-filtered publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject IS NOT TRUE at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterIsNotTrueRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIsNotTrueRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible IS NOT TRUE)` is valid; `FALSE` and `NULL` values can match,
+  and matching writes commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter operator "is not true" is not supported`. A valid
+  row-filtered publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject IS NOT FALSE at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterIsNotFalseRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIsNotFalseRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible IS NOT FALSE)` is valid; `TRUE` and `NULL` values can match,
+  and matching writes commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter operator "is not false" is not supported`. A valid
+  row-filtered publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject IS UNKNOWN at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterIsUnknownRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIsUnknownRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible IS UNKNOWN)` is valid; `NULL` values match, and matching
+  writes commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails when replication re-parses the stored filter
+  with `syntax error at position 40 near 'DISTINCT'`. A valid row-filtered
+  publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject IS NOT UNKNOWN at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterIsNotUnknownRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIsNotUnknownRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible IS NOT UNKNOWN)` is valid; non-`NULL` boolean values match,
+  and matching writes commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails when replication re-parses the stored filter
+  with `syntax error at position 36 near 'DISTINCT'`. A valid row-filtered
+  publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject boolean true literals at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterBooleanTrueEqualityRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBooleanTrueEqualityRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible = true)` is valid for a boolean column; matching writes
+  commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter scalar expression sqlparser.BoolVal is not supported`.
+  A valid row-filtered publication can make ordinary publisher DML fail.
+
+### Logical replication row filters reject boolean false literals at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterBooleanFalseEqualityRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBooleanFalseEqualityRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (visible = false)` is valid for a boolean column; matching writes
+  commit normally and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter scalar expression sqlparser.BoolVal is not supported`.
+  A valid row-filtered publication can make ordinary publisher DML fail.
+
+### Logical replication row filters do not coerce boolean string literals
+
+- Reproducer: `TestLogicalReplicationRowFilterBooleanStringLiteralRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBooleanStringLiteralRepro -count=1`.
+- Expected PostgreSQL behavior: a row filter such as `WHERE (visible =
+  'true')` coerces the unknown literal to boolean, so a row with
+  `visible = TRUE` matches and is streamed.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare serialized row bytes to the literal bytes instead of using
+  PostgreSQL boolean coercion semantics.
+
+### Logical replication row filters publish boolean rows filtered by string literal inequality
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterBooleanStringInequalitySuppressesRowsRepro`
+  in `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBooleanStringInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: a row filter such as `WHERE (visible <>
+  'true')` coerces the unknown string literal to boolean, so a row with
+  `visible = TRUE` does not match and should not be streamed.
+- Observed Doltgres behavior: the insert commits, but logical replication emits
+  a `CopyData` message instead of timing out with no row. A subscriber can
+  receive a row that PostgreSQL would have filtered out.
+
 ### Logical replication row filters reject IS DISTINCT FROM at write time
 
 - Reproducer: `TestLogicalReplicationRowFilterIsDistinctFromRepro` in
@@ -15035,6 +15332,505 @@ They are worth keeping, but they are not counted as found bugs.
   `syntax error at position 30 near '::VARCHAR'`. A PostgreSQL-valid row filter
   can turn publisher writes into runtime errors.
 
+### Logical replication row filters reject LIKE at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterLikeRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterLikeRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (label LIKE 'show%')` is valid; matching writes commit normally and
+  are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter comparison operator "like" is not supported`. A
+  PostgreSQL-valid row filter can turn publisher writes into runtime errors.
+
+### Logical replication row filters reject BETWEEN at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterBetweenRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBetweenRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (score BETWEEN 10 AND 20)` is valid; matching writes commit normally
+  and are streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter expression *sqlparser.RangeCond is not supported`. A
+  PostgreSQL-valid row filter can turn publisher writes into runtime errors.
+
+### Logical replication row filters reject arithmetic expressions at write time
+
+- Reproducer: `TestLogicalReplicationRowFilterArithmeticRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterArithmeticRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (score + 1 = 2)` is valid; matching writes commit normally and are
+  streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but an insert that
+  should match the filter fails with
+  `publication row filter scalar expression *sqlparser.BinaryExpr is not supported`.
+  A PostgreSQL-valid row filter can turn publisher writes into runtime errors.
+
+### Logical replication misses CHAR(n) rows by comparing padded bytes
+
+- Reproducer: `TestLogicalReplicationRowFilterBpcharPaddingRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBpcharPaddingRepro -count=1`.
+- Expected PostgreSQL behavior: `CHAR(n)` equality uses `bpchar` comparison
+  semantics, so a publication row filter such as `WHERE (code = 'a')` matches
+  a `CHAR(3)` row inserted as `'a'` and streams the row.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the stored padded bytes with the unpadded literal, so
+  subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes CHAR(n) rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterBpcharInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterBpcharInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `CHAR(n)` inequality uses `bpchar` comparison
+  semantics, so a `CHAR(3)` value inserted as `'a'` is not distinct from
+  literal `'a'`; `WHERE (code <> 'a')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare the padded stored value with the unpadded literal as raw
+  bytes, so subscribers can receive rows PostgreSQL would filter out.
+
+### Logical replication treats numeric-looking text values as equal
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTextNumericEqualitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericEqualitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label = '1.0'` uses text
+  equality, so an inserted row with `label = '1'` does not match and should not
+  be streamed by the publication.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. Doltgres parses both
+  byte strings as numbers and treats text values `'1'` and `'1.0'` as equal,
+  so subscribers can receive rows PostgreSQL would filter out.
+
+### Logical replication orders numeric-looking text values as numbers
+
+- Reproducer: `TestLogicalReplicationRowFilterTextNumericOrderingRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericOrderingRepro -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label < '2'` uses text
+  ordering, so an inserted row with `label = '10'` matches under the baseline
+  PostgreSQL collation and should be streamed by the publication.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. Doltgres parses both byte
+  strings as numbers and treats `'10' < '2'` as false, so subscribers can miss
+  rows PostgreSQL would publish.
+
+### Logical replication streams numeric-looking text values using numeric ordering
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTextNumericGreaterThanSuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericGreaterThanSuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label > '2'` uses text
+  ordering, so an inserted row with `label = '10'` does not match and should
+  not be streamed by the publication.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. Doltgres parses both
+  byte strings as numbers and treats `'10' > '2'` as true, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication treats numeric-looking text inequality as numeric inequality
+
+- Reproducer: `TestLogicalReplicationRowFilterTextNumericInequalityRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericInequalityRepro -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label <> '1.0'` uses text
+  inequality, so an inserted row with `label = '1'` matches and should be
+  streamed by the publication.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. Doltgres parses both byte
+  strings as numbers and treats text values `'1'` and `'1.0'` as equal, so
+  subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication reparses numeric-looking text IN filters incorrectly
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTextNumericInSuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericInSuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label IN ('1.0')` uses
+  text equality; an inserted row with `label = '1'` commits normally and is not
+  streamed by the publication.
+- Observed Doltgres behavior: the publication is created, but the insert fails
+  when replication re-parses the stored filter with
+  `syntax error at position 34 near '1.0'`. A valid row-filtered publication can
+  make ordinary publisher DML fail.
+
+### Logical replication reparses numeric-looking text NOT IN filters incorrectly
+
+- Reproducer: `TestLogicalReplicationRowFilterTextNumericNotInRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTextNumericNotInRepro -count=1`.
+- Expected PostgreSQL behavior: for a `TEXT` column, `label NOT IN ('1.0')`
+  uses text equality; an inserted row with `label = '1'` matches, commits
+  normally, and is streamed by the publication.
+- Observed Doltgres behavior: the publication is created, but the insert fails
+  when replication re-parses the stored filter with
+  `syntax error at position 38 near '1.0'`. A valid row-filtered publication can
+  make ordinary publisher DML fail.
+
+### Logical replication reparses escaped text row filters incorrectly
+
+- Reproducer: `TestLogicalReplicationRowFilterEscapedTextLiteralRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterEscapedTextLiteralRepro -count=1`.
+- Expected PostgreSQL behavior: a publication row filter such as
+  `WHERE (label = 'can''t')` is valid; a matching row commits normally and is
+  streamed to subscribers.
+- Observed Doltgres behavior: the publication is created, but the insert fails
+  when replication re-parses the stored filter with
+  `syntax error at position 34 near 'can't'`. A valid row-filtered publication
+  can make ordinary publisher DML fail.
+
+### Logical replication misses BYTEA rows by comparing rendered text
+
+- Reproducer: `TestLogicalReplicationRowFilterByteaTextLiteralRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterByteaTextLiteralRepro -count=1`.
+- Expected PostgreSQL behavior: `BYTEA` comparisons coerce string literals to
+  typed byte strings, so a row filter literal spelled `'abc'` matches the same
+  stored bytes even though row output renders as `\x616263`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the rendered `\x616263` bytea text to the literal source
+  text `abc`, so subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes BYTEA rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterByteaInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterByteaInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `BYTEA` inequality compares typed byte strings,
+  so a row storing the bytes for `abc` is not distinct from a row filter literal
+  spelled `'abc'`; `WHERE (payload <> 'abc')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication connection
+  receives a `CopyData` change for the row. The row-filter evaluator appears to
+  compare rendered bytea text byte-for-byte, so subscribers can receive rows
+  PostgreSQL would filter out.
+
+### Logical replication misses JSONB rows by comparing serialized object text
+
+- Reproducer: `TestLogicalReplicationRowFilterJsonbObjectCanonicalizationRepro`
+  in `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterJsonbObjectCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `JSONB` equality compares typed canonical JSONB
+  values, so object key order in a row filter literal is insignificant. A stored
+  value `{"a":2,"b":1}` matches a row filter literal spelled `{"b":1,"a":2}`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare serialized JSONB object text instead of typed JSONB values,
+  so subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes JSONB rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterJsonbInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterJsonbInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `JSONB` inequality compares typed canonical
+  JSONB values, so `{"a":2,"b":1}` is not distinct from a row filter literal
+  spelled `{"b":1,"a":2}`; `WHERE (doc <> '{"b":1,"a":2}')` should not stream
+  the row.
+- Observed Doltgres behavior: the insert commits, and the replication connection
+  receives a `CopyData` change for the row. The row-filter evaluator appears to
+  compare serialized JSONB object text byte-for-byte, so subscribers can receive
+  rows PostgreSQL would filter out.
+
+### Logical replication misses JSONB numeric-equivalent rows
+
+- Reproducer: `TestLogicalReplicationRowFilterJsonbNumericCanonicalizationRepro`
+  in `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterJsonbNumericCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `JSONB` equality compares semantic JSONB numeric
+  values, so a stored value `{"n":1}` matches a row filter literal spelled
+  `{"n":1.0}`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare serialized JSONB numeric spelling instead of typed JSONB
+  values, so subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes JSONB numeric-equivalent rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterJsonbNumericInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterJsonbNumericInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `JSONB` inequality compares semantic JSONB
+  numeric values, so `{"n":1}` is not distinct from a row filter literal spelled
+  `{"n":1.0}`; `WHERE (doc <> '{"n":1.0}')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication connection
+  receives a `CopyData` change for the row. The row-filter evaluator appears to
+  compare serialized JSONB numeric spelling byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses UUID rows by comparing literal case
+
+- Reproducer: `TestLogicalReplicationRowFilterUuidLiteralCaseRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterUuidLiteralCaseRepro -count=1`.
+- Expected PostgreSQL behavior: UUID comparisons coerce unknown string
+  literals to typed UUID values, so an uppercase UUID literal in a publication
+  row filter matches the same UUID value stored in canonical lowercase form.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the UUID's serialized lowercase bytes to the literal's
+  uppercase source bytes, so subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes UUID rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterUuidInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterUuidInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: UUID inequality compares typed UUID values, so
+  an uppercase UUID literal is not distinct from the same stored UUID value in
+  canonical lowercase form; `WHERE (external_id <> '...')` should not stream
+  the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare UUID source spelling case-sensitively, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses DATE rows by comparing literal spelling
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterDateLiteralCanonicalizationRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterDateLiteralCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: date comparisons coerce unknown string
+  literals to typed `DATE` values, so a row filter literal spelled
+  `'2026-5-1'` matches a stored `DATE` value output as `2026-05-01`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the date's canonical serialized bytes to the literal's
+  noncanonical source bytes, so subscribers can miss rows PostgreSQL would
+  publish.
+
+### Logical replication publishes DATE rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterDateInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterDateInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: date inequality compares typed `DATE` values,
+  so `DATE '2026-05-01'` is not distinct from a row filter literal spelled
+  `'2026-5-1'`; `WHERE (event_date <> '2026-5-1')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare date source spelling byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses TIMESTAMP rows by comparing literal spelling
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimestampLiteralCanonicalizationRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimestampLiteralCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: timestamp comparisons coerce unknown string
+  literals to typed `TIMESTAMP` values, so a row filter literal spelled
+  `'2026-5-1 1:2:3'` matches a stored timestamp output as
+  `2026-05-01 01:02:03`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the timestamp's canonical serialized bytes to the literal's
+  noncanonical source bytes, so subscribers can miss rows PostgreSQL would
+  publish.
+
+### Logical replication publishes TIMESTAMP rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimestampInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimestampInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: timestamp inequality compares typed
+  `TIMESTAMP` values, so `TIMESTAMP '2026-05-01 01:02:03'` is not distinct from
+  a row filter literal spelled `'2026-5-1 1:2:3'`; `WHERE (event_ts <>
+  '2026-5-1 1:2:3')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare timestamp source spelling byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses TIMESTAMPTZ rows by comparing rendered text
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimestamptzLiteralCanonicalizationRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimestamptzLiteralCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `TIMESTAMPTZ` comparisons compare instants, so a
+  row filter literal spelled `2026-05-01 01:02:03+00` matches a stored value
+  inserted as `2026-04-30 18:02:03-07`, even when the replication session renders
+  the row in the `America/Phoenix` time zone.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the session-rendered timestamp text to the literal source
+  text, so subscribers can miss rows PostgreSQL would publish.
+
+### Logical replication publishes TIMESTAMPTZ rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimestamptzInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimestamptzInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `TIMESTAMPTZ` inequality compares typed instants,
+  so `2026-04-30 18:02:03-07` is not distinct from a row filter literal spelled
+  `2026-05-01 01:02:03+00`; `WHERE (event_tz <> '2026-05-01 01:02:03+00')`
+  should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication connection
+  receives a `CopyData` change for the row. The row-filter evaluator appears to
+  compare session-rendered timestamp text byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses TIME rows by comparing literal spelling
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimeLiteralCanonicalizationRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimeLiteralCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: time comparisons coerce unknown string literals
+  to typed `TIME` values, so a row filter literal spelled `'1:2:3'` matches a
+  stored `TIME` value output as `01:02:03`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the time's canonical serialized bytes to the literal's
+  noncanonical source bytes, so subscribers can miss rows PostgreSQL would
+  publish.
+
+### Logical replication publishes TIME rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterTimeInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterTimeInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: time inequality compares typed `TIME` values,
+  so `TIME '01:02:03'` is not distinct from a row filter literal spelled
+  `'1:2:3'`; `WHERE (event_time <> '1:2:3')` should not stream the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare time source spelling byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
+### Logical replication misses INTERVAL rows by comparing literal spelling
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterIntervalLiteralCanonicalizationRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIntervalLiteralCanonicalizationRepro
+  -count=1`.
+- Expected PostgreSQL behavior: interval comparisons coerce unknown string
+  literals to typed `INTERVAL` values, so a row filter literal spelled
+  `'1 day 2 hours'` matches a stored interval inserted as `'26 hours'`.
+- Observed Doltgres behavior: the insert commits, but no replication message is
+  emitted and the test times out waiting for the row. The row-filter evaluator
+  appears to compare the interval's canonical serialized bytes to the literal's
+  noncanonical source bytes, so subscribers can miss rows PostgreSQL would
+  publish.
+
+### Logical replication publishes INTERVAL rows that should be filtered
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterIntervalInequalitySuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterIntervalInequalitySuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: interval inequality compares typed `INTERVAL`
+  values, so `INTERVAL '26 hours'` is not distinct from a row filter literal
+  spelled `'1 day 2 hours'`; `WHERE (span <> '1 day 2 hours')` should not stream
+  the row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  appears to compare interval source spelling byte-for-byte, so subscribers can
+  receive rows PostgreSQL would filter out.
+
 ### Logical replication publishes rows for `NOT IN` filters with NULL members
 
 - Reproducer: `TestLogicalReplicationRowFilterNotInNullSuppressesRowsRepro` in
@@ -15049,6 +15845,23 @@ They are worth keeping, but they are not counted as found bugs.
   connection receives a `CopyData` change for the row. A subscriber can store a
   row that PostgreSQL would have filtered out, diverging from the publisher's
   publication contract.
+
+### Logical replication publishes rows for `NOT` around `IN` filters with NULL members
+
+- Reproducer:
+  `TestLogicalReplicationRowFilterNotAroundInNullSuppressesRowsRepro` in
+  `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationRowFilterNotAroundInNullSuppressesRowsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `customer_id IN (1, NULL)` evaluates to SQL
+  `UNKNOWN` for `customer_id = 2`, and `NOT UNKNOWN` remains `UNKNOWN`, so a
+  row-filtered publication should not stream that inserted row.
+- Observed Doltgres behavior: the insert commits, and the replication
+  connection receives a `CopyData` change for the row. The row-filter evaluator
+  collapses the `IN` expression to false before applying `NOT`, so subscribers
+  can receive rows PostgreSQL would filter out.
 
 ### Logical replication publishes NULL input rows for `NOT IN` filters
 
@@ -15080,6 +15893,23 @@ They are worth keeping, but they are not counted as found bugs.
   connection receives a `CopyData` change for the row. Doltgres treats
   `NOT UNKNOWN` like `TRUE`, so subscribers can receive rows PostgreSQL would
   have filtered out.
+
+### Logical replication drops rows when schema publication overlaps a filtered table
+
+- Reproducer: `TestLogicalReplicationSchemaPublicationOverridesTableRowFilterRepro`
+  in `testing/go/logical_replication_row_filter_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestLogicalReplicationSchemaPublicationOverridesTableRowFilterRepro
+  -count=1`.
+- Expected PostgreSQL behavior: when a publication includes a table both
+  explicitly with a row filter and through `TABLES IN SCHEMA`, the effective
+  row filter shown by `pg_publication_tables` is empty, so rows outside the
+  explicit filter still stream through the schema membership.
+- Observed Doltgres behavior: inserting a row that does not match the explicit
+  table filter produces no replication message and the test times out waiting
+  for the row. A subscriber can miss rows that PostgreSQL would publish through
+  the schema publication.
 
 ### Logical replication ignores the pgoutput `binary` option
 

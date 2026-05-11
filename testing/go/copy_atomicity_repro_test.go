@@ -54,6 +54,40 @@ func TestCopyFromStdinBadRowIsStatementAtomicRepro(t *testing.T) {
 	require.Equal(t, int64(0), count)
 }
 
+// TestCopyFromStdinRejectsDuplicateTargetColumnsRepro reproduces a COPY
+// correctness bug: PostgreSQL rejects COPY target column lists that mention the
+// same column more than once and leaves the table unchanged.
+func TestCopyFromStdinRejectsDuplicateTargetColumnsRepro(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_stdin_duplicate_column_items (
+		id INT PRIMARY KEY,
+		a INT,
+		b INT
+	);`)
+	require.NoError(t, err)
+
+	tag, err := connection.Default.PgConn().CopyFrom(
+		ctx,
+		strings.NewReader("1\t10\t20\n"),
+		`COPY copy_stdin_duplicate_column_items (id, a, a) FROM STDIN;`,
+	)
+	require.Error(t, err, "COPY FROM should reject the duplicate target column; tag=%s", tag.String())
+	require.Contains(t, err.Error(), `column "a" specified more than once`)
+
+	var count int64
+	require.NoError(t, connection.Default.QueryRow(
+		context.Background(),
+		`SELECT count(*) FROM copy_stdin_duplicate_column_items;`,
+	).Scan(&count))
+	require.Equal(t, int64(0), count)
+}
+
 // TestCopyFromStdinDuplicateKeyIsStatementAtomicRepro guards PostgreSQL COPY
 // FROM STDIN atomicity: duplicate-key errors should roll back all rows from the
 // COPY statement, including earlier accepted input rows.

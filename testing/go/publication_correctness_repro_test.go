@@ -1524,6 +1524,37 @@ func TestPublicationRowFilterRejectsUnknownColumnRepro(t *testing.T) {
 	})
 }
 
+// TestPublicationRowFilterRespectsQuotedColumnCaseRepro reproduces a
+// publication correctness bug: PostgreSQL treats quoted mixed-case identifiers
+// as distinct from their unquoted folded spelling in publication row filters.
+func TestPublicationRowFilterRespectsQuotedColumnCaseRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "publication row filter respects quoted column case",
+			SetUpScript: []string{
+				`CREATE TABLE publication_filter_case_column_items (
+					id INT PRIMARY KEY,
+					"CaseColumn" TEXT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE PUBLICATION publication_filter_case_column_pub
+						FOR TABLE publication_filter_case_column_items
+						WHERE (casecolumn = 'visible');`,
+					ExpectedErr: `does not exist`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_publication
+						WHERE pubname = 'publication_filter_case_column_pub';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
 // TestPublicationAddTableRowFilterRejectsUnknownColumnRepro reproduces a
 // publication correctness bug: ALTER PUBLICATION ADD TABLE must validate row
 // filters against the target table before adding publication membership.
