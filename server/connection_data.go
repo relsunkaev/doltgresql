@@ -82,6 +82,9 @@ type copyFromStdinState struct {
 	// dataLoader is the implementation of DataLoader that is used to load each individual CopyData chunk into the
 	// target table.
 	dataLoader dataloader.DataLoader
+	// replicationCapture stores rows inserted by COPY FROM so logical replication can publish them after a successful
+	// load.
+	replicationCapture *replicationChangeCapture
 	// copyErr stores any error that was returned while processing a CopyData message and loading a chunk of data
 	// to the target table. The server needs to keep track of any errors that were encountered while processing chunks
 	// so that it can avoid sending a CommandComplete message if an error was encountered after the client already

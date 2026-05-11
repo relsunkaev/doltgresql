@@ -1641,6 +1641,11 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 		}
 		sqlCtx.SetIgnoreAutoCommit(false)
 	}
+	if copyState.replicationCapture != nil {
+		if err = copyState.replicationCapture.publish(sqlCtx); err != nil {
+			return err
+		}
+	}
 
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(fmt.Sprintf("COPY %d", loadDataResults.RowsLoaded)),
@@ -1677,7 +1682,13 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 		return false, false, err
 	}
 
-	callback := func(_ *sql.Context, _ *Result) error { return nil }
+	callback := func(ctx *sql.Context, res *Result) error {
+		if copyState.replicationCapture == nil {
+			return nil
+		}
+		_, err := copyState.replicationCapture.appendResultAndTrimClient(ctx, res)
+		return err
+	}
 	err = h.doltgresHandler.ComExecuteBound(sqlCtx, h.mysqlConn, "COPY FROM", copyState.insertNode, nil, callback)
 	if err != nil {
 		return false, false, err
@@ -1726,6 +1737,28 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	if tbl == nil {
 		// this should be impossible, enforced by analyzer above
 		return errors.Errorf("no insertable table found in %v", insertNode.Destination)
+	}
+	if capture, ok := replicationChangeCaptureFromStatement(copyFromStdinNode.InsertStub); ok {
+		fullRowColumns := make([]string, len(tbl.Schema(sqlCtx)))
+		for i, column := range tbl.Schema(sqlCtx) {
+			fullRowColumns[i] = column.Name
+		}
+		ensureReturningFullRow(copyFromStdinNode.InsertStub, fullRowColumns)
+		capture.fullRowFieldCount = len(fullRowColumns)
+		copyState.replicationCapture = capture
+
+		planNode, flags, err = builder.BindOnly(copyFromStdinNode.InsertStub, "", nil)
+		if err != nil {
+			return err
+		}
+		insertNode, ok = planNode.(*plan.InsertInto)
+		if !ok {
+			return errors.Errorf("expected plan.InsertInto, got %T", planNode)
+		}
+		tbl = getInsertableTable(insertNode.Destination)
+		if tbl == nil {
+			return errors.Errorf("no insertable table found in %v", insertNode.Destination)
+		}
 	}
 
 	var dataLoader dataloader.DataLoader
@@ -1823,6 +1856,11 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 		return false, false, err
 	}
 	sqlCtx.SetIgnoreAutoCommit(false)
+	if h.copyFromStdinState.replicationCapture != nil {
+		if err = h.copyFromStdinState.replicationCapture.publish(sqlCtx); err != nil {
+			return false, false, err
+		}
+	}
 
 	h.copyFromStdinState = nil
 	// We send back endOfMessage=true, since the COPY DONE message ends the COPY DATA flow and the server is ready
