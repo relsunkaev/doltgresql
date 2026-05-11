@@ -268,6 +268,39 @@ func TestCreateTableAsPreservesDomainColumnTypesGuard(t *testing.T) {
 	})
 }
 
+// TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro reproduces a
+// CTAS persistence bug: PostgreSQL materializes text-domain query outputs using
+// the domain base type's typmod and preserves the output domain type.
+func TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TABLE AS text domain typmod materializes coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_ctas_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_ctas_domain AS character(3);`,
+				`CREATE TABLE ctas_text_domain_typmod_items AS
+					SELECT 'abc   '::varchar3_ctas_domain AS v,
+						'ab'::char3_ctas_domain AS c;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM ctas_text_domain_typmod_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_ctas_domain", "char3_ctas_domain"}},
+				},
+				{
+					Query: `SELECT format_type(atttypid, atttypmod)
+						FROM pg_attribute
+						WHERE attrelid = 'ctas_text_domain_typmod_items'::regclass
+							AND attnum > 0
+						ORDER BY attnum;`,
+					Expected: []sql.Row{{"varchar3_ctas_domain"}, {"char3_ctas_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsTimetzTypmodMaterializesRoundedValueRepro reproduces a CTAS
 // persistence bug: PostgreSQL materializes typmod-constrained timetz query
 // output using the rounded value and preserves the output column typmod.

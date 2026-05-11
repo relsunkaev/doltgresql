@@ -820,6 +820,23 @@ artifacts only; no fixes are included here.
   `character(3)`, but the stored row has `octet_length(label) = 2`, so CTAS can
   persist fixed-width character output without the required padding.
 
+### CREATE TABLE AS text-domain typmod outputs store uncoerced base values
+
+- Reproducer: `TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro`
+  in `testing/go/create_table_as_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateTableAsTextDomainTypmodMaterializesCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: `CREATE TABLE name AS SELECT` over
+  `varchar(3)` and `character(3)` domain expressions materializes the
+  typmod-coerced values and records the output columns as those domain types.
+  `abc   ` stores as `abc`, and `ab` stores as a padded `character(3)` value.
+- Observed Doltgres behavior: CTAS stores `abc   ` with `length = 6`, stores
+  underpadded `ab` with `octet_length = 2`, and reports the result values as
+  base `character varying` / `character` types. `pg_attribute` also cannot
+  format the output column types, so CTAS can persist text-domain outputs
+  outside their declared base typmods while losing domain type identity.
+
 ### CREATE TABLE LIKE INCLUDING DEFAULTS is rejected
 
 - Reproducer: `TestCreateTableLikeIncludingDefaultsCopiesDefaultsRepro` in
