@@ -109,6 +109,41 @@ func TestUpdateMultiAssignmentFromSubqueryRepro(t *testing.T) {
 	})
 }
 
+// TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro reproduces an UPDATE
+// correctness bug: PostgreSQL assigns NULLs to each target column when a
+// row-valued assignment subquery returns no rows.
+func TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "UPDATE multi-assignment empty subquery sets NULLs",
+			SetUpScript: []string{
+				`CREATE TABLE update_multi_assignment_empty_items (
+					id INT PRIMARY KEY,
+					a INT,
+					b INT
+				);`,
+				`INSERT INTO update_multi_assignment_empty_items VALUES (1, 10, 20);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE update_multi_assignment_empty_items AS t
+						SET (a, b) = (
+							SELECT s.a, s.b
+							FROM update_multi_assignment_empty_items AS s
+							WHERE s.id = 99
+						)
+						WHERE t.id = 1;`,
+				},
+				{
+					Query: `SELECT id, a, b
+						FROM update_multi_assignment_empty_items;`,
+					Expected: []sql.Row{{1, nil, nil}},
+				},
+			},
+		},
+	})
+}
+
 // TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro reproduces an UPDATE
 // correctness bug: PostgreSQL rejects row-valued assignment lists that assign
 // the same target column more than once and leaves the row unchanged.

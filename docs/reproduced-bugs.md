@@ -3095,17 +3095,22 @@ artifacts only; no fixes are included here.
 
 ### UPDATE row-valued SET from a subquery is rejected
 
-- Reproducer: `TestUpdateMultiAssignmentFromSubqueryRepro` in
+- Reproducers: `TestUpdateMultiAssignmentFromSubqueryRepro` and
+  `TestUpdateMultiAssignmentEmptySubquerySetsNullsRepro` in
   `testing/go/update_correctness_repro_test.go`.
 - Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
   CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
-  ./testing/go -run TestUpdateMultiAssignmentFromSubqueryRepro -count=1`.
+  ./testing/go -run
+  'TestUpdateMultiAssignment(FromSubquery|EmptySubquerySetsNulls)Repro'
+  -count=1`.
 - Expected PostgreSQL behavior: `UPDATE ... SET (a, b) = (SELECT ...)` can
   assign multiple target columns from a scalar subquery in one simultaneous
-  row-valued assignment.
+  row-valued assignment. If the scalar subquery returns no rows, PostgreSQL
+  assigns `NULL` to each target column.
 - Observed Doltgres behavior: the update fails with `UPDATE: non-Doltgres type
   found in source: Subquery(...)`, and the target row keeps its original
-  values.
+  values instead of applying either the selected values or the no-row `NULL`
+  assignment.
 
 ### UPDATE row-valued SET reports an internal error for duplicate target columns
 
