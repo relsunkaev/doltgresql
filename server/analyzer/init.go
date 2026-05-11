@@ -74,12 +74,17 @@ const (
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
 	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
 	ruleId_PreferOrderedSortOptionIndexes                                         // preferOrderedSortOptionIndexes
+	ruleId_ResolveDropColumnIfExists                                              // resolveDropColumnIfExists
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
 func Init() {
 	// OnceBeforeDefault runs before AlwaysBeforeDefault in GMS
 	analyzer.OnceBeforeDefault = append([]analyzer.Rule{
+		// resolveDropColumnIfExists must run before any rule that validates
+		// DropColumn against the table schema, otherwise the "column not found"
+		// error masks the IF EXISTS no-op semantics.
+		{Id: ruleId_ResolveDropColumnIfExists, Apply: resolveDropColumnIfExists},
 		{Id: ruleId_ResolveType, Apply: ResolveType}, // ResolveType rule must run before simplifyFilters rule in GMS
 		{Id: ruleId_ApplyTablesForAnalyzeAllTables, Apply: applyTablesForAnalyzeAllTables},
 		{Id: ruleId_ValidateDropConstraintOwnership, Apply: validateDropConstraintOwnership},

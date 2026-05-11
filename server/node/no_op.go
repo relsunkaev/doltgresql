@@ -28,10 +28,14 @@ import (
 var _ vitess.Injectable = (*NoOp)(nil)
 var _ sql.ExecSourceRel = (*NoOp)(nil)
 
-// NoOp is a node that does nothing and issues zero or more warnings when run.
+// NoOp is a node that does nothing and issues zero or more messages when run.
 // Used when a statement should parse but isn't expected to do anything, for compatibility with Postgres dumps / tools.
 type NoOp struct {
 	Warnings []string
+	// Severity is the PostgreSQL severity used when sending each message to the
+	// client. An empty value falls back to "WARNING" so existing call sites that
+	// don't care about severity keep their historical behaviour.
+	Severity string
 }
 
 func (n NoOp) Resolved() bool {
@@ -64,6 +68,7 @@ func (n NoOp) WithResolvedChildren(ctx context.Context, children []any) (any, er
 
 type noOpRowIter struct {
 	warnings []string
+	severity string
 }
 
 func (n noOpRowIter) Next(ctx *sql.Context) (sql.Row, error) {
@@ -71,9 +76,13 @@ func (n noOpRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 }
 
 func (n noOpRowIter) Close(ctx *sql.Context) error {
+	severity := n.severity
+	if severity == "" {
+		severity = "WARNING"
+	}
 	for _, warning := range n.warnings {
 		noticeResponse := &pgproto3.NoticeResponse{
-			Severity: "WARNING",
+			Severity: severity,
 			Message:  warning,
 		}
 		sess := dsess.DSessFromSess(ctx.Session)
@@ -83,5 +92,5 @@ func (n noOpRowIter) Close(ctx *sql.Context) error {
 }
 
 func (n NoOp) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	return noOpRowIter{warnings: n.Warnings}, nil
+	return noOpRowIter{warnings: n.Warnings, severity: n.Severity}, nil
 }
