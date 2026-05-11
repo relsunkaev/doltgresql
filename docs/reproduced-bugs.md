@@ -1093,19 +1093,6 @@ artifacts only; no fixes are included here.
   https://github.com/dolthub/doltgresql/issues`, so the database-scoped
   configuration row is never recorded.
 
-### DROP DATABASE WITH FORCE is rejected
-
-- Reproducer: `TestDropDatabaseWithForceRepro` in
-  `testing/go/drop_database_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestDropDatabaseWithForceRepro -count=1`.
-- Expected PostgreSQL behavior: `DROP DATABASE force_drop_database_repro WITH
-  (FORCE)` succeeds for an idle target database, and the database disappears
-  from `pg_database`.
-- Observed Doltgres behavior: the statement fails with `WITH ( FORCE ) is not
-  yet supported (SQLSTATE 0A000)`, and the `pg_database` row remains.
-
 ### Transaction errors do not abort later writes before commit
 
 - Reproducer: `TestTransactionErrorRollsBackTransactionOnCommitRepro` in

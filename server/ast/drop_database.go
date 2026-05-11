@@ -15,8 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -27,9 +25,11 @@ func nodeDropDatabase(_ *Context, node *tree.DropDatabase) (*vitess.DBDDL, error
 	if node == nil {
 		return nil, nil
 	}
-	if node.Force {
-		return nil, errors.Errorf("WITH ( FORCE ) is not yet supported")
-	}
+	// PostgreSQL's WITH (FORCE) tells the server to terminate any sessions
+	// connected to the target database before removing it. Doltgres does not
+	// currently model cross-session connection termination, so the keyword is
+	// accepted as a pass-through: the underlying DROP DATABASE still fails if
+	// the caller's own session is currently connected to the target.
 	return &vitess.DBDDL{
 		Action:           vitess.DropStr,
 		SchemaOrDatabase: "database",

@@ -20,25 +20,40 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestDropDatabaseWithForceRepro reproduces a database DDL correctness bug:
-// PostgreSQL accepts DROP DATABASE ... WITH (FORCE), and the idle-database case
-// should drop the target database.
-func TestDropDatabaseWithForceRepro(t *testing.T) {
+// TestDropDatabaseWithForceDropsIdleDatabase guards that DROP DATABASE accepts
+// the WITH (FORCE) option and removes an idle target database.
+func TestDropDatabaseWithForceDropsIdleDatabase(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DROP DATABASE WITH FORCE drops an idle database",
 			SetUpScript: []string{
-				`CREATE DATABASE force_drop_database_repro;`,
+				`CREATE DATABASE force_drop_database_idle;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `DROP DATABASE force_drop_database_repro WITH (FORCE);`,
+					Query: `DROP DATABASE force_drop_database_idle WITH (FORCE);`,
 				},
 				{
 					Query: `SELECT datname
 						FROM pg_database
-						WHERE datname = 'force_drop_database_repro';`,
+						WHERE datname = 'force_drop_database_idle';`,
 					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
+// TestDropDatabaseWithForceIfExistsNoopsMissingDatabase guards that combining
+// WITH (FORCE) with IF EXISTS on a non-existent target succeeds silently, the
+// same way PostgreSQL does.
+func TestDropDatabaseWithForceIfExistsNoopsMissingDatabase(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DATABASE IF EXISTS WITH FORCE no-ops on missing database",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP DATABASE IF EXISTS force_drop_database_missing WITH (FORCE);`,
 				},
 			},
 		},
