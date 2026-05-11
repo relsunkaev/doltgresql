@@ -3167,20 +3167,6 @@ artifacts only; no fixes are included here.
   assignment, changing `a` from `10` to `2`. A conflict-handling statement
   PostgreSQL rejects can silently mutate stored data.
 
-### ON CONFLICT DO UPDATE WHERE false returns the skipped row
-
-- Reproducer: `TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro` in
-  `testing/go/update_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
-  ./testing/go -run
-  TestOnConflictUpdateWhereFalseReturningSkipsRowsRepro -count=1`.
-- Expected PostgreSQL behavior: if an `ON CONFLICT DO UPDATE WHERE` predicate
-  rejects the conflicting row, the row is not updated and is not returned by
-  the statement's `RETURNING` list.
-- Observed Doltgres behavior: `WHERE false` leaves the stored row unchanged,
-  but the `RETURNING` list still emits the skipped target row as `(1, 'old')`.
-
 ### ON CONFLICT DO UPDATE cannot pass EXCLUDED columns to functions
 
 - Reproducer: `TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro`
@@ -11594,6 +11580,26 @@ artifacts only; no fixes are included here.
   `alter_fk_parent_private`, even though it has no `REFERENCES` privilege on
   the parent table.
 
+### ALTER TABLE ADD FOREIGN KEY ignores column-scoped REFERENCES privileges
+
+- Reproducer:
+  `TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro` in
+  `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ADD FOREIGN KEY` requires
+  `REFERENCES` privilege on the referenced table or specifically on the
+  referenced parent column. A grant on `other_id` must not authorize a foreign
+  key that references `id`.
+- Observed Doltgres behavior: a role granted only `REFERENCES (other_id)` on
+  `alter_fk_column_scope_parent_private` can add a foreign key from
+  `alter_fk_column_scope_child_private(parent_id)` to
+  `alter_fk_column_scope_parent_private(id)`, and the constraint metadata is
+  durably created.
+
 ### ALTER TABLE ADD COLUMN REFERENCES does not require REFERENCES privilege
 
 - Reproducer:
@@ -11609,6 +11615,26 @@ artifacts only; no fixes are included here.
   can create `alter_column_fk_child_private` and then add
   `parent_id INT REFERENCES alter_column_fk_parent_private(id)`, even though it
   has no `REFERENCES` privilege on the parent table.
+
+### ALTER TABLE ADD COLUMN REFERENCES ignores column-scoped REFERENCES privileges
+
+- Reproducer:
+  `TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro`
+  in `testing/go/ddl_privilege_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ADD COLUMN ... REFERENCES`
+  requires `REFERENCES` privilege on the referenced table or specifically on
+  the referenced parent column. A grant on `other_id` must not authorize an
+  inline foreign key that references `id`.
+- Observed Doltgres behavior: a role granted only `REFERENCES (other_id)` on
+  `alter_column_fk_scope_parent_private` can add
+  `parent_id INT REFERENCES alter_column_fk_scope_parent_private(id)` to
+  `alter_column_fk_scope_child_private`, and the unauthorized column is durably
+  created.
 
 ### ALTER TABLE ADD COLUMN does not require table ownership
 

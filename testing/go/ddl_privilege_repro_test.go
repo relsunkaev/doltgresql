@@ -116,6 +116,51 @@ func TestAlterTableAddForeignKeyRequiresReferencesPrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro
+// reproduces a security bug: Doltgres ignores which parent columns were
+// covered by a column-scoped REFERENCES grant when adding a foreign key.
+func TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE ADD FOREIGN KEY requires REFERENCES on referenced column",
+			SetUpScript: []string{
+				`CREATE USER alter_fk_column_scope_creator PASSWORD 'creator';`,
+				`CREATE TABLE alter_fk_column_scope_parent_private (
+					id INT PRIMARY KEY,
+					other_id INT UNIQUE
+				);`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO alter_fk_column_scope_creator;`,
+				`GRANT REFERENCES (other_id) ON alter_fk_column_scope_parent_private TO alter_fk_column_scope_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE alter_fk_column_scope_child_private (
+						id INT PRIMARY KEY,
+						parent_id INT
+					);`,
+					Username: `alter_fk_column_scope_creator`,
+					Password: `creator`,
+				},
+				{
+					Query: `ALTER TABLE alter_fk_column_scope_child_private
+						ADD CONSTRAINT alter_fk_column_scope_child_parent_fk
+						FOREIGN KEY (parent_id) REFERENCES alter_fk_column_scope_parent_private(id);`,
+					ExpectedErr: `permission denied`,
+					Username:    `alter_fk_column_scope_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.table_constraints
+						WHERE table_name = 'alter_fk_column_scope_child_private'
+							AND constraint_type = 'FOREIGN KEY';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTableAddColumnReferencesRequiresReferencesPrivilegeRepro reproduces
 // a security bug: Doltgres does not require REFERENCES privilege on the
 // referenced table when adding a column with an inline foreign key.
@@ -142,6 +187,50 @@ func TestAlterTableAddColumnReferencesRequiresReferencesPrivilegeRepro(t *testin
 					ExpectedErr: `permission denied`,
 					Username:    `alter_column_fk_creator`,
 					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro
+// reproduces a security bug: Doltgres ignores which parent columns were
+// covered by a column-scoped REFERENCES grant when adding a column with an
+// inline foreign key.
+func TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE ADD COLUMN REFERENCES requires REFERENCES on referenced column",
+			SetUpScript: []string{
+				`CREATE USER alter_column_fk_scope_creator PASSWORD 'creator';`,
+				`CREATE TABLE alter_column_fk_scope_parent_private (
+					id INT PRIMARY KEY,
+					other_id INT UNIQUE
+				);`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO alter_column_fk_scope_creator;`,
+				`GRANT REFERENCES (other_id) ON alter_column_fk_scope_parent_private TO alter_column_fk_scope_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE alter_column_fk_scope_child_private (
+						id INT PRIMARY KEY
+					);`,
+					Username: `alter_column_fk_scope_creator`,
+					Password: `creator`,
+				},
+				{
+					Query: `ALTER TABLE alter_column_fk_scope_child_private
+						ADD COLUMN parent_id INT REFERENCES alter_column_fk_scope_parent_private(id);`,
+					ExpectedErr: `permission denied`,
+					Username:    `alter_column_fk_scope_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.columns
+						WHERE table_name = 'alter_column_fk_scope_child_private'
+							AND column_name = 'parent_id';`,
+					Expected: []sql.Row{{int64(0)}},
 				},
 			},
 		},
