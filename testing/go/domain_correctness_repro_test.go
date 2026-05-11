@@ -153,6 +153,52 @@ func TestTimetzDomainTypmodsRoundValuesRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodsCoerceValuesRepro reproduces a domain correctness bug:
+// PostgreSQL applies varchar(n) and character(n) typmods from a domain's base
+// type when values are stored or explicitly cast to that domain.
+func TestTextDomainTypmodsCoerceValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain typmods coerce stored values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_domain_items AS varchar(3);`,
+				`CREATE DOMAIN char3_domain_items AS character(3);`,
+				`CREATE TABLE text_domain_typmod_items (
+					id INT PRIMARY KEY,
+					v varchar3_domain_items,
+					c char3_domain_items
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO text_domain_typmod_items VALUES (1, 'abc   ', 'ab');`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM text_domain_typmod_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_domain_items", "char3_domain_items"}},
+				},
+			},
+		},
+		{
+			Name: "text domain typmod casts coerce values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_domain_casts AS varchar(3);`,
+				`CREATE DOMAIN char3_domain_casts AS character(3);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT 'abc   '::varchar3_domain_casts::text,
+						length('abc   '::varchar3_domain_casts),
+						'ab'::char3_domain_casts = 'ab '::CHARACTER(3),
+						octet_length('ab'::char3_domain_casts);`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestNumericDomainTypmodsRoundStoredValuesRepro reproduces a domain storage
 // correctness bug: PostgreSQL applies numeric precision and scale from a
 // domain's base type when values are assigned to domain-typed columns.

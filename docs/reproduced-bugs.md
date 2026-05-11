@@ -2699,6 +2699,23 @@ artifacts only; no fixes are included here.
   domain cast return `21:43:56.789+00`, so timetz domain base-type typmods are
   not enforced before values reach storage or expression results.
 
+### Text domain typmods are not applied to stored or cast values
+
+- Reproducer: `TestTextDomainTypmodsCoerceValuesRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodsCoerceValuesRepro -count=1`.
+- Expected PostgreSQL behavior: domains declared as `varchar(3)` and
+  `character(3)` apply their base-type typmods on stored values and explicit
+  casts. The `varchar(3)` domain truncates excess trailing spaces to `abc`, the
+  `character(3)` domain pads `ab` to a three-byte value equal to
+  `'ab '::character(3)`, and `pg_typeof` reports the domain type.
+- Observed Doltgres behavior: stored and cast values keep `abc   ` at
+  `length = 6` and `ab` at `octet_length = 2`, the `character(3)` value
+  compares false against the padded value, and `pg_typeof` reports the base
+  `character varying` / `character` types, so text-domain typmods are bypassed.
+
 ### Domain typmod casts return uncoerced values
 
 - Reproducer: `TestDomainTypmodCastsUseCoercedValueRepro` in
