@@ -55,6 +55,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/node"
@@ -1696,6 +1697,14 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	copyFromStdinNode := copyState.copyFromStdinNode
 	if copyFromStdinNode == nil {
 		return errors.Errorf("no COPY FROM STDIN node found")
+	}
+	authHandler := auth.AuthorizationHandler{}
+	if err := authHandler.HandleAuth(sqlCtx, nil, sqlparser.AuthInformation{
+		AuthType:    auth.AuthType_INSERT,
+		TargetType:  auth.AuthTargetType_TableIdentifiers,
+		TargetNames: []string{copyFromStdinNode.DatabaseName, copyFromStdinNode.TableName.Schema, copyFromStdinNode.TableName.Name},
+	}); err != nil {
+		return err
 	}
 
 	// we build an insert node to use for the full insert plan, for which the copy from node will be the row source

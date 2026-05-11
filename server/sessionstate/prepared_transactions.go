@@ -32,6 +32,8 @@ import (
 	"github.com/dolthub/dolt/go/libraries/utils/filesys"
 	"github.com/dolthub/dolt/go/store/hash"
 	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // PreparedTransaction describes a prepared transaction visible in pg_prepared_xacts.
@@ -158,9 +160,12 @@ func PrepareTransaction(ctx *sql.Context, gid string, replication *PreparedRepli
 		return err
 	}
 
-	owner := sess.Username()
+	owner := ctx.Client().User
 	if owner == "" {
-		owner = "postgres"
+		owner = sess.Username()
+		if owner == "" {
+			owner = "postgres"
+		}
 	}
 	prepared := PreparedTransaction{
 		GID:                    gid,
@@ -211,6 +216,10 @@ func CommitPreparedTransaction(ctx *sql.Context, gid string) error {
 	if !ok {
 		return errors.Errorf("prepared transaction with identifier %q does not exist", gid)
 	}
+	if err := checkPreparedTransactionOwner(ctx, prepared); err != nil {
+		restorePreparedTransaction(prepared)
+		return err
+	}
 
 	sess := dsess.DSessFromSess(ctx.Session)
 	var err error
@@ -255,6 +264,10 @@ func RollbackPreparedTransaction(ctx *sql.Context, gid string) error {
 		preparedTransactions.Unlock()
 		return errors.Errorf("prepared transaction with identifier %q does not exist", gid)
 	}
+	if err := checkPreparedTransactionOwner(ctx, prepared); err != nil {
+		preparedTransactions.Unlock()
+		return err
+	}
 	delete(preparedTransactions.byGID, gid)
 	err := persistPreparedTransactionsLocked()
 	preparedTransactions.Unlock()
@@ -269,6 +282,31 @@ func RollbackPreparedTransaction(ctx *sql.Context, gid string) error {
 		}
 	}
 	return nil
+}
+
+func checkPreparedTransactionOwner(ctx *sql.Context, prepared PreparedTransaction) error {
+	if ctx == nil {
+		return nil
+	}
+	user := ctx.Client().User
+	if user == "" {
+		user = dsess.DSessFromSess(ctx.Session).Username()
+		if user == "" {
+			user = "postgres"
+		}
+	}
+	if user == prepared.Owner {
+		return nil
+	}
+	var isSuperUser bool
+	auth.LockRead(func() {
+		role := auth.GetRole(user)
+		isSuperUser = role.IsValid() && role.IsSuperUser
+	})
+	if isSuperUser {
+		return nil
+	}
+	return errors.Errorf("permission denied to finish prepared transaction %q", prepared.GID)
 }
 
 func takePreparedTransaction(gid string) (PreparedTransaction, bool) {
