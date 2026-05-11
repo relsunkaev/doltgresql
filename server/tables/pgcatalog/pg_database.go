@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -134,7 +135,7 @@ func (iter *pgDatabaseRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		nil,       // daticulocale
 		"",        // daticurules
 		nil,       // datcollversion
-		nil,       // datacl
+		aclTextArray(auth.DatabaseACLItems(db.Name())), // datacl
 	}, nil
 }
 

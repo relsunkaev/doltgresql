@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -275,7 +276,7 @@ func pgNamespaceToRow(namespace *pgNamespace) sql.Row {
 		namespace.oid,                         // oid
 		namespace.name,                        // nspname
 		id.NewId(id.Section_User, "postgres"), // nspowner
-		nil,                                   // nspacl
+		aclTextArray(auth.SchemaACLItems(namespace.name)), // nspacl
 		id.NewTable(PgCatalogName, PgNamespaceName).AsId(), // tableoid
 	}
 }

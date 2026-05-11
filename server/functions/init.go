@@ -178,6 +178,7 @@ func Init() {
 	initPgGetSerialSequence()
 	initPgGetStatisticsobjdefColumns()
 	initPgHasRole()
+	initPrivilegeInquiry()
 	initPgStatGetNumscans()
 	initPgTableIsVisible()
 	initPgTableSize()

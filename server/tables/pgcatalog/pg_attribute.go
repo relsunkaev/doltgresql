@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tables"
@@ -84,14 +85,14 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	attrelidAttnameIdx := NewUniqueInMemIndexStorage[*pgAttribute](lessAttName)
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
-		Table: func(ctx *sql.Context, _ functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			attnum := int16(0)
 			for _, col := range table.Item.Schema(ctx) {
 				if col.HiddenSystem {
 					continue
 				}
 				attnum++
-				attr := tableColumnAttribute(table.OID.AsId(), attnum, col)
+				attr := tableColumnAttribute(table.OID.AsId(), schema.Item.SchemaName(), table.Item.Name(), attnum, col)
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
@@ -120,7 +121,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	return nil
 }
 
-func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAttribute {
+func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column) *pgAttribute {
 	typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 	generated := ""
 	if col.Generated != nil {
@@ -130,6 +131,8 @@ func tableColumnAttribute(relationID id.Id, attnum int16, col *sql.Column) *pgAt
 		attrelid:       relationID,
 		attrelidNative: id.Cache().ToOID(relationID),
 		attname:        col.Name,
+		schemaName:     schemaName,
+		tableName:      tableName,
 		atttypid:       typeOid,
 		attnum:         attnum,
 		attndims:       dimensions,
@@ -457,6 +460,8 @@ type pgAttribute struct {
 	attrelid       id.Id
 	attrelidNative uint32
 	attname        string
+	schemaName     string
+	tableName      string
 	atttypid       id.Id
 	attnum         int16
 	attndims       int16
@@ -509,6 +514,11 @@ func (iter *pgAttributeTableScanIter) Close(ctx *sql.Context) error {
 }
 
 func pgAttributeToRow(attr *pgAttribute) sql.Row {
+	var attacl any
+	if attr.schemaName != "" && attr.tableName != "" {
+		attacl = aclTextArray(auth.ColumnACLItems(attr.schemaName, attr.tableName, attr.attname))
+	}
+
 	// TODO: Fill in the rest of the pg_attribute columns
 	return sql.Row{
 		attr.attrelid,      // attrelid
@@ -533,7 +543,7 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		int16(0),           // attinhcount
 		attr.attstattarget, // attstattarget
 		attr.attcollation,  // attcollation
-		nil,                // attacl
+		attacl,             // attacl
 		nil,                // attoptions
 		nil,                // attfdwoptions
 		nil,                // attmissingval

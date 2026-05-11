@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -149,6 +150,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
 				name:            table.Item.Name(),
+				schemaName:      schema.Item.SchemaName(),
 				hasIndexes:      hasIndexes,
 				hasTriggers:     hasTriggers,
 				kind:            kind,
@@ -168,6 +170,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				oid:             view.OID.AsId(),
 				oidNative:       id.Cache().ToOID(view.OID.AsId()),
 				name:            view.Item.Name,
+				schemaName:      schema.Item.SchemaName(),
 				hasIndexes:      false,
 				kind:            "v",
 				schemaOid:       schema.OID.AsId(),
@@ -184,6 +187,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				oid:             sequence.OID.AsId(),
 				oidNative:       id.Cache().ToOID(sequence.OID.AsId()),
 				name:            sequence.Item.Id.SequenceName(),
+				schemaName:      schema.Item.SchemaName(),
 				hasIndexes:      false,
 				kind:            "S",
 				schemaOid:       schema.OID.AsId(),
@@ -416,6 +420,7 @@ type pgClass struct {
 	oid             id.Id
 	oidNative       uint32
 	name            string
+	schemaName      string
 	schemaOid       id.Id
 	schemaOidNative uint32
 	hasIndexes      bool
@@ -482,6 +487,14 @@ func pgClassToRow(class *pgClass) sql.Row {
 		relam = id.NewAccessMethod("heap").AsId()
 	}
 
+	var relacl any
+	switch class.kind {
+	case "S":
+		relacl = aclTextArray(auth.SequenceACLItems(class.schemaName, class.name))
+	case "r", "m", "v":
+		relacl = aclTextArray(auth.TableACLItems(class.schemaName, class.name))
+	}
+
 	// TODO: Fill in the rest of the pg_class columns
 	return sql.Row{
 		class.oid,                             // oid
@@ -514,7 +527,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		id.Null,                               // relrewrite
 		uint32(0),                             // relfrozenxid
 		uint32(0),                             // relminmxid
-		nil,                                   // relacl
+		relacl,                                // relacl
 		reloptions,                            // reloptions
 		nil,                                   // relpartbound
 		id.NewTable(PgCatalogName, PgClassName).AsId(), // tableoid
