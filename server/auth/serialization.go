@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(1)
+	writer.Uint32(2)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -66,6 +66,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV0(reader)
 	case 1:
 		return db.deserializeV1(reader)
+	case 2:
+		return db.deserializeV2(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -100,6 +102,15 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 
 // deserializeV1 creates a Database from a byte slice. Expects a reader that has already read the version.
 func (db *Database) deserializeV1(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 1)
+}
+
+// deserializeV2 creates a Database from a byte slice. Expects a reader that has already read the version.
+func (db *Database) deserializeV2(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 2)
+}
+
+func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
 	clear(db.rolesByID)
@@ -115,7 +126,7 @@ func (db *Database) deserializeV1(reader *utils.Reader) error {
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(1, reader)
 	// Read the table privileges
-	db.tablePrivileges.deserialize(1, reader)
+	db.tablePrivileges.deserialize(version, reader)
 	// Read the role chain
 	db.roleMembership.deserialize(1, reader)
 	// Read the routine privileges

@@ -18,15 +18,21 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
 // validateForeignKeyDefinition validates that the given foreign key definition is valid for creation
 func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstraint, cols map[string]*sql.Column, parentCols map[string]*sql.Column) error {
+	if err := validateForeignKeyReferencePrivileges(ctx, fkDef); err != nil {
+		return err
+	}
 	for i := range fkDef.Columns {
 		col := cols[strings.ToLower(fkDef.Columns[i])]
 		parentCol := parentCols[strings.ToLower(fkDef.ParentColumns[i])]
@@ -35,6 +41,51 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 		}
 	}
 	return nil
+}
+
+func validateForeignKeyReferencePrivileges(ctx *sql.Context, fkDef sql.ForeignKeyConstraint) error {
+	if fkDef.IsSelfReferential() {
+		return nil
+	}
+
+	schemaName, err := core.GetSchemaName(ctx, nil, fkDef.ParentSchema)
+	if err != nil {
+		return err
+	}
+	var denied bool
+	auth.LockRead(func() {
+		role := auth.GetRole(ctx.Client().User)
+		public := auth.GetRole("public")
+		denied = !roleHasReferencesOnColumns(role.ID(), schemaName, fkDef.ParentTable, fkDef.ParentColumns) &&
+			!roleHasReferencesOnColumns(public.ID(), schemaName, fkDef.ParentTable, fkDef.ParentColumns)
+	})
+	if denied {
+		return errors.Errorf("permission denied for table %s", fkDef.ParentTable)
+	}
+	return nil
+}
+
+func roleHasReferencesOnColumns(role auth.RoleID, schemaName, tableName string, columns []string) bool {
+	if !role.IsValid() {
+		return false
+	}
+	table := doltdb.TableName{Name: tableName, Schema: schemaName}
+	if len(columns) == 0 {
+		return auth.HasTablePrivilege(auth.TablePrivilegeKey{
+			Role:  role,
+			Table: table,
+		}, auth.Privilege_REFERENCES)
+	}
+	for _, column := range columns {
+		if !auth.HasTablePrivilege(auth.TablePrivilegeKey{
+			Role:   role,
+			Table:  table,
+			Column: column,
+		}, auth.Privilege_REFERENCES) {
+			return false
+		}
+	}
+	return true
 }
 
 // foreignKeyComparableTypes returns whether the two given types are able to be used as parent/child columns in a

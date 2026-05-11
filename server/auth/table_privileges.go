@@ -29,6 +29,9 @@ type TablePrivileges struct {
 type TablePrivilegeKey struct {
 	Role  RoleID
 	Table doltdb.TableName
+	// Column is empty for relation-level privileges. A non-empty value stores
+	// column-level GRANT state for the same table.
+	Column string
 }
 
 // TablePrivilegeValue is the value associated with the TablePrivilegeKey.
@@ -65,13 +68,19 @@ func HasTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
 	if IsSuperUser(key.Role) {
 		return true
 	}
+	if len(key.Column) > 0 {
+		tableKey := key
+		tableKey.Column = ""
+		if HasTablePrivilege(tableKey, privilege) {
+			return true
+		}
+	}
 	// If a table name was provided, then we also want to search for privileges provided to all tables in the schema
 	// space. Since those are saved with an empty table name, we can easily do another search by removing the table.
-	if len(key.Table.Name) > 0 {
-		if ok := HasTablePrivilege(TablePrivilegeKey{
-			Role:  key.Role,
-			Table: doltdb.TableName{Name: "", Schema: key.Table.Schema},
-		}, privilege); ok {
+	if len(key.Table.Name) > 0 && len(key.Column) == 0 {
+		allTablesKey := key
+		allTablesKey.Table.Name = ""
+		if ok := HasTablePrivilege(allTablesKey, privilege); ok {
 			return true
 		}
 	}
@@ -81,10 +90,9 @@ func HasTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
 		}
 	}
 	for _, group := range GetAllGroupsWithMember(key.Role, true) {
-		if HasTablePrivilege(TablePrivilegeKey{
-			Role:  group,
-			Table: key.Table,
-		}, privilege) {
+		groupKey := key
+		groupKey.Role = group
+		if HasTablePrivilege(groupKey, privilege) {
 			return true
 		}
 	}
@@ -97,13 +105,19 @@ func HasTablePrivilegeGrantOption(key TablePrivilegeKey, privilege Privilege) Ro
 	if IsSuperUser(key.Role) {
 		return key.Role
 	}
+	if len(key.Column) > 0 {
+		tableKey := key
+		tableKey.Column = ""
+		if returnedID := HasTablePrivilegeGrantOption(tableKey, privilege); returnedID.IsValid() {
+			return returnedID
+		}
+	}
 	// If a table name was provided, then we also want to search for privileges provided to all tables in the schema
 	// space. Since those are saved with an empty table name, we can easily do another search by removing the table.
-	if len(key.Table.Name) > 0 {
-		if returnedID := HasTablePrivilegeGrantOption(TablePrivilegeKey{
-			Role:  key.Role,
-			Table: doltdb.TableName{Name: "", Schema: key.Table.Schema},
-		}, privilege); returnedID.IsValid() {
+	if len(key.Table.Name) > 0 && len(key.Column) == 0 {
+		allTablesKey := key
+		allTablesKey.Table.Name = ""
+		if returnedID := HasTablePrivilegeGrantOption(allTablesKey, privilege); returnedID.IsValid() {
 			return returnedID
 		}
 	}
@@ -117,10 +131,9 @@ func HasTablePrivilegeGrantOption(key TablePrivilegeKey, privilege Privilege) Ro
 		}
 	}
 	for _, group := range GetAllGroupsWithMember(key.Role, true) {
-		if returnedID := HasTablePrivilegeGrantOption(TablePrivilegeKey{
-			Role:  group,
-			Table: key.Table,
-		}, privilege); returnedID.IsValid() {
+		groupKey := key
+		groupKey.Role = group
+		if returnedID := HasTablePrivilegeGrantOption(groupKey, privilege); returnedID.IsValid() {
 			return returnedID
 		}
 	}
@@ -176,6 +189,7 @@ func (tp *TablePrivileges) serialize(writer *utils.Writer) {
 		writer.Uint64(uint64(value.Key.Role))
 		writer.String(value.Key.Table.Name)
 		writer.String(value.Key.Table.Schema)
+		writer.String(value.Key.Column)
 		// Write the total number of privileges
 		writer.Uint64(uint64(len(value.Privileges)))
 		for privilege, privilegeMap := range value.Privileges {
@@ -203,6 +217,9 @@ func (tp *TablePrivileges) deserialize(version uint32, reader *utils.Reader) {
 			tpv.Key.Role = RoleID(reader.Uint64())
 			tpv.Key.Table.Name = reader.String()
 			tpv.Key.Table.Schema = reader.String()
+			if version >= 2 {
+				tpv.Key.Column = reader.String()
+			}
 			// Read the total number of privileges
 			privilegeCount := reader.Uint64()
 			for privilegeIdx := uint64(0); privilegeIdx < privilegeCount; privilegeIdx++ {

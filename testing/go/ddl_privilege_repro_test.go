@@ -77,6 +77,18 @@ func TestCreateTableForeignKeyRequiresReferencesOnReferencedColumnRepro(t *testi
 					Query:    `SELECT to_regclass('fk_column_scope_child_private')::text;`,
 					Expected: []sql.Row{{nil}},
 				},
+				{
+					Query: `CREATE TABLE fk_column_scope_child_allowed (
+						id INT PRIMARY KEY,
+						parent_id INT REFERENCES fk_column_scope_parent_private(other_id)
+					);`,
+					Username: `fk_column_scope_creator`,
+					Password: `creator`,
+				},
+				{
+					Query:    `SELECT to_regclass('fk_column_scope_child_allowed')::text;`,
+					Expected: []sql.Row{{"fk_column_scope_child_allowed"}},
+				},
 			},
 		},
 	})
@@ -156,6 +168,20 @@ func TestAlterTableAddForeignKeyRequiresReferencesOnReferencedColumnRepro(t *tes
 							AND constraint_type = 'FOREIGN KEY';`,
 					Expected: []sql.Row{{int64(0)}},
 				},
+				{
+					Query: `ALTER TABLE alter_fk_column_scope_child_private
+						ADD CONSTRAINT alter_fk_column_scope_child_parent_allowed_fk
+						FOREIGN KEY (parent_id) REFERENCES alter_fk_column_scope_parent_private(other_id);`,
+					Username: `alter_fk_column_scope_creator`,
+					Password: `creator`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.table_constraints
+						WHERE table_name = 'alter_fk_column_scope_child_private'
+							AND constraint_type = 'FOREIGN KEY';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
 			},
 		},
 	})
@@ -231,6 +257,19 @@ func TestAlterTableAddColumnReferencesRequiresReferencesOnReferencedColumnRepro(
 						WHERE table_name = 'alter_column_fk_scope_child_private'
 							AND column_name = 'parent_id';`,
 					Expected: []sql.Row{{int64(0)}},
+				},
+				{
+					Query: `ALTER TABLE alter_column_fk_scope_child_private
+						ADD COLUMN parent_other_id INT REFERENCES alter_column_fk_scope_parent_private(other_id);`,
+					Username: `alter_column_fk_scope_creator`,
+					Password: `creator`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.columns
+						WHERE table_name = 'alter_column_fk_scope_child_private'
+							AND column_name = 'parent_other_id';`,
+					Expected: []sql.Row{{int64(1)}},
 				},
 			},
 		},

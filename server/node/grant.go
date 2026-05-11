@@ -42,8 +42,15 @@ type Grant struct {
 
 // GrantTable specifically handles the GRANT ... ON TABLE statement.
 type GrantTable struct {
-	Privileges []auth.Privilege
-	Tables     []doltdb.TableName
+	Privileges       []auth.Privilege
+	ColumnPrivileges []GrantColumnPrivilege
+	Tables           []doltdb.TableName
+}
+
+// GrantColumnPrivilege handles a GRANT privilege(column, ...) entry.
+type GrantColumnPrivilege struct {
+	Privilege auth.Privilege
+	Columns   []string
 }
 
 // GrantSchema specifically handles the GRANT ... ON SCHEMA statement.
@@ -210,6 +217,10 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 			for _, privilege := range g.GrantTable.Privileges {
 				grantedBy := auth.HasTablePrivilegeGrantOption(key, privilege)
 				if !grantedBy.IsValid() {
+					if auth.HasTablePrivilege(key, privilege) {
+						ctx.Warn(0, "no privileges were granted for %s", table.Name)
+						continue
+					}
 					// TODO: grab the actual error message
 					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
 				}
@@ -220,6 +231,32 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 					Privilege: privilege,
 					GrantedBy: grantedBy,
 				}, g.WithGrantOption)
+			}
+			for _, columnPrivilege := range g.GrantTable.ColumnPrivileges {
+				for _, column := range columnPrivilege.Columns {
+					columnKey := auth.TablePrivilegeKey{
+						Role:   userRole.ID(),
+						Table:  doltdb.TableName{Name: table.Name, Schema: schemaName},
+						Column: column,
+					}
+					grantedBy := auth.HasTablePrivilegeGrantOption(columnKey, columnPrivilege.Privilege)
+					if !grantedBy.IsValid() {
+						if auth.HasTablePrivilege(columnKey, columnPrivilege.Privilege) {
+							ctx.Warn(0, "no privileges were granted for %s", table.Name)
+							continue
+						}
+						// TODO: grab the actual error message
+						return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
+					}
+					auth.AddTablePrivilege(auth.TablePrivilegeKey{
+						Role:   role.ID(),
+						Table:  doltdb.TableName{Name: table.Name, Schema: schemaName},
+						Column: column,
+					}, auth.GrantedPrivilege{
+						Privilege: columnPrivilege.Privilege,
+						GrantedBy: grantedBy,
+					}, g.WithGrantOption)
+				}
 			}
 		}
 	}

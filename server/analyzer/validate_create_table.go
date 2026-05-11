@@ -59,7 +59,56 @@ func validateCreateTable(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, sco
 		return ct, transform.NewTree, nil
 	}
 
+	if err = validateCreateTableForeignKeyReferencePrivileges(ctx, a, ct); err != nil {
+		return nil, transform.SameTree, err
+	}
+
 	return n, transform.SameTree, nil
+}
+
+func validateCreateTableForeignKeyReferencePrivileges(ctx *sql.Context, a *analyzer.Analyzer, ct *plan.CreateTable) error {
+	for _, fkDef := range ct.ForeignKeys() {
+		if fkDef.IsSelfReferential() {
+			continue
+		}
+		parentTable, _, err := a.Catalog.TableSchema(ctx, fkDef.ParentDatabase, fkDef.ParentSchema, fkDef.ParentTable)
+		if err != nil {
+			return err
+		}
+		parentColumns, ok := canonicalForeignKeyParentColumns(ctx, parentTable, fkDef.ParentColumns)
+		if !ok {
+			continue
+		}
+		fkCopy := *fkDef
+		fkCopy.ParentColumns = parentColumns
+		if schemaTable, ok := parentTable.(sql.DatabaseSchemaTable); ok {
+			fkCopy.ParentSchema = schemaTable.DatabaseSchema().SchemaName()
+		}
+		if err = validateForeignKeyReferencePrivileges(ctx, fkCopy); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func canonicalForeignKeyParentColumns(ctx *sql.Context, parentTable sql.Table, parentColumns []string) ([]string, bool) {
+	if len(parentColumns) == 0 {
+		return parentColumns, true
+	}
+	parentSchema := parentTable.Schema(ctx)
+	columnNames := make(map[string]string, len(parentSchema))
+	for _, column := range parentSchema {
+		columnNames[strings.ToLower(column.Name)] = column.Name
+	}
+	canonicalColumns := make([]string, len(parentColumns))
+	for i, parentColumn := range parentColumns {
+		columnName, ok := columnNames[strings.ToLower(parentColumn)]
+		if !ok {
+			return nil, false
+		}
+		canonicalColumns[i] = columnName
+	}
+	return canonicalColumns, true
 }
 
 // validateIdentifiers validates the names of all schema elements for validity

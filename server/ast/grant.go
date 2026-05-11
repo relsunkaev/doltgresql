@@ -73,9 +73,14 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
+		columnPrivileges, err := convertColumnPrivileges(node.PrivsWithCols)
+		if err != nil {
+			return nil, err
+		}
 		grantTable = &pgnodes.GrantTable{
-			Privileges: privileges,
-			Tables:     tables,
+			Privileges:       privileges,
+			ColumnPrivileges: columnPrivileges,
+			Tables:           tables,
 		}
 	case privilege.Schema:
 		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_SCHEMA, node.Privileges)
@@ -159,6 +164,27 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 		},
 		Children: nil,
 	}, nil
+}
+
+func convertColumnPrivileges(privsWithCols []tree.PrivForCols) ([]pgnodes.GrantColumnPrivilege, error) {
+	if len(privsWithCols) == 0 {
+		return nil, nil
+	}
+	columnPrivileges := make([]pgnodes.GrantColumnPrivilege, 0, len(privsWithCols))
+	for _, privWithCols := range privsWithCols {
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_TABLE_COLUMN, []privilege.Kind{privWithCols.Privilege})
+		if err != nil {
+			return nil, err
+		}
+		columns := privWithCols.ColNames.ToStrings()
+		for _, priv := range privileges {
+			columnPrivileges = append(columnPrivileges, pgnodes.GrantColumnPrivilege{
+				Privilege: priv,
+				Columns:   columns,
+			})
+		}
+	}
+	return columnPrivileges, nil
 }
 
 // sequenceSchema returns the schema portion of an UnresolvedObjectName for a sequence.
