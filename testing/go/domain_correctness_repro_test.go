@@ -819,6 +819,92 @@ func TestDomainTypmodUpdateFromUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodDmlUsesCoercedValuesRepro reproduces data consistency
+// bugs: PostgreSQL applies text-domain base-type typmods on UPDATE,
+// INSERT ... SELECT, and ON CONFLICT DO UPDATE assignment paths.
+func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain UPDATE uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_update_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_update_domain AS character(3);`,
+				`CREATE TABLE text_domain_update_items (
+					id INT PRIMARY KEY,
+					v varchar3_update_domain,
+					c char3_update_domain
+				);`,
+				`INSERT INTO text_domain_update_items VALUES (1, 'abc', 'abc');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE text_domain_update_items
+						SET v = 'abc   ', c = 'ab'
+						WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_update_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+		{
+			Name: "text domain INSERT SELECT uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_insert_select_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_insert_select_domain AS character(3);`,
+				`CREATE TABLE text_domain_insert_select_source (
+					id INT PRIMARY KEY,
+					v TEXT,
+					c TEXT
+				);`,
+				`CREATE TABLE text_domain_insert_select_items (
+					id INT PRIMARY KEY,
+					v varchar3_insert_select_domain,
+					c char3_insert_select_domain
+				);`,
+				`INSERT INTO text_domain_insert_select_source VALUES (1, 'abc   ', 'ab');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO text_domain_insert_select_items
+						SELECT id, v, c FROM text_domain_insert_select_source;`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_insert_select_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+		{
+			Name: "text domain ON CONFLICT UPDATE uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_upsert_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_upsert_domain AS character(3);`,
+				`CREATE TABLE text_domain_upsert_items (
+					id INT PRIMARY KEY,
+					v varchar3_upsert_domain,
+					c char3_upsert_domain
+				);`,
+				`INSERT INTO text_domain_upsert_items VALUES (1, 'abc', 'abc');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO text_domain_upsert_items VALUES (1, 'abc   ', 'ab')
+						ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v, c = EXCLUDED.c;`,
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM text_domain_upsert_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainCheckRejectsNonScalarExpressionsRepro reproduces domain
 // correctness bugs if Doltgres accepts CHECK expressions PostgreSQL rejects for
 // domains.
