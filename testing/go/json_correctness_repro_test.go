@@ -979,6 +979,47 @@ func TestJsonbDeleteOperatorPersistsStoredDocumentRepro(t *testing.T) {
 	})
 }
 
+// TestJsonbInsertPersistsNestedArrayUpdateGuard guards PostgreSQL JSONB
+// persistence semantics: jsonb_insert rewrites nested arrays at the requested
+// insertion position when used in UPDATE.
+func TestJsonbInsertPersistsNestedArrayUpdateGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "jsonb_insert updates nested arrays",
+			SetUpScript: []string{
+				`CREATE TABLE jsonb_insert_update_items (
+					id INT PRIMARY KEY,
+					doc JSONB
+				);`,
+				`INSERT INTO jsonb_insert_update_items VALUES
+					(1, '{"a":[1,3],"keep":true}'::jsonb),
+					(2, '{"a":[1,3],"keep":true}'::jsonb);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE jsonb_insert_update_items
+						SET doc = jsonb_insert(doc, '{a,1}', '2'::jsonb)
+						WHERE id = 1;`,
+				},
+				{
+					Query: `UPDATE jsonb_insert_update_items
+						SET doc = jsonb_insert(doc, '{a,1}', '2'::jsonb, true)
+						WHERE id = 2;`,
+				},
+				{
+					Query: `SELECT id, doc::text
+						FROM jsonb_insert_update_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, `{"a": [1, 2, 3], "keep": true}`},
+						{2, `{"a": [1, 3, 2], "keep": true}`},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro guards PostgreSQL JSONB
 // persistence semantics: jsonb_set_lax with null_value_treatment =>
 // 'delete_key' should remove the addressed key when used in an UPDATE.
