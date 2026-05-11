@@ -7160,6 +7160,37 @@ artifacts only; no fixes are included here.
   `3 days 04:05:06.789`). The plain `time(0)` default is rounded, so altered
   defaults can persist values outside declared temporal precision.
 
+### ALTER COLUMN SET DEFAULT varchar typmods reject trailing spaces
+
+- Reproducer: `TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro`
+  in `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ALTER COLUMN label SET
+  DEFAULT 'abc   '` on a `varchar(3)` column succeeds because the excess
+  characters are all spaces, and future default inserts store `abc` with
+  `length(label) = 3`.
+- Observed Doltgres behavior: `ALTER COLUMN SET DEFAULT` fails with `value too
+  long for type varying(3): out of range`, so a PostgreSQL-compatible default
+  cannot be installed.
+
+### ALTER COLUMN SET DEFAULT character typmods reject trailing spaces
+
+- Reproducer: `TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro`
+  in `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ALTER COLUMN label SET
+  DEFAULT 'abc   '` on a `character(3)` column succeeds because the excess
+  characters are all spaces, and future default inserts store a three-byte
+  value equal to `'abc'::character(3)`.
+- Observed Doltgres behavior: `ALTER COLUMN SET DEFAULT` fails with `value too
+  long for type varying(3): out of range`, so a PostgreSQL-compatible default
+  cannot be installed.
+
 ### UPDATE SET DEFAULT stores uncoerced temporal typmod defaults
 
 - Reproducer: `TestTemporalTypmodUpdateSetDefaultCoercesStoredValuesRepro` in

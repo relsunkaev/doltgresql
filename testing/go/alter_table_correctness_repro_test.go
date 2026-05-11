@@ -851,6 +851,72 @@ func TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro(t *testing.T
 	})
 }
 
+// TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro reproduces an
+// ALTER TABLE correctness bug: PostgreSQL accepts a varchar(n) default whose
+// only excess characters are trailing spaces and applies that default to future
+// inserts.
+func TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER COLUMN SET DEFAULT varchar truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE alter_set_default_varchar_trailing_items (
+					id INT PRIMARY KEY,
+					label VARCHAR(3)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_set_default_varchar_trailing_items
+						ALTER COLUMN label SET DEFAULT 'abc   ';`,
+				},
+				{
+					Query: `INSERT INTO alter_set_default_varchar_trailing_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT label, length(label), pg_typeof(label)::text
+						FROM alter_set_default_varchar_trailing_items;`,
+					Expected: []sql.Row{{"abc", 3, "character varying"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro reproduces an
+// ALTER TABLE correctness bug: PostgreSQL accepts a character(n) default whose
+// only excess characters are trailing spaces and applies that default to future
+// inserts.
+func TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER COLUMN SET DEFAULT character truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE alter_set_default_character_trailing_items (
+					id INT PRIMARY KEY,
+					label CHARACTER(3)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_set_default_character_trailing_items
+						ALTER COLUMN label SET DEFAULT 'abc   ';`,
+				},
+				{
+					Query: `INSERT INTO alter_set_default_character_trailing_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text
+						FROM alter_set_default_character_trailing_items;`,
+					Expected: []sql.Row{{true, 3, "character"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTableReloptionsPersistRepro reproduces a catalog persistence gap:
 // PostgreSQL persists table reloptions changed with ALTER TABLE ... SET (...).
 func TestAlterTableReloptionsPersistRepro(t *testing.T) {
