@@ -686,20 +686,6 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: setup fails with `storage parameters are not yet
   supported`, so table storage options cannot be declared or persisted.
 
-### CREATE TABLE AS WITH NO DATA is rejected
-
-- Reproducer: `TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro` in
-  `testing/go/create_table_as_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro -count=1`.
-- Expected PostgreSQL behavior: `CREATE TABLE name AS SELECT ... WITH NO DATA`
-  creates the target table from the query shape without evaluating result rows;
-  for example, `SELECT 1 / 0 AS value WITH NO DATA` creates an empty table
-  instead of raising division-by-zero.
-- Observed Doltgres behavior: the statement is rejected with `WITH NO DATA is
-  not yet supported`, and the target table is not created.
-
 ### CREATE TABLE IF NOT EXISTS AS evaluates the skipped query
 
 - Reproducer: `TestCreateTableAsIfNotExistsDoesNotEvaluateQueryRepro` in

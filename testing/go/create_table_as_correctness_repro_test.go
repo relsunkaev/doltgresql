@@ -20,10 +20,11 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
-// TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro reproduces a CTAS
-// correctness bug: CREATE TABLE AS ... WITH NO DATA should create the target
-// table from the query shape without evaluating result rows.
-func TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro(t *testing.T) {
+// TestCreateTableAsWithNoDataDoesNotEvaluateQuery guards PostgreSQL's CTAS
+// WITH NO DATA semantics: the table is created from the query's projection
+// shape but the query is not executed, so a row-time error like 1/0 cannot
+// fire and no rows are inserted.
+func TestCreateTableAsWithNoDataDoesNotEvaluateQuery(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "CREATE TABLE AS WITH NO DATA does not evaluate query",
@@ -35,6 +36,59 @@ func TestCreateTableAsWithNoDataDoesNotEvaluateQueryRepro(t *testing.T) {
 				},
 				{
 					Query:    `SELECT value FROM ctas_no_data_error;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateTableAsWithNoDataPreservesColumnSchema guards that CREATE TABLE
+// AS ... WITH NO DATA still derives the projected column names and types from
+// the query, so subsequent inserts succeed against the inferred schema and
+// queries against unknown columns fail.
+func TestCreateTableAsWithNoDataPreservesColumnSchema(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "WITH NO DATA infers projection schema",
+			SetUpScript: []string{
+				`CREATE TABLE ctas_no_data_schema AS
+					SELECT 1::INT AS id, 'kept'::TEXT AS label
+					WITH NO DATA;`,
+				`INSERT INTO ctas_no_data_schema VALUES (1, 'hello');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT id, label FROM ctas_no_data_schema;`,
+					Expected: []sql.Row{{int32(1), "hello"}},
+				},
+				{
+					Query:       `SELECT missing_col FROM ctas_no_data_schema;`,
+					ExpectedErr: `missing_col`,
+				},
+			},
+		},
+	})
+}
+
+// TestCreateTableAsWithNoDataAcceptsUnionSource guards that WITH NO DATA
+// works when the source query is a set operation rather than a bare SELECT,
+// so the LIMIT 0 transform applied to suppress evaluation also threads
+// through UNION/INTERSECT/EXCEPT.
+func TestCreateTableAsWithNoDataAcceptsUnionSource(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "WITH NO DATA accepts UNION source",
+			SetUpScript: []string{
+				`CREATE TABLE ctas_no_data_union AS
+					SELECT 1 / 0 AS value
+					UNION ALL
+					SELECT 2 / 0 AS value
+					WITH NO DATA;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT value FROM ctas_no_data_union;`,
 					Expected: []sql.Row{},
 				},
 			},

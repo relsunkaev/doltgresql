@@ -111,6 +111,14 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if err != nil {
 			return nil, err
 		}
+		if node.WithNoData {
+			// PostgreSQL semantics: WITH NO DATA creates the table from the
+			// query's column types but does not evaluate the query. Forcing
+			// LIMIT 0 reproduces that: GMS still infers the projection schema,
+			// but no rows are produced so row-time expression evaluation
+			// (e.g., a literal `1/0` in a projected column) cannot fire.
+			selectStmt = forceLimitZero(selectStmt)
+		}
 		optSelect = &vitess.OptSelect{
 			Select: selectStmt,
 		}
@@ -127,9 +135,6 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			}
 			optLike.LikeTables = append(optLike.LikeTables, likeTable)
 		}
-	}
-	if node.WithNoData {
-		return nil, errors.Errorf("WITH NO DATA is not yet supported")
 	}
 	ddl := &vitess.DDL{
 		Action:      vitess.CreateStr,
@@ -168,6 +173,24 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, errors.Errorf("PARTITION OF is not yet supported")
 	}
 	return ddl, nil
+}
+
+// forceLimitZero rewrites a SelectStatement so it produces no rows while still
+// exposing the projection schema. Used to implement CREATE TABLE AS ... WITH
+// NO DATA: PostgreSQL creates the table from the query's column types without
+// running the query, so any row-time side effects (errors, sequence advance,
+// volatile function calls) must not fire.
+func forceLimitZero(stmt vitess.SelectStatement) vitess.SelectStatement {
+	zero := &vitess.Limit{Rowcount: vitess.NewIntVal([]byte("0"))}
+	switch s := stmt.(type) {
+	case *vitess.Select:
+		s.Limit = zero
+	case *vitess.SetOp:
+		s.Limit = zero
+	case *vitess.ParenSelect:
+		s.Select = forceLimitZero(s.Select)
+	}
+	return stmt
 }
 
 func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, vitess.Exprs, error) {
