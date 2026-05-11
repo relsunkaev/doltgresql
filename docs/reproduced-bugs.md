@@ -2900,6 +2900,21 @@ artifacts only; no fixes are included here.
   row, so table constraints can validate and persist values using raw
   uncoerced input instead of the domain's declared base type.
 
+### Text domain typmod table CHECK constraints see uncoerced values
+
+- Reproducer: `TestTextDomainTypmodTableCheckUsesCoercedValueRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestTextDomainTypmodTableCheckUsesCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: table `CHECK` constraints over `varchar(3)` and
+  `character(3)` domain columns are evaluated after the domain base-type typmod
+  is applied. `abc   ` satisfies `CHECK (v = 'abc')`, and `ab` satisfies
+  `CHECK (c = 'ab '::character(3))` after padding.
+- Observed Doltgres behavior: the insert is rejected by the table check because
+  the checked row values are still `abc   ` and underpadded `ab`, so table
+  constraints over text domains validate the raw input before typmod coercion.
+
 ### Schema-qualified domain CHECK functions resolve through search_path
 
 - Reproducer: `TestSchemaQualifiedDomainCheckFunctionUsesExplicitSchemaRepro`
