@@ -1542,6 +1542,20 @@ artifacts only; no fixes are included here.
   `numeric field overflow`, so `ALTER COLUMN TYPE` can persist values that
   violate the target PostgreSQL typmod.
 
+### ALTER COLUMN TYPE varchar typmod rewrites truncate oversized values
+
+- Reproducer: `TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro -count=1`.
+- Expected PostgreSQL behavior: converting a `text` column containing `abcd` to
+  `varchar(3)` rejects the rewrite with `value too long for type character
+  varying(3)` and leaves the stored row and column type unchanged.
+- Observed Doltgres behavior: the `ALTER TABLE` succeeds, changes the column
+  type to `character varying`, and rewrites the stored value from `abcd` to
+  `abc`, so a schema change can silently truncate persisted data.
+
 ### ALTER COLUMN TYPE TIMETZ typmod rewrites store unrounded values
 
 - Reproducer: `TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro` in

@@ -352,6 +352,36 @@ func TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro(t *testing.T) {
 	})
 }
 
+// TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro reproduces an ALTER
+// TABLE persistence bug: PostgreSQL rejects an ALTER COLUMN TYPE rewrite when
+// an existing value is too long for the target varchar(n) typmod.
+func TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER COLUMN TYPE varchar rejects existing overflow",
+			SetUpScript: []string{
+				`CREATE TABLE alter_type_varchar_overflow_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO alter_type_varchar_overflow_items VALUES (1, 'abcd');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_type_varchar_overflow_items
+						ALTER COLUMN label TYPE VARCHAR(3);`,
+					ExpectedErr: `too long`,
+				},
+				{
+					Query: `SELECT id, label, pg_typeof(label)::text
+						FROM alter_type_varchar_overflow_items;`,
+					Expected: []sql.Row{{1, "abcd", "text"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro reproduces an
 // ALTER TABLE persistence bug: PostgreSQL rewrites existing timetz values
 // through the new column typmod.
