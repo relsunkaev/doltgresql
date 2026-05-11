@@ -16599,6 +16599,24 @@ They are worth keeping, but they are not counted as found bugs.
   stored array to `{abc,"ab ",abc}`, so array mutation can persist character
   elements with invalid fixed-width semantics.
 
+### `array_prepend` can persist underpadded or truncated character array elements
+
+- Reproducer: `TestCharacterArrayPrependAppliesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCharacterArrayPrependAppliesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning `array_prepend('ab', labels)` into a
+  `character(3)[]` column pads the prepended element so
+  `octet_length(labels[1]) = 3` and it compares equal to
+  `'ab '::character(3)`. A later `array_prepend('abcd', labels)` rejects the
+  update with `value too long`, leaving the stored array unchanged.
+- Observed Doltgres behavior: the short prepended element has
+  `octet_length(labels[1]) = 2` and does not compare equal to the padded
+  `character(3)` value. The overlong prepend also succeeds and extends the
+  stored array to `{abc,"ab ",abc}`, so array mutation can persist character
+  elements with invalid fixed-width semantics.
+
 ### `array_prepend` can persist values outside varchar array element typmods
 
 - Reproducer: `TestVarcharArrayPrependValidatesElementTypmodRepro` in

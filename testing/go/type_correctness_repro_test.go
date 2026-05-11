@@ -631,6 +631,49 @@ func TestCharacterArrayAppendAppliesElementTypmodRepro(t *testing.T) {
 	})
 }
 
+// TestCharacterArrayPrependAppliesElementTypmodRepro reproduces array
+// persistence bugs: array_prepend results assigned into character(n)[] columns
+// must pad shorter prepended elements and reject over-length prepended
+// elements.
+func TestCharacterArrayPrependAppliesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "character array_prepend applies element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE character_array_prepend_typmod_items (
+					id INT PRIMARY KEY,
+					labels CHARACTER(3)[]
+				);`,
+				`INSERT INTO character_array_prepend_typmod_items
+					VALUES (1, ARRAY['abc']::character(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE character_array_prepend_typmod_items
+						SET labels = array_prepend('ab', labels)
+						WHERE id = 1;`,
+				},
+				{
+					Query: `SELECT labels::text, octet_length(labels[1]), labels[1] = 'ab '::CHARACTER(3)
+						FROM character_array_prepend_typmod_items;`,
+					Expected: []sql.Row{{`{"ab ",abc}`, 3, true}},
+				},
+				{
+					Query: `UPDATE character_array_prepend_typmod_items
+						SET labels = array_prepend('abcd', labels)
+						WHERE id = 1;`,
+					ExpectedErr: `value too long`,
+				},
+				{
+					Query: `SELECT labels::text
+						FROM character_array_prepend_typmod_items;`,
+					Expected: []sql.Row{{`{"ab ",abc}`}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterArrayTypmodSupportsEqualityRepro reproduces an array
 // correctness bug: PostgreSQL array equality delegates to the element type, so
 // character(n) array elements that differ only by trailing padding spaces
