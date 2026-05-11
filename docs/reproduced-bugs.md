@@ -1556,6 +1556,21 @@ artifacts only; no fixes are included here.
   type to `character varying`, and rewrites the stored value from `abcd` to
   `abc`, so a schema change can silently truncate persisted data.
 
+### ALTER COLUMN TYPE varchar typmod rewrites keep excess trailing spaces
+
+- Reproducer: `TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro -count=1`.
+- Expected PostgreSQL behavior: converting a `text` column containing
+  `abc   ` to `varchar(3)` succeeds because the excess characters are all
+  spaces, changes the column type to `character varying`, and rewrites the
+  stored value to `abc` with `length(label) = 3`.
+- Observed Doltgres behavior: the `ALTER TABLE` succeeds and changes the
+  column type, but `length(label)` remains `6`, so a schema rewrite can persist
+  a value outside the declared `varchar(3)` typmod.
+
 ### ALTER COLUMN TYPE character typmod rewrites truncate or underpad values
 
 - Reproducer: `TestAlterColumnTypeCharacterAppliesTypmodRepro` in
@@ -1696,6 +1711,22 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: existing rows are backfilled with
   `3 days 04:05:06.789`, so adding an interval typmod column with a default can
   persist values outside the new column's declared field/precision.
+
+### ALTER TABLE ADD COLUMN varchar typmod defaults reject trailing spaces
+
+- Reproducer:
+  `TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro` in
+  `testing/go/alter_table_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `ALTER TABLE ... ADD COLUMN label VARCHAR(3)
+  DEFAULT 'abc   '` accepts the default because the excess characters are all
+  spaces, then backfills every existing row with `abc` at `length(label) = 3`.
+- Observed Doltgres behavior: the `ALTER TABLE` fails with `value too long for
+  type varying(3): out of range`, so a PostgreSQL-compatible schema change is
+  rejected before the rows can be backfilled with the typmod-coerced value.
 
 ### ALTER TABLE ADD COLUMN character typmod defaults backfill underpadded values
 

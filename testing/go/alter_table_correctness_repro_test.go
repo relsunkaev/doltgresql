@@ -382,6 +382,35 @@ func TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro(t *testing.T) {
 	})
 }
 
+// TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro reproduces an ALTER
+// TABLE persistence bug: PostgreSQL allows a varchar(n) rewrite when only the
+// trailing spaces exceed the typmod, but stores the truncated value.
+func TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER COLUMN TYPE varchar truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE alter_type_varchar_trailing_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO alter_type_varchar_trailing_items VALUES (1, 'abc   ');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_type_varchar_trailing_items
+						ALTER COLUMN label TYPE VARCHAR(3);`,
+				},
+				{
+					Query: `SELECT id, label, length(label), pg_typeof(label)::text
+						FROM alter_type_varchar_trailing_items;`,
+					Expected: []sql.Row{{1, "abc", 3, "character varying"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterColumnTypeCharacterAppliesTypmodRepro reproduces ALTER TABLE
 // persistence bugs: PostgreSQL rewrites existing rows through character(n)
 // typmods, rejecting overlong values and padding shorter values.
@@ -698,6 +727,36 @@ func TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro(t
 						FROM alter_add_interval_typmod_default_items
 						GROUP BY ds::text;`,
 					Expected: []sql.Row{{"3 days 04:05:07", 2}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro
+// reproduces an ALTER TABLE correctness bug: PostgreSQL accepts a varchar(n)
+// default whose only excess characters are trailing spaces and backfills the
+// truncated value into existing rows.
+func TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE ADD varchar typmod column default truncates trailing spaces",
+			SetUpScript: []string{
+				`CREATE TABLE alter_add_varchar_trailing_default_items (
+					id INT PRIMARY KEY
+				);`,
+				`INSERT INTO alter_add_varchar_trailing_default_items VALUES (1), (2);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_add_varchar_trailing_default_items
+						ADD COLUMN label VARCHAR(3) DEFAULT 'abc   ';`,
+				},
+				{
+					Query: `SELECT label, length(label), count(*)
+						FROM alter_add_varchar_trailing_default_items
+						GROUP BY label;`,
+					Expected: []sql.Row{{"abc", 3, 2}},
 				},
 			},
 		},
