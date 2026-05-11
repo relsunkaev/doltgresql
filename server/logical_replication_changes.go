@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -59,9 +60,12 @@ type replicationChangeCapture struct {
 }
 
 type publicationChangeTarget struct {
-	name      string
-	columns   []string
-	rowFilter string
+	name          string
+	columns       []string
+	rowFilter     string
+	publishInsert bool
+	publishUpdate bool
+	publishDelete bool
 }
 
 type rowFilterValue struct {
@@ -70,8 +74,10 @@ type rowFilterValue struct {
 }
 
 type replicationProjectedRow struct {
-	newRow Row
-	oldRow Row
+	newRow       Row
+	oldRow       Row
+	action       replicationChangeAction
+	forceOldFull bool
 }
 
 func prepareReplicationChangeCapture(query ConvertedQuery, fullRowColumns []string) (*replicationChangeCapture, bool) {
@@ -465,32 +471,39 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 	var targets []publicationChangeTarget
 	tableID := id.NewTable(schema, capture.table)
 	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
-		if !publicationPublishesAction(pub, capture.action) {
+		if !publicationPublishesCaptureAction(pub, capture.action) {
 			return false, nil
 		}
 		for _, relation := range pub.Tables {
 			if relation.Table == tableID {
-				targets = append(targets, publicationChangeTarget{
-					name:      pub.ID.PublicationName(),
-					columns:   relation.Columns,
-					rowFilter: relation.RowFilter,
-				})
+				targets = append(targets, publicationChangeTargetFor(pub, relation.Columns, relation.RowFilter))
 				return false, nil
 			}
 		}
 		if pub.AllTables {
-			targets = append(targets, publicationChangeTarget{name: pub.ID.PublicationName()})
+			targets = append(targets, publicationChangeTargetFor(pub, nil, ""))
 			return false, nil
 		}
 		for _, pubSchema := range pub.Schemas {
 			if strings.EqualFold(pubSchema, schema) {
-				targets = append(targets, publicationChangeTarget{name: pub.ID.PublicationName()})
+				targets = append(targets, publicationChangeTargetFor(pub, nil, ""))
 				return false, nil
 			}
 		}
 		return false, nil
 	})
 	return targets, err
+}
+
+func publicationChangeTargetFor(pub publications.Publication, columns []string, rowFilter string) publicationChangeTarget {
+	return publicationChangeTarget{
+		name:          pub.ID.PublicationName(),
+		columns:       columns,
+		rowFilter:     rowFilter,
+		publishInsert: pub.PublishInsert,
+		publishUpdate: pub.PublishUpdate,
+		publishDelete: pub.PublishDelete,
+	}
 }
 
 func (capture *replicationChangeCapture) projectRowsForPublication(target publicationChangeTarget) ([]pgproto3.FieldDescription, []replicationProjectedRow, error) {
@@ -508,19 +521,24 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 	}
 	rows := make([]replicationProjectedRow, 0, len(capture.rows))
 	for rowIdx, row := range capture.rows {
-		matches, err := capture.rowMatchesPublicationFilter(row, filterExpr)
+		newMatches, err := capture.rowMatchesPublicationFilter(row, filterExpr)
 		if err != nil {
 			return nil, nil, err
-		}
-		if !matches {
-			continue
 		}
 		projected := Row{val: make([][]byte, len(indexes))}
 		for i, idx := range indexes {
 			projected.val[i] = append([]byte(nil), row.val[idx]...)
 		}
-		projectedRow := replicationProjectedRow{newRow: projected}
+		projectedRow := replicationProjectedRow{
+			newRow: projected,
+			action: capture.action,
+		}
+		oldMatches := false
 		if rowIdx < len(capture.oldRows) {
+			oldMatches, err = capture.rowMatchesPublicationFilter(capture.oldRows[rowIdx], filterExpr)
+			if err != nil {
+				return nil, nil, err
+			}
 			projectedOld := Row{val: make([][]byte, len(indexes))}
 			for i, idx := range indexes {
 				if idx < len(capture.oldRows[rowIdx].val) {
@@ -529,9 +547,43 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 			}
 			projectedRow.oldRow = projectedOld
 		}
+		if capture.action == replicationChangeUpdate && rowIdx < len(capture.oldRows) {
+			switch {
+			case oldMatches && newMatches:
+				projectedRow.action = replicationChangeUpdate
+			case oldMatches && !newMatches:
+				projectedRow.action = replicationChangeDelete
+				projectedRow.newRow = projectedRow.oldRow
+				projectedRow.oldRow = Row{}
+				projectedRow.forceOldFull = true
+			case !oldMatches && newMatches:
+				projectedRow.action = replicationChangeInsert
+				projectedRow.oldRow = Row{}
+			default:
+				continue
+			}
+		} else if !newMatches {
+			continue
+		}
+		if !target.publishesAction(projectedRow.action) {
+			continue
+		}
 		rows = append(rows, projectedRow)
 	}
 	return fields, rows, nil
+}
+
+func (target publicationChangeTarget) publishesAction(action replicationChangeAction) bool {
+	switch action {
+	case replicationChangeInsert:
+		return target.publishInsert
+	case replicationChangeUpdate:
+		return target.publishUpdate
+	case replicationChangeDelete:
+		return target.publishDelete
+	default:
+		return false
+	}
 }
 
 func (capture *replicationChangeCapture) publicationColumnIndexes(columns []string) ([]int, error) {
@@ -663,7 +715,22 @@ func evalPublicationFilterComparison(expr *vitess.ComparisonExpr, values map[str
 	case vitess.EqualStr:
 		return rowFilterValuesEqual(left, right), nil
 	case vitess.NotEqualStr, "<>":
+		if left.null || right.null {
+			return false, nil
+		}
 		return !rowFilterValuesEqual(left, right), nil
+	case vitess.LessThanStr:
+		cmp, ok := rowFilterValuesCompare(left, right)
+		return ok && cmp < 0, nil
+	case vitess.LessEqualStr:
+		cmp, ok := rowFilterValuesCompare(left, right)
+		return ok && cmp <= 0, nil
+	case vitess.GreaterThanStr:
+		cmp, ok := rowFilterValuesCompare(left, right)
+		return ok && cmp > 0, nil
+	case vitess.GreaterEqualStr:
+		cmp, ok := rowFilterValuesCompare(left, right)
+		return ok && cmp >= 0, nil
 	default:
 		return false, errors.Errorf("publication row filter comparison operator %q is not supported", expr.Operator)
 	}
@@ -692,7 +759,34 @@ func rowFilterValuesEqual(left rowFilterValue, right rowFilterValue) bool {
 	if left.null || right.null {
 		return false
 	}
+	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
+		if rightNum, ok := parseRowFilterNumeric(right.data); ok {
+			return leftNum.Cmp(rightNum) == 0
+		}
+	}
 	return string(left.data) == string(right.data)
+}
+
+func rowFilterValuesCompare(left rowFilterValue, right rowFilterValue) (int, bool) {
+	if left.null || right.null {
+		return 0, false
+	}
+	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
+		if rightNum, ok := parseRowFilterNumeric(right.data); ok {
+			return leftNum.Cmp(rightNum), true
+		}
+	}
+	return bytes.Compare(left.data, right.data), true
+}
+
+func parseRowFilterNumeric(data []byte) (*big.Rat, bool) {
+	value := strings.TrimSpace(string(data))
+	if value == "" {
+		return nil, false
+	}
+	rat := new(big.Rat)
+	_, ok := rat.SetString(value)
+	return rat, ok
 }
 
 func publicationPublishesAction(pub publications.Publication, action replicationChangeAction) bool {
@@ -708,6 +802,13 @@ func publicationPublishesAction(pub publications.Publication, action replication
 	default:
 		return false
 	}
+}
+
+func publicationPublishesCaptureAction(pub publications.Publication, action replicationChangeAction) bool {
+	if action == replicationChangeUpdate {
+		return pub.PublishInsert || pub.PublishUpdate || pub.PublishDelete
+	}
+	return publicationPublishesAction(pub, action)
 }
 
 func encodeBeginMessage(commitLSN pglogrepl.LSN) []byte {
@@ -821,7 +922,11 @@ func logicalReplicationIndexColumnName(expr string) string {
 }
 
 func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row replicationProjectedRow, fields []pgproto3.FieldDescription, keyColumns map[string]struct{}, identity replicaidentity.Identity) []byte {
-	switch capture.action {
+	action := row.action
+	if action == 0 {
+		action = capture.action
+	}
+	switch action {
 	case replicationChangeInsert:
 		data := []byte{byte(pglogrepl.MessageTypeInsert)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
@@ -842,7 +947,7 @@ func (capture *replicationChangeCapture) encodeRowMessage(relationID uint32, row
 	case replicationChangeDelete:
 		data := []byte{byte(pglogrepl.MessageTypeDelete)}
 		data = binary.BigEndian.AppendUint32(data, relationID)
-		if identity == replicaidentity.IdentityFull {
+		if identity == replicaidentity.IdentityFull || row.forceOldFull {
 			data = append(data, 'O')
 			return appendTupleData(data, row.newRow.val)
 		}
@@ -870,7 +975,7 @@ func replicaIdentityKeyChanged(oldValues [][]byte, newValues [][]byte, fields []
 
 func replicaIdentityTuple(values [][]byte, fields []pgproto3.FieldDescription, keyColumns map[string]struct{}) [][]byte {
 	if len(keyColumns) == 0 {
-		return nil
+		return values
 	}
 	ret := make([][]byte, 0, len(keyColumns))
 	for i, field := range fields {
@@ -882,6 +987,9 @@ func replicaIdentityTuple(values [][]byte, fields []pgproto3.FieldDescription, k
 		} else {
 			ret = append(ret, nil)
 		}
+	}
+	if len(ret) == 0 {
+		return values
 	}
 	return ret
 }
