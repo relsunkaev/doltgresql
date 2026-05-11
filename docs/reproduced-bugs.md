@@ -16504,6 +16504,37 @@ They are worth keeping, but they are not counted as found bugs.
   `function: 'trim_array' not found`, so standard array truncation expressions
   cannot be used in queries, defaults, or writes.
 
+### `array_append` can persist values outside varchar array element typmods
+
+- Reproducer: `TestVarcharArrayAppendValidatesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestVarcharArrayAppendValidatesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning
+  `array_append(labels, 'abcd')` into a `varchar(3)[]` column rejects the
+  statement with `value too long for type character varying(3)`, leaving the
+  original stored array `{abc}` unchanged.
+- Observed Doltgres behavior: the update succeeds and the stored array becomes
+  `{abc,abc}`. The appended `abcd` is silently truncated through the array
+  element typmod instead of rejecting the write, so an invalid update is
+  accepted and persisted.
+
+### `array_append` can persist values outside numeric array element typmods
+
+- Reproducer: `TestNumericArrayAppendValidatesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestNumericArrayAppendValidatesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning
+  `array_append(amounts, 999.995)` into a `numeric(5,2)[]` column rejects the
+  statement with `numeric field overflow`, leaving the original stored array
+  `{1.23}` unchanged.
+- Observed Doltgres behavior: the update succeeds and the stored array becomes
+  `{1.23,1000.00}`. The appended value rounds outside the declared precision
+  but is still persisted in the `numeric(5,2)[]` column.
+
 ### Arrays of typmod-constrained elements cannot be compared for equality
 
 - Reproducers: `TestCharacterArrayTypmodSupportsEqualityRepro`,

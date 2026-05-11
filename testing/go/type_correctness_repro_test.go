@@ -493,6 +493,38 @@ func TestVarcharArrayTypmodTruncatesTrailingSpacesGuard(t *testing.T) {
 	})
 }
 
+// TestVarcharArrayAppendValidatesElementTypmodRepro reproduces an array
+// persistence bug: array mutation results assigned into varchar(n)[] columns
+// must validate the appended element against the column's element typmod.
+func TestVarcharArrayAppendValidatesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar array_append validates element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE varchar_array_append_typmod_items (
+					id INT PRIMARY KEY,
+					labels VARCHAR(3)[]
+				);`,
+				`INSERT INTO varchar_array_append_typmod_items
+					VALUES (1, ARRAY['abc']::varchar(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE varchar_array_append_typmod_items
+						SET labels = array_append(labels, 'abcd')
+						WHERE id = 1;`,
+					ExpectedErr: `value too long`,
+				},
+				{
+					Query: `SELECT labels::text
+						FROM varchar_array_append_typmod_items;`,
+					Expected: []sql.Row{{"{abc}"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterArrayTypmodSupportsEqualityRepro reproduces an array
 // correctness bug: PostgreSQL array equality delegates to the element type, so
 // character(n) array elements that differ only by trailing padding spaces
@@ -910,6 +942,38 @@ func TestNumericArrayTypmodsRoundStoredElementsGuard(t *testing.T) {
 				{
 					Query:       `INSERT INTO numeric_array_typmod_items VALUES (2, ARRAY[999.995]::numeric[]);`,
 					ExpectedErr: `numeric field overflow`,
+				},
+			},
+		},
+	})
+}
+
+// TestNumericArrayAppendValidatesElementTypmodRepro reproduces an array
+// persistence bug: array mutation results assigned into numeric(p,s)[] columns
+// must validate the appended element against the column's element typmod.
+func TestNumericArrayAppendValidatesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "numeric array_append validates element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE numeric_array_append_typmod_items (
+					id INT PRIMARY KEY,
+					amounts NUMERIC(5,2)[]
+				);`,
+				`INSERT INTO numeric_array_append_typmod_items
+					VALUES (1, ARRAY[1.23]::numeric(5,2)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE numeric_array_append_typmod_items
+						SET amounts = array_append(amounts, 999.995)
+						WHERE id = 1;`,
+					ExpectedErr: `numeric field overflow`,
+				},
+				{
+					Query: `SELECT amounts::text
+						FROM numeric_array_append_typmod_items;`,
+					Expected: []sql.Row{{"{1.23}"}},
 				},
 			},
 		},
