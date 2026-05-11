@@ -3263,6 +3263,23 @@ artifacts only; no fixes are included here.
   treat that conflict as its arbiter. The statement fails with `duplicate key
   value violates unique constraint`, and the original row remains unchanged.
 
+### CREATE UNIQUE INDEX NULLS NOT DISTINCT accepts existing duplicate NULLs
+
+- Reproducer:
+  `TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro` in
+  `testing/go/index_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off
+  ./testing/go -run
+  TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: building a `UNIQUE NULLS NOT DISTINCT` index
+  scans existing rows and rejects duplicate `NULL` keys with a duplicate-key
+  error, leaving no invalid index behind.
+- Observed Doltgres behavior: `CREATE UNIQUE INDEX ... NULLS NOT DISTINCT`
+  succeeds on a table that already contains two `NULL` keys, and
+  `pg_indexes` reports the invalid unique index as created.
+
 ### Index definitions accept invalid expressions PostgreSQL rejects
 
 - Reproducer: `TestIndexDefinitionsRejectInvalidExpressionsRepro` in

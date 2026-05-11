@@ -460,6 +460,41 @@ func TestOnConflictUsesNullsNotDistinctUniqueIndexRepro(t *testing.T) {
 	})
 }
 
+// TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro
+// reproduces an index integrity bug: PostgreSQL validates existing rows when
+// building a UNIQUE NULLS NOT DISTINCT index.
+func TestCreateUniqueIndexNullsNotDistinctRejectsExistingDuplicateNullsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE UNIQUE INDEX NULLS NOT DISTINCT rejects existing duplicate NULLs",
+			SetUpScript: []string{
+				`CREATE TABLE create_nulls_not_distinct_existing_items (
+					id INT PRIMARY KEY,
+					code INT
+				);`,
+				`INSERT INTO create_nulls_not_distinct_existing_items VALUES
+					(1, NULL),
+					(2, NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE UNIQUE INDEX create_nulls_not_distinct_existing_code_idx
+						ON create_nulls_not_distinct_existing_items (code)
+						NULLS NOT DISTINCT;`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_indexes
+						WHERE tablename = 'create_nulls_not_distinct_existing_items'
+							AND indexname = 'create_nulls_not_distinct_existing_code_idx';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestIndexDefinitionsRejectInvalidExpressionsRepro reproduces index
 // correctness bugs where Doltgres accepts expressions PostgreSQL rejects in
 // persisted index definitions.
