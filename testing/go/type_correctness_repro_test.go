@@ -525,6 +525,70 @@ func TestVarcharArrayAppendValidatesElementTypmodRepro(t *testing.T) {
 	})
 }
 
+// TestVarcharArrayPrependValidatesElementTypmodRepro reproduces an array
+// persistence bug: array_prepend results assigned into varchar(n)[] columns
+// must validate the prepended element against the column's element typmod.
+func TestVarcharArrayPrependValidatesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar array_prepend validates element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE varchar_array_prepend_typmod_items (
+					id INT PRIMARY KEY,
+					labels VARCHAR(3)[]
+				);`,
+				`INSERT INTO varchar_array_prepend_typmod_items
+					VALUES (1, ARRAY['abc']::varchar(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE varchar_array_prepend_typmod_items
+						SET labels = array_prepend('abcd', labels)
+						WHERE id = 1;`,
+					ExpectedErr: `value too long`,
+				},
+				{
+					Query: `SELECT labels::text
+						FROM varchar_array_prepend_typmod_items;`,
+					Expected: []sql.Row{{"{abc}"}},
+				},
+			},
+		},
+	})
+}
+
+// TestVarcharArrayCatReportsAssignmentTypmodErrorRepro reproduces an array
+// correctness bug: PostgreSQL resolves array_cat with a compatible untyped
+// array literal before assignment validation rejects the oversized element.
+func TestVarcharArrayCatReportsAssignmentTypmodErrorRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "varchar array_cat reports assignment typmod error",
+			SetUpScript: []string{
+				`CREATE TABLE varchar_array_cat_typmod_items (
+					id INT PRIMARY KEY,
+					labels VARCHAR(3)[]
+				);`,
+				`INSERT INTO varchar_array_cat_typmod_items
+					VALUES (1, ARRAY['abc']::varchar(3)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE varchar_array_cat_typmod_items
+						SET labels = array_cat(labels, ARRAY['abcd'])
+						WHERE id = 1;`,
+					ExpectedErr: `value too long`,
+				},
+				{
+					Query: `SELECT labels::text
+						FROM varchar_array_cat_typmod_items;`,
+					Expected: []sql.Row{{"{abc}"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCharacterArrayTypmodSupportsEqualityRepro reproduces an array
 // correctness bug: PostgreSQL array equality delegates to the element type, so
 // character(n) array elements that differ only by trailing padding spaces
@@ -973,6 +1037,70 @@ func TestNumericArrayAppendValidatesElementTypmodRepro(t *testing.T) {
 				{
 					Query: `SELECT amounts::text
 						FROM numeric_array_append_typmod_items;`,
+					Expected: []sql.Row{{"{1.23}"}},
+				},
+			},
+		},
+	})
+}
+
+// TestNumericArrayPrependValidatesElementTypmodGuard guards that array_prepend
+// results assigned into numeric(p,s)[] columns validate the prepended element
+// against the column's element typmod.
+func TestNumericArrayPrependValidatesElementTypmodGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "numeric array_prepend validates element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE numeric_array_prepend_typmod_items (
+					id INT PRIMARY KEY,
+					amounts NUMERIC(5,2)[]
+				);`,
+				`INSERT INTO numeric_array_prepend_typmod_items
+					VALUES (1, ARRAY[1.23]::numeric(5,2)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE numeric_array_prepend_typmod_items
+						SET amounts = array_prepend(999.995, amounts)
+						WHERE id = 1;`,
+					ExpectedErr: `numeric field overflow`,
+				},
+				{
+					Query: `SELECT amounts::text
+						FROM numeric_array_prepend_typmod_items;`,
+					Expected: []sql.Row{{"{1.23}"}},
+				},
+			},
+		},
+	})
+}
+
+// TestNumericArrayCatValidatesElementTypmodRepro reproduces an array
+// persistence bug: array_cat results assigned into numeric(p,s)[] columns must
+// validate the concatenated elements against the column's element typmod.
+func TestNumericArrayCatValidatesElementTypmodRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "numeric array_cat validates element typmod",
+			SetUpScript: []string{
+				`CREATE TABLE numeric_array_cat_typmod_items (
+					id INT PRIMARY KEY,
+					amounts NUMERIC(5,2)[]
+				);`,
+				`INSERT INTO numeric_array_cat_typmod_items
+					VALUES (1, ARRAY[1.23]::numeric(5,2)[]);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE numeric_array_cat_typmod_items
+						SET amounts = array_cat(amounts, ARRAY[999.995])
+						WHERE id = 1;`,
+					ExpectedErr: `numeric field overflow`,
+				},
+				{
+					Query: `SELECT amounts::text
+						FROM numeric_array_cat_typmod_items;`,
 					Expected: []sql.Row{{"{1.23}"}},
 				},
 			},

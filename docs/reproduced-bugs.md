@@ -16520,6 +16520,38 @@ They are worth keeping, but they are not counted as found bugs.
   element typmod instead of rejecting the write, so an invalid update is
   accepted and persisted.
 
+### `array_prepend` can persist values outside varchar array element typmods
+
+- Reproducer: `TestVarcharArrayPrependValidatesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestVarcharArrayPrependValidatesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning
+  `array_prepend('abcd', labels)` into a `varchar(3)[]` column rejects the
+  statement with `value too long for type character varying(3)`, leaving the
+  original stored array `{abc}` unchanged.
+- Observed Doltgres behavior: the update succeeds and the stored array becomes
+  `{abc,abc}`. The prepended `abcd` is silently truncated through the array
+  element typmod instead of rejecting the write, so an invalid update is
+  accepted and persisted.
+
+### `array_cat` fails before varchar array assignment typmod validation
+
+- Reproducer: `TestVarcharArrayCatReportsAssignmentTypmodErrorRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestVarcharArrayCatReportsAssignmentTypmodErrorRepro -count=1`.
+- Expected PostgreSQL behavior: `array_cat(labels, ARRAY['abcd'])` resolves
+  against the `varchar(3)[]` target expression and the assignment rejects the
+  oversized concatenated element with `value too long for type character
+  varying(3)`, leaving the original stored array `{abc}` unchanged.
+- Observed Doltgres behavior: the update fails earlier with
+  `function array_cat(varchar(3)[](3), text[]) does not exist`, so the
+  compatible array concatenation call is rejected during function resolution
+  rather than reaching PostgreSQL's assignment validation boundary.
+
 ### `array_append` can persist values outside numeric array element typmods
 
 - Reproducer: `TestNumericArrayAppendValidatesElementTypmodRepro` in
@@ -16534,6 +16566,21 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: the update succeeds and the stored array becomes
   `{1.23,1000.00}`. The appended value rounds outside the declared precision
   but is still persisted in the `numeric(5,2)[]` column.
+
+### `array_cat` can persist values outside numeric array element typmods
+
+- Reproducer: `TestNumericArrayCatValidatesElementTypmodRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestNumericArrayCatValidatesElementTypmodRepro -count=1`.
+- Expected PostgreSQL behavior: assigning
+  `array_cat(amounts, ARRAY[999.995])` into a `numeric(5,2)[]` column rejects
+  the statement with `numeric field overflow`, leaving the original stored
+  array `{1.23}` unchanged.
+- Observed Doltgres behavior: the update succeeds and the stored array becomes
+  `{1.23,1000.00}`. The concatenated value rounds outside the declared
+  precision but is still persisted in the `numeric(5,2)[]` column.
 
 ### Arrays of typmod-constrained elements cannot be compared for equality
 
