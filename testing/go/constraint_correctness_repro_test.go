@@ -1237,6 +1237,41 @@ func TestAddColumnCheckConstraintValidatesBackfilledRowsRepro(t *testing.T) {
 	})
 }
 
+// TestAddColumnForeignKeyValidatesBackfilledDefaultGuard guards that adding a
+// column with a default and a REFERENCES clause validates the values backfilled
+// into existing rows before accepting the new column and foreign key.
+func TestAddColumnForeignKeyValidatesBackfilledDefaultGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE ADD COLUMN validates backfilled foreign keys",
+			SetUpScript: []string{
+				`CREATE TABLE add_fk_column_default_parents (
+					id INT PRIMARY KEY
+				);`,
+				`CREATE TABLE add_fk_column_default_children (
+					id INT PRIMARY KEY
+				);`,
+				`INSERT INTO add_fk_column_default_children VALUES (1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE add_fk_column_default_children
+						ADD COLUMN parent_id INT DEFAULT 42
+						REFERENCES add_fk_column_default_parents(id);`,
+					ExpectedErr: `Foreign key violation`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM information_schema.columns
+						WHERE table_name = 'add_fk_column_default_children'
+							AND column_name = 'parent_id';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestCheckConstraintsRejectNonScalarExpressionsRepro guards rejection of
 // several non-scalar CHECK expressions and reproduces that set-returning
 // functions are currently accepted.
