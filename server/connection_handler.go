@@ -86,6 +86,8 @@ type ConnectionHandler struct {
 	pendingReplicationCaptures []*replicationChangeCapture
 	// pendingReplicationAdvance records a row-producing transaction without an active logical sender.
 	pendingReplicationAdvance bool
+	// pendingReplicationSavepoints records replication-buffer positions for transaction savepoints.
+	pendingReplicationSavepoints []replicationSavepointState
 	// replicationMode is true when the client connected with replication=database.
 	replicationMode bool
 	// startupParams stores startup parameters that are needed after authentication, such as application_name.
@@ -101,6 +103,12 @@ type ConnectionHandler struct {
 	// query — so the value lives for the connection's lifetime and
 	// must be nonzero to distinguish from "uninitialized" sessions.
 	cancelSecretKey uint32
+}
+
+type replicationSavepointState struct {
+	name       string
+	captures   int
+	advanceLSN bool
 }
 
 // Set this env var to disable panic handling in the connection, which is useful when debugging a panic
@@ -1487,16 +1495,19 @@ func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) erro
 	switch stmt := query.AST.(type) {
 	case *sqlparser.Savepoint:
 		name := stmt.Identifier
+		h.pushReplicationSavepoint(name)
 		apply = func(ctx *sql.Context) error {
 			return functions.PushSessionXactVarSavepoint(ctx, name)
 		}
 	case *sqlparser.RollbackSavepoint:
 		name := stmt.Identifier
+		h.rollbackReplicationToSavepoint(name)
 		apply = func(ctx *sql.Context) error {
 			return functions.RollbackSessionXactVarsToSavepoint(ctx, name)
 		}
 	case *sqlparser.ReleaseSavepoint:
 		name := stmt.Identifier
+		h.releaseReplicationSavepoint(name)
 		apply = func(ctx *sql.Context) error {
 			functions.ReleaseSessionXactVarSavepoint(ctx, name)
 			return nil
@@ -1573,6 +1584,47 @@ func (h *ConnectionHandler) flushPendingReplication(ctx *sql.Context) error {
 func (h *ConnectionHandler) clearPendingReplication() {
 	h.pendingReplicationCaptures = nil
 	h.pendingReplicationAdvance = false
+	h.pendingReplicationSavepoints = nil
+}
+
+func (h *ConnectionHandler) pushReplicationSavepoint(name string) {
+	if !h.inTransaction {
+		return
+	}
+	h.pendingReplicationSavepoints = append(h.pendingReplicationSavepoints, replicationSavepointState{
+		name:       strings.ToLower(name),
+		captures:   len(h.pendingReplicationCaptures),
+		advanceLSN: h.pendingReplicationAdvance,
+	})
+}
+
+func (h *ConnectionHandler) rollbackReplicationToSavepoint(name string) {
+	idx := h.replicationSavepointIndex(name)
+	if idx < 0 {
+		return
+	}
+	savepoint := h.pendingReplicationSavepoints[idx]
+	h.pendingReplicationCaptures = h.pendingReplicationCaptures[:savepoint.captures]
+	h.pendingReplicationAdvance = savepoint.advanceLSN
+	h.pendingReplicationSavepoints = h.pendingReplicationSavepoints[:idx+1]
+}
+
+func (h *ConnectionHandler) releaseReplicationSavepoint(name string) {
+	idx := h.replicationSavepointIndex(name)
+	if idx < 0 {
+		return
+	}
+	h.pendingReplicationSavepoints = h.pendingReplicationSavepoints[:idx]
+}
+
+func (h *ConnectionHandler) replicationSavepointIndex(name string) int {
+	name = strings.ToLower(name)
+	for i := len(h.pendingReplicationSavepoints) - 1; i >= 0; i-- {
+		if h.pendingReplicationSavepoints[i].name == name {
+			return i
+		}
+	}
+	return -1
 }
 
 func makeCommandComplete(tag string, rows int32) *pgproto3.CommandComplete {
