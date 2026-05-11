@@ -510,6 +510,41 @@ func TestUniqueIndexNullsNotDistinctRejectsDuplicateNullsRepro(t *testing.T) {
 	})
 }
 
+// TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard guards that
+// UNIQUE NULLS NOT DISTINCT indexes reject updates that would create a second
+// NULL key value.
+func TestUniqueIndexNullsNotDistinctRejectsUpdatedDuplicateNullsGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "unique index NULLS NOT DISTINCT rejects updated duplicate NULLs",
+			SetUpScript: []string{
+				`CREATE TABLE unique_nulls_not_distinct_update_items (
+					id INT PRIMARY KEY,
+					code INT
+				);`,
+				`CREATE UNIQUE INDEX unique_nulls_not_distinct_update_code_idx
+					ON unique_nulls_not_distinct_update_items (code)
+					NULLS NOT DISTINCT;`,
+				`INSERT INTO unique_nulls_not_distinct_update_items VALUES
+					(1, NULL),
+					(2, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `UPDATE unique_nulls_not_distinct_update_items SET code = NULL WHERE id = 2;`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `SELECT id, code
+						FROM unique_nulls_not_distinct_update_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, nil}, {2, 10}},
+				},
+			},
+		},
+	})
+}
+
 // TestOnConflictUsesNullsNotDistinctUniqueIndexRepro reproduces an ON CONFLICT
 // correctness bug: PostgreSQL can infer a NULLS NOT DISTINCT unique index and
 // route duplicate NULL key values through DO UPDATE.
