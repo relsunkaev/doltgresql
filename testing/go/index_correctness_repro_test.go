@@ -179,6 +179,56 @@ func TestPartialUniqueIndexEnforcesPredicateRepro(t *testing.T) {
 	})
 }
 
+// TestPartialUniqueIndexUpdatesPredicateMembershipGuard guards that partial
+// unique index entries are updated when a row enters or leaves the predicate.
+func TestPartialUniqueIndexUpdatesPredicateMembershipGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "partial unique index updates predicate membership",
+			SetUpScript: []string{
+				`CREATE TABLE partial_unique_update_items (
+					id INT PRIMARY KEY,
+					code INT NOT NULL,
+					active BOOL NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX partial_unique_update_active_code_idx
+					ON partial_unique_update_items (code)
+					WHERE active;`,
+				`INSERT INTO partial_unique_update_items VALUES
+					(1, 10, true),
+					(2, 10, false),
+					(3, 20, false);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `UPDATE partial_unique_update_items SET active = true WHERE id = 2;`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query: `UPDATE partial_unique_update_items SET active = false WHERE id = 1;`,
+				},
+				{
+					Query: `UPDATE partial_unique_update_items SET active = true WHERE id = 2;`,
+				},
+				{
+					Query: `INSERT INTO partial_unique_update_items VALUES (4, 10, false);`,
+				},
+				{
+					Query: `SELECT id, code, active
+						FROM partial_unique_update_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, 10, "f"},
+						{2, 10, "t"},
+						{3, 20, "f"},
+						{4, 10, "f"},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestOnConflictUsesPartialUniqueIndexPredicateRepro guards PostgreSQL upsert
 // inference for partial unique indexes when the conflict target includes the
 // matching index predicate.
