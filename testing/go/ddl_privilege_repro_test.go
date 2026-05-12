@@ -330,6 +330,38 @@ func TestCreateAggregateRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 	})
 }
 
+// TestCreateOperatorRequiresSchemaCreatePrivilegeRepro reproduces a security
+// bug: Doltgres allows a role without CREATE privilege on the target schema to
+// create an operator in that schema.
+func TestCreateOperatorRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OPERATOR requires schema CREATE privilege",
+			SetUpScript: []string{
+				`CREATE USER operator_creator PASSWORD 'creator';`,
+				`CREATE FUNCTION create_operator_private_func(left_value INT, right_value INT)
+					RETURNS BOOL
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT left_value = right_value $$;`,
+				`GRANT USAGE ON SCHEMA public TO operator_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE OPERATOR === (
+						LEFTARG = INT,
+						RIGHTARG = INT,
+						PROCEDURE = create_operator_private_func
+					);`,
+					ExpectedErr: `permission denied for schema public`,
+					Username:    `operator_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
