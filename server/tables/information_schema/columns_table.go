@@ -143,6 +143,7 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 	if col.Generated != nil {
 		isGenerated = "ALWAYS"
 	}
+	generationExpression := getGenerationExpression(col)
 
 	charName, collName, charMaxLen, charOctetLen := getCharAndCollNamesAndCharMaxAndOctetLens(ctx, col.Type)
 	numericPrecision, numericPrecisionRadix, numericScale := getColumnPrecisionAndScale(col.Type)
@@ -193,9 +194,19 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 		nil,                   // identity_minimum TODO
 		"NO",                  // identity_cycle TODO
 		isGenerated,           // is_generated
-		nil,                   // generation_expression TODO
+		generationExpression,  // generation_expression
 		"YES",                 // is_updatable
 	}
+}
+
+func getGenerationExpression(col *sql.Column) interface{} {
+	if col.Generated == nil || col.AutoIncrement {
+		return nil
+	}
+	if col.Generated.Expr != nil {
+		return col.Generated.Expr.String()
+	}
+	return col.Generated.String()
 }
 
 // getRowsFromTable returns array of rows for all accessible columns of the given table.
