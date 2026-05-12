@@ -23,6 +23,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/server/accessmethod"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // CreateAccessMethod implements CREATE ACCESS METHOD.
@@ -61,6 +62,9 @@ func (c *CreateAccessMethod) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateAccessMethod) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
+	if err := requireAccessMethodSuperuser(ctx); err != nil {
+		return nil, err
+	}
 	if err := accessmethod.Register(c.Name, c.Handler, c.Type); err != nil {
 		return nil, err
 	}
@@ -126,6 +130,9 @@ func (d *DropAccessMethod) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (d *DropAccessMethod) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
+	if err := requireAccessMethodSuperuser(ctx); err != nil {
+		return nil, err
+	}
 	for _, name := range d.Names {
 		dropped, err := accessmethod.Drop(name)
 		if err != nil {
@@ -159,4 +166,15 @@ func (d *DropAccessMethod) WithResolvedChildren(ctx context.Context, children []
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return d, nil
+}
+
+func requireAccessMethodSuperuser(ctx *sql.Context) error {
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if !userRole.IsValid() || !userRole.IsSuperUser {
+		return errors.New("must be superuser")
+	}
+	return nil
 }
