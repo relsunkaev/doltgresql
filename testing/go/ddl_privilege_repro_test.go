@@ -1015,6 +1015,38 @@ func TestDropFunctionRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropAggregateRequiresOwnershipRepro reproduces a security bug: Doltgres
+// allows a role that does not own an aggregate to drop it.
+func TestDropAggregateRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP AGGREGATE requires aggregate ownership",
+			SetUpScript: []string{
+				`CREATE USER aggregate_dropper PASSWORD 'dropper';`,
+				`CREATE FUNCTION drop_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE drop_aggregate_private(INT) (
+					SFUNC = drop_aggregate_private_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`GRANT USAGE ON SCHEMA public TO aggregate_dropper;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP AGGREGATE drop_aggregate_private(INT);`,
+					ExpectedErr: `permission denied`,
+					Username:    `aggregate_dropper`,
+					Password:    `dropper`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
