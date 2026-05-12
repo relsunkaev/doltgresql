@@ -28,15 +28,16 @@ import (
 
 // CreateTextSearchConfiguration implements CREATE TEXT SEARCH CONFIGURATION ... (COPY = ...).
 type CreateTextSearchConfiguration struct {
-	Name string
+	Namespace string
+	Name      string
 }
 
 var _ sql.ExecSourceRel = (*CreateTextSearchConfiguration)(nil)
 var _ vitess.Injectable = (*CreateTextSearchConfiguration)(nil)
 
 // NewCreateTextSearchConfiguration returns a new *CreateTextSearchConfiguration.
-func NewCreateTextSearchConfiguration(name string) *CreateTextSearchConfiguration {
-	return &CreateTextSearchConfiguration{Name: name}
+func NewCreateTextSearchConfiguration(namespace string, name string) *CreateTextSearchConfiguration {
+	return &CreateTextSearchConfiguration{Namespace: namespace, Name: name}
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -50,9 +51,13 @@ func (c *CreateTextSearchConfiguration) Resolved() bool { return true }
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateTextSearchConfiguration) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	schemaName, err := core.GetCurrentSchema(ctx)
-	if err != nil {
-		return nil, err
+	schemaName := c.Namespace
+	var err error
+	if schemaName == "" {
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
 		return nil, err

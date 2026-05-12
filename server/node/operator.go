@@ -31,6 +31,7 @@ import (
 
 // CreateOperator implements CREATE OPERATOR for function-backed binary operators.
 type CreateOperator struct {
+	Namespace string
 	Name      string
 	LeftType  string
 	RightType string
@@ -41,8 +42,8 @@ var _ sql.ExecSourceRel = (*CreateOperator)(nil)
 var _ vitess.Injectable = (*CreateOperator)(nil)
 
 // NewCreateOperator returns a new *CreateOperator.
-func NewCreateOperator(name string, leftType string, rightType string, function string) *CreateOperator {
-	return &CreateOperator{Name: name, LeftType: leftType, RightType: rightType, Function: function}
+func NewCreateOperator(namespace string, name string, leftType string, rightType string, function string) *CreateOperator {
+	return &CreateOperator{Namespace: namespace, Name: name, LeftType: leftType, RightType: rightType, Function: function}
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -64,9 +65,12 @@ func (c *CreateOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err != nil {
 		return nil, err
 	}
-	schemaName, err := core.GetCurrentSchema(ctx)
-	if err != nil {
-		return nil, err
+	schemaName := c.Namespace
+	if schemaName == "" {
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
 		return nil, err

@@ -3507,6 +3507,7 @@ func convertedCreateOperator(query string) (ConvertedQuery, bool) {
 	if matches == nil {
 		return ConvertedQuery{}, false
 	}
+	namespace, name := splitQualifiedCatalogName(matches[1])
 	options := parseCreateOperatorOptions(matches[2])
 	leftType, hasLeft := options["leftarg"]
 	rightType, hasRight := options["rightarg"]
@@ -3517,7 +3518,7 @@ func convertedCreateOperator(query string) (ConvertedQuery, bool) {
 	return ConvertedQuery{
 		String: query,
 		AST: sqlparser.InjectedStatement{
-			Statement: node.NewCreateOperator(matches[1], leftType, rightType, function),
+			Statement: node.NewCreateOperator(namespace, name, leftType, rightType, function),
 		},
 		StatementTag: "CREATE OPERATOR",
 	}, true
@@ -3577,11 +3578,11 @@ func convertedCreateTextSearchConfiguration(query string) (ConvertedQuery, bool)
 	if matches == nil {
 		return ConvertedQuery{}, false
 	}
-	_, name := splitQualifiedCatalogName(matches[1])
+	namespace, name := splitQualifiedCatalogName(matches[1])
 	return ConvertedQuery{
 		String: query,
 		AST: sqlparser.InjectedStatement{
-			Statement: node.NewCreateTextSearchConfiguration(name),
+			Statement: node.NewCreateTextSearchConfiguration(namespace, name),
 		},
 		StatementTag: "CREATE TEXT SEARCH CONFIGURATION",
 	}, true
