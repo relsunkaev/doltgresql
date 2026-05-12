@@ -30,6 +30,8 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 	switch node := node.(type) {
 	case *plan.DropTable:
 		return pgnodes.NewDropTable(node), transform.NewTree, nil
+	case *plan.DropView:
+		return pgnodes.NewDropView(node), transform.NewTree, nil
 	case *plan.InsertInto:
 		if len(node.Returning) > 0 && (node.Ignore || (node.OnDupExprs != nil && node.OnDupExprs.HasUpdates())) {
 			return pgnodes.NewOnConflictReturningInsert(node), transform.NewTree, nil

@@ -17,6 +17,7 @@ package node
 import (
 	"github.com/cockroachdb/errors"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
@@ -55,13 +56,10 @@ func (c *DropTable) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
-	dropTableIter, err := b.Build(ctx, c.gmsDropTable, r)
-	if err != nil {
-		return nil, err
-	}
-
+	targets := make([]dropTableTarget, 0, len(c.gmsDropTable.Tables))
 	for _, table := range c.gmsDropTable.Tables {
 		var dbName string
+		var err error
 		var schemaName string
 		var tableName string
 		switch table := table.(type) {
@@ -76,15 +74,34 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 			return nil, errors.Errorf("encountered unexpected table type `%T` during DROP TABLE", table)
 		}
 
-		tableID := id.NewTable(schemaName, tableName).AsId()
-		if err = id.ValidateOperation(ctx, id.Section_Table, id.Operation_Delete, dbName, tableID, id.Null); err != nil {
+		doltTableName := doltdb.TableName{Schema: schemaName, Name: tableName}
+		if err := checkTableOwnership(ctx, doltTableName); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
+		}
+
+		tableID := id.NewTable(doltTableName.Schema, doltTableName.Name).AsId()
+		if err := id.ValidateOperation(ctx, id.Section_Table, id.Operation_Delete, dbName, tableID, id.Null); err != nil {
 			return nil, err
 		}
-		if err = id.PerformOperation(ctx, id.Section_Table, id.Operation_Delete, dbName, tableID, id.Null); err != nil {
+		targets = append(targets, dropTableTarget{dbName: dbName, tableID: tableID})
+	}
+
+	dropTableIter, err := b.Build(ctx, c.gmsDropTable, r)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, target := range targets {
+		if err = id.PerformOperation(ctx, id.Section_Table, id.Operation_Delete, target.dbName, target.tableID, id.Null); err != nil {
 			return nil, err
 		}
 	}
 	return dropTableIter, err
+}
+
+type dropTableTarget struct {
+	dbName  string
+	tableID id.Id
 }
 
 // Schema implements the interface sql.ExecBuilderNode.
