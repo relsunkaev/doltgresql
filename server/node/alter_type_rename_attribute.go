@@ -33,12 +33,12 @@ import (
 // in place causes the rename to be persisted at the next writeCache (which
 // happens automatically during transaction commit).
 type AlterTypeRenameAttribute struct {
-	database  string
-	schName   string
-	typName   string
-	oldAttr   string
-	newAttr   string
-	cascade   bool
+	database string
+	schName  string
+	typName  string
+	oldAttr  string
+	newAttr  string
+	cascade  bool
 }
 
 var _ sql.ExecSourceRel = (*AlterTypeRenameAttribute)(nil)
@@ -141,5 +141,8 @@ func (c *AlterTypeRenameAttribute) RowIter(ctx *sql.Context, r sql.Row) (sql.Row
 	// the cached DoltgresType, so this mutation is visible to subsequent
 	// catalog reads in the same session as well.
 	typ.CompositeAttrs[oldIdx].Name = c.newAttr
+	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
 }

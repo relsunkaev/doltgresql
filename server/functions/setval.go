@@ -58,12 +58,11 @@ var setval_text_int64_boolean = framework.Function3{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1 any, val2 any, val3 any) (any, error) {
-		// TODO: this needs a database name to support inserts into other databases (including inserts on other branches than the current one)
-		collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+		database, schema, relation, err := ResolveSequenceNameWithDatabase(ctx, val1.(string))
 		if err != nil {
 			return nil, err
 		}
-		schema, relation, err := ResolveSequenceName(ctx, collection, val1.(string))
+		collection, err := core.GetSequencesCollectionFromContext(ctx, database)
 		if err != nil {
 			return nil, err
 		}
@@ -124,6 +123,29 @@ func ResolveSequenceName(ctx *sql.Context, resolver sequenceNameResolver, name s
 		return "", "", err
 	}
 	return schema, pathElems[0], nil
+}
+
+func ResolveSequenceNameWithDatabase(ctx *sql.Context, name string) (database string, schema string, relation string, err error) {
+	pathElems, err := splitQualifiedIdentifier(name)
+	if err != nil {
+		return "", "", "", err
+	}
+	switch len(pathElems) {
+	case 1:
+		database = ctx.GetCurrentDatabase()
+		collection, err := core.GetSequencesCollectionFromContext(ctx, database)
+		if err != nil {
+			return "", "", "", err
+		}
+		schema, relation, err = ResolveSequenceName(ctx, collection, name)
+		return database, schema, relation, err
+	case 2:
+		return ctx.GetCurrentDatabase(), pathElems[0], pathElems[1], nil
+	case 3:
+		return pathElems[0], pathElems[1], pathElems[2], nil
+	default:
+		return "", "", "", errors.Errorf(`cannot parse relation: %s`, name)
+	}
 }
 
 // splitQualifiedIdentifier splits a qualified relation name on unquoted dots,

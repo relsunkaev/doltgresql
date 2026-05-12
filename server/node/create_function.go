@@ -43,6 +43,7 @@ type RoutineParam struct {
 
 // CreateFunction implements CREATE FUNCTION.
 type CreateFunction struct {
+	DatabaseName      string
 	FunctionName      string
 	SchemaName        string
 	Replace           bool
@@ -63,6 +64,7 @@ var _ vitess.Injectable = (*CreateFunction)(nil)
 
 // NewCreateFunction returns a new *CreateFunction.
 func NewCreateFunction(
+	databaseName string,
 	functionName string,
 	schemaName string,
 	replace bool,
@@ -77,6 +79,7 @@ func NewCreateFunction(
 	sqlDefParsedStmts []vitess.Statement,
 	setOf bool) *CreateFunction {
 	return &CreateFunction{
+		DatabaseName:      databaseName,
 		FunctionName:      functionName,
 		SchemaName:        schemaName,
 		Replace:           replace,
@@ -110,7 +113,7 @@ func (c *CreateFunction) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+	funcCollection, err := core.GetFunctionsCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err
 	}

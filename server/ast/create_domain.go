@@ -91,6 +91,7 @@ func nodeCreateDomain(ctx *Context, node *tree.CreateDomain) (vitess.Statement, 
 	children = append(children, checkConstraintExprs...)
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.CreateDomain{
+			DatabaseName:         name.DbQualifier.String(),
 			SchemaName:           name.SchemaQualifier.String(),
 			Name:                 name.Name.String(),
 			AsType:               dataType,

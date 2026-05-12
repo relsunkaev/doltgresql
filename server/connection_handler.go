@@ -2616,7 +2616,7 @@ func (h *ConnectionHandler) spoolRowsCallbackWithRowSuppression(query ConvertedQ
 		}
 		sess.ClearNotices()
 
-		if returnsRow(query) && !suppressRows {
+		if queryReturnsRows(query, res.Fields) && !suppressRows {
 			// EXECUTE does not send RowDescription; instead it should be sent from DESCRIBE prior to it
 			if !isExecute && !hasSentRowDescription {
 				hasSentRowDescription = true
@@ -2651,7 +2651,7 @@ func (h *ConnectionHandler) sendDescribeResponse(fields []pgproto3.FieldDescript
 		})
 	}
 
-	if returnsRow(query) {
+	if queryReturnsRows(query, fields) {
 		// Both variants finish with a row description.
 		h.sendBuffered(&pgproto3.RowDescription{
 			Fields: fields,
@@ -3020,6 +3020,13 @@ func returnsRow(query ConvertedQuery) bool {
 	default:
 		return false
 	}
+}
+
+func queryReturnsRows(query ConvertedQuery, fields []pgproto3.FieldDescription) bool {
+	if returnsRow(query) {
+		return true
+	}
+	return query.StatementTag == "CALL" && len(fields) > 0
 }
 
 // hasReturningClause return true if |statement| has a RETURNING clause defined.

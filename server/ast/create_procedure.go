@@ -126,6 +126,7 @@ func nodeCreateProcedure(ctx *Context, node *tree.CreateProcedure) (vitess.State
 	// Returns the stored procedure call with all options
 	return vitess.InjectedStatement{
 		Statement: pgnodes.NewCreateProcedure(
+			tableName.Catalog(),
 			tableName.Table(),
 			tableName.Schema(),
 			node.Replace,

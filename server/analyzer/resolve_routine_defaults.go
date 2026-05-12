@@ -15,6 +15,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -25,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -36,11 +38,11 @@ import (
 func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	switch n := node.(type) {
 	case *pgnodes.Call:
-		procCollection, err := core.GetProceduresCollectionFromContext(ctx)
+		procCollection, err := core.GetProceduresCollectionFromContextForDatabase(ctx, n.DatabaseName)
 		if err != nil {
 			return nil, transform.SameTree, err
 		}
-		typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+		typesCollection, err := core.GetTypesCollectionFromContextForDatabase(ctx, n.DatabaseName)
 		if err != nil {
 			return nil, transform.SameTree, err
 		}
@@ -62,6 +64,7 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 
 		same := transform.SameTree
 		overloadTree := framework.NewOverloads()
+		outputSchema := sql.Schema(nil)
 		for _, overload := range overloads {
 			paramTypes := make([]*pgtypes.DoltgresType, len(overload.ParameterTypes))
 			for i, paramType := range overload.ParameterTypes {
@@ -72,10 +75,11 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 			}
 			// TODO: we should probably have procedure equivalents instead of converting these to functions
 			//  probably fine for now since we don't implement/support the differing functionality between the two just yet
+			returnType := procedureReturnType(overload.ParameterModes, paramTypes)
 			if len(overload.ExtensionName) > 0 {
 				if err = overloadTree.Add(framework.CFunction{
 					ID:                 id.Function(overload.ID),
-					ReturnType:         pgtypes.Void,
+					ReturnType:         returnType,
 					ParameterTypes:     paramTypes,
 					Variadic:           false,
 					IsNonDeterministic: true,
@@ -88,7 +92,7 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 			} else if len(overload.SQLDefinition) > 0 {
 				if err = overloadTree.Add(framework.SQLFunction{
 					ID:                 id.Function(overload.ID),
-					ReturnType:         pgtypes.Void,
+					ReturnType:         returnType,
 					ParameterNames:     overload.ParameterNames,
 					ParameterTypes:     paramTypes,
 					ParameterDefaults:  overload.ParameterDefaults,
@@ -103,9 +107,10 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 			} else {
 				if err = overloadTree.Add(framework.InterpretedFunction{
 					ID:                 id.Function(overload.ID),
-					ReturnType:         pgtypes.Void,
+					ReturnType:         returnType,
 					ParameterNames:     overload.ParameterNames,
 					ParameterTypes:     paramTypes,
+					ParameterModes:     procedureParameterModes(overload.ParameterModes),
 					Variadic:           false,
 					IsNonDeterministic: true,
 					Strict:             false,
@@ -113,6 +118,9 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}
+			}
+			if outputSchema == nil {
+				outputSchema = procedureOutputSchema(overload.ParameterNames, overload.ParameterModes, paramTypes)
 			}
 		}
 		compiledFunction := framework.NewCompiledFunction(ctx, n.ProcedureName, n.Exprs, overloadTree, false)
@@ -122,9 +130,57 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 		}); err != nil {
 			return nil, transform.SameTree, err
 		}
-		n.CompiledFunc = compiledFunction
+		n.SetResolvedProcedure(compiledFunction, outputSchema)
 		return node, same, nil
 	default:
 		return node, transform.SameTree, nil
 	}
+}
+
+func procedureParameterModes(modes []procedures.ParameterMode) []uint8 {
+	if len(modes) == 0 {
+		return nil
+	}
+	ret := make([]uint8, len(modes))
+	for i, mode := range modes {
+		ret[i] = uint8(mode)
+	}
+	return ret
+}
+
+func procedureOutputSchema(names []string, modes []procedures.ParameterMode, types []*pgtypes.DoltgresType) sql.Schema {
+	var schema sql.Schema
+	for i, mode := range modes {
+		if mode != procedures.ParameterMode_OUT && mode != procedures.ParameterMode_INOUT {
+			continue
+		}
+		if i >= len(types) {
+			continue
+		}
+		name := ""
+		if i < len(names) {
+			name = names[i]
+		}
+		if len(name) == 0 {
+			name = fmt.Sprintf("column%d", len(schema)+1)
+		}
+		schema = append(schema, &sql.Column{
+			Name:     name,
+			Type:     types[i],
+			Nullable: true,
+		})
+	}
+	return schema
+}
+
+func procedureReturnType(modes []procedures.ParameterMode, types []*pgtypes.DoltgresType) *pgtypes.DoltgresType {
+	for i, mode := range modes {
+		if mode != procedures.ParameterMode_OUT && mode != procedures.ParameterMode_INOUT {
+			continue
+		}
+		if i < len(types) {
+			return types[i]
+		}
+	}
+	return pgtypes.Void
 }

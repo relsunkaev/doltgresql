@@ -23,12 +23,14 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 )
 
 // Call is used to call stored procedures.
 type Call struct {
+	DatabaseName  string
 	SchemaName    string
 	ProcedureName string
 	Exprs         []sql.Expression
@@ -43,8 +45,9 @@ var _ sql.Expressioner = (*Call)(nil)
 var _ vitess.Injectable = (*Call)(nil)
 
 // NewCall returns a new *Call.
-func NewCall(schema string, name string, originalExprs vitess.Exprs) *Call {
+func NewCall(database string, schema string, name string, originalExprs vitess.Exprs) *Call {
 	return &Call{
+		DatabaseName:  database,
 		SchemaName:    schema,
 		ProcedureName: name,
 		Exprs:         nil,
@@ -85,17 +88,68 @@ func (c *Call) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	}
 
 	cf := c.CompiledFunc.SetStatementRunner(ctx, c.Runner.Runner).(*framework.CompiledFunction)
-	_, err := cf.Eval(ctx, nil)
+	result, err := cf.Eval(ctx, nil)
 	if err != nil {
 		return nil, err
+	}
+	if len(c.Schema(ctx)) == 0 {
+		return sql.RowsToRowIter(), nil
+	}
+	if row, ok := result.(sql.Row); ok {
+		return sql.RowsToRowIter(row), nil
+	}
+	if result != nil {
+		return sql.RowsToRowIter(sql.Row{result}), nil
 	}
 	return sql.RowsToRowIter(), nil
 }
 
 // Schema implements the interface sql.ExecSourceRel.
 func (c *Call) Schema(ctx *sql.Context) sql.Schema {
-	// TODO: this should be the INOUT and OUT parameters of the target procedure assuming we're not using the cached schema
-	return c.cachedSch
+	if c.cachedSch != nil {
+		return c.cachedSch
+	}
+	if ctx == nil || !core.IsContextValid(ctx) {
+		return nil
+	}
+	procCollection, err := core.GetProceduresCollectionFromContextForDatabase(ctx, c.DatabaseName)
+	if err != nil {
+		return nil
+	}
+	typesCollection, err := core.GetTypesCollectionFromContextForDatabase(ctx, c.DatabaseName)
+	if err != nil {
+		return nil
+	}
+	schemaName, err := core.GetSchemaName(ctx, nil, c.SchemaName)
+	if err != nil {
+		return nil
+	}
+	overloads, err := procCollection.GetProcedureOverloads(ctx, id.NewProcedure(schemaName, c.ProcedureName))
+	if err != nil || len(overloads) == 0 {
+		return nil
+	}
+	var schema sql.Schema
+	for i, mode := range overloads[0].ParameterModes {
+		if mode != 1 && mode != 2 {
+			continue
+		}
+		if i >= len(overloads[0].ParameterTypes) {
+			continue
+		}
+		typ, err := typesCollection.GetType(ctx, overloads[0].ParameterTypes[i])
+		if err != nil || typ == nil {
+			return nil
+		}
+		name := ""
+		if i < len(overloads[0].ParameterNames) {
+			name = overloads[0].ParameterNames[i]
+		}
+		if len(name) == 0 {
+			name = "column"
+		}
+		schema = append(schema, &sql.Column{Name: name, Type: typ, Nullable: true})
+	}
+	return schema
 }
 
 // String implements the interface sql.ExecSourceRel.
@@ -117,6 +171,11 @@ func (c *Call) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.N
 	nc.Runner = exprs[0].(pgexprs.StatementRunner)
 	nc.Exprs = exprs[1:]
 	return &nc, nil
+}
+
+func (c *Call) SetResolvedProcedure(compiledFunc *framework.CompiledFunction, schema sql.Schema) {
+	c.CompiledFunc = compiledFunc
+	c.cachedSch = schema
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.

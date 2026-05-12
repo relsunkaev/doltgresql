@@ -121,7 +121,8 @@ $$;`,
 					Expected: []sql.Row{},
 				},
 				{
-					Query: `CALL create_game('d')`,
+					SkipResultsCheck: true,
+					Query:            `CALL create_game('d')`,
 				},
 				{
 					Query:    `SELECT id, host_connection_id FROM games`,

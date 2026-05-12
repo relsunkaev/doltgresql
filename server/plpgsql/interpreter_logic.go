@@ -42,6 +42,7 @@ type InterpretedFunction interface {
 	GetName() string
 	GetParameters() []*pgtypes.DoltgresType
 	GetParameterNames() []string
+	GetParameterModes() []uint8
 	GetReturn() *pgtypes.DoltgresType
 	GetStatements() []InterpreterOperation
 	InternalID() id.Id
@@ -108,7 +109,38 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	}
 	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
 	defer restoreDiagnosticContext()
-	return call(ctx, iFunc, stack)
+	result, err := call(ctx, iFunc, stack)
+	if err != nil || result != nil {
+		return result, err
+	}
+	return procedureOutputRow(iFunc, stack), nil
+}
+
+func procedureOutputRow(iFunc InterpretedFunction, stack InterpreterStack) sql.Row {
+	modes := iFunc.GetParameterModes()
+	if len(modes) == 0 {
+		return nil
+	}
+	names := iFunc.GetParameterNames()
+	outputRow := make(sql.Row, 0)
+	for i, mode := range modes {
+		if mode != 1 && mode != 2 {
+			continue
+		}
+		if i >= len(names) {
+			continue
+		}
+		variable := stack.GetVariable(names[i])
+		if variable.Type == nil || variable.Value == nil {
+			outputRow = append(outputRow, nil)
+		} else {
+			outputRow = append(outputRow, *variable.Value)
+		}
+	}
+	if len(outputRow) == 0 {
+		return nil
+	}
+	return outputRow
 }
 
 // TriggerCall runs the contained trigger operations on the given runner.

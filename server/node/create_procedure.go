@@ -31,6 +31,7 @@ import (
 
 // CreateProcedure implements CREATE PROCEDURE.
 type CreateProcedure struct {
+	DatabaseName      string
 	ProcedureName     string
 	SchemaName        string
 	Replace           bool
@@ -48,6 +49,7 @@ var _ vitess.Injectable = (*CreateProcedure)(nil)
 
 // NewCreateProcedure returns a new *CreateProcedure.
 func NewCreateProcedure(
+	databaseName string,
 	procedureName string,
 	schemaName string,
 	replace bool,
@@ -59,6 +61,7 @@ func NewCreateProcedure(
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement) *CreateProcedure {
 	return &CreateProcedure{
+		DatabaseName:      databaseName,
 		ProcedureName:     procedureName,
 		SchemaName:        schemaName,
 		Replace:           replace,
@@ -89,7 +92,7 @@ func (c *CreateProcedure) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	procCollection, err := core.GetProceduresCollectionFromContext(ctx)
+	procCollection, err := core.GetProceduresCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +104,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 	for i, param := range c.Parameters {
 		paramNames[i] = param.Name
 		paramTypes[i] = param.Type.ID
+		paramModes[i] = param.Mode
 		if param.Default != nil {
 			paramDefaults[i] = param.Default.String()
 		}
@@ -112,6 +116,13 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 	}
 	procID := id.NewProcedure(schemaName, c.ProcedureName, paramTypes...)
 	if c.Replace && procCollection.HasProcedure(ctx, procID) {
+		proc, err := procCollection.GetProcedure(ctx, procID)
+		if err != nil {
+			return nil, err
+		}
+		if err = checkProcedureOwnership(ctx, proc); err != nil {
+			return nil, err
+		}
 		if err = procCollection.DropProcedure(ctx, procID); err != nil {
 			return nil, err
 		}
@@ -140,6 +151,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		ExtensionSymbol:   c.ExtensionSymbol,
 		Operations:        c.Statements,
 		SQLDefinition:     c.SqlDef,
+		Owner:             ctx.Client().User,
 	})
 	if err != nil {
 		return nil, err

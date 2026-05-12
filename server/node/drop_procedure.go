@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // DropProcedure implements DROP PROCEDURE.
@@ -133,5 +134,26 @@ func dropProcedure(ctx *sql.Context, procColl *procedures.Collection, fn *Routin
 	if !procExists && ifExists {
 		return nil
 	}
+	proc, err := procColl.GetProcedure(ctx, procId)
+	if err != nil {
+		return err
+	}
+	if err = checkProcedureOwnership(ctx, proc); err != nil {
+		return err
+	}
 	return procColl.DropProcedure(ctx, procId)
+}
+
+func checkProcedureOwnership(ctx *sql.Context, proc procedures.Procedure) error {
+	if len(proc.Owner) == 0 || proc.Owner == ctx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("permission denied for procedure %s", proc.ID.ProcedureName())
 }

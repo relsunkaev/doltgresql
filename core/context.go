@@ -42,10 +42,13 @@ import (
 type contextValues struct {
 	seqs   map[string]*sequences.Collection
 	fkMeta map[string]*fkmetadata.Collection
+	types  map[string]*typecollection.TypeCollection
+	// Type collections cache builtin and derived type lookups in memory, so a
+	// loaded collection is not automatically dirty.
+	dirtyTypes map[string]struct{}
+	funcs      map[string]*functions.Collection
+	procs      map[string]*procedures.Collection
 	// TODO: all these collection fields need to be mapped by database name as seqs above
-	types          *typecollection.TypeCollection
-	funcs          *functions.Collection
-	procs          *procedures.Collection
 	pubs           *publications.Collection
 	subs           *subscriptions.Collection
 	trigs          *triggers.Collection
@@ -77,6 +80,26 @@ func ClearContextValues(ctx *sql.Context) {
 	if sess.DoltgresSessObj != nil {
 		sess.DoltgresSessObj = &contextValues{}
 	}
+}
+
+func contextDatabaseName(ctx *sql.Context, database string) string {
+	if len(database) == 0 {
+		return ctx.GetCurrentDatabase()
+	}
+	return database
+}
+
+func MarkTypesCollectionDirty(ctx *sql.Context, database string) error {
+	cv, err := getContextValues(ctx)
+	if err != nil {
+		return err
+	}
+	database = contextDatabaseName(ctx, database)
+	if cv.dirtyTypes == nil {
+		cv.dirtyTypes = make(map[string]struct{})
+	}
+	cv.dirtyTypes[database] = struct{}{}
+	return nil
 }
 
 // GetRootFromContext returns the working session's root from the context, along with the session.
@@ -291,6 +314,7 @@ func GetForeignKeyMetadataCollectionFromContext(ctx *sql.Context, database strin
 	if err != nil {
 		return nil, err
 	}
+	database = contextDatabaseName(ctx, database)
 	if cv.fkMeta == nil {
 		cv.fkMeta = make(map[string]*fkmetadata.Collection)
 	}
@@ -310,51 +334,69 @@ func GetForeignKeyMetadataCollectionFromContext(ctx *sql.Context, database strin
 // GetFunctionsCollectionFromContext returns the functions collection from the given context. Will always return a
 // collection if no error is returned.
 func GetFunctionsCollectionFromContext(ctx *sql.Context) (*functions.Collection, error) {
+	return GetFunctionsCollectionFromContextForDatabase(ctx, "")
+}
+
+// GetFunctionsCollectionFromContextForDatabase returns the functions collection for the requested database.
+func GetFunctionsCollectionFromContextForDatabase(ctx *sql.Context, database string) (*functions.Collection, error) {
 	cv, err := getContextValues(ctx)
 	if err != nil {
 		return nil, err
 	}
-	_, root, err := GetRootFromContext(ctx)
+	database = contextDatabaseName(ctx, database)
+	if cv.funcs == nil {
+		cv.funcs = make(map[string]*functions.Collection)
+	}
+	_, root, err := getRootFromContextForDatabase(ctx, database)
 	if err != nil {
 		return nil, err
 	}
-	if cv.funcs == nil {
-		cv.funcs, err = functions.LoadFunctions(ctx, root)
+	if cv.funcs[database] == nil {
+		cv.funcs[database], err = functions.LoadFunctions(ctx, root)
 		if err != nil {
 			return nil, err
 		}
-	} else if cv.funcs.DiffersFrom(ctx, root) {
-		cv.funcs, err = functions.LoadFunctions(ctx, root)
+	} else if cv.funcs[database].DiffersFrom(ctx, root) {
+		cv.funcs[database], err = functions.LoadFunctions(ctx, root)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return cv.funcs, nil
+	return cv.funcs[database], nil
 }
 
 // GetProceduresCollectionFromContext returns the procedures collection from the given context. Will always return a
 // collection if no error is returned.
 func GetProceduresCollectionFromContext(ctx *sql.Context) (*procedures.Collection, error) {
+	return GetProceduresCollectionFromContextForDatabase(ctx, "")
+}
+
+// GetProceduresCollectionFromContextForDatabase returns the procedures collection for the requested database.
+func GetProceduresCollectionFromContextForDatabase(ctx *sql.Context, database string) (*procedures.Collection, error) {
 	cv, err := getContextValues(ctx)
 	if err != nil {
 		return nil, err
 	}
-	_, root, err := GetRootFromContext(ctx)
+	database = contextDatabaseName(ctx, database)
+	if cv.procs == nil {
+		cv.procs = make(map[string]*procedures.Collection)
+	}
+	_, root, err := getRootFromContextForDatabase(ctx, database)
 	if err != nil {
 		return nil, err
 	}
-	if cv.procs == nil {
-		cv.procs, err = procedures.LoadProcedures(ctx, root)
+	if cv.procs[database] == nil {
+		cv.procs[database], err = procedures.LoadProcedures(ctx, root)
 		if err != nil {
 			return nil, err
 		}
-	} else if cv.procs.DiffersFrom(ctx, root) {
-		cv.procs, err = procedures.LoadProcedures(ctx, root)
+	} else if cv.procs[database].DiffersFrom(ctx, root) {
+		cv.procs[database], err = procedures.LoadProcedures(ctx, root)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return cv.procs, nil
+	return cv.procs[database], nil
 }
 
 // GetPublicationsCollectionFromContext returns the publications collection from the given context.
@@ -390,6 +432,7 @@ func GetSequencesCollectionFromContext(ctx *sql.Context, database string) (*sequ
 	if err != nil {
 		return nil, err
 	}
+	database = contextDatabaseName(ctx, database)
 	if cv.seqs == nil {
 		cv.seqs = make(map[string]*sequences.Collection)
 	}
@@ -459,21 +502,30 @@ func GetTriggersCollectionFromContext(ctx *sql.Context, database string) (*trigg
 // GetTypesCollectionFromContext returns the given type collection from the context.
 // Will always return a collection if no error is returned.
 func GetTypesCollectionFromContext(ctx *sql.Context) (*typecollection.TypeCollection, error) {
+	return GetTypesCollectionFromContextForDatabase(ctx, "")
+}
+
+// GetTypesCollectionFromContextForDatabase returns the type collection for the requested database.
+func GetTypesCollectionFromContextForDatabase(ctx *sql.Context, database string) (*typecollection.TypeCollection, error) {
 	cv, err := getContextValues(ctx)
 	if err != nil {
 		return nil, err
 	}
+	database = contextDatabaseName(ctx, database)
 	if cv.types == nil {
-		_, root, err := GetRootFromContext(ctx)
+		cv.types = make(map[string]*typecollection.TypeCollection)
+	}
+	if cv.types[database] == nil {
+		_, root, err := getRootFromContextForDatabase(ctx, database)
 		if err != nil {
 			return nil, err
 		}
-		cv.types, err = typecollection.LoadTypes(ctx, root)
+		cv.types[database], err = typecollection.LoadTypes(ctx, root)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return cv.types, nil
+	return cv.types[database], nil
 }
 
 // CloseContextRootFinalizer finalizes any changes persisted within the context by writing them to the working root.
@@ -504,14 +556,21 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 	if err != nil {
 		return err
 	}
+	isCurrentDatabase := db == ctx.GetCurrentDatabase()
 
 	newRoot := root
 	if cv.seqs != nil && cv.seqs[db] != nil {
-		retRoot, err := cv.seqs[db].UpdateRoot(ctx, newRoot)
+		differs, err := sequenceCollectionDiffersFromRoot(ctx, cv.seqs[db], newRoot)
 		if err != nil {
 			return err
 		}
-		newRoot = retRoot.(*RootValue)
+		if differs {
+			retRoot, err := cv.seqs[db].UpdateRoot(ctx, newRoot)
+			if err != nil {
+				return err
+			}
+			newRoot = retRoot.(*RootValue)
+		}
 		delete(cv.seqs, db)
 	}
 
@@ -524,25 +583,25 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		delete(cv.fkMeta, db)
 	}
 
-	if cv.funcs != nil && cv.funcs.DiffersFrom(ctx, root) {
-		retRoot, err := cv.funcs.UpdateRoot(ctx, newRoot)
+	if cv.funcs != nil && cv.funcs[db] != nil && cv.funcs[db].DiffersFrom(ctx, root) {
+		retRoot, err := cv.funcs[db].UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
 		}
 		newRoot = retRoot.(*RootValue)
-		cv.funcs = nil
+		delete(cv.funcs, db)
 	}
 
-	if cv.procs != nil && cv.procs.DiffersFrom(ctx, root) {
-		retRoot, err := cv.procs.UpdateRoot(ctx, newRoot)
+	if cv.procs != nil && cv.procs[db] != nil && cv.procs[db].DiffersFrom(ctx, root) {
+		retRoot, err := cv.procs[db].UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
 		}
 		newRoot = retRoot.(*RootValue)
-		cv.procs = nil
+		delete(cv.procs, db)
 	}
 
-	if cv.pubs != nil && cv.pubs.DiffersFrom(ctx, root) {
+	if isCurrentDatabase && cv.pubs != nil && cv.pubs.DiffersFrom(ctx, root) {
 		retRoot, err := cv.pubs.UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
@@ -551,7 +610,7 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		cv.pubs = nil
 	}
 
-	if cv.subs != nil && cv.subs.DiffersFrom(ctx, root) {
+	if isCurrentDatabase && cv.subs != nil && cv.subs.DiffersFrom(ctx, root) {
 		retRoot, err := cv.subs.UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
@@ -560,7 +619,7 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		cv.subs = nil
 	}
 
-	if cv.trigs != nil && cv.trigs.DiffersFrom(ctx, root) {
+	if isCurrentDatabase && cv.trigs != nil && cv.trigs.DiffersFrom(ctx, root) {
 		retRoot, err := cv.trigs.UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
@@ -569,7 +628,7 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		cv.trigs = nil
 	}
 
-	if cv.exts != nil && cv.exts.DiffersFrom(ctx, root) {
+	if isCurrentDatabase && cv.exts != nil && cv.exts.DiffersFrom(ctx, root) {
 		retRoot, err := cv.exts.UpdateRoot(ctx, newRoot)
 		if err != nil {
 			return err
@@ -578,20 +637,34 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 		cv.exts = nil
 	}
 
-	if cv.types != nil {
-		retRoot, err := cv.types.UpdateRoot(ctx, newRoot)
-		if err != nil {
-			return err
+	if cv.types != nil && cv.types[db] != nil {
+		_, dirty := cv.dirtyTypes[db]
+		if !dirty {
+			delete(cv.types, db)
+		} else {
+			differs, err := typeCollectionDiffersFromRoot(ctx, cv.types[db], newRoot)
+			if err != nil {
+				return err
+			}
+			if !differs {
+				delete(cv.types, db)
+			} else {
+				retRoot, err := cv.types[db].UpdateRoot(ctx, newRoot)
+				if err != nil {
+					return err
+				}
+				newRoot = retRoot.(*RootValue)
+				delete(cv.types, db)
+			}
+			delete(cv.dirtyTypes, db)
 		}
-		newRoot = retRoot.(*RootValue)
-		cv.types = nil
 	}
 
 	// Setting the session working root doesn't do a check to see if anything actually changed or not before marking that
 	// branch state dirty, and dolt only allows a single dirty working set per commit. So it's important here to only
 	// update the session root if something actually changed for that db.
 	if err, rootChanged := rootValueChanged(newRoot, root); rootChanged {
-		if err = session.SetWorkingRoot(ctx, ctx.GetCurrentDatabase(), newRoot); err != nil {
+		if err = session.SetWorkingRoot(ctx, db, newRoot); err != nil {
 			// TODO: We need a way to see if the session has a writeable working root
 			// (new interface method on session probably), and avoid setting it if so
 			if errors.Is(err, doltdb.ErrOperationNotSupportedInDetachedHead) {
@@ -604,6 +677,38 @@ func updateSessionRootForDatabase(ctx *sql.Context, db string, cv *contextValues
 	}
 
 	return nil
+}
+
+func typeCollectionDiffersFromRoot(ctx *sql.Context, collection *typecollection.TypeCollection, root *RootValue) (bool, error) {
+	currentMap, err := collection.Map(ctx)
+	if err != nil {
+		return false, err
+	}
+	hashOnRoot, err := collection.LoadCollectionHash(ctx, root)
+	if err != nil {
+		return false, err
+	}
+	if currentCount, currentCountErr := currentMap.Count(); currentCountErr == nil && currentCount == 0 && hashOnRoot.IsEmpty() {
+		return false, nil
+	}
+	currentHash := currentMap.HashOf()
+	return currentHash != hashOnRoot, nil
+}
+
+func sequenceCollectionDiffersFromRoot(ctx *sql.Context, collection *sequences.Collection, root *RootValue) (bool, error) {
+	currentMap, err := collection.Map(ctx)
+	if err != nil {
+		return false, err
+	}
+	hashOnRoot, err := collection.LoadCollectionHash(ctx, root)
+	if err != nil {
+		return false, err
+	}
+	if currentCount, currentCountErr := currentMap.Count(); currentCountErr == nil && currentCount == 0 && hashOnRoot.IsEmpty() {
+		return false, nil
+	}
+	currentHash := currentMap.HashOf()
+	return currentHash != hashOnRoot, nil
 }
 
 // rootValueChanged returns whether the new root value is different from the old one
@@ -641,7 +746,24 @@ func databasesInContext(ctx *sql.Context, cv *contextValues) []string {
 			dbs[db] = struct{}{}
 		}
 	}
-	dbs[ctx.GetCurrentDatabase()] = struct{}{}
+	if cv.funcs != nil {
+		for db := range cv.funcs {
+			dbs[db] = struct{}{}
+		}
+	}
+	if cv.procs != nil {
+		for db := range cv.procs {
+			dbs[db] = struct{}{}
+		}
+	}
+	if cv.types != nil {
+		for db := range cv.types {
+			dbs[db] = struct{}{}
+		}
+	}
+	if cv.pubs != nil || cv.subs != nil || cv.trigs != nil || cv.exts != nil {
+		dbs[ctx.GetCurrentDatabase()] = struct{}{}
+	}
 
 	return slices.Sorted(maps.Keys(dbs))
 }
@@ -655,6 +777,7 @@ func (cv *contextValues) clear(objID objinterface.RootObjectID) {
 		cv.seqs = nil
 	case objinterface.RootObjectID_Types:
 		cv.types = nil
+		cv.dirtyTypes = nil
 	case objinterface.RootObjectID_Functions:
 		cv.funcs = nil
 	case objinterface.RootObjectID_Triggers:

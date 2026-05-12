@@ -220,7 +220,10 @@ func (c *CreateExtension) installTextCompatibleExtensionType(ctx *sql.Context, n
 	if err = typesCollection.CreateType(ctx, extensionType); err != nil {
 		return err
 	}
-	return typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(extensionType))
+	if err = typesCollection.CreateType(ctx, pgtypes.CreateArrayTypeFromBaseType(extensionType)); err != nil {
+		return err
+	}
+	return core.MarkTypesCollectionDirty(ctx, "")
 }
 
 func (c *CreateExtension) useExtensionSearchPath(ctx *sql.Context, namespace id.Namespace) (func(), error) {

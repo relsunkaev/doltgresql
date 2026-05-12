@@ -30,8 +30,9 @@ import (
 
 // CreateType handles the CREATE TYPE statement.
 type CreateType struct {
-	SchemaName string
-	Name       string
+	DatabaseName string
+	SchemaName   string
+	Name         string
 
 	// composite type
 	AsTypes []CompositeAsType
@@ -54,19 +55,19 @@ var _ sql.ExecSourceRel = (*CreateType)(nil)
 var _ vitess.Injectable = (*CreateType)(nil)
 
 // NewCreateCompositeType creates CreateType node for creating COMPOSITE type.
-func NewCreateCompositeType(schema, name string, typs []CompositeAsType) *CreateType {
-	return &CreateType{SchemaName: schema, Name: name, AsTypes: typs, typType: types.TypeType_Composite}
+func NewCreateCompositeType(database, schema, name string, typs []CompositeAsType) *CreateType {
+	return &CreateType{DatabaseName: database, SchemaName: schema, Name: name, AsTypes: typs, typType: types.TypeType_Composite}
 }
 
 // NewCreateEnumType creates CreateType node for creating ENUM type.
-func NewCreateEnumType(schema, name string, labels []string) *CreateType {
-	return &CreateType{SchemaName: schema, Name: name, Labels: labels, typType: types.TypeType_Enum}
+func NewCreateEnumType(database, schema, name string, labels []string) *CreateType {
+	return &CreateType{DatabaseName: database, SchemaName: schema, Name: name, Labels: labels, typType: types.TypeType_Enum}
 }
 
 // NewCreateShellType creates CreateType node for creating
 // a placeholder for a type to be defined later.
-func NewCreateShellType(schema, name string) *CreateType {
-	return &CreateType{SchemaName: schema, Name: name, typType: types.TypeType_Pseudo}
+func NewCreateShellType(database, schema, name string) *CreateType {
+	return &CreateType{DatabaseName: database, SchemaName: schema, Name: name, typType: types.TypeType_Pseudo}
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -98,7 +99,7 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if err != nil {
 		return nil, err
 	}
-	collection, err := core.GetTypesCollectionFromContext(ctx)
+	collection, err := core.GetTypesCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +155,9 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	if err = core.MarkTypesCollectionDirty(ctx, c.DatabaseName); err != nil {
+		return nil, err
 	}
 
 	return sql.RowsToRowIter(), nil

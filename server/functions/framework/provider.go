@@ -15,10 +15,14 @@
 package framework
 
 import (
+	"encoding/hex"
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/extensions"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -26,6 +30,9 @@ import (
 // FunctionProvider is the special sql.FunctionProvider for Doltgres that allows us to handle functions that
 // are created by users.
 type FunctionProvider struct{}
+
+const qualifiedFunctionNamePrefix = "__doltgres_qualified_function__"
+const qualifiedFunctionNameSeparator = "\x1f"
 
 var _ sql.FunctionProvider = (*FunctionProvider)(nil)
 
@@ -35,32 +42,43 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 	if !core.IsContextValid(ctx) {
 		return nil, false
 	}
-	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+	databaseName, schemaName, functionName, qualified := parseQualifiedFunctionName(name)
+	funcCollection, err := core.GetFunctionsCollectionFromContextForDatabase(ctx, databaseName)
 	if err != nil {
 		return nil, false
 	}
-	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	typesCollection, err := core.GetTypesCollectionFromContextForDatabase(ctx, databaseName)
 	if err != nil {
 		return nil, false
 	}
-	// TODO: this should search all schemas in the search path, but the search path doesn't handle pg_catalog yet
-	funcName := id.NewFunction("pg_catalog", name)
-	overloads, err := funcCollection.GetFunctionOverloads(ctx, funcName)
-	if err != nil {
-		return nil, false
-	}
-	if len(overloads) == 0 {
-		currentSchema, err := core.GetCurrentSchema(ctx)
-		if err != nil {
+	var funcName id.Function
+	var overloads []corefunctions.Function
+	if qualified {
+		funcName = id.NewFunction(schemaName, functionName)
+		overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
+		if err != nil || len(overloads) == 0 {
 			return nil, false
 		}
-		funcName = id.NewFunction(currentSchema, name)
+	} else {
+		// TODO: this should search all schemas in the search path, but the search path doesn't handle pg_catalog yet
+		funcName = id.NewFunction("pg_catalog", functionName)
 		overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
 		if err != nil {
 			return nil, false
 		}
 		if len(overloads) == 0 {
-			return nil, false
+			currentSchema, err := core.GetCurrentSchema(ctx)
+			if err != nil {
+				return nil, false
+			}
+			funcName = id.NewFunction(currentSchema, functionName)
+			overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
+			if err != nil {
+				return nil, false
+			}
+			if len(overloads) == 0 {
+				return nil, false
+			}
 		}
 	}
 
@@ -170,16 +188,39 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 	}
 	if hasAggregate {
 		return sql.FunctionN{
-			Name: name,
+			Name: functionName,
 			Fn: func(ctx *sql.Context, params ...sql.Expression) (sql.Expression, error) {
-				return NewCompiledAggregateFunction(ctx, name, params, overloadTree, aggregateNewBuffer), nil
+				return NewCompiledAggregateFunction(ctx, functionName, params, overloadTree, aggregateNewBuffer), nil
 			},
 		}, true
 	}
 	return sql.FunctionN{
-		Name: name,
+		Name: functionName,
 		Fn: func(ctx *sql.Context, params ...sql.Expression) (sql.Expression, error) {
-			return NewCompiledFunction(ctx, name, params, overloadTree, false), nil
+			return NewCompiledFunction(ctx, functionName, params, overloadTree, false), nil
 		},
 	}, true
+}
+
+func parseQualifiedFunctionName(name string) (databaseName string, schemaName string, functionName string, qualified bool) {
+	if !strings.HasPrefix(name, qualifiedFunctionNamePrefix) {
+		return "", "", name, false
+	}
+	parts := strings.Split(strings.TrimPrefix(name, qualifiedFunctionNamePrefix), qualifiedFunctionNameSeparator)
+	if len(parts) != 3 {
+		return "", "", name, false
+	}
+	databaseBytes, err := hex.DecodeString(parts[0])
+	if err != nil {
+		return "", "", name, false
+	}
+	schemaBytes, err := hex.DecodeString(parts[1])
+	if err != nil {
+		return "", "", name, false
+	}
+	functionBytes, err := hex.DecodeString(parts[2])
+	if err != nil {
+		return "", "", name, false
+	}
+	return string(databaseBytes), string(schemaBytes), string(functionBytes), true
 }

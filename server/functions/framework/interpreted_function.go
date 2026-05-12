@@ -36,6 +36,7 @@ type InterpretedFunction struct {
 	ReturnType         *pgtypes.DoltgresType
 	ParameterNames     []string
 	ParameterTypes     []*pgtypes.DoltgresType
+	ParameterModes     []uint8
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -63,6 +64,11 @@ func (iFunc InterpretedFunction) GetParameters() []*pgtypes.DoltgresType {
 // GetParameterNames returns the names of all parameters.
 func (iFunc InterpretedFunction) GetParameterNames() []string {
 	return iFunc.ParameterNames
+}
+
+// GetParameterModes returns the modes of all parameters.
+func (iFunc InterpretedFunction) GetParameterModes() []uint8 {
+	return iFunc.ParameterModes
 }
 
 // GetReturn implements the interface FunctionInterface.

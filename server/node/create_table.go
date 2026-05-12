@@ -109,7 +109,9 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	if err != nil {
 		return nil, err
 	}
+	databaseName := databaseNameForSQLDatabase(c.gmsCreateTable.Db)
 	for _, sequence := range c.sequences {
+		sequence.database = databaseName
 		sequence.schema = schemaName
 		_, err = sequence.RowIter(ctx, r)
 		if err != nil {
@@ -118,6 +120,20 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		}
 	}
 	return createTableIter, err
+}
+
+type revisionQualifiedDatabase interface {
+	RevisionQualifiedName() string
+}
+
+func databaseNameForSQLDatabase(db sql.Database) string {
+	if db == nil {
+		return ""
+	}
+	if revisionDb, ok := db.(revisionQualifiedDatabase); ok {
+		return revisionDb.RevisionQualifiedName()
+	}
+	return db.Name()
 }
 
 // Schema implements the interface sql.ExecBuilderNode.

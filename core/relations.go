@@ -37,6 +37,11 @@ const (
 // to the Postgres docs, a relation may be one of: table, sequence, index, view, materialized view, foreign table. This
 // may also include composite types and partitions, but this hasn't been confirmed.
 func GetRelationType(ctx *sql.Context, schema string, relation string) (RelationType, error) {
+	return GetRelationTypeForDatabase(ctx, ctx.GetCurrentDatabase(), schema, relation)
+}
+
+// GetRelationTypeForDatabase returns whether the requested database's working root has the given relation.
+func GetRelationTypeForDatabase(ctx *sql.Context, database string, schema string, relation string) (RelationType, error) {
 	// TODO: the schema isn't actually being used
 	if len(schema) == 0 {
 		var err error
@@ -47,7 +52,8 @@ func GetRelationType(ctx *sql.Context, schema string, relation string) (Relation
 	}
 
 	session := dsess.DSessFromSess(ctx.Session)
-	state, ok, err := session.LookupDbState(ctx, ctx.GetCurrentDatabase())
+	database = contextDatabaseName(ctx, database)
+	state, ok, err := session.LookupDbState(ctx, database)
 	if err != nil {
 		return RelationType_DoesNotExist, err
 	}
@@ -56,8 +62,7 @@ func GetRelationType(ctx *sql.Context, schema string, relation string) (Relation
 	}
 
 	// Verify relation against temporary tables created this session
-	dbName := ctx.GetCurrentDatabase()
-	if _, ok := session.GetTemporaryTable(ctx, dbName, relation); ok {
+	if _, ok := session.GetTemporaryTable(ctx, database, relation); ok {
 		return RelationType_Table, nil
 	}
 

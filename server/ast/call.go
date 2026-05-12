@@ -48,16 +48,20 @@ func nodeCall(ctx *Context, node *tree.Call) (vitess.Statement, error) {
 	ctx.Auth().PushAuthType(auth.AuthType_EXECUTE)
 	defer ctx.Auth().PopAuthType()
 
+	var database string
 	var qualifier vitess.TableIdent
 	var name vitess.ColIdent
 	switch funcRef := node.Procedure.Func.FunctionReference.(type) {
 	case *tree.FunctionDefinition:
 		name = vitess.NewColIdent(funcRef.Name)
 	case *tree.UnresolvedName:
-		if funcRef.NumParts > 2 {
+		if funcRef.NumParts > 3 {
 			return nil, errors.Errorf("referencing items outside the schema or database is not yet supported")
 		}
-		if funcRef.NumParts == 2 {
+		if funcRef.NumParts == 3 {
+			database = funcRef.Parts[2]
+			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
+		} else if funcRef.NumParts == 2 {
 			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
 		}
 		name = vitess.NewColIdent(funcRef.Parts[0])
@@ -69,7 +73,7 @@ func nodeCall(ctx *Context, node *tree.Call) (vitess.Statement, error) {
 		return nil, err
 	}
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewCall(qualifier.String(), name.String(), exprs),
+		Statement: pgnodes.NewCall(database, qualifier.String(), name.String(), exprs),
 		Children:  exprs,
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_EXECUTE,

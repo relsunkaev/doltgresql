@@ -33,6 +33,7 @@ func nodeCreateType(ctx *Context, node *tree.CreateType) (vitess.Statement, erro
 	if err != nil {
 		return nil, err
 	}
+	databaseName := name.DbQualifier.String()
 	schemaName := name.SchemaQualifier.String()
 	typName := name.Name.String()
 	var createTypeNode *pgnodes.CreateType
@@ -55,15 +56,15 @@ func nodeCreateType(ctx *Context, node *tree.CreateType) (vitess.Statement, erro
 				Collation: t.Collate,
 			}
 		}
-		createTypeNode = pgnodes.NewCreateCompositeType(schemaName, typName, typs)
+		createTypeNode = pgnodes.NewCreateCompositeType(databaseName, schemaName, typName, typs)
 	case tree.Enum:
-		createTypeNode = pgnodes.NewCreateEnumType(schemaName, typName, node.Enum.Labels)
+		createTypeNode = pgnodes.NewCreateEnumType(databaseName, schemaName, typName, node.Enum.Labels)
 	case tree.Range:
 		return nil, errors.Errorf("CREATE RANGE TYPE is not yet supported")
 	case tree.Base:
 		return nil, errors.Errorf("CREATE BASE TYPE is not yet supported")
 	case tree.Shell:
-		createTypeNode = pgnodes.NewCreateShellType(schemaName, typName)
+		createTypeNode = pgnodes.NewCreateShellType(databaseName, schemaName, typName)
 	case tree.Domain:
 		// NOT POSSIBLE
 		return nil, errors.Errorf("use CREATE DOMAIN to create domain type")

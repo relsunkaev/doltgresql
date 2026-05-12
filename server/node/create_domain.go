@@ -31,6 +31,7 @@ import (
 
 // CreateDomain handles the CREATE DOMAIN statement.
 type CreateDomain struct {
+	DatabaseName         string
 	SchemaName           string
 	Name                 string
 	AsType               *types.DoltgresType
@@ -68,7 +69,7 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err != nil {
 		return nil, err
 	}
-	collection, err := core.GetTypesCollectionFromContext(ctx)
+	collection, err := core.GetTypesCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +111,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	arrayType := types.CreateArrayTypeFromBaseType(newType)
 	err = collection.CreateType(ctx, arrayType)
 	if err != nil {
+		return nil, err
+	}
+	if err = core.MarkTypesCollectionDirty(ctx, c.DatabaseName); err != nil {
 		return nil, err
 	}
 
@@ -177,6 +181,7 @@ func (c *CreateDomain) WithResolvedChildren(ctx context.Context, children []any)
 		})
 	}
 	return &CreateDomain{
+		DatabaseName:         c.DatabaseName,
 		SchemaName:           c.SchemaName,
 		Name:                 c.Name,
 		AsType:               c.AsType,

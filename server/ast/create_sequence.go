@@ -43,9 +43,6 @@ func nodeCreateSequence(ctx *Context, node *tree.CreateSequence) (vitess.Stateme
 	if err != nil {
 		return nil, err
 	}
-	if len(name.DbQualifier.String()) > 0 {
-		return nil, errors.Errorf("CREATE SEQUENCE is currently only supported for the current database")
-	}
 	// Read all options and check whether they've been set (if not, we'll use the defaults)
 	minValueLimit := int64(math.MinInt64)
 	maxValueLimit := int64(math.MaxInt64)
@@ -185,7 +182,7 @@ func nodeCreateSequence(ctx *Context, node *tree.CreateSequence) (vitess.Stateme
 	}
 	// Returns the stored procedure call with all options
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewCreateSequence(node.IfNotExists, name.SchemaQualifier.String(), fromAlter, &sequences.Sequence{
+		Statement: pgnodes.NewCreateSequence(node.IfNotExists, name.DbQualifier.String(), name.SchemaQualifier.String(), fromAlter, &sequences.Sequence{
 			Id:          id.NewSequence("", name.Name.String()),
 			DataTypeID:  dataType.ID,
 			Persistence: sequences.Persistence_Permanent,

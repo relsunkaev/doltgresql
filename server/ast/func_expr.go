@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"encoding/hex"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -24,6 +25,9 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
+
+const qualifiedFunctionNamePrefix = "__doltgres_qualified_function__"
+const qualifiedFunctionNameSeparator = "\x1f"
 
 // nodeFuncExpr handles *tree.FuncExpr nodes.
 func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
@@ -53,13 +57,18 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	case *tree.FunctionDefinition:
 		name = vitess.NewColIdent(funcRef.Name)
 	case *tree.UnresolvedName:
-		colName, err := unresolvedNameToColName(funcRef)
-		if err != nil {
-			return nil, err
-		}
+		if funcRef.NumParts == 3 {
+			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
+			name = vitess.NewColIdent(qualifiedFunctionName(funcRef.Parts[2], funcRef.Parts[1], funcRef.Parts[0]))
+		} else {
+			colName, err := unresolvedNameToColName(funcRef)
+			if err != nil {
+				return nil, err
+			}
 
-		qualifier = colName.Qualifier.Name
-		name = colName.Name
+			qualifier = colName.Qualifier.Name
+			name = colName.Name
+		}
 	default:
 		return nil, errors.Errorf("unknown function reference")
 	}
@@ -179,6 +188,13 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			TargetNames: []string{qualifier.String(), name.String()},
 		},
 	}, nil
+}
+
+func qualifiedFunctionName(database string, schema string, function string) string {
+	return qualifiedFunctionNamePrefix +
+		hex.EncodeToString([]byte(database)) + qualifiedFunctionNameSeparator +
+		hex.EncodeToString([]byte(schema)) + qualifiedFunctionNameSeparator +
+		hex.EncodeToString([]byte(function))
 }
 
 // rewriteAggregateFilter rewrites `func(args...) FILTER (WHERE pred)` to

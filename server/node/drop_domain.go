@@ -135,6 +135,9 @@ func (c *DropDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if err = collection.DropType(ctx, arrayID); err != nil {
 		return nil, err
 	}
+	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
+		return nil, err
+	}
 
 	return sql.RowsToRowIter(), nil
 }

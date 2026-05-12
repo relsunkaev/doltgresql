@@ -64,6 +64,7 @@ type Procedure struct {
 	ExtensionSymbol   string                         // Only used when this is an extension procedure
 	Operations        []plpgsql.InterpreterOperation // Only used when this is a plpgsql language
 	SQLDefinition     string                         // Only used when this is a sql language
+	Owner             string
 }
 
 var _ objinterface.Collection = (*Collection)(nil)

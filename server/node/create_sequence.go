@@ -36,6 +36,7 @@ import (
 
 // CreateSequence handles the CREATE SEQUENCE statement, along with SERIAL type definitions.
 type CreateSequence struct {
+	database    string
 	schema      string
 	ifNotExists bool
 	fromAlter   bool
@@ -46,8 +47,9 @@ var _ sql.ExecSourceRel = (*CreateSequence)(nil)
 var _ vitess.Injectable = (*CreateSequence)(nil)
 
 // NewCreateSequence returns a new *CreateSequence.
-func NewCreateSequence(ifNotExists bool, schema string, fromAlter bool, sequence *sequences.Sequence) *CreateSequence {
+func NewCreateSequence(ifNotExists bool, database string, schema string, fromAlter bool, sequence *sequences.Sequence) *CreateSequence {
 	return &CreateSequence{
+		database:    database,
 		schema:      schema,
 		ifNotExists: ifNotExists,
 		fromAlter:   fromAlter,
@@ -83,7 +85,7 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	c.sequence.Id = id.NewSequence(schema, c.sequence.Id.SequenceName())
 
 	// Check that the sequence name is free
-	relationType, err := core.GetRelationType(ctx, schema, c.sequence.Id.SequenceName())
+	relationType, err := core.GetRelationTypeForDatabase(ctx, c.database, schema, c.sequence.Id.SequenceName())
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +103,7 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	if c.sequence.OwnerTable.IsValid() {
 		// The table will only have its name set, so we need to fill in the schema as well
 		c.sequence.OwnerTable = id.NewTable(schema, c.sequence.OwnerTable.TableName())
-		relationType, err = core.GetRelationType(ctx, schema, c.sequence.OwnerTable.TableName())
+		relationType, err = core.GetRelationTypeForDatabase(ctx, c.database, schema, c.sequence.OwnerTable.TableName())
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +113,7 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			return nil, errors.Errorf(`sequence cannot be owned by relation "%s"`, c.sequence.OwnerTable.TableName())
 		}
 
-		table, err = core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
+		table, err = core.GetSqlTableFromContext(ctx, c.database, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
 		if err != nil {
 			return nil, err
 		}
@@ -164,9 +166,7 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		}
 	}
 	// Create the sequence since we know it's completely valid
-	// TODO: we always create the sequence in the current database, but there's no need to require this, and in fact we
-	//  need to support it to create a sequence on another branch than the current one
-	collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	collection, err := core.GetSequencesCollectionFromContext(ctx, c.database)
 	if err != nil {
 		return nil, err
 	}

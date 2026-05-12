@@ -102,7 +102,8 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			return nil, transform.SameTree, err
 		}
 
-		seqName := doltdb.TableName{Name: sequenceName, Schema: schemaName}.String()
+		databaseName := databaseNameForSQLDatabase(createTable.Db)
+		seqName := sequenceDefaultName(ctx, databaseName, schemaName, sequenceName)
 		nextVal, isDoltgresType, err := framework.GetFunction(ctx, "nextval", pgexprs.NewTextLiteral(seqName))
 		if err != nil {
 			return nil, transform.NewTree, err
@@ -138,7 +139,7 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			maxValue = 9223372036854775807
 		}
 
-		ctSequences = append(ctSequences, pgnodes.NewCreateSequence(false, "", false, &sequences.Sequence{
+		ctSequences = append(ctSequences, pgnodes.NewCreateSequence(false, databaseName, "", false, &sequences.Sequence{
 			Id:          id.NewSequence("", sequenceName),
 			DataTypeID:  col.Type.(*pgtypes.DoltgresType).ID,
 			Persistence: sequences.Persistence_Permanent,
@@ -170,6 +171,31 @@ func hasDoltgresTableMetadata(tableOpts map[string]any) bool {
 	}
 	_, ok = tablemetadata.DecodeComment(comment)
 	return ok
+}
+
+type revisionQualifiedDatabase interface {
+	RevisionQualifiedName() string
+}
+
+func databaseNameForSQLDatabase(db sql.Database) string {
+	if db == nil {
+		return ""
+	}
+	if revisionDb, ok := db.(revisionQualifiedDatabase); ok {
+		return revisionDb.RevisionQualifiedName()
+	}
+	return db.Name()
+}
+
+func sequenceDefaultName(ctx *sql.Context, databaseName string, schemaName string, sequenceName string) string {
+	if databaseName == "" || databaseName == ctx.GetCurrentDatabase() {
+		return doltdb.TableName{Name: sequenceName, Schema: schemaName}.String()
+	}
+	return quoteIdentifier(databaseName) + "." + quoteIdentifier(schemaName) + "." + quoteIdentifier(sequenceName)
+}
+
+func quoteIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
 // generateSequenceName generates a unique sequence name for a SERIAL column in the table given
