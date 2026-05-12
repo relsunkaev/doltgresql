@@ -22,7 +22,9 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/uuid"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 func TestFormatIntegerBase(t *testing.T) {
@@ -59,6 +61,17 @@ func TestTypeMetadataHelpers(t *testing.T) {
 	}
 	if got, want := parseTypeModifier("text"), int32(-1); got != want {
 		t.Fatalf("got %d, want %d", got, want)
+	}
+}
+
+func TestCatalogLookupHelpers(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	formatted, err := format_type.Callable(ctx, [3]*pgtypes.DoltgresType{}, id.NewOID(0).AsId(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := formatted.(string), "-"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
 	}
 }
 

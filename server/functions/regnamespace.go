@@ -16,6 +16,7 @@ package functions
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -30,6 +31,7 @@ import (
 func initRegnamespace() {
 	framework.RegisterFunction(regnamespacein)
 	framework.RegisterFunction(regnamespaceout)
+	framework.RegisterFunction(to_regnamespace_text)
 	framework.RegisterFunction(regnamespacerecv)
 	framework.RegisterFunction(regnamespacesend)
 }
@@ -86,6 +88,29 @@ var regnamespaceout = framework.Function1{
 			},
 		})
 		return output, err
+	},
+}
+
+// to_regnamespace_text represents the PostgreSQL function of the same name,
+// returning NULL instead of raising an error when the schema is missing.
+var to_regnamespace_text = framework.Function1{
+	Name:               "to_regnamespace",
+	Return:             pgtypes.Regnamespace,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Text},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if _, err := strconv.ParseUint(val.(string), 10, 32); err == nil {
+			return nil, nil
+		}
+		oid, err := regnamespacein.Callable(ctx, [2]*pgtypes.DoltgresType{}, val.(string))
+		if err != nil {
+			if strings.Contains(err.Error(), "does not exist") {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return oid, nil
 	},
 }
 

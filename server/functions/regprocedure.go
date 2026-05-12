@@ -34,6 +34,7 @@ import (
 func initRegprocedure() {
 	framework.RegisterFunction(regprocedurein)
 	framework.RegisterFunction(regprocedureout)
+	framework.RegisterFunction(to_regprocedure_text)
 	framework.RegisterFunction(regprocedurerecv)
 	framework.RegisterFunction(regproceduresend)
 }
@@ -231,6 +232,29 @@ var regprocedureout = framework.Function1{
 			}
 		}
 		return fmt.Sprintf("%s(%s)", functionID.FunctionName(), strings.Join(paramNames, ",")), nil
+	},
+}
+
+// to_regprocedure_text represents the PostgreSQL function of the same name,
+// returning NULL instead of raising an error when the function is missing.
+var to_regprocedure_text = framework.Function1{
+	Name:               "to_regprocedure",
+	Return:             pgtypes.Regprocedure,
+	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Text},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if _, err := strconv.ParseUint(val.(string), 10, 32); err == nil {
+			return nil, nil
+		}
+		oid, err := regprocedurein.Callable(ctx, [2]*pgtypes.DoltgresType{}, val.(string))
+		if err != nil {
+			if strings.Contains(err.Error(), "does not exist") {
+				return nil, nil
+			}
+			return nil, err
+		}
+		return oid, nil
 	},
 }
 

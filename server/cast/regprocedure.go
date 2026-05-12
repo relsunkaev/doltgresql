@@ -44,6 +44,20 @@ func regprocedureAssignment() {
 			return int64(id.Cache().ToOID(val.(id.Id))), nil
 		},
 	})
+	framework.MustAddAssignmentTypeCast(framework.TypeCast{
+		FromType: pgtypes.Regprocedure,
+		ToType:   pgtypes.Text,
+		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
+			return pgtypes.Regprocedure.IoOutput(ctx, val)
+		},
+	})
+	framework.MustAddExplicitTypeCast(framework.TypeCast{
+		FromType: pgtypes.Regprocedure,
+		ToType:   pgtypes.Text,
+		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
+			return pgtypes.Regprocedure.IoOutput(ctx, val)
+		},
+	})
 }
 
 // regprocedureImplicit registers the regprocedure -> oid implicit cast.
