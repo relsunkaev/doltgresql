@@ -140,6 +140,44 @@ func TestTxidCurrentReportsNonzeroTransactionId(t *testing.T) {
 	})
 }
 
+// TestTxidCurrentAdvancesAcrossTransactionsRepro reproduces a transaction
+// identity bug: PostgreSQL gives separate transactions in the same session
+// distinct txid_current() values.
+func TestTxidCurrentAdvancesAcrossTransactionsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "txid_current advances across committed transactions",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE txid_values (seq INT PRIMARY KEY, txid TEXT);`,
+				},
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `INSERT INTO txid_values VALUES (1, txid_current()::TEXT);`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `INSERT INTO txid_values VALUES (2, txid_current()::TEXT);`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query:    `SELECT count(DISTINCT txid) FROM txid_values;`,
+					Expected: []sql.Row{{int64(2)}},
+				},
+			},
+		},
+	})
+}
+
 // TestRepeatableReadUsesStableSnapshotRepro reproduces a transaction isolation
 // bug: PostgreSQL REPEATABLE READ transactions keep a stable snapshot even
 // after other transactions commit new rows.
