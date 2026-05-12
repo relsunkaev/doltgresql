@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestCreateDatabaseRequiresCreatedbPrivilegeRepro reproduces a security bug:
 // a normal login role without CREATEDB can create a database.
@@ -53,6 +57,34 @@ func TestDropDatabaseRequiresOwnershipRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `db_dropper`,
 					Password:    `dropper`,
+				},
+			},
+		},
+	})
+}
+
+// TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON DATABASE does not
+// transfer ownership and should not allow the grantee to DROP the database.
+func TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DATABASE requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_database_intruder PASSWORD 'dropper';`,
+				`CREATE DATABASE protected_all_db;`,
+				`GRANT ALL PRIVILEGES ON DATABASE protected_all_db TO drop_database_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP DATABASE protected_all_db;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_database_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT datname FROM pg_database WHERE datname = 'protected_all_db';`,
+					Expected: []sql.Row{{"protected_all_db"}},
 				},
 			},
 		},

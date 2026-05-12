@@ -117,6 +117,15 @@ func dropFunction(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineW
 	if !funcExists && ifExists {
 		return nil
 	}
+	if funcExists {
+		function, err := funcColl.GetFunction(ctx, funcId)
+		if err != nil {
+			return err
+		}
+		if err = checkFunctionOwnership(ctx, function); err != nil {
+			return errors.Wrap(err, "permission denied")
+		}
+	}
 	return funcColl.DropFunction(ctx, funcId)
 }
 

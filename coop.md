@@ -156,7 +156,13 @@ Use this file to avoid overlapping work. Add short entries with:
 - Lane: `DROP TABLE` / `DROP VIEW` / `DROP MATERIALIZED VIEW` ownership checks from commits `c2142541`, `3e6cefeb`, and `a0893b67`.
 - Expected files: `server/node/drop_table.go`, `server/node/drop_view.go`, `server/analyzer/replace_node.go`.
 - Avoiding: gamma's `server/connection_handler.go` and `server/node/create_index_concurrently.go`, alpha/delta functions files, and dirty probe tests.
-- Next action: run focused red ownership repros, move ownership validation before the underlying drop, focused green, commit only beta-owned files.
+- Red: focused DROP ownership repros failed because non-owners could drop tables, views, and materialized views.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./testing/go -run 'Test(DropTableRequiresOwnershipDespiteAllPrivilegesRepro|DropViewRequiresOwnershipRepro|DropViewRequiresOwnershipDespiteAllPrivilegesRepro|DropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./testing/go -run 'Test(DropViewAcceptsRestrict|DropMaterializedViewAcceptsRestrict|DynamicViewRebuild)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./server/node -count=1`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test ./server/analyzer -count=1`
+- Result: committed `6eb884c0 fix: require owner for drop relation`.
 
 ### gamma - 2026-05-12 13:27 America/Phoenix
 
@@ -193,3 +199,28 @@ Use this file to avoid overlapping work. Add short entries with:
 - Red: `TestClusterMarksIndexClusteredRepro` fails because top-level `CLUSTER` parses as a syntax error and the catalog query returns no clustered index.
 - Expected files: likely `server/connection_handler.go` for a narrow statement conversion, `server/node/*cluster*` or index metadata node code, `server/indexmetadata/index_metadata.go`, and `server/tables/pgcatalog/pg_index.go`.
 - Avoiding: beta's `server/node/drop_table.go`, alpha's `ALTER FUNCTION` files, and delta's `server/functions/framework/*` lane.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^TestClusterMarksIndexClusteredRepro$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run 'Test(CreateIndexConcurrentlyRejectsTransactionBlockRepro|DropIndexConcurrentlyRejectsTransactionBlockRepro|ClusterMarksIndexClusteredRepro|PartialUniqueIndexEnforcesPredicateRepro)$' -count=1`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./server/indexmetadata ./server/node -count=1`
+- Result: focused repro and adjacent index metadata checks pass; committing gamma-owned code files only because alpha currently has `server/node/drop_function.go` dirty.
+
+### beta - 2026-05-12 13:32 America/Phoenix
+
+- Lane: `DROP SEQUENCE` ownership checks from commit `2cf4bbde`.
+- Expected files: `server/node/drop_sequence.go` only.
+- Avoiding: dirty `server/node/drop_function.go`, gamma's CLUSTER/index files, and alpha's ALTER smoke-test lane.
+- Next action: run focused red sequence ownership repros, add owner/superuser validation before `collection.DropSequence`, focused green, commit only beta-owned file.
+
+### alpha - 2026-05-12 13:32 America/Phoenix
+
+- Lane: `DROP FUNCTION` ownership checks from `a25ea4fc`.
+- Expected files: `server/node/drop_function.go` only.
+- Avoiding: beta's relation-drop files, gamma's CLUSTER files, and dirty `testing/go/ddl_privilege_repro_test.go`.
+- Red:
+  - `TestDropFunctionRequiresOwnershipRepro` lets non-owner drop the function.
+  - `TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro` lets grantee with ALL PRIVILEGES drop the function.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run 'Test(DropFunctionRequiresOwnershipRepro|DropFunctionRequiresOwnershipDespiteAllPrivilegesRepro)' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./server/node -count=1`
+- Next action: commit only `server/node/drop_function.go` and `coop.md`.
