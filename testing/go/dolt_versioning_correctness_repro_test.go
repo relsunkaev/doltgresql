@@ -121,9 +121,9 @@ func TestDoltCommitDiffWorkingSetFilterRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT diff_type, from_pk, to_pk
-						FROM dolt_commit_diff_commit_diff_working_items
-						WHERE to_commit = HASHOF('main')
-							AND from_commit = 'WORKING';`,
+							FROM dolt_commit_diff_commit_diff_working_items
+							WHERE to_commit = 'WORKING'
+								AND from_commit = HASHOF('main');`,
 					Expected: []sql.Row{{"added", nil, 1}},
 				},
 			},
