@@ -143,7 +143,7 @@ func validateSchemaForCreate(existingSchemas []schema.DatabaseSchema, dbSchema s
 	}
 
 	for _, s := range existingSchemas {
-		if strings.EqualFold(s.Name, dbSchema.Name) {
+		if s.Name == dbSchema.Name {
 			return errors.Errorf("A schema with the name %s already exists", dbSchema.Name)
 		}
 	}

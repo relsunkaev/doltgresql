@@ -908,7 +908,7 @@ var SchemaTests = []ScriptTest{
 		SetUpScript: []string{
 			"CREATE SCHEMA dropme",
 			`CREATE schema "hasTables"`,
-			"CREATE TABLE hasTables.t1 (pk BIGINT PRIMARY KEY, v1 BIGINT);",
+			`CREATE TABLE "hasTables".t1 (pk BIGINT PRIMARY KEY, v1 BIGINT);`,
 		},
 		Assertions: []ScriptTestAssertion{
 			{
@@ -944,12 +944,12 @@ var SchemaTests = []ScriptTest{
 				Query: "drop schema if exists dropme;",
 			},
 			{
-				Query:       "DROP SCHEMA hasTables;",
-				ExpectedErr: "cannot drop schema hastables because other objects depend on it",
+				Query:       `DROP SCHEMA "hasTables";`,
+				ExpectedErr: "cannot drop schema hasTables because other objects depend on it",
 			},
 			{
 				Skip:  true, // not implemented yet
-				Query: "drop schema hasTables cascade;",
+				Query: `drop schema "hasTables" cascade;`,
 			},
 			{
 				Query: "create schema hastype;",

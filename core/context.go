@@ -238,14 +238,17 @@ func GetSqlTableFromContext(ctx *sql.Context, databaseName string, tableName dol
 	}
 
 	for _, schema := range searchPath {
-		db, ok, err = schemaDb.GetSchema(ctx, schema)
+		schemaDatabase, ok, err := schemaDb.GetSchema(ctx, schema)
 		if err != nil {
 			return nil, err
 		}
 		if !ok {
 			continue
 		}
-		tbl, ok, err := db.GetTableInsensitive(ctx, tableName.Name)
+		if len(tableName.Schema) > 0 && schemaDatabase.SchemaName() != schema {
+			continue
+		}
+		tbl, ok, err := schemaDatabase.GetTableInsensitive(ctx, tableName.Name)
 		if err != nil {
 			return nil, err
 		}
