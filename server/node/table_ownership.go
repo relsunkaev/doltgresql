@@ -47,6 +47,10 @@ func tableOwner(ctx *sql.Context, tableName doltdb.TableName) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	relation := doltdb.TableName{Name: tableName.Name, Schema: schemaName}
+	if owner := auth.GetRelationOwner(relation); owner != "" {
+		return owner, nil
+	}
 	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: tableName.Name, Schema: schemaName})
 	if err != nil {
 		return "", err

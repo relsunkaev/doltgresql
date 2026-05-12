@@ -343,6 +343,10 @@ func tableOwnedByRole(ctx *sql.Context, schemaName, tableName, roleName string) 
 	if roleName == "" {
 		return false
 	}
+	relation := doltdb.TableName{Name: tableName, Schema: schemaName}
+	if RelationOwnedByRole(relation, roleName) {
+		return true
+	}
 	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: tableName, Schema: schemaName})
 	if err != nil {
 		return false

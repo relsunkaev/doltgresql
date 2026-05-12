@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(12)
+	writer.Uint32(13)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -47,6 +47,8 @@ func (db *Database) serialize() []byte {
 	db.schemaPrivileges.serialize(writer)
 	// Write the schema owners
 	db.schemaOwners.serialize(writer)
+	// Write the relation owners
+	db.relationOwners.serialize(writer)
 	// Write the table privileges
 	db.tablePrivileges.serialize(writer)
 	// Write the sequence privileges
@@ -112,6 +114,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV11(reader)
 	case 12:
 		return db.deserializeV12(reader)
+	case 13:
+		return db.deserializeV13(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -135,6 +139,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(0, reader)
 	db.schemaOwners.deserialize(0, reader)
+	db.relationOwners.deserialize(0, reader)
 	// Read the table privileges
 	db.tablePrivileges.deserialize(0, reader)
 	// Read the role chain
@@ -209,6 +214,10 @@ func (db *Database) deserializeV12(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 12)
 }
 
+func (db *Database) deserializeV13(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 13)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -234,6 +243,11 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.schemaOwners.deserialize(1, reader)
 	} else {
 		db.schemaOwners.deserialize(0, reader)
+	}
+	if version >= 13 {
+		db.relationOwners.deserialize(1, reader)
+	} else {
+		db.relationOwners.deserialize(0, reader)
 	}
 	if version >= 3 {
 		// Read the table privileges

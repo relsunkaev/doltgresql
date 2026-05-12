@@ -19,6 +19,7 @@ import (
 	"io"
 	"math"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -153,6 +154,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if relPersistence == "" {
 				relPersistence = "p"
 			}
+			owner := auth.GetRelationOwner(doltdb.TableName{Name: table.Item.Name(), Schema: schema.Item.SchemaName()})
+			if owner == "" {
+				owner = tablemetadata.Owner(comment)
+			}
 			class := &pgClass{
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
@@ -168,7 +173,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				relOfType:       relOfType,
 				reloptions:      pgClassRelOptions(comment),
 				relpersistence:  relPersistence,
-				owner:           tablemetadata.Owner(comment),
+				owner:           owner,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -186,6 +191,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				relType:         id.NewType(view.OID.SchemaName(), view.OID.SchemaName()).AsId(),
+				owner:           auth.GetRelationOwner(doltdb.TableName{Name: view.Item.Name, Schema: schema.Item.SchemaName()}),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)

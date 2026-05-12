@@ -582,6 +582,7 @@ func TestAlterViewOwnerCanUseTransferredViewRepro(t *testing.T) {
 				`CREATE VIEW transferred_view_runtime AS
 					SELECT id, label FROM transferred_view_source;`,
 				`GRANT USAGE ON SCHEMA public TO transferred_view_owner;`,
+				`GRANT SELECT ON transferred_view_source TO transferred_view_owner;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{

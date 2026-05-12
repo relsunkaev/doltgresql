@@ -18,10 +18,12 @@ import (
 	"io"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -128,10 +130,15 @@ func (iter *pgViewsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		textDef = cv.AsSource.String()
 	}
 
+	owner := auth.GetRelationOwner(doltdb.TableName{Name: view.Name, Schema: schema})
+	if owner == "" {
+		owner = "postgres"
+	}
+
 	return sql.Row{
 		schema,    // schemaname
 		view.Name, // viewname
-		"",        // viewowner
+		owner,     // viewowner
 		textDef,   // definition
 	}, nil
 }

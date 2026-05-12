@@ -24,7 +24,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
-	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -78,6 +77,15 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 					),
 				}, nil
 			}
+		case *tree.AlterTableOwner:
+			return vitess.InjectedStatement{
+				Statement: pgnodes.NewAlterTableOwner(
+					node.IfExists,
+					tableName.SchemaQualifier.String(),
+					tableName.Name.String(),
+					cmd.Owner,
+				),
+			}, nil
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -276,10 +284,7 @@ func nodeAlterTableCmds(
 			}
 			vitessDdlCmds = append(vitessDdlCmds, statement)
 		case *tree.AlterTableOwner:
-			if !auth.RoleExists(cmd.Owner) {
-				return nil, nil, errors.Errorf(`role "%s" does not exist`, cmd.Owner)
-			}
-			unsupportedWarnings = append(unsupportedWarnings, fmt.Sprintf("ALTER TABLE %s OWNER TO %s", tableName.String(), cmd.Owner))
+			return nil, nil, errors.New("This command does not currently support multiple actions in one statement")
 		case *tree.AlterTableComputed:
 			return nil, nil, errors.New("This command does not currently support multiple actions in one statement")
 		case *tree.AlterTableSetStatistics:

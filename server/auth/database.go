@@ -47,6 +47,7 @@ type Database struct {
 	databasePrivileges  *DatabasePrivileges
 	schemaPrivileges    *SchemaPrivileges
 	schemaOwners        *SchemaOwners
+	relationOwners      *RelationOwners
 	tablePrivileges     *TablePrivileges
 	sequencePrivileges  *SequencePrivileges
 	routinePrivileges   *RoutinePrivileges
@@ -71,6 +72,7 @@ func ClearDatabase() {
 	clear(globalDatabase.databasePrivileges.Data)
 	clear(globalDatabase.schemaPrivileges.Data)
 	clear(globalDatabase.schemaOwners.Data)
+	clear(globalDatabase.relationOwners.Data)
 	clear(globalDatabase.tablePrivileges.Data)
 	clear(globalDatabase.sequencePrivileges.Data)
 	clear(globalDatabase.routinePrivileges.Data)
@@ -247,6 +249,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		databasePrivileges:  NewDatabasePrivileges(),
 		schemaPrivileges:    NewSchemaPrivileges(),
 		schemaOwners:        NewSchemaOwners(),
+		relationOwners:      NewRelationOwners(),
 		tablePrivileges:     NewTablePrivileges(),
 		sequencePrivileges:  NewSequencePrivileges(),
 		routinePrivileges:   NewRoutinePrivileges(),

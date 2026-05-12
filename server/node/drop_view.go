@@ -16,6 +16,7 @@ package node
 
 import (
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
@@ -112,7 +113,11 @@ func dropViewExists(ctx *sql.Context, drop *plan.SingleDropView) (bool, error) {
 }
 
 func checkViewOwnership(ctx *sql.Context, viewName string) error {
-	owner, _ := auth.GetSuperUserAndPassword()
+	schemaName, err := core.GetSchemaName(ctx, nil, "")
+	if err != nil {
+		return err
+	}
+	owner := auth.GetRelationOwner(doltdb.TableName{Name: viewName, Schema: schemaName})
 	if owner == "" {
 		owner = "postgres"
 	}
