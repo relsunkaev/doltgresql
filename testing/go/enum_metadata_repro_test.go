@@ -380,15 +380,22 @@ func TestAlterEnumAddValuePersistsUsableLabelRepro(t *testing.T) {
 			Name: "ALTER TYPE ADD VALUE persists usable enum label",
 			SetUpScript: []string{
 				`CREATE TYPE enum_alter_status AS ENUM ('new', 'done');`,
-				`ALTER TYPE enum_alter_status ADD VALUE 'archived' AFTER 'new';`,
 				`CREATE TABLE enum_alter_items (
 					id INT PRIMARY KEY,
 					status enum_alter_status
 				);`,
+				`ALTER TYPE enum_alter_status ADD VALUE 'archived' AFTER 'new';`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO enum_alter_items VALUES (1, 'archived');`,
+				},
+				{
+					Query: `SELECT enumlabel
+						FROM pg_catalog.pg_enum
+						WHERE enumtypid = 'enum_alter_status'::regtype
+						ORDER BY enumsortorder;`,
+					Expected: []sql.Row{{"new"}, {"archived"}, {"done"}},
 				},
 				{
 					Query: `SELECT status::text
@@ -424,6 +431,10 @@ func TestAlterEnumRenameValueUpdatesStoredRowsRepro(t *testing.T) {
 					Query: `SELECT status::text
 						FROM enum_rename_items;`,
 					Expected: []sql.Row{{"open"}},
+				},
+				{
+					Query:       `INSERT INTO enum_rename_items VALUES (2, 'new');`,
+					ExpectedErr: `invalid input value for enum enum_rename_status: "new"`,
 				},
 			},
 		},

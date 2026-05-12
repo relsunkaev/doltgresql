@@ -62,6 +62,36 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 				cmd.DropBehavior == tree.DropCascade,
 			),
 		}, nil
+	case *tree.AlterTypeAddValue:
+		tn := node.Type.ToTableName()
+		before := false
+		existingVal := ""
+		if cmd.Placement != nil {
+			before = cmd.Placement.Before
+			existingVal = cmd.Placement.ExistingVal
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeAddValue(
+				tn.Catalog(),
+				tn.Schema(),
+				tn.Object(),
+				cmd.NewVal,
+				cmd.IfNotExists,
+				before,
+				existingVal,
+			),
+		}, nil
+	case *tree.AlterTypeRenameValue:
+		tn := node.Type.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeRenameValue(
+				tn.Catalog(),
+				tn.Schema(),
+				tn.Object(),
+				cmd.OldVal,
+				cmd.NewVal,
+			),
+		}, nil
 	}
 
 	return NotYetSupportedError("ALTER TYPE is not yet supported")

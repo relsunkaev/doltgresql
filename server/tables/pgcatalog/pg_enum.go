@@ -16,9 +16,11 @@ package pgcatalog
 
 import (
 	"io"
+	"sort"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,39 @@ func (p PgEnumHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgEnumHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_enum row iter
-	return emptyRowIter()
+	collection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var rows []sql.Row
+	err = collection.IterateTypes(ctx, func(typ *pgtypes.DoltgresType) (bool, error) {
+		if typ.TypType != pgtypes.TypeType_Enum {
+			return false, nil
+		}
+		labels := make([]pgtypes.EnumLabel, 0, len(typ.EnumLabels))
+		for _, label := range typ.EnumLabels {
+			labels = append(labels, label)
+		}
+		sort.Slice(labels, func(i, j int) bool {
+			if labels[i].SortOrder == labels[j].SortOrder {
+				return labels[i].ID.Label() < labels[j].ID.Label()
+			}
+			return labels[i].SortOrder < labels[j].SortOrder
+		})
+		for _, label := range labels {
+			rows = append(rows, sql.Row{
+				label.ID.AsId(),
+				typ.ID.AsId(),
+				label.SortOrder,
+				label.ID.Label(),
+			})
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
