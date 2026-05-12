@@ -93,11 +93,19 @@ func assignUpdateCastsHandleSource(ctx *sql.Context, updateSource *plan.UpdateSo
 	if err != nil {
 		return nil, err
 	}
-	newUpdateSource, err := updateSource.WithExpressions(ctx, newUpdateExprs...)
-	if err != nil {
-		return nil, err
+	numExplicitExprs := len(updateExprs.ExplicitUpdateExprs())
+	if numExplicitExprs > 1 {
+		newUpdateExprs = append(
+			[]sql.Expression{pgexprs.NewSimultaneousUpdate(newUpdateExprs[:numExplicitExprs])},
+			newUpdateExprs[numExplicitExprs:]...,
+		)
+		numExplicitExprs = 1
 	}
-	return newUpdateSource.(*plan.UpdateSource), nil
+	return plan.NewUpdateSource(
+		updateSource.Child,
+		updateSource.Ignore,
+		plan.NewUpdateExprs(newUpdateExprs, numExplicitExprs),
+	), nil
 }
 
 func assignUpdateFieldCasts(ctx *sql.Context, updateExprs []sql.Expression) ([]sql.Expression, error) {
@@ -107,14 +115,23 @@ func assignUpdateFieldCasts(ctx *sql.Context, updateExprs []sql.Expression) ([]s
 		if !ok {
 			return nil, errors.Errorf("UPDATE: assumption that expression is always SetField is incorrect: %T", updateExpr)
 		}
-		fromType, ok := setField.RightChild.Type(ctx).(*pgtypes.DoltgresType)
-		if !ok {
-			return nil, errors.Errorf("UPDATE: non-Doltgres type found in source: %s", setField.RightChild.String())
-		}
 		toType, ok := setField.LeftChild.Type(ctx).(*pgtypes.DoltgresType)
 		if !ok {
 			// Only non-Doltgres destination tables will have GMS types (such as system tables), so we don't error here
 			toType = pgtypes.FromGmsType(setField.LeftChild.Type(ctx))
+		}
+		fromSqlType := setField.RightChild.Type(ctx)
+		if fromSqlType == nil {
+			newSetField, err := setField.WithChildren(ctx, setField.LeftChild, expression.NewLiteral(nil, toType))
+			if err != nil {
+				return nil, err
+			}
+			setField = newSetField.(*expression.SetField)
+			fromSqlType = toType
+		}
+		fromType, ok := fromSqlType.(*pgtypes.DoltgresType)
+		if !ok {
+			return nil, errors.Errorf("UPDATE: non-Doltgres type found in source: %s", setField.RightChild.String())
 		}
 		// We only assign the existing expression if the types perfectly match (same parameters), otherwise we'll cast
 		if fromType.Equals(toType) {
