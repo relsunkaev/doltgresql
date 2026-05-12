@@ -100,8 +100,16 @@ func (sqlFunc SQLFunction) enforceInterfaceInheritance(error) {}
 
 // CallSqlFunction runs the given SQL definition inside the function on the given runner.
 func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner, args []any) (any, error) {
+	if len(args) != len(f.ParameterTypes) {
+		return nil, errors.Errorf("function %s called with %d arguments, expected %d", f.ID.FunctionName(), len(args), len(f.ParameterTypes))
+	}
+
 	paramMap := make(map[string]*ParamTypAndValue)
-	for i, name := range f.ParameterNames {
+	for i := range f.ParameterTypes {
+		var name string
+		if i < len(f.ParameterNames) {
+			name = f.ParameterNames[i]
+		}
 		var formattedVar string
 		isNull := args[i] == nil
 		if !isNull {
