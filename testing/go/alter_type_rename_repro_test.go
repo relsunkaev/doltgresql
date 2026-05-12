@@ -343,6 +343,42 @@ func TestAlterTypeRenameUpdatesColumnDefaultMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeRenameUpdatesCheckConstraintMetadataRepro reproduces a catalog
+// persistence bug: check constraints that reference a renamed type should keep
+// resolving through the renamed type after ALTER TYPE RENAME TO.
+func TestAlterTypeRenameUpdatesCheckConstraintMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates check constraint expressions",
+			SetUpScript: []string{
+				`CREATE TYPE rename_check_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE rename_check_status_items (
+					id INT PRIMARY KEY,
+					status TEXT,
+					CONSTRAINT rename_check_not_done
+						CHECK (status::rename_check_status <> 'done'::rename_check_status)
+				);`,
+				`ALTER TYPE rename_check_status RENAME TO renamed_check_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_check_status_items
+						VALUES (1, 'new');`,
+				},
+				{
+					Query:       `INSERT INTO rename_check_status_items VALUES (2, 'done');`,
+					ExpectedErr: `rename_check_not_done`,
+				},
+				{
+					Query: `SELECT id::text, status
+						FROM rename_check_status_items;`,
+					Expected: []sql.Row{{"1", "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro reproduces a
 // catalog persistence bug: renaming a type should update function signatures
 // that reference it, so overload lookup with the renamed type keeps working.
