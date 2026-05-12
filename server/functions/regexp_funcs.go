@@ -30,16 +30,22 @@ import (
 func initRegexpSetReturning() {
 	framework.RegisterFunction(regexp_matches_text_text)
 	framework.RegisterFunction(regexp_matches_text_text_text)
+	framework.RegisterFunction(regexp_count_text_text)
+	framework.RegisterFunction(regexp_replace_text_text_text)
+	framework.RegisterFunction(regexp_replace_text_text_text_text)
+	framework.RegisterFunction(regexp_split_to_array_text_text)
+	framework.RegisterFunction(regexp_split_to_array_text_text_text)
 	framework.RegisterFunction(regexp_split_to_table_text_text)
 	framework.RegisterFunction(regexp_split_to_table_text_text_text)
 }
 
 // compilePGRegex compiles a PG-style regex pattern with optional flags.
-// Recognised flags: 'i' (case-insensitive), 'g' (global; consumed by caller).
-// Other PG flags are rejected so callers do not silently get the wrong
-// semantics.
+// Recognised flags include 'i' (case-insensitive), 'g' (global; consumed by
+// caller), 'x' (expanded whitespace mode), and 'n' (newline-sensitive anchors).
+// Other PG flags are rejected so callers do not silently get the wrong semantics.
 func compilePGRegex(pattern, flags string) (re *regexp.Regexp, global bool, err error) {
 	var inlineFlags strings.Builder
+	expanded := false
 	for _, f := range flags {
 		switch f {
 		case 'g':
@@ -48,11 +54,18 @@ func compilePGRegex(pattern, flags string) (re *regexp.Regexp, global bool, err 
 			inlineFlags.WriteRune('i')
 		case 'c':
 			// case-sensitive (default in Go); no-op
-		case 'm', 's', 'n', 'x', 'p', 'q', 'w', 'b', 'e':
+		case 'n':
+			inlineFlags.WriteRune('m')
+		case 'x':
+			expanded = true
+		case 'm', 's', 'p', 'q', 'w', 'b', 'e':
 			return nil, false, errors.Errorf("regex flag %q not supported", string(f))
 		default:
 			return nil, false, errors.Errorf("invalid regex flag %q", string(f))
 		}
+	}
+	if expanded {
+		pattern = expandPGRegex(pattern)
 	}
 	prefix := ""
 	if inlineFlags.Len() > 0 {
@@ -63,6 +76,39 @@ func compilePGRegex(pattern, flags string) (re *regexp.Regexp, global bool, err 
 		return nil, false, errors.Errorf("invalid regular expression: %s", err.Error())
 	}
 	return re, global, nil
+}
+
+func expandPGRegex(pattern string) string {
+	var sb strings.Builder
+	inClass := false
+	escaped := false
+	for _, r := range pattern {
+		if escaped {
+			sb.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if r == '\\' {
+			sb.WriteRune(r)
+			escaped = true
+			continue
+		}
+		switch r {
+		case '[':
+			inClass = true
+			sb.WriteRune(r)
+		case ']':
+			inClass = false
+			sb.WriteRune(r)
+		case ' ', '\t', '\n', '\r', '\f':
+			if inClass {
+				sb.WriteRune(r)
+			}
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
 }
 
 // regexpMatchesIter advances through matches; each row is text[] of capture
@@ -125,6 +171,85 @@ var regexp_matches_text_text_text = framework.Function3{
 	},
 }
 
+var regexp_count_text_text = framework.Function2{
+	Name:       "regexp_count",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
+		re, _, err := compilePGRegex(val2.(string), "g")
+		if err != nil {
+			return nil, err
+		}
+		return int32(len(re.FindAllStringIndex(val1.(string), -1))), nil
+	},
+}
+
+var regexp_replace_text_text_text = framework.Function3{
+	Name:       "regexp_replace",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+		re, _, err := compilePGRegex(val2.(string), "")
+		if err != nil {
+			return nil, err
+		}
+		return regexpReplace(val1.(string), re, val3.(string), false), nil
+	},
+}
+
+var regexp_replace_text_text_text_text = framework.Function4{
+	Name:       "regexp_replace",
+	Return:     pgtypes.Text,
+	Parameters: [4]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, val1, val2, val3, val4 any) (any, error) {
+		re, global, err := compilePGRegex(val2.(string), val4.(string))
+		if err != nil {
+			return nil, err
+		}
+		return regexpReplace(val1.(string), re, val3.(string), global), nil
+	},
+}
+
+func regexpReplace(input string, re *regexp.Regexp, replacement string, global bool) string {
+	replacement = pgRegexReplacement(replacement)
+	if global {
+		return re.ReplaceAllString(input, replacement)
+	}
+	loc := re.FindStringSubmatchIndex(input)
+	if loc == nil {
+		return input
+	}
+	var sb strings.Builder
+	sb.WriteString(input[:loc[0]])
+	sb.Write(re.ExpandString(nil, replacement, input, loc))
+	sb.WriteString(input[loc[1]:])
+	return sb.String()
+}
+
+func pgRegexReplacement(replacement string) string {
+	var sb strings.Builder
+	for i := 0; i < len(replacement); i++ {
+		if replacement[i] != '\\' || i+1 >= len(replacement) {
+			sb.WriteByte(replacement[i])
+			continue
+		}
+		i++
+		switch next := replacement[i]; {
+		case next >= '0' && next <= '9':
+			sb.WriteByte('$')
+			sb.WriteByte(next)
+		case next == '&':
+			sb.WriteString("$0")
+		default:
+			sb.WriteByte(next)
+		}
+	}
+	return sb.String()
+}
+
 func regexpSplitIter(input string, re *regexp.Regexp) *pgtypes.SetReturningFunctionRowIter {
 	parts := re.Split(input, -1)
 	idx := 0
@@ -136,6 +261,43 @@ func regexpSplitIter(input string, re *regexp.Regexp) *pgtypes.SetReturningFunct
 		idx++
 		return sql.Row{p}, nil
 	})
+}
+
+func regexpSplitArray(input string, re *regexp.Regexp) []any {
+	parts := re.Split(input, -1)
+	values := make([]any, len(parts))
+	for i, part := range parts {
+		values[i] = part
+	}
+	return values
+}
+
+var regexp_split_to_array_text_text = framework.Function2{
+	Name:       "regexp_split_to_array",
+	Return:     pgtypes.TextArray,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
+		re, _, err := compilePGRegex(val2.(string), "")
+		if err != nil {
+			return nil, err
+		}
+		return regexpSplitArray(val1.(string), re), nil
+	},
+}
+
+var regexp_split_to_array_text_text_text = framework.Function3{
+	Name:       "regexp_split_to_array",
+	Return:     pgtypes.TextArray,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
+		re, _, err := compilePGRegex(val2.(string), val3.(string))
+		if err != nil {
+			return nil, err
+		}
+		return regexpSplitArray(val1.(string), re), nil
+	},
 }
 
 var regexp_split_to_table_text_text = framework.Function2{
