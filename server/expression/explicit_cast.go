@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/procedures"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -78,7 +79,16 @@ func (c *ExplicitCast) Child() sql.Expression {
 // Eval implements the sql.Expression interface.
 func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	if !c.castToType.IsResolvedType() {
-		return nil, errors.Errorf("cannot call ExplicitCast.Eval with unresolved cast to type: %s", c.castToType.String())
+		resolvedType, err := resolveRuntimeCastType(ctx, c.castToType)
+		if err != nil {
+			return nil, err
+		}
+		if !resolvedType.IsDefined {
+			return nil, pgtypes.ErrTypeIsOnlyAShell.New(resolvedType.Name())
+		}
+		resolvedCast := *c
+		resolvedCast.castToType = resolvedType
+		c = &resolvedCast
 	}
 
 	val, err := c.sqlChild.Eval(ctx, row)
@@ -155,6 +165,59 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 
 	return castResult, nil
+}
+
+func resolveRuntimeCastType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ == nil || typ.IsResolvedType() {
+		return typ, nil
+	}
+	collection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	schema, _ := core.GetSchemaName(ctx, nil, typ.ID.SchemaName())
+	resolvedTyp, err := collection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+	if err != nil {
+		return nil, err
+	}
+	if resolvedTyp == nil && typ.ID.SchemaName() == "" {
+		resolvedTyp, err = collection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+	}
+	if resolvedTyp == nil {
+		return nil, pgtypes.ErrTypeDoesNotExist.New(typ.Name())
+	}
+	return withRuntimeCastTypmod(resolvedTyp, typ)
+}
+
+func withRuntimeCastTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	typmod := unresolvedTyp.GetAttTypMod()
+	if typmod == -1 {
+		return resolvedTyp, nil
+	}
+	switch resolvedTyp.ID {
+	case pgtypes.Vector.ID:
+		var err error
+		typmod, err = pgtypes.GetTypmodFromVectorDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	case pgtypes.Halfvec.ID:
+		var err error
+		typmod, err = pgtypes.GetTypmodFromHalfvecDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	case pgtypes.Sparsevec.ID:
+		var err error
+		typmod, err = pgtypes.GetTypmodFromSparsevecDimensions(typmod)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return resolvedTyp.WithAttTypMod(typmod), nil
 }
 
 func (c *ExplicitCast) evalUserDefinedCast(ctx *sql.Context, val any, fromType *pgtypes.DoltgresType, cast auth.Cast) (any, error) {
