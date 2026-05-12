@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,17 @@ func (p PgLargeobjectHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgLargeobjectHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_largeobject row iter
-	return emptyRowIter()
+	rows := make([]sql.Row, 0)
+	for _, obj := range largeobject.Objects() {
+		for pageNo, page := range largeobject.Pages(obj) {
+			rows = append(rows, sql.Row{
+				id.NewOID(obj.OID).AsId(),
+				int32(pageNo),
+				page,
+			})
+		}
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

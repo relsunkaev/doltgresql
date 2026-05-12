@@ -27,6 +27,7 @@ import (
 	"os"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -2834,6 +2835,9 @@ func isFeatureNotSupportedMessage(err error) bool {
 func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error) {
 	s, err := parser.Parse(query)
 	if err != nil {
+		if converted, ok := convertedAlterLargeObjectOwner(query); ok {
+			return []ConvertedQuery{converted}, nil
+		}
 		if containsCreateEventTrigger(query) {
 			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied to create event trigger")
 		}
@@ -2869,6 +2873,29 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 	}
 	return converted, nil
+}
+
+func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {
+	fields := strings.Fields(strings.TrimSuffix(strings.TrimSpace(query), ";"))
+	if len(fields) != 7 ||
+		!strings.EqualFold(fields[0], "alter") ||
+		!strings.EqualFold(fields[1], "large") ||
+		!strings.EqualFold(fields[2], "object") ||
+		!strings.EqualFold(fields[4], "owner") ||
+		!strings.EqualFold(fields[5], "to") {
+		return ConvertedQuery{}, false
+	}
+	oid, err := strconv.ParseUint(fields[3], 10, 32)
+	if err != nil {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewAlterLargeObjectOwner(uint32(oid), fields[6]),
+		},
+		StatementTag: "ALTER LARGE OBJECT",
+	}, true
 }
 
 func containsCreateEventTrigger(query string) bool {

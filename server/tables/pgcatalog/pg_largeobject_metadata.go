@@ -19,6 +19,9 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +46,21 @@ func (p PgLargeobjectMetadataHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgLargeobjectMetadataHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_largeobject_metadata row iter
-	return emptyRowIter()
+	rows := make([]sql.Row, 0)
+	for _, obj := range largeobject.Objects() {
+		owner := catalogOwnerOID()
+		auth.LockRead(func() {
+			if role := auth.GetRole(obj.Owner); role.IsValid() {
+				owner = id.NewId(id.Section_User, obj.Owner)
+			}
+		})
+		rows = append(rows, sql.Row{
+			id.NewOID(obj.OID).AsId(),
+			owner,
+			nil,
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

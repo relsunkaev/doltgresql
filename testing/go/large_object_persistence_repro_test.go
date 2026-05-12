@@ -47,6 +47,27 @@ func TestLargeObjectCreatePersistsMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestAlterLargeObjectOwnerReachesValidationRepro reproduces a large-object
+// ownership parity gap: ALTER LARGE OBJECT should parse and reach large-object
+// existence/ownership validation.
+func TestAlterLargeObjectOwnerReachesValidationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER LARGE OBJECT OWNER reaches object validation",
+			SetUpScript: []string{
+				`CREATE ROLE large_object_owner_target;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER LARGE OBJECT 515151
+						OWNER TO large_object_owner_target;`,
+					ExpectedErr: `large object`,
+				},
+			},
+		},
+	})
+}
+
 // TestLargeObjectByteaRoundTripRepro reproduces a large-object persistence
 // bug: lo_from_bytea should create a large object whose bytes are readable by
 // lo_get through the returned OID.
