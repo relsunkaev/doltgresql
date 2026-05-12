@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"fmt"
+
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -46,8 +48,16 @@ func nodeUpdateExprs(ctx *Context, node tree.UpdateExprs) (vitess.AssignmentExpr
 	if len(node) == 0 {
 		return nil, nil
 	}
+	seenTargets := make(map[string]struct{})
 	var assignmentExprs vitess.AssignmentExprs
 	for i := range node {
+		for _, name := range node[i].Names {
+			name := string(name)
+			if _, ok := seenTargets[name]; ok {
+				return nil, fmt.Errorf("multiple assignments to same column %q", name)
+			}
+			seenTargets[name] = struct{}{}
+		}
 		newAssignmentExprs, err := nodeUpdateExpr(ctx, node[i])
 		if err != nil {
 			return nil, err
