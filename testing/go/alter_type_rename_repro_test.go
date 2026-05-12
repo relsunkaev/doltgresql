@@ -241,6 +241,38 @@ func TestAlterCompositeTypeRenameAttributeUpdatesViewMetadataRepro(t *testing.T)
 	})
 }
 
+// TestAlterCompositeTypeRenameAttributeUpdatesMaterializedViewMetadataRepro
+// reproduces a catalog persistence bug: renaming a composite type attribute
+// should update materialized views that reference that attribute so refreshes
+// keep working.
+func TestAlterCompositeTypeRenameAttributeUpdatesMaterializedViewMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE updates dependent materialized view metadata",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_matview_item AS (old_name INT);`,
+				`CREATE MATERIALIZED VIEW rename_attr_matview_reader AS
+					SELECT (ROW(7)::rename_attr_matview_item).old_name AS value;`,
+				`ALTER TYPE rename_attr_matview_item
+					RENAME ATTRIBUTE old_name TO new_name;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT value FROM rename_attr_matview_reader;`,
+					Expected: []sql.Row{{7}},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW rename_attr_matview_reader;`,
+				},
+				{
+					Query:    `SELECT value FROM rename_attr_matview_reader;`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
 // PostgreSQL can rename type and domain objects in place. Doltgres should
 // update type lookup metadata so the old name disappears and the new name is
 // usable.
