@@ -360,6 +360,46 @@ func TestDoltResetHardRemovesUncommittedViewRepro(t *testing.T) {
 	})
 }
 
+// TestDoltResetHardRemovesUncommittedMaterializedViewRepro reproduces a
+// versioned persistence bug: DOLT_RESET --hard should discard uncommitted
+// materialized view definitions and their materialized rows.
+func TestDoltResetHardRemovesUncommittedMaterializedViewRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted materialized view",
+			SetUpScript: []string{
+				`CREATE TABLE reset_matview_source (id INT PRIMARY KEY);`,
+				`INSERT INTO reset_matview_source VALUES (1);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial matview reset source');`,
+				`CREATE MATERIALIZED VIEW reset_uncommitted_matview AS
+					SELECT id FROM reset_matview_source;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT id FROM reset_uncommitted_matview;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       `SELECT id FROM reset_uncommitted_matview;`,
+					ExpectedErr: `not found`,
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetHardRemovesUncommittedSequenceGuard keeps coverage for
 // DOLT_RESET --hard discarding uncommitted sequence objects.
 func TestDoltResetHardRemovesUncommittedSequenceGuard(t *testing.T) {

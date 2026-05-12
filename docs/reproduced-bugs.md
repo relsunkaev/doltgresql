@@ -17377,6 +17377,22 @@ They are worth keeping, but they are not counted as found bugs.
   remains queryable. Resetting a working set can therefore leave stale view
   metadata active after it should have been removed.
 
+### DOLT_RESET --hard leaves uncommitted materialized views in the working set
+
+- Reproducer: `TestDoltResetHardRemovesUncommittedMaterializedViewRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltResetHardRemovesUncommittedMaterializedViewRepro -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted materialized view,
+  `DOLT_RESET('--hard')` should discard both the materialized view definition
+  and its materialized rows, leave `dolt_status` clean, and make later reads
+  fail as undefined.
+- Observed Doltgres behavior: `DOLT_RESET('--hard')` returns success, but
+  `dolt_status` still reports one change and the supposedly discarded
+  materialized view remains queryable with its row data. Resetting a working
+  set can therefore leave stale materialized-view data active.
+
 ### DOLT_RESET --hard to an older revision leaves newer functions active
 
 - Reproducer: `TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro` in
