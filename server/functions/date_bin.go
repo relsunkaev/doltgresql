@@ -15,7 +15,6 @@
 package functions
 
 import (
-	"math"
 	"time"
 
 	cerrors "github.com/cockroachdb/errors"
@@ -74,18 +73,21 @@ func binTimestamp(interval duration.Duration, timestamp time.Time, origin time.T
 		return time.Time{}, cerrors.Errorf("stride must be greater than zero")
 	}
 
-	originNanos := origin.UnixNano()
-	diffNanos := timestamp.UnixNano() - originNanos
+	diffNanos := timestamp.Sub(origin).Nanoseconds()
 
 	// Calculate how many complete intervals have passed
-	binCount := diffNanos / intervalNanos
-	if diffNanos < 0 {
-		// For negative differences, we need to round down (towards negative infinity)
-		binCount = int64(math.Floor(float64(diffNanos) / float64(intervalNanos)))
-	}
+	binCount := floorDivInt64(diffNanos, intervalNanos)
 
 	// Calculate the bin start time
-	binStartNanos := originNanos + binCount*intervalNanos
+	binOffsetNanos := binCount * intervalNanos
 
-	return time.Unix(0, binStartNanos).In(timestamp.Location()), nil
+	return origin.Add(time.Duration(binOffsetNanos)).In(timestamp.Location()), nil
+}
+
+func floorDivInt64(n, d int64) int64 {
+	q := n / d
+	if n%d != 0 && n < 0 {
+		q--
+	}
+	return q
 }
