@@ -351,6 +351,9 @@ var SchemaTests = []ScriptTest{
 	},
 	{
 		Name: "Create schema authorized role",
+		SetUpScript: []string{
+			"CREATE ROLE myUser",
+		},
 		Assertions: []ScriptTestAssertion{
 			{
 				Query: "create schema AUTHORIZATION myUser",

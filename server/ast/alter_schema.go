@@ -17,6 +17,8 @@ package ast
 import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	pgnodes "github.com/dolthub/doltgresql/server/node"
+
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
 
@@ -26,9 +28,11 @@ func nodeAlterSchema(ctx *Context, node *tree.AlterSchema) (vitess.Statement, er
 		return nil, nil
 	}
 
-	// We intentionally don't support OWNER TO since we don't support owning objects
-	if _, ok := node.Cmd.(*tree.AlterSchemaOwner); ok {
-		return NewNoOp("OWNER TO is unsupported and ignored"), nil
+	if owner, ok := node.Cmd.(*tree.AlterSchemaOwner); ok {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterSchemaOwner(node.Schema, owner.Owner),
+			Children:  nil,
+		}, nil
 	}
 
 	return NotYetSupportedError("ALTER SCHEMA is not yet supported")

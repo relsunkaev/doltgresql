@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(10)
+	writer.Uint32(11)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -43,6 +43,8 @@ func (db *Database) serialize() []byte {
 	db.databasePrivileges.serialize(writer)
 	// Write the schema privileges
 	db.schemaPrivileges.serialize(writer)
+	// Write the schema owners
+	db.schemaOwners.serialize(writer)
 	// Write the table privileges
 	db.tablePrivileges.serialize(writer)
 	// Write the sequence privileges
@@ -102,6 +104,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV9(reader)
 	case 10:
 		return db.deserializeV10(reader)
+	case 11:
+		return db.deserializeV11(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -123,6 +127,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	db.databasePrivileges.deserialize(0, reader)
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(0, reader)
+	db.schemaOwners.deserialize(0, reader)
 	// Read the table privileges
 	db.tablePrivileges.deserialize(0, reader)
 	// Read the role chain
@@ -189,6 +194,10 @@ func (db *Database) deserializeV10(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 10)
 }
 
+func (db *Database) deserializeV11(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 11)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -204,6 +213,11 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 	db.databasePrivileges.deserialize(1, reader)
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(1, reader)
+	if version >= 11 {
+		db.schemaOwners.deserialize(1, reader)
+	} else {
+		db.schemaOwners.deserialize(0, reader)
+	}
 	if version >= 3 {
 		// Read the table privileges
 		db.tablePrivileges.deserialize(version, reader)

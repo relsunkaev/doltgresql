@@ -17,7 +17,7 @@ package ast
 import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
-	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
@@ -34,16 +34,8 @@ func nodeCreateSchema(ctx *Context, node *tree.CreateSchema) (vitess.Statement, 
 		schemaName = node.AuthRole
 	}
 
-	return &vitess.DBDDL{
-		Action:           "CREATE",
-		SchemaOrDatabase: "schema",
-		DBName:           schemaName,
-		IfNotExists:      node.IfNotExists,
-		CharsetCollate:   nil, // TODO
-		Auth: vitess.AuthInformation{
-			AuthType:    auth.AuthType_CREATE,
-			TargetType:  auth.AuthTargetType_DatabaseIdentifiers,
-			TargetNames: []string{""},
-		},
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewCreateSchema(schemaName, node.AuthRole, node.IfNotExists),
+		Children:  nil,
 	}, nil
 }

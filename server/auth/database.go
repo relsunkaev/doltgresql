@@ -42,6 +42,7 @@ type Database struct {
 	rolesByID           map[RoleID]Role
 	databasePrivileges  *DatabasePrivileges
 	schemaPrivileges    *SchemaPrivileges
+	schemaOwners        *SchemaOwners
 	tablePrivileges     *TablePrivileges
 	sequencePrivileges  *SequencePrivileges
 	routinePrivileges   *RoutinePrivileges
@@ -63,6 +64,7 @@ func ClearDatabase() {
 	clear(globalDatabase.rolesByID)
 	clear(globalDatabase.databasePrivileges.Data)
 	clear(globalDatabase.schemaPrivileges.Data)
+	clear(globalDatabase.schemaOwners.Data)
 	clear(globalDatabase.tablePrivileges.Data)
 	clear(globalDatabase.sequencePrivileges.Data)
 	clear(globalDatabase.routinePrivileges.Data)
@@ -180,6 +182,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		rolesByID:           make(map[RoleID]Role),
 		databasePrivileges:  NewDatabasePrivileges(),
 		schemaPrivileges:    NewSchemaPrivileges(),
+		schemaOwners:        NewSchemaOwners(),
 		tablePrivileges:     NewTablePrivileges(),
 		sequencePrivileges:  NewSequencePrivileges(),
 		routinePrivileges:   NewRoutinePrivileges(),

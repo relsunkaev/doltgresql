@@ -282,8 +282,5 @@ func pgNamespaceToRow(namespace *pgNamespace) sql.Row {
 }
 
 func namespaceOwner(name string) id.Id {
-	if name == "public" {
-		return id.NewId(id.Section_User, "pg_database_owner")
-	}
-	return id.NewId(id.Section_User, "postgres")
+	return id.NewId(id.Section_User, auth.GetSchemaOwner(name))
 }

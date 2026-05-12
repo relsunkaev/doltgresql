@@ -296,6 +296,9 @@ func (h *AuthorizationHandler) dbName(ctx *sql.Context, dbName string) string {
 
 // checkPrivilegeOnSchema checks privileges for given schema.
 func checkPrivilegeOnSchema(state AuthorizationQueryState, schemaName string, privileges []Privilege) error {
+	if SchemaOwnedByRole(schemaName, state.role.Name) {
+		return nil
+	}
 	roleSchemaKey := SchemaPrivilegeKey{
 		Role:   state.role.ID(),
 		Schema: schemaName,
