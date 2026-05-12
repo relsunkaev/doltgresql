@@ -75,6 +75,13 @@ func (d *DropAggregate) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error
 			}
 			return nil, err
 		}
+		aggregate, err := funcColl.GetFunction(ctx, aggregateID)
+		if err != nil {
+			return nil, err
+		}
+		if err = checkAggregateOwnership(ctx, aggregate); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
+		}
 		if err = funcColl.DropFunction(ctx, aggregateID); err != nil {
 			return nil, err
 		}

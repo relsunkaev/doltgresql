@@ -158,7 +158,18 @@ func (c *CreateAggregate) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	}
 
 	aggregateID := id.NewFunction(schemaName, c.AggregateName, paramTypes...)
+	owner := ctx.Client().User
 	if c.Replace && funcCollection.HasFunction(ctx, aggregateID) {
+		existing, err := funcCollection.GetFunction(ctx, aggregateID)
+		if err != nil {
+			return nil, err
+		}
+		if err = checkAggregateOwnership(ctx, existing); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
+		}
+		if existing.Owner != "" {
+			owner = existing.Owner
+		}
 		if err = funcCollection.DropFunction(ctx, aggregateID); err != nil {
 			return nil, err
 		}
@@ -173,7 +184,7 @@ func (c *CreateAggregate) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		AggregateStateType: stateType.ID,
 		AggregateSFunc:     transitionID,
 		AggregateInitCond:  c.InitCond,
-		Owner:              ctx.Client().User,
+		Owner:              owner,
 	})
 	if err != nil {
 		return nil, err

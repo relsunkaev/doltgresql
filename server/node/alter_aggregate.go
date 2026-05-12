@@ -23,6 +23,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 )
@@ -91,6 +92,9 @@ func (a *AlterAggregate) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err != nil {
 		return nil, err
 	}
+	if err = checkAggregateOwnership(ctx, aggregate); err != nil {
+		return nil, err
+	}
 	newAggregateID := aggregateID
 	if a.Rename != "" {
 		newAggregateID = id.NewFunction(newAggregateID.SchemaName(), a.Rename, newAggregateID.Parameters()...)
@@ -125,6 +129,20 @@ func (a *AlterAggregate) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkAggregateOwnership(ctx *sql.Context, aggregate corefunctions.Function) error {
+	if len(aggregate.Owner) == 0 || aggregate.Owner == ctx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be owner of aggregate %s", aggregate.ID.FunctionName())
 }
 
 // Schema implements the interface sql.ExecSourceRel.
