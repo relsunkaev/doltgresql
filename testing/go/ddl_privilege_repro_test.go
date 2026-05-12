@@ -2619,6 +2619,38 @@ func TestRenameIndexRequiresTableOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestClusterRequiresTableOwnershipRepro reproduces a security bug: Doltgres
+// allows a role that does not own the indexed table to mark one of its indexes
+// as clustered.
+func TestClusterRequiresTableOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CLUSTER requires ownership of indexed table",
+			SetUpScript: []string{
+				`CREATE USER cluster_user PASSWORD 'clusterer';`,
+				`CREATE TABLE cluster_private (id INT PRIMARY KEY, label TEXT);`,
+				`CREATE INDEX cluster_private_label_idx ON cluster_private (label);`,
+				`GRANT USAGE ON SCHEMA public TO cluster_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CLUSTER cluster_private_label_idx ON cluster_private;`,
+					ExpectedErr: `permission denied`,
+					Username:    `cluster_user`,
+					Password:    `clusterer`,
+				},
+				{
+					Query: `SELECT i.indisclustered
+						FROM pg_catalog.pg_index i
+						JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+						WHERE c.relname = 'cluster_private_label_idx';`,
+					Expected: []sql.Row{{"f"}},
+				},
+			},
+		},
+	})
+}
+
 // TestReindexTableRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a table to REINDEX it.
 func TestReindexTableRequiresOwnershipRepro(t *testing.T) {
