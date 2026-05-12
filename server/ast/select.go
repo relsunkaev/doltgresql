@@ -241,6 +241,20 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 	case tree.UnqualifiedStar:
 		return &vitess.StarExpr{}, nil
 	case *tree.UnresolvedName:
+		if ctx.ResolveExcludedRefs() && isExcludedRef(expr) {
+			if expr.Star {
+				return nil, errors.Errorf("* syntax is not yet supported in this context")
+			}
+			vitessExpr, err := nodeExpr(ctx, expr)
+			if err != nil {
+				return nil, err
+			}
+			return &vitess.AliasedExpr{
+				Expr: vitessExpr,
+				As:   vitess.NewColIdent(string(node.As)),
+			}, nil
+		}
+
 		colName, err := unresolvedNameToColName(expr)
 		if err != nil {
 			return nil, err
