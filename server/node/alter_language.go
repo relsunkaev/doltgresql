@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -63,6 +64,10 @@ func (a *AlterLanguage) Resolved() bool {
 func (a *AlterLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	var err error
 	auth.LockWrite(func() {
+		err = checkLanguageOwnership(ctx, a.Name)
+		if err != nil {
+			return
+		}
 		if a.NewName != "" {
 			err = auth.RenameLanguage(a.Name, a.NewName)
 		} else {
@@ -77,6 +82,21 @@ func (a *AlterLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkLanguageOwnership(ctx *sql.Context, name string) error {
+	language, ok := auth.GetLanguage(name)
+	if !ok {
+		return errors.Errorf(`language "%s" does not exist`, name)
+	}
+	if language.Owner == "" || language.Owner == ctx.Client().User {
+		return nil
+	}
+	userRole := auth.GetRole(ctx.Client().User)
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be owner of language %s", name)
 }
 
 // Schema implements the interface sql.ExecSourceRel.

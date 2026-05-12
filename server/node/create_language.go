@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -68,6 +69,15 @@ func (c *CreateLanguage) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if !c.Trusted {
+		var userRole auth.Role
+		auth.LockRead(func() {
+			userRole = auth.GetRole(ctx.Client().User)
+		})
+		if !userRole.IsValid() || !userRole.IsSuperUser {
+			return nil, errors.New("permission denied to create untrusted language: must be superuser")
+		}
+	}
 	var err error
 	auth.LockWrite(func() {
 		err = auth.CreateLanguage(auth.Language{
