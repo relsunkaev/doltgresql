@@ -12624,6 +12624,41 @@ artifacts only; no fixes are included here.
   yet supported`, so version-pinned extension restore statements cannot run or
   report PostgreSQL-compatible version validation.
 
+### CREATE EXTENSION hstore WITH SCHEMA does not relocate functions and operators
+
+- Reproducer:
+  `TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro` in
+  `testing/go/extension_dependency_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `CREATE EXTENSION hstore WITH SCHEMA
+  extensions` creates the hstore member objects in `extensions`, so
+  `to_regtype('extensions.hstore')`, `extensions.fetchval(...)`, and
+  `OPERATOR(extensions.?)` work with values of type `extensions.hstore`.
+- Observed Doltgres behavior: table DDL accepts `extensions.hstore`, but
+  `to_regtype('extensions.hstore')` returns NULL,
+  `extensions.fetchval(...)` fails with `function fetchval(hstore, unknown)
+  does not exist`, and `OPERATOR(extensions.?)` fails with `schema
+  "extensions" not allowed in OPERATOR syntax`.
+
+### CREATE EXTENSION vector WITH SCHEMA does not create the target-schema vector type
+
+- Reproducer: `TestCreateExtensionVectorWithSchemaQualifiesTypesRepro` in
+  `testing/go/extension_dependency_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateExtensionVectorWithSchemaQualifiesTypesRepro -count=1`.
+- Expected PostgreSQL behavior: `CREATE EXTENSION vector WITH SCHEMA
+  extensions` records the extension in `pg_extension` and installs its member
+  types in the target schema, so `to_regtype('extensions.vector')` resolves and
+  tables can declare `extensions.vector(3)` columns.
+- Observed Doltgres behavior: `pg_extension` records `vector` in
+  `extensions`, but `to_regtype('extensions.vector')` returns NULL and
+  declaring an `extensions.vector(3)` column fails with `type "vector" does not
+  exist`.
+
 ### DROP EXTENSION does not require extension ownership
 
 - Reproducer: `TestDropExtensionRequiresOwnershipRepro` in

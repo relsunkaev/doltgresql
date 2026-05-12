@@ -38,6 +38,72 @@ func TestCreateExtensionVersionOptionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro reproduces
+// an extension schema relocation gap: hstore member functions and operators
+// should be created in the extension's target schema.
+func TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "hstore WITH SCHEMA qualifies runtime objects",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION hstore WITH SCHEMA extensions;`,
+				`CREATE TABLE hstore_schema_qualified_items (
+					id INT PRIMARY KEY,
+					attrs extensions.hstore
+				);`,
+				`INSERT INTO hstore_schema_qualified_items VALUES (1, '"A"=>"2", "B"=>"5"');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT to_regtype('extensions.hstore')::text;`,
+					Expected: []sql.Row{{"extensions.hstore"}},
+				},
+				{
+					Query:    `SELECT attrs::text, extensions.fetchval(attrs, 'A') FROM hstore_schema_qualified_items;`,
+					Expected: []sql.Row{{`"A"=>"2", "B"=>"5"`, "2"}},
+				},
+				{
+					Query:    `SELECT attrs OPERATOR(extensions.?) 'B' FROM hstore_schema_qualified_items;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateExtensionVectorWithSchemaQualifiesTypesRepro reproduces an
+// extension schema relocation gap: pgvector member types should be created in
+// the extension's target schema.
+func TestCreateExtensionVectorWithSchemaQualifiesTypesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "vector WITH SCHEMA qualifies vector type",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION vector WITH SCHEMA extensions;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'vector';`,
+					Expected: []sql.Row{{"vector", "extensions"}},
+				},
+				{
+					Query:    `SELECT to_regtype('extensions.vector')::text;`,
+					Expected: []sql.Row{{"extensions.vector"}},
+				},
+				{
+					Query:    `CREATE TABLE vector_schema_qualified_items (id INT PRIMARY KEY, embedding extensions.vector(3));`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
 // TestDropExtensionRestrictRejectsDependentObjectsRepro reproduces an
 // extension dependency bug: PostgreSQL's default RESTRICT behavior prevents
 // dropping an extension while user objects depend on extension member objects.
