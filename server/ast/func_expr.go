@@ -112,6 +112,20 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	}
 
 	switch strings.ToLower(name.String()) {
+	case "count":
+		if distinct && windowDef == nil {
+			return &vitess.OrderedInjectedExpr{
+				InjectedExpr: vitess.InjectedExpr{
+					Expression:         pgexprs.NewCountDistinct(),
+					SelectExprChildren: exprs,
+					Auth: vitess.AuthInformation{
+						AuthType:    auth.AuthType_EXECUTE,
+						TargetType:  auth.AuthTargetType_FunctionIdentifiers,
+						TargetNames: []string{qualifier.String(), name.String()},
+					},
+				},
+			}, nil
+		}
 	// special case for string_agg, which maps to the mysql aggregate function group_concat
 	case "string_agg":
 		if len(node.Exprs) != 2 {
