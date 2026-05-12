@@ -52,6 +52,9 @@ type AlterFunctionOptionMetadata struct {
 	Parallel        *string
 	Cost            *float32
 	Rows            *float32
+	SetConfig       map[string]string
+	ResetConfig     []string
+	ResetAllConfig  bool
 }
 
 // NewAlterFunctionOptions returns a new *AlterFunctionOptions.
@@ -164,6 +167,7 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 		}
 		function.Rows = *a.Metadata.Rows
 	}
+	function.SetConfig = applyRoutineConfigOptions(function.SetConfig, a.Metadata.SetConfig, a.Metadata.ResetConfig, a.Metadata.ResetAllConfig)
 	newFuncID := funcID
 	if a.Rename != "" {
 		newFuncID = id.NewFunction(newFuncID.SchemaName(), a.Rename, newFuncID.Parameters()...)
@@ -215,6 +219,30 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func applyRoutineConfigOptions(current map[string]string, setConfig map[string]string, resetConfig []string, resetAll bool) map[string]string {
+	if resetAll {
+		current = nil
+	}
+	if len(resetConfig) > 0 && current != nil {
+		for _, name := range resetConfig {
+			delete(current, name)
+		}
+		if len(current) == 0 {
+			current = nil
+		}
+	}
+	if len(setConfig) == 0 {
+		return current
+	}
+	if current == nil {
+		current = make(map[string]string, len(setConfig))
+	}
+	for name, value := range setConfig {
+		current[name] = value
+	}
+	return current
 }
 
 func checkFunctionOwnership(ctx *sql.Context, function corefunctions.Function) error {

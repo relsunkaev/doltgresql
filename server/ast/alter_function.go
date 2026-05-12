@@ -117,6 +117,21 @@ func alterFunctionOptions(options map[tree.FunctionOption]tree.RoutineOption) (*
 		metadata.Rows = &value
 		hasOptions = true
 	}
+	if _, ok := options[tree.OptionSet]; ok {
+		setConfig, err := routineSetOptions(options)
+		if err != nil {
+			return nil, metadata, false, err
+		}
+		metadata.SetConfig = setConfig
+		hasOptions = true
+	}
+	if reset, ok := options[tree.OptionReset]; ok {
+		metadata.ResetAllConfig = reset.ResetAll
+		if !reset.ResetAll {
+			metadata.ResetConfig = []string{reset.ResetParam}
+		}
+		hasOptions = true
+	}
 	return strict, metadata, hasOptions, nil
 }
 

@@ -18,19 +18,73 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterProcedure handles *tree.AlterProcedure nodes.
 func nodeAlterProcedure(ctx *Context, node *tree.AlterProcedure) (vitess.Statement, error) {
-	_, err := validateRoutineOptions(ctx, node.Options)
+	options, err := validateRoutineOptions(ctx, node.Options)
 	if err != nil {
 		return nil, err
 	}
 
-	// We intentionally don't support OWNER TO since we don't support owning objects
-	if node.Owner != "" && len(node.Options) == 0 {
-		return NewNoOp("OWNER TO is unsupported and ignored"), nil
+	routine, err := routineWithParams(ctx, node.Name, node.Args)
+	if err != nil {
+		return nil, err
+	}
+	metadata, hasOptions, err := alterProcedureOptions(options)
+	if err != nil {
+		return nil, err
+	}
+	if hasOptions {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterProcedureOptions(routine, metadata),
+			Children:  nil,
+		}, nil
+	}
+	if len(node.Options) > 0 {
+		return NotYetSupportedError("ALTER PROCEDURE statement is not yet supported")
+	}
+	if node.Rename != nil {
+		newName := node.Rename.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterProcedureRename(routine, newName.Object()),
+			Children:  nil,
+		}, nil
+	}
+	if node.Schema != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterProcedureSetSchema(routine, node.Schema),
+			Children:  nil,
+		}, nil
+	}
+	if node.Owner != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterProcedureOwner(routine, node.Owner),
+			Children:  nil,
+		}, nil
 	}
 
 	return NotYetSupportedError("ALTER PROCEDURE statement is not yet supported")
+}
+
+func alterProcedureOptions(options map[tree.FunctionOption]tree.RoutineOption) (pgnodes.AlterProcedureOptionMetadata, bool, error) {
+	var metadata pgnodes.AlterProcedureOptionMetadata
+	hasOptions := false
+	if _, ok := options[tree.OptionSet]; ok {
+		setConfig, err := routineSetOptions(options)
+		if err != nil {
+			return metadata, false, err
+		}
+		metadata.SetConfig = setConfig
+		hasOptions = true
+	}
+	if reset, ok := options[tree.OptionReset]; ok {
+		metadata.ResetAllConfig = reset.ResetAll
+		if !reset.ResetAll {
+			metadata.ResetConfig = []string{reset.ResetParam}
+		}
+		hasOptions = true
+	}
+	return metadata, hasOptions, nil
 }
