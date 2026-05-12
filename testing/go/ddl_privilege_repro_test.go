@@ -1154,6 +1154,44 @@ func TestAlterAggregateOwnerToRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterAggregateRenameRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own an aggregate to rename it.
+func TestAlterAggregateRenameRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER AGGREGATE RENAME TO requires aggregate ownership",
+			SetUpScript: []string{
+				`CREATE USER aggregate_renamer PASSWORD 'renamer';`,
+				`CREATE FUNCTION rename_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE rename_aggregate_private_old(INT) (
+					SFUNC = rename_aggregate_private_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`GRANT USAGE ON SCHEMA public TO aggregate_renamer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER AGGREGATE rename_aggregate_private_old(INT) RENAME TO rename_aggregate_private_new;`,
+					ExpectedErr: `must be owner`,
+					Username:    `aggregate_renamer`,
+					Password:    `renamer`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'rename_aggregate_private_old';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
