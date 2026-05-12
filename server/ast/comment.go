@@ -167,7 +167,7 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnType(typeName, stmt.Comment)}, nil
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnDomain(typeName, stmt.Comment)}, nil
 	case *tree.CommentOnLanguage:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnLanguage(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnColumn:

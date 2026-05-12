@@ -46,6 +46,7 @@ const (
 	CommentTargetProc     CommentTargetKind = "procedure"
 	CommentTargetRoutine  CommentTargetKind = "routine"
 	CommentTargetType     CommentTargetKind = "type"
+	CommentTargetDomain   CommentTargetKind = "domain"
 	CommentTargetLang     CommentTargetKind = "language"
 	CommentTargetDB       CommentTargetKind = "database"
 	CommentTargetRole     CommentTargetKind = "role"
@@ -114,6 +115,10 @@ func NewCommentOnRoutine(routine *RoutineWithParams, description *string) Commen
 
 func NewCommentOnType(relation vitess.TableName, description *string) Comment {
 	return Comment{Kind: CommentTargetType, Relation: relation, Description: description}
+}
+
+func NewCommentOnDomain(relation vitess.TableName, description *string) Comment {
+	return Comment{Kind: CommentTargetDomain, Relation: relation, Description: description}
 }
 
 func NewCommentOnLanguage(name string, description *string) Comment {
@@ -225,6 +230,9 @@ func (c Comment) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = c.checkPrivileges(ctx); err != nil {
+		return nil, err
+	}
 	comments.Set(key, c.Description)
 	return sql.RowsToRowIter(), nil
 }
@@ -255,7 +263,7 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_proc", 0), nil
-	case CommentTargetType:
+	case CommentTargetType, CommentTargetDomain:
 		oid, err := resolveCommentType(ctx, c.Relation)
 		if err != nil {
 			return comments.Key{}, err
@@ -390,6 +398,149 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 		key.ObjSubID = int32(idx + 1)
 	}
 	return key, nil
+}
+
+func (c Comment) checkPrivileges(ctx *sql.Context) error {
+	if c.requiresSuperuser() {
+		if commentUserIsSuperuser(ctx) {
+			return nil
+		}
+		return c.privilegeError()
+	}
+
+	owner, err := c.owner(ctx)
+	if err != nil {
+		return err
+	}
+	if commentUserIsOwnerOrSuperuser(ctx, owner) {
+		return nil
+	}
+	return c.privilegeError()
+}
+
+func (c Comment) requiresSuperuser() bool {
+	switch c.Kind {
+	case CommentTargetTSParser, CommentTargetTSTmpl, CommentTargetAM, CommentTargetTblspace:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c Comment) privilegeError() error {
+	switch c.Kind {
+	case CommentTargetProc, CommentTargetRoutine, CommentTargetDomain, CommentTargetLang,
+		CommentTargetExt, CommentTargetColl, CommentTargetOperator, CommentTargetTSConfig,
+		CommentTargetTSDict:
+		return errors.New("must be owner")
+	case CommentTargetTSParser, CommentTargetTSTmpl, CommentTargetAM, CommentTargetTblspace:
+		return errors.New("must be superuser")
+	default:
+		return errors.New("permission denied")
+	}
+}
+
+func (c Comment) owner(ctx *sql.Context) (string, error) {
+	switch c.Kind {
+	case CommentTargetFunc:
+		return commentFunctionOwner(ctx, c.Routine)
+	case CommentTargetProc:
+		return commentProcedureOwner(ctx, c.Routine)
+	case CommentTargetRoutine:
+		if owner, err := commentFunctionOwner(ctx, c.Routine); err == nil {
+			return owner, nil
+		}
+		return commentProcedureOwner(ctx, c.Routine)
+	case CommentTargetLang:
+		var (
+			lang auth.Language
+			ok   bool
+		)
+		auth.LockRead(func() {
+			lang, ok = auth.GetLanguage(c.Name)
+		})
+		if !ok {
+			return "", errors.Errorf(`language "%s" does not exist`, c.Name)
+		}
+		return lang.Owner, nil
+	default:
+		owner, _ := auth.GetSuperUserAndPassword()
+		if owner == "" {
+			owner = "postgres"
+		}
+		return owner, nil
+	}
+}
+
+func commentFunctionOwner(ctx *sql.Context, routine *RoutineWithParams) (string, error) {
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	funcID, err := resolveFunctionID(ctx, funcColl, routine)
+	if err != nil {
+		return "", err
+	}
+	function, err := funcColl.GetFunction(ctx, funcID)
+	if err != nil {
+		return "", err
+	}
+	if !function.ID.IsValid() {
+		return "", fmt.Errorf(`function "%s" does not exist`, routine.RoutineName)
+	}
+	return function.Owner, nil
+}
+
+func commentProcedureOwner(ctx *sql.Context, routine *RoutineWithParams) (string, error) {
+	procColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	schema, err := core.GetSchemaName(ctx, nil, routine.SchemaName)
+	if err != nil {
+		return "", err
+	}
+	procID := id.NewProcedure(schema, routine.RoutineName)
+	if len(routine.Args) == 0 {
+		procs, err := procColl.GetProcedureOverloads(ctx, procID)
+		if err != nil {
+			return "", err
+		}
+		if len(procs) == 1 {
+			procID = procs[0].ID
+		} else if len(procs) > 1 && !procColl.HasProcedure(ctx, procID) {
+			return "", fmt.Errorf(`procedure name "%s" is not unique`, routine.RoutineName)
+		}
+	} else {
+		argTypes := make([]id.Type, len(routine.Args))
+		for i, arg := range routine.Args {
+			argTypes[i] = arg.Type.ID
+		}
+		procID = id.NewProcedure(schema, routine.RoutineName, argTypes...)
+	}
+	procedure, err := procColl.GetProcedure(ctx, procID)
+	if err != nil {
+		return "", err
+	}
+	if !procedure.ID.IsValid() {
+		return "", fmt.Errorf(`procedure "%s" does not exist`, routine.RoutineName)
+	}
+	return procedure.Owner, nil
+}
+
+func commentUserIsOwnerOrSuperuser(ctx *sql.Context, owner string) bool {
+	if owner == "" || owner == ctx.Client().User {
+		return true
+	}
+	return commentUserIsSuperuser(ctx)
+}
+
+func commentUserIsSuperuser(ctx *sql.Context) bool {
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	return userRole.IsValid() && userRole.IsSuperUser
 }
 
 func commentObjectKey(objID id.Id, className string, objSubID int32) comments.Key {
