@@ -41,6 +41,8 @@ type SQLFunction struct {
 	SetOf              bool
 	SetConfig          map[string]string
 	ReturnTableType    []*pgtypes.DoltgresType
+	Owner              string
+	SecurityDefiner    bool
 }
 
 var _ FunctionInterface = SQLFunction{}
@@ -96,6 +98,11 @@ func (sqlFunc SQLFunction) IsSRF() bool {
 	return sqlFunc.SetOf
 }
 
+// RoutineSecurityDefiner returns the owner context for SECURITY DEFINER functions.
+func (sqlFunc SQLFunction) RoutineSecurityDefiner() (string, bool) {
+	return sqlFunc.Owner, sqlFunc.SecurityDefiner
+}
+
 // enforceInterfaceInheritance implements the interface FunctionInterface.
 func (sqlFunc SQLFunction) enforceInterfaceInheritance(error) {}
 
@@ -104,6 +111,8 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 	if len(args) != len(f.ParameterTypes) {
 		return nil, errors.Errorf("function %s called with %d arguments, expected %d", f.ID.FunctionName(), len(args), len(f.ParameterTypes))
 	}
+	restoreSecurityDefiner := applyRoutineSecurityDefiner(ctx, f)
+	defer restoreSecurityDefiner()
 
 	paramMap := make(map[string]*ParamTypAndValue)
 	for i := range f.ParameterTypes {

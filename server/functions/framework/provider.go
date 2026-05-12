@@ -136,6 +136,8 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 					SqlStatement:       transition.SQLDefinition,
 					SetOf:              transition.SetOf,
 					SetConfig:          transition.SetConfig,
+					Owner:              transition.Owner,
+					SecurityDefiner:    transition.SecurityDefiner,
 				},
 				InitCond:           overload.AggregateInitCond,
 				IsNonDeterministic: overload.IsNonDeterministic,
@@ -154,6 +156,8 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				Strict:             overload.Strict,
 				ExtensionName:      extensions.LibraryIdentifier(overload.ExtensionName),
 				ExtensionSymbol:    overload.ExtensionSymbol,
+				Owner:              overload.Owner,
+				SecurityDefiner:    overload.SecurityDefiner,
 			}); err != nil {
 				return nil, false
 			}
@@ -170,6 +174,8 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				SqlStatement:       overload.SQLDefinition,
 				SetOf:              overload.SetOf,
 				SetConfig:          overload.SetConfig,
+				Owner:              overload.Owner,
+				SecurityDefiner:    overload.SecurityDefiner,
 			}); err != nil {
 				return nil, false
 			}
@@ -184,6 +190,8 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				Strict:             overload.Strict,
 				Statements:         overload.Operations,
 				SetConfig:          overload.SetConfig,
+				Owner:              overload.Owner,
+				SecurityDefiner:    overload.SecurityDefiner,
 			}); err != nil {
 				return nil, false
 			}

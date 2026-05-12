@@ -86,6 +86,8 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					Strict:             false,
 					ExtensionName:      extensions.LibraryIdentifier(overload.ExtensionName),
 					ExtensionSymbol:    overload.ExtensionSymbol,
+					Owner:              overload.Owner,
+					SecurityDefiner:    overload.SecurityDefiner,
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}
@@ -102,6 +104,8 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					SqlStatement:       overload.SQLDefinition,
 					SetOf:              false,
 					SetConfig:          overload.SetConfig,
+					Owner:              overload.Owner,
+					SecurityDefiner:    overload.SecurityDefiner,
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}
@@ -117,6 +121,8 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					Strict:             false,
 					Statements:         overload.Operations,
 					SetConfig:          overload.SetConfig,
+					Owner:              overload.Owner,
+					SecurityDefiner:    overload.SecurityDefiner,
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}

@@ -39,6 +39,10 @@ func nodeCreateProcedure(ctx *Context, node *tree.CreateProcedure) (vitess.State
 	if err != nil {
 		return nil, err
 	}
+	securityDefiner := false
+	if security, ok := options[tree.OptionSecurity]; ok {
+		securityDefiner = security.Definer
+	}
 	// Grab the general information that we'll need to create the procedure
 	tableName := node.Name.ToTableName()
 	params := make([]pgnodes.RoutineParam, len(node.Args))
@@ -145,6 +149,7 @@ func nodeCreateProcedure(ctx *Context, node *tree.CreateProcedure) (vitess.State
 			sqlDef,
 			sqlDefParsedStmts,
 			setConfig,
+			securityDefiner,
 		),
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_CREATE,

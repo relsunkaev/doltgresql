@@ -30,6 +30,8 @@ type CFunction struct {
 	Strict             bool
 	ExtensionName      extensions.LibraryIdentifier
 	ExtensionSymbol    string
+	Owner              string
+	SecurityDefiner    bool
 }
 
 var _ FunctionInterface = CFunction{}
@@ -84,6 +86,11 @@ func (cFunc CFunction) VariadicIndex() int {
 // IsSRF implements the interface FunctionInterface.
 func (cFunc CFunction) IsSRF() bool {
 	return false
+}
+
+// RoutineSecurityDefiner returns the owner context for SECURITY DEFINER functions.
+func (cFunc CFunction) RoutineSecurityDefiner() (string, bool) {
+	return cFunc.Owner, cFunc.SecurityDefiner
 }
 
 // enforceInterfaceInheritance implements the interface FunctionInterface.

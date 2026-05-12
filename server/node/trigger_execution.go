@@ -184,6 +184,8 @@ func (te *TriggerExecution) loadTriggerFunction(ctx *sql.Context, trigger trigge
 		IsNonDeterministic: function.IsNonDeterministic,
 		Strict:             function.Strict,
 		Statements:         function.Operations,
+		Owner:              function.Owner,
+		SecurityDefiner:    function.SecurityDefiner,
 	}, nil
 }
 

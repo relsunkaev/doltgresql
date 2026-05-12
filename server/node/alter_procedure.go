@@ -42,9 +42,10 @@ var _ vitess.Injectable = (*AlterProcedure)(nil)
 
 // AlterProcedureOptionMetadata represents optional metadata updates from ALTER PROCEDURE options.
 type AlterProcedureOptionMetadata struct {
-	SetConfig      map[string]string
-	ResetConfig    []string
-	ResetAllConfig bool
+	SecurityDefiner *bool
+	SetConfig       map[string]string
+	ResetConfig     []string
+	ResetAllConfig  bool
 }
 
 // NewAlterProcedureOptions returns a new *AlterProcedure.
@@ -116,6 +117,9 @@ func (a *AlterProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	}
 
 	procedure.SetConfig = applyRoutineConfigOptions(procedure.SetConfig, a.Metadata.SetConfig, a.Metadata.ResetConfig, a.Metadata.ResetAllConfig)
+	if a.Metadata.SecurityDefiner != nil {
+		procedure.SecurityDefiner = *a.Metadata.SecurityDefiner
+	}
 
 	newProcID := procID
 	if a.Rename != "" {

@@ -45,6 +45,7 @@ type CreateProcedure struct {
 	SqlDef            string
 	SqlDefParsedStmts []vitess.Statement
 	SetConfig         map[string]string
+	SecurityDefiner   bool
 }
 
 var _ sql.ExecSourceRel = (*CreateProcedure)(nil)
@@ -64,7 +65,8 @@ func NewCreateProcedure(
 	language string,
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement,
-	setConfig map[string]string) *CreateProcedure {
+	setConfig map[string]string,
+	securityDefiner bool) *CreateProcedure {
 	return &CreateProcedure{
 		DatabaseName:      databaseName,
 		ProcedureName:     procedureName,
@@ -79,6 +81,7 @@ func NewCreateProcedure(
 		SqlDef:            sqlDef,
 		SqlDefParsedStmts: sqlDefParsedStmts,
 		SetConfig:         setConfig,
+		SecurityDefiner:   securityDefiner,
 	}
 }
 
@@ -167,6 +170,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		SQLDefinition:     c.SqlDef,
 		SetConfig:         c.SetConfig,
 		Owner:             owner,
+		SecurityDefiner:   c.SecurityDefiner,
 	})
 	if err != nil {
 		return nil, err

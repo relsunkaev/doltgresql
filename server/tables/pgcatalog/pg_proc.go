@@ -308,7 +308,7 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		id.Null,                                           // provariadic
 		"-",                                               // prosupport
 		"p",                                               // prokind
-		false,                                             // prosecdef
+		procedure.SecurityDefiner,                         // prosecdef
 		false,                                             // proleakproof
 		false,                                             // proisstrict
 		false,                                             // proretset

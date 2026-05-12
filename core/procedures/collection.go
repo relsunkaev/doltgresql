@@ -66,6 +66,7 @@ type Procedure struct {
 	SQLDefinition     string                         // Only used when this is a sql language
 	SetConfig         map[string]string
 	Owner             string
+	SecurityDefiner   bool
 }
 
 var _ objinterface.Collection = (*Collection)(nil)

@@ -364,8 +364,12 @@ func (c *CompiledFunction) Eval(ctx *sql.Context, row sql.Row) (interface{}, err
 	case Function7:
 		return f.Callable(ctx, ([8]*pgtypes.DoltgresType)(c.callResolved), args[0], args[1], args[2], args[3], args[4], args[5], args[6])
 	case InterpretedFunction:
+		restoreSecurityDefiner := applyRoutineSecurityDefiner(ctx, f)
+		defer restoreSecurityDefiner()
 		return plpgsql.Call(ctx, f, c.runner, c.callResolved, args)
 	case CFunction:
+		restoreSecurityDefiner := applyRoutineSecurityDefiner(ctx, f)
+		defer restoreSecurityDefiner()
 		cfunc, err := extensions.GetExtensionFunction(f.ExtensionName, f.ExtensionSymbol)
 		if err != nil {
 			return nil, err

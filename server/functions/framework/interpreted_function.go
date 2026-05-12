@@ -42,6 +42,8 @@ type InterpretedFunction struct {
 	Strict             bool
 	Statements         []plpgsql.InterpreterOperation
 	SetConfig          map[string]string
+	Owner              string
+	SecurityDefiner    bool
 }
 
 var _ FunctionInterface = InterpretedFunction{}
@@ -85,6 +87,11 @@ func (iFunc InterpretedFunction) GetStatements() []plpgsql.InterpreterOperation 
 // GetSetConfig returns the routine-level SET options.
 func (iFunc InterpretedFunction) GetSetConfig() map[string]string {
 	return iFunc.SetConfig
+}
+
+// RoutineSecurityDefiner returns the owner context for SECURITY DEFINER functions.
+func (iFunc InterpretedFunction) RoutineSecurityDefiner() (string, bool) {
+	return iFunc.Owner, iFunc.SecurityDefiner
 }
 
 // InternalID implements the interface FunctionInterface.

@@ -86,5 +86,10 @@ func alterProcedureOptions(options map[tree.FunctionOption]tree.RoutineOption) (
 		}
 		hasOptions = true
 	}
+	if security, ok := options[tree.OptionSecurity]; ok {
+		value := security.Definer
+		metadata.SecurityDefiner = &value
+		hasOptions = true
+	}
 	return metadata, hasOptions, nil
 }
