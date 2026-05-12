@@ -40,10 +40,16 @@ var xidin = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cstring},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		input := val.(string)
-		uVal, err := strconv.ParseInt(strings.TrimSpace(input), 10, 64)
+		input := strings.TrimSpace(val.(string))
+		if input == "" || strings.HasPrefix(input, "+") || strings.HasPrefix(input, "-") {
+			return nil, pgtypes.ErrInvalidSyntaxForType.New("xid", val.(string))
+		}
+		uVal, err := strconv.ParseUint(input, 10, 32)
 		if err != nil {
-			return uint32(0), nil
+			if numErr, ok := err.(*strconv.NumError); ok && numErr.Err == strconv.ErrRange {
+				return nil, pgtypes.ErrValueIsOutOfRangeForType.New(val.(string), "xid")
+			}
+			return nil, pgtypes.ErrInvalidSyntaxForType.New("xid", val.(string))
 		}
 		return uint32(uVal), nil
 	},
