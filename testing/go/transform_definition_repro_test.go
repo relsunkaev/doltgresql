@@ -45,3 +45,28 @@ func TestCreateTransformPersistsPgTransformRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestCreateTransformRequiresTypeOwnershipRepro reproduces a transform DDL
+// security bug: PostgreSQL does not allow a normal role to create transforms
+// for types it does not own.
+func TestCreateTransformRequiresTypeOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TRANSFORM requires target type ownership",
+			SetUpScript: []string{
+				`CREATE USER transform_creator PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TRANSFORM FOR int LANGUAGE SQL (
+						FROM SQL WITH FUNCTION prsd_lextype(internal),
+						TO SQL WITH FUNCTION int4recv(internal)
+					);`,
+					ExpectedErr: `must be owner`,
+					Username:    `transform_creator`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
