@@ -215,6 +215,7 @@ func Init() {
 	initReplace()
 	initReverse()
 	initRight()
+	initRowSecurity()
 	initRowsFrom()
 	initRound()
 	initRpad()

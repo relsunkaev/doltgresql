@@ -51,6 +51,7 @@ import (
 	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/servercfg"
 	"github.com/dolthub/doltgresql/servercfg/cfgdetails"
@@ -416,6 +417,7 @@ func CreateServerWithPort(t testing.TB, database string, port int) (context.Cont
 	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
+	rowsecurity.ResetForTests()
 	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
@@ -441,6 +443,7 @@ func CreateServerLocalWithPort(t testing.TB, database string, port int) (context
 	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
+	rowsecurity.ResetForTests()
 	// We avoid using [T.TempDir] because it results in a file lock conflict on Windows. [T.TempDir] registers a
 	// [T.Cleanup] function that runs without checking the [svcs.Controller] and it cannot be overwritten.
 	// TODO(elianddb): Setup an optional [T.Cleanup] function for the temporary directory. Our default setup for now is
@@ -457,6 +460,7 @@ func CreateServerLocalInDirWithPort(t testing.TB, database string, dbDir string,
 	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
+	rowsecurity.ResetForTests()
 	fileSys, err := filesys.LocalFilesysWithWorkingDir(dbDir)
 	require.NoError(t, err)
 

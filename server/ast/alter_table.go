@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/sirupsen/logrus"
 
@@ -52,6 +53,8 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableSetStorage(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableSetAttribution:
 			return nodeAlterTableSetAttribution(ctx, treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableRowLevelSecurity:
+			return nodeAlterTableRowLevelSecurity(treeTableName, cmd)
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -75,6 +78,37 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 	return &vitess.AlterTable{
 		Table:      tableName,
 		Statements: statements,
+	}, nil
+}
+
+func nodeAlterTableRowLevelSecurity(tableName tree.TableName, cmd *tree.AlterTableRowLevelSecurity) (vitess.Statement, error) {
+	var enabled *bool
+	var forced *bool
+	switch cmd.Type {
+	case tree.RowLevelSecurityDisable:
+		val := false
+		enabled = &val
+	case tree.RowLevelSecurityEnable:
+		val := true
+		enabled = &val
+	case tree.RowLevelSecurityForce:
+		val := true
+		forced = &val
+	case tree.RowLevelSecurityNoForce:
+		val := false
+		forced = &val
+	default:
+		return nil, errors.Errorf("unknown row-level security mode %d", cmd.Type)
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableRowSecurity(
+			doltdb.TableName{
+				Name:   tableName.Object(),
+				Schema: tableName.Schema(),
+			},
+			enabled,
+			forced,
+		),
 	}, nil
 }
 

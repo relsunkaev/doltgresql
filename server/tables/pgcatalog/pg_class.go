@@ -29,6 +29,7 @@ import (
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -532,6 +533,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 	case "r", "m", "v":
 		relacl = aclTextArray(auth.TableACLItems(class.schemaName, class.name))
 	}
+	rlsState, _ := rowsecurity.Get("", class.schemaName, class.name)
 
 	// TODO: Fill in the rest of the pg_class columns
 	return sql.Row{
@@ -557,8 +559,8 @@ func pgClassToRow(class *pgClass) sql.Row {
 		false,                                 // relhasrules
 		class.hasTriggers,                     // relhastriggers
 		false,                                 // relhassubclass
-		false,                                 // relrowsecurity
-		false,                                 // relforcerowsecurity
+		rlsState.Enabled,                      // relrowsecurity
+		rlsState.Forced,                       // relforcerowsecurity
 		true,                                  // relispopulated
 		replicaIdentity,                       // relreplident
 		false,                                 // relispartition

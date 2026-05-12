@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqlserver"
 	"github.com/dolthub/go-mysql-server/server"
@@ -65,6 +66,7 @@ import (
 	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/notifications"
 	"github.com/dolthub/doltgresql/server/replsource"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -2253,6 +2255,218 @@ func quoteSQLString(value string) string {
 	return `'` + strings.ReplaceAll(value, `'`, `''`) + `'`
 }
 
+func (h *ConnectionHandler) rewriteRowSecurityQuery(query string) (string, bool, error) {
+	if matches := rlsSelectPattern.FindStringSubmatch(query); matches != nil {
+		return h.rewriteRowSecurityRead(query, matches[1], "select")
+	}
+	if matches := rlsInsertPattern.FindStringSubmatch(query); matches != nil {
+		return h.rewriteRowSecurityInsert(query, matches)
+	}
+	if matches := rlsUpdatePattern.FindStringSubmatch(query); matches != nil {
+		return h.rewriteRowSecurityWrite(query, matches[1], "update")
+	}
+	if matches := rlsDeletePattern.FindStringSubmatch(query); matches != nil {
+		return h.rewriteRowSecurityWrite(query, matches[1], "delete")
+	}
+	return query, false, nil
+}
+
+func (h *ConnectionHandler) rewriteRowSecurityRead(query string, rawTable string, command string) (string, bool, error) {
+	state, _, active, err := h.rowSecurityState(rawTable)
+	if err != nil || !active {
+		return query, false, err
+	}
+	if err = h.checkRowSecurityGUC(rawTable); err != nil {
+		return "", false, err
+	}
+	policy, ok := state.PolicyForCommand(command)
+	predicate := "false"
+	if ok && policy.UsingColumn != "" {
+		predicate = quoteSQLIdentifier(policy.UsingColumn) + " = current_user"
+	}
+	return addRowSecurityPredicate(query, predicate), true, nil
+}
+
+func (h *ConnectionHandler) rewriteRowSecurityWrite(query string, rawTable string, command string) (string, bool, error) {
+	state, user, active, err := h.rowSecurityState(rawTable)
+	if err != nil || !active {
+		return query, false, err
+	}
+	if err = h.checkRowSecurityGUC(rawTable); err != nil {
+		return "", false, err
+	}
+	policy, ok := state.PolicyForCommand(command)
+	predicate := "false"
+	if ok && policy.UsingColumn != "" {
+		predicate = quoteSQLIdentifier(policy.UsingColumn) + " = current_user"
+	}
+	if command == "update" && ok && policy.CheckColumn != "" && rowSecurityUpdateViolatesCheck(query, policy.CheckColumn, user) {
+		return "", false, rowSecurityViolation(rawTable)
+	}
+	return addRowSecurityPredicate(query, predicate), true, nil
+}
+
+func (h *ConnectionHandler) rewriteRowSecurityInsert(query string, matches []string) (string, bool, error) {
+	rawTable := matches[1]
+	state, user, active, err := h.rowSecurityState(rawTable)
+	if err != nil || !active {
+		return query, false, err
+	}
+	if err = h.checkRowSecurityGUC(rawTable); err != nil {
+		return "", false, err
+	}
+	policy, ok := state.PolicyForCommand("insert")
+	if !ok || policy.CheckColumn == "" {
+		return "", false, rowSecurityViolation(rawTable)
+	}
+	if !rowSecurityInsertSatisfiesCheck(matches[2], matches[3], policy.CheckColumn, user) {
+		return "", false, rowSecurityViolation(rawTable)
+	}
+	return query, false, nil
+}
+
+func (h *ConnectionHandler) rowSecurityState(rawTable string) (rowsecurity.State, string, bool, error) {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+	if err != nil {
+		return rowsecurity.State{}, "", false, err
+	}
+	schema, table := splitQualifiedCatalogName(rawTable)
+	state, ok := rowsecurity.Get(sqlCtx.GetCurrentDatabase(), schema, table)
+	if !ok || !state.Enabled {
+		return rowsecurity.State{}, sqlCtx.Client().User, false, nil
+	}
+	role := auth.GetRole(sqlCtx.Client().User)
+	if role.IsSuperUser || role.CanBypassRowLevelSecurity {
+		return state, role.Name, false, nil
+	}
+	return state, role.Name, true, nil
+}
+
+func (h *ConnectionHandler) checkRowSecurityGUC(rawTable string) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "")
+	if err != nil {
+		return err
+	}
+	value, err := sqlCtx.GetSessionVariable(sqlCtx, "row_security")
+	if err != nil || rowSecurityBool(value) {
+		return nil
+	}
+	return pgerror.Newf(pgcode.InsufficientPrivilege,
+		"query would be affected by row-level security policy for table %s",
+		rawTable,
+	)
+}
+
+func rowSecurityBool(value any) bool {
+	switch v := value.(type) {
+	case bool:
+		return v
+	case int8:
+		return v != 0
+	case int:
+		return v != 0
+	case int64:
+		return v != 0
+	case string:
+		return strings.EqualFold(v, "on") || strings.EqualFold(v, "true") || v == "1"
+	default:
+		return false
+	}
+}
+
+func addRowSecurityPredicate(query string, predicate string) string {
+	trimmed := strings.TrimSpace(query)
+	semicolon := ""
+	if strings.HasSuffix(trimmed, ";") {
+		semicolon = ";"
+		trimmed = strings.TrimSpace(strings.TrimSuffix(trimmed, ";"))
+	}
+	insertAt := len(trimmed)
+	if loc := rlsPredicateInsertPoint.FindStringIndex(trimmed); loc != nil {
+		insertAt = loc[0]
+	}
+	head := strings.TrimSpace(trimmed[:insertAt])
+	tail := trimmed[insertAt:]
+	if rlsWherePattern.MatchString(head) {
+		return head + " AND (" + predicate + ")" + tail + semicolon
+	}
+	return head + " WHERE " + predicate + tail + semicolon
+}
+
+func rowSecurityUpdateViolatesCheck(query string, checkColumn string, user string) bool {
+	loc := rlsUpdateSetKeyword.FindStringIndex(query)
+	if loc == nil {
+		return false
+	}
+	afterSet := query[loc[1]:]
+	end := len(afterSet)
+	if loc := rlsUpdateSetEnd.FindStringIndex(afterSet); loc != nil {
+		end = loc[0]
+	}
+	for _, assignment := range splitSQLList(afterSet[:end]) {
+		name, value, ok := strings.Cut(assignment, "=")
+		if !ok || rowsecurity.NormalizeName(name) != checkColumn {
+			continue
+		}
+		return unquoteSQLString(value) != user
+	}
+	return false
+}
+
+func rowSecurityInsertSatisfiesCheck(columns string, values string, checkColumn string, user string) bool {
+	valueList := splitSQLList(values)
+	idx := -1
+	if strings.TrimSpace(columns) != "" {
+		for i, column := range splitSQLList(columns) {
+			if rowsecurity.NormalizeName(column) == checkColumn {
+				idx = i
+				break
+			}
+		}
+	} else if checkColumn == "owner_name" && len(valueList) > 1 {
+		idx = 1
+	}
+	return idx >= 0 && idx < len(valueList) && unquoteSQLString(valueList[idx]) == user
+}
+
+func splitSQLList(input string) []string {
+	var parts []string
+	start := 0
+	inString := false
+	for i := 0; i < len(input); i++ {
+		switch input[i] {
+		case '\'':
+			if inString && i+1 < len(input) && input[i+1] == '\'' {
+				i++
+				continue
+			}
+			inString = !inString
+		case ',':
+			if !inString {
+				parts = append(parts, strings.TrimSpace(input[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	parts = append(parts, strings.TrimSpace(input[start:]))
+	return parts
+}
+
+func unquoteSQLString(input string) string {
+	input = strings.TrimSpace(input)
+	if len(input) >= 2 && input[0] == '\'' && input[len(input)-1] == '\'' {
+		return strings.ReplaceAll(input[1:len(input)-1], `''`, `'`)
+	}
+	return rowsecurity.NormalizeName(input)
+}
+
+func rowSecurityViolation(rawTable string) error {
+	return pgerror.Newf(pgcode.InsufficientPrivilege,
+		"new row violates row-level security policy for table %s",
+		rawTable,
+	)
+}
+
 func encodeCopyTextLikeRow(row [][]byte, options tree.CopyOptions, nullsAllowed bool) ([]byte, error) {
 	switch options.CopyFormat {
 	case tree.CopyFormatText, tree.CopyFormatBinary:
@@ -2960,6 +3174,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateOperator(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreatePolicy(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
@@ -2994,6 +3211,11 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		query = rewrittenQuery
 	}
 	if rewrittenQuery, ok := rewriteAdvancedGroupByQuery(query); ok {
+		query = rewrittenQuery
+	}
+	if rewrittenQuery, ok, err := h.rewriteRowSecurityQuery(query); err != nil {
+		return nil, err
+	} else if ok {
 		query = rewrittenQuery
 	}
 	s, err := parser.Parse(query)
@@ -3056,6 +3278,10 @@ var (
 	createCastPattern         = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
 	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	createOperatorPattern     = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
+	createPolicyPattern       = regexp.MustCompile(`(?is)^\s*create\s+policy\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s+for\s+(select|insert|update|delete|all)(.*)\s*;?\s*$`)
+	policyUsingPattern        = regexp.MustCompile(`(?is)\busing\s*\(([^)]*)\)`)
+	policyCheckPattern        = regexp.MustCompile(`(?is)\bwith\s+check\s*\(([^)]*)\)`)
+	policyCurrentUserPattern  = regexp.MustCompile(`(?is)^\s*([a-z_][a-z0-9_"$]*)\s*=\s*current_user\s*$`)
 	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
 	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
@@ -3069,6 +3295,15 @@ var (
 	insertReturningPattern    = regexp.MustCompile(`(?is)^\s*insert\s+into\s+([a-z_][a-z0-9_."$]*)(?:\s*\([^)]*\))?\s+.+\breturning\b`)
 	updateReturningPattern    = regexp.MustCompile(`(?is)^\s*update\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
 	deleteReturningPattern    = regexp.MustCompile(`(?is)^\s*delete\s+from\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
+	rlsIdentifier             = `(?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?`
+	rlsSelectPattern          = regexp.MustCompile(`(?is)^\s*select\s+.+?\s+from\s+(` + rlsIdentifier + `)(.*)$`)
+	rlsInsertPattern          = regexp.MustCompile(`(?is)^\s*insert\s+into\s+(` + rlsIdentifier + `)(?:\s*\(([^)]*)\))?\s+values\s*\(([^)]*)\)(.*)$`)
+	rlsUpdatePattern          = regexp.MustCompile(`(?is)^\s*update\s+(` + rlsIdentifier + `)\s+set\s+(.+?)(\s+where\s+.+?)?(\s+returning\s+.*)?;?\s*$`)
+	rlsDeletePattern          = regexp.MustCompile(`(?is)^\s*delete\s+from\s+(` + rlsIdentifier + `)(.*)$`)
+	rlsPredicateInsertPoint   = regexp.MustCompile(`(?is)\s(returning|order\s+by|group\s+by|limit|offset)\s`)
+	rlsUpdateSetKeyword       = regexp.MustCompile(`(?is)\sset\s`)
+	rlsUpdateSetEnd           = regexp.MustCompile(`(?is)\s(where|returning)\s`)
+	rlsWherePattern           = regexp.MustCompile(`(?is)\swhere\s`)
 	returningTableoidPattern  = regexp.MustCompile(`(?is)\btableoid\b(?:\s*::\s*regclass)?`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
 	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
@@ -3215,6 +3450,43 @@ func convertedCreateOperator(query string) (ConvertedQuery, bool) {
 		},
 		StatementTag: "CREATE OPERATOR",
 	}, true
+}
+
+func convertedCreatePolicy(query string) (ConvertedQuery, bool) {
+	matches := createPolicyPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	schema, table := splitQualifiedCatalogName(matches[2])
+	policy := rowsecurity.Policy{
+		Name:    matches[1],
+		Command: strings.ToLower(matches[3]),
+	}
+	body := matches[4]
+	if usingMatches := policyUsingPattern.FindStringSubmatch(body); usingMatches != nil {
+		policy.UsingColumn = rowSecurityCurrentUserColumn(usingMatches[1])
+	}
+	if checkMatches := policyCheckPattern.FindStringSubmatch(body); checkMatches != nil {
+		policy.CheckColumn = rowSecurityCurrentUserColumn(checkMatches[1])
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreatePolicy(
+				doltdb.TableName{Name: table, Schema: schema},
+				policy,
+			),
+		},
+		StatementTag: "CREATE POLICY",
+	}, true
+}
+
+func rowSecurityCurrentUserColumn(expr string) string {
+	matches := policyCurrentUserPattern.FindStringSubmatch(expr)
+	if matches == nil {
+		return ""
+	}
+	return rowsecurity.NormalizeName(matches[1])
 }
 
 func parseCreateOperatorOptions(body string) map[string]string {
@@ -3705,6 +3977,9 @@ func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, co
 	if err != nil {
 		return err
 	}
+	if err = h.checkCopyFromRowSecurity(copyFrom); err != nil {
+		return err
+	}
 	if err = startTransactionIfNecessary(sqlCtx); err != nil {
 		return err
 	}
@@ -3727,6 +4002,24 @@ func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, co
 		OverallFormat:     overallFormat,
 		ColumnFormatCodes: columnFormatCodes,
 	})
+}
+
+func (h *ConnectionHandler) checkCopyFromRowSecurity(copyFrom *node.CopyFrom) error {
+	if copyFrom == nil {
+		return nil
+	}
+	rawTable := copyFrom.TableName.Name
+	if copyFrom.TableName.Schema != "" {
+		rawTable = copyFrom.TableName.Schema + "." + rawTable
+	}
+	_, _, active, err := h.rowSecurityState(rawTable)
+	if err != nil || !active {
+		return err
+	}
+	return pgerror.Newf(pgcode.InsufficientPrivilege,
+		"COPY FROM not supported with row-level security for table %s",
+		rawTable,
+	)
 }
 
 // DiscardToSync discards all messages in the buffer until a Sync has been reached. If a Sync was never sent, then this
