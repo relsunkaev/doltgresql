@@ -172,3 +172,58 @@ func TestAlterDatabaseSetRequiresOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseCatalogOptionsRequireOwnershipRepro reproduces a security
+// bug: Doltgres allows a role that does not own a database to change persisted
+// pg_database catalog options.
+func TestAlterDatabaseCatalogOptionsRequireOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE catalog options require database ownership",
+			SetUpScript: []string{
+				`CREATE USER db_metadata_intruder PASSWORD 'metadata';`,
+				`CREATE DATABASE metadata_allow_database_private;`,
+				`CREATE DATABASE metadata_connection_database_private;`,
+				`CREATE DATABASE metadata_template_database_private;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER DATABASE metadata_allow_database_private
+						WITH ALLOW_CONNECTIONS false;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_metadata_intruder`,
+					Password:    `metadata`,
+				},
+				{
+					Query: `ALTER DATABASE metadata_connection_database_private
+						WITH CONNECTION LIMIT 0;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_metadata_intruder`,
+					Password:    `metadata`,
+				},
+				{
+					Query: `ALTER DATABASE metadata_template_database_private
+						WITH IS_TEMPLATE true;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_metadata_intruder`,
+					Password:    `metadata`,
+				},
+				{
+					Query: `SELECT datname, datallowconn, datconnlimit, datistemplate
+						FROM pg_catalog.pg_database
+						WHERE datname IN (
+							'metadata_allow_database_private',
+							'metadata_connection_database_private',
+							'metadata_template_database_private'
+						)
+						ORDER BY datname;`,
+					Expected: []sql.Row{
+						{"metadata_allow_database_private", "t", int64(-1), "f"},
+						{"metadata_connection_database_private", "t", int64(-1), "f"},
+						{"metadata_template_database_private", "t", int64(-1), "f"},
+					},
+				},
+			},
+		},
+	})
+}
