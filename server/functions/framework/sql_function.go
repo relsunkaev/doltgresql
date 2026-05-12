@@ -119,7 +119,6 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 			if err != nil {
 				return nil, err
 			}
-			formattedVar = quoteSQLFunctionArgument(f.ParameterTypes[i], formattedVar)
 		}
 		if name == "" {
 			// sanity check
