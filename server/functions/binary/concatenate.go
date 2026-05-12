@@ -29,6 +29,7 @@ func initBinaryConcatenate() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, anytextcat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_append)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat_text_array)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_prepend)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, byteacat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, bitcat)
@@ -84,25 +85,34 @@ var array_cat = framework.Function2{
 	Return:     pgtypes.AnyArray,                                             // TODO: should be anycompatiblearray
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.AnyArray}, // TODO: should be anycompatiblearray, anycompatiblearray
 	Strict:     false,
-	Callable: func(ctx *sql.Context, paramsAndReturn [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		if val1 == nil && val2 == nil {
-			return nil, nil
-		} else if val1 == nil {
-			return val2, nil
-		} else if val2 == nil {
-			return val1, nil
-		}
+	Callable:   array_cat_callable,
+}
 
-		array1 := val1.([]any)
-		array2 := val2.([]any)
+var array_cat_text_array = framework.Function2{
+	Name:       "array_cat",
+	Return:     pgtypes.AnyArray,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.TextArray},
+	Strict:     false,
+	Callable:   array_cat_callable,
+}
 
-		// Concatenate the arrays
-		result := make([]any, len(array1)+len(array2))
-		copy(result, array1)
-		copy(result[len(array1):], array2)
+func array_cat_callable(ctx *sql.Context, paramsAndReturn [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	if val1 == nil && val2 == nil {
+		return nil, nil
+	} else if val1 == nil {
+		return val2, nil
+	} else if val2 == nil {
+		return val1, nil
+	}
 
-		return result, nil
-	},
+	array1 := val1.([]any)
+	array2 := val2.([]any)
+
+	result := make([]any, len(array1)+len(array2))
+	copy(result, array1)
+	copy(result[len(array1):], array2)
+
+	return result, nil
 }
 
 func bitcat_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
