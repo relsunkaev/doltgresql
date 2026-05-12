@@ -30,6 +30,15 @@ func IsValidPostgresConfigParameter(name string) bool {
 	return ok
 }
 
+// GetPostgresConfigParameterDefault returns the default value for the named PostgreSQL configuration parameter.
+func GetPostgresConfigParameterDefault(name string) (any, bool) {
+	sysVar, ok := postgresConfigParameters[strings.ToLower(name)]
+	if !ok {
+		return nil, false
+	}
+	return sysVar.GetDefault(), true
+}
+
 // IsValidDoltConfigParameter returns true if the given parameter name is a valid Dolt configuration parameter.
 func IsValidDoltConfigParameter(name string) bool {
 	_, ok := doltConfigParameters[strings.ToLower(name)]

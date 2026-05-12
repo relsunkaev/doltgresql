@@ -29,12 +29,13 @@ import (
 // `SELECT set_config('name', 'value', true)`, which routes through the
 // transaction-scope variable tracker.
 func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
-	if len(node.Values) != 1 {
-		return nil, errors.Errorf("SET LOCAL %s requires exactly one value", node.Name)
-	}
 	fullName := node.Name
 	if node.Namespace != "" {
 		fullName = fmt.Sprintf("%s.%s", node.Namespace, node.Name)
+	}
+	valueExpr, err := setLocalValue(node.Name, node.Values)
+	if err != nil {
+		return nil, err
 	}
 	// We dispatch through __doltgres_set_config_local(name, value)
 	// rather than the public set_config(name, value, is_local=true)
@@ -51,7 +52,7 @@ func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 						&vitess.AliasedExpr{
 							Expr: &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(fullName)},
 						},
-						&vitess.AliasedExpr{Expr: setLocalValue(node.Values[0])},
+						&vitess.AliasedExpr{Expr: valueExpr},
 					},
 				},
 				As: vitess.NewColIdent("set_config"),
@@ -60,11 +61,29 @@ func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 	}, nil
 }
 
-func setLocalValue(value tree.Expr) vitess.Expr {
-	if str, ok := value.(*tree.StrVal); ok {
-		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(str.RawString())}
+func setLocalValue(name string, values tree.Exprs) (vitess.Expr, error) {
+	if len(values) == 0 {
+		return nil, errors.Errorf(`ERROR: syntax error at or near ";"'`)
 	}
-	return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(value.String())}
+	if len(values) > 1 {
+		vals := make([]string, len(values))
+		for i, value := range values {
+			vals[i] = value.String()
+		}
+		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(strings.Join(vals, ", "))}, nil
+	}
+	value := values[0]
+	if strings.EqualFold(value.String(), "default") {
+		defaultValue, ok := config.GetPostgresConfigParameterDefault(name)
+		if !ok {
+			return nil, errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, name)
+		}
+		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(fmt.Sprint(defaultValue))}, nil
+	}
+	if str, ok := value.(*tree.StrVal); ok {
+		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(str.RawString())}, nil
+	}
+	return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(value.String())}, nil
 }
 
 // nodeSetVar handles *tree.SetVar nodes.

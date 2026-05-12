@@ -72,7 +72,7 @@ func preparedPlanCacheInvalidatingQuery(query ConvertedQuery) bool {
 	}
 	switch stmt := query.AST.(type) {
 	case *sqlparser.AlterTable, *sqlparser.Analyze, *sqlparser.DBDDL, *sqlparser.DDL,
-		*sqlparser.Delete, *sqlparser.Insert, *sqlparser.Rollback, *sqlparser.RollbackSavepoint,
+		*sqlparser.Commit, *sqlparser.Delete, *sqlparser.Insert, *sqlparser.Rollback, *sqlparser.RollbackSavepoint,
 		*sqlparser.Set, *sqlparser.Update, *sqlparser.Use:
 		return true
 	case *sqlparser.Select:
@@ -110,6 +110,11 @@ var workingSetMutatingFuncs = map[string]struct{}{
 	"dolt_rebase":      {},
 	"dolt_cherry_pick": {},
 	"dolt_clean":       {},
+	"set_config":       {},
+
+	// SET LOCAL is rewritten into this helper so it can share the
+	// transaction-local GUC tracking used by set_config(..., true).
+	"__doltgres_set_config_local": {},
 }
 
 func selectMutatesWorkingSet(stmt *sqlparser.Select) bool {
