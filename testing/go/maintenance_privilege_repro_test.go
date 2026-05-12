@@ -66,6 +66,31 @@ func TestPgMaintainRoleAllowsVacuumRepro(t *testing.T) {
 	})
 }
 
+// TestTableMaintainPrivilegeAllowsVacuumRepro reproduces a table-privilege
+// security gap: PostgreSQL's MAINTAIN privilege allows VACUUM on a specific
+// table without requiring table ownership or broad pg_maintain membership.
+func TestTableMaintainPrivilegeAllowsVacuumRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "table MAINTAIN privilege allows VACUUM",
+			SetUpScript: []string{
+				`CREATE USER table_maintain_user PASSWORD 'pw';`,
+				`CREATE TABLE table_maintain_private (id INT PRIMARY KEY);`,
+				`INSERT INTO table_maintain_private VALUES (1);`,
+				`GRANT USAGE ON SCHEMA public TO table_maintain_user;`,
+				`GRANT MAINTAIN ON table_maintain_private TO table_maintain_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `VACUUM table_maintain_private;`,
+					Username: `table_maintain_user`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestVacuumCannotRunInsideTransactionBlockRepro reproduces a PostgreSQL
 // compatibility gap: VACUUM is a top-level utility command and must reject
 // execution inside an explicit transaction block.

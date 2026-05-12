@@ -1547,6 +1547,37 @@ func TestUpdateSetDefaultUsesDomainDefaultRepro(t *testing.T) {
 	})
 }
 
+// TestAlterDomainSetDefaultAppliesToColumnsRepro reproduces a persistence bug:
+// ALTER DOMAIN ... SET DEFAULT changes the domain default used by future
+// inserts into domain-typed columns that do not declare their own default.
+func TestAlterDomainSetDefaultAppliesToColumnsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DOMAIN SET DEFAULT applies to domain typed column",
+			SetUpScript: []string{
+				`CREATE DOMAIN alter_defaulted_domain AS integer
+					CONSTRAINT alter_defaulted_domain_check CHECK (VALUE > 0);`,
+				`CREATE TABLE alter_defaulted_domain_items (
+					id INT PRIMARY KEY,
+					amount alter_defaulted_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER DOMAIN alter_defaulted_domain SET DEFAULT 11;`,
+				},
+				{
+					Query: `INSERT INTO alter_defaulted_domain_items (id) VALUES (1);`,
+				},
+				{
+					Query:    `SELECT id, amount FROM alter_defaulted_domain_items;`,
+					Expected: []sql.Row{{1, 11}},
+				},
+			},
+		},
+	})
+}
+
 // TestDomainTypedColumnAcceptsValidColumnDefaultRepro reproduces a persistence
 // bug: a valid column default declared on a domain-typed column is ignored when
 // the column is omitted from INSERT.

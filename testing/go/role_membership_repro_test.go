@@ -635,6 +635,90 @@ func TestInheritedRolePrivilegesApplyGuard(t *testing.T) {
 	})
 }
 
+// TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro reproduces a role
+// membership security gap: PostgreSQL lets a membership grant explicitly disable
+// privilege inheritance even when the member role itself has INHERIT enabled.
+func TestGrantRoleWithInheritFalseDoesNotApplyPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT role WITH INHERIT FALSE blocks inherited privileges",
+			SetUpScript: []string{
+				`CREATE ROLE grant_inherit_false_reader;`,
+				`CREATE USER grant_inherit_false_user PASSWORD 'pw';`,
+				`CREATE TABLE grant_inherit_false_private_items (
+					id INT PRIMARY KEY,
+					secret TEXT
+				);`,
+				`INSERT INTO grant_inherit_false_private_items VALUES (1, 'hidden without set role');`,
+				`GRANT USAGE ON SCHEMA public TO grant_inherit_false_reader, grant_inherit_false_user;`,
+				`GRANT SELECT ON grant_inherit_false_private_items TO grant_inherit_false_reader;`,
+				`GRANT grant_inherit_false_reader TO grant_inherit_false_user WITH INHERIT FALSE;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, secret
+						FROM grant_inherit_false_private_items;`,
+					ExpectedErr: `permission denied`,
+					Username:    `grant_inherit_false_user`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro reproduces a role
+// membership catalog gap: pg_auth_members should record per-membership inherit
+// and set options independently from the member role's default attributes.
+func TestGrantRoleWithInheritFalsePopulatesPgAuthMembersRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT role WITH INHERIT FALSE records membership options",
+			SetUpScript: []string{
+				`CREATE ROLE grant_option_catalog_parent;`,
+				`CREATE ROLE grant_option_catalog_child;`,
+				`GRANT grant_option_catalog_parent
+					TO grant_option_catalog_child WITH INHERIT FALSE;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT inherit_option, set_option
+						FROM pg_catalog.pg_auth_members
+						WHERE pg_get_userbyid(roleid) = 'grant_option_catalog_parent'
+							AND pg_get_userbyid(member) = 'grant_option_catalog_child';`,
+					Expected: []sql.Row{{"f", "t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro reproduces a role
+// membership catalog gap: pg_auth_members should record when a membership
+// explicitly denies SET ROLE to the granted role.
+func TestGrantRoleWithSetFalsePopulatesPgAuthMembersRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT role WITH SET FALSE records membership options",
+			SetUpScript: []string{
+				`CREATE ROLE grant_set_option_catalog_parent;`,
+				`CREATE ROLE grant_set_option_catalog_child;`,
+				`GRANT grant_set_option_catalog_parent
+					TO grant_set_option_catalog_child WITH SET FALSE;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT inherit_option, set_option
+						FROM pg_catalog.pg_auth_members
+						WHERE pg_get_userbyid(roleid) = 'grant_set_option_catalog_parent'
+							AND pg_get_userbyid(member) = 'grant_set_option_catalog_child';`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+			},
+		},
+	})
+}
+
 // TestNoInheritRolePrivilegesDoNotApplyGuard guards that NOINHERIT login roles
 // do not automatically use privileges from member roles.
 func TestNoInheritRolePrivilegesDoNotApplyGuard(t *testing.T) {

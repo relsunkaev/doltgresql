@@ -148,6 +148,67 @@ func TestPlpgsqlExceptionDiagnosticsRollbackRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlExceptionSqlstateSqlerrmVariablesRepro reproduces a PL/pgSQL
+// compatibility gap: exception handlers expose implicit SQLSTATE and SQLERRM
+// variables for the caught error.
+func TestPlpgsqlExceptionSqlstateSqlerrmVariablesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL exception handler exposes SQLSTATE and SQLERRM",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_exception_sqlstate_sqlerrm()
+				RETURNS TEXT AS $$
+				BEGIN
+					RAISE EXCEPTION 'special failure' USING ERRCODE = '22012';
+				EXCEPTION WHEN OTHERS THEN
+					RETURN SQLSTATE || ':' || SQLERRM;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_exception_sqlstate_sqlerrm();`,
+					Expected: []sql.Row{{"22012:special failure"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlBareRaiseRethrowsCurrentExceptionRepro reproduces a PL/pgSQL
+// compatibility gap: bare RAISE inside an exception handler should rethrow the
+// current exception with its original SQLSTATE and message.
+func TestPlpgsqlBareRaiseRethrowsCurrentExceptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL bare RAISE rethrows current exception",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_bare_raise_rethrow()
+				RETURNS TEXT AS $$
+				DECLARE
+					message_text TEXT;
+				BEGIN
+					BEGIN
+						RAISE EXCEPTION 'reraised failure' USING ERRCODE = '22012';
+					EXCEPTION WHEN OTHERS THEN
+						RAISE;
+					END;
+				EXCEPTION WHEN SQLSTATE '22012' THEN
+					GET STACKED DIAGNOSTICS message_text = MESSAGE_TEXT;
+					RETURN message_text;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_bare_raise_rethrow();`,
+					Expected: []sql.Row{{"reraised failure"}},
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro reproduces a PL/pgSQL
 // correctness bug: EXECUTE updates ROW_COUNT but must not change FOUND.
 func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
@@ -207,6 +268,145 @@ func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
 				{
 					Query:    `SELECT found_value, affected FROM plpgsql_execute_dml_found_seen WHERE marker = 'execute_dml';`,
 					Expected: []sql.Row{{"true", 0}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlDynamicExecuteIntoRecordRepro reproduces a PL/pgSQL compatibility
+// gap: EXECUTE ... INTO can populate a RECORD target whose fields are then
+// accessible by name.
+func TestPlpgsqlDynamicExecuteIntoRecordRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "dynamic EXECUTE INTO populates RECORD fields",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_execute_into_record()
+				RETURNS TEXT AS $$
+				DECLARE
+					got_row RECORD;
+				BEGIN
+					EXECUTE 'SELECT 10 AS id, ''dynamic'' AS label' INTO got_row;
+					RETURN got_row.id::TEXT || ':' || got_row.label;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_execute_into_record();`,
+					Expected: []sql.Row{{"10:dynamic"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlNonVoidFunctionRequiresReturnValueRepro reproduces a PL/pgSQL
+// correctness bug: reaching the end of a non-void function without RETURN must
+// raise an error.
+func TestPlpgsqlNonVoidFunctionRequiresReturnValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL non-void function requires return value",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_missing_return_value()
+				RETURNS INT AS $$
+				BEGIN
+					PERFORM 1;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_missing_return_value();`,
+					ExpectedErr: `control reached end of function without RETURN`,
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlReturnStatementValidationRepro reproduces PL/pgSQL compatibility
+// gaps: RETURN syntax is validated against the function's declared result type.
+func TestPlpgsqlReturnStatementValidationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL RETURN statements match result type",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE FUNCTION plpgsql_nonvoid_bare_return()
+						RETURNS INT AS $$
+						BEGIN
+							RETURN;
+						END;
+						$$ LANGUAGE plpgsql;`,
+					ExpectedErr: `RETURN`,
+				},
+				{
+					Query: `CREATE FUNCTION plpgsql_void_return_expression()
+						RETURNS VOID AS $$
+						BEGIN
+							RETURN 5;
+						END;
+						$$ LANGUAGE plpgsql;`,
+					ExpectedErr: `RETURN`,
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlSelectIntoStrictCardinalityRepro reproduces a PL/pgSQL
+// compatibility gap: SELECT ... INTO STRICT must require exactly one row,
+// returning the row when present and raising errors for zero or multiple rows.
+func TestPlpgsqlSelectIntoStrictCardinalityRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL SELECT INTO STRICT enforces cardinality",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_strict_items (
+					id INT PRIMARY KEY,
+					label TEXT NOT NULL
+				);`,
+				`INSERT INTO plpgsql_strict_items VALUES
+					(1, 'one'),
+					(2, 'two');`,
+				`CREATE FUNCTION plpgsql_strict_label(input_id INT)
+				RETURNS TEXT AS $$
+				DECLARE
+					got_label TEXT;
+				BEGIN
+					SELECT label INTO STRICT got_label
+					FROM plpgsql_strict_items
+					WHERE id = input_id;
+					RETURN got_label;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE FUNCTION plpgsql_strict_any_label()
+				RETURNS TEXT AS $$
+				DECLARE
+					got_label TEXT;
+				BEGIN
+					SELECT label INTO STRICT got_label
+					FROM plpgsql_strict_items
+					ORDER BY id;
+					RETURN got_label;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_strict_label(1);`,
+					Expected: []sql.Row{{"one"}},
+				},
+				{
+					Query:       `SELECT plpgsql_strict_label(999);`,
+					ExpectedErr: `query returned no rows`,
+				},
+				{
+					Query:       `SELECT plpgsql_strict_any_label();`,
+					ExpectedErr: `query returned more than one row`,
 				},
 			},
 		},
@@ -283,6 +483,42 @@ func TestPlpgsqlReturnsTableCompositeVariableRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlTableStarCompositeArgumentRepro reproduces a PL/pgSQL
+// compatibility gap: PostgreSQL allows alias.* to pass a table row into a
+// composite-typed PL/pgSQL function argument.
+func TestPlpgsqlTableStarCompositeArgumentRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL accepts table star composite argument",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_table_star_items (
+					id INT PRIMARY KEY,
+					name TEXT NOT NULL,
+					qty INT NOT NULL,
+					price REAL NOT NULL
+				);`,
+				`INSERT INTO plpgsql_table_star_items VALUES
+					(1, 'apple', 3, 2.5),
+					(2, 'banana', 5, 1.2);`,
+				`CREATE FUNCTION plpgsql_table_star_total(item plpgsql_table_star_items)
+				RETURNS REAL AS $$
+				BEGIN
+					RETURN item.qty * item.price;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT plpgsql_table_star_total(item.*)
+						FROM plpgsql_table_star_items AS item
+						ORDER BY item.id;`,
+					Expected: []sql.Row{{7.5}, {6.0}},
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlReturnNextSetofScalarRepro reproduces a PL/pgSQL compatibility
 // gap: set-returning functions can emit scalar rows with RETURN NEXT.
 func TestPlpgsqlReturnNextSetofScalarRepro(t *testing.T) {
@@ -309,6 +545,43 @@ func TestPlpgsqlReturnNextSetofScalarRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlReturnNextRecordVariableRepro reproduces a PL/pgSQL compatibility
+// gap: set-returning functions can emit composite rows with RETURN NEXT from a
+// RECORD variable.
+func TestPlpgsqlReturnNextRecordVariableRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL RETURN NEXT emits RECORD rows",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_return_next_record_items (
+					id INT PRIMARY KEY,
+					label TEXT NOT NULL
+				);`,
+				`INSERT INTO plpgsql_return_next_record_items VALUES
+					(1, 'one'),
+					(2, 'two');`,
+				`CREATE FUNCTION plpgsql_return_next_record_rows()
+				RETURNS SETOF plpgsql_return_next_record_items AS $$
+				DECLARE
+					item RECORD;
+				BEGIN
+					FOR item IN SELECT * FROM plpgsql_return_next_record_items ORDER BY id LOOP
+						RETURN NEXT item;
+					END LOOP;
+					RETURN;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT id, label FROM plpgsql_return_next_record_rows();`,
+					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlReturnQueryExecuteRepro reproduces a PL/pgSQL compatibility gap:
 // set-returning functions can append rows from dynamic RETURN QUERY EXECUTE.
 func TestPlpgsqlReturnQueryExecuteRepro(t *testing.T) {
@@ -328,6 +601,78 @@ func TestPlpgsqlReturnQueryExecuteRepro(t *testing.T) {
 				{
 					Query:    `SELECT * FROM plpgsql_return_query_execute();`,
 					Expected: []sql.Row{{10}, {20}, {40}, {50}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlForQueryLoopUpdatesFoundRepro reproduces a PL/pgSQL runtime
+// correctness bug: FOR query loops should set FOUND after the loop exits based
+// on whether at least one row was iterated.
+func TestPlpgsqlForQueryLoopUpdatesFoundRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL FOR query loop updates FOUND",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_for_query_found(include_rows BOOL)
+				RETURNS TEXT AS $$
+				DECLARE
+					value_seen RECORD;
+				BEGIN
+					PERFORM 1 WHERE false;
+					FOR value_seen IN
+						SELECT x FROM (VALUES (1), (2)) AS v(x) WHERE include_rows
+					LOOP
+						NULL;
+					END LOOP;
+					RETURN FOUND::TEXT;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_for_query_found(true);`,
+					Expected: []sql.Row{{"true"}},
+				},
+				{
+					Query:    `SELECT plpgsql_for_query_found(false);`,
+					Expected: []sql.Row{{"false"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlForIntegerLoopUpdatesFoundRepro reproduces a PL/pgSQL runtime
+// correctness bug: integer FOR loops should set FOUND after the loop exits
+// based on whether at least one iteration ran.
+func TestPlpgsqlForIntegerLoopUpdatesFoundRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL integer FOR loop updates FOUND",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_for_integer_found(start_value INT, end_value INT)
+				RETURNS TEXT AS $$
+				DECLARE
+					i INT;
+				BEGIN
+					PERFORM 1 WHERE false;
+					FOR i IN start_value..end_value LOOP
+						NULL;
+					END LOOP;
+					RETURN FOUND::TEXT;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_for_integer_found(1, 2);`,
+					Expected: []sql.Row{{"true"}},
+				},
+				{
+					Query:    `SELECT plpgsql_for_integer_found(2, 1);`,
+					Expected: []sql.Row{{"false"}},
 				},
 			},
 		},
@@ -570,6 +915,162 @@ func TestPlpgsqlForeachArrayLoopRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlForeachSliceArrayLoopRepro reproduces a PL/pgSQL compatibility
+// gap: FOREACH ... SLICE should iterate array slices from multidimensional
+// arrays.
+func TestPlpgsqlForeachSliceArrayLoopRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL FOREACH SLICE iterates multidimensional array rows",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_foreach_slice_sum(values_in INT[])
+				RETURNS INT AS $$
+				DECLARE
+					row_slice INT[];
+					value_seen INT;
+					total INT := 0;
+				BEGIN
+					FOREACH row_slice SLICE 1 IN ARRAY values_in LOOP
+						FOREACH value_seen IN ARRAY row_slice LOOP
+							total := total + value_seen;
+						END LOOP;
+					END LOOP;
+					RETURN total;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_foreach_slice_sum(ARRAY[[1, 2], [3, 4]]);`,
+					Expected: []sql.Row{{10}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlColumnTypeDeclarationRepro reproduces a PL/pgSQL compatibility
+// gap: variables can use table.column%TYPE declarations.
+func TestPlpgsqlColumnTypeDeclarationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL variable uses table column percent TYPE",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_type_source (
+					id INT PRIMARY KEY,
+					label VARCHAR(8)
+				);`,
+				`CREATE FUNCTION plpgsql_column_type_echo(input_label TEXT)
+				RETURNS TEXT AS $$
+				DECLARE
+					typed_label plpgsql_type_source.label%TYPE;
+				BEGIN
+					typed_label := input_label;
+					RETURN typed_label;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_column_type_echo('sample');`,
+					Expected: []sql.Row{{"sample"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlRowTypeDeclarationRepro reproduces a PL/pgSQL compatibility gap:
+// variables can use table%ROWTYPE declarations and access row fields.
+func TestPlpgsqlRowTypeDeclarationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL variable uses table percent ROWTYPE",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_rowtype_source (
+					id INT PRIMARY KEY,
+					label TEXT NOT NULL
+				);`,
+				`INSERT INTO plpgsql_rowtype_source VALUES (1, 'first');`,
+				`CREATE FUNCTION plpgsql_rowtype_label(input_id INT)
+				RETURNS TEXT AS $$
+				DECLARE
+					row_value plpgsql_rowtype_source%ROWTYPE;
+				BEGIN
+					SELECT * INTO row_value
+					FROM plpgsql_rowtype_source
+					WHERE id = input_id;
+					RETURN row_value.label;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_rowtype_label(1);`,
+					Expected: []sql.Row{{"first"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlDomainVariableAssignmentChecksConstraintRepro reproduces a data
+// consistency bug: assignments to PL/pgSQL variables declared as domain types
+// must enforce the domain's check constraints.
+func TestPlpgsqlDomainVariableAssignmentChecksConstraintRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL domain variable assignment checks constraint",
+			SetUpScript: []string{
+				`CREATE DOMAIN plpgsql_var_positive_domain AS INT
+					CHECK (VALUE > 0);`,
+				`CREATE FUNCTION plpgsql_domain_assignment_bad()
+				RETURNS INT AS $$
+				DECLARE
+					value_seen plpgsql_var_positive_domain;
+				BEGIN
+					value_seen := -1;
+					RETURN value_seen;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_domain_assignment_bad();`,
+					ExpectedErr: `violates check constraint`,
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro reproduces a PL/pgSQL
+// data-integrity bug: variables declared NOT NULL must reject NULL assignment.
+func TestPlpgsqlNotNullVariableRejectsNullAssignmentRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL NOT NULL variable rejects NULL assignment",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_not_null_assignment()
+				RETURNS INT AS $$
+				DECLARE
+					value_seen INT NOT NULL := 1;
+				BEGIN
+					value_seen := NULL;
+					RETURN value_seen;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_not_null_assignment();`,
+					ExpectedErr: `null value cannot be assigned`,
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlAssertStatementRepro reproduces a PL/pgSQL compatibility gap:
 // ASSERT should raise an exception when its condition is false.
 func TestPlpgsqlAssertStatementRepro(t *testing.T) {
@@ -593,6 +1094,153 @@ func TestPlpgsqlAssertStatementRepro(t *testing.T) {
 				{
 					Query:       `SELECT plpgsql_assert_positive(0);`,
 					ExpectedErr: `input must be positive`,
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlExplicitCursorFetchLoopRepro reproduces a PL/pgSQL compatibility
+// gap: explicit cursor variables should support OPEN, FETCH, and CLOSE.
+func TestPlpgsqlExplicitCursorFetchLoopRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL explicit cursor fetch loop sums rows",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_cursor_fetch_sum()
+				RETURNS INT AS $$
+				DECLARE
+					item_cursor CURSOR FOR
+						SELECT x FROM (VALUES (1), (2), (3)) AS v(x) ORDER BY x;
+					row_value INT;
+					total INT := 0;
+				BEGIN
+					OPEN item_cursor;
+					LOOP
+						FETCH item_cursor INTO row_value;
+						EXIT WHEN NOT FOUND;
+						total := total + row_value;
+					END LOOP;
+					CLOSE item_cursor;
+					RETURN total;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_cursor_fetch_sum();`,
+					Expected: []sql.Row{{6}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlCursorParametersRepro reproduces a PL/pgSQL compatibility gap:
+// explicit cursor declarations can accept parameters that are bound by OPEN.
+func TestPlpgsqlCursorParametersRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL cursor parameters filter rows",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_cursor_param_items (id INT PRIMARY KEY);`,
+				`INSERT INTO plpgsql_cursor_param_items VALUES (1), (2), (3), (4);`,
+				`CREATE FUNCTION plpgsql_cursor_param_sum(low_id INT, high_id INT)
+				RETURNS INT AS $$
+				DECLARE
+					item_cursor CURSOR (min_id INT, max_id INT) FOR
+						SELECT id FROM plpgsql_cursor_param_items
+						WHERE id BETWEEN min_id AND max_id
+						ORDER BY id;
+					row_value INT;
+					total INT := 0;
+				BEGIN
+					OPEN item_cursor(low_id, high_id);
+					LOOP
+						FETCH item_cursor INTO row_value;
+						EXIT WHEN NOT FOUND;
+						total := total + row_value;
+					END LOOP;
+					CLOSE item_cursor;
+					RETURN total;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_cursor_param_sum(2, 3);`,
+					Expected: []sql.Row{{5}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlFunctionReturnsRefcursorRepro reproduces a PL/pgSQL compatibility
+// gap: PL/pgSQL functions can open and return a named refcursor that callers
+// fetch from in the surrounding transaction.
+func TestPlpgsqlFunctionReturnsRefcursorRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL function returns fetchable refcursor",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_refcursor_items (id INT PRIMARY KEY);`,
+				`INSERT INTO plpgsql_refcursor_items VALUES (1), (2), (3);`,
+				`CREATE FUNCTION plpgsql_open_refcursor(cursor_name REFCURSOR)
+				RETURNS REFCURSOR AS $$
+				BEGIN
+					OPEN cursor_name FOR
+						SELECT id FROM plpgsql_refcursor_items ORDER BY id;
+					RETURN cursor_name;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:            `BEGIN;`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query:    `SELECT plpgsql_open_refcursor('plpgsql_item_cursor');`,
+					Expected: []sql.Row{{"plpgsql_item_cursor"}},
+				},
+				{
+					Query:    `FETCH ALL FROM plpgsql_item_cursor;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+				{
+					Query:            `COMMIT;`,
+					SkipResultsCheck: true,
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlFunctionOutParametersReturnRowsRepro reproduces a PL/pgSQL
+// compatibility gap: OUT parameters are excluded from the callable argument
+// list, and their assigned values form the function result row.
+func TestPlpgsqlFunctionOutParametersReturnRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL function OUT parameters are callable by input args",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_out_parameter_values(
+					input_value INT,
+					OUT doubled INT,
+					OUT tripled INT
+				)
+				AS $$
+				BEGIN
+					doubled := input_value * 2;
+					tripled := input_value * 3;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT * FROM plpgsql_out_parameter_values(4);`,
+					Expected: []sql.Row{{8, 12}},
 				},
 			},
 		},

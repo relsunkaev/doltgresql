@@ -59,3 +59,33 @@ func TestDropDatabaseWithForceIfExistsNoopsMissingDatabase(t *testing.T) {
 		},
 	})
 }
+
+// TestDropCurrentDatabaseRejectedRepro reproduces a database DDL persistence
+// boundary: PostgreSQL rejects dropping the database currently used by the
+// session, leaving it present in pg_database.
+func TestDropCurrentDatabaseRejectedRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DATABASE rejects current database",
+			SetUpScript: []string{
+				`CREATE DATABASE current_drop_database_repro;`,
+				`USE current_drop_database_repro;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP DATABASE current_drop_database_repro;`,
+					ExpectedErr: `cannot drop the currently open database`,
+				},
+				{
+					Query: `USE postgres;`,
+				},
+				{
+					Query: `SELECT datname
+						FROM pg_database
+						WHERE datname = 'current_drop_database_repro';`,
+					Expected: []sql.Row{{"current_drop_database_repro"}},
+				},
+			},
+		},
+	})
+}

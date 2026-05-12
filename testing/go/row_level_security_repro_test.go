@@ -91,6 +91,29 @@ func TestRowLevelSecuritySelectPolicyFiltersRowsRepro(t *testing.T) {
 	})
 }
 
+// TestDropPolicyIfExistsMissingRepro reproduces a PostgreSQL compatibility gap:
+// DROP POLICY IF EXISTS should no-op when the named policy is absent on an
+// existing table.
+func TestDropPolicyIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP POLICY IF EXISTS missing policy no-ops",
+			SetUpScript: []string{
+				`CREATE TABLE rls_drop_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP POLICY IF EXISTS missing_rls_drop_policy
+						ON rls_drop_docs;`,
+				},
+			},
+		},
+	})
+}
+
 // TestRowLevelSecurityDefaultDenyInsertRepro reproduces a security bug:
 // PostgreSQL default-deny RLS blocks INSERT for granted non-owners when no
 // INSERT policy exists.
@@ -115,6 +138,120 @@ func TestRowLevelSecurityDefaultDenyInsertRepro(t *testing.T) {
 				{
 					Query:    `SELECT count(*) FROM rls_insert_secrets;`,
 					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityInsertPolicyWithCheckRepro reproduces a security bug:
+// PostgreSQL enforces INSERT policy WITH CHECK expressions for granted
+// non-owners.
+func TestRowLevelSecurityInsertPolicyWithCheckRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS INSERT WITH CHECK rejects invalid rows",
+			SetUpScript: []string{
+				`CREATE USER rls_insert_check_user PASSWORD 'writer';`,
+				`CREATE TABLE rls_insert_check_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA public TO rls_insert_check_user;`,
+				`GRANT INSERT, SELECT ON rls_insert_check_docs TO rls_insert_check_user;`,
+				`CREATE POLICY rls_insert_check_owner_insert
+					ON rls_insert_check_docs
+					FOR INSERT
+					WITH CHECK (owner_name = current_user);`,
+				`ALTER TABLE rls_insert_check_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rls_insert_check_docs
+						VALUES (1, 'rls_insert_check_user', 'allowed');`,
+					Username: `rls_insert_check_user`,
+					Password: `writer`,
+				},
+				{
+					Query: `INSERT INTO rls_insert_check_docs
+						VALUES (2, 'other_user', 'blocked');`,
+					ExpectedErr: `row-level security`,
+					Username:    `rls_insert_check_user`,
+					Password:    `writer`,
+				},
+				{
+					Query: `SELECT id, owner_name, label
+						FROM rls_insert_check_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, "rls_insert_check_user", "allowed"}},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityUpdatePolicyWithCheckRepro reproduces an RLS security
+// gap: PostgreSQL accepts UPDATE policies with USING and WITH CHECK
+// expressions and applies them to granted non-owners.
+func TestRowLevelSecurityUpdatePolicyWithCheckRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS UPDATE policy filters rows and rejects invalid new rows",
+			SetUpScript: []string{
+				`CREATE USER rls_update_policy_user PASSWORD 'writer';`,
+				`CREATE TABLE rls_update_policy_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`INSERT INTO rls_update_policy_docs VALUES
+					(1, 'rls_update_policy_user', 'visible'),
+					(2, 'other_user', 'hidden');`,
+				`GRANT USAGE ON SCHEMA public TO rls_update_policy_user;`,
+				`GRANT SELECT, UPDATE ON rls_update_policy_docs TO rls_update_policy_user;`,
+				`CREATE POLICY rls_update_policy_docs_owner_update
+					ON rls_update_policy_docs
+					FOR UPDATE
+					USING (owner_name = current_user)
+					WITH CHECK (owner_name = current_user);`,
+				`ALTER TABLE rls_update_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE rls_update_policy_docs
+						SET label = 'changed'
+						WHERE id = 1
+						RETURNING id;`,
+					Expected: []sql.Row{{1}},
+					Username: `rls_update_policy_user`,
+					Password: `writer`,
+				},
+				{
+					Query: `UPDATE rls_update_policy_docs
+						SET label = 'blocked'
+						WHERE id = 2
+						RETURNING id;`,
+					Expected: []sql.Row{},
+					Username: `rls_update_policy_user`,
+					Password: `writer`,
+				},
+				{
+					Query: `UPDATE rls_update_policy_docs
+						SET owner_name = 'other_user'
+						WHERE id = 1;`,
+					ExpectedErr: `row-level security`,
+					Username:    `rls_update_policy_user`,
+					Password:    `writer`,
+				},
+				{
+					Query: `SELECT id, owner_name, label
+						FROM rls_update_policy_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "rls_update_policy_user", "changed"},
+						{2, "other_user", "hidden"},
+					},
 				},
 			},
 		},
@@ -149,6 +286,50 @@ func TestRowLevelSecurityDefaultDenyUpdateRepro(t *testing.T) {
 				{
 					Query:    `SELECT label FROM rls_update_secrets WHERE id = 1;`,
 					Expected: []sql.Row{{"original"}},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityDeletePolicyFiltersRowsRepro reproduces an RLS security
+// gap: PostgreSQL accepts DELETE policies and applies their USING expressions
+// to granted non-owners.
+func TestRowLevelSecurityDeletePolicyFiltersRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS DELETE policy filters target rows",
+			SetUpScript: []string{
+				`CREATE USER rls_delete_policy_user PASSWORD 'writer';`,
+				`CREATE TABLE rls_delete_policy_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`INSERT INTO rls_delete_policy_docs VALUES
+					(1, 'rls_delete_policy_user', 'delete me'),
+					(2, 'other_user', 'keep me');`,
+				`GRANT USAGE ON SCHEMA public TO rls_delete_policy_user;`,
+				`GRANT SELECT, DELETE ON rls_delete_policy_docs TO rls_delete_policy_user;`,
+				`CREATE POLICY rls_delete_policy_docs_owner_delete
+					ON rls_delete_policy_docs
+					FOR DELETE
+					USING (owner_name = current_user);`,
+				`ALTER TABLE rls_delete_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DELETE FROM rls_delete_policy_docs
+						RETURNING id;`,
+					Expected: []sql.Row{{1}},
+					Username: `rls_delete_policy_user`,
+					Password: `writer`,
+				},
+				{
+					Query: `SELECT id, owner_name, label
+						FROM rls_delete_policy_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{{2, "other_user", "keep me"}},
 				},
 			},
 		},
@@ -294,6 +475,64 @@ func TestRowLevelSecurityPgClassMetadataRepro(t *testing.T) {
 						FROM pg_catalog.pg_class
 						WHERE oid = 'rls_catalog_target'::regclass;`,
 					Expected: []sql.Row{{"t", "t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityNoForcePgClassMetadataRepro reproduces a catalog
+// persistence bug: ALTER TABLE ... NO FORCE ROW LEVEL SECURITY should clear
+// the forced-RLS table mode without disabling RLS.
+func TestRowLevelSecurityNoForcePgClassMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "NO FORCE RLS clears pg_class forced metadata",
+			SetUpScript: []string{
+				`CREATE TABLE rls_no_force_catalog_target (id INT PRIMARY KEY);`,
+				`ALTER TABLE rls_no_force_catalog_target ENABLE ROW LEVEL SECURITY;`,
+				`ALTER TABLE rls_no_force_catalog_target FORCE ROW LEVEL SECURITY;`,
+				`ALTER TABLE rls_no_force_catalog_target NO FORCE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT relrowsecurity, relforcerowsecurity
+						FROM pg_catalog.pg_class
+						WHERE oid = 'rls_no_force_catalog_target'::regclass;`,
+					Expected: []sql.Row{{"t", "f"}},
+				},
+			},
+		},
+	})
+}
+
+// TestForcedRowLevelSecurityAppliesToTableOwnerRepro reproduces a security bug:
+// PostgreSQL FORCE ROW LEVEL SECURITY applies policies to the table owner.
+func TestForcedRowLevelSecurityAppliesToTableOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "FORCE RLS applies policy to table owner",
+			SetUpScript: []string{
+				`CREATE USER rls_forced_owner PASSWORD 'owner';`,
+				`CREATE TABLE rls_force_owner_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_force_owner_docs VALUES (1, 'hidden from owner');`,
+				`ALTER TABLE rls_force_owner_docs OWNER TO rls_forced_owner;`,
+				`GRANT USAGE ON SCHEMA public TO rls_forced_owner;`,
+				`GRANT SELECT ON rls_force_owner_docs TO rls_forced_owner;`,
+				`ALTER TABLE rls_force_owner_docs ENABLE ROW LEVEL SECURITY;`,
+				`ALTER TABLE rls_force_owner_docs FORCE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM rls_force_owner_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{},
+					Username: `rls_forced_owner`,
+					Password: `owner`,
 				},
 			},
 		},

@@ -689,6 +689,26 @@ func TestJsonbPathQueryArrayFilterPredicateRepro(t *testing.T) {
 	})
 }
 
+// TestJsonpathPostgres16NumericLiteralSyntaxRepro reproduces a PostgreSQL 16
+// compatibility gap: JSONPath numeric literals support underscore separators
+// and non-decimal integer prefixes.
+func TestJsonpathPostgres16NumericLiteralSyntaxRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "JSONPath accepts PostgreSQL 16 numeric literal syntax",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT jsonb_path_match('1000'::jsonb, '$ == 1_000'),
+						jsonb_path_match('16'::jsonb, '$ == 0x10'),
+						jsonb_path_match('8'::jsonb, '$ == 0o10'),
+						jsonb_path_match('10'::jsonb, '$ == 0b1010');`,
+					Expected: []sql.Row{{true, true, true, true}},
+				},
+			},
+		},
+	})
+}
+
 // TestJsonbNestedArrayContainmentGuard guards PostgreSQL JSONB containment
 // semantics for nested array values.
 func TestJsonbNestedArrayContainmentGuard(t *testing.T) {
@@ -1044,6 +1064,55 @@ func TestJsonbSetLaxDeleteKeyPersistsStoredDocumentRepro(t *testing.T) {
 				{
 					Query:    `SELECT doc::text FROM jsonb_set_lax_delete_key_items;`,
 					Expected: []sql.Row{{`{"keep": true}`}},
+				},
+			},
+		},
+	})
+}
+
+// TestPostgres18JsonStripNullsStripInArraysRepro reproduces a PostgreSQL 18
+// compatibility gap: json_strip_nulls/jsonb_strip_nulls accept a second
+// strip_in_arrays argument that removes null array elements when true.
+func TestPostgres18JsonStripNullsStripInArraysRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "json strip nulls supports strip_in_arrays",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT json_strip_nulls('[1,null,{"a":null,"b":2}]'::json, true)::text;`,
+					Expected: []sql.Row{{`[1,{"b":2}]`}},
+				},
+				{
+					Query:    `SELECT jsonb_strip_nulls('[1,null,{"a":null,"b":2}]'::jsonb, true)::text;`,
+					Expected: []sql.Row{{`[1, {"b": 2}]`}},
+				},
+				{
+					Query:    `SELECT jsonb_strip_nulls('[1,null,{"a":null,"b":2}]'::jsonb, false)::text;`,
+					Expected: []sql.Row{{`[1, null, {"b": 2}]`}},
+				},
+				{
+					Query:    `SELECT json_strip_nulls('null'::json, true)::text, jsonb_strip_nulls('null'::jsonb, true)::text;`,
+					Expected: []sql.Row{{`null`, `null`}},
+				},
+			},
+		},
+	})
+}
+
+// TestPostgres18JsonbNullCastsToSqlNullRepro reproduces a PostgreSQL 18
+// compatibility gap: jsonb null values cast to scalar SQL types as SQL NULL
+// instead of raising an error.
+func TestPostgres18JsonbNullCastsToSqlNullRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "jsonb null casts to scalar SQL null",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+						(('null'::jsonb)::int4 IS NULL)::text,
+						(('null'::jsonb)::bool IS NULL)::text,
+						(('null'::jsonb)::numeric IS NULL)::text;`,
+					Expected: []sql.Row{{"true", "true", "true"}},
 				},
 			},
 		},

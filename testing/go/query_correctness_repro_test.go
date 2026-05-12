@@ -941,6 +941,51 @@ func TestTableSampleSystemHundredReturnsAllRowsRepro(t *testing.T) {
 	})
 }
 
+// TestRecursiveCteSearchClauseRepro reproduces a query compatibility gap:
+// PostgreSQL recursive CTEs support SQL-standard SEARCH ordering clauses.
+func TestRecursiveCteSearchClauseRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "WITH RECURSIVE supports SEARCH clause",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `WITH RECURSIVE tree(id, parent_id) AS (
+							VALUES (1, NULL::INT)
+							UNION ALL
+							SELECT child.id, child.parent_id
+							FROM (VALUES (2, 1), (3, 1)) AS child(id, parent_id)
+							JOIN tree ON child.parent_id = tree.id
+						) SEARCH BREADTH FIRST BY id SET bfs_order
+						SELECT id FROM tree ORDER BY bfs_order;`,
+					Expected: []sql.Row{{1}, {2}, {3}},
+				},
+			},
+		},
+	})
+}
+
+// TestRecursiveCteCycleClauseRepro reproduces a query compatibility gap:
+// PostgreSQL recursive CTEs support SQL-standard CYCLE clauses that add cycle
+// marker and path columns.
+func TestRecursiveCteCycleClauseRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "WITH RECURSIVE supports CYCLE clause",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `WITH RECURSIVE nums(n) AS (
+							VALUES (1)
+							UNION ALL
+							SELECT n + 1 FROM nums WHERE n < 3
+						) CYCLE n SET is_cycle USING path
+						SELECT n, is_cycle FROM nums ORDER BY n;`,
+					Expected: []sql.Row{{1, false}, {2, false}, {3, false}},
+				},
+			},
+		},
+	})
+}
+
 // TestSelectCanProjectTableoidRepro reproduces a query correctness gap:
 // PostgreSQL exposes tableoid as a system column for ordinary base-table
 // scans.

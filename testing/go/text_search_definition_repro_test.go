@@ -40,6 +40,302 @@ func TestBuiltInTextSearchFunctionsMatchTermsRepro(t *testing.T) {
 	})
 }
 
+// TestPlainToTsQueryFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes plainto_tsquery for turning plain text into a tsquery.
+func TestPlainToTsQueryFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "plainto_tsquery parses plain text",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plainto_tsquery('simple'::regconfig, 'fat cats')::text;`,
+					Expected: []sql.Row{{"'fat' & 'cats'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPhraseToTsQueryFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes phraseto_tsquery for turning plain text phrases into
+// phrase-distance tsquery values.
+func TestPhraseToTsQueryFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "phraseto_tsquery parses phrase text",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT phraseto_tsquery('simple'::regconfig, 'fat cats')::text;`,
+					Expected: []sql.Row{{"'fat' <-> 'cats'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestWebsearchToTsQueryFunctionRepro reproduces a full-text search
+// compatibility gap: PostgreSQL exposes websearch_to_tsquery for accepting
+// web-search-style query text.
+func TestWebsearchToTsQueryFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "websearch_to_tsquery parses web search text",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT websearch_to_tsquery('simple'::regconfig, 'fat cat')::text;`,
+					Expected: []sql.Row{{"'fat' & 'cat'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsHeadlineFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_headline for highlighting text fragments that match a
+// tsquery.
+func TestTsHeadlineFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_headline highlights matching text",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ts_headline('simple'::regconfig, 'fat cats ate rats', to_tsquery('simple'::regconfig, 'cats'))::text;`,
+					Expected: []sql.Row{{"fat <b>cats</b> ate rats"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsRankFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_rank for scoring a tsvector against a tsquery.
+func TestTsRankFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_rank scores matching documents",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT ts_rank(
+						to_tsvector('simple'::regconfig, 'fat cats ate rats'),
+						to_tsquery('simple'::regconfig, 'cats')
+					) > 0;`,
+					Expected: []sql.Row{{true}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsRankCdFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_rank_cd for cover-density ranking of a tsvector against
+// a tsquery.
+func TestTsRankCdFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_rank_cd scores matching documents",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT ts_rank_cd(
+						to_tsvector('simple'::regconfig, 'fat cats ate rats'),
+						to_tsquery('simple'::regconfig, 'cats')
+					) > 0;`,
+					Expected: []sql.Row{{true}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsVectorToArrayFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes tsvector_to_array for extracting lexemes from a
+// tsvector.
+func TestTsVectorToArrayFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "tsvector_to_array extracts lexemes",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT tsvector_to_array(to_tsvector('simple'::regconfig, 'fat cats'))::text;`,
+					Expected: []sql.Row{{`{cats,fat}`}},
+				},
+			},
+		},
+	})
+}
+
+// TestArrayToTsVectorFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes array_to_tsvector for constructing a tsvector from
+// lexeme arrays.
+func TestArrayToTsVectorFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "array_to_tsvector constructs sorted lexemes",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT array_to_tsvector(ARRAY['foo', 'bar', 'baz', 'bar'])::text;`,
+					Expected: []sql.Row{{"'bar' 'baz' 'foo'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsDeleteFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_delete for removing lexemes from a tsvector.
+func TestTsDeleteFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_delete removes a lexeme",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ts_delete(to_tsvector('simple'::regconfig, 'fat cats'), 'cats')::text;`,
+					Expected: []sql.Row{{"'fat':1"}},
+				},
+			},
+		},
+	})
+}
+
+// TestSetWeightFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes setweight for assigning weights to tsvector lexemes.
+func TestSetWeightFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "setweight assigns lexeme weights",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT setweight(to_tsvector('simple'::regconfig, 'fat cats'), 'A')::text;`,
+					Expected: []sql.Row{{"'cats':2A 'fat':1A"}},
+				},
+			},
+		},
+	})
+}
+
+// TestStripTsVectorFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes strip for removing position and weight data from a
+// tsvector.
+func TestStripTsVectorFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "strip removes tsvector positions",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT strip(to_tsvector('simple'::regconfig, 'fat cats'))::text;`,
+					Expected: []sql.Row{{"'cats' 'fat'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestNumNodeFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes numnode for counting lexeme and operator nodes in a
+// tsquery.
+func TestNumNodeFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "numnode counts tsquery nodes",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT numnode(to_tsquery('simple'::regconfig, 'fat & cats'));`,
+					Expected: []sql.Row{{3}},
+				},
+			},
+		},
+	})
+}
+
+// TestQueryTreeFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes querytree for extracting the indexable portion of a
+// tsquery.
+func TestQueryTreeFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "querytree returns indexable tsquery text",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT querytree(to_tsquery('simple'::regconfig, 'fat & cats'));`,
+					Expected: []sql.Row{{"'fat' & 'cats'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsQueryPhraseFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes tsquery_phrase for building phrase-distance tsquery
+// values from two tsquery inputs.
+func TestTsQueryPhraseFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "tsquery_phrase builds phrase query",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT tsquery_phrase(
+						to_tsquery('simple'::regconfig, 'fat'),
+						to_tsquery('simple'::regconfig, 'cats')
+					)::text;`,
+					Expected: []sql.Row{{"'fat' <-> 'cats'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsRewriteFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_rewrite for substituting parts of a tsquery.
+func TestTsRewriteFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_rewrite substitutes tsquery terms",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT ts_rewrite(
+						to_tsquery('simple'::regconfig, 'fat'),
+						to_tsquery('simple'::regconfig, 'fat'),
+						to_tsquery('simple'::regconfig, 'cat')
+					)::text;`,
+					Expected: []sql.Row{{"'cat'"}},
+				},
+			},
+		},
+	})
+}
+
+// TestTsFilterFunctionRepro reproduces a full-text search compatibility gap:
+// PostgreSQL exposes ts_filter for keeping only selected tsvector weights.
+func TestTsFilterFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ts_filter keeps selected tsvector weights",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT ts_filter('base:1A hidden:2B rebel:3A'::tsvector, '{a}')::text;`,
+					Expected: []sql.Row{{"'base':1A 'rebel':3A"}},
+				},
+			},
+		},
+	})
+}
+
+// TestJsonToTsVectorFunctionRepro reproduces a full-text search compatibility
+// gap: PostgreSQL exposes json_to_tsvector for indexing JSON documents with a
+// selectable token filter.
+func TestJsonToTsVectorFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "json_to_tsvector extracts JSON string tokens",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT json_to_tsvector('english'::regconfig, '{"a": "aaa in bbb"}'::json, '"string"')::text;`,
+					Expected: []sql.Row{{"'aaa':1 'bbb':3"}},
+				},
+			},
+		},
+	})
+}
+
 // PostgreSQL allows user-defined text-search configurations and makes them
 // available to full-text functions. Doltgres currently rejects the definition
 // syntax before it can persist the catalog object.

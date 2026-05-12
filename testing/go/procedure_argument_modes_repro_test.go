@@ -91,6 +91,37 @@ func TestProcedureOutArgumentsReturnRowsRepro(t *testing.T) {
 	})
 }
 
+// TestProcedureCallNamedArgumentsRepro reproduces a CALL compatibility gap:
+// PostgreSQL supports named-argument notation for procedure calls.
+func TestProcedureCallNamedArgumentsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CALL accepts named procedure arguments",
+			SetUpScript: []string{
+				`CREATE TABLE proc_named_call_audit (
+					value_seen INT,
+					label_seen TEXT
+				);`,
+				`CREATE PROCEDURE proc_named_call(
+					value_arg INT,
+					label_arg TEXT DEFAULT 'default'
+				)
+				LANGUAGE SQL
+				AS $$ INSERT INTO proc_named_call_audit VALUES (value_arg, label_arg) $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CALL proc_named_call(label_arg => 'custom', value_arg => 7);`,
+				},
+				{
+					Query:    `SELECT value_seen, label_seen FROM proc_named_call_audit;`,
+					Expected: []sql.Row{{7, "custom"}},
+				},
+			},
+		},
+	})
+}
+
 // TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro reproduces a
 // procedure execution correctness bug: a procedure-level SET search_path option
 // should apply while the procedure body runs, regardless of the caller's

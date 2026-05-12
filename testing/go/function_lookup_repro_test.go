@@ -78,6 +78,29 @@ func TestAlterRoutineRenameFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestDropRoutineFunctionRepro reproduces a routine DDL compatibility gap:
+// PostgreSQL supports the generic DROP ROUTINE syntax for functions.
+func TestDropRoutineFunctionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP ROUTINE removes function",
+			SetUpScript: []string{
+				`CREATE FUNCTION drop_routine_value()
+					RETURNS INT LANGUAGE SQL AS $$ SELECT 7 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP ROUTINE drop_routine_value();`,
+				},
+				{
+					Query:       `SELECT drop_routine_value();`,
+					ExpectedErr: `not found`,
+				},
+			},
+		},
+	})
+}
+
 // TestSchemaQualifiedFunctionLookupUsesExplicitSchemaRepro reproduces a
 // function lookup correctness bug: schema-qualified calls should use the named
 // schema instead of resolving the same-name function from the current schema.

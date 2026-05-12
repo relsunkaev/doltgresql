@@ -261,3 +261,33 @@ func TestAlterEnumAddValuePersistsUsableLabelRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterEnumRenameValueUpdatesStoredRowsRepro reproduces an enum persistence
+// bug: PostgreSQL renames enum labels in the catalog, so existing stored enum
+// values display through the new label.
+func TestAlterEnumRenameValueUpdatesStoredRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME VALUE updates stored enum labels",
+			SetUpScript: []string{
+				`CREATE TYPE enum_rename_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE enum_rename_items (
+					id INT PRIMARY KEY,
+					status enum_rename_status
+				);`,
+				`INSERT INTO enum_rename_items VALUES (1, 'new');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TYPE enum_rename_status
+						RENAME VALUE 'new' TO 'open';`,
+				},
+				{
+					Query: `SELECT status::text
+						FROM enum_rename_items;`,
+					Expected: []sql.Row{{"open"}},
+				},
+			},
+		},
+	})
+}

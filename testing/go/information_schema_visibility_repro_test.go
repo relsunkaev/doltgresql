@@ -192,3 +192,102 @@ func TestInformationSchemaTablePrivilegesHidesUngrantableTablesRepro(t *testing.
 		},
 	})
 }
+
+// TestInformationSchemaTablePrivilegesReflectsTableGrantRepro reproduces an
+// ACL introspection bug: information_schema.table_privileges should expose
+// table-level grants visible to the grantee.
+func TestInformationSchemaTablePrivilegesReflectsTableGrantRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "information_schema.table_privileges reflects granted tables",
+			SetUpScript: []string{
+				`CREATE USER info_schema_table_grantee PASSWORD 'pw';`,
+				`CREATE TABLE info_schema_table_grant_private (id INT PRIMARY KEY);`,
+				`GRANT USAGE ON SCHEMA public TO info_schema_table_grantee;`,
+				`GRANT SELECT ON info_schema_table_grant_private
+					TO info_schema_table_grantee;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name, privilege_type
+						FROM information_schema.table_privileges
+						WHERE table_schema = 'public'
+							AND table_name = 'info_schema_table_grant_private'
+							AND grantee = current_user
+						ORDER BY table_name, privilege_type;`,
+					Expected: []sql.Row{{"info_schema_table_grant_private", "SELECT"}},
+					Username: `info_schema_table_grantee`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestInformationSchemaColumnPrivilegesReflectsColumnGrantRepro reproduces an
+// ACL introspection bug: information_schema.column_privileges should expose
+// column-level grants visible to the grantee.
+func TestInformationSchemaColumnPrivilegesReflectsColumnGrantRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "information_schema.column_privileges reflects granted columns",
+			SetUpScript: []string{
+				`CREATE USER info_schema_column_grantee PASSWORD 'pw';`,
+				`CREATE TABLE info_schema_column_grant_private (
+					id INT PRIMARY KEY,
+					secret TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA public TO info_schema_column_grantee;`,
+				`GRANT SELECT (id) ON info_schema_column_grant_private
+					TO info_schema_column_grantee;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT column_name, privilege_type
+						FROM information_schema.column_privileges
+						WHERE table_schema = 'public'
+							AND table_name = 'info_schema_column_grant_private'
+							AND grantee = current_user
+						ORDER BY column_name, privilege_type;`,
+					Expected: []sql.Row{{"id", "SELECT"}},
+					Username: `info_schema_column_grantee`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro reproduces
+// an ACL introspection bug: information_schema.routine_privileges should expose
+// function EXECUTE grants visible to the grantee.
+func TestInformationSchemaRoutinePrivilegesReflectsFunctionGrantRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "information_schema.routine_privileges reflects granted functions",
+			SetUpScript: []string{
+				`CREATE USER info_schema_routine_grantee PASSWORD 'pw';`,
+				`CREATE FUNCTION info_schema_routine_grant_target(input INT)
+					RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT input + 1 $$;`,
+				`GRANT USAGE ON SCHEMA public TO info_schema_routine_grantee;`,
+				`GRANT EXECUTE ON FUNCTION info_schema_routine_grant_target(INT)
+					TO info_schema_routine_grantee;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT routine_name, privilege_type
+						FROM information_schema.routine_privileges
+						WHERE routine_schema = 'public'
+							AND routine_name = 'info_schema_routine_grant_target'
+							AND grantee = current_user
+						ORDER BY routine_name, privilege_type;`,
+					Expected: []sql.Row{{"info_schema_routine_grant_target", "EXECUTE"}},
+					Username: `info_schema_routine_grantee`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}

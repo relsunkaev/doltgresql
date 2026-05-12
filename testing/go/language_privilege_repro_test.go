@@ -96,6 +96,28 @@ func TestAlterLanguageOwnerUpdatesPgLanguageRepro(t *testing.T) {
 	})
 }
 
+// TestAlterLanguageOwnerToRequiresOwnershipRepro reproduces a PostgreSQL
+// privilege incompatibility: a normal login role can run ALTER LANGUAGE OWNER
+// TO against a language it does not own.
+func TestAlterLanguageOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER LANGUAGE OWNER TO requires language ownership",
+			SetUpScript: []string{
+				`CREATE USER language_owner_hijacker PASSWORD 'hijacker';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER LANGUAGE plpgsql OWNER TO language_owner_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `language_owner_hijacker`,
+					Password:    `hijacker`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateLanguagePopulatesPgLanguageRepro reproduces a procedural-language
 // catalog persistence gap: CREATE LANGUAGE should add the new language to
 // pg_language.

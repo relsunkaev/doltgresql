@@ -56,6 +56,38 @@ func TestSqlProcedureInsertReturningExecutesRepro(t *testing.T) {
 	})
 }
 
+// TestSqlProcedureBeginAtomicBodyRepro reproduces a SQL-standard routine body
+// compatibility gap: PostgreSQL accepts BEGIN ATOMIC ... END procedure bodies.
+func TestSqlProcedureBeginAtomicBodyRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SQL procedure BEGIN ATOMIC body executes",
+			SetUpScript: []string{
+				`CREATE TABLE sql_proc_atomic_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE PROCEDURE sql_proc_atomic_insert(input_id INT, input_label TEXT)
+						LANGUAGE SQL
+						BEGIN ATOMIC
+							INSERT INTO sql_proc_atomic_items VALUES (input_id, input_label);
+						END;`,
+				},
+				{
+					Query: `CALL sql_proc_atomic_insert(1, 'first');`,
+				},
+				{
+					Query:    `SELECT id, label FROM sql_proc_atomic_items;`,
+					Expected: []sql.Row{{1, "first"}},
+				},
+			},
+		},
+	})
+}
+
 func TestCreateProcedureLanguageSql(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

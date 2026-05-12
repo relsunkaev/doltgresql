@@ -138,6 +138,37 @@ func TestCreateExtensionVectorWithSchemaQualifiesTypesRepro(t *testing.T) {
 	})
 }
 
+// TestAlterExtensionSetSchemaMovesObjectsRepro reproduces an extension
+// compatibility gap: ALTER EXTENSION ... SET SCHEMA should move a relocatable
+// extension and its member objects to the target schema.
+func TestAlterExtensionSetSchemaMovesObjectsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER EXTENSION SET SCHEMA moves extension objects",
+			SetUpScript: []string{
+				`CREATE SCHEMA extension_move_target;`,
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER EXTENSION hstore SET SCHEMA extension_move_target;`,
+				},
+				{
+					Query: `SELECT n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'hstore';`,
+					Expected: []sql.Row{{"extension_move_target"}},
+				},
+				{
+					Query:    `SELECT to_regtype('extension_move_target.hstore')::text;`,
+					Expected: []sql.Row{{"extension_move_target.hstore"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionDependsOnExtensionRepro reproduces a routine dependency
 // gap: ALTER FUNCTION ... DEPENDS ON EXTENSION should record a pg_depend edge,
 // block DROP EXTENSION by default, and remove the function on CASCADE.

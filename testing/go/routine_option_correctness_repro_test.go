@@ -169,6 +169,110 @@ func TestCreateFunctionSecurityDefinerCatalogRepro(t *testing.T) {
 	})
 }
 
+// TestCreateProcedureSecurityDefinerCatalogRepro reproduces a security metadata
+// persistence gap: pg_proc.prosecdef should persist SECURITY DEFINER status for
+// procedures as well as functions.
+func TestCreateProcedureSecurityDefinerCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE PROCEDURE security option persists in pg_proc",
+			SetUpScript: []string{
+				`CREATE PROCEDURE catalog_security_definer_proc()
+					LANGUAGE SQL
+					SECURITY DEFINER
+					AS $$ SELECT 1 $$;`,
+				`CREATE PROCEDURE catalog_security_invoker_proc()
+					LANGUAGE SQL
+					SECURITY INVOKER
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, prosecdef
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_security_definer_proc',
+							'catalog_security_invoker_proc'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_security_definer_proc", true},
+						{"catalog_security_invoker_proc", false},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionOutArgumentCatalogRepro reproduces a routine catalog
+// metadata gap: pg_proc records OUT argument modes and names separately from
+// the callable input-argument list.
+func TestCreateFunctionOutArgumentCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION OUT arguments populate pg_proc metadata",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_out_argument_value(
+					input_value INT,
+					OUT doubled INT,
+					OUT tripled INT
+				)
+				LANGUAGE SQL
+				AS $$ SELECT input_value * 2, input_value * 3 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							pronargs::text,
+							array_to_string(proargmodes, ','),
+							array_to_string(proargnames, ',')
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'catalog_out_argument_value';`,
+					Expected: []sql.Row{{
+						"1",
+						"i,o,o",
+						"input_value,doubled,tripled",
+					}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateProcedureOutArgumentCatalogRepro reproduces the same routine
+// catalog metadata gap for procedures with OUT parameters.
+func TestCreateProcedureOutArgumentCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE PROCEDURE OUT arguments populate pg_proc metadata",
+			SetUpScript: []string{
+				`CREATE PROCEDURE catalog_out_argument_proc(
+					input_value INT,
+					OUT doubled INT
+				)
+				LANGUAGE SQL
+				AS $$ SELECT input_value * 2 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							pronargs::text,
+							array_to_string(proargmodes, ','),
+							array_to_string(proargnames, ',')
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'catalog_out_argument_proc';`,
+					Expected: []sql.Row{{
+						"1",
+						"i,o",
+						"input_value,doubled",
+					}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateFunctionVolatilityCatalogRepro reproduces a routine metadata
 // persistence bug: pg_proc.provolatile should reflect IMMUTABLE/STABLE/VOLATILE.
 func TestCreateFunctionVolatilityCatalogRepro(t *testing.T) {
@@ -438,6 +542,66 @@ func TestAlterFunctionCostRowsOptionRepro(t *testing.T) {
 						FROM pg_catalog.pg_proc
 						WHERE proname = 'alter_catalog_cost_rows_value';`,
 					Expected: []sql.Row{{"9", "11"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionSetConfigOptionRepro reproduces a routine catalog
+// persistence gap: ALTER FUNCTION ... SET should store function-local GUC
+// options in pg_proc.proconfig.
+func TestAlterFunctionSetConfigOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION SET updates pg_proc proconfig",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_config_option_value()
+					RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER FUNCTION alter_config_option_value()
+						SET work_mem = '64kB';`,
+				},
+				{
+					Query: `SELECT array_to_string(proconfig, ',')
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_config_option_value';`,
+					Expected: []sql.Row{{"work_mem=64kB"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterProcedureSetConfigOptionRepro reproduces a routine catalog
+// persistence gap: ALTER PROCEDURE ... SET should store procedure-local GUC
+// options in pg_proc.proconfig.
+func TestAlterProcedureSetConfigOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER PROCEDURE SET updates pg_proc proconfig",
+			SetUpScript: []string{
+				`CREATE TABLE alter_config_proc_audit (
+					value_seen INT
+				);`,
+				`CREATE PROCEDURE alter_config_option_proc()
+					LANGUAGE SQL
+					AS $$ INSERT INTO alter_config_proc_audit VALUES (1) $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER PROCEDURE alter_config_option_proc()
+						SET work_mem = '64kB';`,
+				},
+				{
+					Query: `SELECT array_to_string(proconfig, ',')
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_config_option_proc';`,
+					Expected: []sql.Row{{"work_mem=64kB"}},
 				},
 			},
 		},

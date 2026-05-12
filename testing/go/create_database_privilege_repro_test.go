@@ -58,3 +58,26 @@ func TestDropDatabaseRequiresOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseOwnerToRequiresOwnershipRepro reproduces a PostgreSQL
+// privilege incompatibility: a normal login role can run ALTER DATABASE OWNER
+// TO against a database owned by another role.
+func TestAlterDatabaseOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE OWNER TO requires database ownership",
+			SetUpScript: []string{
+				`CREATE USER db_owner_hijacker PASSWORD 'hijacker';`,
+				`CREATE DATABASE owner_to_database_private;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER DATABASE owner_to_database_private OWNER TO db_owner_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_owner_hijacker`,
+					Password:    `hijacker`,
+				},
+			},
+		},
+	})
+}

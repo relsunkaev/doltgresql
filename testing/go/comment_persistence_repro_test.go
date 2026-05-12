@@ -65,6 +65,33 @@ func TestCommentOnTablePersistsDescriptionRepro(t *testing.T) {
 	})
 }
 
+// TestCommentOnTablePopulatesPgDescriptionRepro reproduces the same comment
+// persistence gap through the underlying pg_description catalog table.
+func TestCommentOnTablePopulatesPgDescriptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMENT ON TABLE populates pg_description",
+			SetUpScript: []string{
+				`CREATE TABLE pg_description_table_target (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `COMMENT ON TABLE pg_description_table_target
+						IS 'visible pg_description comment';`,
+				},
+				{
+					Query: `SELECT description
+						FROM pg_catalog.pg_description
+						WHERE objoid = 'pg_description_table_target'::regclass
+							AND classoid = 'pg_class'::regclass
+							AND objsubid = 0;`,
+					Expected: []sql.Row{{"visible pg_description comment"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCommentOnRelationKindsPersistsDescriptionRepro reproduces the same
 // persistence bug for other relation kinds: Doltgres accepts COMMENT ON VIEW,
 // COMMENT ON MATERIALIZED VIEW, and COMMENT ON SEQUENCE but does not persist
@@ -211,6 +238,29 @@ func TestCommentOnDatabasePersistsDescriptionRepro(t *testing.T) {
 	})
 }
 
+// TestCommentOnDatabasePopulatesPgShdescriptionRepro reproduces the same
+// shared-comment persistence gap through the pg_shdescription catalog table.
+func TestCommentOnDatabasePopulatesPgShdescriptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMENT ON DATABASE populates pg_shdescription",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `COMMENT ON DATABASE postgres
+						IS 'visible pg_shdescription comment';`,
+				},
+				{
+					Query: `SELECT description
+						FROM pg_catalog.pg_shdescription
+						WHERE objoid = (SELECT oid FROM pg_database WHERE datname = 'postgres')
+							AND classoid = 'pg_database'::regclass;`,
+					Expected: []sql.Row{{"visible pg_shdescription comment"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCommentOnFunctionPersistsDescriptionRepro reproduces a persistence bug:
 // Doltgres accepts COMMENT ON FUNCTION but does not persist the function
 // description.
@@ -230,6 +280,42 @@ func TestCommentOnFunctionPersistsDescriptionRepro(t *testing.T) {
 						(SELECT oid FROM pg_proc WHERE proname = 'comment_function_target'),
 						'pg_proc');`,
 					Expected: []sql.Row{{"visible function comment"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCommentOnAggregatePersistsDescriptionRepro reproduces a persistence gap:
+// PostgreSQL stores aggregate comments as pg_proc descriptions, just like
+// function comments.
+func TestCommentOnAggregatePersistsDescriptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMENT ON AGGREGATE persists obj_description metadata",
+			SetUpScript: []string{
+				`CREATE FUNCTION comment_aggregate_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE comment_aggregate_target(INT) (
+					SFUNC = comment_aggregate_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `COMMENT ON AGGREGATE comment_aggregate_target(INT)
+						IS 'visible aggregate comment';`,
+				},
+				{
+					Query: `SELECT obj_description(
+						(SELECT oid FROM pg_proc
+						 WHERE proname = 'comment_aggregate_target'),
+						'pg_proc');`,
+					Expected: []sql.Row{{"visible aggregate comment"}},
 				},
 			},
 		},

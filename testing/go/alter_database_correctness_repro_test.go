@@ -127,3 +127,29 @@ func TestAlterDatabaseSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseResetSettingRepro reproduces a PostgreSQL compatibility gap:
+// ALTER DATABASE ... RESET should be accepted, even when there is no stored
+// value for that database.
+func TestAlterDatabaseResetSettingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE RESET setting succeeds",
+			SetUpScript: []string{
+				`CREATE DATABASE database_reset_setting_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER DATABASE database_reset_setting_catalog RESET work_mem;`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_db_role_setting
+						JOIN pg_catalog.pg_database ON setdatabase = pg_database.oid
+						WHERE datname = 'database_reset_setting_catalog';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}

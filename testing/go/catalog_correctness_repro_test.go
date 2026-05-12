@@ -979,6 +979,45 @@ func TestPgGetFunctionCatalogIntrospectionRepro(t *testing.T) {
 	})
 }
 
+// TestPgGetFunctionUserDefinedIntrospectionRepro reproduces a catalog
+// correctness gap: PostgreSQL renders user-defined function signatures,
+// results, and definitions through the pg_get_function_* helpers.
+func TestPgGetFunctionUserDefinedIntrospectionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_get_function helpers render user-defined function metadata",
+			SetUpScript: []string{
+				`CREATE FUNCTION introspect_user_function(input_value INTEGER, label TEXT)
+					RETURNS TEXT
+					LANGUAGE SQL
+					IMMUTABLE
+					STRICT
+					AS $$ SELECT label || input_value::TEXT $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							pg_get_function_result(p.oid),
+							pg_get_function_identity_arguments(p.oid),
+							pg_get_function_arguments(p.oid),
+							pg_get_functiondef(p.oid) LIKE
+								'CREATE OR REPLACE FUNCTION public.introspect_user_function(input_value integer, label text)%RETURNS text%LANGUAGE sql%IMMUTABLE STRICT%SELECT%'
+						FROM pg_catalog.pg_proc p
+						JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+						WHERE n.nspname = 'public'
+							AND p.proname = 'introspect_user_function';`,
+					Expected: []sql.Row{{
+						"text",
+						"input_value integer, label text",
+						"input_value integer, label text",
+						"t",
+					}},
+				},
+			},
+		},
+	})
+}
+
 // TestPgEncodingToCharMapsKnownEncodingIdsRepro reproduces a catalog utility
 // correctness bug: PostgreSQL maps known encoding IDs to their canonical names.
 func TestPgEncodingToCharMapsKnownEncodingIdsRepro(t *testing.T) {
@@ -1527,6 +1566,65 @@ func TestPgStatSlruReportsCacheRowsRepro(t *testing.T) {
 	})
 }
 
+// TestPgStatIoCatalogShapeRepro reproduces a PostgreSQL 16 monitoring-catalog
+// compatibility gap: pg_stat_io should expose cluster-wide I/O statistics.
+func TestPgStatIoCatalogShapeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_stat_io exposes PostgreSQL 16 columns and rows",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT count(*) = 18
+						FROM pg_catalog.pg_attribute
+						WHERE attrelid = 'pg_catalog.pg_stat_io'::regclass
+							AND NOT attisdropped
+							AND attname IN (
+								'backend_type', 'object', 'context', 'reads', 'read_time',
+								'writes', 'write_time', 'writebacks', 'writeback_time',
+								'extends', 'extend_time', 'op_bytes', 'hits', 'evictions',
+								'reuses', 'fsyncs', 'fsync_time', 'stats_reset'
+							);`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT count(*) > 0 FROM pg_catalog.pg_stat_io;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPostgres18PgAiosCatalogShapeRepro reproduces a PostgreSQL 18
+// monitoring-catalog compatibility gap: pg_aios should expose active
+// asynchronous I/O handles as a readable pg_catalog system view.
+func TestPostgres18PgAiosCatalogShapeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_aios exposes PostgreSQL 18 columns",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT count(*) = 15
+						FROM pg_catalog.pg_attribute
+						WHERE attrelid = 'pg_catalog.pg_aios'::regclass
+							AND NOT attisdropped
+							AND attname IN (
+								'pid', 'io_id', 'io_generation', 'state', 'operation',
+								'off', 'length', 'target', 'handle_data_len', 'raw_result',
+								'result', 'target_desc', 'f_sync', 'f_localmem', 'f_buffered'
+							);`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query: `SELECT count(*) >= 0
+						FROM pg_catalog.pg_aios;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestPgTableIsVisibleHonorsSearchPathShadowingRepro reproduces a catalog
 // visibility correctness bug: a relation is not visible when an earlier
 // search-path schema contains another relation with the same name.
@@ -1928,6 +2026,59 @@ func TestAlterRoleSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
 						FROM pg_catalog.pg_db_role_setting
 						WHERE setrole = 'role_setting_catalog'::regrole;`,
 					Expected: []sql.Row{{"role_setting_catalog", uint32(0), "work_mem=64kB"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterRoleResetSettingRepro reproduces a PostgreSQL compatibility gap:
+// ALTER ROLE ... RESET should be accepted, even when there is no stored value.
+func TestAlterRoleResetSettingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER ROLE RESET setting succeeds",
+			SetUpScript: []string{
+				`CREATE ROLE role_reset_setting_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER ROLE role_reset_setting_catalog RESET work_mem;`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setrole = 'role_reset_setting_catalog'::regrole;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterRoleInDatabaseSetPopulatesPgDbRoleSettingRepro reproduces a catalog
+// persistence bug: PostgreSQL persists role settings scoped to a specific
+// database in pg_db_role_setting.
+func TestAlterRoleInDatabaseSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER ROLE IN DATABASE SET populates pg_db_role_setting",
+			SetUpScript: []string{
+				`CREATE ROLE role_database_setting_catalog;`,
+				`CREATE DATABASE role_database_setting_db;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER ROLE role_database_setting_catalog
+						IN DATABASE role_database_setting_db
+						SET work_mem = '64kB';`,
+				},
+				{
+					Query: `SELECT setrole::regrole::text, datname, array_to_string(setconfig, ',')
+						FROM pg_catalog.pg_db_role_setting
+						JOIN pg_catalog.pg_database ON setdatabase = pg_database.oid
+						WHERE setrole = 'role_database_setting_catalog'::regrole;`,
+					Expected: []sql.Row{{"role_database_setting_catalog", "role_database_setting_db", "work_mem=64kB"}},
 				},
 			},
 		},

@@ -122,6 +122,88 @@ func TestDataAndMonitoringPredefinedRolesExistRepro(t *testing.T) {
 	})
 }
 
+// TestPgMonitorInheritsMonitoringRolesRepro reproduces a predefined-role
+// privilege bug: pg_monitor should inherit PostgreSQL's read-all-settings,
+// read-all-stats, and stat-scan-table memberships.
+func TestPgMonitorInheritsMonitoringRolesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_monitor inherits monitoring memberships",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)
+						FROM pg_catalog.pg_auth_members
+						WHERE pg_get_userbyid(member) = 'pg_monitor'
+						ORDER BY pg_get_userbyid(roleid);`,
+					Expected: []sql.Row{
+						{"pg_read_all_settings", "pg_monitor"},
+						{"pg_read_all_stats", "pg_monitor"},
+						{"pg_stat_scan_tables", "pg_monitor"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestPgReadAllDataRoleAllowsTableReadsRepro reproduces a predefined-role
+// privilege bug: membership in pg_read_all_data should allow reading tables
+// without per-table SELECT grants.
+func TestPgReadAllDataRoleAllowsTableReadsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_read_all_data allows table reads",
+			SetUpScript: []string{
+				`CREATE USER read_all_data_user PASSWORD 'pw';`,
+				`CREATE TABLE read_all_data_private (
+					id INT PRIMARY KEY,
+					secret TEXT
+				);`,
+				`INSERT INTO read_all_data_private VALUES (1, 'visible through predefined role');`,
+				`GRANT USAGE ON SCHEMA public TO read_all_data_user;`,
+				`GRANT pg_read_all_data TO read_all_data_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, secret
+						FROM read_all_data_private;`,
+					Expected: []sql.Row{{1, "visible through predefined role"}},
+					Username: `read_all_data_user`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestPgWriteAllDataRoleAllowsTableWritesRepro reproduces a predefined-role
+// privilege bug: membership in pg_write_all_data should allow writing tables
+// without per-table INSERT grants.
+func TestPgWriteAllDataRoleAllowsTableWritesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_write_all_data allows table writes",
+			SetUpScript: []string{
+				`CREATE USER write_all_data_user PASSWORD 'pw';`,
+				`CREATE TABLE write_all_data_private (
+					id INT PRIMARY KEY,
+					secret TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA public TO write_all_data_user;`,
+				`GRANT pg_write_all_data TO write_all_data_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO write_all_data_private
+						VALUES (1, 'written through predefined role');`,
+					Username: `write_all_data_user`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestMaintenancePredefinedRolesExistRepro reproduces a privilege-model
 // correctness bug: PostgreSQL exposes predefined maintenance roles that can be
 // granted instead of broad superuser access.
@@ -142,6 +224,63 @@ func TestMaintenancePredefinedRolesExistRepro(t *testing.T) {
 						{"pg_maintain", "f", "f"},
 						{"pg_signal_autovacuum_worker", "f", "f"},
 					},
+				},
+			},
+		},
+	})
+}
+
+// TestCheckpointPredefinedRoleExistsRepro reproduces a predefined-role catalog
+// gap: PostgreSQL exposes pg_checkpoint for delegating CHECKPOINT execution
+// without broad superuser access.
+func TestCheckpointPredefinedRoleExistsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "checkpoint predefined role exists",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT rolname, rolcanlogin, rolsuper
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'pg_checkpoint';`,
+					Expected: []sql.Row{{"pg_checkpoint", "f", "f"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateSubscriptionPredefinedRoleExistsRepro reproduces a predefined-role
+// catalog gap: PostgreSQL exposes pg_create_subscription for delegating
+// subscription creation without broad superuser access.
+func TestCreateSubscriptionPredefinedRoleExistsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "subscription predefined role exists",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT rolname, rolcanlogin, rolsuper
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'pg_create_subscription';`,
+					Expected: []sql.Row{{"pg_create_subscription", "f", "f"}},
+				},
+			},
+		},
+	})
+}
+
+// TestUseReservedConnectionsPredefinedRoleExistsRepro reproduces a predefined
+// role catalog gap: PostgreSQL exposes pg_use_reserved_connections for
+// delegating use of reserved connection slots without superuser access.
+func TestUseReservedConnectionsPredefinedRoleExistsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "reserved-connections predefined role exists",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT rolname, rolcanlogin, rolsuper
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'pg_use_reserved_connections';`,
+					Expected: []sql.Row{{"pg_use_reserved_connections", "f", "f"}},
 				},
 			},
 		},

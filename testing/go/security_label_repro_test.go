@@ -33,6 +33,10 @@ func TestSecurityLabelReachesProviderValidationRepro(t *testing.T) {
 					ExpectedErr: `security label`,
 				},
 				{
+					Query:       `SECURITY LABEL ON COLUMN security_label_target.id IS 'classified';`,
+					ExpectedErr: `security label`,
+				},
+				{
 					Query:       `SECURITY LABEL FOR 'dummy' ON TABLE security_label_target IS 'classified';`,
 					ExpectedErr: `security label`,
 				},

@@ -810,6 +810,37 @@ func TestAlterTableReplicaIdentityRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTableRowLevelSecurityRequiresOwnershipRepro reproduces a security
+// bug: PostgreSQL only allows a table owner to change row-level security modes.
+func TestAlterTableRowLevelSecurityRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE row-level security requires table ownership",
+			SetUpScript: []string{
+				`CREATE USER rls_mode_editor PASSWORD 'editor';`,
+				`CREATE TABLE rls_mode_owner_private (
+					id INT PRIMARY KEY
+				);`,
+				`GRANT USAGE ON SCHEMA public TO rls_mode_editor;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TABLE rls_mode_owner_private ENABLE ROW LEVEL SECURITY;`,
+					ExpectedErr: `must be owner`,
+					Username:    `rls_mode_editor`,
+					Password:    `editor`,
+				},
+				{
+					Query: `SELECT relrowsecurity
+						FROM pg_catalog.pg_class
+						WHERE oid = 'rls_mode_owner_private'::regclass;`,
+					Expected: []sql.Row{{"f"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRenameTableRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a table to rename it.
 func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
@@ -827,6 +858,66 @@ func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `table_renamer`,
 					Password:    `renamer`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTableOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a table to transfer its ownership.
+func TestAlterTableOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TABLE OWNER TO requires table ownership",
+			SetUpScript: []string{
+				`CREATE USER table_owner_hijacker PASSWORD 'hijacker';`,
+				`CREATE TABLE owner_to_table_private (id INT PRIMARY KEY);`,
+				`GRANT USAGE ON SCHEMA public TO table_owner_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TABLE owner_to_table_private OWNER TO table_owner_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `table_owner_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(relowner)
+						FROM pg_catalog.pg_class
+						WHERE oid = 'owner_to_table_private'::regclass;`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterViewOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a view to transfer its ownership.
+func TestAlterViewOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER VIEW OWNER TO requires view ownership",
+			SetUpScript: []string{
+				`CREATE USER view_owner_hijacker PASSWORD 'hijacker';`,
+				`CREATE TABLE owner_to_view_base (id INT PRIMARY KEY);`,
+				`CREATE VIEW owner_to_view_private AS
+					SELECT id FROM owner_to_view_base;`,
+				`GRANT USAGE ON SCHEMA public TO view_owner_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER VIEW owner_to_view_private OWNER TO view_owner_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `view_owner_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(relowner)
+						FROM pg_catalog.pg_class
+						WHERE oid = 'owner_to_view_private'::regclass;`,
+					Expected: []sql.Row{{"postgres"}},
 				},
 			},
 		},
@@ -924,6 +1015,37 @@ func TestDropFunctionRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a function to transfer ownership.
+func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION OWNER TO requires function ownership",
+			SetUpScript: []string{
+				`CREATE USER function_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE FUNCTION owner_to_function_private() RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`GRANT USAGE ON SCHEMA public TO function_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER FUNCTION owner_to_function_private() OWNER TO function_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `function_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'owner_to_function_private';`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateOrReplaceFunctionRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own an existing function to replace it.
 func TestCreateOrReplaceFunctionRequiresOwnershipRepro(t *testing.T) {
@@ -973,6 +1095,37 @@ func TestDropProcedureRequiresOwnershipRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `procedure_dropper`,
 					Password:    `dropper`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterProcedureOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a procedure to transfer ownership.
+func TestAlterProcedureOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER PROCEDURE OWNER TO requires procedure ownership",
+			SetUpScript: []string{
+				`CREATE USER procedure_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE PROCEDURE owner_to_procedure_private()
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`GRANT USAGE ON SCHEMA public TO procedure_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER PROCEDURE owner_to_procedure_private() OWNER TO procedure_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `procedure_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'owner_to_procedure_private';`,
+					Expected: []sql.Row{{"postgres"}},
 				},
 			},
 		},
@@ -1167,6 +1320,35 @@ func TestAlterSequenceRequiresSequenceOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterSequenceOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a sequence to transfer ownership.
+func TestAlterSequenceOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER SEQUENCE OWNER TO requires sequence ownership",
+			SetUpScript: []string{
+				`CREATE USER sequence_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE SEQUENCE owner_to_sequence_private;`,
+				`GRANT USAGE ON SCHEMA public TO sequence_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER SEQUENCE owner_to_sequence_private OWNER TO sequence_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `sequence_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(relowner)
+						FROM pg_catalog.pg_class
+						WHERE oid = 'owner_to_sequence_private'::regclass;`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropTypeRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a type to drop it.
 func TestDropTypeRequiresOwnershipRepro(t *testing.T) {
@@ -1190,6 +1372,35 @@ func TestDropTypeRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a type to transfer ownership.
+func TestAlterTypeOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE OWNER TO requires type ownership",
+			SetUpScript: []string{
+				`CREATE USER type_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE TYPE owner_to_type_private AS ENUM ('one');`,
+				`GRANT USAGE ON SCHEMA public TO type_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TYPE owner_to_type_private OWNER TO type_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `type_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(typowner)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'owner_to_type_private';`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropDomainRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a domain to drop it.
 func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
@@ -1207,6 +1418,64 @@ func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `domain_dropper`,
 					Password:    `dropper`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterDomainOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a domain to transfer ownership.
+func TestAlterDomainOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DOMAIN OWNER TO requires domain ownership",
+			SetUpScript: []string{
+				`CREATE USER domain_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE DOMAIN owner_to_domain_private AS INT;`,
+				`GRANT USAGE ON SCHEMA public TO domain_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER DOMAIN owner_to_domain_private OWNER TO domain_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `domain_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(typowner)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'owner_to_domain_private';`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterSchemaOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a schema to transfer ownership.
+func TestAlterSchemaOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER SCHEMA OWNER TO requires schema ownership",
+			SetUpScript: []string{
+				`CREATE USER schema_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE SCHEMA owner_to_schema_private;`,
+				`GRANT USAGE ON SCHEMA owner_to_schema_private TO schema_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER SCHEMA owner_to_schema_private OWNER TO schema_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `schema_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(nspowner)
+						FROM pg_catalog.pg_namespace
+						WHERE nspname = 'owner_to_schema_private';`,
+					Expected: []sql.Row{{"postgres"}},
 				},
 			},
 		},
@@ -1883,6 +2152,33 @@ func TestAlterPublicationRequiresOwnershipRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `publication_alterer`,
 					Password:    `alterer`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterPublicationOwnerToUpdatesCatalogRepro reproduces a PostgreSQL
+// compatibility gap: ALTER PUBLICATION OWNER TO should be accepted and update
+// pg_publication.pubowner.
+func TestAlterPublicationOwnerToUpdatesCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER PUBLICATION OWNER TO updates publication owner",
+			SetUpScript: []string{
+				`CREATE ROLE publication_owner_target;`,
+				`CREATE TABLE publication_owner_to_private (id INT PRIMARY KEY);`,
+				`CREATE PUBLICATION publication_owner_to_pub FOR TABLE publication_owner_to_private;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER PUBLICATION publication_owner_to_pub OWNER TO publication_owner_target;`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(pubowner)
+						FROM pg_catalog.pg_publication
+						WHERE pubname = 'publication_owner_to_pub';`,
+					Expected: []sql.Row{{"publication_owner_target"}},
 				},
 			},
 		},

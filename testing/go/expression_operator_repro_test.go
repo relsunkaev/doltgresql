@@ -122,6 +122,34 @@ func TestUnaryPlusOperatorGuard(t *testing.T) {
 	})
 }
 
+// PostgreSQL 16 accepts underscores in numeric literals and non-decimal integer
+// literal prefixes. Doltgres currently rejects this parser-level syntax.
+func TestPostgres16IntegerLiteralSyntaxRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PostgreSQL integer literal prefixes and underscores",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT 1_000::text;`,
+					Expected: []sql.Row{{"1000"}},
+				},
+				{
+					Query:    `SELECT 0x10::text;`,
+					Expected: []sql.Row{{"16"}},
+				},
+				{
+					Query:    `SELECT 0o10::text;`,
+					Expected: []sql.Row{{"8"}},
+				},
+				{
+					Query:    `SELECT 0b1010::text;`,
+					Expected: []sql.Row{{"10"}},
+				},
+			},
+		},
+	})
+}
+
 // PostgreSQL supports the SQL OVERLAPS operator for temporal periods. Doltgres
 // currently rejects the syntax before evaluating the period intersections.
 func TestTemporalOverlapsOperatorRepro(t *testing.T) {

@@ -68,6 +68,36 @@ func TestAlterLargeObjectOwnerReachesValidationRepro(t *testing.T) {
 	})
 }
 
+// TestLargeObjectGrantPopulatesMetadataAclRepro reproduces a large-object
+// privilege/catalog gap: GRANT SELECT ON LARGE OBJECT should persist in
+// pg_largeobject_metadata.lomacl.
+func TestLargeObjectGrantPopulatesMetadataAclRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT SELECT ON LARGE OBJECT populates metadata ACL",
+			SetUpScript: []string{
+				`CREATE ROLE large_object_acl_reader;`,
+				`SELECT lo_create(424243);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `GRANT SELECT ON LARGE OBJECT 424243
+						TO large_object_acl_reader;`,
+				},
+				{
+					Query: `SELECT COALESCE(
+							lomacl::TEXT LIKE '%large_object_acl_reader=r/%',
+							false
+						)::TEXT
+						FROM pg_catalog.pg_largeobject_metadata
+						WHERE oid = 424243;`,
+					Expected: []sql.Row{{"true"}},
+				},
+			},
+		},
+	})
+}
+
 // TestLargeObjectByteaRoundTripRepro reproduces a large-object persistence
 // bug: lo_from_bytea should create a large object whose bytes are readable by
 // lo_get through the returned OID.
@@ -85,6 +115,39 @@ func TestLargeObjectByteaRoundTripRepro(t *testing.T) {
 					Query: `SELECT encode(lo_get(loid), 'hex')
 						FROM large_object_round_trip_stash;`,
 					Expected: []sql.Row{{"deadbeef"}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectPutAndSlicedGetRepro reproduces a large-object persistence
+// gap: PostgreSQL supports in-place byte writes with lo_put and offset/length
+// reads with lo_get.
+func TestLargeObjectPutAndSlicedGetRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object lo_put and sliced lo_get",
+			SetUpScript: []string{
+				`CREATE TABLE large_object_put_stash (loid OID);`,
+				`INSERT INTO large_object_put_stash
+					SELECT lo_from_bytea(0, decode('001122334455', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT lo_put(loid, 2, decode('aabb', 'hex'))
+						FROM large_object_put_stash;`,
+					Expected: []sql.Row{{""}},
+				},
+				{
+					Query: `SELECT encode(lo_get(loid, 0, 6), 'hex')
+						FROM large_object_put_stash;`,
+					Expected: []sql.Row{{"0011aabb4455"}},
+				},
+				{
+					Query: `SELECT encode(lo_get(loid, 2, 2), 'hex')
+						FROM large_object_put_stash;`,
+					Expected: []sql.Row{{"aabb"}},
 				},
 			},
 		},

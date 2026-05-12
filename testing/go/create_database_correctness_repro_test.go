@@ -121,3 +121,205 @@ func TestCreateDatabaseCatalogOptionsRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestCreateDatabaseTemplateCopiesDataRepro reproduces a database DDL
+// consistency bug: PostgreSQL copies schema and data from the named template
+// database into the newly-created database.
+func TestCreateDatabaseTemplateCopiesDataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE TEMPLATE copies source database data",
+			SetUpScript: []string{
+				`CREATE DATABASE template_source_db;`,
+				`USE template_source_db;`,
+				`CREATE TABLE template_copy_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO template_copy_items VALUES (1, 'copied');`,
+				`USE postgres;`,
+				`CREATE DATABASE template_copied_db TEMPLATE template_source_db;`,
+				`USE template_copied_db;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM template_copy_items;`,
+					Expected: []sql.Row{{1, "copied"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseStrategyWalLogRepro reproduces a database DDL compatibility
+// gap: PostgreSQL accepts CREATE DATABASE STRATEGY WAL_LOG.
+func TestCreateDatabaseStrategyWalLogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE STRATEGY WAL_LOG creates usable database",
+			SetUpScript: []string{
+				`CREATE DATABASE strategy_wal_log_db STRATEGY WAL_LOG;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `USE strategy_wal_log_db;`,
+				},
+				{
+					Query: `CREATE TABLE strategy_created_items (
+						id INT PRIMARY KEY
+					);`,
+				},
+				{
+					Query: `SELECT datname
+						FROM pg_database
+						WHERE datname = 'strategy_wal_log_db';`,
+					Expected: []sql.Row{{"strategy_wal_log_db"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseOidOptionPersistsCatalogRepro reproduces a database DDL
+// catalog gap: PostgreSQL accepts CREATE DATABASE OID and stores the requested
+// OID in pg_database.
+func TestCreateDatabaseOidOptionPersistsCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE OID persists pg_database oid",
+			SetUpScript: []string{
+				`CREATE DATABASE oid_option_db OID 987654;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT oid::INT
+						FROM pg_database
+						WHERE datname = 'oid_option_db';`,
+					Expected: []sql.Row{{987654}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseLocaleProviderRepro reproduces a database DDL compatibility
+// gap: PostgreSQL dump headers can specify TEMPLATE template0 with libc locale
+// provider options.
+func TestCreateDatabaseLocaleProviderRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE LOCALE_PROVIDER creates usable database",
+			SetUpScript: []string{
+				`CREATE DATABASE locale_provider_db
+					WITH TEMPLATE = template0
+					LOCALE_PROVIDER = libc
+					LOCALE = 'C';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `USE locale_provider_db;`,
+				},
+				{
+					Query: `SELECT datname
+						FROM pg_database
+						WHERE datname = 'locale_provider_db';`,
+					Expected: []sql.Row{{"locale_provider_db"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseLocaleCatalogRepro reproduces a database DDL catalog gap:
+// PostgreSQL stores LC_COLLATE and LC_CTYPE in pg_database.
+func TestCreateDatabaseLocaleCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE LC_COLLATE LC_CTYPE persist catalog values",
+			SetUpScript: []string{
+				`CREATE DATABASE locale_catalog_db
+					WITH TEMPLATE = template0
+					LC_COLLATE = 'C'
+					LC_CTYPE = 'C';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT datcollate, datctype
+						FROM pg_database
+						WHERE datname = 'locale_catalog_db';`,
+					Expected: []sql.Row{{"C", "C"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseCollationVersionRepro reproduces a database DDL catalog
+// gap: PostgreSQL accepts COLLATION_VERSION and exposes it through pg_database.
+func TestCreateDatabaseCollationVersionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE COLLATION_VERSION persists datcollversion",
+			SetUpScript: []string{
+				`CREATE DATABASE collation_version_db
+					WITH TEMPLATE = template0
+					COLLATION_VERSION = '1';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT datcollversion
+						FROM pg_database
+						WHERE datname = 'collation_version_db';`,
+					Expected: []sql.Row{{"1"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseIcuLocaleRepro reproduces a database DDL catalog gap:
+// PostgreSQL accepts ICU_LOCALE for ICU-backed databases and stores the locale
+// in pg_database.daticulocale.
+func TestCreateDatabaseIcuLocaleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE ICU_LOCALE persists daticulocale",
+			SetUpScript: []string{
+				`CREATE DATABASE icu_locale_db
+					WITH TEMPLATE = template0
+					ICU_LOCALE = 'und';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT daticulocale
+						FROM pg_database
+						WHERE datname = 'icu_locale_db';`,
+					Expected: []sql.Row{{"und"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateDatabaseIcuRulesRepro reproduces a database DDL catalog gap:
+// PostgreSQL accepts ICU_RULES and stores them in pg_database.daticurules.
+func TestCreateDatabaseIcuRulesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE DATABASE ICU_RULES persists daticurules",
+			SetUpScript: []string{
+				`CREATE DATABASE icu_rules_db
+					ICU_RULES = '&V << w <<< W';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT daticurules
+						FROM pg_database
+						WHERE datname = 'icu_rules_db';`,
+					Expected: []sql.Row{{"&V << w <<< W"}},
+				},
+			},
+		},
+	})
+}

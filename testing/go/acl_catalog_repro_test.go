@@ -114,6 +114,79 @@ func TestGrantSequencePrivilegesPopulatePgClassRelaclRepro(t *testing.T) {
 	})
 }
 
+// TestGrantLanguagePrivilegesPopulatePgLanguageLanaclRepro reproduces a catalog
+// persistence bug: explicit procedural-language grants should be reflected in
+// pg_language.lanacl.
+func TestGrantLanguagePrivilegesPopulatePgLanguageLanaclRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT language privileges populate pg_language lanacl",
+			SetUpScript: []string{
+				`CREATE ROLE acl_language_user;`,
+				`GRANT USAGE ON LANGUAGE plpgsql TO acl_language_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT lanacl::text LIKE '%acl_language_user=U/%'
+						FROM pg_catalog.pg_language
+						WHERE lanname = 'plpgsql';`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestGrantFunctionPrivilegesPopulatePgProcProaclRepro reproduces a catalog
+// persistence bug: explicit routine grants should be reflected in pg_proc.proacl.
+func TestGrantFunctionPrivilegesPopulatePgProcProaclRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT function privileges populate pg_proc proacl",
+			SetUpScript: []string{
+				`CREATE ROLE acl_function_user;`,
+				`CREATE FUNCTION acl_function_target() RETURNS INT
+					LANGUAGE SQL AS 'SELECT 42';`,
+				`GRANT EXECUTE ON FUNCTION acl_function_target() TO acl_function_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proacl::text LIKE '%acl_function_user=X/%'
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'acl_function_target';`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestGrantTypePrivilegesPopulatePgTypeTypaclRepro reproduces a type privilege
+// compatibility gap: explicit type grants should be accepted and reflected in
+// pg_type.typacl.
+func TestGrantTypePrivilegesPopulatePgTypeTypaclRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT type privileges populate pg_type typacl",
+			SetUpScript: []string{
+				`CREATE ROLE acl_type_user;`,
+				`CREATE TYPE acl_type_mood AS ENUM ('ok', 'sad');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `GRANT USAGE ON TYPE acl_type_mood TO acl_type_user;`,
+				},
+				{
+					Query: `SELECT typacl::text LIKE '%acl_type_user=U/%'
+						FROM pg_catalog.pg_type
+						WHERE typname = 'acl_type_mood';`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestPgGetAclReflectsTableGrantRepro reproduces an ACL helper parity gap:
 // pg_get_acl should expose the effective ACL for a catalog object.
 func TestPgGetAclReflectsTableGrantRepro(t *testing.T) {
@@ -178,6 +251,25 @@ func TestHasAnyColumnPrivilegeHelperRepro(t *testing.T) {
 							'any_column_privilege_private',
 							'SELECT'
 						);`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestHasLargeObjectPrivilegeHelperRepro reproduces a PostgreSQL 18 ACL helper
+// parity gap: has_largeobject_privilege should be registered for checking
+// SELECT and UPDATE privileges on large objects.
+func TestHasLargeObjectPrivilegeHelperRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "has_largeobject_privilege helper is registered",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT count(*) >= 1
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'has_largeobject_privilege';`,
 					Expected: []sql.Row{{"t"}},
 				},
 			},

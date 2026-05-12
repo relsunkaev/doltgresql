@@ -90,3 +90,53 @@ func TestPreparedSelectStarRejectsChangedResultShapeRepro(t *testing.T) {
 	}
 	require.Contains(t, err.Error(), "cached plan must not change result type")
 }
+
+// TestPreparedStatementAcceptsUserDefinedParameterTypeRepro reproduces a
+// prepared-statement compatibility gap: PostgreSQL accepts user-defined types
+// such as enum types in the PREPARE parameter type list.
+func TestPreparedStatementAcceptsUserDefinedParameterTypeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PREPARE accepts user-defined enum parameter type",
+			SetUpScript: []string{
+				`CREATE TYPE prepared_enum_mood AS ENUM ('ok', 'sad');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `PREPARE prepared_enum_plan(prepared_enum_mood) AS
+						SELECT $1::TEXT;`,
+				},
+				{
+					Query:    `EXECUTE prepared_enum_plan('ok');`,
+					Expected: []sql.Row{{"ok"}},
+				},
+				{
+					Query: `SELECT parameter_types::TEXT
+						FROM pg_catalog.pg_prepared_statements
+						WHERE name = 'prepared_enum_plan';`,
+					Expected: []sql.Row{{"{prepared_enum_mood}"}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreparedStatementsResultTypesColumnRepro reproduces a PostgreSQL 16
+// catalog-shape gap: pg_prepared_statements should expose result_types.
+func TestPreparedStatementsResultTypesColumnRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_prepared_statements exposes result_types",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT atttypid::regtype::text
+						FROM pg_catalog.pg_attribute
+						WHERE attrelid = 'pg_catalog.pg_prepared_statements'::regclass
+							AND attname = 'result_types'
+							AND NOT attisdropped;`,
+					Expected: []sql.Row{{"regtype[]"}},
+				},
+			},
+		},
+	})
+}
