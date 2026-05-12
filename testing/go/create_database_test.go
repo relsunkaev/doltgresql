@@ -45,13 +45,16 @@ func TestCreateDatabase(t *testing.T) {
 					Query: "USE testdb2",
 				},
 				{
-					Query: "CREATE DATABASE testdb3 encoding=notexist",
-					// Errors converted to warnings for now
+					Query:       "CREATE DATABASE testdb3 encoding=notexist",
+					ExpectedErr: "not a valid encoding name",
 				},
 			},
 		},
 		{
 			Name: "multiple options",
+			SetUpScript: []string{
+				"CREATE ROLE foo",
+			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "CREATE DATABASE testdb OWNER=foo ENCODING=utf8",
