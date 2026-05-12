@@ -86,6 +86,8 @@ func pgFormat(ctx *sql.Context, formatStr string, argTypes []*pgtypes.DoltgresTy
 
 		width := 0
 		widthSet := false
+		widthArgIndex := -1
+		widthConsumesArg := false
 		widthStart := j
 		for j < len(formatStr) && formatStr[j] >= '0' && formatStr[j] <= '9' {
 			j++
@@ -98,7 +100,26 @@ func pgFormat(ctx *sql.Context, formatStr string, argTypes []*pgtypes.DoltgresTy
 			}
 			widthSet = true
 		} else if j < len(formatStr) && formatStr[j] == '*' {
-			return "", errors.New("format() width from arguments is not yet supported")
+			widthSet = true
+			widthArgIndex = nextArg
+			widthConsumesArg = true
+			j++
+			widthPositionStart := j
+			for j < len(formatStr) && formatStr[j] >= '0' && formatStr[j] <= '9' {
+				j++
+			}
+			if j > widthPositionStart {
+				if j >= len(formatStr) || formatStr[j] != '$' {
+					return "", errors.Errorf("invalid format() width argument position: %s", formatStr[widthPositionStart:j])
+				}
+				parsedPosition, err := strconv.Atoi(formatStr[widthPositionStart:j])
+				if err != nil || parsedPosition <= 0 {
+					return "", errors.Errorf("invalid format() width argument position: %s", formatStr[widthPositionStart:j])
+				}
+				widthArgIndex = parsedPosition - 1
+				widthConsumesArg = false
+				j++
+			}
 		}
 
 		if j >= len(formatStr) {
@@ -107,6 +128,24 @@ func pgFormat(ctx *sql.Context, formatStr string, argTypes []*pgtypes.DoltgresTy
 		formatType := formatStr[j]
 		if formatType != 's' && formatType != 'I' && formatType != 'L' {
 			return "", errors.Errorf("unrecognized format() type specifier: %%%c", formatType)
+		}
+
+		if widthArgIndex >= 0 {
+			if widthArgIndex >= len(args) {
+				return "", errors.New("too few arguments for format()")
+			}
+			parsedWidth, err := pgFormatWidthArg(ctx, argTypes[widthArgIndex], args[widthArgIndex])
+			if err != nil {
+				return "", err
+			}
+			width = parsedWidth
+			if width < 0 {
+				leftJustify = true
+				width = -width
+			}
+			if widthConsumesArg {
+				nextArg = widthArgIndex + 1
+			}
 		}
 
 		argIndex := position
@@ -134,6 +173,43 @@ func pgFormat(ctx *sql.Context, formatStr string, argTypes []*pgtypes.DoltgresTy
 		i = j + 1
 	}
 	return sb.String(), nil
+}
+
+func pgFormatWidthArg(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (int, error) {
+	if val == nil {
+		return 0, errors.New("null values cannot be used as format() width")
+	}
+	switch width := val.(type) {
+	case int:
+		return width, nil
+	case int8:
+		return int(width), nil
+	case int16:
+		return int(width), nil
+	case int32:
+		return int(width), nil
+	case int64:
+		return int(width), nil
+	case uint:
+		return int(width), nil
+	case uint8:
+		return int(width), nil
+	case uint16:
+		return int(width), nil
+	case uint32:
+		return int(width), nil
+	case uint64:
+		return int(width), nil
+	}
+	output, err := pgFormatOutput(ctx, typ, val)
+	if err != nil {
+		return 0, err
+	}
+	width, err := strconv.Atoi(output)
+	if err != nil {
+		return 0, errors.Errorf("format() width argument is not an integer: %s", output)
+	}
+	return width, nil
 }
 
 func pgFormatArg(ctx *sql.Context, typ *pgtypes.DoltgresType, val any, formatType byte) (string, error) {
@@ -173,7 +249,18 @@ func pgFormatOutput(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (strin
 		}
 		return "f", nil
 	}
+	if str, ok := val.(string); ok && isFormatNativeStringType(typ) {
+		return str, nil
+	}
 	return typ.IoOutput(ctx, val)
+}
+
+func isFormatNativeStringType(typ *pgtypes.DoltgresType) bool {
+	return typ.ID == pgtypes.Text.ID ||
+		typ.ID == pgtypes.VarChar.ID ||
+		typ.ID == pgtypes.BpChar.ID ||
+		typ.ID == pgtypes.Name.ID ||
+		typ.ID == pgtypes.Cstring.ID
 }
 
 func pgQuoteIdentifier(val string) string {

@@ -37,6 +37,36 @@ func TestFormatIntegerBase(t *testing.T) {
 	}
 }
 
+func TestFormatDynamicWidth(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	argTypes := []*pgtypes.DoltgresType{pgtypes.Int64, pgtypes.Text, pgtypes.Int64, pgtypes.Text}
+	args := []any{int64(5), "x", int64(-5), "y"}
+	got, err := pgFormat(ctx, "%*s|%*s", argTypes, args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "    x|y    "; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
+	argTypes = []*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64}
+	args = []any{"foo", int64(6)}
+	got, err = pgFormat(ctx, "%*2$s", argTypes, args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "   foo"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
+	if _, err = pgFormat(ctx, "%*s", []*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text}, []any{"wide", "x"}); err == nil {
+		t.Fatal("expected non-integer dynamic width to error")
+	}
+	if _, err = pgFormat(ctx, "%*s", []*pgtypes.DoltgresType{pgtypes.Int64}, []any{int64(3)}); err == nil {
+		t.Fatal("expected missing value argument to error")
+	}
+}
+
 func TestUuidExtractHelpers(t *testing.T) {
 	v4 := uuid.Must(uuid.FromString("41db1265-8bc1-4ab3-992f-885799a4af1d"))
 	if got, want := uuidExtractVersion(v4), uuid.V4; got != want {
