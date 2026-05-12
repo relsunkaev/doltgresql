@@ -253,6 +253,9 @@ func unaryNegation(e tree.Expr) tree.Expr {
 
 // Parse parses a sql statement string and returns a list of Statements.
 func Parse(sql string) (Statements, error) {
+	if alterRoutine, ok := rewriteAlterRoutine(sql); ok {
+		sql = alterRoutine
+	}
 	if doBlock, ok, err := parseDoBlock(sql); ok || err != nil {
 		if err != nil {
 			return nil, err
@@ -273,6 +276,15 @@ func Parse(sql string) (Statements, error) {
 	}
 	var p Parser
 	return p.parseWithDepth(1, sql, defaultNakedIntType)
+}
+
+func rewriteAlterRoutine(sql string) (string, bool) {
+	trimmed := strings.TrimLeft(sql, " \t\r\n")
+	if !strings.HasPrefix(strings.ToUpper(trimmed), "ALTER ROUTINE ") {
+		return sql, false
+	}
+	offset := len(sql) - len(trimmed)
+	return sql[:offset] + "ALTER FUNCTION " + trimmed[len("ALTER ROUTINE "):], true
 }
 
 // ParseOne parses a sql statement string, ensuring that it contains only a

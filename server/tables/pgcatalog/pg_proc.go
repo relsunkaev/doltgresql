@@ -15,10 +15,11 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,19 @@ func (p PgProcHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgProcHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_proc row iter
-	return emptyRowIter()
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var rows []sql.Row
+	err = funcColl.IterateFunctions(ctx, func(function corefunctions.Function) (stop bool, err error) {
+		rows = append(rows, pgProcFunctionRow(function))
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // PkSchema implements the interface tables.Handler.
@@ -90,18 +102,58 @@ var pgProcSchema = sql.Schema{
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgProcName},
 }
 
-// pgProcRowIter is the sql.RowIter for the pg_proc table.
-type pgProcRowIter struct {
-}
-
-var _ sql.RowIter = (*pgProcRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgProcRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgProcRowIter) Close(ctx *sql.Context) error {
-	return nil
+func pgProcFunctionRow(function corefunctions.Function) sql.Row {
+	owner := function.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	argTypes := make([]any, len(function.ParameterTypes))
+	for i, argType := range function.ParameterTypes {
+		argTypes[i] = argType.AsId()
+	}
+	argNames := make([]any, len(function.ParameterNames))
+	for i, argName := range function.ParameterNames {
+		argNames[i] = argName
+	}
+	proConfig := []any(nil)
+	for name, value := range function.SetConfig {
+		proConfig = append(proConfig, name+"="+value)
+	}
+	proLang := id.NewId(id.Section_FunctionLanguage, "plpgsql")
+	if function.SQLDefinition != "" {
+		proLang = id.NewId(id.Section_FunctionLanguage, "sql")
+	}
+	return sql.Row{
+		function.ID.AsId(),                               // oid
+		function.ID.FunctionName(),                       // proname
+		id.NewNamespace(function.ID.SchemaName()).AsId(), // pronamespace
+		id.NewId(id.Section_User, owner),                 // proowner
+		proLang,                                          // prolang
+		float32(100),                                     // procost
+		float32(1000),                                    // prorows
+		id.Null,                                          // provariadic
+		"-",                                              // prosupport
+		"f",                                              // prokind
+		false,                                            // prosecdef
+		false,                                            // proleakproof
+		function.Strict,                                  // proisstrict
+		function.SetOf,                                   // proretset
+		"v",                                              // provolatile
+		"u",                                              // proparallel
+		int16(len(function.ParameterTypes)),              // pronargs
+		int16(len(function.ParameterDefaults)),           // pronargdefaults
+		function.ReturnType.AsId(),                       // prorettype
+		argTypes,                                         // proargtypes
+		nil,                                              // proallargtypes
+		nil,                                              // proargmodes
+		argNames,                                         // proargnames
+		nil,                                              // proargdefaults
+		nil,                                              // protrftypes
+		function.GetInnerDefinition(),                    // prosrc
+		nil,                                              // probin
+		function.SQLDefinition,                           // prosqlbody
+		proConfig,                                        // proconfig
+		nil,                                              // proacl
+		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
+	}
 }

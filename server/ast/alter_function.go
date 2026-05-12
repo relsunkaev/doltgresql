@@ -18,19 +18,70 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterFunction handles *tree.AlterFunction nodes.
 func nodeAlterFunction(ctx *Context, node *tree.AlterFunction) (vitess.Statement, error) {
-	_, err := validateRoutineOptions(ctx, node.Options)
+	options, err := validateRoutineOptions(ctx, node.Options)
 	if err != nil {
 		return nil, err
 	}
 
 	// We intentionally don't support OWNER TO since we don't support owning objects
-	if node.Owner != "" && len(node.Options) == 0 {
-		return NewNoOp("OWNER TO is unsupported and ignored"), nil
+	routine, err := routineWithParams(ctx, node.Name, node.Args)
+	if err != nil {
+		return nil, err
+	}
+	if nullInputOption, ok := options[tree.OptionNullInput]; ok {
+		strict := nullInputOption.NullInput == tree.ReturnsNullOnNullInput || nullInputOption.NullInput == tree.StrictNullInput
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterFunctionOptions(routine, &strict),
+			Children:  nil,
+		}, nil
+	}
+	if node.Rename != nil {
+		newName := node.Rename.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterFunctionRename(routine, newName.Object()),
+			Children:  nil,
+		}, nil
+	}
+	if node.Schema != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterFunctionSetSchema(routine, node.Schema),
+			Children:  nil,
+		}, nil
+	}
+	if node.Owner != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterFunctionOwner(routine, node.Owner),
+			Children:  nil,
+		}, nil
 	}
 
 	return NotYetSupportedError("ALTER FUNCTION statement is not yet supported")
+}
+
+func routineWithParams(ctx *Context, name *tree.UnresolvedObjectName, args tree.RoutineArgs) (*pgnodes.RoutineWithParams, error) {
+	routineArgs := make([]pgnodes.RoutineParam, 0, len(args))
+	for _, arg := range args {
+		if arg.Mode == tree.RoutineArgModeOut {
+			continue
+		}
+		_, dt, err := nodeResolvableTypeReference(ctx, arg.Type, false)
+		if err != nil {
+			return nil, err
+		}
+		routineArgs = append(routineArgs, pgnodes.RoutineParam{
+			Name: arg.Name.String(),
+			Type: dt,
+		})
+	}
+	objName := name.ToTableName()
+	return &pgnodes.RoutineWithParams{
+		Args:        routineArgs,
+		SchemaName:  objName.Schema(),
+		RoutineName: objName.Object(),
+	}, nil
 }

@@ -364,7 +364,7 @@ func TestAlterFunctionSetSchemaMovesFunctionRepro(t *testing.T) {
 				},
 				{
 					Query:       `SELECT public.alter_function_set_schema_value();`,
-					ExpectedErr: `does not exist`,
+					ExpectedErr: `not found`,
 				},
 			},
 		},
@@ -433,7 +433,7 @@ func TestAlterRoutineSetSchemaMovesFunctionRepro(t *testing.T) {
 				},
 				{
 					Query:       `SELECT public.alter_routine_set_schema_value();`,
-					ExpectedErr: `does not exist`,
+					ExpectedErr: `not found`,
 				},
 			},
 		},

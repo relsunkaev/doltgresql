@@ -60,6 +60,9 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 		if funcRef.NumParts == 3 {
 			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
 			name = vitess.NewColIdent(qualifiedFunctionName(funcRef.Parts[2], funcRef.Parts[1], funcRef.Parts[0]))
+		} else if funcRef.NumParts == 2 {
+			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
+			name = vitess.NewColIdent(qualifiedFunctionName("", funcRef.Parts[1], funcRef.Parts[0]))
 		} else {
 			colName, err := unresolvedNameToColName(funcRef)
 			if err != nil {

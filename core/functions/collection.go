@@ -61,6 +61,7 @@ type Function struct {
 	SQLDefinition      string                         // Only used when this is a sql language
 	SetOf              bool
 	SetConfig          map[string]string
+	Owner              string
 	Aggregate          bool
 	AggregateStateType id.Type
 	AggregateSFunc     id.Function

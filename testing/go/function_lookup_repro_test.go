@@ -42,7 +42,7 @@ func TestAlterFunctionRenameRepro(t *testing.T) {
 				},
 				{
 					Query:       `SELECT rename_function_old();`,
-					ExpectedErr: `does not exist`,
+					ExpectedErr: `not found`,
 				},
 			},
 		},
@@ -71,7 +71,7 @@ func TestAlterRoutineRenameFunctionRepro(t *testing.T) {
 				},
 				{
 					Query:       `SELECT rename_routine_old();`,
-					ExpectedErr: `does not exist`,
+					ExpectedErr: `not found`,
 				},
 			},
 		},

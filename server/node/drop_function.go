@@ -109,23 +109,35 @@ func (d *DropFunction) WithResolvedChildren(ctx context.Context, children []any)
 }
 
 func dropFunction(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineWithParams, ifExists bool) error {
+	funcId, err := resolveFunctionID(ctx, funcColl, fn)
+	if err != nil {
+		return err
+	}
+	funcExists := funcColl.HasFunction(ctx, funcId)
+	if !funcExists && ifExists {
+		return nil
+	}
+	return funcColl.DropFunction(ctx, funcId)
+}
+
+func resolveFunctionID(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineWithParams) (id.Function, error) {
 	// TODO: provide db
 	schema, err := core.GetSchemaName(ctx, nil, fn.SchemaName)
 	if err != nil {
-		return err
+		return id.NullFunction, err
 	}
 	var funcId = id.NewFunction(schema, fn.RoutineName)
 	if len(fn.Args) == 0 {
 		funcs, err := funcColl.GetFunctionOverloads(ctx, funcId)
 		if err != nil {
-			return err
+			return id.NullFunction, err
 		}
 		if len(funcs) == 1 {
 			funcId = funcs[0].ID
 		} else if len(funcs) > 1 {
 			funcExists := funcColl.HasFunction(ctx, funcId)
 			if !funcExists {
-				return errors.Errorf(`function name "%s" is not unique`, fn.RoutineName)
+				return id.NullFunction, errors.Errorf(`function name "%s" is not unique`, fn.RoutineName)
 			}
 		}
 	} else {
@@ -135,9 +147,5 @@ func dropFunction(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineW
 		}
 		funcId = id.NewFunction(schema, fn.RoutineName, argTypes...)
 	}
-	funcExists := funcColl.HasFunction(ctx, funcId)
-	if !funcExists && ifExists {
-		return nil
-	}
-	return funcColl.DropFunction(ctx, funcId)
+	return funcId, nil
 }

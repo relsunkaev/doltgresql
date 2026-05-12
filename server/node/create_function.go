@@ -183,6 +183,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		SQLDefinition:      c.SqlDef,
 		SetOf:              c.SetOf,
 		SetConfig:          c.SetConfig,
+		Owner:              ctx.Client().User,
 	})
 	if err != nil {
 		return nil, err

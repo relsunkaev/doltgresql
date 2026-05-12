@@ -71,17 +71,12 @@ func TestAlterStatements(t *testing.T) {
 		{
 			Name: "alter function",
 			SetUpScript: []string{
+				"CREATE ROLE foo",
 				"CREATE FUNCTION testfunc() RETURNS int AS $$ BEGIN RETURN 1; END; $$ LANGUAGE plpgsql",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "ALTER FUNCTION testfunc() OWNER TO foo",
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "OWNER TO is unsupported and ignored",
-						},
-					},
 				},
 			},
 		},
