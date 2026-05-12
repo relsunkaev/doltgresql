@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,7 @@ func (p PgTsParserHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTsParserHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_ts_parser row iter
-	return emptyRowIter()
+	return &pgTsParserRowIter{}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -70,13 +70,28 @@ var pgTsParserSchema = sql.Schema{
 
 // pgTsParserRowIter is the sql.RowIter for the pg_ts_parser table.
 type pgTsParserRowIter struct {
+	done bool
 }
 
 var _ sql.RowIter = (*pgTsParserRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgTsParserRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.done {
+		return nil, io.EOF
+	}
+	iter.done = true
+	return sql.Row{
+		id.NewId(id.Section_TextSearchParser, PgCatalogName, "default"),
+		"default",
+		id.NewNamespace(PgCatalogName).AsId(),
+		"",
+		"",
+		"",
+		"",
+		"",
+		id.NewTable(PgCatalogName, PgTsParserName).AsId(),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

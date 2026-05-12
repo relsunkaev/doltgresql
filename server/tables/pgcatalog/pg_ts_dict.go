@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,7 @@ func (p PgTsDictHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTsDictHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_ts_dict row iter
-	return emptyRowIter()
+	return &pgTsDictRowIter{}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,13 +68,26 @@ var pgTsDictSchema = sql.Schema{
 
 // pgTsDictRowIter is the sql.RowIter for the pg_ts_dict table.
 type pgTsDictRowIter struct {
+	done bool
 }
 
 var _ sql.RowIter = (*pgTsDictRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgTsDictRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.done {
+		return nil, io.EOF
+	}
+	iter.done = true
+	return sql.Row{
+		id.NewId(id.Section_TextSearchDictionary, PgCatalogName, "simple"),
+		"simple",
+		id.NewNamespace(PgCatalogName).AsId(),
+		id.NewId(id.Section_User, "postgres"),
+		id.NewId(id.Section_TextSearchTemplate, PgCatalogName, "simple"),
+		nil,
+		id.NewTable(PgCatalogName, PgTsDictName).AsId(),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

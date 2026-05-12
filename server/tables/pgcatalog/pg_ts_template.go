@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,7 @@ func (p PgTsTemplateHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTsTemplateHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_ts_template row iter
-	return emptyRowIter()
+	return &pgTsTemplateRowIter{}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -67,13 +67,25 @@ var pgTsTemplateSchema = sql.Schema{
 
 // pgTsTemplateRowIter is the sql.RowIter for the pg_ts_template table.
 type pgTsTemplateRowIter struct {
+	done bool
 }
 
 var _ sql.RowIter = (*pgTsTemplateRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgTsTemplateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.done {
+		return nil, io.EOF
+	}
+	iter.done = true
+	return sql.Row{
+		id.NewId(id.Section_TextSearchTemplate, PgCatalogName, "simple"),
+		"simple",
+		id.NewNamespace(PgCatalogName).AsId(),
+		"",
+		"",
+		id.NewTable(PgCatalogName, PgTsTemplateName).AsId(),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.

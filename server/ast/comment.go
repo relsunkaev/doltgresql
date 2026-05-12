@@ -70,6 +70,14 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPublication(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnSubscription:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSubscription(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnTextSearchConfiguration:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTextSearchConfiguration(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnTextSearchDictionary:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTextSearchDictionary(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnTextSearchParser:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTextSearchParser(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnTextSearchTemplate:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTextSearchTemplate(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnFunction:
 		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
 		if err != nil {

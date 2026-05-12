@@ -34,22 +34,26 @@ import (
 type CommentTargetKind string
 
 const (
-	CommentTargetTable   CommentTargetKind = "table"
-	CommentTargetColumn  CommentTargetKind = "column"
-	CommentTargetView    CommentTargetKind = "view"
-	CommentTargetSeq     CommentTargetKind = "sequence"
-	CommentTargetSchema  CommentTargetKind = "schema"
-	CommentTargetFunc    CommentTargetKind = "function"
-	CommentTargetProc    CommentTargetKind = "procedure"
-	CommentTargetRoutine CommentTargetKind = "routine"
-	CommentTargetType    CommentTargetKind = "type"
-	CommentTargetLang    CommentTargetKind = "language"
-	CommentTargetDB      CommentTargetKind = "database"
-	CommentTargetRole    CommentTargetKind = "role"
-	CommentTargetExt     CommentTargetKind = "extension"
-	CommentTargetAM      CommentTargetKind = "access method"
-	CommentTargetPub     CommentTargetKind = "publication"
-	CommentTargetSub     CommentTargetKind = "subscription"
+	CommentTargetTable    CommentTargetKind = "table"
+	CommentTargetColumn   CommentTargetKind = "column"
+	CommentTargetView     CommentTargetKind = "view"
+	CommentTargetSeq      CommentTargetKind = "sequence"
+	CommentTargetSchema   CommentTargetKind = "schema"
+	CommentTargetFunc     CommentTargetKind = "function"
+	CommentTargetProc     CommentTargetKind = "procedure"
+	CommentTargetRoutine  CommentTargetKind = "routine"
+	CommentTargetType     CommentTargetKind = "type"
+	CommentTargetLang     CommentTargetKind = "language"
+	CommentTargetDB       CommentTargetKind = "database"
+	CommentTargetRole     CommentTargetKind = "role"
+	CommentTargetExt      CommentTargetKind = "extension"
+	CommentTargetAM       CommentTargetKind = "access method"
+	CommentTargetPub      CommentTargetKind = "publication"
+	CommentTargetSub      CommentTargetKind = "subscription"
+	CommentTargetTSConfig CommentTargetKind = "text search configuration"
+	CommentTargetTSDict   CommentTargetKind = "text search dictionary"
+	CommentTargetTSParser CommentTargetKind = "text search parser"
+	CommentTargetTSTmpl   CommentTargetKind = "text search template"
 )
 
 type Comment struct {
@@ -122,6 +126,22 @@ func NewCommentOnPublication(name string, description *string) Comment {
 
 func NewCommentOnSubscription(name string, description *string) Comment {
 	return Comment{Kind: CommentTargetSub, Name: name, Description: description}
+}
+
+func NewCommentOnTextSearchConfiguration(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTSConfig, Name: name, Description: description}
+}
+
+func NewCommentOnTextSearchDictionary(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTSDict, Name: name, Description: description}
+}
+
+func NewCommentOnTextSearchParser(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTSParser, Name: name, Description: description}
+}
+
+func NewCommentOnTextSearchTemplate(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTSTmpl, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -235,6 +255,30 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_subscription", 0), nil
+	case CommentTargetTSConfig:
+		oid, err := resolveCommentTextSearchConfig(c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_ts_config", 0), nil
+	case CommentTargetTSDict:
+		oid, err := resolveBuiltInTextSearchObject(c.Name, id.Section_TextSearchDictionary, "dictionary", "simple")
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_ts_dict", 0), nil
+	case CommentTargetTSParser:
+		oid, err := resolveBuiltInTextSearchObject(c.Name, id.Section_TextSearchParser, "parser", "default")
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_ts_parser", 0), nil
+	case CommentTargetTSTmpl:
+		oid, err := resolveBuiltInTextSearchObject(c.Name, id.Section_TextSearchTemplate, "template", "simple")
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_ts_template", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -440,6 +484,34 @@ func resolveCommentSubscription(ctx *sql.Context, name string) (id.Id, error) {
 		return id.Null, fmt.Errorf(`subscription "%s" does not exist`, name)
 	}
 	return subID.AsId(), nil
+}
+
+func resolveCommentTextSearchConfig(name string) (id.Id, error) {
+	if name == "simple" {
+		return id.NewId(id.Section_TextSearchConfig, "pg_catalog", name), nil
+	}
+	var found bool
+	var foundID id.Id
+	auth.LockRead(func() {
+		for _, config := range auth.GetAllTextSearchConfigs() {
+			if config.Name == name {
+				found = true
+				foundID = id.NewId(id.Section_TextSearchConfig, config.Namespace.SchemaName(), config.Name)
+				return
+			}
+		}
+	})
+	if found {
+		return foundID, nil
+	}
+	return id.Null, fmt.Errorf(`text search configuration "%s" does not exist`, name)
+}
+
+func resolveBuiltInTextSearchObject(name string, section id.Section, label string, builtInName string) (id.Id, error) {
+	if name != builtInName {
+		return id.Null, fmt.Errorf(`text search %s "%s" does not exist`, label, name)
+	}
+	return id.NewId(section, "pg_catalog", name), nil
 }
 
 type schemaGetter interface {
