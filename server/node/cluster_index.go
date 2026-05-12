@@ -17,6 +17,8 @@ package node
 import (
 	"context"
 
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -68,6 +70,9 @@ func (c *ClusterIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, erro
 	}
 	if !ok {
 		return nil, sql.ErrIndexNotFound.New(c.index)
+	}
+	if err = checkTableOwnership(ctx, doltdb.TableName{Schema: c.schema, Name: c.table}); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
 	}
 
 	indexAddressable, ok := located.table.(sql.IndexAddressable)
