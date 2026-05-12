@@ -295,6 +295,48 @@ func TestAlterTableSameTypeRejectsRowTypeDependentsRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro guards that table
+// constraints do not become part of the table's composite row type.
+func TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET and DROP NOT NULL allow row type dependents",
+			SetUpScript: []string{
+				`CREATE TABLE row_type_not_null_parent (
+					a INT,
+					b TEXT
+				);`,
+				`CREATE TABLE row_type_not_null_child (
+					id INT PRIMARY KEY,
+					parent_row row_type_not_null_parent
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `ALTER TABLE row_type_not_null_parent ALTER COLUMN a SET NOT NULL;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:       `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`,
+					ExpectedErr: `non-nullable`,
+				},
+				{
+					Query:    `INSERT INTO row_type_not_null_child VALUES (1, ROW(NULL, 'child'));`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `ALTER TABLE row_type_not_null_parent ALTER COLUMN a DROP NOT NULL;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro reproduces an ALTER
 // TABLE persistence bug: PostgreSQL rewrites existing rows through the new
 // column typmod and rejects rows that overflow the new typmod.

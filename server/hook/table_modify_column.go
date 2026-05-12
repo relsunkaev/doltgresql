@@ -17,6 +17,7 @@ package hook
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -50,6 +51,9 @@ func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeI
 	tableName := doltTable.TableName()
 	if err = validateDomainAlterColumnExistingRows(ctx, runner, tableName, n.NewColumn()); err != nil {
 		return nil, err
+	}
+	if modifiesOnlyNullability(ctx, n) {
+		return n, nil
 	}
 	tableAsType := id.NewType(tableName.Schema, tableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
@@ -89,6 +93,40 @@ func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeI
 		}
 	}
 	return n, nil
+}
+
+func modifiesOnlyNullability(ctx *sql.Context, n *plan.ModifyColumn) bool {
+	newColumn := n.NewColumn()
+	if newColumn == nil {
+		return false
+	}
+	schema := n.TargetSchema()
+	if len(schema) == 0 {
+		schema = n.Table.Schema(ctx)
+	}
+	for _, existingColumn := range schema {
+		if strings.EqualFold(existingColumn.Name, n.Column()) {
+			return existingColumn.Nullable != newColumn.Nullable && columnsEqualExceptNullability(existingColumn, newColumn)
+		}
+	}
+	return false
+}
+
+func columnsEqualExceptNullability(left *sql.Column, right *sql.Column) bool {
+	return strings.EqualFold(left.Name, right.Name) &&
+		strings.EqualFold(left.Source, right.Source) &&
+		strings.EqualFold(left.DatabaseSource, right.DatabaseSource) &&
+		left.Type.Equals(right.Type) &&
+		reflect.DeepEqual(left.Default, right.Default) &&
+		reflect.DeepEqual(left.Generated, right.Generated) &&
+		reflect.DeepEqual(left.OnUpdate, right.OnUpdate) &&
+		left.Comment == right.Comment &&
+		left.Extra == right.Extra &&
+		left.PrimaryKey == right.PrimaryKey &&
+		left.Virtual == right.Virtual &&
+		left.AutoIncrement == right.AutoIncrement &&
+		left.Hidden == right.Hidden &&
+		left.HiddenSystem == right.HiddenSystem
 }
 
 func validateDomainAlterColumnExistingRows(ctx *sql.Context, runner sql.StatementRunner, tableName doltdb.TableName, newColumn *sql.Column) error {
