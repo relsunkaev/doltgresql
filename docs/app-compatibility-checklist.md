@@ -1,6 +1,6 @@
 # Real-world application compatibility checklist
 
-Last updated: 2026-05-10
+Last updated: 2026-05-12
 
 This is the workload-prioritized view of `postgresql-parity-issues.md`. The
 parity doc enumerates every known PostgreSQL feature gap, organized by the
@@ -1644,7 +1644,7 @@ Do not check off an item until it has workload proof:
   `application_name` through `current_setting`, and run pooled CRUD.
   Pinned by testing/go/ssl_test.go's
   TestPooledSSLStartupParametersAndScramAuth.
-- [~] Secondary clients - `postgres.js` runs through the real client
+- [x] Secondary clients - `postgres.js` runs through the real client
   package with a pooled connection configuration, prepared tagged-template
   queries, parameter binding, JSONB insertion through `sql.json`, arrays,
   lateral JSONB expansion, concurrent reads across the pool, transaction
@@ -1709,6 +1709,9 @@ Do not check off an item until it has workload proof:
   Sequelize runs over the real `pg` driver too, covering startup timezone GUCs,
   `sync({ force: true })` schema management, model CRUD, associations,
   JSONB/text[] values, pooled reads, managed commit, and managed rollback.
+  Django runs through its real PostgreSQL backend, covering migration DDL,
+  model CRUD, JSONB/text[] values, relation reads, projected count/exists
+  filters, startup options, commit, and rollback.
   Pinned by
   testing/go/postgres_js_client_test.go,
   testing/go/node_postgres_client_test.go,
@@ -1721,7 +1724,8 @@ Do not check off an item until it has workload proof:
   testing/go/go_sql_pgx_stdlib_client_test.go, testing/go/gorm_client_test.go,
   testing/go/jdbc_client_test.go, testing/go/rust_sqlx_client_test.go,
   testing/go/perl_dbi_client_test.go, testing/go/prisma_client_test.go,
-  testing/go/typeorm_client_test.go, and testing/go/sequelize_client_test.go.
+  testing/go/typeorm_client_test.go, testing/go/sequelize_client_test.go, and
+  testing/go/django_migration_test.go.
 - [x] Keep secondary-client expansion demand-driven. The checklist names the
   exact client packages and harnesses currently claimed above; future
   workload-required clients should get their own smoke gate before being added
@@ -2218,7 +2222,7 @@ schema diffs, typed-exception handling, and client-side query timeouts.
 
 ## Lower-risk surfaces still requiring smoke tests
 
-- [~] Basic driver pools and ORM CRUD across the advertised driver matrix.
+- [x] Basic driver pools and ORM CRUD across the advertised driver matrix.
   The pgx smoke harness covers the baseline app schema and transaction
   surface, the node-postgres and postgres.js harnesses cover secondary Node
   pooled-client paths with CRUD, parameters, JSONB, arrays, concurrent reads,
