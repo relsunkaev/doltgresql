@@ -1116,6 +1116,44 @@ func TestCreateOrReplaceAggregateRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterAggregateOwnerToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own an aggregate to transfer ownership.
+func TestAlterAggregateOwnerToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER AGGREGATE OWNER TO requires aggregate ownership",
+			SetUpScript: []string{
+				`CREATE USER aggregate_owner_to_hijacker PASSWORD 'hijacker';`,
+				`CREATE FUNCTION owner_to_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE owner_to_aggregate_private(INT) (
+					SFUNC = owner_to_aggregate_private_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`GRANT USAGE ON SCHEMA public TO aggregate_owner_to_hijacker;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER AGGREGATE owner_to_aggregate_private(INT) OWNER TO aggregate_owner_to_hijacker;`,
+					ExpectedErr: `must be owner`,
+					Username:    `aggregate_owner_to_hijacker`,
+					Password:    `hijacker`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'owner_to_aggregate_private';`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
