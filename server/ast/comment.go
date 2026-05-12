@@ -54,6 +54,12 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSequence(tableName, stmt.Comment)}, nil
 	case *tree.CommentOnSchema:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSchema(obj.Name, stmt.Comment)}, nil
+	case *tree.CommentOnDatabase:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnDatabase(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnRole:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnRole(obj.Name, stmt.Comment)}, nil
+	case *tree.CommentOnExtension:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnExtension(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnFunction:
 		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
 		if err != nil {

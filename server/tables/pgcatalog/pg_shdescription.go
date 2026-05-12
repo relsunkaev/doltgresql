@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,14 @@ func (p PgShdescriptionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgShdescriptionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_shdescription row iter
-	return emptyRowIter()
+	entries := comments.Entries()
+	sharedEntries := make([]comments.Entry, 0, len(entries))
+	for _, entry := range entries {
+		if isSharedDescriptionClass(entry.ClassOID) {
+			sharedEntries = append(sharedEntries, entry)
+		}
+	}
+	return &pgShdescriptionRowIter{entries: sharedEntries}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -64,16 +71,33 @@ var pgShdescriptionSchema = sql.Schema{
 
 // pgShdescriptionRowIter is the sql.RowIter for the pg_shdescription table.
 type pgShdescriptionRowIter struct {
+	entries []comments.Entry
+	idx     int
 }
 
 var _ sql.RowIter = (*pgShdescriptionRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgShdescriptionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.entries) {
+		return nil, io.EOF
+	}
+	entry := iter.entries[iter.idx]
+	iter.idx++
+	return sql.Row{
+		comments.IDFromOID(entry.ObjOID),
+		comments.IDFromOID(entry.ClassOID),
+		entry.Description,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgShdescriptionRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+func isSharedDescriptionClass(classOID uint32) bool {
+	return classOID == comments.ClassOID("pg_database") ||
+		classOID == comments.ClassOID("pg_authid") ||
+		classOID == comments.ClassOID("pg_tablespace")
 }

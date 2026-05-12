@@ -43,6 +43,9 @@ const (
 	CommentTargetRoutine CommentTargetKind = "routine"
 	CommentTargetType    CommentTargetKind = "type"
 	CommentTargetLang    CommentTargetKind = "language"
+	CommentTargetDB      CommentTargetKind = "database"
+	CommentTargetRole    CommentTargetKind = "role"
+	CommentTargetExt     CommentTargetKind = "extension"
 )
 
 type Comment struct {
@@ -91,6 +94,18 @@ func NewCommentOnType(relation vitess.TableName, description *string) Comment {
 
 func NewCommentOnLanguage(name string, description *string) Comment {
 	return Comment{Kind: CommentTargetLang, Name: name, Description: description}
+}
+
+func NewCommentOnDatabase(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetDB, Name: name, Description: description}
+}
+
+func NewCommentOnRole(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetRole, Name: name, Description: description}
+}
+
+func NewCommentOnExtension(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetExt, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -168,6 +183,24 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_language", 0), nil
+	case CommentTargetDB:
+		oid, err := resolveCommentDatabase(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_database", 0), nil
+	case CommentTargetRole:
+		oid, err := resolveCommentRole(c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_authid", 0), nil
+	case CommentTargetExt:
+		oid, err := resolveCommentExtension(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_extension", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -302,6 +335,40 @@ func resolveCommentLanguage(name string) (id.Id, error) {
 		return id.Null, fmt.Errorf(`language "%s" does not exist`, name)
 	}
 	return id.NewId(id.Section_FunctionLanguage, name), nil
+}
+
+func resolveCommentDatabase(ctx *sql.Context, name string) (id.Id, error) {
+	doltSession, ok := ctx.Session.(*dsess.DoltSession)
+	if !ok {
+		return id.Null, fmt.Errorf("expected Dolt session")
+	}
+	if _, err := doltSession.Provider().Database(ctx, name); err != nil {
+		return id.Null, err
+	}
+	return id.NewDatabase(name).AsId(), nil
+}
+
+func resolveCommentRole(name string) (id.Id, error) {
+	var exists bool
+	auth.LockRead(func() {
+		exists = auth.RoleExists(name)
+	})
+	if !exists {
+		return id.Null, fmt.Errorf(`role "%s" does not exist`, name)
+	}
+	return id.NewId(id.Section_User, name), nil
+}
+
+func resolveCommentExtension(ctx *sql.Context, name string) (id.Id, error) {
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return id.Null, err
+	}
+	extID := id.NewExtension(name)
+	if !extCollection.HasLoadedExtension(ctx, extID) {
+		return id.Null, fmt.Errorf(`extension "%s" does not exist`, name)
+	}
+	return extID.AsId(), nil
 }
 
 type schemaGetter interface {
