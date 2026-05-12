@@ -191,6 +191,48 @@ func TestSetSessionAuthorizationChangesCurrentAndSessionUserRepro(t *testing.T) 
 	})
 }
 
+func TestSetSessionAuthorizationValidatesTargetRoleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET SESSION AUTHORIZATION rejects missing roles",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SET SESSION AUTHORIZATION missing_session_auth_role;`,
+					ExpectedErr: `role "missing_session_auth_role" does not exist`,
+				},
+			},
+		},
+	})
+}
+
+func TestSetSessionAuthorizationRequiresSuperuserForOtherRolesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET SESSION AUTHORIZATION cannot switch again as non-superuser",
+			SetUpScript: []string{
+				`CREATE USER session_auth_limited PASSWORD 'pw';`,
+				`CREATE USER session_auth_other PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SET SESSION AUTHORIZATION session_auth_limited;`,
+				},
+				{
+					Query:       `SET SESSION AUTHORIZATION session_auth_other;`,
+					ExpectedErr: `permission denied`,
+				},
+				{
+					Query:    `SELECT current_user, session_user;`,
+					Expected: []sql.Row{{"session_auth_limited", "session_auth_limited"}},
+				},
+				{
+					Query: `RESET SESSION AUTHORIZATION;`,
+				},
+			},
+		},
+	})
+}
+
 // TestSetLocalSearchPathAcceptsSchemaListRepro reproduces a session
 // correctness bug: PostgreSQL accepts SET LOCAL search_path with the same
 // comma-separated schema list syntax as SET search_path.

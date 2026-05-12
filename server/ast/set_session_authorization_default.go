@@ -15,11 +15,10 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeSetSessionAuthorization handles *tree.SetSessionAuthorization nodes.
@@ -27,5 +26,7 @@ func nodeSetSessionAuthorization(ctx *Context, node *tree.SetSessionAuthorizatio
 	if node == nil {
 		return nil, nil
 	}
-	return nil, errors.Errorf("SET SESSION AUTHORIZATION is not yet supported")
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewSetSessionAuthorization(node.Username),
+	}, nil
 }
