@@ -217,3 +217,64 @@ func TestAlterTypeAndDomainRenameToRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterTypeRenameUpdatesExistingColumnMetadataRepro reproduces a catalog
+// persistence bug: renaming a type or domain should update existing table
+// columns that reference it, so stored rows and new writes keep working through
+// the renamed type.
+func TestAlterTypeRenameUpdatesExistingColumnMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates existing enum columns",
+			SetUpScript: []string{
+				`CREATE TYPE rename_column_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE rename_column_status_items (
+					id INT PRIMARY KEY,
+					status rename_column_status
+				);`,
+				`INSERT INTO rename_column_status_items VALUES (1, 'new');`,
+				`ALTER TYPE rename_column_status RENAME TO renamed_column_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_column_status_items
+						VALUES (2, 'done'::renamed_column_status);`,
+				},
+				{
+					Query: `SELECT id, status::text
+						FROM rename_column_status_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{int32(1), "new"}, {int32(2), "done"}},
+				},
+			},
+		},
+		{
+			Name: "ALTER DOMAIN RENAME TO updates existing domain columns",
+			SetUpScript: []string{
+				`CREATE DOMAIN rename_column_domain AS INT CHECK (VALUE > 0);`,
+				`CREATE TABLE rename_column_domain_items (
+					id INT PRIMARY KEY,
+					amount rename_column_domain
+				);`,
+				`INSERT INTO rename_column_domain_items VALUES (1, 10);`,
+				`ALTER DOMAIN rename_column_domain RENAME TO renamed_column_domain;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_column_domain_items
+						VALUES (2, 20::renamed_column_domain);`,
+				},
+				{
+					Query:       `INSERT INTO rename_column_domain_items VALUES (3, -1);`,
+					ExpectedErr: `rename_column_domain`,
+				},
+				{
+					Query: `SELECT id, amount
+						FROM rename_column_domain_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{int32(1), int32(10)}, {int32(2), int32(20)}},
+				},
+			},
+		},
+	})
+}
