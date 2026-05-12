@@ -2834,6 +2834,12 @@ func isFeatureNotSupportedMessage(err error) bool {
 // convertQuery takes the given Postgres query, and converts it as an ast.ConvertedQuery that will work with the handler.
 // If the query string contains multiple queries, then multiple ConvertedQuery will be returned.
 func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error) {
+	if converted, ok := convertedCreateConversion(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
+	if converted, ok := convertedDropConversion(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	s, err := parser.Parse(query)
 	if err != nil {
 		if converted, ok := convertedCreateTransform(query); ok {
@@ -2880,9 +2886,11 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 }
 
 var (
-	createTransformPattern = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
-	transformFromPattern   = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
-	transformToPattern     = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	createTransformPattern  = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
+	transformFromPattern    = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	transformToPattern      = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	createConversionPattern = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
+	dropConversionPattern   = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -2914,6 +2922,62 @@ func normalizeTransformFunctionName(name string) string {
 		return strings.ReplaceAll(name[1:len(name)-1], `""`, `"`)
 	}
 	return strings.ToLower(name)
+}
+
+func convertedCreateConversion(query string) (ConvertedQuery, bool) {
+	matches := createConversionPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	namespace, name := splitQualifiedCatalogName(matches[2])
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateConversion(
+				name,
+				namespace,
+				conversionEncodingCode(matches[3]),
+				conversionEncodingCode(matches[4]),
+				normalizeTransformFunctionName(matches[5]),
+				strings.TrimSpace(matches[1]) != "",
+			),
+		},
+		StatementTag: "CREATE CONVERSION",
+	}, true
+}
+
+func convertedDropConversion(query string) (ConvertedQuery, bool) {
+	matches := dropConversionPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	namespace, name := splitQualifiedCatalogName(matches[2])
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewDropConversion(name, namespace, strings.TrimSpace(matches[1]) != ""),
+		},
+		StatementTag: "DROP CONVERSION",
+	}, true
+}
+
+func splitQualifiedCatalogName(raw string) (namespace string, name string) {
+	parts := strings.Split(raw, ".")
+	if len(parts) == 2 {
+		return normalizeTransformFunctionName(parts[0]), normalizeTransformFunctionName(parts[1])
+	}
+	return "", normalizeTransformFunctionName(raw)
+}
+
+func conversionEncodingCode(encoding string) int32 {
+	switch strings.ToUpper(strings.TrimSpace(encoding)) {
+	case "UTF8", "UTF-8":
+		return 6
+	case "LATIN1", "ISO88591", "ISO-8859-1":
+		return 8
+	default:
+		return 0
+	}
 }
 
 func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {

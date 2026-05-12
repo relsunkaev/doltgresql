@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,27 @@ func (p PgConversionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgConversionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_conversion row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, conversion := range auth.GetAllConversions() {
+			owner := catalogOwnerOID()
+			if role := auth.GetRole(conversion.Owner); role.IsValid() {
+				owner = id.NewId(id.Section_User, conversion.Owner)
+			}
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_Table, PgCatalogName, PgConversionName, conversion.Namespace, conversion.Name), // oid
+				conversion.Name, // conname
+				id.NewNamespace(conversion.Namespace).AsId(), // connamespace
+				owner,                  // conowner
+				conversion.ForEncoding, // conforencoding
+				conversion.ToEncoding,  // contoencoding
+				conversion.Proc,        // conproc
+				conversion.Default,     // condefault
+				id.NewTable(PgCatalogName, PgConversionName).AsId(), // tableoid
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

@@ -49,6 +49,7 @@ type Database struct {
 	languagePrivileges  *LanguagePrivileges
 	parameterPrivileges *ParameterPrivileges
 	transforms          *Transforms
+	conversions         *Conversions
 	roleMembership      *RoleMembership
 }
 
@@ -65,6 +66,7 @@ func ClearDatabase() {
 	clear(globalDatabase.languagePrivileges.Data)
 	clear(globalDatabase.parameterPrivileges.Data)
 	clear(globalDatabase.transforms.Data)
+	clear(globalDatabase.conversions.Data)
 	clear(globalDatabase.roleMembership.Data)
 	dbInitDefault()
 }
@@ -177,6 +179,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		languagePrivileges:  NewLanguagePrivileges(),
 		parameterPrivileges: NewParameterPrivileges(),
 		transforms:          NewTransforms(),
+		conversions:         NewConversions(),
 		roleMembership:      NewRoleMembership(),
 	}
 	globalLock = &sync.RWMutex{}
