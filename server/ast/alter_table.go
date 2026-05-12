@@ -184,7 +184,35 @@ func nodeAlterTableSetSchema(ctx *Context, node *tree.AlterTableSetSchema) (vite
 	if node == nil {
 		return nil, nil
 	}
-	return nil, errors.Errorf("ALTER TABLE SET SCHEMA is not yet supported")
+	name, err := nodeUnresolvedObjectName(ctx, node.Name)
+	if err != nil {
+		return nil, err
+	}
+	var statement vitess.Injectable
+	switch {
+	case node.IsMaterialized:
+		statement = pgnodes.NewAlterMaterializedViewSetSchema(
+			node.IfExists,
+			name.SchemaQualifier.String(),
+			name.Name.String(),
+			node.Schema,
+		)
+	case node.IsSequence:
+		statement = pgnodes.NewAlterSequenceSetSchema(
+			node.IfExists,
+			name.SchemaQualifier.String(),
+			name.Name.String(),
+			node.Schema,
+		)
+	default:
+		statement = pgnodes.NewAlterTableSetSchema(
+			node.IfExists,
+			name.SchemaQualifier.String(),
+			name.Name.String(),
+			node.Schema,
+		)
+	}
+	return vitess.InjectedStatement{Statement: statement}, nil
 }
 
 // nodeAlterTableCmds converts tree.AlterTableCmds into a slice of vitess.DDL instances that can be executed by GMS.

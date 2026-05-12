@@ -43,5 +43,21 @@ func nodeAlterView(ctx *Context, stmt *tree.AlterView) (sqlparser.Statement, err
 		}, nil
 	}
 
+	if setSchema, ok := stmt.Cmd.(*tree.AlterViewSetSchema); ok {
+		treeName := stmt.Name.ToTableName()
+		viewName, err := nodeTableName(ctx, &treeName)
+		if err != nil {
+			return nil, err
+		}
+		return sqlparser.InjectedStatement{
+			Statement: pgnodes.NewAlterViewSetSchema(
+				stmt.IfExists,
+				viewName.SchemaQualifier.String(),
+				viewName.Name.String(),
+				setSchema.Schema,
+			),
+		}, nil
+	}
+
 	return NotYetSupportedError("ALTER VIEW is not yet supported")
 }

@@ -35,6 +35,7 @@ const (
 	relationOwnerKindTable            relationOwnerKind = "table"
 	relationOwnerKindView             relationOwnerKind = "view"
 	relationOwnerKindMaterializedView relationOwnerKind = "materialized view"
+	relationOwnerKindSequence         relationOwnerKind = "sequence"
 )
 
 // AlterRelationOwner handles ALTER TABLE/VIEW ... OWNER TO.

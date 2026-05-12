@@ -118,6 +118,12 @@ func getViewDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 }
 
 func schemaQualifiedViewDefinition(createViewStatement string, defaultSchema string) (string, error) {
+	return SchemaQualifiedViewDefinition(createViewStatement, defaultSchema)
+}
+
+// SchemaQualifiedViewDefinition returns the SELECT body from a CREATE VIEW
+// statement with unqualified relation references bound to defaultSchema.
+func SchemaQualifiedViewDefinition(createViewStatement string, defaultSchema string) (string, error) {
 	if strings.TrimSpace(createViewStatement) == "" {
 		return "", nil
 	}
