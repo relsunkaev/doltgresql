@@ -210,7 +210,7 @@ func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresT
 		return UnknownLiteralAssignmentCast
 	}
 	// All types have a built-in assignment cast to string types: https://www.postgresql.org/docs/15/sql-createcast.html
-	if lookupToType.TypCategory == pgtypes.TypeCategory_StringTypes {
+	if lookupToType.TypCategory == pgtypes.TypeCategory_StringTypes && lookupToType.ID != pgtypes.Name.ID {
 		return func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if val == nil {
 				return nil, nil
