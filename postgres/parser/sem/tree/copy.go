@@ -51,6 +51,8 @@ type CopyOptions struct {
 	CopyFormat CopyFormat
 	Header     bool
 	Delimiter  string
+	Default    string
+	DefaultSet bool
 }
 
 var _ NodeFormatter = &CopyOptions{}
@@ -124,6 +126,10 @@ func (o *CopyOptions) Format(ctx *FmtCtx) {
 		maybeAddSep()
 		ctx.WriteString("HEADER")
 	}
+	if o.DefaultSet {
+		maybeAddSep()
+		ctx.WriteString("DEFAULT '" + o.Default + "'")
+	}
 }
 
 // IsDefault returns true if this struct has default value.
@@ -153,6 +159,14 @@ func (o *CopyOptions) CombineWith(other *CopyOptions) error {
 			return errors.New("delimiter option specified multiple times")
 		}
 		o.Delimiter = other.Delimiter
+	}
+
+	if other.DefaultSet {
+		if o.DefaultSet {
+			return errors.New("default option specified multiple times")
+		}
+		o.Default = other.Default
+		o.DefaultSet = true
 	}
 
 	return nil

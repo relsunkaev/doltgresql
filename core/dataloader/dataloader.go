@@ -41,6 +41,11 @@ type DataLoader interface {
 	Finish(ctx *sql.Context) (*LoadDataResults, error)
 }
 
+// DefaultSchemaLoader is implemented by loaders that evaluate COPY DEFAULT markers.
+type DefaultSchemaLoader interface {
+	SetSchemaForDefaults(colNames []string, sch sql.Schema) error
+}
+
 // LoadDataResults contains the results of a load data operation, including the number of rows loaded.
 type LoadDataResults struct {
 	// RowsLoaded contains the total number of rows inserted during a load data operation.
@@ -70,4 +75,21 @@ func getColumnTypes(colNames []string, sch sql.Schema) ([]*types.DoltgresType, s
 	}
 
 	return colTypes, reducedSch, nil
+}
+
+func updateColumnSchema(colNames []string, sch sql.Schema, colTypes *[]*types.DoltgresType, reducedSch *sql.Schema) error {
+	newColTypes, newReducedSch, err := getColumnTypes(colNames, sch)
+	if err != nil {
+		return err
+	}
+	*colTypes = newColTypes
+	*reducedSch = newReducedSch
+	return nil
+}
+
+func evalColumnDefault(ctx *sql.Context, col *sql.Column, row sql.Row) (any, error) {
+	if col.Default == nil {
+		return nil, nil
+	}
+	return col.Default.Eval(ctx, row)
 }

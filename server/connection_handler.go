@@ -1852,9 +1852,9 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	var dataLoader dataloader.DataLoader
 	switch copyFromStdinNode.CopyOptions.CopyFormat {
 	case tree.CopyFormatText:
-		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header)
+		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet)
 	case tree.CopyFormatCsv:
-		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header)
+		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet)
 	case tree.CopyFormatBinary:
 		dataLoader, err = dataloader.NewBinaryDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx))
 	default:
@@ -1876,10 +1876,35 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	if err != nil {
 		return err
 	}
+	if copyFromStdinNode.CopyOptions.DefaultSet {
+		analyzedInsert := getInsertInto(analyzedNode)
+		if analyzedInsert == nil {
+			return errors.Errorf("no analyzed INSERT node found for COPY FROM STDIN")
+		}
+		defaultLoader, ok := dataLoader.(dataloader.DefaultSchemaLoader)
+		if !ok {
+			return errors.Errorf("COPY DEFAULT is unsupported for %s", dataLoader.String())
+		}
+		if err = defaultLoader.SetSchemaForDefaults(insertNode.ColumnNames, analyzedInsert.Destination.Schema(sqlCtx)); err != nil {
+			return err
+		}
+	}
 
 	copyState.insertNode = analyzedNode
 	copyState.dataLoader = dataLoader
 	return nil
+}
+
+func getInsertInto(node sql.Node) *plan.InsertInto {
+	var insert *plan.InsertInto
+	transform.Inspect(node, func(node sql.Node) bool {
+		if n, ok := node.(*plan.InsertInto); ok {
+			insert = n
+			return false
+		}
+		return true
+	})
+	return insert
 }
 
 // Returns the first sql.InsertableTable node found in the tree provided, or nil if none is found.

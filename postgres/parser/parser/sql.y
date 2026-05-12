@@ -3928,6 +3928,10 @@ copy_options:
   {
     $$.val = &tree.CopyOptions{Delimiter: $2}
   }
+| DEFAULT SCONST
+  {
+    $$.val = &tree.CopyOptions{Default: $2, DefaultSet: true}
+  }
 
 notify_stmt:
   NOTIFY name

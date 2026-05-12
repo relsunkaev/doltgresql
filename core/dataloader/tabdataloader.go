@@ -38,6 +38,8 @@ type TabularDataLoader struct {
 	delimiterChar string
 	nullChar      string
 	removeHeader  bool
+	defaultValue  string
+	defaultSet    bool
 }
 
 var _ DataLoader = (*TabularDataLoader)(nil)
@@ -45,7 +47,7 @@ var _ DataLoader = (*TabularDataLoader)(nil)
 // NewTabularDataLoader creates a new TabularDataLoader to insert into the specified |table| using the specified
 // |delimiterChar| and |nullChar|. If |header| is true, the first line of the data will be treated as a header and
 // ignored.
-func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar, nullChar string, header bool) (*TabularDataLoader, error) {
+func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar, nullChar string, header bool, defaultValue string, defaultSet bool) (*TabularDataLoader, error) {
 	colTypes, reducedSch, err := getColumnTypes(colNames, tableSch)
 	if err != nil {
 		return nil, err
@@ -65,7 +67,13 @@ func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar,
 		delimiterChar: delimiterChar,
 		nullChar:      nullChar,
 		removeHeader:  header,
+		defaultValue:  defaultValue,
+		defaultSet:    defaultSet,
 	}, nil
+}
+
+func (tdl *TabularDataLoader) SetSchemaForDefaults(colNames []string, sch sql.Schema) error {
+	return updateColumnSchema(colNames, sch, &tdl.colTypes, &tdl.sch)
 }
 
 // nextRow returns the next SQL row from the reader provided, using any previously saved partial line. Returns true if
@@ -129,6 +137,11 @@ func (tdl *TabularDataLoader) nextRow(ctx *sql.Context, data *bufio.Reader) (sql
 		for i := range tdl.colTypes {
 			if values[i] == tdl.nullChar {
 				row[i] = nil
+			} else if tdl.defaultSet && values[i] == tdl.defaultValue {
+				row[i], err = evalColumnDefault(ctx, tdl.sch[i], row)
+				if err != nil {
+					return nil, false, err
+				}
 			} else {
 				// We must un-escape strings here since we're receiving everything verbatim
 				values[i] = strings.ReplaceAll(values[i], `\\`, `\`)

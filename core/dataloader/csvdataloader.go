@@ -36,6 +36,8 @@ type CsvDataLoader struct {
 	sch           sql.Schema
 	removeHeader  bool
 	delimiter     string
+	defaultValue  string
+	defaultSet    bool
 }
 
 func (cdl *CsvDataLoader) SetNextDataChunk(ctx *sql.Context, data *bufio.Reader) error {
@@ -50,7 +52,7 @@ const defaultCsvDelimiter = ","
 // NewCsvDataLoader creates a new DataLoader instance that will produce rows for the schema provided.
 // |header| is true, the first line of the data will be treated as a header and ignored. If |delimiter| is not the empty
 // string, it will be used as the delimiter separating value.
-func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, header bool) (*CsvDataLoader, error) {
+func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, header bool, defaultValue string, defaultSet bool) (*CsvDataLoader, error) {
 	colTypes, reducedSch, err := getColumnTypes(colNames, sch)
 	if err != nil {
 		return nil, err
@@ -65,7 +67,13 @@ func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, heade
 		sch:          reducedSch,
 		removeHeader: header,
 		delimiter:    delimiter,
+		defaultValue: defaultValue,
+		defaultSet:   defaultSet,
 	}, nil
+}
+
+func (cdl *CsvDataLoader) SetSchemaForDefaults(colNames []string, sch sql.Schema) error {
+	return updateColumnSchema(colNames, sch, &cdl.colTypes, &cdl.sch)
 }
 
 // nextRow attempts to read the next row from the data and return it, and returns true if a row was read
@@ -124,6 +132,11 @@ func (cdl *CsvDataLoader) nextRow(ctx *sql.Context, reader *csvReader) (sql.Row,
 	for i := range cdl.colTypes {
 		if record[i] == nil {
 			row[i] = nil
+		} else if cdl.defaultSet && fmt.Sprintf("%v", record[i]) == cdl.defaultValue {
+			row[i], err = evalColumnDefault(ctx, cdl.sch[i], row)
+			if err != nil {
+				return nil, false, err
+			}
 		} else {
 			row[i], err = cdl.colTypes[i].IoInput(ctx, fmt.Sprintf("%v", record[i]))
 			if err != nil {

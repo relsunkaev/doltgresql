@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/memory"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -47,10 +48,19 @@ func TestTabDataLoader(t *testing.T) {
 		{Name: "c1", Type: types.Int64, Source: "source1"},
 		{Name: "c2", Type: types.VarChar, Source: "source1"},
 	}, 0)
+	defaultInt64, err := sql.NewColumnDefaultValue(expression.NewLiteral(int64(7), types.Int64), types.Int64, true, false, false)
+	require.NoError(t, err)
+	defaultText, err := sql.NewColumnDefaultValue(expression.NewLiteral("from-default", types.VarChar), types.VarChar, true, false, false)
+	require.NoError(t, err)
+	defaultSchema := sql.NewPrimaryKeySchema(sql.Schema{
+		{Name: "pk", Type: types.Int64, Source: "source1"},
+		{Name: "c1", Type: types.Int64, Source: "source1", Default: defaultInt64},
+		{Name: "c2", Type: types.VarChar, Source: "source1", Default: defaultText},
+	}, 0)
 
 	// Tests that a basic tab delimited doc can be loaded as a single chunk.
 	t.Run("basic case", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -74,7 +84,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and the
 	// partial record must be buffered and prepended to the next chunk.
 	t.Run("record split across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -105,7 +115,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and a
 	// header row is present.
 	t.Run("record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", true)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", true, "", false)
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -137,7 +147,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests a record that contains a quoted newline character and is split
 	// across two chunks.
 	t.Run("quoted newlines across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -169,7 +179,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and a
 	// header row is present.
 	t.Run("delimiter='|', record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "|", "\\N", true)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "|", "\\N", true, "", false)
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -195,6 +205,27 @@ func TestTabDataLoader(t *testing.T) {
 		assert.Equal(t, []sql.Row{
 			{int64(1), int64(100), "bar"},
 			{int64(2), int64(200), "bash"},
+		}, rows)
+	})
+
+	t.Run("default marker", func(t *testing.T) {
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, defaultSchema.Schema, "\t", "\\N", false, "DEFAULT", true)
+		require.NoError(t, err)
+
+		var rows []sql.Row
+
+		reader := bytes.NewReader([]byte("1\tDEFAULT\tDEFAULT\n2\t9\texplicit\n"))
+		err = dataLoader.SetNextDataChunk(ctx, bufio.NewReader(reader))
+		require.NoError(t, err)
+		rows = append(rows, loadAllRows(ctx, t, dataLoader)...)
+
+		results, err := dataLoader.Finish(ctx)
+		require.NoError(t, err)
+		require.EqualValues(t, 2, results.RowsLoaded)
+
+		assert.Equal(t, []sql.Row{
+			{int64(1), int64(7), "from-default"},
+			{int64(2), int64(9), "explicit"},
 		}, rows)
 	})
 }

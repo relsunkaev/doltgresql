@@ -28,3 +28,13 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;`)
 		t.Fatalf("expected 1 statement, got %d", len(statements))
 	}
 }
+
+func TestParseCopyDefaultOption(t *testing.T) {
+	statements, err := Parse(`COPY t (a, b) FROM STDIN WITH (FORMAT csv, DEFAULT 'DEFAULT');`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(statements) != 1 {
+		t.Fatalf("expected 1 statement, got %d", len(statements))
+	}
+}
