@@ -1118,6 +1118,54 @@ func TestCreateOrReplaceProcedurePreservesOwnerRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceAggregatePreservesOwnerRepro reproduces an ownership
+// persistence bug: PostgreSQL preserves the existing aggregate owner during
+// CREATE OR REPLACE AGGREGATE.
+func TestCreateOrReplaceAggregatePreservesOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE AGGREGATE preserves pg_proc proowner",
+			SetUpScript: []string{
+				`CREATE USER replace_aggregate_owner PASSWORD 'pw';`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO replace_aggregate_owner;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE FUNCTION replace_aggregate_sfunc(state INT, next_value INT)
+						RETURNS INT
+						LANGUAGE SQL
+						IMMUTABLE
+						AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+					Username: `replace_aggregate_owner`,
+					Password: `pw`,
+				},
+				{
+					Query: `CREATE AGGREGATE replace_owner_aggregate(INT) (
+						SFUNC = replace_aggregate_sfunc,
+						STYPE = INT,
+						INITCOND = '0'
+					);`,
+					Username: `replace_aggregate_owner`,
+					Password: `pw`,
+				},
+				{
+					Query: `CREATE OR REPLACE AGGREGATE replace_owner_aggregate(INT) (
+						SFUNC = replace_aggregate_sfunc,
+						STYPE = INT,
+						INITCOND = '1'
+					);`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'replace_owner_aggregate';`,
+					Expected: []sql.Row{{"replace_aggregate_owner"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateExtensionOwnerUpdatesCatalogRepro reproduces a
 // security/catalog bug: extensions installed by a non-superuser role should
 // record that role in pg_extension.extowner, but Doltgres reports postgres.
