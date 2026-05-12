@@ -174,6 +174,11 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 			return nil, err
 		}
 
+		if f.ReturnType.ID == pgtypes.Void.ID {
+			_, err = sql.RowIterToRows(subCtx, rowIter)
+			return nil, err
+		}
+
 		if !f.SetOf {
 			rows, err := sql.RowIterToRows(subCtx, rowIter)
 			if err != nil {
