@@ -71,6 +71,9 @@ func (c *CreateTransform) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	if err = checkTransformTypeOwnership(ctx, typeID); err != nil {
+		return nil, err
+	}
 	auth.LockWrite(func() {
 		err = auth.CreateTransform(auth.Transform{
 			TypeID:  typeID,
@@ -147,6 +150,20 @@ func transformTypeID(ctx *sql.Context, rawTypeName string) (id.Id, error) {
 		}
 	}
 	return id.Null, errors.Errorf(`type "%s" does not exist`, rawTypeName)
+}
+
+func checkTransformTypeOwnership(ctx *sql.Context, typeID id.Id) error {
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	if _, ok := pgtypes.IDToBuiltInDoltgresType[id.Type(typeID)]; ok {
+		return errors.Errorf("must be owner of type %s", id.Type(typeID).TypeName())
+	}
+	return nil
 }
 
 func normalizeTransformIdentifier(identifier string) string {
