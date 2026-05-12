@@ -107,6 +107,7 @@ func (iter *pgOperatorRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	}
 	iter.idx++
 	operator := iter.operators[iter.idx-1]
+	canMergeOrHash := operator.name == "=" && operator.leftType == operator.rightType
 
 	return sql.Row{
 		operator.oid,                          // oid
@@ -114,8 +115,8 @@ func (iter *pgOperatorRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		operator.namespace,                    // oprnamespace
 		id.NewId(id.Section_User, "postgres"), // oprowner
 		"b",                                   // oprkind
-		false,                                 // oprcanmerge
-		false,                                 // oprcanhash
+		canMergeOrHash,                        // oprcanmerge
+		canMergeOrHash,                        // oprcanhash
 		operator.leftType,                     // oprleft
 		operator.rightType,                    // oprright
 		operator.result,                       // oprresult
