@@ -36,11 +36,37 @@ func validateForeignKeyDefinition(ctx *sql.Context, fkDef sql.ForeignKeyConstrai
 	for i := range fkDef.Columns {
 		col := cols[strings.ToLower(fkDef.Columns[i])]
 		parentCol := parentCols[strings.ToLower(fkDef.ParentColumns[i])]
+		if col.Generated != nil {
+			if foreignKeyUpdateActionWritesReferencingColumn(fkDef.OnUpdate) {
+				return errors.Errorf("generated column %q cannot be used with ON UPDATE %s in a foreign key", col.Name, fkDef.OnUpdate)
+			}
+			if foreignKeyDeleteActionWritesReferencingColumn(fkDef.OnDelete) {
+				return errors.Errorf("generated column %q cannot be used with ON DELETE %s in a foreign key", col.Name, fkDef.OnDelete)
+			}
+		}
 		if !foreignKeyComparableTypes(ctx, col.Type, parentCol.Type) {
 			return errors.Errorf("Key columns %q and %q are of incompatible types: %s and %s", col.Name, parentCol.Name, col.Type.String(), parentCol.Type.String())
 		}
 	}
 	return nil
+}
+
+func foreignKeyUpdateActionWritesReferencingColumn(action sql.ForeignKeyReferentialAction) bool {
+	switch action {
+	case sql.ForeignKeyReferentialAction_Cascade, sql.ForeignKeyReferentialAction_SetNull, sql.ForeignKeyReferentialAction_SetDefault:
+		return true
+	default:
+		return false
+	}
+}
+
+func foreignKeyDeleteActionWritesReferencingColumn(action sql.ForeignKeyReferentialAction) bool {
+	switch action {
+	case sql.ForeignKeyReferentialAction_SetNull, sql.ForeignKeyReferentialAction_SetDefault:
+		return true
+	default:
+		return false
+	}
 }
 
 func validateForeignKeyReferencePrivileges(ctx *sql.Context, fkDef sql.ForeignKeyConstraint) error {
