@@ -18478,3 +18478,20 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: the first user-defined `regtype` input fails
   with `type "regtype_lookup_enum" does not exist`, so catalog queries and
   DDL that rely on `regtype` cannot resolve ordinary user-defined types.
+
+### Replication stat catalogs omit pg_attribute metadata for LSN columns
+
+- Reproducer: `TestReplicationStatCatalogsExposePgAttributeLsnMetadataRepro` in
+  `testing/go/replication_catalog_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestReplicationStatCatalogsExposePgAttributeLsnMetadataRepro -count=1`.
+- Expected PostgreSQL behavior: replication catalog columns that carry LSN
+  values, including `pg_stat_subscription.received_lsn`,
+  `pg_stat_wal_receiver.written_lsn`,
+  `pg_subscription_rel.srsublsn`, and
+  `pg_replication_origin_status.remote_lsn`, are discoverable through
+  `pg_attribute` with PostgreSQL type `pg_lsn`.
+- Observed Doltgres behavior: the `pg_attribute` / `pg_class` introspection
+  query returns no rows for those replication-stat columns, so replication
+  clients and schema introspection cannot verify the PostgreSQL LSN metadata.
