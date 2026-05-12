@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(9)
+	writer.Uint32(10)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -49,6 +49,8 @@ func (db *Database) serialize() []byte {
 	db.sequencePrivileges.serialize(writer)
 	// Write the routine privileges
 	db.routinePrivileges.serialize(writer)
+	// Write the type privileges
+	db.typePrivileges.serialize(writer)
 	// Write the languages
 	db.languages.serialize(writer)
 	// Write the language privileges
@@ -98,6 +100,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV8(reader)
 	case 9:
 		return db.deserializeV9(reader)
+	case 10:
+		return db.deserializeV10(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -125,6 +129,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	db.roleMembership.deserialize(0, reader)
 	// Read the routine privileges
 	db.routinePrivileges.deserialize(0, reader)
+	db.typePrivileges.deserialize(0, reader)
 	// Read the sequence privileges
 	db.sequencePrivileges.deserialize(0, reader)
 	db.languages.deserialize(0, reader)
@@ -180,6 +185,10 @@ func (db *Database) deserializeV9(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 9)
 }
 
+func (db *Database) deserializeV10(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 10)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -202,6 +211,12 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.sequencePrivileges.deserialize(1, reader)
 		// Read the routine privileges
 		db.routinePrivileges.deserialize(1, reader)
+		if version >= 10 {
+			// Read the type privileges
+			db.typePrivileges.deserialize(1, reader)
+		} else {
+			db.typePrivileges.deserialize(0, reader)
+		}
 		// Read the languages
 		db.languages.deserialize(1, reader)
 		// Read the language privileges
@@ -251,6 +266,7 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.roleMembership.deserialize(1, reader)
 		// Read the routine privileges
 		db.routinePrivileges.deserialize(1, reader)
+		db.typePrivileges.deserialize(0, reader)
 		// Read the sequence privileges
 		db.sequencePrivileges.deserialize(1, reader)
 		db.languages.deserialize(0, reader)

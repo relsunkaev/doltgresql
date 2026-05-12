@@ -45,6 +45,7 @@ type Database struct {
 	tablePrivileges     *TablePrivileges
 	sequencePrivileges  *SequencePrivileges
 	routinePrivileges   *RoutinePrivileges
+	typePrivileges      *TypePrivileges
 	languages           *Languages
 	languagePrivileges  *LanguagePrivileges
 	parameterPrivileges *ParameterPrivileges
@@ -65,6 +66,7 @@ func ClearDatabase() {
 	clear(globalDatabase.tablePrivileges.Data)
 	clear(globalDatabase.sequencePrivileges.Data)
 	clear(globalDatabase.routinePrivileges.Data)
+	clear(globalDatabase.typePrivileges.Data)
 	clear(globalDatabase.languages.Data)
 	clear(globalDatabase.languagePrivileges.Data)
 	clear(globalDatabase.parameterPrivileges.Data)
@@ -181,6 +183,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		tablePrivileges:     NewTablePrivileges(),
 		sequencePrivileges:  NewSequencePrivileges(),
 		routinePrivileges:   NewRoutinePrivileges(),
+		typePrivileges:      NewTypePrivileges(),
 		languages:           NewLanguages(),
 		languagePrivileges:  NewLanguagePrivileges(),
 		parameterPrivileges: NewParameterPrivileges(),

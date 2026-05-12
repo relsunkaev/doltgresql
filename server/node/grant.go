@@ -25,6 +25,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/largeobject"
 )
@@ -37,6 +38,7 @@ type Grant struct {
 	GrantSequence    *GrantSequence
 	GrantRoutine     *GrantRoutine
 	GrantLanguage    *GrantLanguage
+	GrantType        *GrantType
 	GrantLargeObject *GrantLargeObject
 	GrantParameter   *GrantParameter
 	GrantRole        *GrantRole
@@ -86,6 +88,12 @@ type GrantRoutine struct {
 type GrantLanguage struct {
 	Privileges []auth.Privilege
 	Languages  []string
+}
+
+// GrantType specifically handles the GRANT ... ON TYPE statement.
+type GrantType struct {
+	Privileges []auth.Privilege
+	Types      []auth.TypePrivilegeKey
 }
 
 // GrantLargeObject specifically handles the GRANT ... ON LARGE OBJECT statement.
@@ -150,6 +158,10 @@ func (g *Grant) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 		case g.GrantLanguage != nil:
 			if err = g.grantLanguage(ctx); err != nil {
+				return
+			}
+		case g.GrantType != nil:
+			if err = g.grantType(ctx); err != nil {
 				return
 			}
 		case g.GrantLargeObject != nil:
@@ -459,6 +471,53 @@ func (g *Grant) grantLanguage(ctx *sql.Context) error {
 				auth.AddLanguagePrivilege(auth.LanguagePrivilegeKey{
 					Role: role.ID(),
 					Name: language,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedBy,
+				}, g.WithGrantOption)
+			}
+		}
+	}
+	return nil
+}
+
+// grantType handles *GrantType from within RowIter.
+func (g *Grant) grantType(ctx *sql.Context) error {
+	roles, userRole, err := g.common(ctx)
+	if err != nil {
+		return err
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, typ := range g.GrantType.Types {
+			schemaName, err := core.GetSchemaName(ctx, nil, typ.Schema)
+			if err != nil {
+				return err
+			}
+			resolvedType, err := typeCollection.GetType(ctx, id.NewType(schemaName, typ.Name))
+			if err != nil {
+				return err
+			}
+			if resolvedType == nil {
+				return errors.Errorf(`type "%s" does not exist`, typ.Name)
+			}
+			key := auth.TypePrivilegeKey{
+				Role:   userRole.ID(),
+				Schema: schemaName,
+				Name:   typ.Name,
+			}
+			for _, privilege := range g.GrantType.Privileges {
+				grantedBy := auth.HasTypePrivilegeGrantOption(key, privilege)
+				if !grantedBy.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
+				}
+				auth.AddTypePrivilege(auth.TypePrivilegeKey{
+					Role:   role.ID(),
+					Schema: schemaName,
+					Name:   typ.Name,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedBy,

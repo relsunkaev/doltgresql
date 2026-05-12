@@ -112,6 +112,19 @@ func LanguageACLItems(language string) []string {
 	return sortedACLItems(items)
 }
 
+// TypeACLItems returns explicit ACL entries for a type.
+func TypeACLItems(schema string, typeName string) []string {
+	var items []string
+	LockRead(func() {
+		for key, value := range globalDatabase.typePrivileges.Data {
+			if key.Schema == schema && key.Name == typeName {
+				items = append(items, aclItemsForRolePrivileges(key.Role, value.Privileges)...)
+			}
+		}
+	})
+	return sortedACLItems(items)
+}
+
 func tableNameMatches(table doltdb.TableName, schema string, name string) bool {
 	if table.Schema != schema {
 		return false

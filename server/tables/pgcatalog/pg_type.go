@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -362,7 +363,7 @@ func (iter *pgTypeTableScanIter) Close(_ *sql.Context) error {
 }
 
 func pgTypeToRow(nextType *pgType) sql.Row {
-	typAcl := []any(nil)
+	typAcl := aclTextArray(auth.TypeACLItems(nextType.typ.ID.SchemaName(), nextType.name))
 
 	return sql.Row{
 		nextType.oid,

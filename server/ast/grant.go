@@ -38,6 +38,7 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	var grantSequence *pgnodes.GrantSequence
 	var grantRoutine *pgnodes.GrantRoutine
 	var grantLanguage *pgnodes.GrantLanguage
+	var grantType *pgnodes.GrantType
 	var grantLargeObject *pgnodes.GrantLargeObject
 	var grantParameter *pgnodes.GrantParameter
 	switch node.Targets.TargetType {
@@ -159,6 +160,22 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			Privileges: privileges,
 			Languages:  node.Targets.Names,
 		}
+	case privilege.Type:
+		types := make([]auth.TypePrivilegeKey, 0, len(node.Targets.Types))
+		for _, typ := range node.Targets.Types {
+			types = append(types, auth.TypePrivilegeKey{
+				Schema: typeSchema(typ),
+				Name:   typ.Parts[0],
+			})
+		}
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_TYPE, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		grantType = &pgnodes.GrantType{
+			Privileges: privileges,
+			Types:      types,
+		}
 	case privilege.LargeObject:
 		oids := make([]uint32, 0, len(node.Targets.LargeObjects))
 		for _, expr := range node.Targets.LargeObjects {
@@ -196,6 +213,7 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			GrantSequence:    grantSequence,
 			GrantRoutine:     grantRoutine,
 			GrantLanguage:    grantLanguage,
+			GrantType:        grantType,
 			GrantLargeObject: grantLargeObject,
 			GrantParameter:   grantParameter,
 			GrantRole:        nil,
@@ -238,6 +256,14 @@ func sequenceSchema(name *tree.UnresolvedObjectName) string {
 
 // routineSchema returns the schema portion of an UnresolvedObjectName for a routine.
 func routineSchema(name *tree.UnresolvedObjectName) string {
+	if name.NumParts >= 2 {
+		return name.Parts[1]
+	}
+	return ""
+}
+
+// typeSchema returns the schema portion of an UnresolvedObjectName for a type.
+func typeSchema(name *tree.UnresolvedObjectName) string {
 	if name.NumParts >= 2 {
 		return name.Parts[1]
 	}
