@@ -112,7 +112,11 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 				return aliasedExpr, err
 			}
 		}
-		aliasedExpr, ok, err := nodeMultiColumnUnnestAlias(ctx, node, expr)
+		aliasedExpr, ok, err := nodeRowsFromAlias(ctx, node, expr)
+		if err != nil || ok {
+			return aliasedExpr, err
+		}
+		aliasedExpr, ok, err = nodeMultiColumnUnnestAlias(ctx, node, expr)
 		if err != nil || ok {
 			return aliasedExpr, err
 		}
@@ -217,6 +221,67 @@ func nodeSingleColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExp
 				From: vitess.TableExprs{
 					&vitess.TableFuncExpr{
 						Name:  funcName,
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: true,
+	}, true, nil
+}
+
+func nodeRowsFromAlias(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {
+	if len(rowsFromExpr.Items) <= 1 {
+		return nil, false, nil
+	}
+	if len(node.As.Cols) > len(rowsFromExpr.Items) {
+		return nil, true, errors.Errorf("ROWS FROM only has %d columns", len(rowsFromExpr.Items))
+	}
+
+	tableFuncArgs := make(vitess.SelectExprs, 0, len(rowsFromExpr.Items)*4)
+	selectExprs := make(vitess.SelectExprs, len(rowsFromExpr.Items))
+	internalAlias := "__doltgres_rows_from"
+	for i, item := range rowsFromExpr.Items {
+		funcExpr, ok := item.(*tree.FuncExpr)
+		if !ok {
+			return nil, true, errors.Errorf("ROWS FROM only supports table functions")
+		}
+		funcName := singleColumnTableFunctionName(funcExpr)
+		switch funcName {
+		case "generate_series", "unnest":
+		default:
+			return nil, true, errors.Errorf("ROWS FROM does not yet support function %s", funcName)
+		}
+
+		args, err := nodeExprs(ctx, funcExpr.Exprs)
+		if err != nil {
+			return nil, true, err
+		}
+		tableFuncArgs = append(tableFuncArgs, tableFuncTextArg(funcName), tableFuncTextArg(strconv.Itoa(len(args))))
+		for _, arg := range args {
+			tableFuncArgs = append(tableFuncArgs, &vitess.AliasedExpr{Expr: arg})
+		}
+
+		sourceName := "value_" + strconv.Itoa(i+1)
+		colName := funcName
+		if i < len(node.As.Cols) {
+			colName = string(node.As.Cols[i])
+		}
+		selectExprs[i] = &vitess.AliasedExpr{
+			Expr: tableFuncColumn(internalAlias, sourceName),
+			As:   vitess.NewColIdent(colName),
+		}
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: selectExprs,
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  "doltgres_rows_from",
 						Exprs: tableFuncArgs,
 						Alias: vitess.NewTableIdent(internalAlias),
 					},

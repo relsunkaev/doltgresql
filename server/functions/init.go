@@ -214,6 +214,7 @@ func Init() {
 	initReplace()
 	initReverse()
 	initRight()
+	initRowsFrom()
 	initRound()
 	initRpad()
 	initRtrim()
