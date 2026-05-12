@@ -3436,6 +3436,7 @@ func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
 		delete(h.preparedStatements, name)
 	}
 	sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+	notifications.UnlistenAll(h.mysqlConn.ConnectionID)
 
 	err := h.doltgresHandler.ComResetConnection(h.mysqlConn)
 	if err != nil {
