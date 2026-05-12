@@ -112,7 +112,7 @@ func checkVacuumTablePrivilege(ctx *sql.Context, table doltdb.TableName) error {
 		allowed = role.IsSuperUser || auth.HasTablePrivilege(auth.TablePrivilegeKey{
 			Role:  role.ID(),
 			Table: table,
-		}, auth.Privilege_DROP)
+		}, auth.Privilege_DROP) || auth.HasInheritedRole(role.ID(), "pg_maintain")
 	})
 	if !allowed {
 		return errors.Errorf("permission denied for table %s", table.Name)

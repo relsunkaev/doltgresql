@@ -264,6 +264,23 @@ func ensurePredefinedRoles() {
 			SetRole(CreateDefaultRole(roleName))
 		}
 	}
+	ensurePredefinedMembership("pg_monitor", "pg_read_all_settings")
+	ensurePredefinedMembership("pg_monitor", "pg_read_all_stats")
+	ensurePredefinedMembership("pg_monitor", "pg_stat_scan_tables")
+}
+
+func ensurePredefinedMembership(memberName string, groupName string) {
+	member := GetRole(memberName)
+	group := GetRole(groupName)
+	if !member.IsValid() || !group.IsValid() {
+		return
+	}
+	if groupMap, ok := globalDatabase.roleMembership.Data[member.ID()]; ok {
+		if _, ok := groupMap[group.ID()]; ok {
+			return
+		}
+	}
+	AddMemberToGroup(member.ID(), group.ID(), false, member.ID())
 }
 
 // dbInitCreateAuthDirectory creates the directory structure pointed to by the auth file if it does not already exist.

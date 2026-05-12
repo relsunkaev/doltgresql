@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,21 @@ func (p PgAuthMembersHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAuthMembersHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_auth_members row iter
-	return emptyRowIter()
+	memberships := auth.GetAllRoleMemberships()
+	rows := make([]sql.Row, 0, len(memberships))
+	for _, membership := range memberships {
+		grantor := membership.Grantor
+		if !grantor.IsValid() {
+			grantor = membership.Member
+		}
+		rows = append(rows, sql.Row{
+			id.NewId(id.Section_User, membership.Group.Name),
+			id.NewId(id.Section_User, membership.Member.Name),
+			id.NewId(id.Section_User, grantor.Name),
+			membership.WithAdminOption,
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -61,20 +74,4 @@ var pgAuthMembersSchema = sql.Schema{
 	{Name: "member", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "grantor", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgAuthMembersName},
 	{Name: "admin_option", Type: pgtypes.Bool, Default: nil, Nullable: false, Source: PgAuthMembersName},
-}
-
-// pgAuthMembersRowIter is the sql.RowIter for the pg_auth_members table.
-type pgAuthMembersRowIter struct {
-}
-
-var _ sql.RowIter = (*pgAuthMembersRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgAuthMembersRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgAuthMembersRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

@@ -14,7 +14,11 @@
 
 package auth
 
-import "github.com/dolthub/doltgresql/utils"
+import (
+	"sort"
+
+	"github.com/dolthub/doltgresql/utils"
+)
 
 // RoleMembership contains all roles that have been granted to other roles.
 type RoleMembership struct {
@@ -27,6 +31,14 @@ type RoleMembershipValue struct {
 	Group           RoleID
 	WithAdminOption bool
 	GrantedBy       RoleID
+}
+
+// RoleMembershipInfo is a resolved role-membership row.
+type RoleMembershipInfo struct {
+	Member          Role
+	Group           Role
+	Grantor         Role
+	WithAdminOption bool
 }
 
 // NewRoleMembership returns a new *RoleMembership.
@@ -83,6 +95,44 @@ func IsRoleAMember(member RoleID, group RoleID) (groupID RoleID, inheritsPrivile
 		return group, true, true
 	}
 	return 0, false, false
+}
+
+// HasInheritedRole returns whether member directly or indirectly inherits the named role.
+func HasInheritedRole(member RoleID, groupName string) bool {
+	group := GetRole(groupName)
+	if !group.IsValid() {
+		return false
+	}
+	groupID, inheritsPrivileges, _ := IsRoleAMember(member, group.ID())
+	return groupID.IsValid() && inheritsPrivileges
+}
+
+// GetAllRoleMemberships returns all direct memberships in deterministic order.
+func GetAllRoleMemberships() []RoleMembershipInfo {
+	memberships := make([]RoleMembershipInfo, 0)
+	for _, groupMap := range globalDatabase.roleMembership.Data {
+		for _, membership := range groupMap {
+			member, memberOk := globalDatabase.rolesByID[membership.Member]
+			group, groupOk := globalDatabase.rolesByID[membership.Group]
+			if !memberOk || !groupOk {
+				continue
+			}
+			grantor := globalDatabase.rolesByID[membership.GrantedBy]
+			memberships = append(memberships, RoleMembershipInfo{
+				Member:          member,
+				Group:           group,
+				Grantor:         grantor,
+				WithAdminOption: membership.WithAdminOption,
+			})
+		}
+	}
+	sort.Slice(memberships, func(i, j int) bool {
+		if memberships[i].Member.Name != memberships[j].Member.Name {
+			return memberships[i].Member.Name < memberships[j].Member.Name
+		}
+		return memberships[i].Group.Name < memberships[j].Group.Name
+	})
+	return memberships
 }
 
 // GetAllGroupsWithMember returns every group that the role is a direct member of. This can also filter by groups that

@@ -68,6 +68,12 @@ func HasTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
 	if IsSuperUser(key.Role) {
 		return true
 	}
+	if privilege == Privilege_SELECT && HasInheritedRole(key.Role, "pg_read_all_data") {
+		return true
+	}
+	if isWriteAllDataTablePrivilege(privilege) && HasInheritedRole(key.Role, "pg_write_all_data") {
+		return true
+	}
 	if len(key.Column) > 0 {
 		tableKey := key
 		tableKey.Column = ""
@@ -97,6 +103,15 @@ func HasTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
 		}
 	}
 	return false
+}
+
+func isWriteAllDataTablePrivilege(privilege Privilege) bool {
+	switch privilege {
+	case Privilege_INSERT, Privilege_UPDATE, Privilege_DELETE, Privilege_TRUNCATE:
+		return true
+	default:
+		return false
+	}
 }
 
 // HasAnyColumnPrivilege checks whether the user has the given privilege on any column in the associated table.
