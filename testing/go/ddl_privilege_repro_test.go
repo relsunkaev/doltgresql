@@ -298,6 +298,38 @@ func TestPublicSchemaDefaultCreateRequiresExplicitGrantGuard(t *testing.T) {
 	})
 }
 
+// TestCreateAggregateRequiresSchemaCreatePrivilegeGuard covers CREATE
+// AGGREGATE authorization: the creator must have CREATE privilege on the target
+// schema.
+func TestCreateAggregateRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE AGGREGATE requires schema CREATE privilege",
+			SetUpScript: []string{
+				`CREATE USER aggregate_creator PASSWORD 'creator';`,
+				`CREATE FUNCTION create_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`GRANT USAGE ON SCHEMA public TO aggregate_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE AGGREGATE create_aggregate_private(INT) (
+						SFUNC = create_aggregate_private_sfunc,
+						STYPE = INT,
+						INITCOND = '0'
+					);`,
+					ExpectedErr: `permission denied for schema public`,
+					Username:    `aggregate_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
