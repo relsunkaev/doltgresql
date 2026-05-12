@@ -71,6 +71,7 @@ func initTypeFunctions() {
 	initVoid()
 	initXid()
 	initXid8()
+	initXml()
 }
 
 // Init initializes all functions in this package.

@@ -155,6 +155,12 @@ func (pgs *TypeCollection) GetDomainType(ctx context.Context, name id.Type) (*pg
 // GetType returns the type with the given schema and name.
 // Returns nil if the type cannot be found.
 func (pgs *TypeCollection) GetType(ctx context.Context, name id.Type) (*pgtypes.DoltgresType, error) {
+	if name.SchemaName() == "pg_catalog" {
+		switch name.TypeName() {
+		case "document", "content":
+			return pgtypes.Xml, nil
+		}
+	}
 	// Check the built-in types first
 	if t, ok := pgtypes.IDToBuiltInDoltgresType[name]; ok {
 		return t, nil

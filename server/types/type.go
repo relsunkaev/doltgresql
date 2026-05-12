@@ -477,6 +477,14 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		if ok {
 			return v, sql.InRange, nil
 		}
+	case "xml":
+		str, ok, err := sql.Unwrap[string](ctx, v)
+		if err != nil {
+			return nil, sql.InRange, err
+		}
+		if ok {
+			return v, sql.InRange, ValidateXMLContent(str)
+		}
 	case "date", "timestamp", "timestamptz":
 		if _, ok := v.(time.Time); ok {
 			return v, sql.InRange, nil

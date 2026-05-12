@@ -202,7 +202,7 @@ func init() {
 		toInternal("_vector"):          VectorArray,
 		toInternal("_xid"):             XidArray,
 		toInternal("_xid8"):            Xid8Array,
-		toInternal("_xml"):             Unknown,
+		toInternal("_xml"):             XmlArray,
 		toInternal("abstime"):          Unknown,
 		toInternal("aclitem"):          Unknown,
 		toInternal("any"):              Any,
@@ -304,7 +304,7 @@ func init() {
 		toInternal("void"):             Void,
 		toInternal("xid"):              Xid,
 		toInternal("xid8"):             Xid8,
-		toInternal("xml"):              Unknown,
+		toInternal("xml"):              Xml,
 	}
 	for _, t := range GetAllBuitInTypes() {
 		NameToInternalID[t.Name()] = t.ID
@@ -319,6 +319,9 @@ func init() {
 			idToInternalDeserializationFunc[globalFunctionRegistry.GetInternalID(t.ReceiveFunc)] = t.DeserializationFunc
 		}
 	}
+	// XMLPARSE(DOCUMENT '...') is currently parsed as a typed string literal.
+	NameToInternalID["document"] = Xml.ID
+	NameToInternalID["content"] = Xml.ID
 	// Add the created types to the deserialization map
 	idToInternalDeserializationFunc[globalFunctionRegistry.GetInternalID(toFuncID("domain_recv", toInternal("internal"), toInternal("oid"), toInternal("int4")))] = deserializeTypeDomain
 	idToInternalDeserializationFunc[globalFunctionRegistry.GetInternalID(toFuncID("enum_recv", toInternal("internal"), toInternal("oid")))] = deserializeTypeEnum
