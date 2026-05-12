@@ -98,7 +98,7 @@ func diffTimes(t1, t2 time.Time) duration.Duration {
 		days--
 	}
 	if days < 0 {
-		days += 30
+		days += int64(daysInMonth(t2.Year(), t2.Month()))
 		months--
 	}
 	if months < 0 {
@@ -111,6 +111,10 @@ func diffTimes(t1, t2 time.Time) duration.Duration {
 		return dur.Mul(-1)
 	}
 	return dur
+}
+
+func daysInMonth(year int, month time.Month) int {
+	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
 }
 
 func GetIntervalDurationFromTimeComponents(years, months, days, hours, minutes, seconds, nanos int64) duration.Duration {
