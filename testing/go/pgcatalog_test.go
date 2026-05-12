@@ -12,8 +12,8 @@ func TestPgAggregate(t *testing.T) {
 			Name: "pg_aggregate",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_aggregate";`,
-					Expected: []sql.Row{},
+					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_aggregate";`,
+					Expected: []sql.Row{{"t"}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_aggregate";`,
@@ -24,8 +24,8 @@ func TestPgAggregate(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT aggfnoid FROM PG_catalog.pg_AGGREGATE ORDER BY aggfnoid;",
-					Expected: []sql.Row{},
+					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_AGGREGATE;",
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},
@@ -1071,8 +1071,8 @@ func TestPgConfig(t *testing.T) {
 			Name: "pg_config",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_config";`,
-					Expected: []sql.Row{},
+					Query:    `SELECT name FROM "pg_catalog"."pg_config" WHERE name = 'BINDIR';`,
+					Expected: []sql.Row{{"BINDIR"}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_config";`,
@@ -1084,7 +1084,7 @@ func TestPgConfig(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT name FROM PG_catalog.pg_CONFIG ORDER BY name;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"BINDIR"}},
 				},
 			},
 		},
@@ -1471,8 +1471,8 @@ func TestPgConversion(t *testing.T) {
 			Name: "pg_conversion",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_conversion";`,
-					Expected: []sql.Row{},
+					Query:    `SELECT conname FROM "pg_catalog"."pg_conversion" WHERE conname = 'utf8_to_iso_8859_1';`,
+					Expected: []sql.Row{{"utf8_to_iso_8859_1"}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_conversion";`,
@@ -1484,7 +1484,7 @@ func TestPgConversion(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT conname FROM PG_catalog.pg_CONVERSION ORDER BY conname;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"utf8_to_iso_8859_1"}},
 				},
 			},
 		},
@@ -2151,8 +2151,8 @@ func TestPgInitPrivs(t *testing.T) {
 			Name: "pg_init_privs",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_init_privs";`,
-					Expected: []sql.Row{},
+					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_init_privs";`,
+					Expected: []sql.Row{{"t"}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_init_privs";`,
@@ -2163,8 +2163,8 @@ func TestPgInitPrivs(t *testing.T) {
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT objoid FROM PG_catalog.pg_INIT_PRIVS ORDER BY objoid;",
-					Expected: []sql.Row{},
+					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_INIT_PRIVS;",
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},

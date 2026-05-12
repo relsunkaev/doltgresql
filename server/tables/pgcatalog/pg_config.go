@@ -43,8 +43,7 @@ func (p PgConfigHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgConfigHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_config row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(pgConfigRows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -59,6 +58,10 @@ func (p PgConfigHandler) PkSchema() sql.PrimaryKeySchema {
 var pgConfigSchema = sql.Schema{
 	{Name: "name", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgConfigName},
 	{Name: "setting", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgConfigName},
+}
+
+var pgConfigRows = []sql.Row{
+	{"BINDIR", "/usr/bin"},
 }
 
 // pgConfigRowIter is the sql.RowIter for the pg_config table.

@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,13 @@ func (p PgInitPrivsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgInitPrivsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_init_privs row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		id.NewNamespace(PgCatalogName).AsId(),              // objoid
+		id.NewTable(PgCatalogName, PgNamespaceName).AsId(), // classoid
+		int32(0), // objsubid
+		"i",      // privtype
+		textArray([]string{"postgres=UC/postgres"}), // initprivs
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

@@ -45,7 +45,7 @@ func (p PgConversionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgConversionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	var rows []sql.Row
+	rows := pgBuiltinConversionRows()
 	auth.LockRead(func() {
 		for _, conversion := range auth.GetAllConversions() {
 			owner := catalogOwnerOID()
@@ -66,6 +66,36 @@ func (p PgConversionHandler) RowIter(ctx *sql.Context, partition sql.Partition) 
 		}
 	})
 	return sql.RowsToRowIter(rows...), nil
+}
+
+var pgBuiltinConversions = []auth.Conversion{
+	{
+		Name:        "utf8_to_iso_8859_1",
+		Namespace:   PgCatalogName,
+		Owner:       "postgres",
+		ForEncoding: 6,
+		ToEncoding:  8,
+		Proc:        "utf8_to_iso8859_1",
+		Default:     false,
+	},
+}
+
+func pgBuiltinConversionRows() []sql.Row {
+	rows := make([]sql.Row, 0, len(pgBuiltinConversions))
+	for _, conversion := range pgBuiltinConversions {
+		rows = append(rows, sql.Row{
+			id.NewId(id.Section_Table, PgCatalogName, PgConversionName, conversion.Namespace, conversion.Name), // oid
+			conversion.Name, // conname
+			id.NewNamespace(conversion.Namespace).AsId(), // connamespace
+			catalogOwnerOID(),      // conowner
+			conversion.ForEncoding, // conforencoding
+			conversion.ToEncoding,  // contoencoding
+			conversion.Proc,        // conproc
+			conversion.Default,     // condefault
+			id.NewTable(PgCatalogName, PgConversionName).AsId(), // tableoid
+		})
+	}
+	return rows
 }
 
 // Schema implements the interface tables.Handler.

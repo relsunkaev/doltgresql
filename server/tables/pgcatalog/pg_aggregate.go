@@ -15,11 +15,14 @@
 package pgcatalog
 
 import (
+	"sort"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -58,6 +61,7 @@ func (p PgAggregateHandler) RowIter(ctx *sql.Context, partition sql.Partition) (
 	if err != nil {
 		return nil, err
 	}
+	rows = append(rows, pgAggregateBuiltinRows()...)
 	return sql.RowsToRowIter(rows...), nil
 }
 
@@ -123,5 +127,52 @@ func pgAggregateRow(function corefunctions.Function) sql.Row {
 		int32(0),                               // aggmtransspace
 		initCond,                               // agginitval
 		nil,                                    // aggminitval
+	}
+}
+
+func pgAggregateBuiltinRows() []sql.Row {
+	names := make([]string, 0, len(framework.AggregateCatalog))
+	for name := range framework.AggregateCatalog {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	rows := make([]sql.Row, 0)
+	for _, name := range names {
+		overloads := append([]framework.AggregateFunctionInterface(nil), framework.AggregateCatalog[name]...)
+		sort.Slice(overloads, func(i, j int) bool {
+			return string(overloads[i].InternalID()) < string(overloads[j].InternalID())
+		})
+		for _, overload := range overloads {
+			rows = append(rows, pgAggregateBuiltinRow(overload))
+		}
+	}
+	return rows
+}
+
+func pgAggregateBuiltinRow(function framework.AggregateFunctionInterface) sql.Row {
+	return sql.Row{
+		function.GetName(),             // aggfnoid
+		"n",                            // aggkind
+		int16(0),                       // aggnumdirectargs
+		"-",                            // aggtransfn
+		"-",                            // aggfinalfn
+		"-",                            // aggcombinefn
+		"-",                            // aggserialfn
+		"-",                            // aggdeserialfn
+		"-",                            // aggmtransfn
+		"-",                            // aggminvtransfn
+		"-",                            // aggmfinalfn
+		false,                          // aggfinalextra
+		false,                          // aggmfinalextra
+		false,                          // aggfinalmodify
+		false,                          // aggmfinalmodify
+		id.Null,                        // aggsortop
+		function.GetReturn().ID.AsId(), // aggtranstype
+		int32(0),                       // aggtransspace
+		id.Null,                        // aggmtranstype
+		int32(0),                       // aggmtransspace
+		nil,                            // agginitval
+		nil,                            // aggminitval
 	}
 }
