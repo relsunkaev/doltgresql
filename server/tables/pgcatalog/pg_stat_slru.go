@@ -43,8 +43,17 @@ func (p PgStatSlruHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatSlruHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_slru row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		"subtrans", // name
+		int64(0),   // blks_zeroed
+		int64(0),   // blks_hit
+		int64(0),   // blks_read
+		int64(0),   // blks_written
+		int64(0),   // blks_exists
+		int64(0),   // flushes
+		int64(0),   // truncates
+		nil,        // stats_reset
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

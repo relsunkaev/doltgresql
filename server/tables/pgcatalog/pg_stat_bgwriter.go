@@ -43,8 +43,19 @@ func (p PgStatBgwriterHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatBgwriterHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_bgwriter row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int64(0),   // checkpoints_timed
+		int64(0),   // checkpoints_req
+		float64(0), // checkpoint_write_time
+		float64(0), // checkpoint_sync_time
+		int64(0),   // buffers_checkpoint
+		int64(0),   // buffers_clean
+		int64(0),   // maxwritten_clean
+		int64(0),   // buffers_backend
+		int64(0),   // buffers_backend_fsync
+		int64(0),   // buffers_alloc
+		nil,        // stats_reset
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

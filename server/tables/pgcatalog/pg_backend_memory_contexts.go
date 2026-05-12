@@ -43,8 +43,17 @@ func (p PgBackendMemoryContextsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgBackendMemoryContextsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_backend_memory_contexts row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		"TopMemoryContext", // name
+		nil,                // ident
+		nil,                // parent
+		int32(0),           // level
+		int64(0),           // total_bytes
+		int64(0),           // total_nblocks
+		int64(0),           // free_bytes
+		int64(0),           // free_chunks
+		int64(0),           // used_bytes
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

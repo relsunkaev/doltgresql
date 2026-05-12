@@ -43,8 +43,11 @@ func (p PgStatioAllTablesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatioAllTablesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_statio_all_tables row iter
-	return emptyRowIter()
+	rows, err := pgStatioTableRows(ctx, true, true)
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

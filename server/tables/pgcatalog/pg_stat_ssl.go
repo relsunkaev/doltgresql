@@ -43,8 +43,16 @@ func (p PgStatSslHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatSslHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_ssl row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int32(ctx.Session.ID()), // pid
+		false,                   // ssl
+		nil,                     // version
+		nil,                     // cipher
+		nil,                     // bits
+		nil,                     // client_dn
+		nil,                     // client_serial
+		nil,                     // issuer_dn
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

@@ -43,8 +43,30 @@ func (p PgStatActivityHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatActivityHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_activity row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		nil,                      // datid
+		ctx.GetCurrentDatabase(), // datname
+		int32(ctx.Session.ID()),  // pid
+		nil,                      // leader_pid
+		nil,                      // usesysid
+		ctx.Client().User,        // usename
+		nil,                      // application_name
+		nil,                      // client_addr
+		nil,                      // client_hostname
+		nil,                      // client_port
+		nil,                      // backend_start
+		nil,                      // xact_start
+		nil,                      // query_start
+		nil,                      // state_change
+		nil,                      // wait_event_type
+		nil,                      // wait_event
+		"active",                 // state
+		nil,                      // backend_xid
+		nil,                      // backend_xmin
+		nil,                      // query_id
+		nil,                      // query
+		"client backend",         // backend_type
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

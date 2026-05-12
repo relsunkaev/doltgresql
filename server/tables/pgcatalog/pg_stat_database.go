@@ -43,8 +43,36 @@ func (p PgStatDatabaseHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatDatabaseHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_database row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		nil,                      // datid
+		ctx.GetCurrentDatabase(), // datname
+		int32(1),                 // numbackends
+		int64(0),                 // xact_commit
+		int64(0),                 // xact_rollback
+		int64(0),                 // blks_read
+		int64(0),                 // blks_hit
+		int64(0),                 // tup_returned
+		int64(0),                 // tup_fetched
+		int64(0),                 // tup_inserted
+		int64(0),                 // tup_updated
+		int64(0),                 // tup_deleted
+		int64(0),                 // conflicts
+		int64(0),                 // temp_files
+		int64(0),                 // temp_bytes
+		int64(0),                 // deadlocks
+		int64(0),                 // checksum_failures
+		nil,                      // checksum_last_failure
+		float64(0),               // blk_read_time
+		float64(0),               // blk_write_time
+		float64(0),               // session_time
+		float64(0),               // active_time
+		float64(0),               // idle_in_transaction_time
+		int64(1),                 // sessions
+		int64(0),                 // sessions_abandoned
+		int64(0),                 // sessions_fatal
+		int64(0),                 // sessions_killed
+		nil,                      // stats_reset
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

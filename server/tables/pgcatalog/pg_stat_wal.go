@@ -43,8 +43,17 @@ func (p PgStatWalHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatWalHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_wal row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int64(0),   // wal_records
+		int64(0),   // wal_fpi
+		int64(0),   // wal_bytes
+		int64(0),   // wal_buffers_full
+		int64(0),   // wal_write
+		int64(0),   // wal_sync
+		float64(0), // wal_write_time
+		float64(0), // wal_sync_time
+		nil,        // stats_reset
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

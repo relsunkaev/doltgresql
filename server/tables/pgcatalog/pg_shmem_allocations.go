@@ -43,8 +43,12 @@ func (p PgShmemAllocationsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgShmemAllocationsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_shmem_allocations row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		"Doltgres shared memory", // name
+		int64(0),                 // off
+		int64(0),                 // size
+		int64(0),                 // allocated_size
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

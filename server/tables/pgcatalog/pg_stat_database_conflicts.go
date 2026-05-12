@@ -43,8 +43,16 @@ func (p PgStatDatabaseConflictsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatDatabaseConflictsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_database_conflicts row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		nil,                      // datid
+		ctx.GetCurrentDatabase(), // datname
+		int64(0),                 // confl_tablespace
+		int64(0),                 // confl_lock
+		int64(0),                 // confl_snapshot
+		int64(0),                 // confl_bufferpin
+		int64(0),                 // confl_deadlock
+		int64(0),                 // confl_active_logicalslot
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

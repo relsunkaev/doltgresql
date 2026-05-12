@@ -43,8 +43,15 @@ func (p PgStatArchiverHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatArchiverHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_archiver row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int64(0), // archived_count
+		nil,      // last_archived_wal
+		nil,      // last_archived_time
+		int64(0), // failed_count
+		nil,      // last_failed_wal
+		nil,      // last_failed_time
+		nil,      // stats_reset
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

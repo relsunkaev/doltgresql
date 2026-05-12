@@ -43,8 +43,17 @@ func (p PgHbaFileRulesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgHbaFileRulesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_hba_file_rules row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int32(1),     // line_number
+		"host",       // type
+		[]any{"all"}, // database
+		[]any{"all"}, // user_name
+		"0.0.0.0/0",  // address
+		nil,          // netmask
+		"trust",      // auth_method
+		nil,          // options
+		nil,          // error
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

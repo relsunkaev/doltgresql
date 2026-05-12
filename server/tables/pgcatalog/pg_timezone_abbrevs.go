@@ -43,8 +43,11 @@ func (p PgTimezoneAbbrevsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTimezoneAbbrevsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_timezone_abbrevs row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		"UTC",      // abbrev
+		"00:00:00", // utc_offset
+		false,      // is_dst
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

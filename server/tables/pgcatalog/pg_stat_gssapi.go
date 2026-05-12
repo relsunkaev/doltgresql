@@ -43,8 +43,13 @@ func (p PgStatGssapiHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatGssapiHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_gssapi row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(sql.Row{
+		int32(ctx.Session.ID()), // pid
+		false,                   // gss_authenticated
+		nil,                     // principal
+		false,                   // encrypted
+		false,                   // credentials_delegated
+	}), nil
 }
 
 // Schema implements the interface tables.Handler.

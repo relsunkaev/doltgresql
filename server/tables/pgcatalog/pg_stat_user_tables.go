@@ -43,8 +43,11 @@ func (p PgStatUserTablesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatUserTablesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_user_tables row iter
-	return emptyRowIter()
+	rows, err := pgStatTableRows(ctx, true, false)
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
