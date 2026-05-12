@@ -17460,22 +17460,27 @@ They are worth keeping, but they are not counted as found bugs.
 ### DOLT_RESET cannot unstage root-object changes
 
 - Reproducers: `TestDoltResetUnstagesFunctionDefinitionRepro`,
+  `TestDoltResetUnstagesProcedureDefinitionRepro`,
+  `TestDoltResetUnstagesViewDefinitionRepro`,
+  `TestDoltResetUnstagesMaterializedViewDefinitionRepro`,
   `TestDoltResetUnstagesSequenceDefinitionRepro`, and
   `TestDoltResetUnstagesTriggerDefinitionRepro` in
   `testing/go/dolt_versioning_correctness_repro_test.go`.
 - Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
   CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run 'TestDoltResetUnstages(FunctionDefinitionRepro|SequenceDefinitionRepro|TriggerDefinitionRepro)' -count=1`.
-- Expected Doltgres behavior: after staging a function, sequence, or trigger
-  root-object change with `DOLT_ADD('-A')`, `DOLT_RESET(<root-object-name>)`
-  should unstage that root object while leaving the working object present.
+  -run 'TestDoltResetUnstages(FunctionDefinition|ProcedureDefinition|ViewDefinition|MaterializedViewDefinition|SequenceDefinition|TriggerDefinition)Repro' -count=1`.
+- Expected Doltgres behavior: after staging a function, procedure, view,
+  materialized view, sequence, or trigger root-object change with
+  `DOLT_ADD('-A')`, `DOLT_RESET(<root-object-name>)` should unstage that root
+  object while leaving the working object present.
 - Observed Doltgres behavior: `DOLT_RESET` rejects canonical root-object paths
   such as `public.reset_staged_function_value()`,
   `public.reset_staged_sequence_value`, and
-  `public.reset_staged_trigger_items.reset_staged_trigger` with
-  `branch not found`, and the staged changes remain staged. Users can stage
-  these root objects but cannot unstage them through the matching path reset
-  API.
+  `public.reset_staged_trigger_items.reset_staged_trigger`, and it also rejects
+  the exact root-object names reported by `dolt_status` for staged procedures,
+  views, and materialized views, with `branch not found`. The staged changes
+  remain staged, so users can stage these root objects but cannot unstage them
+  through the matching path reset API.
 
 ### DOLT_CLEAN leaves uncommitted trigger metadata dirty
 

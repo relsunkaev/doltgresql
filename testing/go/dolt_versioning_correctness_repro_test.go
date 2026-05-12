@@ -806,6 +806,126 @@ func TestDoltResetUnstagesFunctionDefinitionRepro(t *testing.T) {
 	})
 }
 
+// TestDoltResetUnstagesProcedureDefinitionRepro reproduces a versioned-data
+// correctness bug: DOLT_RESET should unstage procedure definition changes.
+func TestDoltResetUnstagesProcedureDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET unstages procedure definition",
+			SetUpScript: []string{
+				`CREATE PROCEDURE reset_staged_procedure_value()
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`SELECT DOLT_ADD('-A');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 't';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `SELECT DOLT_RESET((
+							SELECT table_name
+							FROM dolt_status
+							WHERE staged = 't'
+							LIMIT 1
+						));`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `CALL reset_staged_procedure_value();`,
+				},
+			},
+		},
+	})
+}
+
+// TestDoltResetUnstagesViewDefinitionRepro reproduces a versioned-data
+// correctness bug: DOLT_RESET should unstage view definition changes.
+func TestDoltResetUnstagesViewDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET unstages view definition",
+			SetUpScript: []string{
+				`CREATE TABLE reset_staged_view_source (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial reset staged view source');`,
+				`CREATE VIEW reset_staged_view AS
+					SELECT id FROM reset_staged_view_source;`,
+				`SELECT DOLT_ADD('-A');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 't';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `SELECT DOLT_RESET((
+							SELECT table_name
+							FROM dolt_status
+							WHERE staged = 't'
+							LIMIT 1
+						));`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM reset_staged_view;`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltResetUnstagesMaterializedViewDefinitionRepro reproduces a
+// versioned-data correctness bug: DOLT_RESET should unstage materialized view
+// definition changes.
+func TestDoltResetUnstagesMaterializedViewDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET unstages materialized view definition",
+			SetUpScript: []string{
+				`CREATE TABLE reset_staged_matview_source (id INT PRIMARY KEY);`,
+				`INSERT INTO reset_staged_matview_source VALUES (1);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial reset staged matview source');`,
+				`CREATE MATERIALIZED VIEW reset_staged_matview AS
+					SELECT id FROM reset_staged_matview_source;`,
+				`SELECT DOLT_ADD('-A');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 't';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `SELECT DOLT_RESET((
+							SELECT table_name
+							FROM dolt_status
+							WHERE staged = 't'
+							LIMIT 1
+						));`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status WHERE staged = 'f';`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT id FROM reset_staged_matview;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetUnstagesSequenceDefinitionRepro reproduces a versioned-data
 // correctness bug: DOLT_RESET should unstage sequence object changes.
 func TestDoltResetUnstagesSequenceDefinitionRepro(t *testing.T) {
