@@ -1336,6 +1336,54 @@ func TestDoltCheckoutRestoresTriggerDefinitionsGuard(t *testing.T) {
 	})
 }
 
+// TestDoltCommitPersistsExtensionMetadataRepro reproduces a versioned
+// persistence bug: DOLT_COMMIT should be able to commit extension metadata and
+// extension member objects.
+func TestDoltCommitPersistsExtensionMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_COMMIT persists extension metadata",
+			SetUpScript: []string{
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_extension
+						WHERE extname = 'hstore';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'hstore';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query:            `SELECT DOLT_COMMIT('-A', '-m', 'commit extension metadata');`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_extension
+						WHERE extname = 'hstore';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'hstore';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltCleanRemovesUncommittedFunctionGuard keeps coverage for DOLT_CLEAN
 // removing uncommitted function definitions.
 func TestDoltCleanRemovesUncommittedFunctionGuard(t *testing.T) {
@@ -1393,6 +1441,78 @@ func TestDoltCleanRemovesUncommittedSequenceGuard(t *testing.T) {
 				{
 					Query:       `SELECT nextval('clean_uncommitted_sequence_value');`,
 					ExpectedErr: `relation "clean_uncommitted_sequence_value" does not exist`,
+				},
+			},
+		},
+	})
+}
+
+// TestDoltCleanRemovesUncommittedTypeAndDomainRepro reproduces a versioned
+// persistence bug: DOLT_CLEAN should remove uncommitted type/domain metadata
+// and leave the working set clean.
+func TestDoltCleanRemovesUncommittedTypeAndDomainRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_CLEAN removes uncommitted type and domain",
+			SetUpScript: []string{
+				`CREATE TYPE clean_uncommitted_enum AS ENUM ('one', 'two');`,
+				`CREATE TYPE clean_uncommitted_composite AS (id integer);`,
+				`CREATE DOMAIN clean_uncommitted_domain AS integer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CLEAN();`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname IN (
+							'clean_uncommitted_enum',
+							'clean_uncommitted_composite',
+							'clean_uncommitted_domain'
+						);`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltCleanRemovesUncommittedExtensionRepro reproduces a versioned
+// persistence bug: DOLT_CLEAN should remove uncommitted extension metadata and
+// extension member objects.
+func TestDoltCleanRemovesUncommittedExtensionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_CLEAN removes uncommitted extension",
+			SetUpScript: []string{
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CLEAN();`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_extension
+						WHERE extname = 'hstore';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'hstore';`,
+					Expected: []sql.Row{{int64(0)}},
 				},
 			},
 		},
