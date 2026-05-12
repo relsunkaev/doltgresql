@@ -73,6 +73,21 @@ func TestCatalogLookupHelpers(t *testing.T) {
 	if got, want := formatted.(string), "-"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
+
+	sqlASCII, err := pg_encoding_to_char_int.Callable(ctx, [2]*pgtypes.DoltgresType{}, int32(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := sqlASCII.(string), "SQL_ASCII"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+	invalidEncoding, err := pg_encoding_to_char_int.Callable(ctx, [2]*pgtypes.DoltgresType{}, int32(-1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := invalidEncoding.(string), ""; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
 }
 
 func TestUnicodeInformationHelpers(t *testing.T) {
