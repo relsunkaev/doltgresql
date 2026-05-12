@@ -362,6 +362,39 @@ func TestCreateOperatorRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOperatorRequiresFunctionExecutePrivilegeRepro reproduces a
+// security bug: Doltgres allows a role without EXECUTE privilege on the
+// underlying function to create an operator backed by it.
+func TestCreateOperatorRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OPERATOR requires EXECUTE on backing function",
+			SetUpScript: []string{
+				`CREATE USER operator_function_user PASSWORD 'creator';`,
+				`CREATE FUNCTION create_operator_execute_private_func(left_value INT, right_value INT)
+					RETURNS BOOL
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT left_value = right_value $$;`,
+				`REVOKE ALL ON FUNCTION create_operator_execute_private_func(INT, INT) FROM PUBLIC;`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO operator_function_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE OPERATOR === (
+						LEFTARG = INT,
+						RIGHTARG = INT,
+						PROCEDURE = create_operator_execute_private_func
+					);`,
+					ExpectedErr: `permission denied`,
+					Username:    `operator_function_user`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateCastRequiresTypeOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that owns neither the source nor target type to create
 // a cast between them.
