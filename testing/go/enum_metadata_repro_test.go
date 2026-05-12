@@ -290,6 +290,41 @@ func TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping an enum type referenced by an
+// expression index unless CASCADE is requested.
+func TestDropEnumTypeUsedByExpressionIndexRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects expression index dependencies",
+			SetUpScript: []string{
+				`CREATE TYPE enum_index_dependency_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE enum_index_dependency_items (
+					id INT PRIMARY KEY,
+					status TEXT
+				);`,
+				`CREATE INDEX enum_index_dependency_status_idx
+					ON enum_index_dependency_items (((status::enum_index_dependency_status)::text));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE enum_index_dependency_status;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO enum_index_dependency_items
+						VALUES (1, 'new');`,
+				},
+				{
+					Query: `SELECT id::text, status
+						FROM enum_index_dependency_items;`,
+					Expected: []sql.Row{{"1", "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropEnumTypeUsedByViewRequiresCascadeRepro reproduces a dependency bug:
 // PostgreSQL rejects dropping an enum type referenced by a view unless CASCADE
 // is requested.
