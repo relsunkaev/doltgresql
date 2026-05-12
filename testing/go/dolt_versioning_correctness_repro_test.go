@@ -320,6 +320,46 @@ func TestDoltResetHardRemovesUncommittedFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestDoltResetHardRemovesUncommittedViewRepro reproduces a versioned
+// persistence bug: DOLT_RESET --hard should discard uncommitted view
+// definitions.
+func TestDoltResetHardRemovesUncommittedViewRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted view",
+			SetUpScript: []string{
+				`CREATE TABLE reset_view_source (id INT PRIMARY KEY);`,
+				`INSERT INTO reset_view_source VALUES (1);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial view reset source');`,
+				`CREATE VIEW reset_uncommitted_view AS
+					SELECT id FROM reset_view_source;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT id FROM reset_uncommitted_view;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       `SELECT id FROM reset_uncommitted_view;`,
+					ExpectedErr: `not found`,
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetHardRemovesUncommittedSequenceGuard keeps coverage for
 // DOLT_RESET --hard discarding uncommitted sequence objects.
 func TestDoltResetHardRemovesUncommittedSequenceGuard(t *testing.T) {

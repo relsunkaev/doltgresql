@@ -17362,6 +17362,21 @@ They are worth keeping, but they are not counted as found bugs.
   remains callable, so reset does not actually restore root-object state for
   uncommitted functions.
 
+### DOLT_RESET --hard leaves uncommitted views in the working set
+
+- Reproducer: `TestDoltResetHardRemovesUncommittedViewRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltResetHardRemovesUncommittedViewRepro -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted view,
+  `DOLT_RESET('--hard')` should discard the view, leave `dolt_status` clean,
+  and make later reads from the view fail as undefined.
+- Observed Doltgres behavior: `DOLT_RESET('--hard')` returns success, but
+  `dolt_status` still reports one change and the supposedly discarded view
+  remains queryable. Resetting a working set can therefore leave stale view
+  metadata active after it should have been removed.
+
 ### DOLT_RESET --hard to an older revision leaves newer functions active
 
 - Reproducer: `TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro` in
