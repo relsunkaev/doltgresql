@@ -273,6 +273,42 @@ func TestAlterCompositeTypeRenameAttributeUpdatesMaterializedViewMetadataRepro(t
 	})
 }
 
+// TestAlterCompositeTypeRenameAttributeUpdatesGeneratedColumnMetadataRepro
+// reproduces a catalog persistence bug: renaming a composite type attribute
+// should update stored generated column expressions that reference that
+// attribute.
+func TestAlterCompositeTypeRenameAttributeUpdatesGeneratedColumnMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE updates generated column expressions",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_generated_item AS (old_name INT);`,
+				`CREATE TABLE rename_attr_generated_items (
+					id INT PRIMARY KEY,
+					payload rename_attr_generated_item,
+					extracted INT GENERATED ALWAYS AS ((payload).old_name) STORED
+				);`,
+				`INSERT INTO rename_attr_generated_items (id, payload)
+					VALUES (1, ROW(7)::rename_attr_generated_item);`,
+				`ALTER TYPE rename_attr_generated_item
+					RENAME ATTRIBUTE old_name TO new_name;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_attr_generated_items (id, payload)
+						VALUES (2, ROW(11)::rename_attr_generated_item);`,
+				},
+				{
+					Query: `SELECT id, (payload).new_name, extracted
+						FROM rename_attr_generated_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, 7, 7}, {2, 11, 11}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro
 // reproduces a catalog persistence bug: renaming a composite type attribute
 // should update SQL function bodies that reference that attribute.
