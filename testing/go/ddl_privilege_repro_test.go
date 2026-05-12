@@ -395,6 +395,50 @@ func TestCreateOperatorRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOperatorUsesQualifiedSchemaRepro reproduces a security and catalog
+// bug: a schema-qualified CREATE OPERATOR should check CREATE on the named
+// schema instead of creating an operator in the current schema.
+func TestCreateOperatorUsesQualifiedSchemaRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OPERATOR uses qualified schema",
+			SetUpScript: []string{
+				`CREATE USER operator_qualified_creator PASSWORD 'creator';`,
+				`CREATE SCHEMA operator_private;`,
+				`CREATE FUNCTION operator_qualified_func(left_value INT, right_value INT)
+					RETURNS BOOL
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT left_value = right_value $$;`,
+				`GRANT CREATE ON SCHEMA public TO operator_qualified_creator;`,
+				`GRANT USAGE ON SCHEMA operator_private TO operator_qualified_creator;`,
+				`GRANT EXECUTE ON FUNCTION operator_qualified_func(INT, INT)
+					TO operator_qualified_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE OPERATOR operator_private.=== (
+						LEFTARG = INT,
+						RIGHTARG = INT,
+						PROCEDURE = operator_qualified_func
+					);`,
+					ExpectedErr: `permission denied for schema operator_private`,
+					Username:    `operator_qualified_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query: `SELECT n.nspname, o.oprname
+						FROM pg_catalog.pg_operator o
+						JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace
+						WHERE o.oprname IN ('===', 'operator_private.===')
+						ORDER BY n.nspname, o.oprname;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateCastRequiresTypeOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that owns neither the source nor target type to create
 // a cast between them.
