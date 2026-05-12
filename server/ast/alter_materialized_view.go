@@ -56,6 +56,19 @@ func nodeAlterMaterializedView(ctx *Context, node *tree.AlterMaterializedView) (
 				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
 			},
 		}, nil
+	case *tree.AlterTableOwner:
+		viewName, err := nodeUnresolvedObjectName(ctx, node.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterMaterializedViewOwner(
+				node.IfExists,
+				viewName.SchemaQualifier.String(),
+				viewName.Name.String(),
+				cmd.Owner,
+			),
+		}, nil
 	default:
 		return NotYetSupportedError("ALTER MATERIALIZED VIEW command is not yet supported")
 	}

@@ -26,13 +26,15 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 type relationOwnerKind string
 
 const (
-	relationOwnerKindTable relationOwnerKind = "table"
-	relationOwnerKindView  relationOwnerKind = "view"
+	relationOwnerKindTable            relationOwnerKind = "table"
+	relationOwnerKindView             relationOwnerKind = "view"
+	relationOwnerKindMaterializedView relationOwnerKind = "materialized view"
 )
 
 // AlterRelationOwner handles ALTER TABLE/VIEW ... OWNER TO.
@@ -69,6 +71,17 @@ func NewAlterViewOwner(ifExists bool, schema string, view string, owner string) 
 	}
 }
 
+// NewAlterMaterializedViewOwner returns a new *AlterRelationOwner for ALTER MATERIALIZED VIEW ... OWNER TO.
+func NewAlterMaterializedViewOwner(ifExists bool, schema string, view string, owner string) *AlterRelationOwner {
+	return &AlterRelationOwner{
+		kind:     relationOwnerKindMaterializedView,
+		ifExists: ifExists,
+		schema:   schema,
+		name:     view,
+		owner:    owner,
+	}
+}
+
 // Children implements sql.ExecSourceRel.
 func (a *AlterRelationOwner) Children() []sql.Node {
 	return nil
@@ -97,6 +110,8 @@ func (a *AlterRelationOwner) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter
 		relation, err = a.resolveTable(ctx)
 	case relationOwnerKindView:
 		relation, err = a.resolveView(ctx)
+	case relationOwnerKindMaterializedView:
+		relation, err = a.resolveMaterializedView(ctx)
 	default:
 		err = errors.Errorf("unknown relation owner kind %s", a.kind)
 	}
@@ -205,10 +220,27 @@ func (a *AlterRelationOwner) resolveView(ctx *sql.Context) (doltdb.TableName, er
 	return doltdb.TableName{}, errors.Errorf(`relation "%s" does not exist`, a.name)
 }
 
+func (a *AlterRelationOwner) resolveMaterializedView(ctx *sql.Context) (doltdb.TableName, error) {
+	target, ok, err := findMaterializedViewRelation(ctx, a.name, a.schema)
+	if err != nil {
+		return doltdb.TableName{}, err
+	}
+	if !ok {
+		if a.ifExists {
+			return doltdb.TableName{}, nil
+		}
+		return doltdb.TableName{}, errors.Errorf(`relation "%s" does not exist`, a.name)
+	}
+	if !tablemetadata.IsMaterializedView(tableComment(target.table)) {
+		return doltdb.TableName{}, errors.Errorf(`relation "%s" is not a materialized view`, a.name)
+	}
+	return doltdb.TableName{Name: target.table.Name(), Schema: target.schema}, nil
+}
+
 func (a *AlterRelationOwner) checkOwnership(ctx *sql.Context, relation doltdb.TableName) error {
 	owner := auth.GetRelationOwner(relation)
 	if owner == "" {
-		if a.kind == relationOwnerKindTable {
+		if a.kind == relationOwnerKindTable || a.kind == relationOwnerKindMaterializedView {
 			var err error
 			owner, err = tableOwner(ctx, relation)
 			if err != nil {
