@@ -15,6 +15,10 @@
 package pgcatalog
 
 func aclTextArray(items []string) any {
+	return textArray(items)
+}
+
+func textArray(items []string) any {
 	if len(items) == 0 {
 		return nil
 	}

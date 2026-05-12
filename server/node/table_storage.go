@@ -27,11 +27,15 @@ import (
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
+type alterTableStorageTarget struct {
+	ifExists bool
+	schema   string
+	table    string
+}
+
 // AlterTableSetStorage handles ALTER TABLE ... SET/RESET storage parameters.
 type AlterTableSetStorage struct {
-	ifExists   bool
-	schema     string
-	table      string
+	target     alterTableStorageTarget
 	relOptions []string
 	resetKeys  []string
 }
@@ -42,9 +46,11 @@ var _ vitess.Injectable = (*AlterTableSetStorage)(nil)
 // NewAlterTableSetStorage returns a new *AlterTableSetStorage.
 func NewAlterTableSetStorage(ifExists bool, schema string, table string, relOptions []string, resetKeys []string) *AlterTableSetStorage {
 	return &AlterTableSetStorage{
-		ifExists:   ifExists,
-		schema:     schema,
-		table:      table,
+		target: alterTableStorageTarget{
+			ifExists: ifExists,
+			schema:   schema,
+			table:    table,
+		},
 		relOptions: append([]string(nil), relOptions...),
 		resetKeys:  append([]string(nil), resetKeys...),
 	}
@@ -67,7 +73,7 @@ func (a *AlterTableSetStorage) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (a *AlterTableSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
-	table, err := a.resolveTable(ctx)
+	table, err := a.target.resolveTable(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +124,7 @@ func (a *AlterTableSetStorage) WithResolvedChildren(ctx context.Context, childre
 	return a, nil
 }
 
-func (a *AlterTableSetStorage) resolveTable(ctx *sql.Context) (sql.Table, error) {
+func (a alterTableStorageTarget) resolveTable(ctx *sql.Context) (sql.Table, error) {
 	if a.schema != "" {
 		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: a.table, Schema: a.schema})
 		if err != nil {
@@ -146,4 +152,110 @@ func (a *AlterTableSetStorage) resolveTable(ctx *sql.Context) (sql.Table, error)
 		return nil, nil
 	}
 	return nil, errors.Errorf(`relation "%s" does not exist`, a.table)
+}
+
+// AlterTableSetColumnOptions handles ALTER TABLE ... ALTER COLUMN ... SET/RESET
+// column storage parameters exposed through pg_attribute.attoptions.
+type AlterTableSetColumnOptions struct {
+	target    alterTableStorageTarget
+	column    string
+	options   []string
+	resetKeys []string
+}
+
+var _ sql.ExecSourceRel = (*AlterTableSetColumnOptions)(nil)
+var _ vitess.Injectable = (*AlterTableSetColumnOptions)(nil)
+
+// NewAlterTableSetColumnOptions returns a new *AlterTableSetColumnOptions.
+func NewAlterTableSetColumnOptions(ifExists bool, schema string, table string, column string, options []string, resetKeys []string) *AlterTableSetColumnOptions {
+	return &AlterTableSetColumnOptions{
+		target: alterTableStorageTarget{
+			ifExists: ifExists,
+			schema:   schema,
+			table:    table,
+		},
+		column:    column,
+		options:   append([]string(nil), options...),
+		resetKeys: append([]string(nil), resetKeys...),
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	table, err := a.target.resolveTable(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if table == nil {
+		return sql.RowsToRowIter(), nil
+	}
+	if _, ok := columnByName(table.Schema(ctx), a.column); !ok {
+		return nil, errors.Errorf(`column "%s" of relation "%s" does not exist`, a.column, a.target.table)
+	}
+	commented, ok := table.(sql.CommentedTable)
+	if !ok {
+		return nil, sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return nil, sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	comment := commented.Comment()
+	options := tablemetadata.ColumnOptions(comment, a.column)
+	if len(a.resetKeys) > 0 {
+		options = tablemetadata.ResetRelOptions(options, a.resetKeys)
+	} else {
+		options = tablemetadata.MergeRelOptions(options, a.options)
+	}
+	if err = alterable.ModifyComment(ctx, tablemetadata.SetColumnOptions(comment, a.column, options)); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) String() string {
+	return "ALTER TABLE SET COLUMN OPTIONS"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnOptions) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterTableSetColumnOptions) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
+func columnByName(schema sql.Schema, name string) (*sql.Column, bool) {
+	for _, column := range schema {
+		if column.Name == name {
+			return column, true
+		}
+	}
+	return nil, false
 }

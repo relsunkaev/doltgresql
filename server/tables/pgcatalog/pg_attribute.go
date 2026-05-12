@@ -32,6 +32,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -94,12 +95,13 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			attnum := int16(0)
+			comment := tableComment(table.Item)
 			for _, col := range table.Item.Schema(ctx) {
 				if col.HiddenSystem {
 					continue
 				}
 				attnum++
-				attr := tableColumnAttribute(table.OID.AsId(), schema.Item.SchemaName(), table.Item.Name(), attnum, col)
+				attr := tableColumnAttribute(table.OID.AsId(), schema.Item.SchemaName(), table.Item.Name(), attnum, col, tablemetadata.ColumnOptions(comment, col.Name))
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
@@ -140,7 +142,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	return nil
 }
 
-func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column) *pgAttribute {
+func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string) *pgAttribute {
 	typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 	generated := ""
 	if col.Generated != nil {
@@ -161,6 +163,7 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		attstattarget:  -1,
 		attcollation:   attcollation,
 		atttypmod:      atttypmod,
+		attoptions:     attoptions,
 	}
 }
 
@@ -232,7 +235,7 @@ func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView
 		if err != nil {
 			return nil, err
 		}
-		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol))
+		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil))
 	}
 	return attrs, nil
 }
@@ -595,6 +598,7 @@ type pgAttribute struct {
 	attstattarget  int16
 	attcollation   id.Id
 	atttypmod      int32
+	attoptions     []string
 }
 
 // lessAttNum is a sort function for pgAttribute based on attrelid.
@@ -642,6 +646,10 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 	if attr.schemaName != "" && attr.tableName != "" {
 		attacl = aclTextArray(auth.ColumnACLItems(attr.schemaName, attr.tableName, attr.attname))
 	}
+	var attoptions any
+	if len(attr.attoptions) > 0 {
+		attoptions = textArray(attr.attoptions)
+	}
 
 	// TODO: Fill in the rest of the pg_attribute columns
 	return sql.Row{
@@ -668,7 +676,7 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		attr.attstattarget, // attstattarget
 		attr.attcollation,  // attcollation
 		attacl,             // attacl
-		nil,                // attoptions
+		attoptions,         // attoptions
 		nil,                // attfdwoptions
 		nil,                // attmissingval
 	}

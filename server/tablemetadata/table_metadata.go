@@ -26,20 +26,22 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // Metadata stores PostgreSQL table metadata that Dolt's native schema metadata
 // does not currently expose.
 type Metadata struct {
-	PrimaryKeyConstraint        string   `json:"primaryKeyConstraint,omitempty"`
-	MaterializedView            bool     `json:"materializedView,omitempty"`
-	MaterializedViewDefinition  string   `json:"materializedViewDefinition,omitempty"`
-	MaterializedViewUnpopulated bool     `json:"materializedViewUnpopulated,omitempty"`
-	OfTypeSchema                string   `json:"ofTypeSchema,omitempty"`
-	OfTypeName                  string   `json:"ofTypeName,omitempty"`
-	RelOptions                  []string `json:"relOptions,omitempty"`
-	RelPersistence              string   `json:"relPersistence,omitempty"`
+	PrimaryKeyConstraint        string              `json:"primaryKeyConstraint,omitempty"`
+	MaterializedView            bool                `json:"materializedView,omitempty"`
+	MaterializedViewDefinition  string              `json:"materializedViewDefinition,omitempty"`
+	MaterializedViewUnpopulated bool                `json:"materializedViewUnpopulated,omitempty"`
+	OfTypeSchema                string              `json:"ofTypeSchema,omitempty"`
+	OfTypeName                  string              `json:"ofTypeName,omitempty"`
+	RelOptions                  []string            `json:"relOptions,omitempty"`
+	RelPersistence              string              `json:"relPersistence,omitempty"`
+	ColumnOptions               map[string][]string `json:"columnOptions,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
 func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	NormalizeRelOptions(metadata.RelOptions)
+	NormalizeColumnOptions(metadata.ColumnOptions)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -56,6 +58,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
 	NormalizeRelOptions(metadata.RelOptions)
+	NormalizeColumnOptions(metadata.ColumnOptions)
 	return metadata, true
 }
 
@@ -163,6 +166,16 @@ func RelPersistence(comment string) string {
 	return metadata.RelPersistence
 }
 
+// ColumnOptions returns the PostgreSQL attoptions encoded for a column in a
+// Doltgres table metadata comment.
+func ColumnOptions(comment string, column string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ColumnOptions) == 0 {
+		return nil
+	}
+	return append([]string(nil), metadata.ColumnOptions[strings.TrimSpace(column)]...)
+}
+
 // SetRelPersistence returns a table metadata comment with the given
 // PostgreSQL relpersistence value. Empty or permanent persistence clears only
 // the relpersistence metadata.
@@ -184,6 +197,35 @@ func SetRelOptions(comment string, relOptions []string) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.RelOptions = append([]string(nil), relOptions...)
 	NormalizeRelOptions(metadata.RelOptions)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// SetColumnOptions returns a table metadata comment with PostgreSQL attoptions
+// for a single column. An empty options slice clears only that column's metadata.
+func SetColumnOptions(comment string, column string, options []string) string {
+	column = strings.TrimSpace(column)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.ColumnOptions == nil {
+		metadata.ColumnOptions = make(map[string][]string)
+	}
+	if len(options) == 0 {
+		delete(metadata.ColumnOptions, column)
+	} else {
+		metadata.ColumnOptions[column] = append([]string(nil), options...)
+		NormalizeRelOptions(metadata.ColumnOptions[column])
+	}
+	if len(metadata.ColumnOptions) == 0 {
+		metadata.ColumnOptions = nil
+	}
 	if metadata.empty() {
 		return ""
 	}
@@ -263,6 +305,18 @@ func NormalizeRelOptions(relOptions []string) {
 	}
 }
 
+// NormalizeColumnOptions normalizes all column option values in place and
+// removes empty column names.
+func NormalizeColumnOptions(columnOptions map[string][]string) {
+	for column, options := range columnOptions {
+		if strings.TrimSpace(column) == "" || len(options) == 0 {
+			delete(columnOptions, column)
+			continue
+		}
+		NormalizeRelOptions(options)
+	}
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
@@ -271,5 +325,6 @@ func (metadata Metadata) empty() bool {
 		metadata.OfTypeSchema == "" &&
 		metadata.OfTypeName == "" &&
 		metadata.RelPersistence == "" &&
-		len(metadata.RelOptions) == 0
+		len(metadata.RelOptions) == 0 &&
+		len(metadata.ColumnOptions) == 0
 }

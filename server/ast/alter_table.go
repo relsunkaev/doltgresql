@@ -50,6 +50,8 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableReplicaIdentity(treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableSetStorage:
 			return nodeAlterTableSetStorage(ctx, treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableSetAttribution:
+			return nodeAlterTableSetAttribution(ctx, treeTableName, cmd, node.IfExists)
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -287,6 +289,34 @@ func nodeAlterTableSetStorage(ctx *Context, treeTableName tree.TableName, cmd *t
 			tableName.SchemaQualifier.String(),
 			tableName.Name.String(),
 			relOptions,
+			resetKeys,
+		),
+	}, nil
+}
+
+func nodeAlterTableSetAttribution(ctx *Context, treeTableName tree.TableName, cmd *tree.AlterTableSetAttribution, ifExists bool) (vitess.Statement, error) {
+	var options []string
+	var resetKeys []string
+	var err error
+	if cmd.Reset {
+		resetKeys = nodeIndexRelOptionResetKeys(cmd.Params)
+	} else {
+		options, err = nodeTableRelOptions(cmd.Params)
+		if err != nil {
+			return nil, err
+		}
+	}
+	tableName, err := nodeTableName(ctx, &treeTableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableSetColumnOptions(
+			ifExists,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			bareIdentifier(cmd.Column),
+			options,
 			resetKeys,
 		),
 	}, nil

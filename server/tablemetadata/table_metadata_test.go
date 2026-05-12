@@ -154,6 +154,37 @@ func TestRelPersistenceMetadata(t *testing.T) {
 	}
 }
 
+func TestColumnOptionsMetadata(t *testing.T) {
+	comment := SetColumnOptions("", "category", []string{" N_DISTINCT = 100 ", "n_distinct_inherited=200"})
+	got := ColumnOptions(comment, "category")
+	if len(got) != 2 || got[0] != "n_distinct=100" || got[1] != "n_distinct_inherited=200" {
+		t.Fatalf("unexpected column options: %#v", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
+	merged := MergeRelOptions(ColumnOptions(comment, "category"), []string{"n_distinct=300"})
+	comment = SetColumnOptions(comment, "category", merged)
+	got = ColumnOptions(comment, "category")
+	if len(got) != 2 || got[0] != "n_distinct=300" || got[1] != "n_distinct_inherited=200" {
+		t.Fatalf("unexpected merged column options: %#v", got)
+	}
+	if gotName := PrimaryKeyConstraintName(comment); gotName != "items_pkey" {
+		t.Fatalf("expected primary key metadata to be preserved, got %q", gotName)
+	}
+
+	comment = SetColumnOptions(comment, "category", ResetRelOptions(ColumnOptions(comment, "category"), []string{"n_distinct"}))
+	got = ColumnOptions(comment, "category")
+	if len(got) != 1 || got[0] != "n_distinct_inherited=200" {
+		t.Fatalf("unexpected reset column options: %#v", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	comment = SetColumnOptions(comment, "category", nil)
+	if comment != "" {
+		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	}
+}
+
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("plain table comment"); ok {
 		t.Fatalf("expected plain comments to be ignored")
