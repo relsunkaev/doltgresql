@@ -15,9 +15,11 @@
 package _go
 
 import (
+	"os"
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/stretchr/testify/require"
 )
 
 // TestLargeObjectCreatePersistsMetadataRepro reproduces a large-object
@@ -230,4 +232,41 @@ func TestLargeObjectUnlinkRequiresOwnershipRepro(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestLargeObjectSurvivesServerRestartRepro reproduces a persistence bug:
+// PostgreSQL large objects are durable database objects, so their metadata and
+// contents should survive a server restart.
+func TestLargeObjectSurvivesServerRestartRepro(t *testing.T) {
+	dbDir, err := os.MkdirTemp(os.TempDir(), t.Name())
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dbDir)
+	})
+
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, conn, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	_, err = conn.Exec(ctx, `SELECT lo_from_bytea(424247, decode('cafebabe', 'hex'));`)
+	require.NoError(t, err)
+	conn.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	ctx, conn, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		conn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	var oid string
+	var contents string
+	err = conn.Current.QueryRow(ctx, `SELECT oid::TEXT, encode(lo_get(oid), 'hex')
+		FROM pg_catalog.pg_largeobject_metadata
+		WHERE oid = 424247;`).Scan(&oid, &contents)
+	require.NoError(t, err, "large-object metadata and contents should survive server restart")
+	require.Equal(t, "424247", oid)
+	require.Equal(t, "cafebabe", contents)
 }
