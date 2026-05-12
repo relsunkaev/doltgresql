@@ -182,7 +182,18 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	funcID := id.NewFunction(schemaName, c.FunctionName, paramTypes...)
+	owner := ctx.Client().User
 	if c.Replace && funcCollection.HasFunction(ctx, funcID) {
+		existing, err := funcCollection.GetFunction(ctx, funcID)
+		if err != nil {
+			return nil, err
+		}
+		if err = checkFunctionOwnership(ctx, existing); err != nil {
+			return nil, err
+		}
+		if existing.Owner != "" {
+			owner = existing.Owner
+		}
 		if err = funcCollection.DropFunction(ctx, funcID); err != nil {
 			return nil, err
 		}
@@ -222,7 +233,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		SQLDefinition:      c.SqlDef,
 		SetOf:              c.SetOf,
 		SetConfig:          c.SetConfig,
-		Owner:              ctx.Client().User,
+		Owner:              owner,
 	})
 	if err != nil {
 		return nil, err

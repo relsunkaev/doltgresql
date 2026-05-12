@@ -125,6 +125,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		return nil, err
 	}
 	procID := id.NewProcedure(schemaName, c.ProcedureName, paramTypes...)
+	owner := ctx.Client().User
 	if c.Replace && procCollection.HasProcedure(ctx, procID) {
 		proc, err := procCollection.GetProcedure(ctx, procID)
 		if err != nil {
@@ -132,6 +133,9 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		}
 		if err = checkProcedureOwnership(ctx, proc); err != nil {
 			return nil, err
+		}
+		if proc.Owner != "" {
+			owner = proc.Owner
 		}
 		if err = procCollection.DropProcedure(ctx, procID); err != nil {
 			return nil, err
@@ -162,7 +166,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		Operations:        c.Statements,
 		SQLDefinition:     c.SqlDef,
 		SetConfig:         c.SetConfig,
-		Owner:             ctx.Client().User,
+		Owner:             owner,
 	})
 	if err != nil {
 		return nil, err

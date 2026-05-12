@@ -72,6 +72,27 @@ func TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 	})
 }
 
+// TestCreateUntrustedLanguageRequiresSuperuserRepro reproduces a language DDL
+// security bug: PostgreSQL restricts untrusted language creation to superusers.
+func TestCreateUntrustedLanguageRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE LANGUAGE for untrusted language requires superuser",
+			SetUpScript: []string{
+				`CREATE USER untrusted_language_creator PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE LANGUAGE untrusted_user_lang HANDLER plpgsql_call_handler;`,
+					ExpectedErr: `superuser`,
+					Username:    `untrusted_language_creator`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterLanguageOwnerUpdatesPgLanguageRepro reproduces a procedural-language
 // catalog persistence gap: ALTER LANGUAGE OWNER TO should update pg_language.
 func TestAlterLanguageOwnerUpdatesPgLanguageRepro(t *testing.T) {

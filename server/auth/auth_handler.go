@@ -23,6 +23,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 )
 
@@ -383,6 +384,9 @@ func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, sc
 	}
 	for _, privilege := range privileges {
 		if !HasRoutinePrivilege(roleRoutineKey, privilege) && !HasRoutinePrivilege(publicRoutineKey, privilege) {
+			if routineOwnedByRole(ctx, schName, routineName, state.role.Name) {
+				continue
+			}
 			// check if it's system function
 			_, ok := framework.Catalog[strings.ToLower(routineName)]
 			if ok && (schemaName == "" || strings.EqualFold(schName, "pg_catalog")) {
@@ -394,4 +398,33 @@ func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, sc
 		}
 	}
 	return nil
+}
+
+func routineOwnedByRole(ctx *sql.Context, schemaName, routineName, roleName string) bool {
+	if roleName == "" {
+		return false
+	}
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err == nil {
+		functions, err := funcColl.GetFunctionOverloads(ctx, id.NewFunction(schemaName, routineName))
+		if err == nil {
+			for _, function := range functions {
+				if function.Owner == roleName {
+					return true
+				}
+			}
+		}
+	}
+	procColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err == nil {
+		procedures, err := procColl.GetProcedureOverloads(ctx, id.NewProcedure(schemaName, routineName))
+		if err == nil {
+			for _, procedure := range procedures {
+				if procedure.Owner == roleName {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
