@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,15 @@ func (p PgTsConfigHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTsConfigHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_ts_config row iter
-	return emptyRowIter()
+	configs := []pgTsConfig{
+		{name: "simple", namespace: id.NewNamespace(PgCatalogName)},
+	}
+	auth.LockRead(func() {
+		for _, config := range auth.GetAllTextSearchConfigs() {
+			configs = append(configs, pgTsConfig{name: config.Name, namespace: config.Namespace})
+		}
+	})
+	return &pgTsConfigRowIter{configs: configs}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -67,16 +76,35 @@ var pgTsConfigSchema = sql.Schema{
 
 // pgTsConfigRowIter is the sql.RowIter for the pg_ts_config table.
 type pgTsConfigRowIter struct {
+	configs []pgTsConfig
+	idx     int
 }
 
 var _ sql.RowIter = (*pgTsConfigRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgTsConfigRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.configs) {
+		return nil, io.EOF
+	}
+	iter.idx++
+	config := iter.configs[iter.idx-1]
+	return sql.Row{
+		id.NewId(id.Section_TextSearchConfig, config.namespace.SchemaName(), config.name),
+		config.name,
+		config.namespace.AsId(),
+		id.NewId(id.Section_User, "postgres"),
+		id.NewId(id.Section_TextSearchParser, PgCatalogName, "default"),
+		id.NewTable(PgCatalogName, PgTsConfigName).AsId(),
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
 func (iter *pgTsConfigRowIter) Close(ctx *sql.Context) error {
 	return nil
+}
+
+type pgTsConfig struct {
+	name      string
+	namespace id.Namespace
 }

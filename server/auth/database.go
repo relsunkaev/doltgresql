@@ -52,6 +52,7 @@ type Database struct {
 	conversions         *Conversions
 	casts               *Casts
 	operators           *Operators
+	textSearchConfigs   *TextSearchConfigs
 	roleMembership      *RoleMembership
 }
 
@@ -71,6 +72,7 @@ func ClearDatabase() {
 	clear(globalDatabase.conversions.Data)
 	clear(globalDatabase.casts.Data)
 	clear(globalDatabase.operators.Data)
+	clear(globalDatabase.textSearchConfigs.Data)
 	clear(globalDatabase.roleMembership.Data)
 	dbInitDefault()
 }
@@ -186,6 +188,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		conversions:         NewConversions(),
 		casts:               NewCasts(),
 		operators:           NewOperators(),
+		textSearchConfigs:   NewTextSearchConfigs(),
 		roleMembership:      NewRoleMembership(),
 	}
 	globalLock = &sync.RWMutex{}

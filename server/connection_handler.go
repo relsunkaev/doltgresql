@@ -2849,10 +2849,16 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateOperator(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if converted, ok := convertedDropIfExistsNoOp(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
 	if rewrittenQuery, ok := rewriteCustomOperatorSelect(query); ok {
+		query = rewrittenQuery
+	}
+	if rewrittenQuery, ok := rewriteTextSearchQuery(query); ok {
 		query = rewrittenQuery
 	}
 	s, err := parser.Parse(query)
@@ -2862,6 +2868,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 		if converted, ok := convertedAlterLargeObjectOwner(query); ok {
 			return []ConvertedQuery{converted}, nil
+		}
+		if containsAlterTextSearchObject(query) {
+			return nil, pgerror.New(pgcode.UndefinedObject, "text search object does not exist")
 		}
 		if containsCreateEventTrigger(query) {
 			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied to create event trigger")
@@ -2909,11 +2918,13 @@ var (
 	createCastPattern         = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
 	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	createOperatorPattern     = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
+	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
+	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -3064,6 +3075,21 @@ func parseCreateOperatorOptions(body string) map[string]string {
 	return options
 }
 
+func convertedCreateTextSearchConfiguration(query string) (ConvertedQuery, bool) {
+	matches := createTsConfigPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	_, name := splitQualifiedCatalogName(matches[1])
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateTextSearchConfiguration(name),
+		},
+		StatementTag: "CREATE TEXT SEARCH CONFIGURATION",
+	}, true
+}
+
 func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	statementTag := ""
 	switch {
@@ -3118,6 +3144,12 @@ func rewriteCustomOperatorSelect(query string) (string, bool) {
 		return "", false
 	}
 	return "SELECT " + strings.Join(rewritten, ", "), true
+}
+
+func rewriteTextSearchQuery(query string) (string, bool) {
+	rewritten := strings.ReplaceAll(query, "::regconfig", "")
+	rewritten = textSearchMatchPattern.ReplaceAllString(rewritten, "ts_match_vq($1, $2)")
+	return rewritten, rewritten != query
 }
 
 func rewriteCustomOperatorProjection(projection string, operator auth.Operator) (string, bool) {
@@ -3186,6 +3218,10 @@ func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {
 
 func containsCreateEventTrigger(query string) bool {
 	return containsKeywordSequence(query, "create", "event", "trigger")
+}
+
+func containsAlterTextSearchObject(query string) bool {
+	return containsKeywordSequence(query, "alter", "text", "search")
 }
 
 func containsCreateCollation(query string) bool {

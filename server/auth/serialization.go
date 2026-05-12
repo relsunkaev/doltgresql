@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(8)
+	writer.Uint32(9)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -63,6 +63,8 @@ func (db *Database) serialize() []byte {
 	db.casts.serialize(writer)
 	// Write the operators
 	db.operators.serialize(writer)
+	// Write the text-search configurations
+	db.textSearchConfigs.serialize(writer)
 	// Write the role chain
 	db.roleMembership.serialize(writer)
 	return writer.Data()
@@ -94,6 +96,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV7(reader)
 	case 8:
 		return db.deserializeV8(reader)
+	case 9:
+		return db.deserializeV9(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -130,6 +134,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	db.conversions.deserialize(0, reader)
 	db.casts.deserialize(0, reader)
 	db.operators.deserialize(0, reader)
+	db.textSearchConfigs.deserialize(0, reader)
 	ensurePredefinedRoles()
 	dbInitDefaultLanguages()
 	return nil
@@ -169,6 +174,10 @@ func (db *Database) deserializeV7(reader *utils.Reader) error {
 
 func (db *Database) deserializeV8(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 8)
+}
+
+func (db *Database) deserializeV9(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 9)
 }
 
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
@@ -227,6 +236,12 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		} else {
 			db.operators.deserialize(0, reader)
 		}
+		if version >= 9 {
+			// Read the text-search configurations
+			db.textSearchConfigs.deserialize(1, reader)
+		} else {
+			db.textSearchConfigs.deserialize(0, reader)
+		}
 		// Read the role chain
 		db.roleMembership.deserialize(1, reader)
 	} else {
@@ -245,6 +260,7 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.conversions.deserialize(0, reader)
 		db.casts.deserialize(0, reader)
 		db.operators.deserialize(0, reader)
+		db.textSearchConfigs.deserialize(0, reader)
 		ensurePredefinedRoles()
 		dbInitDefaultLanguages()
 	}
