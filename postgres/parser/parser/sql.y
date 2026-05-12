@@ -15074,7 +15074,11 @@ position_list:
 // here, and convert the SQL9x style to the generic list for further
 // processing. - thomas 2000-11-28
 substr_list:
-  a_expr substr_from substr_for
+  a_expr SIMILAR a_expr ESCAPE a_expr
+  {
+    $$.val = tree.Exprs{$1.expr(), $3.expr(), $5.expr()}
+  }
+| a_expr substr_from substr_for
   {
     $$.val = tree.Exprs{$1.expr(), $2.expr(), $3.expr()}
   }

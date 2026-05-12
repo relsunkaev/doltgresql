@@ -17,6 +17,7 @@ package functions
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -38,6 +39,7 @@ func initSubstr() {
 	framework.RegisterFunction(substring_text_int64_int32)
 	framework.RegisterFunction(substring_text_int64_int64)
 	framework.RegisterFunction(substring_text_text)
+	framework.RegisterFunction(substring_text_text_text)
 }
 
 // substr_text_int32 represents the PostgreSQL function of the same name, taking the same parameters.
@@ -239,4 +241,96 @@ var substring_text_text = framework.Function2{
 
 		return string(match), nil
 	},
+}
+
+// This is a form of the syntax `substring(string similar pattern escape escape)`.
+var substring_text_text_text = framework.Function3{
+	Name:       "substring",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, input any, pattern any, escape any) (any, error) {
+		str, ok, err := sql.Unwrap[string](ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for substring input, expected string, got %T", str)
+		}
+		patternStr, ok, err := sql.Unwrap[string](ctx, pattern)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for substring pattern, expected string, got %T", pattern)
+		}
+		escapeStr, ok, err := sql.Unwrap[string](ctx, escape)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("unexpected type for substring escape, expected string, got %T", escape)
+		}
+
+		regex, err := substringSimilarPatternToRegex(patternStr, escapeStr)
+		if err != nil {
+			return nil, err
+		}
+		re, err := regexp.Compile("(?s)" + regex)
+		if err != nil {
+			return nil, err
+		}
+		match := re.FindStringSubmatch(str)
+		if match == nil {
+			return nil, nil
+		}
+		return match[1], nil
+	},
+}
+
+func substringSimilarPatternToRegex(pattern string, escape string) (string, error) {
+	if len(escape) != 1 {
+		return "", errors.Errorf("invalid escape string")
+	}
+
+	escapeChar := escape[0]
+	parts := [3]strings.Builder{}
+	partIdx := 0
+	for i := 0; i < len(pattern); i++ {
+		if pattern[i] == escapeChar {
+			if i+1 >= len(pattern) {
+				parts[partIdx].WriteString(regexp.QuoteMeta(pattern[i : i+1]))
+				continue
+			}
+			i++
+			if pattern[i] == '"' {
+				partIdx++
+				if partIdx > 2 {
+					return "", errors.Errorf("invalid substring SIMILAR pattern")
+				}
+				continue
+			}
+			parts[partIdx].WriteString(regexp.QuoteMeta(pattern[i : i+1]))
+			continue
+		}
+
+		switch pattern[i] {
+		case '%':
+			parts[partIdx].WriteString(".*")
+		case '_':
+			parts[partIdx].WriteByte('.')
+		case '|', '*', '+', '?', '{', '}', '(', ')', '[', ']':
+			parts[partIdx].WriteByte(pattern[i])
+		default:
+			parts[partIdx].WriteString(regexp.QuoteMeta(pattern[i : i+1]))
+		}
+	}
+
+	if partIdx == 0 {
+		return "^(" + parts[0].String() + ")$", nil
+	}
+	if partIdx != 2 {
+		return "", errors.Errorf("invalid substring SIMILAR pattern")
+	}
+	return "^" + parts[0].String() + "(" + parts[1].String() + ")" + parts[2].String() + "$", nil
 }
