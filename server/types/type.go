@@ -580,6 +580,15 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 		return nil, false, nil
 	}
 
+	if t.IsArrayType() {
+		vals, ok := v.([]any)
+		if !ok {
+			return nil, false, nil
+		}
+		converted, err := convertArrayElementsWithTypmod(ctx, t.ArrayBaseType(), vals)
+		return converted, true, err
+	}
+
 	switch t.ID.TypeName() {
 	case "bpchar", "char", "varchar":
 		str, ok, err := sql.Unwrap[string](ctx, v)
@@ -629,6 +638,30 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 	}
 
 	return nil, false, nil
+}
+
+func convertArrayElementsWithTypmod(ctx context.Context, baseType *DoltgresType, vals []any) ([]any, error) {
+	converted := make([]any, len(vals))
+	var err error
+	for i, val := range vals {
+		if val == nil {
+			continue
+		}
+		if nested, ok := val.([]any); ok {
+			var nErr error
+			converted[i], nErr = convertArrayElementsWithTypmod(ctx, baseType, nested)
+			if nErr != nil && err == nil {
+				err = nErr
+			}
+			continue
+		}
+		next, _, nErr := baseType.Convert(ctx, val)
+		if nErr != nil && err == nil {
+			err = nErr
+		}
+		converted[i] = next
+	}
+	return converted, err
 }
 
 func timePrecisionToRoundDuration(precision int32) (time.Duration, error) {
