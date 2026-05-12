@@ -15,8 +15,6 @@
 package functions
 
 import (
-	"github.com/cockroachdb/errors"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -51,10 +49,8 @@ var pg_get_triggerdef_oid_bool = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		pretty := val2.(bool)
-		if pretty {
-			return "", errors.Errorf("pretty printing is not yet supported")
-		}
+		// PostgreSQL accepts the pretty-print flag. Doltgres currently stores
+		// one canonical trigger definition, so both modes return that text.
 		return getTriggerDef(ctx, val1.(id.Id))
 	},
 }

@@ -70,9 +70,11 @@ var pg_get_viewdef_oid_int = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		// TODO: prettyprint is implied, not yet supported
-		// TODO: lines with fields are wrapped to specified number of columns
-		return "", errors.Errorf("not yet supported")
+		oidVal := val1.(id.Id)
+		// PostgreSQL treats the integer argument as a preferred wrap column.
+		// Doltgres does not pretty-wrap definitions yet, but the overload
+		// should still return the canonical view definition.
+		return getViewDef(ctx, oidVal)
 	},
 }
 
