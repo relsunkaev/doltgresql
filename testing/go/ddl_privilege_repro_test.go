@@ -1047,6 +1047,43 @@ func TestDropAggregateRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceAggregateRequiresOwnershipRepro reproduces a security
+// bug: Doltgres allows a role that does not own an existing aggregate to
+// replace it.
+func TestCreateOrReplaceAggregateRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE AGGREGATE requires aggregate ownership",
+			SetUpScript: []string{
+				`CREATE USER aggregate_replacer PASSWORD 'replacer';`,
+				`CREATE FUNCTION replace_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE replace_aggregate_private(INT) (
+					SFUNC = replace_aggregate_private_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO aggregate_replacer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE OR REPLACE AGGREGATE replace_aggregate_private(INT) (
+						SFUNC = replace_aggregate_private_sfunc,
+						STYPE = INT,
+						INITCOND = '1'
+					);`,
+					ExpectedErr: `permission denied`,
+					Username:    `aggregate_replacer`,
+					Password:    `replacer`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
