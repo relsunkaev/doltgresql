@@ -379,6 +379,42 @@ func TestAlterTypeRenameUpdatesCheckConstraintMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeRenameUpdatesGeneratedColumnMetadataRepro reproduces a catalog
+// persistence bug: stored generated column expressions that reference a renamed
+// type should keep resolving through the renamed type.
+func TestAlterTypeRenameUpdatesGeneratedColumnMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates generated column expressions",
+			SetUpScript: []string{
+				`CREATE TYPE rename_generated_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE rename_generated_status_items (
+					id INT PRIMARY KEY,
+					status TEXT,
+					normalized TEXT GENERATED ALWAYS AS (
+						(status::rename_generated_status)::text
+					) STORED
+				);`,
+				`INSERT INTO rename_generated_status_items (id, status)
+					VALUES (1, 'new');`,
+				`ALTER TYPE rename_generated_status RENAME TO renamed_generated_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_generated_status_items (id, status)
+						VALUES (2, 'done');`,
+				},
+				{
+					Query: `SELECT id::text, status, normalized
+						FROM rename_generated_status_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{"1", "new", "new"}, {"2", "done", "done"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro reproduces a
 // catalog persistence bug: renaming a type should update function signatures
 // that reference it, so overload lookup with the renamed type keeps working.
