@@ -31,13 +31,27 @@ type CreateDatabase struct {
 	Name        string
 	IfNotExists bool
 	Update      auth.DatabaseMetadataUpdate
+	gmsCreateDB *plan.CreateDB
 }
 
 var _ sql.ExecSourceRel = (*CreateDatabase)(nil)
+var _ sql.ExecBuilderNode = (*CreateDatabase)(nil)
 var _ vitess.Injectable = (*CreateDatabase)(nil)
+
+// NewCreateDatabase returns a wrapper around GMS CREATE DATABASE execution.
+func NewCreateDatabase(createDB *plan.CreateDB) *CreateDatabase {
+	return &CreateDatabase{
+		Name:        createDB.DbName,
+		IfNotExists: createDB.IfNotExists,
+		gmsCreateDB: createDB,
+	}
+}
 
 // Children implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) Children() []sql.Node {
+	if c.gmsCreateDB != nil {
+		return c.gmsCreateDB.Children()
+	}
 	return nil
 }
 
@@ -48,20 +62,16 @@ func (c *CreateDatabase) IsReadOnly() bool {
 
 // Resolved implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) Resolved() bool {
+	if c.gmsCreateDB != nil {
+		return c.gmsCreateDB.Resolved()
+	}
 	return true
 }
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	var user auth.Role
-	auth.LockRead(func() {
-		user = auth.GetRole(ctx.Client().User)
-	})
-	if !user.IsValid() {
-		return nil, errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
-	}
-	if !user.IsSuperUser && !user.CanCreateDB {
-		return nil, errors.Errorf(`permission denied to create database`)
+	if err := checkCreateDatabasePrivilege(ctx); err != nil {
+		return nil, err
 	}
 	if c.Update.Owner != nil {
 		var ownerExists bool
@@ -83,9 +93,14 @@ func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err := provider.CreateDatabase(ctx, c.Name); err != nil {
 		return nil, err
 	}
+	update := c.Update
+	if update.Owner == nil {
+		owner := ctx.Client().User
+		update.Owner = &owner
+	}
 	var err error
 	auth.LockWrite(func() {
-		auth.UpdateDatabaseMetadata(c.Name, c.Update)
+		auth.UpdateDatabaseMetadata(c.Name, update)
 		err = auth.PersistChanges()
 	})
 	if err != nil {
@@ -94,18 +109,71 @@ func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	return sql.RowsToRowIter(), nil
 }
 
+// BuildRowIter implements sql.ExecBuilderNode.
+func (c *CreateDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
+	if c.gmsCreateDB == nil {
+		return c.RowIter(ctx, r)
+	}
+	if err := checkCreateDatabasePrivilege(ctx); err != nil {
+		return nil, err
+	}
+	exists := c.gmsCreateDB.Catalog.HasDatabase(ctx, c.gmsCreateDB.DbName)
+	iter, err := b.Build(ctx, c.gmsCreateDB, r)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		owner := ctx.Client().User
+		auth.LockWrite(func() {
+			auth.UpdateDatabaseMetadata(c.gmsCreateDB.DbName, auth.DatabaseMetadataUpdate{Owner: &owner})
+			err = auth.PersistChanges()
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return iter, nil
+}
+
+func checkCreateDatabasePrivilege(ctx *sql.Context) error {
+	var user auth.Role
+	auth.LockRead(func() {
+		user = auth.GetRole(ctx.Client().User)
+	})
+	if !user.IsValid() {
+		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+	}
+	if !user.IsSuperUser && !user.CanCreateDB {
+		return errors.Errorf(`permission denied to create database`)
+	}
+	return nil
+}
+
 // Schema implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) Schema(ctx *sql.Context) sql.Schema {
+	if c.gmsCreateDB != nil {
+		return c.gmsCreateDB.Schema(ctx)
+	}
 	return nil
 }
 
 // String implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) String() string {
+	if c.gmsCreateDB != nil {
+		return c.gmsCreateDB.String()
+	}
 	return "CREATE DATABASE"
 }
 
 // WithChildren implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if c.gmsCreateDB != nil {
+		gmsCreateDB, err := c.gmsCreateDB.WithChildren(ctx, children...)
+		if err != nil {
+			return nil, err
+		}
+		return NewCreateDatabase(gmsCreateDB.(*plan.CreateDB)), nil
+	}
 	return plan.NillaryWithChildren(c, children...)
 }
 

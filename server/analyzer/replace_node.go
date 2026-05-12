@@ -28,6 +28,8 @@ import (
 func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	// TODO: need to add the majority of other DDL operations here
 	switch node := node.(type) {
+	case *plan.CreateDB:
+		return pgnodes.NewCreateDatabase(node), transform.NewTree, nil
 	case *plan.DropDB:
 		return pgnodes.NewDropDatabase(node), transform.NewTree, nil
 	case *plan.DropTable:

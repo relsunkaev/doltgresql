@@ -59,7 +59,7 @@ func (a *AlterDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error
 	if err := databaseExists(ctx, a.Name); err != nil {
 		return nil, err
 	}
-	if a.Update.Owner != nil {
+	if a.requiresDatabaseOwnership() {
 		if err := checkDatabaseOwnership(ctx, a.Name); err != nil {
 			return nil, errors.Wrap(err, "permission denied")
 		}
@@ -94,6 +94,13 @@ func (a *AlterDatabase) hasMetadataUpdate() bool {
 		a.Update.AllowConnections != nil ||
 		a.Update.ConnectionLimit != nil ||
 		a.Update.IsTemplate != nil
+}
+
+func (a *AlterDatabase) requiresDatabaseOwnership() bool {
+	return a.hasMetadataUpdate() ||
+		a.SetName != "" ||
+		a.ResetName != "" ||
+		a.ResetAll
 }
 
 func databaseExists(ctx *sql.Context, name string) error {
@@ -155,6 +162,9 @@ func (r *RenameDatabase) Resolved() bool {
 func (r *RenameDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	if err := databaseExists(ctx, r.Name); err != nil {
 		return nil, err
+	}
+	if err := checkDatabaseOwnership(ctx, r.Name); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
 	}
 	provider := dsess.DSessFromSess(ctx.Session).Provider()
 	if provider.HasDatabase(ctx, r.NewName) {
