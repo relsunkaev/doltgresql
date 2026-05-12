@@ -17,10 +17,26 @@ package ast
 import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
-// nodeVacuum handles *tree.Vacuum nodes, returning a NoOp statement that issues an unimplemented warning
-func nodeVacuum(_ *Context, _ *tree.Vacuum) (vitess.Statement, error) {
-	return NewNoOp("VACUUM is not supported"), nil
+// nodeVacuum handles *tree.Vacuum nodes.
+func nodeVacuum(_ *Context, node *tree.Vacuum) (vitess.Statement, error) {
+	if node == nil {
+		return nil, nil
+	}
+	tables := make([]doltdb.TableName, 0, len(node.TablesAndCols))
+	for _, tableAndCols := range node.TablesAndCols {
+		tableName := tableAndCols.Name.ToTableName()
+		tables = append(tables, doltdb.TableName{
+			Name:   tableName.Table(),
+			Schema: tableName.Schema(),
+		})
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewVacuum(tables),
+		Children:  nil,
+	}, nil
 }

@@ -40,3 +40,29 @@ func TestVacuumTableRequiresOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestVacuumCannotRunInsideTransactionBlockRepro reproduces a PostgreSQL
+// compatibility gap: VACUUM is a top-level utility command and must reject
+// execution inside an explicit transaction block.
+func TestVacuumCannotRunInsideTransactionBlockRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "VACUUM rejects explicit transaction block",
+			SetUpScript: []string{
+				`CREATE TABLE vacuum_transaction_target (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:       `VACUUM vacuum_transaction_target;`,
+					ExpectedErr: `VACUUM cannot run inside a transaction block`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+			},
+		},
+	})
+}
