@@ -16,8 +16,10 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -107,6 +109,9 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	} else if relationType != core.RelationType_Table {
 		return nil, errors.Errorf(`"%s" is not a table or view`, c.Name.TableName())
 	}
+	if err = c.validateGeneratedColumnWhen(ctx, schema); err != nil {
+		return nil, err
+	}
 	function, err := loadFunction(ctx, nil, c.Function)
 	if err != nil {
 		return nil, err
@@ -145,6 +150,55 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateTrigger) validateGeneratedColumnWhen(ctx *sql.Context, schema string) error {
+	if c.Timing != triggers.TriggerTiming_Before || !c.ForEachRow || len(c.When) == 0 {
+		return nil
+	}
+
+	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
+		Name:   c.Name.TableName(),
+		Schema: schema,
+	})
+	if err != nil || table == nil {
+		return err
+	}
+
+	generatedColumns := make(map[string]struct{})
+	for _, col := range table.Schema(ctx) {
+		if col.Generated != nil && !col.AutoIncrement {
+			generatedColumns[strings.ToLower(col.Name)] = struct{}{}
+		}
+	}
+	if len(generatedColumns) == 0 {
+		return nil
+	}
+
+	for _, op := range c.When {
+		for _, ref := range op.SecondaryData {
+			name, ok := referencedNewColumnName(ref)
+			if !ok {
+				continue
+			}
+			if _, ok = generatedColumns[name]; ok {
+				return errors.Errorf(`BEFORE trigger WHEN cannot reference generated column "%s"`, name)
+			}
+		}
+	}
+	return nil
+}
+
+func referencedNewColumnName(ref string) (string, bool) {
+	ref = strings.TrimSpace(ref)
+	if len(ref) == 0 {
+		return "", false
+	}
+	parts := strings.Split(ref, ".")
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "new") {
+		return "", false
+	}
+	return strings.ToLower(strings.Trim(parts[1], `"`)), true
 }
 
 // Schema implements the interface sql.ExecSourceRel.
