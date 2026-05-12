@@ -38,6 +38,7 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	var grantSequence *pgnodes.GrantSequence
 	var grantRoutine *pgnodes.GrantRoutine
 	var grantLanguage *pgnodes.GrantLanguage
+	var grantLargeObject *pgnodes.GrantLargeObject
 	var grantParameter *pgnodes.GrantParameter
 	switch node.Targets.TargetType {
 	case privilege.Table:
@@ -158,6 +159,23 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			Privileges: privileges,
 			Languages:  node.Targets.Names,
 		}
+	case privilege.LargeObject:
+		oids := make([]uint32, 0, len(node.Targets.LargeObjects))
+		for _, expr := range node.Targets.LargeObjects {
+			oid, err := commentLargeObjectOID(expr)
+			if err != nil {
+				return nil, err
+			}
+			oids = append(oids, oid)
+		}
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_LARGE_OBJECT, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		grantLargeObject = &pgnodes.GrantLargeObject{
+			Privileges: privileges,
+			OIDs:       oids,
+		}
 	case privilege.Parameter:
 		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_PARAMETER, node.Privileges)
 		if err != nil {
@@ -172,17 +190,18 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.Grant{
-			GrantTable:      grantTable,
-			GrantSchema:     grantSchema,
-			GrantDatabase:   grantDatabase,
-			GrantSequence:   grantSequence,
-			GrantRoutine:    grantRoutine,
-			GrantLanguage:   grantLanguage,
-			GrantParameter:  grantParameter,
-			GrantRole:       nil,
-			ToRoles:         node.Grantees,
-			WithGrantOption: node.WithGrantOption,
-			GrantedBy:       node.GrantedBy,
+			GrantTable:       grantTable,
+			GrantSchema:      grantSchema,
+			GrantDatabase:    grantDatabase,
+			GrantSequence:    grantSequence,
+			GrantRoutine:     grantRoutine,
+			GrantLanguage:    grantLanguage,
+			GrantLargeObject: grantLargeObject,
+			GrantParameter:   grantParameter,
+			GrantRole:        nil,
+			ToRoles:          node.Grantees,
+			WithGrantOption:  node.WithGrantOption,
+			GrantedBy:        node.GrantedBy,
 		},
 		Children: nil,
 	}, nil

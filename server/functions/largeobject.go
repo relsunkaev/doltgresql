@@ -32,6 +32,10 @@ func initLargeObject() {
 	framework.RegisterFunction(lo_unlink_oid)
 	framework.RegisterFunction(lo_from_bytea_oid_bytea)
 	framework.RegisterFunction(lo_get_oid)
+	framework.RegisterFunction(lo_get_oid_int32_int32)
+	framework.RegisterFunction(lo_get_oid_int64_int32)
+	framework.RegisterFunction(lo_put_oid_int32_bytea)
+	framework.RegisterFunction(lo_put_oid_int64_bytea)
 }
 
 var lo_create_oid = framework.Function1{
@@ -93,6 +97,94 @@ var lo_get_oid = framework.Function1{
 	},
 }
 
+var lo_get_oid_int32_int32 = framework.Function3{
+	Name:       "lo_get",
+	Return:     pgtypes.Bytea,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int32, pgtypes.Int32},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, lengthVal any) (any, error) {
+		return loGetSlice(oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
+	},
+}
+
+var lo_get_oid_int64_int32 = framework.Function3{
+	Name:       "lo_get",
+	Return:     pgtypes.Bytea,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int64, pgtypes.Int32},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, lengthVal any) (any, error) {
+		return loGetSlice(oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
+	},
+}
+
+var lo_put_oid_int32_bytea = framework.Function3{
+	Name:       "lo_put",
+	Return:     pgtypes.Void,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int32, pgtypes.Bytea},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, dataVal any) (any, error) {
+		return "", loPut(ctx, oidValue(oidVal), int64Value(offsetVal), dataVal)
+	},
+}
+
+var lo_put_oid_int64_bytea = framework.Function3{
+	Name:       "lo_put",
+	Return:     pgtypes.Void,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int64, pgtypes.Bytea},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, dataVal any) (any, error) {
+		return "", loPut(ctx, oidValue(oidVal), int64Value(offsetVal), dataVal)
+	},
+}
+
+func loGetSlice(oid uint32, offset int64, length int32) ([]byte, error) {
+	data, ok, err := largeobject.GetSlice(oid, offset, length)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.Errorf("large object %d does not exist", oid)
+	}
+	return data, nil
+}
+
+func loPut(ctx *sql.Context, oid uint32, offset int64, dataVal any) error {
+	data, ok, err := sql.Unwrap[[]byte](ctx, dataVal)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.Errorf("expected bytea, got %T", dataVal)
+	}
+	return largeobject.Put(oid, offset, data)
+}
+
 func oidValue(val any) uint32 {
 	return id.Cache().ToOID(val.(id.Id))
+}
+
+func int64Value(val any) int64 {
+	switch v := val.(type) {
+	case int:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	default:
+		panic(errors.Errorf("expected integer, got %T", val))
+	}
+}
+
+func int32Value(val any) int32 {
+	switch v := val.(type) {
+	case int:
+		return int32(v)
+	case int32:
+		return v
+	case int64:
+		return int32(v)
+	default:
+		panic(errors.Errorf("expected integer, got %T", val))
+	}
 }

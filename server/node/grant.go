@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -25,21 +26,23 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/largeobject"
 )
 
 // Grant handles all of the GRANT statements.
 type Grant struct {
-	GrantTable      *GrantTable
-	GrantSchema     *GrantSchema
-	GrantDatabase   *GrantDatabase
-	GrantSequence   *GrantSequence
-	GrantRoutine    *GrantRoutine
-	GrantLanguage   *GrantLanguage
-	GrantParameter  *GrantParameter
-	GrantRole       *GrantRole
-	ToRoles         []string
-	WithGrantOption bool // This is "WITH ADMIN OPTION" for GrantRole only
-	GrantedBy       string
+	GrantTable       *GrantTable
+	GrantSchema      *GrantSchema
+	GrantDatabase    *GrantDatabase
+	GrantSequence    *GrantSequence
+	GrantRoutine     *GrantRoutine
+	GrantLanguage    *GrantLanguage
+	GrantLargeObject *GrantLargeObject
+	GrantParameter   *GrantParameter
+	GrantRole        *GrantRole
+	ToRoles          []string
+	WithGrantOption  bool // This is "WITH ADMIN OPTION" for GrantRole only
+	GrantedBy        string
 }
 
 // GrantTable specifically handles the GRANT ... ON TABLE statement.
@@ -83,6 +86,12 @@ type GrantRoutine struct {
 type GrantLanguage struct {
 	Privileges []auth.Privilege
 	Languages  []string
+}
+
+// GrantLargeObject specifically handles the GRANT ... ON LARGE OBJECT statement.
+type GrantLargeObject struct {
+	Privileges []auth.Privilege
+	OIDs       []uint32
 }
 
 // GrantParameter specifically handles the GRANT ... ON PARAMETER statement.
@@ -141,6 +150,10 @@ func (g *Grant) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 		case g.GrantLanguage != nil:
 			if err = g.grantLanguage(ctx); err != nil {
+				return
+			}
+		case g.GrantLargeObject != nil:
+			if err = g.grantLargeObject(ctx); err != nil {
 				return
 			}
 		case g.GrantParameter != nil:
@@ -450,6 +463,36 @@ func (g *Grant) grantLanguage(ctx *sql.Context) error {
 					Privilege: privilege,
 					GrantedBy: grantedBy,
 				}, g.WithGrantOption)
+			}
+		}
+	}
+	return nil
+}
+
+// grantLargeObject handles *GrantLargeObject from within RowIter.
+func (g *Grant) grantLargeObject(ctx *sql.Context) error {
+	roles, userRole, err := g.common(ctx)
+	if err != nil {
+		return err
+	}
+	for _, oid := range g.GrantLargeObject.OIDs {
+		owner, ok := largeobject.Owner(oid)
+		if !ok {
+			return errors.Errorf("large object %d does not exist", oid)
+		}
+		if !userRole.IsSuperUser && userRole.Name != owner {
+			return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
+		}
+		for _, role := range roles {
+			for _, privilege := range g.GrantLargeObject.Privileges {
+				aclPrivilege := privilege.ACLAbbreviation()
+				if g.WithGrantOption {
+					aclPrivilege += "*"
+				}
+				item := strings.Join([]string{role.Name, "=", aclPrivilege, "/", userRole.Name}, "")
+				if err := largeobject.AddACLItem(oid, item); err != nil {
+					return err
+				}
 			}
 		}
 	}

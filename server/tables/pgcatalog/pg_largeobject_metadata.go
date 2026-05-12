@@ -57,7 +57,7 @@ func (p PgLargeobjectMetadataHandler) RowIter(ctx *sql.Context, partition sql.Pa
 		rows = append(rows, sql.Row{
 			id.NewOID(obj.OID).AsId(),
 			owner,
-			nil,
+			aclTextArray(obj.ACL),
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
