@@ -62,7 +62,16 @@ func (d *DropLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 	}
 	var err error
 	auth.LockWrite(func() {
-		if ok := auth.DropLanguage(d.Name); !ok && !d.IfExists {
+		if _, ok := auth.GetLanguage(d.Name); !ok {
+			if !d.IfExists {
+				err = errors.Errorf(`language "%s" does not exist`, d.Name)
+			}
+			return
+		}
+		if err = checkLanguageOwnership(ctx, d.Name); err != nil {
+			return
+		}
+		if ok := auth.DropLanguage(d.Name); !ok {
 			err = errors.Errorf(`language "%s" does not exist`, d.Name)
 			return
 		}
