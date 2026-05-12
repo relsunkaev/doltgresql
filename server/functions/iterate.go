@@ -401,7 +401,7 @@ func iterateChecks(ctx *sql.Context, callbacks Callbacks, itemSchema ItemSchema,
 func iterateColumnDefaults(ctx *sql.Context, callbacks Callbacks, itemSchema ItemSchema, itemTable ItemTable, columnDefaultCount *int) error {
 	columns := itemTable.Item.Schema(ctx)
 	for i, col := range columns {
-		if col.Default != nil {
+		if columnHasAttrdef(col) {
 			*columnDefaultCount++
 			itemColDefault := ItemColumnDefault{
 				OID:  id.NewColumnDefault(itemSchema.Item.SchemaName(), itemTable.Item.Name(), col.Name),
@@ -611,7 +611,7 @@ func runColumnDefault(ctx *sql.Context, internalID id.Id, callbacks Callbacks, i
 	columns := itemTable.Item.Schema(ctx)
 	var colDefaults []ColumnWithIndex
 	for i, col := range columns {
-		if col.Default != nil {
+		if columnHasAttrdef(col) {
 			colDefaults = append(colDefaults, ColumnWithIndex{col, i})
 		}
 	}
@@ -628,6 +628,10 @@ func runColumnDefault(ctx *sql.Context, internalID id.Id, callbacks Callbacks, i
 		}
 	}
 	return true, nil
+}
+
+func columnHasAttrdef(col *sql.Column) bool {
+	return col.Default != nil || (col.Generated != nil && !col.AutoIncrement)
 }
 
 // runForeignKey is called by RunCallback to handle Section_ForeignKey.

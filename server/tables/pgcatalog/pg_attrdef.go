@@ -112,10 +112,10 @@ func (iter *pgAttrdefRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	tableOid := iter.tableOIDs[iter.idx-1]
 
 	return sql.Row{
-		col.OID.AsId(),                  // oid
-		tableOid,                        // adrelid
-		int16(col.Item.ColumnIndex + 1), // adnum
-		columnDefaultText(col.Item.Column.Default),       // adbin
+		col.OID.AsId(),                     // oid
+		tableOid,                           // adrelid
+		int16(col.Item.ColumnIndex + 1),    // adnum
+		columnDefaultText(col.Item.Column), // adbin
 		id.NewTable(PgCatalogName, PgAttrdefName).AsId(), // tableoid
 	}, nil
 }
@@ -125,7 +125,18 @@ func (iter *pgAttrdefRowIter) Close(ctx *sql.Context) error {
 	return nil
 }
 
-func columnDefaultText(def *sql.ColumnDefaultValue) string {
+func columnDefaultText(col *sql.Column) string {
+	if col.Default != nil {
+		return columnDefaultValueText(col.Default)
+	}
+	if col.Generated != nil {
+		expr := unquoteSimpleExpressionIdentifiers(col.Generated.String())
+		return "(" + stripRedundantOuterParens(expr) + ")"
+	}
+	return ""
+}
+
+func columnDefaultValueText(def *sql.ColumnDefaultValue) string {
 	if def == nil {
 		return ""
 	}
@@ -162,4 +173,79 @@ func stripRedundantOuterParens(expr string) string {
 		}
 		expr = trimmed[1 : len(trimmed)-1]
 	}
+}
+
+func unquoteSimpleExpressionIdentifiers(expr string) string {
+	var builder strings.Builder
+	for i := 0; i < len(expr); {
+		switch expr[i] {
+		case '\'':
+			next := copySingleQuotedString(&builder, expr, i)
+			i = next
+		case '"':
+			next, content, ok := readDoubleQuotedIdentifier(expr, i)
+			if ok && canUseBareCatalogIdentifier(content) {
+				builder.WriteString(content)
+			} else {
+				builder.WriteString(expr[i:next])
+			}
+			i = next
+		default:
+			builder.WriteByte(expr[i])
+			i++
+		}
+	}
+	return builder.String()
+}
+
+func copySingleQuotedString(builder *strings.Builder, expr string, start int) int {
+	builder.WriteByte('\'')
+	for i := start + 1; i < len(expr); i++ {
+		builder.WriteByte(expr[i])
+		if expr[i] == '\'' {
+			if i+1 < len(expr) && expr[i+1] == '\'' {
+				i++
+				builder.WriteByte('\'')
+				continue
+			}
+			return i + 1
+		}
+	}
+	return len(expr)
+}
+
+func readDoubleQuotedIdentifier(expr string, start int) (next int, content string, ok bool) {
+	var builder strings.Builder
+	for i := start + 1; i < len(expr); i++ {
+		if expr[i] != '"' {
+			builder.WriteByte(expr[i])
+			continue
+		}
+		if i+1 < len(expr) && expr[i+1] == '"' {
+			builder.WriteByte('"')
+			i++
+			continue
+		}
+		return i + 1, builder.String(), true
+	}
+	return len(expr), "", false
+}
+
+func canUseBareCatalogIdentifier(identifier string) bool {
+	if len(identifier) == 0 {
+		return false
+	}
+	for i := 0; i < len(identifier); i++ {
+		c := identifier[i]
+		if i == 0 {
+			if (c < 'a' || c > 'z') && c != '_' {
+				return false
+			}
+			continue
+		}
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '_' && c != '$' {
+			return false
+		}
+	}
+	return true
 }
