@@ -392,6 +392,40 @@ func TestCreateCastRequiresTypeOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropCastRequiresTypeOwnershipRepro reproduces a security bug: Doltgres
+// allows a role that owns neither side of a cast to drop it.
+func TestDropCastRequiresTypeOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP CAST requires source or target type ownership",
+			SetUpScript: []string{
+				`CREATE USER cast_dropper PASSWORD 'dropper';`,
+				`CREATE TYPE drop_cast_private_color AS ENUM ('red', 'green');`,
+				`CREATE FUNCTION int_to_drop_cast_private_color(input_value INT)
+					RETURNS drop_cast_private_color
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT CASE WHEN input_value = 1 THEN 'red'::drop_cast_private_color ELSE 'green'::drop_cast_private_color END $$;`,
+				`CREATE CAST (INT AS drop_cast_private_color)
+					WITH FUNCTION int_to_drop_cast_private_color(INT);`,
+				`GRANT USAGE ON SCHEMA public TO cast_dropper;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP CAST (INT AS drop_cast_private_color);`,
+					ExpectedErr: `must be owner`,
+					Username:    `cast_dropper`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT ((1)::drop_cast_private_color)::text;`,
+					Expected: []sql.Row{{"red"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
