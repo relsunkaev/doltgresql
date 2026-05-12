@@ -17,15 +17,22 @@ package hook
 import (
 	"fmt"
 	"io"
+	"math"
 	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/server/ast"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -35,9 +42,12 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	if !ok {
 		return nil, errors.Errorf("ADD COLUMN pre-hook expected `*plan.AddColumn` but received `%T`", nodeInterface)
 	}
+	if err := prepareSerialAddColumn(ctx, n); err != nil {
+		return nil, err
+	}
 	// A NOT NULL column with no default would rewrite existing rows with NULL in
 	// PostgreSQL, so non-empty tables must reject it before the schema changes.
-	if n.Column().Default == nil {
+	if n.Column().Default == nil && n.Column().Generated == nil {
 		if !n.Column().Nullable {
 			hasRows, err := tableHasRows(ctx, n.Table)
 			if err != nil {
@@ -99,6 +109,171 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 		}
 	}
 	return n, nil
+}
+
+func prepareSerialAddColumn(ctx *sql.Context, n *plan.AddColumn) error {
+	col := n.Column()
+	doltgresType, ok := col.Type.(*pgtypes.DoltgresType)
+	if !ok || !doltgresType.IsSerial {
+		return nil
+	}
+
+	generatedFromSequence := false
+	if col.Generated != nil {
+		generatedFromSequence = addColumnGeneratedFromSequence(ctx, col.Generated)
+		if !generatedFromSequence {
+			return nil
+		}
+	}
+
+	doltTable := core.SQLNodeToDoltTable(n.Table)
+	if doltTable == nil {
+		return nil
+	}
+	tableName := doltTable.TableName()
+	schemaName := tableName.Schema
+	if schemaName == "" {
+		var err error
+		schemaName, err = core.GetSchemaName(ctx, n.Database(), "")
+		if err != nil {
+			return err
+		}
+	}
+	databaseName := databaseNameForSQLDatabase(n.Database())
+
+	sequenceName, err := generateAddColumnSequenceName(ctx, databaseName, schemaName, tableName.Name, col.Name)
+	if err != nil {
+		return err
+	}
+	seqName := sequenceDefaultName(ctx, databaseName, schemaName, sequenceName)
+	nextVal, foundFunc, err := framework.GetFunction(ctx, "nextval", pgexprs.NewTextLiteral(seqName))
+	if err != nil {
+		return err
+	}
+	if !foundFunc {
+		return errors.Errorf(`function "nextval" could not be found for SERIAL default`)
+	}
+
+	nextValExpr := &sql.ColumnDefaultValue{
+		Expr:          nextVal,
+		OutType:       pgtypes.Int64,
+		Literal:       false,
+		ReturnNil:     false,
+		Parenthesized: false,
+	}
+	if generatedFromSequence {
+		col.Generated = nextValExpr
+	} else {
+		col.Default = nextValExpr
+	}
+
+	var maxValue int64
+	switch doltgresType.Name() {
+	case "smallserial":
+		col.Type = pgtypes.Int16
+		maxValue = math.MaxInt16
+	case "serial":
+		col.Type = pgtypes.Int32
+		maxValue = math.MaxInt32
+	case "bigserial":
+		col.Type = pgtypes.Int64
+		maxValue = math.MaxInt64
+	default:
+		return errors.Errorf(`type "%s" cannot be serial`, doltgresType.String())
+	}
+
+	collection, err := core.GetSequencesCollectionFromContext(ctx, databaseName)
+	if err != nil {
+		return err
+	}
+	return collection.CreateSequence(ctx, &sequences.Sequence{
+		Id:          id.NewSequence(schemaName, sequenceName),
+		DataTypeID:  col.Type.(*pgtypes.DoltgresType).ID,
+		Persistence: sequences.Persistence_Permanent,
+		Start:       1,
+		Current:     1,
+		Increment:   1,
+		Minimum:     1,
+		Maximum:     maxValue,
+		Cache:       1,
+		Cycle:       false,
+		IsAtEnd:     false,
+		OwnerTable:  id.NewTable(schemaName, tableName.Name),
+		OwnerColumn: col.Name,
+	})
+}
+
+func addColumnGeneratedFromSequence(ctx *sql.Context, generated *sql.ColumnDefaultValue) bool {
+	seenNextVal := false
+	seenPlaceholder := false
+	transform.InspectExpr(ctx, generated, func(ctx *sql.Context, expr sql.Expression) bool {
+		switch e := expr.(type) {
+		case *framework.CompiledFunction:
+			if strings.EqualFold(e.Name, "nextval") {
+				seenNextVal = true
+			}
+		case *expression.Literal:
+			placeholderName := fmt.Sprintf("'%s'", ast.DoltCreateTablePlaceholderSequenceName)
+			if e.String() == placeholderName {
+				seenPlaceholder = true
+			}
+		}
+		return false
+	})
+	return seenNextVal || seenPlaceholder
+}
+
+func generateAddColumnSequenceName(ctx *sql.Context, databaseName string, schemaName string, tableName string, columnName string) (string, error) {
+	baseSequenceName := fmt.Sprintf("%s_%s_seq", tableName, columnName)
+	sequenceName := baseSequenceName
+	relationType, err := core.GetRelationTypeForDatabase(ctx, databaseName, schemaName, baseSequenceName)
+	if err != nil {
+		return "", err
+	}
+	if relationType != core.RelationType_DoesNotExist {
+		seqIndex := 1
+		for ; seqIndex <= maxSequenceAutoNames; seqIndex++ {
+			sequenceName = fmt.Sprintf("%s%d", baseSequenceName, seqIndex)
+			relationType, err = core.GetRelationTypeForDatabase(ctx, databaseName, schemaName, sequenceName)
+			if err != nil {
+				return "", err
+			}
+			if relationType == core.RelationType_DoesNotExist {
+				break
+			}
+		}
+		if seqIndex > maxSequenceAutoNames {
+			return "", errors.Errorf("SERIAL sequence name reached max iterations")
+		}
+	}
+	return sequenceName, nil
+}
+
+const maxSequenceAutoNames = 10_000
+
+type revisionQualifiedDatabase interface {
+	RevisionQualifiedName() string
+}
+
+func databaseNameForSQLDatabase(db sql.Database) string {
+	if db == nil {
+		return ""
+	}
+	if revisionDb, ok := db.(revisionQualifiedDatabase); ok {
+		return revisionDb.RevisionQualifiedName()
+	}
+	return db.Name()
+}
+
+func sequenceDefaultName(ctx *sql.Context, databaseName string, schemaName string, sequenceName string) string {
+	if databaseName == "" || databaseName == ctx.GetCurrentDatabase() {
+		return doltdb.TableName{Name: sequenceName, Schema: schemaName}.String()
+	}
+	return quoteIdentifier(databaseName) + "." + quoteIdentifier(schemaName) + "." + quoteIdentifier(sequenceName)
+}
+
+func quoteIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
 func tableHasRows(ctx *sql.Context, node sql.Node) (bool, error) {
