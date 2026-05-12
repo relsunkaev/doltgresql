@@ -58,6 +58,7 @@ const (
 	SET
 	ALTERSYSTEM
 	DROP
+	MAINTAIN
 )
 
 // ObjectType represents objects that can have privileges.
@@ -123,6 +124,7 @@ var ByName = map[string]Kind{
 	"SET":          SET,
 	"ALTER SYSTEM": ALTERSYSTEM,
 	"DROP":         DROP,
+	"MAINTAIN":     MAINTAIN,
 }
 
 // List is a list of privileges.

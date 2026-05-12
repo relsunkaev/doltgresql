@@ -34,6 +34,7 @@ const (
 	Privilege_SET          = "s"
 	Privilege_ALTER_SYSTEM = "A"
 	Privilege_DROP         = "Y"
+	Privilege_MAINTAIN     = "m"
 )
 
 // PrivilegeObject is the database object that privileges are applied to.
@@ -81,6 +82,7 @@ func GetAllPrivileges() []Privilege {
 		Privilege_SET,
 		Privilege_ALTER_SYSTEM,
 		Privilege_DROP,
+		Privilege_MAINTAIN,
 	}
 }
 
@@ -142,6 +144,8 @@ func (p Privilege) String() string {
 		return "ALTER SYSTEM"
 	case Privilege_DROP:
 		return "DROP"
+	case Privilege_MAINTAIN:
+		return "MAINTAIN"
 	default:
 		return "UNKNOWN"
 	}
@@ -171,7 +175,7 @@ func (po PrivilegeObject) AllPrivileges() []Privilege {
 	case PrivilegeObject_SEQUENCE:
 		return []Privilege{Privilege_SELECT, Privilege_UPDATE, Privilege_USAGE, Privilege_DROP}
 	case PrivilegeObject_TABLE:
-		return []Privilege{Privilege_INSERT, Privilege_SELECT, Privilege_UPDATE, Privilege_DELETE, Privilege_TRUNCATE, Privilege_REFERENCES, Privilege_TRIGGER, Privilege_DROP}
+		return []Privilege{Privilege_INSERT, Privilege_SELECT, Privilege_UPDATE, Privilege_DELETE, Privilege_TRUNCATE, Privilege_REFERENCES, Privilege_TRIGGER, Privilege_MAINTAIN, Privilege_DROP}
 	case PrivilegeObject_TABLE_COLUMN:
 		return []Privilege{Privilege_INSERT, Privilege_SELECT, Privilege_UPDATE, Privilege_REFERENCES, Privilege_DROP}
 	case PrivilegeObject_TABLESPACE:

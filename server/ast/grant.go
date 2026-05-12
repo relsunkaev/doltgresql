@@ -301,6 +301,8 @@ func convertPrivilegeKinds(object auth.PrivilegeObject, kinds []privilege.Kind) 
 			privileges[i] = auth.Privilege_EXECUTE
 		case privilege.INSERT:
 			privileges[i] = auth.Privilege_INSERT
+		case privilege.MAINTAIN:
+			privileges[i] = auth.Privilege_MAINTAIN
 		case privilege.REFERENCES:
 			privileges[i] = auth.Privilege_REFERENCES
 		case privilege.SELECT:
