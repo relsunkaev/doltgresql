@@ -187,6 +187,39 @@ func TestDropEnumTypeUsedByTableRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
+// column default unless CASCADE is requested.
+func TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects column default expression dependencies",
+			SetUpScript: []string{
+				`CREATE TYPE enum_default_dependency_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE enum_default_dependency_items (
+					id INT PRIMARY KEY,
+					status TEXT DEFAULT ('new'::enum_default_dependency_status)::text
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE enum_default_dependency_status;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO enum_default_dependency_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT id::text, status
+						FROM enum_default_dependency_items;`,
+					Expected: []sql.Row{{"1", "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropEnumTypeUsedByViewRequiresCascadeRepro reproduces a dependency bug:
 // PostgreSQL rejects dropping an enum type referenced by a view unless CASCADE
 // is requested.
