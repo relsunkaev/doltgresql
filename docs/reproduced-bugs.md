@@ -2515,6 +2515,32 @@ artifacts only; no fixes are included here.
   ordinary unique constraint is not deferrable.
 - Observed Doltgres behavior: the statement succeeds and records no error.
 
+### SET CONSTRAINTS accepts non-deferrable foreign keys
+
+- Reproducer: `TestSetConstraintsRejectsNonDeferrableForeignKeyRepro` in
+  `testing/go/constraint_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestSetConstraintsRejectsNonDeferrableForeignKeyRepro -count=1`.
+- Expected PostgreSQL behavior: `SET CONSTRAINTS
+  set_constraints_nondeferrable_fk DEFERRED` fails because the named
+  foreign-key constraint is explicitly `NOT DEFERRABLE`.
+- Observed Doltgres behavior: inside an explicit transaction the statement
+  succeeds and records no error.
+
+### SET CONSTRAINTS accepts missing constraint names
+
+- Reproducer: `TestSetConstraintsRejectsMissingConstraintRepro` in
+  `testing/go/constraint_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestSetConstraintsRejectsMissingConstraintRepro -count=1`.
+- Expected PostgreSQL behavior: `SET CONSTRAINTS
+  set_constraints_missing_name DEFERRED` fails because no constraint by that
+  name exists.
+- Observed Doltgres behavior: inside an explicit transaction the statement
+  succeeds and records no error.
+
 ### ALTER CONSTRAINT cannot change foreign-key deferrability
 
 - Reproducer: `TestAlterForeignKeyConstraintDeferrabilityRepro` in

@@ -1603,6 +1603,59 @@ func TestSetConstraintsRejectsNonDeferrableConstraintRepro(t *testing.T) {
 	})
 }
 
+// TestSetConstraintsRejectsNonDeferrableForeignKeyRepro reproduces a
+// correctness bug: PostgreSQL rejects SET CONSTRAINTS DEFERRED for a named
+// non-deferrable foreign-key constraint.
+func TestSetConstraintsRejectsNonDeferrableForeignKeyRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET CONSTRAINTS rejects non-deferrable foreign key",
+			SetUpScript: []string{
+				`CREATE TABLE set_constraints_nondeferrable_fk_parent (id INT PRIMARY KEY);`,
+				`CREATE TABLE set_constraints_nondeferrable_fk_child (
+					id INT PRIMARY KEY,
+					parent_id INT,
+					CONSTRAINT set_constraints_nondeferrable_fk
+						FOREIGN KEY (parent_id) REFERENCES set_constraints_nondeferrable_fk_parent(id)
+						NOT DEFERRABLE
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:       `SET CONSTRAINTS set_constraints_nondeferrable_fk DEFERRED;`,
+					ExpectedErr: `is not deferrable`,
+				},
+			},
+		},
+	})
+}
+
+// TestSetConstraintsRejectsMissingConstraintRepro reproduces a correctness
+// bug: PostgreSQL rejects SET CONSTRAINTS for a name that does not resolve to
+// any constraint.
+func TestSetConstraintsRejectsMissingConstraintRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET CONSTRAINTS rejects missing constraint",
+			SetUpScript: []string{
+				`CREATE TABLE set_constraints_missing_name_anchor (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:       `SET CONSTRAINTS set_constraints_missing_name DEFERRED;`,
+					ExpectedErr: `constraint "set_constraints_missing_name" does not exist`,
+				},
+			},
+		},
+	})
+}
+
 // TestExclusionConstraintRejectsConflictingRowsRepro reproduces a data
 // consistency bug: PostgreSQL exclusion constraints prevent conflicting rows.
 func TestExclusionConstraintRejectsConflictingRowsRepro(t *testing.T) {
