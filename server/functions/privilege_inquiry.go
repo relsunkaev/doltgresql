@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -36,6 +37,8 @@ func initPrivilegeInquiry() {
 	framework.RegisterFunction(has_schema_privilege_text_text_text)
 	framework.RegisterFunction(has_sequence_privilege_text_text_text)
 	framework.RegisterFunction(has_function_privilege_text_text_text)
+	framework.RegisterFunction(has_largeobject_privilege_oid_text)
+	framework.RegisterFunction(has_largeobject_privilege_text_oid_text)
 	framework.RegisterFunction(pg_get_acl_regclass_regclass_int32)
 	framework.RegisterFunction(has_parameter_privilege_text_text)
 	framework.RegisterFunction(has_parameter_privilege_text_text_text)
@@ -186,6 +189,26 @@ var has_function_privilege_text_text_text = framework.Function3{
 	},
 }
 
+var has_largeobject_privilege_oid_text = framework.Function2{
+	Name:       "has_largeobject_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, objectID any, privilege any) (any, error) {
+		return hasLargeObjectPrivilege(currentSQLUser(ctx), oidValue(objectID), privilege.(string))
+	},
+}
+
+var has_largeobject_privilege_text_oid_text = framework.Function3{
+	Name:       "has_largeobject_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Oid, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, role any, objectID any, privilege any) (any, error) {
+		return hasLargeObjectPrivilege(role.(string), oidValue(objectID), privilege.(string))
+	},
+}
+
 var has_parameter_privilege_text_text = framework.Function2{
 	Name:       "has_parameter_privilege",
 	Return:     pgtypes.Bool,
@@ -245,6 +268,38 @@ func hasParameterPrivilege(roleName, parameterName, privilegeName string) (bool,
 			Name: parameterName,
 		}, authPrivilege)
 	}), nil
+}
+
+func hasLargeObjectPrivilege(roleName string, oid uint32, privilegeName string) (bool, error) {
+	privilege, err := privilegeByName(privilegeName)
+	if err != nil {
+		return false, err
+	}
+	if privilege != auth.Privilege_SELECT && privilege != auth.Privilege_UPDATE {
+		return false, errors.Errorf(`unrecognized privilege type: "%s"`, privilegeName)
+	}
+	owner, ok := largeobject.Owner(oid)
+	if !ok {
+		return false, errors.Errorf("large object %d does not exist", oid)
+	}
+	role := auth.GetRole(roleName)
+	if role.IsSuperUser || roleName == owner {
+		return true, nil
+	}
+	aclPrefix := roleName + "="
+	aclPrivilege := privilege.ACLAbbreviation()
+	for _, object := range largeobject.Objects() {
+		if object.OID != oid {
+			continue
+		}
+		for _, item := range object.ACL {
+			aclSpec := strings.SplitN(item, "/", 2)[0]
+			if strings.HasPrefix(aclSpec, aclPrefix) && strings.Contains(strings.TrimPrefix(aclSpec, aclPrefix), aclPrivilege) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func roleHasPrivilege(roleName string, check func(auth.RoleID) bool) bool {

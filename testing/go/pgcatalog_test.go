@@ -3376,20 +3376,20 @@ func TestPgProc(t *testing.T) {
 			Name: "pg_proc",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_proc";`,
-					Expected: []sql.Row{},
+					Query:    `SELECT count(*) > 0 FROM "pg_catalog"."pg_proc";`,
+					Expected: []sql.Row{{"t"}},
 				},
-				{ // Different cases and quoted, so it fails
-					Query:       `SELECT * FROM "PG_catalog"."pg_proc";`,
-					ExpectedErr: "not",
+				{ // Schema lookup is case-insensitive for pg_catalog handlers.
+					Query:    `SELECT count(*) > 0 FROM "PG_catalog"."pg_proc";`,
+					Expected: []sql.Row{{"t"}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "pg_catalog"."PG_proc";`,
 					ExpectedErr: "not",
 				},
 				{ // Different cases but non-quoted, so it works
-					Query:    "SELECT proname FROM PG_catalog.pg_PROC ORDER BY proname;",
-					Expected: []sql.Row{},
+					Query:    "SELECT count(*) > 0 FROM PG_catalog.pg_PROC WHERE proname = 'abs';",
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},

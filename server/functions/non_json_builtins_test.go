@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/uuid"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -106,6 +107,44 @@ func TestPostgres18MathHelpers(t *testing.T) {
 	lgamma, _ := math.Lgamma(6)
 	if lgamma <= 4.7 || lgamma >= 4.8 {
 		t.Fatalf("got %v, want value between 4.7 and 4.8", lgamma)
+	}
+}
+
+func TestLargeObjectPrivilegeInquiry(t *testing.T) {
+	largeobject.ResetForTests()
+	t.Cleanup(largeobject.ResetForTests)
+
+	oid, err := largeobject.Create(12345, "owner_role", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = largeobject.AddACLItem(oid, "reader_role=r/owner_role"); err != nil {
+		t.Fatal(err)
+	}
+
+	hasPrivilege, err := hasLargeObjectPrivilege("owner_role", oid, "SELECT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasPrivilege {
+		t.Fatal("expected owner to have SELECT")
+	}
+	hasPrivilege, err = hasLargeObjectPrivilege("reader_role", oid, "SELECT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasPrivilege {
+		t.Fatal("expected explicit ACL to grant SELECT")
+	}
+	hasPrivilege, err = hasLargeObjectPrivilege("reader_role", oid, "UPDATE")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasPrivilege {
+		t.Fatal("expected SELECT-only ACL not to grant UPDATE")
+	}
+	if _, err = hasLargeObjectPrivilege("reader_role", oid, "INSERT"); err == nil {
+		t.Fatal("expected unsupported large-object privilege error")
 	}
 }
 

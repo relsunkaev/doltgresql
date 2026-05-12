@@ -15,12 +15,15 @@
 package pgcatalog
 
 import (
+	"sort"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -68,6 +71,7 @@ func (p PgProcHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.R
 	if err != nil {
 		return nil, err
 	}
+	rows = append(rows, pgProcBuiltinFunctionRows()...)
 	return sql.RowsToRowIter(rows...), nil
 }
 
@@ -188,6 +192,82 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		function.SQLDefinition,                           // prosqlbody
 		proConfig,                                        // proconfig
 		nil,                                              // proacl
+		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
+	}
+}
+
+func pgProcBuiltinFunctionRows() []sql.Row {
+	names := make([]string, 0, len(framework.Catalog))
+	for name := range framework.Catalog {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	rows := make([]sql.Row, 0)
+	for _, name := range names {
+		overloads := append([]framework.FunctionInterface(nil), framework.Catalog[name]...)
+		sort.Slice(overloads, func(i, j int) bool {
+			return string(overloads[i].InternalID()) < string(overloads[j].InternalID())
+		})
+		for _, overload := range overloads {
+			rows = append(rows, pgProcBuiltinFunctionRow(overload))
+		}
+	}
+	return rows
+}
+
+func pgProcBuiltinFunctionRow(function framework.FunctionInterface) sql.Row {
+	paramTypes := function.GetParameters()
+	argTypes := make([]any, len(paramTypes))
+	functionIDParamTypes := make([]id.Type, len(paramTypes))
+	for i, paramType := range paramTypes {
+		argTypes[i] = paramType.ID.AsId()
+		functionIDParamTypes[i] = paramType.ID
+	}
+
+	rows := float32(0)
+	if function.IsSRF() {
+		rows = 1000
+	}
+	volatility := "i"
+	if function.NonDeterministic() {
+		volatility = "v"
+	}
+	functionID := id.Function(function.InternalID())
+	if !functionID.IsValid() || id.Id(functionID).Section() != id.Section_Function {
+		functionID = id.NewFunction("pg_catalog", function.GetName(), functionIDParamTypes...)
+	}
+	return sql.Row{
+		functionID.AsId(),                          // oid
+		function.GetName(),                         // proname
+		id.NewNamespace("pg_catalog").AsId(),       // pronamespace
+		catalogOwnerOID(),                          // proowner
+		id.NewId(id.Section_FunctionLanguage, "c"), // prolang
+		float32(1),                                 // procost
+		rows,                                       // prorows
+		id.Null,                                    // provariadic
+		"-",                                        // prosupport
+		"f",                                        // prokind
+		false,                                      // prosecdef
+		false,                                      // proleakproof
+		function.IsStrict(),                        // proisstrict
+		function.IsSRF(),                           // proretset
+		volatility,                                 // provolatile
+		"s",                                        // proparallel
+		int16(len(paramTypes)),                     // pronargs
+		int16(0),                                   // pronargdefaults
+		function.GetReturn().ID.AsId(),             // prorettype
+		argTypes,                                   // proargtypes
+		nil,                                        // proallargtypes
+		nil,                                        // proargmodes
+		nil,                                        // proargnames
+		nil,                                        // proargdefaults
+		nil,                                        // protrftypes
+		"builtin",                                  // prosrc
+		nil,                                        // probin
+		nil,                                        // prosqlbody
+		nil,                                        // proconfig
+		nil,                                        // proacl
 		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
 	}
 }
