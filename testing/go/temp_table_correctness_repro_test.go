@@ -74,6 +74,31 @@ func TestTemporaryTableOnCommitDropRepro(t *testing.T) {
 	})
 }
 
+// TestTemporaryTableOnCommitPreserveRowsRepro reproduces a temp-table
+// persistence gap: PostgreSQL accepts the explicit spelling of the default
+// ON COMMIT behavior, and rows survive COMMIT.
+func TestTemporaryTableOnCommitPreserveRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "temporary table ON COMMIT PRESERVE ROWS keeps rows at commit",
+			SetUpScript: []string{
+				`CREATE TEMPORARY TABLE temp_on_commit_preserve_items (
+					id INT
+				) ON COMMIT PRESERVE ROWS;`,
+				`BEGIN;`,
+				`INSERT INTO temp_on_commit_preserve_items VALUES (1), (2);`,
+				`COMMIT;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT id FROM temp_on_commit_preserve_items ORDER BY id;`,
+					Expected: []sql.Row{{1}, {2}},
+				},
+			},
+		},
+	})
+}
+
 // TestTemporaryTableRejectsPersistentSchemaRepro reproduces a namespace
 // correctness bug: PostgreSQL rejects temporary tables explicitly created in a
 // persistent schema.
