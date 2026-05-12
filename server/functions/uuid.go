@@ -33,6 +33,8 @@ func initUuid() {
 	framework.RegisterFunction(uuid_recv)
 	framework.RegisterFunction(uuid_send)
 	framework.RegisterFunction(uuid_cmp)
+	framework.RegisterFunction(uuid_extract_version)
+	framework.RegisterFunction(uuid_extract_timestamp)
 }
 
 // uuid_in represents the PostgreSQL function of uuid type IO input.
@@ -105,4 +107,39 @@ var uuid_cmp = framework.Function2{
 		bb := val2.(uuid.UUID)
 		return int32(bytes.Compare(ab.GetBytesMut(), bb.GetBytesMut())), nil
 	},
+}
+
+var uuid_extract_version = framework.Function1{
+	Name:       "uuid_extract_version",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Uuid},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return int32(uuidExtractVersion(val.(uuid.UUID))), nil
+	},
+}
+
+var uuid_extract_timestamp = framework.Function1{
+	Name:       "uuid_extract_timestamp",
+	Return:     pgtypes.TimestampTZ,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Uuid},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return uuidExtractTimestamp(val.(uuid.UUID))
+	},
+}
+
+func uuidExtractVersion(val uuid.UUID) byte {
+	return val.Version()
+}
+
+func uuidExtractTimestamp(val uuid.UUID) (any, error) {
+	if val.Version() != uuid.V1 {
+		return nil, nil
+	}
+	ts, err := uuid.TimestampFromV1(val)
+	if err != nil {
+		return nil, err
+	}
+	return ts.Time()
 }
