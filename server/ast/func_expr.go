@@ -47,10 +47,6 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 		}
 		node = filtered
 	}
-	if node.AggType == tree.OrderedSetAgg {
-		return nil, errors.Errorf("WITHIN GROUP is not yet supported")
-	}
-
 	var qualifier vitess.TableIdent
 	var name vitess.ColIdent
 	switch funcRef := node.Func.FunctionReference.(type) {
@@ -91,6 +87,28 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	exprs, err := nodeExprsToSelectExprs(ctx, node.Exprs)
 	if err != nil {
 		return nil, err
+	}
+	if node.AggType == tree.OrderedSetAgg {
+		var orderBy vitess.OrderBy
+		if len(node.OrderBy) > 0 {
+			orderBy, err = nodeOrderBy(ctx, node.OrderBy, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+		switch strings.ToLower(name.String()) {
+		case "percentile_cont", "percentile_disc", "mode", "rank":
+			return &vitess.OrderedInjectedExpr{
+				InjectedExpr: vitess.InjectedExpr{
+					Expression:         pgexprs.NewOrderedSetAgg(strings.ToLower(name.String())),
+					SelectExprChildren: exprs,
+					Auth:               vitess.AuthInformation{},
+				},
+				OrderBy: orderBy,
+			}, nil
+		default:
+			return nil, errors.Errorf("ordered-set aggregate %s is not yet supported", name.String())
+		}
 	}
 
 	switch strings.ToLower(name.String()) {
