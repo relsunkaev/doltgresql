@@ -59,6 +59,9 @@ func internalCharExplicit() {
 			if len(s) == 0 {
 				return int32(0), nil
 			}
+			if s[0]&0x80 != 0 {
+				return int32(int8(s[0])), nil
+			}
 			if unicode.IsLetter(rune(s[0])) {
 				return int32(s[0]), nil
 			}
