@@ -356,3 +356,110 @@ func TestLargeObjectUnlinkRollsBackRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestLargeObjectCreateRollsBackToSavepointRepro reproduces a transaction
+// consistency bug: large-object creation after a savepoint must be undone by
+// ROLLBACK TO SAVEPOINT.
+func TestLargeObjectCreateRollsBackToSavepointRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object creation rolls back to savepoint",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `SAVEPOINT before_large_object_create;`,
+				},
+				{
+					Query:            `SELECT lo_from_bytea(424251, decode('11223344', 'hex'));`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `ROLLBACK TO SAVEPOINT before_large_object_create;`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_largeobject_metadata
+						WHERE oid = 424251;`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectPutRollsBackToSavepointRepro reproduces a transaction
+// consistency bug: writes to large-object contents after a savepoint must be
+// undone by ROLLBACK TO SAVEPOINT.
+func TestLargeObjectPutRollsBackToSavepointRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object writes roll back to savepoint",
+			SetUpScript: []string{
+				`SELECT lo_from_bytea(424252, decode('10203040', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `SAVEPOINT before_large_object_write;`,
+				},
+				{
+					Query:            `SELECT lo_put(424252, 2, decode('ffee', 'hex'));`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `ROLLBACK TO SAVEPOINT before_large_object_write;`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query:    `SELECT encode(lo_get(424252), 'hex');`,
+					Expected: []sql.Row{{"10203040"}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectUnlinkRollsBackToSavepointRepro reproduces a transaction
+// consistency bug: large-object deletion after a savepoint must be undone by
+// ROLLBACK TO SAVEPOINT.
+func TestLargeObjectUnlinkRollsBackToSavepointRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object unlink rolls back to savepoint",
+			SetUpScript: []string{
+				`SELECT lo_from_bytea(424253, decode('55667788', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `SAVEPOINT before_large_object_unlink;`,
+				},
+				{
+					Query:    `SELECT lo_unlink(424253);`,
+					Expected: []sql.Row{{int32(1)}},
+				},
+				{
+					Query: `ROLLBACK TO SAVEPOINT before_large_object_unlink;`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query:    `SELECT encode(lo_get(424253), 'hex');`,
+					Expected: []sql.Row{{"55667788"}},
+				},
+			},
+		},
+	})
+}
