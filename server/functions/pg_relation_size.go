@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -49,6 +50,11 @@ var pg_relation_size_regclass_text = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
+		switch val2.(string) {
+		case "main", "fsm", "vm", "init":
+		default:
+			return nil, errors.Errorf("invalid fork name")
+		}
 		// TODO: on-disk size in bytes of one fork of that relation
 		//  used by the specified fork ('main', 'fsm', 'vm', or 'init')
 		return int64(0), nil
