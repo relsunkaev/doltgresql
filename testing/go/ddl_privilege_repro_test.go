@@ -703,6 +703,38 @@ func TestCreateTableLikeRequiresSchemaCreatePrivilegeGuard(t *testing.T) {
 	})
 }
 
+// TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro reproduces a CREATE
+// TABLE OF authorization bug: the typed-table path bypasses the target
+// schema's CREATE privilege check.
+func TestCreateTypedTableRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TABLE OF requires CREATE on target schema",
+			SetUpScript: []string{
+				`CREATE USER typed_table_schema_creator PASSWORD 'typed';`,
+				`CREATE SCHEMA typed_table_private_schema;`,
+				`CREATE TYPE typed_table_private_row AS (
+					id INT,
+					label TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA typed_table_private_schema TO typed_table_schema_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE TABLE typed_table_private_schema.created_without_create OF typed_table_private_row;`,
+					ExpectedErr: `permission denied`,
+					Username:    `typed_table_schema_creator`,
+					Password:    `typed`,
+				},
+				{
+					Query:    `SELECT to_regclass('typed_table_private_schema.created_without_create')::text;`,
+					Expected: []sql.Row{{nil}},
+				},
+			},
+		},
+	})
+}
+
 // TestSelectIntoCreatesTableRepro reproduces a DDL/query correctness gap:
 // PostgreSQL SELECT ... INTO creates a table from the query result.
 func TestSelectIntoCreatesTableRepro(t *testing.T) {
