@@ -86,12 +86,21 @@ func TestMergeGeneratedColumnConflictReportsConflictRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:    `BEGIN;`,
+					Expected: []sql.Row{},
+				},
+				{
 					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
 					Expected: []sql.Row{{"t"}},
 				},
 				{
-					Query:    `SELECT table_name, num_conflicts FROM dolt_conflicts;`,
+					Query:    `SELECT "table", num_conflicts FROM dolt_conflicts;`,
 					Expected: []sql.Row{{"merge_generated_conflict_items", Numeric("1")}},
+				},
+				{
+					Query: `SELECT base_base_value, base_doubled, our_base_value, our_doubled, their_base_value, their_doubled
+						FROM dolt_conflicts_merge_generated_conflict_items;`,
+					Expected: []sql.Row{{10, 20, 30, 60, 20, 40}},
 				},
 			},
 		},
