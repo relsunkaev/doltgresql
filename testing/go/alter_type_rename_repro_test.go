@@ -278,3 +278,35 @@ func TestAlterTypeRenameUpdatesExistingColumnMetadataRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro reproduces a
+// catalog persistence bug: renaming a type should update function signatures
+// that reference it, so overload lookup with the renamed type keeps working.
+func TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates function signatures",
+			SetUpScript: []string{
+				`CREATE TYPE rename_function_status AS ENUM ('new', 'done');`,
+				`CREATE FUNCTION rename_function_status_echo(input_status rename_function_status)
+					RETURNS rename_function_status
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT input_status $$;`,
+				`ALTER TYPE rename_function_status RENAME TO renamed_function_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT to_regprocedure(
+							'rename_function_status_echo(renamed_function_status)'
+						)::text;`,
+					Expected: []sql.Row{{"rename_function_status_echo(renamed_function_status)"}},
+				},
+				{
+					Query:    `SELECT rename_function_status_echo('done'::renamed_function_status)::text;`,
+					Expected: []sql.Row{{"done"}},
+				},
+			},
+		},
+	})
+}
