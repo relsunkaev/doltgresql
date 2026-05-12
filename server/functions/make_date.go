@@ -47,6 +47,10 @@ var make_date = framework.Function3{
 		if day < 1 || day > 31 {
 			return time.Time{}, errDateFieldOutOfRange
 		}
-		return time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), nil
+		d := time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
+		if !sameDateParts(d, year, month, day) {
+			return time.Time{}, errDateFieldOutOfRange
+		}
+		return d, nil
 	},
 }

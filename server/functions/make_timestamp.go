@@ -95,6 +95,9 @@ func getTimestampInServerLocation(year, month, day, hour, minute int32, partialS
 	if day < 1 || day > 31 {
 		return time.Time{}, errDateFieldOutOfRange
 	}
+	if !sameDateParts(time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), year, month, day) {
+		return time.Time{}, errDateFieldOutOfRange
+	}
 
 	if hour < 0 || hour > 23 {
 		return time.Time{}, errTimeFieldOutOfRange
@@ -111,4 +114,8 @@ func getTimestampInServerLocation(year, month, day, hour, minute int32, partialS
 	nsec := int64(partialSecond*float64(time.Second)) % int64(time.Second)
 
 	return time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), second, int(nsec), loc), nil
+}
+
+func sameDateParts(t time.Time, year, month, day int32) bool {
+	return t.Year() == int(year) && t.Month() == time.Month(month) && t.Day() == int(day)
 }
