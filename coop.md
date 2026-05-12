@@ -1118,6 +1118,17 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(CompositeAttributeTypmodsRoundStoredValuesRepro|CompositeTimetzAttributeTypmodsRoundStoredValuesRepro|TimeTypmodCastsUseRoundedValueRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/types ./server/functions/framework ./server/cast ./server/expression ./server/node ./server/plpgsql ./core/typecollection -run 'Composite|Typmod|TimeTZ|Time|Record|Json|Hstore|Typed' -count=1`
 
+### delta - 2026-05-12 16:16 America/Phoenix
+
+- Lane complete: composite arrays can now be declared as table columns, inferred from `ARRAY[...]` literals, stored/deserialized, emitted by `array_out`, and subscripted for field access.
+- Source touched: `server/ast/resolvable_type_reference.go`, `server/expression/array.go`, `server/expression/subscript.go`, `server/functions/array.go`, `server/types/array.go`, `server/types/type.go`, `server/types/utils.go`.
+- Red in clean verifier `/tmp/doltgresql-delta-composite-array.M5ORfg` at `81e27f87`: `TestCompositeArrayColumnRoundTripsValuesRepro` first panicked in `nodeColumnTableDef` for `lines composite_array_line[]`; after that was fixed, it exposed catalog-resolution panics in `ARRAY[...]` inference and insert type comparison.
+- Green:
+  - `GOCACHE=/tmp/doltgresql-delta-composite-array-gocache GOTMPDIR=/tmp/doltgresql-delta-composite-array-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestCompositeArrayColumnRoundTripsValuesRepro$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-delta-composite-array-gocache GOTMPDIR=/tmp/doltgresql-delta-composite-array-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/types ./server/expression ./server/functions ./server/ast ./server/analyzer -run 'Array|Composite|Type|Cast|Subscript' -count=1`
+  - `GOCACHE=/tmp/doltgresql-delta-composite-array-gocache GOTMPDIR=/tmp/doltgresql-delta-composite-array-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/types ./server/expression ./server/functions -count=1`
+- Note: the shared default Go build cache showed missing toolchain/cache files during one rerun, so final verification used isolated `GOCACHE`/`GOTMPDIR`.
+
 ### alpha - 2026-05-12 16:08 America/Phoenix
 
 - Lane complete: `ALTER DEFAULT PRIVILEGES` now persists default ACL metadata, exposes it through `pg_default_acl`, and applies matching default grants to future tables, sequences, and routines. Added parser support for PostgreSQL 18 `ALTER DEFAULT PRIVILEGES ... ON LARGE OBJECTS`.
@@ -1127,3 +1138,145 @@ Use this file to avoid overlapping work. Add short entries with:
 - Green:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterDefaultPrivilegesGrantAppliesToFutureTablesRepro|TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro|TestAlterDefaultPrivilegesGrantAppliesToFutureSequencesRepro|TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro|TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro|TestPostgres18LargeObjectDefaultPrivilegesRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/auth ./server/node ./server/ast ./server/tables/pgcatalog -run '^$' -count=1`
+
+### gamma - 2026-05-12 16:18 America/Phoenix
+
+- Lane complete: numeric `ln(numeric)`, `log(numeric)`, and `log(numeric,numeric)` now compute with high-precision decimal logarithms instead of converting through `float64`, preserving tiny deltas around 1.
+- Source touched and committed: `server/functions/ln.go`, `server/functions/log.go`.
+- Result: committed `0e991ec1 fix: preserve numeric logarithm precision`.
+- Red: `TestNumericLogarithmsPreserveSmallDeltasRepro` returned `0` for one-argument numeric logarithms and `division by zero` for `log(1.0000000000000000000001, 1.0000000000000000000003)`.
+- Green in clean temp worktree at `141a48db` plus gamma patch:
+  - `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestNumericLogarithmsPreserveSmallDeltasRepro$' -count=1 -v`
+  - `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -count=1`
+- Note: current dirty worktree build was blocked by peer in-flight auth files; verification used a clean worktree with only this patch. Cleared the shared Go build cache after a linker `no space left on device` failure; `/tmp` free space recovered before rerun.
+
+### beta - 2026-05-12 16:19 America/Phoenix
+
+- Lane complete: scalar `UPDATE` assignments now evaluate all explicit RHS expressions against the original row before applying target changes, and `SET col = DEFAULT` with no explicit column default now uses PostgreSQL's implicit NULL default instead of failing cast assignment.
+- Source touched: `server/analyzer/assign_update_casts.go`, `server/expression/simultaneous_update.go`.
+- Red: clean temp worktree at `15b544f4` failed `TestUpdateSetImplicitNullDefaultRepro` with `UPDATE: non-Doltgres type found in source: ()`; `TestUpdateAssignmentsUseOriginalRowValuesRepro` updated `SET a = b, b = a` to `{20,20}` instead of `{20,10}`.
+- Green:
+  - Current worktree after beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestUpdate(SetImplicitNullDefault|AssignmentsUseOriginalRowValues)Repro$' -count=1 -v`
+  - Clean temp worktree at `141a48db` plus beta patch and copied generated parser artifacts: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestUpdate(SetImplicitNullDefault|AssignmentsUseOriginalRowValues)Repro$' -count=1 -v`
+  - Clean temp worktree at `141a48db` plus beta patch and copied generated parser artifacts: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/analyzer ./server/expression -run '^$' -count=1`
+- Broader note: clean `^TestUpdate.*Repro$` at later `9104c41a` plus beta patch still has existing update failures outside this slice: `RETURNING old/new`, domain defaults, tuple subquery assignment, and duplicate target checks. The two beta-targeted repros still passed in that broader run.
+
+### gamma - 2026-05-12 16:24 America/Phoenix
+
+- Lane complete: `pg_relation_size(regclass, text)` now rejects unknown relation fork names instead of silently returning `0`.
+- Source touched and committed: `server/functions/pg_relation_size.go`.
+- Result: committed `50a5f030 fix: validate relation size fork names`.
+- Red: `TestPgRelationSizeRejectsInvalidForkRepro` expected an `invalid fork name` error for `pg_relation_size('relation_size_fork_items'::regclass, 'badfork')`, but the two-argument overload returned nil error.
+- Green in clean temp worktree at `3008c149` plus gamma patch:
+  - `TMPDIR=/tmp/doltgresql-gamma-relsize-gotmp GOTMPDIR=/tmp/doltgresql-gamma-relsize-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestPgRelationSizeRejectsInvalidForkRepro$' -count=1 -v`
+  - `TMPDIR=/tmp/doltgresql-gamma-relsize-gotmp GOTMPDIR=/tmp/doltgresql-gamma-relsize-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'PgRelationSize|pg_relation_size' -count=1`
+- Green after commit on current HEAD `50a5f030`: `TMPDIR=/tmp/doltgresql-gamma-relsize-current-gotmp GOTMPDIR=/tmp/doltgresql-gamma-relsize-current-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'PgRelationSize|pg_relation_size' -count=1`
+
+### gamma - 2026-05-12 16:36 America/Phoenix
+
+- Lane complete: `pg_get_indexdef()` and indexed-attribute output now quote index, table, key-column, and INCLUDE-column identifiers when required for PostgreSQL round-tripping.
+- Source touched and committed: `server/indexmetadata/index_definition.go`.
+- Result: committed `cf22d945 fix: quote identifiers in index definitions`.
+- Red: `TestPgGetIndexdefQuotesIdentifiersRepro` expected `CREATE INDEX "IndexQuoteIdx" ON public."IndexQuoteItems" USING btree ("CaseColumn")` and `"CaseColumn"`, but the deparser emitted bare mixed-case identifiers.
+- Green:
+  - Current worktree before commit: `TMPDIR=/tmp/doltgresql-gamma-indexdef-gotmp GOTMPDIR=/tmp/doltgresql-gamma-indexdef-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/indexmetadata -count=1`
+  - Clean temp worktree at `b1ff0e09` plus gamma patch, with parser artifacts regenerated inside the temp worktree: `TMPDIR=/tmp/doltgresql-gamma-indexdef-gotmp GOTMPDIR=/tmp/doltgresql-gamma-indexdef-gotmp GOCACHE=/tmp/doltgresql-gamma-indexdef-gocache CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestPgGetIndexdefQuotesIdentifiersRepro$' -count=1 -v`
+  - After commit on current HEAD `cf22d945`: `TMPDIR=/tmp/doltgresql-gamma-indexdef-current-gotmp GOTMPDIR=/tmp/doltgresql-gamma-indexdef-current-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/indexmetadata -count=1`
+- Note: the first clean temp run copied dirty generated parser files from the main checkout and failed with unrelated `tree.AlterForeignDataWrapper` undefined errors; the successful run regenerated parser artifacts in the temp worktree from its own clean grammar.
+
+### beta - 2026-05-12 16:22 America/Phoenix
+
+- Lane complete: duplicate target columns are now rejected during shared UPDATE assignment conversion, covering both plain `UPDATE` and `INSERT ... ON CONFLICT DO UPDATE`.
+- Source touched and committed: `server/ast/update_expr.go`.
+- Result: committed `ae0b72d3 fix: reject duplicate update targets`.
+- Red in clean temp worktree at `06f8222d`: `TestUpdateMultiAssignmentRejectsDuplicateColumnsRepro` failed with `ASSIGNMENT_CAST: target is of type integer but expression is of type record`; `TestUpdateScalarAssignmentRejectsDuplicateColumnsRepro` and `TestOnConflictUpdateRejectsDuplicateTargetColumnsRepro` accepted duplicate assignments and changed rows.
+- Green in clean temp worktree at `3008c149` plus beta patch and copied generated parser artifacts:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(Update(MultiAssignment|ScalarAssignment)RejectsDuplicateColumns|OnConflictUpdateRejectsDuplicateTargetColumns)Repro$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/ast -run '^$' -count=1`
+- Progress note: latest manifest `/tmp/doltgresql-testing-go-alpha-20260512-1609.jsonl` is incomplete: `756/783` covered tests passed (`96.6%` covered), `27` failed, then the run aborted in auth/metrics. This lane converts 3 focused top-level repro failures from the update correctness file.
+
+### delta - 2026-05-12 16:29 America/Phoenix
+
+- Lane complete: legacy `TestAlterStatements` now creates the target role for owner-change smoke statements that are implemented, instead of expecting the old unsupported-warning notice.
+- Source touched: `testing/go/alter_test.go`.
+- Red in clean verifier `/tmp/doltgresql-delta-age.HAHEnA`: `TestAlterStatements` failed for `ALTER DATABASE/SEQUENCE/SCHEMA/VIEW ... OWNER TO foo` with `role "foo" does not exist`.
+- Green in clean verifier `/tmp/doltgresql-delta-age.HAHEnA`:
+  - `GOCACHE=/tmp/doltgresql-delta-age-gocache GOTMPDIR=/tmp/doltgresql-delta-age-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterStatements|TestAlterOwnerRequiresExistingRoleRepro|TestAlterTableOwnerUpdatesCatalogRepro|TestAlterViewOwnerUpdatesCatalogRepro)$' -count=1 -v`
+
+### delta - 2026-05-12 16:36 America/Phoenix
+
+- Lane complete: legacy `TestAlterTable` subcases now match implemented behavior: owner changes require an existing role, downcasting out-of-range `int` values to `smallint` reports the range error, and the generated-column PK smoke uses built-in `gen_random_uuid()` rather than `public.gen_random_uuid()` without extension-installed schema support.
+- Source touched: `testing/go/alter_table_test.go`.
+- Red in clean verifier `/tmp/doltgresql-delta-altertable.FmK6fs`: targeted subtests failed with missing `public.gen_random_uuid`, stale `smallint: unhandled type: int32` expectation, and missing `new_owner` role.
+- Green in clean verifier `/tmp/doltgresql-delta-altertable.FmK6fs`:
+  - `GOCACHE=/tmp/doltgresql-delta-altertable-gocache GOTMPDIR=/tmp/doltgresql-delta-altertable-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestAlterTable$/^(Add_primary_key_with_generated_column|Alter_Column_Type|alter_table_owner)$' -count=1 -v`
+- Still open in `TestAlterTable`: `ALTER TABLE SET/DROP NOT NULL with table types` fails separately; not covered by this test-alignment slice.
+
+### beta - 2026-05-12 16:40 America/Phoenix
+
+- Coordination: alpha already owns the latest `./testing/go` manifest run; active process is writing `/tmp/doltgresql-testing-go-alpha-20260512-1637.jsonl`, so beta will not start another full manifest.
+- Current manifest snapshot while running: `46/46` covered tests passed (`100.0%` covered), no failures yet; not a complete denominator.
+- Beta lane remains row-valued update assignments. Plain `UPDATE SET (a,b) = (SELECT ...)` is green in clean verification; `ON CONFLICT DO UPDATE SET (a,b) = (SELECT ... WHERE ... EXCLUDED.id)` still fails because the scalar subquery resolves `EXCLUDED.id` against the old-row half and returns `{10,20}` instead of source `{100,200}`.
+- Temporary debug probe removed from beta files; beta is continuing on the root row-indexing fix and leaving manifest ownership to alpha.
+
+### beta - 2026-05-12 16:49 America/Phoenix
+
+- Lane complete: row-valued multi-target assignments now extract individual fields from row-valued RHS expressions, including scalar subqueries; uncorrelated row-valued subqueries are evaluated without prepending the outer update row, avoiding the ON DUPLICATE path reading old target columns as subquery projection output.
+- Source touched: `server/ast/update_expr.go`, `server/expression/row_value_field.go`.
+- Red: clean verifier before the final fix passed plain `UPDATE` multi-assignment subquery cases but failed `TestOnConflictUpdateMultiAssignmentFromSubqueryRepro`, leaving `{10,20}` instead of `{100,200}`.
+- Green in clean verifier at `c70d1bdb` plus beta patch, parser regenerated in temp worktree:
+  - `GOCACHE=/tmp/doltgresql-beta-rowvalue-gocache.* GOTMPDIR=/tmp/doltgresql-beta-rowvalue-gotmp.* TMPDIR=/tmp/doltgresql-beta-rowvalue-gotmp.* CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(UpdateMultiAssignment(FromSubquery|EmptySubquerySetsNulls)|OnConflictUpdateMultiAssignmentFromSubquery)Repro$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-beta-rowvalue-gocache.* GOTMPDIR=/tmp/doltgresql-beta-rowvalue-gotmp.* TMPDIR=/tmp/doltgresql-beta-rowvalue-gotmp.* CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/ast ./server/expression -run 'RowValue|Update' -count=1`
+- Manifest coordination: alpha still owns `/tmp/doltgresql-testing-go-alpha-20260512-1637.jsonl`; latest beta-read snapshot is `47/47` covered tests passing (`100.0%` covered), no failures yet, still incomplete.
+
+### delta - 2026-05-12 16:40 America/Phoenix
+
+- Lane complete: `ALTER TABLE ... SET/DROP NOT NULL` now allows tables with row-type dependents, while `ALTER COLUMN TYPE` still rejects those dependents.
+- Source touched: `server/hook/table_modify_column.go`, `testing/go/alter_table_correctness_repro_test.go`.
+- Red in clean verifier `/tmp/doltgresql-delta-altertable.FmK6fs`: `TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro` failed with `cannot alter table ... uses its row type`.
+- Green in clean verifier `/tmp/doltgresql-delta-altertable.FmK6fs`:
+  - `GOCACHE=/tmp/doltgresql-delta-altertable-gocache GOTMPDIR=/tmp/doltgresql-delta-altertable-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro|TestAlterTableSameTypeRejectsRowTypeDependentsRepro)$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-delta-altertable-gocache GOTMPDIR=/tmp/doltgresql-delta-altertable-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestAlterTable$/^ALTER_TABLE_SET$/^DROP_NOT_NULL_with_table_types$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-delta-altertable-gocache GOTMPDIR=/tmp/doltgresql-delta-altertable-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestAlterTable$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-delta-altertable-gocache GOTMPDIR=/tmp/doltgresql-delta-altertable-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/hook -run '^$' -count=1`
+
+### gamma - 2026-05-12 16:41 America/Phoenix
+
+- Coordination: alpha owns the latest full `./testing/go` stats run. Active process was restarted and is writing `/tmp/doltgresql-testing-go-alpha-20260512-1640.jsonl`; gamma will not start a competing full manifest and will focus on isolated build/test failures.
+- Latest complete-ish alpha snapshot before restart was `/tmp/doltgresql-testing-go-alpha-20260512-1637.jsonl`; it reached ActiveRecord and had only passing top-level tests before alpha restarted it against newer HEAD. Treat it as incomplete, not a denominator.
+- Lane complete: `pg_has_role` now supports PostgreSQL role-name and `regrole` overloads, plus the two-argument current-user form.
+- Source touched and committed: `server/functions/pg_has_role.go`.
+- Result: committed `aabfdb18 fix: support pg_has_role role name overloads`.
+- Red: stale beta manifest failed `TestPgHasRoleSupportsRoleNameArgumentsRepro` because `pg_has_role(text,text,text)` tried to cast the role name to OID, `pg_has_role(regrole,regrole,text)` was unregistered, and `pg_has_role(text,text)` was unregistered.
+- Green:
+  - Current worktree package compile: `TMPDIR=/tmp/doltgresql-gamma-pghasrole-gotmp GOTMPDIR=/tmp/doltgresql-gamma-pghasrole-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'PgHasRole|Regrole|pg_has_role' -count=1`
+  - Clean temp worktree at `6d236a2f` plus gamma patch, with parser artifacts regenerated inside the temp worktree and isolated `GOCACHE`: `TMPDIR=/tmp/doltgresql-gamma-pghasrole-gotmp GOTMPDIR=/tmp/doltgresql-gamma-pghasrole-gotmp GOCACHE=/tmp/doltgresql-gamma-pghasrole-gocache CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestPgHasRoleSupportsRoleNameArgumentsRepro$' -count=1 -v`
+- Note: a current-checkout focused run failed before tests with a shared Go cache/toolchain error (`could not import reflect (open : no such file or directory)`), so the authoritative proof is the clean temp worktree using isolated cache.
+
+### gamma - 2026-05-12 16:43 America/Phoenix
+
+- Manifest coordination update: alpha's current manifest `/tmp/doltgresql-testing-go-alpha-20260512-1640.jsonl` is running and has reached test output. Snapshot at 16:43: `15` top-level passes, `0` top-level failures, `0` package failures, currently in `TestActiveRecordClientSmoke`. This is partial, not final stats.
+- Build-error side: no actionable compile error has appeared in the alpha manifest yet. The only build error gamma hit locally was the shared Go cache/toolchain missing-object error; use isolated `GOCACHE`/`GOTMPDIR` for focused proofs until the shared cache settles.
+
+### delta - 2026-05-12 16:42 America/Phoenix
+
+- Coordination: alpha owns the latest `./testing/go` manifest run at `/tmp/doltgresql-testing-go-alpha-20260512-1637.jsonl`; delta will not start a duplicate full run.
+- Delta is taking the build-error side with a no-test compile probe on the shared dirty tree. Current dirty files look peer-owned: beta row-valued update work in `server/ast/update_expr.go` and `server/expression/row_value_field.go`, plus `server/functions/pg_has_role.go`.
+- Shared dirty-tree no-test compile is green, so there is no current `./testing/go` build break to fix:
+  - `GOCACHE=/tmp/doltgresql-delta-shared-build-gocache GOTMPDIR=/tmp/doltgresql-delta-shared-build-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^$' -count=1`
+
+### alpha - 2026-05-12 16:41 America/Phoenix
+
+- Coordination: alpha owns the current full `./testing/go` stats manifest so peers should not start duplicate full-suite runs unless this note is superseded. Please focus on build/failure lanes while alpha reports pass/fail totals.
+- Stopped stale manifest from `a5a7b531` after HEAD advanced; last stale partial was `15/15` top-level passing (`100.0%`), `0` failed.
+- Restarted clean manifest from current HEAD `aabfdb18` with isolated `GOCACHE=/tmp/doltgresql-alpha-gocache`.
+- Stale `aabfdb18` manifest reached `16/16` completed top-level tests passing (`100.0%`), `0` failed, but was stopped after HEAD advanced to `c70d1bdb`.
+- Manifest `/tmp/doltgresql-testing-go-alpha-20260512-1644.jsonl` from `c70d1bdb` hit an environment build failure before tests (`0/0`): missing Go toolchain `compile` binary under `golang.org/toolchain@v0.0.1-go1.26.2.darwin-arm64`; `go version` repopulated the toolchain.
+- Current manifest after toolchain repair: `/tmp/doltgresql-testing-go-alpha-20260512-1645.jsonl`; worktree: `/tmp/doltgresql-alpha-manifest.PZrZgu`; head: `c70d1bdb`.
+
+### alpha - 2026-05-12 16:48 America/Phoenix
+
+- Manifest ownership still with alpha; please keep focusing on build/failure lanes and avoid duplicate full `./testing/go` runs.
+- Current stale-but-running manifest `/tmp/doltgresql-testing-go-alpha-20260512-1645.jsonl` is from `c70d1bdb`; snapshot: `15/15` completed top-level tests passing (`100.0%`), `0` failed, currently stuck/running in `TestActiveRecordClientSmoke`.
+- Main worktree HEAD has advanced to `754c828a`, so alpha will refresh the manifest against that newer commit after this run exits or is stopped.
+- No source build error has appeared in the current manifest; the earlier failure was the Go toolchain cache missing `compile`, now repaired by `go version`.
