@@ -85,6 +85,18 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTrigger(tableName, string(obj.Trigger), stmt.Comment)}, nil
+	case *tree.CommentOnCollation:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnCollation(obj.Name, stmt.Comment)}, nil
+	case *tree.CommentOnOperator:
+		_, leftType, err := nodeResolvableTypeReference(ctx, obj.Left, false)
+		if err != nil {
+			return nil, err
+		}
+		_, rightType, err := nodeResolvableTypeReference(ctx, obj.Right, false)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnOperator(operatorName(obj.Op), leftType.ID, rightType.ID, stmt.Comment)}, nil
 	case *tree.CommentOnPublication:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPublication(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnSubscription:
@@ -149,5 +161,18 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnColumn(tableName, string(obj.ColumnName), stmt.Comment)}, nil
 	default:
 		return NewNoOp("COMMENT ON is not yet supported"), nil
+	}
+}
+
+func operatorName(op tree.Operator) string {
+	switch typedOp := op.(type) {
+	case tree.UnaryOperator:
+		return typedOp.String()
+	case tree.BinaryOperator:
+		return typedOp.String()
+	case tree.ComparisonOperator:
+		return typedOp.String()
+	default:
+		return ""
 	}
 }

@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
@@ -58,6 +59,8 @@ const (
 	CommentTargetIndex    CommentTargetKind = "index"
 	CommentTargetConstr   CommentTargetKind = "constraint"
 	CommentTargetTrigger  CommentTargetKind = "trigger"
+	CommentTargetColl     CommentTargetKind = "collation"
+	CommentTargetOperator CommentTargetKind = "operator"
 )
 
 type Comment struct {
@@ -67,6 +70,8 @@ type Comment struct {
 	Name        string
 	SchemaName  string
 	TableName   string
+	LeftType    id.Type
+	RightType   id.Type
 	Routine     *RoutineWithParams
 	Description *string
 }
@@ -160,6 +165,14 @@ func NewCommentOnConstraint(relation vitess.TableName, name string, description 
 
 func NewCommentOnTrigger(relation vitess.TableName, name string, description *string) Comment {
 	return Comment{Kind: CommentTargetTrigger, Relation: relation, Name: name, Description: description}
+}
+
+func NewCommentOnCollation(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetColl, Name: name, Description: description}
+}
+
+func NewCommentOnOperator(name string, leftType id.Type, rightType id.Type, description *string) Comment {
+	return Comment{Kind: CommentTargetOperator, Name: name, LeftType: leftType, RightType: rightType, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -315,6 +328,18 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_trigger", 0), nil
+	case CommentTargetColl:
+		oid, err := resolveCommentCollation(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_collation", 0), nil
+	case CommentTargetOperator:
+		oid, err := resolveCommentOperator(c.Name, c.LeftType, c.RightType)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_operator", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -677,6 +702,40 @@ func schemaTable(ctx *sql.Context, relation vitess.TableName, schema sql.Schema)
 		}
 	}
 	return nil
+}
+
+func resolveCommentCollation(ctx *sql.Context, name string) (id.Id, error) {
+	schemaName := "pg_catalog"
+	collationName := name
+	if idx := strings.LastIndex(name, "."); idx >= 0 {
+		schemaName = strings.Trim(name[:idx], `"`)
+		collationName = name[idx+1:]
+	}
+	collationName = strings.Trim(collationName, `"`)
+	collationID := id.NewCollation(schemaName, collationName)
+	if !id.Cache().Exists(collationID.AsId()) {
+		return id.Null, fmt.Errorf(`collation "%s" does not exist`, name)
+	}
+	return collationID.AsId(), nil
+}
+
+func resolveCommentOperator(name string, leftType id.Type, rightType id.Type) (id.Id, error) {
+	if name == "+" && leftType == id.NewType("pg_catalog", "int4") && rightType == id.NewType("pg_catalog", "int4") {
+		return id.NewId(id.Section_Operator, name, string(leftType), string(rightType)), nil
+	}
+	var found id.Id
+	auth.LockRead(func() {
+		for _, operator := range auth.GetAllOperators() {
+			if operator.Name == name && operator.LeftType == leftType && operator.RightType == rightType {
+				found = id.NewId(id.Section_Operator, operator.Namespace.SchemaName(), operator.Name, string(operator.LeftType), string(operator.RightType))
+				return
+			}
+		}
+	})
+	if found.IsValid() {
+		return found, nil
+	}
+	return id.Null, fmt.Errorf(`operator "%s" does not exist`, name)
 }
 
 type schemaGetter interface {

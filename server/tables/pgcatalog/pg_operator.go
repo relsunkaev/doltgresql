@@ -205,6 +205,7 @@ var defaultPostgresOperators = func() []pgOperator {
 		}
 	}
 	operators = append(operators,
+		newBuiltinOperator("+", "int4", "int4", "int4", "int4pl"),
 		newJsonbOperator("@>", "jsonb", "jsonb", "jsonb_contains", jsonbOperatorID("<@", "jsonb", "jsonb")),
 		newJsonbOperator("<@", "jsonb", "jsonb", "jsonb_contained", jsonbOperatorID("@>", "jsonb", "jsonb")),
 		newJsonbOperator("?", "jsonb", "text", "jsonb_exists", zeroOID()),
@@ -213,6 +214,20 @@ var defaultPostgresOperators = func() []pgOperator {
 	)
 	return operators
 }()
+
+func newBuiltinOperator(name string, leftType string, rightType string, resultType string, function string) pgOperator {
+	return pgOperator{
+		oid:       pgCatalogOperatorID(name, leftType, rightType),
+		name:      name,
+		namespace: pgCatalogNamespaceID(),
+		leftType:  pgCatalogTypeID(leftType),
+		rightType: pgCatalogTypeID(rightType),
+		result:    pgCatalogTypeID(resultType),
+		code:      pgCatalogFunctionID(function, pgCatalogType(leftType), pgCatalogType(rightType)),
+		restrict:  zeroOID(),
+		join:      zeroOID(),
+	}
+}
 
 func newBtreeOperator(typ btreeCatalogType, operator btreeComparisonOperator, function string) pgOperator {
 	functionType := typ.operatorFunctionType()
