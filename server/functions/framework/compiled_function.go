@@ -237,7 +237,7 @@ func (c *CompiledFunction) Type(ctx *sql.Context) sql.Type {
 		// TODO: need to add underlying to these types for IO input and output uses
 		if rt.IsPolymorphicType() && len(c.originalTypes) > 0 {
 			rt = c.originalTypes[0]
-			if rt.IsArrayType() {
+			if isPolymorphicArrayInput(rt) {
 				return rt.ArrayBaseType()
 			}
 		}
@@ -813,7 +813,7 @@ func (*CompiledFunction) polymorphicTypesCompatible(paramTypes []*pgtypes.Doltgr
 			}
 			// Get the base expression type that we'll compare against
 			baseExprType := exprTypes[i]
-			if baseExprType.IsArrayType() {
+			if isPolymorphicArrayInput(baseExprType) {
 				baseExprType = baseExprType.ArrayBaseType()
 			}
 			// TODO: handle range types
@@ -858,14 +858,14 @@ func (c *CompiledFunction) resolvePolymorphicReturnType(functionInterfaceTypes [
 		// "...anynonarray and anyenum do not represent separate type variables; they are the same type as anyelement..."
 		// The implication of this being that anyelement will always return the base type even for array types,
 		// just like anynonarray would.
-		if firstPolymorphicType.IsArrayType() {
+		if isPolymorphicArrayInput(firstPolymorphicType) {
 			return firstPolymorphicType.ArrayBaseType()
 		} else {
 			return firstPolymorphicType
 		}
 	case pgtypes.AnyArray.ID:
 		// Array types will return themselves, so this is safe
-		if firstPolymorphicType.IsArrayType() {
+		if isPolymorphicArrayInput(firstPolymorphicType) {
 			return firstPolymorphicType
 		} else if firstPolymorphicType.ID == pgtypes.Internal.ID {
 			return pgtypes.IDToBuiltInDoltgresType[firstPolymorphicType.BaseTypeForInternal]
@@ -935,6 +935,10 @@ func resolveUnresolvedArgumentType(ctx *sql.Context, typ *pgtypes.DoltgresType) 
 		return resolvedTyp.WithAttTypMod(typmod), nil
 	}
 	return resolvedTyp, nil
+}
+
+func isPolymorphicArrayInput(typ *pgtypes.DoltgresType) bool {
+	return typ.IsArrayType() || (typ.IsArrayCategory() && typ.Elem != id.NullType)
 }
 
 // specificFuncImpl implements the interface sql.Expression.

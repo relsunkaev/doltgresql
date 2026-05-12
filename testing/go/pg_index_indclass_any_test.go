@@ -108,6 +108,21 @@ SELECT array_to_string(array_agg(table_pos ORDER BY table_pos), ',') FROM indexe
 					Expected: []sql.Row{{"2,3"}},
 				},
 				{
+					Query: `SELECT array_to_string(array_agg(a.attname ORDER BY idx.ord), ',')
+FROM (
+  SELECT i.indrelid,
+         pg_catalog.unnest(i.indkey) AS attnum,
+         pg_catalog.generate_subscripts(i.indkey, 1) AS ord
+  FROM pg_catalog.pg_index i
+  JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
+  WHERE c.relname = 'idxslice_label_category_idx'
+) AS idx
+JOIN pg_catalog.pg_attribute a
+  ON a.attrelid = idx.indrelid
+ AND a.attnum = idx.attnum;`,
+					Expected: []sql.Row{{"label,category"}},
+				},
+				{
 					Query: `WITH indexed_columns AS (
   SELECT
       pg_indexes.schemaname as "schema",

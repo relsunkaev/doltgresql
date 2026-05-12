@@ -37,7 +37,7 @@ func TestDumpVersionIdentity(t *testing.T) {
 					// pg_dump's first probe is `SELECT version()`;
 					// the major version drives the output dialect
 					// branch.
-					Query: `SELECT version() LIKE 'PostgreSQL %';`,
+					Query:    `SELECT version() LIKE 'PostgreSQL %';`,
 					Expected: []sql.Row{{"t"}},
 				},
 			},
@@ -68,6 +68,16 @@ func TestDumpVersionIdentity(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:        "pg_catalog-qualified version builtins resolve",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_catalog.version() LIKE 'PostgreSQL %',
+						pg_catalog.current_setting('server_version') = current_setting('server_version');`,
+					Expected: []sql.Row{{"t", "t"}},
+				},
+			},
+		},
 	})
 }
-

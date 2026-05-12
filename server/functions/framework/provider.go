@@ -57,6 +57,9 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 		funcName = id.NewFunction(schemaName, functionName)
 		overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
 		if err != nil || len(overloads) == 0 {
+			if fn, ok := compiledPgCatalogFunction(schemaName, functionName); ok {
+				return fn, true
+			}
 			return nil, false
 		}
 	} else {
@@ -210,6 +213,20 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 		Fn: func(ctx *sql.Context, params ...sql.Expression) (sql.Expression, error) {
 			return NewCompiledFunction(ctx, functionName, params, overloadTree, false), nil
 		},
+	}, true
+}
+
+func compiledPgCatalogFunction(schemaName string, functionName string) (sql.Function, bool) {
+	if !strings.EqualFold(schemaName, "pg_catalog") {
+		return nil, false
+	}
+	createFunc, ok := compiledCatalog[strings.ToLower(functionName)]
+	if !ok {
+		return nil, false
+	}
+	return sql.FunctionN{
+		Name: functionName,
+		Fn:   createFunc,
 	}, true
 }
 
