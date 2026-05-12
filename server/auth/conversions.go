@@ -59,6 +59,17 @@ func GetAllConversions() []Conversion {
 	return conversions
 }
 
+// GetConversion returns the conversion in the given namespace.
+func GetConversion(namespace string, name string) (Conversion, bool) {
+	namespace = conversionNameKey(namespace)
+	name = conversionNameKey(name)
+	if len(namespace) == 0 {
+		namespace = "public"
+	}
+	conversion, ok := globalDatabase.conversions.Data[conversionKey(namespace, name)]
+	return conversion, ok
+}
+
 // CreateConversion creates or replaces the conversion.
 func CreateConversion(conversion Conversion) error {
 	conversion.Name = conversionNameKey(conversion.Name)
@@ -70,6 +81,38 @@ func CreateConversion(conversion Conversion) error {
 		conversion.Namespace = "public"
 	}
 	globalDatabase.conversions.Data[conversionKey(conversion.Namespace, conversion.Name)] = conversion
+	return nil
+}
+
+// UpdateConversion updates an existing conversion's metadata.
+func UpdateConversion(namespace string, name string, conversion Conversion) error {
+	namespace = conversionNameKey(namespace)
+	name = conversionNameKey(name)
+	if len(namespace) == 0 {
+		namespace = "public"
+	}
+	key := conversionKey(namespace, name)
+	if _, ok := globalDatabase.conversions.Data[key]; !ok {
+		return errors.Errorf(`conversion "%s" does not exist`, name)
+	}
+	newNamespace := conversionNameKey(conversion.Namespace)
+	newName := conversionNameKey(conversion.Name)
+	if len(newNamespace) == 0 {
+		newNamespace = namespace
+	}
+	if len(newName) == 0 {
+		newName = name
+	}
+	newKey := conversionKey(newNamespace, newName)
+	if newKey != key {
+		if _, ok := globalDatabase.conversions.Data[newKey]; ok {
+			return errors.Errorf(`conversion "%s" already exists`, newName)
+		}
+		delete(globalDatabase.conversions.Data, key)
+	}
+	conversion.Namespace = newNamespace
+	conversion.Name = newName
+	globalDatabase.conversions.Data[newKey] = conversion
 	return nil
 }
 
