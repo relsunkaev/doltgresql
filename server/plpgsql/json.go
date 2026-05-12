@@ -810,8 +810,19 @@ func (stmt *plpgSQL_stmt_raise) Convert() Raise {
 	}
 
 	options := make(map[string]string)
+	seenOptions := make(map[NoticeOptionType]struct{}, len(stmt.Options))
+	if stmt.Message != "" {
+		seenOptions[NoticeOptionTypeMessage] = struct{}{}
+	}
 	for _, option := range stmt.Options {
-		options[strconv.Itoa(int(option.Option.OptionType))] = option.Option.Expression.Expr.Query
+		optionType := NoticeOptionType(option.Option.OptionType)
+		if _, ok := seenOptions[optionType]; ok {
+			if _, validationExists := options[raiseValidationErrorOption]; !validationExists {
+				options[raiseValidationErrorOption] = fmt.Sprintf("RAISE option already specified: %s", optionType.String())
+			}
+		}
+		seenOptions[optionType] = struct{}{}
+		options[strconv.Itoa(int(optionType))] = option.Option.Expression.Expr.Query
 	}
 
 	return Raise{

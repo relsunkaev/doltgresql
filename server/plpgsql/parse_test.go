@@ -21,9 +21,12 @@ func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 		DECLARE
 			labels TEXT[] := '{alpha,beta,gamma}';
 			target_id INT;
+			target_alias ALIAS FOR target_id;
 			item RECORD;
 		BEGIN
-			FOR item IN SELECT 1 AS id LOOP
+			PERFORM target_id;
+			target_alias := 1;
+			FOR item IN SELECT target_alias AS id LOOP
 				PERFORM item.id;
 			END LOOP;
 		END;
@@ -58,6 +61,39 @@ func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 			t.Fatalf("normalize %q = %s.%s, expected pg_catalog.%s", raw, schema, typ, expectedType)
 		}
 	}
+
+	var foundAlias bool
+	for _, op := range ops {
+		if op.OpCode == OpCode_Alias && op.Target == "target_alias" && op.PrimaryData == "target_id" {
+			foundAlias = true
+			break
+		}
+	}
+	if !foundAlias {
+		t.Fatalf("expected target_alias alias operation; ops: %#v", ops)
+	}
+}
+
+func TestParseRaiseDuplicateOptionValidation(t *testing.T) {
+	ops, err := Parse(`CREATE FUNCTION plpgsql_raise_duplicate_detail()
+		RETURNS void AS $$
+		BEGIN
+			RAISE EXCEPTION USING MESSAGE = 'raise message', DETAIL = 'first detail', DETAIL = 'second detail';
+		END;
+		$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, op := range ops {
+		if op.OpCode == OpCode_Raise {
+			if op.Options[raiseValidationErrorOption] != "RAISE option already specified: DETAIL" {
+				t.Fatalf("validation error = %q, expected duplicate DETAIL", op.Options[raiseValidationErrorOption])
+			}
+			return
+		}
+	}
+	t.Fatalf("expected raise operation; ops: %#v", ops)
 }
 
 func TestParseReturnQueryOperations(t *testing.T) {

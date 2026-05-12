@@ -65,6 +65,30 @@ func (stmt Assignment) AppendOperations(ops *[]InterpreterOperation, stack *Inte
 	return nil
 }
 
+// Alias represents an ALIAS FOR declaration.
+type Alias struct {
+	Name   string
+	Target string
+}
+
+var _ Statement = Alias{}
+
+// OperationSize implements the interface Statement.
+func (Alias) OperationSize() int32 {
+	return 1
+}
+
+// AppendOperations implements the interface Statement.
+func (stmt Alias) AppendOperations(ops *[]InterpreterOperation, stack *InterpreterStack) error {
+	stack.NewVariableAlias(stmt.Name, stmt.Target)
+	*ops = append(*ops, InterpreterOperation{
+		OpCode:      OpCode_Alias,
+		PrimaryData: stmt.Target,
+		Target:      stmt.Name,
+	})
+	return nil
+}
+
 // Block contains a collection of statements, alongside the variables that were declared for the block. Only the
 // top-level block will contain parameter variables.
 type Block struct {

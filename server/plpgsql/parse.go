@@ -16,6 +16,9 @@ package plpgsql
 
 import (
 	"encoding/json"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	pg_query "github.com/dolthub/pg_query_go/v6"
@@ -40,6 +43,13 @@ func Parse(fullCreateFunctionString string) ([]InterpreterOperation, error) {
 	if err != nil {
 		return nil, err
 	}
+	if aliases := extractAliasDeclarations(fullCreateFunctionString, block.Variables); len(aliases) > 0 {
+		aliasStatements := make([]Statement, len(aliases))
+		for i, alias := range aliases {
+			aliasStatements[i] = alias
+		}
+		block.Body = append(aliasStatements, block.Body...)
+	}
 	ops := make([]InterpreterOperation, 0, len(block.Body)+len(block.Variables))
 	stack := NewInterpreterStack(nil)
 	if err = block.AppendOperations(&ops, &stack); err != nil {
@@ -49,4 +59,62 @@ func Parse(fullCreateFunctionString string) ([]InterpreterOperation, error) {
 		return nil, err
 	}
 	return ops, nil
+}
+
+var plpgsqlAliasDeclarationRegex = regexp.MustCompile(`(?i)\b([A-Za-z_][A-Za-z0-9_$]*)\s+alias\s+for\s+(\$[0-9]+|[A-Za-z_][A-Za-z0-9_$]*)\s*;`)
+
+func extractAliasDeclarations(src string, variables []Variable) []Alias {
+	declareSection := extractTopLevelDeclareSection(src)
+	if declareSection == "" {
+		return nil
+	}
+	matches := plpgsqlAliasDeclarationRegex.FindAllStringSubmatch(declareSection, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+	aliases := make([]Alias, 0, len(matches))
+	for _, match := range matches {
+		target := resolveAliasTarget(match[2], variables)
+		if target == "" {
+			continue
+		}
+		aliases = append(aliases, Alias{
+			Name:   match[1],
+			Target: target,
+		})
+	}
+	return aliases
+}
+
+func extractTopLevelDeclareSection(src string) string {
+	lower := strings.ToLower(src)
+	declareIdx := strings.Index(lower, "declare")
+	if declareIdx == -1 {
+		return ""
+	}
+	beginIdx := strings.Index(lower[declareIdx:], "begin")
+	if beginIdx == -1 {
+		return ""
+	}
+	return src[declareIdx : declareIdx+beginIdx]
+}
+
+func resolveAliasTarget(target string, variables []Variable) string {
+	if !strings.HasPrefix(target, "$") {
+		return target
+	}
+	ordinal, err := strconv.Atoi(strings.TrimPrefix(target, "$"))
+	if err != nil || ordinal <= 0 {
+		return ""
+	}
+	paramIndex := 0
+	for _, variable := range variables {
+		if variable.IsParameter && !strings.EqualFold(variable.Name, "found") {
+			paramIndex++
+			if paramIndex == ordinal {
+				return variable.Name
+			}
+		}
+	}
+	return ""
 }

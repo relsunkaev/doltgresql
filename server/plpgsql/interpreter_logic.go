@@ -61,6 +61,7 @@ const (
 	diagnosticOptionAction     = "pgContextAction"
 	diagnosticOptionLineNumber = "lineNumber"
 	diagnosticOptionStatement  = "pgContextStatement"
+	raiseValidationErrorOption = "raiseValidationError"
 )
 
 type interpreterExecutionState struct {
@@ -485,6 +486,10 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			// TODO: Use the client_min_messages config param to determine which
 			//       notice levels to send to the client.
 			// https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-CLIENT-MIN-MESSAGES
+
+			if validationErr := operation.Options[raiseValidationErrorOption]; validationErr != "" {
+				return nil, false, errors.New(validationErr)
+			}
 
 			message, err := evaluteNoticeMessage(ctx, iFunc, operation, stack)
 			if err != nil {

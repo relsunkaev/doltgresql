@@ -60,3 +60,29 @@ const (
 	NoticeOptionTypeTable      NoticeOptionType = 7
 	NoticeOptionTypeSchema     NoticeOptionType = 8
 )
+
+// String returns a string representation of this NoticeOptionType.
+func (not NoticeOptionType) String() string {
+	switch not {
+	case NoticeOptionTypeErrCode:
+		return "ERRCODE"
+	case NoticeOptionTypeMessage:
+		return "MESSAGE"
+	case NoticeOptionTypeDetail:
+		return "DETAIL"
+	case NoticeOptionTypeHint:
+		return "HINT"
+	case NoticeOptionTypeColumn:
+		return "COLUMN"
+	case NoticeOptionTypeConstraint:
+		return "CONSTRAINT"
+	case NoticeOptionTypeDataType:
+		return "DATATYPE"
+	case NoticeOptionTypeTable:
+		return "TABLE"
+	case NoticeOptionTypeSchema:
+		return "SCHEMA"
+	default:
+		return "UNKNOWN"
+	}
+}
