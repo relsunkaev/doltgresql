@@ -41,6 +41,7 @@ func Init() {
 	initRegnamespace()
 	initRegproc()
 	initRegprocedure()
+	initRegrole()
 	initRegtype()
 	initText()
 	initTime()
