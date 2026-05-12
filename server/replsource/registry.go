@@ -467,6 +467,19 @@ func TerminateSenderByPID(pid int32) bool {
 	return terminated
 }
 
+// SenderByPID returns a snapshot of the active replication sender with the
+// given backend PID.
+func SenderByPID(pid int32) (Sender, bool) {
+	defaultRegistry.mu.Lock()
+	defer defaultRegistry.mu.Unlock()
+	for _, sender := range defaultRegistry.senders {
+		if sender.PID == pid {
+			return *sender, true
+		}
+	}
+	return Sender{}, false
+}
+
 // Broadcast records logical WAL messages and sends them to matching active senders.
 func Broadcast(publications []string, messages []WALMessage) error {
 	if len(messages) == 0 {

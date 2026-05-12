@@ -15,8 +15,10 @@
 package functions
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/replsource"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -36,7 +38,7 @@ var pg_terminate_backend_int32 = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return replsource.TerminateSenderByPID(val.(int32)), nil
+		return terminateReplicationSender(ctx, val.(int32))
 	},
 }
 
@@ -51,4 +53,31 @@ var pg_terminate_backend_int32_int64 = framework.Function2{
 		var unusedTypes [2]*pgtypes.DoltgresType
 		return pg_terminate_backend_int32.Callable(ctx, unusedTypes, val1)
 	},
+}
+
+func terminateReplicationSender(ctx *sql.Context, pid int32) (bool, error) {
+	sender, ok := replsource.SenderByPID(pid)
+	if !ok {
+		return false, nil
+	}
+	if err := checkTerminateBackendPrivilege(ctx, sender.User); err != nil {
+		return false, err
+	}
+	return replsource.TerminateSenderByPID(pid), nil
+}
+
+func checkTerminateBackendPrivilege(ctx *sql.Context, targetUser string) error {
+	userName := currentSQLUser(ctx)
+	userRole := auth.GetRole(userName)
+	targetRole := auth.GetRole(targetUser)
+	if userRole.IsSuperUser || userName == targetUser {
+		return nil
+	}
+	if targetRole.IsSuperUser {
+		return errors.Errorf("must be a superuser to terminate superuser process")
+	}
+	if userRole.IsValid() && auth.HasInheritedRole(userRole.ID(), "pg_signal_backend") {
+		return nil
+	}
+	return errors.Errorf("must be a superuser or have privileges of the pg_signal_backend role to terminate this backend")
 }
