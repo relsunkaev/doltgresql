@@ -39,6 +39,18 @@ func nodeAlterDomain(ctx *Context, stmt *tree.AlterDomain) (vitess.Statement, er
 			),
 		}, nil
 	}
+	if rename, ok := stmt.Cmd.(*tree.AlterDomainRename); ok {
+		domainName := stmt.Name.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeRename(
+				domainName.Catalog(),
+				domainName.Schema(),
+				domainName.Object(),
+				rename.NewName,
+				true,
+			),
+		}, nil
+	}
 
 	return NotYetSupportedError("ALTER DOMAIN is not yet supported")
 }

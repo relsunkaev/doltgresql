@@ -28,6 +28,17 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 	}
 
 	switch cmd := node.Cmd.(type) {
+	case *tree.AlterTypeRename:
+		typeName := node.Type.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeRename(
+				typeName.Catalog(),
+				typeName.Schema(),
+				typeName.Object(),
+				cmd.NewName,
+				false,
+			),
+		}, nil
 	case *tree.AlterTypeOwner:
 		typeName := node.Type.ToTableName()
 		return vitess.InjectedStatement{
