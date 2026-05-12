@@ -15,8 +15,12 @@
 package functions
 
 import (
+	"hash/crc32"
+	"math"
 	"testing"
 	"time"
+
+	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/postgres/parser/uuid"
 )
@@ -64,5 +68,39 @@ func TestUnicodeInformationHelpers(t *testing.T) {
 	}
 	if unicodeAssigned(string([]byte{0xff})) {
 		t.Fatal("expected invalid UTF-8 text to be unassigned")
+	}
+}
+
+func TestPostgres18MathHelpers(t *testing.T) {
+	if got, want := math.Gamma(6), float64(120); got != want {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	lgamma, _ := math.Lgamma(6)
+	if lgamma <= 4.7 || lgamma >= 4.8 {
+		t.Fatalf("got %v, want value between 4.7 and 4.8", lgamma)
+	}
+}
+
+func TestPostgres18ByteaHelpers(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	if got, want := int64(crc32.ChecksumIEEE([]byte("abc"))), int64(891568578); got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+	if got, want := int64(crc32.Checksum([]byte("abc"), crc32.MakeTable(crc32.Castagnoli))), int64(910901175); got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+	encoded, err := int32ToBytea(ctx, int32(1234), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := encoded.([]byte), []byte{0, 0, 4, 210}; string(got) != string(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	decoded, err := byteaToInt16(ctx, []byte{0x80, 0x00}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := decoded.(int16), int16(-32768); got != want {
+		t.Fatalf("got %d, want %d", got, want)
 	}
 }

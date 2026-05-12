@@ -16,7 +16,9 @@ package functions
 
 import (
 	"crypto/rand"
+	"encoding/binary"
 	"net"
+	"time"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -38,6 +40,7 @@ func initGenRandomUuid() {
 	framework.RegisterFunction(uuid_generate_v3)
 	framework.RegisterFunction(uuid_generate_v4)
 	framework.RegisterFunction(uuid_generate_v5)
+	framework.RegisterFunction(uuidv7)
 }
 
 var gen_random_uuid = framework.Function0{
@@ -55,6 +58,25 @@ var uuid_generate_v4 = framework.Function0{
 	Strict: true,
 	Callable: func(ctx *sql.Context) (any, error) {
 		return uuid.NewV4()
+	},
+}
+
+var uuidv7 = framework.Function0{
+	Name:               "uuidv7",
+	Return:             pgtypes.Uuid,
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context) (any, error) {
+		var out uuid.UUID
+		if _, err := rand.Read(out[:]); err != nil {
+			return uuid.UUID{}, err
+		}
+		millis := uint64(time.Now().UnixMilli())
+		binary.BigEndian.PutUint32(out[0:4], uint32(millis>>16))
+		binary.BigEndian.PutUint16(out[4:6], uint16(millis))
+		out[6] = (out[6] & 0x0f) | 0x70
+		out[8] = (out[8] & 0x3f) | 0x80
+		return out, nil
 	},
 }
 

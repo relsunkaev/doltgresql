@@ -24,6 +24,7 @@ import (
 // initReverse registers the functions to the catalog.
 func initReverse() {
 	framework.RegisterFunction(reverse_text)
+	framework.RegisterFunction(reverse_bytea)
 }
 
 // reverse_text represents the PostgreSQL function of the same name, taking the same parameters.
@@ -38,5 +39,23 @@ var reverse_text = framework.Function1{
 			runes[i], runes[j] = runes[j], runes[i]
 		}
 		return string(runes), nil
+	},
+}
+
+var reverse_bytea = framework.Function1{
+	Name:       "reverse",
+	Return:     pgtypes.Bytea,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Bytea},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val1 any) (any, error) {
+		input, err := unwrapBytea(ctx, val1)
+		if err != nil {
+			return nil, err
+		}
+		out := append([]byte(nil), input...)
+		for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+			out[i], out[j] = out[j], out[i]
+		}
+		return out, nil
 	},
 }
