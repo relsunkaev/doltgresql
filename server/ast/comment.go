@@ -60,6 +60,18 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnFunction(routine, stmt.Comment)}, nil
+	case *tree.CommentOnProcedure:
+		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnProcedure(routine, stmt.Comment)}, nil
+	case *tree.CommentOnRoutine:
+		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnRoutine(routine, stmt.Comment)}, nil
 	case *tree.CommentOnAggregate:
 		if err := validateAggArgMode(ctx, obj.AggSig.Args, obj.AggSig.OrderByArgs); err != nil {
 			return nil, err
@@ -84,6 +96,8 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnType(typeName, stmt.Comment)}, nil
+	case *tree.CommentOnLanguage:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnLanguage(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnColumn:
 		tableName, err := nodeUnresolvedObjectName(ctx, obj.ColumnItem.TableName)
 		if err != nil {

@@ -25,6 +25,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/settings"
 )
@@ -32,13 +33,16 @@ import (
 type CommentTargetKind string
 
 const (
-	CommentTargetTable  CommentTargetKind = "table"
-	CommentTargetColumn CommentTargetKind = "column"
-	CommentTargetView   CommentTargetKind = "view"
-	CommentTargetSeq    CommentTargetKind = "sequence"
-	CommentTargetSchema CommentTargetKind = "schema"
-	CommentTargetFunc   CommentTargetKind = "function"
-	CommentTargetType   CommentTargetKind = "type"
+	CommentTargetTable   CommentTargetKind = "table"
+	CommentTargetColumn  CommentTargetKind = "column"
+	CommentTargetView    CommentTargetKind = "view"
+	CommentTargetSeq     CommentTargetKind = "sequence"
+	CommentTargetSchema  CommentTargetKind = "schema"
+	CommentTargetFunc    CommentTargetKind = "function"
+	CommentTargetProc    CommentTargetKind = "procedure"
+	CommentTargetRoutine CommentTargetKind = "routine"
+	CommentTargetType    CommentTargetKind = "type"
+	CommentTargetLang    CommentTargetKind = "language"
 )
 
 type Comment struct {
@@ -73,8 +77,20 @@ func NewCommentOnFunction(routine *RoutineWithParams, description *string) Comme
 	return Comment{Kind: CommentTargetFunc, Routine: routine, Description: description}
 }
 
+func NewCommentOnProcedure(routine *RoutineWithParams, description *string) Comment {
+	return Comment{Kind: CommentTargetProc, Routine: routine, Description: description}
+}
+
+func NewCommentOnRoutine(routine *RoutineWithParams, description *string) Comment {
+	return Comment{Kind: CommentTargetRoutine, Routine: routine, Description: description}
+}
+
 func NewCommentOnType(relation vitess.TableName, description *string) Comment {
 	return Comment{Kind: CommentTargetType, Relation: relation, Description: description}
+}
+
+func NewCommentOnLanguage(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetLang, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -128,12 +144,30 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_proc", 0), nil
+	case CommentTargetProc:
+		oid, err := resolveCommentProcedure(ctx, c.Routine)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_proc", 0), nil
+	case CommentTargetRoutine:
+		oid, err := resolveCommentRoutine(ctx, c.Routine)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_proc", 0), nil
 	case CommentTargetType:
 		oid, err := resolveCommentType(ctx, c.Relation)
 		if err != nil {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_type", 0), nil
+	case CommentTargetLang:
+		oid, err := resolveCommentLanguage(c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_language", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -200,6 +234,46 @@ func resolveCommentFunction(ctx *sql.Context, routine *RoutineWithParams) (id.Id
 	return funcID.AsId(), nil
 }
 
+func resolveCommentProcedure(ctx *sql.Context, routine *RoutineWithParams) (id.Id, error) {
+	procColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	schema, err := core.GetSchemaName(ctx, nil, routine.SchemaName)
+	if err != nil {
+		return id.Null, err
+	}
+	procID := id.NewProcedure(schema, routine.RoutineName)
+	if len(routine.Args) == 0 {
+		procs, err := procColl.GetProcedureOverloads(ctx, procID)
+		if err != nil {
+			return id.Null, err
+		}
+		if len(procs) == 1 {
+			procID = procs[0].ID
+		} else if len(procs) > 1 && !procColl.HasProcedure(ctx, procID) {
+			return id.Null, fmt.Errorf(`procedure name "%s" is not unique`, routine.RoutineName)
+		}
+	} else {
+		argTypes := make([]id.Type, len(routine.Args))
+		for i, arg := range routine.Args {
+			argTypes[i] = arg.Type.ID
+		}
+		procID = id.NewProcedure(schema, routine.RoutineName, argTypes...)
+	}
+	if !procColl.HasProcedure(ctx, procID) {
+		return id.Null, fmt.Errorf(`procedure "%s" does not exist`, routine.RoutineName)
+	}
+	return procID.AsId(), nil
+}
+
+func resolveCommentRoutine(ctx *sql.Context, routine *RoutineWithParams) (id.Id, error) {
+	if oid, err := resolveCommentFunction(ctx, routine); err == nil {
+		return oid, nil
+	}
+	return resolveCommentProcedure(ctx, routine)
+}
+
 func resolveCommentType(ctx *sql.Context, relation vitess.TableName) (id.Id, error) {
 	typeName := relation.Name.String()
 	searchSchemas, err := commentSearchSchemas(ctx, relation)
@@ -217,6 +291,17 @@ func resolveCommentType(ctx *sql.Context, relation vitess.TableName) (id.Id, err
 		}
 	}
 	return id.Null, fmt.Errorf(`type "%s" does not exist`, typeName)
+}
+
+func resolveCommentLanguage(name string) (id.Id, error) {
+	var exists bool
+	auth.LockRead(func() {
+		_, exists = auth.GetLanguage(name)
+	})
+	if !exists {
+		return id.Null, fmt.Errorf(`language "%s" does not exist`, name)
+	}
+	return id.NewId(id.Section_FunctionLanguage, name), nil
 }
 
 type schemaGetter interface {
