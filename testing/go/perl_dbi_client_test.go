@@ -16,12 +16,14 @@ package _go
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	gms "github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
@@ -61,10 +63,10 @@ func TestPerlDBIClientSmoke(t *testing.T) {
 	scriptPath := filepath.Join(work, "dbi_probe.pl")
 	require.NoError(t, os.WriteFile(scriptPath, []byte(perlDBIProbe), 0o644))
 
-	cmdCtx, cancel := context.WithCancel(ctx)
+	cmdCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	out, err := runner.run(cmdCtx, scriptPath, port)
-	if err != nil && runner.usesDocker && dockerInfrastructureUnavailable(err, out) {
+	if err != nil && runner.usesDocker && dockerInfrastructureUnavailable(err, out, cmdCtx.Err()) {
 		t.Skipf("Docker runtime is unavailable for the Perl DBI harness: %v\n%s", err, string(out))
 	}
 	require.NoError(t, err, "Perl DBI probe failed: %s", string(out))
@@ -140,7 +142,10 @@ func runDockerPerlDBIProbe(ctx context.Context, scriptPath string, port int) ([]
 	return exec.CommandContext(ctx, "docker", args...).CombinedOutput()
 }
 
-func dockerInfrastructureUnavailable(err error, out []byte) bool {
+func dockerInfrastructureUnavailable(err error, out []byte, ctxErr error) bool {
+	if errors.Is(ctxErr, context.DeadlineExceeded) {
+		return true
+	}
 	exitErr, ok := err.(*exec.ExitError)
 	if !ok || exitErr.ExitCode() != 125 {
 		return false
