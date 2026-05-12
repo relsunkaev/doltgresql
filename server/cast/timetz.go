@@ -46,7 +46,8 @@ func timeTZImplicit() {
 		FromType: pgtypes.TimeTZ,
 		ToType:   pgtypes.TimeTZ,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return val.(timetz.TimeTZ), nil
+			converted, _, err := targetType.Convert(ctx, val.(timetz.TimeTZ))
+			return converted, err
 		},
 	})
 }

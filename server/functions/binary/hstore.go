@@ -1216,7 +1216,11 @@ func hstoreRecordFieldValue(value string, quoted bool) *string {
 }
 
 func hstoreCompositeAttributeType(ctx *sql.Context, attr pgtypes.CompositeAttribute) (*pgtypes.DoltgresType, error) {
-	return hstoreResolveType(ctx, pgtypes.NewUnresolvedDoltgresType(attr.TypeID.SchemaName(), attr.TypeID.TypeName()))
+	attrType, err := hstoreResolveType(ctx, pgtypes.NewUnresolvedDoltgresType(attr.TypeID.SchemaName(), attr.TypeID.TypeName()))
+	if err != nil || attrType == nil {
+		return attrType, err
+	}
+	return attr.ApplyTypMod(attrType), nil
 }
 
 func hstoreRecordFieldName(typ *pgtypes.DoltgresType, idx int) string {

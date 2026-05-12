@@ -76,7 +76,7 @@ func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Ex
 		if nameable, ok := field.(sql.Nameable); ok && nameable.Name() != "" {
 			fieldName = nameable.Name()
 		}
-		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, fieldName, colType.ID, int16(i+1), "")
+		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, fieldName, colType.ID, colType.GetAttTypMod(), int16(i+1), "")
 	}
 	return pgtypes.NewCompositeType(ctx, relID, arrayID, typeID, attrs), nil
 }

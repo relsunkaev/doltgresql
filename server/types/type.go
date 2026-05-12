@@ -458,6 +458,11 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 	if v == nil {
 		return nil, sql.InRange, nil
 	}
+	if t.IsCompositeType() {
+		if converted, handled, err := t.convertCompositeValue(ctx, v); handled {
+			return converted, sql.InRange, err
+		}
+	}
 	if converted, handled, err := t.convertValueWithTypmod(ctx, v); handled {
 		return converted, sql.InRange, err
 	}
@@ -572,6 +577,51 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		return v, sql.InRange, nil
 	}
 	return nil, sql.InRange, ErrUnhandledType.New(t.String(), v)
+}
+
+func (t *DoltgresType) convertCompositeValue(ctx context.Context, v interface{}) (interface{}, bool, error) {
+	vals, ok := v.([]RecordValue)
+	if !ok {
+		return nil, false, nil
+	}
+	if len(vals) != len(t.CompositeAttrs) {
+		return nil, true, errors.Errorf("cannot cast record with %d columns to %s", len(vals), t.Name())
+	}
+	sqlCtx, ok := ctx.(*sql.Context)
+	if !ok {
+		return nil, false, nil
+	}
+	typeCollection, err := GetTypesCollectionFromContext(sqlCtx)
+	if err != nil {
+		return nil, true, err
+	}
+	converted := make([]RecordValue, len(vals))
+	for i, val := range vals {
+		targetType, err := t.CompositeAttrs[i].ResolveType(sqlCtx, typeCollection)
+		if err != nil {
+			return nil, true, err
+		}
+		if targetType == nil {
+			return nil, true, ErrTypeDoesNotExist.New(t.CompositeAttrs[i].TypeID.TypeName())
+		}
+		converted[i].Type = targetType
+		if val.Value == nil {
+			continue
+		}
+		fromType, ok := val.Type.(*DoltgresType)
+		if !ok {
+			return nil, true, errors.Errorf("cannot cast record containing %T to %s", val.Type, targetType.Name())
+		}
+		cast := GetAssignmentCast(fromType, targetType)
+		if cast == nil {
+			return nil, true, errors.Errorf("cannot cast type %s to %s in column %d", fromType.Name(), targetType.Name(), i+1)
+		}
+		converted[i].Value, err = cast(sqlCtx, val.Value, targetType)
+		if err != nil {
+			return nil, true, err
+		}
+	}
+	return converted, true, nil
 }
 
 func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}) (interface{}, bool, error) {

@@ -395,9 +395,12 @@ func getRecordCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType,
 					if !ok {
 						return nil, errors.New("cannot cast record containing GMS type")
 					}
-					outputType, err := typeCollection.GetType(ctx, targetType.CompositeAttrs[i].TypeID)
+					outputType, err := targetType.CompositeAttrs[i].ResolveType(ctx, typeCollection)
 					if err != nil {
 						return nil, err
+					}
+					if outputType == nil {
+						return nil, pgtypes.ErrTypeDoesNotExist.New(targetType.CompositeAttrs[i].TypeID.TypeName())
 					}
 					outputVals[i].Type = outputType
 					if vals[i].Value != nil {

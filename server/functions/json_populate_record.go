@@ -154,6 +154,7 @@ func (j *jsonbPopulateRecordTableFunction) Schema(ctx *sql.Context) sql.Schema {
 		if err != nil || attrType == nil {
 			return nil
 		}
+		attrType = attr.ApplyTypMod(attrType)
 		schema[i] = &sql.Column{
 			DatabaseSource: dbName,
 			Source:         j.Name(),
@@ -525,6 +526,7 @@ func jsonPopulateRecordFromObject(
 		if attrType == nil {
 			return nil, pgtypes.ErrTypeDoesNotExist.New(attr.TypeID.TypeName())
 		}
+		attrType = attr.ApplyTypMod(attrType)
 		var baseValue any
 		if i < len(baseRecord) {
 			baseValue = baseRecord[i].Value

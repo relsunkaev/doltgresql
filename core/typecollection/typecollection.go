@@ -230,7 +230,7 @@ func createAnonymousCompositeType(ctx context.Context, returnType id.Type) (*pgt
 		}
 
 		typeId := id.NewType("", split[1])
-		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, split[0], typeId, int16(i), "")
+		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, split[0], typeId, -1, int16(i), "")
 	}
 	return pgtypes.NewCompositeType(ctx, id.Null, id.NullType, returnType, attrs), nil
 }
@@ -477,7 +477,7 @@ func (*TypeCollection) tableToType(ctx *sql.Context, tbl sql.Table, schema strin
 			// TODO: perhaps we should use a better error message stating that it uses a non-Doltgres type?
 			return nil, pgtypes.ErrTypeDoesNotExist.New(tblName)
 		}
-		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, col.Name, colType.ID, int16(i+1), collation)
+		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, col.Name, colType.ID, colType.GetAttTypMod(), int16(i+1), collation)
 	}
 	return pgtypes.NewCompositeType(ctx, relID, arrayID, typeID, attrs), nil
 }

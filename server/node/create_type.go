@@ -136,7 +136,7 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		relID := id.Null
 		attrs := make([]types.CompositeAttribute, len(c.AsTypes))
 		for i, a := range c.AsTypes {
-			attrs[i] = types.NewCompositeAttribute(ctx, relID, a.AttrName, a.Typ.ID, int16(i+1), a.Collation)
+			attrs[i] = types.NewCompositeAttribute(ctx, relID, a.AttrName, a.Typ.ID, a.Typ.GetAttTypMod(), int16(i+1), a.Collation)
 		}
 		newType = types.NewCompositeType(ctx, relID, arrayID, typeID, attrs)
 	default:

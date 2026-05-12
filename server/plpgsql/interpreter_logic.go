@@ -1410,7 +1410,7 @@ func assignSQLCompositeRowValue(ctx *sql.Context, stack InterpreterStack, variab
 	}
 	values := make([]pgtypes.RecordValue, len(target.Type.CompositeAttrs))
 	for i, attr := range target.Type.CompositeAttrs {
-		targetType, err := typeCollection.GetType(ctx, attr.TypeID)
+		targetType, err := attr.ResolveType(ctx, typeCollection)
 		if err != nil {
 			return err
 		}

@@ -201,7 +201,7 @@ func createAnonymousCompositeType(fieldTypes []tree.SimpleColumnDef) *pgtypes.Do
 	attrs := make([]pgtypes.CompositeAttribute, len(fieldTypes))
 	for i, fieldType := range fieldTypes {
 		attrs[i] = pgtypes.NewCompositeAttribute(nil, id.Null, fieldType.Name.String(),
-			id.NewType("", fieldType.Type.SQLString()), int16(i), "")
+			id.NewType("", fieldType.Type.SQLString()), -1, int16(i), "")
 	}
 
 	typeIdString := "table("

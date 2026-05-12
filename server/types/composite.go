@@ -69,17 +69,34 @@ type CompositeAttribute struct {
 	RelID     id.Id // ID of the relation it belongs to
 	Name      string
 	TypeID    id.Type // ID of DoltgresType
-	Num       int16   // 1-based number of the column in relation
+	TypMod    int32
+	Num       int16 // 1-based number of the column in relation
 	Collation string
 }
 
 // NewCompositeAttribute creates new instance of composite type attribute. `num` is 1-based rather than 0-based.
-func NewCompositeAttribute(ctx *sql.Context, relID id.Id, name string, typeID id.Type, num int16, collation string) CompositeAttribute {
+func NewCompositeAttribute(ctx *sql.Context, relID id.Id, name string, typeID id.Type, typmod int32, num int16, collation string) CompositeAttribute {
 	return CompositeAttribute{
 		RelID:     relID,
 		Name:      name,
 		TypeID:    typeID,
+		TypMod:    typmod,
 		Num:       num,
 		Collation: collation,
 	}
+}
+
+func (attr CompositeAttribute) ResolveType(ctx context.Context, typeCollection TypeCollection) (*DoltgresType, error) {
+	attrType, err := typeCollection.GetType(ctx, attr.TypeID)
+	if err != nil || attrType == nil {
+		return attrType, err
+	}
+	return attr.ApplyTypMod(attrType), nil
+}
+
+func (attr CompositeAttribute) ApplyTypMod(typ *DoltgresType) *DoltgresType {
+	if typ == nil || attr.TypMod == -1 {
+		return typ
+	}
+	return typ.WithAttTypMod(attr.TypMod)
 }

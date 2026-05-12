@@ -54,7 +54,7 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 	typ := &DoltgresType{}
 	reader := utils.NewReader(serializedType)
 	version := reader.VariableUint()
-	if version > 1 {
+	if version > 2 {
 		return nil, errors.Errorf("version %d of types is not supported, please upgrade the server", version)
 	}
 
@@ -124,12 +124,17 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 			relID := reader.Id()
 			name := reader.String()
 			typeID := reader.Id()
+			typmod := int32(-1)
+			if version >= 2 {
+				typmod = reader.Int32()
+			}
 			num := reader.Int16()
 			collation := reader.String()
 			typ.CompositeAttrs[k] = CompositeAttribute{
 				RelID:     relID,
 				Name:      name,
 				TypeID:    id.Type(typeID),
+				TypMod:    typmod,
 				Num:       num,
 				Collation: collation,
 			}
@@ -157,7 +162,7 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 // Serialize returns the DoltgresType as a byte slice.
 func (t *DoltgresType) Serialize() []byte {
 	writer := utils.NewWriter(256)
-	writer.VariableUint(1) // Version
+	writer.VariableUint(2) // Version
 	// Write the type to the writer
 	writer.Id(t.ID.AsId())
 	writer.Int16(t.TypLength)
@@ -214,6 +219,7 @@ func (t *DoltgresType) Serialize() []byte {
 			writer.Id(l.RelID)
 			writer.String(l.Name)
 			writer.Id(l.TypeID.AsId())
+			writer.Int32(l.TypMod)
 			writer.Int16(l.Num)
 			writer.String(l.Collation)
 		}

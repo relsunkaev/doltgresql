@@ -566,7 +566,7 @@ type typeResolver interface {
 func typedTableSchema(ctx *sql.Context, typeCollection typeResolver, tableName string, databaseName string, typ *pgtypes.DoltgresType, options TypedTableOptions, overrides sql.EngineOverrides) (sql.Schema, error) {
 	schema := make(sql.Schema, len(typ.CompositeAttrs))
 	for i, attr := range typ.CompositeAttrs {
-		attrType, err := typeCollection.GetType(ctx, attr.TypeID)
+		attrType, err := attr.ResolveType(ctx, typeCollection)
 		if err != nil {
 			return nil, err
 		}
