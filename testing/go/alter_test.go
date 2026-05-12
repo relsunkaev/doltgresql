@@ -22,32 +22,24 @@ func TestAlterStatements(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "alter database",
+			SetUpScript: []string{
+				"CREATE ROLE foo",
+			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "ALTER DATABASE postgres OWNER TO foo",
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "OWNER TO is unsupported and ignored",
-						},
-					},
 				},
 			},
 		},
 		{
 			Name: "alter sequence",
 			SetUpScript: []string{
+				"CREATE ROLE foo",
 				"CREATE SEQUENCE testseq",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "ALTER SEQUENCE testseq OWNER TO foo",
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "OWNER TO is unsupported and ignored",
-						},
-					},
 				},
 			},
 		},
@@ -91,34 +83,24 @@ func TestAlterStatements(t *testing.T) {
 		{
 			Name: "alter schema",
 			SetUpScript: []string{
+				"CREATE ROLE foo",
 				"CREATE SCHEMA testschema",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "ALTER schema testschema OWNER TO foo",
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "OWNER TO is unsupported and ignored",
-						},
-					},
 				},
 			},
 		},
 		{
 			Name: "alter view",
 			SetUpScript: []string{
+				"CREATE ROLE foo",
 				"CREATE VIEW testview AS SELECT 1",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: "ALTER VIEW testview OWNER TO foo",
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "OWNER TO is unsupported and ignored",
-						},
-					},
 				},
 			},
 		},
