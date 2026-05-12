@@ -331,6 +331,9 @@ func (a *AnyExpr) DebugString(ctx *sql.Context) string {
 // anySubqueryWithChildren resolves the comparison functions for a plan.Subquery.
 func anySubqueryWithChildren(ctx *sql.Context, anyExpr *AnyExpr, sub *plan.Subquery) (sql.Expression, error) {
 	schema := sub.Query.Schema(ctx)
+	if _, ok := anyExpr.leftExpr.(*RecordExpr); !ok && len(schema) > 1 {
+		return nil, errors.Errorf("subquery has too many columns")
+	}
 	subTypes := make([]*pgtypes.DoltgresType, len(schema))
 	for i, col := range schema {
 		dgType, ok := col.Type.(*pgtypes.DoltgresType)

@@ -23,7 +23,6 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/hash"
 	"github.com/dolthub/go-mysql-server/sql/plan"
-	"github.com/dolthub/go-mysql-server/sql/types"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -37,7 +36,7 @@ type InSubquery struct {
 
 	// These variables are used so that we can resolve the comparison functions once and reuse them as we iterate over rows.
 	// These are assigned in WithChildren, so refer there for more information.
-	leftLiteral   *expression.Literal
+	leftLiterals  []*expression.Literal
 	rightLiterals []*expression.Literal
 	compFuncs     []framework.Function
 }
@@ -74,13 +73,33 @@ func (in *InSubquery) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	// https://www.postgresql.org/docs/16/functions-comparisons.html#FUNCTIONS-COMPARISONS-IN-SCALAR:
 	// To comply with the SQL standard, IN() returns NULL not only if the expression on the left hand side is NULL, but
 	// also if no match is found in the list and one of the expressions in the list is NULL.
-	leftNull := left == nil
-
-	if types.NumColumns(in.Left().Type(ctx)) != types.NumColumns(in.Right().Type(ctx)) {
-		return nil, sql.ErrInvalidOperandColumns.New(types.NumColumns(in.Left().Type(ctx)), types.NumColumns(in.Right().Type(ctx)))
+	leftValues, err := inSubqueryLeftValues(left)
+	if err != nil {
+		return nil, err
 	}
+	leftNull := len(leftValues) == 1 && leftValues[0] == nil
 
 	right := in.rightExpr
+	if len(in.leftLiterals) > 1 {
+		values, err := right.EvalMultiple(ctx, row)
+		if err != nil {
+			return nil, err
+		}
+		for _, value := range values {
+			rightValues, ok := value.([]any)
+			if !ok {
+				rightValues = []any{value}
+			}
+			matched, err := in.valuesEqual(ctx, leftValues, sql.NewRow(rightValues...))
+			if err != nil {
+				return nil, err
+			}
+			if matched {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
 
 	// TODO: does this work for all pg values?
 	values, err := right.HashMultiple(ctx, row)
@@ -98,7 +117,7 @@ func (in *InSubquery) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 
 	// TODO: it might be possible for the left value to hash to a different value than the right even though they pass
 	//  an equality check. We need to perform a type conversion here to catch this case.
-	key, err := hash.HashOf(ctx, nil, sql.NewRow(left))
+	key, err := hash.HashOf(ctx, nil, sql.NewRow(leftValues...))
 	if err != nil {
 		return nil, err
 	}
@@ -122,15 +141,20 @@ func (in *InSubquery) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		r = sql.NewRow(rowVal...)
 	}
 
-	return in.valuesEqual(ctx, left, r)
+	return in.valuesEqual(ctx, leftValues, r)
 }
 
 // valuesEqual returns true if the left value is equal to the row provided using the equality functions previously
 // assigned to |compFuncs| during analysis. If the left value is a single scalar, then |row| has a single value as
 // well. Otherwise, (left is a tuple), |row| has a matching number of values.
-func (in *InSubquery) valuesEqual(ctx *sql.Context, left interface{}, row sql.Row) (bool, error) {
+func (in *InSubquery) valuesEqual(ctx *sql.Context, leftValues []any, row sql.Row) (bool, error) {
+	if len(leftValues) != len(row) {
+		return false, sql.ErrInvalidOperandColumns.New(len(leftValues), len(row))
+	}
 	// Note that we have to edit the literals in place, since the comparison functions reference them directly.
-	in.leftLiteral.Val = left
+	for i, v := range leftValues {
+		in.leftLiterals[i].Val = v
+	}
 	for i, v := range row {
 		in.rightLiterals[i].Val = v
 	}
@@ -145,6 +169,18 @@ func (in *InSubquery) valuesEqual(ctx *sql.Context, left interface{}, row sql.Ro
 		}
 	}
 	return true, nil
+}
+
+func inSubqueryLeftValues(left any) ([]any, error) {
+	recordValues, ok := left.([]pgtypes.RecordValue)
+	if !ok {
+		return []any{left}, nil
+	}
+	values := make([]any, len(recordValues))
+	for i, value := range recordValues {
+		values[i] = value.Value
+	}
+	return values, nil
 }
 
 // IsNullable implements the sql.Expression interface.
@@ -189,7 +225,7 @@ func (in *InSubquery) WithChildren(ctx *sql.Context, children ...sql.Expression)
 	}
 	// We'll only resolve the comparison functions once we have all Doltgres types.
 	// We may see GMS types during some analyzer steps, so we should wait until those are done.
-	if leftType, ok := children[0].Type(ctx).(*pgtypes.DoltgresType); ok {
+	if _, ok := children[0].Type(ctx).(*pgtypes.DoltgresType); ok {
 		// Rather than finding and resolving a comparison function every time we call Eval, we resolve them once and
 		// reuse the functions. We also want to avoid re-assigning the parameters of the comparison functions since that
 		// will also cause the functions to resolve again. To do this, we store expressions within our struct that the
@@ -199,20 +235,37 @@ func (in *InSubquery) WithChildren(ctx *sql.Context, children ...sql.Expression)
 		// significant speedup as function resolution is very expensive, so we want to do it as few times as possible
 		// (preferably once).
 
-		// We need a comparison function for each type in the query result
+		leftExprs := []sql.Expression{children[0]}
+		if recordExpr, ok := children[0].(*RecordExpr); ok {
+			leftExprs = recordExpr.Children()
+		}
+
+		// We need a comparison function for each type in the query result.
 		sch := sq.Query.Schema(ctx)
-		leftLiteral := expression.NewLiteral(nil, leftType)
+		if len(leftExprs) != len(sch) {
+			if len(sch) > len(leftExprs) {
+				return nil, errors.Errorf("subquery has too many columns")
+			}
+			return nil, errors.Errorf("subquery has too few columns")
+		}
+		leftLiterals := make([]*expression.Literal, len(leftExprs))
 		rightLiterals := make([]*expression.Literal, len(sch))
 		compFuncs := make([]framework.Function, len(sch))
 		allValidChildren := true
 		for i, rightCol := range sch {
+			leftType, ok := leftExprs[i].Type(ctx).(*pgtypes.DoltgresType)
+			if !ok {
+				allValidChildren = false
+				break
+			}
 			rightType, ok := rightCol.Type.(*pgtypes.DoltgresType)
 			if !ok {
 				allValidChildren = false
 				break
 			}
+			leftLiterals[i] = expression.NewLiteral(nil, leftType)
 			rightLiterals[i] = expression.NewLiteral(nil, rightType)
-			compFuncs[i] = framework.GetBinaryFunction(framework.Operator_BinaryEqual).Compile(ctx, "internal_in_comparison", leftLiteral, rightLiterals[i])
+			compFuncs[i] = framework.GetBinaryFunction(framework.Operator_BinaryEqual).Compile(ctx, "internal_in_comparison", leftLiterals[i], rightLiterals[i])
 			if compFuncs[i] == nil {
 				return nil, errors.Errorf("operator does not exist: %s = %s", leftType.String(), rightType.String())
 			}
@@ -225,7 +278,7 @@ func (in *InSubquery) WithChildren(ctx *sql.Context, children ...sql.Expression)
 			return &InSubquery{
 				leftExpr:      children[0],
 				rightExpr:     sq,
-				leftLiteral:   leftLiteral,
+				leftLiterals:  leftLiterals,
 				rightLiterals: rightLiterals,
 				compFuncs:     compFuncs,
 			}, nil
