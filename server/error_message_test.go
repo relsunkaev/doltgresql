@@ -38,3 +38,9 @@ func TestSanitizeErrorMessageFormatsInlineAdaptiveJSONB(t *testing.T) {
 	require.Contains(t, sanitized, `{"key": "value"}`)
 	require.True(t, strings.HasPrefix(sanitized, `duplicate unique key given: [{"key": "value"},2]`))
 }
+
+func TestSanitizeErrorMessageFormatsDuplicateTargetColumn(t *testing.T) {
+	sanitized := sanitizeErrorMessage("column 'a' specified twice")
+
+	require.Equal(t, `column "a" specified more than once`, sanitized)
+}

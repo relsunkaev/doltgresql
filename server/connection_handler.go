@@ -2746,6 +2746,9 @@ func errorResponseCode(err error) string {
 		return pgcode.UndefinedTable.String()
 	case sql.ErrColumnNotFound.Is(err):
 		return pgcode.UndefinedColumn.String()
+	case sql.ErrColumnSpecifiedTwice.Is(err),
+		sql.ErrDuplicateColumn.Is(err):
+		return pgcode.DuplicateColumn.String()
 	case sql.ErrInvalidValue.Is(err):
 		return pgcode.InvalidTextRepresentation.String()
 	case sql.ErrLockDeadlock.Is(err):
@@ -2782,6 +2785,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.CheckViolation.String(), true
 	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
 		return pgcode.UndefinedColumn.String(), true
+	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
+		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):

@@ -16,6 +16,9 @@ package _go
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -52,6 +55,168 @@ func TestCopyFromStdinBadRowIsStatementAtomicRepro(t *testing.T) {
 		`SELECT count(*) FROM copy_stdin_bad_row_items;`,
 	).Scan(&count))
 	require.Equal(t, int64(0), count)
+}
+
+// TestCopyFromStdinExplicitTransactionRollbackRepro reproduces a COPY
+// transaction consistency bug: COPY FROM STDIN inside an explicit transaction
+// must be rolled back by the surrounding ROLLBACK.
+func TestCopyFromStdinExplicitTransactionRollbackRepro(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_stdin_tx_rollback_items (
+		id INT PRIMARY KEY,
+		label TEXT
+	);`)
+	require.NoError(t, err)
+
+	_, err = connection.Default.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	tag, err := connection.Default.PgConn().CopyFrom(
+		ctx,
+		strings.NewReader("1\trolled-back\n2\talso-rolled-back\n"),
+		`COPY copy_stdin_tx_rollback_items (id, label) FROM STDIN;`,
+	)
+	require.NoError(t, err, "COPY FROM should succeed inside the explicit transaction; tag=%s", tag.String())
+	_, err = connection.Default.Exec(ctx, `ROLLBACK;`)
+	require.NoError(t, err)
+
+	var count int64
+	require.NoError(t, connection.Default.QueryRow(
+		context.Background(),
+		`SELECT count(*) FROM copy_stdin_tx_rollback_items;`,
+	).Scan(&count))
+	require.Equal(t, int64(0), count)
+}
+
+// TestCopyFromServerFileExplicitTransactionRollbackRepro reproduces a COPY
+// transaction consistency bug: COPY FROM a server-side file inside an explicit
+// transaction must be rolled back by the surrounding ROLLBACK.
+func TestCopyFromServerFileExplicitTransactionRollbackRepro(t *testing.T) {
+	copyPath := filepath.Join(t.TempDir(), "copy_server_file_tx.csv")
+	require.NoError(t, os.WriteFile(copyPath, []byte("1,rolled-back\n2,also-rolled-back\n"), 0644))
+	escapedPath := strings.ReplaceAll(copyPath, "'", "''")
+
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_server_file_tx_rollback_items (
+		id INT PRIMARY KEY,
+		label TEXT
+	);`)
+	require.NoError(t, err)
+
+	_, err = connection.Default.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, fmt.Sprintf(
+		`COPY copy_server_file_tx_rollback_items (id, label) FROM '%s' WITH (FORMAT CSV);`,
+		escapedPath,
+	))
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `ROLLBACK;`)
+	require.NoError(t, err)
+
+	var count int64
+	require.NoError(t, connection.Default.QueryRow(
+		context.Background(),
+		`SELECT count(*) FROM copy_server_file_tx_rollback_items;`,
+	).Scan(&count))
+	require.Equal(t, int64(0), count)
+}
+
+// TestCopyFromStdinSavepointRollbackRepro reproduces a COPY transaction
+// consistency bug: COPY FROM STDIN after a savepoint must be discarded by
+// ROLLBACK TO SAVEPOINT while preserving earlier transaction work.
+func TestCopyFromStdinSavepointRollbackRepro(t *testing.T) {
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_stdin_savepoint_items (
+		id INT PRIMARY KEY,
+		label TEXT
+	);`)
+	require.NoError(t, err)
+
+	_, err = connection.Default.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `INSERT INTO copy_stdin_savepoint_items VALUES (1, 'kept');`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `SAVEPOINT copy_sp;`)
+	require.NoError(t, err)
+	tag, err := connection.Default.PgConn().CopyFrom(
+		ctx,
+		strings.NewReader("2\trolled-back\n3\talso-rolled-back\n"),
+		`COPY copy_stdin_savepoint_items (id, label) FROM STDIN;`,
+	)
+	require.NoError(t, err, "COPY FROM should succeed after the savepoint; tag=%s", tag.String())
+	_, err = connection.Default.Exec(ctx, `ROLLBACK TO SAVEPOINT copy_sp;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `COMMIT;`)
+	require.NoError(t, err)
+
+	var ids string
+	require.NoError(t, connection.Default.QueryRow(
+		context.Background(),
+		`SELECT string_agg(id::text, ',' ORDER BY id) FROM copy_stdin_savepoint_items;`,
+	).Scan(&ids))
+	require.Equal(t, "1", ids)
+}
+
+// TestCopyFromServerFileSavepointRollbackRepro reproduces a COPY transaction
+// consistency bug: COPY FROM a server-side file after a savepoint must be
+// discarded by ROLLBACK TO SAVEPOINT while preserving earlier transaction work.
+func TestCopyFromServerFileSavepointRollbackRepro(t *testing.T) {
+	copyPath := filepath.Join(t.TempDir(), "copy_server_file_savepoint.csv")
+	require.NoError(t, os.WriteFile(copyPath, []byte("2,rolled-back\n3,also-rolled-back\n"), 0644))
+	escapedPath := strings.ReplaceAll(copyPath, "'", "''")
+
+	ctx, connection, controller := CreateServer(t, "postgres")
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	_, err := connection.Exec(ctx, `CREATE TABLE copy_server_file_savepoint_items (
+		id INT PRIMARY KEY,
+		label TEXT
+	);`)
+	require.NoError(t, err)
+
+	_, err = connection.Default.Exec(ctx, `BEGIN;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `INSERT INTO copy_server_file_savepoint_items VALUES (1, 'kept');`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `SAVEPOINT copy_sp;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, fmt.Sprintf(
+		`COPY copy_server_file_savepoint_items (id, label) FROM '%s' WITH (FORMAT CSV);`,
+		escapedPath,
+	))
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `ROLLBACK TO SAVEPOINT copy_sp;`)
+	require.NoError(t, err)
+	_, err = connection.Default.Exec(ctx, `COMMIT;`)
+	require.NoError(t, err)
+
+	var ids string
+	require.NoError(t, connection.Default.QueryRow(
+		context.Background(),
+		`SELECT string_agg(id::text, ',' ORDER BY id) FROM copy_server_file_savepoint_items;`,
+	).Scan(&ids))
+	require.Equal(t, "1", ids)
 }
 
 // TestCopyFromStdinRejectsDuplicateTargetColumnsRepro reproduces a COPY

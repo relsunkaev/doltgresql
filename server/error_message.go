@@ -23,10 +23,21 @@ import (
 )
 
 func sanitizeErrorMessage(message string) string {
+	message = formatColumnSpecifiedTwiceError(message)
 	if strings.Contains(message, "duplicate unique key given: [") {
 		message = formatSerializedJSONBInUniqueKeyError(message)
 	}
 	return escapeNullBytes(message)
+}
+
+func formatColumnSpecifiedTwiceError(message string) string {
+	const prefix = "column '"
+	const suffix = "' specified twice"
+	if !strings.HasPrefix(message, prefix) || !strings.HasSuffix(message, suffix) {
+		return message
+	}
+	columnName := strings.TrimSuffix(strings.TrimPrefix(message, prefix), suffix)
+	return `column "` + columnName + `" specified more than once`
 }
 
 func formatSerializedJSONBInUniqueKeyError(message string) string {
