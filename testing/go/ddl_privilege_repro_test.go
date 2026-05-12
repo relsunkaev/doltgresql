@@ -2237,6 +2237,35 @@ func TestDropViewRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+// PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a view does not
+// transfer ownership and should not allow the grantee to DROP the view.
+func TestDropViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP VIEW requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_view_intruder PASSWORD 'dropper';`,
+				`CREATE VIEW drop_view_all_private AS SELECT 1 AS id;`,
+				`GRANT USAGE ON SCHEMA public TO drop_view_intruder;`,
+				`GRANT ALL PRIVILEGES ON TABLE drop_view_all_private TO drop_view_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP VIEW drop_view_all_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_view_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT to_regclass('drop_view_all_private')::text;`,
+					Expected: []sql.Row{{"drop_view_all_private"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRefreshMaterializedViewRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a materialized view to refresh it.
 func TestRefreshMaterializedViewRequiresOwnershipRepro(t *testing.T) {
