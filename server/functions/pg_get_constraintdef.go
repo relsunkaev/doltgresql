@@ -71,15 +71,10 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	var result string
 	err := RunCallback(ctx, oidVal, Callbacks{
 		Check: func(ctx *sql.Context, schema ItemSchema, table ItemTable, check ItemCheck) (cont bool, err error) {
-			name := check.Item.Name
-			if len(name) > 0 {
-				name += " "
-			}
-			not := ""
+			result = fmt.Sprintf("CHECK %s", formatCheckConstraintExpression(check.Item.CheckExpression))
 			if !check.Item.Enforced {
-				not = "not "
+				result += " NOT ENFORCED"
 			}
-			result = fmt.Sprintf("%sCHECK %s %sENFORCED", name, check.Item.CheckExpression, not)
 			return false, nil
 		},
 		ForeignKey: func(ctx *sql.Context, schema ItemSchema, table ItemTable, fk ItemForeignKey) (cont bool, err error) {
@@ -95,6 +90,12 @@ func getConstraintDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 				parentTableName,
 				getColumnNamesString(fk.Item.ParentColumns),
 			)
+			if action := formatForeignKeyAction("ON UPDATE", fk.Item.OnUpdate); action != "" {
+				result += " " + action
+			}
+			if action := formatForeignKeyAction("ON DELETE", fk.Item.OnDelete); action != "" {
+				result += " " + action
+			}
 			timing, err := deferrable.ForeignKeyTimingForID(ctx, fk.OID, fk.Item)
 			if err != nil {
 				return false, err
@@ -133,9 +134,9 @@ func getColumnNamesString(exprs []string) string {
 			return ""
 		}
 		if len(split) == 1 {
-			colNames[i] = split[0]
+			colNames[i] = pgQuoteIdentifier(split[0])
 		} else {
-			colNames[i] = split[1]
+			colNames[i] = pgQuoteIdentifier(split[len(split)-1])
 		}
 	}
 	return strings.Join(colNames, ", ")
@@ -151,7 +152,112 @@ func formatForeignKeyReferencedTable(ctx *sql.Context, schema ItemSchema, fk sql
 		return "", err
 	}
 	if _, ok := searchPath[parentSchema]; ok {
-		return fk.ParentTable, nil
+		return pgQuoteIdentifier(fk.ParentTable), nil
 	}
-	return fmt.Sprintf("%s.%s", parentSchema, fk.ParentTable), nil
+	return fmt.Sprintf("%s.%s", pgQuoteIdentifier(parentSchema), pgQuoteIdentifier(fk.ParentTable)), nil
+}
+
+func formatForeignKeyAction(prefix string, action sql.ForeignKeyReferentialAction) string {
+	switch action {
+	case sql.ForeignKeyReferentialAction_Restrict,
+		sql.ForeignKeyReferentialAction_Cascade,
+		sql.ForeignKeyReferentialAction_SetNull,
+		sql.ForeignKeyReferentialAction_SetDefault:
+		return fmt.Sprintf("%s %s", prefix, action)
+	default:
+		return ""
+	}
+}
+
+func formatCheckConstraintExpression(expr string) string {
+	expr = strings.TrimSpace(unquoteSimpleConstraintIdentifiers(expr))
+	if expr == "" {
+		return "()"
+	}
+	return fmt.Sprintf("((%s))", stripOuterParens(expr))
+}
+
+func stripOuterParens(expr string) string {
+	for {
+		trimmed := strings.TrimSpace(expr)
+		if len(trimmed) < 2 || trimmed[0] != '(' || trimmed[len(trimmed)-1] != ')' {
+			return trimmed
+		}
+		depth := 0
+		wrapsWholeExpr := true
+		for i := 0; i < len(trimmed); i++ {
+			switch trimmed[i] {
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 && i < len(trimmed)-1 {
+					wrapsWholeExpr = false
+				}
+			}
+			if depth < 0 {
+				return trimmed
+			}
+		}
+		if depth != 0 || !wrapsWholeExpr {
+			return trimmed
+		}
+		expr = trimmed[1 : len(trimmed)-1]
+	}
+}
+
+func unquoteSimpleConstraintIdentifiers(expr string) string {
+	var builder strings.Builder
+	for i := 0; i < len(expr); {
+		switch expr[i] {
+		case '\'':
+			next := copyConstraintStringLiteral(&builder, expr, i)
+			i = next
+		case '"':
+			next, content, ok := readConstraintQuotedIdentifier(expr, i)
+			if ok && canUseBareIdentifier(content) {
+				builder.WriteString(content)
+			} else {
+				builder.WriteString(expr[i:next])
+			}
+			i = next
+		default:
+			builder.WriteByte(expr[i])
+			i++
+		}
+	}
+	return builder.String()
+}
+
+func copyConstraintStringLiteral(builder *strings.Builder, expr string, start int) int {
+	builder.WriteByte('\'')
+	for i := start + 1; i < len(expr); i++ {
+		builder.WriteByte(expr[i])
+		if expr[i] == '\'' {
+			if i+1 < len(expr) && expr[i+1] == '\'' {
+				i++
+				builder.WriteByte('\'')
+				continue
+			}
+			return i + 1
+		}
+	}
+	return len(expr)
+}
+
+func readConstraintQuotedIdentifier(expr string, start int) (next int, content string, ok bool) {
+	var builder strings.Builder
+	for i := start + 1; i < len(expr); i++ {
+		if expr[i] != '"' {
+			builder.WriteByte(expr[i])
+			continue
+		}
+		if i+1 < len(expr) && expr[i+1] == '"' {
+			builder.WriteByte('"')
+			i++
+			continue
+		}
+		return i + 1, builder.String(), true
+	}
+	return len(expr), "", false
 }
