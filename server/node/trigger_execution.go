@@ -44,16 +44,17 @@ const (
 
 // TriggerExecution handles the execution of a set of triggers on a table.
 type TriggerExecution struct {
-	Timing                   triggers.TriggerTiming
-	Statement                bool
-	Operation                string
-	Triggers                 []triggers.Trigger
-	Split                    TriggerExecutionRowHandling // How the source row should be split
-	Return                   TriggerExecutionRowHandling // How the returned rows should be combined
-	Sch                      sql.Schema
-	Source                   sql.Node
-	Runner                   pgexprs.StatementRunner
-	InsertDefaultProjections []sql.Expression
+	Timing                     triggers.TriggerTiming
+	Statement                  bool
+	Operation                  string
+	Triggers                   []triggers.Trigger
+	Split                      TriggerExecutionRowHandling // How the source row should be split
+	Return                     TriggerExecutionRowHandling // How the returned rows should be combined
+	Sch                        sql.Schema
+	Source                     sql.Node
+	Runner                     pgexprs.StatementRunner
+	InsertDefaultProjections   []sql.Expression
+	GeneratedColumnProjections []sql.Expression
 }
 
 var _ sql.ExecBuilderNode = (*TriggerExecution)(nil)
@@ -106,18 +107,19 @@ func (te *TriggerExecution) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder
 	}
 
 	return &triggerExecutionIter{
-		triggers:                 te.Triggers,
-		functions:                trigFuncs,
-		whens:                    whens,
-		statement:                te.Statement,
-		split:                    te.Split,
-		treturn:                  te.Return,
-		runner:                   te.Runner.Runner,
-		sch:                      te.Sch,
-		source:                   sourceIter,
-		tgOp:                     te.Operation,
-		timing:                   te.Timing,
-		insertDefaultProjections: te.InsertDefaultProjections,
+		triggers:                   te.Triggers,
+		functions:                  trigFuncs,
+		whens:                      whens,
+		statement:                  te.Statement,
+		split:                      te.Split,
+		treturn:                    te.Return,
+		runner:                     te.Runner.Runner,
+		sch:                        te.Sch,
+		source:                     sourceIter,
+		tgOp:                       te.Operation,
+		timing:                     te.Timing,
+		insertDefaultProjections:   te.InsertDefaultProjections,
+		generatedColumnProjections: te.GeneratedColumnProjections,
 	}, nil
 }
 
@@ -187,25 +189,26 @@ func (te *TriggerExecution) loadTriggerFunction(ctx *sql.Context, trigger trigge
 
 // triggerExecutionIter is the iterator for TriggerExecution.
 type triggerExecutionIter struct {
-	triggers                 []triggers.Trigger
-	functions                []framework.InterpretedFunction
-	whens                    []framework.InterpretedFunction
-	statement                bool
-	statementFired           bool
-	split                    TriggerExecutionRowHandling
-	treturn                  TriggerExecutionRowHandling
-	runner                   sql.StatementRunner
-	sch                      sql.Schema
-	source                   sql.RowIter
-	tgOp                     string
-	timing                   triggers.TriggerTiming
-	insertDefaultProjections []sql.Expression
-	sourceClosed             bool
-	oldRows                  []sql.Row
-	newRows                  []sql.Row
-	pendingRows              []sql.Row
-	pendingRowIdx            int
-	afterRowsDrained         bool
+	triggers                   []triggers.Trigger
+	functions                  []framework.InterpretedFunction
+	whens                      []framework.InterpretedFunction
+	statement                  bool
+	statementFired             bool
+	split                      TriggerExecutionRowHandling
+	treturn                    TriggerExecutionRowHandling
+	runner                     sql.StatementRunner
+	sch                        sql.Schema
+	source                     sql.RowIter
+	tgOp                       string
+	timing                     triggers.TriggerTiming
+	insertDefaultProjections   []sql.Expression
+	generatedColumnProjections []sql.Expression
+	sourceClosed               bool
+	oldRows                    []sql.Row
+	newRows                    []sql.Row
+	pendingRows                []sql.Row
+	pendingRowIdx              int
+	afterRowsDrained           bool
 }
 
 var _ sql.RowIter = (*triggerExecutionIter)(nil)
@@ -327,6 +330,12 @@ func (t *triggerExecutionIter) fireRowTriggers(ctx *sql.Context, nextRow sql.Row
 			oldRow = returnedRow
 		case TriggerExecutionRowHandling_OldNew, TriggerExecutionRowHandling_NewOld, TriggerExecutionRowHandling_New:
 			newRow = returnedRow
+		}
+	}
+	if t.timing == triggers.TriggerTiming_Before && newRow != nil && len(t.generatedColumnProjections) > 0 {
+		newRow, err = rowexec.ProjectRow(ctx, t.generatedColumnProjections, newRow)
+		if err != nil {
+			return nil, err
 		}
 	}
 	switch t.treturn {

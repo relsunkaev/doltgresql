@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 	"github.com/dolthub/go-mysql-server/sql/types"
 
@@ -86,16 +87,21 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 						return nil, transform.NewTree, err
 					}
 				}
+				generatedColumnProjections, err := generatedColumnRecomputeProjections(ctx, triggerInfo.dbName, triggerInfo.tableName, triggerInfo.sch, a.Overrides)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
 				newNode, err = nodeWithTriggers(ctx, newNode, &pgnodes.TriggerExecution{
-					Timing:                   triggers.TriggerTiming_Before,
-					Operation:                operation,
-					Triggers:                 triggerInfo.beforeRow,
-					Split:                    handling,
-					Return:                   handling,
-					Sch:                      triggerInfo.sch,
-					Source:                   getTriggerSource(newNode),
-					Runner:                   pgexprs.StatementRunner{Runner: a.Runner},
-					InsertDefaultProjections: insertDefaultProjections,
+					Timing:                     triggers.TriggerTiming_Before,
+					Operation:                  operation,
+					Triggers:                   triggerInfo.beforeRow,
+					Split:                      handling,
+					Return:                     handling,
+					Sch:                        triggerInfo.sch,
+					Source:                     getTriggerSource(newNode),
+					Runner:                     pgexprs.StatementRunner{Runner: a.Runner},
+					InsertDefaultProjections:   insertDefaultProjections,
+					GeneratedColumnProjections: generatedColumnProjections,
 				})
 				if err != nil {
 					return nil, transform.NewTree, err
@@ -134,6 +140,8 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 }
 
 type triggerInformation struct {
+	dbName          string
+	tableName       string
 	sch             sql.Schema
 	beforeStatement []triggers.Trigger
 	beforeRow       []triggers.Trigger
@@ -205,7 +213,9 @@ func getTriggerInformation(ctx *sql.Context, node sql.Node) (triggerInformation,
 	}
 	allTrigs := trigCollection.GetTriggersForTable(ctx, tblID)
 	info := triggerInformation{
-		sch: tbl.Schema(ctx),
+		dbName:    dbName,
+		tableName: tbl.Name(),
+		sch:       tbl.Schema(ctx),
 	}
 	// Return early if there are no triggers for the table
 	if len(allTrigs) == 0 {
@@ -401,6 +411,59 @@ func insertTriggerDefaultProjections(ctx *sql.Context, insert *plan.InsertInto, 
 		projections[i] = def
 	}
 
+	return projections, nil
+}
+
+func generatedColumnRecomputeProjections(ctx *sql.Context, dbName string, tableName string, schema sql.Schema, overrides sql.EngineOverrides) ([]sql.Expression, error) {
+	hasGeneratedColumn := false
+	for _, col := range schema {
+		if col.Generated != nil && !col.AutoIncrement {
+			hasGeneratedColumn = true
+			break
+		}
+	}
+	if !hasGeneratedColumn {
+		return nil, nil
+	}
+
+	builder := planbuilder.NewBuilderForColumnDefaultResolution(ctx, overrides)
+	schema = builder.ResolveSchemaDefaults(dbName, tableName, schema)
+
+	projections := make([]sql.Expression, len(schema))
+	colNameToIdx := make(map[string]int, len(schema))
+	for i, c := range schema {
+		colNameToIdx[strings.ToLower(c.Name)] = i
+		if c.Source != "" {
+			colNameToIdx[fmt.Sprintf("%s.%s", strings.ToLower(c.Source), strings.ToLower(c.Name))] = i
+		}
+	}
+	for i, col := range schema {
+		if col.Generated == nil || col.AutoIncrement {
+			projections[i] = expression.NewGetField(i, col.Type, col.Name, col.Nullable)
+			continue
+		}
+
+		def, _, err := transform.Expr(ctx, col.Generated, func(ctx *sql.Context, e sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+			switch e := e.(type) {
+			case *expression.GetField:
+				key := strings.ToLower(e.Name())
+				if e.Table() != "" {
+					key = fmt.Sprintf("%s.%s", strings.ToLower(e.Table()), key)
+				}
+				idx, ok := colNameToIdx[key]
+				if !ok {
+					return nil, transform.SameTree, fmt.Errorf("field not found: %s", e.String())
+				}
+				return e.WithIndex(idx), transform.NewTree, nil
+			default:
+				return e, transform.SameTree, nil
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+		projections[i] = def
+	}
 	return projections, nil
 }
 
