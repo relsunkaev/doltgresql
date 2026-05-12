@@ -79,6 +79,7 @@ const (
 	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
 	ruleId_PreferOrderedSortOptionIndexes                                         // preferOrderedSortOptionIndexes
 	ruleId_ResolveDropColumnIfExists                                              // resolveDropColumnIfExists
+	ruleId_ValidateOrderBy                                                        // validateOrderBy
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -153,6 +154,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
 		analyzer.Rule{Id: ruleId_UnwrapTableCopierCreateTable, Apply: UnwrapTableCopierCreateTable},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},
+		analyzer.Rule{Id: ruleId_ValidateOrderBy, Apply: ValidateOrderBy},
 		analyzer.Rule{Id: ruleId_ValidateOnConflictArbiter, Apply: ValidateOnConflictArbiter},
 	)
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "replaceIdxSort", true,
