@@ -25,6 +25,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"slices"
 	"strconv"
@@ -2835,6 +2836,9 @@ func isFeatureNotSupportedMessage(err error) bool {
 func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error) {
 	s, err := parser.Parse(query)
 	if err != nil {
+		if converted, ok := convertedCreateTransform(query); ok {
+			return []ConvertedQuery{converted}, nil
+		}
 		if converted, ok := convertedAlterLargeObjectOwner(query); ok {
 			return []ConvertedQuery{converted}, nil
 		}
@@ -2873,6 +2877,43 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 	}
 	return converted, nil
+}
+
+var (
+	createTransformPattern = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
+	transformFromPattern   = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	transformToPattern     = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+)
+
+func convertedCreateTransform(query string) (ConvertedQuery, bool) {
+	matches := createTransformPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	body := matches[3]
+	fromSQL := ""
+	if fromMatches := transformFromPattern.FindStringSubmatch(body); fromMatches != nil {
+		fromSQL = normalizeTransformFunctionName(fromMatches[1])
+	}
+	toSQL := ""
+	if toMatches := transformToPattern.FindStringSubmatch(body); toMatches != nil {
+		toSQL = normalizeTransformFunctionName(toMatches[1])
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateTransform(matches[1], matches[2], fromSQL, toSQL),
+		},
+		StatementTag: "CREATE TRANSFORM",
+	}, true
+}
+
+func normalizeTransformFunctionName(name string) string {
+	name = strings.TrimSpace(name)
+	if len(name) >= 2 && name[0] == '"' && name[len(name)-1] == '"' {
+		return strings.ReplaceAll(name[1:len(name)-1], `""`, `"`)
+	}
+	return strings.ToLower(name)
 }
 
 func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {

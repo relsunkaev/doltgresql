@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,20 @@ func (p PgTransformHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTransformHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_transform row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, transform := range auth.GetAllTransforms() {
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_Table, PgCatalogName, PgTransformName, string(transform.TypeID), transform.Lang), // oid
+				transform.TypeID, // trftype
+				id.NewId(id.Section_FunctionLanguage, transform.Lang), // trflang
+				transform.FromSQL, // trffromsql
+				transform.ToSQL,   // trftosql
+				id.NewTable(PgCatalogName, PgTransformName).AsId(), // tableoid
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
