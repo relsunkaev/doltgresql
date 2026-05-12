@@ -2206,9 +2206,12 @@ schema diffs, typed-exception handling, and client-side query timeouts.
   foreign keys, `LIKE`, standalone table indexes, `EXCLUDE`, `PARTITION BY`,
   `PARTITION OF`, and the generic unsupported `CREATE TABLE` options that also
   apply outside typed tables (`UNLOGGED`, storage parameters, `ON COMMIT`,
-  `USING`, and `TABLESPACE`). Pinned by
-  testing/go/pg_class_reloftype_test.go. Remaining option parity is tracked by
-  dg-7ug.12.
+  `USING`, and `TABLESPACE`). Dropping the referenced composite type still
+  leaves a typed table with dangling `reloftype` metadata instead of rejecting
+  without `CASCADE`; that dependency bug is pinned by
+  testing/go/type_correctness_repro_test.go and documented in
+  docs/reproduced-bugs.md. Pinned by testing/go/pg_class_reloftype_test.go.
+  Remaining option parity is tracked by dg-7ug.12.
 - [x] `information_schema.columns.collation_name` - reports NULL
   for default-collated string columns and non-string columns,
   matching PG, and surfaces the user-supplied collation name
