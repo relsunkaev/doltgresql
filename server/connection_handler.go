@@ -1716,18 +1716,11 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 		return err
 	}
 
-	if sqlCtx.GetTransaction() != nil && sqlCtx.GetIgnoreAutoCommit() {
-		txSession, ok := sqlCtx.Session.(sql.TransactionSession)
-		if !ok {
-			return errors.Errorf("session does not implement sql.TransactionSession")
-		}
-		if err = txSession.CommitTransaction(sqlCtx, txSession.GetTransaction()); err != nil {
-			return err
-		}
-		sqlCtx.SetIgnoreAutoCommit(false)
+	if err = h.commitCopyTransactionIfAutocommit(sqlCtx); err != nil {
+		return err
 	}
 	if copyState.replicationCapture != nil {
-		if err = copyState.replicationCapture.publish(sqlCtx); err != nil {
+		if err = h.publishOrBufferReplicationCapture(sqlCtx, copyState.replicationCapture); err != nil {
 			return err
 		}
 	}
@@ -1952,20 +1945,11 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 		return false, false, err
 	}
 
-	// TODO: rather than always committing the transaction here, we should respect whether a transaction was
-	//  expliclitly started and not commit if not. In order to do that, we need to not always set
-	//  ctx.GetIgnoreAutoCommit(), and instead conditionally *not* insert a transaction closing iterator during chunk
-	//  processing. We need a new query flag to effectively do the latter though.
-	txSession, ok := sqlCtx.Session.(sql.TransactionSession)
-	if !ok {
-		return false, false, errors.Errorf("session does not implement sql.TransactionSession")
-	}
-	if err = txSession.CommitTransaction(sqlCtx, txSession.GetTransaction()); err != nil {
+	if err = h.commitCopyTransactionIfAutocommit(sqlCtx); err != nil {
 		return false, false, err
 	}
-	sqlCtx.SetIgnoreAutoCommit(false)
 	if h.copyFromStdinState.replicationCapture != nil {
-		if err = h.copyFromStdinState.replicationCapture.publish(sqlCtx); err != nil {
+		if err = h.publishOrBufferReplicationCapture(sqlCtx, h.copyFromStdinState.replicationCapture); err != nil {
 			return false, false, err
 		}
 	}
@@ -1976,6 +1960,21 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 	return false, true, h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(fmt.Sprintf("COPY %d", loadDataResults.RowsLoaded)),
 	})
+}
+
+func (h *ConnectionHandler) commitCopyTransactionIfAutocommit(sqlCtx *sql.Context) error {
+	if h.inTransaction || sqlCtx.GetTransaction() == nil {
+		return nil
+	}
+	txSession, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return errors.Errorf("session does not implement sql.TransactionSession")
+	}
+	if err := txSession.CommitTransaction(sqlCtx, txSession.GetTransaction()); err != nil {
+		return err
+	}
+	sqlCtx.SetIgnoreAutoCommit(false)
+	return nil
 }
 
 // handleCopyFail handles a COPY FAIL message by aborting the in-progress COPY DATA operation.  The |stop| response
