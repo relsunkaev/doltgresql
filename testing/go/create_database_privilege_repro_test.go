@@ -143,3 +143,32 @@ func TestAlterDatabaseRenameToRequiresOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseSetRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a database to change its persisted
+// database-level settings.
+func TestAlterDatabaseSetRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE SET requires database ownership",
+			SetUpScript: []string{
+				`CREATE USER db_setting_intruder PASSWORD 'setter';`,
+				`CREATE DATABASE setting_database_private;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER DATABASE setting_database_private SET work_mem = '64kB';`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_setting_intruder`,
+					Password:    `setter`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setdatabase = 'setting_database_private'::regdatabase;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
