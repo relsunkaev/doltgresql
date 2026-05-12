@@ -45,6 +45,8 @@ func TestPreparedPlanCacheInvalidatingQuery(t *testing.T) {
 
 	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: &sqlparser.DDL{}}))
 	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: &sqlparser.Insert{}}))
+	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: &sqlparser.Rollback{}}))
+	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: &sqlparser.RollbackSavepoint{}}))
 	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: &sqlparser.Set{}}))
 	require.True(t, preparedPlanCacheInvalidatingQuery(ConvertedQuery{AST: sqlparser.InjectedStatement{
 		Statement: node.DiscardStatement{},

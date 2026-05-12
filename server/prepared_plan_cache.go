@@ -72,7 +72,8 @@ func preparedPlanCacheInvalidatingQuery(query ConvertedQuery) bool {
 	}
 	switch stmt := query.AST.(type) {
 	case *sqlparser.AlterTable, *sqlparser.Analyze, *sqlparser.DBDDL, *sqlparser.DDL,
-		*sqlparser.Delete, *sqlparser.Insert, *sqlparser.Set, *sqlparser.Update, *sqlparser.Use:
+		*sqlparser.Delete, *sqlparser.Insert, *sqlparser.Rollback, *sqlparser.RollbackSavepoint,
+		*sqlparser.Set, *sqlparser.Update, *sqlparser.Use:
 		return true
 	case *sqlparser.Select:
 		// A bare SELECT is not invalidating, but SELECT calls that mutate
@@ -97,18 +98,18 @@ func preparedPlanCacheInvalidatingQuery(query ConvertedQuery) bool {
 // changes the session's branch/working-set view. Subsequent queries must not
 // reuse plans cached against the prior view.
 var workingSetMutatingFuncs = map[string]struct{}{
-	"dolt_checkout":   {},
-	"dolt_reset":      {},
-	"dolt_revert":     {},
-	"dolt_merge":      {},
-	"dolt_commit":     {},
-	"dolt_branch":     {},
-	"dolt_clone":      {},
-	"dolt_fetch":      {},
-	"dolt_pull":       {},
-	"dolt_rebase":     {},
+	"dolt_checkout":    {},
+	"dolt_reset":       {},
+	"dolt_revert":      {},
+	"dolt_merge":       {},
+	"dolt_commit":      {},
+	"dolt_branch":      {},
+	"dolt_clone":       {},
+	"dolt_fetch":       {},
+	"dolt_pull":        {},
+	"dolt_rebase":      {},
 	"dolt_cherry_pick": {},
-	"dolt_clean":      {},
+	"dolt_clean":       {},
 }
 
 func selectMutatesWorkingSet(stmt *sqlparser.Select) bool {

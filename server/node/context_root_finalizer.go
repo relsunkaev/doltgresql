@@ -16,8 +16,10 @@ package node
 
 import (
 	"io"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/plan"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/deferrable"
@@ -74,7 +76,10 @@ func (rf *ContextRootFinalizer) BuildRowIter(ctx *sql.Context, b sql.NodeExecBui
 	if childIter == nil {
 		childIter = sql.RowsToRowIter()
 	}
-	return &rootFinalizerIter{childIter: childIter}, nil
+	return &rootFinalizerIter{
+		childIter:              childIter,
+		clearContextAfterClose: clearsContextOnSuccess(rf.child),
+	}, nil
 }
 
 // Schema implements the interface sql.ExecBuilderNode.
@@ -97,8 +102,9 @@ func (rf *ContextRootFinalizer) WithChildren(ctx *sql.Context, children ...sql.N
 
 // rootFinalizerIter is the iterator for *ContextRootFinalizer that finalizes the context.
 type rootFinalizerIter struct {
-	childIter sql.RowIter
-	hadErr    bool
+	childIter              sql.RowIter
+	clearContextAfterClose bool
+	hadErr                 bool
 }
 
 var _ sql.MutableRowIter = (*rootFinalizerIter)(nil)
@@ -125,6 +131,11 @@ func (r *rootFinalizerIter) Close(ctx *sql.Context) error {
 		_ = core.CloseContextRootFinalizer(ctx)
 		return err
 	}
+	if r.clearContextAfterClose {
+		deferrable.DiscardPendingForeignKeys(ctx)
+		core.ClearContextValues(ctx)
+		return nil
+	}
 	if err := deferrable.FlushPendingForeignKeys(ctx); err != nil {
 		core.ClearContextValues(ctx)
 		return err
@@ -142,4 +153,13 @@ func (r *rootFinalizerIter) WithChildIter(childIter sql.RowIter) sql.RowIter {
 	nr := *r
 	nr.childIter = childIter
 	return &nr
+}
+
+func clearsContextOnSuccess(child sql.Node) bool {
+	switch child.(type) {
+	case *plan.Rollback, *plan.RollbackSavepoint:
+		return true
+	default:
+		return strings.HasPrefix(strings.ToUpper(child.String()), "ROLLBACK")
+	}
 }

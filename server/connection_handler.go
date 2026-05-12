@@ -47,6 +47,7 @@ import (
 	"github.com/mitchellh/go-ps"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/dataloader"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
@@ -1524,7 +1525,11 @@ func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) erro
 		name := stmt.Identifier
 		h.rollbackReplicationToSavepoint(name)
 		apply = func(ctx *sql.Context) error {
-			return functions.RollbackSessionXactVarsToSavepoint(ctx, name)
+			if err := functions.RollbackSessionXactVarsToSavepoint(ctx, name); err != nil {
+				return err
+			}
+			core.ClearContextValues(ctx)
+			return nil
 		}
 	case *sqlparser.ReleaseSavepoint:
 		name := stmt.Identifier
@@ -2536,6 +2541,9 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
 		deferrable.Rollback(connectionID)
+		if ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String); err == nil {
+			core.ClearContextValues(ctx)
+		}
 		functions.RollbackSessionLogicalDecodingMessages(connectionID)
 		notifications.Rollback(connectionID)
 	case !h.inTransaction:
