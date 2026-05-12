@@ -45,13 +45,16 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, err
 	}
 	var isTemporary bool
+	relPersistence := "p"
 	switch node.Persistence {
 	case tree.PersistencePermanent:
 		isTemporary = false
 	case tree.PersistenceTemporary:
 		isTemporary = true
+		relPersistence = "t"
 	case tree.PersistenceUnlogged:
-		return nil, errors.Errorf("UNLOGGED is not yet supported")
+		isTemporary = false
+		relPersistence = "u"
 	default:
 		return nil, errors.Errorf("unknown persistence strategy encountered")
 	}
@@ -160,6 +163,14 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		}
 		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
 			return tablemetadata.SetRelOptions(comment, relOptions)
+		})
+	}
+	if relPersistence != "p" {
+		if ddl.TableSpec == nil {
+			ddl.TableSpec = &vitess.TableSpec{}
+		}
+		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
+			return tablemetadata.SetRelPersistence(comment, relPersistence)
 		})
 	}
 

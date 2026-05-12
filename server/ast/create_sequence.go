@@ -36,9 +36,6 @@ func nodeCreateSequence(ctx *Context, node *tree.CreateSequence) (vitess.Stateme
 	if node.Persistence.IsTemporary() {
 		return nil, errors.Errorf("temporary sequences are not yet supported")
 	}
-	if node.Persistence.IsUnlogged() {
-		return nil, errors.Errorf("unlogged sequences are not yet supported")
-	}
 	name, err := nodeTableName(ctx, &node.Name)
 	if err != nil {
 		return nil, err
@@ -180,12 +177,16 @@ func nodeCreateSequence(ctx *Context, node *tree.CreateSequence) (vitess.Stateme
 	if dataType.IsEmptyType() {
 		dataType = pgtypes.Int64
 	}
+	persistence := sequences.Persistence_Permanent
+	if node.Persistence.IsUnlogged() {
+		persistence = sequences.Persistence_Unlogged
+	}
 	// Returns the stored procedure call with all options
 	return vitess.InjectedStatement{
 		Statement: pgnodes.NewCreateSequence(node.IfNotExists, name.DbQualifier.String(), name.SchemaQualifier.String(), fromAlter, &sequences.Sequence{
 			Id:          id.NewSequence("", name.Name.String()),
 			DataTypeID:  dataType.ID,
-			Persistence: sequences.Persistence_Permanent,
+			Persistence: persistence,
 			Start:       start,
 			Current:     start,
 			Increment:   increment,

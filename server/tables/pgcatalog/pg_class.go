@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
@@ -147,6 +148,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if typeID, ok := tablemetadata.OfType(comment); ok {
 				relOfType = typeID.AsId()
 			}
+			relPersistence := tablemetadata.RelPersistence(comment)
+			if relPersistence == "" {
+				relPersistence = "p"
+			}
 			class := &pgClass{
 				oid:             table.OID.AsId(),
 				oidNative:       id.Cache().ToOID(table.OID.AsId()),
@@ -161,6 +166,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				relType:         id.NewType(table.OID.SchemaName(), table.OID.SchemaName()).AsId(),
 				relOfType:       relOfType,
 				reloptions:      pgClassRelOptions(comment),
+				relpersistence:  relPersistence,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -185,6 +191,12 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			return true, nil
 		},
 		Sequence: func(ctx *sql.Context, schema functions.ItemSchema, sequence functions.ItemSequence) (cont bool, err error) {
+			relPersistence := "p"
+			if sequence.Item.Persistence == sequences.Persistence_Unlogged {
+				relPersistence = "u"
+			} else if sequence.Item.Persistence == sequences.Persistence_Temporary {
+				relPersistence = "t"
+			}
 			class := &pgClass{
 				oid:             sequence.OID.AsId(),
 				oidNative:       id.Cache().ToOID(sequence.OID.AsId()),
@@ -195,6 +207,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				relType:         id.Null,
+				relpersistence:  relPersistence,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -451,6 +464,7 @@ type pgClass struct {
 	relOfType       id.Id
 	relam           id.Id
 	reloptions      []any
+	relpersistence  string
 }
 
 // lessOid is a sort function for pgClass based on oid.
@@ -494,6 +508,10 @@ func pgClassToRow(class *pgClass) sql.Row {
 	if len(class.reloptions) > 0 {
 		reloptions = class.reloptions
 	}
+	relPersistence := class.relpersistence
+	if relPersistence == "" {
+		relPersistence = "p"
+	}
 
 	// TODO: this is temporary definition of 'relam' field
 	var relam = id.Null
@@ -532,7 +550,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		id.Null,                               // reltoastrelid
 		class.hasIndexes,                      // relhasindex
 		false,                                 // relisshared
-		"p",                                   // relpersistence
+		relPersistence,                        // relpersistence
 		class.kind,                            // relkind
 		int16(0),                              // relnatts
 		int16(0),                              // relchecks

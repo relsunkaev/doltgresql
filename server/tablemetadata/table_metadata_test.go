@@ -133,6 +133,27 @@ func TestRelOptionsMetadata(t *testing.T) {
 	}
 }
 
+func TestRelPersistenceMetadata(t *testing.T) {
+	comment := SetRelPersistence("", "u")
+	if got := RelPersistence(comment); got != "u" {
+		t.Fatalf("unexpected relpersistence: %q", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
+	if got := RelPersistence(comment); got != "u" {
+		t.Fatalf("expected relpersistence metadata to be preserved, got %q", got)
+	}
+	if got := PrimaryKeyConstraintName(comment); got != "items_pkey" {
+		t.Fatalf("expected primary key metadata to be preserved, got %q", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	comment = SetRelPersistence(comment, "p")
+	if comment != "" {
+		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	}
+}
+
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("plain table comment"); ok {
 		t.Fatalf("expected plain comments to be ignored")

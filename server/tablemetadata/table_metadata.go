@@ -33,6 +33,7 @@ type Metadata struct {
 	OfTypeSchema                string   `json:"ofTypeSchema,omitempty"`
 	OfTypeName                  string   `json:"ofTypeName,omitempty"`
 	RelOptions                  []string `json:"relOptions,omitempty"`
+	RelPersistence              string   `json:"relPersistence,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -152,6 +153,31 @@ func RelOptions(comment string) []string {
 	return metadata.RelOptions
 }
 
+// RelPersistence returns the PostgreSQL relpersistence value encoded in a
+// Doltgres table metadata comment.
+func RelPersistence(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.RelPersistence
+}
+
+// SetRelPersistence returns a table metadata comment with the given
+// PostgreSQL relpersistence value. Empty or permanent persistence clears only
+// the relpersistence metadata.
+func SetRelPersistence(comment string, relPersistence string) string {
+	metadata, _ := DecodeComment(comment)
+	if relPersistence == "p" {
+		relPersistence = ""
+	}
+	metadata.RelPersistence = strings.TrimSpace(relPersistence)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
 // SetRelOptions returns a table metadata comment with the given PostgreSQL
 // reloptions. An empty reloptions slice clears only the reloptions metadata.
 func SetRelOptions(comment string, relOptions []string) string {
@@ -244,5 +270,6 @@ func (metadata Metadata) empty() bool {
 		!metadata.MaterializedViewUnpopulated &&
 		metadata.OfTypeSchema == "" &&
 		metadata.OfTypeName == "" &&
+		metadata.RelPersistence == "" &&
 		len(metadata.RelOptions) == 0
 }
