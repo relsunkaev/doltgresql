@@ -85,6 +85,9 @@ type copyFromStdinState struct {
 	// replicationCapture stores rows inserted by COPY FROM so logical replication can publish them after a successful
 	// load.
 	replicationCapture *replicationChangeCapture
+	// statementSavepoint stores the internal savepoint that protects the whole COPY operation. COPY FROM may execute
+	// several insert iterations, so this savepoint is broader than the engine's per-DML trigger savepoint.
+	statementSavepoint string
 	// copyErr stores any error that was returned while processing a CopyData message and loading a chunk of data
 	// to the target table. The server needs to keep track of any errors that were encountered while processing chunks
 	// so that it can avoid sending a CommandComplete message if an error was encountered after the client already

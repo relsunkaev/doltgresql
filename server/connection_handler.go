@@ -1713,6 +1713,10 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 
 	loadDataResults, err := copyState.dataLoader.Finish(sqlCtx)
 	if err != nil {
+		return h.abortCopyStatement(sqlCtx, copyState, err)
+	}
+
+	if err = h.releaseCopyStatementSavepoint(sqlCtx, copyState); err != nil {
 		return err
 	}
 
@@ -1746,18 +1750,21 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 	if err = startTransactionIfNecessary(sqlCtx); err != nil {
 		return false, false, err
 	}
+	if err = h.ensureCopyStatementSavepoint(sqlCtx, copyState); err != nil {
+		return false, false, err
+	}
 
 	dataLoader := copyState.dataLoader
 	if dataLoader == nil {
 		if err = h.initializeCopyFromState(sqlCtx, copyState); err != nil {
-			return false, false, err
+			return false, false, h.abortCopyStatement(sqlCtx, copyState, err)
 		}
 		dataLoader = copyState.dataLoader
 	}
 
 	reader := bufio.NewReader(copyFromData)
 	if err = dataLoader.SetNextDataChunk(sqlCtx, reader); err != nil {
-		return false, false, err
+		return false, false, h.abortCopyStatement(sqlCtx, copyState, err)
 	}
 
 	callback := func(ctx *sql.Context, res *Result) error {
@@ -1769,7 +1776,7 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 	}
 	err = h.doltgresHandler.ComExecuteBound(sqlCtx, h.mysqlConn, "COPY FROM", copyState.insertNode, nil, callback)
 	if err != nil {
-		return false, false, err
+		return false, false, h.abortCopyStatement(sqlCtx, copyState, err)
 	}
 
 	// We expect to see more CopyData messages until we see either a CopyDone or CopyFail message, so
@@ -1942,6 +1949,10 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 
 	loadDataResults, err := dataLoader.Finish(sqlCtx)
 	if err != nil {
+		return false, false, h.abortCopyStatement(sqlCtx, h.copyFromStdinState, err)
+	}
+
+	if err = h.releaseCopyStatementSavepoint(sqlCtx, h.copyFromStdinState); err != nil {
 		return false, false, err
 	}
 
@@ -1975,6 +1986,62 @@ func (h *ConnectionHandler) commitCopyTransactionIfAutocommit(sqlCtx *sql.Contex
 	}
 	sqlCtx.SetIgnoreAutoCommit(false)
 	return nil
+}
+
+func (h *ConnectionHandler) ensureCopyStatementSavepoint(sqlCtx *sql.Context, copyState *copyFromStdinState) error {
+	if copyState.statementSavepoint != "" {
+		return nil
+	}
+	tx := sqlCtx.GetTransaction()
+	if tx == nil {
+		return errors.Errorf("COPY FROM requires an active transaction")
+	}
+	txSession, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return errors.Errorf("session does not implement sql.TransactionSession")
+	}
+	copyState.statementSavepoint = fmt.Sprintf("__doltgresql_copy_%d_%d", h.mysqlConn.ConnectionID, h.cancelSecretKey)
+	return txSession.CreateSavepoint(sqlCtx, tx, copyState.statementSavepoint)
+}
+
+func (h *ConnectionHandler) releaseCopyStatementSavepoint(sqlCtx *sql.Context, copyState *copyFromStdinState) error {
+	if copyState == nil || copyState.statementSavepoint == "" || sqlCtx.GetTransaction() == nil {
+		return nil
+	}
+	txSession, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return errors.Errorf("session does not implement sql.TransactionSession")
+	}
+	savepoint := copyState.statementSavepoint
+	copyState.statementSavepoint = ""
+	return txSession.ReleaseSavepoint(sqlCtx, sqlCtx.GetTransaction(), savepoint)
+}
+
+func (h *ConnectionHandler) abortCopyStatement(sqlCtx *sql.Context, copyState *copyFromStdinState, cause error) error {
+	if copyState == nil || copyState.statementSavepoint == "" || sqlCtx.GetTransaction() == nil {
+		return cause
+	}
+	txSession, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return errors.Errorf("%w; COPY rollback failed: session does not implement sql.TransactionSession", cause)
+	}
+	savepoint := copyState.statementSavepoint
+	copyState.statementSavepoint = ""
+	if err := txSession.RollbackToSavepoint(sqlCtx, sqlCtx.GetTransaction(), savepoint); err != nil {
+		return fmt.Errorf("%w; COPY rollback failed: %v", cause, err)
+	}
+	if err := txSession.ReleaseSavepoint(sqlCtx, sqlCtx.GetTransaction(), savepoint); err != nil {
+		return fmt.Errorf("%w; COPY savepoint release failed: %v", cause, err)
+	}
+	if h.inTransaction {
+		return cause
+	}
+	if err := txSession.Rollback(sqlCtx, sqlCtx.GetTransaction()); err != nil {
+		return fmt.Errorf("%w; COPY transaction rollback failed: %v", cause, err)
+	}
+	sqlCtx.SetIgnoreAutoCommit(false)
+	sqlCtx.SetTransaction(nil)
+	return cause
 }
 
 // handleCopyFail handles a COPY FAIL message by aborting the in-progress COPY DATA operation.  The |stop| response
