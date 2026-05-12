@@ -17922,6 +17922,39 @@ They are worth keeping, but they are not counted as found bugs.
   preview API treats the procedure name as a table and cannot surface procedure
   conflicts.
 
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview trigger conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsTriggerConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsTriggerConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches replace the same committed
+  trigger definition differently, `DOLT_PREVIEW_MERGE_CONFLICTS` should report
+  the trigger-definition conflict so callers can inspect the merge outcome
+  before applying it.
+- Observed Doltgres behavior: previewing
+  `preview_trigger_conflict_items.preview_trigger_conflict_changed` fails with
+  `table not found: public.preview_trigger_conflict_items.preview_trigger_conflict_changed`,
+  so the preview API treats the trigger root-object name as a table and cannot
+  surface trigger conflicts.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview view conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsViewConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsViewConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches replace the same committed
+  view definition differently, `DOLT_PREVIEW_MERGE_CONFLICTS` should report the
+  view-definition conflict so callers can inspect the merge outcome before
+  applying it.
+- Observed Doltgres behavior: previewing `preview_view_conflict_reader` fails
+  with `table not found: public.preview_view_conflict_reader`, so the preview
+  API treats the view root-object name as a table and cannot surface view
+  conflicts.
+
 ### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview sequence conflicts
 
 - Reproducer: `TestPreviewMergeConflictsReportsSequenceConflictRepro` in

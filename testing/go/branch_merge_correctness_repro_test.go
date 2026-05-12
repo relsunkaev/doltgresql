@@ -192,6 +192,90 @@ func TestPreviewMergeConflictsReportsProcedureConflictRepro(t *testing.T) {
 	})
 }
 
+// TestPreviewMergeConflictsReportsTriggerConflictRepro reproduces a branch
+// merge correctness bug: previewing conflicts should include versioned trigger
+// definitions, not only table rows.
+func TestPreviewMergeConflictsReportsTriggerConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports trigger conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_trigger_conflict_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE FUNCTION preview_trigger_conflict_func()
+					RETURNS TRIGGER AS $$
+					BEGIN
+						RETURN NEW;
+					END;
+					$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER preview_trigger_conflict_changed
+					BEFORE INSERT ON preview_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION preview_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial trigger conflict value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`DROP TRIGGER preview_trigger_conflict_changed
+					ON preview_trigger_conflict_items;`,
+				`CREATE TRIGGER preview_trigger_conflict_changed
+					BEFORE UPDATE ON preview_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION preview_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main trigger conflict value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`DROP TRIGGER preview_trigger_conflict_changed
+					ON preview_trigger_conflict_items;`,
+				`CREATE TRIGGER preview_trigger_conflict_changed
+					BEFORE DELETE ON preview_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION preview_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other trigger conflict value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_trigger_conflict_items.preview_trigger_conflict_changed'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsReportsViewConflictRepro reproduces a branch merge
+// correctness bug: previewing conflicts should include versioned view
+// definitions, not only base table rows.
+func TestPreviewMergeConflictsReportsViewConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports view conflicts",
+			SetUpScript: []string{
+				`CREATE VIEW preview_view_conflict_reader AS SELECT 1 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial view conflict value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE OR REPLACE VIEW preview_view_conflict_reader AS SELECT 2 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main view conflict value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE OR REPLACE VIEW preview_view_conflict_reader AS SELECT 3 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other view conflict value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_view_conflict_reader'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestPreviewMergeConflictsSummaryReportsFunctionConflictRepro reproduces a
 // branch merge correctness bug: preview summaries should include root-object
 // conflicts such as changed function definitions.
