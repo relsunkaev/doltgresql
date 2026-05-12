@@ -180,6 +180,39 @@ func TestAlterCompositeTypeRenameAttributeSchemaQualified(t *testing.T) {
 	})
 }
 
+// TestAlterCompositeTypeRenameAttributeUpdatesStoredColumnsRepro reproduces a
+// catalog persistence bug: renaming a composite type attribute should update
+// stored table columns using that composite type.
+func TestAlterCompositeTypeRenameAttributeUpdatesStoredColumnsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE updates stored composite columns",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_stored_item AS (old_name INT);`,
+				`CREATE TABLE rename_attr_stored_items (
+					id INT PRIMARY KEY,
+					payload rename_attr_stored_item
+				);`,
+				`INSERT INTO rename_attr_stored_items
+					VALUES (1, ROW(7)::rename_attr_stored_item);`,
+				`ALTER TYPE rename_attr_stored_item
+					RENAME ATTRIBUTE old_name TO new_name;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT (payload).new_name
+						FROM rename_attr_stored_items;`,
+					Expected: []sql.Row{{int32(7)}},
+				},
+				{
+					Query:       `SELECT (payload).old_name FROM rename_attr_stored_items;`,
+					ExpectedErr: `old_name`,
+				},
+			},
+		},
+	})
+}
+
 // PostgreSQL can rename type and domain objects in place. Doltgres should
 // update type lookup metadata so the old name disappears and the new name is
 // usable.
