@@ -371,6 +371,7 @@ var generatedColumnSetReturningFunctions = []string{
 	"jsonb_array_elements_text",
 	"regexp_matches",
 	"regexp_split_to_table",
+	"string_to_table",
 }
 
 // Finds first ResolvedTable node that is a descendant of the node given

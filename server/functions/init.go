@@ -229,6 +229,7 @@ func Init() {
 	initSqlConstant()
 	initSqrt()
 	initStartsWith()
+	initStringToTable()
 	initStrpos()
 	initSubstr()
 	initTan()
