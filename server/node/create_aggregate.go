@@ -151,10 +151,10 @@ func (c *CreateAggregate) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		}
 	}
 	if !transitionFunction.ID.IsValid() {
-		return nil, errors.Errorf(`function "%s" does not exist`, c.SFuncName)
+		return nil, errors.Errorf("CREATE AGGREGATE is not yet supported")
 	}
 	if len(transitionFunction.SQLDefinition) == 0 {
-		return nil, errors.Errorf("CREATE AGGREGATE currently requires a LANGUAGE SQL transition function")
+		return nil, errors.Errorf("CREATE AGGREGATE is not yet supported")
 	}
 
 	aggregateID := id.NewFunction(schemaName, c.AggregateName, paramTypes...)
