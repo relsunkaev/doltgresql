@@ -195,7 +195,7 @@ var has_largeobject_privilege_oid_text = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, objectID any, privilege any) (any, error) {
-		return hasLargeObjectPrivilege(currentSQLUser(ctx), oidValue(objectID), privilege.(string))
+		return hasLargeObjectPrivilege(currentDatabase(ctx), currentSQLUser(ctx), oidValue(objectID), privilege.(string))
 	},
 }
 
@@ -205,7 +205,7 @@ var has_largeobject_privilege_text_oid_text = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Oid, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, role any, objectID any, privilege any) (any, error) {
-		return hasLargeObjectPrivilege(role.(string), oidValue(objectID), privilege.(string))
+		return hasLargeObjectPrivilege(currentDatabase(ctx), role.(string), oidValue(objectID), privilege.(string))
 	},
 }
 
@@ -270,7 +270,7 @@ func hasParameterPrivilege(roleName, parameterName, privilegeName string) (bool,
 	}), nil
 }
 
-func hasLargeObjectPrivilege(roleName string, oid uint32, privilegeName string) (bool, error) {
+func hasLargeObjectPrivilege(database string, roleName string, oid uint32, privilegeName string) (bool, error) {
 	privilege, err := privilegeByName(privilegeName)
 	if err != nil {
 		return false, err
@@ -278,7 +278,7 @@ func hasLargeObjectPrivilege(roleName string, oid uint32, privilegeName string) 
 	if privilege != auth.Privilege_SELECT && privilege != auth.Privilege_UPDATE {
 		return false, errors.Errorf(`unrecognized privilege type: "%s"`, privilegeName)
 	}
-	owner, ok := largeobject.Owner(oid)
+	owner, ok := largeobject.Owner(database, oid)
 	if !ok {
 		return false, errors.Errorf("large object %d does not exist", oid)
 	}
@@ -288,7 +288,7 @@ func hasLargeObjectPrivilege(roleName string, oid uint32, privilegeName string) 
 	}
 	aclPrefix := roleName + "="
 	aclPrivilege := privilege.ACLAbbreviation()
-	for _, object := range largeobject.Objects() {
+	for _, object := range largeobject.Objects(database) {
 		if object.OID != oid {
 			continue
 		}

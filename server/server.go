@@ -41,6 +41,7 @@ import (
 
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/initialization"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/logrepl"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
@@ -145,6 +146,9 @@ func runServer(ctx context.Context, cfg *servercfg.DoltgresConfig, dEnv *env.Dol
 		return nil, err
 	}
 	if err = replicaidentity.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "replica_identity.json")); err != nil {
+		return nil, err
+	}
+	if err = largeobject.ConfigureStorage(dataDirFs, filepath.Join(cfgDir, "large_objects.json")); err != nil {
 		return nil, err
 	}
 	if err = sessionstate.ConfigurePreparedTransactionStorage(dataDirFs, filepath.Join(cfgDir, "prepared_transactions.json")); err != nil {

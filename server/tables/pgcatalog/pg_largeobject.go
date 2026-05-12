@@ -46,7 +46,7 @@ func (p PgLargeobjectHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgLargeobjectHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	rows := make([]sql.Row, 0)
-	for _, obj := range largeobject.Objects() {
+	for _, obj := range largeobject.Objects(ctx.GetCurrentDatabase()) {
 		for pageNo, page := range largeobject.Pages(obj) {
 			rows = append(rows, sql.Row{
 				id.NewOID(obj.OID).AsId(),

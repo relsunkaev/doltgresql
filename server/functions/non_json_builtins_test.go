@@ -144,36 +144,36 @@ func TestLargeObjectPrivilegeInquiry(t *testing.T) {
 	largeobject.ResetForTests()
 	t.Cleanup(largeobject.ResetForTests)
 
-	oid, err := largeobject.Create(12345, "owner_role", nil)
+	oid, err := largeobject.Create("postgres", 12345, "owner_role", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = largeobject.AddACLItem(oid, "reader_role=r/owner_role"); err != nil {
+	if err = largeobject.AddACLItem("postgres", oid, "reader_role=r/owner_role"); err != nil {
 		t.Fatal(err)
 	}
 
-	hasPrivilege, err := hasLargeObjectPrivilege("owner_role", oid, "SELECT")
+	hasPrivilege, err := hasLargeObjectPrivilege("postgres", "owner_role", oid, "SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !hasPrivilege {
 		t.Fatal("expected owner to have SELECT")
 	}
-	hasPrivilege, err = hasLargeObjectPrivilege("reader_role", oid, "SELECT")
+	hasPrivilege, err = hasLargeObjectPrivilege("postgres", "reader_role", oid, "SELECT")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !hasPrivilege {
 		t.Fatal("expected explicit ACL to grant SELECT")
 	}
-	hasPrivilege, err = hasLargeObjectPrivilege("reader_role", oid, "UPDATE")
+	hasPrivilege, err = hasLargeObjectPrivilege("postgres", "reader_role", oid, "UPDATE")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if hasPrivilege {
 		t.Fatal("expected SELECT-only ACL not to grant UPDATE")
 	}
-	if _, err = hasLargeObjectPrivilege("reader_role", oid, "INSERT"); err == nil {
+	if _, err = hasLargeObjectPrivilege("postgres", "reader_role", oid, "INSERT"); err == nil {
 		t.Fatal("expected unsupported large-object privilege error")
 	}
 }

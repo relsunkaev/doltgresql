@@ -57,6 +57,7 @@ func (a *AlterLargeObject) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (a *AlterLargeObject) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	database := ctx.GetCurrentDatabase()
 	var roleExists bool
 	auth.LockRead(func() {
 		roleExists = auth.RoleExists(a.Owner)
@@ -64,7 +65,16 @@ func (a *AlterLargeObject) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, er
 	if !roleExists {
 		return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
 	}
-	if err := largeobject.AlterOwner(a.OID, a.Owner); err != nil {
+	owner, ok := largeobject.Owner(database, a.OID)
+	if !ok {
+		return nil, errors.Errorf("large object %d does not exist", a.OID)
+	}
+	userRole := auth.GetRole(ctx.Client().User)
+	if !userRole.IsSuperUser && userRole.Name != owner {
+		return nil, errors.Errorf("permission denied for large object %d", a.OID)
+	}
+	largeobject.TrackMutation(uint32(ctx.Session.ID()))
+	if err := largeobject.AlterOwner(database, a.OID, a.Owner); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil

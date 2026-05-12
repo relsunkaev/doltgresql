@@ -61,6 +61,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/notifications"
 	"github.com/dolthub/doltgresql/server/replsource"
@@ -1521,12 +1522,16 @@ func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) erro
 		name := stmt.Identifier
 		h.pushReplicationSavepoint(name)
 		apply = func(ctx *sql.Context) error {
+			largeobject.PushSavepoint(uint32(ctx.Session.ID()), name)
 			return functions.PushSessionXactVarSavepoint(ctx, name)
 		}
 	case *sqlparser.RollbackSavepoint:
 		name := stmt.Identifier
 		h.rollbackReplicationToSavepoint(name)
 		apply = func(ctx *sql.Context) error {
+			if err := largeobject.RollbackToSavepoint(uint32(ctx.Session.ID()), name); err != nil {
+				return err
+			}
 			if err := functions.RollbackSessionXactVarsToSavepoint(ctx, name); err != nil {
 				return err
 			}
@@ -1537,6 +1542,7 @@ func (h *ConnectionHandler) applyXactVarSavepointHook(query ConvertedQuery) erro
 		name := stmt.Identifier
 		h.releaseReplicationSavepoint(name)
 		apply = func(ctx *sql.Context) error {
+			largeobject.ReleaseSavepoint(uint32(ctx.Session.ID()), name)
 			functions.ReleaseSessionXactVarSavepoint(ctx, name)
 			return nil
 		}
@@ -2629,15 +2635,20 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 	switch {
 	case isBeginQuery(query):
 		deferrable.Begin(connectionID)
+		largeobject.BeginTransaction(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
 		deferrable.Commit(connectionID)
+		if err := largeobject.CommitTransaction(connectionID); err != nil {
+			return err
+		}
 		if err := functions.CommitSessionLogicalDecodingMessages(connectionID); err != nil {
 			return err
 		}
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
 		deferrable.Rollback(connectionID)
+		largeobject.RollbackTransaction(connectionID)
 		if ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String); err == nil {
 			core.ClearContextValues(ctx)
 		}

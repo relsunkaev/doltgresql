@@ -534,8 +534,9 @@ func (g *Grant) grantLargeObject(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	database := ctx.GetCurrentDatabase()
 	for _, oid := range g.GrantLargeObject.OIDs {
-		owner, ok := largeobject.Owner(oid)
+		owner, ok := largeobject.Owner(database, oid)
 		if !ok {
 			return errors.Errorf("large object %d does not exist", oid)
 		}
@@ -549,7 +550,8 @@ func (g *Grant) grantLargeObject(ctx *sql.Context) error {
 					aclPrivilege += "*"
 				}
 				item := strings.Join([]string{role.Name, "=", aclPrivilege, "/", userRole.Name}, "")
-				if err := largeobject.AddACLItem(oid, item); err != nil {
+				largeobject.TrackMutation(uint32(ctx.Session.ID()))
+				if err := largeobject.AddACLItem(database, oid, item); err != nil {
 					return err
 				}
 			}

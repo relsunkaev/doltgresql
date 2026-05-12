@@ -47,7 +47,7 @@ func (p PgLargeobjectMetadataHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgLargeobjectMetadataHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	rows := make([]sql.Row, 0)
-	for _, obj := range largeobject.Objects() {
+	for _, obj := range largeobject.Objects(ctx.GetCurrentDatabase()) {
 		owner := catalogOwnerOID()
 		auth.LockRead(func() {
 			if role := auth.GetRole(obj.Owner); role.IsValid() {

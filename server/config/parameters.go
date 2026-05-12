@@ -26,6 +26,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/variables"
 	"gopkg.in/src-d/go-errors.v1"
+
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // doltConfigParameters is a list of Dolt-specific configuration parameters that can be used in SET statement.
@@ -162,8 +164,18 @@ func (p *Parameter) SetValue(ctx *sql.Context, val any, global bool) (sql.System
 	if p.IsReadOnly() {
 		return sql.SystemVarValue{}, ErrCannotChangeAtRuntime.New(p.Name)
 	}
+	if p.Context == ParameterContextSuperUser && !currentRoleIsSuperUser(ctx) {
+		return sql.SystemVarValue{}, cerrors.Errorf(`permission denied to set parameter "%s"`, p.Name)
+	}
 	// TODO: Do parsing of units for memory and time parameters
 	return p.InitValue(ctx, val, global)
+}
+
+func currentRoleIsSuperUser(ctx *sql.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	return auth.GetRole(ctx.Client().User).IsSuperUser
 }
 
 // IsReadOnly implements sql.SystemVariable.

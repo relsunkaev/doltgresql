@@ -45,7 +45,8 @@ var lo_create_oid = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Oid},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		oid, err := largeobject.Create(oidValue(val), currentSQLUser(ctx), nil)
+		trackLargeObjectMutation(ctx)
+		oid, err := largeobject.Create(currentDatabase(ctx), oidValue(val), currentSQLUser(ctx), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +64,8 @@ var lo_unlink_oid = framework.Function1{
 		if err := requireLargeObjectOwner(ctx, oid); err != nil {
 			return nil, err
 		}
-		return largeobject.Unlink(oid), nil
+		trackLargeObjectMutation(ctx)
+		return largeobject.Unlink(currentDatabase(ctx), oid)
 	},
 }
 
@@ -80,7 +82,8 @@ var lo_from_bytea_oid_bytea = framework.Function2{
 		if !ok {
 			return nil, errors.Errorf("expected bytea, got %T", dataVal)
 		}
-		oid, err := largeobject.Create(oidValue(oidVal), currentSQLUser(ctx), data)
+		trackLargeObjectMutation(ctx)
+		oid, err := largeobject.Create(currentDatabase(ctx), oidValue(oidVal), currentSQLUser(ctx), data)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +101,7 @@ var lo_get_oid = framework.Function1{
 		if err := requireLargeObjectPrivilege(ctx, oid, "SELECT"); err != nil {
 			return nil, err
 		}
-		data, ok := largeobject.Get(oid)
+		data, ok := largeobject.Get(currentDatabase(ctx), oid)
 		if !ok {
 			return nil, errors.Errorf("large object %d does not exist", oid)
 		}
@@ -150,7 +153,7 @@ func loGetSlice(ctx *sql.Context, oid uint32, offset int64, length int32) ([]byt
 	if err := requireLargeObjectPrivilege(ctx, oid, "SELECT"); err != nil {
 		return nil, err
 	}
-	data, ok, err := largeobject.GetSlice(oid, offset, length)
+	data, ok, err := largeobject.GetSlice(currentDatabase(ctx), oid, offset, length)
 	if err != nil {
 		return nil, err
 	}
@@ -171,14 +174,22 @@ func loPut(ctx *sql.Context, oid uint32, offset int64, dataVal any) error {
 	if err := requireLargeObjectPrivilege(ctx, oid, "UPDATE"); err != nil {
 		return err
 	}
-	return largeobject.Put(oid, offset, data)
+	trackLargeObjectMutation(ctx)
+	return largeobject.Put(currentDatabase(ctx), oid, offset, data)
+}
+
+func trackLargeObjectMutation(ctx *sql.Context) {
+	if ctx == nil || ctx.Session == nil {
+		return
+	}
+	largeobject.TrackMutation(uint32(ctx.Session.ID()))
 }
 
 func requireLargeObjectPrivilege(ctx *sql.Context, oid uint32, privilege string) error {
 	if largeObjectCompatPrivileges(ctx) {
 		return nil
 	}
-	allowed, err := hasLargeObjectPrivilege(currentSQLUser(ctx), oid, privilege)
+	allowed, err := hasLargeObjectPrivilege(currentDatabase(ctx), currentSQLUser(ctx), oid, privilege)
 	if err != nil {
 		return err
 	}
@@ -192,7 +203,7 @@ func requireLargeObjectOwner(ctx *sql.Context, oid uint32) error {
 	if largeObjectCompatPrivileges(ctx) {
 		return nil
 	}
-	owner, ok := largeobject.Owner(oid)
+	owner, ok := largeobject.Owner(currentDatabase(ctx), oid)
 	if !ok {
 		return errors.Errorf("large object %d does not exist", oid)
 	}
@@ -202,6 +213,16 @@ func requireLargeObjectOwner(ctx *sql.Context, oid uint32) error {
 		return nil
 	}
 	return errors.Errorf("permission denied for large object %d", oid)
+}
+
+func currentDatabase(ctx *sql.Context) string {
+	if ctx == nil {
+		return "postgres"
+	}
+	if database := ctx.GetCurrentDatabase(); database != "" {
+		return database
+	}
+	return "postgres"
 }
 
 func largeObjectCompatPrivileges(ctx *sql.Context) bool {

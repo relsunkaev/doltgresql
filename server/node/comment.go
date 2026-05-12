@@ -372,7 +372,7 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 		}
 		return commentObjectKey(oid, "pg_policy", 0), nil
 	case CommentTargetLargeObj:
-		oid, err := resolveCommentLargeObject(c.OID)
+		oid, err := resolveCommentLargeObject(ctx, c.OID)
 		if err != nil {
 			return comments.Key{}, err
 		}
@@ -933,8 +933,8 @@ func resolveCommentPolicy(ctx *sql.Context, relation vitess.TableName, policyNam
 	return id.Null, fmt.Errorf(`policy "%s" for relation "%s" does not exist`, policyName, tableID.TableName())
 }
 
-func resolveCommentLargeObject(oid uint32) (id.Id, error) {
-	if !largeobject.Exists(oid) {
+func resolveCommentLargeObject(ctx *sql.Context, oid uint32) (id.Id, error) {
+	if !largeobject.Exists(ctx.GetCurrentDatabase(), oid) {
 		return id.Null, fmt.Errorf("large object %d does not exist", oid)
 	}
 	return id.NewOID(oid).AsId(), nil
