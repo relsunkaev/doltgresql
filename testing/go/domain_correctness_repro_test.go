@@ -65,9 +65,10 @@ func TestDomainValueCastsToBaseTypeRepro(t *testing.T) {
 	})
 }
 
-// TestDomainValuesUseBaseTypeOperatorsGuard covers domain operator binding:
-// domain values should participate in operators defined for their base type.
-func TestDomainValuesUseBaseTypeOperatorsGuard(t *testing.T) {
+// TestDomainValuesUseBaseTypeOperatorsRepro reproduces a domain expression
+// correctness bug: domain values should participate in operators defined for
+// their base type.
+func TestDomainValuesUseBaseTypeOperatorsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "domain values use base type operators",
@@ -81,7 +82,19 @@ func TestDomainValuesUseBaseTypeOperatorsGuard(t *testing.T) {
 					Expected: []sql.Row{{12}},
 				},
 				{
+					Query:    `SELECT 5 + 7::operator_domain;`,
+					Expected: []sql.Row{{12}},
+				},
+				{
+					Query:    `SELECT 7::operator_domain + '5';`,
+					Expected: []sql.Row{{12}},
+				},
+				{
 					Query:    `SELECT 7::operator_domain = 7;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT 7::operator_domain = 7::operator_domain;`,
 					Expected: []sql.Row{{"t"}},
 				},
 			},

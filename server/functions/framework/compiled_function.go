@@ -501,14 +501,19 @@ func (c *CompiledFunction) GetQuickFunction() QuickFunction {
 // resolve returns an overloadMatch that either matches the given parameters exactly, or is a viable match after casting.
 // Returns an invalid overloadMatch if a viable match is not found.
 func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload, argTypes []*pgtypes.DoltgresType) (overloadMatch, error) {
+	lookupArgTypes := argTypes
+	if c.IsOperator {
+		lookupArgTypes = operatorLookupTypes(argTypes)
+	}
+
 	// First check for an exact match
-	exactMatch, found := overloads.ExactMatchForTypes(argTypes...)
+	exactMatch, found := overloads.ExactMatchForTypes(lookupArgTypes...)
 	if found {
 		return overloadMatch{
 			params: Overload{
 				function:   exactMatch,
-				paramTypes: argTypes,
-				argTypes:   argTypes,
+				paramTypes: lookupArgTypes,
+				argTypes:   lookupArgTypes,
 				variadic:   -1,
 			},
 		}, nil
@@ -516,10 +521,28 @@ func (c *CompiledFunction) resolve(overloads *Overloads, fnOverloads []Overload,
 	// There are no exact matches, so now we'll look through all overloads to determine the best match. This is
 	// much more work, but there's a performance penalty for runtime overload resolution in Postgres as well.
 	if c.IsOperator {
-		return c.resolveOperator(argTypes, overloads, fnOverloads)
+		return c.resolveOperator(lookupArgTypes, overloads, fnOverloads)
 	} else {
 		return c.resolveFunction(argTypes, fnOverloads)
 	}
+}
+
+func operatorLookupTypes(argTypes []*pgtypes.DoltgresType) []*pgtypes.DoltgresType {
+	var lookupArgTypes []*pgtypes.DoltgresType
+	for i, argType := range argTypes {
+		if argType.TypType != pgtypes.TypeType_Domain {
+			continue
+		}
+		if lookupArgTypes == nil {
+			lookupArgTypes = make([]*pgtypes.DoltgresType, len(argTypes))
+			copy(lookupArgTypes, argTypes)
+		}
+		lookupArgTypes[i] = argType.DomainUnderlyingBaseType()
+	}
+	if lookupArgTypes != nil {
+		return lookupArgTypes
+	}
+	return argTypes
 }
 
 // resolveOperator resolves an operator according to the rules defined by Postgres.
