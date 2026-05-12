@@ -16,6 +16,7 @@ package hook
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -34,8 +35,18 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	if !ok {
 		return nil, errors.Errorf("ADD COLUMN pre-hook expected `*plan.AddColumn` but received `%T`", nodeInterface)
 	}
-	// If the column being added doesn't have a default value, then we don't have anything to check (for now)
+	// A NOT NULL column with no default would rewrite existing rows with NULL in
+	// PostgreSQL, so non-empty tables must reject it before the schema changes.
 	if n.Column().Default == nil {
+		if !n.Column().Nullable {
+			hasRows, err := tableHasRows(ctx, n.Table)
+			if err != nil {
+				return nil, err
+			}
+			if hasRows {
+				return nil, errors.Errorf(`column "%s" of relation "%s" contains null values`, n.Column().Name, nodeTableName(n.Table))
+			}
+		}
 		return n, nil
 	}
 
@@ -88,6 +99,49 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 		}
 	}
 	return n, nil
+}
+
+func tableHasRows(ctx *sql.Context, node sql.Node) (bool, error) {
+	table, ok := node.(sql.Table)
+	if !ok {
+		return false, nil
+	}
+	partitions, err := table.Partitions(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		rows, err := table.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, err
+		}
+		_, err = rows.Next(ctx)
+		closeErr := rows.Close(ctx)
+		if err == nil {
+			return true, closeErr
+		}
+		if !errors.Is(err, io.EOF) {
+			return false, err
+		}
+		if closeErr != nil {
+			return false, closeErr
+		}
+	}
+}
+
+func nodeTableName(node sql.Node) string {
+	if table, ok := node.(sql.Table); ok {
+		return table.Name()
+	}
+	return node.String()
 }
 
 // AfterTableAddColumn handles updating various table columns, alongside other validation that's unique to Doltgres.
