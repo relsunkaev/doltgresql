@@ -3031,6 +3031,22 @@ artifacts only; no fixes are included here.
   updates can rewrite existing rows into values outside the domain base type's
   declared typmod.
 
+### Domain typmod bind-variable assignments store uncoerced values
+
+- Reproducer: `TestDomainTypmodBindVarsUseCoercedValueRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDomainTypmodBindVarsUseCoercedValueRepro -count=1`.
+- Expected PostgreSQL behavior: extended-protocol parameter values assigned to
+  `numeric(5,2)` and `timestamp(0)` domain columns are coerced through the
+  domain base-type typmods before storage. Bound `123.456` stores as `123.46`,
+  and bound `2021-09-15 21:43:56.789` stores as
+  `2021-09-15 21:43:57`.
+- Observed Doltgres behavior: the bound insert stores `123.456` and
+  `2021-09-15 21:43:56.789`, so client bind parameters can persist values
+  outside their domain base type's declared typmods.
+
 ### Text domain typmod DML stores uncoerced values
 
 - Reproducer: `TestTextDomainTypmodDmlUsesCoercedValuesRepro` in

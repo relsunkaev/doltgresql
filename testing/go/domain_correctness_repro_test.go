@@ -851,6 +851,38 @@ func TestDomainTypmodUpdateFromUsesCoercedValueRepro(t *testing.T) {
 	})
 }
 
+// TestDomainTypmodBindVarsUseCoercedValueRepro reproduces data consistency bugs:
+// PostgreSQL applies domain base-type typmods to values assigned through
+// extended-protocol bind variables.
+func TestDomainTypmodBindVarsUseCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "domain typmod bind variable assignments use coerced values",
+			SetUpScript: []string{
+				`SET TIME ZONE 'UTC';`,
+				`CREATE DOMAIN num52_bind_domain AS numeric(5,2);`,
+				`CREATE DOMAIN ts0_bind_domain AS timestamp(0);`,
+				`CREATE TABLE domain_bind_items (
+					id INT PRIMARY KEY,
+					amount num52_bind_domain,
+					ts ts0_bind_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `INSERT INTO domain_bind_items VALUES ($1, $2, $3);`,
+					BindVars: []any{1, "123.456", "2021-09-15 21:43:56.789"},
+				},
+				{
+					Query: `SELECT amount::text, ts::text
+						FROM domain_bind_items;`,
+					Expected: []sql.Row{{"123.46", "2021-09-15 21:43:57"}},
+				},
+			},
+		},
+	})
+}
+
 // TestTextDomainTypmodDmlUsesCoercedValuesRepro reproduces data consistency
 // bugs: PostgreSQL applies text-domain base-type typmods on UPDATE,
 // INSERT ... SELECT, and ON CONFLICT DO UPDATE assignment paths.
