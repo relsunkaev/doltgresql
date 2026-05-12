@@ -44,7 +44,7 @@ func (p PgTsDictHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgTsDictHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	return &pgTsDictRowIter{}, nil
+	return &pgTsDictRowIter{dicts: []string{"english_stem", "simple"}}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,20 +68,22 @@ var pgTsDictSchema = sql.Schema{
 
 // pgTsDictRowIter is the sql.RowIter for the pg_ts_dict table.
 type pgTsDictRowIter struct {
-	done bool
+	dicts []string
+	idx   int
 }
 
 var _ sql.RowIter = (*pgTsDictRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgTsDictRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	if iter.done {
+	if iter.idx >= len(iter.dicts) {
 		return nil, io.EOF
 	}
-	iter.done = true
+	iter.idx++
+	dict := iter.dicts[iter.idx-1]
 	return sql.Row{
-		id.NewId(id.Section_TextSearchDictionary, PgCatalogName, "simple"),
-		"simple",
+		id.NewId(id.Section_TextSearchDictionary, PgCatalogName, dict),
+		dict,
 		id.NewNamespace(PgCatalogName).AsId(),
 		id.NewId(id.Section_User, "postgres"),
 		id.NewId(id.Section_TextSearchTemplate, PgCatalogName, "simple"),

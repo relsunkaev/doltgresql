@@ -46,6 +46,7 @@ func (p PgTsConfigHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgTsConfigHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	configs := []pgTsConfig{
+		{name: "english", namespace: id.NewNamespace(PgCatalogName)},
 		{name: "simple", namespace: id.NewNamespace(PgCatalogName)},
 	}
 	auth.LockRead(func() {
