@@ -257,11 +257,11 @@ func (root *RootValue) DebugString(ctx context.Context, transitive bool) string 
 func (root *RootValue) FilterRootObjectNames(ctx context.Context, names []doltdb.TableName) ([]doltdb.TableName, error) {
 	var returnNames []doltdb.TableName
 	for _, name := range names {
-		_, _, objID, err := rootobject.ResolveName(ctx, root, name)
+		matches, err := root.rootObjectsMatchingName(ctx, name)
 		if err != nil {
 			return nil, err
 		}
-		if objID != objinterface.RootObjectID_None {
+		if len(matches) > 0 {
 			returnNames = append(returnNames, name)
 		}
 	}
@@ -639,10 +639,8 @@ func (root *RootValue) RemoveTables(
 	tableMaps := make(map[string]storage.RootTableMap)
 	deletedObjIds := make(map[objinterface.RootObjectID]struct{})
 	var tables []doltdb.TableName
-	var rootObjNames []struct {
-		rawID id.Id
-		objID objinterface.RootObjectID
-	}
+	var rootObjNames []rootObjectName
+	seenRootObjNames := make(map[rootObjectName]struct{})
 	for _, name := range originalTables {
 		// Split into tables and root objects
 		tableMap, ok := tableMaps[name.Schema]
@@ -662,19 +660,25 @@ func (root *RootValue) RemoveTables(
 			tables = append(tables, name)
 			continue
 		}
-		// Table wasn't in the table map, so we'll check our root objects
-		_, rawID, objID, err := rootobject.ResolveName(ctx, root, name)
+		// Table wasn't in the table map, so we'll check our root objects. Some
+		// PostgreSQL extension shims install multiple root objects with the same
+		// table-like name, such as hstore's extension and type metadata, so remove
+		// every canonical root-object match rather than only the resolver winner.
+		matches, err := root.rootObjectsMatchingName(ctx, name)
 		if err != nil {
 			return nil, err
 		}
-		if objID == objinterface.RootObjectID_None {
+		if len(matches) == 0 {
 			return nil, errors.Errorf("%w: '%s'", doltdb.ErrTableNotFound, name)
 		}
-		rootObjNames = append(rootObjNames, struct {
-			rawID id.Id
-			objID objinterface.RootObjectID
-		}{rawID: rawID, objID: objID})
-		deletedObjIds[objID] = struct{}{}
+		for _, match := range matches {
+			if _, ok := seenRootObjNames[match]; ok {
+				continue
+			}
+			rootObjNames = append(rootObjNames, match)
+			seenRootObjNames[match] = struct{}{}
+			deletedObjIds[match.objID] = struct{}{}
+		}
 	}
 	newRoot := root
 
@@ -707,10 +711,7 @@ func (root *RootValue) RemoveTables(
 						return nil, err
 					}
 					// If we're deleting sequences here, then we need to ensure that we don't try to delete them later too
-					rootObjNames = slices.DeleteFunc(rootObjNames, func(s struct {
-						rawID id.Id
-						objID objinterface.RootObjectID
-					}) bool {
+					rootObjNames = slices.DeleteFunc(rootObjNames, func(s rootObjectName) bool {
 						return s.rawID == seq.Id.AsId()
 					})
 				}
@@ -733,10 +734,7 @@ func (root *RootValue) RemoveTables(
 					return nil, err
 				}
 				// If we're deleting sequences here, then we need to ensure that we don't try to delete them later too
-				rootObjNames = slices.DeleteFunc(rootObjNames, func(s struct {
-					rawID id.Id
-					objID objinterface.RootObjectID
-				}) bool {
+				rootObjNames = slices.DeleteFunc(rootObjNames, func(s rootObjectName) bool {
 					return s.rawID == trigID.AsId()
 				})
 			}
@@ -787,6 +785,52 @@ func (root *RootValue) RemoveTables(
 	}
 
 	return newRoot, nil
+}
+
+type rootObjectName struct {
+	rawID id.Id
+	objID objinterface.RootObjectID
+}
+
+func (root *RootValue) rootObjectsMatchingName(ctx context.Context, name doltdb.TableName) ([]rootObjectName, error) {
+	colls, err := rootobject.LoadAllCollections(ctx, root)
+	if err != nil {
+		return nil, err
+	}
+	var matches []rootObjectName
+	for _, coll := range colls {
+		err = coll.IterIDs(ctx, func(identifier id.Id) (stop bool, err error) {
+			if rootObjectTableNameMatches(coll.IDToTableName(identifier), name) {
+				matches = append(matches, rootObjectName{
+					rawID: identifier,
+					objID: coll.GetID(),
+				})
+			}
+			return false, nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(matches) > 0 {
+		return matches, nil
+	}
+
+	_, rawID, objID, err := rootobject.ResolveName(ctx, root, name)
+	if err != nil {
+		return nil, err
+	}
+	if objID == objinterface.RootObjectID_None {
+		return nil, nil
+	}
+	return []rootObjectName{{rawID: rawID, objID: objID}}, nil
+}
+
+func rootObjectTableNameMatches(candidate doltdb.TableName, requested doltdb.TableName) bool {
+	if !strings.EqualFold(candidate.Name, requested.Name) {
+		return false
+	}
+	return requested.Schema == "" || strings.EqualFold(candidate.Schema, requested.Schema)
 }
 
 // RenameTable implements the interface doltdb.RootValue.

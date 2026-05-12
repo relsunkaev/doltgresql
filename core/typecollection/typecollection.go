@@ -78,28 +78,26 @@ func (pgs *TypeCollection) CreateType(ctx context.Context, typ *pgtypes.Doltgres
 
 // DropType drops an existing type.
 func (pgs *TypeCollection) DropType(ctx context.Context, names ...id.Type) (err error) {
-	// First we'll check if we're trying to drop a built-in type
-	for _, name := range names {
-		if _, ok := pgtypes.IDToBuiltInDoltgresType[name]; ok {
-			// TODO: investigate why we sometimes attempt to drop built-in types
-			return nil
-		}
-	}
-
 	// We need to clear the cache so that we only need to worry about the underlying map
 	if err = pgs.writeCache(ctx); err != nil {
 		return err
 	}
+	toDrop := make([]id.Type, 0, len(names))
 	for _, name := range names {
 		if ok, err := pgs.underlyingMap.Has(ctx, string(name)); err != nil {
 			return err
-		} else if !ok {
+		} else if ok {
+			toDrop = append(toDrop, name)
+		} else if _, ok = pgtypes.IDToBuiltInDoltgresType[name]; !ok {
 			return pgtypes.ErrTypeDoesNotExist.New(name.TypeName())
 		}
 	}
+	if len(toDrop) == 0 {
+		return nil
+	}
 	// Now we'll remove the types from the underlying map
 	mapEditor := pgs.underlyingMap.Editor()
-	for _, name := range names {
+	for _, name := range toDrop {
 		if err = mapEditor.Delete(ctx, string(name)); err != nil {
 			return err
 		}
