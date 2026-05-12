@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -173,6 +174,14 @@ func (h *ConnectionHandler) handleAuthentication(startupMessage *pgproto3.Startu
 				})
 				return err
 			}
+			if err = h.validateRoleLogin(role); err != nil {
+				_ = h.send(&pgproto3.ErrorResponse{
+					Severity: "FATAL",
+					Code:     "28P01",
+					Message:  err.Error(),
+				})
+				return err
+			}
 			if err = h.send(&pgproto3.AuthenticationSASLFinal{
 				Data: []byte("v=" + serverSignature),
 			}); err != nil {
@@ -183,6 +192,30 @@ func (h *ConnectionHandler) handleAuthentication(startupMessage *pgproto3.Startu
 			return errors.Errorf("unknown message type encountered during SASL authentication: %T", response)
 		}
 	}
+}
+
+func (h *ConnectionHandler) validateRoleLogin(role auth.Role) error {
+	if role.ValidUntil != nil && !time.Now().Before(*role.ValidUntil) {
+		return errors.Errorf(`password authentication failed for user "%s"`, role.Name)
+	}
+	if role.ConnectionLimit >= 0 && h.activeRoleConnectionCount(role.Name) >= role.ConnectionLimit {
+		return errors.Errorf(`too many connections for role "%s"`, role.Name)
+	}
+	return nil
+}
+
+func (h *ConnectionHandler) activeRoleConnectionCount(roleName string) int32 {
+	if h == nil || h.doltgresHandler == nil || h.doltgresHandler.sm == nil {
+		return 0
+	}
+	var count int32
+	_ = h.doltgresHandler.sm.Iter(func(session sql.Session) (bool, error) {
+		if session.Client().User == roleName {
+			count++
+		}
+		return false, nil
+	})
+	return count
 }
 
 // readSASLInitial reads the initial SASL response from the client.
