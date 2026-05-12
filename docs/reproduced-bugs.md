@@ -17362,6 +17362,21 @@ They are worth keeping, but they are not counted as found bugs.
   remains callable, so reset does not actually restore root-object state for
   uncommitted functions.
 
+### DOLT_RESET --hard leaves uncommitted procedures in the working set
+
+- Reproducer: `TestDoltResetHardRemovesUncommittedProcedureRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltResetHardRemovesUncommittedProcedureRepro -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted procedure,
+  `DOLT_RESET('--hard')` should discard the procedure, leave `dolt_status`
+  clean, and make later calls fail as undefined.
+- Observed Doltgres behavior: `DOLT_RESET('--hard')` returns success, but
+  `dolt_status` still reports one change and the supposedly discarded
+  procedure remains callable, so reset does not actually restore root-object
+  state for uncommitted procedures.
+
 ### DOLT_RESET --hard leaves uncommitted views in the working set
 
 - Reproducer: `TestDoltResetHardRemovesUncommittedViewRepro` in

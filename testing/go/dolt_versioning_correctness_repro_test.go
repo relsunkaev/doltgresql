@@ -320,6 +320,48 @@ func TestDoltResetHardRemovesUncommittedFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestDoltResetHardRemovesUncommittedProcedureRepro reproduces a versioned
+// persistence bug: DOLT_RESET --hard should discard uncommitted procedure
+// definitions.
+func TestDoltResetHardRemovesUncommittedProcedureRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted procedure",
+			SetUpScript: []string{
+				`CREATE TABLE reset_procedure_audit (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial procedure reset audit');`,
+				`CREATE PROCEDURE reset_uncommitted_procedure()
+					LANGUAGE SQL
+					AS $$ INSERT INTO reset_procedure_audit VALUES (1) $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CALL reset_uncommitted_procedure();`,
+				},
+				{
+					Query:    `SELECT id FROM reset_procedure_audit;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query: `TRUNCATE reset_procedure_audit;`,
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query:       `CALL reset_uncommitted_procedure();`,
+					ExpectedErr: `procedure "reset_uncommitted_procedure" does not exist`,
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetHardRemovesUncommittedViewRepro reproduces a versioned
 // persistence bug: DOLT_RESET --hard should discard uncommitted view
 // definitions.
