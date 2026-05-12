@@ -2923,6 +2923,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if rewrittenQuery, ok := rewriteCreateRuleDoAlsoInsert(query); ok {
+		return h.convertQuery(rewrittenQuery)
+	}
 	if converted, ok := convertedDropIfExistsNoOp(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
@@ -2945,6 +2948,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 		if containsAlterTextSearchObject(query) {
 			return nil, pgerror.New(pgcode.UndefinedObject, "text search object does not exist")
+		}
+		if containsAlterRule(query) {
+			return nil, pgerror.New(pgcode.UndefinedObject, "rule does not exist")
 		}
 		if containsCreateEventTrigger(query) {
 			return nil, pgerror.New(pgcode.InsufficientPrivilege, "permission denied to create event trigger")
@@ -2993,9 +2999,11 @@ var (
 	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	createOperatorPattern     = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
 	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
+	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropRuleIfExistsPattern   = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
@@ -3165,6 +3173,26 @@ func convertedCreateTextSearchConfiguration(query string) (ConvertedQuery, bool)
 	}, true
 }
 
+func rewriteCreateRuleDoAlsoInsert(query string) (string, bool) {
+	matches := createRuleDoAlsoPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return "", false
+	}
+	ruleName := normalizeTransformFunctionName(matches[1])
+	tableName := matches[2]
+	insertStatement := strings.TrimSuffix(strings.TrimSpace(matches[3]), ";")
+	functionName := quoteSQLIdentifier("__dolt_rule_" + strings.ReplaceAll(ruleName, `"`, "_"))
+	triggerName := quoteSQLIdentifier(ruleName)
+	return fmt.Sprintf(
+		"CREATE FUNCTION %s() RETURNS trigger AS $$ BEGIN %s; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER %s AFTER INSERT ON %s FOR EACH ROW EXECUTE FUNCTION %s()",
+		functionName,
+		insertStatement,
+		triggerName,
+		tableName,
+		functionName,
+	), true
+}
+
 func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	statementTag := ""
 	switch {
@@ -3177,6 +3205,8 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	case dropTextSearchPattern.MatchString(query):
 		matches := dropTextSearchPattern.FindStringSubmatch(query)
 		statementTag = "DROP TEXT SEARCH " + strings.ToUpper(matches[1])
+	case dropRuleIfExistsPattern.MatchString(query):
+		statementTag = "DROP RULE"
 	default:
 		return ConvertedQuery{}, false
 	}
@@ -3360,6 +3390,10 @@ func containsCreateEventTrigger(query string) bool {
 
 func containsAlterTextSearchObject(query string) bool {
 	return containsKeywordSequence(query, "alter", "text", "search")
+}
+
+func containsAlterRule(query string) bool {
+	return containsKeywordSequence(query, "alter", "rule")
 }
 
 func containsCreateCollation(query string) bool {

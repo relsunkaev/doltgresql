@@ -54,3 +54,41 @@ func TestCreateRuleDoAlsoExecutesAuditInsertRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestDropRuleIfExistsMissingRepro reproduces a rewrite-rule compatibility gap:
+// PostgreSQL accepts DROP RULE IF EXISTS for an absent rule on an existing table.
+func TestDropRuleIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP RULE IF EXISTS missing rule succeeds",
+			SetUpScript: []string{
+				`CREATE TABLE drop_missing_rule_target (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP RULE IF EXISTS missing_rule_repro ON drop_missing_rule_target;`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterRuleMissingReachesValidationRepro reproduces a rewrite-rule
+// compatibility gap: PostgreSQL parses ALTER RULE and validates that the target
+// rule exists on the relation.
+func TestAlterRuleMissingReachesValidationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER RULE missing target reaches validation",
+			SetUpScript: []string{
+				`CREATE TABLE alter_missing_rule_target (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER RULE missing_rule_repro ON alter_missing_rule_target RENAME TO renamed_rule_repro;`,
+					ExpectedErr: `does not exist`,
+				},
+			},
+		},
+	})
+}
