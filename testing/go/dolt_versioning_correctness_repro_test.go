@@ -62,6 +62,246 @@ func TestDoltStashPushPopRestoresTrackedRowRepro(t *testing.T) {
 	})
 }
 
+// TestBranchQualifiedSerialTableCreatesSequenceRepro reproduces a versioning
+// consistency bug: creating a SERIAL table on a non-current branch should create
+// and use the branch-local sequence metadata.
+func TestBranchQualifiedSerialTableCreatesSequenceRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified SERIAL table creates sequence",
+			SetUpScript: []string{
+				`SELECT DOLT_BRANCH('serial_branch');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TABLE "postgres/serial_branch".public.branch_plain_items (
+						id INT PRIMARY KEY,
+						label TEXT
+					);`,
+				},
+				{
+					Query: `INSERT INTO "postgres/serial_branch".public.branch_plain_items
+						VALUES (1, 'plain');`,
+				},
+				{
+					Query: `SELECT label
+						FROM "postgres/serial_branch".public.branch_plain_items
+						WHERE id = 1;`,
+					Expected: []sql.Row{{"plain"}},
+				},
+				{
+					Query: `CREATE TABLE "postgres/serial_branch".public.branch_serial_items (
+						id SERIAL PRIMARY KEY,
+						label TEXT
+					);`,
+				},
+				{
+					Query: `INSERT INTO "postgres/serial_branch".public.branch_serial_items (label)
+						VALUES ('first'), ('second');`,
+				},
+				{
+					Query: `SELECT id, label
+						FROM "postgres/serial_branch".public.branch_serial_items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "first"},
+						{2, "second"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedFunctionDefinitionRepro reproduces a versioning
+// consistency bug: creating a function on a non-current branch through a
+// branch-qualified name should create branch-local routine metadata.
+func TestBranchQualifiedFunctionDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified function definition is branch-local",
+			SetUpScript: []string{
+				`CREATE FUNCTION branch_function_value(input TEXT) RETURNS TEXT AS $$
+				BEGIN
+					RETURN input || '_main';
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`SELECT DOLT_BRANCH('function_branch');`,
+				`CREATE FUNCTION "postgres/function_branch".public.branch_function_value(input INT4)
+				RETURNS INT4 AS $$
+				BEGIN
+					RETURN input + 11;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT branch_function_value('abcd');`,
+					Expected: []sql.Row{{"abcd_main"}},
+				},
+				{
+					Query:    `SELECT "postgres/function_branch".public.branch_function_value(55);`,
+					Expected: []sql.Row{{66}},
+				},
+				{
+					Query:    `SELECT DOLT_CHECKOUT('function_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'function_branch'"}`}},
+				},
+				{
+					Query:    `SELECT branch_function_value(55);`,
+					Expected: []sql.Row{{66}},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedProcedureDefinitionRepro reproduces a versioning
+// consistency bug: creating a procedure on a non-current branch through a
+// branch-qualified name should create branch-local routine metadata.
+func TestBranchQualifiedProcedureDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified procedure definition is branch-local",
+			SetUpScript: []string{
+				`CREATE PROCEDURE branch_procedure_value(INOUT input INT4) AS $$
+				BEGIN
+					input := input + 1;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`SELECT DOLT_BRANCH('procedure_branch');`,
+				`CREATE PROCEDURE "postgres/procedure_branch".public.branch_procedure_value(INOUT input INT4) AS $$
+				BEGIN
+					input := input + 11;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CALL branch_procedure_value(4);`,
+					Expected: []sql.Row{{5}},
+				},
+				{
+					Query:    `CALL "postgres/procedure_branch".public.branch_procedure_value(55);`,
+					Expected: []sql.Row{{66}},
+				},
+				{
+					Query:    `SELECT DOLT_CHECKOUT('procedure_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'procedure_branch'"}`}},
+				},
+				{
+					Query:    `CALL branch_procedure_value(55);`,
+					Expected: []sql.Row{{66}},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedSequenceDefinitionRepro reproduces a versioning
+// consistency bug: creating a sequence on a non-current branch through a
+// branch-qualified name should create branch-local sequence metadata.
+func TestBranchQualifiedSequenceDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified sequence definition is branch-local",
+			SetUpScript: []string{
+				`SELECT DOLT_BRANCH('sequence_branch');`,
+				`CREATE SEQUENCE "postgres/sequence_branch".public.branch_plain_seq
+					START WITH 5;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CHECKOUT('sequence_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'sequence_branch'"}`}},
+				},
+				{
+					Query:    `SELECT nextval('branch_plain_seq');`,
+					Expected: []sql.Row{{int64(5)}},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedEnumTypeDefinitionRepro reproduces a versioning
+// consistency bug: creating an enum type on a non-current branch through a
+// branch-qualified name should create branch-local type metadata.
+func TestBranchQualifiedEnumTypeDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified enum type definition is branch-local",
+			SetUpScript: []string{
+				`SELECT DOLT_BRANCH('type_branch');`,
+				`CREATE TYPE "postgres/type_branch".public.branch_enum_mood AS ENUM ('ok');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CHECKOUT('type_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'type_branch'"}`}},
+				},
+				{
+					Query:    `SELECT 'ok'::branch_enum_mood::text;`,
+					Expected: []sql.Row{{"ok"}},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedCompositeTypeDefinitionRepro reproduces a versioning
+// consistency bug: creating a composite type on a non-current branch through a
+// branch-qualified name should create branch-local type metadata.
+func TestBranchQualifiedCompositeTypeDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified composite type definition is branch-local",
+			SetUpScript: []string{
+				`SELECT DOLT_BRANCH('composite_type_branch');`,
+				`CREATE TYPE "postgres/composite_type_branch".public.branch_pair_type AS (
+					id integer
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CHECKOUT('composite_type_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'composite_type_branch'"}`}},
+				},
+				{
+					Query:    `SELECT (ROW(7)::branch_pair_type).id;`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
+// TestBranchQualifiedDomainDefinitionRepro reproduces a versioning consistency
+// bug: creating a domain on a non-current branch through a branch-qualified name
+// should create branch-local type metadata.
+func TestBranchQualifiedDomainDefinitionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "branch-qualified domain definition is branch-local",
+			SetUpScript: []string{
+				`SELECT DOLT_BRANCH('domain_branch');`,
+				`CREATE DOMAIN "postgres/domain_branch".public.branch_positive_domain
+					AS integer CHECK (VALUE > 0);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT DOLT_CHECKOUT('domain_branch');`,
+					Expected: []sql.Row{{`{0,"Switched to branch 'domain_branch'"}`}},
+				},
+				{
+					Query:    `SELECT 7::branch_positive_domain::integer;`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltStashPushPopRestoresUntrackedTableRepro reproduces a Dolt
 // persistence bug: DOLT_STASH --all should save and restore untracked tables
 // with their row data.

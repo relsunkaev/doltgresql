@@ -173,6 +173,90 @@ func TestPreviewMergeConflictsSummaryReportsFunctionConflictRepro(t *testing.T) 
 	})
 }
 
+// TestPreviewMergeConflictsSummaryReportsEnumTypeConflictRepro reproduces a
+// branch merge correctness bug: preview summaries should include root-object
+// conflicts such as changed enum type definitions.
+func TestPreviewMergeConflictsSummaryReportsEnumTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY reports enum type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_summary_enum_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial enum summary conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE preview_summary_enum_conflict_type AS ENUM ('main');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main enum summary conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE preview_summary_enum_conflict_type AS ENUM ('other');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other enum summary conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsSummaryReportsCompositeTypeConflictRepro reproduces
+// a branch merge correctness bug: preview summaries should include root-object
+// conflicts such as changed composite type definitions.
+func TestPreviewMergeConflictsSummaryReportsCompositeTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY reports composite type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_summary_composite_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial composite summary conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE preview_summary_composite_conflict_type AS (main_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main composite summary conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE preview_summary_composite_conflict_type AS (other_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other composite summary conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsSummaryReportsDomainConflictRepro reproduces a
+// branch merge correctness bug: preview summaries should include root-object
+// conflicts such as changed domain definitions.
+func TestPreviewMergeConflictsSummaryReportsDomainConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY reports domain conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_summary_domain_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial domain summary conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE DOMAIN preview_summary_domain_conflict_type AS integer CHECK (VALUE > 0);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main domain summary conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE DOMAIN preview_summary_domain_conflict_type AS integer CHECK (VALUE > 10);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other domain summary conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY('main', 'other');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestMergeReportsFunctionDefinitionConflictGuard keeps coverage for branch
 // merges that detect incompatible function-definition edits.
 func TestMergeReportsFunctionDefinitionConflictGuard(t *testing.T) {
@@ -376,6 +460,102 @@ func TestPreviewMergeConflictsReportsSequenceConflictRepro(t *testing.T) {
 							'main',
 							'other',
 							'preview_sequence_conflict_items_id_seq'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsReportsEnumTypeConflictRepro reproduces a branch
+// merge correctness bug: previewing conflicts should include versioned enum
+// type definitions.
+func TestPreviewMergeConflictsReportsEnumTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports enum type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_enum_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial enum conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE preview_enum_conflict_type AS ENUM ('main');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main enum conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE preview_enum_conflict_type AS ENUM ('other');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other enum conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_enum_conflict_type'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsReportsCompositeTypeConflictRepro reproduces a
+// branch merge correctness bug: previewing conflicts should include versioned
+// composite type definitions.
+func TestPreviewMergeConflictsReportsCompositeTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports composite type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_composite_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial composite conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE preview_composite_conflict_type AS (main_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main composite conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE preview_composite_conflict_type AS (other_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other composite conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_composite_conflict_type'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPreviewMergeConflictsReportsDomainConflictRepro reproduces a branch merge
+// correctness bug: previewing conflicts should include versioned domain
+// definitions.
+func TestPreviewMergeConflictsReportsDomainConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports domain conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE preview_domain_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial domain conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE DOMAIN preview_domain_conflict_type AS integer CHECK (VALUE > 0);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main domain conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE DOMAIN preview_domain_conflict_type AS integer CHECK (VALUE > 10);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other domain conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_domain_conflict_type'
 						);`,
 					Expected: []sql.Row{{1}},
 				},

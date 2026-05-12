@@ -1925,6 +1925,22 @@ artifacts only; no fixes are included here.
   does not exist`; the qualified sequence is not reseeded and the following
   qualified `nextval` returns its original start value `70`.
 
+### Column defaults do not bind same-schema unqualified sequences
+
+- Reproducer: `TestColumnDefaultNextvalResolvesSameSchemaSequenceRepro` in
+  `testing/go/sequence_dependency_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestColumnDefaultNextvalResolvesSameSchemaSequenceRepro -count=1`.
+- Expected PostgreSQL behavior: when a table is created in a non-default schema
+  and its default expression uses `nextval('item_seq')`, the unqualified
+  sequence reference can bind to `item_seq` in the table's schema. Inserts into
+  `same_schema_default_seq.items` should generate ids `1` and `2`.
+- Observed Doltgres behavior: `CREATE TABLE
+  same_schema_default_seq.items (id INT DEFAULT nextval('item_seq'), ...)`
+  succeeds, but later inserts into that table fail with `relation "item_seq"
+  does not exist`; no rows are inserted.
+
 ### nextval misparses quoted sequence names containing dots
 
 - Reproducer: `TestNextvalHandlesQuotedSequenceNamesWithDotsRepro` in
@@ -2682,6 +2698,22 @@ artifacts only; no fixes are included here.
   `7::base_cast_domain::integer`.
 - Observed Doltgres behavior: the second cast fails with `EXPLICIT CAST: cast
   from base_cast_domain to integer does not exist`.
+
+### Domain values cannot use base-type operators
+
+- Reproducer: `TestDomainValuesUseBaseTypeOperatorsRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDomainValuesUseBaseTypeOperatorsRepro -count=1`.
+- Expected PostgreSQL behavior: values cast to a domain can participate in
+  operators defined for the domain's base type, so
+  `7::operator_domain + 5` returns `12` and
+  `7::operator_domain = 7` returns true.
+- Observed Doltgres behavior: both operators fail to resolve, with errors such
+  as `function internal_binary_operator_func_+(operator_domain, integer) does
+  not exist` and `function internal_binary_operator_func_=(operator_domain,
+  integer) does not exist`.
 
 ### Domain base-type typmods are not applied to stored values
 
@@ -5654,11 +5686,11 @@ artifacts only; no fixes are included here.
 
 ### Generated columns accept duplicate generation clauses
 
-- Reproducer: `TestGeneratedColumnRejectsMalformedReferencesGuard` in
+- Reproducer: `TestGeneratedColumnRejectsMalformedReferencesRepro` in
   `testing/go/generated_column_correctness_repro_test.go`.
 - Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
   CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestGeneratedColumnRejectsMalformedReferencesGuard -count=1`.
+  -run TestGeneratedColumnRejectsMalformedReferencesRepro -count=1`.
 - Expected PostgreSQL behavior: a column cannot specify more than one stored
   generation clause; `GENERATED ALWAYS AS (...) STORED GENERATED ALWAYS AS
   (...) STORED` fails with `multiple generation clauses specified`.
@@ -6114,6 +6146,20 @@ artifacts only; no fixes are included here.
   extra escaping required to represent bytea values inside text array output.
 - Observed Doltgres behavior: the cast returns values with one fewer escape
   layer, so the text array does not match PostgreSQL's bytea array rendering.
+
+### High-bit `"char"` values cast to unsigned integers
+
+- Reproducer: `TestInternalCharCastsHighBitByteToSignedIntRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestInternalCharCastsHighBitByteToSignedIntRepro -count=1`.
+- Expected PostgreSQL behavior: the internal `"char"` type stores one byte, and
+  casting that byte to integer uses PostgreSQL's signed-byte semantics. The
+  first byte of `'こんにちは'::"char"` casts to `-29`.
+- Observed Doltgres behavior: storing `'こんにちは'` in a `"char"` column and
+  selecting `value::int` returns `227`, treating the high-bit byte as unsigned
+  instead of matching PostgreSQL's signed integer value.
 
 ### `substring(string for count)` resolves to the wrong function signature
 
@@ -16712,6 +16758,21 @@ They are worth keeping, but they are not counted as found bugs.
   PostgreSQL procedure definitions that differ by quoted case cannot be called
   reliably.
 
+### SQL procedures with INSERT RETURNING do not execute
+
+- Reproducer: `TestSqlProcedureInsertReturningExecutesRepro` in
+  `testing/go/create_procedure_sql_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestSqlProcedureInsertReturningExecutesRepro -count=1`.
+- Expected PostgreSQL behavior: a SQL-language procedure whose body contains
+  `INSERT ... RETURNING` should run under `CALL`, apply the insert, and make the
+  inserted row visible to later statements.
+- Observed Doltgres behavior: `CALL sql_proc_insert_returning('first')` fails
+  with `no valid cast for return value`, and the target table remains empty, so
+  SQL procedures with `INSERT ... RETURNING` cannot persist their intended
+  writes.
+
 ### `DROP_REPLICATION_SLOT WAIT` does not wait for active slots
 
 - Reproducer: `TestLogicalReplicationDropSlotWaitWaitsForInactiveSlotRepro` in
@@ -17271,6 +17332,130 @@ They are worth keeping, but they are not counted as found bugs.
   `ERROR: dolt_procedures: unsupported type int`, so ordinary tracked table
   edits involving integer columns cannot be stashed and restored through SQL.
 
+### Branch-qualified SERIAL tables fail to create sequence metadata
+
+- Reproducer: `TestBranchQualifiedSerialTableCreatesSequenceRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedSerialTableCreatesSequenceRepro -count=1`.
+- Expected Doltgres behavior: creating a `SERIAL` table through a branch-qualified
+  relation name, such as `"postgres/serial_branch".public.branch_serial_items`,
+  should create the table and its branch-local sequence metadata. Inserts on
+  that branch-qualified table should generate `id` values from that sequence.
+- Observed Doltgres behavior: the branch-qualified `CREATE TABLE ... id SERIAL`
+  fails with `relation "branch_serial_items" does not exist`, and later
+  branch-qualified `INSERT` or `SELECT` statements report `table not found:
+  branch_serial_items`, so versioned DDL cannot create serial-backed tables on a
+  non-current branch.
+
+### Branch-qualified sequence definitions are rejected
+
+- Reproducer: `TestBranchQualifiedSequenceDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedSequenceDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating a sequence through a branch-qualified
+  name, such as `"postgres/sequence_branch".public.branch_plain_seq`, should
+  create sequence metadata on that non-current branch. After checking out the
+  branch, `nextval('branch_plain_seq')` should use the branch-local sequence.
+- Observed Doltgres behavior: the branch-qualified `CREATE SEQUENCE` fails
+  during setup with `CREATE SEQUENCE is currently only supported for the current
+  database`, so callers cannot create standalone sequence objects on a
+  non-current branch.
+
+### Branch-qualified enum type definitions are not visible after checkout
+
+- Reproducer: `TestBranchQualifiedEnumTypeDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedEnumTypeDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating an enum type through a branch-qualified
+  name, such as `"postgres/type_branch".public.branch_enum_mood`, should create
+  branch-local type metadata. After checking out `type_branch`, casts to
+  `branch_enum_mood` should resolve and accept the enum labels.
+- Observed Doltgres behavior: the branch-qualified `CREATE TYPE` succeeds, but
+  after `DOLT_CHECKOUT('type_branch')`, `SELECT 'ok'::branch_enum_mood::text`
+  fails with `type "branch_enum_mood" does not exist`. Branch-qualified enum
+  DDL is therefore not restored as checked-out branch type metadata.
+
+### Branch-qualified composite type definitions are not visible after checkout
+
+- Reproducer: `TestBranchQualifiedCompositeTypeDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedCompositeTypeDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating a composite type through a
+  branch-qualified name, such as
+  `"postgres/composite_type_branch".public.branch_pair_type`, should create
+  branch-local type metadata. After checking out `composite_type_branch`, casts
+  to `branch_pair_type` should resolve and expose the composite fields.
+- Observed Doltgres behavior: the branch-qualified `CREATE TYPE` succeeds, but
+  after `DOLT_CHECKOUT('composite_type_branch')`,
+  `SELECT (ROW(7)::branch_pair_type).id` fails with
+  `type "branch_pair_type" does not exist`. Branch-qualified composite DDL is
+  therefore not restored as checked-out branch type metadata.
+
+### Branch-qualified domain definitions are not visible after checkout
+
+- Reproducer: `TestBranchQualifiedDomainDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedDomainDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating a domain through a branch-qualified
+  name, such as
+  `"postgres/domain_branch".public.branch_positive_domain`, should create
+  branch-local type metadata. After checking out `domain_branch`, casts to
+  `branch_positive_domain` should resolve and enforce the domain definition.
+- Observed Doltgres behavior: the branch-qualified `CREATE DOMAIN` succeeds,
+  but after `DOLT_CHECKOUT('domain_branch')`,
+  `SELECT 7::branch_positive_domain::integer` fails with
+  `type "branch_positive_domain" does not exist`. Branch-qualified domain DDL is
+  therefore not restored as checked-out branch type metadata.
+
+### Branch-qualified function definitions are not visible after checkout
+
+- Reproducer: `TestBranchQualifiedFunctionDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedFunctionDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating a function through a branch-qualified
+  name, such as
+  `"postgres/function_branch".public.branch_function_value(int4)`, should
+  create branch-local routine metadata. The main branch should keep its own
+  overload, direct branch-qualified calls should work, and after checking out
+  `function_branch`, an unqualified call should resolve to the function created
+  on that branch.
+- Observed Doltgres behavior: the main-branch overload and the direct
+  branch-qualified call both work, but after `DOLT_CHECKOUT('function_branch')`
+  the unqualified call fails with `function: 'branch_function_value' not found`.
+  Branch-qualified function DDL is therefore callable through the synthetic
+  branch name but is not restored as the checked-out branch's routine metadata.
+
+### Branch-qualified procedure definitions collide with current-branch signatures
+
+- Reproducer: `TestBranchQualifiedProcedureDefinitionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestBranchQualifiedProcedureDefinitionRepro -count=2`.
+- Expected Doltgres behavior: creating a procedure through a branch-qualified
+  name, such as
+  `"postgres/procedure_branch".public.branch_procedure_value(int4)`, should
+  create routine metadata on `procedure_branch`. A procedure with the same name
+  and argument types on `main` should not block a different definition on the
+  other branch, and after checkout the branch-local procedure should execute.
+- Observed Doltgres behavior: the branch-qualified `CREATE PROCEDURE` fails
+  during setup with `procedure "branch_procedure_value" already exists with
+  same argument types`, even though the existing procedure is on the current
+  branch. Procedure identity checks therefore ignore the branch-qualified target
+  and prevent valid per-branch routine definitions.
+
 ### DOLT_STASH cannot save untracked tables with integer columns
 
 - Reproducer: `TestDoltStashPushPopRestoresUntrackedTableRepro` in
@@ -17317,20 +17502,39 @@ They are worth keeping, but they are not counted as found bugs.
   before the transaction continues returning `8` after the rollback, so aborted
   view-definition changes leak into durable catalog state.
 
-### CREATE OR REPLACE PROCEDURE ignores savepoint rollback
+### DROP PROCEDURE rollback restores corrupted procedure metadata
 
-- Reproducer: `TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro`
-  in `testing/go/transaction_ddl_repro_test.go`.
+- Reproducer: `TestRollbackRestoresDroppedProcedureRepro` in
+  `testing/go/transaction_ddl_repro_test.go`.
 - Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
   CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro -count=1`.
-- Expected Doltgres behavior: if `CREATE OR REPLACE PROCEDURE` changes an
-  existing procedure body after a savepoint, `ROLLBACK TO SAVEPOINT` should
-  restore the previous procedure body before the transaction commits.
-- Observed Doltgres behavior: after rolling back to the savepoint and
-  committing, calling the procedure still runs the replacement body. The
-  procedure initially inserted `7`, the replacement inserted `8`, and after the
-  savepoint rollback the committed procedure still inserts `8`.
+  -run TestRollbackRestoresDroppedProcedureRepro -count=1`.
+- Expected PostgreSQL behavior: if `DROP PROCEDURE` removes a procedure inside
+  a transaction, `ROLLBACK` should restore the previous procedure definition,
+  and the restored procedure should remain callable.
+- Observed Doltgres behavior: after `ROLLBACK`, `CALL
+  rollback_drop_procedure_value()` fails with `no valid cast for return value`
+  and the audit table remains empty. The procedure name is restored, but its
+  executable metadata is corrupted.
+
+### CREATE OR REPLACE PROCEDURE inside transactions corrupts procedure execution
+
+- Reproducers: `TestRollbackRestoresReplacedProcedureDefinitionRepro` and
+  `TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro` in
+  `testing/go/transaction_ddl_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run 'TestRollback(RestoresReplacedProcedureDefinitionRepro|ToSavepointRestoresReplacedProcedureDefinitionRepro)' -count=1`.
+- Expected PostgreSQL behavior: if `CREATE OR REPLACE PROCEDURE` changes an
+  existing procedure body inside a transaction or after a savepoint, the
+  replacement procedure should be callable while the change is active, and
+  `ROLLBACK` or `ROLLBACK TO SAVEPOINT` should restore the previous procedure
+  body.
+- Observed Doltgres behavior: after transactional `CREATE OR REPLACE
+  PROCEDURE`, `CALL` fails with `no valid cast for return value` and the audit
+  table remains empty. The same failure is still visible after rollback, so
+  transactional procedure replacement leaves the procedure metadata corrupted
+  instead of preserving a callable definition.
 
 ### CREATE OR REPLACE TRIGGER ignores savepoint rollback
 
@@ -17498,6 +17702,53 @@ They are worth keeping, but they are not counted as found bugs.
   remain staged, so users can stage these root objects but cannot unstage them
   through the matching path reset API.
 
+### DOLT_COMMIT panics when committing extension metadata
+
+- Reproducer: `TestDoltCommitPersistsExtensionMetadataRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltCommitPersistsExtensionMetadataRepro -count=1`.
+- Expected Doltgres behavior: after creating an extension such as `hstore`,
+  `DOLT_COMMIT('-A', '-m', ...)` should persist the `pg_extension` row and
+  extension member objects, including extension-provided types, and leave
+  `dolt_status` clean.
+- Observed Doltgres behavior: `DOLT_COMMIT` fails with a caught nil-pointer
+  panic from `diff.TableDelta.HasHashChanged` while computing staged/unstaged
+  deltas for the extension root objects. The extension remains uncommitted and
+  `dolt_status` still reports two pending changes.
+
+### DOLT_CLEAN leaves uncommitted type and domain metadata dirty
+
+- Reproducer: `TestDoltCleanRemovesUncommittedTypeAndDomainRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltCleanRemovesUncommittedTypeAndDomainRepro -count=1`.
+- Expected Doltgres behavior: after creating uncommitted enum, composite, and
+  domain metadata, `DOLT_CLEAN()` should discard those root objects, leave
+  `dolt_status` clean, and remove the matching `pg_type` rows.
+- Observed Doltgres behavior: `DOLT_CLEAN()` returns success, but
+  `dolt_status` still reports one pending change instead of zero and one
+  matching `pg_type` row remains, so cleaning uncommitted type/domain metadata
+  leaves the working set dirty.
+
+### DOLT_CLEAN fails on uncommitted extension metadata
+
+- Reproducer: `TestDoltCleanRemovesUncommittedExtensionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltCleanRemovesUncommittedExtensionRepro -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted extension,
+  `DOLT_CLEAN()` should discard the `pg_extension` row and installed member
+  objects, including extension-provided types, and leave `dolt_status` clean.
+- Observed Doltgres behavior: `DOLT_CLEAN()` fails with
+  ``root returned table `public.hstore` but it could not be found``. Later
+  status/catalog queries return the same error. Cleaning an uncommitted
+  extension can therefore leave the working root in an internally inconsistent
+  state instead of restoring a clean root.
+
 ### DOLT_CLEAN leaves uncommitted trigger metadata dirty
 
 - Reproducer: `TestDoltCleanRemovesUncommittedTriggerRepro` in
@@ -17547,6 +17798,41 @@ They are worth keeping, but they are not counted as found bugs.
   the `to_commit = HASHOF('main')` predicate. Versioned diff queries that use
   commit-hash expressions cannot inspect the working-set row diff.
 
+### DOLT_DIFF_SUMMARY cannot filter dolt docs by its reported name
+
+- Reproducer: `TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro -count=1`.
+- Expected Doltgres behavior: if `DOLT_DIFF_SUMMARY('main', 'WORKING')`
+  reports a changed root object as `dolt.docs`, then filtering the same
+  function with `DOLT_DIFF_SUMMARY('main', 'WORKING', 'dolt.docs')` should
+  return that matching docs diff row.
+- Observed Doltgres behavior: the unfiltered summary reports
+  `to_table_name = 'dolt.docs'` with `diff_type = 'added'`, but filtering by
+  `dolt.docs` returns zero rows. The summary API therefore reports a root-object
+  name that cannot be used to inspect that same changed object.
+
+### DOLT_DIFF_SUMMARY cannot filter schema metadata by qualified name
+
+- Reproducer:
+  `TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro
+  -count=1`.
+- Expected Doltgres behavior: if `DOLT_DIFF_SUMMARY('main', 'WORKING')`
+  reports schema metadata as `public.dolt_schemas`, then filtering the same
+  function with `DOLT_DIFF_SUMMARY('main', 'WORKING', 'public.dolt_schemas')`
+  should return that matching public-schema metadata diff row.
+- Observed Doltgres behavior: the unfiltered summary reports
+  `to_table_name = 'public.dolt_schemas'` with `diff_type = 'added'`, but
+  filtering by `public.dolt_schemas` returns zero rows. The schema metadata
+  summary reports a qualified root-object name that cannot be used to inspect
+  that same changed schema metadata object.
+
 ### dolt_query_diff rejects AS OF queries in diff inputs
 
 - Reproducer: `TestDoltQueryDiffSupportsAsOfRevisionRepro` in
@@ -17593,6 +17879,50 @@ They are worth keeping, but they are not counted as found bugs.
   preview API treats sequence names as tables and cannot surface sequence
   conflicts.
 
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview enum type conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsEnumTypeConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsEnumTypeConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same enum type name
+  with different labels, `DOLT_PREVIEW_MERGE_CONFLICTS` should report one
+  pending root-object conflict for that enum type before the merge is applied.
+- Observed Doltgres behavior: previewing `preview_enum_conflict_type` fails
+  with `table not found: public.preview_enum_conflict_type`, so the preview API
+  treats enum type names as tables and cannot surface enum type conflicts.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview composite type conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsCompositeTypeConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsCompositeTypeConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same composite type
+  name with different attributes, `DOLT_PREVIEW_MERGE_CONFLICTS` should report
+  one pending root-object conflict for that composite type before the merge is
+  applied.
+- Observed Doltgres behavior: previewing `preview_composite_conflict_type`
+  fails with `table not found: public.preview_composite_conflict_type`, so the
+  preview API treats composite type names as tables and cannot surface
+  composite type conflicts.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview domain conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsDomainConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsDomainConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same domain name
+  with different constraints, `DOLT_PREVIEW_MERGE_CONFLICTS` should report one
+  pending root-object conflict for that domain before the merge is applied.
+- Observed Doltgres behavior: previewing `preview_domain_conflict_type` fails
+  with `table not found: public.preview_domain_conflict_type`, so the preview
+  API treats domain names as tables and cannot surface domain conflicts.
+
 ### DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY panics on function conflicts
 
 - Reproducer: `TestPreviewMergeConflictsSummaryReportsFunctionConflictRepro` in
@@ -17606,6 +17936,56 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: the summary query panics with a nil pointer
   dereference in `getDataConflictsForTable` / `rowsFromTable` while processing
   the function conflict, so preview-summary callers can crash the SQL request
+  instead of receiving conflict metadata.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY panics on enum type conflicts
+
+- Reproducer: `TestPreviewMergeConflictsSummaryReportsEnumTypeConflictRepro`
+  in `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsSummaryReportsEnumTypeConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same enum type name
+  with different labels, `DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY` should report
+  one pending root-object conflict for that enum type before the merge is
+  applied.
+- Observed Doltgres behavior: the summary query panics with a nil pointer
+  dereference in `getDataConflictsForTable` / `rowsFromTable` while processing
+  the enum type conflict, so preview-summary callers can crash the SQL request
+  instead of receiving conflict metadata.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY panics on composite type conflicts
+
+- Reproducer:
+  `TestPreviewMergeConflictsSummaryReportsCompositeTypeConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsSummaryReportsCompositeTypeConflictRepro
+  -count=2`.
+- Expected Doltgres behavior: when two branches create the same composite type
+  name with different attributes, `DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY`
+  should report one pending root-object conflict for that composite type before
+  the merge is applied.
+- Observed Doltgres behavior: the summary query panics with a nil pointer
+  dereference in `getDataConflictsForTable` / `rowsFromTable` while processing
+  the composite type conflict, so preview-summary callers can crash the SQL
+  request instead of receiving conflict metadata.
+
+### DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY panics on domain conflicts
+
+- Reproducer: `TestPreviewMergeConflictsSummaryReportsDomainConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsSummaryReportsDomainConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same domain name
+  with different constraints, `DOLT_PREVIEW_MERGE_CONFLICTS_SUMMARY` should
+  report one pending root-object conflict for that domain before the merge is
+  applied.
+- Observed Doltgres behavior: the summary query panics with a nil pointer
+  dereference in `getDataConflictsForTable` / `rowsFromTable` while processing
+  the domain conflict, so preview-summary callers can crash the SQL request
   instead of receiving conflict metadata.
 
 ### DOLT_DIFF cannot inspect function-definition changes
@@ -17637,6 +18017,51 @@ They are worth keeping, but they are not counted as found bugs.
   but `DOLT_DIFF('main', 'original', 'diff_sequence_items_id_seq')` fails with
   `table not found: diff_sequence_items_id_seq`, so callers cannot inspect the
   sequence-object delta.
+
+### DOLT_DIFF cannot inspect enum type metadata changes
+
+- Reproducer: `TestDoltDiffReportsEnumTypeChangesRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffReportsEnumTypeChangesRepro -count=1`.
+- Expected Doltgres behavior: if an enum type is added or changed between two
+  revisions, `DOLT_DIFF` should expose the type metadata root-object diff just
+  as `DOLT_DIFF_STAT` reports `public.diff_enum_type`.
+- Observed Doltgres behavior: `DOLT_DIFF_STAT` reports the changed enum type,
+  but `DOLT_DIFF('main', 'original', 'diff_enum_type')` fails with
+  `table not found: diff_enum_type`, so callers cannot inspect the type
+  metadata delta.
+
+### DOLT_DIFF cannot inspect composite type metadata changes
+
+- Reproducer: `TestDoltDiffReportsCompositeTypeChangesRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffReportsCompositeTypeChangesRepro -count=1`.
+- Expected Doltgres behavior: if a composite type is added or changed between
+  two revisions, `DOLT_DIFF` should expose the type metadata root-object diff
+  just as `DOLT_DIFF_STAT` reports `public.diff_composite_type`.
+- Observed Doltgres behavior: `DOLT_DIFF_STAT` reports the changed composite
+  type, but `DOLT_DIFF('main', 'original', 'diff_composite_type')` fails with
+  `table not found: diff_composite_type`, so callers cannot inspect the type
+  metadata delta.
+
+### DOLT_DIFF cannot inspect domain metadata changes
+
+- Reproducer: `TestDoltDiffReportsDomainTypeChangesRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffReportsDomainTypeChangesRepro -count=1`.
+- Expected Doltgres behavior: if a domain is added or changed between two
+  revisions, `DOLT_DIFF` should expose the domain metadata root-object diff
+  just as `DOLT_DIFF_STAT` reports `public.diff_domain_type`.
+- Observed Doltgres behavior: `DOLT_DIFF_STAT` reports the changed domain, but
+  `DOLT_DIFF('main', 'original', 'diff_domain_type')` fails with
+  `table not found: diff_domain_type`, so callers cannot inspect the domain
+  metadata delta.
 
 ### DOLT_DIFF cannot inspect trigger-definition changes
 

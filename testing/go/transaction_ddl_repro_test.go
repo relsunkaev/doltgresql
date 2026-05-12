@@ -868,9 +868,9 @@ func TestRollbackDropsProcedureCreatedInTransactionGuard(t *testing.T) {
 	})
 }
 
-// TestRollbackRestoresDroppedProcedureGuard keeps coverage for rolling back
-// DROP PROCEDURE with the surrounding transaction.
-func TestRollbackRestoresDroppedProcedureGuard(t *testing.T) {
+// TestRollbackRestoresDroppedProcedureRepro reproduces a transaction persistence
+// bug: rolling back DROP PROCEDURE should restore a callable procedure.
+func TestRollbackRestoresDroppedProcedureRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ROLLBACK restores dropped procedure",
@@ -947,9 +947,10 @@ func TestRollbackRestoresReplacedFunctionDefinitionRepro(t *testing.T) {
 	})
 }
 
-// TestRollbackRestoresReplacedProcedureDefinitionGuard keeps coverage for
-// rolling back CREATE OR REPLACE PROCEDURE with the surrounding transaction.
-func TestRollbackRestoresReplacedProcedureDefinitionGuard(t *testing.T) {
+// TestRollbackRestoresReplacedProcedureDefinitionRepro reproduces a transaction
+// persistence bug: CREATE OR REPLACE PROCEDURE should keep the replacement
+// procedure callable and allow rollback to restore the prior body.
+func TestRollbackRestoresReplacedProcedureDefinitionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "ROLLBACK restores replaced procedure definition",
@@ -2358,8 +2359,9 @@ func TestRollbackToSavepointRestoresReplacedFunctionDefinitionRepro(t *testing.T
 }
 
 // TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro reproduces a
-// transaction persistence bug: rolling back CREATE OR REPLACE PROCEDURE to a
-// savepoint should restore the prior procedure body.
+// transaction persistence bug: CREATE OR REPLACE PROCEDURE after a savepoint
+// should keep the replacement procedure callable and allow savepoint rollback
+// to restore the prior body.
 func TestRollbackToSavepointRestoresReplacedProcedureDefinitionRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
