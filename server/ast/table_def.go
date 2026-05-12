@@ -54,6 +54,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if err != nil {
 			return err
 		}
+		assignDefaultColumnCheckConstraintName(columnDef, target.Table.Name.String(), node.Name)
 		if node.Unique {
 			columnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
 		}
@@ -202,4 +203,11 @@ func assignTableDefs(ctx *Context, node tree.TableDefs, target *vitess.DDL) erro
 		}
 	}
 	return nil
+}
+
+func assignDefaultColumnCheckConstraintName(columnDef *vitess.ColumnDefinition, tableName string, column tree.Name) {
+	if columnDef == nil || columnDef.Type.Constraint == nil || columnDef.Type.Constraint.Name != "" {
+		return
+	}
+	columnDef.Type.Constraint.Name = defaultColumnCheckConstraintName(tableName, column)
 }

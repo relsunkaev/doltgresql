@@ -194,6 +194,14 @@ func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) s
 	return strings.Join(parts, "_")
 }
 
+func defaultColumnCheckConstraintName(tableName string, column tree.Name) string {
+	return strings.Join([]string{
+		sanitizeIndexNamePart(tableName, "table"),
+		sanitizeIndexNamePart(string(column), "column"),
+		"check",
+	}, "_")
+}
+
 func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name, nullsNotDistinct bool) (*vitess.IndexDefinition, error) {
 	columns := tree.IndexElemList{{Column: column}}
 	fields, err := nodeIndexElemList(ctx, columns)

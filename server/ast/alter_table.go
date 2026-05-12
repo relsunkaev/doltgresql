@@ -327,6 +327,7 @@ func nodeAlterTableAddColumn(ctx *Context, node *tree.AlterTableAddColumn, table
 	if err != nil {
 		return nil, err
 	}
+	assignDefaultColumnCheckConstraintName(vitessColumnDef, tableName.Name.String(), node.ColumnDef.Name)
 	if node.ColumnDef.Unique {
 		vitessColumnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
 	}
