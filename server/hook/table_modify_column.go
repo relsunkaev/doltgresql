@@ -25,14 +25,6 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
-// beforeTableModifyColumnChange represents what properties of a column changed when a call is made to BeforeTableModifyColumn.
-type beforeTableModifyColumnChange uint8
-
-const (
-	beforeTableModifyColumnChange_None beforeTableModifyColumnChange = iota
-	beforeTableModifyColumnChange_Type
-)
-
 // BeforeTableModifyColumn handles validation that's unique to Doltgres.
 func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInterface sql.Node) (sql.Node, error) {
 	n, ok := nodeInterface.(*plan.ModifyColumn)
@@ -40,21 +32,8 @@ func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeI
 		return nil, errors.Errorf("MODIFY COLUMN pre-hook expected `*plan.ModifyColumn` but received `%T`", nodeInterface)
 	}
 
-	// Figure out what was changed. We know it's not the name because we have a dedicated *RenameColumn node.
-	changed := beforeTableModifyColumnChange_None
-	newColumn := n.NewColumn()
-	for _, col := range n.TargetSchema() {
-		if col.Name == newColumn.Name {
-			if !col.Type.Equals(newColumn.Type) {
-				changed = beforeTableModifyColumnChange_Type
-			}
-		}
-	}
-	if changed == beforeTableModifyColumnChange_None {
-		return n, nil
-	}
-
-	// Grab the table being altered (so we know the schema)
+	// PostgreSQL checks row-type dependents for ALTER COLUMN TYPE even when
+	// the requested type matches the existing type.
 	doltTable := core.SQLNodeToDoltTable(n.Table)
 	if doltTable == nil {
 		// If this table isn't a Dolt table then we don't have anything to do
