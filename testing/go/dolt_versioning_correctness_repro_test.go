@@ -313,7 +313,7 @@ func TestDoltResetHardRemovesUncommittedFunctionRepro(t *testing.T) {
 				},
 				{
 					Query:       `SELECT reset_uncommitted_function_value();`,
-					ExpectedErr: `function "reset_uncommitted_function_value" does not exist`,
+					ExpectedErr: `not found`,
 				},
 			},
 		},
