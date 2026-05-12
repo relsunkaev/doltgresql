@@ -153,6 +153,10 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 	if function.SQLDefinition != "" {
 		proLang = id.NewId(id.Section_FunctionLanguage, "sql")
 	}
+	proKind := "f"
+	if function.Aggregate {
+		proKind = "a"
+	}
 	return sql.Row{
 		function.ID.AsId(),                               // oid
 		function.ID.FunctionName(),                       // proname
@@ -163,7 +167,7 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		rows,                                             // prorows
 		id.Null,                                          // provariadic
 		"-",                                              // prosupport
-		"f",                                              // prokind
+		proKind,                                          // prokind
 		function.SecurityDefiner,                         // prosecdef
 		function.LeakProof,                               // proleakproof
 		function.Strict,                                  // proisstrict

@@ -173,6 +173,7 @@ func (c *CreateAggregate) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		AggregateStateType: stateType.ID,
 		AggregateSFunc:     transitionID,
 		AggregateInitCond:  c.InitCond,
+		Owner:              ctx.Client().User,
 	})
 	if err != nil {
 		return nil, err

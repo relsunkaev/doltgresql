@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterAggregate handles *tree.AlterAggregate nodes.
@@ -28,6 +29,32 @@ func nodeAlterAggregate(ctx *Context, node *tree.AlterAggregate) (vitess.Stateme
 	if err := validateAggArgMode(ctx, node.AggSig.Args, node.AggSig.OrderByArgs); err != nil {
 		return nil, err
 	}
+	if len(node.AggSig.OrderByArgs) > 0 || node.AggSig.All {
+		return NotYetSupportedError("ALTER AGGREGATE ordered-set signature is not yet supported")
+	}
 
-	return NotYetSupportedError("ALTER AGGREGATE is not yet supported")
+	routine, err := routineWithParams(ctx, node.Name, node.AggSig.Args)
+	if err != nil {
+		return nil, err
+	}
+	if node.Rename != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterAggregateRename(routine, string(node.Rename)),
+			Children:  nil,
+		}, nil
+	}
+	if node.Schema != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterAggregateSetSchema(routine, node.Schema),
+			Children:  nil,
+		}, nil
+	}
+	if node.Owner != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterAggregateOwner(routine, node.Owner),
+			Children:  nil,
+		}, nil
+	}
+
+	return NotYetSupportedError("ALTER AGGREGATE action is not yet supported")
 }

@@ -15,10 +15,11 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,21 @@ func (p PgAggregateHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgAggregateHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_aggregate row iter
-	return emptyRowIter()
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var rows []sql.Row
+	err = funcColl.IterateFunctions(ctx, func(function corefunctions.Function) (stop bool, err error) {
+		if function.Aggregate {
+			rows = append(rows, pgAggregateRow(function))
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -81,18 +95,33 @@ var pgAggregateSchema = sql.Schema{
 	{Name: "aggminitval", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgAggregateName}, // TODO: collation C
 }
 
-// pgAggregateRowIter is the sql.RowIter for the pg_aggregate table.
-type pgAggregateRowIter struct {
-}
-
-var _ sql.RowIter = (*pgAggregateRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgAggregateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgAggregateRowIter) Close(ctx *sql.Context) error {
-	return nil
+func pgAggregateRow(function corefunctions.Function) sql.Row {
+	initCond := any(nil)
+	if function.AggregateInitCond != "" {
+		initCond = function.AggregateInitCond
+	}
+	return sql.Row{
+		function.ID.FunctionName(),             // aggfnoid
+		"n",                                    // aggkind
+		int16(0),                               // aggnumdirectargs
+		function.AggregateSFunc.FunctionName(), // aggtransfn
+		"-",                                    // aggfinalfn
+		"-",                                    // aggcombinefn
+		"-",                                    // aggserialfn
+		"-",                                    // aggdeserialfn
+		"-",                                    // aggmtransfn
+		"-",                                    // aggminvtransfn
+		"-",                                    // aggmfinalfn
+		false,                                  // aggfinalextra
+		false,                                  // aggmfinalextra
+		false,                                  // aggfinalmodify
+		false,                                  // aggmfinalmodify
+		id.Null,                                // aggsortop
+		function.AggregateStateType.AsId(),     // aggtranstype
+		int32(0),                               // aggtransspace
+		id.Null,                                // aggmtranstype
+		int32(0),                               // aggmtransspace
+		initCond,                               // agginitval
+		nil,                                    // aggminitval
+	}
 }

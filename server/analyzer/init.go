@@ -15,11 +15,13 @@
 package analyzer
 
 import (
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/memo"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
+	goerrors "gopkg.in/src-d/go-errors.v1"
 
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
@@ -182,6 +184,7 @@ func initEngine() {
 	plan.ValidateForeignKeyDefinition = validateForeignKeyDefinition
 
 	planbuilder.IsAggregateFunc = IsAggregateFunc
+	sql.ErrFunctionNotFound = goerrors.NewKind("function: '%s' not found; function does not exist")
 
 	expression.DefaultExpressionFactory = pgexpression.PostgresExpressionFactory{}
 
