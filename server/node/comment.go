@@ -36,12 +36,17 @@ const (
 	CommentTargetColumn CommentTargetKind = "column"
 	CommentTargetView   CommentTargetKind = "view"
 	CommentTargetSeq    CommentTargetKind = "sequence"
+	CommentTargetSchema CommentTargetKind = "schema"
+	CommentTargetFunc   CommentTargetKind = "function"
+	CommentTargetType   CommentTargetKind = "type"
 )
 
 type Comment struct {
 	Kind        CommentTargetKind
 	Relation    vitess.TableName
 	Column      string
+	Name        string
+	Routine     *RoutineWithParams
 	Description *string
 }
 
@@ -58,6 +63,18 @@ func NewCommentOnView(relation vitess.TableName, description *string) Comment {
 
 func NewCommentOnSequence(relation vitess.TableName, description *string) Comment {
 	return Comment{Kind: CommentTargetSeq, Relation: relation, Description: description}
+}
+
+func NewCommentOnSchema(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetSchema, Name: name, Description: description}
+}
+
+func NewCommentOnFunction(routine *RoutineWithParams, description *string) Comment {
+	return Comment{Kind: CommentTargetFunc, Routine: routine, Description: description}
+}
+
+func NewCommentOnType(relation vitess.TableName, description *string) Comment {
+	return Comment{Kind: CommentTargetType, Relation: relation, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -98,15 +115,32 @@ func (c Comment) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 }
 
 func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
+	switch c.Kind {
+	case CommentTargetSchema:
+		oid, err := resolveCommentSchema(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_namespace", 0), nil
+	case CommentTargetFunc:
+		oid, err := resolveCommentFunction(ctx, c.Routine)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_proc", 0), nil
+	case CommentTargetType:
+		oid, err := resolveCommentType(ctx, c.Relation)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_type", 0), nil
+	}
+
 	relationOID, schema, err := c.resolveObjectID(ctx)
 	if err != nil {
 		return comments.Key{}, err
 	}
-	key := comments.Key{
-		ObjOID:   id.Cache().ToOID(relationOID),
-		ClassOID: comments.PgClassOID(),
-		ObjSubID: 0,
-	}
+	key := commentObjectKey(relationOID, "pg_class", 0)
 	if c.Kind == CommentTargetColumn {
 		idx := schema.IndexOfColName(c.Column)
 		if idx < 0 {
@@ -115,6 +149,14 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 		key.ObjSubID = int32(idx + 1)
 	}
 	return key, nil
+}
+
+func commentObjectKey(objID id.Id, className string, objSubID int32) comments.Key {
+	return comments.Key{
+		ObjOID:   id.Cache().ToOID(objID),
+		ClassOID: comments.ClassOID(className),
+		ObjSubID: objSubID,
+	}
 }
 
 func (c Comment) resolveObjectID(ctx *sql.Context) (id.Id, sql.Schema, error) {
@@ -128,6 +170,53 @@ func (c Comment) resolveObjectID(ctx *sql.Context) (id.Id, sql.Schema, error) {
 	default:
 		return resolveCommentRelation(ctx, c.Relation)
 	}
+}
+
+func resolveCommentSchema(ctx *sql.Context, schemaName string) (id.Id, error) {
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	if _, ok, err := schemaDatabase.GetSchema(ctx, schemaName); err != nil {
+		return id.Null, err
+	} else if !ok {
+		return id.Null, fmt.Errorf(`schema "%s" does not exist`, schemaName)
+	}
+	return id.NewNamespace(schemaName).AsId(), nil
+}
+
+func resolveCommentFunction(ctx *sql.Context, routine *RoutineWithParams) (id.Id, error) {
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	funcID, err := resolveFunctionID(ctx, funcColl, routine)
+	if err != nil {
+		return id.Null, err
+	}
+	if !funcColl.HasFunction(ctx, funcID) {
+		return id.Null, fmt.Errorf(`function "%s" does not exist`, routine.RoutineName)
+	}
+	return funcID.AsId(), nil
+}
+
+func resolveCommentType(ctx *sql.Context, relation vitess.TableName) (id.Id, error) {
+	typeName := relation.Name.String()
+	searchSchemas, err := commentSearchSchemas(ctx, relation)
+	if err != nil {
+		return id.Null, err
+	}
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	for _, schemaName := range searchSchemas {
+		typeID := id.NewType(schemaName, typeName)
+		if typeCollection.HasType(ctx, typeID) {
+			return typeID.AsId(), nil
+		}
+	}
+	return id.Null, fmt.Errorf(`type "%s" does not exist`, typeName)
 }
 
 type schemaGetter interface {

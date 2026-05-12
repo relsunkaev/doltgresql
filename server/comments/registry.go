@@ -82,7 +82,11 @@ func Entries() []Entry {
 }
 
 func PgClassOID() uint32 {
-	return id.Cache().ToOID(id.NewTable(pgCatalogName, pgClassName).AsId())
+	return ClassOID(pgClassName)
+}
+
+func ClassOID(className string) uint32 {
+	return id.Cache().ToOID(id.NewTable(pgCatalogName, className).AsId())
 }
 
 func IDFromOID(oid uint32) id.Id {

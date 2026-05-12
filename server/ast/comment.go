@@ -52,6 +52,38 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSequence(tableName, stmt.Comment)}, nil
+	case *tree.CommentOnSchema:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSchema(obj.Name, stmt.Comment)}, nil
+	case *tree.CommentOnFunction:
+		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnFunction(routine, stmt.Comment)}, nil
+	case *tree.CommentOnAggregate:
+		if err := validateAggArgMode(ctx, obj.AggSig.Args, obj.AggSig.OrderByArgs); err != nil {
+			return nil, err
+		}
+		if len(obj.AggSig.OrderByArgs) > 0 || obj.AggSig.All {
+			return NotYetSupportedError("COMMENT ON AGGREGATE ordered-set signature is not yet supported")
+		}
+		routine, err := routineWithParams(ctx, obj.Name, obj.AggSig.Args)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnFunction(routine, stmt.Comment)}, nil
+	case *tree.CommentOnType:
+		typeName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnType(typeName, stmt.Comment)}, nil
+	case *tree.CommentOnDomain:
+		typeName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnType(typeName, stmt.Comment)}, nil
 	case *tree.CommentOnColumn:
 		tableName, err := nodeUnresolvedObjectName(ctx, obj.ColumnItem.TableName)
 		if err != nil {
