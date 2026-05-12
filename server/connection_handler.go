@@ -2880,11 +2880,13 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 	connectionID := h.mysqlConn.ConnectionID
 	switch {
 	case isBeginQuery(query):
+		functions.BeginSessionTxid(connectionID)
 		auth.BeginTransaction(connectionID)
 		deferrable.Begin(connectionID)
 		largeobject.BeginTransaction(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
+		functions.EndSessionTxid(connectionID)
 		deferrable.Commit(connectionID)
 		auth.CommitTransaction(connectionID)
 		if err := largeobject.CommitTransaction(connectionID); err != nil {
@@ -2895,6 +2897,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		}
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
+		functions.EndSessionTxid(connectionID)
 		deferrable.Rollback(connectionID)
 		if err := auth.RollbackTransaction(connectionID); err != nil {
 			return err
@@ -2906,6 +2909,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		functions.RollbackSessionLogicalDecodingMessages(connectionID)
 		notifications.Rollback(connectionID)
 	case !h.inTransaction:
+		functions.EndSessionTxid(connectionID)
 		if err := functions.CommitSessionLogicalDecodingMessages(connectionID); err != nil {
 			return err
 		}

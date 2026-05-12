@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"sync"
+
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -26,21 +28,49 @@ func initTxidCurrent() {
 	framework.RegisterFunction(txid_current)
 }
 
-// txid_current returns a session-stable nonzero transaction identifier so the
-// PostgreSQL contract (`txid_current() = txid_current()` within a transaction,
-// and `txid_current() > 0`) holds. Doltgres does not currently allocate a
-// fresh transaction ID per BEGIN/COMMIT cycle the way PostgreSQL does — the
-// value is derived from the session ID, so a new transaction in the same
-// session reuses the previous identifier. Replacing this with a real
-// per-transaction allocation is a follow-up.
+var txidCurrentState = struct {
+	sync.Mutex
+	next    int64
+	current map[uint32]int64
+}{
+	next:    1,
+	current: make(map[uint32]int64),
+}
+
+func BeginSessionTxid(connectionID uint32) {
+	txidCurrentState.Lock()
+	defer txidCurrentState.Unlock()
+	txidCurrentState.current[connectionID] = txidCurrentState.next
+	txidCurrentState.next++
+}
+
+func EndSessionTxid(connectionID uint32) {
+	txidCurrentState.Lock()
+	delete(txidCurrentState.current, connectionID)
+	txidCurrentState.Unlock()
+}
+
+func sessionTxid(connectionID uint32) int64 {
+	txidCurrentState.Lock()
+	defer txidCurrentState.Unlock()
+	if txid, ok := txidCurrentState.current[connectionID]; ok {
+		return txid
+	}
+	txid := txidCurrentState.next
+	txidCurrentState.next++
+	txidCurrentState.current[connectionID] = txid
+	return txid
+}
+
+// txid_current returns a stable nonzero identifier for the current transaction.
+// Autocommit statements lazily allocate one for the statement and the
+// connection layer clears it when the statement finishes.
 var txid_current = framework.Function0{
 	Name:               "txid_current",
 	Return:             pgtypes.Int64,
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context) (any, error) {
-		// +1 keeps the value strictly positive even if the host happens to
-		// assign session ID 0 to the first session.
-		return int64(ctx.Session.ID()) + 1, nil
+		return sessionTxid(ctx.Session.ID()), nil
 	},
 }
