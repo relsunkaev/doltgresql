@@ -995,6 +995,26 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(TimestampColumnTypmodsRoundStoredFractionalSecondsRepro|TimestampTypmod(Default|CopyFrom|Update|OnConflictUpdate|InsertSelect|UpdateFrom|TableCheck|GeneratedColumn|Unique|ForeignKey).*Repro|TimestamptzTypmod(Default|CopyFrom|Update|OnConflictUpdate|InsertSelect|UpdateFrom|TableCheck|GeneratedColumn|Unique|ForeignKey).*Repro|TimestampArrayTypmodsRoundStoredElementsRepro|TimeArrayTypmodsRoundStoredElementsRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/types ./server/functions -run 'Time|Timestamp|Array|Typmod|timestamp|time' -count=1`
 
+### delta - 2026-05-12 15:45 America/Phoenix
+
+- Lane complete: typmod arrays now have a proper `=` overload using element comparison.
+- Source touched: `server/functions/binary/array.go`.
+- Red: character/varchar/numeric typmod array equality and a varchar-array WHERE equality predicate failed with missing `internal_binary_operator_func_=` overloads.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(CharacterArrayTypmodSupportsEqualityRepro|VarcharArrayTypmodSupportsEqualityRepro|NumericArrayTypmodSupportsEqualityRepro|VarcharArrayTypmodWherePredicateUsesElementEqualityRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions ./server/functions/binary -run 'Array|array' -count=1`
+- Still separate: DISTINCT over typmod arrays fails in row conversion (`[abc] -> text`), and `array_cat(labels, ARRAY['...'])` still needs compatible-array resolution.
+
+### delta - 2026-05-12 15:47 America/Phoenix
+
+- Lane complete: `array_cat(anyarray, text[])` now resolves for typmod string-array columns before assignment coercion.
+- Source touched: `server/functions/binary/concatenate.go`.
+- Red: `TestVarcharArrayCatReportsAssignmentTypmodErrorRepro` and `TestCharacterArrayCatResolvesTypmodArrayRepro` failed with missing `array_cat(varchar(3)[], text[])` / `array_cat(bpchar(3)[], text[])` overloads.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(VarcharArrayCatReportsAssignmentTypmodErrorRepro|CharacterArrayCatResolvesTypmodArrayRepro|NumericArrayCatValidatesElementTypmodRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions/binary -run 'Array|array|Concat|concat' -count=1`
+- Still separate: DISTINCT over typmod arrays fails in row conversion (`[abc] -> text`).
+
 ### alpha - 2026-05-12 15:40 America/Phoenix
 
 - Lane complete: generic `ALTER TABLE` DDL and `ALTER TABLE ... RENAME TO` now require table ownership through a dedicated auth-layer `OWNER` check; `ALTER TABLE ... REPLICA IDENTITY` now performs its explicit owner check before changing metadata.
@@ -1005,3 +1025,24 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./testing/go -run '^(TestAlterTableAlterColumnTypeRequiresOwnershipRepro|TestRenameTableRequiresOwnershipRepro|TestAlterTableReplicaIdentityRequiresOwnershipRepro|TestAlterTableRowLevelSecurityRequiresOwnershipRepro|TestAlterTableAddColumnRequiresOwnershipRepro|TestAlterTableDropColumnRequiresOwnershipRepro|TestAlterTableRenameColumnRequiresOwnershipRepro|TestAlterTableAddConstraintRequiresOwnershipRepro|TestAlterTableDropConstraintRequiresOwnershipRepro|TestAlterTableAlterColumnSetDefaultRequiresOwnershipRepro|TestAlterTableAlterColumnDropDefaultRequiresOwnershipRepro|TestAlterTableAlterColumnSetNotNullRequiresOwnershipRepro|TestAlterTableAlterColumnDropNotNullRequiresOwnershipRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./server/auth ./server/ast ./server/node -count=1`
 - Progress note: fresh alpha manifest `/tmp/doltgresql-testing-go-alpha-20260512-1534.jsonl` last read `609/796` passing (`76.5%`), `187` failed, but excludes this commit.
+
+### gamma - 2026-05-12 15:49 America/Phoenix
+
+- Lane complete: branch-qualified `CREATE TABLE` now preserves its target revision while refreshing Doltgres table metadata, so the owner/comment update no longer reopens the current database branch.
+- Source touched and committed: `server/node/create_table.go`.
+- Result: committed `afa179e8 fix: preserve branch-qualified create table metadata`.
+- Red: `TestBranchQualifiedSerialTableCreatesSequenceRepro` created the table on `postgres/serial_branch`, then failed while applying table metadata because `freshDatabase` looked in `postgres/main` and returned `table not found`.
+- Green:
+  - `TMPDIR=/tmp/doltgresql-gamma-versioning-gotmp GOTMPDIR=/tmp/doltgresql-gamma-versioning-gotmp GOCACHE=/tmp/doltgresql-gamma-versioning-gocache CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestBranchQualified(SerialTableCreatesSequence|FunctionDefinition|ProcedureDefinition|SequenceDefinition|EnumTypeDefinition|CompositeTypeDefinition|DomainDefinition)Repro$' -count=1 -v`
+  - `TMPDIR=/tmp/doltgresql-gamma-versioning-gotmp GOTMPDIR=/tmp/doltgresql-gamma-versioning-gotmp GOCACHE=/tmp/doltgresql-gamma-versioning-gocache CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./server/node -count=1`
+- Note: cleared old gamma temp/cache directories to recover disk space after a linker `errno=28`; free space recovered to about 14 GiB before rerunning.
+### alpha - 2026-05-12 15:51 America/Phoenix
+
+- Lane complete: `ALTER TABLE/VIEW/MATERIALIZED VIEW/SEQUENCE ... SET SCHEMA` now moves relations across schemas instead of returning unsupported errors.
+- Source touched and committed: `server/node/alter_relation_set_schema.go`, `server/node/alter_relation_owner.go`, `server/ast/alter_table.go`, `server/ast/alter_view.go`, `server/functions/pg_get_viewdef.go`.
+- Result: committed `7b370c15 fix: support relation set schema`.
+- Red: `TestAlterTableSetSchemaMovesRelationRepro`, `TestAlterViewSetSchemaMovesViewRepro`, `TestAlterMaterializedViewSetSchemaMovesViewRepro`, and `TestAlterSequenceSetSchemaMovesSequenceRepro` failed with unsupported/no move behavior. The first green attempt showed moved views rebinding unqualified base tables in the target schema; the fix now schema-qualifies stored view SELECT relation references using the source schema during the move.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-focused-gocache GOTMPDIR=/tmp/doltgresql-alpha-focused-tmp go test -vet=off ./testing/go -run '^(TestAlterTableSetSchemaMovesRelationRepro|TestAlterViewSetSchemaMovesViewRepro|TestAlterMaterializedViewSetSchemaMovesViewRepro|TestAlterSequenceSetSchemaMovesSequenceRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-focused-gocache GOTMPDIR=/tmp/doltgresql-alpha-focused-tmp go test -vet=off ./server/node ./server/ast ./server/functions -run '^$' -count=1`
+- Progress note: fresh manifest `/tmp/doltgresql-testing-go-alpha-20260512-1541.jsonl` reached `881/1320` passing (`66.7%`), `439` failed before this commit made it stale. Restarting manifest from `7b370c15`.
