@@ -220,6 +220,40 @@ func TestDropEnumTypeUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
+// CHECK constraint unless CASCADE is requested.
+func TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects check constraint expression dependencies",
+			SetUpScript: []string{
+				`CREATE TYPE enum_check_dependency_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE enum_check_dependency_items (
+					id INT PRIMARY KEY,
+					status TEXT,
+					CONSTRAINT enum_check_dependency_not_done
+						CHECK (status::enum_check_dependency_status <> 'done'::enum_check_dependency_status)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE enum_check_dependency_status;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO enum_check_dependency_items
+						VALUES (1, 'new');`,
+				},
+				{
+					Query:       `INSERT INTO enum_check_dependency_items VALUES (2, 'done');`,
+					ExpectedErr: `enum_check_dependency_not_done`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropEnumTypeUsedByViewRequiresCascadeRepro reproduces a dependency bug:
 // PostgreSQL rejects dropping an enum type referenced by a view unless CASCADE
 // is requested.
