@@ -137,6 +137,65 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index permits duplicate NULL keys",
+			SetUpScript: []string{
+				`CREATE TABLE nullable_memberships (
+					id INT PRIMARY KEY,
+					user_id INT,
+					locale TEXT,
+					active BOOL NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX nullable_memberships_user_idx
+					ON nullable_memberships (user_id)
+					WHERE active;`,
+				`CREATE TABLE nullable_membership_pairs (
+					id INT PRIMARY KEY,
+					user_id INT,
+					locale TEXT,
+					active BOOL NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX nullable_membership_pairs_user_locale_idx
+					ON nullable_membership_pairs (user_id, locale)
+					WHERE active;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO nullable_memberships VALUES
+						(1, NULL, 'en', true),
+						(2, NULL, 'en', true),
+						(3, 10, NULL, false),
+						(4, 10, NULL, false),
+						(5, 10, NULL, true);`,
+				},
+				{
+					Query:       `INSERT INTO nullable_memberships VALUES (6, 10, NULL, true);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:    `SELECT count(*)::text FROM nullable_memberships;`,
+					Expected: []sql.Row{{"5"}},
+				},
+				{
+					Query: `INSERT INTO nullable_membership_pairs VALUES
+						(1, 20, NULL, true),
+						(2, 20, NULL, true),
+						(3, NULL, 'en', true),
+						(4, NULL, 'en', true),
+						(5, 30, 'en', false),
+						(6, 30, 'en', false),
+						(7, 30, 'en', true);`,
+				},
+				{
+					Query:       `INSERT INTO nullable_membership_pairs VALUES (8, 30, 'en', true);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:    `SELECT count(*)::text FROM nullable_membership_pairs;`,
+					Expected: []sql.Row{{"7"}},
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports boolean predicates",
 			SetUpScript: []string{
 				`CREATE TABLE inventory (id INT PRIMARY KEY, vmid INT, at_service BOOL);`,
