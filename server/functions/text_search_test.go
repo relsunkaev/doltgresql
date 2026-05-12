@@ -17,6 +17,10 @@ package functions
 import (
 	"reflect"
 	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 func TestSimpleTSPhraseQuery(t *testing.T) {
@@ -72,6 +76,41 @@ func TestSimpleTSQueryPhrase(t *testing.T) {
 
 func TestSimpleTSRewrite(t *testing.T) {
 	if got, want := simpleTSRewrite("'fat'", "'fat'", "'cat'"), "'cat'"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestSimpleTSFilter(t *testing.T) {
+	got := simpleTSFilter("base:1A hidden:2B rebel:3A", "{a}")
+	if want := "'base':1A 'rebel':3A"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestSimpleJsonToTSVector(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	got, err := simpleJsonToTSVector(ctx, pgtypes.Json, `{"a": "aaa in bbb"}`, `"string"`, "english")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "'aaa':1 'bbb':3"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
+	got, err = simpleJsonToTSVector(ctx, pgtypes.Json, `{"title": "ignored"}`, `"key"`, "simple")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "'title':1"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
+	got, err = simpleJsonToTSVector(ctx, pgtypes.Json, `{"b": true, "n": 42, "s": "skip"}`, `["numeric", "boolean"]`, "simple")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "'42':2 'true':1"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -29,6 +30,10 @@ import (
 func init() {
 	framework.RegisterFunction(to_tsvector_text)
 	framework.RegisterFunction(to_tsvector_config_text)
+	framework.RegisterFunction(json_to_tsvector_json_jsonb)
+	framework.RegisterFunction(json_to_tsvector_config_json_jsonb)
+	framework.RegisterFunction(jsonb_to_tsvector_jsonb_jsonb)
+	framework.RegisterFunction(jsonb_to_tsvector_config_jsonb_jsonb)
 	framework.RegisterFunction(to_tsquery_text)
 	framework.RegisterFunction(to_tsquery_config_text)
 	framework.RegisterFunction(plainto_tsquery_text)
@@ -49,11 +54,19 @@ func init() {
 	framework.RegisterFunction(querytree_text)
 	framework.RegisterFunction(tsquery_phrase_text_text)
 	framework.RegisterFunction(ts_rewrite_text_text_text)
+	framework.RegisterFunction(ts_filter_text_text)
 	framework.RegisterFunction(ts_match_vq_text)
 }
 
 var textSearchTokenPattern = regexp.MustCompile(`[[:alnum:]_]+`)
 var tsVectorLexemePattern = regexp.MustCompile(`'((?:''|[^'])*)'(?:\:([0-9A-D,]+))?`)
+var tsVectorBareLexemePattern = regexp.MustCompile(`([[:alnum:]_]+)(?:\:([0-9A-D,]+))`)
+
+var englishTextSearchStopWords = map[string]struct{}{
+	"a": {}, "an": {}, "and": {}, "are": {}, "as": {}, "at": {}, "be": {}, "by": {},
+	"for": {}, "from": {}, "in": {}, "is": {}, "it": {}, "of": {}, "on": {}, "or": {},
+	"that": {}, "the": {}, "to": {}, "was": {}, "were": {}, "with": {},
+}
 
 var to_tsvector_text = framework.Function1{
 	Name:       "to_tsvector",
@@ -70,6 +83,42 @@ var to_tsvector_config_text = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, config any, val any) (any, error) {
 		return simpleTSVector(fmt.Sprint(val)), nil
+	},
+}
+
+var json_to_tsvector_json_jsonb = framework.Function2{
+	Name:       "json_to_tsvector",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.JsonB},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, doc any, filter any) (any, error) {
+		return simpleJsonToTSVector(ctx, pgtypes.Json, doc, filter, "")
+	},
+}
+
+var json_to_tsvector_config_json_jsonb = framework.Function3{
+	Name:       "json_to_tsvector",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Json, pgtypes.JsonB},
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, config any, doc any, filter any) (any, error) {
+		return simpleJsonToTSVector(ctx, pgtypes.Json, doc, filter, fmt.Sprint(config))
+	},
+}
+
+var jsonb_to_tsvector_jsonb_jsonb = framework.Function2{
+	Name:       "jsonb_to_tsvector",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.JsonB},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, doc any, filter any) (any, error) {
+		return simpleJsonToTSVector(ctx, pgtypes.JsonB, doc, filter, "")
+	},
+}
+
+var jsonb_to_tsvector_config_jsonb_jsonb = framework.Function3{
+	Name:       "jsonb_to_tsvector",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.JsonB, pgtypes.JsonB},
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, config any, doc any, filter any) (any, error) {
+		return simpleJsonToTSVector(ctx, pgtypes.JsonB, doc, filter, fmt.Sprint(config))
 	},
 }
 
@@ -279,6 +328,15 @@ var ts_rewrite_text_text_text = framework.Function3{
 	},
 }
 
+var ts_filter_text_text = framework.Function2{
+	Name:       "ts_filter",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, vector any, weights any) (any, error) {
+		return simpleTSFilter(fmt.Sprint(vector), fmt.Sprint(weights)), nil
+	},
+}
+
 var ts_match_vq_text = framework.Function2{
 	Name:       "ts_match_vq",
 	Return:     pgtypes.Bool,
@@ -289,17 +347,24 @@ var ts_match_vq_text = framework.Function2{
 }
 
 func simpleTSVector(input string) string {
+	return renderTSVectorFromTerms(textSearchTerms(input), nil)
+}
+
+func renderTSVectorFromTerms(terms []string, stopWords map[string]struct{}) string {
 	positionsByTerm := map[string][]int{}
-	for i, term := range textSearchTerms(input) {
+	for i, term := range terms {
+		if _, ok := stopWords[term]; ok {
+			continue
+		}
 		positionsByTerm[term] = append(positionsByTerm[term], i+1)
 	}
-	terms := make([]string, 0, len(positionsByTerm))
+	lexemes := make([]string, 0, len(positionsByTerm))
 	for term := range positionsByTerm {
-		terms = append(terms, term)
+		lexemes = append(lexemes, term)
 	}
-	sort.Strings(terms)
-	parts := make([]string, 0, len(terms))
-	for _, term := range terms {
+	sort.Strings(lexemes)
+	parts := make([]string, 0, len(lexemes))
+	for _, term := range lexemes {
 		positions := positionsByTerm[term]
 		positionText := make([]string, len(positions))
 		for i, pos := range positions {
@@ -308,6 +373,114 @@ func simpleTSVector(input string) string {
 		parts = append(parts, "'"+term+"':"+strings.Join(positionText, ","))
 	}
 	return strings.Join(parts, " ")
+}
+
+func simpleJsonToTSVector(ctx *sql.Context, docType *pgtypes.DoltgresType, doc any, filter any, config string) (string, error) {
+	jsonDoc, err := pgtypes.JsonDocumentFromSQLValue(ctx, docType, doc)
+	if err != nil {
+		return "", err
+	}
+	filterSet, err := jsonToTSVectorFilter(ctx, filter)
+	if err != nil {
+		return "", err
+	}
+	terms, err := jsonTextSearchTerms(jsonDoc.Value, filterSet)
+	if err != nil {
+		return "", err
+	}
+	return renderTSVectorFromTerms(terms, textSearchStopWords(config)), nil
+}
+
+func jsonToTSVectorFilter(ctx *sql.Context, filter any) (map[string]bool, error) {
+	doc, err := pgtypes.JsonDocumentFromSQLValue(ctx, pgtypes.JsonB, filter)
+	if err != nil {
+		return nil, err
+	}
+	filterSet := map[string]bool{}
+	var visit func(value pgtypes.JsonValue) error
+	visit = func(value pgtypes.JsonValue) error {
+		switch value := value.(type) {
+		case pgtypes.JsonValueString:
+			option, err := pgtypes.JsonStringUnescape(value)
+			if err != nil {
+				return err
+			}
+			filterSet[strings.ToLower(option)] = true
+		case pgtypes.JsonValueArray:
+			for _, item := range value {
+				if _, isNull := item.(pgtypes.JsonValueNull); isNull {
+					continue
+				}
+				if err := visit(item); err != nil {
+					return err
+				}
+			}
+		case pgtypes.JsonValueNull:
+		default:
+			return fmt.Errorf("invalid json_to_tsvector filter")
+		}
+		return nil
+	}
+	if err := visit(doc.Value); err != nil {
+		return nil, err
+	}
+	return filterSet, nil
+}
+
+func jsonTextSearchTerms(value pgtypes.JsonValue, filter map[string]bool) ([]string, error) {
+	var terms []string
+	var visit func(value pgtypes.JsonValue) error
+	enabled := func(name string) bool {
+		return filter["all"] || filter[name]
+	}
+	visit = func(value pgtypes.JsonValue) error {
+		switch value := value.(type) {
+		case pgtypes.JsonValueObject:
+			for _, item := range value.Items {
+				if enabled("key") {
+					terms = append(terms, textSearchTerms(item.Key)...)
+				}
+				if err := visit(item.Value); err != nil {
+					return err
+				}
+			}
+		case pgtypes.JsonValueArray:
+			for _, item := range value {
+				if err := visit(item); err != nil {
+					return err
+				}
+			}
+		case pgtypes.JsonValueString:
+			if enabled("string") {
+				text, err := pgtypes.JsonStringUnescape(value)
+				if err != nil {
+					return err
+				}
+				terms = append(terms, textSearchTerms(text)...)
+			}
+		case pgtypes.JsonValueNumber:
+			if enabled("numeric") {
+				terms = append(terms, textSearchTerms(decimal.Decimal(value).String())...)
+			}
+		case pgtypes.JsonValueBoolean:
+			if enabled("boolean") {
+				terms = append(terms, textSearchTerms(fmt.Sprint(bool(value)))...)
+			}
+		case pgtypes.JsonValueNull:
+		}
+		return nil
+	}
+	if err := visit(value); err != nil {
+		return nil, err
+	}
+	return terms, nil
+}
+
+func textSearchStopWords(config string) map[string]struct{} {
+	if strings.EqualFold(config, "english") {
+		return englishTextSearchStopWords
+	}
+	return nil
 }
 
 func simpleTSQuery(input string) string {
@@ -407,6 +580,32 @@ func simpleTSRewrite(query string, target string, substitute string) string {
 	return strings.ReplaceAll(query, target, substitute)
 }
 
+func simpleTSFilter(vector string, weights string) string {
+	allowed := map[string]bool{}
+	for _, weight := range textSearchTerms(weights) {
+		allowed[strings.ToUpper(weight)] = true
+	}
+	entries := tsVectorEntries(vector)
+	filtered := entries[:0]
+	for _, entry := range entries {
+		keptPositions := entry.positions[:0]
+		for _, position := range entry.positions {
+			if len(position) == 0 {
+				continue
+			}
+			weight := strings.ToUpper(position[len(position)-1:])
+			if allowed[weight] {
+				keptPositions = append(keptPositions, position)
+			}
+		}
+		if len(keptPositions) > 0 {
+			entry.positions = keptPositions
+			filtered = append(filtered, entry)
+		}
+	}
+	return renderTSVectorEntries(filtered)
+}
+
 func textSearchTermSet(input string) map[string]bool {
 	terms := map[string]bool{}
 	for _, term := range textSearchTerms(input) {
@@ -432,7 +631,10 @@ func tsVectorLexemes(input string) []string {
 func tsVectorEntries(input string) []tsVectorEntry {
 	matches := tsVectorLexemePattern.FindAllStringSubmatch(input, -1)
 	if len(matches) == 0 {
-		return nil
+		matches = tsVectorBareLexemePattern.FindAllStringSubmatch(input, -1)
+		if len(matches) == 0 {
+			return nil
+		}
 	}
 	entries := make([]tsVectorEntry, 0, len(matches))
 	seen := map[string]bool{}
