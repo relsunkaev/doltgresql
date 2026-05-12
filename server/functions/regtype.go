@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/lib/pq/oid"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -59,17 +60,19 @@ var regtypein = framework.Function1{
 		if err = regtype_IoInputValidation(ctx, input, sections); err != nil {
 			return id.Null, err
 		}
-		var schema string
+		var searchSchemas []string
 		var typeName string
 		switch len(sections) {
 		case 1:
-			// TODO: we should make use of the search path, but it needs to include an implicit "pg_catalog" before we can
+			searchSchemas, err = core.SearchPath(ctx)
+			if err != nil {
+				return id.Null, err
+			}
 			typeName = sections[0]
 		case 3:
-			// TODO: sections[0] is the schema that we need to search in
-			schema = sections[0]
+			searchSchemas = []string{sections[0]}
 			typeName = sections[2]
-			if schema == "pg_catalog" && typeName == "char" { // Sad but true
+			if sections[0] == "pg_catalog" && typeName == "char" { // Sad but true
 				typeName = `"char"`
 			}
 		default:
@@ -78,14 +81,27 @@ var regtypein = framework.Function1{
 		// Remove everything after the first parenthesis
 		typeName = strings.Split(typeName, "(")[0]
 
-		if typeName == "char" && schema == "" {
+		if typeName == "char" && len(searchSchemas) > 0 && searchSchemas[0] == "pg_catalog" {
 			return id.NewType("pg_catalog", "bpchar").AsId(), nil
 		}
 		if typeName == "int" {
 			typeName = "int4"
 		}
-		if internalID, ok := pgtypes.NameToInternalID[typeName]; ok && (internalID.SchemaName() == schema || schema == "") {
-			return internalID.AsId(), nil
+		typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return id.Null, err
+		}
+		for _, schema := range searchSchemas {
+			if internalID, ok := pgtypes.NameToInternalID[typeName]; ok && internalID.SchemaName() == schema {
+				return internalID.AsId(), nil
+			}
+			typ, err := typeCollection.GetType(ctx, id.NewType(schema, typeName))
+			if err != nil {
+				return id.Null, err
+			}
+			if typ != nil {
+				return typ.ID.AsId(), nil
+			}
 		}
 		return id.Null, pgtypes.ErrTypeDoesNotExist.New(input)
 	},
