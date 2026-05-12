@@ -144,3 +144,62 @@ func TestRollbackRevertsAlterRoleOptionsRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRollbackDropsCreatedRoleRepro reproduces a transaction consistency bug:
+// CREATE ROLE writes auth metadata outside the surrounding transaction and
+// survives ROLLBACK.
+func TestRollbackDropsCreatedRoleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK drops created role",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `CREATE ROLE rollback_created_role;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'rollback_created_role';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestRollbackRestoresDroppedRoleRepro reproduces a transaction consistency bug:
+// DROP ROLE deletes auth metadata outside the surrounding transaction and
+// survives ROLLBACK.
+func TestRollbackRestoresDroppedRoleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK restores dropped role",
+			SetUpScript: []string{
+				`CREATE ROLE rollback_dropped_role;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `DROP ROLE rollback_dropped_role;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'rollback_dropped_role';`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
