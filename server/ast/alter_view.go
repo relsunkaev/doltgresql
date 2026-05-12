@@ -15,9 +15,11 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // nodeAlterView handles ALTER VIEW nodes.
@@ -27,7 +29,10 @@ func nodeAlterView(ctx *Context, stmt *tree.AlterView) (sqlparser.Statement, err
 	}
 
 	// We intentionally don't support OWNER TO since we don't support owning objects
-	if _, ok := stmt.Cmd.(*tree.AlterViewOwnerTo); ok {
+	if owner, ok := stmt.Cmd.(*tree.AlterViewOwnerTo); ok {
+		if !auth.RoleExists(owner.Owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, owner.Owner)
+		}
 		return NewNoOp("OWNER TO is unsupported and ignored"), nil
 	}
 

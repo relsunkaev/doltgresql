@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -275,6 +276,9 @@ func nodeAlterTableCmds(
 			}
 			vitessDdlCmds = append(vitessDdlCmds, statement)
 		case *tree.AlterTableOwner:
+			if !auth.RoleExists(cmd.Owner) {
+				return nil, nil, errors.Errorf(`role "%s" does not exist`, cmd.Owner)
+			}
 			unsupportedWarnings = append(unsupportedWarnings, fmt.Sprintf("ALTER TABLE %s OWNER TO %s", tableName.String(), cmd.Owner))
 		case *tree.AlterTableComputed:
 			return nil, nil, errors.New("This command does not currently support multiple actions in one statement")
