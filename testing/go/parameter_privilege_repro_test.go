@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestGrantOnConfigurationParameterRepro reproduces an admin ACL correctness
 // bug: PostgreSQL supports granting SET and ALTER SYSTEM privileges on
@@ -74,6 +78,23 @@ func TestRevokeOnConfigurationParameterRepro(t *testing.T) {
 				{
 					Query:       `REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM parameter_alter_system_revokee;`,
 					ExpectedTag: `REVOKE`,
+				},
+			},
+		},
+	})
+}
+
+// TestHasParameterPrivilegeHelperRepro reproduces an admin ACL helper gap:
+// PostgreSQL exposes has_parameter_privilege for parameter-level SET and ALTER
+// SYSTEM privileges.
+func TestHasParameterPrivilegeHelperRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "has_parameter_privilege reports parameter privileges",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT has_parameter_privilege('work_mem', 'SET');`,
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},

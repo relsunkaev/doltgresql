@@ -29,17 +29,18 @@ import (
 
 // Revoke handles all of the REVOKE statements.
 type Revoke struct {
-	RevokeTable    *RevokeTable
-	RevokeSchema   *RevokeSchema
-	RevokeDatabase *RevokeDatabase
-	RevokeSequence *RevokeSequence
-	RevokeRoutine  *RevokeRoutine
-	RevokeLanguage *RevokeLanguage
-	RevokeRole     *RevokeRole
-	FromRoles      []string
-	GrantedBy      string
-	GrantOptionFor bool // This is "ADMIN OPTION FOR" for RevokeRole only
-	Cascade        bool // When false, represents RESTRICT
+	RevokeTable     *RevokeTable
+	RevokeSchema    *RevokeSchema
+	RevokeDatabase  *RevokeDatabase
+	RevokeSequence  *RevokeSequence
+	RevokeRoutine   *RevokeRoutine
+	RevokeLanguage  *RevokeLanguage
+	RevokeParameter *RevokeParameter
+	RevokeRole      *RevokeRole
+	FromRoles       []string
+	GrantedBy       string
+	GrantOptionFor  bool // This is "ADMIN OPTION FOR" for RevokeRole only
+	Cascade         bool // When false, represents RESTRICT
 }
 
 // RevokeTable specifically handles the REVOKE ... ON TABLE statement.
@@ -76,6 +77,12 @@ type RevokeRoutine struct {
 type RevokeLanguage struct {
 	Privileges []auth.Privilege
 	Languages  []string
+}
+
+// RevokeParameter specifically handles the REVOKE ... ON PARAMETER statement.
+type RevokeParameter struct {
+	Privileges []auth.Privilege
+	Parameters []string
 }
 
 // RevokeRole specifically handles the REVOKE <roles> FROM <roles> statement.
@@ -132,6 +139,10 @@ func (r *Revoke) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 			}
 		case r.RevokeLanguage != nil:
 			if err = r.revokeLanguage(ctx); err != nil {
+				return
+			}
+		case r.RevokeParameter != nil:
+			if err = r.revokeParameter(ctx); err != nil {
 				return
 			}
 		case r.RevokeRole != nil:
@@ -399,6 +410,35 @@ func (r *Revoke) revokeLanguage(ctx *sql.Context) error {
 				auth.RemoveLanguagePrivilege(auth.LanguagePrivilegeKey{
 					Role: role.ID(),
 					Name: language,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedByID,
+				}, r.GrantOptionFor)
+			}
+		}
+	}
+	return nil
+}
+
+// revokeParameter handles *RevokeParameter from within RowIter.
+func (r *Revoke) revokeParameter(ctx *sql.Context) error {
+	roles, userRole, grantedByID, err := r.common(ctx)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, parameter := range r.RevokeParameter.Parameters {
+			key := auth.ParameterPrivilegeKey{
+				Role: userRole.ID(),
+				Name: parameter,
+			}
+			for _, privilege := range r.RevokeParameter.Privileges {
+				if id := auth.HasParameterPrivilegeGrantOption(key, privilege); !id.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
+				}
+				auth.RemoveParameterPrivilege(auth.ParameterPrivilegeKey{
+					Role: role.ID(),
+					Name: parameter,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedByID,

@@ -38,16 +38,17 @@ var (
 // Database contains all information pertaining to authorization and privileges. This is a global structure that is
 // shared between all branches.
 type Database struct {
-	rolesByName        map[string]RoleID
-	rolesByID          map[RoleID]Role
-	databasePrivileges *DatabasePrivileges
-	schemaPrivileges   *SchemaPrivileges
-	tablePrivileges    *TablePrivileges
-	sequencePrivileges *SequencePrivileges
-	routinePrivileges  *RoutinePrivileges
-	languages          *Languages
-	languagePrivileges *LanguagePrivileges
-	roleMembership     *RoleMembership
+	rolesByName         map[string]RoleID
+	rolesByID           map[RoleID]Role
+	databasePrivileges  *DatabasePrivileges
+	schemaPrivileges    *SchemaPrivileges
+	tablePrivileges     *TablePrivileges
+	sequencePrivileges  *SequencePrivileges
+	routinePrivileges   *RoutinePrivileges
+	languages           *Languages
+	languagePrivileges  *LanguagePrivileges
+	parameterPrivileges *ParameterPrivileges
+	roleMembership      *RoleMembership
 }
 
 // ClearDatabase clears the internal database, leaving only the default users. This is primarily for use by tests.
@@ -61,6 +62,7 @@ func ClearDatabase() {
 	clear(globalDatabase.routinePrivileges.Data)
 	clear(globalDatabase.languages.Data)
 	clear(globalDatabase.languagePrivileges.Data)
+	clear(globalDatabase.parameterPrivileges.Data)
 	clear(globalDatabase.roleMembership.Data)
 	dbInitDefault()
 }
@@ -162,16 +164,17 @@ func LockWrite(f func()) {
 // terribly wrong.
 func dbInit(dEnv *env.DoltEnv, cfg Config) {
 	globalDatabase = Database{
-		rolesByName:        make(map[string]RoleID),
-		rolesByID:          make(map[RoleID]Role),
-		databasePrivileges: NewDatabasePrivileges(),
-		schemaPrivileges:   NewSchemaPrivileges(),
-		tablePrivileges:    NewTablePrivileges(),
-		sequencePrivileges: NewSequencePrivileges(),
-		routinePrivileges:  NewRoutinePrivileges(),
-		languages:          NewLanguages(),
-		languagePrivileges: NewLanguagePrivileges(),
-		roleMembership:     NewRoleMembership(),
+		rolesByName:         make(map[string]RoleID),
+		rolesByID:           make(map[RoleID]Role),
+		databasePrivileges:  NewDatabasePrivileges(),
+		schemaPrivileges:    NewSchemaPrivileges(),
+		tablePrivileges:     NewTablePrivileges(),
+		sequencePrivileges:  NewSequencePrivileges(),
+		routinePrivileges:   NewRoutinePrivileges(),
+		languages:           NewLanguages(),
+		languagePrivileges:  NewLanguagePrivileges(),
+		parameterPrivileges: NewParameterPrivileges(),
+		roleMembership:      NewRoleMembership(),
 	}
 	globalLock = &sync.RWMutex{}
 	if dEnv != nil {

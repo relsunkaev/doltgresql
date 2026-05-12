@@ -35,6 +35,7 @@ type Grant struct {
 	GrantSequence   *GrantSequence
 	GrantRoutine    *GrantRoutine
 	GrantLanguage   *GrantLanguage
+	GrantParameter  *GrantParameter
 	GrantRole       *GrantRole
 	ToRoles         []string
 	WithGrantOption bool // This is "WITH ADMIN OPTION" for GrantRole only
@@ -82,6 +83,12 @@ type GrantRoutine struct {
 type GrantLanguage struct {
 	Privileges []auth.Privilege
 	Languages  []string
+}
+
+// GrantParameter specifically handles the GRANT ... ON PARAMETER statement.
+type GrantParameter struct {
+	Privileges []auth.Privilege
+	Parameters []string
 }
 
 // GrantRole specifically handles the GRANT <roles> TO <roles> statement.
@@ -134,6 +141,10 @@ func (g *Grant) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 		case g.GrantLanguage != nil:
 			if err = g.grantLanguage(ctx); err != nil {
+				return
+			}
+		case g.GrantParameter != nil:
+			if err = g.grantParameter(ctx); err != nil {
 				return
 			}
 		case g.GrantRole != nil:
@@ -435,6 +446,36 @@ func (g *Grant) grantLanguage(ctx *sql.Context) error {
 				auth.AddLanguagePrivilege(auth.LanguagePrivilegeKey{
 					Role: role.ID(),
 					Name: language,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedBy,
+				}, g.WithGrantOption)
+			}
+		}
+	}
+	return nil
+}
+
+// grantParameter handles *GrantParameter from within RowIter.
+func (g *Grant) grantParameter(ctx *sql.Context) error {
+	roles, userRole, err := g.common(ctx)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, parameter := range g.GrantParameter.Parameters {
+			key := auth.ParameterPrivilegeKey{
+				Role: userRole.ID(),
+				Name: parameter,
+			}
+			for _, privilege := range g.GrantParameter.Privileges {
+				grantedBy := auth.HasParameterPrivilegeGrantOption(key, privilege)
+				if !grantedBy.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
+				}
+				auth.AddParameterPrivilege(auth.ParameterPrivilegeKey{
+					Role: role.ID(),
+					Name: parameter,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedBy,

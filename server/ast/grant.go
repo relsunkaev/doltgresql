@@ -38,6 +38,7 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	var grantSequence *pgnodes.GrantSequence
 	var grantRoutine *pgnodes.GrantRoutine
 	var grantLanguage *pgnodes.GrantLanguage
+	var grantParameter *pgnodes.GrantParameter
 	switch node.Targets.TargetType {
 	case privilege.Table:
 		tables := make([]doltdb.TableName, 0, len(node.Targets.Tables)+len(node.Targets.InSchema))
@@ -157,6 +158,15 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			Privileges: privileges,
 			Languages:  node.Targets.Names,
 		}
+	case privilege.Parameter:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_PARAMETER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		grantParameter = &pgnodes.GrantParameter{
+			Privileges: privileges,
+			Parameters: node.Targets.Names,
+		}
 	default:
 		return nil, errors.Errorf("this form of GRANT is not yet supported")
 	}
@@ -168,6 +178,7 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			GrantSequence:   grantSequence,
 			GrantRoutine:    grantRoutine,
 			GrantLanguage:   grantLanguage,
+			GrantParameter:  grantParameter,
 			GrantRole:       nil,
 			ToRoles:         node.Grantees,
 			WithGrantOption: node.WithGrantOption,

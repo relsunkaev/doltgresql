@@ -37,6 +37,7 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	var revokeSequence *pgnodes.RevokeSequence
 	var revokeRoutine *pgnodes.RevokeRoutine
 	var revokeLanguage *pgnodes.RevokeLanguage
+	var revokeParameter *pgnodes.RevokeParameter
 	switch node.Targets.TargetType {
 	case privilege.Table:
 		tables := make([]doltdb.TableName, len(node.Targets.Tables)+len(node.Targets.InSchema))
@@ -151,22 +152,32 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			Privileges: privileges,
 			Languages:  node.Targets.Names,
 		}
+	case privilege.Parameter:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_PARAMETER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		revokeParameter = &pgnodes.RevokeParameter{
+			Privileges: privileges,
+			Parameters: node.Targets.Names,
+		}
 	default:
 		return nil, errors.Errorf("this form of REVOKE is not yet supported")
 	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.Revoke{
-			RevokeTable:    revokeTable,
-			RevokeSchema:   revokeSchema,
-			RevokeDatabase: revokeDatabase,
-			RevokeSequence: revokeSequence,
-			RevokeRoutine:  revokeRoutine,
-			RevokeLanguage: revokeLanguage,
-			RevokeRole:     nil,
-			FromRoles:      node.Grantees,
-			GrantedBy:      node.GrantedBy,
-			GrantOptionFor: node.GrantOptionFor,
-			Cascade:        node.DropBehavior == tree.DropCascade,
+			RevokeTable:     revokeTable,
+			RevokeSchema:    revokeSchema,
+			RevokeDatabase:  revokeDatabase,
+			RevokeSequence:  revokeSequence,
+			RevokeRoutine:   revokeRoutine,
+			RevokeLanguage:  revokeLanguage,
+			RevokeParameter: revokeParameter,
+			RevokeRole:      nil,
+			FromRoles:       node.Grantees,
+			GrantedBy:       node.GrantedBy,
+			GrantOptionFor:  node.GrantOptionFor,
+			Cascade:         node.DropBehavior == tree.DropCascade,
 		},
 		Children: nil,
 	}, nil

@@ -34,6 +34,8 @@ func initPrivilegeInquiry() {
 	framework.RegisterFunction(has_schema_privilege_text_text_text)
 	framework.RegisterFunction(has_sequence_privilege_text_text_text)
 	framework.RegisterFunction(has_function_privilege_text_text_text)
+	framework.RegisterFunction(has_parameter_privilege_text_text)
+	framework.RegisterFunction(has_parameter_privilege_text_text_text)
 }
 
 var has_table_privilege_text_text_text = framework.Function3{
@@ -144,6 +146,26 @@ var has_function_privilege_text_text_text = framework.Function3{
 	},
 }
 
+var has_parameter_privilege_text_text = framework.Function2{
+	Name:       "has_parameter_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, parameter any, privilege any) (any, error) {
+		return hasParameterPrivilege(ctx.Client().User, parameter.(string), privilege.(string))
+	},
+}
+
+var has_parameter_privilege_text_text_text = framework.Function3{
+	Name:       "has_parameter_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, role any, parameter any, privilege any) (any, error) {
+		return hasParameterPrivilege(role.(string), parameter.(string), privilege.(string))
+	},
+}
+
 func hasTablePrivilege(ctx *sql.Context, roleName, tableName, columnName, privilegeName string) (bool, error) {
 	authPrivilege, err := privilegeByName(privilegeName)
 	if err != nil {
@@ -158,6 +180,19 @@ func hasTablePrivilege(ctx *sql.Context, roleName, tableName, columnName, privil
 			Role:   roleID,
 			Table:  doltdb.TableName{Name: relationName, Schema: schemaName},
 			Column: columnName,
+		}, authPrivilege)
+	}), nil
+}
+
+func hasParameterPrivilege(roleName, parameterName, privilegeName string) (bool, error) {
+	authPrivilege, err := privilegeByName(privilegeName)
+	if err != nil {
+		return false, err
+	}
+	return roleHasPrivilege(roleName, func(roleID auth.RoleID) bool {
+		return auth.HasParameterPrivilege(auth.ParameterPrivilegeKey{
+			Role: roleID,
+			Name: parameterName,
 		}, authPrivilege)
 	}), nil
 }
