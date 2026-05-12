@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro reproduces
 // correctness bugs: Doltgres accepts function planner options that PostgreSQL
@@ -55,6 +59,70 @@ func TestFunctionDefinitionsRejectInvalidPlannerOptionsRepro(t *testing.T) {
 						COST -1
 						AS $$ SELECT 1 $$;`,
 					ExpectedErr: `COST must be positive`,
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionNullInputOptionsGuard keeps coverage for create-time
+// null-input routine options.
+func TestCreateFunctionNullInputOptionsGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION null-input options control strict execution",
+			SetUpScript: []string{
+				`CREATE FUNCTION strict_null_input_value(input INT)
+					RETURNS INT
+					LANGUAGE SQL
+					STRICT
+					AS $$ SELECT 7 $$;`,
+				`CREATE FUNCTION called_null_input_value(input INT)
+					RETURNS INT
+					LANGUAGE SQL
+					CALLED ON NULL INPUT
+					AS $$ SELECT 7 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT strict_null_input_value(NULL::INT) IS NULL;`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `SELECT called_null_input_value(NULL::INT);`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionNullInputOptionRepro reproduces a routine DDL correctness
+// bug: PostgreSQL lets ALTER FUNCTION switch between CALLED ON NULL INPUT and
+// STRICT / RETURNS NULL ON NULL INPUT behavior.
+func TestAlterFunctionNullInputOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION STRICT changes null-input behavior",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_strict_null_input_value(input INT)
+					RETURNS INT
+					LANGUAGE SQL
+					CALLED ON NULL INPUT
+					AS $$ SELECT 7 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT alter_strict_null_input_value(NULL::INT);`,
+					Expected: []sql.Row{{7}},
+				},
+				{
+					Query:    `ALTER FUNCTION alter_strict_null_input_value(INT) STRICT;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT alter_strict_null_input_value(NULL::INT) IS NULL;`,
+					Expected: []sql.Row{{"t"}},
 				},
 			},
 		},

@@ -18283,6 +18283,21 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: each invalid function definition succeeds, so
   routines can be persisted with planner metadata that PostgreSQL rejects.
 
+### ALTER FUNCTION cannot change null-input behavior
+
+- Reproducer: `TestAlterFunctionNullInputOptionRepro` in
+  `testing/go/routine_option_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestAlterFunctionNullInputOptionRepro -count=2`.
+- Expected PostgreSQL behavior: after a SQL function is created with
+  `CALLED ON NULL INPUT`, `ALTER FUNCTION function_name(INT) STRICT` changes
+  its null-input behavior so later calls with `NULL` arguments return `NULL`
+  without executing the function body.
+- Observed Doltgres behavior: the `ALTER FUNCTION ... STRICT` statement fails
+  with `ALTER FUNCTION statement is not yet supported`, and the function
+  continues executing for `NULL` input.
+
 ### SET LOCAL search_path rejects schema lists
 
 - Reproducer: `TestSetLocalSearchPathAcceptsSchemaListRepro` in
