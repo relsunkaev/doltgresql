@@ -169,6 +169,18 @@ const (
 	NanosPerSec   = NanosPerMicro * duration.MicrosPerMilli * duration.MillisPerSec
 )
 
+func intervalFieldFromMonths(months int64, monthsPerField int64) int64 {
+	return months / monthsPerField
+}
+
+func intervalHourField(nanos int64) int64 {
+	return nanos / (NanosPerSec * duration.SecsPerHour)
+}
+
+func intervalMinuteField(nanos int64) int64 {
+	return (nanos % (NanosPerSec * duration.SecsPerHour)) / (NanosPerSec * duration.SecsPerMinute)
+}
+
 // extract_text_interval represents the PostgreSQL date/time function, taking {text, interval}
 var extract_text_interval = framework.Function2{
 	Name:               "extract",
@@ -181,32 +193,29 @@ var extract_text_interval = framework.Function2{
 		dur := val2.(duration.Duration)
 		switch strings.ToLower(field) {
 		case "century", "centuries":
-			return decimal.NewFromFloat(math.Floor(float64(dur.Months) / 12 / 100)), nil
+			return decimal.NewFromInt(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*100)), nil
 		case "day", "days":
 			return decimal.NewFromInt(dur.Days), nil
 		case "decade", "decades":
-			return decimal.NewFromFloat(math.Floor(float64(dur.Months) / 12 / 10)), nil
+			return decimal.NewFromInt(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*10)), nil
 		case "epoch":
 			epoch := float64(duration.SecsPerDay*duration.DaysPerMonth*dur.Months) + float64(duration.SecsPerDay*dur.Days) +
 				(float64(dur.Nanos()) / (NanosPerSec))
 			return decimal.NewFromString(decimal.NewFromFloat(epoch).StringFixed(6))
 		case "hour", "hours":
-			hours := math.Floor(float64(dur.Nanos()) / (NanosPerSec * duration.SecsPerHour))
-			return decimal.NewFromFloat(hours), nil
+			return decimal.NewFromInt(intervalHourField(dur.Nanos())), nil
 		case "microsecond", "microseconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			microseconds := float64(secondsInNanos) / NanosPerMicro
 			return decimal.NewFromFloat(microseconds), nil
 		case "millennium", "millenniums":
-			return decimal.NewFromFloat(math.Floor(float64(dur.Months) / 12 / 1000)), nil
+			return decimal.NewFromInt(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*1000)), nil
 		case "millisecond", "milliseconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			milliseconds := float64(secondsInNanos) / NanosPerMilli
 			return decimal.NewFromString(decimal.NewFromFloat(milliseconds).StringFixed(3))
 		case "minute", "minutes":
-			minutesInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerHour)
-			minutes := math.Floor(float64(minutesInNanos) / (NanosPerSec * duration.SecsPerMinute))
-			return decimal.NewFromFloat(minutes), nil
+			return decimal.NewFromInt(intervalMinuteField(dur.Nanos())), nil
 		case "month", "months":
 			return decimal.NewFromInt(dur.Months % 12), nil
 		case "quarter":
@@ -216,7 +225,7 @@ var extract_text_interval = framework.Function2{
 			seconds := float64(secondsInNanos) / NanosPerSec
 			return decimal.NewFromString(decimal.NewFromFloat(seconds).StringFixed(6))
 		case "year", "years":
-			return decimal.NewFromFloat(math.Floor(float64(dur.Months) / 12)), nil
+			return decimal.NewFromInt(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear)), nil
 		case "dow", "doy", "isodow", "isoyear", "julian", "timezone", "timezone_hour", "timezone_minute", "week":
 			return nil, ErrUnitNotSupported.New(field, "interval")
 		default:

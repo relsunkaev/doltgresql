@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
@@ -191,42 +190,29 @@ var date_part_text_interval = framework.Function2{
 		// This mirrors the exact logic from extract_text_interval
 		switch strings.ToLower(field) {
 		case "century", "centuries":
-			result := decimal.NewFromFloat(float64(dur.Months) / 12 / 100).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*100)), nil
 		case "day", "days":
 			return float64(dur.Days), nil
 		case "decade", "decades":
-			result := decimal.NewFromFloat(float64(dur.Months) / 12 / 10).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*10)), nil
 		case "epoch":
 			epoch := float64(duration.SecsPerDay*duration.DaysPerMonth*dur.Months) + float64(duration.SecsPerDay*dur.Days) +
 				(float64(dur.Nanos()) / float64(NanosPerSec))
 			return epoch, nil
 		case "hour", "hours":
-			hours := float64(dur.Nanos()) / float64(NanosPerSec*duration.SecsPerHour)
-			result := decimal.NewFromFloat(hours).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalHourField(dur.Nanos())), nil
 		case "microsecond", "microseconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			microseconds := float64(secondsInNanos) / float64(NanosPerMicro)
 			return microseconds, nil
 		case "millennium", "millenniums":
-			result := decimal.NewFromFloat(float64(dur.Months) / 12 / 1000).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear*1000)), nil
 		case "millisecond", "milliseconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			milliseconds := float64(secondsInNanos) / float64(NanosPerMilli)
 			return milliseconds, nil
 		case "minute", "minutes":
-			minutesInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerHour)
-			minutes := float64(minutesInNanos) / float64(NanosPerSec*duration.SecsPerMinute)
-			result := decimal.NewFromFloat(minutes).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalMinuteField(dur.Nanos())), nil
 		case "month", "months":
 			return float64(dur.Months % 12), nil
 		case "quarter":
@@ -236,9 +222,7 @@ var date_part_text_interval = framework.Function2{
 			seconds := float64(secondsInNanos) / float64(NanosPerSec)
 			return seconds, nil
 		case "year", "years":
-			result := decimal.NewFromFloat(float64(dur.Months) / 12).Floor()
-			f, _ := result.Float64()
-			return f, nil
+			return float64(intervalFieldFromMonths(dur.Months, duration.MonthsPerYear)), nil
 		case "dow", "doy", "isodow", "isoyear", "julian", "timezone", "timezone_hour", "timezone_minute", "week":
 			return nil, ErrUnitNotSupported.New(field, "interval")
 		default:
