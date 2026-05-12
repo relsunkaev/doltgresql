@@ -34,8 +34,8 @@ import (
 
 // TestJSClientSingleConnectionPipelineGuards runs real JS clients through
 // single-socket concurrency patterns. The postgres.js leg is routed through a
-// protocol-observing proxy that withholds backend responses long enough to prove
-// the client sent multiple Execute/Query messages before the first backend
+// protocol-observing proxy that withholds backend ReadyForQuery completion long
+// enough to prove the client sent multiple Execute/Query messages before the first
 // ReadyForQuery. Drizzle and node-postgres stay in this test as compatibility
 // guards, but are not labeled as pipeline proofs because their higher-level APIs
 // may queue work before it reaches the socket.
@@ -248,6 +248,10 @@ console.log(JSON.stringify({ ok: true, result }));
 	nodePostgresStats := nodePostgresProxy.stats()
 	require.GreaterOrEqual(t, postgresJSStats.MaxExecutionsBeforeReady, 2,
 		"postgres.js should send multiple Execute/Query messages before the first backend ReadyForQuery; stats=%+v", postgresJSStats)
+	require.Positive(t, postgresJSStats.ReadyForQueryDelays,
+		"postgres.js pipeline proof should block at least one ReadyForQuery completion before releasing it; stats=%+v", postgresJSStats)
+	require.GreaterOrEqual(t, postgresJSStats.MaxExecutionsWhileReadyDelayed, 2,
+		"postgres.js should send multiple Execute/Query messages while ReadyForQuery completion is withheld; stats=%+v", postgresJSStats)
 	require.Positive(t, drizzleStats.TotalExecutions,
 		"Drizzle postgres-js compatibility guard should still execute through the protocol-observing proxy; stats=%+v", drizzleStats)
 	require.Positive(t, nodePostgresStats.TotalExecutions,
@@ -265,8 +269,10 @@ type postgresPipelineProbe struct {
 }
 
 type postgresPipelineStats struct {
-	TotalExecutions          int
-	MaxExecutionsBeforeReady int
+	TotalExecutions                int
+	MaxExecutionsBeforeReady       int
+	ReadyForQueryDelays            int
+	MaxExecutionsWhileReadyDelayed int
 }
 
 func startPostgresPipelineProbe(t *testing.T, label string, targetPort int, delayUntilPipeline bool) *postgresPipelineProbe {
@@ -346,23 +352,32 @@ func (s *postgresPipelineConnState) markExecution() int {
 	return s.currentExecutions
 }
 
-func (s *postgresPipelineConnState) shouldDelayBackend() bool {
+func (s *postgresPipelineConnState) waitForPipelineBeforeReadyOrTimeout(wait time.Duration) (int, bool) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.startupDone && s.currentExecutions == 1
-}
+	if !s.startupDone || s.currentExecutions == 0 {
+		s.mu.Unlock()
+		return 0, false
+	}
+	if s.currentExecutions != 1 {
+		current := s.currentExecutions
+		s.mu.Unlock()
+		return current, true
+	}
+	s.mu.Unlock()
 
-func (s *postgresPipelineConnState) waitForPipelineOrTimeout(wait time.Duration) {
 	deadline := time.Now().Add(wait)
 	for time.Now().Before(deadline) {
 		s.mu.Lock()
 		current := s.currentExecutions
 		s.mu.Unlock()
 		if current != 1 {
-			return
+			return current
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.currentExecutions, true
 }
 
 func (s *postgresPipelineConnState) markReadyForQuery() {
@@ -418,8 +433,10 @@ func (p *postgresPipelineProbe) forwardBackend(server net.Conn, client net.Conn,
 		if err != nil {
 			return
 		}
-		if p.delayUntilPipeline && state.shouldDelayBackend() {
-			state.waitForPipelineOrTimeout(250 * time.Millisecond)
+		if p.delayUntilPipeline && messageType == 'Z' {
+			if currentExecutions, ok := state.waitForPipelineBeforeReadyOrTimeout(250 * time.Millisecond); ok {
+				p.recordReadyForQueryDelay(currentExecutions)
+			}
 		}
 		if _, err = client.Write(msg); err != nil {
 			return
@@ -436,6 +453,15 @@ func (p *postgresPipelineProbe) recordExecutionBurst(currentExecutions int) {
 	p.s.TotalExecutions++
 	if currentExecutions > p.s.MaxExecutionsBeforeReady {
 		p.s.MaxExecutionsBeforeReady = currentExecutions
+	}
+}
+
+func (p *postgresPipelineProbe) recordReadyForQueryDelay(currentExecutions int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.s.ReadyForQueryDelays++
+	if currentExecutions > p.s.MaxExecutionsWhileReadyDelayed {
+		p.s.MaxExecutionsWhileReadyDelayed = currentExecutions
 	}
 }
 
