@@ -80,6 +80,48 @@ func TestAlterRoleNoLoginPreventsLoginGuard(t *testing.T) {
 	requireLoginRejected(t, ctx, port, "altered_no_login", "pw")
 }
 
+// TestCreatedUserLoginSurvivesRestartRepro reproduces an auth persistence bug:
+// a role created with a password must still be able to authenticate after a
+// server restart using the same database directory.
+func TestCreatedUserLoginSurvivesRestartRepro(t *testing.T) {
+	dbDir := t.TempDir()
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+
+	ctx, connection, controller := CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	_, err = connection.Exec(ctx, `CREATE USER restart_login PASSWORD 'pw';`)
+	require.NoError(t, err)
+
+	immediateConn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://restart_login:pw@127.0.0.1:%d/postgres?sslmode=disable",
+		port,
+	))
+	require.NoError(t, err)
+	require.NoError(t, immediateConn.Close(ctx))
+
+	connection.Close(ctx)
+	controller.Stop()
+	require.NoError(t, controller.WaitForStop())
+
+	ctx, connection, controller = CreateServerLocalInDirWithPort(t, "postgres", dbDir, port)
+	defer func() {
+		connection.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	restartedConn, err := pgx.Connect(ctx, fmt.Sprintf(
+		"postgres://restart_login:pw@127.0.0.1:%d/postgres?sslmode=disable",
+		port,
+	))
+	require.NoError(t, err)
+	defer restartedConn.Close(context.Background())
+
+	var currentUser string
+	require.NoError(t, restartedConn.QueryRow(ctx, `SELECT current_user;`).Scan(&currentUser))
+	require.Equal(t, "restart_login", currentUser)
+}
+
 // TestExpiredRoleValidUntilPreventsLoginRepro reproduces a security bug:
 // Doltgres stores role VALID UNTIL metadata but does not enforce expiration at
 // authentication time.
