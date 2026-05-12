@@ -326,6 +326,31 @@ func TestCreateIndexConcurrently(t *testing.T) {
 			},
 		},
 		{
+			Name: "CREATE INDEX CONCURRENTLY rejects unsupported methods cleanly",
+			SetUpScript: []string{
+				"CREATE EXTENSION vector;",
+				"CREATE TABLE unsupported_concurrent_t (id INT PRIMARY KEY, v INT, embedding vector(3));",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "CREATE INDEX CONCURRENTLY unsupported_concurrent_gist_idx ON unsupported_concurrent_t USING gist (v);",
+					ExpectedErr: "index method gist is not yet supported",
+				},
+				{
+					Query:       "CREATE INDEX CONCURRENTLY unsupported_concurrent_hnsw_idx ON unsupported_concurrent_t USING hnsw (embedding vector_l2_ops);",
+					ExpectedErr: "index method hnsw is not yet supported",
+				},
+				{
+					Query: `SELECT indexname
+						FROM pg_catalog.pg_indexes
+						WHERE tablename = 'unsupported_concurrent_t'
+							AND indexname IN ('unsupported_concurrent_gist_idx', 'unsupported_concurrent_hnsw_idx')
+						ORDER BY indexname;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+		{
 			Name: "DROP INDEX CONCURRENTLY",
 			SetUpScript: []string{
 				"CREATE TABLE drop_t (id INT PRIMARY KEY, v INT);",
