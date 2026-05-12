@@ -222,6 +222,39 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index duplicate multi-row update is atomic",
+			SetUpScript: []string{
+				`CREATE TABLE partial_unique_update_atomic_memberships (
+					id INT PRIMARY KEY,
+					user_id INT NOT NULL,
+					active BOOL NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX partial_unique_update_atomic_memberships_user_idx
+					ON partial_unique_update_atomic_memberships (user_id)
+					WHERE active;`,
+				`INSERT INTO partial_unique_update_atomic_memberships VALUES
+					(1, 10, false),
+					(2, 10, false),
+					(3, 20, true);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `UPDATE partial_unique_update_atomic_memberships SET active = true WHERE user_id = 10;`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query: `SELECT id, active
+						FROM partial_unique_update_atomic_memberships
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{int32(1), "f"},
+						{int32(2), "f"},
+						{int32(3), "t"},
+					},
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports boolean predicates",
 			SetUpScript: []string{
 				`CREATE TABLE inventory (id INT PRIMARY KEY, vmid INT, at_service BOOL);`,
