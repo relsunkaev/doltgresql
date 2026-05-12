@@ -76,7 +76,9 @@ var power_numeric_numeric = framework.Function2{
 		if d2.Equal(decimal.Zero) {
 			return numericOne, nil
 		}
-		// TODO: this doesn't handle non-integer exponents
+		if d2.Exponent() < 0 {
+			return decimal.New(int64(math.Round(math.Pow(d1.InexactFloat64(), d2.InexactFloat64())*1e16)), -16), nil
+		}
 		return d1.Pow(d2), nil
 	},
 }

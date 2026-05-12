@@ -2945,6 +2945,12 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if rewrittenQuery, ok := rewriteXmlConstructors(query); ok {
 		query = rewrittenQuery
 	}
+	if rewrittenQuery, ok := rewritePostgres16IntegerLiterals(query); ok {
+		query = rewrittenQuery
+	}
+	if rewrittenQuery, ok := rewriteTemporalOverlaps(query); ok {
+		query = rewrittenQuery
+	}
 	if rewrittenQuery, ok := rewriteDMLReturningTableOID(query); ok {
 		query = rewrittenQuery
 	}
@@ -3029,6 +3035,7 @@ var (
 	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
 	xmlForestCallPattern      = regexp.MustCompile(`(?is)xmlforest\s*\((.+?)\)`)
 	xmlForestArgPattern       = regexp.MustCompile(`(?is)^\s*(.+?)\s+as\s+([a-z_][a-z0-9_$]*)\s*$`)
+	temporalOverlapsPattern   = regexp.MustCompile(`(?is)\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)\s+overlaps\s+\(\s*(date\s+'[^']+')\s*,\s*((?:date|interval)\s+'[^']+')\s*\)`)
 	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
 
@@ -3303,6 +3310,115 @@ func rewriteXmlConstructors(query string) (string, bool) {
 		}
 		return "xmlforest(" + strings.Join(rewrittenArgs, ", ") + ")"
 	})
+	return rewritten, rewritten != query
+}
+
+func rewritePostgres16IntegerLiterals(query string) (string, bool) {
+	var rewritten strings.Builder
+	changed := false
+	for i := 0; i < len(query); {
+		if query[i] == '\'' {
+			start := i
+			i++
+			for i < len(query) {
+				if query[i] == '\'' {
+					i++
+					if i < len(query) && query[i] == '\'' {
+						i++
+						continue
+					}
+					break
+				}
+				i++
+			}
+			rewritten.WriteString(query[start:i])
+			continue
+		}
+		if isSQLDigit(query[i]) && (i == 0 || !isSQLIdentifierPart(query[i-1])) {
+			if next, ok := rewritePostgres16IntegerLiteralAt(query, i); ok {
+				rewritten.WriteString(next.literal)
+				i = next.end
+				changed = true
+				continue
+			}
+		}
+		rewritten.WriteByte(query[i])
+		i++
+	}
+	if !changed {
+		return "", false
+	}
+	return rewritten.String(), true
+}
+
+type rewrittenIntegerLiteral struct {
+	literal string
+	end     int
+}
+
+func rewritePostgres16IntegerLiteralAt(query string, start int) (rewrittenIntegerLiteral, bool) {
+	if start+2 < len(query) && query[start] == '0' {
+		base := 0
+		switch query[start+1] {
+		case 'x', 'X':
+			base = 16
+		case 'o', 'O':
+			base = 8
+		case 'b', 'B':
+			base = 2
+		}
+		if base != 0 {
+			end := start + 2
+			for end < len(query) && (query[end] == '_' || digitValue(query[end]) >= 0 && digitValue(query[end]) < base) {
+				end++
+			}
+			if end == start+2 || end < len(query) && isSQLIdentifierPart(query[end]) {
+				return rewrittenIntegerLiteral{}, false
+			}
+			value, err := strconv.ParseUint(strings.ReplaceAll(query[start+2:end], "_", ""), base, 64)
+			if err != nil {
+				return rewrittenIntegerLiteral{}, false
+			}
+			return rewrittenIntegerLiteral{literal: strconv.FormatUint(value, 10), end: end}, true
+		}
+	}
+	end := start
+	hasUnderscore := false
+	for end < len(query) && (isSQLDigit(query[end]) || query[end] == '_') {
+		if query[end] == '_' {
+			hasUnderscore = true
+		}
+		end++
+	}
+	if !hasUnderscore || end < len(query) && isSQLIdentifierPart(query[end]) {
+		return rewrittenIntegerLiteral{}, false
+	}
+	return rewrittenIntegerLiteral{literal: strings.ReplaceAll(query[start:end], "_", ""), end: end}, true
+}
+
+func isSQLDigit(ch byte) bool {
+	return ch >= '0' && ch <= '9'
+}
+
+func isSQLIdentifierPart(ch byte) bool {
+	return ch == '_' || ch == '$' || ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z'
+}
+
+func digitValue(ch byte) int {
+	switch {
+	case ch >= '0' && ch <= '9':
+		return int(ch - '0')
+	case ch >= 'a' && ch <= 'f':
+		return int(ch-'a') + 10
+	case ch >= 'A' && ch <= 'F':
+		return int(ch-'A') + 10
+	default:
+		return -1
+	}
+}
+
+func rewriteTemporalOverlaps(query string) (string, bool) {
+	rewritten := temporalOverlapsPattern.ReplaceAllString(query, "__doltgres_overlaps($1, $2, $3, $4)")
 	return rewritten, rewritten != query
 }
 

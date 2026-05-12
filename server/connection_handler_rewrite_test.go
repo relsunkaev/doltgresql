@@ -52,3 +52,35 @@ func TestRewriteDMLReturningTableOID(t *testing.T) {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
+
+func TestRewritePostgres16IntegerLiterals(t *testing.T) {
+	tests := []struct {
+		query string
+		want  string
+		ok    bool
+	}{
+		{`SELECT 1_000::text;`, `SELECT 1000::text;`, true},
+		{`SELECT 0x10::text, 0o10::text, 0b1010::text;`, `SELECT 16::text, 8::text, 10::text;`, true},
+		{`SELECT '0x10', 1;`, ``, false},
+		{`SELECT col1_000 FROM t;`, ``, false},
+	}
+	for _, tt := range tests {
+		got, ok := rewritePostgres16IntegerLiterals(tt.query)
+		if ok != tt.ok {
+			t.Fatalf("%q: got ok %v, want %v", tt.query, ok, tt.ok)
+		}
+		if ok && got != tt.want {
+			t.Fatalf("%q: got %q, want %q", tt.query, got, tt.want)
+		}
+	}
+}
+
+func TestRewriteTemporalOverlaps(t *testing.T) {
+	got, ok := rewriteTemporalOverlaps(`SELECT (DATE '2024-01-01', DATE '2024-01-10') OVERLAPS (DATE '2024-01-05', DATE '2024-01-20');`)
+	if !ok {
+		t.Fatal("expected rewrite")
+	}
+	if want := `SELECT __doltgres_overlaps(DATE '2024-01-01', DATE '2024-01-10', DATE '2024-01-05', DATE '2024-01-20');`; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

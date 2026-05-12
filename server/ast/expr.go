@@ -182,8 +182,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		case tree.Mod:
 			operator = framework.Operator_BinaryMod
 		case tree.Pow:
-			// TODO: replace with power function
-			return nil, errors.Errorf("the power operator is not yet supported")
+			return astFunctionExpr("power", left, right), nil
 		case tree.Concat:
 			operator = framework.Operator_BinaryConcatenate
 		case tree.LShift:
@@ -437,21 +436,21 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		case tree.NotLike:
 			operator = vitess.NotLikeStr
 		case tree.ILike:
-			return nil, errors.Errorf("ILIKE is not yet supported")
+			return astFunctionExpr("__doltgres_ilike", left, right), nil
 		case tree.NotILike:
-			return nil, errors.Errorf("ILIKE is not yet supported")
+			return astNotExpr(astFunctionExpr("__doltgres_ilike", left, right)), nil
 		case tree.SimilarTo:
-			return nil, errors.Errorf("similar to is not yet supported")
+			return astFunctionExpr("__doltgres_similar_to", left, right), nil
 		case tree.NotSimilarTo:
-			return nil, errors.Errorf("not similar to is not yet supported")
+			return astNotExpr(astFunctionExpr("__doltgres_similar_to", left, right)), nil
 		case tree.RegMatch:
 			operator = vitess.RegexpStr
 		case tree.NotRegMatch:
 			operator = vitess.NotRegexpStr
 		case tree.RegIMatch:
-			return nil, errors.Errorf("~* is not yet supported")
+			return astFunctionExpr("__doltgres_regex_match_ci", left, right), nil
 		case tree.NotRegIMatch:
-			return nil, errors.Errorf("!~* is not yet supported")
+			return astNotExpr(astFunctionExpr("__doltgres_regex_match_ci", left, right)), nil
 		case tree.TextSearchMatch:
 			return vitess.InjectedExpr{
 				Expression: pgexprs.NewBinaryOperator(framework.Operator_BinaryJSONPathMatch),
@@ -922,14 +921,11 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 				Expr:     expr,
 			}, nil
 		case tree.UnarySqrt:
-			// TODO: replace with a function
-			return nil, errors.Errorf("square root operator is not yet supported")
+			return astFunctionExpr("sqrt", expr), nil
 		case tree.UnaryCbrt:
-			// TODO: replace with a function
-			return nil, errors.Errorf("cube root operator is not yet supported")
+			return astFunctionExpr("cbrt", expr), nil
 		case tree.UnaryAbsolute:
-			// TODO: replace with a function
-			return nil, errors.Errorf("absolute operator is not yet supported")
+			return astFunctionExpr("abs", expr), nil
 		case tree.HstoreToArray:
 			operator = framework.Operator_UnaryHstoreToArray
 		case tree.HstoreToMatrix:
@@ -955,6 +951,24 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		return nil, nil
 	default:
 		return nil, errors.Errorf("unknown expression: `%T`", node)
+	}
+}
+
+func astFunctionExpr(name string, args ...vitess.Expr) *vitess.FuncExpr {
+	exprs := make(vitess.SelectExprs, len(args))
+	for i, arg := range args {
+		exprs[i] = &vitess.AliasedExpr{Expr: arg}
+	}
+	return &vitess.FuncExpr{
+		Name:  vitess.NewColIdent(name),
+		Exprs: exprs,
+	}
+}
+
+func astNotExpr(expr vitess.Expr) vitess.Expr {
+	return vitess.InjectedExpr{
+		Expression: pgexprs.NewNot(),
+		Children:   vitess.Exprs{expr},
 	}
 }
 
