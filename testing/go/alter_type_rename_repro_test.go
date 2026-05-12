@@ -312,6 +312,37 @@ func TestAlterTypeRenameUpdatesExistingColumnMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeRenameUpdatesColumnDefaultMetadataRepro reproduces a catalog
+// persistence bug: column defaults that reference a renamed type should keep
+// working after ALTER TYPE RENAME TO.
+func TestAlterTypeRenameUpdatesColumnDefaultMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates enum column defaults",
+			SetUpScript: []string{
+				`CREATE TYPE rename_default_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE rename_default_status_items (
+					id INT PRIMARY KEY,
+					status rename_default_status
+						DEFAULT 'new'::rename_default_status
+				);`,
+				`ALTER TYPE rename_default_status RENAME TO renamed_default_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_default_status_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT id::text, status::text, pg_typeof(status)::text
+						FROM rename_default_status_items;`,
+					Expected: []sql.Row{{"1", "new", "renamed_default_status"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro reproduces a
 // catalog persistence bug: renaming a type should update function signatures
 // that reference it, so overload lookup with the renamed type keeps working.
