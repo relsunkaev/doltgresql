@@ -130,7 +130,10 @@ func serializedStringCompare(v1 []byte, v2 []byte) int {
 // with an exception to BOOLEAN type. It returns "t" instead of "true".
 func sqlString(ctx *sql.Context, t *DoltgresType, val any) (string, error) {
 	if t.IsArrayType() {
-		baseType := t.ArrayBaseType()
+		baseType, err := t.ResolveArrayBaseType(ctx)
+		if err != nil {
+			return "", err
+		}
 		return ArrToString(ctx, val.([]any), baseType, true)
 	} else if t.ID == Bool.ID {
 		if val.(bool) {

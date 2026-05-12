@@ -66,7 +66,11 @@ func (s Subscript) Type(ctx *sql.Context) sql.Type {
 	if dt == types.Name {
 		return types.InternalChar
 	}
-	return dt.ArrayBaseType()
+	baseType, err := dt.ResolveArrayBaseType(ctx)
+	if err != nil {
+		panic(err.Error())
+	}
+	return baseType
 }
 
 // IsNullable implements the sql.Expression interface.

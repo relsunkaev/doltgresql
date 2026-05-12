@@ -151,7 +151,10 @@ var array_out = framework.Function1{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
 		arrType := t[0]
-		baseType := arrType.ArrayBaseType()
+		baseType, err := arrType.ResolveArrayBaseType(ctx)
+		if err != nil {
+			return nil, err
+		}
 		return pgtypes.ArrToString(ctx, val.([]any), baseType, false)
 	},
 }
@@ -258,7 +261,11 @@ var array_send = framework.Function1{
 		} else {
 			writer.WriteInt32(0)
 		}
-		writer.WriteUint32(id.Cache().ToOID(t[0].BaseType().ID.AsId())) // Element OID
+		baseType, err := t[0].ResolveArrayBaseType(ctx)
+		if err != nil {
+			return nil, err
+		}
+		writer.WriteUint32(id.Cache().ToOID(baseType.ID.AsId())) // Element OID
 		for i := int32(0); i < dimensions; i++ {
 			writer.WriteInt32(int32(len(vals))) // Elements in this dimension
 			if t[0].IsArrayType() {
@@ -270,7 +277,7 @@ var array_send = framework.Function1{
 				if val == nil {
 					writer.WriteInt32(-1)
 				} else {
-					valBytes, err := t[0].BaseType().CallSend(ctx, val)
+					valBytes, err := baseType.CallSend(ctx, val)
 					if err != nil {
 						return nil, err
 					}
@@ -301,8 +308,12 @@ var btarraycmp = framework.Function2{
 		ab := val1.([]any)
 		bb := val2.([]any)
 		minLength := utils.Min(len(ab), len(bb))
+		baseType, err := at.ResolveArrayBaseType(ctx)
+		if err != nil {
+			return nil, err
+		}
 		for i := 0; i < minLength; i++ {
-			res, err := at.ArrayBaseType().Compare(ctx, ab[i], bb[i])
+			res, err := baseType.Compare(ctx, ab[i], bb[i])
 			if err != nil {
 				return 0, err
 			}

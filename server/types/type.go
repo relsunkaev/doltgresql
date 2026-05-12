@@ -143,8 +143,16 @@ func (t *DoltgresType) AnalyzeFuncID() id.Id {
 // `oid = ANY(oidvector_col)` and similar planner shapes can find
 // the right element-comparison function.
 func (t *DoltgresType) ArrayBaseType() *DoltgresType {
+	elem, err := t.ResolveArrayBaseType(nil)
+	if err != nil {
+		panic(err.Error())
+	}
+	return elem
+}
+
+func (t *DoltgresType) ResolveArrayBaseType(ctx *sql.Context) (*DoltgresType, error) {
 	if !t.IsArrayType() && !(t.IsArrayCategory() && t.Elem != id.NullType) {
-		return t
+		return t, nil
 	}
 
 	var elem *DoltgresType
@@ -156,12 +164,25 @@ func (t *DoltgresType) ArrayBaseType() *DoltgresType {
 		// we return for analysis
 		elem, ok = LogicalArrayElementTypes[t.ID]
 		if !ok {
-			panic(fmt.Sprintf("cannot get base type from: %s", t.Name()))
+			if ctx != nil && t.Elem.IsValid() && GetTypesCollectionFromContext != nil {
+				typeCollection, err := GetTypesCollectionFromContext(ctx)
+				if err != nil {
+					return nil, err
+				}
+				elem, err = typeCollection.GetType(ctx, t.Elem)
+				if err != nil {
+					return nil, err
+				}
+				if elem != nil {
+					return elem.WithAttTypMod(t.attTypMod), nil
+				}
+			}
+			return nil, errors.Errorf("cannot get base type from: %s", t.Name())
 		}
 	}
 
 	newElem := *elem.WithAttTypMod(t.attTypMod)
-	return &newElem
+	return &newElem, nil
 }
 
 // BaseType returns a base type of given array or vector type.
@@ -334,8 +355,16 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		}
 		bb := v2.([]any)
 		minLength := utils.Min(len(ab), len(bb))
+		baseType := t.ArrayBaseType()
+		if sqlCtx, ok := ctx.(*sql.Context); ok {
+			var err error
+			baseType, err = t.ResolveArrayBaseType(sqlCtx)
+			if err != nil {
+				return 0, err
+			}
+		}
 		for i := 0; i < minLength; i++ {
-			res, err := t.ArrayBaseType().Compare(ctx, ab[i], bb[i])
+			res, err := baseType.Compare(ctx, ab[i], bb[i])
 			if err != nil {
 				return 0, err
 			}
@@ -635,7 +664,15 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 		if !ok {
 			return nil, false, nil
 		}
-		converted, err := convertArrayElementsWithTypmod(ctx, t.ArrayBaseType(), vals)
+		baseType := t.ArrayBaseType()
+		if sqlCtx, ok := ctx.(*sql.Context); ok {
+			var err error
+			baseType, err = t.ResolveArrayBaseType(sqlCtx)
+			if err != nil {
+				return nil, true, err
+			}
+		}
+		converted, err := convertArrayElementsWithTypmod(ctx, baseType, vals)
 		return converted, true, err
 	}
 
@@ -851,8 +888,13 @@ func oidAliasTypesEqual(left *DoltgresType, right *DoltgresType) bool {
 
 func oidAliasBase(t *DoltgresType) (bool, bool) {
 	if t.IsArrayType() {
-		base := t.ArrayBaseType()
-		return isOidAliasTypeName(base.ID.TypeName()), true
+		if base, ok := IDToBuiltInDoltgresType[t.Elem]; ok {
+			return isOidAliasTypeName(base.ID.TypeName()), true
+		}
+		if base, ok := LogicalArrayElementTypes[t.ID]; ok {
+			return isOidAliasTypeName(base.ID.TypeName()), true
+		}
+		return isOidAliasTypeName(t.Elem.TypeName()), true
 	}
 	return isOidAliasTypeName(t.ID.TypeName()), false
 }
@@ -1280,16 +1322,39 @@ func (t *DoltgresType) SubscriptFuncID() id.Id {
 // ToArrayType returns an array type of given base type.
 // For array types, ToArrayType causes them to return themselves.
 func (t *DoltgresType) ToArrayType() *DoltgresType {
+	arr, err := t.ResolveArrayType(nil)
+	if err != nil {
+		panic(err.Error())
+	}
+	return arr
+}
+
+func (t *DoltgresType) ResolveArrayType(ctx *sql.Context) (*DoltgresType, error) {
 	if t.IsArrayType() {
-		return t
+		return t, nil
 	}
 	arr, ok := IDToBuiltInDoltgresType[t.Array]
 	if !ok {
-		panic(fmt.Sprintf("cannot get array type from: %s", t.Name()))
+		if ctx != nil && t.Array.IsValid() && GetTypesCollectionFromContext != nil {
+			typeCollection, err := GetTypesCollectionFromContext(ctx)
+			if err != nil {
+				return nil, err
+			}
+			arr, err = typeCollection.GetType(ctx, t.Array)
+			if err != nil {
+				return nil, err
+			}
+			if arr != nil {
+				newArr := *arr.WithAttTypMod(t.attTypMod)
+				newArr.InternalName = fmt.Sprintf("%s[]", t.String())
+				return &newArr, nil
+			}
+		}
+		return nil, errors.Errorf("cannot get array type from: %s", t.Name())
 	}
 	newArr := *arr.WithAttTypMod(t.attTypMod)
 	newArr.InternalName = fmt.Sprintf("%s[]", t.String())
-	return &newArr
+	return &newArr, nil
 }
 
 // Type implements the types.ExtendedType interface.

@@ -62,7 +62,10 @@ func (array *Array) Children() []sql.Expression {
 
 // Eval implements the sql.Expression interface.
 func (array *Array) Eval(ctx *sql.Context, row sql.Row) (any, error) {
-	resultTyp := array.coercedType.ArrayBaseType()
+	resultTyp, err := array.coercedType.ResolveArrayBaseType(ctx)
+	if err != nil {
+		return nil, err
+	}
 	values := make([]any, len(array.children))
 	for i, expr := range array.children {
 		val, err := expr.Eval(ctx, row)
@@ -78,6 +81,10 @@ func (array *Array) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		doltgresType, ok := expr.Type(ctx).(*pgtypes.DoltgresType)
 		if !ok {
 			return nil, errors.Errorf("expected DoltgresType, but got %s", expr.Type(ctx).String())
+		}
+		doltgresType, err = resolveRuntimeCastType(ctx, doltgresType)
+		if err != nil {
+			return nil, err
 		}
 
 		// We always cast the element, as there may be parameter restrictions in place
@@ -169,6 +176,10 @@ func (array *Array) getTargetType(ctx *sql.Context, children ...sql.Expression) 
 				// We use "anyarray" as the indeterminate/invalid type
 				return pgtypes.AnyArray, nil
 			}
+			childType, err := resolveRuntimeCastType(ctx, childType)
+			if err != nil {
+				return nil, err
+			}
 			childrenTypes = append(childrenTypes, childType)
 		}
 	}
@@ -176,5 +187,5 @@ func (array *Array) getTargetType(ctx *sql.Context, children ...sql.Expression) 
 	if err != nil {
 		return nil, errors.Errorf("ARRAY %s", err.Error())
 	}
-	return targetType.ToArrayType(), nil
+	return targetType.ResolveArrayType(ctx)
 }
