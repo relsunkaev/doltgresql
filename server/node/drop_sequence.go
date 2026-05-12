@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // DropSequence handles the DROP SEQUENCE statement.
@@ -90,6 +91,9 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err != nil {
 		return nil, err
 	}
+	if err = checkSequenceOwnership(ctx, sequence.Id.SequenceName()); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 	if sequence.OwnerTable.IsValid() {
 		if c.cascade {
 			// TODO: if the sequence is referenced by the column's default value, then we also need to delete the default
@@ -103,6 +107,24 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkSequenceOwnership(ctx *sql.Context, sequenceName string) error {
+	owner, _ := auth.GetSuperUserAndPassword()
+	if owner == "" {
+		owner = "postgres"
+	}
+	if owner == "" || owner == ctx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be owner of sequence %s", sequenceName)
 }
 
 // Schema implements the interface sql.ExecSourceRel.
