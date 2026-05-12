@@ -119,6 +119,7 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 			if err != nil {
 				return nil, err
 			}
+			formattedVar = quoteSQLFunctionArgument(f.ParameterTypes[i], formattedVar)
 		}
 		if name == "" {
 			// sanity check
@@ -212,6 +213,15 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 		}
 		return rowIter, nil
 	})
+}
+
+func quoteSQLFunctionArgument(typ *pgtypes.DoltgresType, value string) string {
+	switch typ.TypCategory {
+	case pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_EnumTypes:
+		return "'" + strings.ReplaceAll(value, "'", "''") + "'::" + typ.String()
+	default:
+		return value
+	}
 }
 
 type sqlFunctionScalarReturn struct {

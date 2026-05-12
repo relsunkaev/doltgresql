@@ -2840,6 +2840,12 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedDropConversion(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreateCast(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
+	if converted, ok := convertedDropCast(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	s, err := parser.Parse(query)
 	if err != nil {
 		if converted, ok := convertedCreateTransform(query); ok {
@@ -2891,6 +2897,8 @@ var (
 	transformToPattern      = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
 	createConversionPattern = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
 	dropConversionPattern   = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createCastPattern       = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
+	dropCastPattern         = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -2978,6 +2986,34 @@ func conversionEncodingCode(encoding string) int32 {
 	default:
 		return 0
 	}
+}
+
+func convertedCreateCast(query string) (ConvertedQuery, bool) {
+	matches := createCastPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateCast(matches[1], matches[2], normalizeTransformFunctionName(matches[3])),
+		},
+		StatementTag: "CREATE CAST",
+	}, true
+}
+
+func convertedDropCast(query string) (ConvertedQuery, bool) {
+	matches := dropCastPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewDropCast(matches[2], matches[3], strings.TrimSpace(matches[1]) != ""),
+		},
+		StatementTag: "DROP CAST",
+	}, true
 }
 
 func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {

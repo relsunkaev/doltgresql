@@ -46,3 +46,19 @@ func TestCreateCastFunctionIsUsedByExplicitCastRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestDropCastIfExistsMissingTypeRepro reproduces a compatibility gap:
+// PostgreSQL accepts DROP CAST IF EXISTS even when the cast's type name is
+// missing, treating it as a no-op.
+func TestDropCastIfExistsMissingTypeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP CAST IF EXISTS missing type succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP CAST IF EXISTS (INTEGER AS missing_cast_type_repro);`,
+				},
+			},
+		},
+	})
+}

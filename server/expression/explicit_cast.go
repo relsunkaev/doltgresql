@@ -22,9 +22,11 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
+	"github.com/dolthub/go-mysql-server/sql/procedures"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -35,10 +37,12 @@ type ExplicitCast struct {
 	castToType     *pgtypes.DoltgresType
 	domainNullable bool
 	domainChecks   sql.CheckConstraints
+	runner         sql.StatementRunner
 }
 
 var _ vitess.Injectable = (*ExplicitCast)(nil)
 var _ sql.Expression = (*ExplicitCast)(nil)
+var _ procedures.InterpreterExpr = (*ExplicitCast)(nil)
 
 // NewExplicitCastInjectable returns an incomplete *ExplicitCast that must be resolved through the vitess.Injectable interface.
 func NewExplicitCastInjectable(castToType sql.Type) (*ExplicitCast, error) {
@@ -109,6 +113,13 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	fromType = runtimeFromTypeForExplicitCast(fromType, val)
 
 	baseCastToType := checkForDomainType(c.castToType)
+	if userCast, ok := auth.GetCast(fromType.ID, baseCastToType.ID); ok {
+		castResult, err := c.evalUserDefinedCast(ctx, val, fromType, userCast)
+		if err != nil {
+			return nil, err
+		}
+		return castResult, nil
+	}
 	castFunction := framework.GetExplicitCast(fromType, baseCastToType)
 	if castFunction == nil {
 		return nil, errors.Errorf(
@@ -144,6 +155,24 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 
 	return castResult, nil
+}
+
+func (c *ExplicitCast) evalUserDefinedCast(ctx *sql.Context, val any, fromType *pgtypes.DoltgresType, cast auth.Cast) (any, error) {
+	if c.runner == nil {
+		return nil, errors.Errorf("statement runner is not available for cast %s", cast.Function)
+	}
+	fn, ok := (&framework.FunctionProvider{}).Function(ctx, cast.Function)
+	if !ok {
+		return nil, errors.Errorf("function %s does not exist", cast.Function)
+	}
+	fnExpr, err := fn.NewInstance(ctx, []sql.Expression{expression.NewLiteral(val, fromType)})
+	if err != nil {
+		return nil, err
+	}
+	if interp, ok := fnExpr.(procedures.InterpreterExpr); ok {
+		fnExpr = interp.SetStatementRunner(ctx, c.runner)
+	}
+	return fnExpr.Eval(ctx, nil)
 }
 
 func runtimeFromTypeForExplicitCast(fromType *pgtypes.DoltgresType, val any) *pgtypes.DoltgresType {
@@ -207,6 +236,7 @@ func (c *ExplicitCast) WithChildren(ctx *sql.Context, children ...sql.Expression
 		castToType:     c.castToType,
 		domainNullable: c.domainNullable,
 		domainChecks:   c.domainChecks,
+		runner:         c.runner,
 	}, nil
 }
 
@@ -224,6 +254,7 @@ func (c *ExplicitCast) WithResolvedChildren(ctx context.Context, children []any)
 		castToType:     c.castToType,
 		domainNullable: c.domainNullable,
 		domainChecks:   c.domainChecks,
+		runner:         c.runner,
 	}, nil
 }
 
@@ -239,5 +270,12 @@ func (c *ExplicitCast) WithDomainConstraints(nullable bool, checks sql.CheckCons
 	ec := *c
 	ec.domainNullable = nullable
 	ec.domainChecks = checks
+	return &ec
+}
+
+// SetStatementRunner implements procedures.InterpreterExpr.
+func (c *ExplicitCast) SetStatementRunner(ctx *sql.Context, runner sql.StatementRunner) sql.Expression {
+	ec := *c
+	ec.runner = runner
 	return &ec
 }
