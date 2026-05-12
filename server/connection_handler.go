@@ -25,6 +25,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime/debug"
 	"slices"
@@ -1726,6 +1727,10 @@ func (h *ConnectionHandler) handleCopyData(message *pgproto3.CopyData) (stop boo
 func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 	copyState := &copyFromStdinState{
 		copyFromStdinNode: stmt,
+	}
+
+	if !filepath.IsAbs(stmt.File) {
+		return errors.Errorf("relative path not allowed for COPY FROM")
 	}
 
 	// TODO: security check for file path
