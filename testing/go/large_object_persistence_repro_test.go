@@ -153,3 +153,81 @@ func TestLargeObjectPutAndSlicedGetRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestLargeObjectGetRequiresSelectPrivilegeRepro reproduces a security bug:
+// lo_get should require ownership, SELECT on the large object, or superuser
+// privileges when lo_compat_privileges is off.
+func TestLargeObjectGetRequiresSelectPrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "lo_get requires large-object SELECT privilege",
+			SetUpScript: []string{
+				`CREATE USER large_object_get_intruder PASSWORD 'pw';`,
+				`SELECT lo_from_bytea(424244, decode('6869', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT encode(lo_get(424244), 'hex');`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_get_intruder`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectPutRequiresUpdatePrivilegeRepro reproduces a security bug:
+// lo_put should require ownership, UPDATE on the large object, or superuser
+// privileges when lo_compat_privileges is off.
+func TestLargeObjectPutRequiresUpdatePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "lo_put requires large-object UPDATE privilege",
+			SetUpScript: []string{
+				`CREATE USER large_object_put_intruder PASSWORD 'pw';`,
+				`SELECT lo_from_bytea(424245, decode('00112233', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT lo_put(424245, 1, decode('ff', 'hex'));`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_put_intruder`,
+					Password:    `pw`,
+				},
+				{
+					Query:    `SELECT encode(lo_get(424245), 'hex');`,
+					Expected: []sql.Row{{"00112233"}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectUnlinkRequiresOwnershipRepro reproduces a security bug:
+// lo_unlink should require ownership or superuser privileges.
+func TestLargeObjectUnlinkRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "lo_unlink requires large-object ownership",
+			SetUpScript: []string{
+				`CREATE USER large_object_unlink_intruder PASSWORD 'pw';`,
+				`SELECT lo_from_bytea(424246, decode('aabbccdd', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT lo_unlink(424246);`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_unlink_intruder`,
+					Password:    `pw`,
+				},
+				{
+					Query: `SELECT oid::TEXT
+						FROM pg_catalog.pg_largeobject_metadata
+						WHERE oid = 424246;`,
+					Expected: []sql.Row{{"424246"}},
+				},
+			},
+		},
+	})
+}
