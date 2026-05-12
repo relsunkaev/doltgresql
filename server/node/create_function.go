@@ -28,6 +28,7 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -57,6 +58,7 @@ type CreateFunction struct {
 	SqlDef            string
 	SqlDefParsedStmts []vitess.Statement
 	SetOf             bool
+	LeakProof         bool
 }
 
 var _ sql.ExecSourceRel = (*CreateFunction)(nil)
@@ -77,7 +79,8 @@ func NewCreateFunction(
 	statements []plpgsql.InterpreterOperation,
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement,
-	setOf bool) *CreateFunction {
+	setOf bool,
+	leakProof bool) *CreateFunction {
 	return &CreateFunction{
 		DatabaseName:      databaseName,
 		FunctionName:      functionName,
@@ -93,6 +96,7 @@ func NewCreateFunction(
 		SqlDef:            sqlDef,
 		SqlDefParsedStmts: sqlDefParsedStmts,
 		SetOf:             setOf,
+		LeakProof:         leakProof,
 	}
 }
 
@@ -113,6 +117,15 @@ func (c *CreateFunction) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
+	if c.LeakProof {
+		var userRole auth.Role
+		auth.LockRead(func() {
+			userRole = auth.GetRole(ctx.Client().User)
+		})
+		if !userRole.IsValid() || !userRole.IsSuperUser {
+			return nil, errors.Errorf("permission denied")
+		}
+	}
 	funcCollection, err := core.GetFunctionsCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err

@@ -17,6 +17,7 @@ package ast
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -36,6 +37,9 @@ import (
 func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Statement, error) {
 	options, err := validateRoutineOptions(ctx, node.Options)
 	if err != nil {
+		return nil, err
+	}
+	if err = validateCreateFunctionRoutineOptions(node.ReturnsSetOf, options); err != nil {
 		return nil, err
 	}
 	// Grab the general information that we'll need to create the function
@@ -169,6 +173,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			sqlDef,
 			sqlDefParsedStmts,
 			node.ReturnsSetOf,
+			options[tree.OptionLeakProof].IsLeakProof,
 		),
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_CREATE,
@@ -265,4 +270,32 @@ func validateRoutineOptions(ctx *Context, options []tree.RoutineOption) (map[tre
 		}
 	}
 	return optDefined, nil
+}
+
+// validateCreateFunctionRoutineOptions validates options that PostgreSQL restricts on CREATE FUNCTION.
+func validateCreateFunctionRoutineOptions(returnsSetOf bool, options map[tree.FunctionOption]tree.RoutineOption) error {
+	if cost, ok := options[tree.OptionCost]; ok && !routineOptionNumberIsPositive(cost.Cost) {
+		return errors.Errorf("COST must be positive")
+	}
+	if rows, ok := options[tree.OptionRows]; ok {
+		if !returnsSetOf {
+			return errors.Errorf("ROWS is not applicable when function does not return a set")
+		}
+		if !routineOptionNumberIsPositive(rows.Rows) {
+			return errors.Errorf("ROWS must be positive")
+		}
+	}
+	return nil
+}
+
+func routineOptionNumberIsPositive(expr tree.Expr) bool {
+	if expr == nil {
+		return false
+	}
+	literal := strings.TrimSpace(expr.String())
+	for strings.HasPrefix(literal, "(") && strings.HasSuffix(literal, ")") {
+		literal = strings.TrimSpace(literal[1 : len(literal)-1])
+	}
+	value, err := strconv.ParseFloat(literal, 64)
+	return err == nil && value > 0
 }
