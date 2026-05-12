@@ -60,7 +60,7 @@ func TestSQLAlchemyClientSmoke(t *testing.T) {
 	install := exec.CommandContext(cmdCtx, pip, "install", "--quiet",
 		"--disable-pip-version-check",
 		"SQLAlchemy==2.0.49",
-		"psycopg[binary]==3.3.4")
+		"psycopg[binary]==3.2.13")
 	install.Env = append(os.Environ(), "PIP_DISABLE_PIP_VERSION_CHECK=1")
 	if out, err := install.CombinedOutput(); err != nil {
 		t.Fatalf("pip install SQLAlchemy + psycopg: %v\n%s", err, out)

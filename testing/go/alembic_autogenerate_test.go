@@ -86,7 +86,7 @@ func TestAlembicAutogenerate(t *testing.T) {
 	pip := filepath.Join(venv, "bin", "pip")
 	install := exec.CommandContext(cmdCtx, pip, "install", "--quiet",
 		"--disable-pip-version-check",
-		"alembic==1.13.2", "SQLAlchemy==2.0.34", "psycopg[binary]==3.3.4")
+		"alembic==1.13.2", "SQLAlchemy==2.0.34", "psycopg[binary]==3.2.13")
 	install.Env = append(os.Environ(), "PIP_DISABLE_PIP_VERSION_CHECK=1")
 	if out, err := install.CombinedOutput(); err != nil {
 		t.Fatalf("pip install Alembic + SQLAlchemy + psycopg: %v\n%s", err, out)

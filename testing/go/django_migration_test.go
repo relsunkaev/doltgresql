@@ -56,7 +56,7 @@ func TestDjangoMigrationAndORMSmoke(t *testing.T) {
 	pip := filepath.Join(venv, "bin", "pip")
 	install := exec.CommandContext(cmdCtx, pip, "install", "--quiet",
 		"--disable-pip-version-check",
-		"Django==5.2.1", "psycopg[binary]==3.3.4")
+		"Django==4.2.30", "psycopg[binary]==3.2.13")
 	install.Env = append(os.Environ(), "PIP_DISABLE_PIP_VERSION_CHECK=1")
 	if out, err := install.CombinedOutput(); err != nil {
 		t.Fatalf("pip install Django + psycopg: %v\n%s", err, out)
