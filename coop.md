@@ -65,11 +65,20 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ### delta - 2026-05-12 13:18 America/Phoenix
 
-- Lane: Alembic/SQLAlchemy startup failure on `SELECT pg_catalog.version()`.
-- Baseline slice from gamma's jsonl: 79 top-level tests passed, 14 failed before the incomplete run stopped; first failure is `TestAlembicAutogenerate` because qualified `pg_catalog.version()` is missing.
-- Expected files: `server/functions/*version*` or a new small `server/functions/version.go`, `server/functions/init.go`, and focused tests only if needed.
-- Avoiding: alpha's DDL ownership files, beta's `server/connection_handler.go`, and gamma's full-suite baseline.
-- Next action: red focused Alembic/server-version repros, implement the missing built-in/GUC root cause, focused green, commit.
+- Lane: Alembic/SQLAlchemy startup failure on `SELECT pg_catalog.version()`, then `int2vector` `unnest(pg_index.indkey)` element typing.
+- Baseline slice from gamma's jsonl: 79 top-level tests passed, 14 failed before the incomplete run stopped; first failure was `TestAlembicAutogenerate`.
+- Expected files: `server/functions/framework/provider.go`, `server/functions/framework/compiled_function.go`, and focused catalog/vector probe tests.
+- Avoiding: alpha's DDL ownership files, beta's `server/connection_handler.go`, gamma's full-suite baseline, and dirty peer-owned repro files.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^TestDumpVersionIdentity$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^TestPgIndexVectorSlices$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^TestAlembicAutogenerate$' -count=1 -v`
+- Extra green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^(TestDumpVersionIdentity|TestPgIndexVectorSlices|TestAlembicAutogenerate)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run '^TestTypes$/Int2vector_type$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./server/functions/framework -count=1`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./server/functions -count=1`
+- Result: committed `493c0c3d fix: resolve pg_catalog builtins and vector polymorphism`; leaving `coop.md` unstaged because it includes active peer edits.
 
 ### alpha - 2026-05-12 13:18 America/Phoenix
 
@@ -130,7 +139,10 @@ Use this file to avoid overlapping work. Add short entries with:
   - `TestDropIndexConcurrentlyRejectsTransactionBlockRepro` fails because `DROP INDEX CONCURRENTLY` succeeds inside `BEGIN`.
 - Expected files: `server/connection_handler.go`; possibly a comment-only correction in `server/node/create_index_concurrently.go`.
 - Avoiding: alpha's keyword/function lane, beta's analyzer lane, delta's version-function/probe lane, and dirty test files.
-- Next action: reject concurrent index DDL when `ConnectionHandler.inTransaction` is true, focused green, commit only gamma-owned files.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run 'Test(CreateIndexConcurrentlyRejectsTransactionBlockRepro|DropIndexConcurrentlyRejectsTransactionBlockRepro)$' -count=1`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test ./testing/go -run 'TestCreateIndexConcurrently(CrossSessionVisibility|MetadataBackedCrossSessionVisibility)$' -count=1`
+- Result: focused transaction-block repros and adjacent CONCURRENTLY visibility tests pass; committing gamma-owned files only.
 
 ### alpha - 2026-05-12 13:25 America/Phoenix
 
@@ -138,3 +150,46 @@ Use this file to avoid overlapping work. Add short entries with:
 - Result: implementation is ready to commit; `server/functions` package is green.
 - Focused repro note: `TestPgGetKeywordsExposesReservedWordsRepro` was green before the current peer-owned `server/connection_handler.go` edit. The rerun now fails at build time because `server/connection_handler.go` references undefined `createIndexConcurrentlyPattern` / `dropIndexConcurrentlyPattern`.
 - Current stats note: gamma's JSONL ended with 725/1285 top-level passing (56.4%), but this is not a valid full-suite snapshot because the package build is broken by the in-progress concurrent-index lane.
+
+### beta - 2026-05-12 13:26 America/Phoenix
+
+- Lane: `DROP TABLE` / `DROP VIEW` / `DROP MATERIALIZED VIEW` ownership checks from commits `c2142541`, `3e6cefeb`, and `a0893b67`.
+- Expected files: `server/node/drop_table.go`, `server/node/drop_view.go`, `server/analyzer/replace_node.go`.
+- Avoiding: gamma's `server/connection_handler.go` and `server/node/create_index_concurrently.go`, alpha/delta functions files, and dirty probe tests.
+- Next action: run focused red ownership repros, move ownership validation before the underlying drop, focused green, commit only beta-owned files.
+
+### gamma - 2026-05-12 13:27 America/Phoenix
+
+- Status: looking for next unclaimed lane.
+- Blocker: fresh `go test ./testing/go -run '^TestClusterMarksIndexClusteredRepro$' -count=1 -v` cannot build while beta's `server/node/drop_table.go` edit is in progress:
+  - `server/node/drop_table.go:66:16: undefined: err`
+  - `server/node/drop_table.go:67:7: undefined: err`
+  - `server/node/drop_table.go:68:17: undefined: err`
+- Current action: not touching `server/node/drop_table.go`; waiting for beta to finish or selecting only non-build-dependent inspection work.
+
+### alpha - 2026-05-12 13:27 America/Phoenix
+
+- Status: backing off the `DROP TABLE` / `DROP VIEW` / `DROP MATERIALIZED VIEW` ownership lane because beta claimed and edited `server/node/drop_table.go`.
+- Next lane: `ALTER FUNCTION` unsupported-feature repros, per user direction.
+- Expected files: likely `server/ast/alter_function.go`, `server/node/alter_function.go`, and focused tests only if a new regression is needed.
+- Avoiding: beta's `server/node/drop_table.go`, delta's `server/functions/framework/*` and probe tests, gamma's concurrent-index files.
+- Blocker: focused `testing/go` runs will not build until beta fixes/commits `server/node/drop_table.go`.
+
+### alpha - 2026-05-12 13:29 America/Phoenix
+
+- Result: focused `ALTER FUNCTION` and `ALTER ROUTINE` repros are already green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run 'TestAlter(Function|Routine).*Repro|TestAlterFunction.*OptionRepro|TestAlterFunctionOwnerToRequiresOwnershipRepro|TestAlterFunctionOwnerUpdatesCatalogRepro|TestAlter$' -count=1 -v`
+- New lane: stale `TestAlterStatements` smoke expectations for implemented ownership features.
+- Expected files: `testing/go/alter_test.go` only.
+- Red: `TestAlterStatements` now fails because `ALTER TYPE ... OWNER TO` and `ALTER PROCEDURE ... OWNER TO` are implemented and correctly reject missing role `foo`, while the smoke test still expects unsupported-warning stubs.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run '^TestAlterStatements$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go -run 'TestAlter(Function|Routine).*Repro|TestAlterFunction.*OptionRepro|TestAlterFunctionOwnerToRequiresOwnershipRepro|TestAlterFunctionOwnerUpdatesCatalogRepro' -count=1`
+- Next action: commit only `testing/go/alter_test.go` and `coop.md`.
+
+### gamma - 2026-05-12 13:29 America/Phoenix
+
+- Lane: `CLUSTER index ON table` should mark `pg_index.indisclustered`.
+- Red: `TestClusterMarksIndexClusteredRepro` fails because top-level `CLUSTER` parses as a syntax error and the catalog query returns no clustered index.
+- Expected files: likely `server/connection_handler.go` for a narrow statement conversion, `server/node/*cluster*` or index metadata node code, `server/indexmetadata/index_metadata.go`, and `server/tables/pgcatalog/pg_index.go`.
+- Avoiding: beta's `server/node/drop_table.go`, alpha's `ALTER FUNCTION` files, and delta's `server/functions/framework/*` lane.
