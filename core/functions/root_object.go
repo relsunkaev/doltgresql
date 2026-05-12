@@ -38,6 +38,10 @@ const (
 	FIELD_NAME_EXTENSION_SYMBOL  = "extension_symbol"
 	FIELD_NAME_SQL_DEFINITION    = "sql_definition"
 	FIELD_NAME_SET_OF            = "set_of"
+	FIELD_NAME_AGGREGATE         = "aggregate"
+	FIELD_NAME_AGGREGATE_STYPE   = "aggregate_state_type"
+	FIELD_NAME_AGGREGATE_SFUNC   = "aggregate_sfunc"
+	FIELD_NAME_AGGREGATE_INIT    = "aggregate_initcond"
 )
 
 // DeserializeRootObject implements the interface objinterface.Collection.
@@ -164,6 +168,54 @@ func (pgf *Collection) DiffRootObjects(ctx context.Context, fromHash string, o o
 			ours.SetOf = diff.OurValue.(bool)
 		}
 	}
+	if ours.Aggregate != theirs.Aggregate {
+		diff := objinterface.RootObjectDiff{
+			Type:      pgtypes.Bool,
+			FromHash:  fromHash,
+			FieldName: FIELD_NAME_AGGREGATE,
+		}
+		if pgmerge.DiffValues(&diff, ours.Aggregate, theirs.Aggregate, ancestor.Aggregate, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Aggregate = diff.OurValue.(bool)
+		}
+	}
+	if ours.AggregateStateType != theirs.AggregateStateType {
+		diff := objinterface.RootObjectDiff{
+			Type:      pgtypes.Text,
+			FromHash:  fromHash,
+			FieldName: FIELD_NAME_AGGREGATE_STYPE,
+		}
+		if pgmerge.DiffValues(&diff, ours.AggregateStateType.TypeName(), theirs.AggregateStateType.TypeName(), ancestor.AggregateStateType.TypeName(), hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.AggregateStateType = id.NewType(ours.AggregateStateType.SchemaName(), diff.OurValue.(string))
+		}
+	}
+	if ours.AggregateSFunc != theirs.AggregateSFunc {
+		diff := objinterface.RootObjectDiff{
+			Type:      pgtypes.Text,
+			FromHash:  fromHash,
+			FieldName: FIELD_NAME_AGGREGATE_SFUNC,
+		}
+		if pgmerge.DiffValues(&diff, string(ours.AggregateSFunc), string(theirs.AggregateSFunc), string(ancestor.AggregateSFunc), hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.AggregateSFunc = id.Function(diff.OurValue.(string))
+		}
+	}
+	if ours.AggregateInitCond != theirs.AggregateInitCond {
+		diff := objinterface.RootObjectDiff{
+			Type:      pgtypes.Text,
+			FromHash:  fromHash,
+			FieldName: FIELD_NAME_AGGREGATE_INIT,
+		}
+		if pgmerge.DiffValues(&diff, ours.AggregateInitCond, theirs.AggregateInitCond, ancestor.AggregateInitCond, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.AggregateInitCond = diff.OurValue.(string)
+		}
+	}
 	return diffs, ours, nil
 }
 
@@ -196,6 +248,14 @@ func (pgf *Collection) GetFieldType(ctx context.Context, fieldName string) *pgty
 		return pgtypes.Text
 	case FIELD_NAME_SET_OF:
 		return pgtypes.Bool
+	case FIELD_NAME_AGGREGATE:
+		return pgtypes.Bool
+	case FIELD_NAME_AGGREGATE_STYPE:
+		return pgtypes.Text
+	case FIELD_NAME_AGGREGATE_SFUNC:
+		return pgtypes.Text
+	case FIELD_NAME_AGGREGATE_INIT:
+		return pgtypes.Text
 	default:
 		return nil
 	}
@@ -317,6 +377,14 @@ func (pgf *Collection) UpdateField(ctx context.Context, rootObject objinterface.
 		function.SQLDefinition = newValue.(string)
 	case FIELD_NAME_SET_OF:
 		function.SetOf = newValue.(bool)
+	case FIELD_NAME_AGGREGATE:
+		function.Aggregate = newValue.(bool)
+	case FIELD_NAME_AGGREGATE_STYPE:
+		function.AggregateStateType = id.NewType(function.AggregateStateType.SchemaName(), newValue.(string))
+	case FIELD_NAME_AGGREGATE_SFUNC:
+		function.AggregateSFunc = id.Function(newValue.(string))
+	case FIELD_NAME_AGGREGATE_INIT:
+		function.AggregateInitCond = newValue.(string)
 	default:
 		return nil, errors.Newf("unknown field name: `%s`", fieldName)
 	}

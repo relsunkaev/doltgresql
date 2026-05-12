@@ -307,6 +307,7 @@ type FunctionColumn struct {
 	Idx    uint16
 	Typ    *pgtypes.DoltgresType
 	StrVal string // Do not set it for CREATE FUNCTION
+	IsNull bool
 }
 
 // ResolvedType implements the TypedExpr interface.
@@ -316,6 +317,10 @@ func (f FunctionColumn) ResolvedType() *types.T {
 
 // Format implements the NodeFormatter interface.
 func (f FunctionColumn) Format(ctx *FmtCtx) {
+	if f.IsNull {
+		ctx.WriteString("NULL")
+		return
+	}
 	if f.StrVal == "" {
 		ctx.WriteString(f.Name)
 	}

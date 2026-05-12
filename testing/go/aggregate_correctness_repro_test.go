@@ -103,6 +103,95 @@ func TestCreateAggregateSqlTransitionFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateAggregateSqlTransitionFunctionEdges covers the supported
+// CREATE AGGREGATE slice beyond the happy path: SQL transition functions with
+// no INITCOND, NULL inputs, empty inputs, and old-style BASETYPE syntax.
+func TestCreateAggregateSqlTransitionFunctionEdges(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SQL aggregate transition handles NULL state and old syntax",
+			SetUpScript: []string{
+				`CREATE FUNCTION custom_count_seen_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + CASE WHEN next_value IS NULL THEN 0 ELSE 1 END $$;`,
+				`CREATE AGGREGATE custom_count_seen(
+					BASETYPE = INT,
+					SFUNC = custom_count_seen_sfunc,
+					STYPE = INT
+				);`,
+				`CREATE TABLE custom_count_seen_items (
+					grp TEXT,
+					v INT
+				);`,
+				`INSERT INTO custom_count_seen_items VALUES
+					('a', 1),
+					('a', NULL),
+					('a', 3),
+					('b', NULL);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT grp, custom_count_seen(v)
+						FROM custom_count_seen_items
+						GROUP BY grp
+						ORDER BY grp;`,
+					Expected: []sql.Row{
+						{"a", 2},
+						{"b", 0},
+					},
+				},
+				{
+					Query: `SELECT custom_count_seen(v)
+						FROM custom_count_seen_items
+						WHERE grp = 'missing';`,
+					Expected: []sql.Row{{nil}},
+				},
+			},
+		},
+		{
+			Name: "overloaded SQL aggregates use their resolved transition function",
+			SetUpScript: []string{
+				`CREATE FUNCTION overloaded_custom_sum_int_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) + 1 $$;`,
+				`CREATE FUNCTION overloaded_custom_sum_bigint_sfunc(state BIGINT, next_value BIGINT)
+					RETURNS BIGINT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0::BIGINT) + COALESCE(next_value, 0::BIGINT) + 100::BIGINT $$;`,
+				`CREATE AGGREGATE overloaded_custom_sum(INT) (
+					SFUNC = overloaded_custom_sum_int_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`CREATE AGGREGATE overloaded_custom_sum(BIGINT) (
+					SFUNC = overloaded_custom_sum_bigint_sfunc,
+					STYPE = BIGINT,
+					INITCOND = '0'
+				);`,
+				`CREATE TABLE overloaded_custom_sum_items (
+					v_int INT,
+					v_bigint BIGINT
+				);`,
+				`INSERT INTO overloaded_custom_sum_items VALUES
+					(1, 10),
+					(2, 20);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT overloaded_custom_sum(v_int), overloaded_custom_sum(v_bigint)
+						FROM overloaded_custom_sum_items;`,
+					Expected: []sql.Row{{5, int64(230)}},
+				},
+			},
+		},
+	})
+}
+
 // TestGroupByPrimaryKeyAllowsDependentColumnsRepro guards PostgreSQL
 // functional-dependency grouping: grouping by a table's primary key permits
 // selecting other columns from that same base table.

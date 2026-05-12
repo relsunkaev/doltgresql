@@ -29,7 +29,7 @@ type AggregateFunction interface {
 	specificFuncImpl()
 }
 
-type NewBufferFn func([]sql.Expression) (sql.AggregationBuffer, error)
+type NewBufferFn func(*sql.Context, sql.StatementRunner, []sql.Expression) (sql.AggregationBuffer, error)
 
 // CompiledAggregateFunction is an expression that represents a fully-analyzed PostgreSQL aggregate function.
 type CompiledAggregateFunction struct {
@@ -43,12 +43,12 @@ var _ AggregateFunction = (*CompiledAggregateFunction)(nil)
 // NewCompiledAggregateFunction returns a newly compiled function.
 // TODO: newBuffer probably needs to be parameterized in the overloads
 func NewCompiledAggregateFunction(ctx *sql.Context, name string, args []sql.Expression, functions *Overloads, newBuffer NewBufferFn) *CompiledAggregateFunction {
-	return newCompiledAggregateFunctionInternal(ctx, name, args, functions, functions.overloadsForParams(len(args)), newBuffer)
+	return newCompiledAggregateFunctionInternal(ctx, name, args, functions, functions.overloadsForParams(len(args)), newBuffer, nil)
 }
 
 // newCompiledAggregateFunctionInternal is called internally, which skips steps that may have already been processed.
-func newCompiledAggregateFunctionInternal(ctx *sql.Context, name string, args []sql.Expression, overloads *Overloads, fnOverloads []Overload, newBuffer NewBufferFn) *CompiledAggregateFunction {
-	cf := newCompiledFunctionInternal(ctx, name, args, overloads, fnOverloads, false, nil)
+func newCompiledAggregateFunctionInternal(ctx *sql.Context, name string, args []sql.Expression, overloads *Overloads, fnOverloads []Overload, newBuffer NewBufferFn, runner sql.StatementRunner) *CompiledAggregateFunction {
+	cf := newCompiledFunctionInternal(ctx, name, args, overloads, fnOverloads, false, runner)
 	c := &CompiledAggregateFunction{
 		CompiledFunction: cf,
 		newBuffer:        newBuffer,
@@ -69,7 +69,7 @@ func (c *CompiledAggregateFunction) WithChildren(ctx *sql.Context, children ...s
 	}
 
 	// We have to re-resolve here, since the change in children may require it (e.g. we have more type info than we did)
-	return newCompiledAggregateFunctionInternal(ctx, c.Name, children, c.overloads, c.fnOverloads, c.newBuffer), nil
+	return newCompiledAggregateFunctionInternal(ctx, c.Name, children, c.overloads, c.fnOverloads, c.newBuffer, c.runner), nil
 }
 
 // SetStatementRunner implements the interface analyzer.Interpreter.
@@ -102,7 +102,12 @@ func (c *CompiledAggregateFunction) DebugString(ctx *sql.Context) string {
 
 // NewBuffer implements the interface sql.Aggregation.
 func (c *CompiledAggregateFunction) NewBuffer(ctx *sql.Context) (sql.AggregationBuffer, error) {
-	return c.newBuffer(c.Arguments)
+	if c.overload.Valid() {
+		if aggregateFunction, ok := c.overload.Function().(AggregateFunctionInterface); ok {
+			return aggregateFunction.NewBuffer(ctx, c.runner, c.Arguments)
+		}
+	}
+	return c.newBuffer(ctx, c.runner, c.Arguments)
 }
 
 // Id implements the interface sql.Aggregation.

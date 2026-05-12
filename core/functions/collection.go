@@ -20,6 +20,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -34,12 +35,13 @@ import (
 
 // Collection contains a collection of functions.
 type Collection struct {
-	accessCache   map[id.Function]Function      // This cache is used for general access when you know the exact ID
-	overloadCache map[id.Function][]id.Function // This cache is used to find overloads if you know the name
-	idCache       []id.Function                 // This cache simply contains the name of every function
-	mapHash       hash.Hash                     // This is cached so that we don't have to calculate the hash every time
-	underlyingMap prolly.AddressMap
-	ns            tree.NodeStore
+	accessCache    map[id.Function]Function      // This cache is used for general access when you know the exact ID
+	overloadCache  map[id.Function][]id.Function // This cache is used to find overloads if you know the name
+	idCache        []id.Function                 // This cache simply contains the name of every function
+	aggregateNames map[string]int
+	mapHash        hash.Hash // This is cached so that we don't have to calculate the hash every time
+	underlyingMap  prolly.AddressMap
+	ns             tree.NodeStore
 }
 
 // Function represents a created function.
@@ -58,6 +60,50 @@ type Function struct {
 	Operations         []plpgsql.InterpreterOperation // Only used when this is a plpgsql language
 	SQLDefinition      string                         // Only used when this is a sql language
 	SetOf              bool
+	Aggregate          bool
+	AggregateStateType id.Type
+	AggregateSFunc     id.Function
+	AggregateInitCond  string
+}
+
+var aggregateNameRegistry = struct {
+	sync.Mutex
+	counts map[string]int
+}{
+	counts: make(map[string]int),
+}
+
+// IsAggregateName returns whether the given function name has been registered
+// by a loaded user-defined aggregate.
+func IsAggregateName(name string) bool {
+	aggregateNameRegistry.Lock()
+	defer aggregateNameRegistry.Unlock()
+	return aggregateNameRegistry.counts[strings.ToLower(name)] > 0
+}
+
+func registerAggregateName(name string) {
+	name = strings.ToLower(name)
+	if len(name) == 0 {
+		return
+	}
+	aggregateNameRegistry.Lock()
+	defer aggregateNameRegistry.Unlock()
+	aggregateNameRegistry.counts[name]++
+}
+
+func unregisterAggregateName(name string) {
+	name = strings.ToLower(name)
+	if len(name) == 0 {
+		return
+	}
+	aggregateNameRegistry.Lock()
+	defer aggregateNameRegistry.Unlock()
+	count := aggregateNameRegistry.counts[name]
+	if count <= 1 {
+		delete(aggregateNameRegistry.counts, name)
+		return
+	}
+	aggregateNameRegistry.counts[name] = count - 1
 }
 
 var _ objinterface.Collection = (*Collection)(nil)
@@ -66,12 +112,13 @@ var _ objinterface.RootObject = Function{}
 // NewCollection returns a new Collection.
 func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree.NodeStore) (*Collection, error) {
 	collection := &Collection{
-		accessCache:   make(map[id.Function]Function),
-		overloadCache: make(map[id.Function][]id.Function),
-		idCache:       nil,
-		mapHash:       hash.Hash{},
-		underlyingMap: underlyingMap,
-		ns:            ns,
+		accessCache:    make(map[id.Function]Function),
+		overloadCache:  make(map[id.Function][]id.Function),
+		idCache:        nil,
+		aggregateNames: make(map[string]int),
+		mapHash:        hash.Hash{},
+		underlyingMap:  underlyingMap,
+		ns:             ns,
 	}
 	return collection, collection.reloadCaches(ctx)
 }
@@ -272,12 +319,13 @@ func (pgf *Collection) IterateFunctions(ctx context.Context, callback func(f Fun
 // Clone returns a new *Collection with the same contents as the original.
 func (pgf *Collection) Clone(ctx context.Context) *Collection {
 	return &Collection{
-		accessCache:   maps.Clone(pgf.accessCache),
-		overloadCache: maps.Clone(pgf.overloadCache),
-		idCache:       slices.Clone(pgf.idCache),
-		underlyingMap: pgf.underlyingMap,
-		mapHash:       pgf.mapHash,
-		ns:            pgf.ns,
+		accessCache:    maps.Clone(pgf.accessCache),
+		overloadCache:  maps.Clone(pgf.overloadCache),
+		idCache:        slices.Clone(pgf.idCache),
+		aggregateNames: maps.Clone(pgf.aggregateNames),
+		underlyingMap:  pgf.underlyingMap,
+		mapHash:        pgf.mapHash,
+		ns:             pgf.ns,
 	}
 }
 
@@ -313,6 +361,12 @@ func (pgf *Collection) reloadCaches(ctx context.Context) error {
 
 	clear(pgf.accessCache)
 	clear(pgf.overloadCache)
+	for aggregateName, count := range pgf.aggregateNames {
+		for range count {
+			unregisterAggregateName(aggregateName)
+		}
+	}
+	clear(pgf.aggregateNames)
 	pgf.mapHash = pgf.underlyingMap.HashOf()
 	pgf.idCache = make([]id.Function, 0, count)
 
@@ -332,6 +386,11 @@ func (pgf *Collection) reloadCaches(ctx context.Context) error {
 		partialID := id.NewFunction(f.ID.SchemaName(), f.ID.FunctionName())
 		pgf.overloadCache[partialID] = append(pgf.overloadCache[partialID], f.ID)
 		pgf.idCache = append(pgf.idCache, f.ID)
+		if f.Aggregate {
+			aggregateName := strings.ToLower(f.ID.FunctionName())
+			pgf.aggregateNames[aggregateName]++
+			registerAggregateName(aggregateName)
+		}
 		return nil
 	})
 }

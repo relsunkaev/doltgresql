@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
 )
 
@@ -194,6 +195,9 @@ func initEngine() {
 // MySQL plus some postgres specific ones.
 func IsAggregateFunc(name string) bool {
 	if planbuilder.IsMySQLAggregateFuncName(name) {
+		return true
+	}
+	if corefunctions.IsAggregateName(name) {
 		return true
 	}
 

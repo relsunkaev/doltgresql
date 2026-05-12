@@ -102,9 +102,14 @@ func (sqlFunc SQLFunction) enforceInterfaceInheritance(error) {}
 func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner, args []any) (any, error) {
 	paramMap := make(map[string]*ParamTypAndValue)
 	for i, name := range f.ParameterNames {
-		formattedVar, err := f.ParameterTypes[i].FormatValueWithContext(ctx, args[i])
-		if err != nil {
-			return nil, err
+		var formattedVar string
+		isNull := args[i] == nil
+		if !isNull {
+			var err error
+			formattedVar, err = f.ParameterTypes[i].FormatValueWithContext(ctx, args[i])
+			if err != nil {
+				return nil, err
+			}
 		}
 		if name == "" {
 			// sanity check
@@ -113,6 +118,7 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 		paramMap[name] = &ParamTypAndValue{
 			Typ:    f.ParameterTypes[i],
 			StrVal: formattedVar,
+			IsNull: isNull,
 		}
 	}
 
@@ -207,6 +213,7 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 type ParamTypAndValue struct {
 	Typ    *pgtypes.DoltgresType
 	StrVal string
+	IsNull bool
 }
 
 // ReplaceFunctionColumn parses and replaces UnresolvedName and Placeholder expressions
@@ -279,6 +286,7 @@ func ReplaceUnresolvedToFunctionColumn(paramMap map[string]*ParamTypAndValue, ex
 					Typ:    tv.Typ,
 					Idx:    uint16(v.Idx),
 					StrVal: tv.StrVal,
+					IsNull: tv.IsNull,
 				}, nil
 			}
 		case *tree.UnresolvedName:
@@ -288,6 +296,7 @@ func ReplaceUnresolvedToFunctionColumn(paramMap map[string]*ParamTypAndValue, ex
 					Name:   name,
 					Typ:    tv.Typ,
 					StrVal: tv.StrVal,
+					IsNull: tv.IsNull,
 				}, nil
 			}
 		}

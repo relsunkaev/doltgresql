@@ -65,6 +65,8 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 	}
 
 	overloadTree := NewOverloads()
+	var aggregateNewBuffer NewBufferFn
+	var hasAggregate bool
 	for _, overload := range overloads {
 		returnType, err := typesCollection.GetType(ctx, overload.ReturnType)
 		if err != nil || returnType == nil {
@@ -78,7 +80,52 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				return nil, false
 			}
 		}
-		if len(overload.ExtensionName) > 0 {
+		if overload.Aggregate {
+			hasAggregate = true
+			stateType, err := typesCollection.GetType(ctx, overload.AggregateStateType)
+			if err != nil || stateType == nil {
+				return nil, false
+			}
+			transition, err := funcCollection.GetFunction(ctx, overload.AggregateSFunc)
+			if err != nil || !transition.ID.IsValid() || len(transition.SQLDefinition) == 0 {
+				return nil, false
+			}
+			transitionReturnType, err := typesCollection.GetType(ctx, transition.ReturnType)
+			if err != nil || transitionReturnType == nil {
+				return nil, false
+			}
+			transitionParamTypes := make([]*pgtypes.DoltgresType, len(transition.ParameterTypes))
+			for i, paramType := range transition.ParameterTypes {
+				transitionParamTypes[i], err = typesCollection.GetType(ctx, paramType)
+				if err != nil || transitionParamTypes[i] == nil {
+					return nil, false
+				}
+			}
+			aggregateFunction := SQLAggregateFunction{
+				ID:             overload.ID,
+				ReturnType:     returnType,
+				ParameterTypes: paramTypes,
+				StateType:      stateType,
+				TransitionFunction: SQLFunction{
+					ID:                 transition.ID,
+					ReturnType:         transitionReturnType,
+					ParameterNames:     transition.ParameterNames,
+					ParameterTypes:     transitionParamTypes,
+					ParameterDefaults:  transition.ParameterDefaults,
+					Variadic:           transition.Variadic,
+					IsNonDeterministic: transition.IsNonDeterministic,
+					Strict:             transition.Strict,
+					SqlStatement:       transition.SQLDefinition,
+					SetOf:              transition.SetOf,
+				},
+				InitCond:           overload.AggregateInitCond,
+				IsNonDeterministic: overload.IsNonDeterministic,
+			}
+			aggregateNewBuffer = aggregateFunction.NewBuffer
+			if err = overloadTree.Add(aggregateFunction); err != nil {
+				return nil, false
+			}
+		} else if len(overload.ExtensionName) > 0 {
 			if err = overloadTree.Add(CFunction{
 				ID:                 overload.ID,
 				ReturnType:         returnType,
@@ -120,6 +167,14 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 				return nil, false
 			}
 		}
+	}
+	if hasAggregate {
+		return sql.FunctionN{
+			Name: name,
+			Fn: func(ctx *sql.Context, params ...sql.Expression) (sql.Expression, error) {
+				return NewCompiledAggregateFunction(ctx, name, params, overloadTree, aggregateNewBuffer), nil
+			},
+		}, true
 	}
 	return sql.FunctionN{
 		Name: name,
