@@ -937,6 +937,37 @@ func TestTextDomainTypmodDmlUsesCoercedValuesRepro(t *testing.T) {
 	})
 }
 
+// TestTextDomainTypmodBindVarsUseCoercedValuesRepro reproduces data
+// consistency bugs: PostgreSQL applies text-domain base-type typmods to values
+// assigned through extended-protocol bind variables.
+func TestTextDomainTypmodBindVarsUseCoercedValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "text domain bind variable assignments use coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_bind_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_bind_domain AS character(3);`,
+				`CREATE TABLE text_domain_bind_items (
+					id INT PRIMARY KEY,
+					v varchar3_bind_domain,
+					c char3_bind_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `INSERT INTO text_domain_bind_items VALUES ($1, $2, $3);`,
+					BindVars: []any{1, "abc   ", "ab"},
+				},
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM text_domain_bind_items;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_bind_domain", "char3_bind_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestTextDomainTypmodBulkWritesUseCoercedValuesRepro reproduces data
 // consistency bugs: PostgreSQL applies text-domain base-type typmods on
 // UPDATE ... FROM and COPY FROM assignment paths.
