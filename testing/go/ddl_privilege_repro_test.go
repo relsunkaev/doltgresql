@@ -1996,6 +1996,35 @@ func TestDropTypeRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT ALL
+// PRIVILEGES ON TYPE does not transfer ownership and does not allow the grantee
+// to DROP the type.
+func TestDropTypeRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_type_intruder PASSWORD 'dropper';`,
+				`CREATE TYPE drop_type_all_private AS ENUM ('one');`,
+				`GRANT USAGE ON SCHEMA public TO drop_type_intruder;`,
+				`GRANT ALL PRIVILEGES ON TYPE drop_type_all_private TO drop_type_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE drop_type_all_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_type_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT 'one'::drop_type_all_private::text;`,
+					Expected: []sql.Row{{"one"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTypeOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a type to transfer ownership.
 func TestAlterTypeOwnerToRequiresOwnershipRepro(t *testing.T) {
