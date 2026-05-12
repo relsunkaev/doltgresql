@@ -101,6 +101,32 @@ func TestTypmodForeignKeyUsesCoercedValuesRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "text domain typmod foreign key uses coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_fk_domain AS varchar(3);`,
+				`CREATE TABLE varchar_domain_fk_parent (
+						label varchar3_fk_domain PRIMARY KEY
+					);`,
+				`CREATE TABLE varchar_domain_fk_child (
+						id INT PRIMARY KEY,
+						label varchar3_fk_domain REFERENCES varchar_domain_fk_parent(label)
+					);`,
+				`INSERT INTO varchar_domain_fk_parent VALUES ('abc');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO varchar_domain_fk_child VALUES (1, 'abc   ');`,
+				},
+				{
+					Query: `SELECT c.id, c.label, length(c.label), p.label
+							FROM varchar_domain_fk_child c
+							JOIN varchar_domain_fk_parent p ON c.label = p.label
+							ORDER BY c.id;`,
+					Expected: []sql.Row{{1, "abc", 3, "abc"}},
+				},
+			},
+		},
 	})
 }
 

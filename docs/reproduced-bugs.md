@@ -5113,10 +5113,12 @@ artifacts only; no fixes are included here.
   declared typmods. A child `TIMESTAMP(0)` value of
   `2021-09-15 21:43:56.700` can reference a parent value inserted as
   `2021-09-15 21:43:56.600` because both store as `2021-09-15 21:43:57`. The
-  same applies to domain values over `numeric(5,2)` that both round to `1.23`.
-- Observed Doltgres behavior: both child inserts fail with foreign-key
-  violations because Doltgres probes the parent key using the uncoerced child
-  value, rejecting referentially-valid PostgreSQL rows.
+  same applies to domain values over `numeric(5,2)` that both round to `1.23`
+  and `varchar(3)` domain values where excess trailing spaces coerce to the
+  parent key.
+- Observed Doltgres behavior: all child inserts fail with foreign-key violations
+  because Doltgres probes the parent key using the uncoerced child value,
+  rejecting referentially-valid PostgreSQL rows.
 
 ### Domain foreign-key columns cannot reference base-type keys
 
