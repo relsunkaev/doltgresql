@@ -4555,6 +4555,22 @@ artifacts only; no fixes are included here.
   PL/pgSQL exception statements can be silently accepted or report the wrong
   failure.
 
+### Dynamic PL/pgSQL EXECUTE changes FOUND
+
+- Reproducer: `TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro` in
+  `testing/go/plpgsql_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro -count=1`.
+- Expected PostgreSQL behavior: dynamic PL/pgSQL `EXECUTE` updates
+  `GET DIAGNOSTICS ... ROW_COUNT`, but it does not change the special
+  `FOUND` variable. If `FOUND` is true before a zero-row dynamic
+  `EXECUTE INTO` or zero-row dynamic DML statement, it remains true afterward.
+- Observed Doltgres behavior: both zero-row dynamic `EXECUTE INTO` and
+  zero-row dynamic DML set `FOUND` to false while still reporting
+  `ROW_COUNT = 0`, so control flow in migration blocks can branch differently
+  than PostgreSQL.
+
 ### PL/pgSQL ALIAS variables are not resolved
 
 - Reproducer: `TestPlpgsqlAliasVariablesResolveRepro` in

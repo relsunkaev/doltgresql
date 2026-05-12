@@ -105,6 +105,71 @@ func TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro reproduces a PL/pgSQL
+// correctness bug: EXECUTE updates ROW_COUNT but must not change FOUND.
+func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "dynamic EXECUTE INTO does not change FOUND",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_execute_found_source (id INT PRIMARY KEY);`,
+				`INSERT INTO plpgsql_execute_found_source VALUES (1);`,
+				`CREATE TABLE plpgsql_execute_found_seen (marker TEXT PRIMARY KEY, found_value TEXT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							got_id INT;
+						BEGIN
+							PERFORM 1;
+							EXECUTE 'SELECT id FROM plpgsql_execute_found_source WHERE id = 999' INTO got_id;
+							INSERT INTO plpgsql_execute_found_seen VALUES ('execute_into', FOUND::text);
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT found_value FROM plpgsql_execute_found_seen WHERE marker = 'execute_into';`,
+					Expected: []sql.Row{{"true"}},
+				},
+			},
+		},
+		{
+			Name: "dynamic EXECUTE DML does not change FOUND",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_execute_dml_found_source (
+					id INT PRIMARY KEY,
+					touched BOOL NOT NULL DEFAULT false
+				);`,
+				`INSERT INTO plpgsql_execute_dml_found_source VALUES (1, false);`,
+				`CREATE TABLE plpgsql_execute_dml_found_seen (
+					marker TEXT PRIMARY KEY,
+					found_value TEXT,
+					affected INT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DO $$
+						DECLARE
+							affected INT;
+						BEGIN
+							PERFORM 1;
+							EXECUTE 'UPDATE plpgsql_execute_dml_found_source SET touched = true WHERE id = 999';
+							GET DIAGNOSTICS affected = ROW_COUNT;
+							INSERT INTO plpgsql_execute_dml_found_seen VALUES ('execute_dml', FOUND::text, affected);
+						END;
+					$$;`,
+				},
+				{
+					Query:    `SELECT found_value, affected FROM plpgsql_execute_dml_found_seen WHERE marker = 'execute_dml';`,
+					Expected: []sql.Row{{"true", 0}},
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlAliasVariablesResolveRepro reproduces a PL/pgSQL correctness bug:
 // ALIAS variables should be assignable names for local variables and function
 // arguments.
