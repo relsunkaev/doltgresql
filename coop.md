@@ -953,3 +953,14 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./testing/go -run '^(TestAlterTableOwnerUpdatesCatalogRepro|TestAlterTableOwnerCanUseTransferredTableRepro|TestAlterViewOwnerUpdatesCatalogRepro|TestAlterViewOwnerCanUseTransferredViewRepro|TestAlterTableOwnerToRequiresOwnershipRepro|TestAlterViewOwnerToRequiresOwnershipRepro|TestAlterOwnerRequiresExistingRoleRepro|TestPgViewsViewownerMetadataRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./server/auth ./server/node ./server/ast ./server/tables/pgcatalog -count=1`
 - Progress note: stale in-progress alpha manifest `/tmp/doltgresql-testing-go-alpha-20260512-1514.jsonl` last read `1254/2153` passing (`58.2%`), `899` failed, excluding this commit. Next action is a fresh manifest from `b21832f6`.
+
+### alpha - 2026-05-12 15:34 America/Phoenix
+
+- Lane complete: `ALTER MATERIALIZED VIEW ... OWNER TO` now shares the relation-owner transfer path and updates `pg_class.relowner` for table-backed materialized views.
+- Source touched and committed: `server/node/alter_relation_owner.go`, `server/ast/alter_materialized_view.go`.
+- Result: committed `af5d8a04 fix: support materialized view owner transfers`.
+- Red: `TestAlterMaterializedViewOwnerUpdatesCatalogRepro` returned "ALTER MATERIALIZED VIEW command is not yet supported" and kept `relowner` as `postgres`.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./testing/go -run '^(TestAlterMaterializedViewOwnerUpdatesCatalogRepro|TestAlterTableOwnerUpdatesCatalogRepro|TestAlterTableOwnerCanUseTransferredTableRepro|TestAlterViewOwnerUpdatesCatalogRepro|TestAlterViewOwnerCanUseTransferredViewRepro|TestAlterTableOwnerToRequiresOwnershipRepro|TestAlterViewOwnerToRequiresOwnershipRepro|TestAlterOwnerRequiresExistingRoleRepro|TestPgViewsViewownerMetadataRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-owner-one-gocache.lwQCms go test -vet=off ./server/node ./server/ast -count=1`
+- Progress note: fresh alpha manifest `/tmp/doltgresql-testing-go-alpha-20260512-1530.jsonl` from `8e125e63` had started at `16/16` passing (`100.0%`), but does not include `af5d8a04`.
