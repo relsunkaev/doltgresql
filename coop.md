@@ -1067,3 +1067,63 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestCreatedUserLoginSurvivesRestartRepro$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/auth ./testing/go -run '^Test(NoLoginRolePreventsLoginGuard|AlterRoleNoLoginPreventsLoginGuard|CreatedUserLoginSurvivesRestartRepro)$' -count=1 -v`
 - Note: alpha stopped the stale `1551` manifest and cleared alpha temp/cache state after a link failed from disk pressure; free space recovered to about 17 GiB.
+
+### beta - 2026-05-12 15:59 America/Phoenix
+
+- Lane complete: `pg_get_constraintdef()` now emits PostgreSQL-shaped CHECK, foreign-key, and primary/unique definitions: CHECK output omits the constraint name and `ENFORCED`, FK output preserves non-default referential actions, and identifiers are quoted when needed.
+- Source touched: `server/functions/pg_get_constraintdef.go`.
+- Red: in clean temp worktree at `7126d44b`, `TestPgGetConstraintdefCheckOmitsConstraintNameRepro`, `TestPgGetConstraintdefForeignKeyActionsRepro`, and `TestPgGetConstraintdefQuotesColumnNamesRepro` failed with `amount_positive CHECK "amount" > 0 ENFORCED`, missing `ON UPDATE CASCADE ON DELETE SET NULL`, and unquoted `CaseColumn`.
+- Green:
+  - Clean temp worktree at `afa179e8` plus beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOTMPDIR=/tmp/doltgresql-beta-constraintdef-green-gotmp GOCACHE=/tmp/doltgresql-beta-constraintdef-green-gocache go test -vet=off ./testing/go -run '^TestPgGetConstraintdef(CheckOmitsConstraintNameRepro|ForeignKeyActionsRepro|QuotesColumnNamesRepro)$' -count=1 -v`
+  - Clean temp worktree at `7b370c15` plus beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOTMPDIR=/tmp/doltgresql-beta-constraintdef-broad-gotmp GOCACHE=/tmp/doltgresql-beta-constraintdef-broad-gocache go test -vet=off ./server/functions -count=1`
+  - Clean temp worktree at `3cdeadc0` plus beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOTMPDIR=/tmp/doltgresql-beta-constraintdef-oid-gotmp go test -vet=off ./testing/go -run '^TestFunctionsOID$/^pg_get_constraintdef$' -count=1 -v`
+- Progress note: latest manifest noted in coop is still stale/incomplete at `881/1320` passing (`66.7%`), `439` failed, and excludes later commits. This patch converts 3 focused top-level repros from failing to passing; full current pass/fail/left still needs the restarted manifest.
+
+### beta - 2026-05-12 16:08 America/Phoenix
+
+- Lane complete: `SET SESSION AUTHORIZATION` / `RESET SESSION AUTHORIZATION` now switch the current connection's session client user, remember the original login user for reset, validate target roles, and reject switching from a non-superuser to a different role.
+- Source touched: `server/ast/set_session_authorization_default.go`, `server/node/set_session_authorization.go`, `testing/go/session_correctness_repro_test.go`.
+- Red: clean temp worktree at `f1bbd209` failed `TestSetSessionAuthorizationChangesCurrentAndSessionUserRepro` because both SET and RESET returned `SET SESSION AUTHORIZATION is not yet supported`, and `current_user/session_user` stayed `postgres`.
+- Green:
+  - Clean temp worktree at `7d826199` plus beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOTMPDIR=/tmp/doltgresql-beta-sessionauth-focused-gotmp go test -vet=off ./testing/go -run '^TestSetSessionAuthorization(ChangesCurrentAndSessionUser|ValidatesTargetRole|RequiresSuperuserForOtherRoles)Repro$' -count=1 -v`
+  - Clean temp worktree at `7d826199` plus beta patch: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOTMPDIR=/tmp/doltgresql-beta-sessionauth-pkg-gotmp go test -vet=off ./server/ast ./server/node -count=1`
+- Progress note: latest complete-ish stale manifest `/tmp/doltgresql-testing-go-20260512-delta-1512.jsonl` was `1497/2633` passing (`56.9%`), `1136` failed before many later commits. This lane converts 1 listed failure and adds 2 passing edge regressions; current full pass/fail/left still depends on a fresh manifest.
+
+### gamma - 2026-05-12 15:59 America/Phoenix
+
+- Lane complete: `txid_current()` now allocates a fresh transaction ID per explicit transaction while preserving stable values within the same transaction/statement.
+- Source touched: `server/functions/txid_current.go`, `server/connection_handler.go`.
+- Red: `TestTxidCurrentAdvancesAcrossTransactionsRepro` returned `count(DISTINCT txid)=1` after two committed transactions in the same session.
+- Green:
+  - `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestTxidCurrent(ReportsNonzeroTransactionId|AdvancesAcrossTransactionsRepro)$' -count=1 -v`
+  - `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'Txid|txid' -count=1`
+  - `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server -run '^$' -count=1`
+
+### gamma - 2026-05-12 16:04 America/Phoenix
+
+- Lane complete: `SELECT ... FOR UPDATE` now rejects aggregate, grouped, distinct, VALUES, and set-operation result shapes that cannot be mapped back to lockable base rows.
+- Source touched: `server/ast/select.go`.
+- Red: `TestSelectForUpdateRejectsNonLockableQueryShapesRepro` accepted `count(*)`, `GROUP BY`, `DISTINCT`, and `UNION` forms with `FOR UPDATE`.
+- Green:
+  - Clean temp worktree at `f1bbd209` plus gamma patch: `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestSelectForUpdateRejectsNonLockableQueryShapesRepro$' -count=1 -v`
+  - Current worktree: `TMPDIR=/tmp/doltgresql-gamma-count-gotmp GOTMPDIR=/tmp/doltgresql-gamma-count-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/ast -count=1`
+- Note: current worktree `testing/go` build was blocked by peer dirty `server/node/set_session_authorization.go` before verification, so the focused repro was verified in a clean temp worktree with only this patch.
+
+### delta - 2026-05-12 16:06 America/Phoenix
+
+- Lane complete: composite attributes now preserve and apply typmods when constructing, serializing, resolving, and assigning composite record values. Explicit `timetz` casts now route through target conversion so typmod rounding is not bypassed.
+- Source touched: `server/types/composite.go`, `server/types/serialization.go`, `server/types/type.go`, `core/typecollection/typecollection.go`, `server/ast/create_function.go`, `server/expression/column_access.go`, `server/expression/table_to_composite.go`, `server/functions/binary/hstore.go`, `server/functions/framework/cast.go`, `server/functions/json_populate_record.go`, `server/node/create_type.go`, `server/node/create_typed_table.go`, `server/plpgsql/interpreter_logic.go`, `server/cast/timetz.go`.
+- Red: `TestCompositeAttributeTypmodsRoundStoredValuesRepro` stored unrounded `numeric(5,2)`/`timestamp(0)` values and accepted overflow; `TestCompositeTimetzAttributeTypmodsRoundStoredValuesRepro` stored unrounded `timetz(0)` values; `TestTimeTypmodCastsUseRoundedValueRepro` showed explicit `TIMETZ(0)` casts bypassed rounding.
+- Green in clean verifier `/tmp/doltgresql-delta-composite-verify2.UE4T1P` at `7d826199` plus delta patch:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(CompositeAttributeTypmodsRoundStoredValuesRepro|CompositeTimetzAttributeTypmodsRoundStoredValuesRepro|TimeTypmodCastsUseRoundedValueRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/types ./server/functions/framework ./server/cast ./server/expression ./server/node ./server/plpgsql ./core/typecollection -run 'Composite|Typmod|TimeTZ|Time|Record|Json|Hstore|Typed' -count=1`
+
+### alpha - 2026-05-12 16:08 America/Phoenix
+
+- Lane complete: `ALTER DEFAULT PRIVILEGES` now persists default ACL metadata, exposes it through `pg_default_acl`, and applies matching default grants to future tables, sequences, and routines. Added parser support for PostgreSQL 18 `ALTER DEFAULT PRIVILEGES ... ON LARGE OBJECTS`.
+- Source touched and committed: `postgres/parser/parser/sql.y`, `server/ast/alter_default_privileges.go`, `server/auth/default_privileges.go`, `server/auth/database.go`, `server/auth/serialization.go`, `server/node/alter_default_privileges.go`, `server/node/create_table.go`, `server/node/create_sequence.go`, `server/node/create_function.go`, `server/tables/pgcatalog/pg_default_acl.go`, `testing/go/default_privileges_repro_test.go`.
+- Result: committed `149ff494 fix: support alter default privileges`.
+- Red: default-privilege table/catalog repros failed because the statement was a no-op; `ON LARGE OBJECTS` failed in the parser.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterDefaultPrivilegesGrantAppliesToFutureTablesRepro|TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro|TestAlterDefaultPrivilegesGrantAppliesToFutureSequencesRepro|TestAlterDefaultPrivilegesGrantAppliesToFutureFunctionsRepro|TestAlterDefaultPrivilegesPopulatesPgDefaultAclRepro|TestPostgres18LargeObjectDefaultPrivilegesRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/auth ./server/node ./server/ast ./server/tables/pgcatalog -run '^$' -count=1`
