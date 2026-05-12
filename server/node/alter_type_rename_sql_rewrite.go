@@ -143,6 +143,36 @@ func rewriteMaterializedViewCommentTypeReferences(comment string, oldTypeID id.T
 	return updatedComment, true, true, nil
 }
 
+func rewriteColumnDefaultCompositeAttributeReferences(defaultValue *sql.ColumnDefaultValue, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (*sql.ColumnDefaultValue, bool, error) {
+	if defaultValue == nil || defaultValue.Expr == nil {
+		return defaultValue, false, nil
+	}
+	rewrittenExpr, changed, err := rewriteExpressionCompositeAttributeReferences(defaultValue.Expr.String(), typeID, oldAttr, newAttr, compositeColumns)
+	if err != nil || !changed {
+		return defaultValue, changed, err
+	}
+	rewritten := *defaultValue
+	rewritten.Expr = sql.NewUnresolvedColumnDefaultValue(rewrittenExpr).Expr
+	return &rewritten, true, nil
+}
+
+func rewriteMaterializedViewCommentCompositeAttributeReferences(comment string, typeID id.Type, oldAttr string, newAttr string) (string, bool, bool, error) {
+	if !tablemetadata.IsMaterializedView(comment) {
+		return comment, false, false, nil
+	}
+	definition := tablemetadata.MaterializedViewDefinition(comment)
+	rewrittenDefinition, changed, err := rewriteSQLCompositeAttributeReferences(definition, typeID, oldAttr, newAttr)
+	if err != nil || !changed {
+		return comment, true, changed, err
+	}
+	updatedComment := tablemetadata.SetMaterializedViewDefinitionWithPopulated(
+		comment,
+		rewrittenDefinition,
+		tablemetadata.IsMaterializedViewPopulated(comment),
+	)
+	return updatedComment, true, true, nil
+}
+
 func rewriteExpressionTypeReferences(expr string, oldTypeID id.Type, oldArrayID id.Type, newTypeID id.Type, newArrayID id.Type) (string, bool, error) {
 	if !sqlTextMayReferenceType(expr, oldTypeID, oldArrayID) {
 		return expr, false, nil
@@ -156,6 +186,29 @@ func rewriteExpressionTypeReferences(expr string, oldTypeID id.Type, oldArrayID 
 		return expr, false, nil
 	}
 	changed, err := rewriteSelectTypeReferences(selectStmt, oldTypeID, oldArrayID, newTypeID, newArrayID)
+	if err != nil || !changed {
+		return expr, changed, err
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok || len(selectClause.Exprs) != 1 {
+		return expr, false, nil
+	}
+	return selectClause.Exprs[0].Expr.String(), true, nil
+}
+
+func rewriteExpressionCompositeAttributeReferences(expr string, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (string, bool, error) {
+	if !sqlTextMayReferenceCompositeAttribute(expr, typeID, oldAttr, compositeColumns) {
+		return expr, false, nil
+	}
+	statements, err := parser.Parse("SELECT " + expr)
+	if err != nil || len(statements) != 1 {
+		return expr, false, err
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return expr, false, nil
+	}
+	changed, err := rewriteSelectCompositeAttributeReferences(selectStmt, typeID, oldAttr, newAttr, compositeColumns)
 	if err != nil || !changed {
 		return expr, changed, err
 	}
@@ -201,12 +254,55 @@ func rewriteSQLTypeReferences(statement string, oldTypeID id.Type, oldArrayID id
 	}
 }
 
+func rewriteSQLCompositeAttributeReferences(statement string, typeID id.Type, oldAttr string, newAttr string) (string, bool, error) {
+	if strings.TrimSpace(statement) == "" {
+		return statement, false, nil
+	}
+	if !sqlTextMayReferenceCompositeAttribute(statement, typeID, oldAttr, nil) {
+		return statement, false, nil
+	}
+	statements, err := parser.Parse(statement)
+	if err != nil || len(statements) == 0 {
+		return statement, false, err
+	}
+	changed := false
+	rewrittenStatements := make([]string, len(statements))
+	for i, statement := range statements {
+		statementChanged, err := rewriteStatementCompositeAttributeReferences(statement.AST, typeID, oldAttr, newAttr, nil)
+		if err != nil {
+			return statement.SQL, false, err
+		}
+		changed = changed || statementChanged
+		rewrittenStatements[i] = statement.AST.String()
+	}
+	if !changed {
+		return statement, false, nil
+	}
+	return strings.Join(rewrittenStatements, ";"), true, nil
+}
+
 func sqlTextMayReferenceType(text string, typeID id.Type, arrayID id.Type) bool {
 	lowerText := strings.ToLower(text)
 	if strings.Contains(lowerText, strings.ToLower(typeID.TypeName())) {
 		return true
 	}
 	return arrayID.IsValid() && strings.Contains(lowerText, strings.ToLower(arrayID.TypeName()))
+}
+
+func sqlTextMayReferenceCompositeAttribute(text string, typeID id.Type, oldAttr string, compositeColumns map[string]struct{}) bool {
+	lowerText := strings.ToLower(text)
+	if !strings.Contains(lowerText, strings.ToLower(oldAttr)) {
+		return false
+	}
+	if strings.Contains(lowerText, strings.ToLower(typeID.TypeName())) {
+		return true
+	}
+	for column := range compositeColumns {
+		if strings.Contains(lowerText, strings.ToLower(column)) {
+			return true
+		}
+	}
+	return len(compositeColumns) == 0
 }
 
 func rewriteSelectTypeReferences(selectStmt *tree.Select, oldTypeID id.Type, oldArrayID id.Type, newTypeID id.Type, newArrayID id.Type) (bool, error) {
@@ -261,6 +357,158 @@ func rewriteSelectTypeReferences(selectStmt *tree.Select, oldTypeID id.Type, old
 				changed = true
 			}
 		}
+	}
+	return changed, nil
+}
+
+func rewriteStatementCompositeAttributeReferences(statement tree.Statement, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (bool, error) {
+	switch stmt := statement.(type) {
+	case *tree.CreateView:
+		return rewriteSelectCompositeAttributeReferences(stmt.AsSource, typeID, oldAttr, newAttr, compositeColumns)
+	case *tree.CreateMaterializedView:
+		return rewriteSelectCompositeAttributeReferences(stmt.AsSource, typeID, oldAttr, newAttr, compositeColumns)
+	case *tree.Select:
+		return rewriteSelectCompositeAttributeReferences(stmt, typeID, oldAttr, newAttr, compositeColumns)
+	default:
+		return false, nil
+	}
+}
+
+func rewriteSelectCompositeAttributeReferences(selectStmt *tree.Select, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (bool, error) {
+	if selectStmt == nil {
+		return false, nil
+	}
+	changed := false
+	if selectStmt.With != nil {
+		for _, cte := range selectStmt.With.CTEList {
+			if cteSelect, ok := cte.Stmt.(*tree.Select); ok {
+				cteChanged, err := rewriteSelectCompositeAttributeReferences(cteSelect, typeID, oldAttr, newAttr, compositeColumns)
+				if err != nil {
+					return false, err
+				}
+				changed = changed || cteChanged
+			}
+		}
+	}
+	selectChanged, err := rewriteSelectStatementCompositeAttributeReferences(selectStmt.Select, typeID, oldAttr, newAttr, compositeColumns)
+	if err != nil {
+		return false, err
+	}
+	changed = changed || selectChanged
+	for _, order := range selectStmt.OrderBy {
+		expr, exprChanged, err := rewriteExprCompositeAttributeReferences(order.Expr, typeID, oldAttr, newAttr, compositeColumns)
+		if err != nil {
+			return false, err
+		}
+		if exprChanged {
+			order.Expr = expr
+			changed = true
+		}
+	}
+	if selectStmt.Limit != nil {
+		if selectStmt.Limit.Offset != nil {
+			expr, exprChanged, err := rewriteExprCompositeAttributeReferences(selectStmt.Limit.Offset, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				selectStmt.Limit.Offset = expr
+				changed = true
+			}
+		}
+		if selectStmt.Limit.Count != nil {
+			expr, exprChanged, err := rewriteExprCompositeAttributeReferences(selectStmt.Limit.Count, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				selectStmt.Limit.Count = expr
+				changed = true
+			}
+		}
+	}
+	return changed, nil
+}
+
+func rewriteSelectStatementCompositeAttributeReferences(stmt tree.SelectStatement, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (bool, error) {
+	changed := false
+	switch stmt := stmt.(type) {
+	case *tree.SelectClause:
+		for i, expr := range stmt.Exprs {
+			rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(expr.Expr, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				stmt.Exprs[i].Expr = rewritten
+				changed = true
+			}
+		}
+		for i, expr := range stmt.DistinctOn {
+			rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(expr, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				stmt.DistinctOn[i] = rewritten
+				changed = true
+			}
+		}
+		if stmt.Where != nil {
+			rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(stmt.Where.Expr, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				stmt.Where.Expr = rewritten
+				changed = true
+			}
+		}
+		for i, expr := range stmt.GroupBy {
+			rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(expr, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				stmt.GroupBy[i] = rewritten
+				changed = true
+			}
+		}
+		if stmt.Having != nil {
+			rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(stmt.Having.Expr, typeID, oldAttr, newAttr, compositeColumns)
+			if err != nil {
+				return false, err
+			}
+			if exprChanged {
+				stmt.Having.Expr = rewritten
+				changed = true
+			}
+		}
+	case *tree.ValuesClause:
+		for rowIdx := range stmt.Rows {
+			for exprIdx, expr := range stmt.Rows[rowIdx] {
+				rewritten, exprChanged, err := rewriteExprCompositeAttributeReferences(expr, typeID, oldAttr, newAttr, compositeColumns)
+				if err != nil {
+					return false, err
+				}
+				if exprChanged {
+					stmt.Rows[rowIdx][exprIdx] = rewritten
+					changed = true
+				}
+			}
+		}
+	case *tree.ParenSelect:
+		return rewriteSelectCompositeAttributeReferences(stmt.Select, typeID, oldAttr, newAttr, compositeColumns)
+	case *tree.UnionClause:
+		leftChanged, err := rewriteSelectCompositeAttributeReferences(stmt.Left, typeID, oldAttr, newAttr, compositeColumns)
+		if err != nil {
+			return false, err
+		}
+		rightChanged, err := rewriteSelectCompositeAttributeReferences(stmt.Right, typeID, oldAttr, newAttr, compositeColumns)
+		if err != nil {
+			return false, err
+		}
+		changed = leftChanged || rightChanged
 	}
 	return changed, nil
 }
@@ -392,6 +640,72 @@ func rewriteExprTypeReferences(expr tree.Expr, oldTypeID id.Type, oldArrayID id.
 	return rewritten, changed, err
 }
 
+func rewriteExprCompositeAttributeReferences(expr tree.Expr, typeID id.Type, oldAttr string, newAttr string, compositeColumns map[string]struct{}) (tree.Expr, bool, error) {
+	if expr == nil {
+		return nil, false, nil
+	}
+	changed := false
+	rewritten, err := tree.SimpleVisit(expr, func(expr tree.Expr) (bool, tree.Expr, error) {
+		typedExpr, ok := expr.(*tree.ColumnAccessExpr)
+		if !ok || typedExpr.ByIndex || !strings.EqualFold(typedExpr.ColName, oldAttr) {
+			return true, expr, nil
+		}
+		if !exprReferencesCompositeAttributeTarget(typedExpr.Expr, typeID, compositeColumns) {
+			return true, expr, nil
+		}
+		rewrittenAccess := *typedExpr
+		rewrittenAccess.ColName = newAttr
+		changed = true
+		return true, &rewrittenAccess, nil
+	})
+	return rewritten, changed, err
+}
+
+func exprReferencesCompositeAttributeTarget(expr tree.Expr, typeID id.Type, compositeColumns map[string]struct{}) bool {
+	if expr == nil {
+		return false
+	}
+	found := false
+	_, _ = tree.SimpleVisit(expr, func(expr tree.Expr) (bool, tree.Expr, error) {
+		switch typedExpr := expr.(type) {
+		case *tree.CastExpr:
+			if typeReferenceMatches(typedExpr.Type, typeID) {
+				found = true
+				return false, expr, nil
+			}
+		case *tree.AnnotateTypeExpr:
+			if typeReferenceMatches(typedExpr.Type, typeID) {
+				found = true
+				return false, expr, nil
+			}
+		case *tree.UnresolvedName:
+			if unresolvedColumnIsComposite(typedExpr.Parts[0], compositeColumns) {
+				found = true
+				return false, expr, nil
+			}
+		case *tree.ColumnItem:
+			if unresolvedColumnIsComposite(string(typedExpr.ColumnName), compositeColumns) {
+				found = true
+				return false, expr, nil
+			}
+		}
+		return !found, expr, nil
+	})
+	return found
+}
+
+func unresolvedColumnIsComposite(columnName string, compositeColumns map[string]struct{}) bool {
+	if columnName == "" || len(compositeColumns) == 0 {
+		return false
+	}
+	for column := range compositeColumns {
+		if strings.EqualFold(column, columnName) {
+			return true
+		}
+	}
+	return false
+}
+
 func rewriteTypeReference(ref tree.ResolvableTypeReference, oldTypeID id.Type, oldArrayID id.Type, newTypeID id.Type, newArrayID id.Type) (tree.ResolvableTypeReference, bool, error) {
 	switch ref := ref.(type) {
 	case *tree.UnresolvedObjectName:
@@ -442,6 +756,19 @@ func rewriteUnresolvedTypeReference(ref *tree.UnresolvedObjectName, oldTypeID id
 		return nil, false, err
 	}
 	return rewritten, true, nil
+}
+
+func typeReferenceMatches(ref tree.ResolvableTypeReference, typeID id.Type) bool {
+	switch ref := ref.(type) {
+	case *tree.UnresolvedObjectName:
+		return unresolvedTypeReferenceMatches(ref, typeID)
+	case *tree.ArrayTypeReference:
+		return typeReferenceMatches(ref.ElementType, typeID)
+	case *tree.TypeReferenceWithModifiers:
+		return typeReferenceMatches(ref.Type, typeID)
+	default:
+		return false
+	}
 }
 
 func unresolvedTypeReferenceMatches(ref *tree.UnresolvedObjectName, typeID id.Type) bool {
