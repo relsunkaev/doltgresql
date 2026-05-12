@@ -40,6 +40,14 @@ func Init(dEnv *env.DoltEnv, cfg Config) {
 	sql.SetAuthorizationHandlerFactory(AuthorizationHandlerFactory{})
 }
 
+// ResetForTests reloads the auth database for tests that start multiple
+// on-disk servers in one process. Production initialization is guarded by the
+// top-level package initializer, but persistence tests need to simulate a fresh
+// process restart against the same auth.db file.
+func ResetForTests(dEnv *env.DoltEnv, cfg Config) {
+	dbInit(dEnv, cfg)
+}
+
 // GetSuperUserAndPassword returns the superuser and password for the server to use, as defined in the environment
 func GetSuperUserAndPassword() (string, string) {
 	user := "postgres"

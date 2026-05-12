@@ -242,6 +242,8 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 	transactionSnapshotsMu.Lock()
 	clear(transactionSnapshots)
 	transactionSnapshotsMu.Unlock()
+	authFileName = "auth.db"
+	fileSystem = nil
 	globalDatabase = Database{
 		rolesByName:         make(map[string]RoleID),
 		rolesByID:           make(map[RoleID]Role),

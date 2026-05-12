@@ -471,7 +471,7 @@ func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port 
 	ctx := context.Background()
 	doltEnv := env.Load(ctx, env.GetCurrentUserHomeDir, fileSys, doltdb.LocalDirDoltDB, dserver.Version)
 
-	controller, err := dserver.RunOnDisk(ctx, &servercfg.DoltgresConfig{
+	cfg := &servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
 				PortNumber: &port,
@@ -479,9 +479,10 @@ func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port 
 			},
 			LogLevelStr: &testServerLogLevel,
 		},
-	}, doltEnv)
+	}
+	controller, err := dserver.RunOnDisk(ctx, cfg, doltEnv)
 	require.NoError(t, err)
-	auth.ClearDatabase()
+	auth.ResetForTests(doltEnv, cfg)
 	fmt.Printf("port is %d\n", port)
 
 	connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)
