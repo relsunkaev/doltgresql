@@ -109,5 +109,32 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "unique nullable NULLS LAST index preserves NULL uniqueness",
+			SetUpScript: []string{
+				`CREATE TABLE unique_null_order_events (
+					id INT PRIMARY KEY,
+					ts TIMESTAMP
+				);`,
+				`CREATE UNIQUE INDEX unique_null_order_events_ts_idx
+					ON unique_null_order_events (ts ASC NULLS LAST);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO unique_null_order_events VALUES
+						(1, NULL),
+						(2, NULL),
+						(3, '2024-01-01 00:00:00');`,
+				},
+				{
+					Query:       `INSERT INTO unique_null_order_events VALUES (4, '2024-01-01 00:00:00');`,
+					ExpectedErr: `duplicate`,
+				},
+				{
+					Query:    `SELECT id::text FROM unique_null_order_events ORDER BY ts ASC NULLS LAST, id;`,
+					Expected: []sql.Row{{"3"}, {"1"}, {"2"}},
+				},
+			},
+		},
 	})
 }
