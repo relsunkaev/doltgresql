@@ -460,13 +460,13 @@ func (stmt *plpgSQL_stmt_case) Convert(conv jsonConversionContext) (block Block,
 			return Block{}, err
 		}
 		block.Body = append(block.Body, convertElseBodyStatements...)
-		// TODO: If no cases match and there is no ELSE block, then add a RAISE statement
-		//       to return an error.
-		//} else {
-		// Sample PostgreSQL error response:
-		//	     ERROR:  case not found
-		//	     HINT:  CASE statement is missing ELSE part.
-		//	     CONTEXT:  PL/pgSQL function interpreted_case(integer) line 5 at CASE
+	} else {
+		block.Body = append(block.Body, Raise{
+			Level:      "EXCEPTION",
+			Message:    "case not found",
+			Options:    map[string]string{strconv.Itoa(int(NoticeOptionTypeHint)): "'CASE statement is missing ELSE part.'"},
+			LineNumber: stmt.LineNumber,
+		})
 	}
 
 	// Update all the GOTO ops that jump to the very end of the case block.

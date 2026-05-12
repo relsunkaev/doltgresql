@@ -239,3 +239,319 @@ func TestPlpgsqlReturnsTableCompositeVariableRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestPlpgsqlReturnNextSetofScalarRepro reproduces a PL/pgSQL compatibility
+// gap: set-returning functions can emit scalar rows with RETURN NEXT.
+func TestPlpgsqlReturnNextSetofScalarRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL RETURN NEXT emits scalar SETOF rows",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_return_next_scalar(start_value INT)
+				RETURNS SETOF INT AS $$
+				BEGIN
+					RETURN NEXT start_value;
+					RETURN NEXT start_value + 1;
+					RETURN;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT * FROM plpgsql_return_next_scalar(7);`,
+					Expected: []sql.Row{{7}, {8}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlReturnQueryExecuteRepro reproduces a PL/pgSQL compatibility gap:
+// set-returning functions can append rows from dynamic RETURN QUERY EXECUTE.
+func TestPlpgsqlReturnQueryExecuteRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL RETURN QUERY EXECUTE emits scalar SETOF rows",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_return_query_execute()
+				RETURNS SETOF INT AS $$
+				BEGIN
+					RETURN QUERY EXECUTE 'SELECT * FROM (VALUES (10), (20)) AS v(x)';
+					RETURN QUERY EXECUTE 'SELECT * FROM (VALUES ($1), ($2)) AS v(x)' USING 40, 50;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT * FROM plpgsql_return_query_execute();`,
+					Expected: []sql.Row{{10}, {20}, {40}, {50}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlForInExecuteLoopRepro reproduces a PL/pgSQL compatibility gap:
+// FOR target IN EXECUTE should iterate rows from a dynamic query.
+func TestPlpgsqlForInExecuteLoopRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL FOR IN EXECUTE iterates dynamic query rows",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_for_execute_sum()
+				RETURNS INT AS $$
+				DECLARE
+					total INT := 0;
+					value_seen INT;
+				BEGIN
+					FOR value_seen IN EXECUTE 'SELECT x FROM (VALUES (1), (2), (3)) AS v(x)' LOOP
+						total := total + value_seen;
+					END LOOP;
+					RETURN total;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_for_execute_sum();`,
+					Expected: []sql.Row{{6}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro reproduces a PL/pgSQL
+// consistency bug: DML RETURNING INTO must reject multiple returned rows and
+// leave the failed statement's writes rolled back.
+func TestPlpgsqlDmlReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL DML RETURNING INTO rejects multiple rows atomically",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_returning_multi_items (id INT PRIMARY KEY);`,
+				`CREATE FUNCTION plpgsql_returning_multi()
+				RETURNS INT AS $$
+				DECLARE
+					got_id INT;
+				BEGIN
+					INSERT INTO plpgsql_returning_multi_items VALUES (1), (2)
+						RETURNING id INTO got_id;
+					RETURN got_id;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_returning_multi();`,
+					ExpectedErr: `query returned more than one row`,
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM plpgsql_returning_multi_items;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro reproduces a PL/pgSQL
+// consistency bug: UPDATE RETURNING INTO must reject multiple returned rows and
+// leave the failed update rolled back.
+func TestPlpgsqlUpdateReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL UPDATE RETURNING INTO rejects multiple rows atomically",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_update_returning_multi_items (
+					id INT PRIMARY KEY,
+					touched BOOL NOT NULL DEFAULT false
+				);`,
+				`INSERT INTO plpgsql_update_returning_multi_items VALUES
+					(1, false),
+					(2, false);`,
+				`CREATE FUNCTION plpgsql_update_returning_multi()
+				RETURNS INT AS $$
+				DECLARE
+					got_id INT;
+				BEGIN
+					UPDATE plpgsql_update_returning_multi_items
+					SET touched = true
+					RETURNING id INTO got_id;
+					RETURN got_id;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_update_returning_multi();`,
+					ExpectedErr: `query returned more than one row`,
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM plpgsql_update_returning_multi_items WHERE touched;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro reproduces a PL/pgSQL
+// consistency bug: DELETE RETURNING INTO must reject multiple returned rows and
+// leave the failed delete rolled back.
+func TestPlpgsqlDeleteReturningIntoRejectsMultipleRowsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL DELETE RETURNING INTO rejects multiple rows atomically",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_delete_returning_multi_items (id INT PRIMARY KEY);`,
+				`INSERT INTO plpgsql_delete_returning_multi_items VALUES (1), (2);`,
+				`CREATE FUNCTION plpgsql_delete_returning_multi()
+				RETURNS INT AS $$
+				DECLARE
+					got_id INT;
+				BEGIN
+					DELETE FROM plpgsql_delete_returning_multi_items
+					RETURNING id INTO got_id;
+					RETURN got_id;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT plpgsql_delete_returning_multi();`,
+					ExpectedErr: `query returned more than one row`,
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM plpgsql_delete_returning_multi_items;`,
+					Expected: []sql.Row{{2}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlProcedureCommitPersistsPriorWorkRepro reproduces a PL/pgSQL
+// persistence gap: transaction control inside a top-level CALL can commit work
+// before a later procedure error.
+func TestPlpgsqlProcedureCommitPersistsPriorWorkRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL procedure COMMIT persists prior work before later error",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_proc_commit_items (id INT PRIMARY KEY);`,
+				`CREATE PROCEDURE plpgsql_proc_commit_then_fail()
+				LANGUAGE plpgsql
+				AS $$
+				BEGIN
+					INSERT INTO plpgsql_proc_commit_items VALUES (1);
+					COMMIT;
+					INSERT INTO plpgsql_proc_commit_items VALUES (2);
+					RAISE EXCEPTION 'fail after commit';
+				END;
+				$$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CALL plpgsql_proc_commit_then_fail();`,
+					ExpectedErr: `fail after commit`,
+				},
+				{
+					Query:    `SELECT id FROM plpgsql_proc_commit_items ORDER BY id;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlProcedureRollbackDiscardsPriorWorkRepro reproduces a PL/pgSQL
+// persistence gap: transaction control inside a top-level CALL can roll back
+// earlier procedure work and continue in a new transaction.
+func TestPlpgsqlProcedureRollbackDiscardsPriorWorkRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL procedure ROLLBACK discards prior work and continues",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_proc_rollback_items (id INT PRIMARY KEY);`,
+				`CREATE PROCEDURE plpgsql_proc_rollback_then_insert()
+				LANGUAGE plpgsql
+				AS $$
+				BEGIN
+					INSERT INTO plpgsql_proc_rollback_items VALUES (1);
+					ROLLBACK;
+					INSERT INTO plpgsql_proc_rollback_items VALUES (2);
+				END;
+				$$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CALL plpgsql_proc_rollback_then_insert();`,
+				},
+				{
+					Query:    `SELECT id FROM plpgsql_proc_rollback_items ORDER BY id;`,
+					Expected: []sql.Row{{2}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlForeachArrayLoopRepro reproduces a PL/pgSQL compatibility gap:
+// FOREACH loops should iterate over array elements.
+func TestPlpgsqlForeachArrayLoopRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL FOREACH iterates array values",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_foreach_array_sum(values_in INT[])
+				RETURNS INT AS $$
+				DECLARE
+					value_seen INT;
+					total INT := 0;
+				BEGIN
+					FOREACH value_seen IN ARRAY values_in LOOP
+						total := total + value_seen;
+					END LOOP;
+					RETURN total;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_foreach_array_sum(ARRAY[1, 2, 3, 4]);`,
+					Expected: []sql.Row{{10}},
+				},
+			},
+		},
+	})
+}
+
+// TestPlpgsqlAssertStatementRepro reproduces a PL/pgSQL compatibility gap:
+// ASSERT should raise an exception when its condition is false.
+func TestPlpgsqlAssertStatementRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL ASSERT checks conditions",
+			SetUpScript: []string{
+				`CREATE FUNCTION plpgsql_assert_positive(input_value INT)
+				RETURNS INT AS $$
+				BEGIN
+					ASSERT input_value > 0, 'input must be positive';
+					RETURN input_value;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_assert_positive(5);`,
+					Expected: []sql.Row{{5}},
+				},
+				{
+					Query:       `SELECT plpgsql_assert_positive(0);`,
+					ExpectedErr: `input must be positive`,
+				},
+			},
+		},
+	})
+}
