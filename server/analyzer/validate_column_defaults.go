@@ -15,6 +15,9 @@
 package analyzer
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/expression"
@@ -22,6 +25,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	pgnode "github.com/dolthub/doltgresql/server/node"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // ValidateColumnDefaults ensures that newly created column defaults from a DDL statement are legal for the type of
@@ -86,6 +90,12 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 				err = validateColumnDefault(ctx, col, colDefault)
 				if err != nil {
 					return nil, transform.SameTree, err
+				}
+				if isGeneratedColumnDefault(col, colDefault) {
+					err = validateGeneratedColumnDefault(ctx, col, colDefault, node.TargetSchema())
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
 				}
 
 				return e, transform.SameTree, nil
@@ -169,6 +179,198 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 	}
 
 	return nil
+}
+
+func isGeneratedColumnDefault(col *sql.Column, colDefault *sql.ColumnDefaultValue) bool {
+	if col == nil || col.AutoIncrement || col.Generated == nil || col.Generated != colDefault {
+		return false
+	}
+	if doltgresType, ok := col.Type.(*pgtypes.DoltgresType); ok && doltgresType.IsSerial {
+		return false
+	}
+	return true
+}
+
+func validateGeneratedColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.ColumnDefaultValue, schema sql.Schema) error {
+	if colDefault == nil {
+		return nil
+	}
+	for _, schemaCol := range schema {
+		if schemaCol.Generated == nil {
+			continue
+		}
+		if plan.ColumnReferencedInDefaultValueExpression(ctx, colDefault, schemaCol.Name) {
+			return fmt.Errorf("cannot use generated column %q in column generation expression", schemaCol.Name)
+		}
+	}
+
+	var err error
+	sql.Inspect(ctx, colDefault.Expr, func(ctx *sql.Context, e sql.Expression) bool {
+		if e != nil {
+			if textErr := validateGeneratedColumnExpressionText(e.String()); textErr != nil {
+				err = textErr
+				return false
+			}
+		}
+		if _, ok := e.(sql.Aggregation); ok {
+			err = fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+			return false
+		}
+		if _, ok := e.(sql.WindowAggregation); ok {
+			err = fmt.Errorf("window functions are not allowed in column generation expressions")
+			return false
+		}
+		if expr, ok := e.(sql.WindowAdaptableExpression); ok {
+			if expr.Window() != nil {
+				err = fmt.Errorf("window functions are not allowed in column generation expressions")
+				return false
+			}
+		}
+		if expr, ok := e.(sql.RowIterExpression); ok {
+			if expr.ReturnsRowIter() {
+				err = fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+				return false
+			}
+		}
+		if expr, ok := e.(sql.NonDeterministicExpression); ok {
+			if expr.IsNonDeterministic() {
+				err = fmt.Errorf("generation expression is not immutable")
+				return false
+			}
+		}
+		if expr, ok := e.(sql.FunctionExpression); ok {
+			if functionErr := validateGeneratedColumnFunctionName(expr.FunctionName()); functionErr != nil {
+				err = functionErr
+				return false
+			}
+		}
+		if expr, ok := e.(*expression.GetField); ok {
+			if strings.EqualFold(expr.Name(), col.Name) {
+				err = fmt.Errorf("cannot use generated column %q in column generation expression", col.Name)
+				return false
+			}
+		}
+		return true
+	})
+	return err
+}
+
+func validateGeneratedColumnExpressionText(expr string) error {
+	lower := strings.ToLower(expr)
+	if strings.Contains(lower, " over (") {
+		return fmt.Errorf("window functions are not allowed in column generation expressions")
+	}
+	for _, name := range generatedColumnVolatileFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("generation expression is not immutable")
+		}
+	}
+	for _, name := range generatedColumnAggregateFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+		}
+	}
+	for _, name := range generatedColumnWindowFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("window functions are not allowed in column generation expressions")
+		}
+	}
+	for _, name := range generatedColumnSetReturningFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+		}
+	}
+	return nil
+}
+
+func validateGeneratedColumnFunctionName(name string) error {
+	lower := strings.ToLower(name)
+	if stringInList(lower, generatedColumnVolatileFunctions) {
+		return fmt.Errorf("generation expression is not immutable")
+	}
+	if stringInList(lower, generatedColumnAggregateFunctions) {
+		return fmt.Errorf("aggregate functions are not allowed in column generation expressions")
+	}
+	if stringInList(lower, generatedColumnWindowFunctions) {
+		return fmt.Errorf("window functions are not allowed in column generation expressions")
+	}
+	if stringInList(lower, generatedColumnSetReturningFunctions) {
+		return fmt.Errorf("set-returning functions are not allowed in column generation expressions")
+	}
+	return nil
+}
+
+func stringInList(value string, list []string) bool {
+	for _, candidate := range list {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+func containsFunctionCall(expr string, name string) bool {
+	needle := name + "("
+	start := 0
+	for {
+		idx := strings.Index(expr[start:], needle)
+		if idx == -1 {
+			return false
+		}
+		idx += start
+		if idx == 0 || isFunctionNameBoundary(expr[idx-1]) {
+			return true
+		}
+		start = idx + len(needle)
+	}
+}
+
+func isFunctionNameBoundary(ch byte) bool {
+	return !((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_')
+}
+
+var generatedColumnVolatileFunctions = []string{
+	"random",
+	"rand",
+}
+
+var generatedColumnAggregateFunctions = []string{
+	"avg",
+	"bit_and",
+	"bit_or",
+	"bit_xor",
+	"bool_and",
+	"bool_or",
+	"count",
+	"every",
+	"json_agg",
+	"json_object_agg",
+	"max",
+	"min",
+	"sum",
+}
+
+var generatedColumnWindowFunctions = []string{
+	"cume_dist",
+	"dense_rank",
+	"first_value",
+	"lag",
+	"last_value",
+	"lead",
+	"ntile",
+	"percent_rank",
+	"rank",
+	"row_number",
+}
+
+var generatedColumnSetReturningFunctions = []string{
+	"generate_series",
+	"json_array_elements",
+	"json_array_elements_text",
+	"jsonb_array_elements",
+	"jsonb_array_elements_text",
+	"regexp_matches",
+	"regexp_split_to_table",
 }
 
 // Finds first ResolvedTable node that is a descendant of the node given
