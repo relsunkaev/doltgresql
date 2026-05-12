@@ -59,11 +59,25 @@ func (p PgAuthidHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql
 			role.IsReplicationRole,               // rolreplication
 			role.CanBypassRowLevelSecurity,       // rolbypassrls
 			role.ConnectionLimit,                 // rolconnlimit
-			nil,                                  // rolpassword
+			rolePasswordText(role),               // rolpassword
 			roleValidUntil(role),                 // rolvaliduntil
 		})
 	}
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func rolePasswordText(role auth.Role) any {
+	if role.Password == nil {
+		return nil
+	}
+	return role.Password.AsPasswordString()
+}
+
+func rolePasswordMask(role auth.Role) any {
+	if role.Password == nil {
+		return nil
+	}
+	return "********"
 }
 
 func roleValidUntil(role auth.Role) any {

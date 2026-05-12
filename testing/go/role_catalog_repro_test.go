@@ -39,6 +39,25 @@ func TestPgDatabaseOwnerRoleExistsRepro(t *testing.T) {
 	})
 }
 
+// TestPublicSchemaOwnedByPgDatabaseOwnerRepro reproduces a PostgreSQL 15
+// security-default bug: the public schema should be owned by the predefined
+// pg_database_owner role, not by the bootstrap superuser.
+func TestPublicSchemaOwnedByPgDatabaseOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "public schema is owned by pg_database_owner",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_get_userbyid(nspowner)
+						FROM pg_catalog.pg_namespace
+						WHERE nspname = 'public';`,
+					Expected: []sql.Row{{"pg_database_owner"}},
+				},
+			},
+		},
+	})
+}
+
 // TestServerFilePredefinedRolesExistRepro reproduces a security-default bug:
 // PostgreSQL exposes predefined roles for controlled server-file and
 // server-program access.
@@ -96,6 +115,32 @@ func TestDataAndMonitoringPredefinedRolesExistRepro(t *testing.T) {
 						{"pg_signal_backend", "f", "f"},
 						{"pg_stat_scan_tables", "f", "f"},
 						{"pg_write_all_data", "f", "f"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestMaintenancePredefinedRolesExistRepro reproduces a privilege-model
+// correctness bug: PostgreSQL exposes predefined maintenance roles that can be
+// granted instead of broad superuser access.
+func TestMaintenancePredefinedRolesExistRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "maintenance predefined roles exist",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT rolname, rolcanlogin, rolsuper
+						FROM pg_catalog.pg_roles
+						WHERE rolname IN (
+							'pg_maintain',
+							'pg_signal_autovacuum_worker'
+						)
+						ORDER BY rolname;`,
+					Expected: []sql.Row{
+						{"pg_maintain", "f", "f"},
+						{"pg_signal_autovacuum_worker", "f", "f"},
 					},
 				},
 			},

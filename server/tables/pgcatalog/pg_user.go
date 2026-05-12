@@ -58,7 +58,7 @@ func (p PgUserHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.R
 			role.IsSuperUser,                     // usesuper
 			role.IsReplicationRole,               // userepl
 			role.CanBypassRowLevelSecurity,       // usebypassrls
-			nil,                                  // passwd
+			rolePasswordMask(role),               // passwd
 			roleValidUntil(role),                 // valuntil
 			nil,                                  // useconfig
 		})

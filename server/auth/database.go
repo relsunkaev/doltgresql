@@ -223,7 +223,32 @@ func dbInitDefault() {
 		panic(err)
 	}
 	SetRole(superUser)
+	ensurePredefinedRoles()
 	dbInitDefaultLanguages()
+}
+
+// ensurePredefinedRoles installs PostgreSQL's built-in non-login roles when
+// initializing or loading auth state.
+func ensurePredefinedRoles() {
+	for _, roleName := range []string{
+		"pg_database_owner",
+		"pg_read_all_data",
+		"pg_write_all_data",
+		"pg_monitor",
+		"pg_read_all_settings",
+		"pg_read_all_stats",
+		"pg_stat_scan_tables",
+		"pg_signal_backend",
+		"pg_read_server_files",
+		"pg_write_server_files",
+		"pg_execute_server_program",
+		"pg_maintain",
+		"pg_signal_autovacuum_worker",
+	} {
+		if !RoleExists(roleName) {
+			SetRole(CreateDefaultRole(roleName))
+		}
+	}
 }
 
 // dbInitCreateAuthDirectory creates the directory structure pointed to by the auth file if it does not already exist.

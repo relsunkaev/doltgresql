@@ -57,7 +57,7 @@ func (p PgRolesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.
 			role.CanLogin,                        // rolcanlogin
 			role.IsReplicationRole,               // rolreplication
 			role.ConnectionLimit,                 // rolconnlimit
-			nil,                                  // rolpassword
+			rolePasswordText(role),               // rolpassword
 			roleValidUntil(role),                 // rolvaliduntil
 			role.CanBypassRowLevelSecurity,       // rolbypassrls
 			nil,                                  // rolconfig

@@ -110,6 +110,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	db.languages.deserialize(0, reader)
 	db.languagePrivileges.deserialize(0, reader)
 	db.parameterPrivileges.deserialize(0, reader)
+	ensurePredefinedRoles()
 	dbInitDefaultLanguages()
 	return nil
 }
@@ -180,7 +181,11 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.languages.deserialize(0, reader)
 		db.languagePrivileges.deserialize(0, reader)
 		db.parameterPrivileges.deserialize(0, reader)
+		ensurePredefinedRoles()
 		dbInitDefaultLanguages()
+	}
+	if version >= 3 {
+		ensurePredefinedRoles()
 	}
 	return nil
 }

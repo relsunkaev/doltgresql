@@ -273,10 +273,17 @@ func (iter *pgNamespaceTableScanIter) Close(ctx *sql.Context) error {
 func pgNamespaceToRow(namespace *pgNamespace) sql.Row {
 	// TODO: columns are incomplete
 	return sql.Row{
-		namespace.oid,                         // oid
-		namespace.name,                        // nspname
-		id.NewId(id.Section_User, "postgres"), // nspowner
-		aclTextArray(auth.SchemaACLItems(namespace.name)), // nspacl
+		namespace.oid,                  // oid
+		namespace.name,                 // nspname
+		namespaceOwner(namespace.name), // nspowner
+		aclTextArray(auth.SchemaACLItems(namespace.name)),  // nspacl
 		id.NewTable(PgCatalogName, PgNamespaceName).AsId(), // tableoid
 	}
+}
+
+func namespaceOwner(name string) id.Id {
+	if name == "public" {
+		return id.NewId(id.Section_User, "pg_database_owner")
+	}
+	return id.NewId(id.Section_User, "postgres")
 }
