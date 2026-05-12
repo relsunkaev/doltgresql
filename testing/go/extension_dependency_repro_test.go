@@ -20,6 +20,24 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
+// TestCreateExtensionVersionOptionRepro reproduces an extension compatibility
+// gap: PostgreSQL accepts the VERSION option syntax and validates the requested
+// version against extension install scripts.
+func TestCreateExtensionVersionOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name:        "CREATE EXTENSION validates requested version",
+			SetUpScript: []string{},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE EXTENSION hstore VERSION "999.0";`,
+					ExpectedErr: `has no installation script`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropExtensionRestrictRejectsDependentObjectsRepro reproduces an
 // extension dependency bug: PostgreSQL's default RESTRICT behavior prevents
 // dropping an extension while user objects depend on extension member objects.

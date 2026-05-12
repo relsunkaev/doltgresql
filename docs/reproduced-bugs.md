@@ -12610,6 +12610,20 @@ artifacts only; no fixes are included here.
   succeeds and records `plpgsql` in `pg_extension` with `public` as its
   namespace.
 
+### CREATE EXTENSION VERSION option is not supported
+
+- Reproducer: `TestCreateExtensionVersionOptionRepro` in
+  `testing/go/extension_dependency_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateExtensionVersionOptionRepro -count=1`.
+- Expected PostgreSQL behavior: `CREATE EXTENSION hstore VERSION "999.0"`
+  parses the `VERSION` option and rejects the unavailable extension version
+  with PostgreSQL's missing-install-script diagnostic.
+- Observed Doltgres behavior: the statement fails earlier with `VERSION is not
+  yet supported`, so version-pinned extension restore statements cannot run or
+  report PostgreSQL-compatible version validation.
+
 ### DROP EXTENSION does not require extension ownership
 
 - Reproducer: `TestDropExtensionRequiresOwnershipRepro` in
