@@ -17425,6 +17425,22 @@ They are worth keeping, but they are not counted as found bugs.
   `pg_type` row remains visible. Resetting a working set can therefore leave
   stale type and domain metadata active after it should have been removed.
 
+### DOLT_RESET --hard leaves uncommitted extensions in the working set
+
+- Reproducer: `TestDoltResetHardRemovesUncommittedExtensionRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltResetHardRemovesUncommittedExtensionRepro -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted extension,
+  `DOLT_RESET('--hard')` should discard the `pg_extension` row and installed
+  member objects, including extension-provided types, and leave `dolt_status`
+  clean.
+- Observed Doltgres behavior: `DOLT_RESET('--hard')` returns success, but
+  `dolt_status` still reports two changes, `pg_extension` still reports
+  `hstore`, and `pg_type` still reports the `hstore` type. Resetting a working
+  set can therefore leave stale extension metadata and member objects active.
+
 ### DOLT_RESET --hard to an older revision leaves newer functions active
 
 - Reproducer: `TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro` in
