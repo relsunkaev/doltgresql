@@ -2294,6 +2294,36 @@ func TestRefreshMaterializedViewRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro
+// reproduces a PostgreSQL authorization bug: GRANT ALL PRIVILEGES on a
+// materialized view does not transfer ownership and should not allow the
+// grantee to DROP it.
+func TestDropMaterializedViewRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP MATERIALIZED VIEW requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_matview_intruder PASSWORD 'dropper';`,
+				`CREATE MATERIALIZED VIEW drop_matview_all_private AS SELECT 1 AS id;`,
+				`GRANT USAGE ON SCHEMA public TO drop_matview_intruder;`,
+				`GRANT ALL PRIVILEGES ON TABLE drop_matview_all_private TO drop_matview_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP MATERIALIZED VIEW drop_matview_all_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_matview_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT to_regclass('drop_matview_all_private')::text;`,
+					Expected: []sql.Row{{"drop_matview_all_private"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterMaterializedViewRenameColumnRequiresOwnershipRepro reproduces a
 // security bug: Doltgres allows a role that does not own a materialized view to
 // rename one of its columns.
