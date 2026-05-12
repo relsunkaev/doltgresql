@@ -713,6 +713,41 @@ func TestSetvalUsesSecondSearchPathSchemaRepro(t *testing.T) {
 	})
 }
 
+// TestColumnDefaultNextvalResolvesSameSchemaSequenceRepro reproduces a sequence
+// default correctness bug: a table created in a non-default schema should bind
+// an unqualified nextval default to a sequence in that same schema.
+func TestColumnDefaultNextvalResolvesSameSchemaSequenceRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "column default nextval resolves same-schema sequence",
+			SetUpScript: []string{
+				`CREATE SCHEMA same_schema_default_seq;`,
+				`CREATE SEQUENCE same_schema_default_seq.item_seq;`,
+				`CREATE TABLE same_schema_default_seq.items (
+					id INT DEFAULT nextval('item_seq'),
+					label TEXT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO same_schema_default_seq.items (label)
+						VALUES ('first'), ('second');`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT id, label
+						FROM same_schema_default_seq.items
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "first"},
+						{2, "second"},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestNextvalIsVisibleAcrossTransactionsRepro guards PostgreSQL sequence
 // semantics: sequence value allocation is immediately visible across sessions,
 // even before the allocating transaction commits.

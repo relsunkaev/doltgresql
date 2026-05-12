@@ -43,16 +43,16 @@ var nextval_text = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		schema, sequence, err := ParseRelationName(ctx, val.(string))
-		if err != nil {
-			return nil, err
-		}
-
 		// TODO: this needs a database name to support inserts into other databases (including inserts on other branches than the current one)
 		collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
 		if err != nil {
 			return nil, err
 		}
+		schema, sequence, err := ResolveSequenceName(ctx, collection, val.(string))
+		if err != nil {
+			return nil, err
+		}
+
 		return collection.NextVal(ctx, id.NewSequence(schema, sequence))
 	},
 }
@@ -70,16 +70,16 @@ var nextval_regclass = framework.Function1{
 			return nil, err
 		}
 
-		schema, sequence, err := ParseRelationName(ctx, relationName)
-		if err != nil {
-			return nil, err
-		}
-
 		// TODO: this needs a database name to support inserts into other databases (including inserts on other branches than the current one)
 		collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
 		if err != nil {
 			return nil, err
 		}
+		schema, sequence, err := ResolveSequenceName(ctx, collection, relationName)
+		if err != nil {
+			return nil, err
+		}
+
 		return collection.NextVal(ctx, id.NewSequence(schema, sequence))
 	},
 }

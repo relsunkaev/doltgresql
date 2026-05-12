@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"context"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -25,6 +26,10 @@ import (
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+type sequenceNameResolver interface {
+	HasSequence(context.Context, id.Sequence) bool
+}
 
 // initSetVal registers the functions to the catalog.
 func initSetVal() {
@@ -58,8 +63,7 @@ var setval_text_int64_boolean = framework.Function3{
 		if err != nil {
 			return nil, err
 		}
-		// TODO: this should take a regclass as the parameter to determine the schema
-		schema, relation, err := ParseRelationName(ctx, val1.(string))
+		schema, relation, err := ResolveSequenceName(ctx, collection, val1.(string))
 		if err != nil {
 			return nil, err
 		}
@@ -94,6 +98,32 @@ func ParseRelationName(ctx *sql.Context, name string) (schema string, relation s
 		return "", "", errors.Errorf(`cannot parse relation: %s`, name)
 	}
 	return schema, relation, nil
+}
+
+func ResolveSequenceName(ctx *sql.Context, resolver sequenceNameResolver, name string) (schema string, relation string, err error) {
+	pathElems, err := splitQualifiedIdentifier(name)
+	if err != nil {
+		return "", "", err
+	}
+	if len(pathElems) != 1 {
+		return ParseRelationName(ctx, name)
+	}
+
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return "", "", err
+	}
+	for _, schema := range searchPath {
+		if resolver != nil && resolver.HasSequence(ctx, id.NewSequence(schema, pathElems[0])) {
+			return schema, pathElems[0], nil
+		}
+	}
+
+	schema, err = core.GetCurrentSchema(ctx)
+	if err != nil {
+		return "", "", err
+	}
+	return schema, pathElems[0], nil
 }
 
 // splitQualifiedIdentifier splits a qualified relation name on unquoted dots,
