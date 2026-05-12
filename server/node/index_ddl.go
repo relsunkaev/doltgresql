@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -30,6 +31,8 @@ import (
 
 type locatedIndex struct {
 	db        sql.Database
+	schema    string
+	tableName string
 	table     sql.Table
 	alterable sql.IndexAlterableTable
 	index     sql.Index
@@ -107,6 +110,9 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			indexName := indexmetadata.DisplayNameForTable(located.index, located.table)
 			return nil, errors.Errorf(`cannot drop index "%s" because constraint "%s" on table "%s" requires it`,
 				indexName, indexName, located.index.Table())
+		}
+		if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
+			return nil, err
 		}
 
 		metadata, hasMetadata := indexmetadata.DecodeComment(located.index.Comment())
@@ -214,6 +220,9 @@ func (r *RenameIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error
 	if isPrimaryKeyIndex(located.index) {
 		return nil, errors.Errorf("renaming primary key indexes is not yet supported")
 	}
+	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
+		return nil, err
+	}
 	if err = located.alterable.RenameIndex(ctx, located.index.ID(), r.to); err != nil {
 		if sql.ErrIndexNotFound.Is(err) && r.ifExists {
 			return sql.RowsToRowIter(), nil
@@ -287,7 +296,7 @@ func (a *AlterIndexSetDefaultTablespace) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (a *AlterIndexSetDefaultTablespace) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
-	_, ok, err := locateIndex(ctx, a.schema, a.table, a.index, a.ifExists)
+	located, ok, err := locateIndex(ctx, a.schema, a.table, a.index, a.ifExists)
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +305,9 @@ func (a *AlterIndexSetDefaultTablespace) RowIter(ctx *sql.Context, row sql.Row) 
 			return sql.RowsToRowIter(), nil
 		}
 		return nil, sql.ErrIndexNotFound.New(a.index)
+	}
+	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
+		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
 }
@@ -377,6 +389,9 @@ func (a *AlterIndexSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIt
 	}
 	if isConstraintBackedIndex(located.index) {
 		return nil, errors.Errorf("ALTER INDEX storage parameters for constraint-backed indexes are not yet supported")
+	}
+	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
+		return nil, err
 	}
 
 	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
@@ -478,6 +493,9 @@ func (a *AlterIndexSetStatistics) RowIter(ctx *sql.Context, row sql.Row) (sql.Ro
 	if isConstraintBackedIndex(located.index) {
 		return nil, errors.Errorf("ALTER INDEX statistics targets for constraint-backed indexes are not yet supported")
 	}
+	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
+		return nil, err
+	}
 
 	accessMethod := indexmetadata.AccessMethod(located.index.IndexType(), located.index.Comment())
 	if accessMethod != indexmetadata.AccessMethodBtree {
@@ -561,7 +579,7 @@ func locateIndex(ctx *sql.Context, schemaName string, tableName string, indexNam
 			}
 			return nil, false, sql.ErrTableNotFound.New(tableName)
 		}
-		return locateIndexOnTable(ctx, db, tableName, table, indexName)
+		return locateIndexOnTable(ctx, db, schemaName, tableName, table, indexName)
 	}
 
 	tableNames, err := db.GetTableNames(ctx)
@@ -577,7 +595,7 @@ func locateIndex(ctx *sql.Context, schemaName string, tableName string, indexNam
 		if !ok {
 			continue
 		}
-		located, ok, err := locateIndexOnTable(ctx, db, nextTableName, table, indexName)
+		located, ok, err := locateIndexOnTable(ctx, db, schemaName, nextTableName, table, indexName)
 		if err != nil {
 			return nil, false, err
 		}
@@ -623,7 +641,7 @@ func indexDDLDatabase(ctx *sql.Context, schemaName string, missingOK bool) (sql.
 	return db, nil
 }
 
-func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, table sql.Table, indexName string) (*locatedIndex, bool, error) {
+func locateIndexOnTable(ctx *sql.Context, db sql.Database, schemaName string, tableName string, table sql.Table, indexName string) (*locatedIndex, bool, error) {
 	indexAddressable, ok := table.(sql.IndexAddressable)
 	if !ok {
 		return nil, false, nil
@@ -642,12 +660,22 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, tableName string, tab
 		}
 		return &locatedIndex{
 			db:        db,
+			schema:    schemaName,
+			tableName: tableName,
 			table:     table,
 			alterable: alterable,
 			index:     index,
 		}, true, nil
 	}
 	return nil, false, nil
+}
+
+func checkLocatedIndexTableOwnership(ctx *sql.Context, located *locatedIndex) error {
+	err := checkTableOwnership(ctx, doltdb.TableName{Schema: located.schema, Name: located.tableName})
+	if err != nil && strings.HasPrefix(err.Error(), "must be owner of table ") {
+		return errors.Errorf("permission denied for table %s", located.tableName)
+	}
+	return err
 }
 
 func indexNameMatches(index sql.Index, table sql.Table, name string) bool {
