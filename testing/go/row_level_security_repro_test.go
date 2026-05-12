@@ -91,6 +91,45 @@ func TestRowLevelSecuritySelectPolicyFiltersRowsRepro(t *testing.T) {
 	})
 }
 
+// TestRowSecurityOffDoesNotBypassPoliciesRepro reproduces a security bug:
+// PostgreSQL's row_security=off mode does not bypass RLS for ordinary users;
+// it errors when a query would be affected by row-level security.
+func TestRowSecurityOffDoesNotBypassPoliciesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "row_security off does not bypass policies",
+			SetUpScript: []string{
+				`CREATE USER rls_guc_reader PASSWORD 'reader';`,
+				`CREATE TABLE rls_guc_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_guc_docs VALUES
+					(1, 'alpha'),
+					(2, 'beta');`,
+				`GRANT USAGE ON SCHEMA public TO rls_guc_reader;`,
+				`GRANT SELECT ON rls_guc_docs TO rls_guc_reader;`,
+				`ALTER TABLE rls_guc_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SET row_security = off;`,
+					Username: `rls_guc_reader`,
+					Password: `reader`,
+				},
+				{
+					Query: `SELECT id, label
+						FROM rls_guc_docs
+						ORDER BY id;`,
+					ExpectedErr: `row-level security`,
+					Username:    `rls_guc_reader`,
+					Password:    `reader`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropPolicyIfExistsMissingRepro reproduces a PostgreSQL compatibility gap:
 // DROP POLICY IF EXISTS should no-op when the named policy is absent on an
 // existing table.
