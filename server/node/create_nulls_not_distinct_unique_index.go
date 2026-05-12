@@ -1,0 +1,165 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package node
+
+import (
+	"context"
+
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/plan"
+	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
+
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
+)
+
+// CreateNullsNotDistinctUniqueIndex validates existing NULL keys before
+// registering a native unique index with PostgreSQL NULLS NOT DISTINCT metadata.
+type CreateNullsNotDistinctUniqueIndex struct {
+	ifIndexNotExists bool
+	ifTableExists    bool
+	constraintBacked bool
+	schema           string
+	table            string
+	indexName        string
+	columns          []sql.IndexColumn
+	metadata         indexmetadata.Metadata
+}
+
+var _ sql.ExecSourceRel = (*CreateNullsNotDistinctUniqueIndex)(nil)
+var _ vitess.Injectable = (*CreateNullsNotDistinctUniqueIndex)(nil)
+
+// NewCreateNullsNotDistinctUniqueIndex constructs the metadata-backed unique
+// index node.
+func NewCreateNullsNotDistinctUniqueIndex(
+	ifIndexNotExists bool,
+	ifTableExists bool,
+	constraintBacked bool,
+	schema string,
+	table string,
+	indexName string,
+	columns []sql.IndexColumn,
+	metadata indexmetadata.Metadata,
+) *CreateNullsNotDistinctUniqueIndex {
+	cols := append([]sql.IndexColumn(nil), columns...)
+	metadata.AccessMethod = indexmetadata.AccessMethodBtree
+	metadata.NullsNotDistinct = true
+	if !constraintBacked {
+		metadata.Constraint = indexmetadata.ConstraintNone
+	}
+	return &CreateNullsNotDistinctUniqueIndex{
+		ifIndexNotExists: ifIndexNotExists,
+		ifTableExists:    ifTableExists,
+		constraintBacked: constraintBacked,
+		schema:           schema,
+		table:            table,
+		indexName:        indexName,
+		columns:          cols,
+		metadata:         metadata,
+	}
+}
+
+// Children implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) Children() []sql.Node { return nil }
+
+// IsReadOnly implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) IsReadOnly() bool { return false }
+
+// Resolved implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) Resolved() bool { return true }
+
+// Schema implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) Schema(*sql.Context) sql.Schema { return nil }
+
+// String implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) String() string {
+	return "CREATE UNIQUE INDEX NULLS NOT DISTINCT"
+}
+
+// WithChildren implements sql.ExecSourceRel.
+func (c *CreateNullsNotDistinctUniqueIndex) WithChildren(_ *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(c, children...)
+}
+
+// WithResolvedChildren implements vitess.Injectable.
+func (c *CreateNullsNotDistinctUniqueIndex) WithResolvedChildren(_ context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return c, nil
+}
+
+// RowIter validates existing rows and registers the unique index.
+func (c *CreateNullsNotDistinctUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	schemaName, err := core.GetSchemaName(ctx, nil, c.schema)
+	if err != nil {
+		return nil, err
+	}
+	db, err := indexDDLDatabase(ctx, schemaName, false)
+	if err != nil {
+		return nil, err
+	}
+	if db == nil {
+		if c.ifTableExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, errors.Errorf(`schema "%s" does not exist`, c.schema)
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, c.table)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		if c.ifTableExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, sql.ErrTableNotFound.New(c.table)
+	}
+	if c.ifIndexNotExists {
+		exists, err := indexExists(ctx, table, c.indexName)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return sql.RowsToRowIter(), nil
+		}
+	}
+	alterable, ok := table.(sql.IndexAlterableTable)
+	if !ok {
+		return nil, errors.Errorf(`relation "%s" does not support index alteration`, c.table)
+	}
+	check, err := nullsNotDistinctUniqueIndexFromColumns(table.Schema(ctx), c.columns)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateNoNullsNotDistinctUniqueDuplicates(ctx, scanTableForNullsNotDistinctCheck(table), check); err != nil {
+		return nil, err
+	}
+	indexDef := sql.IndexDef{
+		Name:       c.indexName,
+		Columns:    append([]sql.IndexColumn(nil), c.columns...),
+		Constraint: sql.IndexConstraint_Unique,
+		Storage:    sql.IndexUsing_BTree,
+		Comment:    indexmetadata.EncodeComment(c.metadata),
+	}
+	if err = alterable.CreateIndex(ctx, indexDef); err != nil {
+		if c.ifIndexNotExists && sql.ErrDuplicateKey.Is(err) {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}

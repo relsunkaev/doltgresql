@@ -191,6 +191,16 @@ func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return c.rowIterWithResolvedCreateStatement(ctx, schemaName)
 	}
 
+	if c.unique && c.metadata.NullsNotDistinct {
+		check, err := nullsNotDistinctUniqueIndexFromColumns(table.Schema(ctx), c.columns)
+		if err != nil {
+			return nil, err
+		}
+		if err = validateNoNullsNotDistinctUniqueDuplicates(ctx, scanTableForNullsNotDistinctCheck(table), check); err != nil {
+			return nil, err
+		}
+	}
+
 	// Phase 1: register-with-Building. The planner skips the index
 	// (indisready=false, indisvalid=false), while concurrent writers can still
 	// commit against the table. If those writers commit before this transaction,

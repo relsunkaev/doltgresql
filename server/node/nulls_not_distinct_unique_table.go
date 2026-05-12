@@ -219,6 +219,25 @@ func (t *NullsNotDistinctUniqueTable) findDuplicate(ctx *sql.Context, index null
 	return firstMatchingNullsNotDistinctRow(ctx, table, index, key, oldRow, ignoreRows)
 }
 
+func nullsNotDistinctUniqueIndexFromColumns(schema sql.Schema, columns []sql.IndexColumn) (nullsNotDistinctUniqueIndex, error) {
+	check := nullsNotDistinctUniqueIndex{
+		columnIndexes: make([]int, len(columns)),
+		columnTypes:   make([]sql.Type, len(columns)),
+	}
+	for i, column := range columns {
+		if column.Expression != nil {
+			return nullsNotDistinctUniqueIndex{}, errors.Errorf("NULLS NOT DISTINCT expression indexes are not yet supported")
+		}
+		columnIndex := schema.IndexOfColName(column.Name)
+		if columnIndex < 0 {
+			return nullsNotDistinctUniqueIndex{}, sql.ErrKeyColumnDoesNotExist.New(column.Name)
+		}
+		check.columnIndexes[i] = columnIndex
+		check.columnTypes[i] = schema[columnIndex].Type
+	}
+	return check, nil
+}
+
 func scanTableForNullsNotDistinctCheck(table sql.Table) sql.Table {
 	table = sql.GetUnderlyingTable(table)
 	switch table := table.(type) {
@@ -411,6 +430,57 @@ func (i nullsNotDistinctUniqueIndex) valuesMatch(ctx *sql.Context, columnIndex i
 		return cmp == 0, nil
 	}
 	return reflect.DeepEqual(left, right), nil
+}
+
+func validateNoNullsNotDistinctUniqueDuplicates(ctx *sql.Context, table sql.Table, index nullsNotDistinctUniqueIndex) error {
+	seen := make([]pendingNullsNotDistinctRow, 0)
+	partitions, err := table.Partitions(ctx)
+	if err != nil {
+		return err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		rows, err := table.PartitionRows(ctx, partition)
+		if err != nil {
+			return err
+		}
+		for {
+			row, err := rows.Next(ctx)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				_ = rows.Close(ctx)
+				return err
+			}
+			key, hasNull := index.key(row)
+			if !hasNull {
+				continue
+			}
+			for _, pending := range seen {
+				matches, err := index.keyMatches(ctx, pending.key, key)
+				if err != nil {
+					_ = rows.Close(ctx)
+					return err
+				}
+				if matches {
+					_ = rows.Close(ctx)
+					return sql.NewUniqueKeyErr(fmt.Sprintf("%v", key), false, pending.row)
+				}
+			}
+			seen = append(seen, pendingNullsNotDistinctRow{key: key, row: row})
+		}
+		if err := rows.Close(ctx); err != nil {
+			return err
+		}
+	}
 }
 
 type nullsNotDistinctPrimaryEditor interface {

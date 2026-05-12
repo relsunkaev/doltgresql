@@ -141,6 +141,21 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 		}
 		metadata.Constraint = indexmetadata.ConstraintNone
 	}
+	if node.Unique && metadata != nil && metadata.NullsNotDistinct && !node.Concurrently {
+		columns := indexFieldsToIndexColumns(indexDef.Fields)
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreateNullsNotDistinctUniqueIndex(
+				node.IfNotExists,
+				false,
+				false,
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				indexDef.Info.Name.String(),
+				columns,
+				*metadata,
+			),
+		}, nil
+	}
 	var indexType string
 	if node.Unique {
 		indexType = vitess.UniqueStr

@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -61,6 +62,10 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableSetCompression(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableRowLevelSecurity:
 			return nodeAlterTableRowLevelSecurity(treeTableName, cmd)
+		case *tree.AlterTableAddConstraint:
+			if statement, handled, err := nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx, cmd, tableName, node.IfExists); handled || err != nil {
+				return statement, err
+			}
 		case *tree.AlterTableAlterColumnType:
 			if cmd.Using != nil {
 				return vitess.InjectedStatement{
@@ -96,6 +101,36 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 		Table:      tableName,
 		Statements: statements,
 	}, nil
+}
+
+func nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx *Context, cmd *tree.AlterTableAddConstraint, tableName vitess.TableName, ifExists bool) (vitess.Statement, bool, error) {
+	constraintDef, ok := cmd.ConstraintDef.(*tree.UniqueConstraintTableDef)
+	if !ok || constraintDef.PrimaryKey || !constraintDef.NullsNotDistinct {
+		return nil, false, nil
+	}
+	ddl, err := nodeUniqueConstraintTableDef(ctx, constraintDef, tableName, ifExists)
+	if err != nil {
+		return nil, true, err
+	}
+	if ddl == nil || ddl.IndexSpec == nil {
+		return nil, true, errors.Errorf("missing UNIQUE NULLS NOT DISTINCT index definition")
+	}
+	metadata := indexmetadata.Metadata{
+		AccessMethod:     indexmetadata.AccessMethodBtree,
+		NullsNotDistinct: true,
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewCreateNullsNotDistinctUniqueIndex(
+			false,
+			ifExists,
+			true,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			ddl.IndexSpec.ToName.String(),
+			indexFieldsToIndexColumns(ddl.IndexSpec.Fields),
+			metadata,
+		),
+	}, true, nil
 }
 
 func nodeAlterTableRowLevelSecurity(tableName tree.TableName, cmd *tree.AlterTableRowLevelSecurity) (vitess.Statement, error) {
