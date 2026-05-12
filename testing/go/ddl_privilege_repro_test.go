@@ -522,6 +522,33 @@ func TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro(t *test
 	})
 }
 
+// TestCreateAccessMethodRequiresSuperuserRepro reproduces a security bug:
+// Doltgres allows a non-superuser to define an access method.
+func TestCreateAccessMethodRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE ACCESS METHOD requires superuser",
+			SetUpScript: []string{
+				`CREATE USER access_method_creator PASSWORD 'creator';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE ACCESS METHOD unauthorized_table_am TYPE TABLE HANDLER heap_tableam_handler;`,
+					ExpectedErr: `superuser`,
+					Username:    `access_method_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_am
+						WHERE amname = 'unauthorized_table_am';`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
