@@ -297,8 +297,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 		case OpCode_Execute:
 			statement := operation.PrimaryData
 			bindings := operation.SecondaryData
+			isDynamicExecute := operation.Options["dynamic"] == "true"
 			dynamicUsingScope := false
-			if operation.Options["dynamic"] == "true" {
+			if isDynamicExecute {
 				queryBindingCount, err := strconv.Atoi(operation.Options["queryBindingCount"])
 				if err != nil {
 					return nil, false, err
@@ -346,8 +347,10 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				}
 				state.lastRowCount = rowCountFromResultRows(rows)
 				found := state.lastRowCount > 0
-				if err = setFoundVariable(ctx, stack, found); err != nil {
-					return nil, false, err
+				if !isDynamicExecute {
+					if err = setFoundVariable(ctx, stack, found); err != nil {
+						return nil, false, err
+					}
 				}
 				strict := operation.Options["strict"] == "true"
 				if strict && !found {
@@ -396,8 +399,10 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 					return nil, false, err
 				}
 				state.lastRowCount = rowCountFromResultRows(rows)
-				if err = setFoundVariable(ctx, stack, state.lastRowCount > 0); err != nil {
-					return nil, false, err
+				if !isDynamicExecute {
+					if err = setFoundVariable(ctx, stack, state.lastRowCount > 0); err != nil {
+						return nil, false, err
+					}
 				}
 			}
 		case OpCode_Get:
