@@ -338,3 +338,39 @@ func TestAlterTypeRenameUpdatesViewMetadataRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterTypeRenameUpdatesMaterializedViewMetadataRepro reproduces a catalog
+// persistence bug: materialized views that reference a renamed type should keep
+// reading and refreshing through the renamed type rather than retaining the old
+// textual type name.
+func TestAlterTypeRenameUpdatesMaterializedViewMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates materialized view metadata",
+			SetUpScript: []string{
+				`CREATE TYPE rename_matview_status AS ENUM ('new', 'done');`,
+				`CREATE MATERIALIZED VIEW rename_matview_status_view AS
+					SELECT 'done'::rename_matview_status AS status;`,
+				`ALTER TYPE rename_matview_status RENAME TO renamed_matview_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT status::text FROM rename_matview_status_view;`,
+					Expected: []sql.Row{{"done"}},
+				},
+				{
+					Query: `SELECT pg_typeof(status)::text
+						FROM rename_matview_status_view;`,
+					Expected: []sql.Row{{"renamed_matview_status"}},
+				},
+				{
+					Query: `REFRESH MATERIALIZED VIEW rename_matview_status_view;`,
+				},
+				{
+					Query:    `SELECT status::text FROM rename_matview_status_view;`,
+					Expected: []sql.Row{{"done"}},
+				},
+			},
+		},
+	})
+}
