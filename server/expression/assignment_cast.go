@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -54,12 +56,20 @@ func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	if err != nil || val == nil {
 		return val, err
 	}
-	castFunc := framework.GetAssignmentCast(ac.fromType, ac.toType)
+	fromType, err := checkForDomainTypeWithContext(ctx, ac.fromType)
+	if err != nil {
+		return nil, err
+	}
+	toType, err := checkForDomainTypeWithContext(ctx, ac.toType)
+	if err != nil {
+		return nil, err
+	}
+	castFunc := framework.GetAssignmentCast(fromType, toType)
 	if castFunc == nil {
 		return nil, errors.Errorf("ASSIGNMENT_CAST: target is of type %s but expression is of type %s: %s",
-			ac.toType.String(), ac.fromType.String(), ac.expr.String())
+			toType.String(), fromType.String(), ac.expr.String())
 	}
-	return castFunc(ctx, val, ac.toType)
+	return castFunc(ctx, val, toType)
 }
 
 // IsNullable implements the sql.Expression interface.
@@ -95,4 +105,46 @@ func checkForDomainType(t *pgtypes.DoltgresType) *pgtypes.DoltgresType {
 		t = t.DomainUnderlyingBaseType()
 	}
 	return t
+}
+
+func checkForDomainTypeWithContext(ctx *sql.Context, t *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if t.TypType != pgtypes.TypeType_Domain {
+		return t, nil
+	}
+	if ctx == nil {
+		return t.DomainUnderlyingBaseType(), nil
+	}
+	return domainUnderlyingBaseTypeWithContext(ctx, t)
+}
+
+func domainUnderlyingBaseTypeWithContext(ctx *sql.Context, t *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	bt, ok := pgtypes.IDToBuiltInDoltgresType[t.BaseTypeID]
+	if !ok {
+		typeColl, err := pgtypes.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		schema, err := core.GetSchemaName(ctx, nil, t.BaseTypeID.SchemaName())
+		if err != nil {
+			return nil, err
+		}
+		bt, err = typeColl.GetType(ctx, id.NewType(schema, t.BaseTypeID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if bt == nil {
+			return nil, pgtypes.ErrTypeDoesNotExist.New(t.BaseTypeID.TypeName())
+		}
+	}
+	if bt.TypType == pgtypes.TypeType_Domain {
+		var err error
+		bt, err = domainUnderlyingBaseTypeWithContext(ctx, bt)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if typmod := t.GetAttTypMod(); typmod != -1 {
+		return bt.WithAttTypMod(typmod), nil
+	}
+	return bt, nil
 }

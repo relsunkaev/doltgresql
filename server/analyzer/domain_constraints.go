@@ -26,6 +26,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
@@ -65,7 +67,11 @@ func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckCo
 			}
 			col.Default = defVal
 			// get domain checks
-			colChecks, err := getDomainCheckConstraintsForTable(ctx, a, col.Name, col.Source, dt.Checks)
+			checkDefs, err := collectDomainCheckDefinitions(ctx, dt)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			colChecks, err := getDomainCheckConstraintsForTable(ctx, a, col.Name, col.Source, checkDefs)
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
@@ -132,7 +138,11 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 		case *expression.ExplicitCast:
 			if rt, ok := e.Type(ctx).(*pgtypes.DoltgresType); ok && rt.TypType == pgtypes.TypeType_Domain {
 				// the domain type should be resolved by this point
-				colChecks, err := getDomainCheckConstraintsForCast(ctx, a, rt.Checks, e.Child())
+				checkDefs, err := collectDomainCheckDefinitions(ctx, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, e.Child())
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -145,6 +155,56 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 			return e, transform.SameTree, nil
 		}
 	})
+}
+
+func collectDomainCheckDefinitions(ctx *sql.Context, dt *pgtypes.DoltgresType) ([]*sql.CheckDefinition, error) {
+	if dt.TypType != pgtypes.TypeType_Domain {
+		return nil, nil
+	}
+
+	var checkDefs []*sql.CheckDefinition
+	if baseDomain, err := resolveBaseDomainType(ctx, dt); err != nil {
+		return nil, err
+	} else if baseDomain != nil {
+		baseCheckDefs, err := collectDomainCheckDefinitions(ctx, baseDomain)
+		if err != nil {
+			return nil, err
+		}
+		checkDefs = append(checkDefs, baseCheckDefs...)
+	}
+	checkDefs = append(checkDefs, dt.Checks...)
+	return checkDefs, nil
+}
+
+func resolveBaseDomainType(ctx *sql.Context, dt *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	baseType, ok := pgtypes.IDToBuiltInDoltgresType[dt.BaseTypeID]
+	if !ok {
+		typeCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		schema, err := core.GetSchemaName(ctx, nil, dt.BaseTypeID.SchemaName())
+		if err != nil {
+			return nil, err
+		}
+		baseType, err = typeCollection.GetType(ctx, id.NewType(schema, dt.BaseTypeID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if baseType == nil && dt.BaseTypeID.SchemaName() == "" {
+			baseType, err = typeCollection.GetType(ctx, id.NewType("pg_catalog", dt.BaseTypeID.TypeName()))
+			if err != nil {
+				return nil, err
+			}
+		}
+		if baseType == nil {
+			return nil, pgtypes.ErrTypeDoesNotExist.New(dt.BaseTypeID.TypeName())
+		}
+	}
+	if baseType.TypType != pgtypes.TypeType_Domain {
+		return nil, nil
+	}
+	return baseType, nil
 }
 
 // getDomainCheckConstraintsForCast takes the check constraint definitions, parses, builds and returns sql.CheckConstraints.

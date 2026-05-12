@@ -715,10 +715,12 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 				tableAttributeNumber = 0
 			}
 			if doltgresType.TypType == pgtypes.TypeType_Domain {
-				oid = id.Cache().ToOID(doltgresType.BaseTypeID.AsId())
-			} else {
-				oid = id.Cache().ToOID(doltgresType.ID.AsId())
+				doltgresType, err = doltgresType.DomainUnderlyingBaseTypeWithContext(ctx)
+				if err != nil {
+					return nil, err
+				}
 			}
+			oid = id.Cache().ToOID(doltgresType.ID.AsId())
 			typmod = doltgresType.GetAttTypMod() // pg_attribute.atttypmod
 		} else {
 			oid, err = VitessTypeToObjectID(columnType)

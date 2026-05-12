@@ -708,18 +708,45 @@ func (t *DoltgresType) ConvertToType(ctx *sql.Context, typ sql.ExtendedType, val
 // DomainUnderlyingBaseType returns an underlying base type of this domain type.
 // It can be a nested domain type, so it recursively searches for a valid base type.
 func (t *DoltgresType) DomainUnderlyingBaseType() *DoltgresType {
-	// TODO: handle user-defined type
-	bt, ok := IDToBuiltInDoltgresType[t.BaseTypeID]
-	if !ok {
-		panic(fmt.Sprintf("unable to get DoltgresType from ID: %s", t.BaseTypeID.AsId().String()))
-	}
-	if bt.TypType == TypeType_Domain {
-		bt = bt.DomainUnderlyingBaseType()
-	}
-	if typmod := t.GetAttTypMod(); typmod != -1 {
-		return bt.WithAttTypMod(typmod)
+	bt, err := t.DomainUnderlyingBaseTypeWithContext(nil)
+	if err != nil {
+		return t
 	}
 	return bt
+}
+
+// DomainUnderlyingBaseTypeWithContext returns an underlying base type of this
+// domain type, resolving user-defined base domains from the session's type
+// collection when needed.
+func (t *DoltgresType) DomainUnderlyingBaseTypeWithContext(ctx *sql.Context) (*DoltgresType, error) {
+	bt, ok := IDToBuiltInDoltgresType[t.BaseTypeID]
+	if !ok {
+		if ctx == nil {
+			return t, nil
+		}
+		typeColl, err := GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		bt, err = typeColl.GetType(ctx, t.BaseTypeID)
+		if err != nil {
+			return nil, err
+		}
+		if bt == nil {
+			return nil, ErrTypeDoesNotExist.New(t.BaseTypeID.TypeName())
+		}
+	}
+	if bt.TypType == TypeType_Domain {
+		var err error
+		bt, err = bt.DomainUnderlyingBaseTypeWithContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if typmod := t.GetAttTypMod(); typmod != -1 {
+		return bt.WithAttTypMod(typmod), nil
+	}
+	return bt, nil
 }
 
 // Equals implements the types.ExtendedType interface.

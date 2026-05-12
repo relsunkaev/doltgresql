@@ -54,11 +54,19 @@ func (ic *ImplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	if err != nil || val == nil {
 		return val, err
 	}
-	castFunc := framework.GetImplicitCast(ic.fromType, ic.toType)
-	if castFunc == nil {
-		return nil, errors.Errorf("target is of type %s but expression is of type %s", ic.toType.String(), ic.fromType.String())
+	fromType, err := checkForDomainTypeWithContext(ctx, ic.fromType)
+	if err != nil {
+		return nil, err
 	}
-	return castFunc(ctx, val, ic.toType)
+	toType, err := checkForDomainTypeWithContext(ctx, ic.toType)
+	if err != nil {
+		return nil, err
+	}
+	castFunc := framework.GetImplicitCast(fromType, toType)
+	if castFunc == nil {
+		return nil, errors.Errorf("target is of type %s but expression is of type %s", toType.String(), fromType.String())
+	}
+	return castFunc(ctx, val, toType)
 }
 
 // IsNullable implements the sql.Expression interface.

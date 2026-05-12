@@ -122,7 +122,10 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 	fromType = runtimeFromTypeForExplicitCast(fromType, val)
 
-	baseCastToType := checkForDomainType(c.castToType)
+	baseCastToType, err := checkForDomainTypeWithContext(ctx, c.castToType)
+	if err != nil {
+		return nil, err
+	}
 	if userCast, ok := auth.GetCast(fromType.ID, baseCastToType.ID); ok {
 		castResult, err := c.evalUserDefinedCast(ctx, val, fromType, userCast)
 		if err != nil {

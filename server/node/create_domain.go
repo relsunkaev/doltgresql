@@ -81,6 +81,17 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 		return nil, types.ErrTypeAlreadyExists.New(c.Name)
 	}
 
+	asType := c.AsType
+	if !asType.IsResolvedType() {
+		asType, err = resolveCreateDomainBaseType(ctx, collection, asType)
+		if err != nil {
+			return nil, err
+		}
+		if !asType.IsDefined {
+			return nil, types.ErrTypeIsOnlyAShell.New(asType.Name())
+		}
+	}
+
 	var defExpr string
 	if c.DefaultExpr != nil {
 		defExpr = c.DefaultExpr.String()
@@ -101,7 +112,7 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 		}
 	}
 
-	newType := types.NewDomainType(ctx, c.AsType, defExpr, c.IsNotNull, checkDefs, arrayID, internalID)
+	newType := types.NewDomainType(ctx, asType, defExpr, c.IsNotNull, checkDefs, arrayID, internalID)
 	newType.Owner = ctx.Client().User
 	err = collection.CreateType(ctx, newType)
 	if err != nil {
@@ -119,6 +130,32 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	}
 
 	return sql.RowsToRowIter(), nil
+}
+
+func resolveCreateDomainBaseType(ctx *sql.Context, collection interface {
+	GetType(context.Context, id.Type) (*types.DoltgresType, error)
+}, typ *types.DoltgresType) (*types.DoltgresType, error) {
+	schema, err := core.GetSchemaName(ctx, nil, typ.ID.SchemaName())
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := collection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+	if err != nil {
+		return nil, err
+	}
+	if resolved == nil && typ.ID.SchemaName() == "" {
+		resolved, err = collection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+	}
+	if resolved == nil {
+		return nil, types.ErrTypeDoesNotExist.New(typ.Name())
+	}
+	if typmod := typ.GetAttTypMod(); typmod != -1 {
+		return resolved.WithAttTypMod(typmod), nil
+	}
+	return resolved, nil
 }
 
 // generateCheckNameForDomain generates a unique check constraint name for a domain when one is not provided. The
