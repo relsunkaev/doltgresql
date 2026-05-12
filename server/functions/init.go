@@ -175,6 +175,7 @@ func Init() {
 	initPgGetFunctionArguments()
 	initPgGetFunctionIdentityArguments()
 	initPgGetFunctionDef()
+	initPgGetKeywords()
 	initPgGetFunctionResult()
 	initPgGetIndexDef()
 	initPgGetPartKeyDef()
