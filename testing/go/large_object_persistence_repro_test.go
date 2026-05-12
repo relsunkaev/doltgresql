@@ -70,6 +70,36 @@ func TestAlterLargeObjectOwnerReachesValidationRepro(t *testing.T) {
 	})
 }
 
+// TestAlterLargeObjectOwnerRequiresOwnershipRepro reproduces a security bug:
+// non-owners must not be able to transfer ownership of a large object.
+func TestAlterLargeObjectOwnerRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER LARGE OBJECT OWNER TO requires ownership",
+			SetUpScript: []string{
+				`CREATE USER large_object_owner_intruder PASSWORD 'pw';`,
+				`CREATE ROLE large_object_owner_hijack_target;`,
+				`SELECT lo_from_bytea(424255, decode('0102', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER LARGE OBJECT 424255
+						OWNER TO large_object_owner_hijack_target;`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_owner_intruder`,
+					Password:    `pw`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(lomowner)
+						FROM pg_catalog.pg_largeobject_metadata
+						WHERE oid = 424255;`,
+					Expected: []sql.Row{{"postgres"}},
+				},
+			},
+		},
+	})
+}
+
 // TestLargeObjectGrantPopulatesMetadataAclRepro reproduces a large-object
 // privilege/catalog gap: GRANT SELECT ON LARGE OBJECT should persist in
 // pg_largeobject_metadata.lomacl.
