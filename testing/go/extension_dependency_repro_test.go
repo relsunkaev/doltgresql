@@ -72,6 +72,40 @@ func TestCreateExtensionHstoreWithSchemaQualifiesRuntimeObjectsRepro(t *testing.
 	})
 }
 
+// TestCreateExtensionCitextWithSchemaRegtypeRepro reproduces an extension
+// schema relocation catalog gap: citext can be used from a target schema, but
+// regtype lookup should resolve the relocated extension type too.
+func TestCreateExtensionCitextWithSchemaRegtypeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "citext WITH SCHEMA qualifies regtype lookup",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION citext WITH SCHEMA extensions;`,
+				`CREATE TABLE citext_schema_qualified_items (
+					id INT PRIMARY KEY,
+					email extensions.citext UNIQUE
+				);`,
+				`INSERT INTO citext_schema_qualified_items VALUES (1, 'Alice@Example.com');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT to_regtype('extensions.citext')::text;`,
+					Expected: []sql.Row{{"extensions.citext"}},
+				},
+				{
+					Query:    `SELECT id FROM citext_schema_qualified_items WHERE email = 'alice@example.com'::extensions.citext;`,
+					Expected: []sql.Row{{1}},
+				},
+				{
+					Query:       `INSERT INTO citext_schema_qualified_items VALUES (2, 'ALICE@example.com');`,
+					ExpectedErr: `duplicate`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateExtensionVectorWithSchemaQualifiesTypesRepro reproduces an
 // extension schema relocation gap: pgvector member types should be created in
 // the extension's target schema.

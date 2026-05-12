@@ -12643,6 +12643,20 @@ artifacts only; no fixes are included here.
   does not exist`, and `OPERATOR(extensions.?)` fails with `schema
   "extensions" not allowed in OPERATOR syntax`.
 
+### CREATE EXTENSION citext WITH SCHEMA does not resolve the target-schema regtype
+
+- Reproducer: `TestCreateExtensionCitextWithSchemaRegtypeRepro` in
+  `testing/go/extension_dependency_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateExtensionCitextWithSchemaRegtypeRepro -count=1`.
+- Expected PostgreSQL behavior: `CREATE EXTENSION citext WITH SCHEMA
+  extensions` installs a type that can be resolved with
+  `to_regtype('extensions.citext')`.
+- Observed Doltgres behavior: `extensions.citext` can be used in table DDL,
+  case-insensitive comparison, and unique checks, but
+  `to_regtype('extensions.citext')` returns NULL.
+
 ### CREATE EXTENSION vector WITH SCHEMA does not create the target-schema vector type
 
 - Reproducer: `TestCreateExtensionVectorWithSchemaQualifiesTypesRepro` in
