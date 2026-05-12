@@ -139,6 +139,33 @@ func TestAlterLanguageOwnerToRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropLanguageRequiresOwnershipRepro reproduces a language DDL security
+// bug: a normal login role can drop a procedural language it does not own.
+func TestDropLanguageRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP LANGUAGE requires language ownership",
+			SetUpScript: []string{
+				`CREATE USER language_dropper PASSWORD 'dropper';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP LANGUAGE plpgsql;`,
+					ExpectedErr: `must be owner`,
+					Username:    `language_dropper`,
+					Password:    `dropper`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_language
+						WHERE lanname = 'plpgsql';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateLanguagePopulatesPgLanguageRepro reproduces a procedural-language
 // catalog persistence gap: CREATE LANGUAGE should add the new language to
 // pg_language.
