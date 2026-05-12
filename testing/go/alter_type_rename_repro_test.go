@@ -415,6 +415,38 @@ func TestAlterTypeRenameUpdatesGeneratedColumnMetadataRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeRenameUpdatesExpressionIndexMetadataRepro reproduces a catalog
+// persistence bug: expression indexes that reference a renamed type should keep
+// resolving through the renamed type after ALTER TYPE RENAME TO.
+func TestAlterTypeRenameUpdatesExpressionIndexMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates expression index metadata",
+			SetUpScript: []string{
+				`CREATE TYPE rename_index_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE rename_index_status_items (
+					id INT PRIMARY KEY,
+					status TEXT
+				);`,
+				`CREATE INDEX rename_index_status_expr_idx
+					ON rename_index_status_items (((status::rename_index_status)::text));`,
+				`ALTER TYPE rename_index_status RENAME TO renamed_index_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rename_index_status_items
+						VALUES (1, 'new');`,
+				},
+				{
+					Query: `SELECT id::text, status
+						FROM rename_index_status_items;`,
+					Expected: []sql.Row{{"1", "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro reproduces a
 // catalog persistence bug: renaming a type should update function signatures
 // that reference it, so overload lookup with the renamed type keeps working.
