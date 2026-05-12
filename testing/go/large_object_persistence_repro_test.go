@@ -463,3 +463,32 @@ func TestLargeObjectUnlinkRollsBackToSavepointRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestLargeObjectRegistryIsDatabaseLocalRepro reproduces a data isolation bug:
+// PostgreSQL large objects live in one database's catalogs and must not be
+// visible from another database in the same server.
+func TestLargeObjectRegistryIsDatabaseLocalRepro(t *testing.T) {
+	port, err := sql.GetEmptyPort()
+	require.NoError(t, err)
+	ctx, adminConn, controller := CreateServerWithPort(t, "postgres", port)
+	defer func() {
+		adminConn.Close(ctx)
+		controller.Stop()
+		require.NoError(t, controller.WaitForStop())
+	}()
+
+	dbOne := newTestDatabaseConnection(t, ctx, "large_object_db_one", serverHost, port)
+	defer dbOne.Close(ctx)
+	dbTwo := newTestDatabaseConnection(t, ctx, "large_object_db_two", serverHost, port)
+	defer dbTwo.Close(ctx)
+
+	_, err = dbOne.Exec(ctx, `SELECT lo_from_bytea(424254, decode('abcdef', 'hex'));`)
+	require.NoError(t, err)
+
+	var visibleInOtherDB int64
+	err = dbTwo.Current.QueryRow(ctx, `SELECT count(*)
+		FROM pg_catalog.pg_largeobject_metadata
+		WHERE oid = 424254;`).Scan(&visibleInOtherDB)
+	require.NoError(t, err)
+	require.EqualValues(t, 0, visibleInOtherDB, "large objects should be database-local")
+}
