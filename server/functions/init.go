@@ -161,6 +161,7 @@ func Init() {
 	initObjDescription()
 	initOctetLength()
 	initOverlaps()
+	initParseIdent()
 	initPgObjectAddress()
 	initPgEncodingToChar()
 	initPgBackendPid()
