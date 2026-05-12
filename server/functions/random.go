@@ -26,6 +26,7 @@ import (
 // initRandom registers the functions to the catalog.
 func initRandom() {
 	framework.RegisterFunction(random)
+	framework.RegisterFunction(random_normal_float64_float64)
 }
 
 // random represents the PostgreSQL function of the same name, taking the same parameters.
@@ -36,5 +37,16 @@ var random = framework.Function0{
 	Strict:             true,
 	Callable: func(ctx *sql.Context) (any, error) {
 		return rand.Float64(), nil
+	},
+}
+
+var random_normal_float64_float64 = framework.Function2{
+	Name:               "random_normal",
+	Return:             pgtypes.Float64,
+	Parameters:         [2]*pgtypes.DoltgresType{pgtypes.Float64, pgtypes.Float64},
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, mean any, stddev any) (any, error) {
+		return rand.NormFloat64()*stddev.(float64) + mean.(float64), nil
 	},
 }

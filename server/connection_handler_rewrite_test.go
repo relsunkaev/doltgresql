@@ -84,3 +84,14 @@ func TestRewriteTemporalOverlaps(t *testing.T) {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
+
+func TestRewritePostgres16BuiltinSyntax(t *testing.T) {
+	got, ok := rewritePostgres16BuiltinSyntax(`SELECT (pg_input_error_info('42000000000', 'integer')).sql_error_code, system_user IS NOT NULL, any_value(v) FROM t;`)
+	if !ok {
+		t.Fatal("expected rewrite")
+	}
+	want := `SELECT pg_input_error_info_sql_error_code('42000000000', 'integer'), system_user() IS NOT NULL, min(v) FROM t;`
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

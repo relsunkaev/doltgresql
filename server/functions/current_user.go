@@ -25,6 +25,7 @@ import (
 func initCurrentUser() {
 	framework.RegisterFunction(current_user)
 	framework.RegisterFunction(session_user)
+	framework.RegisterFunction(system_user)
 }
 
 // current_user represents the PostgreSQL current_user/current_role SQL value function.
@@ -40,6 +41,16 @@ var current_user = framework.Function0{
 // session_user represents the PostgreSQL session_user SQL value function.
 var session_user = framework.Function0{
 	Name:               "session_user",
+	Return:             pgtypes.Name,
+	IsNonDeterministic: true,
+	Callable: func(ctx *sql.Context) (any, error) {
+		return currentSQLUser(ctx), nil
+	},
+}
+
+// system_user represents PostgreSQL's SQL value function of the same name.
+var system_user = framework.Function0{
+	Name:               "system_user",
 	Return:             pgtypes.Name,
 	IsNonDeterministic: true,
 	Callable: func(ctx *sql.Context) (any, error) {
