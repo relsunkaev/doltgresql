@@ -1150,6 +1150,42 @@ func TestCreatePolicyRequiresTableOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestCreateRuleRequiresTableOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a table to create a rewrite rule on
+// it when the role has enough privileges for Doltgres' trigger-based rewrite.
+func TestCreateRuleRequiresTableOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE RULE requires table ownership",
+			SetUpScript: []string{
+				`CREATE USER rule_creator PASSWORD 'creator';`,
+				`CREATE TABLE rule_private_source (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE TABLE rule_private_audit (
+					source_id INT,
+					label TEXT
+				);`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO rule_creator;`,
+				`GRANT TRIGGER ON rule_private_source TO rule_creator;`,
+				`GRANT INSERT ON rule_private_audit TO rule_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE RULE rule_private_source_audit AS
+						ON INSERT TO rule_private_source
+						DO ALSO
+						INSERT INTO rule_private_audit VALUES (NEW.id, NEW.label);`,
+					ExpectedErr: `must be owner`,
+					Username:    `rule_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestRenameTableRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a table to rename it.
 func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
