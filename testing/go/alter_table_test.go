@@ -281,7 +281,7 @@ func TestAlterTable(t *testing.T) {
 			Name: "Add primary key with generated column",
 			SetUpScript: []string{
 				`CREATE TABLE t1 (
-      id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+      id uuid DEFAULT gen_random_uuid() NOT NULL,
       data jsonb,
       has_data boolean GENERATED ALWAYS AS ((data IS NOT NULL)) STORED
   );`,
@@ -522,7 +522,7 @@ func TestAlterTable(t *testing.T) {
 					// Attempting to change to a smaller type that doesn't support the values in the
 					// column results in an error instead of changing the type.
 					Query:       "ALTER TABLE test1 ALTER COLUMN b TYPE smallint;",
-					ExpectedErr: "smallint: unhandled type: int32",
+					ExpectedErr: "smallint out of range",
 				},
 			},
 		},
@@ -630,6 +630,7 @@ func TestAlterTable(t *testing.T) {
 		{
 			Name: "alter table owner",
 			SetUpScript: []string{
+				"CREATE ROLE new_owner;",
 				"CREATE TABLE t1 (a INT, b INT);",
 			},
 			Assertions: []ScriptTestAssertion{
