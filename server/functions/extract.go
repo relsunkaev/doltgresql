@@ -210,7 +210,7 @@ var extract_text_interval = framework.Function2{
 		case "month", "months":
 			return decimal.NewFromInt(dur.Months % 12), nil
 		case "quarter":
-			return decimal.NewFromInt((dur.Months%12-1)/3 + 1), nil
+			return decimal.NewFromInt((dur.Months%12)/3 + 1), nil
 		case "second", "seconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			seconds := float64(secondsInNanos) / NanosPerSec

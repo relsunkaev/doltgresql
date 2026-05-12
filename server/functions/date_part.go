@@ -230,7 +230,7 @@ var date_part_text_interval = framework.Function2{
 		case "month", "months":
 			return float64(dur.Months % 12), nil
 		case "quarter":
-			return float64((dur.Months%12-1)/3 + 1), nil
+			return float64((dur.Months%12)/3 + 1), nil
 		case "second", "seconds":
 			secondsInNanos := dur.Nanos() % (NanosPerSec * duration.SecsPerMinute)
 			seconds := float64(secondsInNanos) / float64(NanosPerSec)
