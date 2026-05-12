@@ -254,6 +254,42 @@ func TestDropEnumTypeUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping an enum type referenced by a
+// stored generated column unless CASCADE is requested.
+func TestDropEnumTypeUsedByGeneratedColumnRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects generated column expression dependencies",
+			SetUpScript: []string{
+				`CREATE TYPE enum_generated_dependency_status AS ENUM ('new', 'done');`,
+				`CREATE TABLE enum_generated_dependency_items (
+					id INT PRIMARY KEY,
+					status TEXT,
+					normalized TEXT GENERATED ALWAYS AS (
+						(status::enum_generated_dependency_status)::text
+					) STORED
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE enum_generated_dependency_status;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO enum_generated_dependency_items (id, status)
+						VALUES (1, 'new');`,
+				},
+				{
+					Query: `SELECT id::text, status, normalized
+						FROM enum_generated_dependency_items;`,
+					Expected: []sql.Row{{"1", "new", "new"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropEnumTypeUsedByViewRequiresCascadeRepro reproduces a dependency bug:
 // PostgreSQL rejects dropping an enum type referenced by a view unless CASCADE
 // is requested.
