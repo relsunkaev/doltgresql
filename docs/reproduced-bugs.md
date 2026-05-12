@@ -17679,3 +17679,17 @@ They are worth keeping, but they are not counted as found bugs.
 - Observed Doltgres behavior: `to_regtype` returns `NULL` for all three
   user-defined types, so catalog/introspection queries cannot resolve ordinary
   user type names through the PostgreSQL compatibility function.
+
+### regtype input does not resolve user-defined types
+
+- Reproducer: `TestRegtypeResolvesUserDefinedTypesRepro` in
+  `testing/go/catalog_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestRegtypeResolvesUserDefinedTypesRepro -count=1`.
+- Expected PostgreSQL behavior: after creating user-defined enum, composite,
+  and domain types in the active search path, `'type_name'::regtype::text`
+  resolves each type name and returns the canonical type name.
+- Observed Doltgres behavior: the first user-defined `regtype` input fails
+  with `type "regtype_lookup_enum" does not exist`, so catalog queries and
+  DDL that rely on `regtype` cannot resolve ordinary user-defined types.

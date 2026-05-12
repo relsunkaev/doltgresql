@@ -1576,6 +1576,35 @@ func TestRegtypeResolvesSchemaQualifiedDomainsRepro(t *testing.T) {
 	})
 }
 
+// TestRegtypeResolvesUserDefinedTypesRepro reproduces a catalog lookup
+// correctness bug: PostgreSQL regtype input resolves user-defined enum,
+// composite, and domain types through the active search path.
+func TestRegtypeResolvesUserDefinedTypesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "regtype resolves user-defined types",
+			SetUpScript: []string{
+				`CREATE TYPE regtype_lookup_enum AS ENUM ('one', 'two');`,
+				`CREATE TYPE regtype_lookup_composite AS (id integer);`,
+				`CREATE DOMAIN regtype_lookup_domain AS integer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							'regtype_lookup_enum'::regtype::text,
+							'regtype_lookup_composite'::regtype::text,
+							'regtype_lookup_domain'::regtype::text;`,
+					Expected: []sql.Row{{
+						"regtype_lookup_enum",
+						"regtype_lookup_composite",
+						"regtype_lookup_domain",
+					}},
+				},
+			},
+		},
+	})
+}
+
 // TestToRegtypeResolvesUserDefinedTypesRepro reproduces a catalog lookup
 // correctness bug: PostgreSQL to_regtype resolves user-defined enum,
 // composite, and domain types through the active search path.
