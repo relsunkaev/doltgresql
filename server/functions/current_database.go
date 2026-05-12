@@ -24,6 +24,7 @@ import (
 // initCurrentDatabase registers the functions to the catalog.
 func initCurrentDatabase() {
 	framework.RegisterFunction(current_database)
+	framework.RegisterFunction(current_catalog)
 }
 
 // current_database represents the PostgreSQL system information function of the same name, taking no parameters.
@@ -38,4 +39,13 @@ var current_database = framework.Function0{
 		}
 		return ctx.GetCurrentDatabase(), nil
 	},
+}
+
+// current_catalog represents the PostgreSQL system information value expression of the same name.
+var current_catalog = framework.Function0{
+	Name:               "current_catalog",
+	Return:             pgtypes.Name,
+	IsNonDeterministic: true,
+	Strict:             true,
+	Callable:           current_database.Callable,
 }

@@ -241,6 +241,12 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 		// protocol response (see protocolDisplayName in
 		// server/doltgres_handler.go).
 		if node.As == "" {
+			if functionDisplayName, ok := defaultFunctionColumnName(expr); ok {
+				node.As = tree.UnrestrictedName(functionDisplayName)
+			}
+		}
+
+		if node.As == "" {
 			switch expr.(type) {
 			case *tree.CaseExpr:
 				node.As = tree.UnrestrictedName(anonColumnAlias("case"))
@@ -257,6 +263,23 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			As:              vitess.NewColIdent(string(node.As)),
 			InputExpression: inputExpressionForSelectExpr(node),
 		}, nil
+	}
+}
+
+func defaultFunctionColumnName(expr tree.Expr) (string, bool) {
+	funcExpr, ok := expr.(*tree.FuncExpr)
+	if !ok {
+		return "", false
+	}
+	unresolved, ok := funcExpr.Func.FunctionReference.(*tree.UnresolvedName)
+	if !ok || unresolved.NumParts != 1 {
+		return "", false
+	}
+	switch strings.ToLower(unresolved.Parts[0]) {
+	case "current_catalog", "current_schema":
+		return strings.ToLower(unresolved.Parts[0]), true
+	default:
+		return "", false
 	}
 }
 
