@@ -227,3 +227,48 @@ func TestAlterDatabaseCatalogOptionsRequireOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseResetRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a database to delete persisted
+// database-level settings.
+func TestAlterDatabaseResetRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE RESET requires database ownership",
+			SetUpScript: []string{
+				`CREATE USER db_reset_intruder PASSWORD 'resetter';`,
+				`CREATE DATABASE reset_setting_database_private;`,
+				`CREATE DATABASE reset_all_database_private;`,
+				`ALTER DATABASE reset_setting_database_private SET work_mem = '64kB';`,
+				`ALTER DATABASE reset_all_database_private SET work_mem = '64kB';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER DATABASE reset_setting_database_private RESET work_mem;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_reset_intruder`,
+					Password:    `resetter`,
+				},
+				{
+					Query:       `ALTER DATABASE reset_all_database_private RESET ALL;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_reset_intruder`,
+					Password:    `resetter`,
+				},
+				{
+					Query: `SELECT setdatabase::regdatabase::text, array_to_string(setconfig, ',')
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setdatabase IN (
+							'reset_setting_database_private'::regdatabase,
+							'reset_all_database_private'::regdatabase
+						)
+						ORDER BY setdatabase::regdatabase::text;`,
+					Expected: []sql.Row{
+						{"reset_all_database_private", "work_mem=64kB"},
+						{"reset_setting_database_private", "work_mem=64kB"},
+					},
+				},
+			},
+		},
+	})
+}
