@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
@@ -65,6 +66,8 @@ const (
 	raiseValidationErrorOption = "raiseValidationError"
 )
 
+var plpgsqlExceptionSavepointCounter uint64
+
 type interpreterExecutionState struct {
 	statements           []InterpreterOperation
 	lastRowCount         int64
@@ -91,6 +94,49 @@ type plpgsqlExceptionError struct {
 
 func (e plpgsqlExceptionError) Error() string {
 	return e.diagnostics.MessageText
+}
+
+func createExceptionBlockSavepoint(ctx *sql.Context) (string, bool, error) {
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return "", false, nil
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return "", false, nil
+	}
+	name := fmt.Sprintf("__doltgresql_plpgsql_exception_%d", atomic.AddUint64(&plpgsqlExceptionSavepointCounter, 1))
+	if err := txSession.CreateSavepoint(ctx, tx, name); err != nil {
+		return "", false, err
+	}
+	return name, true, nil
+}
+
+func rollbackExceptionBlockSavepoint(ctx *sql.Context, name string) error {
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return nil
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
+	}
+	if err := txSession.RollbackToSavepoint(ctx, tx, name); err != nil {
+		return err
+	}
+	return txSession.ReleaseSavepoint(ctx, ctx.GetTransaction(), name)
+}
+
+func releaseExceptionBlockSavepoint(ctx *sql.Context, name string) error {
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return nil
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
+	}
+	return txSession.ReleaseSavepoint(ctx, tx, name)
 }
 
 // Call runs the contained operations on the given runner.
@@ -282,8 +328,17 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			if err != nil {
 				return nil, false, err
 			}
+			savepointName, hasSavepoint, err := createExceptionBlockSavepoint(ctx)
+			if err != nil {
+				return nil, false, err
+			}
 			ret, returned, err := runOperations(ctx, iFunc, stack, state, counter+1, operation.Index)
 			if err != nil {
+				if hasSavepoint {
+					if rollbackErr := rollbackExceptionBlockSavepoint(ctx, savepointName); rollbackErr != nil {
+						return nil, false, fmt.Errorf("%w; exception block rollback failed: %v", err, rollbackErr)
+					}
+				}
 				diagnostics := plpgsqlExceptionDiagnosticsFromError(err)
 				if diagnostics.Context == "" {
 					diagnostics.Context = state.lastExceptionContext
@@ -303,8 +358,15 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				if returned {
 					return ret, true, nil
 				}
-			} else if returned {
-				return ret, true, nil
+			} else {
+				if hasSavepoint {
+					if err = releaseExceptionBlockSavepoint(ctx, savepointName); err != nil {
+						return nil, false, err
+					}
+				}
+				if returned {
+					return ret, true, nil
+				}
 			}
 			counter = handlerEnd - 1
 		case OpCode_Execute:

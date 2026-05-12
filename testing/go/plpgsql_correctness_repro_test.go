@@ -105,6 +105,49 @@ func TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro(t *testing.T) {
 	})
 }
 
+// TestPlpgsqlExceptionDiagnosticsRollbackRepro reproduces a PL/pgSQL
+// compatibility gap: exception blocks can catch errors, inspect stacked
+// diagnostics, and roll back only the failed block's side effects.
+func TestPlpgsqlExceptionDiagnosticsRollbackRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "PL/pgSQL exception block exposes diagnostics and rolls back block",
+			SetUpScript: []string{
+				`CREATE TABLE plpgsql_exception_diag_items (id INT PRIMARY KEY);`,
+				`CREATE FUNCTION plpgsql_exception_diag()
+				RETURNS TEXT AS $$
+				DECLARE
+					state_text TEXT;
+					message_text TEXT;
+				BEGIN
+					BEGIN
+						INSERT INTO plpgsql_exception_diag_items VALUES (1);
+						RAISE EXCEPTION 'broken %', 'thing'
+							USING ERRCODE = '22012', DETAIL = 'detail text';
+					EXCEPTION WHEN OTHERS THEN
+						GET STACKED DIAGNOSTICS
+							state_text = RETURNED_SQLSTATE,
+							message_text = MESSAGE_TEXT;
+						INSERT INTO plpgsql_exception_diag_items VALUES (2);
+						RETURN state_text || ':' || message_text;
+					END;
+				END;
+				$$ LANGUAGE plpgsql;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT plpgsql_exception_diag();`,
+					Expected: []sql.Row{{"22012:broken thing"}},
+				},
+				{
+					Query:    `SELECT id FROM plpgsql_exception_diag_items ORDER BY id;`,
+					Expected: []sql.Row{{2}},
+				},
+			},
+		},
+	})
+}
+
 // TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro reproduces a PL/pgSQL
 // correctness bug: EXECUTE updates ROW_COUNT but must not change FOUND.
 func TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro(t *testing.T) {
