@@ -48,6 +48,7 @@ import (
 	dserver "github.com/dolthub/doltgresql/server"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/types"
@@ -412,6 +413,7 @@ func CreateServer(t testing.TB, database string) (context.Context, *Connection, 
 // to wait until the server has closed.
 func CreateServerWithPort(t testing.TB, database string, port int) (context.Context, *Connection, *svcs.Controller) {
 	require.NotEmpty(t, database)
+	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
@@ -436,6 +438,7 @@ func CreateServerWithPort(t testing.TB, database string, port int) (context.Cont
 // |database| at 127.0.0.1:|port|. The server will close when the connection is closed or lost. The returned
 // [svcs.Controller] may be used to wait for the server to stop.
 func CreateServerLocalWithPort(t testing.TB, database string, port int) (context.Context, *Connection, *svcs.Controller) {
+	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	// We avoid using [T.TempDir] because it results in a file lock conflict on Windows. [T.TempDir] registers a
@@ -451,6 +454,7 @@ func CreateServerLocalWithPort(t testing.TB, database string, port int) (context
 }
 
 func CreateServerLocalInDirWithPort(t testing.TB, database string, dbDir string, port int) (context.Context, *Connection, *svcs.Controller) {
+	largeobject.ResetForTests()
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	fileSys, err := filesys.LocalFilesysWithWorkingDir(dbDir)

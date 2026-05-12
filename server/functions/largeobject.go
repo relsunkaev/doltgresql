@@ -21,6 +21,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/largeobject"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -58,7 +59,11 @@ var lo_unlink_oid = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Oid},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return largeobject.Unlink(oidValue(val)), nil
+		oid := oidValue(val)
+		if err := requireLargeObjectOwner(ctx, oid); err != nil {
+			return nil, err
+		}
+		return largeobject.Unlink(oid), nil
 	},
 }
 
@@ -89,9 +94,13 @@ var lo_get_oid = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Oid},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		data, ok := largeobject.Get(oidValue(val))
+		oid := oidValue(val)
+		if err := requireLargeObjectPrivilege(ctx, oid, "SELECT"); err != nil {
+			return nil, err
+		}
+		data, ok := largeobject.Get(oid)
 		if !ok {
-			return nil, errors.Errorf("large object %d does not exist", oidValue(val))
+			return nil, errors.Errorf("large object %d does not exist", oid)
 		}
 		return data, nil
 	},
@@ -103,7 +112,7 @@ var lo_get_oid_int32_int32 = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int32, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, lengthVal any) (any, error) {
-		return loGetSlice(oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
+		return loGetSlice(ctx, oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
 	},
 }
 
@@ -113,7 +122,7 @@ var lo_get_oid_int64_int32 = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Oid, pgtypes.Int64, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, oidVal any, offsetVal any, lengthVal any) (any, error) {
-		return loGetSlice(oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
+		return loGetSlice(ctx, oidValue(oidVal), int64Value(offsetVal), int32Value(lengthVal))
 	},
 }
 
@@ -137,7 +146,10 @@ var lo_put_oid_int64_bytea = framework.Function3{
 	},
 }
 
-func loGetSlice(oid uint32, offset int64, length int32) ([]byte, error) {
+func loGetSlice(ctx *sql.Context, oid uint32, offset int64, length int32) ([]byte, error) {
+	if err := requireLargeObjectPrivilege(ctx, oid, "SELECT"); err != nil {
+		return nil, err
+	}
 	data, ok, err := largeobject.GetSlice(oid, offset, length)
 	if err != nil {
 		return nil, err
@@ -156,7 +168,64 @@ func loPut(ctx *sql.Context, oid uint32, offset int64, dataVal any) error {
 	if !ok {
 		return errors.Errorf("expected bytea, got %T", dataVal)
 	}
+	if err := requireLargeObjectPrivilege(ctx, oid, "UPDATE"); err != nil {
+		return err
+	}
 	return largeobject.Put(oid, offset, data)
+}
+
+func requireLargeObjectPrivilege(ctx *sql.Context, oid uint32, privilege string) error {
+	if largeObjectCompatPrivileges(ctx) {
+		return nil
+	}
+	allowed, err := hasLargeObjectPrivilege(currentSQLUser(ctx), oid, privilege)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errors.Errorf("permission denied for large object %d", oid)
+	}
+	return nil
+}
+
+func requireLargeObjectOwner(ctx *sql.Context, oid uint32) error {
+	if largeObjectCompatPrivileges(ctx) {
+		return nil
+	}
+	owner, ok := largeobject.Owner(oid)
+	if !ok {
+		return errors.Errorf("large object %d does not exist", oid)
+	}
+	user := currentSQLUser(ctx)
+	role := auth.GetRole(user)
+	if role.IsSuperUser || owner == user {
+		return nil
+	}
+	return errors.Errorf("permission denied for large object %d", oid)
+}
+
+func largeObjectCompatPrivileges(ctx *sql.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	value, err := ctx.GetSessionVariable(ctx, "lo_compat_privileges")
+	if err != nil || value == nil {
+		return false
+	}
+	switch v := value.(type) {
+	case bool:
+		return v
+	case int8:
+		return v != 0
+	case int:
+		return v != 0
+	case int64:
+		return v != 0
+	case string:
+		return v == "on" || v == "true" || v == "1"
+	default:
+		return false
+	}
 }
 
 func oidValue(val any) uint32 {
