@@ -2077,6 +2077,35 @@ func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
+// ALL PRIVILEGES ON TYPE for a domain does not transfer ownership and does not
+// allow the grantee to DROP the domain.
+func TestDropDomainRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DOMAIN requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_domain_intruder PASSWORD 'dropper';`,
+				`CREATE DOMAIN drop_domain_all_private AS INT CHECK (VALUE > 0);`,
+				`GRANT USAGE ON SCHEMA public TO drop_domain_intruder;`,
+				`GRANT ALL PRIVILEGES ON TYPE drop_domain_all_private TO drop_domain_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP DOMAIN drop_domain_all_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_domain_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT 1::drop_domain_all_private::int;`,
+					Expected: []sql.Row{{int32(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterDomainOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a domain to transfer ownership.
 func TestAlterDomainOwnerToRequiresOwnershipRepro(t *testing.T) {
