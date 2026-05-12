@@ -230,6 +230,7 @@ func (h *ConnectionHandler) HandleConnection() {
 		replsource.DropTemporarySlotsForPID(int32(h.mysqlConn.ConnectionID))
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
 		globalCancelRegistry.unregister(h.mysqlConn.ConnectionID, h.cancelSecretKey)
+		_ = auth.RollbackTransaction(h.mysqlConn.ConnectionID)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
 	}()
 
@@ -2874,11 +2875,13 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 	connectionID := h.mysqlConn.ConnectionID
 	switch {
 	case isBeginQuery(query):
+		auth.BeginTransaction(connectionID)
 		deferrable.Begin(connectionID)
 		largeobject.BeginTransaction(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
 		deferrable.Commit(connectionID)
+		auth.CommitTransaction(connectionID)
 		if err := largeobject.CommitTransaction(connectionID); err != nil {
 			return err
 		}
@@ -2888,6 +2891,9 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		return notifications.Commit(connectionID)
 	case isRollbackQuery(query):
 		deferrable.Rollback(connectionID)
+		if err := auth.RollbackTransaction(connectionID); err != nil {
+			return err
+		}
 		largeobject.RollbackTransaction(connectionID)
 		if ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String); err == nil {
 			core.ClearContextValues(ctx)

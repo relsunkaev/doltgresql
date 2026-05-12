@@ -33,6 +33,9 @@ var (
 	globalLock     *sync.RWMutex
 	userIDCounter  atomic.Uint64
 	fileSystem     filesys.Filesys
+
+	transactionSnapshotsMu sync.Mutex
+	transactionSnapshots   = make(map[uint32][]byte)
 )
 
 // Database contains all information pertaining to authorization and privileges. This is a global structure that is
@@ -82,6 +85,9 @@ func ClearDatabase() {
 	clear(globalDatabase.textSearchConfigs.Data)
 	clear(globalDatabase.roleMembership.Data)
 	clear(globalDatabase.dbRoleSettings.Data)
+	transactionSnapshotsMu.Lock()
+	clear(transactionSnapshots)
+	transactionSnapshotsMu.Unlock()
 	dbInitDefault()
 }
 
@@ -178,9 +184,62 @@ func LockWrite(f func()) {
 	f()
 }
 
+// BeginTransaction snapshots auth metadata for rollback. Auth metadata is
+// global process state, so the connection layer explicitly brackets it around
+// transaction commands.
+func BeginTransaction(connectionID uint32) {
+	transactionSnapshotsMu.Lock()
+	if _, ok := transactionSnapshots[connectionID]; ok {
+		transactionSnapshotsMu.Unlock()
+		return
+	}
+	transactionSnapshotsMu.Unlock()
+
+	globalLock.RLock()
+	snapshot := globalDatabase.serialize()
+	globalLock.RUnlock()
+
+	transactionSnapshotsMu.Lock()
+	if _, ok := transactionSnapshots[connectionID]; !ok {
+		transactionSnapshots[connectionID] = snapshot
+	}
+	transactionSnapshotsMu.Unlock()
+}
+
+// CommitTransaction commits auth metadata changes by discarding the saved
+// rollback snapshot. Writes already update the global auth state eagerly.
+func CommitTransaction(connectionID uint32) {
+	transactionSnapshotsMu.Lock()
+	delete(transactionSnapshots, connectionID)
+	transactionSnapshotsMu.Unlock()
+}
+
+// RollbackTransaction restores auth metadata to its BEGIN snapshot.
+func RollbackTransaction(connectionID uint32) error {
+	transactionSnapshotsMu.Lock()
+	snapshot, ok := transactionSnapshots[connectionID]
+	if ok {
+		delete(transactionSnapshots, connectionID)
+	}
+	transactionSnapshotsMu.Unlock()
+	if !ok {
+		return nil
+	}
+
+	globalLock.Lock()
+	defer globalLock.Unlock()
+	if err := globalDatabase.deserialize(snapshot); err != nil {
+		return err
+	}
+	return PersistChanges()
+}
+
 // dbInit handle the global database initialization. Panics if an error occurs, since it points to something going
 // terribly wrong.
 func dbInit(dEnv *env.DoltEnv, cfg Config) {
+	transactionSnapshotsMu.Lock()
+	clear(transactionSnapshots)
+	transactionSnapshotsMu.Unlock()
 	globalDatabase = Database{
 		rolesByName:         make(map[string]RoleID),
 		rolesByID:           make(map[RoleID]Role),

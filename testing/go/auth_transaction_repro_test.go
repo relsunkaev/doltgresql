@@ -51,6 +51,63 @@ func TestRollbackRevertsAlterDatabaseSetRepro(t *testing.T) {
 	})
 }
 
+func TestCommitKeepsAlterDatabaseSet(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COMMIT keeps ALTER DATABASE SET",
+			SetUpScript: []string{
+				`CREATE DATABASE commit_database_setting_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ALTER DATABASE commit_database_setting_catalog SET work_mem = '64kB';`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query: `SELECT array_to_string(setconfig, ',')
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setdatabase = 'commit_database_setting_catalog'::regdatabase;`,
+					Expected: []sql.Row{{"work_mem=64kB"}},
+				},
+			},
+		},
+	})
+}
+
+func TestRollbackRestoresPreviousAlterDatabaseSet(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK restores previous ALTER DATABASE SET",
+			SetUpScript: []string{
+				`CREATE DATABASE rollback_restore_database_setting;`,
+				`ALTER DATABASE rollback_restore_database_setting SET work_mem = '64kB';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ALTER DATABASE rollback_restore_database_setting SET work_mem = '128kB';`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT array_to_string(setconfig, ',')
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setdatabase = 'rollback_restore_database_setting'::regdatabase;`,
+					Expected: []sql.Row{{"work_mem=64kB"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRollbackRevertsAlterDatabaseCatalogOptionsRepro reproduces a transaction
 // consistency bug: ALTER DATABASE ... WITH writes pg_database metadata outside
 // the surrounding transaction and survives ROLLBACK.

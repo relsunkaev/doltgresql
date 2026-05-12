@@ -237,7 +237,7 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 	}
 	if version >= 3 {
 		// Read the table privileges
-		db.tablePrivileges.deserialize(version, reader)
+		db.tablePrivileges.deserialize(2, reader)
 		// Read the sequence privileges
 		db.sequencePrivileges.deserialize(1, reader)
 		// Read the routine privileges
