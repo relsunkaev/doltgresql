@@ -534,7 +534,12 @@ Do not check off an item until it has workload proof:
   transaction-local timing for supported child-side FK checks; switching
   to `IMMEDIATE` validates pending deferred rows immediately and raises
   SQLSTATE `23503` on unresolved violations. Pinned by
-  testing/go/deferrable_constraints_probe_test.go.
+  testing/go/deferrable_constraints_probe_test.go. Deferrable unique and
+  primary-key constraints remain partial: `DEFERRABLE INITIALLY DEFERRED`
+  uniqueness is still checked immediately, and `SET CONSTRAINTS ALL DEFERRED`
+  does not defer `UNIQUE DEFERRABLE INITIALLY IMMEDIATE` validation. Pinned by
+  testing/go/constraint_correctness_repro_test.go and documented in
+  docs/reproduced-bugs.md.
 - [x] Persist deferrability metadata in Doltgres-owned root metadata so
   `DEFERRABLE` / `INITIALLY DEFERRED` behavior survives server restart,
   keeps `pg_constraint` / `pg_get_constraintdef()` output stable after
