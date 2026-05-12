@@ -155,5 +155,5 @@ func checkProcedureOwnership(ctx *sql.Context, proc procedures.Procedure) error 
 	if userRole.IsValid() && userRole.IsSuperUser {
 		return nil
 	}
-	return errors.Errorf("must be owner of procedure %s", proc.ID.ProcedureName())
+	return errors.Errorf("permission denied for procedure %s", proc.ID.ProcedureName())
 }

@@ -111,7 +111,7 @@ func (a *AlterProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if !procedure.ID.IsValid() {
 		return nil, errors.Errorf(`procedure %s does not exist`, a.Routine.RoutineName)
 	}
-	if err = checkProcedureOwnership(ctx, procedure); err != nil {
+	if err = checkAlterProcedureOwnership(ctx, procedure); err != nil {
 		return nil, err
 	}
 
@@ -151,6 +151,20 @@ func (a *AlterProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkAlterProcedureOwnership(ctx *sql.Context, proc procedures.Procedure) error {
+	if len(proc.Owner) == 0 || proc.Owner == ctx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be owner of procedure %s", proc.ID.ProcedureName())
 }
 
 func resolveProcedureID(ctx *sql.Context, procColl *procedures.Collection, routine *RoutineWithParams) (id.Procedure, error) {
