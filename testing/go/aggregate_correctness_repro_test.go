@@ -103,6 +103,113 @@ func TestCreateAggregateSqlTransitionFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateAggregatePgAggregateCatalogRowRepro reproduces a catalog
+// correctness gap: PostgreSQL records every aggregate in pg_aggregate, including
+// user-defined aggregates created in the current database.
+func TestCreateAggregatePgAggregateCatalogRowRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE AGGREGATE populates pg_aggregate",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_custom_sum_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE catalog_custom_sum(INT) (
+					SFUNC = catalog_custom_sum_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							aggfnoid::text,
+							aggtransfn::text,
+							aggtranstype::regtype::text,
+							agginitval
+						FROM pg_catalog.pg_aggregate
+						WHERE aggfnoid::text = 'catalog_custom_sum';`,
+					Expected: []sql.Row{{"catalog_custom_sum", "catalog_custom_sum_sfunc", "integer", "0"}},
+				},
+			},
+		},
+	})
+}
+
+// TestDropAggregateRemovesUserAggregateRepro reproduces a PostgreSQL
+// compatibility gap: user-defined aggregates can be dropped by signature.
+func TestDropAggregateRemovesUserAggregateRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP AGGREGATE removes user aggregate",
+			SetUpScript: []string{
+				`CREATE FUNCTION drop_custom_sum_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE drop_custom_sum(INT) (
+					SFUNC = drop_custom_sum_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`CREATE TABLE drop_custom_sum_items (v INT);`,
+				`INSERT INTO drop_custom_sum_items VALUES (1), (2);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP AGGREGATE drop_custom_sum(INT);`,
+				},
+				{
+					Query:       `SELECT drop_custom_sum(v) FROM drop_custom_sum_items;`,
+					ExpectedErr: `does not exist`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterAggregateRenameRepro reproduces a PostgreSQL compatibility gap:
+// ALTER AGGREGATE can rename a user-defined aggregate while preserving its
+// implementation.
+func TestAlterAggregateRenameRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER AGGREGATE RENAME TO updates aggregate lookup",
+			SetUpScript: []string{
+				`CREATE FUNCTION rename_custom_sum_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE rename_custom_sum_old(INT) (
+					SFUNC = rename_custom_sum_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`CREATE TABLE rename_custom_sum_items (v INT);`,
+				`INSERT INTO rename_custom_sum_items VALUES (1), (2);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER AGGREGATE rename_custom_sum_old(INT)
+						RENAME TO rename_custom_sum_new;`,
+				},
+				{
+					Query:    `SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;`,
+					Expected: []sql.Row{{3}},
+				},
+				{
+					Query:       `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`,
+					ExpectedErr: `does not exist`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateAggregateSqlTransitionFunctionEdges covers the supported
 // CREATE AGGREGATE slice beyond the happy path: SQL transition functions with
 // no INITCOND, NULL inputs, empty inputs, and old-style BASETYPE syntax.

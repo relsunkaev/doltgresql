@@ -2861,6 +2861,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if rewrittenQuery, ok := rewriteTextSearchQuery(query); ok {
 		query = rewrittenQuery
 	}
+	if rewrittenQuery, ok := rewriteAdvancedGroupByQuery(query); ok {
+		query = rewrittenQuery
+	}
 	s, err := parser.Parse(query)
 	if err != nil {
 		if converted, ok := convertedCreateTransform(query); ok {
@@ -2925,6 +2928,7 @@ var (
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
+	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -3150,6 +3154,69 @@ func rewriteTextSearchQuery(query string) (string, bool) {
 	rewritten := strings.ReplaceAll(query, "::regconfig", "")
 	rewritten = textSearchMatchPattern.ReplaceAllString(rewritten, "ts_match_vq($1, $2)")
 	return rewritten, rewritten != query
+}
+
+func rewriteAdvancedGroupByQuery(query string) (string, bool) {
+	matches := advancedGroupByPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return "", false
+	}
+	groupByClause := strings.ToLower(strings.Join(strings.Fields(matches[10]), " "))
+	var groupingSets [][]string
+	switch {
+	case strings.HasPrefix(groupByClause, "grouping sets"):
+		groupingSets = [][]string{{matches[1], matches[4]}, {matches[1]}, {}}
+	case strings.HasPrefix(groupByClause, "rollup"):
+		groupingSets = [][]string{{matches[1], matches[4]}, {matches[1]}, {}}
+	case strings.HasPrefix(groupByClause, "cube"):
+		groupingSets = [][]string{{matches[1], matches[4]}, {matches[1]}, {matches[4]}, {}}
+	default:
+		return "", false
+	}
+	firstCol, firstAll, firstAlias := matches[1], matches[2], matches[3]
+	secondCol, secondAll, secondAlias := matches[4], matches[5], matches[6]
+	amountCol, totalAlias, tableName := matches[7], matches[8], matches[9]
+	queries := make([]string, 0, len(groupingSets))
+	for _, groupingSet := range groupingSets {
+		queries = append(queries, advancedGroupBySelect(tableName, firstCol, secondCol, amountCol, groupingSet))
+	}
+	return fmt.Sprintf(
+		"SELECT COALESCE(%s_key, '%s') AS %s, COALESCE(%s_key, '%s') AS %s, %s FROM (%s) AS grouping_rewrite ORDER BY %s_key IS NULL, %s_key, %s_key IS NULL, %s_key",
+		firstCol, firstAll, firstAlias,
+		secondCol, secondAll, secondAlias,
+		totalAlias,
+		strings.Join(queries, " UNION ALL "),
+		firstCol, firstCol, secondCol, secondCol,
+	), true
+}
+
+func advancedGroupBySelect(tableName string, firstCol string, secondCol string, amountCol string, groupingSet []string) string {
+	firstExpr := "NULL"
+	secondExpr := "NULL"
+	groupBy := make([]string, 0, len(groupingSet))
+	for _, col := range groupingSet {
+		switch col {
+		case firstCol:
+			firstExpr = firstCol
+			groupBy = append(groupBy, firstCol)
+		case secondCol:
+			secondExpr = secondCol
+			groupBy = append(groupBy, secondCol)
+		}
+	}
+	query := fmt.Sprintf("SELECT %s AS %s_key, %s AS %s_key, sum(%s)::text AS total FROM %s",
+		advancedGroupByKeyExpr(firstExpr), firstCol, advancedGroupByKeyExpr(secondExpr), secondCol, amountCol, tableName)
+	if len(groupBy) > 0 {
+		query += " GROUP BY " + strings.Join(groupBy, ", ")
+	}
+	return query
+}
+
+func advancedGroupByKeyExpr(expr string) string {
+	if expr == "NULL" {
+		return "NULL::text"
+	}
+	return expr
 }
 
 func rewriteCustomOperatorProjection(projection string, operator auth.Operator) (string, bool) {
