@@ -1926,6 +1926,33 @@ func TestFormatTypeInvalidOidRepro(t *testing.T) {
 	})
 }
 
+// TestFormatTypeDomainAttributeRepro reproduces a catalog correctness bug:
+// PostgreSQL format_type renders domain OIDs from pg_attribute as the domain
+// type name.
+func TestFormatTypeDomainAttributeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "format_type renders domain attribute types",
+			SetUpScript: []string{
+				`CREATE DOMAIN format_type_domain AS integer
+					CHECK (VALUE > 0);`,
+				`CREATE TABLE format_type_domain_items (
+					amount format_type_domain
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT format_type(atttypid, atttypmod)
+						FROM pg_catalog.pg_attribute
+						WHERE attrelid = 'format_type_domain_items'::regclass
+							AND attname = 'amount';`,
+					Expected: []sql.Row{{"format_type_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestRegroleTypeResolvesRolesRepro reproduces a catalog type correctness bug:
 // PostgreSQL's regrole pseudo-OID type resolves role names and InvalidOid.
 func TestRegroleTypeResolvesRolesRepro(t *testing.T) {

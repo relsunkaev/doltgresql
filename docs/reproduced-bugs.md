@@ -10627,6 +10627,20 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: both calls render `???`, the marker PostgreSQL
   uses for arbitrary unknown type OIDs.
 
+### format_type renders domain attributes as unknown types
+
+- Reproducer: `TestFormatTypeDomainAttributeRepro` in
+  `testing/go/catalog_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestFormatTypeDomainAttributeRepro -count=1`.
+- Expected PostgreSQL behavior: `format_type(atttypid, atttypmod)` for a
+  `pg_attribute` row whose column type is a domain renders the domain type name,
+  such as `format_type_domain`.
+- Observed Doltgres behavior: the same catalog query returns `???`, so catalog
+  consumers cannot recover domain column type names through PostgreSQL's
+  standard formatting function.
+
 ### regrole type is missing
 
 - Reproducer: `TestRegroleTypeResolvesRolesRepro` in
