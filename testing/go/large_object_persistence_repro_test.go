@@ -236,6 +236,35 @@ func TestLargeObjectPutRequiresUpdatePrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestLargeObjectCompatPrivilegesRequiresSuperuserRepro reproduces a security
+// bug: lo_compat_privileges disables large-object ACL checks, so ordinary roles
+// must not be able to enable it for their session.
+func TestLargeObjectCompatPrivilegesRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "lo_compat_privileges requires superuser",
+			SetUpScript: []string{
+				`CREATE USER large_object_compat_intruder PASSWORD 'pw';`,
+				`SELECT lo_from_bytea(424256, decode('627970617373', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SET lo_compat_privileges = on;`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_compat_intruder`,
+					Password:    `pw`,
+				},
+				{
+					Query:       `SELECT encode(lo_get(424256), 'hex');`,
+					ExpectedErr: `permission denied`,
+					Username:    `large_object_compat_intruder`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestLargeObjectUnlinkRequiresOwnershipRepro reproduces a security bug:
 // lo_unlink should require ownership or superuser privileges.
 func TestLargeObjectUnlinkRequiresOwnershipRepro(t *testing.T) {
