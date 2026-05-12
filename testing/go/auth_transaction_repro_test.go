@@ -260,3 +260,75 @@ func TestRollbackRestoresDroppedRoleRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRollbackRevertsGrantTablePrivilegeRepro reproduces a transaction
+// consistency bug: GRANT table privileges writes ACL metadata outside the
+// surrounding transaction and survives ROLLBACK.
+func TestRollbackRevertsGrantTablePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK reverts GRANT table privilege",
+			SetUpScript: []string{
+				`CREATE ROLE rollback_grant_table_reader;`,
+				`CREATE TABLE rollback_grant_table_private (id INT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `GRANT SELECT ON TABLE rollback_grant_table_private
+						TO rollback_grant_table_reader;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT has_table_privilege(
+						'rollback_grant_table_reader',
+						'rollback_grant_table_private',
+						'SELECT'
+					);`,
+					Expected: []sql.Row{{false}},
+				},
+			},
+		},
+	})
+}
+
+// TestRollbackRevertsRevokeTablePrivilegeRepro reproduces a transaction
+// consistency bug: REVOKE table privileges deletes ACL metadata outside the
+// surrounding transaction and survives ROLLBACK.
+func TestRollbackRevertsRevokeTablePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK reverts REVOKE table privilege",
+			SetUpScript: []string{
+				`CREATE ROLE rollback_revoke_table_reader;`,
+				`CREATE TABLE rollback_revoke_table_private (id INT);`,
+				`GRANT SELECT ON TABLE rollback_revoke_table_private
+					TO rollback_revoke_table_reader;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `REVOKE SELECT ON TABLE rollback_revoke_table_private
+						FROM rollback_revoke_table_reader;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT has_table_privilege(
+						'rollback_revoke_table_reader',
+						'rollback_revoke_table_private',
+						'SELECT'
+					);`,
+					Expected: []sql.Row{{true}},
+				},
+			},
+		},
+	})
+}
