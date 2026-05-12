@@ -25,6 +25,11 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
+const (
+	numericLogOutputPrecision = int32(38)
+	numericLogWorkPrecision   = numericLogOutputPrecision + 10
+)
+
 // initLog registers the functions to the catalog.
 func initLog() {
 	framework.RegisterFunction(log_float64)
@@ -65,9 +70,15 @@ var log_numeric = framework.Function1{
 		} else if val1.LessThan(decimal.Zero) {
 			return nil, errors.Errorf("cannot take logarithm of a negative number")
 		}
-		// TODO: implement log for numeric instead of relying on float64
-		f, _ := val1.Float64()
-		return decimal.NewFromFloat(math.Log10(f)), nil
+		ln, err := numericNaturalLog(val1, numericLogWorkPrecision)
+		if err != nil {
+			return nil, err
+		}
+		ln10, err := numericNaturalLog(decimal.NewFromInt(10), numericLogWorkPrecision)
+		if err != nil {
+			return nil, err
+		}
+		return roundedNumericLogResult(ln.DivRound(ln10, numericLogWorkPrecision), numericLogOutputPrecision), nil
 	},
 }
 
@@ -88,14 +99,44 @@ var log_numeric_numeric = framework.Function2{
 		} else if val1.LessThan(decimal.Zero) || val2.LessThan(decimal.Zero) {
 			return nil, errors.Errorf("cannot take logarithm of a negative number")
 		}
-		// TODO: implement log for numeric instead of relying on float64
-		base, _ := val1.Float64()
-		num, _ := val2.Float64()
-		logNum := math.Log(num)
-		logBase := math.Log(base)
-		if logBase == 0 {
+		logBase, err := numericNaturalLog(val1, numericLogWorkPrecision)
+		if err != nil {
+			return nil, err
+		}
+		if logBase.Equal(decimal.Zero) {
 			return nil, errors.Errorf("division by zero")
 		}
-		return decimal.NewFromFloat(logNum / logBase), nil
+		logNum, err := numericNaturalLog(val2, numericLogWorkPrecision)
+		if err != nil {
+			return nil, err
+		}
+		return roundedNumericLogResult(logNum.DivRound(logBase, numericLogWorkPrecision), numericLogScale(val1, val2)), nil
 	},
+}
+
+func numericNaturalLog(val decimal.Decimal, precision int32) (decimal.Decimal, error) {
+	if val.Equal(decimal.Zero) {
+		return decimal.Decimal{}, errors.Errorf("cannot take logarithm of zero")
+	} else if val.LessThan(decimal.Zero) {
+		return decimal.Decimal{}, errors.Errorf("cannot take logarithm of a negative number")
+	}
+	return val.Ln(precision)
+}
+
+func numericLogScale(vals ...decimal.Decimal) int32 {
+	var scale int32
+	for _, val := range vals {
+		if exp := -val.Exponent(); exp > scale {
+			scale = exp
+		}
+	}
+	return scale
+}
+
+func roundedNumericLogResult(val decimal.Decimal, precision int32) decimal.Decimal {
+	rounded := val.Round(precision)
+	if rounded.Equal(decimal.Zero) {
+		return decimal.Zero
+	}
+	return rounded
 }

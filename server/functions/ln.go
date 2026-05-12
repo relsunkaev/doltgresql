@@ -57,13 +57,16 @@ var ln_numeric = framework.Function1{
 		if val1 == nil {
 			return nil, nil
 		}
-		// TODO: add an actual ln for numerics rather than relying on float64
-		f, _ := val1.(decimal.Decimal).Float64()
-		if f == 0 {
+		val := val1.(decimal.Decimal)
+		if val.Equal(decimal.Zero) {
 			return nil, errors.Errorf("cannot take logarithm of zero")
-		} else if f < 0 {
+		} else if val.LessThan(decimal.Zero) {
 			return nil, errors.Errorf("cannot take logarithm of a negative number")
 		}
-		return decimal.NewFromFloat(math.Log(f)), nil
+		ln, err := numericNaturalLog(val, numericLogWorkPrecision)
+		if err != nil {
+			return nil, err
+		}
+		return roundedNumericLogResult(ln, numericLogOutputPrecision), nil
 	},
 }
