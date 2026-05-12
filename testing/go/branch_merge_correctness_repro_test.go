@@ -142,6 +142,56 @@ func TestPreviewMergeConflictsReportsFunctionConflictRepro(t *testing.T) {
 	})
 }
 
+// TestPreviewMergeConflictsReportsProcedureConflictRepro reproduces a branch
+// merge correctness bug: previewing conflicts should include versioned
+// procedure definitions, not only table rows.
+func TestPreviewMergeConflictsReportsProcedureConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports procedure conflicts",
+			SetUpScript: []string{
+				`CREATE PROCEDURE preview_procedure_conflict_value(INOUT value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						value := value + 1;
+					END;
+					$$;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial procedure conflict value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE OR REPLACE PROCEDURE preview_procedure_conflict_value(INOUT value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						value := value + 2;
+					END;
+					$$;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main procedure conflict value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE OR REPLACE PROCEDURE preview_procedure_conflict_value(INOUT value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						value := value + 3;
+					END;
+					$$;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other procedure conflict value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
+							'main',
+							'other',
+							'preview_procedure_conflict_value(integer)'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestPreviewMergeConflictsSummaryReportsFunctionConflictRepro reproduces a
 // branch merge correctness bug: preview summaries should include root-object
 // conflicts such as changed function definitions.

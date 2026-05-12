@@ -17905,6 +17905,23 @@ They are worth keeping, but they are not counted as found bugs.
   `table not found: public.preview_conflict_value()`, so the preview API treats
   the function name as a table and cannot surface function conflicts.
 
+### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview procedure conflicts
+
+- Reproducer: `TestPreviewMergeConflictsReportsProcedureConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestPreviewMergeConflictsReportsProcedureConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches replace the same committed
+  procedure body differently, `DOLT_PREVIEW_MERGE_CONFLICTS` should report the
+  procedure-definition conflict so callers can inspect the merge outcome before
+  applying it.
+- Observed Doltgres behavior: previewing
+  `preview_procedure_conflict_value(integer)` fails with
+  `table not found: public.preview_procedure_conflict_value(integer)`, so the
+  preview API treats the procedure name as a table and cannot surface procedure
+  conflicts.
+
 ### DOLT_PREVIEW_MERGE_CONFLICTS cannot preview sequence conflicts
 
 - Reproducer: `TestPreviewMergeConflictsReportsSequenceConflictRepro` in
