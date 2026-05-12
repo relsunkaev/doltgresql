@@ -441,6 +441,14 @@ func NewColumnTableDef(
 			d.References.Deferrable = c.Deferrable
 			d.References.Initially = c.Initially
 		case *ColumnComputedDef:
+			if d.IsComputed() {
+				if (d.Computed.Expr == nil) != (t.Expr == nil) {
+					return nil, pgerror.Newf(pgcode.Syntax,
+						"both identity and generation expression specified for column %q", name)
+				}
+				return nil, pgerror.Newf(pgcode.Syntax,
+					"multiple generation clauses specified for column %q", name)
+			}
 			d.Computed.Computed = true
 			d.Computed.ByDefault = t.ByDefault
 			d.Computed.Expr = t.Expr
