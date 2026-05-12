@@ -1285,6 +1285,41 @@ func TestArrayOverDomainEnforcesElementConstraintsRepro(t *testing.T) {
 	})
 }
 
+// TestEnumDomainEnforcesConstraintsRepro reproduces a domain correctness bug:
+// PostgreSQL supports domains over enum types and evaluates domain checks
+// against enum values on assignment.
+func TestEnumDomainEnforcesConstraintsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "enum domain enforces constraints",
+			SetUpScript: []string{
+				`CREATE TYPE enum_domain_mood AS ENUM ('sad', 'ok', 'happy');`,
+				`CREATE DOMAIN enum_domain_happyish AS enum_domain_mood
+					CONSTRAINT enum_domain_happyish_check CHECK (VALUE <> 'sad');`,
+				`CREATE TABLE enum_domain_items (
+					id INT PRIMARY KEY,
+					mood enum_domain_happyish
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO enum_domain_items VALUES (1, 'ok');`,
+					ExpectedTag: "INSERT 0 1",
+				},
+				{
+					Query:       `INSERT INTO enum_domain_items VALUES (2, 'sad');`,
+					ExpectedErr: `enum_domain_happyish_check`,
+				},
+				{
+					Query: `SELECT id, mood::text
+						FROM enum_domain_items;`,
+					Expected: []sql.Row{{1, "ok"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCompositeTypeDomainFieldEnforcesConstraintsRepro reproduces a domain
 // correctness bug: PostgreSQL composite types can contain domain-typed fields,
 // accept valid composite rows, and reject invalid field values through the

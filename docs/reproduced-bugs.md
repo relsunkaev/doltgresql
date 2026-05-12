@@ -3127,6 +3127,22 @@ artifacts only; no fixes are included here.
   a nil-pointer dereference in `server/ast.nodeColumnTableDef`, so arrays over
   domain element types cannot be stored or validated.
 
+### Enum-backed domains panic during constraint enforcement
+
+- Reproducer: `TestEnumDomainEnforcesConstraintsRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestEnumDomainEnforcesConstraintsRepro -count=1`.
+- Expected PostgreSQL behavior: a domain over an enum type accepts valid enum
+  labels, rejects labels that violate the domain `CHECK`, and keeps prior valid
+  rows persisted.
+- Observed Doltgres behavior: creating the enum type, enum-backed domain, and
+  table succeeds, but assigning a valid label such as `'ok'` to the domain
+  panics while resolving the enum base type with `unable to get DoltgresType
+  from ID: {Type:["","enum_domain_mood"]}`. Invalid labels panic through the
+  same path instead of reporting `enum_domain_happyish_check`.
+
 ### Composite types with domain fields panic on valid inserts
 
 - Reproducer: `TestCompositeTypeDomainFieldEnforcesConstraintsRepro` in
