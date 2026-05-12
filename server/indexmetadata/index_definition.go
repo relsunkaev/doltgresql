@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -76,14 +77,14 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 	}
 	definition := fmt.Sprintf("CREATE%s INDEX %s ON %s.%s USING %s (%s)",
 		unique,
-		displayName,
-		schema,
-		index.Table(),
+		quoteIdentifier(displayName),
+		quoteIdentifier(schema),
+		quoteIdentifier(index.Table()),
 		AccessMethod(index.IndexType(), index.Comment()),
 		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
 	if includeColumns := IncludeColumns(index.Comment()); len(includeColumns) > 0 {
-		definition += " INCLUDE (" + strings.Join(includeColumns, ", ") + ")"
+		definition += " INCLUDE (" + strings.Join(quoteIdentifiers(includeColumns), ", ") + ")"
 	}
 	if NullsNotDistinct(index.Comment()) {
 		definition += " NULLS NOT DISTINCT"
@@ -219,6 +220,9 @@ func ColumnDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []strin
 	cols := make([]string, len(logicalColumns))
 	for i, col := range logicalColumns {
 		cols[i] = col.Definition
+		if !col.Expression {
+			cols[i] = quoteIdentifier(cols[i])
+		}
 	}
 
 	collations := Collations(index.Comment())
@@ -250,8 +254,42 @@ func AttributeDefinitionsForSchema(index sql.Index, tableSchema sql.Schema) []st
 	}
 	attributes := make([]string, 0, len(keyColumns)+len(includeColumns))
 	attributes = append(attributes, keyColumns...)
-	attributes = append(attributes, includeColumns...)
+	attributes = append(attributes, quoteIdentifiers(includeColumns)...)
 	return attributes
+}
+
+func quoteIdentifiers(identifiers []string) []string {
+	quoted := make([]string, len(identifiers))
+	for i, identifier := range identifiers {
+		quoted[i] = quoteIdentifier(identifier)
+	}
+	return quoted
+}
+
+func quoteIdentifier(identifier string) string {
+	if canUseBareIdentifier(identifier) {
+		return identifier
+	}
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
+}
+
+func canUseBareIdentifier(identifier string) bool {
+	if len(identifier) == 0 {
+		return false
+	}
+	for i, ch := range identifier {
+		if i == 0 {
+			if ch != '_' && (ch < 'a' || ch > 'z') {
+				return false
+			}
+			continue
+		}
+		if ch != '_' && ch != '$' && (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') {
+			return false
+		}
+	}
+	category, ok := lex.KeywordsCategories[identifier]
+	return !ok || category != "R"
 }
 
 func hiddenLowerCitextLogicalColumn(tableSchema sql.Schema, column *sql.Column) (*sql.Column, bool) {
