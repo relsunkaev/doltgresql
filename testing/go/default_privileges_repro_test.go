@@ -46,6 +46,32 @@ func TestAlterDefaultPrivilegesGrantAppliesToFutureTablesRepro(t *testing.T) {
 	})
 }
 
+// TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro guards the
+// PostgreSQL boundary that ALTER DEFAULT PRIVILEGES affects objects created
+// after the default ACL change, not objects that already existed.
+func TestAlterDefaultPrivilegesDoesNotGrantExistingTablesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "default SELECT grant does not apply to existing tables",
+			SetUpScript: []string{
+				`CREATE USER default_existing_reader PASSWORD 'reader';`,
+				`GRANT USAGE ON SCHEMA public TO default_existing_reader;`,
+				`CREATE TABLE default_priv_existing (id INT PRIMARY KEY);`,
+				`INSERT INTO default_priv_existing VALUES (1);`,
+				`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO default_existing_reader;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SELECT id FROM default_priv_existing;`,
+					ExpectedErr: `permission denied`,
+					Username:    `default_existing_reader`,
+					Password:    `reader`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterDefaultPrivilegesGrantAppliesToFutureSequencesRepro reproduces a
 // security/ACL persistence bug: Doltgres accepts ALTER DEFAULT PRIVILEGES for
 // sequences, but the default grant is not applied to sequences created later.

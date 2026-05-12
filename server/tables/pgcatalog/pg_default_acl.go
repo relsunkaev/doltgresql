@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,27 @@ func (p PgDefaultAclHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgDefaultAclHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_default_acl row iter
-	return emptyRowIter()
+	defaultACLs := auth.GetDefaultPrivilegeACLs()
+	rows := make([]sql.Row, 0, len(defaultACLs))
+	for i, defaultACL := range defaultACLs {
+		objectType := auth.DefaultPrivilegeObjectType(defaultACL.Object)
+		if objectType == "" {
+			continue
+		}
+		namespace := id.NewOID(0).AsId()
+		if defaultACL.Schema != "" {
+			namespace = id.NewNamespace(defaultACL.Schema).AsId()
+		}
+		rows = append(rows, sql.Row{
+			id.NewOID(uint32(100000 + i)).AsId(),            // oid
+			id.NewId(id.Section_User, defaultACL.OwnerName), // defaclrole
+			namespace,                         // defaclnamespace
+			objectType,                        // defaclobjtype
+			aclTextArray(defaultACL.ACLItems), // defaclacl
+			id.NewTable(PgCatalogName, PgDefaultAclName).AsId(), // tableoid
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

@@ -29,6 +29,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -180,6 +181,9 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	if err = collection.CreateSequence(ctx, c.sequence); err != nil {
+		return nil, err
+	}
+	if err = auth.ApplyDefaultPrivilegesToSequence(c.sequence.Owner, schema, c.sequence.Id.SequenceName()); err != nil {
 		return nil, err
 	}
 	if c.fromAlter {

@@ -183,7 +183,9 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	}
 	funcID := id.NewFunction(schemaName, c.FunctionName, paramTypes...)
 	owner := ctx.Client().User
+	replacedExisting := false
 	if c.Replace && funcCollection.HasFunction(ctx, funcID) {
+		replacedExisting = true
 		existing, err := funcCollection.GetFunction(ctx, funcID)
 		if err != nil {
 			return nil, err
@@ -237,6 +239,11 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	})
 	if err != nil {
 		return nil, err
+	}
+	if !replacedExisting {
+		if err = auth.ApplyDefaultPrivilegesToRoutine(owner, schemaName, c.FunctionName); err != nil {
+			return nil, err
+		}
 	}
 	return sql.RowsToRowIter(), nil
 }

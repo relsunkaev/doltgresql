@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -122,6 +123,12 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		sequence.schema = schemaName
 		_, err = sequence.RowIter(ctx, r)
 		if err != nil {
+			_ = createTableIter.Close(ctx)
+			return nil, err
+		}
+	}
+	if !tableAlreadyExisted {
+		if err = auth.ApplyDefaultPrivilegesToTable(ctx.Client().User, schemaName, c.gmsCreateTable.Name()); err != nil {
 			_ = createTableIter.Close(ctx)
 			return nil, err
 		}
