@@ -24,6 +24,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 )
@@ -127,6 +128,9 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 	if !function.ID.IsValid() {
 		return nil, errors.Errorf(`function %s does not exist`, a.Routine.RoutineName)
 	}
+	if err = checkFunctionOwnership(ctx, function); err != nil {
+		return nil, err
+	}
 	if a.Strict != nil {
 		function.Strict = *a.Strict
 	}
@@ -211,6 +215,20 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func checkFunctionOwnership(ctx *sql.Context, function corefunctions.Function) error {
+	if len(function.Owner) == 0 || function.Owner == ctx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be owner of function %s", function.ID.FunctionName())
 }
 
 // Schema implements the interface sql.ExecSourceRel.
