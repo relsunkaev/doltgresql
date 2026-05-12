@@ -362,6 +362,36 @@ func TestCreateOperatorRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestCreateCastRequiresTypeOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that owns neither the source nor target type to create
+// a cast between them.
+func TestCreateCastRequiresTypeOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE CAST requires source or target type ownership",
+			SetUpScript: []string{
+				`CREATE USER cast_creator PASSWORD 'creator';`,
+				`CREATE TYPE cast_private_color AS ENUM ('red', 'green');`,
+				`CREATE FUNCTION int_to_cast_private_color(input_value INT)
+					RETURNS cast_private_color
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT CASE WHEN input_value = 1 THEN 'red'::cast_private_color ELSE 'green'::cast_private_color END $$;`,
+				`GRANT USAGE ON SCHEMA public TO cast_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE CAST (INT AS cast_private_color)
+						WITH FUNCTION int_to_cast_private_color(INT);`,
+					ExpectedErr: `must be owner`,
+					Username:    `cast_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
