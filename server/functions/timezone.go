@@ -66,7 +66,7 @@ var timezone_text_timestamptz = framework.Function2{
 		if err != nil {
 			return nil, err
 		}
-		return timeVal.UTC().Add(time.Duration(-int64(newOffset) * NanosPerSec)), nil
+		return timeVal.UTC().Add(time.Duration(int64(newOffset) * NanosPerSec)), nil
 	},
 }
 
@@ -117,15 +117,20 @@ var timezone_text_timestamp = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
 		tz := val1.(string)
 		timeVal := val2.(time.Time)
-		_, newOffset, isOffset, err := convertTzToOffsetSecs(timeVal, tz)
+		loc, newOffset, isOffset, err := convertTzToOffsetSecs(timeVal, tz)
 		if err != nil {
 			return nil, err
 		}
-		t := timeVal.Add(time.Duration(int64(-newOffset) * NanosPerSec))
 		if !isOffset {
-			// for named time zone
-			return t, nil
+			serverLoc, err := GetServerLocation(ctx)
+			if err != nil {
+				return nil, err
+			}
+			year, month, day := timeVal.Date()
+			hour, min, sec := timeVal.Clock()
+			return time.Date(year, month, day, hour, min, sec, timeVal.Nanosecond(), loc).In(serverLoc), nil
 		}
+		t := timeVal.Add(time.Duration(int64(-newOffset) * NanosPerSec))
 		// for time offset
 		serverLoc, err := GetServerLocation(ctx)
 		if err != nil {
