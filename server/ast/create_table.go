@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // nodeCreateTable handles *tree.CreateTable nodes.
@@ -32,11 +33,12 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 	if node == nil {
 		return nil, nil
 	}
-	if len(node.StorageParams) > 0 {
-		return nil, errors.Errorf("storage parameters are not yet supported")
-	}
 	if node.OnCommit != tree.CreateTableOnCommitUnset {
 		return nil, errors.Errorf("ON COMMIT is not yet supported")
+	}
+	relOptions, err := nodeTableRelOptions(node.StorageParams)
+	if err != nil {
+		return nil, err
 	}
 	tableName, err := nodeTableName(ctx, &node.Table)
 	if err != nil {
@@ -151,6 +153,14 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 	}
 	if err = assignTableDefs(ctx, node.Defs, ddl); err != nil {
 		return nil, err
+	}
+	if len(relOptions) > 0 {
+		if ddl.TableSpec == nil {
+			ddl.TableSpec = &vitess.TableSpec{}
+		}
+		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
+			return tablemetadata.SetRelOptions(comment, relOptions)
+		})
 	}
 
 	if node.PartitionBy != nil {

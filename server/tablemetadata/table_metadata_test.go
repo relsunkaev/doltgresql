@@ -99,6 +99,40 @@ func TestOfTypeMetadata(t *testing.T) {
 	}
 }
 
+func TestRelOptionsMetadata(t *testing.T) {
+	comment := SetRelOptions("", []string{" FILLFACTOR = 40 ", "autovacuum_enabled=false"})
+	got := RelOptions(comment)
+	if len(got) != 2 || got[0] != "fillfactor=40" || got[1] != "autovacuum_enabled=false" {
+		t.Fatalf("unexpected reloptions: %#v", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
+	merged := MergeRelOptions(RelOptions(comment), []string{"fillfactor=70", "autovacuum_analyze_scale_factor=0.2"})
+	comment = SetRelOptions(comment, merged)
+	got = RelOptions(comment)
+	if len(got) != 3 ||
+		got[0] != "fillfactor=70" ||
+		got[1] != "autovacuum_enabled=false" ||
+		got[2] != "autovacuum_analyze_scale_factor=0.2" {
+		t.Fatalf("unexpected merged reloptions: %#v", got)
+	}
+	if gotName := PrimaryKeyConstraintName(comment); gotName != "items_pkey" {
+		t.Fatalf("expected primary key metadata to be preserved, got %q", gotName)
+	}
+
+	comment = SetRelOptions(comment, ResetRelOptions(RelOptions(comment), []string{"fillfactor"}))
+	got = RelOptions(comment)
+	if len(got) != 2 || got[0] != "autovacuum_enabled=false" || got[1] != "autovacuum_analyze_scale_factor=0.2" {
+		t.Fatalf("unexpected reset reloptions: %#v", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	comment = SetRelOptions(comment, nil)
+	if comment != "" {
+		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	}
+}
+
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("plain table comment"); ok {
 		t.Fatalf("expected plain comments to be ignored")

@@ -165,12 +165,24 @@ func setPrimaryKeyConstraintTableOption(tableSpec *vitess.TableSpec, name string
 	if tableSpec == nil || name == "" {
 		return
 	}
-	comment := tablemetadata.SetPrimaryKeyConstraintName("", name)
+	setTableMetadataCommentOption(tableSpec, func(comment string) string {
+		return tablemetadata.SetPrimaryKeyConstraintName(comment, name)
+	})
+}
+
+func setTableMetadataCommentOption(tableSpec *vitess.TableSpec, update func(string) string) {
+	if tableSpec == nil {
+		return
+	}
+	comment := update("")
 	for _, option := range tableSpec.TableOpts {
 		if strings.EqualFold(option.Name, "comment") {
-			option.Value = comment
+			option.Value = update(option.Value)
 			return
 		}
+	}
+	if comment == "" {
+		return
 	}
 	tableSpec.TableOpts = append(tableSpec.TableOpts, &vitess.TableOption{
 		Name:  "comment",

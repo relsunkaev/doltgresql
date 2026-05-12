@@ -26,17 +26,19 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // Metadata stores PostgreSQL table metadata that Dolt's native schema metadata
 // does not currently expose.
 type Metadata struct {
-	PrimaryKeyConstraint        string `json:"primaryKeyConstraint,omitempty"`
-	MaterializedView            bool   `json:"materializedView,omitempty"`
-	MaterializedViewDefinition  string `json:"materializedViewDefinition,omitempty"`
-	MaterializedViewUnpopulated bool   `json:"materializedViewUnpopulated,omitempty"`
-	OfTypeSchema                string `json:"ofTypeSchema,omitempty"`
-	OfTypeName                  string `json:"ofTypeName,omitempty"`
+	PrimaryKeyConstraint        string   `json:"primaryKeyConstraint,omitempty"`
+	MaterializedView            bool     `json:"materializedView,omitempty"`
+	MaterializedViewDefinition  string   `json:"materializedViewDefinition,omitempty"`
+	MaterializedViewUnpopulated bool     `json:"materializedViewUnpopulated,omitempty"`
+	OfTypeSchema                string   `json:"ofTypeSchema,omitempty"`
+	OfTypeName                  string   `json:"ofTypeName,omitempty"`
+	RelOptions                  []string `json:"relOptions,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
 func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
+	NormalizeRelOptions(metadata.RelOptions)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -52,6 +54,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	}
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
+	NormalizeRelOptions(metadata.RelOptions)
 	return metadata, true
 }
 
@@ -139,11 +142,107 @@ func OfType(comment string) (id.Type, bool) {
 	return id.NewType(metadata.OfTypeSchema, metadata.OfTypeName), true
 }
 
+// RelOptions returns the PostgreSQL reloptions encoded in a Doltgres table
+// metadata comment.
+func RelOptions(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return nil
+	}
+	return metadata.RelOptions
+}
+
+// SetRelOptions returns a table metadata comment with the given PostgreSQL
+// reloptions. An empty reloptions slice clears only the reloptions metadata.
+func SetRelOptions(comment string, relOptions []string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.RelOptions = append([]string(nil), relOptions...)
+	NormalizeRelOptions(metadata.RelOptions)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// MergeRelOptions applies updates to an existing reloptions slice while
+// preserving first-seen key order.
+func MergeRelOptions(existing []string, updates []string) []string {
+	values := make(map[string]string, len(existing)+len(updates))
+	order := make([]string, 0, len(existing)+len(updates))
+	for _, option := range existing {
+		key, value, ok := SplitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, exists := values[key]; !exists {
+			order = append(order, key)
+		}
+		values[key] = value
+	}
+	for _, option := range updates {
+		key, value, ok := SplitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, exists := values[key]; !exists {
+			order = append(order, key)
+		}
+		values[key] = value
+	}
+	ret := make([]string, 0, len(order))
+	for _, key := range order {
+		ret = append(ret, key+"="+values[key])
+	}
+	return ret
+}
+
+// ResetRelOptions removes the named keys from an existing reloptions slice.
+func ResetRelOptions(existing []string, resetKeys []string) []string {
+	reset := make(map[string]struct{}, len(resetKeys))
+	for _, key := range resetKeys {
+		reset[strings.ToLower(strings.TrimSpace(key))] = struct{}{}
+	}
+	ret := make([]string, 0, len(existing))
+	for _, option := range existing {
+		key, _, ok := SplitRelOption(option)
+		if !ok {
+			continue
+		}
+		if _, remove := reset[key]; remove {
+			continue
+		}
+		ret = append(ret, option)
+	}
+	return ret
+}
+
+// SplitRelOption returns a normalized key and trimmed value from a reloption
+// string in key=value form.
+func SplitRelOption(option string) (key string, value string, ok bool) {
+	key, value, ok = strings.Cut(strings.TrimSpace(option), "=")
+	if !ok {
+		return "", "", false
+	}
+	return strings.ToLower(strings.TrimSpace(key)), strings.TrimSpace(value), true
+}
+
+// NormalizeRelOptions normalizes reloptions in place.
+func NormalizeRelOptions(relOptions []string) {
+	for i, option := range relOptions {
+		key, value, ok := SplitRelOption(option)
+		if !ok {
+			continue
+		}
+		relOptions[i] = key + "=" + value
+	}
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
 		metadata.MaterializedViewDefinition == "" &&
 		!metadata.MaterializedViewUnpopulated &&
 		metadata.OfTypeSchema == "" &&
-		metadata.OfTypeName == ""
+		metadata.OfTypeName == "" &&
+		len(metadata.RelOptions) == 0
 }

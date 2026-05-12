@@ -48,6 +48,8 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableComputed(ctx, treeTableName, cmd)
 		case *tree.AlterTableReplicaIdentity:
 			return nodeAlterTableReplicaIdentity(treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableSetStorage:
+			return nodeAlterTableSetStorage(ctx, treeTableName, cmd, node.IfExists)
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -260,6 +262,33 @@ func nodeAlterTableReplicaIdentity(
 			IndexName:  indexName,
 			IfExists:   ifExists,
 		},
+	}, nil
+}
+
+func nodeAlterTableSetStorage(ctx *Context, treeTableName tree.TableName, cmd *tree.AlterTableSetStorage, ifExists bool) (vitess.Statement, error) {
+	var relOptions []string
+	var resetKeys []string
+	var err error
+	if cmd.IsReset {
+		resetKeys = nodeIndexRelOptionResetKeys(cmd.Params)
+	} else {
+		relOptions, err = nodeTableRelOptions(cmd.Params)
+		if err != nil {
+			return nil, err
+		}
+	}
+	tableName, err := nodeTableName(ctx, &treeTableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableSetStorage(
+			ifExists,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			relOptions,
+			resetKeys,
+		),
 	}, nil
 }
 

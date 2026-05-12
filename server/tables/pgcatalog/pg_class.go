@@ -143,7 +143,8 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				kind = "m"
 			}
 			relOfType := id.Null
-			if typeID, ok := tablemetadata.OfType(tableComment(table.Item)); ok {
+			comment := tableComment(table.Item)
+			if typeID, ok := tablemetadata.OfType(comment); ok {
 				relOfType = typeID.AsId()
 			}
 			class := &pgClass{
@@ -159,6 +160,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				replicaIdentity: replicaidentity.Get(ctx.GetCurrentDatabase(), schema.Item.SchemaName(), table.Item.Name()).Identity.String(),
 				relType:         id.NewType(table.OID.SchemaName(), table.OID.SchemaName()).AsId(),
 				relOfType:       relOfType,
+				reloptions:      pgClassRelOptions(comment),
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -536,6 +538,9 @@ func pgClassToRow(class *pgClass) sql.Row {
 
 func pgClassRelOptions(comment string) []any {
 	relOptions := indexmetadata.RelOptions(comment)
+	if len(relOptions) == 0 {
+		relOptions = tablemetadata.RelOptions(comment)
+	}
 	if len(relOptions) == 0 {
 		return nil
 	}
