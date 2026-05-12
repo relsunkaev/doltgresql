@@ -2160,6 +2160,37 @@ func TestDropDomainUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropDomainUsedByCheckConstraintRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping a domain referenced by a CHECK
+// constraint unless CASCADE is requested.
+func TestDropDomainUsedByCheckConstraintRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DOMAIN rejects check constraint expression dependencies",
+			SetUpScript: []string{
+				`CREATE DOMAIN domain_check_dependency_positive AS integer
+					CONSTRAINT domain_check_dependency_positive_check CHECK (VALUE > 0);`,
+				`CREATE TABLE domain_check_dependency_items (
+					id INT PRIMARY KEY,
+					amount INT,
+					CONSTRAINT domain_check_dependency_amount_check
+						CHECK ((amount::domain_check_dependency_positive)::integer > 0)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP DOMAIN domain_check_dependency_positive;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO domain_check_dependency_items
+						VALUES (1, 7);`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropDomainDependencyChecksSchemaQualifiedDomainRepro reproduces a
 // dependency correctness bug: dropping an unused domain in one schema should
 // not be blocked by columns that use a distinct same-named domain in another
