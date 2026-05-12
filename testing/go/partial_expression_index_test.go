@@ -196,6 +196,32 @@ WHERE tablename = 'memberships'
 			},
 		},
 		{
+			Name: "partial UNIQUE index duplicate multi-row insert is atomic",
+			SetUpScript: []string{
+				`CREATE TABLE partial_unique_atomic_memberships (
+					id INT PRIMARY KEY,
+					user_id INT NOT NULL,
+					active BOOL NOT NULL
+				);`,
+				`CREATE UNIQUE INDEX partial_unique_atomic_memberships_user_idx
+					ON partial_unique_atomic_memberships (user_id)
+					WHERE active;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO partial_unique_atomic_memberships VALUES
+						(1, 10, false),
+						(2, 10, true),
+						(3, 10, true);`,
+					ExpectedErr: "duplicate unique key given",
+				},
+				{
+					Query:    `SELECT count(*)::text FROM partial_unique_atomic_memberships;`,
+					Expected: []sql.Row{{"0"}},
+				},
+			},
+		},
+		{
 			Name: "partial UNIQUE index supports boolean predicates",
 			SetUpScript: []string{
 				`CREATE TABLE inventory (id INT PRIMARY KEY, vmid INT, at_service BOOL);`,
