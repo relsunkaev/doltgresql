@@ -41,27 +41,32 @@ var pg_table_is_visible_oid = framework.Function1{
 		if err != nil {
 			return false, err
 		}
-		lookUpPaths := make(map[string]bool)
+
+		if oidVal.Section() == id.Section_Table || oidVal.Section() == id.Section_View || oidVal.Section() == id.Section_Sequence {
+			return relationIsVisibleInSearchPath(ctx, oidVal, paths)
+		}
+
+		lookupPaths := make(map[string]bool)
 		for _, path := range paths {
-			lookUpPaths[path] = true
+			lookupPaths[path] = true
 		}
 
 		var isVisible bool
 		err = RunCallback(ctx, oidVal, Callbacks{
 			Table: func(ctx *sql.Context, sch ItemSchema, table ItemTable) (cont bool, err error) {
-				_, isVisible = lookUpPaths[sch.Item.SchemaName()]
+				_, isVisible = lookupPaths[sch.Item.SchemaName()]
 				return false, nil
 			},
 			View: func(ctx *sql.Context, sch ItemSchema, view ItemView) (cont bool, err error) {
-				_, isVisible = lookUpPaths[sch.Item.SchemaName()]
+				_, isVisible = lookupPaths[sch.Item.SchemaName()]
 				return false, nil
 			},
 			Index: func(ctx *sql.Context, sch ItemSchema, table ItemTable, index ItemIndex) (cont bool, err error) {
-				_, isVisible = lookUpPaths[sch.Item.SchemaName()]
+				_, isVisible = lookupPaths[sch.Item.SchemaName()]
 				return false, nil
 			},
 			Sequence: func(ctx *sql.Context, sch ItemSchema, sequence ItemSequence) (cont bool, err error) {
-				_, isVisible = lookUpPaths[sch.Item.SchemaName()]
+				_, isVisible = lookupPaths[sch.Item.SchemaName()]
 				return false, nil
 			},
 			// TODO: This works for all types of relations, including views, materialized views, indexes, sequences and foreign tables.
@@ -71,4 +76,31 @@ var pg_table_is_visible_oid = framework.Function1{
 		}
 		return isVisible, nil
 	},
+}
+
+func relationIsVisibleInSearchPath(ctx *sql.Context, oidVal id.Id, paths []string) (bool, error) {
+	targetSchema := oidVal.Segment(0)
+	relationName := oidVal.Segment(1)
+	schemas := make(map[string]sql.DatabaseSchema)
+	err := IterateCurrentDatabase(ctx, Callbacks{
+		Schema: func(ctx *sql.Context, schema ItemSchema) (cont bool, err error) {
+			schemas[schema.Item.SchemaName()] = schema.Item
+			return true, nil
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	for _, path := range paths {
+		schema, ok := schemas[path]
+		if !ok {
+			continue
+		}
+		if _, ok, err := schema.GetTableInsensitive(ctx, relationName); err != nil {
+			return false, err
+		} else if ok {
+			return path == targetSchema, nil
+		}
+	}
+	return false, nil
 }

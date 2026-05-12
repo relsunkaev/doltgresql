@@ -39,8 +39,7 @@ var pg_type_is_visible = framework.Function1{
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		oidVal := val.(id.Id)
 
-		// Check if this is a valid type ID
-		if !id.Cache().Exists(oidVal) {
+		if oidVal.Section() != id.Section_Type {
 			return false, nil
 		}
 
@@ -54,10 +53,18 @@ var pg_type_is_visible = framework.Function1{
 			return false, err
 		}
 
-		// Check if the schema is in the search path
+		typeName := oidVal.Segment(1)
+		typeColl, err := core.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return false, err
+		}
 		for _, path := range searchPath {
-			if path == schemaName {
-				return true, nil
+			typ, err := typeColl.GetType(ctx, id.NewType(path, typeName))
+			if err != nil {
+				return false, err
+			}
+			if typ != nil {
+				return path == schemaName, nil
 			}
 		}
 
