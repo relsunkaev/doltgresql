@@ -113,3 +113,33 @@ func TestAlterDatabaseOwnerToRequiresOwnershipRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterDatabaseRenameToRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a database to rename it.
+func TestAlterDatabaseRenameToRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER DATABASE RENAME TO requires database ownership",
+			SetUpScript: []string{
+				`CREATE USER db_renamer PASSWORD 'renamer';`,
+				`CREATE DATABASE rename_to_database_private;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER DATABASE rename_to_database_private
+						RENAME TO renamed_by_non_owner;`,
+					ExpectedErr: `must be owner`,
+					Username:    `db_renamer`,
+					Password:    `renamer`,
+				},
+				{
+					Query: `SELECT datname
+						FROM pg_catalog.pg_database
+						WHERE datname IN ('rename_to_database_private', 'renamed_by_non_owner')
+						ORDER BY datname;`,
+					Expected: []sql.Row{{"rename_to_database_private"}},
+				},
+			},
+		},
+	})
+}
