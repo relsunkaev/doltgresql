@@ -469,7 +469,7 @@ Do not check off an item until it has workload proof:
   to either application-level checks or an INSERT trigger that runs
   the overlap query. Pinned by testing/go/unsupported_ddl_probes_test.go
   and testing/go/sqlstate_test.go.
-- [~] Statement triggers and transition tables - `FOR EACH
+- [x] Statement triggers and transition tables - `FOR EACH
   STATEMENT` table triggers now execute once per matching
   INSERT/UPDATE/DELETE statement, and AFTER statement triggers may
   declare `REFERENCING OLD TABLE AS ...` / `NEW TABLE AS ...`
@@ -1405,7 +1405,7 @@ Do not check off an item until it has workload proof:
   using the matching ordered index without `Sort(`. Pinned by
   testing/go/index_benchmark_test.go. Tracked by dg-7ug.8.3.5 under
   dg-7ug.8.3.
-- [~] Materialized view indexes - ordinary and unique btree indexes can be
+- [x] Materialized view indexes - ordinary and unique btree indexes can be
   created on table-backed materialized views, round-trip through
   `pg_indexes`, set `pg_class.relhasindex`, and flip
   `pg_matviews.hasindexes`. This covers indexed restore-time snapshots
