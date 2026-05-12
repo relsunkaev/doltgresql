@@ -23,9 +23,26 @@ import (
 
 // initArray registers the array operators.
 func initArray() {
+	framework.RegisterBinaryFunction(framework.Operator_BinaryEqual, array_eq)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsRight, arraycontains)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryJSONContainsLeft, arraycontained)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryOverlaps, arrayoverlap)
+}
+
+// array_eq represents PostgreSQL's array = operator.
+var array_eq = framework.Function2{
+	Name:       "array_eq",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.AnyArray},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		left := val1.([]any)
+		right := val2.([]any)
+		if len(left) != len(right) {
+			return false, nil
+		}
+		return arrayEqual(ctx, t[0].ArrayBaseType(), left, right)
+	},
 }
 
 // arraycontains represents PostgreSQL's array @> operator.
@@ -101,6 +118,37 @@ func arrayContains(ctx *sql.Context, baseType *pgtypes.DoltgresType, container [
 			}
 		}
 		if !found {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func arrayEqual(ctx *sql.Context, baseType *pgtypes.DoltgresType, left []any, right []any) (bool, error) {
+	for i, leftValue := range left {
+		rightValue := right[i]
+		if leftValue == nil || rightValue == nil {
+			if leftValue != rightValue {
+				return false, nil
+			}
+			continue
+		}
+		if leftNested, ok := leftValue.([]any); ok {
+			rightNested, ok := rightValue.([]any)
+			if !ok || len(leftNested) != len(rightNested) {
+				return false, nil
+			}
+			equal, err := arrayEqual(ctx, baseType, leftNested, rightNested)
+			if err != nil || !equal {
+				return equal, err
+			}
+			continue
+		}
+		cmp, err := baseType.Compare(ctx, leftValue, rightValue)
+		if err != nil {
+			return false, err
+		}
+		if cmp != 0 {
 			return false, nil
 		}
 	}
