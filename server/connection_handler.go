@@ -3003,6 +3003,7 @@ var (
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropPolicyIfExistsPattern = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropRuleIfExistsPattern   = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
@@ -3205,6 +3206,8 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	case dropTextSearchPattern.MatchString(query):
 		matches := dropTextSearchPattern.FindStringSubmatch(query)
 		statementTag = "DROP TEXT SEARCH " + strings.ToUpper(matches[1])
+	case dropPolicyIfExistsPattern.MatchString(query):
+		statementTag = "DROP POLICY"
 	case dropRuleIfExistsPattern.MatchString(query):
 		statementTag = "DROP RULE"
 	default:
