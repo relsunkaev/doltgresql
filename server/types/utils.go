@@ -246,7 +246,8 @@ func quoteString(s string) string {
 		}
 	}
 	if shouldQuote || strings.EqualFold(s, "NULL") || len(s) == 0 {
-		return fmt.Sprintf(`"%s"`, strings.ReplaceAll(s, `"`, `\"`))
+		escaped := strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(s)
+		return fmt.Sprintf(`"%s"`, escaped)
 	} else {
 		return s
 	}

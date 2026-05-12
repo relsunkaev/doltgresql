@@ -240,7 +240,7 @@ func TestByteaArrayCastToTextUsesPostgresEscapingRepro(t *testing.T) {
 				{
 					Query: `SELECT '{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}'::bytea[]::text[];`,
 					Expected: []sql.Row{
-						{`{"\\x68656c6c6f", "\\x776f726c64", "\\x6578616d706c65"}`},
+						{`{"\\x68656c6c6f","\\x776f726c64","\\x6578616d706c65"}`},
 					},
 				},
 			},
