@@ -2846,8 +2846,14 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedDropCast(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreateOperator(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if converted, ok := convertedDropIfExistsNoOp(query); ok {
 		return []ConvertedQuery{converted}, nil
+	}
+	if rewrittenQuery, ok := rewriteCustomOperatorSelect(query); ok {
+		query = rewrittenQuery
 	}
 	s, err := parser.Parse(query)
 	if err != nil {
@@ -2902,10 +2908,12 @@ var (
 	dropConversionPattern     = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	createCastPattern         = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
 	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createOperatorPattern     = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -3023,6 +3031,39 @@ func convertedDropCast(query string) (ConvertedQuery, bool) {
 	}, true
 }
 
+func convertedCreateOperator(query string) (ConvertedQuery, bool) {
+	matches := createOperatorPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	options := parseCreateOperatorOptions(matches[2])
+	leftType, hasLeft := options["leftarg"]
+	rightType, hasRight := options["rightarg"]
+	function, hasFunction := options["procedure"]
+	if !hasLeft || !hasRight || !hasFunction {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewCreateOperator(matches[1], leftType, rightType, function),
+		},
+		StatementTag: "CREATE OPERATOR",
+	}, true
+}
+
+func parseCreateOperatorOptions(body string) map[string]string {
+	options := map[string]string{}
+	for _, part := range strings.Split(body, ",") {
+		key, value, ok := strings.Cut(part, "=")
+		if !ok {
+			continue
+		}
+		options[strings.ToLower(strings.TrimSpace(key))] = strings.TrimSpace(value)
+	}
+	return options
+}
+
 func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	statementTag := ""
 	switch {
@@ -3045,6 +3086,79 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 		},
 		StatementTag: statementTag,
 	}, true
+}
+
+func rewriteCustomOperatorSelect(query string) (string, bool) {
+	matches := selectStatementPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return "", false
+	}
+	var operators []auth.Operator
+	auth.LockRead(func() {
+		operators = auth.GetAllOperators()
+	})
+	if len(operators) == 0 {
+		return "", false
+	}
+	projections := splitTopLevelComma(matches[1])
+	rewritten := make([]string, len(projections))
+	changed := false
+	for i, projection := range projections {
+		rewrittenProjection := projection
+		for _, operator := range operators {
+			if next, ok := rewriteCustomOperatorProjection(projection, operator); ok {
+				rewrittenProjection = next
+				changed = true
+				break
+			}
+		}
+		rewritten[i] = rewrittenProjection
+	}
+	if !changed {
+		return "", false
+	}
+	return "SELECT " + strings.Join(rewritten, ", "), true
+}
+
+func rewriteCustomOperatorProjection(projection string, operator auth.Operator) (string, bool) {
+	pattern := regexp.MustCompile(`(?is)^\s*(.+?)\s+` + regexp.QuoteMeta(operator.Name) + `\s+(.+?)\s*$`)
+	matches := pattern.FindStringSubmatch(projection)
+	if matches == nil {
+		return "", false
+	}
+	functionName := operator.Function
+	if operator.FunctionSchema != "" {
+		functionName = operator.FunctionSchema + "." + functionName
+	}
+	return functionName + "(" + strings.TrimSpace(matches[1]) + ", " + strings.TrimSpace(matches[2]) + ")", true
+}
+
+func splitTopLevelComma(s string) []string {
+	var parts []string
+	start := 0
+	depth := 0
+	inString := false
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\'':
+			inString = !inString
+		case '(':
+			if !inString {
+				depth++
+			}
+		case ')':
+			if !inString && depth > 0 {
+				depth--
+			}
+		case ',':
+			if !inString && depth == 0 {
+				parts = append(parts, strings.TrimSpace(s[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	parts = append(parts, strings.TrimSpace(s[start:]))
+	return parts
 }
 
 func convertedAlterLargeObjectOwner(query string) (ConvertedQuery, bool) {

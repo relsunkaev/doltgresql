@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -56,6 +57,7 @@ func (p PgOperatorHandler) RowIter(ctx *sql.Context, partition sql.Partition) (s
 	if err != nil {
 		return nil, err
 	}
+	operators = appendUserDefinedOperators(operators)
 	return &pgOperatorRowIter{
 		operators: operators,
 		idx:       0,
@@ -142,6 +144,29 @@ type pgOperator struct {
 	code       id.Id
 	restrict   id.Id
 	join       id.Id
+}
+
+func appendUserDefinedOperators(operators []pgOperator) []pgOperator {
+	var userOperators []auth.Operator
+	auth.LockRead(func() {
+		userOperators = auth.GetAllOperators()
+	})
+	next := make([]pgOperator, 0, len(operators)+len(userOperators))
+	next = append(next, operators...)
+	for _, operator := range userOperators {
+		next = append(next, pgOperator{
+			oid:       id.NewId(id.Section_Operator, operator.Namespace.SchemaName(), operator.Name, string(operator.LeftType), string(operator.RightType)),
+			name:      operator.Name,
+			namespace: operator.Namespace.AsId(),
+			leftType:  operator.LeftType.AsId(),
+			rightType: operator.RightType.AsId(),
+			result:    operator.ResultType.AsId(),
+			code:      id.NewFunction(operator.FunctionSchema, operator.Function, operator.LeftType, operator.RightType).AsId(),
+			restrict:  zeroOID(),
+			join:      zeroOID(),
+		})
+	}
+	return next
 }
 
 var defaultPostgresOperators = func() []pgOperator {
