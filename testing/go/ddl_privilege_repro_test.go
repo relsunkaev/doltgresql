@@ -522,6 +522,41 @@ func TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro(t *test
 	})
 }
 
+// TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro reproduces a
+// security and catalog bug: a schema-qualified CREATE TEXT SEARCH
+// CONFIGURATION should check CREATE on the named schema instead of silently
+// creating the configuration in the current schema.
+func TestCreateTextSearchConfigurationUsesQualifiedSchemaRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TEXT SEARCH CONFIGURATION uses qualified schema",
+			SetUpScript: []string{
+				`CREATE USER ts_qualified_creator PASSWORD 'creator';`,
+				`CREATE SCHEMA ts_config_private;`,
+				`GRANT CREATE ON SCHEMA public TO ts_qualified_creator;`,
+				`GRANT USAGE ON SCHEMA ts_config_private TO ts_qualified_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE TEXT SEARCH CONFIGURATION ts_config_private.qualified_ts_config
+						(COPY = pg_catalog.simple);`,
+					ExpectedErr: `permission denied for schema ts_config_private`,
+					Username:    `ts_qualified_creator`,
+					Password:    `creator`,
+				},
+				{
+					Query: `SELECT n.nspname, c.cfgname
+						FROM pg_catalog.pg_ts_config c
+						JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace
+						WHERE c.cfgname = 'qualified_ts_config'
+						ORDER BY n.nspname;`,
+					Expected: []sql.Row{},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateAccessMethodRequiresSuperuserRepro reproduces a security bug:
 // Doltgres allows a non-superuser to define an access method.
 func TestCreateAccessMethodRequiresSuperuserRepro(t *testing.T) {
