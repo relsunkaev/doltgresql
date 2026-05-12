@@ -15,10 +15,15 @@
 package analyzer
 
 import (
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+
+	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // applyTablesForAnalyzeAllTables finds plan.AnalyzeTable nodes that don't have any tables explicitly specified and fills in all
@@ -32,6 +37,9 @@ func applyTablesForAnalyzeAllTables(ctx *sql.Context, a *analyzer.Analyzer, node
 	// If a set of tables is already populated, we don't need to do anything. We only fill in all tables when
 	// the caller didn't explicitly specify any tables to be analyzed.
 	if len(analyzeTable.Tables) > 0 {
+		if err := checkAnalyzeTablePrivileges(ctx, analyzeTable.Tables); err != nil {
+			return node, transform.SameTree, err
+		}
 		return node, transform.SameTree, nil
 	}
 
@@ -55,5 +63,56 @@ func applyTablesForAnalyzeAllTables(ctx *sql.Context, a *analyzer.Analyzer, node
 		tables = append(tables, table)
 	}
 
-	return analyzeTable.WithTables(tables), transform.NewTree, nil
+	analyzeTable = analyzeTable.WithTables(tables)
+	if err = checkAnalyzeTablePrivileges(ctx, analyzeTable.Tables); err != nil {
+		return node, transform.SameTree, err
+	}
+	return analyzeTable, transform.NewTree, nil
+}
+
+func checkAnalyzeTablePrivileges(ctx *sql.Context, tables []sql.Table) error {
+	for _, table := range tables {
+		if err := checkAnalyzeTablePrivilege(ctx, table); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkAnalyzeTablePrivilege(ctx *sql.Context, table sql.Table) error {
+	owner := ""
+	if commented, ok := table.(sql.CommentedTable); ok {
+		owner = tablemetadata.Owner(commented.Comment())
+	}
+	if owner == "" {
+		owner = "postgres"
+	}
+	if owner == ctx.Client().User {
+		return nil
+	}
+
+	tableName := doltdb.TableName{Name: table.Name(), Schema: tableSchemaName(table)}
+	allowed := false
+	auth.LockRead(func() {
+		role := auth.GetRole(ctx.Client().User)
+		publicRole := auth.GetRole("public")
+		allowed = (role.IsValid() && role.IsSuperUser) ||
+			roleHasAnalyzePrivilege(role.ID(), tableName) ||
+			roleHasAnalyzePrivilege(publicRole.ID(), tableName) ||
+			auth.HasInheritedRole(role.ID(), "pg_maintain")
+	})
+	if !allowed {
+		return errors.Errorf("permission denied for table %s", table.Name())
+	}
+	return nil
+}
+
+func roleHasAnalyzePrivilege(role auth.RoleID, tableName doltdb.TableName) bool {
+	if !role.IsValid() {
+		return false
+	}
+	return auth.HasTablePrivilege(auth.TablePrivilegeKey{
+		Role:  role,
+		Table: tableName,
+	}, auth.Privilege_MAINTAIN)
 }
