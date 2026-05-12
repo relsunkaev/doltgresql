@@ -68,6 +68,7 @@ import (
 	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/sessionstate"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -3183,7 +3184,10 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if containsSecurityLabel(query) {
 		return nil, pgerror.New(pgcode.InvalidParameterValue, "security label provider is not loaded")
 	}
-	if rewrittenQuery, ok := rewriteCreateRuleDoAlsoInsert(query); ok {
+	if rewrittenQuery, ruleTable, ok := rewriteCreateRuleDoAlsoInsert(query); ok {
+		if err := h.checkCreateRuleTableOwnership(query, ruleTable); err != nil {
+			return nil, err
+		}
 		return h.convertQuery(rewrittenQuery)
 	}
 	if converted, ok := convertedDropIfExistsNoOp(query); ok {
@@ -3516,10 +3520,10 @@ func convertedCreateTextSearchConfiguration(query string) (ConvertedQuery, bool)
 	}, true
 }
 
-func rewriteCreateRuleDoAlsoInsert(query string) (string, bool) {
+func rewriteCreateRuleDoAlsoInsert(query string) (string, string, bool) {
 	matches := createRuleDoAlsoPattern.FindStringSubmatch(query)
 	if matches == nil {
-		return "", false
+		return "", "", false
 	}
 	ruleName := normalizeTransformFunctionName(matches[1])
 	tableName := matches[2]
@@ -3533,7 +3537,41 @@ func rewriteCreateRuleDoAlsoInsert(query string) (string, bool) {
 		triggerName,
 		tableName,
 		functionName,
-	), true
+	), tableName, true
+}
+
+func (h *ConnectionHandler) checkCreateRuleTableOwnership(query string, rawTableName string) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query)
+	if err != nil {
+		return err
+	}
+	rawSchema, tableName := splitQualifiedCatalogName(rawTableName)
+	schemaName, err := core.GetSchemaName(sqlCtx, nil, rawSchema)
+	if err != nil {
+		return err
+	}
+	table, err := core.GetSqlTableFromContext(sqlCtx, "", doltdb.TableName{Name: tableName, Schema: schemaName})
+	if err != nil {
+		return err
+	}
+	owner := ""
+	if commented, ok := table.(sql.CommentedTable); ok {
+		owner = tablemetadata.Owner(commented.Comment())
+	}
+	if owner == "" {
+		owner = "postgres"
+	}
+	if owner == sqlCtx.Client().User {
+		return nil
+	}
+	var userRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(sqlCtx.Client().User)
+	})
+	if userRole.IsValid() && userRole.IsSuperUser {
+		return nil
+	}
+	return pgerror.Newf(pgcode.InsufficientPrivilege, "must be owner of table %s", tableName)
 }
 
 func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
