@@ -2139,6 +2139,35 @@ func TestCreateExtensionWithSchemaRequiresSchemaCreatePrivilegeRepro(t *testing.
 	})
 }
 
+// TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON TABLE does not transfer
+// ownership and should not allow the grantee to DROP the table.
+func TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TABLE requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_table_intruder PASSWORD 'dropper';`,
+				`CREATE TABLE drop_table_private (id INT PRIMARY KEY, secret TEXT);`,
+				`GRANT USAGE ON SCHEMA public TO drop_table_intruder;`,
+				`GRANT ALL PRIVILEGES ON TABLE drop_table_private TO drop_table_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TABLE drop_table_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_table_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT to_regclass('drop_table_private')::text;`,
+					Expected: []sql.Row{{"drop_table_private"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateViewRequiresSchemaCreatePrivilegeRepro reproduces a security bug:
 // Doltgres allows a role without CREATE on the target schema to create a view.
 func TestCreateViewRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
