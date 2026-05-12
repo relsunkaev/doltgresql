@@ -9445,6 +9445,23 @@ artifacts only; no fixes are included here.
   definition can change the ordinal contract of existing output columns instead
   of requiring an append-only compatible replacement.
 
+### CREATE VIEW text-domain typmod outputs break function lookup and catalog metadata
+
+- Reproducer: `TestCreateViewTextDomainTypmodExposesCoercedValuesRepro` in
+  `testing/go/view_ddl_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCreateViewTextDomainTypmodExposesCoercedValuesRepro -count=1`.
+- Expected PostgreSQL behavior: a view whose query returns `varchar(3)` and
+  `character(3)` domain expressions exposes the typmod-coerced values and
+  records the output columns as those domain types. `abc   ` reads as `abc`,
+  and `ab` reads as a padded `character(3)` value.
+- Observed Doltgres behavior: selecting `length(v)` from the view fails with
+  `function length(varchar3_view_domain) does not exist`, and `pg_attribute`
+  returns no output-column rows for the view, so normal PostgreSQL operations on
+  text-domain view outputs break and the view's column metadata is missing from
+  the catalog.
+
 ### CREATE MATERIALIZED VIEW TIMETZ typmod output stores unrounded values
 
 - Reproducer:

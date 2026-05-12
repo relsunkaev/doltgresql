@@ -93,6 +93,39 @@ func TestCreateViewFromOrderedUnionSubqueriesGuard(t *testing.T) {
 	})
 }
 
+// TestCreateViewTextDomainTypmodExposesCoercedValuesRepro reproduces a view
+// correctness bug: PostgreSQL evaluates text-domain view outputs using the
+// domain base type's typmod and exposes the output domain type.
+func TestCreateViewTextDomainTypmodExposesCoercedValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE VIEW text domain typmod exposes coerced values",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_view_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_view_domain AS character(3);`,
+				`CREATE VIEW view_text_domain_typmod_reader AS
+					SELECT 'abc   '::varchar3_view_domain AS v,
+						'ab'::char3_view_domain AS c;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT v, length(v), c = 'ab '::CHARACTER(3), octet_length(c), pg_typeof(v)::text, pg_typeof(c)::text
+						FROM view_text_domain_typmod_reader;`,
+					Expected: []sql.Row{{"abc", 3, true, 3, "varchar3_view_domain", "char3_view_domain"}},
+				},
+				{
+					Query: `SELECT format_type(atttypid, atttypmod)
+						FROM pg_attribute
+						WHERE attrelid = 'view_text_domain_typmod_reader'::regclass
+							AND attnum > 0
+						ORDER BY attnum;`,
+					Expected: []sql.Row{{"varchar3_view_domain"}, {"char3_view_domain"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterViewRenameToRepro reproduces a view DDL correctness bug:
 // PostgreSQL accepts ALTER VIEW ... RENAME TO and keeps the view queryable under
 // the new name.
