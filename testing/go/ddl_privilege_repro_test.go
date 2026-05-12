@@ -992,6 +992,36 @@ func TestAlterTableRowLevelSecurityRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestCreatePolicyRequiresTableOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own a table to create a row-level
+// security policy on it.
+func TestCreatePolicyRequiresTableOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE POLICY requires table ownership",
+			SetUpScript: []string{
+				`CREATE USER policy_creator PASSWORD 'creator';`,
+				`CREATE TABLE policy_private_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA public TO policy_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE POLICY policy_private_docs_select
+						ON policy_private_docs
+						FOR SELECT
+						USING (owner_name = current_user);`,
+					ExpectedErr: `must be owner`,
+					Username:    `policy_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestRenameTableRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a table to rename it.
 func TestRenameTableRequiresOwnershipRepro(t *testing.T) {
