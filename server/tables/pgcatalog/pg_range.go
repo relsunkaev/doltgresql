@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,30 @@ func (p PgRangeHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgRangeHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_range row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(pgBuiltinRangeRows()...), nil
+}
+
+func pgBuiltinRangeRows() []sql.Row {
+	return []sql.Row{
+		pgBuiltinRangeRow("int4range", pgtypes.Int32.ID),
+		pgBuiltinRangeRow("int8range", pgtypes.Int64.ID),
+		pgBuiltinRangeRow("numrange", pgtypes.Numeric.ID),
+		pgBuiltinRangeRow("daterange", pgtypes.Date.ID),
+		pgBuiltinRangeRow("tsrange", pgtypes.Timestamp.ID),
+		pgBuiltinRangeRow("tstzrange", pgtypes.TimestampTZ.ID),
+	}
+}
+
+func pgBuiltinRangeRow(rangeName string, subtype id.Type) sql.Row {
+	return sql.Row{
+		id.NewType("pg_catalog", rangeName).AsId(), // rngtypid
+		subtype.AsId(), // rngsubtype
+		zeroOID(),      // rngmultitypid
+		zeroOID(),      // rngcollation
+		zeroOID(),      // rngsubopc
+		"-",            // rngcanonical
+		"-",            // rngsubdiff
+	}
 }
 
 // Schema implements the interface tables.Handler.
