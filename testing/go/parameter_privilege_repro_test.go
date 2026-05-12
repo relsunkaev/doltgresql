@@ -100,3 +100,31 @@ func TestHasParameterPrivilegeHelperRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestSetSuperuserOnlyParameterRequiresSuperuserRepro reproduces a security
+// bug: PostgreSQL's superuser-context parameters require superuser rights or an
+// explicit parameter-level SET privilege before a normal role can change them.
+func TestSetSuperuserOnlyParameterRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET superuser-only parameter requires superuser",
+			SetUpScript: []string{
+				`CREATE USER parameter_superuser_intruder PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `SET session_preload_libraries = 'unsafe_library';`,
+					ExpectedErr: `permission denied`,
+					Username:    `parameter_superuser_intruder`,
+					Password:    `pw`,
+				},
+				{
+					Query:    `SELECT current_setting('session_preload_libraries');`,
+					Expected: []sql.Row{{""}},
+					Username: `parameter_superuser_intruder`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
