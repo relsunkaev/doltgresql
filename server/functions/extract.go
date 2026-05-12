@@ -16,6 +16,7 @@ package functions
 
 import (
 	"math"
+	"math/big"
 	"strings"
 	"time"
 
@@ -181,6 +182,25 @@ func intervalMinuteField(nanos int64) int64 {
 	return (nanos % (NanosPerSec * duration.SecsPerHour)) / (NanosPerSec * duration.SecsPerMinute)
 }
 
+func julianFromTime(tVal time.Time) decimal.Decimal {
+	julian := decimal.NewFromInt(int64(date2J(tVal.Year(), int(tVal.Month()), tVal.Day())))
+	nanosOfDay := int64(tVal.Hour())*NanosPerSec*duration.SecsPerHour +
+		int64(tVal.Minute())*NanosPerSec*duration.SecsPerMinute +
+		int64(tVal.Second())*NanosPerSec +
+		int64(tVal.Nanosecond())
+	if nanosOfDay == 0 {
+		return julian
+	}
+	fraction := decimal.NewFromBigRat(
+		new(big.Rat).SetFrac(
+			big.NewInt(nanosOfDay),
+			big.NewInt(NanosPerSec*duration.SecsPerDay),
+		),
+		20,
+	)
+	return julian.Add(fraction)
+}
+
 // extract_text_interval represents the PostgreSQL date/time function, taking {text, interval}
 var extract_text_interval = framework.Function2{
 	Name:               "extract",
@@ -265,7 +285,7 @@ func getFieldFromTimeVal(field string, tVal time.Time) (decimal.Decimal, error) 
 		year, _ := tVal.ISOWeek()
 		return decimal.NewFromInt(int64(year)), nil
 	case "julian":
-		return decimal.NewFromInt(int64(date2J(tVal.Year(), int(tVal.Month()), tVal.Day()))), nil
+		return julianFromTime(tVal), nil
 	case "microsecond", "microseconds", "usec", "usecs":
 		w := float64(tVal.Second() * 1000000)
 		f := float64(tVal.Nanosecond()) / float64(1000)
