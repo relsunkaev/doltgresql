@@ -310,3 +310,31 @@ func TestAlterTypeRenameUpdatesFunctionSignatureMetadataRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestAlterTypeRenameUpdatesViewMetadataRepro reproduces a catalog persistence
+// bug: views that reference a renamed type should keep resolving through the
+// renamed type rather than retaining a stale textual reference to the old name.
+func TestAlterTypeRenameUpdatesViewMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME TO updates view metadata",
+			SetUpScript: []string{
+				`CREATE TYPE rename_view_status AS ENUM ('new', 'done');`,
+				`CREATE VIEW rename_view_status_view AS
+					SELECT 'done'::rename_view_status AS status;`,
+				`ALTER TYPE rename_view_status RENAME TO renamed_view_status;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT status::text FROM rename_view_status_view;`,
+					Expected: []sql.Row{{"done"}},
+				},
+				{
+					Query: `SELECT pg_typeof(status)::text
+						FROM rename_view_status_view;`,
+					Expected: []sql.Row{{"renamed_view_status"}},
+				},
+			},
+		},
+	})
+}
