@@ -59,6 +59,9 @@ func (a *AlterTableReplicaIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.Ro
 		}
 		return nil, errors.Errorf(`relation "%s" does not exist`, a.Table)
 	}
+	if err = checkTableOwnership(ctx, doltdb.TableName{Name: tableName, Schema: schema}); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 
 	indexName := ""
 	if a.Identity == replicaidentity.IdentityUsingIndex {

@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
@@ -109,6 +110,11 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 	return &vitess.AlterTable{
 		Table:      tableName,
 		Statements: statements,
+		Auth: vitess.AuthInformation{
+			AuthType:    auth.AuthType_OWNER,
+			TargetType:  auth.AuthTargetType_TableIdentifiers,
+			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+		},
 	}, nil
 }
 
@@ -752,6 +758,11 @@ func nodeAlterTablePartition(ctx *Context, node *tree.AlterTablePartition) (*vit
 	return &vitess.AlterTable{
 		Table:          tableName,
 		PartitionSpecs: []*vitess.PartitionSpec{partitionSpec},
+		Auth: vitess.AuthInformation{
+			AuthType:    auth.AuthType_OWNER,
+			TargetType:  auth.AuthTargetType_TableIdentifiers,
+			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+		},
 	}, nil
 }
 

@@ -24,6 +24,7 @@ const (
 	AuthType_DROPTABLE    = "DROPTABLE"
 	AuthType_EXECUTE      = "EXECUTE"
 	AuthType_INSERT       = "INSERT"
+	AuthType_OWNER        = "OWNER"
 	AuthType_REFERENCES   = "REFERENCES"
 	AuthType_SELECT       = "SELECT"
 	AuthType_SET          = "SET"

@@ -20,6 +20,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // nodeRenameTable handles *tree.RenameTable nodes.
@@ -43,5 +44,10 @@ func nodeRenameTable(ctx *Context, node *tree.RenameTable) (*vitess.DDL, error) 
 		FromTables: vitess.TableNames{fromName},
 		ToTables:   vitess.TableNames{toName},
 		IfExists:   node.IfExists,
+		Auth: vitess.AuthInformation{
+			AuthType:    auth.AuthType_OWNER,
+			TargetType:  auth.AuthTargetType_TableIdentifiers,
+			TargetNames: []string{fromName.DbQualifier.String(), fromName.SchemaQualifier.String(), fromName.Name.String()},
+		},
 	}, nil
 }

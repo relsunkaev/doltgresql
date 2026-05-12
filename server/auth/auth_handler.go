@@ -98,6 +98,10 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 	globalLock.RLock()
 	defer globalLock.RUnlock()
 
+	if auth.AuthType == AuthType_OWNER {
+		return checkOwnership(ctx, state, auth)
+	}
+
 	var privileges []Privilege
 	switch auth.AuthType {
 	case AuthType_IGNORE:
@@ -229,6 +233,40 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 		}
 	}
 	return nil
+}
+
+func checkOwnership(ctx *sql.Context, state AuthorizationQueryState, auth vitess.AuthInformation) error {
+	switch auth.TargetType {
+	case AuthTargetType_TableIdentifiers:
+		if len(auth.TargetNames)%3 != 0 {
+			return errors.Errorf("table identifiers has an unsupported count: %d", len(auth.TargetNames))
+		}
+		for i := 0; i < len(auth.TargetNames); i += 3 {
+			schemaName, err := core.GetSchemaName(ctx, nil, auth.TargetNames[i+1])
+			if err != nil {
+				return nil
+			}
+			if err = checkOwnershipOnTable(ctx, state, schemaName, auth.TargetNames[i+2]); err != nil {
+				return err
+			}
+		}
+		return nil
+	default:
+		if len(auth.TargetType) == 0 {
+			return errors.New("TargetType is unexpectedly empty")
+		}
+		return errors.Errorf("TargetType not handled for ownership: `%s`", auth.TargetType)
+	}
+}
+
+func checkOwnershipOnTable(ctx *sql.Context, state AuthorizationQueryState, schemaName string, tableName string) error {
+	if state.role.IsValid() && state.role.IsSuperUser {
+		return nil
+	}
+	if tableOwnedByRole(ctx, schemaName, tableName, state.role.Name) {
+		return nil
+	}
+	return errors.Errorf("permission denied for table %s", tableName)
 }
 
 // HandleAuthNode implements the sql.AuthorizationHandler interface.
