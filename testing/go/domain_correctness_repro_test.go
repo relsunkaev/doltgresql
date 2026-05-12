@@ -1285,6 +1285,45 @@ func TestArrayOverDomainEnforcesElementConstraintsRepro(t *testing.T) {
 	})
 }
 
+// TestCompositeDomainAcceptsValidValuesRepro reproduces a domain correctness
+// bug: PostgreSQL supports domains over composite types and evaluates domain
+// CHECK constraints against composite fields.
+func TestCompositeDomainAcceptsValidValuesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "composite domain enforces field constraints",
+			SetUpScript: []string{
+				`CREATE TYPE composite_domain_unordered_pair AS (
+					x INT,
+					y INT
+				);`,
+				`CREATE DOMAIN composite_domain_ordered_pair AS composite_domain_unordered_pair
+					CONSTRAINT composite_domain_ordered_pair_check CHECK ((VALUE).x <= (VALUE).y);`,
+				`CREATE TABLE composite_domain_items (
+					id INT PRIMARY KEY,
+					pair composite_domain_ordered_pair
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO composite_domain_items VALUES
+						(1, ROW(1, 2)::composite_domain_ordered_pair);`,
+					ExpectedTag: "INSERT 0 1",
+				},
+				{
+					Query: `INSERT INTO composite_domain_items VALUES
+						(2, ROW(3, 2)::composite_domain_ordered_pair);`,
+					ExpectedErr: `composite_domain_ordered_pair_check`,
+				},
+				{
+					Query:    `SELECT id, pair::text FROM composite_domain_items;`,
+					Expected: []sql.Row{{1, "(1,2)"}},
+				},
+			},
+		},
+	})
+}
+
 // TestSqlFunctionReturnEnforcesDomainConstraintsRepro reproduces a data
 // consistency bug: SQL functions returning a domain do not validate returned
 // values against the domain constraints at execution time.
