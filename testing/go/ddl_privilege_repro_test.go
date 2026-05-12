@@ -1801,6 +1801,35 @@ func TestDropSequenceRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON SEQUENCE does not
+// transfer ownership and should not allow the grantee to DROP the sequence.
+func TestDropSequenceRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP SEQUENCE requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_sequence_intruder PASSWORD 'dropper';`,
+				`CREATE SEQUENCE drop_sequence_all_private;`,
+				`GRANT USAGE ON SCHEMA public TO drop_sequence_intruder;`,
+				`GRANT ALL PRIVILEGES ON SEQUENCE drop_sequence_all_private TO drop_sequence_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP SEQUENCE drop_sequence_all_private;`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_sequence_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT to_regclass('drop_sequence_all_private')::text;`,
+					Expected: []sql.Row{{"drop_sequence_all_private"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateSequenceOwnedByRequiresTableOwnershipRepro reproduces a security
 // bug: Doltgres lets a role create a sequence owned by a table it does not own.
 func TestCreateSequenceOwnedByRequiresTableOwnershipRepro(t *testing.T) {
