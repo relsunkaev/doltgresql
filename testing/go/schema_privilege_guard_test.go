@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestCreateSchemaRejectsDoltReservedNamespaceRepro reproduces a namespace
 // security bug: user-created schemas must not be allowed to occupy Dolt's
@@ -184,6 +188,34 @@ func TestDropSchemaRequiresOwnershipGuard(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `schema_dropper`,
 					Password:    `dropper`,
+				},
+			},
+		},
+	})
+}
+
+// TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard guards that GRANT
+// ALL PRIVILEGES ON SCHEMA does not transfer ownership and does not allow the
+// grantee to DROP the schema.
+func TestDropSchemaRequiresOwnershipDespiteAllPrivilegesGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP SCHEMA requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_schema_intruder PASSWORD 'dropper';`,
+				`CREATE SCHEMA protected_all_schema;`,
+				`GRANT ALL PRIVILEGES ON SCHEMA protected_all_schema TO drop_schema_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP SCHEMA protected_all_schema;`,
+					ExpectedErr: `permission denied`,
+					Username:    `drop_schema_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT nspname FROM pg_namespace WHERE nspname = 'protected_all_schema';`,
+					Expected: []sql.Row{{"protected_all_schema"}},
 				},
 			},
 		},
