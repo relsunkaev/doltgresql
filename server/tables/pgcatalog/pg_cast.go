@@ -45,7 +45,7 @@ func (p PgCastHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgCastHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	var rows []sql.Row
+	rows := pgBuiltinCastRows()
 	auth.LockRead(func() {
 		for _, cast := range auth.GetAllCasts() {
 			rows = append(rows, sql.Row{
@@ -60,6 +60,20 @@ func (p PgCastHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.R
 		}
 	})
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func pgBuiltinCastRows() []sql.Row {
+	return []sql.Row{
+		{
+			id.NewId(id.Section_Cast, string(pgtypes.Int32.ID), string(pgtypes.Int64.ID)), // oid
+			pgtypes.Int32.ID.AsId(), // castsource
+			pgtypes.Int64.ID.AsId(), // casttarget
+			id.NewFunction("pg_catalog", "int8", pgtypes.Int32.ID).AsId(), // castfunc
+			"i", // castcontext
+			"f", // castmethod
+			id.NewTable(PgCatalogName, PgCastName).AsId(), // tableoid
+		},
+	}
 }
 
 // Schema implements the interface tables.Handler.
