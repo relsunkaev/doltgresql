@@ -147,6 +147,9 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			}
 			relOfType := id.Null
 			comment := tableComment(table.Item)
+			if tablemetadata.IsForeignTable(comment) {
+				kind = "f"
+			}
 			if typeID, ok := tablemetadata.OfType(comment); ok {
 				relOfType = typeID.AsId()
 			}

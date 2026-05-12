@@ -35,6 +35,12 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeAlterDatabase(ctx, stmt)
 	case *tree.AlterDefaultPrivileges:
 		return nodeAlterDefaultPrivileges(ctx, stmt)
+	case *tree.AlterForeignDataWrapper:
+		return nodeAlterForeignDataWrapper(ctx, stmt)
+	case *tree.AlterForeignServer:
+		return nodeAlterForeignServer(ctx, stmt)
+	case *tree.AlterForeignTable:
+		return nodeAlterForeignTable(ctx, stmt)
 	case *tree.AlterDomain:
 		return nodeAlterDomain(ctx, stmt)
 	case *tree.AlterFunction:
@@ -65,6 +71,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeAlterTableSetSchema(ctx, stmt)
 	case *tree.AlterType:
 		return nodeAlterType(ctx, stmt)
+	case *tree.AlterUserMapping:
+		return nodeAlterUserMapping(ctx, stmt)
 	case *tree.AlterView:
 		return nodeAlterView(ctx, stmt)
 	case *tree.Analyze:
@@ -109,6 +117,10 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeCreateDomain(ctx, stmt)
 	case *tree.CreateExtension:
 		return nodeCreateExtension(ctx, stmt)
+	case *tree.CreateForeignDataWrapper:
+		return nodeCreateForeignDataWrapper(ctx, stmt)
+	case *tree.CreateForeignServer:
+		return nodeCreateForeignServer(ctx, stmt)
 	case *tree.CreateFunction:
 		return nodeCreateFunction(ctx, stmt)
 	case *tree.CreateIndex:
@@ -131,6 +143,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeCreateStats(ctx, stmt)
 	case *tree.CreateSubscription:
 		return nodeCreateSubscription(ctx, stmt)
+	case *tree.CreateUserMapping:
+		return nodeCreateUserMapping(ctx, stmt)
 	case *tree.CreateTable:
 		return nodeCreateTable(ctx, stmt)
 	case *tree.CreateTrigger:
@@ -157,6 +171,12 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeDropDomain(ctx, stmt)
 	case *tree.DropExtension:
 		return nodeDropExtension(ctx, stmt)
+	case *tree.DropForeignDataWrapper:
+		return nodeDropForeignDataWrapper(ctx, stmt)
+	case *tree.DropForeignServer:
+		return nodeDropForeignServer(ctx, stmt)
+	case *tree.DropForeignTable:
+		return nodeDropForeignTable(ctx, stmt)
 	case *tree.DropFunction:
 		return nodeDropFunction(ctx, stmt)
 	case *tree.DropIndex:
@@ -175,6 +195,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeDropSequence(ctx, stmt)
 	case *tree.DropSubscription:
 		return nodeDropSubscription(ctx, stmt)
+	case *tree.DropUserMapping:
+		return nodeDropUserMapping(ctx, stmt)
 	case *tree.DropTable:
 		return nodeDropTable(ctx, stmt)
 	case *tree.DropTrigger:
@@ -197,6 +219,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeGrantRole(ctx, stmt)
 	case *tree.Import:
 		return nodeImport(ctx, stmt)
+	case *tree.ImportForeignSchema:
+		return nodeImportForeignSchema(ctx, stmt)
 	case *tree.Insert:
 		return nodeInsert(ctx, stmt)
 	case *tree.Listen:

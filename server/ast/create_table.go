@@ -71,6 +71,16 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		// it out is a no-op; any other target name would not resolve.
 		return nil, errors.Errorf(`tablespace "%s" does not exist`, string(node.Tablespace))
 	}
+	foreignServer := string(node.ForeignServer)
+	if foreignServer != "" {
+		var exists bool
+		auth.LockRead(func() {
+			_, exists = auth.GetForeignServer(foreignServer)
+		})
+		if !exists {
+			return nil, errors.Errorf(`server "%s" does not exist`, foreignServer)
+		}
+	}
 	if node.OfType != nil {
 		if node.AsSource != nil {
 			return nil, errors.Errorf("CREATE TABLE OF cannot use AS")
@@ -171,6 +181,14 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		}
 		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
 			return tablemetadata.SetRelPersistence(comment, relPersistence)
+		})
+	}
+	if foreignServer != "" {
+		if ddl.TableSpec == nil {
+			ddl.TableSpec = &vitess.TableSpec{}
+		}
+		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
+			return tablemetadata.SetForeignTable(comment, foreignServer, fdwOptionsToStrings(node.ForeignOptions))
 		})
 	}
 

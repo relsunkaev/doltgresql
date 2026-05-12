@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,27 @@ func (p PgForeignServerHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgForeignServerHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_foreign_server row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, server := range auth.GetAllForeignServers() {
+			owner := catalogOwnerOID()
+			if role := auth.GetRole(server.Owner); role.IsValid() {
+				owner = id.NewId(id.Section_User, server.Owner)
+			}
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_ForeignServer, server.Name), // oid
+				server.Name, // srvname
+				owner,       // srvowner
+				id.NewId(id.Section_ForeignDataWrapper, server.Wrapper), // srvfdw
+				nullableText(server.Type),                               // srvtype
+				nullableText(server.Version),                            // srvversion
+				nil,                                                     // srvacl
+				server.Options,                                          // srvoptions
+				id.NewTable(PgCatalogName, PgForeignServerName).AsId(),
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,18 +87,9 @@ var pgForeignServerSchema = sql.Schema{
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignServerName},
 }
 
-// pgForeignServerRowIter is the sql.RowIter for the pg_foreign_server table.
-type pgForeignServerRowIter struct {
-}
-
-var _ sql.RowIter = (*pgForeignServerRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgForeignServerRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgForeignServerRowIter) Close(ctx *sql.Context) error {
-	return nil
+func nullableText(text string) any {
+	if text == "" {
+		return nil
+	}
+	return text
 }

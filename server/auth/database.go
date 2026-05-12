@@ -61,6 +61,9 @@ type Database struct {
 	casts               *Casts
 	operators           *Operators
 	textSearchConfigs   *TextSearchConfigs
+	foreignDataWrappers *ForeignDataWrappers
+	foreignServers      *ForeignServers
+	userMappings        *UserMappings
 	roleMembership      *RoleMembership
 	dbRoleSettings      *DbRoleSettings
 }
@@ -87,6 +90,9 @@ func ClearDatabase() {
 	clear(globalDatabase.casts.Data)
 	clear(globalDatabase.operators.Data)
 	clear(globalDatabase.textSearchConfigs.Data)
+	clear(globalDatabase.foreignDataWrappers.Data)
+	clear(globalDatabase.foreignServers.Data)
+	clear(globalDatabase.userMappings.Data)
 	clear(globalDatabase.roleMembership.Data)
 	clear(globalDatabase.dbRoleSettings.Data)
 	transactionSnapshotsMu.Lock()
@@ -267,6 +273,9 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		casts:               NewCasts(),
 		operators:           NewOperators(),
 		textSearchConfigs:   NewTextSearchConfigs(),
+		foreignDataWrappers: NewForeignDataWrappers(),
+		foreignServers:      NewForeignServers(),
+		userMappings:        NewUserMappings(),
 		roleMembership:      NewRoleMembership(),
 		dbRoleSettings:      NewDbRoleSettings(),
 	}

@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,23 @@ func (p PgUserMappingHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgUserMappingHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_user_mapping row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, mapping := range auth.GetAllUserMappings() {
+			userOID := id.Null
+			if role := auth.GetRole(mapping.User); role.IsValid() {
+				userOID = id.NewId(id.Section_User, mapping.User)
+			}
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_ForeignServer, mapping.Server, mapping.User), // oid
+				userOID, // umuser
+				id.NewId(id.Section_ForeignServer, mapping.Server), // umserver
+				mapping.Options, // umoptions
+				id.NewTable(PgCatalogName, PgUserMappingName).AsId(),
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -62,20 +77,4 @@ var pgUserMappingSchema = sql.Schema{
 	{Name: "umserver", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName},
 	{Name: "umoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgUserMappingName}, // TODO: collation C
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgUserMappingName},
-}
-
-// pgUserMappingRowIter is the sql.RowIter for the pg_user_mapping table.
-type pgUserMappingRowIter struct {
-}
-
-var _ sql.RowIter = (*pgUserMappingRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgUserMappingRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgUserMappingRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

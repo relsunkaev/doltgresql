@@ -15,10 +15,11 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,26 @@ func (p PgForeignTableHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgForeignTableHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_foreign_table row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			comment := tableComment(table.Item)
+			if !tablemetadata.IsForeignTable(comment) {
+				return true, nil
+			}
+			rows = append(rows, sql.Row{
+				table.OID.AsId(), // ftrelid
+				id.NewId(id.Section_ForeignServer, tablemetadata.ForeignServer(comment)), // ftserver
+				tablemetadata.ForeignOptions(comment),                                    // ftoptions
+				id.NewTable(PgCatalogName, PgForeignTableName).AsId(),
+			})
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -61,20 +80,4 @@ var pgForeignTableSchema = sql.Schema{
 	{Name: "ftserver", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignTableName},
 	{Name: "ftoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignTableName}, // TODO: collation C
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignTableName},
-}
-
-// pgForeignTableRowIter is the sql.RowIter for the pg_foreign_table table.
-type pgForeignTableRowIter struct {
-}
-
-var _ sql.RowIter = (*pgForeignTableRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgForeignTableRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgForeignTableRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

@@ -235,6 +235,24 @@ func (*AlterDefaultPrivileges) StatementTag() string { return "ALTER DEFAULT PRI
 func (*AlterDefaultPrivileges) hiddenFromShowQueries() {}
 
 // StatementType implements the Statement interface.
+func (*AlterForeignDataWrapper) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterForeignDataWrapper) StatementTag() string { return "ALTER FOREIGN DATA WRAPPER" }
+
+// StatementType implements the Statement interface.
+func (*AlterForeignTable) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterForeignTable) StatementTag() string { return "ALTER FOREIGN TABLE" }
+
+// StatementType implements the Statement interface.
+func (*AlterForeignServer) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterForeignServer) StatementTag() string { return "ALTER SERVER" }
+
+// StatementType implements the Statement interface.
 func (*AlterFunction) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -546,6 +564,24 @@ func (*CreateAccessMethod) StatementType() StatementType { return DDL }
 func (*CreateAccessMethod) StatementTag() string { return "CREATE ACCESS METHOD" }
 
 // StatementType implements the Statement interface.
+func (*CreateForeignDataWrapper) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreateForeignDataWrapper) StatementTag() string { return "CREATE FOREIGN DATA WRAPPER" }
+
+// StatementType implements the Statement interface.
+func (*CreateForeignServer) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreateForeignServer) StatementTag() string { return "CREATE SERVER" }
+
+// StatementType implements the Statement interface.
+func (*CreateUserMapping) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreateUserMapping) StatementTag() string { return "CREATE USER MAPPING" }
+
+// StatementType implements the Statement interface.
 func (*CreateExtension) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -709,6 +745,30 @@ func (*DropAccessMethod) StatementType() StatementType { return DDL }
 func (*DropAccessMethod) StatementTag() string { return "DROP ACCESS METHOD" }
 
 // StatementType implements the Statement interface.
+func (*DropForeignDataWrapper) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropForeignDataWrapper) StatementTag() string { return "DROP FOREIGN DATA WRAPPER" }
+
+// StatementType implements the Statement interface.
+func (*DropForeignTable) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropForeignTable) StatementTag() string { return "DROP FOREIGN TABLE" }
+
+// StatementType implements the Statement interface.
+func (*DropForeignServer) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropForeignServer) StatementTag() string { return "DROP SERVER" }
+
+// StatementType implements the Statement interface.
+func (*DropUserMapping) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*DropUserMapping) StatementTag() string { return "DROP USER MAPPING" }
+
+// StatementType implements the Statement interface.
 func (*DropExtension) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -847,6 +907,18 @@ func (n *Import) StatementType() StatementType { return Rows }
 func (*Import) StatementTag() string { return "IMPORT" }
 
 func (*Import) cclOnlyStatement() {}
+
+// StatementType implements the Statement interface.
+func (*ImportForeignSchema) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*ImportForeignSchema) StatementTag() string { return "IMPORT FOREIGN SCHEMA" }
+
+// StatementType implements the Statement interface.
+func (*AlterUserMapping) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*AlterUserMapping) StatementTag() string { return "ALTER USER MAPPING" }
 
 // StatementType implements the Statement interface.
 func (*ParenSelect) StatementType() StatementType { return Rows }
@@ -1279,6 +1351,9 @@ func (n *AlterConversion) String() string           { return AsString(n) }
 func (n *AlterDatabase) String() string             { return AsString(n) }
 func (n *AlterDomain) String() string               { return AsString(n) }
 func (n *AlterDefaultPrivileges) String() string    { return AsString(n) }
+func (n *AlterForeignDataWrapper) String() string   { return AsString(n) }
+func (n *AlterForeignServer) String() string        { return AsString(n) }
+func (n *AlterForeignTable) String() string         { return AsString(n) }
 func (n *AlterFunction) String() string             { return AsString(n) }
 func (n *AlterIndex) String() string                { return AsString(n) }
 func (n *AlterIndexAllInTablespace) String() string { return AsString(n) }
@@ -1294,6 +1369,7 @@ func (n *AlterTablePartition) String() string       { return AsString(n) }
 func (n *AlterTrigger) String() string              { return AsString(n) }
 func (n *AlterType) String() string                 { return AsString(n) }
 func (n *AlterSubscription) String() string         { return AsString(n) }
+func (n *AlterUserMapping) String() string          { return AsString(n) }
 func (n *AlterView) String() string                 { return AsString(n) }
 func (n *AlterRole) String() string                 { return AsString(n) }
 func (n *AlterSequence) String() string             { return AsString(n) }
@@ -1320,6 +1396,8 @@ func (n *CreateChangefeed) String() string          { return AsString(n) }
 func (n *CreateDatabase) String() string            { return AsString(n) }
 func (n *CreateDomain) String() string              { return AsString(n) }
 func (n *CreateExtension) String() string           { return AsString(n) }
+func (n *CreateForeignDataWrapper) String() string  { return AsString(n) }
+func (n *CreateForeignServer) String() string       { return AsString(n) }
 func (n *CreateFunction) String() string            { return AsString(n) }
 func (n *CreateIndex) String() string               { return AsString(n) }
 func (n *CreateLanguage) String() string            { return AsString(n) }
@@ -1334,6 +1412,7 @@ func (n *CreateSchema) String() string              { return AsString(n) }
 func (n *CreateSequence) String() string            { return AsString(n) }
 func (n *CreateStats) String() string               { return AsString(n) }
 func (n *CreateSubscription) String() string        { return AsString(n) }
+func (n *CreateUserMapping) String() string         { return AsString(n) }
 func (n *CreateView) String() string                { return AsString(n) }
 func (n *Deallocate) String() string                { return AsString(n) }
 func (n *Delete) String() string                    { return AsString(n) }
@@ -1342,6 +1421,9 @@ func (n *DropAccessMethod) String() string          { return AsString(n) }
 func (n *DropDatabase) String() string              { return AsString(n) }
 func (n *DropDomain) String() string                { return AsString(n) }
 func (n *DropExtension) String() string             { return AsString(n) }
+func (n *DropForeignDataWrapper) String() string    { return AsString(n) }
+func (n *DropForeignServer) String() string         { return AsString(n) }
+func (n *DropForeignTable) String() string          { return AsString(n) }
 func (n *DropFunction) String() string              { return AsString(n) }
 func (n *DropIndex) String() string                 { return AsString(n) }
 func (n *DropLanguage) String() string              { return AsString(n) }
@@ -1354,7 +1436,9 @@ func (n *DropType) String() string                  { return AsString(n) }
 func (n *DropView) String() string                  { return AsString(n) }
 func (n *DropSequence) String() string              { return AsString(n) }
 func (n *DropSubscription) String() string          { return AsString(n) }
+func (n *DropUserMapping) String() string           { return AsString(n) }
 func (n *DropRole) String() string                  { return AsString(n) }
+func (n *ImportForeignSchema) String() string       { return AsString(n) }
 func (n *Execute) String() string                   { return AsString(n) }
 func (n *Explain) String() string                   { return AsString(n) }
 func (n *ExplainAnalyzeDebug) String() string       { return AsString(n) }

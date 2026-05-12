@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(14)
+	writer.Uint32(15)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -75,6 +75,10 @@ func (db *Database) serialize() []byte {
 	db.operators.serialize(writer)
 	// Write the text-search configurations
 	db.textSearchConfigs.serialize(writer)
+	// Write foreign-data metadata
+	db.foreignDataWrappers.serialize(writer)
+	db.foreignServers.serialize(writer)
+	db.userMappings.serialize(writer)
 	// Write the role chain
 	db.roleMembership.serialize(writer)
 	// Write database/role settings
@@ -120,6 +124,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV13(reader)
 	case 14:
 		return db.deserializeV14(reader)
+	case 15:
+		return db.deserializeV15(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -226,6 +232,10 @@ func (db *Database) deserializeV14(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 14)
 }
 
+func (db *Database) deserializeV15(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 15)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -315,6 +325,16 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		} else {
 			db.textSearchConfigs.deserialize(0, reader)
 		}
+		if version >= 15 {
+			// Read foreign-data metadata
+			db.foreignDataWrappers.deserialize(1, reader)
+			db.foreignServers.deserialize(1, reader)
+			db.userMappings.deserialize(1, reader)
+		} else {
+			db.foreignDataWrappers.deserialize(0, reader)
+			db.foreignServers.deserialize(0, reader)
+			db.userMappings.deserialize(0, reader)
+		}
 		// Read the role chain
 		db.roleMembership.deserialize(1, reader)
 		if version >= 12 {
@@ -341,6 +361,9 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.casts.deserialize(0, reader)
 		db.operators.deserialize(0, reader)
 		db.textSearchConfigs.deserialize(0, reader)
+		db.foreignDataWrappers.deserialize(0, reader)
+		db.foreignServers.deserialize(0, reader)
+		db.userMappings.deserialize(0, reader)
 		db.dbRoleSettings.deserialize(0, reader)
 		ensurePredefinedRoles()
 		dbInitDefaultLanguages()

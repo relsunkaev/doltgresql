@@ -35,6 +35,9 @@ type Metadata struct {
 	Owner                       string              `json:"owner,omitempty"`
 	RelOptions                  []string            `json:"relOptions,omitempty"`
 	RelPersistence              string              `json:"relPersistence,omitempty"`
+	ForeignTable                bool                `json:"foreignTable,omitempty"`
+	ForeignServer               string              `json:"foreignServer,omitempty"`
+	ForeignOptions              []string            `json:"foreignOptions,omitempty"`
 	ColumnOptions               map[string][]string `json:"columnOptions,omitempty"`
 	ColumnStorage               map[string]string   `json:"columnStorage,omitempty"`
 	ColumnCompression           map[string]string   `json:"columnCompression,omitempty"`
@@ -45,7 +48,9 @@ type Metadata struct {
 func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
+	metadata.ForeignServer = strings.TrimSpace(metadata.ForeignServer)
 	NormalizeRelOptions(metadata.RelOptions)
+	NormalizeRelOptions(metadata.ForeignOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
 	normalizeColumnStringMetadata(metadata.ColumnStorage)
 	normalizeColumnStringMetadata(metadata.ColumnCompression)
@@ -67,6 +72,8 @@ func DecodeComment(comment string) (Metadata, bool) {
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
+	metadata.ForeignServer = strings.TrimSpace(metadata.ForeignServer)
+	NormalizeRelOptions(metadata.ForeignOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
 	normalizeColumnStringMetadata(metadata.ColumnStorage)
 	normalizeColumnStringMetadata(metadata.ColumnCompression)
@@ -262,6 +269,41 @@ func SetRelOptions(comment string, relOptions []string) string {
 		return ""
 	}
 	return EncodeComment(metadata)
+}
+
+// SetForeignTable returns a table metadata comment marking the table as a
+// foreign table backed by the named foreign server.
+func SetForeignTable(comment string, server string, options []string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.ForeignTable = true
+	metadata.ForeignServer = strings.TrimSpace(server)
+	metadata.ForeignOptions = append([]string(nil), options...)
+	NormalizeRelOptions(metadata.ForeignOptions)
+	return EncodeComment(metadata)
+}
+
+// IsForeignTable returns whether the comment marks a table as a foreign table.
+func IsForeignTable(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.ForeignTable
+}
+
+// ForeignServer returns the stored foreign server name, if any.
+func ForeignServer(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || !metadata.ForeignTable {
+		return ""
+	}
+	return metadata.ForeignServer
+}
+
+// ForeignOptions returns the stored foreign table options, if any.
+func ForeignOptions(comment string) []string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || !metadata.ForeignTable {
+		return nil
+	}
+	return append([]string(nil), metadata.ForeignOptions...)
 }
 
 // SetColumnOptions returns a table metadata comment with PostgreSQL attoptions
@@ -503,6 +545,9 @@ func (metadata Metadata) empty() bool {
 		metadata.Owner == "" &&
 		metadata.RelPersistence == "" &&
 		len(metadata.RelOptions) == 0 &&
+		!metadata.ForeignTable &&
+		metadata.ForeignServer == "" &&
+		len(metadata.ForeignOptions) == 0 &&
 		len(metadata.ColumnOptions) == 0 &&
 		len(metadata.ColumnStorage) == 0 &&
 		len(metadata.ColumnCompression) == 0 &&

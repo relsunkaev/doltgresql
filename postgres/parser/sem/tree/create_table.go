@@ -50,15 +50,17 @@ var _ Statement = &CreateTable{}
 
 // CreateTable represents a CREATE TABLE statement.
 type CreateTable struct {
-	IfNotExists   bool
-	Table         TableName
-	Inherits      TableNames
-	PartitionBy   *PartitionBy
-	Persistence   Persistence
-	StorageParams StorageParams
-	OnCommit      CreateTableOnCommitSetting
-	Using         string
-	Tablespace    Name
+	IfNotExists    bool
+	Table          TableName
+	Inherits       TableNames
+	PartitionBy    *PartitionBy
+	Persistence    Persistence
+	StorageParams  StorageParams
+	OnCommit       CreateTableOnCommitSetting
+	Using          string
+	Tablespace     Name
+	ForeignServer  Name
+	ForeignOptions []KVOption
 	// In CREATE...AS queries, Defs represents a list of ColumnTableDefs, one for
 	// each column, and a ConstraintTableDef for each constraint on a subset of
 	// these columns.

@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,26 @@ func (p PgForeignDataWrapperHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgForeignDataWrapperHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_foreign_data_wrapper row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, wrapper := range auth.GetAllForeignDataWrappers() {
+			owner := catalogOwnerOID()
+			if role := auth.GetRole(wrapper.Owner); role.IsValid() {
+				owner = id.NewId(id.Section_User, wrapper.Owner)
+			}
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_ForeignDataWrapper, wrapper.Name), // oid
+				wrapper.Name,    // fdwname
+				owner,           // fdwowner
+				id.Null,         // fdwhandler
+				id.Null,         // fdwvalidator
+				nil,             // fdwacl
+				wrapper.Options, // fdwoptions
+				id.NewTable(PgCatalogName, PgForeignDataWrapperName).AsId(),
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,20 +83,4 @@ var pgForeignDataWrapperSchema = sql.Schema{
 	{Name: "fdwacl", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignDataWrapperName},     // TODO: aclitem[] type
 	{Name: "fdwoptions", Type: pgtypes.TextArray, Default: nil, Nullable: true, Source: PgForeignDataWrapperName}, // TODO: collation C
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgForeignDataWrapperName},
-}
-
-// pgForeignDataWrapperRowIter is the sql.RowIter for the pg_foreign_data_wrapper table.
-type pgForeignDataWrapperRowIter struct {
-}
-
-var _ sql.RowIter = (*pgForeignDataWrapperRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgForeignDataWrapperRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgForeignDataWrapperRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

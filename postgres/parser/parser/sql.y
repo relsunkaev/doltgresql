@@ -815,7 +815,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> LINESTRING LINESTRINGM LINESTRINGZ LINESTRINGZM LIST LISTEN
 %token <str> LOCAL LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCK LOCKED LOGGED LOGIN LOOKUP LOW LSHIFT
 
-%token <str> MAIN MATCH MATERIALIZED MAXVALUE MERGE METHOD MODE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
+%token <str> MAIN MAPPING MATCH MATERIALIZED MAXVALUE MERGE METHOD MODE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
 %token <str> MINITCOND MINUTE MINVALUE MINVFUNC MODIFYCLUSTERSETTING MODULUS MONTH MSFUNC MSPACE MSSPACE MSTYPE
 %token <str> MULTILINESTRING MULTILINESTRINGM MULTILINESTRINGZ MULTILINESTRINGZM MULTIPOINT MULTIPOINTM
 %token <str> MULTIPOINTZ MULTIPOINTZM MULTIPOLYGON MULTIPOLYGONM MULTIPOLYGONZ MULTIPOLYGONZM MULTIRANGE_TYPE_NAME
@@ -941,6 +941,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> alter_sequence_set_schema_stmt
 %type <tree.Statement> alter_sequence_set_log_stmt
 %type <tree.Statement> alter_sequence_owner_to_stmt
+%type <tree.Statement> alter_foreign_table_stmt alter_foreign_data_wrapper_stmt alter_foreign_server_stmt alter_user_mapping_stmt
 
 %type <tree.Statement> alter_aggregate_stmt
 %type <tree.Statement> alter_collation_stmt
@@ -988,6 +989,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> create_view_stmt
 %type <tree.Statement> create_materialized_view_stmt
 %type <tree.Statement> create_publication_stmt
+%type <tree.Statement> create_foreign_data_wrapper_stmt create_foreign_server_stmt create_user_mapping_stmt
 %type <tree.Statement> create_sequence_stmt
 %type <tree.Statement> create_subscription_stmt
 %type <tree.Statement> create_trigger_stmt
@@ -1027,6 +1029,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> drop_function_stmt
 %type <tree.Statement> drop_procedure_stmt
 %type <tree.Statement> drop_aggregate_stmt
+%type <tree.Statement> drop_foreign_table_stmt drop_foreign_data_wrapper_stmt drop_foreign_server_stmt drop_user_mapping_stmt
 
 %type <tree.Statement> analyze_stmt
 %type <tree.Statement> explain_stmt
@@ -1132,6 +1135,8 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]string> opt_incremental
 %type <tree.KVOption> kv_option
 %type <[]tree.KVOption> kv_option_list opt_with_options opt_with_schedule_options
+%type <tree.KVOption> foreign_option
+%type <[]tree.KVOption> foreign_options opt_foreign_options foreign_option_list
 %type <*tree.BackupOptions> opt_with_backup_options backup_options backup_options_list
 %type <*tree.RestoreOptions> opt_with_restore_options restore_options restore_options_list
 %type <*tree.CopyOptions> copy_options copy_options_list
@@ -1225,7 +1230,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*tree.UnresolvedObjectName> view_name db_object_name simple_db_object_name complex_db_object_name  opt_collate
 %type <*tree.UnresolvedObjectName> db_object_name_no_keywords simple_db_object_name_no_keywords complex_db_object_name_no_keywords
 %type <[]*tree.UnresolvedObjectName> type_name_list sequence_name_list
-%type <str> schema_name opt_schema_name opt_schema opt_version tablespace_name
+%type <str> schema_name opt_schema_name opt_schema opt_version opt_foreign_server_type opt_foreign_server_version tablespace_name
 %type <[]string> schema_name_list role_spec_list opt_role_list opt_owned_by_list
 %type <*tree.UnresolvedName> table_pattern complex_table_pattern
 %type <*tree.UnresolvedName> column_path prefixed_column_path column_path_with_star
@@ -1619,6 +1624,46 @@ alter_ddl_stmt:
 | alter_trigger_stmt            // EXTEND WITH HELP: ALTER TRIGGER
 | alter_language_stmt           // EXTEND WITH HELP: ALTER LANGUAGE
 | alter_domain_stmt             // EXTEND WITH HELP: ALTER DOMAIN
+| alter_foreign_table_stmt
+| alter_foreign_data_wrapper_stmt
+| alter_foreign_server_stmt
+| alter_user_mapping_stmt
+
+alter_foreign_table_stmt:
+  ALTER FOREIGN TABLE relation_expr alter_table_cmd
+  {
+    $$.val = &tree.AlterTable{Table: $4.unresolvedObjectName(), IfExists: false, Cmds: $5.alterTableCmds()}
+  }
+| ALTER FOREIGN TABLE relation_expr foreign_options
+  {
+    $$.val = &tree.AlterForeignTable{Name: $4.unresolvedObjectName(), Options: $5.kvOptions()}
+  }
+| ALTER FOREIGN TABLE IF EXISTS relation_expr alter_table_cmd
+  {
+    $$.val = &tree.AlterTable{Table: $6.unresolvedObjectName(), IfExists: true, Cmds: $7.alterTableCmds()}
+  }
+| ALTER FOREIGN TABLE IF EXISTS relation_expr foreign_options
+  {
+    $$.val = &tree.AlterForeignTable{Name: $6.unresolvedObjectName(), Options: $7.kvOptions()}
+  }
+
+alter_foreign_data_wrapper_stmt:
+  ALTER FOREIGN DATA WRAPPER name opt_foreign_options
+  {
+    $$.val = &tree.AlterForeignDataWrapper{Name: tree.Name($5), Options: $6.kvOptions()}
+  }
+
+alter_foreign_server_stmt:
+  ALTER SERVER name opt_foreign_server_version opt_foreign_options
+  {
+    $$.val = &tree.AlterForeignServer{Name: tree.Name($3), Version: $4, Options: $5.kvOptions()}
+  }
+
+alter_user_mapping_stmt:
+  ALTER role_or_group_or_user MAPPING FOR role_spec SERVER name opt_foreign_options
+  {
+    $$.val = &tree.AlterUserMapping{User: $5, Server: tree.Name($7), Options: $8.kvOptions()}
+  }
 
 // %Help: ALTER TABLE - change the definition of a table
 // %Category: DDL
@@ -3614,7 +3659,11 @@ import_format:
 //
 // %SeeAlso: CREATE TABLE
 import_stmt:
- IMPORT import_format '(' string_or_placeholder ')' opt_with_options
+ IMPORT FOREIGN SCHEMA name FROM SERVER name INTO schema_name
+  {
+    $$.val = &tree.ImportForeignSchema{Schema: tree.Name($4), Server: tree.Name($7), Into: tree.Name($9)}
+  }
+| IMPORT import_format '(' string_or_placeholder ')' opt_with_options
   {
     /* SKIP DOC */
     $$.val = &tree.Import{Bundle: true, FileFormat: $2, Files: tree.Exprs{$4.expr()}, Options: $6.kvOptions()}
@@ -3747,6 +3796,87 @@ opt_with_options:
 | /* EMPTY */
   {
     $$.val = nil
+  }
+
+opt_foreign_server_type:
+  /* EMPTY */
+  {
+    $$ = ""
+  }
+| TYPE name
+  {
+    $$ = $2
+  }
+| TYPE SCONST
+  {
+    $$ = $2
+  }
+
+opt_foreign_server_version:
+  /* EMPTY */
+  {
+    $$ = ""
+  }
+| VERSION name
+  {
+    $$ = $2
+  }
+| VERSION SCONST
+  {
+    $$ = $2
+  }
+
+opt_foreign_options:
+  /* EMPTY */
+  {
+    $$.val = []tree.KVOption(nil)
+  }
+
+| foreign_options
+  {
+    $$.val = $1.kvOptions()
+  }
+
+foreign_options:
+  OPTIONS '(' foreign_option_list ')'
+  {
+    $$.val = $3.kvOptions()
+  }
+
+foreign_option_list:
+  foreign_option
+  {
+    $$.val = []tree.KVOption{$1.kvOption()}
+  }
+| foreign_option_list ',' foreign_option
+  {
+    $$.val = append($1.kvOptions(), $3.kvOption())
+  }
+
+foreign_option:
+  unrestricted_name
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1)}
+  }
+| unrestricted_name SCONST
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: tree.NewStrVal($2)}
+  }
+| unrestricted_name '=' string_or_placeholder
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: $3.expr()}
+  }
+| ADD unrestricted_name SCONST
+  {
+    $$.val = tree.KVOption{Key: tree.Name($2), Value: tree.NewStrVal($3)}
+  }
+| SET unrestricted_name SCONST
+  {
+    $$.val = tree.KVOption{Key: tree.Name($2), Value: tree.NewStrVal($3)}
+  }
+| DROP unrestricted_name
+  {
+    $$.val = tree.KVOption{Key: tree.Name($2)}
   }
 
 // %Help: CALL - invoke a procedure
@@ -4329,6 +4459,24 @@ access_method_type:
 | TABLE
   {
     $$ = "t"
+  }
+
+create_foreign_data_wrapper_stmt:
+  CREATE FOREIGN DATA WRAPPER name opt_foreign_options
+  {
+    $$.val = &tree.CreateForeignDataWrapper{Name: tree.Name($5), Options: $6.kvOptions()}
+  }
+
+create_foreign_server_stmt:
+  CREATE SERVER name opt_foreign_server_type opt_foreign_server_version FOREIGN DATA WRAPPER name opt_foreign_options
+  {
+    $$.val = &tree.CreateForeignServer{Name: tree.Name($3), Type: $4, Version: $5, Wrapper: tree.Name($9), Options: $10.kvOptions()}
+  }
+
+create_user_mapping_stmt:
+  CREATE role_or_group_or_user MAPPING FOR role_spec SERVER name opt_foreign_options
+  {
+    $$.val = &tree.CreateUserMapping{User: $5, Server: tree.Name($7), Options: $8.kvOptions()}
   }
 
 create_unsupported:
@@ -5233,6 +5381,9 @@ create_ddl_stmt:
 | create_schema_stmt   // EXTEND WITH HELP: CREATE SCHEMA
 | create_type_stmt     // EXTEND WITH HELP: CREATE TYPE
 | create_domain_stmt    // EXTEND WITH HELP: CREATE DOMAIN
+| create_foreign_data_wrapper_stmt
+| create_foreign_server_stmt
+| create_user_mapping_stmt
 | create_ddl_stmt_schema_element // help texts in sub-rule
 
 create_ddl_stmt_schema_element:
@@ -5462,6 +5613,46 @@ drop_access_method_stmt:
     $$.val = &tree.DropAccessMethod{Names: tree.NameList{tree.Name($6)}, IfExists: true, DropBehavior: $7.dropBehavior()}
   }
 
+drop_foreign_table_stmt:
+  DROP FOREIGN TABLE table_name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignTable{Names: $4.tableNames(), IfExists: false, DropBehavior: $5.dropBehavior()}
+  }
+| DROP FOREIGN TABLE IF EXISTS table_name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignTable{Names: $6.tableNames(), IfExists: true, DropBehavior: $7.dropBehavior()}
+  }
+
+drop_foreign_data_wrapper_stmt:
+  DROP FOREIGN DATA WRAPPER name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignDataWrapper{Names: $5.nameList(), DropBehavior: $6.dropBehavior()}
+  }
+| DROP FOREIGN DATA WRAPPER IF EXISTS name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignDataWrapper{Names: $7.nameList(), IfExists: true, DropBehavior: $8.dropBehavior()}
+  }
+
+drop_foreign_server_stmt:
+  DROP SERVER name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignServer{Names: $3.nameList(), DropBehavior: $4.dropBehavior()}
+  }
+| DROP SERVER IF EXISTS name_list opt_drop_behavior
+  {
+    $$.val = &tree.DropForeignServer{Names: $5.nameList(), IfExists: true, DropBehavior: $6.dropBehavior()}
+  }
+
+drop_user_mapping_stmt:
+  DROP role_or_group_or_user MAPPING FOR role_spec SERVER name
+  {
+    $$.val = &tree.DropUserMapping{User: $5, Server: tree.Name($7)}
+  }
+| DROP role_or_group_or_user MAPPING IF EXISTS FOR role_spec SERVER name
+  {
+    $$.val = &tree.DropUserMapping{User: $7, Server: tree.Name($9), IfExists: true}
+  }
+
 drop_ddl_stmt:
   drop_database_stmt // EXTEND WITH HELP: DROP DATABASE
 | drop_index_stmt    // EXTEND WITH HELP: DROP INDEX
@@ -5473,6 +5664,10 @@ drop_ddl_stmt:
 | drop_subscription_stmt // EXTEND WITH HELP: DROP SUBSCRIPTION
 | drop_schema_stmt   // EXTEND WITH HELP: DROP SCHEMA
 | drop_type_stmt     // EXTEND WITH HELP: DROP TYPE
+| drop_foreign_table_stmt
+| drop_foreign_data_wrapper_stmt
+| drop_foreign_server_stmt
+| drop_user_mapping_stmt
 
 // %Help: DROP VIEW - remove a view
 // %Category: DDL
@@ -8191,6 +8386,28 @@ create_table_stmt:
       StorageParams: $11.storageParams(),
       OnCommit: $12.createTableOnCommitSetting(),
       Tablespace: tree.Name($13),
+    }
+  }
+| CREATE FOREIGN TABLE table_name '(' opt_table_elem_list ')' SERVER name opt_foreign_options
+  {
+    $$.val = &tree.CreateTable{
+      Table: $4.unresolvedObjectName().ToTableName(),
+      IfNotExists: false,
+      Defs: $6.tblDefs(),
+      Persistence: tree.PersistencePermanent,
+      ForeignServer: tree.Name($9),
+      ForeignOptions: $10.kvOptions(),
+    }
+  }
+| CREATE FOREIGN TABLE IF NOT EXISTS table_name '(' opt_table_elem_list ')' SERVER name opt_foreign_options
+  {
+    $$.val = &tree.CreateTable{
+      Table: $7.unresolvedObjectName().ToTableName(),
+      IfNotExists: true,
+      Defs: $9.tblDefs(),
+      Persistence: tree.PersistencePermanent,
+      ForeignServer: tree.Name($12),
+      ForeignOptions: $13.kvOptions(),
     }
   }
 | CREATE opt_persistence_temp_table TABLE IF NOT EXISTS table_name '(' opt_table_elem_list ')' opt_inherits opt_partition_by opt_using_method opt_table_with opt_create_table_on_commit opt_tablespace
@@ -16043,6 +16260,7 @@ unreserved_keyword:
 | LOOKUP
 | LOW
 | MAIN
+| MAPPING
 | MATCH
 | MATERIALIZED
 | MAXVALUE
