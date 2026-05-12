@@ -66,6 +66,25 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnAccessMethod(accessMethodName.Name.String(), stmt.Comment)}, nil
+	case *tree.CommentOnIndex:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnIndex(
+			string(obj.Index.Table.SchemaName),
+			string(obj.Index.Table.ObjectName),
+			string(obj.Index.Index),
+			stmt.Comment,
+		)}, nil
+	case *tree.CommentOnConstraintOnTable:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Table)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnConstraint(tableName, string(obj.Constraint), stmt.Comment)}, nil
+	case *tree.CommentOnTrigger:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Table)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTrigger(tableName, string(obj.Trigger), stmt.Comment)}, nil
 	case *tree.CommentOnPublication:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPublication(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnSubscription:

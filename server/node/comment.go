@@ -28,6 +28,7 @@ import (
 	"github.com/dolthub/doltgresql/server/accessmethod"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/settings"
 )
 
@@ -54,6 +55,9 @@ const (
 	CommentTargetTSDict   CommentTargetKind = "text search dictionary"
 	CommentTargetTSParser CommentTargetKind = "text search parser"
 	CommentTargetTSTmpl   CommentTargetKind = "text search template"
+	CommentTargetIndex    CommentTargetKind = "index"
+	CommentTargetConstr   CommentTargetKind = "constraint"
+	CommentTargetTrigger  CommentTargetKind = "trigger"
 )
 
 type Comment struct {
@@ -61,6 +65,8 @@ type Comment struct {
 	Relation    vitess.TableName
 	Column      string
 	Name        string
+	SchemaName  string
+	TableName   string
 	Routine     *RoutineWithParams
 	Description *string
 }
@@ -142,6 +148,18 @@ func NewCommentOnTextSearchParser(name string, description *string) Comment {
 
 func NewCommentOnTextSearchTemplate(name string, description *string) Comment {
 	return Comment{Kind: CommentTargetTSTmpl, Name: name, Description: description}
+}
+
+func NewCommentOnIndex(schemaName string, tableName string, indexName string, description *string) Comment {
+	return Comment{Kind: CommentTargetIndex, SchemaName: schemaName, TableName: tableName, Name: indexName, Description: description}
+}
+
+func NewCommentOnConstraint(relation vitess.TableName, name string, description *string) Comment {
+	return Comment{Kind: CommentTargetConstr, Relation: relation, Name: name, Description: description}
+}
+
+func NewCommentOnTrigger(relation vitess.TableName, name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTrigger, Relation: relation, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -279,6 +297,24 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_ts_template", 0), nil
+	case CommentTargetIndex:
+		oid, err := resolveCommentIndex(ctx, c.SchemaName, c.TableName, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_class", 0), nil
+	case CommentTargetConstr:
+		oid, err := resolveCommentConstraint(ctx, c.Relation, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_constraint", 0), nil
+	case CommentTargetTrigger:
+		oid, err := resolveCommentTrigger(ctx, c.Relation, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_trigger", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -512,6 +548,135 @@ func resolveBuiltInTextSearchObject(name string, section id.Section, label strin
 		return id.Null, fmt.Errorf(`text search %s "%s" does not exist`, label, name)
 	}
 	return id.NewId(section, "pg_catalog", name), nil
+}
+
+func resolveCommentIndex(ctx *sql.Context, schemaName string, tableName string, indexName string) (id.Id, error) {
+	searchSchemas := []string{schemaName}
+	if schemaName == "" {
+		var err error
+		searchSchemas, err = settings.GetCurrentSchemas(ctx)
+		if err != nil {
+			return id.Null, err
+		}
+	}
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	var found id.Id
+	for _, searchSchema := range searchSchemas {
+		schema, ok, err := schemaDatabase.GetSchema(ctx, searchSchema)
+		if err != nil {
+			return id.Null, err
+		}
+		if !ok {
+			continue
+		}
+		tableNames := []string{tableName}
+		if tableName == "" {
+			tableNames, err = schema.GetTableNames(ctx)
+			if err != nil {
+				return id.Null, err
+			}
+		}
+		for _, tblName := range tableNames {
+			table, ok, err := schema.GetTableInsensitive(ctx, tblName)
+			if err != nil {
+				return id.Null, err
+			}
+			if !ok {
+				continue
+			}
+			indexedTable, ok := table.(sql.IndexAddressable)
+			if !ok {
+				continue
+			}
+			indexes, err := indexedTable.GetIndexes(ctx)
+			if err != nil {
+				return id.Null, err
+			}
+			for _, index := range indexes {
+				if indexName != "" && indexmetadata.DisplayNameForTable(index, table) != indexName {
+					continue
+				}
+				if indexName == "" && index.ID() != "PRIMARY" {
+					continue
+				}
+				oid := id.NewIndex(schema.SchemaName(), table.Name(), index.ID()).AsId()
+				if found.IsValid() {
+					return id.Null, fmt.Errorf(`index name "%s" is not unique`, indexName)
+				}
+				found = oid
+			}
+		}
+	}
+	if !found.IsValid() {
+		return id.Null, fmt.Errorf(`index "%s" does not exist`, indexName)
+	}
+	return found, nil
+}
+
+func resolveCommentConstraint(ctx *sql.Context, relation vitess.TableName, constraintName string) (id.Id, error) {
+	relationID, schema, err := resolveCommentRelation(ctx, relation)
+	if err != nil {
+		return id.Null, err
+	}
+	if checkTable, ok := schemaTable(ctx, relation, schema).(sql.CheckTable); ok {
+		checks, err := checkTable.GetChecks(ctx)
+		if err != nil {
+			return id.Null, err
+		}
+		for _, check := range checks {
+			if check.Name == constraintName {
+				tableID := id.Table(relationID)
+				return id.NewCheck(tableID.SchemaName(), tableID.TableName(), constraintName).AsId(), nil
+			}
+		}
+	}
+	return id.Null, fmt.Errorf(`constraint "%s" for relation "%s" does not exist`, constraintName, relation.Name.String())
+}
+
+func resolveCommentTrigger(ctx *sql.Context, relation vitess.TableName, triggerName string) (id.Id, error) {
+	relationID, _, err := resolveCommentRelation(ctx, relation)
+	if err != nil {
+		return id.Null, err
+	}
+	collection, err := core.GetTriggersCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return id.Null, err
+	}
+	tableID := id.Table(relationID)
+	triggerID := id.NewTrigger(tableID.SchemaName(), tableID.TableName(), triggerName)
+	if !collection.HasTrigger(ctx, triggerID) {
+		return id.Null, fmt.Errorf(`trigger "%s" for relation "%s" does not exist`, triggerName, relation.Name.String())
+	}
+	return triggerID.AsId(), nil
+}
+
+func schemaTable(ctx *sql.Context, relation vitess.TableName, schema sql.Schema) sql.Table {
+	relationName := relation.Name.String()
+	searchSchemas, err := commentSearchSchemas(ctx, relation)
+	if err != nil {
+		return nil
+	}
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return nil
+	}
+	for _, schemaName := range searchSchemas {
+		dbSchema, ok, err := schemaDatabase.GetSchema(ctx, schemaName)
+		if err != nil || !ok {
+			continue
+		}
+		table, ok, err := dbSchema.GetTableInsensitive(ctx, relationName)
+		if err != nil || !ok {
+			continue
+		}
+		if len(schema) == len(table.Schema(ctx)) {
+			return table
+		}
+	}
+	return nil
 }
 
 type schemaGetter interface {
