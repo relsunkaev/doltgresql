@@ -99,8 +99,14 @@ func TestEnumOrderingUsesDeclarationOrderRepro(t *testing.T) {
 				{
 					Query: `SELECT status::text
 						FROM enum_declared_order_items
-						ORDER BY status;`,
+						ORDER BY enum_declared_order_items.status;`,
 					Expected: []sql.Row{{"beta"}, {"alpha"}, {"gamma"}},
+				},
+				{
+					Query: `SELECT status::text
+						FROM enum_declared_order_items
+						ORDER BY status;`,
+					Expected: []sql.Row{{"alpha"}, {"beta"}, {"gamma"}},
 				},
 			},
 		},
