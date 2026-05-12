@@ -425,6 +425,46 @@ func TestCreateCastRequiresTypeOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestCreateCastRequiresFunctionExecutePrivilegeRepro reproduces a security
+// bug: Doltgres allows a role without EXECUTE privilege on the cast function to
+// create a cast backed by it.
+func TestCreateCastRequiresFunctionExecutePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE CAST requires EXECUTE on backing function",
+			SetUpScript: []string{
+				`CREATE USER cast_function_creator PASSWORD 'creator';`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO cast_function_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `CREATE TYPE cast_execute_color AS ENUM ('red', 'green');`,
+					Username: `cast_function_creator`,
+					Password: `creator`,
+				},
+				{
+					Query: `CREATE FUNCTION int_to_cast_execute_color(input_value INT)
+						RETURNS cast_execute_color
+						LANGUAGE SQL
+						IMMUTABLE
+						AS $$ SELECT CASE WHEN input_value = 1 THEN 'red'::cast_execute_color ELSE 'green'::cast_execute_color END $$;`,
+				},
+				{
+					Query: `REVOKE ALL ON FUNCTION int_to_cast_execute_color(INT)
+						FROM PUBLIC;`,
+				},
+				{
+					Query: `CREATE CAST (INT AS cast_execute_color)
+						WITH FUNCTION int_to_cast_execute_color(INT);`,
+					ExpectedErr: `permission denied`,
+					Username:    `cast_function_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropCastRequiresTypeOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that owns neither side of a cast to drop it.
 func TestDropCastRequiresTypeOwnershipRepro(t *testing.T) {
