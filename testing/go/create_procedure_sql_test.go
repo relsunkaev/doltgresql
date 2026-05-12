@@ -20,6 +20,42 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
+// TestSqlProcedureInsertReturningExecutesRepro reproduces a SQL procedure
+// execution bug: CALL should run an INSERT ... RETURNING body without panicking
+// and persist the inserted row.
+func TestSqlProcedureInsertReturningExecutesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SQL procedure INSERT RETURNING executes",
+			SetUpScript: []string{
+				`CREATE TABLE sql_proc_returning_items (
+					id SERIAL PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE PROCEDURE sql_proc_insert_returning(input_label TEXT)
+					LANGUAGE SQL
+					AS $$
+						INSERT INTO sql_proc_returning_items (label)
+						VALUES (input_label)
+						RETURNING id
+					$$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:            `CALL sql_proc_insert_returning('first');`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `SELECT label
+						FROM sql_proc_returning_items
+						ORDER BY id;`,
+					Expected: []sql.Row{{"first"}},
+				},
+			},
+		},
+	})
+}
+
 func TestCreateProcedureLanguageSql(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

@@ -79,6 +79,32 @@ func TestByteaPrimaryKeySupportsLookupGuard(t *testing.T) {
 	})
 }
 
+// TestInternalCharCastsHighBitByteToSignedIntRepro reproduces a type-value
+// correctness bug: casting a one-byte "char" value to integer should use
+// PostgreSQL's signed-byte semantics.
+func TestInternalCharCastsHighBitByteToSignedIntRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: `"char" high-bit byte casts to signed integer`,
+			SetUpScript: []string{
+				`CREATE TABLE internal_char_cast_items (
+					id INT PRIMARY KEY,
+					value "char"
+				);`,
+				`INSERT INTO internal_char_cast_items VALUES (1, 'こんにちは');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT value::int
+						FROM internal_char_cast_items
+						WHERE id = 1;`,
+					Expected: []sql.Row{{-29}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropTypeDependencyChecksSchemaQualifiedTypeRepro reproduces a dependency
 // correctness bug: dropping an unused type in one schema should not be blocked
 // by columns that use a distinct same-named type in another schema.

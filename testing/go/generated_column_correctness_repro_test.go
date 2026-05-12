@@ -84,10 +84,10 @@ func TestGeneratedColumnRejectsGeneratedColumnReferenceRepro(t *testing.T) {
 	})
 }
 
-// TestGeneratedColumnRejectsMalformedReferencesGuard guards parser and analyzer
-// rejection of generated-column definitions whose dependency shape PostgreSQL
-// rejects before persisting the table definition.
-func TestGeneratedColumnRejectsMalformedReferencesGuard(t *testing.T) {
+// TestGeneratedColumnRejectsMalformedReferencesRepro reproduces a
+// generated-column correctness bug: Doltgres accepts a duplicate generation
+// clause that PostgreSQL rejects before persisting the table.
+func TestGeneratedColumnRejectsMalformedReferencesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "generated columns reject duplicate generation clauses",
