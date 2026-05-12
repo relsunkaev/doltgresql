@@ -2927,6 +2927,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if containsSecurityLabel(query) {
+		return nil, pgerror.New(pgcode.InvalidParameterValue, "security label provider is not loaded")
+	}
 	if rewrittenQuery, ok := rewriteCreateRuleDoAlsoInsert(query); ok {
 		return h.convertQuery(rewrittenQuery)
 	}
@@ -3013,6 +3016,7 @@ var (
 	dropPolicyIfExistsPattern = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropRuleIfExistsPattern   = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	securityLabelPattern      = regexp.MustCompile(`(?is)^\s*security\s+label\b`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
 	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
@@ -3230,6 +3234,10 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 		},
 		StatementTag: statementTag,
 	}, true
+}
+
+func containsSecurityLabel(query string) bool {
+	return securityLabelPattern.MatchString(query)
 }
 
 func rewriteCustomOperatorSelect(query string) (string, bool) {

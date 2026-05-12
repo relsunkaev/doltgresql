@@ -33,3 +33,12 @@ func TestRewriteXmlConstructors(t *testing.T) {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 }
+
+func TestContainsSecurityLabel(t *testing.T) {
+	if !containsSecurityLabel(`SECURITY LABEL ON TABLE t IS 'x';`) {
+		t.Fatal("expected SECURITY LABEL to be recognized")
+	}
+	if containsSecurityLabel(`SELECT 'security label';`) {
+		t.Fatal("did not expect ordinary SELECT to match")
+	}
+}
