@@ -37,10 +37,14 @@ var _ Statement = &AlterRole{}
 
 // AlterRole represents an ALTER ROLE statement.
 type AlterRole struct {
-	Name      string
-	IfExists  bool
-	IsRole    bool
-	KVOptions KVOptions
+	Name         string
+	IfExists     bool
+	IsRole       bool
+	KVOptions    KVOptions
+	DatabaseName string
+	SetVar       *SetVar
+	ResetVar     string
+	ResetAll     bool
 }
 
 // Format implements the NodeFormatter interface.
@@ -55,6 +59,23 @@ func (node *AlterRole) Format(ctx *FmtCtx) {
 		ctx.WriteString("IF EXISTS ")
 	}
 	ctx.WriteString(node.Name)
+
+	if node.DatabaseName != "" {
+		ctx.WriteString(" IN DATABASE ")
+		ctx.WriteString(node.DatabaseName)
+	}
+
+	if node.SetVar != nil {
+		ctx.WriteString(" SET ")
+		ctx.FormatNode(node.SetVar)
+	}
+	if node.ResetVar != "" {
+		ctx.WriteString(" RESET ")
+		ctx.WriteString(node.ResetVar)
+	}
+	if node.ResetAll {
+		ctx.WriteString(" RESET ALL")
+	}
 
 	if len(node.KVOptions) > 0 {
 		ctx.WriteString(" WITH")

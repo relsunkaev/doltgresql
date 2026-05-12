@@ -21,6 +21,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/config"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
@@ -33,6 +34,32 @@ func nodeAlterRole(ctx *Context, node *tree.AlterRole) (vitess.Statement, error)
 		// The parser should make this impossible, but extra error checking is never bad
 		return nil, errors.New(`role name cannot be empty`)
 	}
+
+	alterRole := &pgnodes.AlterRole{
+		Name:         node.Name,
+		DatabaseName: string(node.DatabaseName),
+	}
+	if node.SetVar != nil {
+		setName, setValue, err := databaseSetVar(node.SetVar)
+		if err != nil {
+			return nil, err
+		}
+		alterRole.SetName = setName
+		alterRole.SetValue = setValue
+		return vitess.InjectedStatement{Statement: alterRole}, nil
+	}
+	if node.ResetVar != "" {
+		if !config.IsValidPostgresConfigParameter(node.ResetVar) && !config.IsValidDoltConfigParameter(node.ResetVar) {
+			return nil, errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, node.ResetVar)
+		}
+		alterRole.ResetName = node.ResetVar
+		return vitess.InjectedStatement{Statement: alterRole}, nil
+	}
+	if node.ResetAll {
+		alterRole.ResetAll = true
+		return vitess.InjectedStatement{Statement: alterRole}, nil
+	}
+
 	// Some of the keys are used as markers, and do not contain values.
 	// Therefore, the values will be nil since they're ignored.
 	options := make(map[string]any)
@@ -110,11 +137,9 @@ func nodeAlterRole(ctx *Context, node *tree.AlterRole) (vitess.Statement, error)
 			return nil, errors.Errorf(`unknown role option "%s"`, kvOption.Key)
 		}
 	}
+	alterRole.Options = options
 	return vitess.InjectedStatement{
-		Statement: &pgnodes.AlterRole{
-			Name:    node.Name,
-			Options: options,
-		},
-		Children: nil,
+		Statement: alterRole,
+		Children:  nil,
 	}, nil
 }

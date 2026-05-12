@@ -9595,6 +9595,30 @@ alter_role_stmt:
 {
   $$.val = &tree.AlterRole{Name: $5, IfExists: true, KVOptions: $6.kvOptions(), IsRole: $2.bool()}
 }
+| ALTER role_or_group_or_user non_reserved_word_or_sconst SET generic_set_single_config
+{
+  $$.val = &tree.AlterRole{Name: $3, SetVar: $5.setVar(), IsRole: $2.bool()}
+}
+| ALTER role_or_group_or_user non_reserved_word_or_sconst RESET name
+{
+  $$.val = &tree.AlterRole{Name: $3, ResetVar: $5, IsRole: $2.bool()}
+}
+| ALTER role_or_group_or_user non_reserved_word_or_sconst RESET ALL
+{
+  $$.val = &tree.AlterRole{Name: $3, ResetAll: true, IsRole: $2.bool()}
+}
+| ALTER role_or_group_or_user non_reserved_word_or_sconst IN DATABASE database_name SET generic_set_single_config
+{
+  $$.val = &tree.AlterRole{Name: $3, DatabaseName: $6, SetVar: $8.setVar(), IsRole: $2.bool()}
+}
+| ALTER role_or_group_or_user non_reserved_word_or_sconst IN DATABASE database_name RESET name
+{
+  $$.val = &tree.AlterRole{Name: $3, DatabaseName: $6, ResetVar: $8, IsRole: $2.bool()}
+}
+| ALTER role_or_group_or_user non_reserved_word_or_sconst IN DATABASE database_name RESET ALL
+{
+  $$.val = &tree.AlterRole{Name: $3, DatabaseName: $6, ResetAll: true, IsRole: $2.bool()}
+}
 | ALTER role_or_group_or_user error // SHOW HELP: ALTER ROLE
 
 // "CREATE GROUP is now an alias for CREATE ROLE"

@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -30,8 +31,13 @@ import (
 
 // AlterRole handles the ALTER ROLE and ALTER USER statements (ALTER USER is an alias).
 type AlterRole struct {
-	Name    string
-	Options map[string]any
+	Name         string
+	Options      map[string]any
+	DatabaseName string
+	SetName      string
+	SetValue     string
+	ResetName    string
+	ResetAll     bool
 }
 
 // ErrVitessChildCount is returned by WithResolvedChildren to indicate that the expected child count is incorrect.
@@ -78,6 +84,26 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		// A role may only modify itself if it doesn't have the ability to create roles
 		// TODO: allow non-role-creating roles to only modify their own password, and grab actual error message
 		return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+	}
+	if c.SetName != "" || c.ResetName != "" || c.ResetAll {
+		if c.DatabaseName != "" && !dsess.DSessFromSess(ctx.Session).Provider().HasDatabase(ctx, c.DatabaseName) {
+			return nil, errors.Errorf(`database "%s" does not exist`, c.DatabaseName)
+		}
+		var err error
+		auth.LockWrite(func() {
+			if c.SetName != "" {
+				auth.SetDbRoleSetting(c.DatabaseName, c.Name, c.SetName, c.SetValue)
+			} else if c.ResetAll {
+				auth.ResetDbRoleSetting(c.DatabaseName, c.Name, "")
+			} else {
+				auth.ResetDbRoleSetting(c.DatabaseName, c.Name, c.ResetName)
+			}
+			err = auth.PersistChanges()
+		})
+		if err != nil {
+			return nil, err
+		}
+		return sql.RowsToRowIter(), nil
 	}
 	for optionName, optionValue := range c.Options {
 		switch optionName {
