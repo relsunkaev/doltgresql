@@ -58,6 +58,48 @@ func TestAlterRoleSelfCreateRolePrivilegeEscalationRepro(t *testing.T) {
 	})
 }
 
+// TestAlterRoleSelfLoginAttributeRepro reproduces a role-authorization bug: a
+// normal role cannot change its own LOGIN attribute.
+func TestAlterRoleSelfLoginAttributeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "normal role cannot change its own LOGIN attribute",
+			SetUpScript: []string{
+				`CREATE USER self_login_attr PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER ROLE self_login_attr NOLOGIN;`,
+					ExpectedErr: `permission denied`,
+					Username:    `self_login_attr`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterRoleSelfInheritAttributeRepro reproduces a role-authorization bug:
+// a normal role cannot change its own INHERIT attribute.
+func TestAlterRoleSelfInheritAttributeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "normal role cannot change its own INHERIT attribute",
+			SetUpScript: []string{
+				`CREATE USER self_inherit_attr PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER ROLE self_inherit_attr NOINHERIT;`,
+					ExpectedErr: `permission denied`,
+					Username:    `self_inherit_attr`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterRoleSelfSuperuserPrivilegeEscalationGuard guards that a normal role
 // cannot grant itself SUPERUSER.
 func TestAlterRoleSelfSuperuserPrivilegeEscalationGuard(t *testing.T) {

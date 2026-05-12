@@ -11087,6 +11087,22 @@ artifacts only; no fixes are included here.
 - Observed Doltgres behavior: `ALTER ROLE self_createrole CREATEROLE` succeeds
   when run as `self_createrole`.
 
+### Normal roles can change their own LOGIN and INHERIT attributes
+
+- Reproducers: `TestAlterRoleSelfLoginAttributeRepro` and
+  `TestAlterRoleSelfInheritAttributeRepro` in
+  `testing/go/role_privilege_escalation_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run 'TestAlterRoleSelf(Login|Inherit)AttributeRepro' -count=1`.
+- Expected PostgreSQL behavior: a normal role cannot change its own role
+  attributes such as `LOGIN` or `INHERIT`; `ALTER ROLE self_login_attr
+  NOLOGIN` and `ALTER ROLE self_inherit_attr NOINHERIT` fail with a permission
+  error.
+- Observed Doltgres behavior: both statements succeed when run as the target
+  role, so a normal login role can mutate role attributes PostgreSQL reserves
+  for authorized role administrators.
+
 ### CREATEROLE users can create BYPASSRLS roles
 
 - Reproducer: `TestCreateRoleBypassRLSRequiresSuperuserRepro` in
