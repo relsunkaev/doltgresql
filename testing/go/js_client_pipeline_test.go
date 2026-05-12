@@ -371,7 +371,7 @@ func (s *postgresPipelineConnState) waitForPipelineBeforeReadyOrTimeout(wait tim
 		current := s.currentExecutions
 		s.mu.Unlock()
 		if current != 1 {
-			return current
+			return current, true
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
