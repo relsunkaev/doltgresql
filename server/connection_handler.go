@@ -80,6 +80,9 @@ type ConnectionHandler struct {
 	// copyFromStdinState is set when this connection is in the COPY FROM STDIN mode, meaning it is waiting on
 	// COPY DATA messages from the client to import data into tables.
 	copyFromStdinState *copyFromStdinState
+	// copyFromStdinFailed is set after a COPY DATA error has already ended the client-visible COPY operation. A
+	// trailing CopyDone or CopyFail from that aborted stream should be consumed without sending another response.
+	copyFromStdinFailed bool
 	// inTransaction is set to true with BEGIN query and false with COMMIT query.
 	inTransaction bool
 	// pendingReplicationCaptures stores row changes produced inside an explicit transaction until COMMIT.
@@ -1664,10 +1667,15 @@ func makeCommandComplete(tag string, rows int32) *pgproto3.CommandComplete {
 // messages are expected, and the server should tell the client that it is ready for the next query, and |err| contains
 // any error that occurred while processing the COPY DATA message.
 func (h *ConnectionHandler) handleCopyData(message *pgproto3.CopyData) (stop bool, endOfMessages bool, err error) {
+	if h.copyFromStdinState == nil && h.copyFromStdinFailed {
+		return false, false, nil
+	}
 	copyFromData := bytes.NewReader(message.Data)
 	stop, endOfMessages, err = h.handleCopyDataHelper(h.copyFromStdinState, copyFromData)
 	if err != nil && h.copyFromStdinState != nil {
 		h.copyFromStdinState.copyErr = err
+		h.copyFromStdinState = nil
+		h.copyFromStdinFailed = true
 	}
 	return stop, endOfMessages, err
 }
@@ -1830,6 +1838,9 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 			return errors.Errorf("no insertable table found in %v", insertNode.Destination)
 		}
 	}
+	if err = validateCopyFromGeneratedColumns(copyFromStdinNode.Columns, tbl.Schema(sqlCtx), copyFromStdinNode.TableName.Name); err != nil {
+		return err
+	}
 
 	var dataLoader dataloader.DataLoader
 	switch copyFromStdinNode.CopyOptions.CopyFormat {
@@ -1880,12 +1891,30 @@ func getInsertableTable(node sql.Node) sql.InsertableTable {
 	return tbl
 }
 
+func validateCopyFromGeneratedColumns(columns tree.NameList, schema sql.Schema, tableName string) error {
+	for _, column := range columns {
+		idx := schema.IndexOfColName(string(column))
+		if idx < 0 {
+			continue
+		}
+		col := schema[idx]
+		if col.Generated != nil && !col.AutoIncrement {
+			return errors.Errorf(`The value specified for generated column "%s" in table "%s" is not allowed.`, col.Name, tableName)
+		}
+	}
+	return nil
+}
+
 // handleCopyDone handles a COPY DONE message by finalizing the in-progress COPY DATA operation and committing the
 // loaded table data. The |stop| response parameter is true if the connection handler should shut down the connection,
 // |endOfMessages| is true if no more COPY DATA messages are expected, and the server should tell the client that it is
 // ready for the next query, and |err| contains any error that occurred while processing the COPY DATA message.
 func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, endOfMessages bool, err error) {
 	if h.copyFromStdinState == nil {
+		if h.copyFromStdinFailed {
+			h.copyFromStdinFailed = false
+			return false, false, nil
+		}
 		return false, true,
 			errors.Errorf("COPY DONE message received without a COPY FROM STDIN operation in progress")
 	}
@@ -1895,6 +1924,8 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 	// endOfMessage=true here, then the client gets confused about the unexpected/extra Idle message since the
 	// server has already reported it was idle in the last message after the returned error.
 	if h.copyFromStdinState.copyErr != nil {
+		h.copyFromStdinState = nil
+		h.copyFromStdinFailed = false
 		return false, false, nil
 	}
 
@@ -1946,6 +1977,10 @@ func (h *ConnectionHandler) handleCopyDone(_ *pgproto3.CopyDone) (stop bool, end
 // |err| contains any error that occurred while processing the COPY DATA message.
 func (h *ConnectionHandler) handleCopyFail(_ *pgproto3.CopyFail) (stop bool, endOfMessages bool, err error) {
 	if h.copyFromStdinState == nil {
+		if h.copyFromStdinFailed {
+			h.copyFromStdinFailed = false
+			return false, false, nil
+		}
 		return false, true,
 			errors.Errorf("COPY FAIL message received without a COPY FROM STDIN operation in progress")
 	}
@@ -1957,6 +1992,7 @@ func (h *ConnectionHandler) handleCopyFail(_ *pgproto3.CopyFail) (stop bool, end
 	}
 
 	h.copyFromStdinState = nil
+	h.copyFromStdinFailed = false
 	// We send back endOfMessage=true, since the COPY FAIL message ends the COPY DATA flow and the server is ready
 	// to accept the next query now.
 	return false, true, nil
@@ -2885,10 +2921,17 @@ func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
 // handleCopyFromStdinQuery handles the COPY FROM STDIN query at the Doltgres layer, without passing it to the engine.
 // COPY FROM STDIN can't be handled directly by the GMS engine, since COPY FROM STDIN relies on multiple messages sent
 // over the wire.
-func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, conn net.Conn) error {
+func (h *ConnectionHandler) handleCopyFromStdinQuery(copyFrom *node.CopyFrom, conn net.Conn) (err error) {
+	h.copyFromStdinFailed = false
 	h.copyFromStdinState = &copyFromStdinState{
 		copyFromStdinNode: copyFrom,
 	}
+	defer func() {
+		if err != nil {
+			h.copyFromStdinState = nil
+			h.copyFromStdinFailed = true
+		}
+	}()
 
 	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "COPY FROM STDIN")
 	if err != nil {
