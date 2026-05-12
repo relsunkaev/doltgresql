@@ -42,6 +42,7 @@ const (
 	FIELD_NAME_DEFINITION        = "definition"
 	FIELD_NAME_EXTENSION_NAME    = "extension_name"
 	FIELD_NAME_EXTENSION_SYMBOL  = "extension_symbol"
+	FIELD_NAME_EXTENSION_DEPS    = "extension_deps"
 	FIELD_NAME_SQL_DEFINITION    = "sql_definition"
 	FIELD_NAME_SET_OF            = "set_of"
 	FIELD_NAME_OWNER             = "owner"
@@ -199,6 +200,17 @@ func (pgf *Collection) DiffRootObjects(ctx context.Context, fromHash string, o o
 			ours.ExtensionSymbol = diff.OurValue.(string)
 		}
 	}
+	{
+		ourExtensionDeps := strings.Join(ours.ExtensionDeps, ",")
+		theirExtensionDeps := strings.Join(theirs.ExtensionDeps, ",")
+		ancestorExtensionDeps := strings.Join(ancestor.ExtensionDeps, ",")
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Text, FromHash: fromHash, FieldName: FIELD_NAME_EXTENSION_DEPS}
+		if pgmerge.DiffValues(&diff, ourExtensionDeps, theirExtensionDeps, ancestorExtensionDeps, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.ExtensionDeps = splitFunctionExtensionDeps(diff.OurValue.(string))
+		}
+	}
 	if ours.SQLDefinition != theirs.SQLDefinition {
 		diff := objinterface.RootObjectDiff{
 			Type:      pgtypes.Text,
@@ -322,6 +334,8 @@ func (pgf *Collection) GetFieldType(ctx context.Context, fieldName string) *pgty
 	case FIELD_NAME_EXTENSION_NAME:
 		return pgtypes.Text
 	case FIELD_NAME_EXTENSION_SYMBOL:
+		return pgtypes.Text
+	case FIELD_NAME_EXTENSION_DEPS:
 		return pgtypes.Text
 	case FIELD_NAME_SQL_DEFINITION:
 		return pgtypes.Text
@@ -466,6 +480,8 @@ func (pgf *Collection) UpdateField(ctx context.Context, rootObject objinterface.
 		function.ExtensionName = newValue.(string)
 	case FIELD_NAME_EXTENSION_SYMBOL:
 		function.ExtensionSymbol = newValue.(string)
+	case FIELD_NAME_EXTENSION_DEPS:
+		function.ExtensionDeps = splitFunctionExtensionDeps(newValue.(string))
 	case FIELD_NAME_SQL_DEFINITION:
 		function.SQLDefinition = newValue.(string)
 	case FIELD_NAME_SET_OF:
@@ -484,4 +500,11 @@ func (pgf *Collection) UpdateField(ctx context.Context, rootObject objinterface.
 		return nil, errors.Newf("unknown field name: `%s`", fieldName)
 	}
 	return function, nil
+}
+
+func splitFunctionExtensionDeps(value string) []string {
+	if value == "" {
+		return nil
+	}
+	return strings.Split(value, ",")
 }

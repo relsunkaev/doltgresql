@@ -19,10 +19,12 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
-	"github.com/dolthub/doltgresql/server/functions"
+	serverfunctions "github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -57,16 +59,16 @@ func (p PgDependHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql
 func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 	classID := id.NewTable(PgCatalogName, PgClassName).AsId()
 	relationOids := make(map[relationDependencyKey]id.Id)
-	if err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
-		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+	if err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
+		Table: func(ctx *sql.Context, schema serverfunctions.ItemSchema, table serverfunctions.ItemTable) (cont bool, err error) {
 			relationOids[newRelationDependencyKey(schema.Item.SchemaName(), table.Item.Name())] = table.OID.AsId()
 			return true, nil
 		},
-		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+		View: func(ctx *sql.Context, schema serverfunctions.ItemSchema, view serverfunctions.ItemView) (cont bool, err error) {
 			relationOids[newRelationDependencyKey(schema.Item.SchemaName(), view.Item.Name)] = view.OID.AsId()
 			return true, nil
 		},
-		Sequence: func(ctx *sql.Context, schema functions.ItemSchema, sequence functions.ItemSequence) (cont bool, err error) {
+		Sequence: func(ctx *sql.Context, schema serverfunctions.ItemSchema, sequence serverfunctions.ItemSequence) (cont bool, err error) {
 			relationOids[newRelationDependencyKey(schema.Item.SchemaName(), sequence.Item.Id.SequenceName())] = sequence.OID.AsId()
 			return true, nil
 		},
@@ -75,8 +77,8 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 	}
 
 	var rows []sql.Row
-	if err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
-		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+	if err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
+		View: func(ctx *sql.Context, schema serverfunctions.ItemSchema, view serverfunctions.ItemView) (cont bool, err error) {
 			refs, err := viewRelationDependencies(view.Item, schema.Item.SchemaName(), relationOids)
 			if err != nil {
 				return false, err
@@ -94,6 +96,28 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 			}
 			return true, nil
 		},
+	}); err != nil {
+		return nil, err
+	}
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	procClassID := id.NewTable(PgCatalogName, PgProcName).AsId()
+	extensionClassID := id.NewTable(PgCatalogName, PgExtensionName).AsId()
+	if err := funcColl.IterateFunctions(ctx, func(function corefunctions.Function) (stop bool, err error) {
+		for _, extName := range function.ExtensionDeps {
+			rows = append(rows, sql.Row{
+				procClassID,                     // classid
+				function.ID.AsId(),              // objid
+				int32(0),                        // objsubid
+				extensionClassID,                // refclassid
+				id.NewExtension(extName).AsId(), // refobjid
+				int32(0),                        // refobjsubid
+				"x",                             // deptype
+			})
+		}
+		return false, nil
 	}); err != nil {
 		return nil, err
 	}

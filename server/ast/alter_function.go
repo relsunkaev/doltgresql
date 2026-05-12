@@ -62,6 +62,12 @@ func nodeAlterFunction(ctx *Context, node *tree.AlterFunction) (vitess.Statement
 			Children:  nil,
 		}, nil
 	}
+	if node.Extension != "" {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterFunctionDependsOnExtension(routine, node.Extension, node.No),
+			Children:  nil,
+		}, nil
+	}
 
 	return NotYetSupportedError("ALTER FUNCTION statement is not yet supported")
 }

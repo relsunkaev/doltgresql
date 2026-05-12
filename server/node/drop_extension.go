@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"slices"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -23,6 +24,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 )
 
@@ -66,6 +68,10 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	if err != nil {
 		return nil, err
 	}
+	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	extensionsToDrop := make([]id.Extension, 0, len(c.Names))
 	for _, name := range c.Names {
 		extID := id.NewExtension(name)
@@ -76,6 +82,25 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 			return nil, errors.Errorf(`extension "%s" does not exist`, name)
 		}
 		extensionsToDrop = append(extensionsToDrop, extID)
+	}
+	functionsToDrop := make([]id.Function, 0)
+	err = funcCollection.IterateFunctions(ctx, func(f corefunctions.Function) (stop bool, err error) {
+		for _, extID := range extensionsToDrop {
+			if slices.Contains(f.ExtensionDeps, extID.Name()) {
+				if !c.Cascade {
+					return true, errors.Errorf(`cannot drop extension "%s" because other objects depend on it`, extID.Name())
+				}
+				functionsToDrop = append(functionsToDrop, f.ID)
+				break
+			}
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = funcCollection.DropFunction(ctx, functionsToDrop...); err != nil {
+		return nil, err
 	}
 	if err = extCollection.DropLoadedExtension(ctx, extensionsToDrop...); err != nil {
 		return nil, err

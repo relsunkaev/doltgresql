@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"slices"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -35,6 +36,8 @@ type AlterFunctionOptions struct {
 	Rename       string
 	TargetSchema string
 	Owner        string
+	Extension    string
+	RemoveDep    bool
 }
 
 var _ sql.ExecSourceRel = (*AlterFunctionOptions)(nil)
@@ -80,6 +83,15 @@ func NewAlterFunctionOwner(routine *RoutineWithParams, owner string) *AlterFunct
 	return &AlterFunctionOptions{
 		Routine: routine,
 		Owner:   owner,
+	}
+}
+
+// NewAlterFunctionDependsOnExtension returns a new *AlterFunctionOptions for ALTER FUNCTION ... DEPENDS ON EXTENSION.
+func NewAlterFunctionDependsOnExtension(routine *RoutineWithParams, extension string, remove bool) *AlterFunctionOptions {
+	return &AlterFunctionOptions{
+		Routine:   routine,
+		Extension: extension,
+		RemoveDep: remove,
 	}
 }
 
@@ -168,6 +180,23 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 			return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
 		}
 		function.Owner = a.Owner
+	}
+	if a.Extension != "" {
+		extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+		if err != nil {
+			return nil, err
+		}
+		if !extCollection.HasLoadedExtension(ctx, id.NewExtension(a.Extension)) {
+			return nil, errors.Errorf(`extension "%s" does not exist`, a.Extension)
+		}
+		if a.RemoveDep {
+			function.ExtensionDeps = slices.DeleteFunc(function.ExtensionDeps, func(dep string) bool {
+				return dep == a.Extension
+			})
+		} else if !slices.Contains(function.ExtensionDeps, a.Extension) {
+			function.ExtensionDeps = append(function.ExtensionDeps, a.Extension)
+			slices.Sort(function.ExtensionDeps)
+		}
 	}
 	if newFuncID != funcID {
 		if funcColl.HasFunction(ctx, newFuncID) {

@@ -138,6 +138,86 @@ func TestCreateExtensionVectorWithSchemaQualifiesTypesRepro(t *testing.T) {
 	})
 }
 
+// TestAlterFunctionDependsOnExtensionRepro reproduces a routine dependency
+// gap: ALTER FUNCTION ... DEPENDS ON EXTENSION should record a pg_depend edge,
+// block DROP EXTENSION by default, and remove the function on CASCADE.
+func TestAlterFunctionDependsOnExtensionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION DEPENDS ON EXTENSION records dependency",
+			SetUpScript: []string{
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+				`CREATE FUNCTION extension_dependent_function()
+					RETURNS INT LANGUAGE SQL AS $$ SELECT 42 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER FUNCTION extension_dependent_function()
+						DEPENDS ON EXTENSION hstore;`,
+				},
+				{
+					Query: `SELECT d.deptype
+						FROM pg_catalog.pg_depend d
+						JOIN pg_catalog.pg_proc p ON p.oid = d.objid
+						JOIN pg_catalog.pg_extension e ON e.oid = d.refobjid
+						WHERE p.proname = 'extension_dependent_function'
+							AND e.extname = 'hstore';`,
+					Expected: []sql.Row{{"x"}},
+				},
+				{
+					Query:       `DROP EXTENSION hstore;`,
+					ExpectedErr: `depend`,
+				},
+				{
+					Query:    `DROP EXTENSION hstore CASCADE;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT count(*) = 0
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'extension_dependent_function';`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+		{
+			Name: "ALTER FUNCTION NO DEPENDS removes dependency",
+			SetUpScript: []string{
+				`CREATE EXTENSION hstore WITH SCHEMA public;`,
+				`CREATE FUNCTION extension_independent_function()
+					RETURNS INT LANGUAGE SQL AS $$ SELECT 7 $$;`,
+				`ALTER FUNCTION extension_independent_function()
+					DEPENDS ON EXTENSION hstore;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER FUNCTION extension_independent_function()
+						NO DEPENDS ON EXTENSION hstore;`,
+				},
+				{
+					Query: `SELECT count(*) = 0
+						FROM pg_catalog.pg_depend d
+						JOIN pg_catalog.pg_proc p ON p.oid = d.objid
+						JOIN pg_catalog.pg_extension e ON e.oid = d.refobjid
+						WHERE p.proname = 'extension_independent_function'
+							AND e.extname = 'hstore';`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query:    `DROP EXTENSION hstore;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT count(*) = 1
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'extension_independent_function';`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropExtensionRestrictRejectsDependentObjectsRepro reproduces an
 // extension dependency bug: PostgreSQL's default RESTRICT behavior prevents
 // dropping an extension while user objects depend on extension member objects.
