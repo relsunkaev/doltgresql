@@ -93,8 +93,10 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	var sqlDef string
 	var sqlDefParsedStmts []vitess.Statement
 	var extensionName, extensionSymbol string
+	var language string
 	if languageOption, ok := options[tree.OptionLanguage]; ok {
-		switch strings.ToLower(languageOption.Language) {
+		language = strings.ToLower(languageOption.Language)
+		switch language {
 		case "plpgsql":
 			// PL/pgSQL is different from standard Postgres SQL, so we have to use a special parser to handle it.
 			// This parser also requires the full `CREATE FUNCTION` string, so we'll pass that.
@@ -175,6 +177,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			extensionName,
 			extensionSymbol,
 			parsedBody,
+			language,
 			sqlDef,
 			sqlDefParsedStmts,
 			node.ReturnsSetOf,

@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -44,33 +45,28 @@ func (p PgLanguageHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgLanguageHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	owner := catalogOwnerOID()
-	return sql.RowsToRowIter(
-		sql.Row{
-			id.NewId(id.Section_FunctionLanguage, "sql"), // oid
-			"sql",   // lanname
-			owner,   // lanowner
-			false,   // lanispl
-			true,    // lanpltrusted
-			id.Null, // lanplcallfoid
-			id.Null, // laninline
-			id.Null, // lanvalidator
-			nil,     // lanacl
-			id.NewTable(PgCatalogName, PgLanguageName).AsId(), // tableoid
-		},
-		sql.Row{
-			id.NewId(id.Section_FunctionLanguage, "plpgsql"), // oid
-			"plpgsql", // lanname
-			owner,     // lanowner
-			true,      // lanispl
-			true,      // lanpltrusted
-			id.Null,   // lanplcallfoid
-			id.Null,   // laninline
-			id.Null,   // lanvalidator
-			nil,       // lanacl
-			id.NewTable(PgCatalogName, PgLanguageName).AsId(), // tableoid
-		},
-	), nil
+	var rows []sql.Row
+	auth.LockRead(func() {
+		for _, language := range auth.GetAllLanguages() {
+			owner := catalogOwnerOID()
+			if role := auth.GetRole(language.Owner); role.IsValid() {
+				owner = id.NewId(id.Section_User, language.Owner)
+			}
+			rows = append(rows, sql.Row{
+				id.NewId(id.Section_FunctionLanguage, language.Name), // oid
+				language.Name,         // lanname
+				owner,                 // lanowner
+				language.IsProcedural, // lanispl
+				language.Trusted,      // lanpltrusted
+				id.Null,               // lanplcallfoid
+				id.Null,               // laninline
+				id.Null,               // lanvalidator
+				nil,                   // lanacl
+				id.NewTable(PgCatalogName, PgLanguageName).AsId(), // tableoid
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

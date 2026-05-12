@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro reproduces a language
 // ACL security bug: PostgreSQL lets language owners revoke default PUBLIC
@@ -62,6 +66,68 @@ func TestLanguageUsagePrivilegeCanBeRevokedAndGrantedRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `language_usage_acl_user`,
 					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterLanguageOwnerUpdatesPgLanguageRepro reproduces a procedural-language
+// catalog persistence gap: ALTER LANGUAGE OWNER TO should update pg_language.
+func TestAlterLanguageOwnerUpdatesPgLanguageRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER LANGUAGE OWNER TO updates pg_language",
+			SetUpScript: []string{
+				`CREATE ROLE language_owner_target;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER LANGUAGE plpgsql OWNER TO language_owner_target;`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(lanowner)
+						FROM pg_catalog.pg_language
+						WHERE lanname = 'plpgsql';`,
+					Expected: []sql.Row{{"language_owner_target"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateLanguagePopulatesPgLanguageRepro reproduces a procedural-language
+// catalog persistence gap: CREATE LANGUAGE should add the new language to
+// pg_language.
+func TestCreateLanguagePopulatesPgLanguageRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE LANGUAGE populates pg_language",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE LANGUAGE compat_lang HANDLER plpgsql_call_handler;`,
+				},
+				{
+					Query: `SELECT lanname
+						FROM pg_catalog.pg_language
+						WHERE lanname = 'compat_lang';`,
+					Expected: []sql.Row{{"compat_lang"}},
+				},
+			},
+		},
+	})
+}
+
+// TestDropLanguageIfExistsMissingRepro reproduces a procedural-language DDL
+// compatibility gap: PostgreSQL accepts DROP LANGUAGE IF EXISTS for absent
+// languages as a dump-safe no-op.
+func TestDropLanguageIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP LANGUAGE IF EXISTS missing language succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP LANGUAGE IF EXISTS missing_language;`,
 				},
 			},
 		},

@@ -34,6 +34,7 @@ type Grant struct {
 	GrantDatabase   *GrantDatabase
 	GrantSequence   *GrantSequence
 	GrantRoutine    *GrantRoutine
+	GrantLanguage   *GrantLanguage
 	GrantRole       *GrantRole
 	ToRoles         []string
 	WithGrantOption bool // This is "WITH ADMIN OPTION" for GrantRole only
@@ -75,6 +76,12 @@ type GrantSequence struct {
 type GrantRoutine struct {
 	Privileges []auth.Privilege
 	Routines   []auth.RoutinePrivilegeKey
+}
+
+// GrantLanguage specifically handles the GRANT ... ON LANGUAGE statement.
+type GrantLanguage struct {
+	Privileges []auth.Privilege
+	Languages  []string
 }
 
 // GrantRole specifically handles the GRANT <roles> TO <roles> statement.
@@ -123,6 +130,10 @@ func (g *Grant) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 		case g.GrantRoutine != nil:
 			if err = g.grantRoutine(ctx); err != nil {
+				return
+			}
+		case g.GrantLanguage != nil:
+			if err = g.grantLanguage(ctx); err != nil {
 				return
 			}
 		case g.GrantRole != nil:
@@ -391,6 +402,39 @@ func (g *Grant) grantRoutine(ctx *sql.Context) error {
 					Schema:   schemaName,
 					Name:     routine.Name,
 					ArgTypes: routine.ArgTypes,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedBy,
+				}, g.WithGrantOption)
+			}
+		}
+	}
+	return nil
+}
+
+// grantLanguage handles *GrantLanguage from within RowIter.
+func (g *Grant) grantLanguage(ctx *sql.Context) error {
+	roles, userRole, err := g.common(ctx)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, language := range g.GrantLanguage.Languages {
+			if _, ok := auth.GetLanguage(language); !ok {
+				return errors.Errorf(`language "%s" does not exist`, language)
+			}
+			key := auth.LanguagePrivilegeKey{
+				Role: userRole.ID(),
+				Name: language,
+			}
+			for _, privilege := range g.GrantLanguage.Privileges {
+				grantedBy := auth.HasLanguagePrivilegeGrantOption(key, privilege)
+				if !grantedBy.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to grant this privilege`, userRole.Name)
+				}
+				auth.AddLanguagePrivilege(auth.LanguagePrivilegeKey{
+					Role: role.ID(),
+					Name: language,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedBy,

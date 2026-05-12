@@ -45,6 +45,8 @@ type Database struct {
 	tablePrivileges    *TablePrivileges
 	sequencePrivileges *SequencePrivileges
 	routinePrivileges  *RoutinePrivileges
+	languages          *Languages
+	languagePrivileges *LanguagePrivileges
 	roleMembership     *RoleMembership
 }
 
@@ -57,6 +59,8 @@ func ClearDatabase() {
 	clear(globalDatabase.tablePrivileges.Data)
 	clear(globalDatabase.sequencePrivileges.Data)
 	clear(globalDatabase.routinePrivileges.Data)
+	clear(globalDatabase.languages.Data)
+	clear(globalDatabase.languagePrivileges.Data)
 	clear(globalDatabase.roleMembership.Data)
 	dbInitDefault()
 }
@@ -165,6 +169,8 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		tablePrivileges:    NewTablePrivileges(),
 		sequencePrivileges: NewSequencePrivileges(),
 		routinePrivileges:  NewRoutinePrivileges(),
+		languages:          NewLanguages(),
+		languagePrivileges: NewLanguagePrivileges(),
 		roleMembership:     NewRoleMembership(),
 	}
 	globalLock = &sync.RWMutex{}
@@ -214,6 +220,7 @@ func dbInitDefault() {
 		panic(err)
 	}
 	SetRole(superUser)
+	dbInitDefaultLanguages()
 }
 
 // dbInitCreateAuthDirectory creates the directory structure pointed to by the auth file if it does not already exist.

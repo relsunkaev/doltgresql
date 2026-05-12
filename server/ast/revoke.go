@@ -36,6 +36,7 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	var revokeDatabase *pgnodes.RevokeDatabase
 	var revokeSequence *pgnodes.RevokeSequence
 	var revokeRoutine *pgnodes.RevokeRoutine
+	var revokeLanguage *pgnodes.RevokeLanguage
 	switch node.Targets.TargetType {
 	case privilege.Table:
 		tables := make([]doltdb.TableName, len(node.Targets.Tables)+len(node.Targets.InSchema))
@@ -141,6 +142,15 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			Privileges: privileges,
 			Routines:   routines,
 		}
+	case privilege.Language:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_LANGUAGE, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		revokeLanguage = &pgnodes.RevokeLanguage{
+			Privileges: privileges,
+			Languages:  node.Targets.Names,
+		}
 	default:
 		return nil, errors.Errorf("this form of REVOKE is not yet supported")
 	}
@@ -151,6 +161,7 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			RevokeDatabase: revokeDatabase,
 			RevokeSequence: revokeSequence,
 			RevokeRoutine:  revokeRoutine,
+			RevokeLanguage: revokeLanguage,
 			RevokeRole:     nil,
 			FromRoles:      node.Grantees,
 			GrantedBy:      node.GrantedBy,

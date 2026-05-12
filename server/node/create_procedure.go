@@ -26,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 )
 
@@ -37,6 +38,7 @@ type CreateProcedure struct {
 	Replace           bool
 	Parameters        []RoutineParam
 	Statements        []plpgsql.InterpreterOperation
+	Language          string
 	ExtensionName     string
 	ExtensionSymbol   string
 	Definition        string
@@ -59,6 +61,7 @@ func NewCreateProcedure(
 	extensionName string,
 	extensionSymbol string,
 	statements []plpgsql.InterpreterOperation,
+	language string,
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement,
 	setConfig map[string]string) *CreateProcedure {
@@ -69,6 +72,7 @@ func NewCreateProcedure(
 		Replace:           replace,
 		Parameters:        params,
 		Statements:        statements,
+		Language:          language,
 		ExtensionName:     extensionName,
 		ExtensionSymbol:   extensionSymbol,
 		Definition:        definition,
@@ -95,6 +99,9 @@ func (c *CreateProcedure) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := auth.CheckLanguageUsage(ctx.Client().User, c.Language); err != nil {
+		return nil, err
+	}
 	procCollection, err := core.GetProceduresCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err

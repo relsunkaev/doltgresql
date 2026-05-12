@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(2)
+	writer.Uint32(3)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -49,6 +49,10 @@ func (db *Database) serialize() []byte {
 	db.sequencePrivileges.serialize(writer)
 	// Write the routine privileges
 	db.routinePrivileges.serialize(writer)
+	// Write the languages
+	db.languages.serialize(writer)
+	// Write the language privileges
+	db.languagePrivileges.serialize(writer)
 	// Write the role chain
 	db.roleMembership.serialize(writer)
 	return writer.Data()
@@ -68,6 +72,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV1(reader)
 	case 2:
 		return db.deserializeV2(reader)
+	case 3:
+		return db.deserializeV3(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -97,6 +103,9 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 	db.routinePrivileges.deserialize(0, reader)
 	// Read the sequence privileges
 	db.sequencePrivileges.deserialize(0, reader)
+	db.languages.deserialize(0, reader)
+	db.languagePrivileges.deserialize(0, reader)
+	dbInitDefaultLanguages()
 	return nil
 }
 
@@ -108,6 +117,11 @@ func (db *Database) deserializeV1(reader *utils.Reader) error {
 // deserializeV2 creates a Database from a byte slice. Expects a reader that has already read the version.
 func (db *Database) deserializeV2(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 2)
+}
+
+// deserializeV3 creates a Database from a byte slice. Expects a reader that has already read the version.
+func (db *Database) deserializeV3(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 3)
 }
 
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
@@ -125,13 +139,31 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 	db.databasePrivileges.deserialize(1, reader)
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(1, reader)
-	// Read the table privileges
-	db.tablePrivileges.deserialize(version, reader)
-	// Read the role chain
-	db.roleMembership.deserialize(1, reader)
-	// Read the routine privileges
-	db.routinePrivileges.deserialize(1, reader)
-	// Read the sequence privileges
-	db.sequencePrivileges.deserialize(1, reader)
+	if version >= 3 {
+		// Read the table privileges
+		db.tablePrivileges.deserialize(version, reader)
+		// Read the sequence privileges
+		db.sequencePrivileges.deserialize(1, reader)
+		// Read the routine privileges
+		db.routinePrivileges.deserialize(1, reader)
+		// Read the languages
+		db.languages.deserialize(1, reader)
+		// Read the language privileges
+		db.languagePrivileges.deserialize(1, reader)
+		// Read the role chain
+		db.roleMembership.deserialize(1, reader)
+	} else {
+		// Read the table privileges
+		db.tablePrivileges.deserialize(version, reader)
+		// Read the role chain
+		db.roleMembership.deserialize(1, reader)
+		// Read the routine privileges
+		db.routinePrivileges.deserialize(1, reader)
+		// Read the sequence privileges
+		db.sequencePrivileges.deserialize(1, reader)
+		db.languages.deserialize(0, reader)
+		db.languagePrivileges.deserialize(0, reader)
+		dbInitDefaultLanguages()
+	}
 	return nil
 }

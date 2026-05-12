@@ -76,6 +76,7 @@ type CreateFunction struct {
 	Parameters        []RoutineParam
 	Strict            bool
 	Statements        []plpgsql.InterpreterOperation
+	Language          string
 	ExtensionName     string
 	ExtensionSymbol   string
 	Definition        string
@@ -103,6 +104,7 @@ func NewCreateFunction(
 	extensionName string,
 	extensionSymbol string,
 	statements []plpgsql.InterpreterOperation,
+	language string,
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement,
 	setOf bool,
@@ -118,6 +120,7 @@ func NewCreateFunction(
 		Parameters:        params,
 		Strict:            strict,
 		Statements:        statements,
+		Language:          language,
 		ExtensionName:     extensionName,
 		ExtensionSymbol:   extensionSymbol,
 		Definition:        definition,
@@ -147,6 +150,9 @@ func (c *CreateFunction) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
+	if err := auth.CheckLanguageUsage(ctx.Client().User, c.Language); err != nil {
+		return nil, err
+	}
 	if c.LeakProof {
 		var userRole auth.Role
 		auth.LockRead(func() {

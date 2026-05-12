@@ -34,6 +34,7 @@ type Revoke struct {
 	RevokeDatabase *RevokeDatabase
 	RevokeSequence *RevokeSequence
 	RevokeRoutine  *RevokeRoutine
+	RevokeLanguage *RevokeLanguage
 	RevokeRole     *RevokeRole
 	FromRoles      []string
 	GrantedBy      string
@@ -69,6 +70,12 @@ type RevokeSequence struct {
 type RevokeRoutine struct {
 	Privileges []auth.Privilege
 	Routines   []auth.RoutinePrivilegeKey
+}
+
+// RevokeLanguage specifically handles the REVOKE ... ON LANGUAGE statement.
+type RevokeLanguage struct {
+	Privileges []auth.Privilege
+	Languages  []string
 }
 
 // RevokeRole specifically handles the REVOKE <roles> FROM <roles> statement.
@@ -121,6 +128,10 @@ func (r *Revoke) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 			}
 		case r.RevokeRoutine != nil:
 			if err = r.revokeRoutine(ctx); err != nil {
+				return
+			}
+		case r.RevokeLanguage != nil:
+			if err = r.revokeLanguage(ctx); err != nil {
 				return
 			}
 		case r.RevokeRole != nil:
@@ -356,6 +367,38 @@ func (r *Revoke) revokeRoutine(ctx *sql.Context) error {
 					Schema:   schemaName,
 					Name:     routine.Name,
 					ArgTypes: routine.ArgTypes,
+				}, auth.GrantedPrivilege{
+					Privilege: privilege,
+					GrantedBy: grantedByID,
+				}, r.GrantOptionFor)
+			}
+		}
+	}
+	return nil
+}
+
+// revokeLanguage handles *RevokeLanguage from within RowIter.
+func (r *Revoke) revokeLanguage(ctx *sql.Context) error {
+	roles, userRole, grantedByID, err := r.common(ctx)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		for _, language := range r.RevokeLanguage.Languages {
+			if _, ok := auth.GetLanguage(language); !ok {
+				return errors.Errorf(`language "%s" does not exist`, language)
+			}
+			key := auth.LanguagePrivilegeKey{
+				Role: userRole.ID(),
+				Name: language,
+			}
+			for _, privilege := range r.RevokeLanguage.Privileges {
+				if id := auth.HasLanguagePrivilegeGrantOption(key, privilege); !id.IsValid() {
+					return errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
+				}
+				auth.RemoveLanguagePrivilege(auth.LanguagePrivilegeKey{
+					Role: role.ID(),
+					Name: language,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedByID,
