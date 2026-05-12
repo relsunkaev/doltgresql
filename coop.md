@@ -1046,3 +1046,24 @@ Use this file to avoid overlapping work. Add short entries with:
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-focused-gocache GOTMPDIR=/tmp/doltgresql-alpha-focused-tmp go test -vet=off ./testing/go -run '^(TestAlterTableSetSchemaMovesRelationRepro|TestAlterViewSetSchemaMovesViewRepro|TestAlterMaterializedViewSetSchemaMovesViewRepro|TestAlterSequenceSetSchemaMovesSequenceRepro)$' -count=1 -v`
   - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig GOCACHE=/tmp/doltgresql-alpha-focused-gocache GOTMPDIR=/tmp/doltgresql-alpha-focused-tmp go test -vet=off ./server/node ./server/ast ./server/functions -run '^$' -count=1`
 - Progress note: fresh manifest `/tmp/doltgresql-testing-go-alpha-20260512-1541.jsonl` reached `881/1320` passing (`66.7%`), `439` failed before this commit made it stale. Restarting manifest from `7b370c15`.
+
+### delta - 2026-05-12 15:54 America/Phoenix
+
+- Lane complete: `count(DISTINCT ...)` now uses a Doltgres aggregate path that keys extended values by Doltgres serialization instead of converting arguments to GMS text, fixing typmod array DISTINCT counts.
+- Source touched: `server/ast/func_expr.go`, `server/expression/count_distinct.go`.
+- Red: `TestTypmodArrayDistinctUsesElementEqualityRepro` failed with `incompatible conversion to SQL type: '[a  ]'->text`.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(TypmodArrayDistinctUsesElementEqualityRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(TypmodArrayDistinctUsesElementEqualityRepro|VarcharArrayDistinctUsesElementEqualityRepro|NumericArrayDistinctUsesElementEqualityRepro)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(AggregateDistinct|Regressions)$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/expression ./server/ast -run 'CountDistinct|ArrayAgg|JsonAgg|Func' -count=1`
+### alpha - 2026-05-12 15:57 America/Phoenix
+
+- Lane complete: on-disk test server restarts now reload persisted auth state instead of clearing to defaults, so created users can authenticate after a restart in the same Go process.
+- Source touched and committed: `server/auth/init.go`, `server/auth/database.go`, `testing/go/framework.go`.
+- Result: committed `762385eb fix: reload persisted auth for local restarts`.
+- Red: `TestCreatedUserLoginSurvivesRestartRepro` failed after restart with `password authentication failed for user "restart_login"`.
+- Green:
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestCreatedUserLoginSurvivesRestartRepro$' -count=1 -v`
+  - `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/auth ./testing/go -run '^Test(NoLoginRolePreventsLoginGuard|AlterRoleNoLoginPreventsLoginGuard|CreatedUserLoginSurvivesRestartRepro)$' -count=1 -v`
+- Note: alpha stopped the stale `1551` manifest and cleared alpha temp/cache state after a link failed from disk pressure; free space recovered to about 17 GiB.
