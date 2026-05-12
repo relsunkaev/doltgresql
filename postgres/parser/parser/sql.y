@@ -5741,11 +5741,31 @@ analyze_stmt:
       Table: $2.tblExpr(),
     }
   }
+| ANALYZE '(' vacuum_option_list ')'
+  {
+    $$.val = &tree.Analyze{}
+  }
+| ANALYZE '(' vacuum_option_list ')' analyze_target
+  {
+    $$.val = &tree.Analyze{
+      Table: $5.tblExpr(),
+    }
+  }
 | ANALYZE error // SHOW HELP: ANALYZE
 | ANALYSE analyze_target
   {
     $$.val = &tree.Analyze{
       Table: $2.tblExpr(),
+    }
+  }
+| ANALYSE '(' vacuum_option_list ')'
+  {
+    $$.val = &tree.Analyze{}
+  }
+| ANALYSE '(' vacuum_option_list ')' analyze_target
+  {
+    $$.val = &tree.Analyze{
+      Table: $5.tblExpr(),
     }
   }
 | ANALYSE error // SHOW HELP: ANALYZE
@@ -5754,6 +5774,10 @@ analyze_target:
   table_name
   {
     $$.val = $1.unresolvedObjectName()
+  }
+| ONLY table_name
+  {
+    $$.val = $2.unresolvedObjectName()
   }
 
 explain_verb:
@@ -7004,6 +7028,13 @@ vacuum_option:
     	Value:  $2,
     }
   }
+| BUFFER_USAGE_LIMIT SCONST
+  {
+    $$.val = &tree.VacuumOption{
+    	Option: "BUFFER_USAGE_LIMIT",
+    	Value:  $2,
+    }
+  }
 
 // Boolean constants for vacuum options. An empty value here is considered true
 boolean_value_for_vacuum_opt:
@@ -7091,11 +7122,22 @@ vacuum_table_and_cols:
   {
     $$.val = &tree.VacuumTableAndCols{Name: $1.unresolvedObjectName()}
   }
+| ONLY table_name
+  {
+    $$.val = &tree.VacuumTableAndCols{Name: $2.unresolvedObjectName()}
+  }
 | table_name '(' name_list ')'
   {
      $$.val = &tree.VacuumTableAndCols{
      	Name: $1.unresolvedObjectName(),
      	Cols: $3.nameList(),
+     }
+  }
+| ONLY table_name '(' name_list ')'
+  {
+     $$.val = &tree.VacuumTableAndCols{
+     	Name: $2.unresolvedObjectName(),
+     	Cols: $4.nameList(),
      }
   }
     

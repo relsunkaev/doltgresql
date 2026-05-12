@@ -38,3 +38,21 @@ func TestParseCopyDefaultOption(t *testing.T) {
 		t.Fatalf("expected 1 statement, got %d", len(statements))
 	}
 }
+
+func TestParseVacuumAnalyzeRecentOptions(t *testing.T) {
+	queries := []string{
+		`VACUUM (BUFFER_USAGE_LIMIT '128 kB') t;`,
+		`ANALYZE (BUFFER_USAGE_LIMIT '128 kB') t;`,
+		`VACUUM ONLY t;`,
+		`ANALYZE ONLY t;`,
+	}
+	for _, query := range queries {
+		statements, err := Parse(query)
+		if err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		if len(statements) != 1 {
+			t.Fatalf("%s: expected 1 statement, got %d", query, len(statements))
+		}
+	}
+}

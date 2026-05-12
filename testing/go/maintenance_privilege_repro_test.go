@@ -41,6 +41,31 @@ func TestVacuumTableRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestPgMaintainRoleAllowsVacuumRepro reproduces a predefined-role privilege
+// bug: membership in pg_maintain should allow VACUUM on another role's table
+// without table ownership.
+func TestPgMaintainRoleAllowsVacuumRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_maintain allows VACUUM",
+			SetUpScript: []string{
+				`CREATE USER maintain_vacuum_user PASSWORD 'pw';`,
+				`CREATE TABLE maintain_vacuum_private (id INT PRIMARY KEY);`,
+				`INSERT INTO maintain_vacuum_private VALUES (1);`,
+				`GRANT USAGE ON SCHEMA public TO maintain_vacuum_user;`,
+				`GRANT pg_maintain TO maintain_vacuum_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `VACUUM maintain_vacuum_private;`,
+					Username: `maintain_vacuum_user`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestVacuumCannotRunInsideTransactionBlockRepro reproduces a PostgreSQL
 // compatibility gap: VACUUM is a top-level utility command and must reject
 // execution inside an explicit transaction block.
@@ -61,6 +86,64 @@ func TestVacuumCannotRunInsideTransactionBlockRepro(t *testing.T) {
 				},
 				{
 					Query: `ROLLBACK;`,
+				},
+			},
+		},
+	})
+}
+
+// TestPostgres16VacuumAnalyzeBufferUsageLimitRepro reproduces a PostgreSQL 16
+// compatibility gap: VACUUM and ANALYZE accept BUFFER_USAGE_LIMIT in their
+// parenthesized option lists.
+func TestPostgres16VacuumAnalyzeBufferUsageLimitRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "VACUUM and ANALYZE accept BUFFER_USAGE_LIMIT",
+			SetUpScript: []string{
+				`CREATE TABLE maintenance_buffer_limit_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO maintenance_buffer_limit_items VALUES
+					(1, 'one'),
+					(2, 'two');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `VACUUM (BUFFER_USAGE_LIMIT '128 kB') maintenance_buffer_limit_items;`,
+				},
+				{
+					Query: `ANALYZE (BUFFER_USAGE_LIMIT '128 kB') maintenance_buffer_limit_items;`,
+				},
+			},
+		},
+	})
+}
+
+// TestPostgres18VacuumAnalyzeOnlyInheritanceTargetRepro reproduces a
+// PostgreSQL 18 compatibility gap: VACUUM and ANALYZE can target only the
+// named inheritance parent with ONLY.
+func TestPostgres18VacuumAnalyzeOnlyInheritanceTargetRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "VACUUM and ANALYZE accept ONLY inheritance targets",
+			SetUpScript: []string{
+				`CREATE TABLE maintenance_only_parent (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE TABLE maintenance_only_child (
+					extra TEXT
+				) INHERITS (maintenance_only_parent);`,
+				`INSERT INTO maintenance_only_parent VALUES (1, 'parent');`,
+				`INSERT INTO maintenance_only_child VALUES (2, 'child', 'extra');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `VACUUM ONLY maintenance_only_parent;`,
+				},
+				{
+					Query: `ANALYZE ONLY maintenance_only_parent;`,
 				},
 			},
 		},
