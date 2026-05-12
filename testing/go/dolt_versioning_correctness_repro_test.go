@@ -131,6 +131,63 @@ func TestDoltCommitDiffWorkingSetFilterRepro(t *testing.T) {
 	})
 }
 
+// TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro reproduces a
+// versioning consistency bug: DOLT_DIFF_SUMMARY should be able to filter
+// changes by the root-object name it reports for dolt docs.
+func TestDoltDiffSummaryFiltersDoltDocsByReportedNameRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "dolt_diff_summary filters dolt docs by reported name",
+			SetUpScript: []string{
+				`INSERT INTO dolt.docs VALUES ('README.md', 'testing');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT to_table_name, diff_type
+						FROM dolt_diff_summary('main', 'WORKING')
+						WHERE to_table_name = 'dolt.docs';`,
+					Expected: []sql.Row{{"dolt.docs", "added"}},
+				},
+				{
+					Query: `SELECT to_table_name, diff_type
+						FROM dolt_diff_summary('main', 'WORKING', 'dolt.docs');`,
+					Expected: []sql.Row{{"dolt.docs", "added"}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro reproduces a
+// versioning consistency bug: DOLT_DIFF_SUMMARY should let callers filter
+// schema root-object changes by the fully-qualified name it reports.
+func TestDoltDiffSummaryFiltersSchemaDoltSchemasByQualifiedNameRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "dolt_diff_summary filters dolt_schemas by qualified name",
+			SetUpScript: []string{
+				`CREATE VIEW public.diff_summary_public_view AS SELECT 4 AS value;`,
+				`CREATE SCHEMA diff_summary_other_schema;`,
+				`SET search_path = diff_summary_other_schema;`,
+				`CREATE VIEW diff_summary_other_view AS SELECT 8 AS value;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT to_table_name, diff_type
+						FROM dolt_diff_summary('main', 'WORKING')
+						WHERE to_table_name = 'public.dolt_schemas';`,
+					Expected: []sql.Row{{"public.dolt_schemas", "added"}},
+				},
+				{
+					Query: `SELECT to_table_name, diff_type
+						FROM dolt_diff_summary('main', 'WORKING', 'public.dolt_schemas');`,
+					Expected: []sql.Row{{"public.dolt_schemas", "added"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltQueryDiffSupportsAsOfRevisionRepro reproduces a versioned-query
 // correctness bug: dolt_query_diff should compare a historical AS OF query with
 // the current working query.
