@@ -48,3 +48,21 @@ func TestUuidExtractHelpers(t *testing.T) {
 		t.Fatalf("got %#v, want time.Time", got)
 	}
 }
+
+func TestTypeMetadataHelpers(t *testing.T) {
+	if got, want := parseTypeModifier("varchar(32)"), int32(36); got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+	if got, want := parseTypeModifier("text"), int32(-1); got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+}
+
+func TestUnicodeInformationHelpers(t *testing.T) {
+	if !unicodeAssigned("abc") {
+		t.Fatal("expected valid UTF-8 text to be assigned")
+	}
+	if unicodeAssigned(string([]byte{0xff})) {
+		t.Fatal("expected invalid UTF-8 text to be unassigned")
+	}
+}
