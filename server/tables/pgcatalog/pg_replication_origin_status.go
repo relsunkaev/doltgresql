@@ -59,8 +59,8 @@ func (p PgReplicationOriginStatusHandler) PkSchema() sql.PrimaryKeySchema {
 var pgReplicationOriginStatusSchema = sql.Schema{
 	{Name: "local_id", Type: pgtypes.Oid, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName},
 	{Name: "external_id", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName},
-	{Name: "remote_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName}, // TODO: pg_lsn type
-	{Name: "local_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName},  // TODO: pg_lsn type
+	{Name: "remote_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName},
+	{Name: "local_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgReplicationOriginStatusName},
 }
 
 // pgReplicationOriginStatusRowIter is the sql.RowIter for the pg_replication_origin_status table.

@@ -60,7 +60,7 @@ var pgSubscriptionRelSchema = sql.Schema{
 	{Name: "srsubid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgSubscriptionRelName},
 	{Name: "srrelid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgSubscriptionRelName},
 	{Name: "srsubstate", Type: pgtypes.InternalChar, Default: nil, Nullable: false, Source: PgSubscriptionRelName},
-	{Name: "srsublsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgSubscriptionRelName}, // TODO: pg_lsn type
+	{Name: "srsublsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgSubscriptionRelName},
 }
 
 // pgSubscriptionRelRowIter is the sql.RowIter for the pg_subscription_rel table.

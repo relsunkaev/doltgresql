@@ -62,10 +62,10 @@ var pgStatSubscriptionSchema = sql.Schema{
 	{Name: "pid", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 	{Name: "leader_pid", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 	{Name: "relid", Type: pgtypes.Oid, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
-	{Name: "received_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatSubscriptionName}, // TODO: pg_lsn type
+	{Name: "received_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 	{Name: "last_msg_send_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 	{Name: "last_msg_receipt_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
-	{Name: "latest_end_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatSubscriptionName}, // TODO: pg_lsn type
+	{Name: "latest_end_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 	{Name: "latest_end_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatSubscriptionName},
 }
 

@@ -14,7 +14,11 @@
 
 package tables
 
-import "github.com/dolthub/go-mysql-server/sql"
+import (
+	"sort"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // Handler is an interface that controls how data is represented for some table.
 type Handler interface {
@@ -45,4 +49,21 @@ func AddHandler(schemaName string, tableName string, handler Handler) {
 		handlers[schemaName] = tableMap
 	}
 	tableMap[tableName] = handler
+}
+
+// HandlersForSchema returns all registered virtual table handlers for a schema
+// in deterministic table-name order.
+func HandlersForSchema(schemaName string) []Handler {
+	tableMap := handlers[schemaName]
+	names := make([]string, 0, len(tableMap))
+	for name := range tableMap {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	schemaHandlers := make([]Handler, 0, len(names))
+	for _, name := range names {
+		schemaHandlers = append(schemaHandlers, tableMap[name])
+	}
+	return schemaHandlers
 }

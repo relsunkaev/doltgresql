@@ -205,6 +205,24 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	if err != nil {
 		return err
 	}
+	pgCatalogSchemaID := id.NewNamespace(PgCatalogName).AsId()
+	for _, handler := range tables.HandlersForSchema(PgCatalogName) {
+		relationID := id.NewTable(PgCatalogName, handler.Name()).AsId()
+		class := &pgClass{
+			oid:             relationID,
+			oidNative:       id.Cache().ToOID(relationID),
+			name:            handler.Name(),
+			schemaName:      PgCatalogName,
+			hasIndexes:      false,
+			kind:            "r",
+			schemaOid:       pgCatalogSchemaID,
+			schemaOidNative: id.Cache().ToOID(pgCatalogSchemaID),
+			relType:         id.Null,
+		}
+		nameIdx.Add(class)
+		oidIdx.Add(class)
+		classes = append(classes, class)
+	}
 
 	pgCatalogCache.pgClasses = &pgClassCache{
 		classes: classes,

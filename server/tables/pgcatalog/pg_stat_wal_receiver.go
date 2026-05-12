@@ -59,14 +59,14 @@ func (p PgStatWalReceiverHandler) PkSchema() sql.PrimaryKeySchema {
 var pgStatWalReceiverSchema = sql.Schema{
 	{Name: "pid", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "status", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
-	{Name: "receive_start_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName}, // TODO: pg_lsn type
+	{Name: "receive_start_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "receive_start_tli", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
-	{Name: "written_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName}, // TODO: pg_lsn type
-	{Name: "flushed_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName}, // TODO: pg_lsn type
+	{Name: "written_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
+	{Name: "flushed_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "received_tli", Type: pgtypes.Int32, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "last_msg_send_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "last_msg_receipt_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
-	{Name: "latest_end_lsn", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName}, // TODO: pg_lsn type
+	{Name: "latest_end_lsn", Type: pgtypes.PgLsn, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "latest_end_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "slot_name", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
 	{Name: "sender_host", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatWalReceiverName},
