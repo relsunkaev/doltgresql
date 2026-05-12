@@ -61,6 +61,23 @@ func TestCommonExtensionsProbe(t *testing.T) {
 			},
 		},
 		{
+			Name: "uuid-ossp WITH SCHEMA exposes qualified functions",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION "uuid-ossp" WITH SCHEMA extensions;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT length(extensions.uuid_generate_v4()::text)::text;`,
+					Expected: []sql.Row{{"36"}},
+				},
+				{
+					Query:    `SELECT extensions.uuid_generate_v3(extensions.uuid_ns_dns(), 'www.example.com')::text;`,
+					Expected: []sql.Row{{"5df41881-3aed-3515-88a7-2f4a814cf09e"}},
+				},
+			},
+		},
+		{
 			Name: "CREATE EXTENSION plpgsql dump compatibility shim",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;`,
