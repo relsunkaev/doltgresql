@@ -47,3 +47,18 @@ func TestCreateOperatorInstallsCallableOperatorRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestDropOperatorIfExistsMissingRepro reproduces a compatibility gap:
+// PostgreSQL accepts DROP OPERATOR IF EXISTS for absent operators.
+func TestDropOperatorIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP OPERATOR IF EXISTS missing operator succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP OPERATOR IF EXISTS @#@ (int, int);`,
+				},
+			},
+		},
+	})
+}

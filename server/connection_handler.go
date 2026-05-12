@@ -2846,6 +2846,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedDropCast(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedDropIfExistsNoOp(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	s, err := parser.Parse(query)
 	if err != nil {
 		if converted, ok := convertedCreateTransform(query); ok {
@@ -2892,13 +2895,17 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 }
 
 var (
-	createTransformPattern  = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
-	transformFromPattern    = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
-	transformToPattern      = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
-	createConversionPattern = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
-	dropConversionPattern   = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
-	createCastPattern       = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
-	dropCastPattern         = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createTransformPattern    = regexp.MustCompile(`(?is)^\s*create\s+transform\s+for\s+([a-z_][a-z0-9_."$]*)\s+language\s+([a-z_][a-z0-9_"$]*)\s*\((.*)\)\s*;?\s*$`)
+	transformFromPattern      = regexp.MustCompile(`(?is)\bfrom\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	transformToPattern        = regexp.MustCompile(`(?is)\bto\s+sql\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\(`)
+	createConversionPattern   = regexp.MustCompile(`(?is)^\s*create\s+(default\s+)?conversion\s+([a-z_][a-z0-9_."$]*)\s+for\s+'([^']+)'\s+to\s+'([^']+)'\s+from\s+([a-z_][a-z0-9_."$]*)\s*;?\s*$`)
+	dropConversionPattern     = regexp.MustCompile(`(?is)^\s*drop\s+conversion\s+(if\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	createCastPattern         = regexp.MustCompile(`(?is)^\s*create\s+cast\s*\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s+with\s+function\s+([a-z_][a-z0-9_."$]*)\s*\([^)]*\)\s*;?\s*$`)
+	dropCastPattern           = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 )
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
@@ -3013,6 +3020,30 @@ func convertedDropCast(query string) (ConvertedQuery, bool) {
 			Statement: node.NewDropCast(matches[2], matches[3], strings.TrimSpace(matches[1]) != ""),
 		},
 		StatementTag: "DROP CAST",
+	}, true
+}
+
+func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
+	statementTag := ""
+	switch {
+	case dropOperatorPattern.MatchString(query):
+		statementTag = "DROP OPERATOR"
+	case dropOperatorClassPattern.MatchString(query):
+		statementTag = "DROP OPERATOR CLASS"
+	case dropOperatorFamilyPattern.MatchString(query):
+		statementTag = "DROP OPERATOR FAMILY"
+	case dropTextSearchPattern.MatchString(query):
+		matches := dropTextSearchPattern.FindStringSubmatch(query)
+		statementTag = "DROP TEXT SEARCH " + strings.ToUpper(matches[1])
+	default:
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NoOp{},
+		},
+		StatementTag: statementTag,
 	}, true
 }
 

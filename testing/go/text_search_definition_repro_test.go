@@ -65,3 +65,95 @@ func TestCreateTextSearchConfigurationCopyIsUsableRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestDropTextSearchConfigurationIfExistsMissingRepro reproduces a
+// compatibility gap: PostgreSQL accepts DROP TEXT SEARCH CONFIGURATION IF
+// EXISTS for absent configurations.
+func TestDropTextSearchConfigurationIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TEXT SEARCH CONFIGURATION IF EXISTS missing config succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP TEXT SEARCH CONFIGURATION IF EXISTS missing_ts_config_repro;`,
+				},
+			},
+		},
+	})
+}
+
+// TestDropTextSearchDictionaryIfExistsMissingRepro reproduces a compatibility
+// gap: PostgreSQL accepts DROP TEXT SEARCH DICTIONARY IF EXISTS for absent
+// dictionaries.
+func TestDropTextSearchDictionaryIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TEXT SEARCH DICTIONARY IF EXISTS missing dictionary succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP TEXT SEARCH DICTIONARY IF EXISTS missing_ts_dictionary_repro;`,
+				},
+			},
+		},
+	})
+}
+
+// TestDropTextSearchParserIfExistsMissingRepro reproduces a compatibility gap:
+// PostgreSQL accepts DROP TEXT SEARCH PARSER IF EXISTS for absent parsers.
+func TestDropTextSearchParserIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TEXT SEARCH PARSER IF EXISTS missing parser succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP TEXT SEARCH PARSER IF EXISTS missing_ts_parser_repro;`,
+				},
+			},
+		},
+	})
+}
+
+// TestDropTextSearchTemplateIfExistsMissingRepro reproduces a compatibility
+// gap: PostgreSQL accepts DROP TEXT SEARCH TEMPLATE IF EXISTS for absent
+// templates.
+func TestDropTextSearchTemplateIfExistsMissingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TEXT SEARCH TEMPLATE IF EXISTS missing template succeeds",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP TEXT SEARCH TEMPLATE IF EXISTS missing_ts_template_repro;`,
+				},
+			},
+		},
+	})
+}
+
+// TestAlterTextSearchObjectsReachMissingObjectValidationRepro reproduces a
+// compatibility gap: PostgreSQL supports ALTER TEXT SEARCH object statements
+// and validates that the target object exists.
+func TestAlterTextSearchObjectsReachMissingObjectValidationRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TEXT SEARCH objects validate missing targets",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER TEXT SEARCH CONFIGURATION missing_ts_config_repro RENAME TO renamed_ts_config_repro;`,
+					ExpectedErr: `does not exist`,
+				},
+				{
+					Query:       `ALTER TEXT SEARCH DICTIONARY missing_ts_dictionary_repro RENAME TO renamed_ts_dictionary_repro;`,
+					ExpectedErr: `does not exist`,
+				},
+				{
+					Query:       `ALTER TEXT SEARCH PARSER missing_ts_parser_repro RENAME TO renamed_ts_parser_repro;`,
+					ExpectedErr: `does not exist`,
+				},
+				{
+					Query:       `ALTER TEXT SEARCH TEMPLATE missing_ts_template_repro RENAME TO renamed_ts_template_repro;`,
+					ExpectedErr: `does not exist`,
+				},
+			},
+		},
+	})
+}
