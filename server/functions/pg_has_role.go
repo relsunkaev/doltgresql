@@ -28,7 +28,21 @@ import (
 
 // initPgHasRole registers the functions to the catalog.
 func initPgHasRole() {
+	framework.RegisterFunction(pg_has_role_text_text)
 	framework.RegisterFunction(pg_has_role_text_oid_text)
+	framework.RegisterFunction(pg_has_role_text_text_text)
+	framework.RegisterFunction(pg_has_role_regrole_regrole_text)
+}
+
+// pg_has_role_text_text represents the PostgreSQL role membership inquiry function.
+var pg_has_role_text_text = framework.Function2{
+	Name:       "pg_has_role",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, roleName any, privilege any) (any, error) {
+		return hasRoleByName(ctx.Client().User, roleName.(string), privilege.(string))
+	},
 }
 
 // pg_has_role_text_oid_text represents the PostgreSQL role membership inquiry function.
@@ -42,22 +56,55 @@ var pg_has_role_text_oid_text = framework.Function3{
 	},
 }
 
+// pg_has_role_text_text_text represents the PostgreSQL role membership inquiry function.
+var pg_has_role_text_text_text = framework.Function3{
+	Name:       "pg_has_role",
+	Return:     pgtypes.Bool,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, userName any, roleName any, privilege any) (any, error) {
+		return hasRoleByName(userName.(string), roleName.(string), privilege.(string))
+	},
+}
+
+// pg_has_role_regrole_regrole_text represents the PostgreSQL role membership inquiry function.
+var pg_has_role_regrole_regrole_text = framework.Function3{
+	Name:       "pg_has_role",
+	Return:     pgtypes.Bool,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Regrole, pgtypes.Regrole, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, userRole any, memberRole any, privilege any) (any, error) {
+		userName, ok := roleNameFromOID(userRole.(id.Id))
+		if !ok {
+			return false, nil
+		}
+		return hasRoleByOID(userName, memberRole.(id.Id), privilege.(string))
+	},
+}
+
 func hasRoleByOID(userName string, roleOID id.Id, privilege string) (bool, error) {
+	roleName, ok := roleNameFromOID(roleOID)
+	if !ok {
+		return false, nil
+	}
+	return hasRoleByName(userName, roleName, privilege)
+}
+
+func hasRoleByName(userName string, roleName string, privilege string) (bool, error) {
 	privilege = strings.ToLower(privilege)
 	if privilege != "member" && privilege != "usage" {
 		return false, errors.Errorf(`unrecognized privilege type: "%s"`, privilege)
 	}
 
-	roleName, ok := roleNameFromOID(roleOID)
-	if !ok {
-		return false, nil
-	}
-
-	var hasRole bool
+	hasRole := false
 	auth.LockRead(func() {
 		userRole := auth.GetRole(userName)
 		memberRole := auth.GetRole(roleName)
 		if !userRole.IsValid() || !memberRole.IsValid() {
+			return
+		}
+		if userRole.IsSuperUser {
+			hasRole = true
 			return
 		}
 		groupID, inheritsPrivileges, _ := auth.IsRoleAMember(userRole.ID(), memberRole.ID())
