@@ -36,6 +36,9 @@ type Metadata struct {
 	RelOptions                  []string            `json:"relOptions,omitempty"`
 	RelPersistence              string              `json:"relPersistence,omitempty"`
 	ColumnOptions               map[string][]string `json:"columnOptions,omitempty"`
+	ColumnStorage               map[string]string   `json:"columnStorage,omitempty"`
+	ColumnCompression           map[string]string   `json:"columnCompression,omitempty"`
+	ColumnStatisticsTargets     map[string]int16    `json:"columnStatisticsTargets,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -44,6 +47,9 @@ func EncodeComment(metadata Metadata) string {
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
+	normalizeColumnStringMetadata(metadata.ColumnStorage)
+	normalizeColumnStringMetadata(metadata.ColumnCompression)
+	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -62,6 +68,9 @@ func DecodeComment(comment string) (Metadata, bool) {
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
+	normalizeColumnStringMetadata(metadata.ColumnStorage)
+	normalizeColumnStringMetadata(metadata.ColumnCompression)
+	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	return metadata, true
 }
 
@@ -198,6 +207,36 @@ func ColumnOptions(comment string, column string) []string {
 	return append([]string(nil), metadata.ColumnOptions[strings.TrimSpace(column)]...)
 }
 
+// ColumnStorage returns the PostgreSQL attstorage value encoded for a column.
+func ColumnStorage(comment string, column string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ColumnStorage) == 0 {
+		return ""
+	}
+	return metadata.ColumnStorage[strings.TrimSpace(column)]
+}
+
+// ColumnCompression returns the PostgreSQL attcompression value encoded for a
+// column.
+func ColumnCompression(comment string, column string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ColumnCompression) == 0 {
+		return ""
+	}
+	return metadata.ColumnCompression[strings.TrimSpace(column)]
+}
+
+// ColumnStatisticsTarget returns the PostgreSQL attstattarget value encoded for
+// a column.
+func ColumnStatisticsTarget(comment string, column string) (int16, bool) {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ColumnStatisticsTargets) == 0 {
+		return -1, false
+	}
+	target, ok := metadata.ColumnStatisticsTargets[strings.TrimSpace(column)]
+	return target, ok
+}
+
 // SetRelPersistence returns a table metadata comment with the given
 // PostgreSQL relpersistence value. Empty or permanent persistence clears only
 // the relpersistence metadata.
@@ -247,6 +286,92 @@ func SetColumnOptions(comment string, column string, options []string) string {
 	}
 	if len(metadata.ColumnOptions) == 0 {
 		metadata.ColumnOptions = nil
+	}
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// SetColumnStorage returns a table metadata comment with PostgreSQL attstorage
+// for a single column.
+func SetColumnStorage(comment string, column string, storage string) string {
+	column = strings.TrimSpace(column)
+	storage = strings.TrimSpace(storage)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.ColumnStorage == nil {
+		metadata.ColumnStorage = make(map[string]string)
+	}
+	if storage == "" {
+		delete(metadata.ColumnStorage, column)
+	} else {
+		metadata.ColumnStorage[column] = storage
+	}
+	if len(metadata.ColumnStorage) == 0 {
+		metadata.ColumnStorage = nil
+	}
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// SetColumnCompression returns a table metadata comment with PostgreSQL
+// attcompression for a single column.
+func SetColumnCompression(comment string, column string, compression string) string {
+	column = strings.TrimSpace(column)
+	compression = strings.TrimSpace(compression)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.ColumnCompression == nil {
+		metadata.ColumnCompression = make(map[string]string)
+	}
+	if compression == "" {
+		delete(metadata.ColumnCompression, column)
+	} else {
+		metadata.ColumnCompression[column] = compression
+	}
+	if len(metadata.ColumnCompression) == 0 {
+		metadata.ColumnCompression = nil
+	}
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// SetColumnStatisticsTarget returns a table metadata comment with PostgreSQL
+// attstattarget for a single column. A target of -1 clears the explicit value.
+func SetColumnStatisticsTarget(comment string, column string, target int16) string {
+	column = strings.TrimSpace(column)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.ColumnStatisticsTargets == nil {
+		metadata.ColumnStatisticsTargets = make(map[string]int16)
+	}
+	if target == -1 {
+		delete(metadata.ColumnStatisticsTargets, column)
+	} else {
+		metadata.ColumnStatisticsTargets[column] = target
+	}
+	if len(metadata.ColumnStatisticsTargets) == 0 {
+		metadata.ColumnStatisticsTargets = nil
 	}
 	if metadata.empty() {
 		return ""
@@ -339,6 +464,35 @@ func NormalizeColumnOptions(columnOptions map[string][]string) {
 	}
 }
 
+func normalizeColumnStringMetadata(values map[string]string) {
+	for column, value := range values {
+		trimmedColumn := strings.TrimSpace(column)
+		trimmedValue := strings.TrimSpace(value)
+		if trimmedColumn == "" || trimmedValue == "" {
+			delete(values, column)
+			continue
+		}
+		if trimmedColumn != column {
+			delete(values, column)
+		}
+		values[trimmedColumn] = trimmedValue
+	}
+}
+
+func normalizeColumnStatisticsTargets(values map[string]int16) {
+	for column, value := range values {
+		trimmedColumn := strings.TrimSpace(column)
+		if trimmedColumn == "" || value == -1 {
+			delete(values, column)
+			continue
+		}
+		if trimmedColumn != column {
+			delete(values, column)
+		}
+		values[trimmedColumn] = value
+	}
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
@@ -349,5 +503,8 @@ func (metadata Metadata) empty() bool {
 		metadata.Owner == "" &&
 		metadata.RelPersistence == "" &&
 		len(metadata.RelOptions) == 0 &&
-		len(metadata.ColumnOptions) == 0
+		len(metadata.ColumnOptions) == 0 &&
+		len(metadata.ColumnStorage) == 0 &&
+		len(metadata.ColumnCompression) == 0 &&
+		len(metadata.ColumnStatisticsTargets) == 0
 }

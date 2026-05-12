@@ -101,7 +101,21 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					continue
 				}
 				attnum++
-				attr := tableColumnAttribute(table.OID.AsId(), schema.Item.SchemaName(), table.Item.Name(), attnum, col, tablemetadata.ColumnOptions(comment, col.Name))
+				attstattarget, ok := tablemetadata.ColumnStatisticsTarget(comment, col.Name)
+				if !ok {
+					attstattarget = -1
+				}
+				attr := tableColumnAttribute(
+					table.OID.AsId(),
+					schema.Item.SchemaName(),
+					table.Item.Name(),
+					attnum,
+					col,
+					tablemetadata.ColumnOptions(comment, col.Name),
+					tablemetadata.ColumnStorage(comment, col.Name),
+					tablemetadata.ColumnCompression(comment, col.Name),
+					attstattarget,
+				)
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
@@ -142,11 +156,14 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	return nil
 }
 
-func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string) *pgAttribute {
+func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string, attstorage string, attcompression string, attstattarget int16) *pgAttribute {
 	typeOid, attcollation, dimensions, atttypmod := attributeTypeMetadata(col.Type)
 	generated := ""
 	if col.Generated != nil {
 		generated = "s"
+	}
+	if attstorage == "" {
+		attstorage = "p"
 	}
 	return &pgAttribute{
 		attrelid:       relationID,
@@ -160,7 +177,9 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		attnotnull:     !col.Nullable,
 		atthasdef:      col.Default != nil,
 		attgenerated:   generated,
-		attstattarget:  -1,
+		attstorage:     attstorage,
+		attcompression: attcompression,
+		attstattarget:  attstattarget,
 		attcollation:   attcollation,
 		atttypmod:      atttypmod,
 		attoptions:     attoptions,
@@ -235,7 +254,7 @@ func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView
 		if err != nil {
 			return nil, err
 		}
-		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil))
+		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil, "", "", -1))
 	}
 	return attrs, nil
 }
@@ -595,6 +614,8 @@ type pgAttribute struct {
 	attnotnull     bool
 	atthasdef      bool
 	attgenerated   string
+	attstorage     string
+	attcompression string
 	attstattarget  int16
 	attcollation   id.Id
 	atttypmod      int32
@@ -650,34 +671,38 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 	if len(attr.attoptions) > 0 {
 		attoptions = textArray(attr.attoptions)
 	}
+	attstorage := attr.attstorage
+	if attstorage == "" {
+		attstorage = "p"
+	}
 
 	// TODO: Fill in the rest of the pg_attribute columns
 	return sql.Row{
-		attr.attrelid,      // attrelid
-		attr.attname,       // attname
-		attr.atttypid,      // atttypid
-		int16(0),           // attlen
-		attr.attnum,        // attnum
-		int32(-1),          // attcacheoff
-		attr.atttypmod,     // atttypmod
-		attr.attndims,      // attndims
-		false,              // attbyval
-		"i",                // attalign
-		"p",                // attstorage
-		"",                 // attcompression
-		attr.attnotnull,    // attnotnull
-		attr.atthasdef,     // atthasdef
-		false,              // atthasmissing
-		"",                 // attidentity
-		attr.attgenerated,  // attgenerated
-		false,              // attisdropped
-		true,               // attislocal
-		int16(0),           // attinhcount
-		attr.attstattarget, // attstattarget
-		attr.attcollation,  // attcollation
-		attacl,             // attacl
-		attoptions,         // attoptions
-		nil,                // attfdwoptions
-		nil,                // attmissingval
+		attr.attrelid,       // attrelid
+		attr.attname,        // attname
+		attr.atttypid,       // atttypid
+		int16(0),            // attlen
+		attr.attnum,         // attnum
+		int32(-1),           // attcacheoff
+		attr.atttypmod,      // atttypmod
+		attr.attndims,       // attndims
+		false,               // attbyval
+		"i",                 // attalign
+		attstorage,          // attstorage
+		attr.attcompression, // attcompression
+		attr.attnotnull,     // attnotnull
+		attr.atthasdef,      // atthasdef
+		false,               // atthasmissing
+		"",                  // attidentity
+		attr.attgenerated,   // attgenerated
+		false,               // attisdropped
+		true,                // attislocal
+		int16(0),            // attinhcount
+		attr.attstattarget,  // attstattarget
+		attr.attcollation,   // attcollation
+		attacl,              // attacl
+		attoptions,          // attoptions
+		nil,                 // attfdwoptions
+		nil,                 // attmissingval
 	}
 }

@@ -185,6 +185,44 @@ func TestColumnOptionsMetadata(t *testing.T) {
 	}
 }
 
+func TestColumnAttributeMetadata(t *testing.T) {
+	comment := SetColumnStorage("", "payload", "e")
+	comment = SetColumnCompression(comment, "payload", "p")
+	comment = SetColumnStatisticsTarget(comment, "payload", 42)
+
+	if got := ColumnStorage(comment, "payload"); got != "e" {
+		t.Fatalf("unexpected column storage: %q", got)
+	}
+	if got := ColumnCompression(comment, "payload"); got != "p" {
+		t.Fatalf("unexpected column compression: %q", got)
+	}
+	if got, ok := ColumnStatisticsTarget(comment, "payload"); !ok || got != 42 {
+		t.Fatalf("unexpected column statistics target: %d, %v", got, ok)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
+	comment = SetColumnStorage(comment, "payload", "")
+	comment = SetColumnCompression(comment, "payload", "")
+	comment = SetColumnStatisticsTarget(comment, "payload", -1)
+	if got := PrimaryKeyConstraintName(comment); got != "items_pkey" {
+		t.Fatalf("expected unrelated metadata to be preserved, got %q", got)
+	}
+	if got := ColumnStorage(comment, "payload"); got != "" {
+		t.Fatalf("expected storage metadata to be cleared, got %q", got)
+	}
+	if got := ColumnCompression(comment, "payload"); got != "" {
+		t.Fatalf("expected compression metadata to be cleared, got %q", got)
+	}
+	if got, ok := ColumnStatisticsTarget(comment, "payload"); ok || got != -1 {
+		t.Fatalf("expected statistics metadata to be cleared, got %d, %v", got, ok)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	if comment != "" {
+		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	}
+}
+
 func TestDecodeCommentRejectsPlainComments(t *testing.T) {
 	if _, ok := DecodeComment("plain table comment"); ok {
 		t.Fatalf("expected plain comments to be ignored")

@@ -251,6 +251,238 @@ func (a *AlterTableSetColumnOptions) WithResolvedChildren(ctx context.Context, c
 	return a, nil
 }
 
+// AlterTableSetColumnStorage handles ALTER TABLE ... ALTER COLUMN ... SET
+// STORAGE.
+type AlterTableSetColumnStorage struct {
+	target  alterTableStorageTarget
+	column  string
+	storage string
+}
+
+var _ sql.ExecSourceRel = (*AlterTableSetColumnStorage)(nil)
+var _ vitess.Injectable = (*AlterTableSetColumnStorage)(nil)
+
+// NewAlterTableSetColumnStorage returns a new *AlterTableSetColumnStorage.
+func NewAlterTableSetColumnStorage(ifExists bool, schema string, table string, column string, storage string) *AlterTableSetColumnStorage {
+	return &AlterTableSetColumnStorage{
+		target: alterTableStorageTarget{
+			ifExists: ifExists,
+			schema:   schema,
+			table:    table,
+		},
+		column:  column,
+		storage: storage,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	return alterColumnMetadata(ctx, a.target, a.column, func(comment string) string {
+		return tablemetadata.SetColumnStorage(comment, a.column, a.storage)
+	})
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) String() string {
+	return "ALTER TABLE SET COLUMN STORAGE"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStorage) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterTableSetColumnStorage) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
+// AlterTableSetColumnCompression handles ALTER TABLE ... ALTER COLUMN ... SET
+// COMPRESSION.
+type AlterTableSetColumnCompression struct {
+	target      alterTableStorageTarget
+	column      string
+	compression string
+}
+
+var _ sql.ExecSourceRel = (*AlterTableSetColumnCompression)(nil)
+var _ vitess.Injectable = (*AlterTableSetColumnCompression)(nil)
+
+// NewAlterTableSetColumnCompression returns a new *AlterTableSetColumnCompression.
+func NewAlterTableSetColumnCompression(ifExists bool, schema string, table string, column string, compression string) *AlterTableSetColumnCompression {
+	return &AlterTableSetColumnCompression{
+		target: alterTableStorageTarget{
+			ifExists: ifExists,
+			schema:   schema,
+			table:    table,
+		},
+		column:      column,
+		compression: compression,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	return alterColumnMetadata(ctx, a.target, a.column, func(comment string) string {
+		return tablemetadata.SetColumnCompression(comment, a.column, a.compression)
+	})
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) String() string {
+	return "ALTER TABLE SET COLUMN COMPRESSION"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnCompression) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterTableSetColumnCompression) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
+// AlterTableSetColumnStatistics handles ALTER TABLE ... ALTER COLUMN ... SET
+// STATISTICS.
+type AlterTableSetColumnStatistics struct {
+	target      alterTableStorageTarget
+	column      string
+	targetValue int16
+}
+
+var _ sql.ExecSourceRel = (*AlterTableSetColumnStatistics)(nil)
+var _ vitess.Injectable = (*AlterTableSetColumnStatistics)(nil)
+
+// NewAlterTableSetColumnStatistics returns a new *AlterTableSetColumnStatistics.
+func NewAlterTableSetColumnStatistics(ifExists bool, schema string, table string, column string, targetValue int16) *AlterTableSetColumnStatistics {
+	return &AlterTableSetColumnStatistics{
+		target: alterTableStorageTarget{
+			ifExists: ifExists,
+			schema:   schema,
+			table:    table,
+		},
+		column:      column,
+		targetValue: targetValue,
+	}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) Children() []sql.Node {
+	return nil
+}
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) IsReadOnly() bool {
+	return false
+}
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) Resolved() bool {
+	return true
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	return alterColumnMetadata(ctx, a.target, a.column, func(comment string) string {
+		return tablemetadata.SetColumnStatisticsTarget(comment, a.column, a.targetValue)
+	})
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+
+// String implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) String() string {
+	return "ALTER TABLE SET COLUMN STATISTICS"
+}
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (a *AlterTableSetColumnStatistics) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(a, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (a *AlterTableSetColumnStatistics) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return a, nil
+}
+
+func alterColumnMetadata(ctx *sql.Context, target alterTableStorageTarget, column string, updateComment func(string) string) (sql.RowIter, error) {
+	table, err := target.resolveTable(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if table == nil {
+		return sql.RowsToRowIter(), nil
+	}
+	if _, ok := columnByName(table.Schema(ctx), column); !ok {
+		return nil, errors.Errorf(`column "%s" of relation "%s" does not exist`, column, target.table)
+	}
+	commented, ok := table.(sql.CommentedTable)
+	if !ok {
+		return nil, sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return nil, sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	if err = alterable.ModifyComment(ctx, updateComment(commented.Comment())); err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
 func columnByName(schema sql.Schema, name string) (*sql.Column, bool) {
 	for _, column := range schema {
 		if column.Name == name {

@@ -53,6 +53,12 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableSetStorage(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableSetAttribution:
 			return nodeAlterTableSetAttribution(ctx, treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableSetStatistics:
+			return nodeAlterTableSetStatistics(ctx, treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableColSetStorage:
+			return nodeAlterTableSetColumnStorage(ctx, treeTableName, cmd, node.IfExists)
+		case *tree.AlterTableSetCompression:
+			return nodeAlterTableSetCompression(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableRowLevelSecurity:
 			return nodeAlterTableRowLevelSecurity(treeTableName, cmd)
 		}
@@ -352,6 +358,88 @@ func nodeAlterTableSetAttribution(ctx *Context, treeTableName tree.TableName, cm
 			bareIdentifier(cmd.Column),
 			options,
 			resetKeys,
+		),
+	}, nil
+}
+
+func nodeAlterTableSetColumnStorage(ctx *Context, treeTableName tree.TableName, cmd *tree.AlterTableColSetStorage, ifExists bool) (vitess.Statement, error) {
+	storage := ""
+	switch cmd.Type {
+	case tree.StoragePlain:
+		storage = "p"
+	case tree.StorageExternal:
+		storage = "e"
+	case tree.StorageExtended:
+		storage = "x"
+	case tree.StorageMain:
+		storage = "m"
+	default:
+		return nil, errors.Errorf("unknown column storage type %d", cmd.Type)
+	}
+	tableName, err := nodeTableName(ctx, &treeTableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableSetColumnStorage(
+			ifExists,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			bareIdentifier(cmd.Column),
+			storage,
+		),
+	}, nil
+}
+
+func nodeAlterTableSetCompression(ctx *Context, treeTableName tree.TableName, cmd *tree.AlterTableSetCompression, ifExists bool) (vitess.Statement, error) {
+	compression := ""
+	switch strings.ToLower(strings.TrimSpace(cmd.Compression)) {
+	case "default":
+		compression = ""
+	case "pglz":
+		compression = "p"
+	case "lz4":
+		compression = "l"
+	default:
+		return nil, errors.Errorf(`compression method "%s" does not exist`, cmd.Compression)
+	}
+	tableName, err := nodeTableName(ctx, &treeTableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableSetColumnCompression(
+			ifExists,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			bareIdentifier(cmd.Column),
+			compression,
+		),
+	}, nil
+}
+
+func nodeAlterTableSetStatistics(ctx *Context, treeTableName tree.TableName, cmd *tree.AlterTableSetStatistics, ifExists bool) (vitess.Statement, error) {
+	statsTarget, err := nodeIndexStorageParamInt(cmd.Num)
+	if err != nil {
+		return nil, errors.Errorf("statistics target must be an integer")
+	}
+	if statsTarget < -1 {
+		return nil, errors.Errorf("statistics target %d is too low", statsTarget)
+	}
+	if statsTarget > 10000 {
+		statsTarget = 10000
+	}
+	tableName, err := nodeTableName(ctx, &treeTableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableSetColumnStatistics(
+			ifExists,
+			tableName.SchemaQualifier.String(),
+			tableName.Name.String(),
+			bareIdentifier(cmd.Column),
+			int16(statsTarget),
 		),
 	}, nil
 }
