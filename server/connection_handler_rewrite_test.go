@@ -42,3 +42,13 @@ func TestContainsSecurityLabel(t *testing.T) {
 		t.Fatal("did not expect ordinary SELECT to match")
 	}
 }
+
+func TestRewriteDMLReturningTableOID(t *testing.T) {
+	got, ok := rewriteDMLReturningTableOID(`INSERT INTO returning_tableoid_items VALUES (1, 10) RETURNING tableoid::regclass::text, id;`)
+	if !ok {
+		t.Fatal("expected rewrite")
+	}
+	if want := `INSERT INTO returning_tableoid_items VALUES (1, 10) RETURNING 'returning_tableoid_items'::regclass::text, id;`; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

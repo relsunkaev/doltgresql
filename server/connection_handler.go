@@ -2945,6 +2945,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if rewrittenQuery, ok := rewriteXmlConstructors(query); ok {
 		query = rewrittenQuery
 	}
+	if rewrittenQuery, ok := rewriteDMLReturningTableOID(query); ok {
+		query = rewrittenQuery
+	}
 	if rewrittenQuery, ok := rewriteAdvancedGroupByQuery(query); ok {
 		query = rewrittenQuery
 	}
@@ -3018,6 +3021,10 @@ var (
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	securityLabelPattern      = regexp.MustCompile(`(?is)^\s*security\s+label\b`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
+	insertReturningPattern    = regexp.MustCompile(`(?is)^\s*insert\s+into\s+([a-z_][a-z0-9_."$]*)(?:\s*\([^)]*\))?\s+.+\breturning\b`)
+	updateReturningPattern    = regexp.MustCompile(`(?is)^\s*update\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
+	deleteReturningPattern    = regexp.MustCompile(`(?is)^\s*delete\s+from\s+([a-z_][a-z0-9_."$]*)\s+.+\breturning\b`)
+	returningTableoidPattern  = regexp.MustCompile(`(?is)\btableoid\b(?:\s*::\s*regclass)?`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
 	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
 	xmlForestCallPattern      = regexp.MustCompile(`(?is)xmlforest\s*\((.+?)\)`)
@@ -3297,6 +3304,30 @@ func rewriteXmlConstructors(query string) (string, bool) {
 		return "xmlforest(" + strings.Join(rewrittenArgs, ", ") + ")"
 	})
 	return rewritten, rewritten != query
+}
+
+func rewriteDMLReturningTableOID(query string) (string, bool) {
+	tableName := ""
+	for _, pattern := range []*regexp.Regexp{insertReturningPattern, updateReturningPattern, deleteReturningPattern} {
+		if matches := pattern.FindStringSubmatch(query); matches != nil {
+			tableName = regclassLiteralTableName(matches[1])
+			break
+		}
+	}
+	if tableName == "" || !returningTableoidPattern.MatchString(query) {
+		return "", false
+	}
+	rewritten := returningTableoidPattern.ReplaceAllString(query, quoteSQLString(tableName)+"::regclass")
+	return rewritten, rewritten != query
+}
+
+func regclassLiteralTableName(raw string) string {
+	raw = strings.TrimSpace(raw)
+	parts := strings.Split(raw, ".")
+	for i, part := range parts {
+		parts[i] = normalizeTransformFunctionName(part)
+	}
+	return strings.Join(parts, ".")
 }
 
 func rewriteAdvancedGroupByQuery(query string) (string, bool) {
