@@ -156,16 +156,14 @@ var date_part_text_timestamptz = framework.Function2{
 			return nil, err
 		}
 		tstzVal := val2.(time.Time).In(loc)
+		_, currentOffset := tstzVal.Zone()
 		switch strings.ToLower(field) {
 		case "timezone":
-			// TODO: postgres seem to use server timezone regardless of input value
-			return float64(-28800), nil
+			return float64(currentOffset), nil
 		case "timezone_hour":
-			// TODO: postgres seem to use server timezone regardless of input value
-			return float64(-8), nil
+			return float64(currentOffset / duration.SecsPerHour), nil
 		case "timezone_minute":
-			// TODO: postgres seem to use server timezone regardless of input value
-			return float64(0), nil
+			return float64((currentOffset % duration.SecsPerHour) / duration.SecsPerMinute), nil
 		default:
 			result, err := getFieldFromTimeVal(field, tstzVal)
 			if err != nil {
