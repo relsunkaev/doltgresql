@@ -82,3 +82,65 @@ func TestRollbackRevertsAlterDatabaseCatalogOptionsRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRollbackRevertsAlterRoleSetRepro reproduces a transaction consistency
+// bug: ALTER ROLE ... SET writes pg_db_role_setting outside the surrounding
+// transaction and survives ROLLBACK.
+func TestRollbackRevertsAlterRoleSetRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK reverts ALTER ROLE SET",
+			SetUpScript: []string{
+				`CREATE ROLE rollback_role_setting_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ALTER ROLE rollback_role_setting_catalog SET work_mem = '64kB';`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_db_role_setting
+						WHERE setrole = 'rollback_role_setting_catalog'::regrole;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
+// TestRollbackRevertsAlterRoleOptionsRepro reproduces a transaction
+// consistency bug: ALTER ROLE option changes write pg_roles metadata outside
+// the surrounding transaction and survive ROLLBACK.
+func TestRollbackRevertsAlterRoleOptionsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK reverts ALTER ROLE options",
+			SetUpScript: []string{
+				`CREATE ROLE rollback_role_options_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ALTER ROLE rollback_role_options_catalog CONNECTION LIMIT 0;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT rolconnlimit
+						FROM pg_catalog.pg_roles
+						WHERE rolname = 'rollback_role_options_catalog';`,
+					Expected: []sql.Row{{int32(-1)}},
+				},
+			},
+		},
+	})
+}
