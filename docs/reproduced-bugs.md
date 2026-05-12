@@ -9751,6 +9751,23 @@ artifacts only; no fixes are included here.
   `character(3)`, so concurrent refresh can persist fixed-width character output
   with the wrong physical width.
 
+### REFRESH MATERIALIZED VIEW CONCURRENTLY text-domain typmod outputs store empty base values
+
+- Reproducer:
+  `TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro`
+  in `testing/go/view_ddl_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro
+  -count=1`.
+- Expected PostgreSQL behavior: `REFRESH MATERIALIZED VIEW CONCURRENTLY`
+  refreshes a materialized view whose query casts source text to `varchar(3)`
+  and `character(3)` domains by materializing typmod-coerced values. `abc   `
+  stores as `abc`, and `ab` stores as a padded `character(3)` value.
+- Observed Doltgres behavior: the concurrent refresh path stores empty values
+  with `length = 0` and `octet_length = 0`, so concurrent refresh can corrupt
+  text-domain outputs.
+
 ### CREATE MATERIALIZED VIEW TABLESPACE pg_default is rejected
 
 - Reproducer: `TestCreateMaterializedViewDefaultTablespaceRepro` in

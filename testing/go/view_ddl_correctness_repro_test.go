@@ -1099,6 +1099,49 @@ func TestRefreshMaterializedViewConcurrentlyCharacterTypmodMaterializesPaddedVal
 	})
 }
 
+// TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro
+// reproduces a materialized-view concurrent refresh persistence bug: PostgreSQL
+// refreshes text-domain query outputs using the domain base type's typmod.
+func TestRefreshMaterializedViewConcurrentlyTextDomainTypmodMaterializesCoercedValueRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "REFRESH MATERIALIZED VIEW CONCURRENTLY text domain typmod materializes coerced value",
+			SetUpScript: []string{
+				`CREATE DOMAIN varchar3_concurrent_refresh_domain AS varchar(3);`,
+				`CREATE DOMAIN char3_concurrent_refresh_domain AS character(3);`,
+				`CREATE TABLE matview_concurrent_refresh_text_domain_source (
+					id INT PRIMARY KEY,
+					v TEXT,
+					c TEXT
+				);`,
+				`INSERT INTO matview_concurrent_refresh_text_domain_source
+					VALUES (1, 'abc', 'abc');`,
+				`CREATE MATERIALIZED VIEW matview_concurrent_refresh_text_domain_reader AS
+					SELECT id,
+						v::varchar3_concurrent_refresh_domain AS v,
+						c::char3_concurrent_refresh_domain AS c
+					FROM matview_concurrent_refresh_text_domain_source;`,
+				`CREATE UNIQUE INDEX matview_concurrent_refresh_text_domain_reader_id_idx
+					ON matview_concurrent_refresh_text_domain_reader (id);`,
+				`UPDATE matview_concurrent_refresh_text_domain_source
+					SET v = 'abc   ', c = 'ab'
+					WHERE id = 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY
+						matview_concurrent_refresh_text_domain_reader;`,
+				},
+				{
+					Query: `SELECT id, v, length(v), c = 'ab '::CHARACTER(3), octet_length(c)
+						FROM matview_concurrent_refresh_text_domain_reader;`,
+					Expected: []sql.Row{{1, "abc", 3, true, 3}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateMaterializedViewDefaultTablespaceRepro reproduces a materialized
 // view DDL correctness bug: PostgreSQL accepts TABLESPACE pg_default.
 func TestCreateMaterializedViewDefaultTablespaceRepro(t *testing.T) {
