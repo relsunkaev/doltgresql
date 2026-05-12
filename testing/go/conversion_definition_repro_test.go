@@ -44,6 +44,30 @@ func TestCreateConversionPersistsPgConversionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateConversionRequiresSchemaCreatePrivilegeRepro reproduces a security
+// bug: PostgreSQL requires CREATE privilege on the target schema for CREATE
+// CONVERSION.
+func TestCreateConversionRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE CONVERSION requires schema CREATE privilege",
+			SetUpScript: []string{
+				`CREATE USER conversion_creator PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE CONVERSION unauthorized_latin1_to_utf8
+						FOR 'LATIN1' TO 'UTF8'
+						FROM iso8859_1_to_utf8;`,
+					ExpectedErr: `permission denied`,
+					Username:    `conversion_creator`,
+					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropConversionIfExistsMissingRepro reproduces a compatibility gap:
 // PostgreSQL accepts DROP CONVERSION IF EXISTS for absent conversions.
 func TestDropConversionIfExistsMissingRepro(t *testing.T) {
