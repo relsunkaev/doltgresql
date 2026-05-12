@@ -28,9 +28,15 @@ import (
 // initSubstr registers the functions to the catalog.
 func initSubstr() {
 	framework.RegisterFunction(substr_text_int32)
+	framework.RegisterFunction(substr_text_int64)
 	framework.RegisterFunction(substring_text_int32)
+	framework.RegisterFunction(substring_text_int64)
 	framework.RegisterFunction(substr_text_int32_int32)
+	framework.RegisterFunction(substr_text_int64_int32)
+	framework.RegisterFunction(substr_text_int64_int64)
 	framework.RegisterFunction(substring_text_int32_int32)
+	framework.RegisterFunction(substring_text_int64_int32)
+	framework.RegisterFunction(substring_text_int64_int64)
 	framework.RegisterFunction(substring_text_text)
 }
 
@@ -43,11 +49,29 @@ var substr_text_int32 = framework.Function2{
 	Callable:   substring_text_int32_fn,
 }
 
+// substr_text_int64 represents the PostgreSQL function of the same name, taking the same parameters.
+var substr_text_int64 = framework.Function2{
+	Name:       "substr",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64},
+	Strict:     true,
+	Callable:   substring_text_int32_fn,
+}
+
 // substring_text_int32 represents the PostgreSQL function of the same name, taking the same parameters.
 var substring_text_int32 = framework.Function2{
 	Name:       "substring",
 	Return:     pgtypes.Text,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int32},
+	Strict:     true,
+	Callable:   substring_text_int32_fn,
+}
+
+// substring_text_int64 represents the PostgreSQL function of the same name, taking the same parameters.
+var substring_text_int64 = framework.Function2{
+	Name:       "substring",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64},
 	Strict:     true,
 	Callable:   substring_text_int32_fn,
 }
@@ -62,15 +86,19 @@ func substring_text_int32_fn(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, input
 		return nil, fmt.Errorf("unexpected type for substring input, expected string, got %T", str)
 	}
 	runes := []rune(str)
-	if start.(int32) < 1 {
-		start = int32(1)
+	startIdx, err := substringIntArg(start)
+	if err != nil {
+		return nil, err
+	}
+	if startIdx < 1 {
+		startIdx = 1
 	}
 	// start is 1-indexed
-	start = start.(int32) - int32(1)
-	if int(start.(int32)) >= len(runes) {
+	startIdx--
+	if startIdx >= int64(len(runes)) {
 		return "", nil
 	}
-	return string(runes[start.(int32):]), nil
+	return string(runes[startIdx:]), nil
 }
 
 // substr_text_int32_int32 represents the PostgreSQL function of the same name, taking the same parameters.
@@ -78,6 +106,24 @@ var substr_text_int32_int32 = framework.Function3{
 	Name:       "substr",
 	Return:     pgtypes.Text,
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int32, pgtypes.Int32},
+	Strict:     true,
+	Callable:   substring_text_int32_int32_fn,
+}
+
+// substr_text_int64_int32 represents the PostgreSQL function of the same name, taking the same parameters.
+var substr_text_int64_int32 = framework.Function3{
+	Name:       "substr",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64, pgtypes.Int32},
+	Strict:     true,
+	Callable:   substring_text_int32_int32_fn,
+}
+
+// substr_text_int64_int64 represents the PostgreSQL function of the same name, taking the same parameters.
+var substr_text_int64_int64 = framework.Function3{
+	Name:       "substr",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64, pgtypes.Int64},
 	Strict:     true,
 	Callable:   substring_text_int32_int32_fn,
 }
@@ -91,6 +137,24 @@ var substring_text_int32_int32 = framework.Function3{
 	Callable:   substring_text_int32_int32_fn,
 }
 
+// substring_text_int64_int32 represents the PostgreSQL function of the same name, taking the same parameters.
+var substring_text_int64_int32 = framework.Function3{
+	Name:       "substring",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64, pgtypes.Int32},
+	Strict:     true,
+	Callable:   substring_text_int32_int32_fn,
+}
+
+// substring_text_int64_int64 represents the PostgreSQL function of the same name, taking the same parameters.
+var substring_text_int64_int64 = framework.Function3{
+	Name:       "substring",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Int64, pgtypes.Int64},
+	Strict:     true,
+	Callable:   substring_text_int32_int32_fn,
+}
+
 // substring_text_int32_int32_fn is a helper function for substr_text_int32_int32.
 func substring_text_int32_int32_fn(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, input any, startInt any, countInt any) (any, error) {
 	str, ok, err := sql.Unwrap[string](ctx, input)
@@ -100,8 +164,14 @@ func substring_text_int32_int32_fn(ctx *sql.Context, _ [4]*pgtypes.DoltgresType,
 	if !ok {
 		return nil, fmt.Errorf("unexpected type for substring input, expected string, got %T", str)
 	}
-	start := startInt.(int32)
-	count := countInt.(int32)
+	start, err := substringIntArg(startInt)
+	if err != nil {
+		return nil, err
+	}
+	count, err := substringIntArg(countInt)
+	if err != nil {
+		return nil, err
+	}
 	runes := []rune(str)
 	if count < 0 {
 		return nil, errors.Errorf("negative substring length not allowed")
@@ -121,6 +191,17 @@ func substring_text_int32_int32_fn(ctx *sql.Context, _ [4]*pgtypes.DoltgresType,
 		return string(runes[start:]), nil
 	}
 	return string(runes[start : start+count]), nil
+}
+
+func substringIntArg(val any) (int64, error) {
+	switch v := val.(type) {
+	case int32:
+		return int64(v), nil
+	case int64:
+		return v, nil
+	default:
+		return 0, fmt.Errorf("unexpected type for substring integer argument, got %T", val)
+	}
 }
 
 // substr_text_text represents the PostgreSQL function of the same name, taking the same parameters.
