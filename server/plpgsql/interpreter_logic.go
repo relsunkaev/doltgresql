@@ -233,6 +233,12 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			if err != nil {
 				return nil, false, err
 			}
+			if resolvedType == nil && schemaName == "pg_catalog" && !strings.Contains(strings.TrimSpace(operation.PrimaryData), ".") {
+				resolvedType, err = typeCollection.GetType(ctx, id.NewType("", typeName))
+				if err != nil {
+					return nil, false, err
+				}
+			}
 			if resolvedType == nil {
 				return nil, false, pgtypes.ErrTypeDoesNotExist.New(operation.PrimaryData)
 			}
@@ -386,6 +392,14 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 							return nil, false, err
 						}
 					} else {
+						target := stack.GetVariable(operation.Target)
+						if target.Type != nil && target.Type.IsCompositeType() && !target.Type.IsRecordType() &&
+							len(rows[0]) == len(target.Type.CompositeAttrs) && len(sch) == len(target.Type.CompositeAttrs) {
+							if err = assignSQLCompositeRowValue(ctx, stack, operation.Target, sch, rows[0]); err != nil {
+								return nil, false, err
+							}
+							continue
+						}
 						if len(rows[0]) != 1 || len(sch) != 1 {
 							return nil, false, errors.New("expression returned multiple results")
 						}
@@ -537,6 +551,19 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 						return *stack.GetVariable("NEW").Value, true, nil
 					} else if strings.EqualFold(operation.SecondaryData[0], "old") {
 						return *stack.GetVariable("OLD").Value, true, nil
+					}
+				}
+			}
+			if len(operation.SecondaryData) == 1 {
+				normalized := strings.ReplaceAll(strings.ToLower(operation.PrimaryData), " ", "")
+				if normalized == "select$1;" {
+					retVariable := stack.GetVariable(operation.SecondaryData[0])
+					if retVariable.Type != nil && retVariable.Type.ID == iFunc.GetReturn().ID {
+						retVal := *retVariable.Value
+						if iFunc.IsSRF() {
+							return sql.RowsToRowIter(sql.Row{retVal}), true, nil
+						}
+						return retVal, true, nil
 					}
 				}
 			}
@@ -1296,6 +1323,55 @@ func assignSQLRowValue(ctx *sql.Context, stack InterpreterStack, variableName st
 		return err
 	}
 	return stack.SetVariable(ctx, variableName, castValue)
+}
+
+func assignSQLCompositeRowValue(ctx *sql.Context, stack InterpreterStack, variableName string, sch sql.Schema, row sql.Row) error {
+	target := stack.GetVariable(variableName)
+	if target.Type == nil {
+		return fmt.Errorf("variable `%s` could not be found", variableName)
+	}
+	if !target.Type.IsCompositeType() || target.Type.IsRecordType() {
+		return errors.New("target is not a named composite type")
+	}
+	if len(row) != len(target.Type.CompositeAttrs) || len(sch) != len(target.Type.CompositeAttrs) {
+		return errors.New("number of row values does not match number of composite attributes")
+	}
+	typeCollection, err := GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	values := make([]pgtypes.RecordValue, len(target.Type.CompositeAttrs))
+	for i, attr := range target.Type.CompositeAttrs {
+		targetType, err := typeCollection.GetType(ctx, attr.TypeID)
+		if err != nil {
+			return err
+		}
+		if targetType == nil {
+			return pgtypes.ErrTypeDoesNotExist.New(attr.TypeID.TypeName())
+		}
+		value := row[i]
+		if value != nil {
+			fromType, err := doltgresTypeFromSQLType(sch[i].Type)
+			if err != nil {
+				return err
+			}
+			if fromType.ID != targetType.ID {
+				str, err := fromType.IoOutput(ctx, value)
+				if err != nil {
+					return err
+				}
+				value, err = targetType.IoInput(ctx, str)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		values[i] = pgtypes.RecordValue{
+			Value: value,
+			Type:  targetType,
+		}
+	}
+	return stack.SetVariable(ctx, variableName, values)
 }
 
 func doltgresTypeFromSQLType(sqlType sql.Type) (*pgtypes.DoltgresType, error) {
