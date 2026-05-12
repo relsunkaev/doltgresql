@@ -426,6 +426,29 @@ func TestDropCastRequiresTypeOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro
+// reproduces a security bug: Doltgres allows a role without CREATE privilege on
+// the target schema to create a text-search configuration in that schema.
+func TestCreateTextSearchConfigurationRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE TEXT SEARCH CONFIGURATION requires schema CREATE privilege",
+			SetUpScript: []string{
+				`CREATE USER ts_config_creator PASSWORD 'creator';`,
+				`GRANT USAGE ON SCHEMA public TO ts_config_creator;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `CREATE TEXT SEARCH CONFIGURATION unauthorized_ts_config (COPY = pg_catalog.simple);`,
+					ExpectedErr: `permission denied for schema public`,
+					Username:    `ts_config_creator`,
+					Password:    `creator`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
