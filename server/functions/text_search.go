@@ -46,6 +46,8 @@ func init() {
 	framework.RegisterFunction(ts_delete_text_text)
 	framework.RegisterFunction(setweight_text_text)
 	framework.RegisterFunction(numnode_text)
+	framework.RegisterFunction(querytree_text)
+	framework.RegisterFunction(tsquery_phrase_text_text)
 	framework.RegisterFunction(ts_match_vq_text)
 }
 
@@ -249,6 +251,24 @@ var numnode_text = framework.Function1{
 	},
 }
 
+var querytree_text = framework.Function1{
+	Name:       "querytree",
+	Return:     pgtypes.Text,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, query any) (any, error) {
+		return fmt.Sprint(query), nil
+	},
+}
+
+var tsquery_phrase_text_text = framework.Function2{
+	Name:       "tsquery_phrase",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, left any, right any) (any, error) {
+		return simpleTSQueryPhrase(fmt.Sprint(left), fmt.Sprint(right)), nil
+	},
+}
+
 var ts_match_vq_text = framework.Function2{
 	Name:       "ts_match_vq",
 	Return:     pgtypes.Bool,
@@ -359,6 +379,15 @@ func simpleTSNumNode(query string) int {
 		return 0
 	}
 	return len(textSearchTerms(query)) + strings.Count(query, "&") + strings.Count(query, "|") + strings.Count(query, "!") + strings.Count(query, "<->")
+}
+
+func simpleTSQueryPhrase(left string, right string) string {
+	terms := append(textSearchTerms(left), textSearchTerms(right)...)
+	parts := make([]string, len(terms))
+	for i, term := range terms {
+		parts[i] = "'" + term + "'"
+	}
+	return strings.Join(parts, " <-> ")
 }
 
 func textSearchTermSet(input string) map[string]bool {

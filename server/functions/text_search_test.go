@@ -64,6 +64,12 @@ func TestSimpleTSNumNode(t *testing.T) {
 	}
 }
 
+func TestSimpleTSQueryPhrase(t *testing.T) {
+	if got, want := simpleTSQueryPhrase("'fat'", "'cats'"), "'fat' <-> 'cats'"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
 func TestSimpleTSMatches(t *testing.T) {
 	if !simpleTSMatches("'cats':2 'fat':1", "'cats'") {
 		t.Fatal("expected query term to match vector lexeme")
