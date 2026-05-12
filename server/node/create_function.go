@@ -42,6 +42,30 @@ type RoutineParam struct {
 	Default    sql.Expression
 }
 
+// FunctionOptionMetadata represents catalog metadata from CREATE/ALTER FUNCTION options.
+type FunctionOptionMetadata struct {
+	SecurityDefiner bool
+	LeakProof       bool
+	Volatility      string
+	Parallel        string
+	Cost            float32
+	Rows            float32
+}
+
+// DefaultFunctionOptionMetadata returns PostgreSQL-compatible defaults for routine option metadata.
+func DefaultFunctionOptionMetadata(setOf bool) FunctionOptionMetadata {
+	rows := float32(0)
+	if setOf {
+		rows = 1000
+	}
+	return FunctionOptionMetadata{
+		Volatility: "v",
+		Parallel:   "u",
+		Cost:       100,
+		Rows:       rows,
+	}
+}
+
 // CreateFunction implements CREATE FUNCTION.
 type CreateFunction struct {
 	DatabaseName      string
@@ -60,6 +84,7 @@ type CreateFunction struct {
 	SetOf             bool
 	LeakProof         bool
 	SetConfig         map[string]string
+	OptionMetadata    FunctionOptionMetadata
 }
 
 var _ sql.ExecSourceRel = (*CreateFunction)(nil)
@@ -82,7 +107,8 @@ func NewCreateFunction(
 	sqlDefParsedStmts []vitess.Statement,
 	setOf bool,
 	leakProof bool,
-	setConfig map[string]string) *CreateFunction {
+	setConfig map[string]string,
+	optionMetadata FunctionOptionMetadata) *CreateFunction {
 	return &CreateFunction{
 		DatabaseName:      databaseName,
 		FunctionName:      functionName,
@@ -100,6 +126,7 @@ func NewCreateFunction(
 		SetOf:             setOf,
 		LeakProof:         leakProof,
 		SetConfig:         setConfig,
+		OptionMetadata:    optionMetadata,
 	}
 }
 
@@ -176,6 +203,12 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		Variadic:           false, // TODO: implement this
 		IsNonDeterministic: true,
 		Strict:             c.Strict,
+		SecurityDefiner:    c.OptionMetadata.SecurityDefiner,
+		LeakProof:          c.OptionMetadata.LeakProof,
+		Volatility:         c.OptionMetadata.Volatility,
+		Parallel:           c.OptionMetadata.Parallel,
+		Cost:               c.OptionMetadata.Cost,
+		Rows:               c.OptionMetadata.Rows,
 		Definition:         c.Definition,
 		ExtensionName:      extName,
 		ExtensionSymbol:    c.ExtensionSymbol,

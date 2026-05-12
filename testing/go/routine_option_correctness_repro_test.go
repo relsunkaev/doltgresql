@@ -132,6 +132,345 @@ func TestCreateOrReplaceFunctionNullInputOptionsGuard(t *testing.T) {
 	})
 }
 
+// TestCreateFunctionSecurityDefinerCatalogRepro reproduces a security metadata
+// persistence bug: pg_proc.prosecdef should persist SECURITY DEFINER status.
+func TestCreateFunctionSecurityDefinerCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION security option persists in pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_security_definer_value()
+					RETURNS INT
+					LANGUAGE SQL
+					SECURITY DEFINER
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_security_invoker_value()
+					RETURNS INT
+					LANGUAGE SQL
+					SECURITY INVOKER
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, prosecdef
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_security_definer_value',
+							'catalog_security_invoker_value'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_security_definer_value", true},
+						{"catalog_security_invoker_value", false},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionVolatilityCatalogRepro reproduces a routine metadata
+// persistence bug: pg_proc.provolatile should reflect IMMUTABLE/STABLE/VOLATILE.
+func TestCreateFunctionVolatilityCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION volatility option persists in pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_volatile_default_value()
+					RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_immutable_value()
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_stable_value()
+					RETURNS INT
+					LANGUAGE SQL
+					STABLE
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, provolatile
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_volatile_default_value',
+							'catalog_immutable_value',
+							'catalog_stable_value'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_immutable_value", "i"},
+						{"catalog_stable_value", "s"},
+						{"catalog_volatile_default_value", "v"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionLeakproofCatalogRepro reproduces a security metadata
+// persistence bug: pg_proc.proleakproof should reflect LEAKPROOF status.
+func TestCreateFunctionLeakproofCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION leakproof option persists in pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_not_leakproof_value()
+					RETURNS BOOL
+					LANGUAGE SQL
+					AS $$ SELECT true $$;`,
+				`CREATE FUNCTION catalog_leakproof_value()
+					RETURNS BOOL
+					LANGUAGE SQL
+					LEAKPROOF
+					AS $$ SELECT true $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, proleakproof
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_not_leakproof_value',
+							'catalog_leakproof_value'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_leakproof_value", true},
+						{"catalog_not_leakproof_value", false},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionParallelCatalogRepro reproduces a routine metadata
+// persistence bug: pg_proc.proparallel should reflect PARALLEL safety options.
+func TestCreateFunctionParallelCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION parallel option persists in pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_parallel_default_value()
+					RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_parallel_safe_value()
+					RETURNS INT
+					LANGUAGE SQL
+					PARALLEL SAFE
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_parallel_restricted_value()
+					RETURNS INT
+					LANGUAGE SQL
+					PARALLEL RESTRICTED
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, proparallel
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_parallel_default_value',
+							'catalog_parallel_safe_value',
+							'catalog_parallel_restricted_value'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_parallel_default_value", "u"},
+						{"catalog_parallel_restricted_value", "r"},
+						{"catalog_parallel_safe_value", "s"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateFunctionCostRowsCatalogRepro reproduces routine metadata
+// persistence bugs: pg_proc.procost/prorows should reflect COST/ROWS options,
+// and scalar functions should store prorows as zero.
+func TestCreateFunctionCostRowsCatalogRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE FUNCTION cost and rows options persist in pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION catalog_scalar_cost_value()
+					RETURNS INT
+					LANGUAGE SQL
+					COST 7
+					AS $$ SELECT 1 $$;`,
+				`CREATE FUNCTION catalog_setof_cost_rows_value()
+					RETURNS SETOF INT
+					LANGUAGE SQL
+					COST 3
+					ROWS 5
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, procost::text, prorows::text
+						FROM pg_catalog.pg_proc
+						WHERE proname IN (
+							'catalog_scalar_cost_value',
+							'catalog_setof_cost_rows_value'
+						)
+						ORDER BY proname;`,
+					Expected: []sql.Row{
+						{"catalog_scalar_cost_value", "7", "0"},
+						{"catalog_setof_cost_rows_value", "3", "5"},
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionVolatilityOptionRepro reproduces a routine DDL compatibility
+// gap: PostgreSQL lets ALTER FUNCTION change volatility metadata.
+func TestAlterFunctionVolatilityOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION volatility changes pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_catalog_volatility_value()
+					RETURNS INT
+					LANGUAGE SQL
+					VOLATILE
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `ALTER FUNCTION alter_catalog_volatility_value() IMMUTABLE;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT provolatile
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_catalog_volatility_value';`,
+					Expected: []sql.Row{{"i"}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionSecurityDefinerOptionRepro reproduces a routine DDL security
+// metadata gap: ALTER FUNCTION can switch SECURITY DEFINER/INVOKER.
+func TestAlterFunctionSecurityDefinerOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION security option changes pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_catalog_security_value()
+					RETURNS INT
+					LANGUAGE SQL
+					SECURITY INVOKER
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `ALTER FUNCTION alter_catalog_security_value() SECURITY DEFINER;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT prosecdef
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_catalog_security_value';`,
+					Expected: []sql.Row{{true}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionLeakproofOptionRepro reproduces a routine DDL security
+// metadata gap: ALTER FUNCTION can set LEAKPROOF.
+func TestAlterFunctionLeakproofOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION leakproof option changes pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_catalog_leakproof_value()
+					RETURNS BOOL
+					LANGUAGE SQL
+					AS $$ SELECT true $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `ALTER FUNCTION alter_catalog_leakproof_value() LEAKPROOF;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT proleakproof
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_catalog_leakproof_value';`,
+					Expected: []sql.Row{{true}},
+				},
+			},
+		},
+	})
+}
+
+// TestAlterFunctionCostRowsOptionRepro reproduces routine DDL metadata gaps:
+// ALTER FUNCTION can change COST and ROWS for set-returning functions.
+func TestAlterFunctionCostRowsOptionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER FUNCTION cost and rows options change pg_proc",
+			SetUpScript: []string{
+				`CREATE FUNCTION alter_catalog_cost_rows_value()
+					RETURNS SETOF INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `ALTER FUNCTION alter_catalog_cost_rows_value() COST 9 ROWS 11;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query: `SELECT procost::text, prorows::text
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'alter_catalog_cost_rows_value';`,
+					Expected: []sql.Row{{"9", "11"}},
+				},
+			},
+		},
+	})
+}
+
+// TestCreateProcedurePgProcCatalogRowRepro reproduces a routine catalog
+// persistence bug: PostgreSQL stores procedures in pg_proc with prokind = 'p'.
+func TestCreateProcedurePgProcCatalogRowRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE PROCEDURE creates pg_proc row",
+			SetUpScript: []string{
+				`CREATE PROCEDURE catalog_proc_row_value(input_value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						NULL;
+					END;
+					$$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT proname, prokind
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'catalog_proc_row_value';`,
+					Expected: []sql.Row{{"catalog_proc_row_value", "p"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionNullInputOptionRepro reproduces a routine DDL correctness
 // bug: PostgreSQL lets ALTER FUNCTION switch between CALLED ON NULL INPUT and
 // STRICT / RETURNS NULL ON NULL INPUT behavior.

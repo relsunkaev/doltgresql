@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -28,15 +29,17 @@ func nodeAlterFunction(ctx *Context, node *tree.AlterFunction) (vitess.Statement
 		return nil, err
 	}
 
-	// We intentionally don't support OWNER TO since we don't support owning objects
 	routine, err := routineWithParams(ctx, node.Name, node.Args)
 	if err != nil {
 		return nil, err
 	}
-	if nullInputOption, ok := options[tree.OptionNullInput]; ok {
-		strict := nullInputOption.NullInput == tree.ReturnsNullOnNullInput || nullInputOption.NullInput == tree.StrictNullInput
+	strict, metadata, hasOptions, err := alterFunctionOptions(options)
+	if err != nil {
+		return nil, err
+	}
+	if hasOptions {
 		return vitess.InjectedStatement{
-			Statement: pgnodes.NewAlterFunctionOptions(routine, &strict),
+			Statement: pgnodes.NewAlterFunctionOptions(routine, strict, metadata),
 			Children:  nil,
 		}, nil
 	}
@@ -61,6 +64,54 @@ func nodeAlterFunction(ctx *Context, node *tree.AlterFunction) (vitess.Statement
 	}
 
 	return NotYetSupportedError("ALTER FUNCTION statement is not yet supported")
+}
+
+func alterFunctionOptions(options map[tree.FunctionOption]tree.RoutineOption) (*bool, pgnodes.AlterFunctionOptionMetadata, bool, error) {
+	var strict *bool
+	var metadata pgnodes.AlterFunctionOptionMetadata
+	hasOptions := false
+	if nullInputOption, ok := options[tree.OptionNullInput]; ok {
+		value := nullInputOption.NullInput == tree.ReturnsNullOnNullInput || nullInputOption.NullInput == tree.StrictNullInput
+		strict = &value
+		hasOptions = true
+	}
+	if security, ok := options[tree.OptionSecurity]; ok {
+		value := security.Definer
+		metadata.SecurityDefiner = &value
+		hasOptions = true
+	}
+	if leakproof, ok := options[tree.OptionLeakProof]; ok {
+		value := leakproof.IsLeakProof
+		metadata.LeakProof = &value
+		hasOptions = true
+	}
+	if volatility, ok := options[tree.OptionVolatility]; ok {
+		value := volatilityChar(volatility.Volatility)
+		metadata.Volatility = &value
+		hasOptions = true
+	}
+	if parallel, ok := options[tree.OptionParallel]; ok {
+		value := parallelChar(parallel.Parallel)
+		metadata.Parallel = &value
+		hasOptions = true
+	}
+	if cost, ok := options[tree.OptionCost]; ok {
+		value, ok := routineOptionNumber(cost.Cost)
+		if !ok || value <= 0 {
+			return nil, metadata, false, errors.Errorf("COST must be positive")
+		}
+		metadata.Cost = &value
+		hasOptions = true
+	}
+	if rows, ok := options[tree.OptionRows]; ok {
+		value, ok := routineOptionNumber(rows.Rows)
+		if !ok || value <= 0 {
+			return nil, metadata, false, errors.Errorf("ROWS must be positive")
+		}
+		metadata.Rows = &value
+		hasOptions = true
+	}
+	return strict, metadata, hasOptions, nil
 }
 
 func routineWithParams(ctx *Context, name *tree.UnresolvedObjectName, args tree.RoutineArgs) (*pgnodes.RoutineWithParams, error) {

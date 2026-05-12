@@ -32,7 +32,7 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 
 	// Write all of the functions to the writer
 	writer := utils.NewWriter(256)
-	writer.VariableUint(6) // Version
+	writer.VariableUint(7) // Version
 	// Write the function data
 	writer.Id(function.ID.AsId())
 	writer.Id(function.ReturnType.AsId())
@@ -69,6 +69,13 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 	writer.StringMap(function.SetConfig)
 	// Write version 6 data
 	writer.String(function.Owner)
+	// Write version 7 data
+	writer.Bool(function.SecurityDefiner)
+	writer.Bool(function.LeakProof)
+	writer.String(function.Volatility)
+	writer.String(function.Parallel)
+	writer.Float32(function.Cost)
+	writer.Float32(function.Rows)
 	// Returns the data
 	return writer.Data(), nil
 }
@@ -81,7 +88,7 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 6 {
+	if version > 7 {
 		return Function{}, errors.Errorf("version %d of functions is not supported, please upgrade the server", version)
 	}
 
@@ -130,6 +137,14 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 	}
 	if version >= 6 {
 		f.Owner = reader.String()
+	}
+	if version >= 7 {
+		f.SecurityDefiner = reader.Bool()
+		f.LeakProof = reader.Bool()
+		f.Volatility = reader.String()
+		f.Parallel = reader.String()
+		f.Cost = reader.Float32()
+		f.Rows = reader.Float32()
 	}
 	if !reader.IsEmpty() {
 		return Function{}, errors.Errorf("extra data found while deserializing a function")

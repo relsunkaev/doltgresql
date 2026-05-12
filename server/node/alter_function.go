@@ -31,6 +31,7 @@ import (
 type AlterFunctionOptions struct {
 	Routine      *RoutineWithParams
 	Strict       *bool
+	Metadata     AlterFunctionOptionMetadata
 	Rename       string
 	TargetSchema string
 	Owner        string
@@ -39,11 +40,22 @@ type AlterFunctionOptions struct {
 var _ sql.ExecSourceRel = (*AlterFunctionOptions)(nil)
 var _ vitess.Injectable = (*AlterFunctionOptions)(nil)
 
+// AlterFunctionOptionMetadata represents optional metadata updates from ALTER FUNCTION options.
+type AlterFunctionOptionMetadata struct {
+	SecurityDefiner *bool
+	LeakProof       *bool
+	Volatility      *string
+	Parallel        *string
+	Cost            *float32
+	Rows            *float32
+}
+
 // NewAlterFunctionOptions returns a new *AlterFunctionOptions.
-func NewAlterFunctionOptions(routine *RoutineWithParams, strict *bool) *AlterFunctionOptions {
+func NewAlterFunctionOptions(routine *RoutineWithParams, strict *bool, metadata AlterFunctionOptionMetadata) *AlterFunctionOptions {
 	return &AlterFunctionOptions{
-		Routine: routine,
-		Strict:  strict,
+		Routine:  routine,
+		Strict:   strict,
+		Metadata: metadata,
 	}
 }
 
@@ -105,6 +117,36 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 	}
 	if a.Strict != nil {
 		function.Strict = *a.Strict
+	}
+	if a.Metadata.SecurityDefiner != nil {
+		function.SecurityDefiner = *a.Metadata.SecurityDefiner
+	}
+	if a.Metadata.LeakProof != nil {
+		if *a.Metadata.LeakProof {
+			var userRole auth.Role
+			auth.LockRead(func() {
+				userRole = auth.GetRole(ctx.Client().User)
+			})
+			if !userRole.IsValid() || !userRole.IsSuperUser {
+				return nil, errors.Errorf("permission denied")
+			}
+		}
+		function.LeakProof = *a.Metadata.LeakProof
+	}
+	if a.Metadata.Volatility != nil {
+		function.Volatility = *a.Metadata.Volatility
+	}
+	if a.Metadata.Parallel != nil {
+		function.Parallel = *a.Metadata.Parallel
+	}
+	if a.Metadata.Cost != nil {
+		function.Cost = *a.Metadata.Cost
+	}
+	if a.Metadata.Rows != nil {
+		if !function.SetOf {
+			return nil, errors.Errorf("ROWS is not applicable when function does not return a set")
+		}
+		function.Rows = *a.Metadata.Rows
 	}
 	newFuncID := funcID
 	if a.Rename != "" {

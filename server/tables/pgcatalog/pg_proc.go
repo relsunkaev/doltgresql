@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -48,9 +49,20 @@ func (p PgProcHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.R
 	if err != nil {
 		return nil, err
 	}
+	procColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var rows []sql.Row
 	err = funcColl.IterateFunctions(ctx, func(function corefunctions.Function) (stop bool, err error) {
 		rows = append(rows, pgProcFunctionRow(function))
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = procColl.IterateProcedures(ctx, func(procedure coreprocedures.Procedure) (stop bool, err error) {
+		rows = append(rows, pgProcProcedureRow(procedure))
 		return false, nil
 	})
 	if err != nil {
@@ -107,6 +119,24 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 	if owner == "" {
 		owner = "postgres"
 	}
+	cost := function.Cost
+	if cost == 0 {
+		cost = 100
+	}
+	rows := function.Rows
+	if !function.SetOf {
+		rows = 0
+	} else if rows == 0 {
+		rows = 1000
+	}
+	volatility := function.Volatility
+	if volatility == "" {
+		volatility = "v"
+	}
+	parallel := function.Parallel
+	if parallel == "" {
+		parallel = "u"
+	}
 	argTypes := make([]any, len(function.ParameterTypes))
 	for i, argType := range function.ParameterTypes {
 		argTypes[i] = argType.AsId()
@@ -129,17 +159,17 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		id.NewNamespace(function.ID.SchemaName()).AsId(), // pronamespace
 		id.NewId(id.Section_User, owner),                 // proowner
 		proLang,                                          // prolang
-		float32(100),                                     // procost
-		float32(1000),                                    // prorows
+		cost,                                             // procost
+		rows,                                             // prorows
 		id.Null,                                          // provariadic
 		"-",                                              // prosupport
 		"f",                                              // prokind
-		false,                                            // prosecdef
-		false,                                            // proleakproof
+		function.SecurityDefiner,                         // prosecdef
+		function.LeakProof,                               // proleakproof
 		function.Strict,                                  // proisstrict
 		function.SetOf,                                   // proretset
-		"v",                                              // provolatile
-		"u",                                              // proparallel
+		volatility,                                       // provolatile
+		parallel,                                         // proparallel
 		int16(len(function.ParameterTypes)),              // pronargs
 		int16(len(function.ParameterDefaults)),           // pronargdefaults
 		function.ReturnType.AsId(),                       // prorettype
@@ -154,6 +184,65 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		function.SQLDefinition,                           // prosqlbody
 		proConfig,                                        // proconfig
 		nil,                                              // proacl
+		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
+	}
+}
+
+func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
+	owner := procedure.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	argTypes := make([]any, 0, len(procedure.ParameterTypes))
+	argNames := make([]any, len(procedure.ParameterNames))
+	for i, argName := range procedure.ParameterNames {
+		argNames[i] = argName
+	}
+	for i, argType := range procedure.ParameterTypes {
+		if i < len(procedure.ParameterModes) && procedure.ParameterModes[i] == coreprocedures.ParameterMode_OUT {
+			continue
+		}
+		argTypes = append(argTypes, argType.AsId())
+	}
+	proConfig := []any(nil)
+	for name, value := range procedure.SetConfig {
+		proConfig = append(proConfig, name+"="+value)
+	}
+	proLang := id.NewId(id.Section_FunctionLanguage, "plpgsql")
+	if procedure.SQLDefinition != "" {
+		proLang = id.NewId(id.Section_FunctionLanguage, "sql")
+	}
+	return sql.Row{
+		procedure.ID.AsId(),                               // oid
+		procedure.ID.ProcedureName(),                      // proname
+		id.NewNamespace(procedure.ID.SchemaName()).AsId(), // pronamespace
+		id.NewId(id.Section_User, owner),                  // proowner
+		proLang,                                           // prolang
+		float32(100),                                      // procost
+		float32(0),                                        // prorows
+		id.Null,                                           // provariadic
+		"-",                                               // prosupport
+		"p",                                               // prokind
+		false,                                             // prosecdef
+		false,                                             // proleakproof
+		false,                                             // proisstrict
+		false,                                             // proretset
+		"v",                                               // provolatile
+		"u",                                               // proparallel
+		int16(len(argTypes)),                              // pronargs
+		int16(len(procedure.ParameterDefaults)),           // pronargdefaults
+		pgtypes.Void.ID.AsId(),                            // prorettype
+		argTypes,                                          // proargtypes
+		nil,                                               // proallargtypes
+		nil,                                               // proargmodes
+		argNames,                                          // proargnames
+		nil,                                               // proargdefaults
+		nil,                                               // protrftypes
+		procedure.Definition,                              // prosrc
+		nil,                                               // probin
+		procedure.SQLDefinition,                           // prosqlbody
+		proConfig,                                         // proconfig
+		nil,                                               // proacl
 		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
 	}
 }

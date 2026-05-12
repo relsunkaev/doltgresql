@@ -42,6 +42,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	if err = validateCreateFunctionRoutineOptions(node.ReturnsSetOf, options); err != nil {
 		return nil, err
 	}
+	metadata := routineOptionMetadata(options, node.ReturnsSetOf)
 	setConfig, err := routineSetOptions(options)
 	if err != nil {
 		return nil, err
@@ -179,6 +180,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			node.ReturnsSetOf,
 			options[tree.OptionLeakProof].IsLeakProof,
 			setConfig,
+			metadata,
 		),
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_CREATE,
@@ -294,15 +296,20 @@ func validateCreateFunctionRoutineOptions(returnsSetOf bool, options map[tree.Fu
 }
 
 func routineOptionNumberIsPositive(expr tree.Expr) bool {
+	value, ok := routineOptionNumber(expr)
+	return ok && value > 0
+}
+
+func routineOptionNumber(expr tree.Expr) (float32, bool) {
 	if expr == nil {
-		return false
+		return 0, false
 	}
 	literal := strings.TrimSpace(expr.String())
 	for strings.HasPrefix(literal, "(") && strings.HasSuffix(literal, ")") {
 		literal = strings.TrimSpace(literal[1 : len(literal)-1])
 	}
-	value, err := strconv.ParseFloat(literal, 64)
-	return err == nil && value > 0
+	value, err := strconv.ParseFloat(literal, 32)
+	return float32(value), err == nil
 }
 
 func routineSetOptions(options map[tree.FunctionOption]tree.RoutineOption) (map[string]string, error) {
@@ -323,4 +330,53 @@ func routineSetOptions(options map[tree.FunctionOption]tree.RoutineOption) (map[
 		return nil, err
 	}
 	return map[string]string{name: value}, nil
+}
+
+func routineOptionMetadata(options map[tree.FunctionOption]tree.RoutineOption, returnsSetOf bool) pgnodes.FunctionOptionMetadata {
+	metadata := pgnodes.DefaultFunctionOptionMetadata(returnsSetOf)
+	if security, ok := options[tree.OptionSecurity]; ok {
+		metadata.SecurityDefiner = security.Definer
+	}
+	if leakProof, ok := options[tree.OptionLeakProof]; ok {
+		metadata.LeakProof = leakProof.IsLeakProof
+	}
+	if volatility, ok := options[tree.OptionVolatility]; ok {
+		metadata.Volatility = volatilityChar(volatility.Volatility)
+	}
+	if parallel, ok := options[tree.OptionParallel]; ok {
+		metadata.Parallel = parallelChar(parallel.Parallel)
+	}
+	if cost, ok := options[tree.OptionCost]; ok {
+		if value, ok := routineOptionNumber(cost.Cost); ok {
+			metadata.Cost = value
+		}
+	}
+	if rows, ok := options[tree.OptionRows]; ok {
+		if value, ok := routineOptionNumber(rows.Rows); ok {
+			metadata.Rows = value
+		}
+	}
+	return metadata
+}
+
+func volatilityChar(volatility tree.Volatility) string {
+	switch volatility {
+	case tree.VolatilityImmutable:
+		return "i"
+	case tree.VolatilityStable:
+		return "s"
+	default:
+		return "v"
+	}
+}
+
+func parallelChar(parallel tree.Parallel) string {
+	switch parallel {
+	case tree.ParallelSafe:
+		return "s"
+	case tree.ParallelRestricted:
+		return "r"
+	default:
+		return "u"
+	}
 }

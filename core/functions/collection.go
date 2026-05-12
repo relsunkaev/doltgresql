@@ -54,6 +54,12 @@ type Function struct {
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
+	SecurityDefiner    bool
+	LeakProof          bool
+	Volatility         string
+	Parallel           string
+	Cost               float32
+	Rows               float32
 	Definition         string
 	ExtensionName      string                         // Only used when this is an extension function
 	ExtensionSymbol    string                         // Only used when this is an extension function

@@ -33,6 +33,12 @@ const (
 	FIELD_NAME_RETURN_TYPE       = "return_type"
 	FIELD_NAME_NON_DETERMINISTIC = "non_deterministic"
 	FIELD_NAME_STRICT            = "strict"
+	FIELD_NAME_SECURITY_DEFINER  = "security_definer"
+	FIELD_NAME_LEAK_PROOF        = "leak_proof"
+	FIELD_NAME_VOLATILITY        = "volatility"
+	FIELD_NAME_PARALLEL          = "parallel"
+	FIELD_NAME_COST              = "cost"
+	FIELD_NAME_ROWS              = "rows"
 	FIELD_NAME_DEFINITION        = "definition"
 	FIELD_NAME_EXTENSION_NAME    = "extension_name"
 	FIELD_NAME_EXTENSION_SYMBOL  = "extension_symbol"
@@ -107,6 +113,54 @@ func (pgf *Collection) DiffRootObjects(ctx context.Context, fromHash string, o o
 			diffs = append(diffs, diff)
 		} else {
 			ours.Strict = diff.OurValue.(bool)
+		}
+	}
+	if ours.SecurityDefiner != theirs.SecurityDefiner {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Bool, FromHash: fromHash, FieldName: FIELD_NAME_SECURITY_DEFINER}
+		if pgmerge.DiffValues(&diff, ours.SecurityDefiner, theirs.SecurityDefiner, ancestor.SecurityDefiner, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.SecurityDefiner = diff.OurValue.(bool)
+		}
+	}
+	if ours.LeakProof != theirs.LeakProof {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Bool, FromHash: fromHash, FieldName: FIELD_NAME_LEAK_PROOF}
+		if pgmerge.DiffValues(&diff, ours.LeakProof, theirs.LeakProof, ancestor.LeakProof, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.LeakProof = diff.OurValue.(bool)
+		}
+	}
+	if ours.Volatility != theirs.Volatility {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Text, FromHash: fromHash, FieldName: FIELD_NAME_VOLATILITY}
+		if pgmerge.DiffValues(&diff, ours.Volatility, theirs.Volatility, ancestor.Volatility, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Volatility = diff.OurValue.(string)
+		}
+	}
+	if ours.Parallel != theirs.Parallel {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Text, FromHash: fromHash, FieldName: FIELD_NAME_PARALLEL}
+		if pgmerge.DiffValues(&diff, ours.Parallel, theirs.Parallel, ancestor.Parallel, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Parallel = diff.OurValue.(string)
+		}
+	}
+	if ours.Cost != theirs.Cost {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Float32, FromHash: fromHash, FieldName: FIELD_NAME_COST}
+		if pgmerge.DiffValues(&diff, ours.Cost, theirs.Cost, ancestor.Cost, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Cost = diff.OurValue.(float32)
+		}
+	}
+	if ours.Rows != theirs.Rows {
+		diff := objinterface.RootObjectDiff{Type: pgtypes.Float32, FromHash: fromHash, FieldName: FIELD_NAME_ROWS}
+		if pgmerge.DiffValues(&diff, ours.Rows, theirs.Rows, ancestor.Rows, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Rows = diff.OurValue.(float32)
 		}
 	}
 	if ours.Definition != theirs.Definition {
@@ -251,6 +305,18 @@ func (pgf *Collection) GetFieldType(ctx context.Context, fieldName string) *pgty
 		return pgtypes.Bool
 	case FIELD_NAME_STRICT:
 		return pgtypes.Bool
+	case FIELD_NAME_SECURITY_DEFINER:
+		return pgtypes.Bool
+	case FIELD_NAME_LEAK_PROOF:
+		return pgtypes.Bool
+	case FIELD_NAME_VOLATILITY:
+		return pgtypes.Text
+	case FIELD_NAME_PARALLEL:
+		return pgtypes.Text
+	case FIELD_NAME_COST:
+		return pgtypes.Float32
+	case FIELD_NAME_ROWS:
+		return pgtypes.Float32
 	case FIELD_NAME_DEFINITION:
 		return pgtypes.Text
 	case FIELD_NAME_EXTENSION_NAME:
@@ -377,6 +443,18 @@ func (pgf *Collection) UpdateField(ctx context.Context, rootObject objinterface.
 		function.IsNonDeterministic = newValue.(bool)
 	case FIELD_NAME_STRICT:
 		function.Strict = newValue.(bool)
+	case FIELD_NAME_SECURITY_DEFINER:
+		function.SecurityDefiner = newValue.(bool)
+	case FIELD_NAME_LEAK_PROOF:
+		function.LeakProof = newValue.(bool)
+	case FIELD_NAME_VOLATILITY:
+		function.Volatility = newValue.(string)
+	case FIELD_NAME_PARALLEL:
+		function.Parallel = newValue.(string)
+	case FIELD_NAME_COST:
+		function.Cost = newValue.(float32)
+	case FIELD_NAME_ROWS:
+		function.Rows = newValue.(float32)
 	case FIELD_NAME_DEFINITION:
 		function.Definition = function.ReplaceDefinition(newValue.(string))
 		parsedBody, err := plpgsql.Parse(function.Definition)
