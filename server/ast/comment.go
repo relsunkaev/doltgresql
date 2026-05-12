@@ -34,6 +34,24 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTable(tableName, stmt.Comment)}, nil
+	case *tree.CommentOnView:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnView(tableName, stmt.Comment)}, nil
+	case *tree.CommentOnMaterializedView:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTable(tableName, stmt.Comment)}, nil
+	case *tree.CommentOnSequence:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSequence(tableName, stmt.Comment)}, nil
 	case *tree.CommentOnColumn:
 		tableName, err := nodeUnresolvedObjectName(ctx, obj.ColumnItem.TableName)
 		if err != nil {
