@@ -420,6 +420,55 @@ func TestMergeReportsFunctionDefinitionConflictGuard(t *testing.T) {
 	})
 }
 
+// TestMergeReportsTriggerDefinitionConflictRepro reproduces a branch merge
+// correctness bug: merging branches should report conflicts when both sides
+// change the same trigger definition differently.
+func TestMergeReportsTriggerDefinitionConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports trigger definition conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE merge_trigger_conflict_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE FUNCTION merge_trigger_conflict_func()
+					RETURNS TRIGGER AS $$
+					BEGIN
+						RETURN NEW;
+					END;
+					$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER merge_trigger_conflict_changed
+					BEFORE INSERT ON merge_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION merge_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial merge trigger value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`DROP TRIGGER merge_trigger_conflict_changed ON merge_trigger_conflict_items;`,
+				`CREATE TRIGGER merge_trigger_conflict_changed
+					BEFORE UPDATE ON merge_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION merge_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main merge trigger value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`DROP TRIGGER merge_trigger_conflict_changed ON merge_trigger_conflict_items;`,
+				`CREATE TRIGGER merge_trigger_conflict_changed
+					BEFORE DELETE ON merge_trigger_conflict_items
+					FOR EACH ROW EXECUTE FUNCTION merge_trigger_conflict_func();`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other merge trigger value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `BEGIN;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestMergeReportsEnumTypeConflictRepro reproduces a branch merge correctness
 // bug: merging branches should report conflicts when both sides create the same
 // enum type name differently.

@@ -17331,6 +17331,21 @@ They are worth keeping, but they are not counted as found bugs.
   ``cannot merge `merge_enum_conflict_type` due to unsupported type``, so the
   conflict is not represented through merge-conflict state.
 
+### DOLT_MERGE errors instead of reporting trigger definition conflicts
+
+- Reproducer: `TestMergeReportsTriggerDefinitionConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestMergeReportsTriggerDefinitionConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches change the same committed
+  trigger definition differently, `DOLT_MERGE` should report a normal merge
+  conflict inside the explicit transaction so callers can resolve which trigger
+  definition to keep.
+- Observed Doltgres behavior: even inside `BEGIN`, `DOLT_MERGE('main')` fails
+  with `unable to merge public.merge_trigger_conflict_items.merge_trigger_conflict_changed`,
+  so the conflict is not represented through merge-conflict state.
+
 ### DOLT_MERGE errors instead of reporting composite type conflicts
 
 - Reproducer: `TestMergeReportsCompositeTypeConflictRepro` in
