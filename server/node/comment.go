@@ -25,6 +25,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/accessmethod"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/settings"
@@ -46,6 +47,9 @@ const (
 	CommentTargetDB      CommentTargetKind = "database"
 	CommentTargetRole    CommentTargetKind = "role"
 	CommentTargetExt     CommentTargetKind = "extension"
+	CommentTargetAM      CommentTargetKind = "access method"
+	CommentTargetPub     CommentTargetKind = "publication"
+	CommentTargetSub     CommentTargetKind = "subscription"
 )
 
 type Comment struct {
@@ -106,6 +110,18 @@ func NewCommentOnRole(name string, description *string) Comment {
 
 func NewCommentOnExtension(name string, description *string) Comment {
 	return Comment{Kind: CommentTargetExt, Name: name, Description: description}
+}
+
+func NewCommentOnAccessMethod(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetAM, Name: name, Description: description}
+}
+
+func NewCommentOnPublication(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetPub, Name: name, Description: description}
+}
+
+func NewCommentOnSubscription(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetSub, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -201,6 +217,24 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_extension", 0), nil
+	case CommentTargetAM:
+		oid, err := resolveCommentAccessMethod(c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_am", 0), nil
+	case CommentTargetPub:
+		oid, err := resolveCommentPublication(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_publication", 0), nil
+	case CommentTargetSub:
+		oid, err := resolveCommentSubscription(ctx, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_subscription", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -369,6 +403,43 @@ func resolveCommentExtension(ctx *sql.Context, name string) (id.Id, error) {
 		return id.Null, fmt.Errorf(`extension "%s" does not exist`, name)
 	}
 	return extID.AsId(), nil
+}
+
+func resolveCommentAccessMethod(name string) (id.Id, error) {
+	switch name {
+	case "heap", "btree", "hash", "gist", "gin", "spgist", "brin":
+		return id.NewAccessMethod(name).AsId(), nil
+	}
+	for _, entry := range accessmethod.Snapshot() {
+		if entry.Name == name {
+			return id.NewAccessMethod(name).AsId(), nil
+		}
+	}
+	return id.Null, fmt.Errorf(`access method "%s" does not exist`, name)
+}
+
+func resolveCommentPublication(ctx *sql.Context, name string) (id.Id, error) {
+	collection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	pubID := id.NewPublication(name)
+	if !collection.HasPublication(ctx, pubID) {
+		return id.Null, fmt.Errorf(`publication "%s" does not exist`, name)
+	}
+	return pubID.AsId(), nil
+}
+
+func resolveCommentSubscription(ctx *sql.Context, name string) (id.Id, error) {
+	collection, err := core.GetSubscriptionsCollectionFromContext(ctx)
+	if err != nil {
+		return id.Null, err
+	}
+	subID := id.NewSubscription(name)
+	if !collection.HasSubscription(ctx, subID) {
+		return id.Null, fmt.Errorf(`subscription "%s" does not exist`, name)
+	}
+	return subID.AsId(), nil
 }
 
 type schemaGetter interface {

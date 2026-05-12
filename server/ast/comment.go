@@ -60,6 +60,16 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnRole(obj.Name, stmt.Comment)}, nil
 	case *tree.CommentOnExtension:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnExtension(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnAccessMethod:
+		accessMethodName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnAccessMethod(accessMethodName.Name.String(), stmt.Comment)}, nil
+	case *tree.CommentOnPublication:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPublication(string(obj.Name), stmt.Comment)}, nil
+	case *tree.CommentOnSubscription:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnSubscription(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnFunction:
 		routine, err := routineWithParams(ctx, obj.Name, obj.Args)
 		if err != nil {
