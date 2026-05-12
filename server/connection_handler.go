@@ -3181,6 +3181,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if _, ok, err := h.convertedAlterSystem(query); ok || err != nil {
+		return nil, err
+	}
 	if containsSecurityLabel(query) {
 		return nil, pgerror.New(pgcode.InvalidParameterValue, "security label provider is not loaded")
 	}
@@ -3288,6 +3291,7 @@ var (
 	policyCurrentUserPattern  = regexp.MustCompile(`(?is)^\s*([a-z_][a-z0-9_"$]*)\s*=\s*current_user\s*$`)
 	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
 	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
+	alterSystemPattern        = regexp.MustCompile(`(?is)^\s*alter\s+system\s+(?:set|reset)\b.+;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
@@ -3319,6 +3323,17 @@ var (
 	anyValuePattern           = regexp.MustCompile(`(?i)\bany_value\s*\(`)
 	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
+
+func (h *ConnectionHandler) convertedAlterSystem(query string) (ConvertedQuery, bool, error) {
+	if !alterSystemPattern.MatchString(query) {
+		return ConvertedQuery{}, false, nil
+	}
+	if h.inTransaction {
+		return ConvertedQuery{}, true, pgerror.Newf(pgcode.ActiveSQLTransaction,
+			"ALTER SYSTEM cannot run inside a transaction block")
+	}
+	return ConvertedQuery{}, true, pgerror.New(pgcode.FeatureNotSupported, "ALTER SYSTEM is not yet supported")
+}
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {
 	matches := createTransformPattern.FindStringSubmatch(query)
