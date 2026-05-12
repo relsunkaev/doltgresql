@@ -471,8 +471,18 @@ func nodeAliasedTableExprWithOrdinality(ctx *Context, node *tree.AliasedTableExp
 		return nil, errors.Errorf("WITH ORDINALITY is only supported for a single table function")
 	}
 	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
-	if !ok || !strings.EqualFold(funcExpr.Func.String(), "unnest") {
-		return nil, errors.Errorf("WITH ORDINALITY is only supported for unnest")
+	if !ok {
+		return nil, errors.Errorf("WITH ORDINALITY is only supported for table functions")
+	}
+	funcName := singleColumnTableFunctionName(funcExpr)
+	internalName := ""
+	switch funcName {
+	case "unnest":
+		internalName = "doltgres_unnest_with_ordinality"
+	case "generate_series":
+		internalName = "doltgres_generate_series_with_ordinality"
+	default:
+		return nil, errors.Errorf("WITH ORDINALITY is only supported for unnest and generate_series")
 	}
 
 	args, err := nodeExprs(ctx, funcExpr.Exprs)
@@ -484,8 +494,8 @@ func nodeAliasedTableExprWithOrdinality(ctx *Context, node *tree.AliasedTableExp
 		tableFuncArgs[i] = &vitess.AliasedExpr{Expr: arg}
 	}
 
-	internalAlias := "__doltgres_unnest_with_ordinality"
-	valueName := "unnest"
+	internalAlias := "__" + internalName
+	valueName := funcName
 	ordinalityName := "ordinality"
 	if len(node.As.Cols) > 0 {
 		if len(node.As.Cols) != 2 {
@@ -509,7 +519,7 @@ func nodeAliasedTableExprWithOrdinality(ctx *Context, node *tree.AliasedTableExp
 			},
 			From: vitess.TableExprs{
 				&vitess.TableFuncExpr{
-					Name:  "doltgres_unnest_with_ordinality",
+					Name:  internalName,
 					Exprs: tableFuncArgs,
 					Alias: vitess.NewTableIdent(internalAlias),
 				},

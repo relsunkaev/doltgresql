@@ -15,10 +15,13 @@
 package functions
 
 import (
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dtablefunctions"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/shopspring/decimal"
 
@@ -36,10 +39,220 @@ func initGenerateSeries() {
 	framework.RegisterFunction(generate_series_numeric_numeric)
 	framework.RegisterFunction(generate_series_numeric_numeric_numeric)
 	framework.RegisterFunction(generate_series_timestamp_timestamp_interval)
+	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions, &generateSeriesWithOrdinalityTableFunction{})
 }
 
 // errStepSizeZero is an error for a step size of zero in the generate_series functions.
 var errStepSizeZero = errors.New("step size cannot equal zero")
+
+var _ sql.TableFunction = (*generateSeriesWithOrdinalityTableFunction)(nil)
+var _ sql.ExecSourceRel = (*generateSeriesWithOrdinalityTableFunction)(nil)
+
+type generateSeriesWithOrdinalityTableFunction struct {
+	db        sql.Database
+	exprs     []sql.Expression
+	valueType sql.Type
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
+	if len(args) != 2 && len(args) != 3 {
+		return nil, sql.ErrInvalidArgumentNumber.New(g.Name(), 2, len(args))
+	}
+	return &generateSeriesWithOrdinalityTableFunction{
+		db:        db,
+		exprs:     args,
+		valueType: generateSeriesValueType(ctx, args),
+	}, nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Name() string {
+	return "doltgres_generate_series_with_ordinality"
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) String() string {
+	args := make([]string, len(g.exprs))
+	for i, expr := range g.exprs {
+		args[i] = expr.String()
+	}
+	return fmt.Sprintf("%s(%s)", g.Name(), strings.Join(args, ", "))
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Resolved() bool {
+	for _, expr := range g.exprs {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Expressions() []sql.Expression {
+	return g.exprs
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
+	if len(exprs) != 2 && len(exprs) != 3 {
+		return nil, sql.ErrInvalidChildrenNumber.New(g, len(exprs), 2)
+	}
+	ng := *g
+	ng.exprs = exprs
+	ng.valueType = generateSeriesValueType(ctx, exprs)
+	return &ng, nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Database() sql.Database {
+	return g.db
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) WithDatabase(db sql.Database) (sql.Node, error) {
+	ng := *g
+	ng.db = db
+	return &ng, nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) IsReadOnly() bool {
+	return true
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Schema(ctx *sql.Context) sql.Schema {
+	var dbName string
+	if g.db != nil {
+		dbName = g.db.Name()
+	}
+	valueType := g.valueType
+	if valueType == nil {
+		valueType = pgtypes.Int64
+	}
+	return sql.Schema{
+		&sql.Column{
+			DatabaseSource: dbName,
+			Source:         g.Name(),
+			Name:           "value",
+			Type:           valueType,
+			Nullable:       false,
+		},
+		&sql.Column{
+			DatabaseSource: dbName,
+			Source:         g.Name(),
+			Name:           "ordinality",
+			Type:           pgtypes.Int64,
+			Nullable:       false,
+		},
+	}
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Children() []sql.Node {
+	return nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	if len(children) != 0 {
+		return nil, sql.ErrInvalidChildrenNumber.New(g, len(children), 0)
+	}
+	return g, nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	values := make([]any, len(g.exprs))
+	for i, expr := range g.exprs {
+		value, err := expr.Eval(ctx, row)
+		if err != nil {
+			return nil, err
+		}
+		if value == nil {
+			return sql.RowsToRowIter(), nil
+		}
+		values[i] = value
+	}
+	iter, err := generateSeriesRowIter(values)
+	if err != nil {
+		return nil, err
+	}
+	return &generateSeriesWithOrdinalityRowIter{iter: iter}, nil
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
+	return sql.Collation_binary, 5
+}
+
+func (g *generateSeriesWithOrdinalityTableFunction) Collation() sql.CollationID {
+	return sql.Collation_Default
+}
+
+func generateSeriesValueType(ctx *sql.Context, exprs []sql.Expression) sql.Type {
+	if len(exprs) == 0 {
+		return pgtypes.Int64
+	}
+	if typ, ok := exprs[0].Type(ctx).(*pgtypes.DoltgresType); ok {
+		return typ
+	}
+	return pgtypes.Int64
+}
+
+type generateSeriesWithOrdinalityRowIter struct {
+	iter sql.RowIter
+	idx  int64
+}
+
+func (g *generateSeriesWithOrdinalityRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	row, err := g.iter.Next(ctx)
+	if err != nil {
+		return nil, err
+	}
+	g.idx++
+	return append(append(sql.Row{}, row...), g.idx), nil
+}
+
+func (g *generateSeriesWithOrdinalityRowIter) Close(ctx *sql.Context) error {
+	return g.iter.Close(ctx)
+}
+
+func generateSeriesRowIter(values []any) (sql.RowIter, error) {
+	switch start := values[0].(type) {
+	case int32:
+		step := int32(1)
+		if len(values) == 3 {
+			step = values[2].(int32)
+		}
+		return int32GenerateSeries(start, values[1].(int32), step)
+	case int64:
+		step := int64(1)
+		if len(values) == 3 {
+			step = values[2].(int64)
+		}
+		return int64GenerateSeries(start, values[1].(int64), step)
+	case decimal.Decimal:
+		step := numericOne
+		if len(values) == 3 {
+			step = values[2].(decimal.Decimal)
+		}
+		return numericGenerateSeries(start, values[1].(decimal.Decimal), step)
+	case time.Time:
+		if len(values) != 3 {
+			return nil, errors.Errorf("timestamp generate_series requires step argument")
+		}
+		step := values[2].(duration.Duration)
+		stepInt, ok := step.AsInt64()
+		if !ok {
+			return nil, errors.Errorf("step argument of generate_series function is overflown")
+		}
+		if stepInt == 0 {
+			return nil, errStepSizeZero
+		}
+		finish := values[1].(time.Time)
+		return pgtypes.NewSetReturningFunctionRowIter(func(ctx *sql.Context) (sql.Row, error) {
+			defer func() {
+				start = start.Add(time.Duration(stepInt) * time.Second)
+			}()
+			if (stepInt > 0 && start.After(finish)) || (stepInt < 0 && start.Before(finish)) {
+				return nil, io.EOF
+			}
+			return sql.Row{start}, nil
+		}), nil
+	default:
+		return nil, errors.Errorf("unsupported generate_series argument type %T", values[0])
+	}
+}
 
 // generate_series_int32_int32 represents the PostgreSQL function of the same name, taking the same parameters.
 var generate_series_int32_int32 = framework.Function2{
