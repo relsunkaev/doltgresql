@@ -151,6 +151,7 @@ func Init() {
 	initNow()
 	initObjDescription()
 	initOctetLength()
+	initPgObjectAddress()
 	initPgEncodingToChar()
 	initPgBackendPid()
 	initPgColumnSize()
