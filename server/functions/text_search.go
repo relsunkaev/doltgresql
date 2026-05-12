@@ -48,6 +48,7 @@ func init() {
 	framework.RegisterFunction(numnode_text)
 	framework.RegisterFunction(querytree_text)
 	framework.RegisterFunction(tsquery_phrase_text_text)
+	framework.RegisterFunction(ts_rewrite_text_text_text)
 	framework.RegisterFunction(ts_match_vq_text)
 }
 
@@ -269,6 +270,15 @@ var tsquery_phrase_text_text = framework.Function2{
 	},
 }
 
+var ts_rewrite_text_text_text = framework.Function3{
+	Name:       "ts_rewrite",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, query any, target any, substitute any) (any, error) {
+		return simpleTSRewrite(fmt.Sprint(query), fmt.Sprint(target), fmt.Sprint(substitute)), nil
+	},
+}
+
 var ts_match_vq_text = framework.Function2{
 	Name:       "ts_match_vq",
 	Return:     pgtypes.Bool,
@@ -388,6 +398,13 @@ func simpleTSQueryPhrase(left string, right string) string {
 		parts[i] = "'" + term + "'"
 	}
 	return strings.Join(parts, " <-> ")
+}
+
+func simpleTSRewrite(query string, target string, substitute string) string {
+	if query == target {
+		return substitute
+	}
+	return strings.ReplaceAll(query, target, substitute)
 }
 
 func textSearchTermSet(input string) map[string]bool {

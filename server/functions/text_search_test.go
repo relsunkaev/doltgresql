@@ -70,6 +70,12 @@ func TestSimpleTSQueryPhrase(t *testing.T) {
 	}
 }
 
+func TestSimpleTSRewrite(t *testing.T) {
+	if got, want := simpleTSRewrite("'fat'", "'fat'", "'cat'"), "'cat'"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
 func TestSimpleTSMatches(t *testing.T) {
 	if !simpleTSMatches("'cats':2 'fat':1", "'cats'") {
 		t.Fatal("expected query term to match vector lexeme")
