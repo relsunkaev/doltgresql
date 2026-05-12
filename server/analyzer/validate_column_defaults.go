@@ -44,7 +44,7 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 				return nil, transform.SameTree, sql.ErrColumnNotFound.New(node.ColumnName)
 			}
 			col := sch[index]
-			err := validateColumnDefault(ctx, col, node.Default)
+			err := validateColumnDefault(ctx, col, node.Default, false)
 			if err != nil {
 				return node, transform.SameTree, err
 			}
@@ -87,12 +87,17 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					return nil, transform.SameTree, err
 				}
 
-				err = validateColumnDefault(ctx, col, colDefault)
-				if err != nil {
-					return nil, transform.SameTree, err
-				}
 				if isGeneratedColumnDefault(col, colDefault) {
+					err = validateColumnDefault(ctx, col, colDefault, true)
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
 					err = validateGeneratedColumnDefault(ctx, col, colDefault, node.TargetSchema())
+					if err != nil {
+						return nil, transform.SameTree, err
+					}
+				} else {
+					err = validateColumnDefault(ctx, col, colDefault, false)
 					if err != nil {
 						return nil, transform.SameTree, err
 					}
@@ -144,9 +149,14 @@ func lookupColumnForTargetSchema(_ *sql.Context, node sql.SchemaTarget, colIndex
 
 // validateColumnDefault validates that the column default expression is valid for the column type and returns an error
 // if not
-func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.ColumnDefaultValue) error {
+func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.ColumnDefaultValue, allowColumnReferences bool) error {
 	if colDefault == nil {
 		return nil
+	}
+	if !allowColumnReferences {
+		if err := validateColumnDefaultExpressionText(colDefault.Expr.String()); err != nil {
+			return err
+		}
 	}
 
 	var err error
@@ -158,7 +168,35 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 		case *plan.Subquery:
 			err = sql.ErrColumnDefaultSubquery.New(col.Name)
 			return false
+		}
+		if !allowColumnReferences {
+			if _, ok := e.(sql.Aggregation); ok {
+				err = fmt.Errorf("aggregate functions are not allowed in DEFAULT expressions")
+				return false
+			}
+			if _, ok := e.(sql.WindowAggregation); ok {
+				err = fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+				return false
+			}
+			if expr, ok := e.(sql.WindowAdaptableExpression); ok {
+				if expr.Window() != nil {
+					err = fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+					return false
+				}
+			}
+			if expr, ok := e.(sql.RowIterExpression); ok {
+				if expr.ReturnsRowIter() {
+					err = fmt.Errorf("set-returning functions are not allowed in DEFAULT expressions")
+					return false
+				}
+			}
+		}
+		switch e.(type) {
 		case *expression.GetField:
+			if !allowColumnReferences {
+				err = fmt.Errorf("cannot use column reference in DEFAULT expression")
+				return false
+			}
 			if !colDefault.IsParenthesized() {
 				err = sql.ErrInvalidColumnDefaultValue.New(col.Name)
 				return false
@@ -178,6 +216,29 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 		return err
 	}
 
+	return nil
+}
+
+func validateColumnDefaultExpressionText(expr string) error {
+	lower := strings.ToLower(expr)
+	if strings.Contains(lower, " over (") {
+		return fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+	}
+	for _, name := range generatedColumnAggregateFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("aggregate functions are not allowed in DEFAULT expressions")
+		}
+	}
+	for _, name := range generatedColumnWindowFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+		}
+	}
+	for _, name := range generatedColumnSetReturningFunctions {
+		if containsFunctionCall(lower, name) {
+			return fmt.Errorf("set-returning functions are not allowed in DEFAULT expressions")
+		}
+	}
 	return nil
 }
 
