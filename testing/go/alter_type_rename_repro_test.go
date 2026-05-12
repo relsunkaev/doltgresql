@@ -273,6 +273,37 @@ func TestAlterCompositeTypeRenameAttributeUpdatesMaterializedViewMetadataRepro(t
 	})
 }
 
+// TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro
+// reproduces a catalog persistence bug: renaming a composite type attribute
+// should update SQL function bodies that reference that attribute.
+func TestAlterCompositeTypeRenameAttributeUpdatesFunctionBodyMetadataRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RENAME ATTRIBUTE updates dependent function bodies",
+			SetUpScript: []string{
+				`CREATE TYPE rename_attr_function_item AS (old_name INT);`,
+				`CREATE FUNCTION rename_attr_function_value()
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT (ROW(7)::rename_attr_function_item).old_name $$;`,
+				`ALTER TYPE rename_attr_function_item
+					RENAME ATTRIBUTE old_name TO new_name;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT rename_attr_function_value();`,
+					Expected: []sql.Row{{7}},
+				},
+				{
+					Query:    `SELECT (ROW(7)::rename_attr_function_item).new_name;`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
 // PostgreSQL can rename type and domain objects in place. Doltgres should
 // update type lookup metadata so the old name disappears and the new name is
 // usable.
