@@ -524,6 +524,56 @@ func TestDoltDiffReportsFunctionDefinitionChangesRepro(t *testing.T) {
 	})
 }
 
+// TestDoltDiffReportsProcedureDefinitionChangesRepro reproduces a
+// versioned-data correctness bug: DOLT_DIFF should expose procedure-definition
+// changes that are already visible to DOLT_MERGE.
+func TestDoltDiffReportsProcedureDefinitionChangesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_DIFF reports changed procedure definition",
+			SetUpScript: []string{
+				`CREATE PROCEDURE diff_procedure_value(INOUT value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						value := value + 1;
+					END;
+					$$;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial diff procedure value');`,
+				`SELECT DOLT_BRANCH('original');`,
+				`CREATE OR REPLACE PROCEDURE diff_procedure_value(INOUT value INT)
+					LANGUAGE plpgsql
+					AS $$
+					BEGIN
+						value := value + 2;
+					END;
+					$$;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main diff procedure value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name
+						FROM DOLT_DIFF_STAT(
+							'main',
+							'original',
+							'diff_procedure_value(integer)'
+						);`,
+					Expected: []sql.Row{{"public.diff_procedure_value(integer)"}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_DIFF(
+							'main',
+							'original',
+							'diff_procedure_value(integer)'
+						);`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltDiffReportsSequenceChangesRepro reproduces a versioned-data
 // correctness bug: DOLT_DIFF should expose sequence object changes, not only
 // table row changes.

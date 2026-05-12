@@ -18112,6 +18112,23 @@ They are worth keeping, but they are not counted as found bugs.
   found: diff_view_reader`, so callers cannot inspect the view-definition
   delta.
 
+### DOLT_DIFF cannot inspect procedure-definition changes
+
+- Reproducer: `TestDoltDiffReportsProcedureDefinitionChangesRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffReportsProcedureDefinitionChangesRepro -count=2`.
+- Expected Doltgres behavior: if a committed procedure body changes between
+  two revisions, `DOLT_DIFF_STAT` and `DOLT_DIFF` should expose the
+  procedure-definition root-object diff using the procedure signature name,
+  just as `DOLT_MERGE` detects conflicting procedure-definition edits.
+- Observed Doltgres behavior: both
+  `DOLT_DIFF_STAT('main', 'original', 'diff_procedure_value(integer)')` and
+  `DOLT_DIFF('main', 'original', 'diff_procedure_value(integer)')` fail with
+  `table not found: diff_procedure_value(integer)`, so callers cannot inspect
+  the procedure-definition delta.
+
 ### DOLT_DIFF cannot inspect sequence-object changes
 
 - Reproducer: `TestDoltDiffReportsSequenceChangesRepro` in
