@@ -344,6 +344,108 @@ func TestDoltDiffReportsTriggerChangesRepro(t *testing.T) {
 	})
 }
 
+// TestDoltDiffReportsEnumTypeChangesRepro reproduces a versioned-data
+// correctness bug: DOLT_DIFF should expose enum type metadata changes that are
+// already visible to DOLT_DIFF_STAT.
+func TestDoltDiffReportsEnumTypeChangesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_DIFF reports changed enum type metadata",
+			SetUpScript: []string{
+				`CREATE TABLE diff_enum_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial diff enum anchor');`,
+				`SELECT DOLT_BRANCH('original');`,
+				`CREATE TYPE diff_enum_type AS ENUM ('one', 'two');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main diff enum type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name
+						FROM DOLT_DIFF_STAT(
+							'main',
+							'original',
+							'diff_enum_type'
+						);`,
+					Expected: []sql.Row{{"public.diff_enum_type"}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_DIFF('main', 'original', 'diff_enum_type');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltDiffReportsCompositeTypeChangesRepro reproduces a versioned-data
+// correctness bug: DOLT_DIFF should expose composite type metadata changes that
+// are already visible to DOLT_DIFF_STAT.
+func TestDoltDiffReportsCompositeTypeChangesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_DIFF reports changed composite type metadata",
+			SetUpScript: []string{
+				`CREATE TABLE diff_composite_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial diff composite anchor');`,
+				`SELECT DOLT_BRANCH('original');`,
+				`CREATE TYPE diff_composite_type AS (id integer, label text);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main diff composite type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name
+						FROM DOLT_DIFF_STAT(
+							'main',
+							'original',
+							'diff_composite_type'
+						);`,
+					Expected: []sql.Row{{"public.diff_composite_type"}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_DIFF('main', 'original', 'diff_composite_type');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltDiffReportsDomainTypeChangesRepro reproduces a versioned-data
+// correctness bug: DOLT_DIFF should expose domain metadata changes that are
+// already visible to DOLT_DIFF_STAT.
+func TestDoltDiffReportsDomainTypeChangesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_DIFF reports changed domain metadata",
+			SetUpScript: []string{
+				`CREATE TABLE diff_domain_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial diff domain anchor');`,
+				`SELECT DOLT_BRANCH('original');`,
+				`CREATE DOMAIN diff_domain_type AS integer CHECK (VALUE > 0);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main diff domain type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name
+						FROM DOLT_DIFF_STAT(
+							'main',
+							'original',
+							'diff_domain_type'
+						);`,
+					Expected: []sql.Row{{"public.diff_domain_type"}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_DIFF('main', 'original', 'diff_domain_type');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetHardRemovesUncommittedFunctionRepro reproduces a versioned
 // persistence bug: DOLT_RESET --hard should discard uncommitted function
 // definitions.
