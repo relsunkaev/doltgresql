@@ -1192,6 +1192,48 @@ func TestAlterAggregateRenameRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterAggregateSetSchemaRequiresOwnershipRepro reproduces a security bug:
+// Doltgres allows a role that does not own an aggregate to move it to another
+// schema.
+func TestAlterAggregateSetSchemaRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER AGGREGATE SET SCHEMA requires aggregate ownership",
+			SetUpScript: []string{
+				`CREATE USER aggregate_schema_mover PASSWORD 'mover';`,
+				`CREATE SCHEMA aggregate_private_target;`,
+				`CREATE FUNCTION set_schema_aggregate_private_sfunc(state INT, next_value INT)
+					RETURNS INT
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;`,
+				`CREATE AGGREGATE set_schema_aggregate_private(INT) (
+					SFUNC = set_schema_aggregate_private_sfunc,
+					STYPE = INT,
+					INITCOND = '0'
+				);`,
+				`GRANT USAGE ON SCHEMA public TO aggregate_schema_mover;`,
+				`GRANT USAGE ON SCHEMA aggregate_private_target TO aggregate_schema_mover;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `ALTER AGGREGATE set_schema_aggregate_private(INT) SET SCHEMA aggregate_private_target;`,
+					ExpectedErr: `must be owner`,
+					Username:    `aggregate_schema_mover`,
+					Password:    `mover`,
+				},
+				{
+					Query: `SELECT n.nspname
+						FROM pg_catalog.pg_proc p
+						JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+						WHERE p.proname = 'set_schema_aggregate_private';`,
+					Expected: []sql.Row{{"public"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionOwnerToRequiresOwnershipRepro reproduces a security bug:
 // Doltgres allows a role that does not own a function to transfer ownership.
 func TestAlterFunctionOwnerToRequiresOwnershipRepro(t *testing.T) {
