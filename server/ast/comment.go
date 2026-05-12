@@ -18,13 +18,29 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeComment handles *tree.Comment nodes.
-func nodeComment(ctx *Context, node *tree.Comment) (vitess.Statement, error) {
-	if node == nil {
+func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
+	if stmt == nil {
 		return nil, nil
 	}
 
-	return NewNoOp("COMMENT ON is not yet supported"), nil
+	switch obj := stmt.Object.(type) {
+	case *tree.CommentOnTable:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTable(tableName, stmt.Comment)}, nil
+	case *tree.CommentOnColumn:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.ColumnItem.TableName)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnColumn(tableName, string(obj.ColumnName), stmt.Comment)}, nil
+	default:
+		return NewNoOp("COMMENT ON is not yet supported"), nil
+	}
 }

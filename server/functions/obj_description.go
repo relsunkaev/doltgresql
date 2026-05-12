@@ -17,6 +17,8 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -35,10 +37,11 @@ var obj_description_oid = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: When we support comments this should return the comment for a
-		// database object specified by its OID and the name of the containing
-		// system catalog.
-		return nil, nil
+		description, ok := comments.GetForObject(id.Cache().ToOID(val.(id.Id)))
+		if !ok {
+			return nil, nil
+		}
+		return description, nil
 	},
 }
 
@@ -50,9 +53,18 @@ var obj_description_oid_name = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: When we support comments this should return the comment for a
-		// database object specified by its OID and the name of the containing
-		// system catalog.
-		return nil, nil
+		classOID, err := regclassin.Callable(ctx, [2]*pgtypes.DoltgresType{pgtypes.Cstring, pgtypes.Regclass}, val2.(string))
+		if err != nil {
+			return nil, err
+		}
+		description, ok := comments.Get(comments.Key{
+			ObjOID:   id.Cache().ToOID(val1.(id.Id)),
+			ClassOID: id.Cache().ToOID(classOID.(id.Id)),
+			ObjSubID: 0,
+		})
+		if !ok {
+			return nil, nil
+		}
+		return description, nil
 	},
 }

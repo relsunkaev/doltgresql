@@ -17,6 +17,8 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,8 +36,14 @@ var col_description = framework.Function2{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: When we support comments this should return the comment for a table
-		// column, which is specified by the OID of its table and its column number
-		return nil, nil
+		description, ok := comments.Get(comments.Key{
+			ObjOID:   id.Cache().ToOID(val1.(id.Id)),
+			ClassOID: comments.PgClassOID(),
+			ObjSubID: val2.(int32),
+		})
+		if !ok {
+			return nil, nil
+		}
+		return description, nil
 	},
 }

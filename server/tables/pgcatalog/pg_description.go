@@ -19,6 +19,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +44,7 @@ func (p PgDescriptionHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgDescriptionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_description row iter
-	return emptyRowIter()
+	return &pgDescriptionRowIter{entries: comments.Entries()}, nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,13 +65,25 @@ var pgDescriptionSchema = sql.Schema{
 
 // pgDescriptionRowIter is the sql.RowIter for the pg_description table.
 type pgDescriptionRowIter struct {
+	entries []comments.Entry
+	idx     int
 }
 
 var _ sql.RowIter = (*pgDescriptionRowIter)(nil)
 
 // Next implements the interface sql.RowIter.
 func (iter *pgDescriptionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
+	if iter.idx >= len(iter.entries) {
+		return nil, io.EOF
+	}
+	entry := iter.entries[iter.idx]
+	iter.idx++
+	return sql.Row{
+		comments.IDFromOID(entry.ObjOID),
+		comments.IDFromOID(entry.ClassOID),
+		entry.ObjSubID,
+		entry.Description,
+	}, nil
 }
 
 // Close implements the interface sql.RowIter.
