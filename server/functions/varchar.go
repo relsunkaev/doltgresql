@@ -16,6 +16,7 @@ package functions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -50,7 +51,10 @@ var varcharin = framework.Function3{
 		}
 		truncated, runeLength := truncateString(input, maxChars)
 		if runeLength > maxChars {
-			return input, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type varying(%v)", maxChars))
+			if strings.TrimSpace(input[len(truncated):]) == "" {
+				return truncated, nil
+			}
+			return truncated, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type varying(%v)", maxChars))
 		} else {
 			return truncated, nil
 		}

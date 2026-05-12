@@ -24,8 +24,10 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/procedures"
 	"gopkg.in/src-d/go-errors.v1"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -854,8 +856,9 @@ func (c *CompiledFunction) analyzeParameters(ctx *sql.Context) (originalTypes []
 	for i, param := range c.Arguments {
 		returnType := param.Type(ctx)
 		if extendedType, ok := returnType.(*pgtypes.DoltgresType); ok && !extendedType.IsEmptyType() {
-			if extendedType.TypType == pgtypes.TypeType_Domain {
-				extendedType = extendedType.DomainUnderlyingBaseType()
+			extendedType, err = resolveUnresolvedArgumentType(ctx, extendedType)
+			if err != nil {
+				return nil, err
 			}
 			originalTypes[i] = extendedType
 		} else {
@@ -868,6 +871,43 @@ func (c *CompiledFunction) analyzeParameters(ctx *sql.Context) (originalTypes []
 		}
 	}
 	return originalTypes, nil
+}
+
+func resolveUnresolvedArgumentType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ.IsResolvedType() || ctx == nil {
+		return typ, nil
+	}
+	typesCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedTyp, err := typesCollection.GetType(ctx, typ.ID)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedTyp == nil && typ.ID.SchemaName() == "" {
+		schema, err := core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+		resolvedTyp, err = typesCollection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolvedTyp == nil {
+			resolvedTyp, err = typesCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if resolvedTyp == nil {
+		return typ, nil
+	}
+	if typmod := typ.GetAttTypMod(); typmod != -1 {
+		return resolvedTyp.WithAttTypMod(typmod), nil
+	}
+	return resolvedTyp, nil
 }
 
 // specificFuncImpl implements the interface sql.Expression.

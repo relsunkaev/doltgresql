@@ -671,6 +671,7 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 	// otherwise strip. nil entries fall through to c.Source (the
 	// unaliased path).
 	aliasHints := extractAliasSourceHints(sourceNode, len(s))
+	projectionTypes := extractProjectionTypes(ctx, sourceNode, len(s))
 
 	fields := make([]pgproto3.FieldDescription, len(s))
 	for i, c := range s {
@@ -687,9 +688,13 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 		if display, ok := ast.AnonColumnAliasDisplayName(colName); ok {
 			colName = display
 		}
-		dataTypeSize := int16(c.Type.MaxTextResponseByteLength(ctx))
+		columnType := c.Type
+		if i < len(projectionTypes) && projectionTypes[i] != nil {
+			columnType = projectionTypes[i]
+		}
+		dataTypeSize := int16(columnType.MaxTextResponseByteLength(ctx))
 		tableAttributeNumber := uint16(i + 1) // TODO: this should be based on the actual table field index, not the return schema
-		if doltgresType, ok := c.Type.(*pgtypes.DoltgresType); ok {
+		if doltgresType, ok := columnType.(*pgtypes.DoltgresType); ok {
 			if doltgresType.ID == pgtypes.Unknown.ID {
 				// It appears that the `unknown` type is always converted to `text` on output since they're binary
 				// coercible. There are other assumptions that we can make as well, as no function or column will return
@@ -716,7 +721,7 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 			}
 			typmod = doltgresType.GetAttTypMod() // pg_attribute.atttypmod
 		} else {
-			oid, err = VitessTypeToObjectID(c.Type)
+			oid, err = VitessTypeToObjectID(columnType)
 			if err != nil {
 				panic(err)
 			}
@@ -758,6 +763,21 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 	}
 
 	return fields, nil
+}
+
+func extractProjectionTypes(ctx *sql.Context, node sql.Node, columnCount int) []sql.Type {
+	if node == nil || columnCount == 0 {
+		return nil
+	}
+	project := findFirstProject(node)
+	if project == nil || len(project.Projections) != columnCount {
+		return nil
+	}
+	types := make([]sql.Type, columnCount)
+	for i, expr := range project.Projections {
+		types[i] = expr.Type(ctx)
+	}
+	return types
 }
 
 // aliasSourceHint records the (sourceTable, sourceColumn) pair we can
@@ -1217,6 +1237,10 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 		} else if !textFormatOnly && formatCodes[i] == 1 {
 			switch d := s[i].Type.(type) {
 			case *pgtypes.DoltgresType:
+				d, err = resolveDoltgresWireType(ctx, d)
+				if err != nil {
+					return nil, err
+				}
 				o[i], err = d.CallSend(ctx, v)
 				if err != nil {
 					return nil, err
@@ -1233,7 +1257,14 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 				}
 			}
 		} else {
-			val, err := s[i].Type.SQL(ctx, []byte{}, v) // We use []byte{} as there's a distinction between nil and empty
+			typ := s[i].Type
+			if d, ok := typ.(*pgtypes.DoltgresType); ok {
+				typ, err = resolveDoltgresWireType(ctx, d)
+				if err != nil {
+					return nil, err
+				}
+			}
+			val, err := typ.SQL(ctx, []byte{}, v) // We use []byte{} as there's a distinction between nil and empty
 			if err != nil {
 				return nil, err
 			}
@@ -1241,4 +1272,41 @@ func rowToBytes(ctx *sql.Context, s sql.Schema, row sql.Row, formatCodes []int16
 		}
 	}
 	return o, nil
+}
+
+func resolveDoltgresWireType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ.IsResolvedType() {
+		return typ, nil
+	}
+	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedTyp, err := typesCollection.GetType(ctx, typ.ID)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedTyp == nil && typ.ID.SchemaName() == "" {
+		schemaName, err := core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+		resolvedTyp, err = typesCollection.GetType(ctx, id.NewType(schemaName, typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolvedTyp == nil {
+			resolvedTyp, err = typesCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if resolvedTyp == nil {
+		return nil, pgtypes.ErrTypeDoesNotExist.New(typ.Name())
+	}
+	if typmod := typ.GetAttTypMod(); typmod != -1 {
+		return resolvedTyp.WithAttTypMod(typmod), nil
+	}
+	return resolvedTyp, nil
 }

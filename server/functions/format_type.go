@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/lib/pq/oid"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 
 	"github.com/dolthub/doltgresql/postgres/parser/types"
@@ -39,12 +40,24 @@ var format_type = framework.Function2{
 		if val1 == nil {
 			return nil, nil
 		}
-		toid := id.Cache().ToOID(val1.(id.Id))
+		internalID := val1.(id.Id)
+		toid := id.Cache().ToOID(internalID)
 		if t, ok := types.OidToType[oid.Oid(toid)]; ok {
 			if val2 == nil {
 				return t.SQLStandardName(), nil
 			} else {
 				return t.SQLStandardNameWithTypmod(true, int(val2.(int32))), nil
+			}
+		}
+		if internalID.Section() == id.Section_Type {
+			typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if typ, err := typesCollection.GetType(ctx, id.Type(internalID)); err != nil {
+				return nil, err
+			} else if typ != nil {
+				return typ.Name(), nil
 			}
 		}
 		return "???", nil

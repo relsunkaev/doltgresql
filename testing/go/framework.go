@@ -623,6 +623,8 @@ func NormalizeExpectedRow(fds []pgconn.FieldDescription, rows []sql.Row) []sql.R
 							newRow[i] = functions.FormatDateTimeWithBC(t.Time.UTC(), "2006-01-02 15:04:05.999999", dt.ID == types.TimestampTZ.ID)
 						}
 					}
+				} else if dt.ID == types.Bool.ID {
+					newRow[i] = NormalizeValToString(dt, row[i])
 				} else {
 					newRow[i] = NormalizeIntsAndFloats(row[i])
 				}

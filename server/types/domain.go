@@ -37,6 +37,7 @@ func NewDomainType(
 	checks []*sql.CheckDefinition,
 	arrayID, internalID id.Type,
 ) *DoltgresType {
+	typmod := asType.GetAttTypMod()
 	return &DoltgresType{
 		ID:                  internalID,
 		TypLength:           asType.TypLength,
@@ -61,7 +62,7 @@ func NewDomainType(
 		Storage:             asType.Storage,
 		NotNull:             notNull,
 		BaseTypeID:          asType.ID,
-		TypMod:              -1,
+		TypMod:              typmod,
 		NDims:               0,
 		TypCollation:        id.NullCollation,
 		DefaulBin:           "",

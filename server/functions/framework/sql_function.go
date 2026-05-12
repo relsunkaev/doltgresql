@@ -133,13 +133,13 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 
 	if len(parseds) > 1 {
 		// of multiple statements, the function returns the result of the final statement in the execution block
-		var res any
+		var res sqlFunctionScalarReturn
 		for _, parsed := range parseds {
 			err = ReplaceFunctionColumn(parsed.AST, paramMap)
 			if err != nil {
 				return nil, err
 			}
-			res, err = sql.RunInterpreted(ctx, func(subCtx *sql.Context) (any, error) {
+			resAny, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) (any, error) {
 				sch, rowIter, _, err := runner.QueryWithBindings(ctx, parsed.AST.String(), nil, nil, nil)
 				if err != nil {
 					return nil, err
@@ -148,25 +148,17 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 				if err != nil {
 					return nil, err
 				}
-				if len(sch) != 1 {
-					return nil, errors.New("expression does not result in a single value")
-				}
-				if len(rows) != 1 {
-					return nil, errors.New("expression returned multiple result sets")
-				}
-				if len(rows[0]) != 1 {
-					return nil, errors.New("expression returned multiple results")
-				}
-				return rows[0][0], nil
+				return sqlFunctionResultFromRows(sch, rows)
 			})
 			if err != nil {
 				return nil, err
 			}
+			res = resAny.(sqlFunctionScalarReturn)
 		}
 		if f.ReturnType.ID == pgtypes.Void.ID {
 			return nil, nil
 		}
-		return res, nil
+		return coerceSQLFunctionReturn(ctx, res, f.ReturnType)
 	}
 
 	// single statement
@@ -187,17 +179,11 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 			if err != nil {
 				return nil, err
 			}
-			// single column row result
-			if len(sch) != 1 {
-				return nil, errors.New("expression does not result in a single value")
+			res, err := sqlFunctionResultFromRows(sch, rows)
+			if err != nil {
+				return nil, err
 			}
-			if len(rows) != 1 {
-				return nil, errors.New("expression returned multiple result sets")
-			}
-			if len(rows[0]) != 1 {
-				return nil, errors.New("expression returned multiple results")
-			}
-			return rows[0][0], nil
+			return coerceSQLFunctionReturn(subCtx, res, f.ReturnType)
 		}
 		// multiple column row result
 		if f.ReturnType.TypCategory == pgtypes.TypeCategory_CompositeTypes {
@@ -206,6 +192,50 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 		}
 		return rowIter, nil
 	})
+}
+
+type sqlFunctionScalarReturn struct {
+	val any
+	typ *pgtypes.DoltgresType
+}
+
+func sqlFunctionResultFromRows(sch sql.Schema, rows []sql.Row) (sqlFunctionScalarReturn, error) {
+	if len(sch) != 1 {
+		return sqlFunctionScalarReturn{}, errors.New("expression does not result in a single value")
+	}
+	if len(rows) != 1 {
+		return sqlFunctionScalarReturn{}, errors.New("expression returned multiple result sets")
+	}
+	if len(rows[0]) != 1 {
+		return sqlFunctionScalarReturn{}, errors.New("expression returned multiple results")
+	}
+	fromType, ok := sch[0].Type.(*pgtypes.DoltgresType)
+	if !ok {
+		var err error
+		fromType, err = pgtypes.FromGmsTypeToDoltgresType(sch[0].Type)
+		if err != nil {
+			return sqlFunctionScalarReturn{}, err
+		}
+	}
+	return sqlFunctionScalarReturn{val: rows[0][0], typ: fromType}, nil
+}
+
+func coerceSQLFunctionReturn(ctx *sql.Context, res sqlFunctionScalarReturn, targetType *pgtypes.DoltgresType) (any, error) {
+	if res.val == nil {
+		return nil, nil
+	}
+	castFunc := GetAssignmentCast(res.typ, targetType)
+	if castFunc != nil {
+		return castFunc(ctx, res.val, targetType)
+	}
+	if res.typ.TypCategory == pgtypes.TypeCategory_StringTypes {
+		str, err := res.typ.IoOutput(ctx, res.val)
+		if err != nil {
+			return nil, err
+		}
+		return targetType.IoInput(ctx, str)
+	}
+	return nil, errors.New("no valid cast for return value")
 }
 
 // ParamTypAndValue contains the parameter type and

@@ -47,11 +47,11 @@ var timestamp_in = framework.Function3{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		input := val1.(string)
-		//oid := val2.(id.Id)
-		//typmod := val3.(int32)
-		// TODO: decode typmod to precision
-		p := 6
-		t, _, err := tree.ParseDTimestamp(nil, input, tree.TimeFamilyPrecisionToRoundDuration(int32(p)))
+		typmod := val3.(int32)
+		if typmod == -1 {
+			typmod = 6
+		}
+		t, _, err := tree.ParseDTimestamp(nil, input, tree.TimeFamilyPrecisionToRoundDuration(typmod))
 		if err != nil {
 			return nil, err
 		}

@@ -19,9 +19,16 @@ import (
 	"math"
 	"strings"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/dolthub/go-mysql-server/sql/plan"
+	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	pgparser "github.com/dolthub/doltgresql/postgres/parser/parser"
+	pgast "github.com/dolthub/doltgresql/server/ast"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -93,6 +100,18 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				}
 				attnum++
 				attr := tableColumnAttribute(table.OID.AsId(), schema.Item.SchemaName(), table.Item.Name(), attnum, col)
+				attrelidIdx.Add(attr)
+				attrelidAttnameIdx.Add(attr)
+				attributes = append(attributes, attr)
+			}
+			return true, nil
+		},
+		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+			attrs, err := viewAttributes(ctx, schema.Item.SchemaName(), view)
+			if err != nil {
+				return false, err
+			}
+			for _, attr := range attrs {
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
 				attributes = append(attributes, attr)
@@ -195,6 +214,111 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 	}
 
 	return attrs
+}
+
+func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView) ([]*pgAttribute, error) {
+	schema, err := viewTargetSchema(ctx, view.Item)
+	if err != nil {
+		return nil, err
+	}
+	attrs := make([]*pgAttribute, 0, len(schema))
+	attnum := int16(0)
+	for _, col := range schema {
+		if col.HiddenSystem {
+			continue
+		}
+		attnum++
+		resolvedCol, err := resolveViewAttributeColumnType(ctx, col)
+		if err != nil {
+			return nil, err
+		}
+		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol))
+	}
+	return attrs, nil
+}
+
+func resolveViewAttributeColumnType(ctx *sql.Context, col *sql.Column) (*sql.Column, error) {
+	doltgresType, ok := col.Type.(*pgtypes.DoltgresType)
+	if !ok || doltgresType.IsResolvedType() {
+		return col, nil
+	}
+	resolvedType, err := resolvePgAttributeType(ctx, doltgresType)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedType == doltgresType {
+		return col, nil
+	}
+	resolvedCol := *col
+	resolvedCol.Type = resolvedType
+	return &resolvedCol, nil
+}
+
+func resolvePgAttributeType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resolvedType, err := typesCollection.GetType(ctx, typ.ID)
+	if err != nil {
+		return nil, err
+	}
+	if resolvedType == nil && typ.ID.SchemaName() == "" {
+		schemaName, err := core.GetSchemaName(ctx, nil, "")
+		if err != nil {
+			return nil, err
+		}
+		resolvedType, err = typesCollection.GetType(ctx, id.NewType(schemaName, typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolvedType == nil {
+			resolvedType, err = typesCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if resolvedType == nil {
+		return typ, nil
+	}
+	if typmod := typ.GetAttTypMod(); typmod != -1 {
+		return resolvedType.WithAttTypMod(typmod), nil
+	}
+	return resolvedType, nil
+}
+
+func viewTargetSchema(ctx *sql.Context, view sql.ViewDefinition) (sql.Schema, error) {
+	createViewStatement := strings.TrimSpace(view.CreateViewStatement)
+	if createViewStatement == "" {
+		createViewStatement = "CREATE VIEW " + view.Name + " AS " + view.TextDefinition
+	}
+	doltSession := dsess.DSessFromSess(ctx.Session)
+	catalog := sqle.NewDefault(doltSession.Provider()).Analyzer.Catalog
+	parsedStatements, err := pgparser.Parse(createViewStatement)
+	if err != nil {
+		return nil, err
+	}
+	if len(parsedStatements) == 0 {
+		return nil, sql.ErrViewCreateStatementInvalid.New(createViewStatement)
+	}
+	convertedStatement, err := pgast.Convert(parsedStatements[0])
+	if err != nil {
+		return nil, err
+	}
+	if convertedStatement == nil {
+		return nil, sql.ErrViewCreateStatementInvalid.New(createViewStatement)
+	}
+	builder := planbuilder.New(ctx, catalog, nil)
+	node, _, err := builder.BindOnly(convertedStatement, createViewStatement, nil)
+	if err != nil {
+		return nil, err
+	}
+	createView, ok := node.(*plan.CreateView)
+	if !ok {
+		return nil, sql.ErrViewCreateStatementInvalid.New(createViewStatement)
+	}
+	return createView.TargetSchema(), nil
 }
 
 func statisticsTargetForAttribute(targets []int16, idx int) int16 {

@@ -58,10 +58,14 @@ var bpcharin = framework.Function3{
 		}
 		str, runeLength := truncateString(input, maxChars)
 		if runeLength > maxChars {
-			return input, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type varying(%v)", maxChars))
-		} else {
-			return str, nil
+			if strings.TrimSpace(input[len(str):]) == "" {
+				return str, nil
+			}
+			return str, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type varying(%v)", maxChars))
+		} else if typmod != -1 && runeLength < maxChars {
+			return str + strings.Repeat(" ", int(maxChars-runeLength)), nil
 		}
+		return str, nil
 	},
 }
 

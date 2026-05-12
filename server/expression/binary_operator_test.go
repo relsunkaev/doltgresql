@@ -23,7 +23,9 @@ import (
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/core/id"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/functions/binary"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/functions/unary"
@@ -34,6 +36,7 @@ var binaryOperatorBenchSink any
 var unaryOperatorBenchSink any
 
 func TestMain(m *testing.M) {
+	functions.Init()
 	binary.Init()
 	unary.Init()
 	framework.Initialize()
@@ -70,6 +73,23 @@ func TestBinaryOperatorKeepsCompiledFunctionWhenCastsAreNeeded(t *testing.T) {
 	expr, err := pgexpression.NewBinaryOperator(framework.Operator_BinaryEqual).WithChildren(ctx, left, right)
 	require.NoError(t, err)
 	requireOperatorFunctionType(t, expr, "*framework.CompiledFunction")
+}
+
+func TestBinaryOperatorDomainBpcharEqualityReturnsBool(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+	baseType, err := pgtypes.NewCharType(3)
+	require.NoError(t, err)
+	domainType := pgtypes.NewDomainType(ctx, baseType, "", false, nil, id.NewType("public", "_char3_domain"), id.NewType("public", "char3_domain"))
+	left := gmsexpression.NewGetField(0, domainType, "c", true)
+	right := gmsexpression.NewLiteral("ab ", baseType)
+
+	expr, err := pgexpression.NewBinaryOperator(framework.Operator_BinaryEqual).WithChildren(ctx, left, right)
+	require.NoError(t, err)
+	require.Equal(t, pgtypes.Bool, expr.Type(ctx))
+
+	result, err := expr.Eval(ctx, sql.NewRow("ab "))
+	require.NoError(t, err)
+	require.Equal(t, true, result)
 }
 
 func TestUnaryOperatorUsesQuickFunctionForExactOverload(t *testing.T) {

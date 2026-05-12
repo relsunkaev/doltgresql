@@ -15,7 +15,10 @@
 package framework
 
 import (
+	"fmt"
+	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -124,39 +127,41 @@ func GetPotentialImplicitCasts(fromType id.Type) []*pgtypes.DoltgresType {
 // GetExplicitCast returns the explicit type cast function that will cast the "from" type to the "to" type. Returns nil
 // if such a cast is not valid.
 func GetExplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) pgtypes.TypeCastFunction {
-	if tcf := getCast(explicitTypeCastMutex, explicitTypeCastsMap, fromType, toType, GetExplicitCast); tcf != nil {
+	lookupFromType := castLookupType(fromType)
+	lookupToType := castLookupType(toType)
+	if tcf := getCast(explicitTypeCastMutex, explicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
 		return tcf
-	} else if tcf = getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, fromType, toType, GetExplicitCast); tcf != nil {
+	} else if tcf = getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
 		return tcf
-	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, fromType, toType, GetExplicitCast); tcf != nil {
+	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetExplicitCast); tcf != nil {
 		return tcf
 	}
 	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
-	if cast := getSizingOrIdentityCast(fromType, toType, true); cast != nil {
+	if cast := getSizingOrIdentityCast(lookupFromType, lookupToType, true); cast != nil {
 		return cast
 	}
-	if recordCast := getRecordCast(fromType, toType, GetExplicitCast); recordCast != nil {
+	if recordCast := getRecordCast(lookupFromType, lookupToType, GetExplicitCast); recordCast != nil {
 		return recordCast
 	}
 	// All types have a built-in explicit cast from string types: https://www.postgresql.org/docs/15/sql-createcast.html
-	if fromType.TypCategory == pgtypes.TypeCategory_StringTypes {
+	if lookupFromType.TypCategory == pgtypes.TypeCategory_StringTypes {
 		return func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if val == nil {
 				return nil, nil
 			}
-			str, err := fromType.IoOutput(ctx, val)
+			str, err := lookupFromType.IoOutput(ctx, val)
 			if err != nil {
 				return nil, err
 			}
 			return targetType.IoInput(ctx, str)
 		}
-	} else if toType.TypCategory == pgtypes.TypeCategory_StringTypes {
+	} else if lookupToType.TypCategory == pgtypes.TypeCategory_StringTypes {
 		// All types have a built-in assignment cast to string types, which we can reference in an explicit cast
 		return func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if val == nil {
 				return nil, nil
 			}
-			str, err := fromType.IoOutput(ctx, val)
+			str, err := lookupFromType.IoOutput(ctx, val)
 			if err != nil {
 				return nil, err
 			}
@@ -164,8 +169,8 @@ func GetExplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTyp
 		}
 	}
 	// It is always valid to convert from the `unknown` type
-	if fromType.ID == pgtypes.Unknown.ID {
-		return UnknownLiteralCast
+	if lookupFromType.ID == pgtypes.Unknown.ID {
+		return UnknownLiteralAssignmentCast
 	}
 	return nil
 }
@@ -173,35 +178,49 @@ func GetExplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTyp
 // GetAssignmentCast returns the assignment type cast function that will cast the "from" type to the "to" type. Returns
 // nil if such a cast is not valid.
 func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) pgtypes.TypeCastFunction {
-	if tcf := getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, fromType, toType, GetAssignmentCast); tcf != nil {
-		return tcf
-	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, fromType, toType, GetAssignmentCast); tcf != nil {
-		return tcf
-	}
-	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
-	if cast := getSizingOrIdentityCast(fromType, toType, false); cast != nil {
-		return cast
-	}
-	// We then check for a record to composite cast
-	if recordCast := getRecordCast(fromType, toType, GetAssignmentCast); recordCast != nil {
-		return recordCast
-	}
-	// All types have a built-in assignment cast to string types: https://www.postgresql.org/docs/15/sql-createcast.html
-	if toType.TypCategory == pgtypes.TypeCategory_StringTypes {
+	lookupFromType := castLookupType(fromType)
+	lookupToType := castLookupType(toType)
+	if lookupFromType.TypCategory == pgtypes.TypeCategory_StringTypes && isLengthRestrictedStringType(lookupToType) {
 		return func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
 			if val == nil {
 				return nil, nil
 			}
-			str, err := fromType.IoOutput(ctx, val)
+			str, err := lookupFromType.IoOutput(ctx, val)
+			if err != nil {
+				return nil, err
+			}
+			return assignmentString(str, targetType)
+		}
+	}
+	if tcf := getCast(assignmentTypeCastMutex, assignmentTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast); tcf != nil {
+		return tcf
+	} else if tcf = getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetAssignmentCast); tcf != nil {
+		return tcf
+	}
+	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
+	if cast := getSizingOrIdentityCast(lookupFromType, lookupToType, false); cast != nil {
+		return cast
+	}
+	// We then check for a record to composite cast
+	if recordCast := getRecordCast(lookupFromType, lookupToType, GetAssignmentCast); recordCast != nil {
+		return recordCast
+	}
+	// It is always valid to convert from the `unknown` type.
+	if lookupFromType.ID == pgtypes.Unknown.ID {
+		return UnknownLiteralAssignmentCast
+	}
+	// All types have a built-in assignment cast to string types: https://www.postgresql.org/docs/15/sql-createcast.html
+	if lookupToType.TypCategory == pgtypes.TypeCategory_StringTypes {
+		return func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
+			if val == nil {
+				return nil, nil
+			}
+			str, err := lookupFromType.IoOutput(ctx, val)
 			if err != nil {
 				return nil, err
 			}
 			return targetType.IoInput(ctx, str)
 		}
-	}
-	// It is always valid to convert from the `unknown` type
-	if fromType.ID == pgtypes.Unknown.ID {
-		return UnknownLiteralCast
 	}
 	return nil
 }
@@ -209,22 +228,31 @@ func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresT
 // GetImplicitCast returns the implicit type cast function that will cast the "from" type to the "to" type. Returns nil
 // if such a cast is not valid.
 func GetImplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) pgtypes.TypeCastFunction {
-	if tcf := getCast(implicitTypeCastMutex, implicitTypeCastsMap, fromType, toType, GetImplicitCast); tcf != nil {
+	lookupFromType := castLookupType(fromType)
+	lookupToType := castLookupType(toType)
+	if tcf := getCast(implicitTypeCastMutex, implicitTypeCastsMap, lookupFromType, lookupToType, GetImplicitCast); tcf != nil {
 		return tcf
 	}
 	// We check for the identity and sizing casts after checking the maps, as the identity may be overridden by a user.
-	if cast := getSizingOrIdentityCast(fromType, toType, false); cast != nil {
+	if cast := getSizingOrIdentityCast(lookupFromType, lookupToType, false); cast != nil {
 		return cast
 	}
 	// We then check for a record to composite cast
-	if recordCast := getRecordCast(fromType, toType, GetImplicitCast); recordCast != nil {
+	if recordCast := getRecordCast(lookupFromType, lookupToType, GetImplicitCast); recordCast != nil {
 		return recordCast
 	}
 	// It is always valid to convert from the `unknown` type
-	if fromType.ID == pgtypes.Unknown.ID {
+	if lookupFromType.ID == pgtypes.Unknown.ID {
 		return UnknownLiteralCast
 	}
 	return nil
+}
+
+func castLookupType(typ *pgtypes.DoltgresType) *pgtypes.DoltgresType {
+	if typ.TypType == pgtypes.TypeType_Domain {
+		return typ.DomainUnderlyingBaseType()
+	}
+	return typ
 }
 
 // addTypeCast registers the given type cast.
@@ -410,4 +438,81 @@ func UnknownLiteralCast(ctx *sql.Context, val any, targetType *pgtypes.DoltgresT
 		return str, nil
 	}
 	return targetType.IoInput(ctx, str)
+}
+
+// UnknownLiteralAssignmentCast is used when assigning unknown string literals. PostgreSQL assignment casts to
+// length-restricted string types reject non-space overflow, but allow overflow that is only trailing spaces.
+func UnknownLiteralAssignmentCast(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
+	if val == nil {
+		return nil, nil
+	}
+	str, err := pgtypes.Unknown.IoOutput(ctx, val)
+	if err != nil {
+		return nil, err
+	}
+	if targetType.ID == pgtypes.Cstring.ID {
+		return str, nil
+	}
+	lookupTargetType := castLookupType(targetType)
+	if !isLengthRestrictedStringType(lookupTargetType) {
+		return targetType.IoInput(ctx, str)
+	}
+	return assignmentString(str, targetType)
+}
+
+func assignmentString(input string, targetType *pgtypes.DoltgresType) (string, error) {
+	switch castLookupType(targetType).ID {
+	case pgtypes.VarChar.ID:
+		return assignmentVarCharString(input, targetType)
+	case pgtypes.BpChar.ID:
+		return assignmentBpCharString(input, targetType)
+	default:
+		return "", errors.Errorf("internal assignment cast called to handle non-string type")
+	}
+}
+
+func isLengthRestrictedStringType(typ *pgtypes.DoltgresType) bool {
+	return typ.ID == pgtypes.VarChar.ID || typ.ID == pgtypes.BpChar.ID
+}
+
+func assignmentVarCharString(input string, targetType *pgtypes.DoltgresType) (string, error) {
+	tm := targetType.GetAttTypMod()
+	if tm == -1 {
+		return input, nil
+	}
+	length := uint32(pgtypes.GetCharLengthFromTypmod(tm))
+	str, runeLength := truncateString(input, length)
+	if runeLength <= length || strings.TrimSpace(input[len(str):]) == "" {
+		return str, nil
+	}
+	return input, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
+}
+
+func assignmentBpCharString(input string, targetType *pgtypes.DoltgresType) (string, error) {
+	tm := targetType.GetAttTypMod()
+	if tm == -1 {
+		return input, nil
+	}
+	length := uint32(pgtypes.GetCharLengthFromTypmod(tm))
+	str, runeLength := truncateString(input, length)
+	if runeLength > length && strings.TrimSpace(input[len(str):]) != "" {
+		return input, errors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
+	}
+	if runeLength < length {
+		return str + strings.Repeat(" ", int(length-runeLength)), nil
+	}
+	return str, nil
+}
+
+func truncateString(val string, runeLimit uint32) (string, uint32) {
+	runeLength := uint32(utf8.RuneCountInString(val))
+	if runeLength > runeLimit {
+		startString := val
+		for i := uint32(0); i < runeLimit; i++ {
+			_, size := utf8.DecodeRuneInString(val)
+			val = val[size:]
+		}
+		return startString[:len(startString)-len(val)], runeLength
+	}
+	return val, runeLength
 }

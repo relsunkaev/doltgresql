@@ -24,6 +24,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // BinaryOperator represents a VALUE OPERATOR VALUE expression.
@@ -103,7 +104,36 @@ func (b *BinaryOperator) ToComparer(ctx *sql.Context) (expression.Comparer, erro
 
 // Type implements the sql.Expression interface.
 func (b *BinaryOperator) Type(ctx *sql.Context) sql.Type {
+	if binaryOperatorReturnsBool(b.operator) {
+		return pgtypes.Bool
+	}
 	return b.compiledFunc.Type(ctx)
+}
+
+func binaryOperatorReturnsBool(operator framework.Operator) bool {
+	switch operator {
+	case framework.Operator_BinaryLessThan,
+		framework.Operator_BinaryGreaterThan,
+		framework.Operator_BinaryLessOrEqual,
+		framework.Operator_BinaryGreaterOrEqual,
+		framework.Operator_BinaryEqual,
+		framework.Operator_BinaryNotEqual,
+		framework.Operator_BinaryJSONContainsRight,
+		framework.Operator_BinaryJSONContainsLeft,
+		framework.Operator_BinaryJSONTopLevel,
+		framework.Operator_BinaryJSONTopLevelAny,
+		framework.Operator_BinaryJSONTopLevelAll,
+		framework.Operator_BinaryJSONPathExists,
+		framework.Operator_BinaryJSONPathMatch,
+		framework.Operator_BinaryOverlaps,
+		framework.Operator_BinaryHstoreLess,
+		framework.Operator_BinaryHstoreLessOrEqual,
+		framework.Operator_BinaryHstoreGreater,
+		framework.Operator_BinaryHstoreGreaterOrEqual:
+		return true
+	default:
+		return false
+	}
 }
 
 // WithChildren implements the sql.Expression interface.

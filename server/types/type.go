@@ -624,10 +624,12 @@ func (t *DoltgresType) DomainUnderlyingBaseType() *DoltgresType {
 		panic(fmt.Sprintf("unable to get DoltgresType from ID: %s", t.BaseTypeID.AsId().String()))
 	}
 	if bt.TypType == TypeType_Domain {
-		return bt.DomainUnderlyingBaseType()
-	} else {
-		return bt
+		bt = bt.DomainUnderlyingBaseType()
 	}
+	if typmod := t.GetAttTypMod(); typmod != -1 {
+		return bt.WithAttTypMod(typmod)
+	}
+	return bt
 }
 
 // Equals implements the types.ExtendedType interface.
@@ -684,6 +686,9 @@ func (t *DoltgresType) FormatValueWithContext(ctx *sql.Context, val any) (string
 
 // GetAttTypMod returns the attTypMod field of the type.
 func (t *DoltgresType) GetAttTypMod() int32 {
+	if t.TypType == TypeType_Domain && t.TypMod != -1 {
+		return t.TypMod
+	}
 	return t.attTypMod
 }
 
@@ -700,7 +705,7 @@ func (t *DoltgresType) InputFuncID() id.Id {
 // IoInput converts input string value to given type value.
 func (t *DoltgresType) IoInput(ctx *sql.Context, input string) (any, error) {
 	if t.TypType == TypeType_Domain {
-		return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.BaseTypeID.AsId(), t.attTypMod)
+		return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.BaseTypeID.AsId(), t.GetAttTypMod())
 	} else if t.ModInFunc != 0 || t.IsArrayType() {
 		if t.Elem != id.NullType {
 			return globalFunctionRegistry.GetFunction(ctx, t.InputFunc).CallVariadic(ctx, input, t.Elem.AsId(), t.attTypMod)
@@ -1287,7 +1292,7 @@ func (t *DoltgresType) CallSend(ctx *sql.Context, val any) ([]byte, error) {
 // CallReceive is a way to call the `receive` function for this type.
 func (t *DoltgresType) CallReceive(ctx *sql.Context, val []byte) (any, error) {
 	if t.TypType == TypeType_Domain {
-		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.BaseTypeID.AsId(), t.attTypMod)
+		return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.BaseTypeID.AsId(), t.GetAttTypMod())
 	} else if t.ModInFunc != 0 || t.IsArrayType() {
 		if t.Elem != id.NullType {
 			return globalFunctionRegistry.GetFunction(ctx, t.ReceiveFunc).CallVariadic(ctx, val, t.Elem.AsId(), t.attTypMod)

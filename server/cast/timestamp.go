@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgdate"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -59,7 +60,7 @@ func timestampImplicit() {
 		FromType: pgtypes.Timestamp,
 		ToType:   pgtypes.Timestamp,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return val.(time.Time), nil
+			return timestampWithTypmod(val.(time.Time), targetType), nil
 		},
 	})
 	framework.MustAddImplicitTypeCast(framework.TypeCast{
@@ -70,4 +71,12 @@ func timestampImplicit() {
 			return val.(time.Time), nil
 		},
 	})
+}
+
+func timestampWithTypmod(ts time.Time, targetType *pgtypes.DoltgresType) time.Time {
+	typmod := targetType.GetAttTypMod()
+	if typmod == -1 {
+		typmod = 6
+	}
+	return ts.Round(tree.TimeFamilyPrecisionToRoundDuration(typmod))
 }
