@@ -20,6 +20,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // nodeUpdateExpr handles *tree.UpdateExpr nodes.
@@ -32,12 +33,19 @@ func nodeUpdateExpr(ctx *Context, node *tree.UpdateExpr) (vitess.AssignmentExprs
 		return nil, err
 	}
 	var assignmentExprs []*vitess.AssignmentExpr
-	for _, name := range node.Names {
+	for i, name := range node.Names {
+		assignmentExpr := expr
+		if len(node.Names) > 1 {
+			assignmentExpr = vitess.InjectedExpr{
+				Expression: pgexprs.NewRowValueField(i),
+				Children:   vitess.Exprs{expr},
+			}
+		}
 		assignmentExprs = append(assignmentExprs, &vitess.AssignmentExpr{
 			Name: &vitess.ColName{
 				Name: vitess.NewColIdent(string(name)),
 			},
-			Expr: expr,
+			Expr: assignmentExpr,
 		})
 	}
 	return assignmentExprs, nil
