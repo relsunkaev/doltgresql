@@ -240,10 +240,10 @@ func TestPreviewMergeConflictsSummaryReportsDomainConflictRepro(t *testing.T) {
 				`CREATE TABLE preview_summary_domain_conflict_anchor (id INT PRIMARY KEY);`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'initial domain summary conflict anchor');`,
 				`SELECT DOLT_BRANCH('other');`,
-				`CREATE DOMAIN preview_summary_domain_conflict_type AS integer CHECK (VALUE > 0);`,
+				`CREATE DOMAIN preview_summary_domain_conflict_type AS integer;`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'main domain summary conflict type');`,
 				`SELECT DOLT_CHECKOUT('other');`,
-				`CREATE DOMAIN preview_summary_domain_conflict_type AS integer CHECK (VALUE > 10);`,
+				`CREATE DOMAIN preview_summary_domain_conflict_type AS text;`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'other domain summary conflict type');`,
 			},
 			Assertions: []ScriptTestAssertion{
@@ -440,18 +440,14 @@ func TestPreviewMergeConflictsReportsSequenceConflictRepro(t *testing.T) {
 		{
 			Name: "DOLT_PREVIEW_MERGE_CONFLICTS reports sequence conflicts",
 			SetUpScript: []string{
-				`CREATE TABLE preview_sequence_conflict_items (
-					id SERIAL PRIMARY KEY,
-					label TEXT
-				);`,
-				`INSERT INTO preview_sequence_conflict_items (label) VALUES ('base');`,
+				`CREATE SEQUENCE preview_sequence_conflict_seq;`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'initial sequence conflict value');`,
 				`SELECT DOLT_BRANCH('other');`,
-				`INSERT INTO preview_sequence_conflict_items (label) VALUES ('main');`,
+				`SELECT nextval('preview_sequence_conflict_seq');`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'main sequence conflict value');`,
 				`SELECT DOLT_CHECKOUT('other');`,
-				`INSERT INTO preview_sequence_conflict_items (label) VALUES ('other');`,
-				`SELECT DOLT_COMMIT('-A', '-m', 'other sequence conflict value');`,
+				`DROP SEQUENCE preview_sequence_conflict_seq;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other sequence conflict drop');`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -459,7 +455,7 @@ func TestPreviewMergeConflictsReportsSequenceConflictRepro(t *testing.T) {
 						FROM DOLT_PREVIEW_MERGE_CONFLICTS(
 							'main',
 							'other',
-							'preview_sequence_conflict_items_id_seq'
+							'preview_sequence_conflict_seq'
 						);`,
 					Expected: []sql.Row{{1}},
 				},
@@ -543,10 +539,10 @@ func TestPreviewMergeConflictsReportsDomainConflictRepro(t *testing.T) {
 				`CREATE TABLE preview_domain_conflict_anchor (id INT PRIMARY KEY);`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'initial domain conflict anchor');`,
 				`SELECT DOLT_BRANCH('other');`,
-				`CREATE DOMAIN preview_domain_conflict_type AS integer CHECK (VALUE > 0);`,
+				`CREATE DOMAIN preview_domain_conflict_type AS integer;`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'main domain conflict type');`,
 				`SELECT DOLT_CHECKOUT('other');`,
-				`CREATE DOMAIN preview_domain_conflict_type AS integer CHECK (VALUE > 10);`,
+				`CREATE DOMAIN preview_domain_conflict_type AS text;`,
 				`SELECT DOLT_COMMIT('-A', '-m', 'other domain conflict type');`,
 			},
 			Assertions: []ScriptTestAssertion{
