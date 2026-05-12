@@ -259,6 +259,9 @@ func ensurePredefinedRoles() {
 		"pg_execute_server_program",
 		"pg_maintain",
 		"pg_signal_autovacuum_worker",
+		"pg_checkpoint",
+		"pg_create_subscription",
+		"pg_use_reserved_connections",
 	} {
 		if !RoleExists(roleName) {
 			SetRole(CreateDefaultRole(roleName))
