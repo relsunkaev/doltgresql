@@ -1,4 +1,4 @@
-// Copyright 2025 Dolthub, Inc.
+// Copyright 2026 Dolthub, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,19 +22,19 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
-// initPgGetFunctionResult registers the functions to the catalog.
-func initPgGetFunctionResult() {
-	framework.RegisterFunction(pg_get_function_result_oid)
+// initPgGetFunctionArguments registers the functions to the catalog.
+func initPgGetFunctionArguments() {
+	framework.RegisterFunction(pg_get_function_arguments_oid)
 }
 
-// pg_get_function_result_oid represents the PostgreSQL system catalog information function.
-var pg_get_function_result_oid = framework.Function1{
-	Name:               "pg_get_function_result",
+// pg_get_function_arguments_oid represents the PostgreSQL system information function.
+var pg_get_function_arguments_oid = framework.Function1{
+	Name:               "pg_get_function_arguments",
 	Return:             pgtypes.Text,
 	Parameters:         [1]*pgtypes.DoltgresType{pgtypes.Oid},
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return pgGetFunctionResult(ctx, val.(id.Id))
+		return pgGetFunctionArguments(ctx, val.(id.Id), true)
 	},
 }

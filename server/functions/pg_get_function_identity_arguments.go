@@ -17,6 +17,7 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +35,6 @@ var pg_get_function_identity_arguments_oid = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: real implementation
-		return "", nil
+		return pgGetFunctionArguments(ctx, val.(id.Id), false)
 	},
 }
