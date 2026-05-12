@@ -1077,6 +1077,47 @@ func TestProcedureOwnerCanCallCreatedProcedureRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceProcedurePreservesOwnerRepro reproduces an ownership
+// persistence bug: PostgreSQL preserves the existing procedure owner during
+// CREATE OR REPLACE PROCEDURE.
+func TestCreateOrReplaceProcedurePreservesOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE PROCEDURE preserves pg_proc proowner",
+			SetUpScript: []string{
+				`CREATE USER replace_procedure_owner PASSWORD 'pw';`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO replace_procedure_owner;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE PROCEDURE replace_owner_procedure()
+						AS $$
+						BEGIN
+							NULL;
+						END;
+						$$ LANGUAGE plpgsql;`,
+					Username: `replace_procedure_owner`,
+					Password: `pw`,
+				},
+				{
+					Query: `CREATE OR REPLACE PROCEDURE replace_owner_procedure()
+						AS $$
+						BEGIN
+							NULL;
+						END;
+						$$ LANGUAGE plpgsql;`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'replace_owner_procedure';`,
+					Expected: []sql.Row{{"replace_procedure_owner"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateExtensionOwnerUpdatesCatalogRepro reproduces a
 // security/catalog bug: extensions installed by a non-superuser role should
 // record that role in pg_extension.extowner, but Doltgres reports postgres.
