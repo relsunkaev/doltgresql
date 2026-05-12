@@ -58,14 +58,25 @@ func (d *DropDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r s
 			return nil, errors.Wrap(err, "permission denied")
 		}
 	}
-	return b.Build(ctx, d.gmsDropDB, r)
+	iter, err := b.Build(ctx, d.gmsDropDB, r)
+	if err != nil {
+		return nil, err
+	}
+	auth.LockWrite(func() {
+		auth.RemoveDatabaseMetadata(d.gmsDropDB.DbName)
+		err = auth.PersistChanges()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return iter, nil
 }
 
 func checkDatabaseOwnership(ctx *sql.Context, dbName string) error {
-	owner, _ := auth.GetSuperUserAndPassword()
-	if owner == "" {
-		owner = "postgres"
-	}
+	var owner string
+	auth.LockRead(func() {
+		owner = auth.GetDatabaseMetadata(dbName).Owner
+	})
 	if owner == "" || owner == ctx.Client().User {
 		return nil
 	}

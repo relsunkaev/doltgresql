@@ -33,12 +33,14 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(11)
+	writer.Uint32(12)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
 		role.serialize(writer)
 	}
+	// Write database metadata
+	db.databaseMetadata.serialize(writer)
 	// Write the database privileges
 	db.databasePrivileges.serialize(writer)
 	// Write the schema privileges
@@ -71,6 +73,8 @@ func (db *Database) serialize() []byte {
 	db.textSearchConfigs.serialize(writer)
 	// Write the role chain
 	db.roleMembership.serialize(writer)
+	// Write database/role settings
+	db.dbRoleSettings.serialize(writer)
 	return writer.Data()
 }
 
@@ -106,6 +110,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV10(reader)
 	case 11:
 		return db.deserializeV11(reader)
+	case 12:
+		return db.deserializeV12(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -124,6 +130,7 @@ func (db *Database) deserializeV0(reader *utils.Reader) error {
 		db.rolesByID[r.id] = r
 	}
 	// Read the database privileges
+	db.databaseMetadata.deserialize(0, reader)
 	db.databasePrivileges.deserialize(0, reader)
 	// Read the schema privileges
 	db.schemaPrivileges.deserialize(0, reader)
@@ -198,6 +205,10 @@ func (db *Database) deserializeV11(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 11)
 }
 
+func (db *Database) deserializeV12(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 12)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -208,6 +219,12 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		r.deserialize(1, reader)
 		db.rolesByName[r.Name] = r.id
 		db.rolesByID[r.id] = r
+	}
+	if version >= 12 {
+		// Read database metadata
+		db.databaseMetadata.deserialize(1, reader)
+	} else {
+		db.databaseMetadata.deserialize(0, reader)
 	}
 	// Read the database privileges
 	db.databasePrivileges.deserialize(1, reader)
@@ -273,6 +290,12 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		}
 		// Read the role chain
 		db.roleMembership.deserialize(1, reader)
+		if version >= 12 {
+			// Read database/role settings
+			db.dbRoleSettings.deserialize(1, reader)
+		} else {
+			db.dbRoleSettings.deserialize(0, reader)
+		}
 	} else {
 		// Read the table privileges
 		db.tablePrivileges.deserialize(version, reader)
@@ -291,6 +314,7 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.casts.deserialize(0, reader)
 		db.operators.deserialize(0, reader)
 		db.textSearchConfigs.deserialize(0, reader)
+		db.dbRoleSettings.deserialize(0, reader)
 		ensurePredefinedRoles()
 		dbInitDefaultLanguages()
 	}

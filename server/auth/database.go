@@ -40,6 +40,7 @@ var (
 type Database struct {
 	rolesByName         map[string]RoleID
 	rolesByID           map[RoleID]Role
+	databaseMetadata    *DatabaseMetadata
 	databasePrivileges  *DatabasePrivileges
 	schemaPrivileges    *SchemaPrivileges
 	schemaOwners        *SchemaOwners
@@ -56,12 +57,14 @@ type Database struct {
 	operators           *Operators
 	textSearchConfigs   *TextSearchConfigs
 	roleMembership      *RoleMembership
+	dbRoleSettings      *DbRoleSettings
 }
 
 // ClearDatabase clears the internal database, leaving only the default users. This is primarily for use by tests.
 func ClearDatabase() {
 	clear(globalDatabase.rolesByName)
 	clear(globalDatabase.rolesByID)
+	clear(globalDatabase.databaseMetadata.Data)
 	clear(globalDatabase.databasePrivileges.Data)
 	clear(globalDatabase.schemaPrivileges.Data)
 	clear(globalDatabase.schemaOwners.Data)
@@ -78,6 +81,7 @@ func ClearDatabase() {
 	clear(globalDatabase.operators.Data)
 	clear(globalDatabase.textSearchConfigs.Data)
 	clear(globalDatabase.roleMembership.Data)
+	clear(globalDatabase.dbRoleSettings.Data)
 	dbInitDefault()
 }
 
@@ -180,6 +184,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 	globalDatabase = Database{
 		rolesByName:         make(map[string]RoleID),
 		rolesByID:           make(map[RoleID]Role),
+		databaseMetadata:    NewDatabaseMetadata(),
 		databasePrivileges:  NewDatabasePrivileges(),
 		schemaPrivileges:    NewSchemaPrivileges(),
 		schemaOwners:        NewSchemaOwners(),
@@ -196,6 +201,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		operators:           NewOperators(),
 		textSearchConfigs:   NewTextSearchConfigs(),
 		roleMembership:      NewRoleMembership(),
+		dbRoleSettings:      NewDbRoleSettings(),
 	}
 	globalLock = &sync.RWMutex{}
 	if dEnv != nil {

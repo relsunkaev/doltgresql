@@ -548,7 +548,7 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		if _, ok := v.(JsonDocument); ok {
 			return v, sql.InRange, nil
 		}
-	case "oid", "regclass", "regproc", "regtype":
+	case "oid", "regclass", "regdatabase", "regproc", "regtype":
 		if _, ok := v.(id.Id); ok {
 			return v, sql.InRange, nil
 		}
@@ -749,7 +749,7 @@ func oidAliasBase(t *DoltgresType) (bool, bool) {
 
 func isOidAliasTypeName(typeName string) bool {
 	switch typeName {
-	case "oid", "regclass", "regnamespace", "regproc", "regprocedure", "regtype":
+	case "oid", "regclass", "regdatabase", "regnamespace", "regproc", "regprocedure", "regtype":
 		return true
 	default:
 		return false
@@ -1219,7 +1219,7 @@ func (t *DoltgresType) Type() query.Type {
 			return sqltypes.Decimal
 		case "oid":
 			return sqltypes.VarChar
-		case "regclass", "regproc", "regtype":
+		case "regclass", "regdatabase", "regproc", "regtype":
 			return sqltypes.Text
 		default:
 			// TODO
@@ -1313,7 +1313,7 @@ func (t *DoltgresType) Zero() interface{} {
 			return int64(0)
 		case "numeric":
 			return decimal.Zero
-		case "oid", "regclass", "regproc", "regtype":
+		case "oid", "regclass", "regdatabase", "regproc", "regtype":
 			return id.Null
 		default:
 			// TODO

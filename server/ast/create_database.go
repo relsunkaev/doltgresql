@@ -23,10 +23,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeCreateDatabase handles *tree.CreateDatabase nodes.
-func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, error) {
+func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement, error) {
 	var charsets []*vitess.CharsetAndCollate
 
 	if len(node.Template) > 0 {
@@ -91,19 +93,24 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, e
 	}
 	// TODO: some clauses have default values in case of not being defined.
 	// ALLOW_CONNECTIONS defaults to TRUE
-	if node.AllowConnections != nil {
-		return nil, errors.Errorf("ALLOW_CONNECTIONS clause is not yet supported")
-	}
 	// CONNECTION LIMIT defaults to -1
-	if node.ConnectionLimit != nil {
-		return nil, errors.Errorf("CONNECTION LIMIT clause is not yet supported")
-	}
 	// IS_TEMPLATE defaults to FALSE
-	if node.IsTemplate != nil {
-		return nil, errors.Errorf("IS_TEMPLATE clause is not yet supported")
-	}
 	if node.Oid != nil {
 		return nil, errors.Errorf("OID clause is not yet supported")
+	}
+
+	if node.Owner != "" || node.AllowConnections != nil || node.ConnectionLimit != nil || node.IsTemplate != nil {
+		update, err := createDatabaseMetadataUpdate(node)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: &pgnodes.CreateDatabase{
+				Name:        bareIdentifier(node.Name),
+				IfNotExists: node.IfNotExists,
+				Update:      update,
+			},
+		}, nil
 	}
 
 	return &vitess.DBDDL{
@@ -113,6 +120,36 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, e
 		IfNotExists:      node.IfNotExists,
 		CharsetCollate:   charsets,
 	}, nil
+}
+
+func createDatabaseMetadataUpdate(node *tree.CreateDatabase) (auth.DatabaseMetadataUpdate, error) {
+	update := auth.DatabaseMetadataUpdate{}
+	if node.Owner != "" {
+		owner := node.Owner
+		update.Owner = &owner
+	}
+	if node.AllowConnections != nil {
+		value, err := databaseBoolOption(node.AllowConnections)
+		if err != nil {
+			return update, err
+		}
+		update.AllowConnections = &value
+	}
+	if node.ConnectionLimit != nil {
+		value, err := databaseIntOption(node.ConnectionLimit)
+		if err != nil {
+			return update, err
+		}
+		update.ConnectionLimit = &value
+	}
+	if node.IsTemplate != nil {
+		value, err := databaseBoolOption(node.IsTemplate)
+		if err != nil {
+			return update, err
+		}
+		update.IsTemplate = &value
+	}
+	return update, nil
 }
 
 var postgresEncodingNames = map[string]struct{}{

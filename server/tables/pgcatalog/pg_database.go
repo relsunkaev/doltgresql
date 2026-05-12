@@ -116,25 +116,27 @@ func (iter *pgDatabaseRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	iter.idx++
 	db := iter.dbs[iter.idx-1]
 	dbOid := id.NewDatabase(db.Name()).AsId()
+	metadata := auth.GetDatabaseMetadata(db.Name())
+	ownerOid := id.NewId(id.Section_User, metadata.Owner)
 
 	// TODO: Add the rest of the pg_database columns
 	return sql.Row{
-		dbOid,     // oid
-		db.Name(), // datname
-		id.Null,   // datdba
-		int32(6),  // encoding
-		"i",       // datlocprovider
-		false,     // datistemplate
-		true,      // datallowconn
-		int32(-1), // datconnlimit
-		uint32(0), // datfrozenxid
-		uint32(0), // datminmxid
-		id.Null,   // dattablespace
-		"",        // datcollate
-		"",        // datctype
-		nil,       // daticulocale
-		"",        // daticurules
-		nil,       // datcollversion
+		dbOid,                     // oid
+		db.Name(),                 // datname
+		ownerOid,                  // datdba
+		int32(6),                  // encoding
+		"i",                       // datlocprovider
+		metadata.IsTemplate,       // datistemplate
+		metadata.AllowConnections, // datallowconn
+		metadata.ConnectionLimit,  // datconnlimit
+		uint32(0),                 // datfrozenxid
+		uint32(0),                 // datminmxid
+		id.Null,                   // dattablespace
+		"",                        // datcollate
+		"",                        // datctype
+		nil,                       // daticulocale
+		"",                        // daticurules
+		nil,                       // datcollversion
 		aclTextArray(auth.DatabaseACLItems(db.Name())), // datacl
 	}, nil
 }

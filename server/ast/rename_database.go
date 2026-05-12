@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeRenameDatabase handles *tree.RenameDatabase nodes.
@@ -26,5 +27,10 @@ func nodeRenameDatabase(ctx *Context, node *tree.RenameDatabase) (vitess.Stateme
 		return nil, nil
 	}
 
-	return NotYetSupportedError("RENAME DATABASE is not yet supported")
+	return vitess.InjectedStatement{
+		Statement: &pgnodes.RenameDatabase{
+			Name:    bareIdentifier(node.Name),
+			NewName: bareIdentifier(node.NewName),
+		},
+	}, nil
 }
