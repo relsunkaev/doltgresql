@@ -282,7 +282,7 @@ func pgIndexToRow(index *pgIndex) sql.Row {
 		index.indisprimary,                      // indisprimary
 		false,                                   // indisexclusion
 		true,                                    // indimmediate
-		false,                                   // indisclustered
+		indexmetadata.IsClustered(comment),      // indisclustered
 		indisvalid,                              // indisvalid
 		false,                                   // indcheckxmin
 		indisready,                              // indisready

@@ -3206,6 +3206,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedClusterIndex(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if _, ok, err := h.convertedAlterSystem(query); ok || err != nil {
 		return nil, err
 	}
@@ -3317,6 +3320,7 @@ var (
 	createTsConfigPattern     = regexp.MustCompile(`(?is)^\s*create\s+text\s+search\s+configuration\s+([a-z_][a-z0-9_."$]*)\s*\(\s*copy\s*=\s*[a-z_][a-z0-9_."$]*\s*\)\s*;?\s*$`)
 	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
 	alterSystemPattern        = regexp.MustCompile(`(?is)^\s*alter\s+system\s+(?:set|reset)\b.+;?\s*$`)
+	clusterIndexPattern       = regexp.MustCompile(`(?is)^\s*cluster\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s+on\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s*;?\s*$`)
 	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
@@ -3361,6 +3365,26 @@ func (h *ConnectionHandler) convertedAlterSystem(query string) (ConvertedQuery, 
 			"ALTER SYSTEM cannot run inside a transaction block")
 	}
 	return ConvertedQuery{}, true, pgerror.New(pgcode.FeatureNotSupported, "ALTER SYSTEM is not yet supported")
+}
+
+func convertedClusterIndex(query string) (ConvertedQuery, bool) {
+	matches := clusterIndexPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false
+	}
+	indexSchema, indexName := splitQualifiedCatalogName(matches[1])
+	tableSchema, tableName := splitQualifiedCatalogName(matches[2])
+	schemaName := tableSchema
+	if schemaName == "" {
+		schemaName = indexSchema
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NewClusterIndex(schemaName, tableName, indexName),
+		},
+		StatementTag: "CLUSTER",
+	}, true
 }
 
 func convertedCreateTransform(query string) (ConvertedQuery, bool) {

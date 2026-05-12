@@ -806,6 +806,7 @@ func hasAlteredIndexMetadata(metadata indexmetadata.Metadata) bool {
 		hasNonDefaultStatisticsTarget(metadata.StatisticsTargets) ||
 		hasNonEmptyIndexColumnOption(metadata.SortOptions) ||
 		strings.TrimSpace(metadata.Constraint) != "" ||
+		metadata.Clustered ||
 		metadata.NotReady ||
 		metadata.Invalid ||
 		metadata.Gin != nil {

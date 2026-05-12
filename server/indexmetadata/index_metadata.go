@@ -153,6 +153,7 @@ type Metadata struct {
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
 	Unique            bool                `json:"unique,omitempty"`
 	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
+	Clustered         bool                `json:"clustered,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
 
@@ -408,6 +409,12 @@ func IsValid(comment string) bool {
 		return true
 	}
 	return !metadata.Invalid
+}
+
+// IsClustered reports PostgreSQL's pg_index.indisclustered flag.
+func IsClustered(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.Clustered
 }
 
 // StatisticsTargets returns the PostgreSQL per-attribute statistics targets encoded for an index.
