@@ -17317,6 +17317,48 @@ They are worth keeping, but they are not counted as found bugs.
   generated-column conflict can therefore abort the SQL server instead of being
   represented as normal conflict state.
 
+### DOLT_MERGE errors instead of reporting enum type conflicts
+
+- Reproducer: `TestMergeReportsEnumTypeConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestMergeReportsEnumTypeConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same enum type name
+  with different labels, `DOLT_MERGE` should report a normal merge conflict so
+  callers can resolve which type definition to keep.
+- Observed Doltgres behavior: `DOLT_MERGE('main')` fails with
+  ``cannot merge `merge_enum_conflict_type` due to unsupported type``, so the
+  conflict is not represented through merge-conflict state.
+
+### DOLT_MERGE errors instead of reporting composite type conflicts
+
+- Reproducer: `TestMergeReportsCompositeTypeConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestMergeReportsCompositeTypeConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same composite type
+  name with different attributes, `DOLT_MERGE` should report a normal merge
+  conflict so callers can resolve which type definition to keep.
+- Observed Doltgres behavior: `DOLT_MERGE('main')` fails with
+  ``cannot merge `merge_composite_conflict_type` due to unsupported type``, so
+  the conflict is not represented through merge-conflict state.
+
+### DOLT_MERGE misses domain conflicts
+
+- Reproducer: `TestMergeReportsDomainConflictRepro` in
+  `testing/go/branch_merge_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestMergeReportsDomainConflictRepro -count=2`.
+- Expected Doltgres behavior: when two branches create the same domain name
+  with different constraints, `DOLT_MERGE` should report a normal merge
+  conflict so callers can resolve which domain definition to keep.
+- Observed Doltgres behavior: `DOLT_MERGE('main')` does not report
+  `conflicts found`; the merge conflict for incompatible domain definitions is
+  missed.
+
 ### DOLT_STASH cannot save tracked table edits with integer columns
 
 - Reproducer: `TestDoltStashPushPopRestoresTrackedRowRepro` in

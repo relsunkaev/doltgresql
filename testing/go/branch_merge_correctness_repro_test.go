@@ -286,6 +286,87 @@ func TestMergeReportsFunctionDefinitionConflictGuard(t *testing.T) {
 	})
 }
 
+// TestMergeReportsEnumTypeConflictRepro reproduces a branch merge correctness
+// bug: merging branches should report conflicts when both sides create the same
+// enum type name differently.
+func TestMergeReportsEnumTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports enum type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE merge_enum_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial enum merge conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE merge_enum_conflict_type AS ENUM ('main');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main enum merge conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE merge_enum_conflict_type AS ENUM ('other');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other enum merge conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestMergeReportsCompositeTypeConflictRepro reproduces a branch merge
+// correctness bug: merging branches should report conflicts when both sides
+// create the same composite type name differently.
+func TestMergeReportsCompositeTypeConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports composite type conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE merge_composite_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial composite merge conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE TYPE merge_composite_conflict_type AS (main_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main composite merge conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE TYPE merge_composite_conflict_type AS (other_value integer);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other composite merge conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestMergeReportsDomainConflictRepro reproduces a branch merge correctness
+// bug: merging branches should report conflicts when both sides create the same
+// domain name differently.
+func TestMergeReportsDomainConflictRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports domain conflicts",
+			SetUpScript: []string{
+				`CREATE TABLE merge_domain_conflict_anchor (id INT PRIMARY KEY);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial domain merge conflict anchor');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`CREATE DOMAIN merge_domain_conflict_type AS integer CHECK (VALUE > 0);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main domain merge conflict type');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`CREATE DOMAIN merge_domain_conflict_type AS integer CHECK (VALUE > 10);`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other domain merge conflict type');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestMergeAppliesFunctionDefinitionGuard keeps coverage for non-conflicting
 // branch merges that apply function-definition changes.
 func TestMergeAppliesFunctionDefinitionGuard(t *testing.T) {
