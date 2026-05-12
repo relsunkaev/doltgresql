@@ -102,6 +102,7 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	}
 
 	newType := types.NewDomainType(ctx, c.AsType, defExpr, c.IsNotNull, checkDefs, arrayID, internalID)
+	newType.Owner = ctx.Client().User
 	err = collection.CreateType(ctx, newType)
 	if err != nil {
 		return nil, err

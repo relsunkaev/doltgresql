@@ -79,6 +79,7 @@ type DoltgresType struct {
 	DefaulBin    string // for Domain types
 	Default      string
 	Acl          []string // TODO: list of privileges
+	Owner        string
 
 	// Below are not part of pg_type fields
 	Checks         []*sql.CheckDefinition // TODO: should be in `pg_constraint` for Domain types

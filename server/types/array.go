@@ -61,6 +61,7 @@ func CreateArrayTypeFromBaseType(baseType *DoltgresType) *DoltgresType {
 		DefaulBin:           "",
 		Default:             "",
 		Acl:                 nil,
+		Owner:               baseType.Owner,
 		Checks:              nil,
 		InternalName:        fmt.Sprintf("%s[]", baseType.Name()), // This will be set to the proper name in ToArrayType
 		attTypMod:           baseType.attTypMod,                   // TODO: check

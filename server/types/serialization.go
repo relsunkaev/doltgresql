@@ -54,7 +54,7 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 	typ := &DoltgresType{}
 	reader := utils.NewReader(serializedType)
 	version := reader.VariableUint()
-	if version != 0 {
+	if version > 1 {
 		return nil, errors.Errorf("version %d of types is not supported, please upgrade the server", version)
 	}
 
@@ -136,6 +136,9 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 		}
 	}
 	typ.InternalName = reader.String()
+	if version >= 1 {
+		typ.Owner = reader.String()
+	}
 	if !reader.IsEmpty() {
 		return nil, errors.Errorf("extra data found while deserializing type %s", typ.Name())
 	}
@@ -154,7 +157,7 @@ func DeserializeType(serializedType []byte) (sql.ExtendedType, error) {
 // Serialize returns the DoltgresType as a byte slice.
 func (t *DoltgresType) Serialize() []byte {
 	writer := utils.NewWriter(256)
-	writer.VariableUint(0) // Version
+	writer.VariableUint(1) // Version
 	// Write the type to the writer
 	writer.Id(t.ID.AsId())
 	writer.Int16(t.TypLength)
@@ -216,5 +219,6 @@ func (t *DoltgresType) Serialize() []byte {
 		}
 	}
 	writer.String(t.InternalName)
+	writer.String(t.Owner)
 	return writer.Data()
 }

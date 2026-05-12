@@ -60,6 +60,9 @@ func (c *CreateCast) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err = checkCastTypeOwnership(ctx, id.Type(sourceID), id.Type(targetID)); err != nil {
+		return nil, err
+	}
 	auth.LockWrite(func() {
 		err = auth.CreateCast(auth.Cast{
 			SourceType: id.Type(sourceID),
@@ -135,6 +138,9 @@ func (d *DropCast) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 		}
 		return nil, err
 	}
+	if err = checkCastTypeOwnership(ctx, id.Type(sourceID), id.Type(targetID)); err != nil {
+		return nil, err
+	}
 	auth.LockWrite(func() {
 		if ok := auth.DropCast(id.Type(sourceID), id.Type(targetID)); !ok && !d.IfExists {
 			err = errors.New("cast does not exist")
@@ -165,4 +171,19 @@ func (d *DropCast) WithResolvedChildren(ctx context.Context, children []any) (an
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return d, nil
+}
+
+func checkCastTypeOwnership(ctx *sql.Context, sourceID id.Type, targetID id.Type) error {
+	ownsSource, err := currentUserOwnsTypeID(ctx, sourceID)
+	if err != nil {
+		return err
+	}
+	ownsTarget, err := currentUserOwnsTypeID(ctx, targetID)
+	if err != nil {
+		return err
+	}
+	if ownsSource || ownsTarget {
+		return nil
+	}
+	return errors.Errorf("must be owner of source or target type")
 }

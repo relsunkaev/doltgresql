@@ -97,6 +97,9 @@ func (c *DropDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		// TODO: handle cascade
 		return nil, errors.Errorf(`cascading domain drops are not yet supported`)
 	}
+	if err = checkTypeOwnership(ctx, domain); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 
 	// iterate on all table columns to check if this domain is currently used.
 	db, err := core.GetSqlDatabaseFromContext(ctx, "")

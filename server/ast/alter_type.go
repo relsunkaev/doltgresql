@@ -29,8 +29,16 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 
 	switch cmd := node.Cmd.(type) {
 	case *tree.AlterTypeOwner:
-		// We intentionally don't support OWNER TO since we don't support owning objects
-		return NewNoOp("OWNER TO is unsupported and ignored"), nil
+		typeName := node.Type.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeOwner(
+				typeName.Catalog(),
+				typeName.Schema(),
+				typeName.Object(),
+				cmd.Owner,
+				false,
+			),
+		}, nil
 	case *tree.AlterTypeRenameAttribute:
 		tn := node.Type.ToTableName()
 		return vitess.InjectedStatement{

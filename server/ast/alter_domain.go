@@ -15,20 +15,29 @@
 package ast
 
 import (
-	"github.com/dolthub/vitess/go/vt/sqlparser"
+	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeAlterDomain handles ALTER DOMAIN nodes.
-func nodeAlterDomain(ctx *Context, stmt *tree.AlterDomain) (sqlparser.Statement, error) {
+func nodeAlterDomain(ctx *Context, stmt *tree.AlterDomain) (vitess.Statement, error) {
 	if stmt == nil {
 		return nil, nil
 	}
 
-	// We intentionally don't support OWNER TO since we don't support owning objects
-	if _, ok := stmt.Cmd.(*tree.AlterDomainOwner); ok {
-		return NewNoOp("OWNER TO is unsupported and ignored"), nil
+	if owner, ok := stmt.Cmd.(*tree.AlterDomainOwner); ok {
+		domainName := stmt.Name.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeOwner(
+				domainName.Catalog(),
+				domainName.Schema(),
+				domainName.Object(),
+				owner.Owner,
+				true,
+			),
+		}, nil
 	}
 
 	return NotYetSupportedError("ALTER DOMAIN is not yet supported")

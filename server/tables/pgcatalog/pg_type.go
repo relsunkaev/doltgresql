@@ -364,12 +364,16 @@ func (iter *pgTypeTableScanIter) Close(_ *sql.Context) error {
 
 func pgTypeToRow(nextType *pgType) sql.Row {
 	typAcl := aclTextArray(auth.TypeACLItems(nextType.typ.ID.SchemaName(), nextType.name))
+	owner := nextType.typ.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
 
 	return sql.Row{
 		nextType.oid,
 		nextType.name,
 		nextType.schemaOid,
-		id.NewId(id.Section_User, "postgres"),
+		id.NewId(id.Section_User, owner),
 		nextType.typ.TypLength,                        // typlen
 		nextType.typ.PassedByVal,                      // typbyval
 		string(nextType.typ.TypType),                  // typtype

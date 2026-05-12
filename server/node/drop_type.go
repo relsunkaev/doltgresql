@@ -111,6 +111,9 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if _, ok := types.IDToBuiltInDoltgresType[typ.ID]; ok {
 		return nil, types.ErrCannotDropSystemType.New(typ.String())
 	}
+	if err = checkTypeOwnership(ctx, typ); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 
 	// TODO: use .IsArrayType() when we support OIDs, so Elem OID isn't 0
 	if typ.TypCategory == types.TypeCategory_ArrayTypes {

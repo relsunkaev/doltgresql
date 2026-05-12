@@ -142,6 +142,7 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	default:
 		return nil, errors.Errorf("create type as %s is not supported", c.typType)
 	}
+	newType.Owner = ctx.Client().User
 
 	err = collection.CreateType(ctx, newType)
 	if err != nil {
