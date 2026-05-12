@@ -39,6 +39,7 @@ type SQLFunction struct {
 	Strict             bool
 	SqlStatement       string
 	SetOf              bool
+	SetConfig          map[string]string
 	ReturnTableType    []*pgtypes.DoltgresType
 }
 
@@ -133,6 +134,12 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 	if lower := strings.ToLower(f.SqlStatement); strings.HasPrefix(lower, "return") {
 		f.SqlStatement = fmt.Sprintf("SELECT%s", f.SqlStatement[6:])
 	}
+
+	restoreSetConfig, err := applyRoutineSetConfig(ctx, f.SetConfig)
+	if err != nil {
+		return nil, err
+	}
+	defer restoreSetConfig()
 
 	parseds, err := parser.Parse(f.SqlStatement)
 	if err != nil {

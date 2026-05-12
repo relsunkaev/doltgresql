@@ -122,6 +122,10 @@ func TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro(t *testing.T) {
 					Query: `CALL procedure_set_path_insert();`,
 				},
 				{
+					Query:    `SELECT current_setting('search_path');`,
+					Expected: []sql.Row{{"dg_proc_set_attacker, public"}},
+				},
+				{
 					Query: `SELECT
 						(SELECT count(*) FROM dg_proc_set_safe.audit_items),
 						(SELECT count(*) FROM dg_proc_set_attacker.audit_items);`,

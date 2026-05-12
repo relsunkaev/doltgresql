@@ -42,6 +42,7 @@ type CreateProcedure struct {
 	Definition        string
 	SqlDef            string
 	SqlDefParsedStmts []vitess.Statement
+	SetConfig         map[string]string
 }
 
 var _ sql.ExecSourceRel = (*CreateProcedure)(nil)
@@ -59,7 +60,8 @@ func NewCreateProcedure(
 	extensionSymbol string,
 	statements []plpgsql.InterpreterOperation,
 	sqlDef string,
-	sqlDefParsedStmts []vitess.Statement) *CreateProcedure {
+	sqlDefParsedStmts []vitess.Statement,
+	setConfig map[string]string) *CreateProcedure {
 	return &CreateProcedure{
 		DatabaseName:      databaseName,
 		ProcedureName:     procedureName,
@@ -72,6 +74,7 @@ func NewCreateProcedure(
 		Definition:        definition,
 		SqlDef:            sqlDef,
 		SqlDefParsedStmts: sqlDefParsedStmts,
+		SetConfig:         setConfig,
 	}
 }
 
@@ -151,6 +154,7 @@ func (c *CreateProcedure) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		ExtensionSymbol:   c.ExtensionSymbol,
 		Operations:        c.Statements,
 		SQLDefinition:     c.SqlDef,
+		SetConfig:         c.SetConfig,
 		Owner:             ctx.Client().User,
 	})
 	if err != nil {

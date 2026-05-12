@@ -60,6 +60,7 @@ type Function struct {
 	Operations         []plpgsql.InterpreterOperation // Only used when this is a plpgsql language
 	SQLDefinition      string                         // Only used when this is a sql language
 	SetOf              bool
+	SetConfig          map[string]string
 	Aggregate          bool
 	AggregateStateType id.Type
 	AggregateSFunc     id.Function

@@ -62,28 +62,36 @@ func setLocalSelect(ctx *Context, node *tree.SetVar) (vitess.Statement, error) {
 }
 
 func setLocalValue(name string, values tree.Exprs) (vitess.Expr, error) {
+	value, err := setVarValueString(name, values)
+	if err != nil {
+		return nil, err
+	}
+	return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(value)}, nil
+}
+
+func setVarValueString(name string, values tree.Exprs) (string, error) {
 	if len(values) == 0 {
-		return nil, errors.Errorf(`ERROR: syntax error at or near ";"'`)
+		return "", errors.Errorf(`ERROR: syntax error at or near ";"'`)
 	}
 	if len(values) > 1 {
 		vals := make([]string, len(values))
 		for i, value := range values {
 			vals[i] = value.String()
 		}
-		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(strings.Join(vals, ", "))}, nil
+		return strings.Join(vals, ", "), nil
 	}
 	value := values[0]
 	if strings.EqualFold(value.String(), "default") {
 		defaultValue, ok := config.GetPostgresConfigParameterDefault(name)
 		if !ok {
-			return nil, errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, name)
+			return "", errors.Errorf(`ERROR: unrecognized configuration parameter "%s"`, name)
 		}
-		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(fmt.Sprint(defaultValue))}, nil
+		return fmt.Sprint(defaultValue), nil
 	}
 	if str, ok := value.(*tree.StrVal); ok {
-		return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(str.RawString())}, nil
+		return str.RawString(), nil
 	}
-	return &vitess.SQLVal{Type: vitess.StrVal, Val: []byte(value.String())}, nil
+	return value.String(), nil
 }
 
 // nodeSetVar handles *tree.SetVar nodes.

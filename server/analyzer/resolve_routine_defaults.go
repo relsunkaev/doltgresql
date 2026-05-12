@@ -101,6 +101,7 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					Strict:             false,
 					SqlStatement:       overload.SQLDefinition,
 					SetOf:              false,
+					SetConfig:          overload.SetConfig,
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}
@@ -115,6 +116,7 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 					IsNonDeterministic: true,
 					Strict:             false,
 					Statements:         overload.Operations,
+					SetConfig:          overload.SetConfig,
 				}); err != nil {
 					return nil, transform.SameTree, err
 				}

@@ -42,6 +42,10 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 	if err = validateCreateFunctionRoutineOptions(node.ReturnsSetOf, options); err != nil {
 		return nil, err
 	}
+	setConfig, err := routineSetOptions(options)
+	if err != nil {
+		return nil, err
+	}
 	// Grab the general information that we'll need to create the function
 	tableName := node.Name.ToTableName()
 	var retType *pgtypes.DoltgresType
@@ -174,6 +178,7 @@ func nodeCreateFunction(ctx *Context, node *tree.CreateFunction) (vitess.Stateme
 			sqlDefParsedStmts,
 			node.ReturnsSetOf,
 			options[tree.OptionLeakProof].IsLeakProof,
+			setConfig,
 		),
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_CREATE,
@@ -298,4 +303,24 @@ func routineOptionNumberIsPositive(expr tree.Expr) bool {
 	}
 	value, err := strconv.ParseFloat(literal, 64)
 	return err == nil && value > 0
+}
+
+func routineSetOptions(options map[tree.FunctionOption]tree.RoutineOption) (map[string]string, error) {
+	setOption, ok := options[tree.OptionSet]
+	if !ok || setOption.SetVar == nil {
+		return nil, nil
+	}
+	setVar := setOption.SetVar
+	if setVar.FromCurrent {
+		return nil, errors.Errorf("SET FROM CURRENT in routine definitions is not yet supported")
+	}
+	name := setVar.Name
+	if setVar.Namespace != "" {
+		name = fmt.Sprintf("%s.%s", setVar.Namespace, setVar.Name)
+	}
+	value, err := setVarValueString(setVar.Name, setVar.Values)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{name: value}, nil
 }

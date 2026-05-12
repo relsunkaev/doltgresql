@@ -32,7 +32,7 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 
 	// Write all of the functions to the writer
 	writer := utils.NewWriter(256)
-	writer.VariableUint(4) // Version
+	writer.VariableUint(5) // Version
 	// Write the function data
 	writer.Id(function.ID.AsId())
 	writer.Id(function.ReturnType.AsId())
@@ -65,6 +65,8 @@ func (function Function) Serialize(ctx context.Context) ([]byte, error) {
 	writer.Id(function.AggregateStateType.AsId())
 	writer.Id(function.AggregateSFunc.AsId())
 	writer.String(function.AggregateInitCond)
+	// Write version 5 data
+	writer.StringMap(function.SetConfig)
 	// Returns the data
 	return writer.Data(), nil
 }
@@ -77,7 +79,7 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 4 {
+	if version > 5 {
 		return Function{}, errors.Errorf("version %d of functions is not supported, please upgrade the server", version)
 	}
 
@@ -120,6 +122,9 @@ func DeserializeFunction(ctx context.Context, data []byte) (Function, error) {
 		f.AggregateStateType = id.Type(reader.Id())
 		f.AggregateSFunc = id.Function(reader.Id())
 		f.AggregateInitCond = reader.String()
+	}
+	if version >= 5 {
+		f.SetConfig = reader.StringMap()
 	}
 	if !reader.IsEmpty() {
 		return Function{}, errors.Errorf("extra data found while deserializing a function")

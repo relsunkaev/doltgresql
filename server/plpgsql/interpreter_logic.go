@@ -44,6 +44,7 @@ type InterpretedFunction interface {
 	GetParameterNames() []string
 	GetParameterModes() []uint8
 	GetReturn() *pgtypes.DoltgresType
+	GetSetConfig() map[string]string
 	GetStatements() []InterpreterOperation
 	InternalID() id.Id
 	QueryMultiReturn(ctx *sql.Context, stack InterpreterStack, stmt string, bindings []string) (schema sql.Schema, rows []sql.Row, err error)
@@ -108,6 +109,11 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if statementsUseFoundVariable(iFunc.GetStatements()) {
 		initFoundVariable(stack)
 	}
+	restoreSetConfig, err := applyRoutineSetConfig(ctx, iFunc.GetSetConfig())
+	if err != nil {
+		return nil, err
+	}
+	defer restoreSetConfig()
 	restoreDiagnosticContext := pushDiagnosticCallFrame(ctx, iFunc)
 	defer restoreDiagnosticContext()
 	result, err := call(ctx, iFunc, stack)

@@ -41,6 +41,7 @@ type InterpretedFunction struct {
 	IsNonDeterministic bool
 	Strict             bool
 	Statements         []plpgsql.InterpreterOperation
+	SetConfig          map[string]string
 }
 
 var _ FunctionInterface = InterpretedFunction{}
@@ -79,6 +80,11 @@ func (iFunc InterpretedFunction) GetReturn() *pgtypes.DoltgresType {
 // GetStatements returns the contained statements.
 func (iFunc InterpretedFunction) GetStatements() []plpgsql.InterpreterOperation {
 	return iFunc.Statements
+}
+
+// GetSetConfig returns the routine-level SET options.
+func (iFunc InterpretedFunction) GetSetConfig() map[string]string {
+	return iFunc.SetConfig
 }
 
 // InternalID implements the interface FunctionInterface.

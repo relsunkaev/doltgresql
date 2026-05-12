@@ -32,7 +32,7 @@ func (procedure Procedure) Serialize(ctx context.Context) ([]byte, error) {
 
 	// Write all of the procedures to the writer
 	writer := utils.NewWriter(256)
-	writer.VariableUint(2) // Version
+	writer.VariableUint(3) // Version
 	// Write the procedure data
 	writer.Id(procedure.ID.AsId())
 	writer.StringSlice(procedure.ParameterNames)
@@ -60,6 +60,8 @@ func (procedure Procedure) Serialize(ctx context.Context) ([]byte, error) {
 	writer.StringSlice(procedure.ParameterDefaults)
 	// Write version 2 data
 	writer.String(procedure.Owner)
+	// Write version 3 data
+	writer.StringMap(procedure.SetConfig)
 	// Returns the data
 	return writer.Data(), nil
 }
@@ -72,7 +74,7 @@ func DeserializeProcedure(ctx context.Context, data []byte) (Procedure, error) {
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 2 {
+	if version > 3 {
 		return Procedure{}, errors.Errorf("version %d of procedures is not supported, please upgrade the server", version)
 	}
 
@@ -109,6 +111,9 @@ func DeserializeProcedure(ctx context.Context, data []byte) (Procedure, error) {
 	}
 	if version >= 2 {
 		p.Owner = reader.String()
+	}
+	if version >= 3 {
+		p.SetConfig = reader.StringMap()
 	}
 	if !reader.IsEmpty() {
 		return Procedure{}, errors.New("extra data found while deserializing a procedure")

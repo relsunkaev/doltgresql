@@ -695,6 +695,10 @@ func TestFunctionSetSearchPathOptionAppliesDuringExecutionRepro(t *testing.T) {
 					Query:    `SELECT function_set_path_count();`,
 					Expected: []sql.Row{{1}},
 				},
+				{
+					Query:    `SELECT current_setting('search_path');`,
+					Expected: []sql.Row{{"dg_fn_set_attacker, public"}},
+				},
 			},
 		},
 	})

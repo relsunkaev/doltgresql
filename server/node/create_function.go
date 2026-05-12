@@ -59,6 +59,7 @@ type CreateFunction struct {
 	SqlDefParsedStmts []vitess.Statement
 	SetOf             bool
 	LeakProof         bool
+	SetConfig         map[string]string
 }
 
 var _ sql.ExecSourceRel = (*CreateFunction)(nil)
@@ -80,7 +81,8 @@ func NewCreateFunction(
 	sqlDef string,
 	sqlDefParsedStmts []vitess.Statement,
 	setOf bool,
-	leakProof bool) *CreateFunction {
+	leakProof bool,
+	setConfig map[string]string) *CreateFunction {
 	return &CreateFunction{
 		DatabaseName:      databaseName,
 		FunctionName:      functionName,
@@ -97,6 +99,7 @@ func NewCreateFunction(
 		SqlDefParsedStmts: sqlDefParsedStmts,
 		SetOf:             setOf,
 		LeakProof:         leakProof,
+		SetConfig:         setConfig,
 	}
 }
 
@@ -179,6 +182,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		Operations:         c.Statements,
 		SQLDefinition:      c.SqlDef,
 		SetOf:              c.SetOf,
+		SetConfig:          c.SetConfig,
 	})
 	if err != nil {
 		return nil, err
