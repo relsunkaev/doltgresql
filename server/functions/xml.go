@@ -15,6 +15,8 @@
 package functions
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
@@ -31,6 +33,10 @@ func initXml() {
 	framework.RegisterFunction(xml_recv)
 	framework.RegisterFunction(xml_send)
 	framework.RegisterFunction(xml_text)
+	framework.RegisterFunction(xmltext_text)
+	framework.RegisterFunction(xmlcomment_text)
+	framework.RegisterFunction(xmlelement_any)
+	framework.RegisterFunction(xmlforest_any)
 	framework.RegisterFunction(xmlparse_text)
 	framework.RegisterFunction(xmlparse_xml)
 	framework.RegisterFunction(xmlparse_text_text)
@@ -114,6 +120,99 @@ var xml_text = framework.Function1{
 	},
 }
 
+var xmltext_text = framework.Function1{
+	Name:       "xmltext",
+	Return:     pgtypes.Xml,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return escapeXMLText(val.(string)), nil
+	},
+}
+
+var xmlcomment_text = framework.Function1{
+	Name:       "xmlcomment",
+	Return:     pgtypes.Xml,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		input := val.(string)
+		if strings.Contains(input, "--") || strings.HasSuffix(input, "-") {
+			return nil, fmt.Errorf("invalid XML comment")
+		}
+		return "<!--" + input + "-->", nil
+	},
+}
+
+var xmlelement_any = framework.Function1N{
+	Name:       "xmlelement",
+	Return:     pgtypes.Xml,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, types []*pgtypes.DoltgresType, name any, vals []any) (any, error) {
+		elementName, err := xmlConstructorOutput(ctx, types[0], name)
+		if err != nil {
+			return nil, err
+		}
+		if len(vals) == 0 {
+			return "<" + elementName + "/>", nil
+		}
+		sb := strings.Builder{}
+		sb.WriteByte('<')
+		sb.WriteString(elementName)
+		sb.WriteByte('>')
+		for i, val := range vals {
+			if val == nil {
+				continue
+			}
+			output, err := xmlConstructorContent(ctx, types[i+1], val)
+			if err != nil {
+				return nil, err
+			}
+			sb.WriteString(output)
+		}
+		sb.WriteString("</")
+		sb.WriteString(elementName)
+		sb.WriteByte('>')
+		return sb.String(), nil
+	},
+}
+
+var xmlforest_any = framework.Function1N{
+	Name:       "xmlforest",
+	Return:     pgtypes.Xml,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Any},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, types []*pgtypes.DoltgresType, val1 any, vals []any) (any, error) {
+		args := append([]any{val1}, vals...)
+		if len(args)%2 != 0 {
+			return nil, fmt.Errorf("xmlforest requires name/value pairs")
+		}
+		sb := strings.Builder{}
+		for i := 0; i < len(args); i += 2 {
+			if args[i+1] == nil {
+				continue
+			}
+			name, err := xmlConstructorOutput(ctx, types[i], args[i])
+			if err != nil {
+				return nil, err
+			}
+			value, err := xmlConstructorContent(ctx, types[i+1], args[i+1])
+			if err != nil {
+				return nil, err
+			}
+			sb.WriteByte('<')
+			sb.WriteString(name)
+			sb.WriteByte('>')
+			sb.WriteString(value)
+			sb.WriteString("</")
+			sb.WriteString(name)
+			sb.WriteByte('>')
+		}
+		return sb.String(), nil
+	},
+}
+
 var xmlparse_text = framework.Function1{
 	Name:       "xmlparse",
 	Return:     pgtypes.Xml,
@@ -191,4 +290,47 @@ var xml_is_well_formed_content_text = framework.Function1{
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		return pgtypes.ValidateXMLContent(val.(string)) == nil, nil
 	},
+}
+
+func xmlConstructorOutput(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (string, error) {
+	if val == nil {
+		return "", nil
+	}
+	switch val := val.(type) {
+	case string:
+		return val, nil
+	case int16:
+		return strconv.FormatInt(int64(val), 10), nil
+	case int32:
+		return strconv.FormatInt(int64(val), 10), nil
+	case int64:
+		return strconv.FormatInt(val, 10), nil
+	case bool:
+		return strconv.FormatBool(val), nil
+	}
+	output, err := typ.IoOutput(ctx, val)
+	if err != nil {
+		return "", err
+	}
+	return output, nil
+}
+
+func xmlConstructorContent(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (string, error) {
+	output, err := xmlConstructorOutput(ctx, typ, val)
+	if err != nil {
+		return "", err
+	}
+	if typ.ID == pgtypes.Xml.ID {
+		return output, nil
+	}
+	return escapeXMLText(output), nil
+}
+
+func escapeXMLText(input string) string {
+	replacer := strings.NewReplacer(
+		"&", "&amp;",
+		"<", "&lt;",
+		">", "&gt;",
+	)
+	return replacer.Replace(input)
 }

@@ -2218,6 +2218,10 @@ func quoteSQLIdentifier(identifier string) string {
 	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
+func quoteSQLString(value string) string {
+	return `'` + strings.ReplaceAll(value, `'`, `''`) + `'`
+}
+
 func encodeCopyTextLikeRow(row [][]byte, options tree.CopyOptions, nullsAllowed bool) ([]byte, error) {
 	switch options.CopyFormat {
 	case tree.CopyFormatText, tree.CopyFormatBinary:
@@ -2935,6 +2939,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if rewrittenQuery, ok := rewriteTextSearchQuery(query); ok {
 		query = rewrittenQuery
 	}
+	if rewrittenQuery, ok := rewriteXmlConstructors(query); ok {
+		query = rewrittenQuery
+	}
 	if rewrittenQuery, ok := rewriteAdvancedGroupByQuery(query); ok {
 		query = rewrittenQuery
 	}
@@ -3008,6 +3015,9 @@ var (
 	dropTextSearchPattern     = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	selectStatementPattern    = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
 	textSearchMatchPattern    = regexp.MustCompile(`(?is)(to_tsvector\s*\([^)]*\))\s*@@\s*(to_tsquery\s*\([^)]*\))`)
+	xmlElementNamePattern     = regexp.MustCompile(`(?is)xmlelement\s*\(\s*name\s+([a-z_][a-z0-9_$]*)\s*\)`)
+	xmlForestCallPattern      = regexp.MustCompile(`(?is)xmlforest\s*\((.+?)\)`)
+	xmlForestArgPattern       = regexp.MustCompile(`(?is)^\s*(.+?)\s+as\s+([a-z_][a-z0-9_$]*)\s*$`)
 	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
 
@@ -3257,6 +3267,27 @@ func rewriteCustomOperatorSelect(query string) (string, bool) {
 func rewriteTextSearchQuery(query string) (string, bool) {
 	rewritten := strings.ReplaceAll(query, "::regconfig", "")
 	rewritten = textSearchMatchPattern.ReplaceAllString(rewritten, "ts_match_vq($1, $2)")
+	return rewritten, rewritten != query
+}
+
+func rewriteXmlConstructors(query string) (string, bool) {
+	rewritten := xmlElementNamePattern.ReplaceAllString(query, "xmlelement('$1')")
+	rewritten = xmlForestCallPattern.ReplaceAllStringFunc(rewritten, func(call string) string {
+		matches := xmlForestCallPattern.FindStringSubmatch(call)
+		if matches == nil {
+			return call
+		}
+		args := splitTopLevelComma(matches[1])
+		rewrittenArgs := make([]string, 0, len(args)*2)
+		for _, arg := range args {
+			argMatches := xmlForestArgPattern.FindStringSubmatch(arg)
+			if argMatches == nil {
+				return call
+			}
+			rewrittenArgs = append(rewrittenArgs, quoteSQLString(argMatches[2]), strings.TrimSpace(argMatches[1]))
+		}
+		return "xmlforest(" + strings.Join(rewrittenArgs, ", ") + ")"
+	})
 	return rewritten, rewritten != query
 }
 
