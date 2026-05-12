@@ -61,6 +61,17 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableSetCompression(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableRowLevelSecurity:
 			return nodeAlterTableRowLevelSecurity(treeTableName, cmd)
+		case *tree.AlterTableAlterColumnType:
+			if cmd.Using != nil {
+				return vitess.InjectedStatement{
+					Statement: pgnodes.NewAlterTableAlterColumnTypeUsing(
+						vitess.String(tableName),
+						tree.AsString(&cmd.Column),
+						cmd.ToType.SQLString(),
+						tree.AsString(cmd.Using),
+					),
+				}, nil
+			}
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)
@@ -220,6 +231,9 @@ func nodeAlterTableCmds(
 			}
 			vitessDdlCmds = append(vitessDdlCmds, statement)
 		case *tree.AlterTableAlterColumnType:
+			if cmd.Using != nil {
+				return nil, nil, errors.New("This command does not currently support multiple actions in one statement")
+			}
 			statement, err = nodeAlterTableAlterColumnType(ctx, cmd, tableName, ifExists)
 			if err != nil {
 				return nil, nil, err
@@ -599,10 +613,6 @@ func nodeAlterTableSetDefault(ctx *Context, node *tree.AlterTableSetDefault, tab
 func nodeAlterTableAlterColumnType(ctx *Context, node *tree.AlterTableAlterColumnType, tableName vitess.TableName, ifExists bool) (*vitess.DDL, error) {
 	if node.Collation != "" {
 		return nil, errors.Errorf("ALTER TABLE with COLLATE is not supported yet")
-	}
-
-	if node.Using != nil {
-		return nil, errors.Errorf("ALTER TABLE with USING is not supported yet")
 	}
 
 	convertType, resolvedType, err := nodeResolvableTypeReference(ctx, node.ToType, false)
