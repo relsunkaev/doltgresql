@@ -3127,6 +3127,22 @@ artifacts only; no fixes are included here.
   a nil-pointer dereference in `server/ast.nodeColumnTableDef`, so arrays over
   domain element types cannot be stored or validated.
 
+### Composite types with domain fields panic on valid inserts
+
+- Reproducer: `TestCompositeTypeDomainFieldEnforcesConstraintsRepro` in
+  `testing/go/domain_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestCompositeTypeDomainFieldEnforcesConstraintsRepro -count=1`.
+- Expected PostgreSQL behavior: a composite type whose attribute is a domain
+  accepts valid field values, persists the composite row, and rejects invalid
+  field values with the domain constraint error.
+- Observed Doltgres behavior: creating the domain, composite type, and table
+  succeeds, but `INSERT INTO composite_field_items VALUES (ROW(1))` panics while
+  resolving the assignment cast with a nil-pointer dereference in
+  `server/functions/framework.getCast`. Invalid field values panic through the
+  same path instead of reporting `composite_field_positive_check`.
+
 ### Composite domains panic when valid values are inserted
 
 - Reproducer: `TestCompositeDomainAcceptsValidValuesRepro` in

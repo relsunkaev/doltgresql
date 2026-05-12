@@ -1285,6 +1285,38 @@ func TestArrayOverDomainEnforcesElementConstraintsRepro(t *testing.T) {
 	})
 }
 
+// TestCompositeTypeDomainFieldEnforcesConstraintsRepro reproduces a domain
+// correctness bug: PostgreSQL composite types can contain domain-typed fields,
+// accept valid composite rows, and reject invalid field values through the
+// domain constraint.
+func TestCompositeTypeDomainFieldEnforcesConstraintsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "composite type domain field enforces constraints",
+			SetUpScript: []string{
+				`CREATE DOMAIN composite_field_positive AS INT
+					CONSTRAINT composite_field_positive_check CHECK (VALUE > 0);`,
+				`CREATE TYPE composite_field_row AS (amount composite_field_positive);`,
+				`CREATE TABLE composite_field_items (item composite_field_row);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO composite_field_items VALUES (ROW(1));`,
+					ExpectedTag: "INSERT 0 1",
+				},
+				{
+					Query:       `INSERT INTO composite_field_items VALUES (ROW(-1));`,
+					ExpectedErr: `composite_field_positive_check`,
+				},
+				{
+					Query:    `SELECT item::text FROM composite_field_items;`,
+					Expected: []sql.Row{{"(1)"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCompositeDomainAcceptsValidValuesRepro reproduces a domain correctness
 // bug: PostgreSQL supports domains over composite types and evaluates domain
 // CHECK constraints against composite fields.
