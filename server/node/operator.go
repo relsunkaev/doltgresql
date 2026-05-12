@@ -68,8 +68,14 @@ func (c *CreateOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err != nil {
 		return nil, err
 	}
-	functionSchema, functionName, resultType, err := c.resolveFunction(ctx, id.Type(leftID), id.Type(rightID))
+	if err = checkOperatorSchemaCreatePrivilege(ctx, schemaName); err != nil {
+		return nil, err
+	}
+	fn, err := c.resolveFunction(ctx, id.Type(leftID), id.Type(rightID))
 	if err != nil {
+		return nil, err
+	}
+	if err = checkFunctionExecutePrivilege(ctx, fn); err != nil {
 		return nil, err
 	}
 	auth.LockWrite(func() {
@@ -78,9 +84,9 @@ func (c *CreateOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 			Namespace:      id.NewNamespace(schemaName),
 			LeftType:       id.Type(leftID),
 			RightType:      id.Type(rightID),
-			ResultType:     resultType,
-			Function:       functionName,
-			FunctionSchema: functionSchema,
+			ResultType:     fn.ReturnType,
+			Function:       fn.ID.FunctionName(),
+			FunctionSchema: fn.ID.SchemaName(),
 		})
 		if err == nil {
 			err = auth.PersistChanges()
@@ -92,27 +98,27 @@ func (c *CreateOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	return sql.RowsToRowIter(), nil
 }
 
-func (c *CreateOperator) resolveFunction(ctx *sql.Context, leftType id.Type, rightType id.Type) (string, string, id.Type, error) {
+func (c *CreateOperator) resolveFunction(ctx *sql.Context, leftType id.Type, rightType id.Type) (functions.Function, error) {
 	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
 	if err != nil {
-		return "", "", id.NullType, err
+		return functions.Function{}, err
 	}
 	functionSchema, functionName := splitOperatorFunctionName(c.Function)
 	if functionSchema == "" {
 		functionSchema, err = core.GetCurrentSchema(ctx)
 		if err != nil {
-			return "", "", id.NullType, err
+			return functions.Function{}, err
 		}
 	}
 	paramTypes := []id.Type{leftType, rightType}
 	fn, err := funcCollection.GetFunction(ctx, id.NewFunction(functionSchema, functionName, paramTypes...))
 	if err != nil {
-		return "", "", id.NullType, err
+		return functions.Function{}, err
 	}
 	if !fn.ID.IsValid() {
 		overloads, err := funcCollection.GetFunctionOverloads(ctx, id.NewFunction(functionSchema, functionName))
 		if err != nil {
-			return "", "", id.NullType, err
+			return functions.Function{}, err
 		}
 		for _, overload := range overloads {
 			if functionParameterTypesMatch(overload.ParameterTypes, paramTypes) {
@@ -131,13 +137,54 @@ func (c *CreateOperator) resolveFunction(ctx *sql.Context, leftType id.Type, rig
 			return true, nil
 		})
 		if err != nil {
-			return "", "", id.NullType, err
+			return functions.Function{}, err
 		}
 	}
 	if !fn.ID.IsValid() {
-		return "", "", id.NullType, errors.Errorf(`function "%s" does not exist`, c.Function)
+		return functions.Function{}, errors.Errorf(`function "%s" does not exist`, c.Function)
 	}
-	return functionSchema, functionName, fn.ReturnType, nil
+	return fn, nil
+}
+
+func checkOperatorSchemaCreatePrivilege(ctx *sql.Context, schemaName string) error {
+	var userRole, publicRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+		publicRole = auth.GetRole("public")
+	})
+	if !userRole.IsValid() {
+		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+	}
+	roleKey := auth.SchemaPrivilegeKey{Role: userRole.ID(), Schema: schemaName}
+	publicKey := auth.SchemaPrivilegeKey{Role: publicRole.ID(), Schema: schemaName}
+	if !auth.HasSchemaPrivilege(roleKey, auth.Privilege_CREATE) && !auth.HasSchemaPrivilege(publicKey, auth.Privilege_CREATE) {
+		return errors.Errorf("permission denied for schema %s", schemaName)
+	}
+	return nil
+}
+
+func checkFunctionExecutePrivilege(ctx *sql.Context, fn functions.Function) error {
+	var userRole, publicRole auth.Role
+	auth.LockRead(func() {
+		userRole = auth.GetRole(ctx.Client().User)
+		publicRole = auth.GetRole("public")
+	})
+	if !userRole.IsValid() {
+		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+	}
+	owner := fn.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	if owner == ctx.Client().User || userRole.IsSuperUser {
+		return nil
+	}
+	roleKey := auth.RoutinePrivilegeKey{Role: userRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName()}
+	publicKey := auth.RoutinePrivilegeKey{Role: publicRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName()}
+	if !auth.HasRoutinePrivilege(roleKey, auth.Privilege_EXECUTE) && !auth.HasRoutinePrivilege(publicKey, auth.Privilege_EXECUTE) {
+		return errors.Errorf("permission denied for routine %s", fn.ID.FunctionName())
+	}
+	return nil
 }
 
 func splitOperatorFunctionName(raw string) (schema string, name string) {

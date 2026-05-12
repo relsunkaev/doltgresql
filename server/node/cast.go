@@ -16,12 +16,15 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 )
@@ -61,6 +64,11 @@ func (c *CreateCast) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 		return nil, err
 	}
 	if err = checkCastTypeOwnership(ctx, id.Type(sourceID), id.Type(targetID)); err != nil {
+		return nil, err
+	}
+	if fn, err := resolveCastFunction(ctx, c.Function, id.Type(sourceID), id.Type(targetID)); err != nil {
+		return nil, err
+	} else if err = checkFunctionExecutePrivilege(ctx, fn); err != nil {
 		return nil, err
 	}
 	auth.LockWrite(func() {
@@ -186,4 +194,54 @@ func checkCastTypeOwnership(ctx *sql.Context, sourceID id.Type, targetID id.Type
 		return nil
 	}
 	return errors.Errorf("must be owner of source or target type")
+}
+
+func resolveCastFunction(ctx *sql.Context, raw string, sourceType id.Type, targetType id.Type) (functions.Function, error) {
+	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return functions.Function{}, err
+	}
+	functionSchema, functionName := splitOperatorFunctionName(raw)
+	if functionSchema == "" {
+		functionSchema, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return functions.Function{}, err
+		}
+	}
+	paramTypes := []id.Type{sourceType}
+	fn, err := funcCollection.GetFunction(ctx, id.NewFunction(functionSchema, functionName, paramTypes...))
+	if err != nil {
+		return functions.Function{}, err
+	}
+	if !fn.ID.IsValid() {
+		overloads, err := funcCollection.GetFunctionOverloads(ctx, id.NewFunction(functionSchema, functionName))
+		if err != nil {
+			return functions.Function{}, err
+		}
+		for _, overload := range overloads {
+			if functionParameterTypesMatch(overload.ParameterTypes, paramTypes) {
+				fn = overload
+				break
+			}
+		}
+	}
+	if !fn.ID.IsValid() && !strings.Contains(raw, ".") {
+		err = funcCollection.IterateFunctions(ctx, func(f functions.Function) (stop bool, err error) {
+			if !strings.EqualFold(f.ID.FunctionName(), functionName) || !functionParameterTypesMatch(f.ParameterTypes, paramTypes) {
+				return false, nil
+			}
+			fn = f
+			return true, nil
+		})
+		if err != nil {
+			return functions.Function{}, err
+		}
+	}
+	if !fn.ID.IsValid() {
+		return functions.Function{}, errors.Errorf(`function "%s" does not exist`, raw)
+	}
+	if fn.ReturnType != targetType {
+		return functions.Function{}, errors.Errorf("cast function must return target type")
+	}
+	return fn, nil
 }
