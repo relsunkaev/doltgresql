@@ -1576,6 +1576,35 @@ func TestRegtypeResolvesSchemaQualifiedDomainsRepro(t *testing.T) {
 	})
 }
 
+// TestToRegtypeResolvesUserDefinedTypesRepro reproduces a catalog lookup
+// correctness bug: PostgreSQL to_regtype resolves user-defined enum,
+// composite, and domain types through the active search path.
+func TestToRegtypeResolvesUserDefinedTypesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "to_regtype resolves user-defined types",
+			SetUpScript: []string{
+				`CREATE TYPE to_regtype_lookup_enum AS ENUM ('one', 'two');`,
+				`CREATE TYPE to_regtype_lookup_composite AS (id integer);`,
+				`CREATE DOMAIN to_regtype_lookup_domain AS integer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT
+							to_regtype('to_regtype_lookup_enum')::text,
+							to_regtype('to_regtype_lookup_composite')::text,
+							to_regtype('to_regtype_lookup_domain')::text;`,
+					Expected: []sql.Row{{
+						"to_regtype_lookup_enum",
+						"to_regtype_lookup_composite",
+						"to_regtype_lookup_domain",
+					}},
+				},
+			},
+		},
+	})
+}
+
 // TestPgTypeIsVisibleHonorsSearchPathShadowingRepro reproduces a catalog
 // visibility correctness bug: a type is not visible when an earlier
 // search-path schema contains another type with the same name.

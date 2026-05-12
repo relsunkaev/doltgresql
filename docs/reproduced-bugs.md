@@ -17665,3 +17665,17 @@ They are worth keeping, but they are not counted as found bugs.
   the next unqualified read fails with `table not found: local_default_items`,
   consistent with storing `DEFAULT` as a literal search-path element instead
   of applying the default GUC value.
+
+### to_regtype does not resolve user-defined types
+
+- Reproducer: `TestToRegtypeResolvesUserDefinedTypesRepro` in
+  `testing/go/catalog_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestToRegtypeResolvesUserDefinedTypesRepro -count=1`.
+- Expected PostgreSQL behavior: after creating user-defined enum, composite,
+  and domain types in the active search path, `to_regtype('type_name')::text`
+  resolves each type name and returns the canonical type name.
+- Observed Doltgres behavior: `to_regtype` returns `NULL` for all three
+  user-defined types, so catalog/introspection queries cannot resolve ordinary
+  user type names through the PostgreSQL compatibility function.
