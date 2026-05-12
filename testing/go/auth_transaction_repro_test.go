@@ -50,3 +50,35 @@ func TestRollbackRevertsAlterDatabaseSetRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRollbackRevertsAlterDatabaseCatalogOptionsRepro reproduces a transaction
+// consistency bug: ALTER DATABASE ... WITH writes pg_database metadata outside
+// the surrounding transaction and survives ROLLBACK.
+func TestRollbackRevertsAlterDatabaseCatalogOptionsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ROLLBACK reverts ALTER DATABASE catalog options",
+			SetUpScript: []string{
+				`CREATE DATABASE rollback_database_options_catalog;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `ALTER DATABASE rollback_database_options_catalog
+						WITH CONNECTION LIMIT 0;`,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT datconnlimit
+						FROM pg_catalog.pg_database
+						WHERE datname = 'rollback_database_options_catalog';`,
+					Expected: []sql.Row{{int64(-1)}},
+				},
+			},
+		},
+	})
+}
