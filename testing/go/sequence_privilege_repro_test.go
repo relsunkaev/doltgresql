@@ -199,3 +199,34 @@ func TestSequenceOwnerCanUseCreatedSequenceRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestCurrvalAllowsSequenceUsagePrivilegeRepro reproduces a sequence privilege
+// bug: currval should be callable by a role with USAGE on the target sequence
+// after that same session has called nextval.
+func TestCurrvalAllowsSequenceUsagePrivilegeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "currval allows sequence USAGE privilege",
+			SetUpScript: []string{
+				`CREATE USER currval_usage_user PASSWORD 'sequence';`,
+				`CREATE SEQUENCE currval_usage_seq;`,
+				`GRANT USAGE ON SCHEMA public TO currval_usage_user;`,
+				`GRANT USAGE ON SEQUENCE currval_usage_seq TO currval_usage_user;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT nextval('currval_usage_seq');`,
+					Expected: []sql.Row{{1}},
+					Username: `currval_usage_user`,
+					Password: `sequence`,
+				},
+				{
+					Query:    `SELECT currval('currval_usage_seq');`,
+					Expected: []sql.Row{{1}},
+					Username: `currval_usage_user`,
+					Password: `sequence`,
+				},
+			},
+		},
+	})
+}
