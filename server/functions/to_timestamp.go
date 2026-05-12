@@ -20,9 +20,15 @@ import (
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgtype"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
+)
+
+const (
+	postgresTimestampMinUnixSeconds          = -210866803200
+	postgresTimestampMaxUnixSecondsExclusive = 9224318016000
 )
 
 // initToTimestamp registers the functions to the catalog.
@@ -40,17 +46,16 @@ var to_timestamp_float8 = framework.Function1{
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		timestamp := val.(float64)
 
-		// Handle special values - PostgreSQL returns special strings for infinity
 		if math.IsInf(timestamp, 1) {
-			return nil, nil
-			// TODO: handle special case
-			//return "infinity", nil
+			return pgtype.Infinity, nil
 		} else if math.IsInf(timestamp, -1) {
-			return nil, nil
-			// TODO: handle special case
-			//return "-infinity", nil
+			return pgtype.NegativeInfinity, nil
 		} else if math.IsNaN(timestamp) {
 			return nil, errors.Errorf("timestamp cannot be NaN")
+		}
+
+		if timestamp < postgresTimestampMinUnixSeconds || timestamp >= postgresTimestampMaxUnixSecondsExclusive {
+			return nil, errors.Errorf("timestamp out of range")
 		}
 
 		// Convert Unix timestamp to time.Time
@@ -61,11 +66,6 @@ var to_timestamp_float8 = framework.Function1{
 		if nsec < 0 {
 			sec--
 			nsec += 1e9
-		}
-
-		// Check for valid timestamp range (PostgreSQL limits)
-		if timestamp < -210866803200 || timestamp > 9223372036.854775 {
-			return nil, errors.Errorf("timestamp out of range")
 		}
 
 		return time.Unix(sec, nsec).UTC(), nil

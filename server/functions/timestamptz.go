@@ -17,6 +17,7 @@ package functions
 import (
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgtype"
 
@@ -68,11 +69,19 @@ var timestamptz_out = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.TimestampTZ},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if infinity, ok := val.(pgtype.InfinityModifier); ok {
+			return infinity.String(), nil
+		}
+
 		serverLoc, err := GetServerLocation(ctx)
 		if err != nil {
 			return "", err
 		}
-		t := val.(time.Time).In(serverLoc)
+		t, ok := val.(time.Time)
+		if !ok {
+			return "", errors.Errorf("unexpected timestamptz value %T", val)
+		}
+		t = t.In(serverLoc)
 
 		// Format timestamp with BC support and timezone
 		return FormatDateTimeWithBC(t, getLayoutStringFormat(ctx, false), true), nil
@@ -106,8 +115,20 @@ var timestamptz_send = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.TimestampTZ},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		if infinity, ok := val.(pgtype.InfinityModifier); ok {
+			return pgtype.Timestamptz{
+				Status:           pgtype.Present,
+				InfinityModifier: infinity,
+			}.EncodeBinary(nil, nil)
+		}
+
+		t, ok := val.(time.Time)
+		if !ok {
+			return nil, errors.Errorf("unexpected timestamptz value %T", val)
+		}
+
 		postgresEpoch := time.UnixMilli(946684800000).UTC() // Jan 1, 2000 @ Midnight
-		deltaInMicroseconds := val.(time.Time).UTC().UnixMicro() - postgresEpoch.UnixMicro()
+		deltaInMicroseconds := t.UTC().UnixMicro() - postgresEpoch.UnixMicro()
 		writer := utils.NewWireWriter()
 		writer.WriteInt64(deltaInMicroseconds)
 		return writer.BufferData(), nil
