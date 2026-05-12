@@ -631,6 +631,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 			h.releaseXactAdvisoryLocksIfOutsideTransaction()
 			return endOfMessages, err
 		}
+		if err = h.rejectConcurrentIndexInTransaction(queries[0]); err != nil {
+			return true, err
+		}
 		err = h.query(queries[0])
 		if err == nil {
 			err = h.applyXactVarSavepointHook(queries[0])
@@ -646,6 +649,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		}
 		if handled {
 			continue
+		}
+		if err = h.rejectConcurrentIndexInTransaction(query); err != nil {
+			return true, err
 		}
 		err = h.query(query)
 		if err == nil {
@@ -751,6 +757,21 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		}
 	}
 	return false
+}
+
+func (h *ConnectionHandler) rejectConcurrentIndexInTransaction(query ConvertedQuery) error {
+	if !h.inTransaction {
+		return nil
+	}
+	if createIndexConcurrentlyPattern.MatchString(query.String) {
+		return pgerror.Newf(pgcode.ActiveSQLTransaction,
+			"CREATE INDEX CONCURRENTLY cannot run inside a transaction block")
+	}
+	if dropIndexConcurrentlyPattern.MatchString(query.String) {
+		return pgerror.Newf(pgcode.ActiveSQLTransaction,
+			"DROP INDEX CONCURRENTLY cannot run inside a transaction block")
+	}
+	return nil
 }
 
 func (h *ConnectionHandler) listen(stmt node.ListenStatement, query ConvertedQuery) error {
@@ -1474,6 +1495,10 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	// Certain statement types get handled directly by the handler instead of being passed to the engine
 	handled, _, err := h.handleQueryOutsideEngine(query)
 	if handled {
+		return err
+	}
+
+	if err = h.rejectConcurrentIndexInTransaction(query); err != nil {
 		return err
 	}
 
@@ -3323,6 +3348,9 @@ var (
 	anyValuePattern           = regexp.MustCompile(`(?i)\bany_value\s*\(`)
 	advancedGroupByPattern    = regexp.MustCompile(`(?is)^\s*select\s+coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*coalesce\s*\(\s*([a-z_][a-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s+as\s+([a-z_][a-z0-9_]*)\s*,\s*sum\s*\(\s*([a-z_][a-z0-9_]*)\s*\)::text\s+as\s+([a-z_][a-z0-9_]*)\s+from\s+([a-z_][a-z0-9_]*)\s+group\s+by\s+(.+?)\s+order\s+by\s+.+?;?\s*$`)
 )
+
+var createIndexConcurrentlyPattern = regexp.MustCompile(`(?is)^\s*create\s+(?:unique\s+)?index\s+concurrently\b`)
+var dropIndexConcurrentlyPattern = regexp.MustCompile(`(?is)^\s*drop\s+index\s+concurrently\b`)
 
 func (h *ConnectionHandler) convertedAlterSystem(query string) (ConvertedQuery, bool, error) {
 	if !alterSystemPattern.MatchString(query) {

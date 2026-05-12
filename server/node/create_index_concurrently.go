@@ -149,18 +149,11 @@ func (c *CreateIndexConcurrently) WithExpressions(_ *sql.Context, expressions ..
 
 // RowIter executes the two-phase state machine.
 //
-// Note: PostgreSQL refuses CREATE INDEX CONCURRENTLY inside an
-// explicit transaction block because the build needs its own commits.
-// Doltgres does not currently distinguish reliably between "inside an
-// explicit BEGIN/COMMIT" and "inside an SQLAlchemy/psycopg3 implicit
-// auto-begun transaction" — both set the IgnoreAutoCommit signal
-// under realistic ORM connections. Erroring on either would block the
-// canonical Alembic CONCURRENTLY migration patterns. We therefore let
-// the build proceed and let the inter-phase commit absorb whatever
-// transaction state was open. A user who intentionally batches DML
-// before CONCURRENTLY in the same explicit transaction will see that
-// work flushed by the inter-phase commit; that is the documented
-// limitation.
+// Note: PostgreSQL refuses CREATE INDEX CONCURRENTLY inside an explicit
+// transaction block because the build needs its own commits. The connection
+// handler enforces that wire-level BEGIN/COMMIT rule before this node runs.
+// This node deliberately avoids ctx.GetIgnoreAutoCommit because that lower
+// level signal also covers ORM-driven implicit transaction state.
 func (c *CreateIndexConcurrently) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	schemaName, err := core.GetSchemaName(ctx, nil, c.schema)
 	if err != nil {
