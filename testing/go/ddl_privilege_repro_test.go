@@ -2133,6 +2133,35 @@ func TestAlterTypeOwnerToRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestAlterTypeRenameAttributeRequiresOwnershipRepro reproduces a security
+// bug: Doltgres allows a role that does not own a composite type to rename one
+// of its attributes.
+func TestAlterTypeRenameAttributeRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER TYPE RENAME ATTRIBUTE requires type ownership",
+			SetUpScript: []string{
+				`CREATE USER type_attr_renamer PASSWORD 'renamer';`,
+				`CREATE TYPE rename_attr_owner_private AS (old_name INT);`,
+				`GRANT USAGE ON SCHEMA public TO type_attr_renamer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TYPE rename_attr_owner_private
+						RENAME ATTRIBUTE old_name TO new_name;`,
+					ExpectedErr: `must be owner`,
+					Username:    `type_attr_renamer`,
+					Password:    `renamer`,
+				},
+				{
+					Query:    `SELECT (ROW(7)::rename_attr_owner_private).old_name;`,
+					Expected: []sql.Row{{7}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropDomainRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own a domain to drop it.
 func TestDropDomainRequiresOwnershipRepro(t *testing.T) {
