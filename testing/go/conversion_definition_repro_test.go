@@ -68,6 +68,36 @@ func TestCreateConversionRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 	})
 }
 
+// TestDropConversionRequiresOwnershipRepro reproduces a security bug:
+// PostgreSQL requires conversion ownership to drop a conversion.
+func TestDropConversionRequiresOwnershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP CONVERSION requires ownership",
+			SetUpScript: []string{
+				`CREATE USER conversion_dropper PASSWORD 'pw';`,
+				`CREATE CONVERSION owner_private_latin1_to_utf8
+					FOR 'LATIN1' TO 'UTF8'
+					FROM iso8859_1_to_utf8;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP CONVERSION owner_private_latin1_to_utf8;`,
+					ExpectedErr: `must be owner`,
+					Username:    `conversion_dropper`,
+					Password:    `pw`,
+				},
+				{
+					Query: `SELECT conname
+						FROM pg_catalog.pg_conversion
+						WHERE conname = 'owner_private_latin1_to_utf8';`,
+					Expected: []sql.Row{{"owner_private_latin1_to_utf8"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropConversionIfExistsMissingRepro reproduces a compatibility gap:
 // PostgreSQL accepts DROP CONVERSION IF EXISTS for absent conversions.
 func TestDropConversionIfExistsMissingRepro(t *testing.T) {
