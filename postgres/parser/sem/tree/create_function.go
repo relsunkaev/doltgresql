@@ -326,7 +326,7 @@ func (f FunctionColumn) Format(ctx *FmtCtx) {
 	}
 	// only used when generating query with parameters replaced with actual value
 	switch f.Typ.TypCategory {
-	case pgtypes.TypeCategory_ArrayTypes, pgtypes.TypeCategory_DateTimeTypes, pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UserDefinedTypes:
+	case pgtypes.TypeCategory_ArrayTypes, pgtypes.TypeCategory_DateTimeTypes, pgtypes.TypeCategory_EnumTypes, pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UserDefinedTypes:
 		ctx.WriteString(pq.QuoteLiteral(f.StrVal))
 	default:
 		ctx.WriteString(f.StrVal)

@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/lib/pq/oid"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -60,28 +61,62 @@ var regprocedurein = framework.Function1{
 		if err != nil {
 			return id.Null, err
 		}
-		if schemaName != "" && schemaName != "pg_catalog" {
-			return id.Null, errors.Errorf("functions are not yet implemented in terms of the schema")
-		}
-
-		for _, overload := range framework.Catalog[functionName] {
-			params := overload.GetParameters()
-			if len(params) != len(paramTypes) {
-				continue
-			}
-			matched := true
-			for i, param := range params {
-				if param.ID != paramTypes[i] {
-					matched = false
-					break
+		if schemaName == "" || schemaName == "pg_catalog" {
+			for _, overload := range framework.Catalog[functionName] {
+				params := overload.GetParameters()
+				if len(params) != len(paramTypes) {
+					continue
+				}
+				matched := true
+				for i, param := range params {
+					if param.ID != paramTypes[i] {
+						matched = false
+						break
+					}
+				}
+				if matched {
+					return overload.InternalID(), nil
 				}
 			}
-			if matched {
-				return overload.InternalID(), nil
+		}
+
+		functionCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+		if err != nil {
+			return id.Null, err
+		}
+		searchSchemas := []string{schemaName}
+		if schemaName == "" {
+			searchSchemas, err = core.SearchPath(ctx)
+			if err != nil {
+				return id.Null, err
+			}
+		}
+		for _, searchSchema := range searchSchemas {
+			overloads, err := functionCollection.GetFunctionOverloads(ctx, id.NewFunction(searchSchema, functionName))
+			if err != nil {
+				return id.Null, err
+			}
+			for _, overload := range overloads {
+				if functionIDMatchesTypes(overload.ID, paramTypes) {
+					return overload.ID.AsId(), nil
+				}
 			}
 		}
 		return id.Null, errors.Errorf(`function "%s" does not exist`, input)
 	},
+}
+
+func functionIDMatchesTypes(functionID id.Function, paramTypes []id.Type) bool {
+	params := functionID.Parameters()
+	if len(params) != len(paramTypes) {
+		return false
+	}
+	for i, param := range params {
+		if param != paramTypes[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func parseRegprocedureInput(ctx *sql.Context, input string) (string, string, []id.Type, error) {

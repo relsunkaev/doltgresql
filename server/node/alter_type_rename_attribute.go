@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -144,5 +145,65 @@ func (c *AlterTypeRenameAttribute) RowIter(ctx *sql.Context, r sql.Row) (sql.Row
 	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
 		return nil, err
 	}
+	if err = c.renameDependentTableColumns(ctx, typ); err != nil {
+		return nil, err
+	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *AlterTypeRenameAttribute) renameDependentTableColumns(ctx *sql.Context, updatedType *types.DoltgresType) error {
+	_, root, err := core.GetRootFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	tableNames, err := root.GetAllTableNames(ctx, false)
+	if err != nil {
+		return err
+	}
+
+	for _, tableName := range tableNames {
+		if doltdb.IsSystemTable(tableName) {
+			continue
+		}
+		sqlTable, err := core.GetSqlTableFromContext(ctx, c.database, tableName)
+		if err != nil {
+			return err
+		}
+		if sqlTable == nil {
+			continue
+		}
+		alterable, ok := sqlTable.(sql.AlterableTable)
+		if !ok {
+			alterable, ok = sql.GetUnderlyingTable(sqlTable).(sql.AlterableTable)
+		}
+		if !ok {
+			continue
+		}
+		originalComment := tableComment(sqlTable)
+		tableChanged := false
+		for _, col := range sqlTable.Schema(ctx) {
+			doltgresType, ok := col.Type.(*types.DoltgresType)
+			if !ok || doltgresType.ID != updatedType.ID {
+				continue
+			}
+			updatedCol := *col
+			updatedCol.Type = updatedType.WithAttTypMod(doltgresType.GetAttTypMod())
+			if err = alterable.ModifyColumn(ctx, col.Name, &updatedCol, nil); err != nil {
+				return err
+			}
+			tableChanged = true
+		}
+		if tableChanged && originalComment != "" {
+			commentAlterable, ok := sqlTable.(sql.CommentAlterableTable)
+			if !ok {
+				commentAlterable, ok = sql.GetUnderlyingTable(sqlTable).(sql.CommentAlterableTable)
+			}
+			if ok {
+				if err = commentAlterable.ModifyComment(ctx, originalComment); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
