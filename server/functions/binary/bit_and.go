@@ -15,6 +15,7 @@
 package binary
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -29,6 +30,8 @@ func initBinaryBitAnd() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryBitAnd, int2and)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryBitAnd, int4and)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryBitAnd, int8and)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryBitAnd, bitand)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryBitAnd, varbitand)
 }
 
 // int2and_callable is the callable logic for the int2and function.
@@ -71,4 +74,39 @@ var int8and = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Int64, pgtypes.Int64},
 	Strict:     true,
 	Callable:   int8and_callable,
+}
+
+func bitand_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	return bitStringAnd(val1.(string), val2.(string))
+}
+
+var bitand = framework.Function2{
+	Name:       "bitand",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.Bit},
+	Strict:     true,
+	Callable:   bitand_callable,
+}
+
+var varbitand = framework.Function2{
+	Name:       "bitand",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.VarBit, pgtypes.VarBit},
+	Strict:     true,
+	Callable:   bitand_callable,
+}
+
+func bitStringAnd(left string, right string) (string, error) {
+	if len(left) != len(right) {
+		return "", errors.Errorf("cannot AND bit strings of different sizes")
+	}
+	out := []byte(left)
+	for i := range out {
+		if left[i] == '1' && right[i] == '1' {
+			out[i] = '1'
+		} else {
+			out[i] = '0'
+		}
+	}
+	return string(out), nil
 }

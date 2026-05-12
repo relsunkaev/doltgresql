@@ -37,6 +37,8 @@ func initBit() {
 	framework.RegisterFunction(bitsend)
 	framework.RegisterFunction(bittypmodin)
 	framework.RegisterFunction(bittypmodout)
+	framework.RegisterFunction(get_bit_bit_int32)
+	framework.RegisterFunction(bit_count_bit)
 }
 
 // bitin represents the PostgreSQL function of bit type IO input.
@@ -55,7 +57,7 @@ var bitin = framework.Function3{
 			return nil, err
 		}
 
-		if array.BitLen() != uint(typmod) {
+		if typmod >= 0 && array.BitLen() != uint(typmod) {
 			return nil, pgtypes.ErrWrongLengthBit.New(len(input), typmod)
 		}
 
@@ -169,4 +171,44 @@ var bittypmodout = framework.Function1{
 		}
 		return fmt.Sprintf("(%v)", typmod), nil
 	},
+}
+
+var get_bit_bit_int32 = framework.Function2{
+	Name:       "get_bit",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.Int32},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val any, offset any) (any, error) {
+		return getBitStringBit(val.(string), offset.(int32))
+	},
+}
+
+var bit_count_bit = framework.Function1{
+	Name:       "bit_count",
+	Return:     pgtypes.Int64,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Bit},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return countBitStringOnes(val.(string)), nil
+	},
+}
+
+func getBitStringBit(bitString string, offset int32) (int32, error) {
+	if offset < 0 || int(offset) >= len(bitString) {
+		return 0, errors.Errorf("bit index %d out of valid range", offset)
+	}
+	if bitString[offset] == '1' {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+func countBitStringOnes(bitString string) int64 {
+	var count int64
+	for i := 0; i < len(bitString); i++ {
+		if bitString[i] == '1' {
+			count++
+		}
+	}
+	return count
 }

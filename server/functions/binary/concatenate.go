@@ -31,10 +31,14 @@ func initBinaryConcatenate() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_cat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, array_prepend)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, byteacat)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, bitcat)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, bitvarbitcat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, jsonb_concat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, textanycat)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, textcat)
-	// TODO: bitcat, tsquery_or, tsvector_concat
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, varbitbitcat)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryConcatenate, varbitcat)
+	// TODO: tsquery_or, tsvector_concat
 }
 
 // anytextcat_callable is the callable logic for the anytextcat function.
@@ -99,6 +103,42 @@ var array_cat = framework.Function2{
 
 		return result, nil
 	},
+}
+
+func bitcat_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	return val1.(string) + val2.(string), nil
+}
+
+var bitcat = framework.Function2{
+	Name:       "bitcat",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.Bit},
+	Strict:     true,
+	Callable:   bitcat_callable,
+}
+
+var bitvarbitcat = framework.Function2{
+	Name:       "bitcat",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Bit, pgtypes.VarBit},
+	Strict:     true,
+	Callable:   bitcat_callable,
+}
+
+var varbitbitcat = framework.Function2{
+	Name:       "bitcat",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.VarBit, pgtypes.Bit},
+	Strict:     true,
+	Callable:   bitcat_callable,
+}
+
+var varbitcat = framework.Function2{
+	Name:       "bitcat",
+	Return:     pgtypes.VarBit,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.VarBit, pgtypes.VarBit},
+	Strict:     true,
+	Callable:   bitcat_callable,
 }
 
 // array_prepend represents the PostgreSQL function of the same name, taking the same parameters.

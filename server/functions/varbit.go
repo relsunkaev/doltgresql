@@ -37,6 +37,8 @@ func initVarBit() {
 	framework.RegisterFunction(varbitsend)
 	framework.RegisterFunction(varbittypmodin)
 	framework.RegisterFunction(varbittypmodout)
+	framework.RegisterFunction(get_bit_varbit_int32)
+	framework.RegisterFunction(bit_count_varbit)
 }
 
 // varbitin represents the PostgreSQL function of varbit type IO input.
@@ -178,5 +180,25 @@ var varbittypmodout = framework.Function1{
 			return "", nil
 		}
 		return fmt.Sprintf("(%v)", typmod), nil
+	},
+}
+
+var get_bit_varbit_int32 = framework.Function2{
+	Name:       "get_bit",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.VarBit, pgtypes.Int32},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val any, offset any) (any, error) {
+		return getBitStringBit(val.(string), offset.(int32))
+	},
+}
+
+var bit_count_varbit = framework.Function1{
+	Name:       "bit_count",
+	Return:     pgtypes.Int64,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.VarBit},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return countBitStringOnes(val.(string)), nil
 	},
 }
