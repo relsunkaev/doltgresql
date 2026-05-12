@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,6 +51,40 @@ func TestCopyFromServerFileRequiresPrivilegeRepro(t *testing.T) {
 					ExpectedErr: "pg_read_server_files",
 					Username:    "copy_file_reader",
 					Password:    "pw",
+				},
+			},
+		},
+	})
+}
+
+// TestCopyFromServerFileRejectsRelativePathRepro reproduces a server-file
+// security/correctness bug: PostgreSQL requires COPY FROM server files to use
+// an absolute path instead of resolving relative paths against the server
+// process working directory.
+func TestCopyFromServerFileRejectsRelativePathRepro(t *testing.T) {
+	relativePath := "copy_relative_server_file_repro.csv"
+	require.NoError(t, os.WriteFile(relativePath, []byte("1,relative\n"), 0644))
+	t.Cleanup(func() {
+		_ = os.Remove(relativePath)
+	})
+
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "COPY FROM server file rejects relative path",
+			SetUpScript: []string{
+				`CREATE TABLE copy_relative_file_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       fmt.Sprintf(`COPY copy_relative_file_items FROM '%s' WITH (FORMAT CSV);`, relativePath),
+					ExpectedErr: `relative path not allowed`,
+				},
+				{
+					Query:    `SELECT count(*) FROM copy_relative_file_items;`,
+					Expected: []sql.Row{{int64(0)}},
 				},
 			},
 		},
