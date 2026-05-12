@@ -78,6 +78,11 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	if node == nil {
 		return nil, nil
 	}
+	if len(node.Locking) > 0 {
+		if err := validateLockingClauseTarget(node.Select); err != nil {
+			return nil, err
+		}
+	}
 	if node.Select == nil {
 		node.Select = &tree.ValuesClause{
 			Rows: []tree.Exprs{},
@@ -122,6 +127,80 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 		return selectStmt, nil
 	default:
 		return nil, errors.Errorf("SELECT has encountered an unknown clause: `%T`", selectStmt)
+	}
+}
+
+func validateLockingClauseTarget(node tree.SelectStatement) error {
+	switch node := node.(type) {
+	case *tree.ParenSelect:
+		if node.Select == nil {
+			return nil
+		}
+		return validateLockingClauseTarget(node.Select.Select)
+	case *tree.SelectClause:
+		if node.Distinct || len(node.GroupBy) > 0 || node.Having != nil || selectExprsContainAggregate(node.Exprs) {
+			return errors.Errorf("FOR UPDATE is not allowed with DISTINCT, GROUP BY, aggregate, or HAVING query results")
+		}
+	case *tree.UnionClause:
+		return errors.Errorf("FOR UPDATE is not allowed with set operation query results")
+	case *tree.ValuesClause:
+		return errors.Errorf("FOR UPDATE is not allowed with VALUES query results")
+	}
+	return nil
+}
+
+func selectExprsContainAggregate(exprs tree.SelectExprs) bool {
+	visitor := aggregateFunctionVisitor{}
+	for _, expr := range exprs {
+		tree.WalkExprConst(&visitor, expr.Expr)
+		if visitor.found {
+			return true
+		}
+	}
+	return false
+}
+
+type aggregateFunctionVisitor struct {
+	found bool
+}
+
+func (v *aggregateFunctionVisitor) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	if v.found {
+		return false, expr
+	}
+	fn, ok := expr.(*tree.FuncExpr)
+	if !ok {
+		return true, expr
+	}
+	if fn.AggType != 0 || isAggregateFunctionName(fn.Func) {
+		v.found = true
+		return false, expr
+	}
+	return true, expr
+}
+
+func (v *aggregateFunctionVisitor) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
+}
+
+func isAggregateFunctionName(ref tree.ResolvableFunctionReference) bool {
+	var name string
+	switch fn := ref.FunctionReference.(type) {
+	case *tree.FunctionDefinition:
+		name = fn.Name
+	case *tree.UnresolvedName:
+		if fn.NumParts > 0 {
+			name = fn.Parts[0]
+		}
+	}
+	switch strings.ToLower(name) {
+	case "array_agg", "avg", "bit_and", "bit_or", "bit_xor", "bool_and", "bool_or",
+		"count", "every", "json_agg", "json_object_agg", "jsonb_agg", "jsonb_object_agg",
+		"max", "min", "stddev", "stddev_pop", "stddev_samp", "string_agg", "sum",
+		"var_pop", "var_samp", "variance":
+		return true
+	default:
+		return false
 	}
 }
 
