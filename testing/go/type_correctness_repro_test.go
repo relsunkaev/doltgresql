@@ -183,6 +183,30 @@ func TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropTypeUsedByFunctionRequiresCascadeRepro reproduces a dependency bug:
+// PostgreSQL rejects dropping a type referenced by a function signature unless
+// CASCADE is requested.
+func TestDropTypeUsedByFunctionRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects function signature dependencies",
+			SetUpScript: []string{
+				`CREATE TYPE type_function_dependency_status AS ENUM ('ready');`,
+				`CREATE FUNCTION type_function_dependency_text(
+					input_value type_function_dependency_status
+				) RETURNS TEXT
+					LANGUAGE SQL IMMUTABLE AS $$ SELECT input_value::text $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE type_function_dependency_status;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+			},
+		},
+	})
+}
+
 // TestDropTypeCascadeWithoutDependentsRepro reproduces a DDL correctness bug:
 // PostgreSQL accepts CASCADE on DROP TYPE even when no dependent objects need
 // to be removed.
