@@ -114,6 +114,77 @@ func TestGrantSequencePrivilegesPopulatePgClassRelaclRepro(t *testing.T) {
 	})
 }
 
+// TestPgGetAclReflectsTableGrantRepro reproduces an ACL helper parity gap:
+// pg_get_acl should expose the effective ACL for a catalog object.
+func TestPgGetAclReflectsTableGrantRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "pg_get_acl reflects table grants",
+			SetUpScript: []string{
+				`CREATE ROLE pg_get_acl_reader;`,
+				`CREATE TABLE pg_get_acl_target (id INT PRIMARY KEY);`,
+				`GRANT SELECT ON pg_get_acl_target TO pg_get_acl_reader;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT pg_get_acl(
+							'pg_class'::regclass,
+							'pg_get_acl_target'::regclass,
+							0
+						) IS NOT NULL;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestHasTypePrivilegeHelperRepro reproduces an ACL helper parity gap:
+// PostgreSQL exposes has_type_privilege for checking type USAGE privileges.
+func TestHasTypePrivilegeHelperRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "has_type_privilege reports built-in type usage",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT has_type_privilege('pg_catalog.int4', 'USAGE');`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestHasAnyColumnPrivilegeHelperRepro reproduces an ACL helper parity gap:
+// PostgreSQL exposes has_any_column_privilege for checking whether any column
+// on a relation has a requested privilege.
+func TestHasAnyColumnPrivilegeHelperRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "has_any_column_privilege reflects column grants",
+			SetUpScript: []string{
+				`CREATE ROLE any_column_privilege_reader;`,
+				`CREATE TABLE any_column_privilege_private (
+					id INT,
+					secret TEXT
+				);`,
+				`GRANT SELECT (id) ON any_column_privilege_private
+					TO any_column_privilege_reader;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT has_any_column_privilege(
+							'any_column_privilege_reader',
+							'any_column_privilege_private',
+							'SELECT'
+						);`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestPrivilegeInquiryFunctionsReflectColumnGrantsRepro reproduces an ACL
 // correctness bug: PostgreSQL privilege inquiry helpers report table and
 // column privileges according to explicit grants.

@@ -99,6 +99,37 @@ func HasTablePrivilege(key TablePrivilegeKey, privilege Privilege) bool {
 	return false
 }
 
+// HasAnyColumnPrivilege checks whether the user has the given privilege on any column in the associated table.
+func HasAnyColumnPrivilege(key TablePrivilegeKey, privilege Privilege) bool {
+	if IsSuperUser(key.Role) {
+		return true
+	}
+	tableKey := key
+	tableKey.Column = ""
+	if HasTablePrivilege(tableKey, privilege) {
+		return true
+	}
+	for privilegeKey, tablePrivilegeValue := range globalDatabase.tablePrivileges.Data {
+		if privilegeKey.Role != key.Role || privilegeKey.Column == "" {
+			continue
+		}
+		if !tableNameMatches(privilegeKey.Table, key.Table.Schema, key.Table.Name) {
+			continue
+		}
+		if privilegeMap, ok := tablePrivilegeValue.Privileges[privilege]; ok && len(privilegeMap) > 0 {
+			return true
+		}
+	}
+	for _, group := range GetAllGroupsWithMember(key.Role, true) {
+		groupKey := key
+		groupKey.Role = group
+		if HasAnyColumnPrivilege(groupKey, privilege) {
+			return true
+		}
+	}
+	return false
+}
+
 // HasTablePrivilegeGrantOption checks whether the user has WITH GRANT OPTION for the given privilege on the associated
 // table. Returns the role that has WITH GRANT OPTION, or an invalid role if WITH GRANT OPTION is not available.
 func HasTablePrivilegeGrantOption(key TablePrivilegeKey, privilege Privilege) RoleID {

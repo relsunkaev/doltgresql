@@ -30,10 +30,13 @@ import (
 func initPrivilegeInquiry() {
 	framework.RegisterFunction(has_table_privilege_text_text_text)
 	framework.RegisterFunction(has_column_privilege_text_text_text_text)
+	framework.RegisterFunction(has_any_column_privilege_text_text_text)
+	framework.RegisterFunction(has_type_privilege_text_text)
 	framework.RegisterFunction(has_database_privilege_text_text_text)
 	framework.RegisterFunction(has_schema_privilege_text_text_text)
 	framework.RegisterFunction(has_sequence_privilege_text_text_text)
 	framework.RegisterFunction(has_function_privilege_text_text_text)
+	framework.RegisterFunction(pg_get_acl_regclass_regclass_int32)
 	framework.RegisterFunction(has_parameter_privilege_text_text)
 	framework.RegisterFunction(has_parameter_privilege_text_text_text)
 }
@@ -55,6 +58,43 @@ var has_column_privilege_text_text_text_text = framework.Function4{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [5]*pgtypes.DoltgresType, role any, table any, column any, privilege any) (any, error) {
 		return hasTablePrivilege(ctx, role.(string), table.(string), column.(string), privilege.(string))
+	},
+}
+
+var has_any_column_privilege_text_text_text = framework.Function3{
+	Name:       "has_any_column_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, role any, table any, privilege any) (any, error) {
+		authPrivilege, err := privilegeByName(privilege.(string))
+		if err != nil {
+			return false, err
+		}
+		schemaName, relationName, err := splitSchemaObjectName(ctx, table.(string))
+		if err != nil {
+			return false, err
+		}
+		return roleHasPrivilege(role.(string), func(roleID auth.RoleID) bool {
+			return auth.HasAnyColumnPrivilege(auth.TablePrivilegeKey{
+				Role:  roleID,
+				Table: doltdb.TableName{Name: relationName, Schema: schemaName},
+			}, authPrivilege)
+		}), nil
+	},
+}
+
+var has_type_privilege_text_text = framework.Function2{
+	Name:       "has_type_privilege",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, typ any, privilege any) (any, error) {
+		authPrivilege, err := privilegeByName(privilege.(string))
+		if err != nil {
+			return false, err
+		}
+		return authPrivilege == auth.Privilege_USAGE, nil
 	},
 }
 
@@ -163,6 +203,16 @@ var has_parameter_privilege_text_text_text = framework.Function3{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, role any, parameter any, privilege any) (any, error) {
 		return hasParameterPrivilege(role.(string), parameter.(string), privilege.(string))
+	},
+}
+
+var pg_get_acl_regclass_regclass_int32 = framework.Function3{
+	Name:       "pg_get_acl",
+	Return:     pgtypes.Text,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Regclass, pgtypes.Regclass, pgtypes.Int32},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, classOID any, objectOID any, subID any) (any, error) {
+		return "{}", nil
 	},
 }
 
