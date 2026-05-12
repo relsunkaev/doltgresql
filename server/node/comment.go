@@ -30,6 +30,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/settings"
 )
 
@@ -61,6 +62,9 @@ const (
 	CommentTargetTrigger  CommentTargetKind = "trigger"
 	CommentTargetColl     CommentTargetKind = "collation"
 	CommentTargetOperator CommentTargetKind = "operator"
+	CommentTargetPolicy   CommentTargetKind = "policy"
+	CommentTargetLargeObj CommentTargetKind = "large object"
+	CommentTargetTblspace CommentTargetKind = "tablespace"
 )
 
 type Comment struct {
@@ -72,6 +76,7 @@ type Comment struct {
 	TableName   string
 	LeftType    id.Type
 	RightType   id.Type
+	OID         uint32
 	Routine     *RoutineWithParams
 	Description *string
 }
@@ -173,6 +178,18 @@ func NewCommentOnCollation(name string, description *string) Comment {
 
 func NewCommentOnOperator(name string, leftType id.Type, rightType id.Type, description *string) Comment {
 	return Comment{Kind: CommentTargetOperator, Name: name, LeftType: leftType, RightType: rightType, Description: description}
+}
+
+func NewCommentOnPolicy(relation vitess.TableName, name string, description *string) Comment {
+	return Comment{Kind: CommentTargetPolicy, Relation: relation, Name: name, Description: description}
+}
+
+func NewCommentOnLargeObject(oid uint32, description *string) Comment {
+	return Comment{Kind: CommentTargetLargeObj, OID: oid, Description: description}
+}
+
+func NewCommentOnTablespace(name string, description *string) Comment {
+	return Comment{Kind: CommentTargetTblspace, Name: name, Description: description}
 }
 
 func NewCommentOnColumn(relation vitess.TableName, column string, description *string) Comment {
@@ -340,6 +357,24 @@ func (c Comment) commentKey(ctx *sql.Context) (comments.Key, error) {
 			return comments.Key{}, err
 		}
 		return commentObjectKey(oid, "pg_operator", 0), nil
+	case CommentTargetPolicy:
+		oid, err := resolveCommentPolicy(ctx, c.Relation, c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_policy", 0), nil
+	case CommentTargetLargeObj:
+		oid, err := resolveCommentLargeObject(c.OID)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_largeobject_metadata", 0), nil
+	case CommentTargetTblspace:
+		oid, err := resolveCommentTablespace(c.Name)
+		if err != nil {
+			return comments.Key{}, err
+		}
+		return commentObjectKey(oid, "pg_tablespace", 0), nil
 	}
 
 	relationOID, schema, err := c.resolveObjectID(ctx)
@@ -736,6 +771,33 @@ func resolveCommentOperator(name string, leftType id.Type, rightType id.Type) (i
 		return found, nil
 	}
 	return id.Null, fmt.Errorf(`operator "%s" does not exist`, name)
+}
+
+func resolveCommentPolicy(ctx *sql.Context, relation vitess.TableName, policyName string) (id.Id, error) {
+	relationID, _, err := resolveCommentRelation(ctx, relation)
+	if err != nil {
+		return id.Null, err
+	}
+	tableID := id.Table(relationID)
+	return id.Null, fmt.Errorf(`policy "%s" for relation "%s" does not exist`, policyName, tableID.TableName())
+}
+
+func resolveCommentLargeObject(oid uint32) (id.Id, error) {
+	if !largeobject.Exists(oid) {
+		return id.Null, fmt.Errorf("large object %d does not exist", oid)
+	}
+	return id.NewOID(oid).AsId(), nil
+}
+
+func resolveCommentTablespace(name string) (id.Id, error) {
+	switch name {
+	case "pg_default":
+		return id.NewOID(1663).AsId(), nil
+	case "pg_global":
+		return id.NewOID(1664).AsId(), nil
+	default:
+		return id.Null, fmt.Errorf(`tablespace "%s" does not exist`, name)
+	}
 }
 
 type schemaGetter interface {

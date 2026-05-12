@@ -15,6 +15,9 @@
 package ast
 
 import (
+	"strconv"
+	"strings"
+
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -97,6 +100,20 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 			return nil, err
 		}
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnOperator(operatorName(obj.Op), leftType.ID, rightType.ID, stmt.Comment)}, nil
+	case *tree.CommentOnPolicy:
+		tableName, err := nodeUnresolvedObjectName(ctx, obj.Table)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPolicy(tableName, string(obj.Policy), stmt.Comment)}, nil
+	case *tree.CommentOnLargeObject:
+		oid, err := commentLargeObjectOID(obj.Oid)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnLargeObject(oid, stmt.Comment)}, nil
+	case *tree.CommentOnTablespace:
+		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnTablespace(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnPublication:
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnPublication(string(obj.Name), stmt.Comment)}, nil
 	case *tree.CommentOnSubscription:
@@ -161,6 +178,22 @@ func nodeComment(ctx *Context, stmt *tree.Comment) (vitess.Statement, error) {
 		return vitess.InjectedStatement{Statement: pgnodes.NewCommentOnColumn(tableName, string(obj.ColumnName), stmt.Comment)}, nil
 	default:
 		return NewNoOp("COMMENT ON is not yet supported"), nil
+	}
+}
+
+func commentLargeObjectOID(expr tree.Expr) (uint32, error) {
+	switch value := expr.(type) {
+	case *tree.NumVal:
+		oid, err := value.AsInt64()
+		if err != nil {
+			return 0, err
+		}
+		return uint32(oid), nil
+	case *tree.DInt:
+		return uint32(*value), nil
+	default:
+		oid, err := strconv.ParseUint(strings.Trim(tree.AsString(expr), "'"), 10, 32)
+		return uint32(oid), err
 	}
 }
 
