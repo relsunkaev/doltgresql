@@ -54,6 +54,9 @@ func (c *CreateTextSearchConfiguration) RowIter(ctx *sql.Context, _ sql.Row) (sq
 	if err != nil {
 		return nil, err
 	}
+	if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
+		return nil, err
+	}
 	auth.LockWrite(func() {
 		auth.CreateTextSearchConfig(auth.TextSearchConfig{
 			Name:      c.Name,

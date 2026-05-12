@@ -49,6 +49,9 @@ func (a *AlterTableRowSecurity) Schema(ctx *sql.Context) sql.Schema {
 func (a *AlterTableRowSecurity) String() string { return "ALTER TABLE ROW LEVEL SECURITY" }
 
 func (a *AlterTableRowSecurity) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := checkTableOwnership(ctx, a.TableName); err != nil {
+		return nil, err
+	}
 	rowsecurity.SetTableMode(ctx.GetCurrentDatabase(), a.TableName.Schema, a.TableName.Name, a.Enabled, a.Forced)
 	return sql.RowsToRowIter(), nil
 }
@@ -87,6 +90,9 @@ func (c *CreatePolicy) Schema(ctx *sql.Context) sql.Schema {
 func (c *CreatePolicy) String() string { return "CREATE POLICY" }
 
 func (c *CreatePolicy) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := checkTableOwnership(ctx, c.TableName); err != nil {
+		return nil, err
+	}
 	rowsecurity.AddPolicy(ctx.GetCurrentDatabase(), c.TableName.Schema, c.TableName.Name, c.Policy)
 	return sql.RowsToRowIter(), nil
 }

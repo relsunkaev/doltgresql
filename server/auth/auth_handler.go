@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // AuthorizationQueryState contains any cached state for a query.
@@ -178,7 +179,7 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 				// This will error later in the process, so we'll pass auth for now.
 				return nil
 			}
-			err = checkPrivilegeOnTable(state, schemaName, auth.TargetNames[i+2], privileges)
+			err = checkPrivilegeOnTable(ctx, state, schemaName, auth.TargetNames[i+2], privileges)
 			if err != nil {
 				return err
 			}
@@ -312,7 +313,7 @@ func checkPrivilegeOnSchema(state AuthorizationQueryState, schemaName string, pr
 }
 
 // checkPrivilegeOnTable checks privileges for given table provided with schema name.
-func checkPrivilegeOnTable(state AuthorizationQueryState, schemaName, tableName string, privileges []Privilege) error {
+func checkPrivilegeOnTable(ctx *sql.Context, state AuthorizationQueryState, schemaName, tableName string, privileges []Privilege) error {
 	if strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid") && onlySelectPrivileges(privileges) {
 		return nil
 	}
@@ -326,10 +327,32 @@ func checkPrivilegeOnTable(state AuthorizationQueryState, schemaName, tableName 
 	}
 	for _, privilege := range privileges {
 		if !HasTablePrivilege(roleTableKey, privilege) && !HasTablePrivilege(publicTableKey, privilege) {
+			if tableOwnedByRole(ctx, schemaName, tableName, state.role.Name) {
+				continue
+			}
 			return errors.Errorf("permission denied for table %s", tableName)
 		}
 	}
 	return nil
+}
+
+func tableOwnedByRole(ctx *sql.Context, schemaName, tableName, roleName string) bool {
+	if roleName == "" {
+		return false
+	}
+	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: tableName, Schema: schemaName})
+	if err != nil {
+		return false
+	}
+	commented, ok := table.(sql.CommentedTable)
+	owner := ""
+	if ok {
+		owner = tablemetadata.Owner(commented.Comment())
+	}
+	if owner == "" {
+		owner = "postgres"
+	}
+	return owner == roleName
 }
 
 func onlySelectPrivileges(privileges []Privilege) bool {

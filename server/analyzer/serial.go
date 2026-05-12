@@ -155,9 +155,6 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			OwnerColumn: col.Name,
 		}))
 	}
-	if len(ctSequences) == 0 && !hasDoltgresTableMetadata(createTable.TableOpts) {
-		return node, transform.SameTree, nil
-	}
 	return pgnodes.NewCreateTable(createTable, ctSequences), transform.NewTree, nil
 }
 

@@ -97,7 +97,14 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	}
 
 	if !tableAlreadyExisted {
-		if comment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
+		comment := ""
+		if existingComment, ok := doltgresTableMetadataComment(c.gmsCreateTable.TableOpts); ok {
+			comment = existingComment
+		}
+		if user := ctx.Client().User; user != "" {
+			comment = tablemetadata.SetOwner(comment, user)
+		}
+		if comment != "" {
 			if err = modifyTableComment(ctx, c.gmsCreateTable.Db, c.gmsCreateTable.Name(), comment); err != nil {
 				_ = createTableIter.Close(ctx)
 				return nil, err

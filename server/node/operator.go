@@ -68,7 +68,7 @@ func (c *CreateOperator) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err != nil {
 		return nil, err
 	}
-	if err = checkOperatorSchemaCreatePrivilege(ctx, schemaName); err != nil {
+	if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
 		return nil, err
 	}
 	fn, err := c.resolveFunction(ctx, id.Type(leftID), id.Type(rightID))
@@ -146,7 +146,7 @@ func (c *CreateOperator) resolveFunction(ctx *sql.Context, leftType id.Type, rig
 	return fn, nil
 }
 
-func checkOperatorSchemaCreatePrivilege(ctx *sql.Context, schemaName string) error {
+func checkSchemaCreatePrivilege(ctx *sql.Context, schemaName string) error {
 	var userRole, publicRole auth.Role
 	auth.LockRead(func() {
 		userRole = auth.GetRole(ctx.Client().User)

@@ -32,6 +32,7 @@ type Metadata struct {
 	MaterializedViewUnpopulated bool                `json:"materializedViewUnpopulated,omitempty"`
 	OfTypeSchema                string              `json:"ofTypeSchema,omitempty"`
 	OfTypeName                  string              `json:"ofTypeName,omitempty"`
+	Owner                       string              `json:"owner,omitempty"`
 	RelOptions                  []string            `json:"relOptions,omitempty"`
 	RelPersistence              string              `json:"relPersistence,omitempty"`
 	ColumnOptions               map[string][]string `json:"columnOptions,omitempty"`
@@ -40,6 +41,7 @@ type Metadata struct {
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
 func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
+	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
 	encoded, _ := json.Marshal(metadata)
@@ -57,6 +59,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	}
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
+	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
 	NormalizeColumnOptions(metadata.ColumnOptions)
 	return metadata, true
@@ -144,6 +147,25 @@ func OfType(comment string) (id.Type, bool) {
 		return id.NullType, false
 	}
 	return id.NewType(metadata.OfTypeSchema, metadata.OfTypeName), true
+}
+
+// Owner returns the PostgreSQL owner encoded in a Doltgres table metadata comment.
+func Owner(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.Owner
+}
+
+// SetOwner returns a table metadata comment with the given PostgreSQL owner.
+func SetOwner(comment string, owner string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.Owner = strings.TrimSpace(owner)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
 }
 
 // RelOptions returns the PostgreSQL reloptions encoded in a Doltgres table
@@ -324,6 +346,7 @@ func (metadata Metadata) empty() bool {
 		!metadata.MaterializedViewUnpopulated &&
 		metadata.OfTypeSchema == "" &&
 		metadata.OfTypeName == "" &&
+		metadata.Owner == "" &&
 		metadata.RelPersistence == "" &&
 		len(metadata.RelOptions) == 0 &&
 		len(metadata.ColumnOptions) == 0
