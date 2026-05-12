@@ -549,6 +549,34 @@ func TestCreateAccessMethodRequiresSuperuserRepro(t *testing.T) {
 	})
 }
 
+// TestDropAccessMethodRequiresSuperuserRepro reproduces a security bug:
+// Doltgres allows a non-superuser to drop a user-defined access method.
+func TestDropAccessMethodRequiresSuperuserRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP ACCESS METHOD requires superuser",
+			SetUpScript: []string{
+				`CREATE USER access_method_dropper PASSWORD 'dropper';`,
+				`CREATE ACCESS METHOD private_drop_am TYPE TABLE HANDLER heap_tableam_handler;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP ACCESS METHOD private_drop_am;`,
+					ExpectedErr: `superuser`,
+					Username:    `access_method_dropper`,
+					Password:    `dropper`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_am
+						WHERE amname = 'private_drop_am';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateTableAsRequiresSelectOnSourceTableGuard covers CREATE TABLE AS
 // authorization: the creator must have SELECT privileges on the source table.
 func TestCreateTableAsRequiresSelectOnSourceTableGuard(t *testing.T) {
