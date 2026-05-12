@@ -165,36 +165,35 @@ depends_on = None
 
 def upgrade() -> None:
     # Real PG forbids CONCURRENTLY inside a transaction; Alembic's
-    # transaction_per_migration=True flag plus the COMMIT before
-    # mirrors what shipped Alembic migrations look like in
-    # production migration files.
-    op.execute("COMMIT")
-    op.create_index(
-        "ix_alembic_t_code",
-        "alembic_t",
-        ["code"],
-        postgresql_concurrently=True,
-    )
-    op.create_index(
-        "ix_alembic_t_hits",
-        "alembic_t",
-        ["hits"],
-        unique=True,
-        postgresql_concurrently=True,
-    )
+    # supported escape hatch is an autocommit block around the
+    # concurrent DDL.
+    with op.get_context().autocommit_block():
+        op.create_index(
+            "ix_alembic_t_code",
+            "alembic_t",
+            ["code"],
+            postgresql_concurrently=True,
+        )
+        op.create_index(
+            "ix_alembic_t_hits",
+            "alembic_t",
+            ["hits"],
+            unique=True,
+            postgresql_concurrently=True,
+        )
 
 def downgrade() -> None:
-    op.execute("COMMIT")
-    op.drop_index(
-        "ix_alembic_t_hits",
-        table_name="alembic_t",
-        postgresql_concurrently=True,
-    )
-    op.drop_index(
-        "ix_alembic_t_code",
-        table_name="alembic_t",
-        postgresql_concurrently=True,
-    )
+    with op.get_context().autocommit_block():
+        op.drop_index(
+            "ix_alembic_t_hits",
+            table_name="alembic_t",
+            postgresql_concurrently=True,
+        )
+        op.drop_index(
+            "ix_alembic_t_code",
+            table_name="alembic_t",
+            postgresql_concurrently=True,
+        )
 `), 0o644))
 
 	alembic := filepath.Join(venv, "bin", "alembic")
