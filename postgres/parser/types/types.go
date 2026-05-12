@@ -1504,10 +1504,7 @@ func (t *T) SQLStandardNameWithTypmod(haveTypmod bool, typmod int) string {
 			panic(errors.AssertionFailedf("programming error: unknown int width: %d", t.Width()))
 		}
 	case IntervalFamily:
-		// TODO(jordan): intervals can have typmods, but we don't support them in the same way.
-		// Masking is used to extract the precision (src/include/utils/timestamp.h), whereas
-		// we store it as `IntervalDurationField`.
-		return "interval"
+		return intervalSQLStandardNameWithTypmod(haveTypmod, typmod)
 	case JsonFamily:
 		// Only binary JSON is currently supported.
 		return "jsonb"
@@ -1595,6 +1592,107 @@ func (t *T) SQLStandardNameWithTypmod(haveTypmod bool, typmod int) string {
 		return t.TypeMeta.Name.Basename()
 	default:
 		panic(errors.AssertionFailedf("unexpected Family: %v", errors.Safe(t.Family())))
+	}
+}
+
+const (
+	pgIntervalFullRange     = 0x7FFF
+	pgIntervalFullPrecision = 0xFFFF
+)
+
+func intervalSQLStandardNameWithTypmod(haveTypmod bool, typmod int) string {
+	if !haveTypmod || typmod < 0 {
+		return "interval"
+	}
+	rangeMask := (typmod >> 16) & pgIntervalFullRange
+	precision := typmod & pgIntervalFullPrecision
+	precisionStr := ""
+	if precision != pgIntervalFullPrecision {
+		precisionStr = fmt.Sprintf("(%d)", precision)
+	}
+	fieldName := intervalFieldNameFromRangeMask(rangeMask)
+	if fieldName == "" {
+		return "interval" + precisionStr
+	}
+	return "interval " + fieldName + precisionStr
+}
+
+func intervalFieldNameFromRangeMask(mask int) string {
+	switch mask {
+	case pgIntervalFullRange:
+		return ""
+	case intervalTypmodDurationBit(IntervalDurationType_YEAR):
+		return "year"
+	case intervalTypmodDurationBit(IntervalDurationType_MONTH):
+		return "month"
+	case intervalTypmodRangeMask(IntervalDurationType_YEAR, IntervalDurationType_MONTH):
+		return "year to month"
+	case intervalTypmodDurationBit(IntervalDurationType_DAY):
+		return "day"
+	case intervalTypmodDurationBit(IntervalDurationType_HOUR):
+		return "hour"
+	case intervalTypmodDurationBit(IntervalDurationType_MINUTE):
+		return "minute"
+	case intervalTypmodDurationBit(IntervalDurationType_SECOND):
+		return "second"
+	case intervalTypmodRangeMask(IntervalDurationType_DAY, IntervalDurationType_HOUR):
+		return "day to hour"
+	case intervalTypmodRangeMask(IntervalDurationType_DAY, IntervalDurationType_MINUTE):
+		return "day to minute"
+	case intervalTypmodRangeMask(IntervalDurationType_DAY, IntervalDurationType_SECOND):
+		return "day to second"
+	case intervalTypmodRangeMask(IntervalDurationType_HOUR, IntervalDurationType_MINUTE):
+		return "hour to minute"
+	case intervalTypmodRangeMask(IntervalDurationType_HOUR, IntervalDurationType_SECOND):
+		return "hour to second"
+	case intervalTypmodRangeMask(IntervalDurationType_MINUTE, IntervalDurationType_SECOND):
+		return "minute to second"
+	default:
+		return ""
+	}
+}
+
+func intervalTypmodRangeMask(from IntervalDurationType, to IntervalDurationType) int {
+	order := []IntervalDurationType{
+		IntervalDurationType_YEAR,
+		IntervalDurationType_MONTH,
+		IntervalDurationType_DAY,
+		IntervalDurationType_HOUR,
+		IntervalDurationType_MINUTE,
+		IntervalDurationType_SECOND,
+	}
+	mask := 0
+	inRange := false
+	for _, typ := range order {
+		if typ == from {
+			inRange = true
+		}
+		if inRange {
+			mask |= intervalTypmodDurationBit(typ)
+		}
+		if typ == to {
+			break
+		}
+	}
+	return mask
+}
+
+func intervalTypmodDurationBit(typ IntervalDurationType) int {
+	switch typ {
+	case IntervalDurationType_YEAR:
+		return 1 << 1
+	case IntervalDurationType_MONTH:
+		return 1 << 2
+	case IntervalDurationType_DAY:
+		return 1 << 3
+	case IntervalDurationType_HOUR:
+		return 1 << 10
+	case IntervalDurationType_MINUTE:
+		return 1 << 11
+	case IntervalDurationType_SECOND:
+		return 1 << 12
+	default:
+		return pgIntervalFullRange
 	}
 }
 

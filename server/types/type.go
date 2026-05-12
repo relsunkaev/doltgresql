@@ -457,6 +457,9 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 	if v == nil {
 		return nil, sql.InRange, nil
 	}
+	if converted, handled, err := t.convertValueWithTypmod(ctx, v); handled {
+		return converted, sql.InRange, err
+	}
 	switch t.ID.TypeName() {
 	case "bool":
 		if _, ok := v.(bool); ok {
@@ -560,6 +563,84 @@ func (t *DoltgresType) Convert(ctx context.Context, v interface{}) (interface{},
 		return v, sql.InRange, nil
 	}
 	return nil, sql.InRange, ErrUnhandledType.New(t.String(), v)
+}
+
+func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}) (interface{}, bool, error) {
+	typmod := t.GetAttTypMod()
+	if typmod == -1 {
+		return nil, false, nil
+	}
+
+	switch t.ID.TypeName() {
+	case "bpchar", "char", "varchar":
+		str, ok, err := sql.Unwrap[string](ctx, v)
+		if err != nil || !ok {
+			return nil, false, err
+		}
+		sqlCtx, ok := ctx.(*sql.Context)
+		if !ok {
+			return nil, false, nil
+		}
+		converted, err := t.IoInput(sqlCtx, str)
+		return converted, true, err
+	case "numeric":
+		if dec, ok := v.(decimal.Decimal); ok {
+			converted, err := GetNumericValueWithTypmod(dec, typmod)
+			return converted, true, err
+		}
+	case "time":
+		if tm, ok := v.(timeofday.TimeOfDay); ok {
+			precision, err := timePrecisionToRoundDuration(typmod)
+			if err != nil {
+				return nil, true, err
+			}
+			return tm.Round(precision), true, nil
+		}
+	case "timetz":
+		if tm, ok := v.(timetz.TimeTZ); ok {
+			precision, err := timePrecisionToRoundDuration(typmod)
+			if err != nil {
+				return nil, true, err
+			}
+			return tm.Round(precision), true, nil
+		}
+	case "timestamp", "timestamptz":
+		if ts, ok := v.(time.Time); ok {
+			precision, err := timePrecisionToRoundDuration(typmod)
+			if err != nil {
+				return nil, true, err
+			}
+			return ts.Round(precision), true, nil
+		}
+	case "interval":
+		if d, ok := v.(duration.Duration); ok {
+			converted, err := ApplyIntervalTypmod(d, typmod)
+			return converted, true, err
+		}
+	}
+
+	return nil, false, nil
+}
+
+func timePrecisionToRoundDuration(precision int32) (time.Duration, error) {
+	switch precision {
+	case 0:
+		return time.Second, nil
+	case 1:
+		return time.Millisecond * 100, nil
+	case 2:
+		return time.Millisecond * 10, nil
+	case 3:
+		return time.Millisecond, nil
+	case 4:
+		return time.Microsecond * 100, nil
+	case 5:
+		return time.Microsecond * 10, nil
+	case 6:
+		return time.Microsecond, nil
+	default:
+		return 0, errors.Errorf("unsupported time precision: %d", precision)
+	}
 }
 
 // GetImplicitCast is a reference to the implicit cast logic in the functions/framework package, which we can't use

@@ -50,7 +50,7 @@ func intervalImplicit() {
 		FromType: pgtypes.Interval,
 		ToType:   pgtypes.Interval,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return val.(duration.Duration), nil
+			return pgtypes.ApplyIntervalTypmod(val.(duration.Duration), targetType.GetAttTypMod())
 		},
 	})
 }

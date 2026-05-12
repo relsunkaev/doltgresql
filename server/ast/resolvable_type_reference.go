@@ -146,7 +146,18 @@ func nodeResolvableTypeReference(ctx *Context, typ tree.ResolvableTypeReference,
 			case oid.T_int8:
 				doltgresType = pgtypes.Int64
 			case oid.T_interval:
-				doltgresType = pgtypes.Interval
+				metadata, err := columnType.IntervalTypeMetadata()
+				if err != nil {
+					return nil, nil, err
+				}
+				if pgtypes.IntervalTypeMetadataHasTypmod(metadata) {
+					doltgresType, err = pgtypes.NewIntervalType(metadata)
+					if err != nil {
+						return nil, nil, err
+					}
+				} else {
+					doltgresType = pgtypes.Interval
+				}
 			case oid.T_json:
 				doltgresType = pgtypes.Json
 			case oid.T_jsonb:

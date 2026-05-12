@@ -45,9 +45,8 @@ var interval_in = framework.Function3{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		input := val1.(string)
-		//oid := val2.(id.Id)
-		//typmod := val3.(int32)
-		dInterval, err := tree.ParseDInterval(input)
+		typmod := val3.(int32)
+		dInterval, err := tree.ParseDIntervalWithTypeMetadata(input, pgtypes.GetIntervalTypeMetadataFromTypmod(typmod))
 		if err != nil {
 			return nil, err
 		}
@@ -121,8 +120,7 @@ var intervaltypmodout = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: implement interval fields and precision
-		return "", nil
+		return pgtypes.IntervalTypmodOut(val.(int32)), nil
 	},
 }
 
