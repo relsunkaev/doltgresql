@@ -454,6 +454,40 @@ func TestDoltQueryDiffSupportsAsOfRevisionRepro(t *testing.T) {
 	})
 }
 
+// TestDoltDiffReportsViewDefinitionChangesRepro reproduces a versioned-data
+// correctness bug: DOLT_DIFF should expose view-definition changes that are
+// already visible to DOLT_DIFF_SUMMARY as public.dolt_schemas changes.
+func TestDoltDiffReportsViewDefinitionChangesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_DIFF reports changed view definition",
+			SetUpScript: []string{
+				`CREATE VIEW diff_view_reader AS SELECT 1 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial diff view value');`,
+				`SELECT DOLT_BRANCH('original');`,
+				`CREATE OR REPLACE VIEW diff_view_reader AS SELECT 2 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main diff view value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT table_name
+						FROM DOLT_DIFF_STAT(
+							'main',
+							'original',
+							'diff_view_reader'
+						);`,
+					Expected: []sql.Row{{"public.diff_view_reader"}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM DOLT_DIFF('main', 'original', 'diff_view_reader');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltDiffReportsFunctionDefinitionChangesRepro reproduces a versioned-data
 // correctness bug: DOLT_DIFF should expose function-definition changes that are
 // already visible to DOLT_DIFF_STAT and DOLT_MERGE.

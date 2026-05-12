@@ -18095,6 +18095,23 @@ They are worth keeping, but they are not counted as found bugs.
   `table not found: diff_function_value()`, so callers cannot inspect the
   function-definition delta.
 
+### DOLT_DIFF cannot inspect view-definition changes
+
+- Reproducer: `TestDoltDiffReportsViewDefinitionChangesRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDoltDiffReportsViewDefinitionChangesRepro -count=2`.
+- Expected Doltgres behavior: if a committed view definition changes between
+  two revisions, `DOLT_DIFF_STAT` and `DOLT_DIFF` should expose the
+  view-definition root-object diff just as `DOLT_DIFF_SUMMARY` exposes view
+  root-object changes through `public.dolt_schemas`.
+- Observed Doltgres behavior: both
+  `DOLT_DIFF_STAT('main', 'original', 'diff_view_reader')` and
+  `DOLT_DIFF('main', 'original', 'diff_view_reader')` fail with `table not
+  found: diff_view_reader`, so callers cannot inspect the view-definition
+  delta.
+
 ### DOLT_DIFF cannot inspect sequence-object changes
 
 - Reproducer: `TestDoltDiffReportsSequenceChangesRepro` in
