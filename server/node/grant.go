@@ -603,6 +603,12 @@ func (g *Grant) grantRole(ctx *sql.Context) error {
 	}
 	for _, member := range members {
 		for _, group := range groups {
+			if member.ID() == group.ID() {
+				return errors.New("role cannot be a member of itself")
+			}
+			if groupID, _, _ := auth.IsRoleAMember(group.ID(), member.ID()); groupID.IsValid() {
+				return errors.New("role memberships cannot be circular")
+			}
 			memberGroupID, _, withAdminOption := auth.IsRoleAMember(userRole.ID(), group.ID())
 			if !memberGroupID.IsValid() || !withAdminOption {
 				// TODO: grab the actual error message
