@@ -881,6 +881,29 @@ ORDER BY amproc.amprocnum;`,
 			},
 		},
 		{
+			Name: "btree_gist WITH SCHEMA exposes target-schema catalog rows",
+			SetUpScript: []string{
+				`CREATE SCHEMA extensions;`,
+				`CREATE EXTENSION btree_gist WITH SCHEMA extensions;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT e.extname, n.nspname
+						FROM pg_catalog.pg_extension e
+						JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
+						WHERE e.extname = 'btree_gist';`,
+					Expected: []sql.Row{{"btree_gist", "extensions"}},
+				},
+				{
+					Query: `SELECT opc.opcname, n.nspname
+						FROM pg_catalog.pg_opclass opc
+						JOIN pg_catalog.pg_namespace n ON n.oid = opc.opcnamespace
+						WHERE opc.opcname = 'gist_text_ops';`,
+					Expected: []sql.Row{{"gist_text_ops", "extensions"}},
+				},
+			},
+		},
+		{
 			Name: "CREATE EXTENSION citext installs case-insensitive text type",
 			SetUpScript: []string{
 				`CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;`,
