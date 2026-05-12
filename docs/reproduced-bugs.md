@@ -5915,6 +5915,21 @@ artifacts only; no fixes are included here.
   drop_type_schema_a.same_named_enum` is rejected because a table column uses a
   same-named type from `drop_type_schema_b`.
 
+### DROP TYPE can remove the composite type used by a typed table
+
+- Reproducer: `TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro` in
+  `testing/go/type_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro -count=1`.
+- Expected PostgreSQL behavior: `DROP TYPE typed_drop_dependency_row` is
+  rejected while `typed_drop_dependency_items` was created with `CREATE TABLE
+  ... OF typed_drop_dependency_row`, preserving the typed table, the composite
+  type, and the `pg_class.reloftype` relationship.
+- Observed Doltgres behavior: the `DROP TYPE` succeeds, removes the composite
+  type from `pg_type`, and leaves the typed table behind with dangling typed
+  table metadata.
+
 ### DROP DOMAIN dependency checks ignore domain schema
 
 - Reproducer: `TestDropDomainDependencyChecksSchemaQualifiedDomainRepro` in

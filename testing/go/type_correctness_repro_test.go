@@ -146,6 +146,43 @@ func TestDropTypeDependencyChecksSchemaQualifiedTypeRepro(t *testing.T) {
 	})
 }
 
+// TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro reproduces a typed
+// table dependency bug: PostgreSQL rejects dropping the composite type that a
+// typed table was created OF unless CASCADE is requested.
+func TestDropCompositeTypeUsedByTypedTableRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TYPE rejects typed table dependency",
+			SetUpScript: []string{
+				`CREATE TYPE typed_drop_dependency_row AS (
+					id INT,
+					note TEXT
+				);`,
+				`CREATE TABLE typed_drop_dependency_items OF typed_drop_dependency_row;`,
+				`INSERT INTO typed_drop_dependency_items VALUES (1, 'kept');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP TYPE typed_drop_dependency_row;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `SELECT c.reloftype = t.oid
+						FROM pg_catalog.pg_class c
+						JOIN pg_catalog.pg_type t ON t.typname = 'typed_drop_dependency_row'
+						WHERE c.relname = 'typed_drop_dependency_items';`,
+					Expected: []sql.Row{{"t"}},
+				},
+				{
+					Query: `SELECT id, note
+						FROM typed_drop_dependency_items;`,
+					Expected: []sql.Row{{1, "kept"}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropTypeCascadeWithoutDependentsRepro reproduces a DDL correctness bug:
 // PostgreSQL accepts CASCADE on DROP TYPE even when no dependent objects need
 // to be removed.
