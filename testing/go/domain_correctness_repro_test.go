@@ -2126,6 +2126,40 @@ func TestDropDomainUsedByFunctionRequiresCascadeRepro(t *testing.T) {
 	})
 }
 
+// TestDropDomainUsedByColumnDefaultRequiresCascadeRepro reproduces a
+// dependency bug: PostgreSQL rejects dropping a domain referenced by a column
+// default unless CASCADE is requested.
+func TestDropDomainUsedByColumnDefaultRequiresCascadeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP DOMAIN rejects column default expression dependencies",
+			SetUpScript: []string{
+				`CREATE DOMAIN domain_default_dependency_positive AS integer
+					CONSTRAINT domain_default_dependency_positive_check CHECK (VALUE > 0);`,
+				`CREATE TABLE domain_default_dependency_items (
+					id INT PRIMARY KEY,
+					amount INT DEFAULT (1::domain_default_dependency_positive)::integer
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP DOMAIN domain_default_dependency_positive;`,
+					ExpectedErr: `other objects depend on it`,
+				},
+				{
+					Query: `INSERT INTO domain_default_dependency_items (id)
+						VALUES (1);`,
+				},
+				{
+					Query: `SELECT id, amount
+						FROM domain_default_dependency_items;`,
+					Expected: []sql.Row{{1, 1}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropDomainDependencyChecksSchemaQualifiedDomainRepro reproduces a
 // dependency correctness bug: dropping an unused domain in one schema should
 // not be blocked by columns that use a distinct same-named domain in another
