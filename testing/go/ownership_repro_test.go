@@ -980,6 +980,39 @@ func TestFunctionOwnerCanExecuteCreatedFunctionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceFunctionPreservesOwnerRepro reproduces an ownership
+// persistence bug: PostgreSQL preserves the existing function owner during
+// CREATE OR REPLACE FUNCTION.
+func TestCreateOrReplaceFunctionPreservesOwnerRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE FUNCTION preserves pg_proc proowner",
+			SetUpScript: []string{
+				`CREATE USER replace_function_owner PASSWORD 'pw';`,
+				`GRANT USAGE, CREATE ON SCHEMA public TO replace_function_owner;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE FUNCTION replace_owner_function()
+						RETURNS INT AS $$ SELECT 1 $$ LANGUAGE SQL;`,
+					Username: `replace_function_owner`,
+					Password: `pw`,
+				},
+				{
+					Query: `CREATE OR REPLACE FUNCTION replace_owner_function()
+						RETURNS INT AS $$ SELECT 2 $$ LANGUAGE SQL;`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(proowner)
+						FROM pg_catalog.pg_proc
+						WHERE proname = 'replace_owner_function';`,
+					Expected: []sql.Row{{"replace_function_owner"}},
+				},
+			},
+		},
+	})
+}
+
 // TestProcedureOwnerCatalogEntryRepro reproduces a security/catalog bug:
 // Doltgres accepts CREATE PROCEDURE and ALTER PROCEDURE ... OWNER TO, but the
 // procedure has no visible pg_proc ownership row.
