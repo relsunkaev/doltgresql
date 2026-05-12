@@ -60,7 +60,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return bool(value), nil
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -87,7 +87,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -114,7 +114,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -144,7 +144,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -174,7 +174,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -204,7 +204,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
@@ -230,7 +230,7 @@ func jsonbExplicit() {
 			case pgtypes.JsonValueBoolean:
 				return nil, errors.Errorf("cannot cast jsonb boolean to type %s", targetType.String())
 			case pgtypes.JsonValueNull:
-				return nil, errors.Errorf("cannot cast jsonb null to type %s", targetType.String())
+				return nil, nil
 			default:
 				return nil, errors.Errorf("")
 			}
