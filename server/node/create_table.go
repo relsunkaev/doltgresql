@@ -228,7 +228,7 @@ func modifyTableComment(ctx *sql.Context, db sql.Database, tableName string, com
 }
 
 func freshDatabase(ctx *sql.Context, db sql.Database) (sql.Database, error) {
-	currentDb, err := core.GetSqlDatabaseFromContext(ctx, "")
+	currentDb, err := core.GetSqlDatabaseFromContext(ctx, db.Name())
 	if err != nil || currentDb == nil {
 		return db, err
 	}
