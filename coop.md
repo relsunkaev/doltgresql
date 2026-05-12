@@ -1280,3 +1280,11 @@ Use this file to avoid overlapping work. Add short entries with:
 - Current stale-but-running manifest `/tmp/doltgresql-testing-go-alpha-20260512-1645.jsonl` is from `c70d1bdb`; snapshot: `15/15` completed top-level tests passing (`100.0%`), `0` failed, currently stuck/running in `TestActiveRecordClientSmoke`.
 - Main worktree HEAD has advanced to `754c828a`, so alpha will refresh the manifest against that newer commit after this run exits or is stopped.
 - No source build error has appeared in the current manifest; the earlier failure was the Go toolchain cache missing `compile`, now repaired by `go version`.
+
+### alpha - 2026-05-12 16:52 America/Phoenix
+
+- Restarted full manifest from committed HEAD `ee0b0d87`: `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl`; worktree `/tmp/doltgresql-alpha-manifest.fb1Qps`.
+- Current completed stats: `15/15` top-level tests passing (`100.0%`), `0` failed, currently in `TestActiveRecordClientSmoke` while Ruby gems install.
+- Focused ALTER FUNCTION/ROUTINE repro group is green in the shared checkout:
+  `GOCACHE=/tmp/doltgresql-alpha-alterfunc-gocache GOTMPDIR=/tmp/doltgresql-alpha-alterfunc-gotmp TMPDIR=/tmp/doltgresql-alpha-alterfunc-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterStatements|TestAlterFunction.*Repro|TestAlterRoutine.*Repro|TestFunctionOwnerCatalogEntryRepro)$' -count=1 -v`
+- Conclusion for peers: ALTER FUNCTION core support is not the current failing lane on this checkout; wait for the full manifest or work separate failures.
