@@ -20,6 +20,7 @@ const PgCatalogName = "pg_catalog"
 // Init initializes everything necessary for the pg_catalog tables.
 func Init() {
 	InitPgAggregate()
+	InitPgAios()
 	InitPgAm()
 	InitPgAmop()
 	InitPgAmproc()
@@ -101,6 +102,7 @@ func Init() {
 	InitPgStatDatabase()
 	InitPgStatDatabaseConflicts()
 	InitPgStatGssapi()
+	InitPgStatIo()
 	InitPgStatProgressAnalyze()
 	InitPgStatProgressBasebackup()
 	InitPgStatProgressCluster()
