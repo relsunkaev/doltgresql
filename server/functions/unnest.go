@@ -17,6 +17,7 @@ package functions
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dtablefunctions"
@@ -66,7 +67,7 @@ type unnestTableFunction struct {
 }
 
 func (u *unnestTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
-	if len(args) != 1 {
+	if len(args) == 0 {
 		return nil, sql.ErrInvalidArgumentNumber.New(u.Name(), 1, len(args))
 	}
 	valueType := sql.Type(pgtypes.AnyElement)
@@ -106,7 +107,7 @@ func (u *unnestTableFunction) Expressions() []sql.Expression {
 }
 
 func (u *unnestTableFunction) WithExpressions(ctx *sql.Context, exprs ...sql.Expression) (sql.Node, error) {
-	if len(exprs) != 1 {
+	if len(exprs) == 0 {
 		return nil, sql.ErrInvalidChildrenNumber.New(u, len(exprs), 1)
 	}
 	nu := *u
@@ -136,6 +137,19 @@ func (u *unnestTableFunction) Schema(ctx *sql.Context) sql.Schema {
 	if u.db != nil {
 		dbName = u.db.Name()
 	}
+	if len(u.exprs) > 1 {
+		schema := make(sql.Schema, len(u.exprs))
+		for i, expr := range u.exprs {
+			schema[i] = &sql.Column{
+				DatabaseSource: dbName,
+				Source:         u.Name(),
+				Name:           "unnest_" + strconv.Itoa(i+1),
+				Type:           unnestArrayBaseType(ctx, expr, pgtypes.AnyElement),
+				Nullable:       true,
+			}
+		}
+		return schema
+	}
 	valueType := unnestValueType(ctx, u.exprs, u.valueType)
 	return sql.Schema{
 		&sql.Column{
@@ -160,18 +174,32 @@ func (u *unnestTableFunction) WithChildren(ctx *sql.Context, children ...sql.Nod
 }
 
 func (u *unnestTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
-	value, err := u.exprs[0].Eval(ctx, row)
-	if err != nil {
-		return nil, err
+	arrays := make([][]any, len(u.exprs))
+	maxLen := 0
+	for i, expr := range u.exprs {
+		value, err := expr.Eval(ctx, row)
+		if err != nil {
+			return nil, err
+		}
+		if value == nil {
+			continue
+		}
+		values, ok := value.([]any)
+		if !ok {
+			return nil, fmt.Errorf("%s expected array argument, got %T", u.Name(), value)
+		}
+		arrays[i] = values
+		if len(values) > maxLen {
+			maxLen = len(values)
+		}
 	}
-	if value == nil {
+	if maxLen == 0 {
 		return sql.RowsToRowIter(), nil
 	}
-	values, ok := value.([]any)
-	if !ok {
-		return nil, fmt.Errorf("%s expected array argument, got %T", u.Name(), value)
+	if len(arrays) == 1 {
+		return &unnestRowIter{values: arrays[0]}, nil
 	}
-	return &unnestRowIter{values: values}, nil
+	return &unnestMultiRowIter{arrays: arrays, maxLen: maxLen}, nil
 }
 
 func (u *unnestTableFunction) CollationCoercibility(ctx *sql.Context) (collation sql.CollationID, coercibility byte) {
@@ -314,9 +342,17 @@ func (u *unnestWithOrdinalityTableFunction) Collation() sql.CollationID {
 
 func unnestValueType(ctx *sql.Context, exprs []sql.Expression, fallback sql.Type) sql.Type {
 	if len(exprs) == 1 {
-		if doltgresType, ok := exprs[0].Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
-			return doltgresType.ArrayBaseType()
-		}
+		return unnestArrayBaseType(ctx, exprs[0], fallback)
+	}
+	if fallback != nil {
+		return fallback
+	}
+	return pgtypes.AnyElement
+}
+
+func unnestArrayBaseType(ctx *sql.Context, expr sql.Expression, fallback sql.Type) sql.Type {
+	if doltgresType, ok := expr.Type(ctx).(*pgtypes.DoltgresType); ok && doltgresType.IsArrayType() {
+		return doltgresType.ArrayBaseType()
 	}
 	if fallback != nil {
 		return fallback
@@ -329,12 +365,19 @@ type unnestWithOrdinalityRowIter struct {
 	idx    int
 }
 
+type unnestMultiRowIter struct {
+	arrays [][]any
+	maxLen int
+	idx    int
+}
+
 type unnestRowIter struct {
 	values []any
 	idx    int
 }
 
 var _ sql.RowIter = (*unnestWithOrdinalityRowIter)(nil)
+var _ sql.RowIter = (*unnestMultiRowIter)(nil)
 var _ sql.RowIter = (*unnestRowIter)(nil)
 
 func (u *unnestRowIter) Next(ctx *sql.Context) (sql.Row, error) {
@@ -347,6 +390,24 @@ func (u *unnestRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 }
 
 func (u *unnestRowIter) Close(ctx *sql.Context) error {
+	return nil
+}
+
+func (u *unnestMultiRowIter) Next(ctx *sql.Context) (sql.Row, error) {
+	if u.idx >= u.maxLen {
+		return nil, io.EOF
+	}
+	row := make(sql.Row, len(u.arrays))
+	for i, values := range u.arrays {
+		if u.idx < len(values) {
+			row[i] = values[u.idx]
+		}
+	}
+	u.idx++
+	return row, nil
+}
+
+func (u *unnestMultiRowIter) Close(ctx *sql.Context) error {
 	return nil
 }
 

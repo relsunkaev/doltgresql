@@ -112,7 +112,11 @@ func nodeAliasedTableExpr(ctx *Context, node *tree.AliasedTableExpr) (*vitess.Al
 				return aliasedExpr, err
 			}
 		}
-		aliasedExpr, ok, err := nodeFixedColumnTableFunctionAlias(ctx, node, expr)
+		aliasedExpr, ok, err := nodeMultiColumnUnnestAlias(ctx, node, expr)
+		if err != nil || ok {
+			return aliasedExpr, err
+		}
+		aliasedExpr, ok, err = nodeFixedColumnTableFunctionAlias(ctx, node, expr)
 		if err != nil || ok {
 			return aliasedExpr, err
 		}
@@ -213,6 +217,59 @@ func nodeSingleColumnTableFunctionAlias(ctx *Context, node *tree.AliasedTableExp
 				From: vitess.TableExprs{
 					&vitess.TableFuncExpr{
 						Name:  funcName,
+						Exprs: tableFuncArgs,
+						Alias: vitess.NewTableIdent(internalAlias),
+					},
+				},
+			},
+		},
+		As:      vitess.NewTableIdent(string(node.As.Alias)),
+		Lateral: true,
+	}, true, nil
+}
+
+func nodeMultiColumnUnnestAlias(ctx *Context, node *tree.AliasedTableExpr, rowsFromExpr *tree.RowsFromExpr) (*vitess.AliasedTableExpr, bool, error) {
+	if len(rowsFromExpr.Items) != 1 {
+		return nil, false, nil
+	}
+	funcExpr, ok := rowsFromExpr.Items[0].(*tree.FuncExpr)
+	if !ok || singleColumnTableFunctionName(funcExpr) != "unnest" || len(funcExpr.Exprs) <= 1 {
+		return nil, false, nil
+	}
+	if len(node.As.Cols) > len(funcExpr.Exprs) {
+		return nil, true, errors.Errorf("table function unnest only has %d columns", len(funcExpr.Exprs))
+	}
+
+	args, err := nodeExprs(ctx, funcExpr.Exprs)
+	if err != nil {
+		return nil, true, err
+	}
+	tableFuncArgs := make(vitess.SelectExprs, len(args))
+	for i, arg := range args {
+		tableFuncArgs[i] = &vitess.AliasedExpr{Expr: arg}
+	}
+
+	internalAlias := "__doltgres_unnest"
+	selectExprs := make(vitess.SelectExprs, len(args))
+	for i := range args {
+		sourceName := "unnest_" + strconv.Itoa(i+1)
+		colName := sourceName
+		if i < len(node.As.Cols) {
+			colName = string(node.As.Cols[i])
+		}
+		selectExprs[i] = &vitess.AliasedExpr{
+			Expr: tableFuncColumn(internalAlias, sourceName),
+			As:   vitess.NewColIdent(colName),
+		}
+	}
+
+	return &vitess.AliasedTableExpr{
+		Expr: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: selectExprs,
+				From: vitess.TableExprs{
+					&vitess.TableFuncExpr{
+						Name:  "unnest",
 						Exprs: tableFuncArgs,
 						Alias: vitess.NewTableIdent(internalAlias),
 					},
