@@ -23,6 +23,7 @@ import (
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -191,8 +192,8 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		nil,                                              // probin
 		function.SQLDefinition,                           // prosqlbody
 		proConfig,                                        // proconfig
-		nil,                                              // proacl
-		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
+		aclTextArray(auth.RoutineACLItems(function.ID.SchemaName(), function.ID.FunctionName())), // proacl
+		id.NewTable(PgCatalogName, PgProcName).AsId(),                                            // tableoid
 	}
 }
 
@@ -326,7 +327,7 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		nil,                                               // probin
 		procedure.SQLDefinition,                           // prosqlbody
 		proConfig,                                         // proconfig
-		nil,                                               // proacl
-		id.NewTable(PgCatalogName, PgProcName).AsId(), // tableoid
+		aclTextArray(auth.RoutineACLItems(procedure.ID.SchemaName(), procedure.ID.ProcedureName())), // proacl
+		id.NewTable(PgCatalogName, PgProcName).AsId(),                                               // tableoid
 	}
 }

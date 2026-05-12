@@ -85,6 +85,33 @@ func DatabaseACLItems(database string) []string {
 	return sortedACLItems(items)
 }
 
+// RoutineACLItems returns explicit ACL entries for a routine.
+func RoutineACLItems(schema string, routine string) []string {
+	var items []string
+	LockRead(func() {
+		for key, value := range globalDatabase.routinePrivileges.Data {
+			if key.Schema == schema && key.Name == routine {
+				items = append(items, aclItemsForRolePrivileges(key.Role, value.Privileges)...)
+			}
+		}
+	})
+	return sortedACLItems(items)
+}
+
+// LanguageACLItems returns explicit ACL entries for a language.
+func LanguageACLItems(language string) []string {
+	language = languageKey(language)
+	var items []string
+	LockRead(func() {
+		for key, value := range globalDatabase.languagePrivileges.Data {
+			if key.Name == language {
+				items = append(items, aclItemsForRolePrivileges(key.Role, value.Privileges)...)
+			}
+		}
+	})
+	return sortedACLItems(items)
+}
+
 func tableNameMatches(table doltdb.TableName, schema string, name string) bool {
 	if table.Schema != schema {
 		return false

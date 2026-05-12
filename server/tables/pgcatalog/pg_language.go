@@ -61,8 +61,8 @@ func (p PgLanguageHandler) RowIter(ctx *sql.Context, partition sql.Partition) (s
 				id.Null,               // lanplcallfoid
 				id.Null,               // laninline
 				id.Null,               // lanvalidator
-				nil,                   // lanacl
-				id.NewTable(PgCatalogName, PgLanguageName).AsId(), // tableoid
+				aclTextArray(auth.LanguageACLItems(language.Name)), // lanacl
+				id.NewTable(PgCatalogName, PgLanguageName).AsId(),  // tableoid
 			})
 		}
 	})
