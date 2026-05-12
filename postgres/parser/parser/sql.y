@@ -849,7 +849,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> STORAGE STORE STORED STYPE SUBSCRIPT SUBSCRIPTION SUBSTRING SUBTYPE SUBTYPE_DIFF SUBTYPE_OPCLASS
 %token <str> SUPERUSER SUPPORT SYMMETRIC SYNTAX SYSID SYSTEM
 
-%token <str> TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT THEN
+%token <str> TABLE TABLES TABLESAMPLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT THEN
 %token <str> TIES TIME TIMETZ TIMESTAMP TIMESTAMPTZ TO THROTTLING TRAILING TRACE TRACING
 %token <str> TRANSACTION TRANSACTIONS TRANSFORM TREAT TRIGGER TRIM TRUE
 %token <str> TRUNCATE TRUSTED TYPE TYPES TYPMOD_IN TYPMOD_OUT
@@ -11973,10 +11973,10 @@ numeric_table_ref table_ref_options
     $$ = $2
     $$.val.(*tree.AliasedTableExpr).Expr = $1.tblExpr()
   }
-| relation_expr table_ref_options
+| relation_expr opt_tablesample table_ref_options
   {
     /* SKIP DOC */
-    $$ = $2
+    $$ = $3
     name := $1.unresolvedObjectName().ToTableName()
     $$.val.(*tree.AliasedTableExpr).Expr = &name
   }
@@ -12045,8 +12045,18 @@ numeric_table_ref table_ref_options
     $$.val = &tree.AliasedTableExpr{Expr: &tree.StatementSource{ Statement: $2.stmt() }, Ordinality: $4.bool(), As: $5.aliasClause() }
   }
 
- // table_ref_options is the set of all possible combinations of AS OF and alias, since the optional versions of those
- // rules create shift/reduce conflicts if they're combined in same rule
+// table_ref_options is the set of all possible combinations of AS OF and alias, since the optional versions of those
+// rules create shift/reduce conflicts if they're combined in same rule
+opt_tablesample:
+  /* EMPTY */
+| TABLESAMPLE SYSTEM '(' ICONST ')'
+  {
+    sampleSize, err := $4.numVal().AsInt64()
+    if err != nil || sampleSize != 100 {
+      return setErr(sqllex, fmt.Errorf("TABLESAMPLE only supports SYSTEM (100)"))
+    }
+  }
+
 table_ref_options:
   opt_index_flags opt_ordinality
   {
@@ -16461,6 +16471,7 @@ reserved_keyword:
 | SOME
 | SYMMETRIC
 | TABLE
+| TABLESAMPLE
 | THEN
 | TO
 | TRAILING
