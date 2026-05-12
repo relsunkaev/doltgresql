@@ -420,6 +420,71 @@ func TestMergeReportsFunctionDefinitionConflictGuard(t *testing.T) {
 	})
 }
 
+// TestMergeReportsMaterializedViewDefinitionConflictGuard keeps coverage for
+// branch merges that detect incompatible materialized-view definition edits.
+func TestMergeReportsMaterializedViewDefinitionConflictGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports materialized view definition conflicts",
+			SetUpScript: []string{
+				`CREATE MATERIALIZED VIEW merge_matview_conflict_reader AS
+					SELECT 1 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial merge matview value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`DROP MATERIALIZED VIEW merge_matview_conflict_reader;`,
+				`CREATE MATERIALIZED VIEW merge_matview_conflict_reader AS
+					SELECT 2 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main merge matview value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`DROP MATERIALIZED VIEW merge_matview_conflict_reader;`,
+				`CREATE MATERIALIZED VIEW merge_matview_conflict_reader AS
+					SELECT 3 AS value;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other merge matview value');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `BEGIN;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
+// TestMergeReportsSequenceDefinitionConflictGuard keeps coverage for branch
+// merges that detect incompatible sequence-definition edits.
+func TestMergeReportsSequenceDefinitionConflictGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_MERGE reports sequence definition conflicts",
+			SetUpScript: []string{
+				`CREATE SEQUENCE merge_sequence_conflict_seq;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'initial sequence conflict value');`,
+				`SELECT DOLT_BRANCH('other');`,
+				`SELECT nextval('merge_sequence_conflict_seq');`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'main sequence conflict value');`,
+				`SELECT DOLT_CHECKOUT('other');`,
+				`DROP SEQUENCE merge_sequence_conflict_seq;`,
+				`SELECT DOLT_COMMIT('-A', '-m', 'other sequence conflict drop');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `BEGIN;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT strpos(DOLT_MERGE('main')::text, 'conflicts found') > 1;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestMergeReportsTriggerDefinitionConflictRepro reproduces a branch merge
 // correctness bug: merging branches should report conflicts when both sides
 // change the same trigger definition differently.
