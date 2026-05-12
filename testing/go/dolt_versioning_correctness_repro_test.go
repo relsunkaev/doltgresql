@@ -442,6 +442,114 @@ func TestDoltResetHardRemovesUncommittedMaterializedViewRepro(t *testing.T) {
 	})
 }
 
+// TestDoltResetHardRemovesUncommittedEnumTypeRepro reproduces a versioned
+// persistence bug: DOLT_RESET --hard should discard uncommitted enum type
+// metadata.
+func TestDoltResetHardRemovesUncommittedEnumTypeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted enum type",
+			SetUpScript: []string{
+				`CREATE TYPE reset_uncommitted_enum AS ENUM ('one', 'two');`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_enum';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_enum';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltResetHardRemovesUncommittedCompositeTypeRepro reproduces a versioned
+// persistence bug: DOLT_RESET --hard should discard uncommitted composite type
+// metadata.
+func TestDoltResetHardRemovesUncommittedCompositeTypeRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted composite type",
+			SetUpScript: []string{
+				`CREATE TYPE reset_uncommitted_composite AS (id integer);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_composite';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_composite';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestDoltResetHardRemovesUncommittedDomainRepro reproduces a versioned
+// persistence bug: DOLT_RESET --hard should discard uncommitted domain
+// metadata.
+func TestDoltResetHardRemovesUncommittedDomainRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DOLT_RESET hard removes uncommitted domain",
+			SetUpScript: []string{
+				`CREATE DOMAIN reset_uncommitted_domain AS integer;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_domain';`,
+					Expected: []sql.Row{{int64(1)}},
+				},
+				{
+					Query:    `SELECT DOLT_RESET('--hard');`,
+					Expected: []sql.Row{{"{0}"}},
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM dolt_status;`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_type
+						WHERE typname = 'reset_uncommitted_domain';`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestDoltResetHardRemovesUncommittedSequenceGuard keeps coverage for
 // DOLT_RESET --hard discarding uncommitted sequence objects.
 func TestDoltResetHardRemovesUncommittedSequenceGuard(t *testing.T) {

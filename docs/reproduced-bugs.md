@@ -17408,6 +17408,23 @@ They are worth keeping, but they are not counted as found bugs.
   materialized view remains queryable with its row data. Resetting a working
   set can therefore leave stale materialized-view data active.
 
+### DOLT_RESET --hard leaves uncommitted type and domain metadata in the working set
+
+- Reproducers: `TestDoltResetHardRemovesUncommittedEnumTypeRepro`,
+  `TestDoltResetHardRemovesUncommittedCompositeTypeRepro`, and
+  `TestDoltResetHardRemovesUncommittedDomainRepro` in
+  `testing/go/dolt_versioning_correctness_repro_test.go`.
+- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
+  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
+  -run 'TestDoltResetHardRemovesUncommitted(EnumType|CompositeType|Domain)Repro' -count=1`.
+- Expected Doltgres behavior: after creating an uncommitted enum type,
+  composite type, or domain, `DOLT_RESET('--hard')` should discard the type
+  metadata, leave `dolt_status` clean, and remove the matching `pg_type` row.
+- Observed Doltgres behavior: `DOLT_RESET('--hard')` returns success, but
+  `dolt_status` still reports two changes and each supposedly discarded
+  `pg_type` row remains visible. Resetting a working set can therefore leave
+  stale type and domain metadata active after it should have been removed.
+
 ### DOLT_RESET --hard to an older revision leaves newer functions active
 
 - Reproducer: `TestDoltResetHardToRevisionRestoresFunctionDefinitionRepro` in
