@@ -312,16 +312,7 @@ var date_mi_interval = framework.Function2{
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		date := val1.(time.Time)
 		interval := val2.(duration.Duration)
-		seconds, ok := interval.AsInt64()
-		if !ok {
-			return nil, errors.New("overflown interval")
-		}
-		// above truncates partial seconds.
-		nanos := seconds*duration.NanosPerMicro*duration.MicrosPerMilli*duration.MillisPerSec + interval.Nanos()%int64(time.Second)
-		// Subtract the interval from the date using negative duration
-		result := date.Add(-time.Duration(nanos))
-
-		return result, nil
+		return duration.Add(date, interval.Mul(-1)), nil
 	},
 }
 
@@ -352,7 +343,7 @@ var timestamptz_mi_interval = framework.Function2{
 		interval := val2.(duration.Duration)
 
 		// Subtract the interval from the timestamptz
-		return timestamptz.Add(-time.Duration(interval.Nanos())), nil
+		return duration.Add(timestamptz, interval.Mul(-1)), nil
 	},
 }
 
@@ -383,7 +374,7 @@ var timestamp_mi_interval = framework.Function2{
 		interval := val2.(duration.Duration)
 
 		// Subtract the interval from the timestamp
-		return timestamp.Add(-time.Duration(interval.Nanos())), nil
+		return duration.Add(timestamp, interval.Mul(-1)), nil
 	},
 }
 
