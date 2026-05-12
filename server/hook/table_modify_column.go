@@ -15,6 +15,10 @@
 package hook
 
 import (
+	"fmt"
+	"io"
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -44,6 +48,9 @@ func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeI
 		return n, nil
 	}
 	tableName := doltTable.TableName()
+	if err = validateDomainAlterColumnExistingRows(ctx, runner, tableName, n.NewColumn()); err != nil {
+		return nil, err
+	}
 	tableAsType := id.NewType(tableName.Schema, tableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
 	if err != nil {
@@ -82,4 +89,51 @@ func BeforeTableModifyColumn(ctx *sql.Context, runner sql.StatementRunner, nodeI
 		}
 	}
 	return n, nil
+}
+
+func validateDomainAlterColumnExistingRows(ctx *sql.Context, runner sql.StatementRunner, tableName doltdb.TableName, newColumn *sql.Column) error {
+	if newColumn == nil {
+		return nil
+	}
+	domainType, ok := newColumn.Type.(*pgtypes.DoltgresType)
+	if !ok || domainType.TypType != pgtypes.TypeType_Domain {
+		return nil
+	}
+	if runner == nil {
+		return errors.New("statement runner is not available for ALTER COLUMN TYPE domain validation")
+	}
+	query := fmt.Sprintf(
+		"SELECT %s::%s FROM %s;",
+		quoteModifyColumnIdentifier(newColumn.Name),
+		quoteModifyColumnQualifiedIdentifier(domainType.Schema(), domainType.Name()),
+		quoteModifyColumnQualifiedIdentifier(tableName.Schema, tableName.Name),
+	)
+	_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+		_, rowIter, _, err := runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer rowIter.Close(subCtx)
+		for {
+			_, err = rowIter.Next(subCtx)
+			if err == io.EOF {
+				return nil, nil
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	})
+	return err
+}
+
+func quoteModifyColumnQualifiedIdentifier(schema string, name string) string {
+	if schema == "" {
+		return quoteModifyColumnIdentifier(name)
+	}
+	return quoteModifyColumnIdentifier(schema) + "." + quoteModifyColumnIdentifier(name)
+}
+
+func quoteModifyColumnIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
