@@ -210,6 +210,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				relType:         id.Null,
 				relpersistence:  relPersistence,
+				owner:           sequence.Item.Owner,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)

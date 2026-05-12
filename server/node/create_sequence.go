@@ -83,6 +83,12 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	}
 	// The sequence won't have the schema filled in, so we have to do that now
 	c.sequence.Id = id.NewSequence(schema, c.sequence.Id.SequenceName())
+	if c.sequence.Owner == "" {
+		c.sequence.Owner = ctx.Client().User
+		if c.sequence.Owner == "" {
+			c.sequence.Owner = "postgres"
+		}
+	}
 
 	// Check that the sequence name is free
 	relationType, err := core.GetRelationTypeForDatabase(ctx, c.database, schema, c.sequence.Id.SequenceName())
@@ -111,6 +117,9 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			return nil, errors.Errorf(`relation "%s" does not exist`, c.sequence.OwnerTable.TableName())
 		} else if relationType != core.RelationType_Table {
 			return nil, errors.Errorf(`sequence cannot be owned by relation "%s"`, c.sequence.OwnerTable.TableName())
+		}
+		if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema}); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
 		}
 
 		table, err = core.GetSqlTableFromContext(ctx, c.database, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})

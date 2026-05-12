@@ -38,6 +38,7 @@ const (
 	FIELD_NAME_CYCLE        = "cycle"
 	FIELD_NAME_IS_AT_END    = "is_at_end"
 	FIELD_NAME_IS_CALLED    = "is_called"
+	FIELD_NAME_OWNER        = "owner"
 	FIELD_NAME_OWNER_TABLE  = "owner_table"
 	FIELD_NAME_OWNER_COLUMN = "owner_column"
 )
@@ -194,6 +195,18 @@ func (pgs *Collection) DiffRootObjects(ctx context.Context, fromHash string, o o
 			ours.IsCalled = diff.OurValue.(bool)
 		}
 	}
+	if ours.Owner != theirs.Owner {
+		diff := objinterface.RootObjectDiff{
+			Type:      pgtypes.Text,
+			FromHash:  fromHash,
+			FieldName: FIELD_NAME_OWNER,
+		}
+		if pgmerge.DiffValues(&diff, ours.Owner, theirs.Owner, ancestor.Owner, hasAncestor) {
+			diffs = append(diffs, diff)
+		} else {
+			ours.Owner = diff.OurValue.(string)
+		}
+	}
 	if ours.OwnerTable != theirs.OwnerTable {
 		diff := objinterface.RootObjectDiff{
 			Type:      pgtypes.Text,
@@ -254,6 +267,8 @@ func (pgs *Collection) GetFieldType(ctx context.Context, fieldName string) *pgty
 		return pgtypes.Bool
 	case FIELD_NAME_IS_CALLED:
 		return pgtypes.Bool
+	case FIELD_NAME_OWNER:
+		return pgtypes.Text
 	case FIELD_NAME_OWNER_TABLE:
 		return pgtypes.Text
 	case FIELD_NAME_OWNER_COLUMN:

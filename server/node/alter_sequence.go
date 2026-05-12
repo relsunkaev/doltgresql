@@ -27,6 +27,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // AlterSequence handles the ALTER SEQUENCE statement.
@@ -34,6 +35,7 @@ type AlterSequence struct {
 	ifExists       bool
 	targetSchema   string
 	targetSequence string
+	owner          string
 	ownedBy        AlterSequenceOwnedBy
 	warnings       []string
 }
@@ -49,11 +51,12 @@ var _ sql.ExecSourceRel = (*AlterSequence)(nil)
 var _ vitess.Injectable = (*AlterSequence)(nil)
 
 // NewAlterSequence returns a new *AlterSequence.
-func NewAlterSequence(ifExists bool, targetSchema string, targetSequence string, ownedBy AlterSequenceOwnedBy, warnings ...string) *AlterSequence {
+func NewAlterSequence(ifExists bool, targetSchema string, targetSequence string, owner string, ownedBy AlterSequenceOwnedBy, warnings ...string) *AlterSequence {
 	return &AlterSequence{
 		ifExists:       ifExists,
 		targetSchema:   targetSchema,
 		targetSequence: targetSequence,
+		owner:          owner,
 		ownedBy:        ownedBy,
 		warnings:       warnings,
 	}
@@ -95,6 +98,18 @@ func (c *AlterSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	if err != nil {
 		return nil, err
 	}
+	if c.owner != "" || c.ownedBy.IsSet {
+		if err = checkSequenceOwnership(ctx, seq); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
+		}
+	}
+
+	if c.owner != "" {
+		if !auth.RoleExists(c.owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, c.owner)
+		}
+		seq.Owner = c.owner
+	}
 
 	if c.ownedBy.IsSet {
 		if len(c.ownedBy.Table) > 0 {
@@ -106,6 +121,9 @@ func (c *AlterSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 				return nil, errors.Errorf(`relation "%s" does not exist`, c.ownedBy.Table)
 			} else if relationType != core.RelationType_Table {
 				return nil, errors.Errorf(`sequence cannot be owned by relation "%s"`, c.ownedBy.Table)
+			}
+			if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.ownedBy.Table, Schema: targetSchema}); err != nil {
+				return nil, errors.Wrap(err, "permission denied")
 			}
 
 			table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: c.ownedBy.Table, Schema: targetSchema})

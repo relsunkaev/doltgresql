@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -91,7 +92,7 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err != nil {
 		return nil, err
 	}
-	if err = checkSequenceOwnership(ctx, sequence.Id.SequenceName()); err != nil {
+	if err = checkSequenceOwnership(ctx, sequence); err != nil {
 		return nil, errors.Wrap(err, "permission denied")
 	}
 	if sequence.OwnerTable.IsValid() {
@@ -109,8 +110,8 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	return sql.RowsToRowIter(), nil
 }
 
-func checkSequenceOwnership(ctx *sql.Context, sequenceName string) error {
-	owner, _ := auth.GetSuperUserAndPassword()
+func checkSequenceOwnership(ctx *sql.Context, sequence *sequences.Sequence) error {
+	owner := sequence.Owner
 	if owner == "" {
 		owner = "postgres"
 	}
@@ -124,7 +125,7 @@ func checkSequenceOwnership(ctx *sql.Context, sequenceName string) error {
 	if userRole.IsValid() && userRole.IsSuperUser {
 		return nil
 	}
-	return errors.Errorf("must be owner of sequence %s", sequenceName)
+	return errors.Errorf("must be owner of sequence %s", sequence.Id.SequenceName())
 }
 
 // Schema implements the interface sql.ExecSourceRel.

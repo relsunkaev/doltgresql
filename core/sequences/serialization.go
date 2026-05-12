@@ -47,6 +47,7 @@ func (sequence *Sequence) Serialize(ctx context.Context) ([]byte, error) {
 	writer.Id(sequence.OwnerTable.AsId())
 	writer.String(sequence.OwnerColumn)
 	writer.Bool(sequence.IsCalled)
+	writer.String(sequence.Owner)
 	// Returns the data
 	return writer.Data(), nil
 }
@@ -80,6 +81,9 @@ func DeserializeSequence(ctx context.Context, data []byte) (*Sequence, error) {
 	sequence.OwnerColumn = reader.String()
 	if !reader.IsEmpty() {
 		sequence.IsCalled = reader.Bool()
+	}
+	if !reader.IsEmpty() {
+		sequence.Owner = reader.String()
 	}
 	if !reader.IsEmpty() {
 		return nil, errors.Errorf("extra data found while deserializing a sequence")

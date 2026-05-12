@@ -62,6 +62,7 @@ type Sequence struct {
 	Cycle       bool
 	IsAtEnd     bool
 	IsCalled    bool
+	Owner       string
 	OwnerTable  id.Table
 	OwnerColumn string
 }

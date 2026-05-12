@@ -214,7 +214,7 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 			if err := checkPrivilegeOnSchema(state, schemaName, []Privilege{Privilege_USAGE}); err != nil {
 				return err
 			}
-			err = checkPrivilegeOnSequence(state, schemaName, auth.TargetNames[i+1], privileges)
+			err = checkPrivilegeOnSequence(ctx, state, schemaName, auth.TargetNames[i+1], privileges)
 			if err != nil {
 				return err
 			}
@@ -368,7 +368,10 @@ func onlySelectPrivileges(privileges []Privilege) bool {
 }
 
 // checkPrivilegeOnSequence checks privileges for given sequence provided with schema name.
-func checkPrivilegeOnSequence(state AuthorizationQueryState, schemaName, seqName string, privileges []Privilege) error {
+func checkPrivilegeOnSequence(ctx *sql.Context, state AuthorizationQueryState, schemaName, seqName string, privileges []Privilege) error {
+	if sequenceOwnedByRole(ctx, schemaName, seqName, state.role.Name) {
+		return nil
+	}
 	roleSequenceKey := SequencePrivilegeKey{
 		Role:   state.role.ID(),
 		Schema: schemaName,
@@ -385,6 +388,25 @@ func checkPrivilegeOnSequence(state AuthorizationQueryState, schemaName, seqName
 		}
 	}
 	return nil
+}
+
+func sequenceOwnedByRole(ctx *sql.Context, schemaName, seqName, roleName string) bool {
+	if roleName == "" {
+		return false
+	}
+	collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return false
+	}
+	sequence, err := collection.GetSequence(ctx, id.NewSequence(schemaName, seqName))
+	if err != nil || sequence == nil {
+		return false
+	}
+	owner := sequence.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	return owner == roleName
 }
 
 // checkPrivilegeOnRoutine checks privileges for given function or procedure provided with schema name.
