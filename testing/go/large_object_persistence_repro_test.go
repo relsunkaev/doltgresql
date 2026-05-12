@@ -270,3 +270,89 @@ func TestLargeObjectSurvivesServerRestartRepro(t *testing.T) {
 	require.Equal(t, "424247", oid)
 	require.Equal(t, "cafebabe", contents)
 }
+
+// TestLargeObjectCreateRollsBackRepro reproduces a transaction consistency bug:
+// creating a large object inside a transaction must be undone by ROLLBACK.
+func TestLargeObjectCreateRollsBackRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object creation rolls back",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:            `SELECT lo_from_bytea(424248, decode('01020304', 'hex'));`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_largeobject_metadata
+						WHERE oid = 424248;`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectPutRollsBackRepro reproduces a transaction consistency bug:
+// writes to large-object contents must be undone by ROLLBACK.
+func TestLargeObjectPutRollsBackRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object writes roll back",
+			SetUpScript: []string{
+				`SELECT lo_from_bytea(424249, decode('00112233', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:            `SELECT lo_put(424249, 1, decode('ff', 'hex'));`,
+					SkipResultsCheck: true,
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query:    `SELECT encode(lo_get(424249), 'hex');`,
+					Expected: []sql.Row{{"00112233"}},
+				},
+			},
+		},
+	})
+}
+
+// TestLargeObjectUnlinkRollsBackRepro reproduces a transaction consistency bug:
+// deleting a large object with lo_unlink must be undone by ROLLBACK.
+func TestLargeObjectUnlinkRollsBackRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "large object unlink rolls back",
+			SetUpScript: []string{
+				`SELECT lo_from_bytea(424250, decode('aabbccdd', 'hex'));`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query:    `SELECT lo_unlink(424250);`,
+					Expected: []sql.Row{{int32(1)}},
+				},
+				{
+					Query: `ROLLBACK;`,
+				},
+				{
+					Query:    `SELECT encode(lo_get(424250), 'hex');`,
+					Expected: []sql.Row{{"aabbccdd"}},
+				},
+			},
+		},
+	})
+}
