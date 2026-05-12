@@ -560,6 +560,13 @@ Do not check off an item until it has workload proof:
   variable assignment. Other procedural
   languages are rejected explicitly. Pinned by
   testing/go/do_block_probe_test.go and server/plpgsql/parse_test.go.
+  Full PL/pgSQL parity is not claimed yet: current reproduced bugs include
+  `CASE` without `ELSE` failing to raise `case_not_found`, dynamic
+  `EXECUTE` changing `FOUND`, unresolved `ALIAS FOR` variables,
+  table-typed composite return variables, and missing subtransaction rollback
+  semantics for PL/pgSQL exceptions. Those gaps are pinned by
+  testing/go/plpgsql_correctness_repro_test.go and documented in
+  docs/reproduced-bugs.md.
 - [x] SQL string-construction helpers used by dynamic migration blocks -
   native `format(text, variadic any)` supports the common `%s`, `%I`,
   `%L`, `%%`, positional-argument, numeric-width, and left-justify

@@ -4537,24 +4537,6 @@ artifacts only; no fixes are included here.
   raising, so control flow that relies on PostgreSQL's exception semantics can
   silently continue.
 
-### PL/pgSQL RAISE accepts duplicate options
-
-- Reproducers: `TestPlpgsqlRaiseRejectsDuplicateMessageOptionRepro` and
-  `TestPlpgsqlRaiseRejectsDuplicateDetailOptionRepro` in
-  `testing/go/plpgsql_correctness_repro_test.go`.
-- Command: `CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include
-  CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib go test -vet=off ./testing/go
-  -run 'TestPlpgsqlRaiseRejectsDuplicate(Message|Detail)OptionRepro' -count=1`.
-- Expected PostgreSQL behavior: a PL/pgSQL `RAISE` statement that supplies a
-  format string and also specifies `USING MESSAGE = ...` raises
-  `RAISE option already specified: MESSAGE`; a statement that repeats
-  `USING DETAIL = ...` raises `RAISE option already specified: DETAIL`.
-- Observed Doltgres behavior: the duplicate-`MESSAGE` function call returns
-  successfully instead of raising, and the duplicate-`DETAIL` function raises
-  the user message instead of the PostgreSQL duplicate-option error. Invalid
-  PL/pgSQL exception statements can be silently accepted or report the wrong
-  failure.
-
 ### Dynamic PL/pgSQL EXECUTE changes FOUND
 
 - Reproducer: `TestPlpgsqlDynamicExecuteDoesNotChangeFoundRepro` in
