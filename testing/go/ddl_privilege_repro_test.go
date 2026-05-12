@@ -1392,6 +1392,37 @@ func TestDropFunctionRequiresOwnershipRepro(t *testing.T) {
 	})
 }
 
+// TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro reproduces a
+// PostgreSQL authorization bug: GRANT ALL PRIVILEGES ON FUNCTION does not
+// transfer ownership and should not allow the grantee to DROP the function.
+func TestDropFunctionRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP FUNCTION requires ownership despite ALL PRIVILEGES",
+			SetUpScript: []string{
+				`CREATE USER drop_function_intruder PASSWORD 'dropper';`,
+				`CREATE FUNCTION drop_function_all_private() RETURNS INT
+					LANGUAGE SQL
+					AS $$ SELECT 1 $$;`,
+				`GRANT USAGE ON SCHEMA public TO drop_function_intruder;`,
+				`GRANT ALL PRIVILEGES ON FUNCTION drop_function_all_private() TO drop_function_intruder;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `DROP FUNCTION drop_function_all_private();`,
+					ExpectedErr: `must be owner`,
+					Username:    `drop_function_intruder`,
+					Password:    `dropper`,
+				},
+				{
+					Query:    `SELECT drop_function_all_private();`,
+					Expected: []sql.Row{{int32(1)}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropAggregateRequiresOwnershipRepro reproduces a security bug: Doltgres
 // allows a role that does not own an aggregate to drop it.
 func TestDropAggregateRequiresOwnershipRepro(t *testing.T) {
