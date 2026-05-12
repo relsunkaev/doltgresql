@@ -50,7 +50,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if target.TableSpec == nil {
 			target.TableSpec = &vitess.TableSpec{}
 		}
-		columnDef, err := nodeColumnTableDef(ctx, node)
+		columnDef, err := nodeColumnTableDef(ctx, node, target.Table.SchemaQualifier.String())
 		if err != nil {
 			return err
 		}

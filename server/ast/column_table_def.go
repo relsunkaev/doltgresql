@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -28,7 +30,7 @@ import (
 const DoltCreateTablePlaceholderSequenceName = "dolt_create_table_placeholder_sequence"
 
 // nodeColumnTableDef handles *tree.ColumnTableDef nodes.
-func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef) (*vitess.ColumnDefinition, error) {
+func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema string) (*vitess.ColumnDefinition, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -67,7 +69,8 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef) (*vitess.Column
 	} else if node.Unique {
 		keyOpt = 3 // colKeyUnique
 	}
-	defaultExpr, err := nodeExpr(ctx, node.DefaultExpr.Expr)
+	defaultExprTree := qualifySameSchemaNextvalDefault(node.DefaultExpr.Expr, tableSchema)
+	defaultExpr, err := nodeExpr(ctx, defaultExprTree)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +196,33 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef) (*vitess.Column
 		colDef.Type.Constraint = checkConstraints[0]
 	}
 	return colDef, nil
+}
+
+func qualifySameSchemaNextvalDefault(expr tree.Expr, tableSchema string) tree.Expr {
+	if expr == nil || tableSchema == "" {
+		return expr
+	}
+	if paren, ok := expr.(*tree.ParenExpr); ok {
+		rewritten := *paren
+		rewritten.Expr = qualifySameSchemaNextvalDefault(paren.Expr, tableSchema)
+		return &rewritten
+	}
+	fn, ok := expr.(*tree.FuncExpr)
+	if !ok || !strings.EqualFold(fn.Func.String(), "nextval") || len(fn.Exprs) != 1 {
+		return expr
+	}
+	seqName, ok := fn.Exprs[0].(*tree.StrVal)
+	if !ok {
+		return expr
+	}
+	rawName := seqName.RawString()
+	if rawName == "" || strings.Contains(rawName, ".") {
+		return expr
+	}
+	rewritten := *fn
+	rewritten.Exprs = append(tree.Exprs(nil), fn.Exprs...)
+	rewritten.Exprs[0] = tree.NewStrVal(tableSchema + "." + rawName)
+	return &rewritten
 }
 
 // clearAliases removes As and InputExpression from any AliasedExpr in the expression tree given. This is required
