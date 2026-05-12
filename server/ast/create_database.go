@@ -36,6 +36,9 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, e
 		}
 	}
 	if len(node.Encoding) > 0 {
+		if !isPostgresEncodingName(node.Encoding) {
+			return nil, errors.Errorf("%s is not a valid encoding name", node.Encoding)
+		}
 		logrus.Warnf("unsupported clause ENCODING, ignoring")
 	}
 	if len(node.Strategy) > 0 {
@@ -110,6 +113,58 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (*vitess.DBDDL, e
 		IfNotExists:      node.IfNotExists,
 		CharsetCollate:   charsets,
 	}, nil
+}
+
+var postgresEncodingNames = map[string]struct{}{
+	"BIG5":           {},
+	"EUC_CN":         {},
+	"EUC_JIS_2004":   {},
+	"EUC_JP":         {},
+	"EUC_KR":         {},
+	"EUC_TW":         {},
+	"GB18030":        {},
+	"GBK":            {},
+	"ISO_8859_5":     {},
+	"ISO_8859_6":     {},
+	"ISO_8859_7":     {},
+	"ISO_8859_8":     {},
+	"JOHAB":          {},
+	"KOI8R":          {},
+	"LATIN1":         {},
+	"LATIN2":         {},
+	"LATIN3":         {},
+	"LATIN4":         {},
+	"LATIN5":         {},
+	"LATIN6":         {},
+	"LATIN7":         {},
+	"LATIN8":         {},
+	"LATIN9":         {},
+	"LATIN10":        {},
+	"MULE_INTERNAL":  {},
+	"SJIS":           {},
+	"SQL_ASCII":      {},
+	"SHIFT_JIS_2004": {},
+	"UHC":            {},
+	"UNICODE":        {},
+	"UTF8":           {},
+	"UTF-8":          {},
+	"WIN866":         {},
+	"WIN874":         {},
+	"WIN1250":        {},
+	"WIN1251":        {},
+	"WIN1252":        {},
+	"WIN1253":        {},
+	"WIN1254":        {},
+	"WIN1255":        {},
+	"WIN1256":        {},
+	"WIN1257":        {},
+	"WIN1258":        {},
+}
+
+func isPostgresEncodingName(encoding string) bool {
+	normalized := strings.ToUpper(strings.Trim(encoding, `"'`))
+	_, ok := postgresEncodingNames[normalized]
+	return ok
 }
 
 var collationRegex = regexp.MustCompile(`^(?P<Language>[^_]+)_?(?P<Region>[^.]+)?\.?(?P<CodePage>\d+)?$`)
