@@ -46,6 +46,24 @@ func TestSimpleTSStrip(t *testing.T) {
 	}
 }
 
+func TestSimpleTSDelete(t *testing.T) {
+	if got, want := simpleTSDelete("'cats':2 'fat':1", "cats"), "'fat':1"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestSimpleTSSetWeight(t *testing.T) {
+	if got, want := simpleTSSetWeight("'cats':2 'fat':1", "A"), "'cats':2A 'fat':1A"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestSimpleTSNumNode(t *testing.T) {
+	if got, want := simpleTSNumNode("'fat' & 'cats'"), 3; got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+}
+
 func TestSimpleTSMatches(t *testing.T) {
 	if !simpleTSMatches("'cats':2 'fat':1", "'cats'") {
 		t.Fatal("expected query term to match vector lexeme")

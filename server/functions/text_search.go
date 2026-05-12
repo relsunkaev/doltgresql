@@ -43,11 +43,14 @@ func init() {
 	framework.RegisterFunction(tsvector_to_array_text)
 	framework.RegisterFunction(array_to_tsvector_text_array)
 	framework.RegisterFunction(strip_text)
+	framework.RegisterFunction(ts_delete_text_text)
+	framework.RegisterFunction(setweight_text_text)
+	framework.RegisterFunction(numnode_text)
 	framework.RegisterFunction(ts_match_vq_text)
 }
 
 var textSearchTokenPattern = regexp.MustCompile(`[[:alnum:]_]+`)
-var tsVectorLexemePattern = regexp.MustCompile(`'((?:''|[^'])*)'(?:\:\d+(?:,\d+)*)?`)
+var tsVectorLexemePattern = regexp.MustCompile(`'((?:''|[^'])*)'(?:\:([0-9A-D,]+))?`)
 
 var to_tsvector_text = framework.Function1{
 	Name:       "to_tsvector",
@@ -219,6 +222,33 @@ var strip_text = framework.Function1{
 	},
 }
 
+var ts_delete_text_text = framework.Function2{
+	Name:       "ts_delete",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, vector any, lexeme any) (any, error) {
+		return simpleTSDelete(fmt.Sprint(vector), strings.ToLower(fmt.Sprint(lexeme))), nil
+	},
+}
+
+var setweight_text_text = framework.Function2{
+	Name:       "setweight",
+	Return:     pgtypes.Text,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, vector any, weight any) (any, error) {
+		return simpleTSSetWeight(fmt.Sprint(vector), strings.ToUpper(fmt.Sprint(weight))), nil
+	},
+}
+
+var numnode_text = framework.Function1{
+	Name:       "numnode",
+	Return:     pgtypes.Int32,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, query any) (any, error) {
+		return int32(simpleTSNumNode(fmt.Sprint(query))), nil
+	},
+}
+
 var ts_match_vq_text = framework.Function2{
 	Name:       "ts_match_vq",
 	Return:     pgtypes.Bool,
@@ -295,12 +325,40 @@ func simpleTSHeadline(document string, query string) string {
 }
 
 func simpleTSStrip(vector string) string {
-	lexemes := tsVectorLexemes(vector)
-	parts := make([]string, len(lexemes))
-	for i, lexeme := range lexemes {
-		parts[i] = "'" + lexeme + "'"
+	entries := tsVectorEntries(vector)
+	parts := make([]string, len(entries))
+	for i, entry := range entries {
+		parts[i] = "'" + entry.lexeme + "'"
 	}
 	return strings.Join(parts, " ")
+}
+
+func simpleTSDelete(vector string, lexeme string) string {
+	entries := tsVectorEntries(vector)
+	filtered := entries[:0]
+	for _, entry := range entries {
+		if entry.lexeme != lexeme {
+			filtered = append(filtered, entry)
+		}
+	}
+	return renderTSVectorEntries(filtered)
+}
+
+func simpleTSSetWeight(vector string, weight string) string {
+	entries := tsVectorEntries(vector)
+	for i := range entries {
+		for j, position := range entries[i].positions {
+			entries[i].positions[j] = strings.TrimRight(position, "ABCD") + weight
+		}
+	}
+	return renderTSVectorEntries(entries)
+}
+
+func simpleTSNumNode(query string) int {
+	if strings.TrimSpace(query) == "" {
+		return 0
+	}
+	return len(textSearchTerms(query)) + strings.Count(query, "&") + strings.Count(query, "|") + strings.Count(query, "!") + strings.Count(query, "<->")
 }
 
 func textSearchTermSet(input string) map[string]bool {
@@ -312,23 +370,53 @@ func textSearchTermSet(input string) map[string]bool {
 }
 
 func tsVectorLexemes(input string) []string {
+	entries := tsVectorEntries(input)
+	if len(entries) > 0 {
+		lexemes := make([]string, len(entries))
+		for i, entry := range entries {
+			lexemes[i] = entry.lexeme
+		}
+		return lexemes
+	}
+	terms := textSearchTerms(input)
+	sort.Strings(terms)
+	return terms
+}
+
+func tsVectorEntries(input string) []tsVectorEntry {
 	matches := tsVectorLexemePattern.FindAllStringSubmatch(input, -1)
 	if len(matches) == 0 {
-		terms := textSearchTerms(input)
-		sort.Strings(terms)
-		return terms
+		return nil
 	}
-	lexemes := make([]string, 0, len(matches))
+	entries := make([]tsVectorEntry, 0, len(matches))
 	seen := map[string]bool{}
 	for _, match := range matches {
 		lexeme := strings.ReplaceAll(match[1], "''", "'")
 		if !seen[lexeme] {
 			seen[lexeme] = true
-			lexemes = append(lexemes, lexeme)
+			var positions []string
+			if len(match) > 2 && match[2] != "" {
+				positions = strings.Split(match[2], ",")
+			}
+			entries = append(entries, tsVectorEntry{lexeme: lexeme, positions: positions})
 		}
 	}
-	sort.Strings(lexemes)
-	return lexemes
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].lexeme < entries[j].lexeme
+	})
+	return entries
+}
+
+func renderTSVectorEntries(entries []tsVectorEntry) string {
+	parts := make([]string, len(entries))
+	for i, entry := range entries {
+		part := "'" + entry.lexeme + "'"
+		if len(entry.positions) > 0 {
+			part += ":" + strings.Join(entry.positions, ",")
+		}
+		parts[i] = part
+	}
+	return strings.Join(parts, " ")
 }
 
 func textSearchTerms(input string) []string {
@@ -340,4 +428,9 @@ func textSearchTerms(input string) []string {
 		}
 	}
 	return terms
+}
+
+type tsVectorEntry struct {
+	lexeme    string
+	positions []string
 }
