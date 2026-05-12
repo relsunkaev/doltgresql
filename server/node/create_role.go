@@ -83,10 +83,22 @@ func (c *CreateRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		}
 		return nil, errors.Errorf(`role "%s" already exists`, c.Name)
 	}
+	if c.ConnectionLimit < -1 {
+		return nil, errors.New("invalid connection limit")
+	}
 
-	if !userRole.IsSuperUser && (!userRole.CanCreateRoles || c.IsSuperUser) {
+	if !userRole.IsSuperUser && !userRole.CanCreateRoles {
 		// TODO: grab the actual error message
 		return nil, errors.Errorf(`role "%s" does not have permission to create the role`, userRole.Name)
+	}
+	if !userRole.IsSuperUser && c.IsSuperUser {
+		return nil, errors.Errorf(`role "%s" does not have permission to create the role`, userRole.Name)
+	}
+	if !userRole.IsSuperUser && (c.CanBypassRowLevelSecurity || c.IsReplicationRole) {
+		return nil, errors.New("permission denied")
+	}
+	if !userRole.IsSuperUser && c.CanCreateDB && !userRole.CanCreateDB {
+		return nil, errors.New("permission denied")
 	}
 	var role auth.Role
 	auth.LockWrite(func() {

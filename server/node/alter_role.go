@@ -105,6 +105,17 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		}
 		return sql.RowsToRowIter(), nil
 	}
+	if connectionLimit, ok := c.Options["CONNECTION_LIMIT"].(int32); ok && connectionLimit < -1 {
+		return nil, errors.New("invalid connection limit")
+	}
+	if !userRole.IsSuperUser {
+		if _, ok := c.Options["CREATEDB"]; ok && !userRole.CanCreateDB {
+			return nil, errors.New("permission denied")
+		}
+		if role.ID() == userRole.ID() && !alterRoleOptionsOnlyPassword(c.Options) {
+			return nil, errors.New("permission denied")
+		}
+	}
 	for optionName, optionValue := range c.Options {
 		switch optionName {
 		case "BYPASSRLS":
@@ -197,6 +208,14 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func alterRoleOptionsOnlyPassword(options map[string]any) bool {
+	if len(options) != 1 {
+		return false
+	}
+	_, ok := options["PASSWORD"]
+	return ok
 }
 
 // Schema implements the interface sql.ExecSourceRel.
