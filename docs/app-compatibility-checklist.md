@@ -336,7 +336,11 @@ Do not check off an item until it has workload proof:
   (`pgvector ... values are not yet supported`).
   `DROP EXTENSION IF EXISTS ...` is accepted for dump cleanup preludes
   and removes loaded extension rows from `pg_extension`.
-  Pinned by testing/go/common_extensions_probe_test.go.
+  Remaining reproduced extension gaps include unsupported `CREATE EXTENSION
+  ... VERSION` validation and target-schema relocation for hstore, citext, and
+  vector member objects under `WITH SCHEMA`. Pinned by
+  testing/go/common_extensions_probe_test.go and
+  testing/go/extension_dependency_repro_test.go.
 - [x] Replace common-extension shims with full parity or narrower tested
   non-goals. pgcrypto now has native runtime coverage for UUID/random bytes,
   digest/HMAC, raw encryption/decryption, password hashing, ASCII armor, and

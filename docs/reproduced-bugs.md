@@ -12635,7 +12635,8 @@ artifacts only; no fixes are included here.
   `to_regtype('extensions.hstore')`, `extensions.fetchval(...)`, and
   `OPERATOR(extensions.?)` work with values of type `extensions.hstore`.
 - Observed Doltgres behavior: table DDL accepts `extensions.hstore`, but
-  `to_regtype('extensions.hstore')` returns NULL,
+  `to_regtype('extensions.hstore')` resolves to the unqualified `hstore`
+  instead of `extensions.hstore`,
   `extensions.fetchval(...)` fails with `function fetchval(hstore, unknown)
   does not exist`, and `OPERATOR(extensions.?)` fails with `schema
   "extensions" not allowed in OPERATOR syntax`.
@@ -12652,7 +12653,8 @@ artifacts only; no fixes are included here.
   `to_regtype('extensions.citext')`.
 - Observed Doltgres behavior: `extensions.citext` can be used in table DDL,
   case-insensitive comparison, and unique checks, but
-  `to_regtype('extensions.citext')` returns NULL.
+  `to_regtype('extensions.citext')` resolves to the unqualified `citext`
+  instead of `extensions.citext`.
 
 ### CREATE EXTENSION vector WITH SCHEMA does not create the target-schema vector type
 
