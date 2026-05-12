@@ -97,6 +97,41 @@ func TestCreateFunctionNullInputOptionsGuard(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceFunctionNullInputOptionsGuard keeps coverage for
+// replacement definitions that change null-input routine options.
+func TestCreateOrReplaceFunctionNullInputOptionsGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE FUNCTION updates null-input behavior",
+			SetUpScript: []string{
+				`CREATE FUNCTION replace_strict_option_value(input INT)
+					RETURNS INT
+					LANGUAGE SQL
+					CALLED ON NULL INPUT
+					AS $$ SELECT 7 $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT replace_strict_option_value(NULL::INT);`,
+					Expected: []sql.Row{{7}},
+				},
+				{
+					Query: `CREATE OR REPLACE FUNCTION replace_strict_option_value(input INT)
+						RETURNS INT
+						LANGUAGE SQL
+						STRICT
+						AS $$ SELECT 7 $$;`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT replace_strict_option_value(NULL::INT) IS NULL;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterFunctionNullInputOptionRepro reproduces a routine DDL correctness
 // bug: PostgreSQL lets ALTER FUNCTION switch between CALLED ON NULL INPUT and
 // STRICT / RETURNS NULL ON NULL INPUT behavior.
