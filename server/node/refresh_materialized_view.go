@@ -161,8 +161,7 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 }
 
 func (r *RefreshMaterializedView) refreshWithNoData(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
-	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
-	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+	if err := truncateMaterializedViewTarget(ctx, target); err != nil {
 		return err
 	}
 	return r.setTargetPopulated(ctx, target, definition, false)
@@ -171,7 +170,7 @@ func (r *RefreshMaterializedView) refreshWithNoData(ctx *sql.Context, target ref
 func (r *RefreshMaterializedView) refreshSynchronously(ctx *sql.Context, target refreshMaterializedViewTarget, definition string) error {
 	qualifiedName := quoteQualifiedIdentifier(target.schema, target.table.Name())
 	columnList := quoteColumnList(target.table.Schema(ctx))
-	if err := r.runRefreshStatement(ctx, "TRUNCATE TABLE "+qualifiedName); err != nil {
+	if err := truncateMaterializedViewTarget(ctx, target); err != nil {
 		return err
 	}
 	if err := r.runRefreshStatement(ctx, fmt.Sprintf("INSERT INTO %s (%s) %s", qualifiedName, columnList, definition)); err != nil {
@@ -342,6 +341,15 @@ func targetDoltTableName(target refreshMaterializedViewTarget) doltdb.TableName 
 		}
 	}
 	return doltdb.TableName{Name: target.table.Name(), Schema: schemaName}
+}
+
+func truncateMaterializedViewTarget(ctx *sql.Context, target refreshMaterializedViewTarget) error {
+	truncateable, ok := target.table.(sql.TruncateableTable)
+	if !ok {
+		return errors.Errorf(`materialized view "%s" does not support refresh truncation`, target.table.Name())
+	}
+	_, err := truncateable.Truncate(ctx)
+	return err
 }
 
 // Schema implements the interface sql.ExecSourceRel.

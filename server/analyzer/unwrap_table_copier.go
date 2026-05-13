@@ -44,7 +44,10 @@ func UnwrapTableCopierCreateTable(ctx *sql.Context, a *analyzer.Analyzer, node s
 	copied.Destination = pgnode.NewCreateTable(createTable, nil)
 	child := sql.Node(pgnode.NewCreateTableAs(&copied))
 	ctasAliases, hasCtasAliases := createTableAsColumnAliases(ctx, createTable.Name())
-	mvInfo, hasMvInfo := createMaterializedViewInfo(ctx, createTable.Name())
+	mvInfo, hasMvInfo, err := createMaterializedViewInfo(ctx, createTable.Name(), tableCopier.Source)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
 	if hasMvInfo {
 		if err := pgnode.ValidateColumnAliases(createTable.PkSchema().Schema, mvInfo.columnAliases); err != nil {
 			return nil, transform.SameTree, err
@@ -152,24 +155,31 @@ type materializedViewInfo struct {
 	columnAliases []string
 }
 
-func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materializedViewInfo, bool) {
+func createMaterializedViewInfo(ctx *sql.Context, tableName string, source sql.Node) (materializedViewInfo, bool, error) {
 	query := ctx.Query()
 	if strings.TrimSpace(query) == "" {
-		return materializedViewInfo{}, false
+		return materializedViewInfo{}, false, nil
 	}
 	stmts, err := parser.Parse(query)
 	if err != nil || len(stmts) != 1 {
-		return materializedViewInfo{}, false
+		return materializedViewInfo{}, false, nil
 	}
 	node, ok := stmts[0].AST.(*tree.CreateMaterializedView)
 	if !ok {
-		return materializedViewInfo{}, false
+		return materializedViewInfo{}, false, nil
 	}
 	if !strings.EqualFold(string(node.Name.ObjectName), tableName) {
-		return materializedViewInfo{}, false
+		return materializedViewInfo{}, false, nil
 	}
 	columnAliases := materializedViewColumnAliases(node.ColumnNames)
 	definition := materializedViewDefinitionWithColumnAliases(node.AsSource.String(), columnAliases)
+	if source != nil {
+		bindings, err := collectResolvedViewFunctionBindings(ctx, source)
+		if err != nil {
+			return materializedViewInfo{}, false, err
+		}
+		definition, _ = rewriteResolvedFunctionBindings(definition, bindings)
+	}
 	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated("", definition, !node.WithNoData)
 	if len(node.Params) > 0 {
 		comment = tablemetadata.SetRelOptions(comment, materializedViewRelOptions(node.Params))
@@ -180,7 +190,7 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 	return materializedViewInfo{
 		comment:       comment,
 		columnAliases: columnAliases,
-	}, true
+	}, true, nil
 }
 
 func materializedViewRelOptions(params tree.StorageParams) []string {

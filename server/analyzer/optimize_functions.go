@@ -84,6 +84,9 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, havingNode)
 			return newNode, sameGetFields && sameFunctions, err
 		}
+		if createView, ok := n.(*plan.CreateView); ok {
+			return preserveCreateViewFunctionBindings(ctx, createView)
+		}
 
 		projectNode, ok := n.(*plan.Project)
 		if !ok {
