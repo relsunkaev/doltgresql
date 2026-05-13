@@ -1092,6 +1092,38 @@
       ]
     },
     {
+      "id": "alter-system-repro-test-testaltersysteminsidetransactionrejectedrepro-0001-alter-system-set-work_mem-=",
+      "source": "testing/go/alter_system_repro_test.go:TestAlterSystemInsideTransactionRejectedRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "BEGIN;"
+      ],
+      "query": "ALTER SYSTEM SET work_mem = '64kB';",
+      "expectedSqlstate": "25001",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "ROLLBACK;"
+      ]
+    },
+    {
+      "id": "alter-system-repro-test-testaltersysteminsidetransactionrejectedrepro-0002-alter-system-reset-work_mem",
+      "source": "testing/go/alter_system_repro_test.go:TestAlterSystemInsideTransactionRejectedRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "BEGIN;"
+      ],
+      "query": "ALTER SYSTEM RESET work_mem;",
+      "expectedSqlstate": "25001",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "ROLLBACK;"
+      ]
+    },
+    {
       "id": "bit-string-correctness-repro-test-testbitstringoperatorsandfunctionsrepro-0001-select-flags::text-flex::text-flags-&",
       "source": "testing/go/bit_string_correctness_repro_test.go:TestBitStringOperatorsAndFunctionsRepro",
       "ordinal": 1,

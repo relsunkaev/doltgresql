@@ -30,6 +30,10 @@ func TestAlterSystemInsideTransactionRejectedRepro(t *testing.T) {
 				{
 					Query:       `ALTER SYSTEM SET work_mem = '64kB';`,
 					ExpectedErr: `ALTER SYSTEM cannot run inside a transaction block`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:      `alter-system-repro-test-testaltersysteminsidetransactionrejectedrepro-0001-alter-system-set-work_mem-=`,
+						Cleanup: []string{`ROLLBACK;`},
+					},
 				},
 				{
 					Query: `ROLLBACK;`,
@@ -45,6 +49,10 @@ func TestAlterSystemInsideTransactionRejectedRepro(t *testing.T) {
 				{
 					Query:       `ALTER SYSTEM RESET work_mem;`,
 					ExpectedErr: `ALTER SYSTEM cannot run inside a transaction block`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:      `alter-system-repro-test-testaltersysteminsidetransactionrejectedrepro-0002-alter-system-reset-work_mem`,
+						Cleanup: []string{`ROLLBACK;`},
+					},
 				},
 				{
 					Query: `ROLLBACK;`,
