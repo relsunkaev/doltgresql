@@ -2271,6 +2271,102 @@
       ]
     },
     {
+      "id": "explicit-collation-probe-test-testexplicitcollationprobe-0001-select-c-from-letters-order",
+      "source": "testing/go/explicit_collation_probe_test.go:TestExplicitCollationProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE letters (id INT PRIMARY KEY, c TEXT);",
+        "INSERT INTO letters VALUES (1, 'b'), (2, 'A'), (3, 'a'), (4, 'B');"
+      ],
+      "query": "SELECT c FROM letters ORDER BY c COLLATE \"C\", id;",
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          }
+        ],
+        [
+          {
+            "value": "B"
+          }
+        ],
+        [
+          {
+            "value": "a"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "explicit-collation-probe-test-testexplicitcollationprobe-0002-select-w-from-words-order",
+      "source": "testing/go/explicit_collation_probe_test.go:TestExplicitCollationProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE words (id INT PRIMARY KEY, w TEXT);",
+        "INSERT INTO words VALUES (1, 'Z'), (2, 'a'), (3, 'A');"
+      ],
+      "query": "SELECT w FROM words ORDER BY w COLLATE \"POSIX\", id;",
+      "expectedRows": [
+        [
+          {
+            "value": "A"
+          }
+        ],
+        [
+          {
+            "value": "Z"
+          }
+        ],
+        [
+          {
+            "value": "a"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "explicit-collation-probe-test-testexplicitcollationprobe-0003-select-collation_name-from-information_schema.columns-where",
+      "source": "testing/go/explicit_collation_probe_test.go:TestExplicitCollationProbe",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE labels (id INT PRIMARY KEY, name TEXT COLLATE \"C\");"
+      ],
+      "query": "SELECT collation_name\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'labels' AND column_name = 'name';",
+      "expectedRows": [
+        [
+          {
+            "value": "C"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "expression-operator-repro-test-testilikepatternmatchrepro-0001-select-alpha-ilike-a%-alpha",
       "source": "testing/go/expression_operator_repro_test.go:TestILikePatternMatchRepro",
       "ordinal": 1,
