@@ -21,10 +21,11 @@ import (
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeTruncate handles *tree.Truncate nodes.
-func nodeTruncate(ctx *Context, node *tree.Truncate) (*vitess.DDL, error) {
+func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 	if node == nil || len(node.Tables) == 0 {
 		return nil, nil
 	}
@@ -35,12 +36,23 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (*vitess.DDL, error) {
 	case tree.DropCascade:
 		return nil, errors.Errorf("CASCADE is not yet supported")
 	}
-	if len(node.Tables) > 1 {
-		return nil, errors.Errorf("truncating multiple tables at once is not yet supported")
-	}
 	tableName, err := nodeTableName(ctx, &node.Tables[0])
 	if err != nil {
 		return nil, err
+	}
+	if len(node.Tables) > 1 {
+		queries := make([]string, 0, len(node.Tables))
+		for i := range node.Tables {
+			tableName, err = nodeTableName(ctx, &node.Tables[i])
+			if err != nil {
+				return nil, err
+			}
+			queries = append(queries, "TRUNCATE TABLE "+vitess.String(tableName))
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewTruncateTables(queries),
+			Children:  nil,
+		}, nil
 	}
 	return &vitess.DDL{
 		Action: vitess.TruncateStr,
