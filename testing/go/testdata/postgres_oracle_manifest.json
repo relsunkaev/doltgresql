@@ -389,6 +389,22 @@
       ]
     },
     {
+      "id": "rls-create-policy-rejects-duplicate-name",
+      "source": "testing/go/row_level_security_policy_ddl_repro_test.go:TestCreatePolicyRejectsDuplicatePolicyNameRepro",
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE TABLE rls_duplicate_policy_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "CREATE POLICY rls_duplicate_policy_docs_select\n\t\t\t\t\tON rls_duplicate_policy_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (true);"
+      ],
+      "query": "CREATE POLICY rls_duplicate_policy_docs_select\n\t\t\t\t\t\tON rls_duplicate_policy_docs\n\t\t\t\t\t\tFOR SELECT\n\t\t\t\t\t\tUSING (false);",
+      "expectedSqlstate": "42710",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP TABLE IF EXISTS rls_duplicate_policy_docs"
+      ]
+    },
+    {
       "id": "rls-policy-role-list-allows-listed-role",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
       "oracle": "postgres",
