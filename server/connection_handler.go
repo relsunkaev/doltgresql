@@ -2639,6 +2639,158 @@ func quoteSQLString(value string) string {
 	return `'` + strings.ReplaceAll(value, `'`, `''`) + `'`
 }
 
+func (h *ConnectionHandler) rewriteSimpleUpdatableViewDML(query string) (string, bool, error) {
+	if matches := updatableViewInsertPattern.FindStringSubmatch(query); matches != nil {
+		baseTable, ok, err := h.simpleUpdatableViewBaseTable(query, matches[1])
+		if err != nil || !ok {
+			return query, false, err
+		}
+		return "INSERT INTO " + baseTable + matches[2], true, nil
+	}
+	if matches := updatableViewUpdatePattern.FindStringSubmatch(query); matches != nil {
+		baseTable, ok, err := h.simpleUpdatableViewBaseTable(query, matches[1])
+		if err != nil || !ok {
+			return query, false, err
+		}
+		return "UPDATE " + baseTable + matches[2], true, nil
+	}
+	if matches := updatableViewDeletePattern.FindStringSubmatch(query); matches != nil {
+		baseTable, ok, err := h.simpleUpdatableViewBaseTable(query, matches[1])
+		if err != nil || !ok {
+			return query, false, err
+		}
+		return "DELETE FROM " + baseTable + matches[2], true, nil
+	}
+	return query, false, nil
+}
+
+func (h *ConnectionHandler) simpleUpdatableViewBaseTable(query string, rawView string) (string, bool, error) {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query)
+	if err != nil {
+		return "", false, err
+	}
+	view, viewSchema, ok, err := viewDefinitionForDMLTarget(sqlCtx, rawView)
+	if err != nil || !ok {
+		return "", false, err
+	}
+	return simpleViewBaseTable(sqlCtx, view, viewSchema)
+}
+
+func viewDefinitionForDMLTarget(ctx *sql.Context, rawView string) (sql.ViewDefinition, string, bool, error) {
+	db, err := core.GetSqlDatabaseFromContext(ctx, "")
+	if err != nil || db == nil {
+		return sql.ViewDefinition{}, "", false, err
+	}
+	rawSchema, viewName := splitQualifiedCatalogName(rawView)
+	schemaName, err := core.GetSchemaName(ctx, db, rawSchema)
+	if err != nil {
+		return sql.ViewDefinition{}, "", false, err
+	}
+	viewSource := db
+	if schemaDB, ok := db.(sql.SchemaDatabase); ok && schemaDB.SupportsDatabaseSchemas() {
+		schema, exists, err := schemaDB.GetSchema(ctx, schemaName)
+		if err != nil || !exists {
+			return sql.ViewDefinition{}, "", false, err
+		}
+		viewSource = schema
+	}
+	viewDB, ok := viewSource.(sql.ViewDatabase)
+	if !ok {
+		return sql.ViewDefinition{}, "", false, nil
+	}
+	view, exists, err := viewDB.GetViewDefinition(ctx, viewName)
+	if err != nil || !exists {
+		return sql.ViewDefinition{}, "", false, err
+	}
+	return view, schemaName, true, nil
+}
+
+func simpleViewBaseTable(ctx *sql.Context, view sql.ViewDefinition, viewSchema string) (string, bool, error) {
+	createViewStatement := strings.TrimSpace(view.CreateViewStatement)
+	if createViewStatement == "" {
+		createViewStatement = "CREATE VIEW " + quoteQualifiedIdentifier(viewSchema, view.Name) + " AS " + view.TextDefinition
+	}
+	stmts, err := parser.Parse(createViewStatement)
+	if err != nil || len(stmts) == 0 {
+		return "", false, err
+	}
+	createView, ok := stmts[0].AST.(*tree.CreateView)
+	if !ok {
+		return "", false, nil
+	}
+	baseTable, ok := simpleViewBaseTableName(createView)
+	if !ok {
+		return "", false, nil
+	}
+	baseSchema := viewSchema
+	if baseTable.ExplicitSchema {
+		baseSchema = string(baseTable.SchemaName)
+	}
+	relation := doltdb.TableName{Name: string(baseTable.ObjectName), Schema: baseSchema}
+	sqlTable, err := core.GetSqlTableFromContext(ctx, "", relation)
+	if err != nil || sqlTable == nil {
+		return "", false, err
+	}
+	if !simpleViewProjectionMatchesTable(createView, sqlTable.Schema(ctx)) {
+		return "", false, nil
+	}
+	return quoteQualifiedIdentifier(baseSchema, relation.Name), true, nil
+}
+
+func simpleViewBaseTableName(createView *tree.CreateView) (tree.TableName, bool) {
+	if createView.AsSource == nil ||
+		createView.AsSource.With != nil ||
+		createView.AsSource.Limit != nil ||
+		len(createView.AsSource.OrderBy) > 0 ||
+		len(createView.AsSource.Locking) > 0 {
+		return tree.TableName{}, false
+	}
+	selectClause, ok := createView.AsSource.Select.(*tree.SelectClause)
+	if !ok {
+		return tree.TableName{}, false
+	}
+	if selectClause.Distinct ||
+		len(selectClause.DistinctOn) > 0 ||
+		len(selectClause.GroupBy) > 0 ||
+		selectClause.Having != nil ||
+		len(selectClause.Window) > 0 ||
+		selectClause.Where != nil ||
+		len(selectClause.From.Tables) != 1 {
+		return tree.TableName{}, false
+	}
+	tableExpr := tree.StripTableParens(selectClause.From.Tables[0])
+	if aliased, ok := tableExpr.(*tree.AliasedTableExpr); ok {
+		tableExpr = tree.StripTableParens(aliased.Expr)
+	}
+	tableName, ok := tableExpr.(*tree.TableName)
+	if !ok {
+		return tree.TableName{}, false
+	}
+	return *tableName, true
+}
+
+func simpleViewProjectionMatchesTable(createView *tree.CreateView, tableSchema sql.Schema) bool {
+	selectClause := createView.AsSource.Select.(*tree.SelectClause)
+	if len(selectClause.Exprs) == 1 {
+		if _, ok := selectClause.Exprs[0].Expr.(tree.UnqualifiedStar); ok {
+			return true
+		}
+	}
+	if len(selectClause.Exprs) != len(tableSchema) {
+		return false
+	}
+	for i, expr := range selectClause.Exprs {
+		if expr.As != "" {
+			return false
+		}
+		name, ok := expr.Expr.(*tree.UnresolvedName)
+		if !ok || name.Star || name.NumParts != 1 || !strings.EqualFold(name.Parts[0], tableSchema[i].Name) {
+			return false
+		}
+	}
+	return true
+}
+
 func (h *ConnectionHandler) rewriteRowSecurityQuery(query string) (string, bool, error) {
 	if matches := rlsSelectPattern.FindStringSubmatch(query); matches != nil {
 		return h.rewriteRowSecurityRead(query, matches[1], "select")
@@ -3714,6 +3866,11 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if rewrittenQuery, ok := rewriteAdvancedGroupByQuery(query); ok {
 		query = rewrittenQuery
 	}
+	if rewrittenQuery, ok, err := h.rewriteSimpleUpdatableViewDML(query); err != nil {
+		return nil, err
+	} else if ok {
+		query = rewrittenQuery
+	}
 	if rewrittenQuery, ok, err := h.rewriteRowSecurityQuery(query); err != nil {
 		return nil, err
 	} else if ok {
@@ -3811,6 +3968,9 @@ var (
 	rlsInsertPattern             = regexp.MustCompile(`(?is)^\s*insert\s+into\s+(` + rlsIdentifier + `)(?:\s*\(([^)]*)\))?\s+values\s*\(([^)]*)\)(.*)$`)
 	rlsUpdatePattern             = regexp.MustCompile(`(?is)^\s*update\s+(` + rlsIdentifier + `)\s+set\s+(.+?)(\s+where\s+.+?)?(\s+returning\s+.*)?;?\s*$`)
 	rlsDeletePattern             = regexp.MustCompile(`(?is)^\s*delete\s+from\s+(` + rlsIdentifier + `)(.*)$`)
+	updatableViewInsertPattern   = regexp.MustCompile(`(?is)^\s*insert\s+into\s+(` + rlsIdentifier + `)(.*)$`)
+	updatableViewUpdatePattern   = regexp.MustCompile(`(?is)^\s*update\s+(` + rlsIdentifier + `)(.*)$`)
+	updatableViewDeletePattern   = regexp.MustCompile(`(?is)^\s*delete\s+from\s+(` + rlsIdentifier + `)(.*)$`)
 	rlsPredicateInsertPoint      = regexp.MustCompile(`(?is)\s(returning|order\s+by|group\s+by|limit|offset)\s`)
 	rlsUpdateSetKeyword          = regexp.MustCompile(`(?is)\sset\s`)
 	rlsUpdateSetEnd              = regexp.MustCompile(`(?is)\s(where|returning)\s`)
