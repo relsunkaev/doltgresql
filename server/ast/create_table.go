@@ -74,12 +74,12 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		// stock builds; doltgres has no extension hooks for additional
 		// table AMs, so reject other targets with the same catalog-style
 		// error PostgreSQL produces.
-		return nil, errors.Errorf(`access method "%s" does not exist`, node.Using)
+		return nil, pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, `access method "%s" does not exist`, node.Using)
 	}
 	if node.Tablespace != "" && !strings.EqualFold(string(node.Tablespace), "pg_default") {
 		// pg_default is the only tablespace doltgres exposes. Spelling
 		// it out is a no-op; any other target name would not resolve.
-		return nil, errors.Errorf(`tablespace "%s" does not exist`, string(node.Tablespace))
+		return nil, pgerror.Newf(pgcode.UndefinedObject, `tablespace "%s" does not exist`, string(node.Tablespace))
 	}
 	foreignServer := string(node.ForeignServer)
 	if foreignServer != "" {
