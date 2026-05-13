@@ -63,6 +63,9 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 	if err = rewriteRenamedColumnCheckConstraints(ctx, freshTable, n.ColumnName, n.NewColumnName); err != nil {
 		return err
 	}
+	if err = renameSequencesOwnedByColumn(ctx, tableName, n.ColumnName, n.NewColumnName); err != nil {
+		return err
+	}
 	var persistErr error
 	auth.LockWrite(func() {
 		auth.RenameTableColumnPrivileges(tableName, n.ColumnName, n.NewColumnName)

@@ -57,6 +57,9 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	if err = recordDroppedColumnMetadata(ctx, n, sch); err != nil {
 		return err
 	}
+	if err = dropSequencesOwnedByColumn(ctx, tableName, n.Column); err != nil {
+		return err
+	}
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {

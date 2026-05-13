@@ -1867,7 +1867,7 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 			h.preparedStatements[stmt.Name] = preparedData
 		}
 	}
-	if err := validatePreparedStatementResultShape(preparedData.ReturnFields, fields); err != nil {
+	if err := validatePreparedStatementResultShape(preparedData.Query, preparedData.ReturnFields, fields); err != nil {
 		return err
 	}
 
@@ -2236,7 +2236,7 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 			h.preparedStatements[message.PreparedStatement] = preparedData
 		}
 	}
-	if err := validatePreparedStatementResultShape(preparedData.ReturnFields, fields); err != nil {
+	if err := validatePreparedStatementResultShape(preparedData.Query, preparedData.ReturnFields, fields); err != nil {
 		return err
 	}
 

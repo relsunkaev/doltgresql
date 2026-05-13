@@ -63,7 +63,10 @@ func (h *ConnectionHandler) cachedPreparedPlan(ctx *sql.Context, data PreparedSt
 	return planCopy, true
 }
 
-func validatePreparedStatementResultShape(expected, actual []pgproto3.FieldDescription) error {
+func validatePreparedStatementResultShape(query ConvertedQuery, expected, actual []pgproto3.FieldDescription) error {
+	if !queryReturnsRows(query, expected) && !queryReturnsRows(query, actual) {
+		return nil
+	}
 	if len(expected) != len(actual) {
 		return preparedStatementResultShapeChangedError()
 	}
