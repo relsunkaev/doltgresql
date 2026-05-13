@@ -85,7 +85,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	exprs, err := nodeExprsToSelectExprs(ctx, node.Exprs)
+	exprs, err := nodeFuncArgExprsToSelectExprs(ctx, node.Exprs)
 	if err != nil {
 		return nil, err
 	}
@@ -338,6 +338,58 @@ func markedDoltgresWindowFunc(marker string, exprs vitess.SelectExprs, windowDef
 		Exprs: markedExprs,
 		Over:  (*vitess.Over)(windowDef),
 	}
+}
+
+func nodeFuncArgExprsToSelectExprs(ctx *Context, node tree.Exprs) (vitess.SelectExprs, error) {
+	if len(node) == 0 {
+		return nil, nil
+	}
+	selectExprs := make(vitess.SelectExprs, len(node))
+	for i := range node {
+		if expr, ok, err := tableStarFunctionArg(node[i]); err != nil {
+			return nil, err
+		} else if ok {
+			selectExprs[i] = expr
+			continue
+		}
+		var err error
+		selectExprs[i], err = nodeSelectExpr(ctx, tree.SelectExpr{Expr: node[i]})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return selectExprs, nil
+}
+
+func tableStarFunctionArg(node tree.Expr) (vitess.SelectExpr, bool, error) {
+	tableName := vitess.NewTableIdent("")
+	switch expr := node.(type) {
+	case *tree.AllColumnsSelector:
+		if expr.TableName.NumParts != 1 {
+			return nil, true, errors.Errorf("referencing items outside the schema or database is not yet supported")
+		}
+		tableName = vitess.NewTableIdent(expr.TableName.Parts[0])
+	case *tree.UnresolvedName:
+		if !expr.Star {
+			return nil, false, nil
+		}
+		colName, err := unresolvedNameToColName(expr)
+		if err != nil {
+			return nil, true, err
+		}
+		if !colName.Qualifier.SchemaQualifier.IsEmpty() || !colName.Qualifier.DbQualifier.IsEmpty() {
+			return nil, true, errors.Errorf("referencing items outside the schema or database is not yet supported")
+		}
+		tableName = colName.Qualifier.Name
+	default:
+		return nil, false, nil
+	}
+	if tableName.IsEmpty() {
+		return nil, false, nil
+	}
+	return &vitess.AliasedExpr{
+		Expr: &vitess.ColName{Name: vitess.NewColIdent(tableName.String())},
+	}, true, nil
 }
 
 func applyFuncArgNames(exprs vitess.SelectExprs, argNames []string) error {
