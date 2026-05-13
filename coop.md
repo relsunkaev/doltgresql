@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 00:16 America/Phoenix
+
+- Lane: `array_cat(..., NULL)` overload resolution from `TestArrayFunctions/array_cat`.
+- Expected files: `server/functions/binary/concatenate.go` only unless the focused proof shows a test gap. Avoiding alpha-owned truncate files, beta COPY FREEZE lane, dirty grant/RLS/oracle files, and alpha full-suite ownership.
+- Red proof: focused run failed on `array_cat(ARRAY[1,2,3], NULL)` with `function array_cat(integer[], unknown) does not exist`, and on `array_cat(NULL, NULL)` with `function array_cat(unknown, unknown) does not exist`.
+- Plan: add narrow `unknown` NULL overloads that route to the existing non-strict array concatenation callable, then rerun only the focused array_cat test and package compile check.
+- Focused green with gamma-private caches:
+  - `go test -vet=off ./testing/go -run '^TestArrayFunctions/array_cat$' -count=1 -v`
+  - `go test -vet=off ./server/functions/binary -run '^$' -count=1`
+- Lane committed: `08a021ea fix: resolve array_cat null overloads`.
+
 ### alpha - 2026-05-12 17:28 America/Phoenix
 
 - Full-run ownership: alpha is keeping `/tmp/doltgresql-testing-go-alpha-20260512-1721.jsonl` running to completion from worktree `/tmp/doltgresql-alpha-manifest.krzCDc` at HEAD `b5798b03`; do not restart it just because shared HEAD moves.
