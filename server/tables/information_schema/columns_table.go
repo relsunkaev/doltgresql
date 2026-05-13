@@ -135,7 +135,8 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 		isGenerated = "NEVER"
 	)
 
-	dataType, udtName := getDataAndUdtType(col.Type, col.Name)
+	dataType, udtName := getDataAndUdtType(ctx, col.Type, col.Name)
+	domainCatalog, domainSchema, domainName := getDomainMetadata(catName, col.Type)
 
 	if col.Nullable {
 		nullable = "YES"
@@ -174,9 +175,9 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 		nil,                   // collation_catalog TODO
 		nil,                   // collation_schema TODO
 		collName,              // collation_name
-		nil,                   // domain_catalog TODO
-		nil,                   // domain_schema TODO
-		nil,                   // domain_name TODO
+		domainCatalog,         // domain_catalog
+		domainSchema,          // domain_schema
+		domainName,            // domain_name
 		catName,               // udt_catalog
 		"pg_catalog",          // udt_schema
 		udtName,               // udt_name
@@ -309,11 +310,17 @@ func getRowsFromDatabase(ctx *sql.Context, db information_schema.DbWithNames, al
 // getDataAndUdtType returns data types for given DoltgresType. udt_name is the
 // base name of the type (i.e. "varchar"). data_type is the SQL standard name of
 // the type (i.e. "character varying").
-func getDataAndUdtType(colType sql.Type, colName string) (string, string) {
+func getDataAndUdtType(ctx *sql.Context, colType sql.Type, colName string) (string, string) {
 	udtName := ""
 	dataType := ""
 	dgType, ok := colType.(*pgtypes.DoltgresType)
 	if ok {
+		if dgType.TypType == pgtypes.TypeType_Domain {
+			baseType, err := dgType.DomainUnderlyingBaseTypeWithContext(ctx)
+			if err == nil {
+				dgType = baseType
+			}
+		}
 		udtName = dgType.Name()
 		if dgType.IsArrayType() {
 			return "ARRAY", udtName
@@ -330,6 +337,14 @@ func getDataAndUdtType(colType sql.Type, colName string) (string, string) {
 		udtName = dataType
 	}
 	return dataType, udtName
+}
+
+func getDomainMetadata(catName string, colType sql.Type) (interface{}, interface{}, interface{}) {
+	dgType, ok := colType.(*pgtypes.DoltgresType)
+	if !ok || dgType.TypType != pgtypes.TypeType_Domain {
+		return nil, nil, nil
+	}
+	return catName, dgType.Schema(), dgType.Name()
 }
 
 // getColumnPrecisionAndScale returns the precision or a number of postgres type. For non-numeric or decimal types this
