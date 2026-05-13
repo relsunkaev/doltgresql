@@ -25,6 +25,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/deferrable"
@@ -472,7 +474,7 @@ func nodeAlterTableCmds(
 			// `pg_default` as a no-op and reject anything else with the same
 			// catalog-style error PostgreSQL produces.
 			if !strings.EqualFold(cmd.Tablespace, "pg_default") {
-				return nil, nil, errors.Errorf(`tablespace "%s" does not exist`, cmd.Tablespace)
+				return nil, nil, pgerror.Newf(pgcode.UndefinedObject, `tablespace "%s" does not exist`, cmd.Tablespace)
 			}
 			unsupportedWarnings = append(
 				unsupportedWarnings,
@@ -484,7 +486,7 @@ func nodeAlterTableCmds(
 			// keyword the parser surfaces as an empty string) as a no-op; any
 			// other access method does not exist in this server.
 			if cmd.Method != "" && !strings.EqualFold(cmd.Method, "heap") {
-				return nil, nil, errors.Errorf(`access method "%s" does not exist`, cmd.Method)
+				return nil, nil, pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, `access method "%s" does not exist`, cmd.Method)
 			}
 			unsupportedWarnings = append(
 				unsupportedWarnings,
