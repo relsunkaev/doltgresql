@@ -3790,6 +3790,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
+	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):
+		return pgcode.DuplicateColumn.String(), true
+	case strings.HasPrefix(msg, "too many column names were specified"):
+		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):

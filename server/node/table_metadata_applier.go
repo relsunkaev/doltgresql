@@ -18,9 +18,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // TableMetadataApplier runs a child DDL node and then applies Doltgres table
@@ -260,7 +262,7 @@ func ValidateColumnAliases(schema sql.Schema, aliases []string) error {
 		return nil
 	}
 	if len(aliases) > len(schema) {
-		return errors.Errorf("too many column names were specified")
+		return pgerror.New(pgcode.Syntax, "too many column names were specified")
 	}
 	seen := make(map[string]struct{}, len(schema))
 	for i, col := range schema {
@@ -269,7 +271,7 @@ func ValidateColumnAliases(schema sql.Schema, aliases []string) error {
 			name = aliases[i]
 		}
 		if _, ok := seen[name]; ok {
-			return errors.Errorf(`column "%s" specified more than once`, name)
+			return pgerror.Newf(pgcode.DuplicateColumn, `column "%s" specified more than once`, name)
 		}
 		seen[name] = struct{}{}
 	}

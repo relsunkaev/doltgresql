@@ -4487,6 +4487,280 @@
       ]
     },
     {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0022-select-account_id-amount-from-renamed_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 22,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;"
+      ],
+      "query": "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0023-select-attname-from-pg_attribute-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 23,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;"
+      ],
+      "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "account_id"
+          }
+        ],
+        [
+          {
+            "value": "amount"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0024-select-account_id-v-from-partial_alias_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 24,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;"
+      ],
+      "query": "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0025-select-accountid-amount-from-quoted_alias_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 25,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;",
+        "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW quoted_alias_mv (\"AccountID\", amount) AS SELECT id, v FROM source;"
+      ],
+      "query": "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0026-select-v-id-from-swapped_alias_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 26,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;",
+        "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW quoted_alias_mv (\"AccountID\", amount) AS SELECT id, v FROM source;",
+        "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+        "CREATE MATERIALIZED VIEW swapped_alias_mv (v, id) AS SELECT id, v FROM source;"
+      ],
+      "query": "SELECT v, id FROM swapped_alias_mv ORDER BY v;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0027-create-materialized-view-too_many_mv-account_id",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 27,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;",
+        "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW quoted_alias_mv (\"AccountID\", amount) AS SELECT id, v FROM source;",
+        "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+        "CREATE MATERIALIZED VIEW swapped_alias_mv (v, id) AS SELECT id, v FROM source;",
+        "SELECT v, id FROM swapped_alias_mv ORDER BY v;"
+      ],
+      "query": "CREATE MATERIALIZED VIEW too_many_mv (account_id, amount, extra) AS SELECT id, v FROM source;",
+      "expectedSqlstate": "42601",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0028-create-materialized-view-duplicate_alias_mv-account_id",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 28,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;",
+        "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW quoted_alias_mv (\"AccountID\", amount) AS SELECT id, v FROM source;",
+        "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+        "CREATE MATERIALIZED VIEW swapped_alias_mv (v, id) AS SELECT id, v FROM source;",
+        "SELECT v, id FROM swapped_alias_mv ORDER BY v;"
+      ],
+      "query": "CREATE MATERIALIZED VIEW duplicate_alias_mv (account_id, account_id) AS SELECT id, v FROM source;",
+      "expectedSqlstate": "42701",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0029-create-materialized-view-duplicate_remaining_mv-v",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 29,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW renamed_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE MATERIALIZED VIEW partial_alias_mv (account_id) AS SELECT id, v FROM source;",
+        "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW quoted_alias_mv (\"AccountID\", amount) AS SELECT id, v FROM source;",
+        "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+        "CREATE MATERIALIZED VIEW swapped_alias_mv (v, id) AS SELECT id, v FROM source;",
+        "SELECT v, id FROM swapped_alias_mv ORDER BY v;"
+      ],
+      "query": "CREATE MATERIALIZED VIEW duplicate_remaining_mv (v) AS SELECT id, v FROM source;",
+      "expectedSqlstate": "42701",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,

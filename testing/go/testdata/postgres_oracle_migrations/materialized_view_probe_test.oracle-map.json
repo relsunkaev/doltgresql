@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name ALTER MATERIALIZED VIEW RENAME COLUMN preserves metadata and refresh,ALTER MATERIALIZED VIEW RENAME TO preserves metadata,CREATE MATERIALIZED VIEW snapshot probe,DROP MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name ALTER MATERIALIZED VIEW RENAME COLUMN preserves metadata and refresh,ALTER MATERIALIZED VIEW RENAME TO preserves metadata,CREATE MATERIALIZED VIEW column aliases,CREATE MATERIALIZED VIEW snapshot probe,DROP MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
   "sourceFile": "testing/go/materialized_view_probe_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -555,6 +555,216 @@
           }
         ]
       ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0022",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 22,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0022-select-account_id-amount-from-renamed_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0022-select-account_id-amount-from-renamed_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT account_id, amount FROM renamed_mv ORDER BY account_id;",
+      "querySha256": "e61da9b510ba601b0cfce7601457e1fb6f1a849e72fd8c70b3706664e6e3016a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0023",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 23,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0023-select-attname-from-pg_attribute-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0023-select-attname-from-pg_attribute-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'renamed_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+      "querySha256": "b2734761a414d1444956342a34c0441e9758f8b2637c13a78428bd037c0c7f2d",
+      "expectedRows": [
+        [
+          {
+            "value": "account_id"
+          }
+        ],
+        [
+          {
+            "value": "amount"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0024",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 24,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0024-select-account_id-v-from-partial_alias_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0024-select-account_id-v-from-partial_alias_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT account_id, v FROM partial_alias_mv ORDER BY account_id;",
+      "querySha256": "9d8f4e24c9440c4b9f875f0dd3a1fcaee42ae1f42434fa04a28fd52ec080443a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0025",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 25,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0025-select-accountid-amount-from-quoted_alias_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0025-select-accountid-amount-from-quoted_alias_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT \"AccountID\", amount FROM quoted_alias_mv ORDER BY \"AccountID\";",
+      "querySha256": "97329757029169e560986d8e1124b6f9844dd202b6a0e5b6c28dcb122381ef8f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0026",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 26,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0026-select-v-id-from-swapped_alias_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0026-select-v-id-from-swapped_alias_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v, id FROM swapped_alias_mv ORDER BY v;",
+      "querySha256": "2602fe7c8197628c6bca9142ed9bf97edd9f3d1dcc019d2b5924dc314178ea28",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0027",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 27,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0027-create-materialized-view-too_many_mv-account_id",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0027-create-materialized-view-too_many_mv-account_id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42601",
+      "errorSeverity": "ERROR",
+      "query": "CREATE MATERIALIZED VIEW too_many_mv (account_id, amount, extra) AS SELECT id, v FROM source;",
+      "querySha256": "9ab1f13b7aa5c6a3fe6dafdd4afca91f9255398b842779788c887bbaeab6d3bd",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0028",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 28,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0028-create-materialized-view-duplicate_alias_mv-account_id",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0028-create-materialized-view-duplicate_alias_mv-account_id",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42701",
+      "errorSeverity": "ERROR",
+      "query": "CREATE MATERIALIZED VIEW duplicate_alias_mv (account_id, account_id) AS SELECT id, v FROM source;",
+      "querySha256": "ff4215014112da8813e5fec79ba3d79fdfc45571ec0ab308b7fe38e50fdb4c56",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0029",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 29,
+      "scriptName": "CREATE MATERIALIZED VIEW column aliases",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0029-create-materialized-view-duplicate_remaining_mv-v",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0029-create-materialized-view-duplicate_remaining_mv-v",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42701",
+      "errorSeverity": "ERROR",
+      "query": "CREATE MATERIALIZED VIEW duplicate_remaining_mv (v) AS SELECT id, v FROM source;",
+      "querySha256": "39442d1734afde6df574e2a115ef93c410b5cb56bcadc26afb4dec3381fdfe7a",
       "needsCleanup": false,
       "cleanupProvided": false
     }

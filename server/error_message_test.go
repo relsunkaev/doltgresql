@@ -20,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -58,4 +59,14 @@ func TestSanitizeErrorMessageFormatsProvidedNullNonNullableColumn(t *testing.T) 
 	sanitized := sanitizeErrorMessage("column name 'label' is non-nullable but attempted to set a value of null (errno 1048) (sqlstate HY000)")
 
 	require.Equal(t, `null value in column "label" violates not-null constraint: column name 'label' is non-nullable but attempted to set a value of null (errno 1048) (sqlstate HY000)`, sanitized)
+}
+
+func TestErrMessageToSQLStateFormatsMaterializedViewAliasErrors(t *testing.T) {
+	code, ok := errMessageToSQLState(`too many column names were specified`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.Syntax.String(), code)
+
+	code, ok = errMessageToSQLState(`column "account_id" specified more than once`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.DuplicateColumn.String(), code)
 }
