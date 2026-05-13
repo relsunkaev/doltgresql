@@ -169,6 +169,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	}
 	switch a.Action {
 	case PublicationAlterAddTables:
+		if pub.AllTables && (len(a.Tables) > 0 || len(a.Schemas) > 0) {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		tables, err := resolvePublicationTables(ctx, a.Tables)
 		if err != nil {
 			return nil, err
@@ -203,6 +206,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterSetTables:
+		if pub.AllTables && (len(a.Tables) > 0 || len(a.Schemas) > 0) {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		pub.AllTables = false
 		pub.Tables, err = resolvePublicationTables(ctx, a.Tables)
 		if err != nil {
@@ -224,6 +230,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterDropTables:
+		if pub.AllTables && (len(a.Tables) > 0 || len(a.Schemas) > 0) {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		tables, err := resolvePublicationTables(ctx, a.Tables)
 		if err != nil {
 			return nil, err
@@ -239,6 +248,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterAddSchemas:
+		if pub.AllTables && len(a.Schemas) > 0 {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		if err = requireSuperuser(ctx, "alter publication add tables in schema"); err != nil {
 			return nil, err
 		}
@@ -253,6 +265,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterSetSchemas:
+		if pub.AllTables && len(a.Schemas) > 0 {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		if err = requireSuperuser(ctx, "alter publication set tables in schema"); err != nil {
 			return nil, err
 		}
@@ -265,6 +280,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterDropSchemas:
+		if pub.AllTables && len(a.Schemas) > 0 {
+			return nil, publicationAllTablesMutationError(pub.ID.PublicationName())
+		}
 		schemas, err := resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
 			return nil, err
@@ -748,7 +766,7 @@ func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([
 		return nil, nil
 	}
 	relations := make([]publications.PublicationRelation, 0, len(specs))
-	seen := make(map[id.Table]struct{}, len(specs))
+	seen := make(map[id.Table]int, len(specs))
 	for _, spec := range specs {
 		schema, err := core.GetSchemaName(ctx, nil, spec.Schema)
 		if err != nil {
@@ -762,21 +780,32 @@ func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([
 			return nil, errors.Errorf(`relation "%s" does not exist`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
 		}
 		relationID := id.NewTable(schema, spec.Name)
-		if _, ok := seen[relationID]; ok {
-			return nil, errors.Errorf(`table "%s" is specified more than once`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
-		}
-		seen[relationID] = struct{}{}
 		columns, err := validatePublicationColumns(table.Schema(ctx), spec.Columns)
 		if err != nil {
 			return nil, err
 		}
-		relations = append(relations, publications.PublicationRelation{
+		relation := publications.PublicationRelation{
 			Table:     relationID,
 			Columns:   columns,
 			RowFilter: spec.RowFilter,
-		})
+		}
+		if existingIdx, ok := seen[relationID]; ok {
+			if publicationRelationsAreRedundant(relations[existingIdx], relation) {
+				continue
+			}
+			return nil, errors.Errorf(`table "%s" is specified more than once`, doltdb.TableName{Name: spec.Name, Schema: schema}.String())
+		}
+		seen[relationID] = len(relations)
+		relations = append(relations, relation)
 	}
 	return relations, nil
+}
+
+func publicationRelationsAreRedundant(left, right publications.PublicationRelation) bool {
+	return len(left.Columns) == 0 &&
+		strings.TrimSpace(left.RowFilter) == "" &&
+		len(right.Columns) == 0 &&
+		strings.TrimSpace(right.RowFilter) == ""
 }
 
 func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]string, error) {
@@ -784,6 +813,7 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 		return nil, nil
 	}
 	resolved := make([]string, len(columns))
+	seen := make(map[string]struct{}, len(columns))
 	for i, column := range columns {
 		found := false
 		for _, tableColumn := range tableSchema {
@@ -796,6 +826,10 @@ func validatePublicationColumns(tableSchema sql.Schema, columns []string) ([]str
 		if !found {
 			return nil, errors.Errorf(`column "%s" does not exist`, column)
 		}
+		if _, ok := seen[resolved[i]]; ok {
+			return nil, errors.Errorf(`duplicate column "%s" in publication column list`, resolved[i])
+		}
+		seen[resolved[i]] = struct{}{}
 	}
 	return resolved, nil
 }
@@ -806,7 +840,7 @@ func resolvePublicationSchemas(ctx *sql.Context, schemaNames []string) ([]string
 	}
 	schemas := make([]string, 0, len(schemaNames))
 	for _, schemaName := range schemaNames {
-		schema, err := core.GetSchemaName(ctx, nil, schemaName)
+		schema, err := resolvePublicationSchemaName(ctx, schemaName)
 		if err != nil {
 			return nil, err
 		}
@@ -821,6 +855,13 @@ func resolvePublicationSchemas(ctx *sql.Context, schemaNames []string) ([]string
 	}
 	slices.Sort(schemas)
 	return slices.Compact(schemas), nil
+}
+
+func resolvePublicationSchemaName(ctx *sql.Context, schemaName string) (string, error) {
+	if strings.EqualFold(schemaName, "current_schema") {
+		return core.GetSchemaName(ctx, nil, "")
+	}
+	return core.GetSchemaName(ctx, nil, schemaName)
 }
 
 func publicationSchemaExists(ctx *sql.Context, schema string) (bool, error) {
@@ -917,6 +958,10 @@ func publicationAddSchemaRestrictionError(publicationName string) error {
 	return pgerror.Newf(pgcode.InvalidParameterValue,
 		`cannot add schema to publication "%s" because it contains a table where a row filter or column list is specified`,
 		publicationName)
+}
+
+func publicationAllTablesMutationError(publicationName string) error {
+	return errors.Errorf(`publication "%s" is defined as FOR ALL TABLES`, publicationName)
 }
 
 func addPublicationTables(pub *publications.Publication, tables []publications.PublicationRelation) error {
