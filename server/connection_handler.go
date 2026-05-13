@@ -4514,7 +4514,7 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	converted := make([]ConvertedQuery, len(s))
 	for i := range s {
 		vitessAST, err := ast.Convert(s[i])
-		stmtTag := s[i].AST.StatementTag()
+		stmtTag := statementTagForParsedStatement(s[i].AST)
 		usesDefaultTransactionReadMode := false
 		usesExplicitTransactionIsolation := false
 		if begin, ok := s[i].AST.(*tree.BeginTransaction); ok {
@@ -4542,6 +4542,24 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		}
 	}
 	return converted, nil
+}
+
+func statementTagForParsedStatement(stmt tree.Statement) string {
+	if selectStmt, ok := stmt.(*tree.Select); ok && parsedSelectIntoClause(selectStmt) != nil {
+		return "CREATE TABLE AS"
+	}
+	return stmt.StatementTag()
+}
+
+func parsedSelectIntoClause(node *tree.Select) *tree.SelectInto {
+	if node == nil {
+		return nil
+	}
+	clause, ok := node.Select.(*tree.SelectClause)
+	if !ok {
+		return nil
+	}
+	return clause.Into
 }
 
 var (
