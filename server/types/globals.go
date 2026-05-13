@@ -219,7 +219,7 @@ func init() {
 		toInternal("bytea"):            Bytea,
 		toInternal("char"):             InternalChar,
 		toInternal("cid"):              Unknown,
-		toInternal("cidr"):             Unknown,
+		toInternal("cidr"):             Cidr,
 		toInternal("circle"):           Unknown,
 		toInternal("cstring"):          Cstring,
 		toInternal("date"):             Date,

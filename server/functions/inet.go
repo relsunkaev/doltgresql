@@ -22,12 +22,60 @@ import (
 )
 
 func initInet() {
+	framework.RegisterFunction(cidr_in)
+	framework.RegisterFunction(cidr_out)
+	framework.RegisterFunction(cidr_recv)
+	framework.RegisterFunction(cidr_send)
 	framework.RegisterFunction(inet_in)
 	framework.RegisterFunction(inet_out)
 	framework.RegisterFunction(inet_recv)
 	framework.RegisterFunction(inet_send)
 	framework.RegisterFunction(inet_host)
 	framework.RegisterFunction(inet_masklen)
+}
+
+var cidr_in = framework.Function1{
+	Name:       "cidr_in",
+	Return:     pgtypes.Cidr,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cstring},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.ParseCidr(val.(string))
+	},
+}
+
+var cidr_out = framework.Function1{
+	Name:       "cidr_out",
+	Return:     pgtypes.Cstring,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cidr},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.FormatCidr(val.(pgtypes.InetValue)), nil
+	},
+}
+
+var cidr_recv = framework.Function1{
+	Name:       "cidr_recv",
+	Return:     pgtypes.Cidr,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Internal},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		data := val.([]byte)
+		if data == nil {
+			return nil, nil
+		}
+		return pgtypes.Cidr.DeserializeValue(ctx, data)
+	},
+}
+
+var cidr_send = framework.Function1{
+	Name:       "cidr_send",
+	Return:     pgtypes.Bytea,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cidr},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.Cidr.SerializeValue(ctx, val)
+	},
 }
 
 var inet_in = framework.Function1{

@@ -768,14 +768,14 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			return nil
 		}
 		return functions.FormatDateTimeWithBC(v.(time.Time).UTC(), "2006-01-02 15:04:05.999999", dt.ID == types.TimestampTZ.ID)
-	case types.Inet.ID:
+	case types.Cidr.ID, types.Inet.ID:
 		switch val := v.(type) {
 		case types.InetValue:
-			return types.FormatInet(val)
+			return NormalizeNetworkValueToString(dt, val)
 		case netip.Prefix:
-			return types.FormatInet(types.InetValue{Addr: val.Addr().Unmap(), Bits: uint8(val.Bits())})
+			return NormalizeNetworkValueToString(dt, types.InetValue{Addr: val.Addr().Unmap(), Bits: uint8(val.Bits())})
 		case netip.Addr:
-			return types.FormatInet(types.InetValue{Addr: val.Unmap(), Bits: 32})
+			return NormalizeNetworkValueToString(dt, types.InetValue{Addr: val.Unmap(), Bits: 32})
 		}
 	}
 
@@ -805,6 +805,13 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 		}
 	}
 	return v
+}
+
+func NormalizeNetworkValueToString(dt *types.DoltgresType, val types.InetValue) string {
+	if dt.ID == types.Cidr.ID {
+		return types.FormatCidr(val)
+	}
+	return types.FormatInet(val)
 }
 
 // NormalizeArrayType normalizes array types by normalizing its elements first,

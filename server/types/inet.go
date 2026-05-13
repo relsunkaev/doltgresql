@@ -74,6 +74,44 @@ var Inet = &DoltgresType{
 	DeserializationFunc: deserializeTypeInet,
 }
 
+// Cidr is PostgreSQL's network block type. This currently implements the IPv4 subset needed by the test suite.
+var Cidr = &DoltgresType{
+	ID:                  toInternal("cidr"),
+	TypLength:           int16(-1),
+	PassedByVal:         false,
+	TypType:             TypeType_Base,
+	TypCategory:         TypeCategory_NetworkAddressTypes,
+	IsPreferred:         false,
+	IsDefined:           true,
+	Delimiter:           ",",
+	RelID:               id.Null,
+	SubscriptFunc:       toFuncID("-"),
+	Elem:                id.NullType,
+	Array:               toInternal("_cidr"),
+	InputFunc:           toFuncID("cidr_in", toInternal("cstring")),
+	OutputFunc:          toFuncID("cidr_out", toInternal("cidr")),
+	ReceiveFunc:         toFuncID("cidr_recv", toInternal("internal")),
+	SendFunc:            toFuncID("cidr_send", toInternal("cidr")),
+	ModInFunc:           toFuncID("-"),
+	ModOutFunc:          toFuncID("-"),
+	AnalyzeFunc:         toFuncID("-"),
+	Align:               TypeAlignment_Int,
+	Storage:             TypeStorage_Plain,
+	NotNull:             false,
+	BaseTypeID:          id.NullType,
+	TypMod:              -1,
+	NDims:               0,
+	TypCollation:        id.NullCollation,
+	DefaulBin:           "",
+	Default:             "",
+	Acl:                 nil,
+	Checks:              nil,
+	attTypMod:           -1,
+	CompareFunc:         toFuncID("-"),
+	SerializationFunc:   serializeTypeInet,
+	DeserializationFunc: deserializeTypeInet,
+}
+
 // ParseInet converts PostgreSQL inet text input into an InetValue.
 func ParseInet(input string) (InetValue, error) {
 	trimmed := strings.TrimSpace(input)
@@ -100,12 +138,47 @@ func ParseInet(input string) (InetValue, error) {
 	return InetValue{Addr: addr, Bits: 32}, nil
 }
 
+// ParseCidr converts PostgreSQL cidr text input into an InetValue.
+func ParseCidr(input string) (InetValue, error) {
+	trimmed := strings.TrimSpace(input)
+	if strings.Contains(trimmed, "/") {
+		prefix, err := netip.ParsePrefix(trimmed)
+		if err != nil {
+			return InetValue{}, ErrInvalidSyntaxForType.New("cidr", input)
+		}
+		addr := prefix.Addr().Unmap()
+		if !addr.Is4() {
+			return InetValue{}, ErrInvalidSyntaxForType.New("cidr", input)
+		}
+		masked := netip.PrefixFrom(addr, prefix.Bits()).Masked()
+		if masked.Addr() != addr {
+			return InetValue{}, ErrInvalidSyntaxForType.New("cidr", input)
+		}
+		return InetValue{Addr: masked.Addr(), Bits: uint8(masked.Bits())}, nil
+	}
+
+	addr, err := netip.ParseAddr(trimmed)
+	if err != nil {
+		return InetValue{}, ErrInvalidSyntaxForType.New("cidr", input)
+	}
+	addr = addr.Unmap()
+	if !addr.Is4() {
+		return InetValue{}, ErrInvalidSyntaxForType.New("cidr", input)
+	}
+	return InetValue{Addr: addr, Bits: 32}, nil
+}
+
 // FormatInet converts an InetValue to PostgreSQL's canonical text form.
 func FormatInet(value InetValue) string {
 	if value.Bits == 32 {
 		return value.Addr.String()
 	}
 	return value.Addr.String() + "/" + strconv.Itoa(int(value.Bits))
+}
+
+// FormatCidr converts an InetValue to PostgreSQL's canonical cidr text form.
+func FormatCidr(value InetValue) string {
+	return value.prefix().String()
 }
 
 // Host returns the address without the network mask.
