@@ -24,12 +24,6 @@ import (
 // consistency bug: PostgreSQL combines multiple permissive SELECT policies with
 // OR semantics, but Doltgres only applies the first matching policy.
 func TestRowLevelSecurityMultipleSelectPoliciesCombineRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_multi_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_multi_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_multi_policy_reader; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_multi_policy_reader",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "multiple permissive SELECT policies combine with OR",
@@ -68,12 +62,6 @@ func TestRowLevelSecurityMultipleSelectPoliciesCombineRepro(t *testing.T) {
 					},
 					Username: `rls_multi_policy_reader`,
 					Password: `reader`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-multiple-select-policies-combine",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -84,12 +72,6 @@ func TestRowLevelSecurityMultipleSelectPoliciesCombineRepro(t *testing.T) {
 // bug: PostgreSQL treats USING (true) as an allow-all permissive policy, but
 // Doltgres rewrites unsupported policy expressions as false.
 func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_true_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_policy_reader; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_true_policy_reader",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "SELECT policy USING true allows all rows",
@@ -121,12 +103,6 @@ func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
 					},
 					Username: `rls_true_policy_reader`,
 					Password: `reader`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-select-policy-using-true-allows-all",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -137,12 +113,6 @@ func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
 // unsupported-expression data consistency bug for INSERT policies: PostgreSQL
 // treats WITH CHECK (true) as allowing every inserted row.
 func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_true_insert_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_insert_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_insert_policy_writer; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_true_insert_policy_writer",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "INSERT policy WITH CHECK true allows all rows",
@@ -172,12 +142,6 @@ func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "inserted"}},
 					Username: `rls_true_insert_policy_writer`,
 					Password: `writer`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-insert-policy-check-true-allows-all",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -188,12 +152,6 @@ func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
 // true-expression bug for UPDATE policies: PostgreSQL allows the update, while
 // Doltgres filters every row out.
 func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_true_update_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_update_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_update_policy_writer; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_true_update_policy_writer",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "UPDATE policy USING true allows all rows",
@@ -226,12 +184,6 @@ func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "updated"}},
 					Username: `rls_true_update_policy_writer`,
 					Password: `writer`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-update-policy-using-true-allows-all",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -242,12 +194,6 @@ func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
 // true-expression bug for DELETE policies: PostgreSQL allows the delete, while
 // Doltgres filters every row out.
 func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_true_delete_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_delete_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_delete_policy_writer; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_true_delete_policy_writer",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "DELETE policy USING true allows all rows",
@@ -278,12 +224,6 @@ func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "delete me"}},
 					Username: `rls_true_delete_policy_writer`,
 					Password: `writer`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-delete-policy-using-true-allows-all",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -294,12 +234,6 @@ func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
 // expression-parsing bug: PostgreSQL treats current_user = owner_name the same
 // as owner_name = current_user, but Doltgres only recognizes the latter form.
 func TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_reversed_policy_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_reversed_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_reversed_policy_reader; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_reversed_policy_reader",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "SELECT policy current_user equals owner column allows matching rows",
@@ -329,12 +263,6 @@ func TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "visible"}},
 					Username: `rls_reversed_policy_reader`,
 					Password: `reader`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-select-policy-reversed-current-user",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},

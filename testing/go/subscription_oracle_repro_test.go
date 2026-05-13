@@ -1,0 +1,40 @@
+// Copyright 2026 Dolthub, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package _go
+
+import "testing"
+
+// TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro pins
+// PostgreSQL's metadata-only subscription boundary: ADD PUBLICATION still
+// implies REFRESH unless refresh=false is requested, so disabled subscriptions
+// must reject it even when copy_data=false.
+func TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "subscription add publication refresh rejected when disabled",
+			SetUpScript: []string{
+				"CREATE TABLE sub_disabled_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+				"CREATE PUBLICATION sub_disabled_pub FOR TABLE sub_disabled_items;",
+				"CREATE SUBSCRIPTION sub_disabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION sub_disabled_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);",
+					ExpectedErr: "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions",
+				},
+			},
+		},
+	})
+}

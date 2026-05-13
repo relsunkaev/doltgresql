@@ -1902,6 +1902,28 @@
         "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_owner_bypass_user') THEN REVOKE USAGE ON SCHEMA public FROM rls_owner_bypass_user; END IF; END $$",
         "DROP ROLE IF EXISTS rls_owner_bypass_user"
       ]
+    },
+    {
+      "id": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshrejectedwhendisabledrepro-0001-alter-subscription-sub_disabled_sub-add-publication",
+      "source": "testing/go/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE sub_disabled_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+        "CREATE PUBLICATION sub_disabled_pub FOR TABLE sub_disabled_items;",
+        "CREATE SUBSCRIPTION sub_disabled_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION sub_disabled_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false);"
+      ],
+      "query": "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SUBSCRIPTION IF EXISTS sub_disabled_sub",
+        "DROP PUBLICATION IF EXISTS sub_disabled_pub",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     }
   ]
 }

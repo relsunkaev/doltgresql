@@ -376,31 +376,38 @@ func loadMigrationOverridesExcludingSource(excludedSourceFile string) (map[strin
 		if excludedSourceFile != "" && mapped.SourceFile == excludedSourceFile {
 			continue
 		}
-		for _, assertion := range mapped.Assertions {
-			if assertion.Oracle != "postgres" {
-				continue
-			}
-			if assertion.Key == "" {
-				return nil, fmt.Errorf("%s: postgres migration entry missing key", file)
-			}
-			if assertion.PostgresID == "" {
-				return nil, fmt.Errorf("%s: %s postgres migration entry missing postgresId", file, assertion.Key)
-			}
-			if _, ok := overrides[assertion.Key]; ok {
-				return nil, fmt.Errorf("%s: duplicate migration key %s", file, assertion.Key)
-			}
-			overrides[assertion.Key] = oracleMeta{
-				ID:                    assertion.PostgresID,
-				Compare:               assertion.Compare,
-				ColumnModes:           assertion.ColumnModes,
-				ExpectedRows:          assertion.ExpectedRows,
-				ExpectedSQLState:      assertion.SQLState,
-				ExpectedErrorSeverity: assertion.ErrorSeverity,
-				Cleanup:               assertion.Cleanup,
-			}
+		if err := addMigrationOverrides(overrides, mapped, file, false); err != nil {
+			return nil, err
 		}
 	}
 	return overrides, nil
+}
+
+func addMigrationOverrides(overrides map[string]oracleMeta, mapped migrationFile, source string, allowReplace bool) error {
+	for _, assertion := range mapped.Assertions {
+		if assertion.Oracle != "postgres" {
+			continue
+		}
+		if assertion.Key == "" {
+			return fmt.Errorf("%s: postgres migration entry missing key", source)
+		}
+		if assertion.PostgresID == "" {
+			return fmt.Errorf("%s: %s postgres migration entry missing postgresId", source, assertion.Key)
+		}
+		if _, ok := overrides[assertion.Key]; ok && !allowReplace {
+			return fmt.Errorf("%s: duplicate migration key %s", source, assertion.Key)
+		}
+		overrides[assertion.Key] = oracleMeta{
+			ID:                    assertion.PostgresID,
+			Compare:               assertion.Compare,
+			ColumnModes:           assertion.ColumnModes,
+			ExpectedRows:          assertion.ExpectedRows,
+			ExpectedSQLState:      assertion.SQLState,
+			ExpectedErrorSeverity: assertion.ErrorSeverity,
+			Cleanup:               assertion.Cleanup,
+		}
+	}
+	return nil
 }
 
 func annotatedScriptTestEntries(migrationOverrides map[string]oracleMeta) ([]entry, error) {
@@ -586,6 +593,9 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 	if err != nil {
 		return err
 	}
+	if err := addMigrationOverrides(migrationOverrides, mapped, outputPath, true); err != nil {
+		return err
+	}
 	entries, err := annotatedScriptTestEntries(migrationOverrides)
 	if err != nil {
 		return err
@@ -608,7 +618,7 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilt
 		key := fmt.Sprintf("%s#%04d", entry.Source, entry.Ordinal)
 		assertion := assertionsByKey[key]
 		if assertion == nil {
-			return fmt.Errorf("missing oracle map assertion for %s", key)
+			continue
 		}
 		expectedRows, sqlstate, severity, err := readPostgresOracleExpected(ctx, conn, entry)
 		if err != nil {

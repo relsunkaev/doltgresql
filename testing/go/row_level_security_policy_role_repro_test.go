@@ -57,18 +57,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 					Expected: []sql.Row{{1, "allowed row"}},
 					Username: `rls_policy_list_allowed`,
 					Password: `allowed`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-allows-listed-role",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup: []string{
-							"RESET ROLE",
-							"DROP TABLE IF EXISTS rls_policy_list_docs",
-							"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
-							"DROP ROLE IF EXISTS rls_policy_list_allowed",
-							"DROP ROLE IF EXISTS rls_policy_list_unlisted",
-						},
-					},
 				},
 				{
 					Query: `SELECT id, label
@@ -77,18 +65,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 					Expected: []sql.Row{},
 					Username: `rls_policy_list_unlisted`,
 					Password: `unlisted`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-denies-unlisted-role",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup: []string{
-							"RESET ROLE",
-							"DROP TABLE IF EXISTS rls_policy_list_docs",
-							"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
-							"DROP ROLE IF EXISTS rls_policy_list_allowed",
-							"DROP ROLE IF EXISTS rls_policy_list_unlisted",
-						},
-					},
 				},
 			},
 		},
@@ -99,13 +75,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 // same role-list applicability bug for write policies: an unlisted role can use
 // an INSERT policy that PostgreSQL only applies to the listed role.
 func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_insert_policy_list_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
-		"DROP ROLE IF EXISTS rls_insert_policy_list_unlisted",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "RLS policy role list restricts insert policy applicability",
@@ -141,12 +110,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) 
 					Expected: []sql.Row{{1, "allowed insert"}},
 					Username: `rls_insert_policy_list_allowed`,
 					Password: `allowed`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-allows-listed-insert",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 				{
 					Query: `INSERT INTO rls_insert_policy_list_docs
@@ -155,13 +118,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) 
 					ExpectedErr: `violates row-level security policy`,
 					Username:    `rls_insert_policy_list_unlisted`,
 					Password:    `unlisted`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:                    "rls-policy-role-list-denies-unlisted-insert",
-						Compare:               "sqlstate",
-						ExpectedSQLState:      "42501",
-						ExpectedErrorSeverity: "ERROR",
-						Cleanup:               cleanup,
-					},
 				},
 			},
 		},
@@ -172,13 +128,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) 
 // role-list applicability bug for UPDATE policies: PostgreSQL applies the
 // policy only to the listed role, but Doltgres lets an unlisted role update rows.
 func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_update_policy_list_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_unlisted; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_update_policy_list_allowed",
-		"DROP ROLE IF EXISTS rls_update_policy_list_unlisted",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "RLS policy role list restricts update policy applicability",
@@ -219,12 +168,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) 
 					Expected: []sql.Row{{1, "allowed updated"}},
 					Username: `rls_update_policy_list_allowed`,
 					Password: `allowed`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-allows-listed-update",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 				{
 					Query: `UPDATE rls_update_policy_list_docs
@@ -234,12 +177,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) 
 					Expected: []sql.Row{},
 					Username: `rls_update_policy_list_unlisted`,
 					Password: `unlisted`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-denies-unlisted-update",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},
@@ -250,13 +187,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) 
 // role-list applicability bug for DELETE policies: PostgreSQL applies the
 // policy only to the listed role, but Doltgres lets an unlisted role delete rows.
 func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_delete_policy_list_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_unlisted; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_delete_policy_list_allowed",
-		"DROP ROLE IF EXISTS rls_delete_policy_list_unlisted",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "RLS policy role list restricts delete policy applicability",
@@ -295,12 +225,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) 
 					Expected: []sql.Row{{1, "allowed row"}},
 					Username: `rls_delete_policy_list_allowed`,
 					Password: `allowed`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-allows-listed-delete",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 				{
 					Query: `DELETE FROM rls_delete_policy_list_docs
@@ -309,12 +233,6 @@ func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) 
 					Expected: []sql.Row{},
 					Username: `rls_delete_policy_list_unlisted`,
 					Password: `unlisted`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-policy-role-list-denies-unlisted-delete",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},

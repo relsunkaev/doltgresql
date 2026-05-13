@@ -550,12 +550,6 @@ func TestRowLevelSecurityNoForcePgClassMetadataRepro(t *testing.T) {
 // table is marked FORCE ROW LEVEL SECURITY, but Doltgres applies default-deny
 // RLS to the owner.
 func TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro(t *testing.T) {
-	cleanup := []string{
-		"RESET ROLE",
-		"DROP TABLE IF EXISTS rls_owner_bypass_docs",
-		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_owner_bypass_user') THEN REVOKE USAGE ON SCHEMA public FROM rls_owner_bypass_user; END IF; END $$",
-		"DROP ROLE IF EXISTS rls_owner_bypass_user",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "table owner bypasses non-forced RLS",
@@ -579,12 +573,6 @@ func TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro(t *testing.T)
 					Expected: []sql.Row{{1, "visible to owner"}},
 					Username: `rls_owner_bypass_user`,
 					Password: `owner`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:          "rls-table-owner-bypasses-unforced-rls",
-						Compare:     "structural",
-						ColumnModes: []string{"structural", "structural"},
-						Cleanup:     cleanup,
-					},
 				},
 			},
 		},

@@ -1,0 +1,231 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --migration-candidates-dir",
+  "sourceFile": "testing/go/row_level_security_policy_role_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro#0001",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "ordinal": 1,
+      "scriptName": "RLS policy role list restricts policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-allows-listed-role",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictspolicyrepro-0001-select-id-label-from-rls_policy_list_docs",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_policy_list_allowed",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "607ed6c3f56efb420dea0a26db8811feae63e95f8aa2eb4211a79761efe33007",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro#0002",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "ordinal": 2,
+      "scriptName": "RLS policy role list restricts policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-denies-unlisted-role",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictspolicyrepro-0002-select-id-label-from-rls_policy_list_docs",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_policy_list_unlisted",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "607ed6c3f56efb420dea0a26db8811feae63e95f8aa2eb4211a79761efe33007",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro#0001",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "ordinal": 1,
+      "scriptName": "RLS policy role list restricts insert policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-allows-listed-insert",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsinsertpolicyrepro-0001-insert-into-rls_insert_policy_list_docs-values-1",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_insert_policy_list_allowed",
+      "query": "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (1, 'rls_insert_policy_list_allowed', 'allowed insert')\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "c00b6747043a2f2decc2cc62e0486e11259dd9b269d21a9e2d5c48c820dd4004",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_insert_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro#0002",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "ordinal": 2,
+      "scriptName": "RLS policy role list restricts insert policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-denies-unlisted-insert",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsinsertpolicyrepro-0002-insert-into-rls_insert_policy_list_docs-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "rls_insert_policy_list_unlisted",
+      "query": "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (2, 'rls_insert_policy_list_unlisted', 'unlisted insert')\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "22756f0d7c21dbc1a05d9f6b22920bc9940ee67ed86eb14a71d9cee7f50cb277",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_insert_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro#0001",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro",
+      "ordinal": 1,
+      "scriptName": "RLS policy role list restricts update policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-allows-listed-update",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsupdatepolicyrepro-0001-update-rls_update_policy_list_docs-set-label-=",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_update_policy_list_allowed",
+      "query": "UPDATE rls_update_policy_list_docs\n\t\t\t\t\t\tSET label = 'allowed updated'\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "541287842ea2230f9bf801f1afb10305a319466ce5fb88b22779e7aca00cb238",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_update_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_update_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_update_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro#0002",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro",
+      "ordinal": 2,
+      "scriptName": "RLS policy role list restricts update policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-denies-unlisted-update",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsupdatepolicyrepro-0002-update-rls_update_policy_list_docs-set-label-=",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_update_policy_list_unlisted",
+      "query": "UPDATE rls_update_policy_list_docs\n\t\t\t\t\t\tSET label = 'unlisted updated'\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "9748f38f5a7afd473d8909c48fe20aefefe9c280697d22665d148a5ccc9d0f0f",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_update_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_update_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_update_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro#0001",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro",
+      "ordinal": 1,
+      "scriptName": "RLS policy role list restricts delete policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-allows-listed-delete",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsdeletepolicyrepro-0001-delete-from-rls_delete_policy_list_docs-where-owner_name",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_delete_policy_list_allowed",
+      "query": "DELETE FROM rls_delete_policy_list_docs\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "38e7cdef566422996c655376764324c5a22c86f2fd2f5d312ee559f5f44c2084",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_delete_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_delete_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_delete_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    },
+    {
+      "key": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro#0002",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro",
+      "ordinal": 2,
+      "scriptName": "RLS policy role list restricts delete policy applicability",
+      "oracle": "postgres",
+      "postgresId": "rls-policy-role-list-denies-unlisted-delete",
+      "suggestedId": "row-level-security-policy-role-repro-test-testrowlevelsecuritypolicyrolelistrestrictsdeletepolicyrepro-0002-delete-from-rls_delete_policy_list_docs-where-owner_name",
+      "compare": "structural",
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "expectedKind": "rows",
+      "username": "rls_delete_policy_list_unlisted",
+      "query": "DELETE FROM rls_delete_policy_list_docs\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
+      "querySha256": "38e7cdef566422996c655376764324c5a22c86f2fd2f5d312ee559f5f44c2084",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_delete_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_delete_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_delete_policy_list_unlisted"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    }
+  ]
+}
