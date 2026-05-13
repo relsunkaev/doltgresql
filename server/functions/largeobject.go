@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/largeobject"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -65,7 +66,14 @@ var lo_unlink_oid = framework.Function1{
 			return nil, err
 		}
 		trackLargeObjectMutation(ctx)
-		return largeobject.Unlink(currentDatabase(ctx), oid)
+		count, err := largeobject.Unlink(currentDatabase(ctx), oid)
+		if err != nil {
+			return nil, err
+		}
+		if count > 0 {
+			clearLargeObjectComment(oid)
+		}
+		return count, nil
 	},
 }
 
@@ -183,6 +191,14 @@ func trackLargeObjectMutation(ctx *sql.Context) {
 		return
 	}
 	largeobject.TrackMutation(uint32(ctx.Session.ID()))
+}
+
+func clearLargeObjectComment(oid uint32) {
+	comments.Set(comments.Key{
+		ObjOID:   oid,
+		ClassOID: comments.ClassOID("pg_largeobject_metadata"),
+		ObjSubID: 0,
+	}, nil)
 }
 
 func requireLargeObjectPrivilege(ctx *sql.Context, oid uint32, privilege string) error {
