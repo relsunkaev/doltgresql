@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
@@ -33,22 +34,33 @@ func nodeDropSchema(ctx *Context, node *tree.DropSchema) (vitess.Statement, erro
 		return NotYetSupportedError("DROP SCHEMA with multiple schema names is not yet supported.")
 	}
 
-	if node.DropBehavior == tree.DropCascade {
-		return NotYetSupportedError("DROP SCHEMA with CASCADE behavior is not yet supported.")
-	}
-
 	schemaName := node.Names[0]
 
-	return &vitess.DBDDL{
-		Action:           vitess.DropStr,
-		SchemaOrDatabase: "schema",
-		DBName:           schemaName,
-		CharsetCollate:   nil,
-		IfExists:         node.IfExists,
+	if node.DropBehavior != tree.DropCascade {
+		return &vitess.DBDDL{
+			Action:           vitess.DropStr,
+			SchemaOrDatabase: "schema",
+			DBName:           schemaName,
+			CharsetCollate:   nil,
+			IfExists:         node.IfExists,
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_DELETE,
+				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+				TargetNames: []string{"", schemaName},
+			},
+		}, nil
+	}
+
+	return vitess.InjectedStatement{
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_DELETE,
 			TargetType:  auth.AuthTargetType_SchemaIdentifiers,
 			TargetNames: []string{"", schemaName},
 		},
+		Statement: pgnodes.NewDropSchemaStatement(
+			schemaName,
+			node.IfExists,
+			node.DropBehavior == tree.DropCascade,
+		),
 	}, nil
 }

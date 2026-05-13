@@ -103,6 +103,16 @@ func RemoveDefaultPrivilege(key DefaultPrivilegeKey, privilege GrantedPrivilege,
 	}
 }
 
+// RemoveDefaultPrivilegesForSchema removes schema-scoped default ACL entries
+// for a dropped schema. Global default privileges are left intact.
+func RemoveDefaultPrivilegesForSchema(schema string) {
+	for key := range globalDatabase.defaultPrivileges.Data {
+		if key.Schema == schema {
+			delete(globalDatabase.defaultPrivileges.Data, key)
+		}
+	}
+}
+
 // ApplyDefaultPrivilegesToTable grants matching default privileges to a newly-created table.
 func ApplyDefaultPrivilegesToTable(ownerName string, schema string, table string) error {
 	var err error
