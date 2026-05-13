@@ -372,7 +372,7 @@ func jsonAggFormatPlain(sb *strings.Builder, value pgtypes.JsonValue) {
 		sb.WriteRune('[')
 		for i, item := range value {
 			if i > 0 {
-				sb.WriteString(", ")
+				sb.WriteString(jsonAggArraySeparator(value[i-1], item))
 			}
 			jsonAggFormatPlain(sb, item)
 		}
@@ -395,6 +395,16 @@ func jsonAggFormatPlain(sb *strings.Builder, value pgtypes.JsonValue) {
 	default:
 		pgtypes.JsonValueFormatterCompact(sb, value)
 	}
+}
+
+func jsonAggArraySeparator(left pgtypes.JsonValue, right pgtypes.JsonValue) string {
+	if _, ok := pgtypes.JsonValueRawText(left); ok {
+		return ", "
+	}
+	if _, ok := pgtypes.JsonValueRawText(right); ok {
+		return ", "
+	}
+	return ","
 }
 
 func jsonAggWriteKey(sb *strings.Builder, value string) {
