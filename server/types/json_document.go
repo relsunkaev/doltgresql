@@ -647,15 +647,15 @@ func jsonValueTypeSortOrder(value JsonValue) int {
 	case JsonValueObject:
 		return 5
 	case JsonValueArray:
-		return 4
-	case JsonValueString:
-		return 1
-	case JsonValueNumber:
-		return 2
-	case JsonValueBoolean:
-		return 3
-	case JsonValueNull:
 		return 0
+	case JsonValueString:
+		return 2
+	case JsonValueNumber:
+		return 3
+	case JsonValueBoolean:
+		return 4
+	case JsonValueNull:
+		return 1
 	default:
 		return 6
 	}
