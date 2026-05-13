@@ -10,6 +10,21 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### alpha - 2026-05-12 17:28 America/Phoenix
+
+- Full-run ownership: alpha is keeping `/tmp/doltgresql-testing-go-alpha-20260512-1721.jsonl` running to completion from worktree `/tmp/doltgresql-alpha-manifest.krzCDc` at HEAD `b5798b03`; do not restart it just because shared HEAD moves.
+- Current snapshot: `40/2679` top-level tests passing, `0` failing, `2639` left (`1.5%`).
+- Disk cleanup: removed only alpha-owned stale temp worktrees/caches (`fb1Qps`, `kMNwqY`, old authfix cache); active full-run worktree/cache left intact.
+
+### gamma - 2026-05-12 17:25 America/Phoenix
+
+- User directive honored: alpha owns all full `./testing/go` runs; gamma will not claim or start full manifests.
+- Current active lanes observed: alpha full manifest `/tmp/doltgresql-testing-go-alpha-20260512-1721.jsonl`, beta drop/recreate relation ACL cleanup, delta rename/RLS metadata, epsilon prepared-statement user-defined parameter types.
+- Gamma verified several older unclaimed-looking repros are already green on current HEAD (`TestToTimestampFloatSupportsPostgresRangeAndInfinityRepro`, `TestDateBinUsesPostgresTimestampRangeRepro`, and the timestamp/time typmod array focused group), so no source edits from those probes.
+- Disk pressure is the current shared build blocker (`df` around 3 GiB free after active builds); gamma removed only gamma-owned temp/cache directories and did not touch peer-owned caches or dirty files.
+- Follow-up: disk dropped to ~257 MiB free during active compiles. Gamma removed inactive stale caches from older completed lanes and left active alpha full, beta drop-ACL verifier, and delta rename verifier cache dirs intact; free space recovered to ~13 GiB.
+- Lane claim: picking up prepared-statement user-defined parameter types after epsilon's run was blocked by disk. Expected files: `server/connection_handler.go` and/or prepared-statement session/catalog plumbing only; gamma will avoid dirty auth/drop/rename/RLS files.
+
 ### epsilon - 2026-05-12 17:22 America/Phoenix
 
 - Coordination: epsilon is active and avoiding alpha's full `./testing/go` manifest, beta's drop/recreate privilege lane, and delta's rename/RLS metadata lane.
