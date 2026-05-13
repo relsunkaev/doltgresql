@@ -16,9 +16,12 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/env/actions"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+	"github.com/dolthub/dolt/go/store/datas/pull"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -30,6 +33,7 @@ import (
 type CreateDatabase struct {
 	Name        string
 	IfNotExists bool
+	Template    string
 	Update      auth.DatabaseMetadataUpdate
 	gmsCreateDB *plan.CreateDB
 }
@@ -96,6 +100,10 @@ func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 	if err := provider.CreateDatabase(ctx, c.Name); err != nil {
 		return nil, err
 	}
+	if err := c.copyTemplateDatabase(ctx, provider); err != nil {
+		_ = provider.DropDatabase(ctx, c.Name)
+		return nil, err
+	}
 	update := c.Update
 	if update.Owner == nil {
 		owner := ctx.Client().User
@@ -110,6 +118,42 @@ func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateDatabase) copyTemplateDatabase(ctx *sql.Context, provider dsess.DoltDatabaseProvider) error {
+	if c.Template == "" || strings.EqualFold(c.Template, "template0") {
+		return nil
+	}
+
+	source, ok, err := provider.SessionDatabase(ctx, c.Template)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrDatabaseNotFound.New(c.Template)
+	}
+	target, ok, err := provider.SessionDatabase(ctx, c.Name)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrDatabaseNotFound.New(c.Name)
+	}
+
+	pull.WithDiscardingStatsCh(func(statsCh chan pull.Stats) {
+		err = actions.SyncRoots(
+			ctx,
+			source.DbData().Ddb,
+			target.DbData().Ddb,
+			provider.FileSystem().TempDir(),
+			actions.SyncRootsDBRelationshipUnrelated,
+			statsCh,
+		)
+	})
+	if err != nil && !errors.Is(err, pull.ErrDBUpToDate) {
+		return err
+	}
+	return nil
 }
 
 // BuildRowIter implements sql.ExecBuilderNode.

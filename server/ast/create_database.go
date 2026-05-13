@@ -31,12 +31,6 @@ import (
 func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement, error) {
 	var charsets []*vitess.CharsetAndCollate
 
-	if len(node.Template) > 0 {
-		// TODO: special casing "template0", as some tests make use of it and we need them to pass for now
-		if node.Template != "template0" {
-			return nil, errors.Errorf("TEMPLATE clause is not yet supported")
-		}
-	}
 	if len(node.Encoding) > 0 {
 		if !isPostgresEncodingName(node.Encoding) {
 			return nil, errors.Errorf("%s is not a valid encoding name", node.Encoding)
@@ -85,7 +79,7 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 		return nil, errors.Errorf(`tablespace "%s" does not exist`, node.Tablespace)
 	}
 
-	if hasCreateDatabaseMetadataUpdate(node) {
+	if hasCreateDatabaseMetadataUpdate(node) || hasCreateDatabaseTemplate(node) {
 		update, err := createDatabaseMetadataUpdate(node)
 		if err != nil {
 			return nil, err
@@ -94,6 +88,7 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 			Statement: &pgnodes.CreateDatabase{
 				Name:        bareIdentifier(node.Name),
 				IfNotExists: node.IfNotExists,
+				Template:    node.Template,
 				Update:      update,
 			},
 		}, nil
@@ -106,6 +101,10 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 		IfNotExists:      node.IfNotExists,
 		CharsetCollate:   charsets,
 	}, nil
+}
+
+func hasCreateDatabaseTemplate(node *tree.CreateDatabase) bool {
+	return node.Template != "" && !strings.EqualFold(node.Template, "template0")
 }
 
 func hasCreateDatabaseMetadataUpdate(node *tree.CreateDatabase) bool {
