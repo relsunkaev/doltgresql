@@ -87,7 +87,14 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					return nil, transform.SameTree, err
 				}
 
-				if isGeneratedColumnDefault(col, colDefault) {
+				isGeneratedDefault := isGeneratedColumnDefault(col, colDefault)
+				sanitizedDefault, sameDefault, err := sanitizeColumnDefaultExpressionAliases(ctx, colDefault)
+				if err != nil {
+					return nil, transform.SameTree, err
+				}
+				colDefault = sanitizedDefault
+
+				if isGeneratedDefault {
 					err = validateColumnDefault(ctx, col, colDefault, true)
 					if err != nil {
 						return nil, transform.SameTree, err
@@ -103,12 +110,51 @@ func ValidateColumnDefaults(ctx *sql.Context, _ *analyzer.Analyzer, n sql.Node, 
 					}
 				}
 
-				return e, transform.SameTree, nil
+				if isGeneratedDefault && sameDefault == transform.NewTree {
+					replaceGeneratedColumnDefault(node, col, colDefault)
+				}
+
+				if sameDefault == transform.SameTree {
+					return e, transform.SameTree, nil
+				}
+				return expression.WrapExpression(colDefault), transform.NewTree, nil
 			})
 		default:
 			return node, transform.SameTree, nil
 		}
 	})
+}
+
+func sanitizeColumnDefaultExpressionAliases(ctx *sql.Context, colDefault *sql.ColumnDefaultValue) (*sql.ColumnDefaultValue, transform.TreeIdentity, error) {
+	if colDefault == nil || colDefault.Expr == nil {
+		return colDefault, transform.SameTree, nil
+	}
+	cleanExpr, same, err := transform.Expr(ctx, colDefault.Expr, func(ctx *sql.Context, e sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		if alias, ok := e.(*expression.Alias); ok {
+			return alias.Child, transform.NewTree, nil
+		}
+		return e, transform.SameTree, nil
+	})
+	if err != nil || same {
+		return colDefault, same, err
+	}
+	cleanDefault, err := sql.NewColumnDefaultValue(cleanExpr, colDefault.OutType, colDefault.Literal, colDefault.Parenthesized, colDefault.ReturnNil)
+	if err != nil {
+		return nil, transform.SameTree, err
+	}
+	return cleanDefault, transform.NewTree, nil
+}
+
+func replaceGeneratedColumnDefault(node sql.SchemaTarget, col *sql.Column, colDefault *sql.ColumnDefaultValue) {
+	if col != nil && col.Generated != nil {
+		col.Generated = colDefault
+	}
+	if modifyColumn, ok := node.(*plan.ModifyColumn); ok {
+		newColumn := modifyColumn.NewColumn()
+		if newColumn != nil && newColumn.Generated != nil && col != nil && strings.EqualFold(newColumn.Name, col.Name) {
+			newColumn.Generated = colDefault
+		}
+	}
 }
 
 // lookupColumnForTargetSchema looks at the target schema for the specified SchemaTarget node and returns
