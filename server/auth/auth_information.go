@@ -44,5 +44,7 @@ const (
 	AuthTargetType_TableColumnIdents   = "DB_SCH_TABLE_COLUMN_IDENTS"
 	AuthTargetType_FunctionIdentifiers = "DB_SCH_FUNCTION_IDENTS"
 	AuthTargetType_SequenceIdentifiers = "DB_SCH_SEQUENCE_IDENTS"
+	AuthTargetType_VitessTableIdents   = "DB_TABLE_IDENTS"
+	AuthTargetType_VitessTableIdent    = "DB_TABLE_IDENT"
 	AuthTargetType_TODO                = "TODO"
 )

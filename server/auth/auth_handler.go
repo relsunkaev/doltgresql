@@ -223,6 +223,22 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 				return err
 			}
 		}
+	case AuthTargetType_VitessTableIdent, AuthTargetType_VitessTableIdents:
+		if len(auth.TargetNames)%2 != 0 {
+			return errors.Errorf("table identifiers has an unsupported count: %d", len(auth.TargetNames))
+		}
+		for i := 0; i < len(auth.TargetNames); i += 2 {
+			schemaName, err := authTargetSchemaName(ctx, auth.TargetNames[i], "")
+			if err != nil {
+				// If this fails, then there's an issue with the search path.
+				// This will error later in the process, so we'll pass auth for now.
+				return nil
+			}
+			err = checkPrivilegeOnTable(ctx, state, schemaName, auth.TargetNames[i+1], privileges)
+			if err != nil {
+				return err
+			}
+		}
 	case AuthTargetType_FunctionIdentifiers:
 		if len(auth.TargetNames)%2 != 0 {
 			return errors.Errorf("function identifiers has an unsupported count: %d", len(auth.TargetNames))

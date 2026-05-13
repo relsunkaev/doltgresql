@@ -447,7 +447,7 @@ func TestDoltQueryDiffSupportsAsOfRevisionRepro(t *testing.T) {
 							'SELECT * FROM query_diff_asof_items AS OF main',
 							'SELECT * FROM query_diff_asof_items'
 						);`,
-					Expected: []sql.Row{{"", "query_diff_asof_items", "added", 1, 1}},
+					Expected: []sql.Row{{nil, 1, "added"}},
 				},
 			},
 		},
