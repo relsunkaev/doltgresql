@@ -15,6 +15,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql/expression"
@@ -31,6 +32,7 @@ func nodeSelectClause(ctx *Context, node *tree.SelectClause) (*vitess.Select, er
 	if node == nil {
 		return nil, nil
 	}
+	node = rewriteValuesCaseDistinctAliases(node)
 	selectExprs, err := nodeSelectExprs(ctx, node.Exprs)
 	if err != nil {
 		return nil, err
@@ -164,6 +166,229 @@ PostJoinRewrite:
 		Window:      window,
 		Comments:    vitess.Comments{[]byte(node.BlockComment)},
 	}, nil
+}
+
+func rewriteValuesCaseDistinctAliases(node *tree.SelectClause) *tree.SelectClause {
+	rewriter := newValuesCaseAliasRewriter()
+	from, changed := rewriter.rewriteFrom(node.From)
+	if !changed {
+		return node
+	}
+
+	ret := *node
+	ret.From = from
+	ret.Exprs = rewriter.rewriteSelectExprs(node.Exprs)
+	ret.DistinctOn = tree.DistinctOn(rewriter.rewriteExprs(tree.Exprs(node.DistinctOn)))
+	ret.GroupBy = tree.GroupBy(rewriter.rewriteExprs(tree.Exprs(node.GroupBy)))
+	if node.Where != nil {
+		where := *node.Where
+		where.Expr = rewriter.rewriteExpr(node.Where.Expr)
+		ret.Where = &where
+	}
+	if node.Having != nil {
+		having := *node.Having
+		having.Expr = rewriter.rewriteExpr(node.Having.Expr)
+		ret.Having = &having
+	}
+	return &ret
+}
+
+type valuesCaseAliasRewriter struct {
+	qualified   map[string]map[string]string
+	unqualified map[string]string
+	ambiguous   map[string]struct{}
+}
+
+func newValuesCaseAliasRewriter() *valuesCaseAliasRewriter {
+	return &valuesCaseAliasRewriter{
+		qualified:   make(map[string]map[string]string),
+		unqualified: make(map[string]string),
+		ambiguous:   make(map[string]struct{}),
+	}
+}
+
+func (r *valuesCaseAliasRewriter) rewriteFrom(from tree.From) (tree.From, bool) {
+	if len(from.Tables) == 0 {
+		return from, false
+	}
+	tables := make(tree.TableExprs, len(from.Tables))
+	changed := false
+	for i, table := range from.Tables {
+		rewritten, ok := r.rewriteTableExpr(table, i)
+		tables[i] = rewritten
+		changed = changed || ok
+	}
+	if !changed {
+		return from, false
+	}
+	return tree.From{Tables: tables}, true
+}
+
+func (r *valuesCaseAliasRewriter) rewriteTableExpr(table tree.TableExpr, tableIndex int) (tree.TableExpr, bool) {
+	aliased, ok := table.(*tree.AliasedTableExpr)
+	if !ok || !isValuesSubquery(aliased.Expr) || len(aliased.As.Cols) == 0 {
+		return table, false
+	}
+
+	encoded := caseDistinctAliasEncodings(aliased.As.Cols, tableIndex)
+	if len(encoded) == 0 {
+		return table, false
+	}
+
+	ret := *aliased
+	ret.As = aliased.As
+	ret.As.Cols = append(tree.NameList(nil), aliased.As.Cols...)
+	for i, col := range ret.As.Cols {
+		if encodedName, ok := encoded[string(col)]; ok {
+			ret.As.Cols[i] = tree.Name(encodedName)
+		}
+	}
+
+	tableName := strings.ToLower(string(aliased.As.Alias))
+	r.qualified[tableName] = encoded
+	for original, encodedName := range encoded {
+		if _, isAmbiguous := r.ambiguous[original]; isAmbiguous {
+			continue
+		}
+		if _, exists := r.unqualified[original]; exists {
+			delete(r.unqualified, original)
+			r.ambiguous[original] = struct{}{}
+			continue
+		}
+		r.unqualified[original] = encodedName
+	}
+	return &ret, true
+}
+
+func isValuesSubquery(expr tree.TableExpr) bool {
+	subquery, ok := expr.(*tree.Subquery)
+	if !ok {
+		return false
+	}
+	return selectStatementIsValues(subquery.Select)
+}
+
+func selectStatementIsValues(statement tree.SelectStatement) bool {
+	switch stmt := statement.(type) {
+	case *tree.ValuesClause:
+		return true
+	case *tree.ParenSelect:
+		return stmt.Select != nil &&
+			stmt.Select.With == nil &&
+			len(stmt.Select.OrderBy) == 0 &&
+			stmt.Select.Limit == nil &&
+			len(stmt.Select.Locking) == 0 &&
+			selectStatementIsValues(stmt.Select.Select)
+	default:
+		return false
+	}
+}
+
+func caseDistinctAliasEncodings(cols tree.NameList, tableIndex int) map[string]string {
+	lowerCounts := make(map[string]int, len(cols))
+	for _, col := range cols {
+		lowerCounts[strings.ToLower(string(col))]++
+	}
+
+	encoded := make(map[string]string)
+	for i, col := range cols {
+		if lowerCounts[strings.ToLower(string(col))] <= 1 {
+			continue
+		}
+		encoded[string(col)] = fmt.Sprintf("__doltgres_values_alias_%d_%d", tableIndex, i)
+	}
+	return encoded
+}
+
+func (r *valuesCaseAliasRewriter) rewriteSelectExprs(exprs tree.SelectExprs) tree.SelectExprs {
+	if len(exprs) == 0 {
+		return exprs
+	}
+	rewritten := make(tree.SelectExprs, len(exprs))
+	for i, expr := range exprs {
+		rewritten[i] = expr
+		rewritten[i].Expr = r.rewriteExpr(expr.Expr)
+	}
+	return rewritten
+}
+
+func (r *valuesCaseAliasRewriter) rewriteExprs(exprs tree.Exprs) tree.Exprs {
+	if len(exprs) == 0 {
+		return exprs
+	}
+	rewritten := make(tree.Exprs, len(exprs))
+	for i, expr := range exprs {
+		rewritten[i] = r.rewriteExpr(expr)
+	}
+	return rewritten
+}
+
+func (r *valuesCaseAliasRewriter) rewriteExpr(expr tree.Expr) tree.Expr {
+	if expr == nil {
+		return nil
+	}
+	rewritten, _ := tree.WalkExpr(r, expr)
+	return rewritten
+}
+
+func (r *valuesCaseAliasRewriter) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	switch expr := expr.(type) {
+	case *tree.Subquery:
+		return false, expr
+	case *tree.UnresolvedName:
+		encoded, ok := r.encodedUnresolvedName(expr)
+		if !ok {
+			return true, expr
+		}
+		ret := *expr
+		ret.Parts[0] = encoded
+		return false, &ret
+	case *tree.ColumnItem:
+		encoded, ok := r.encodedColumnName(expr)
+		if !ok {
+			return true, expr
+		}
+		ret := *expr
+		ret.ColumnName = tree.Name(encoded)
+		return false, &ret
+	default:
+		return true, expr
+	}
+}
+
+func (r *valuesCaseAliasRewriter) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
+}
+
+func (r *valuesCaseAliasRewriter) encodedUnresolvedName(name *tree.UnresolvedName) (string, bool) {
+	if name.Star {
+		return "", false
+	}
+	switch name.NumParts {
+	case 1:
+		encoded, ok := r.unqualified[name.Parts[0]]
+		return encoded, ok
+	case 2:
+		columns := r.qualified[strings.ToLower(name.Parts[1])]
+		encoded, ok := columns[name.Parts[0]]
+		return encoded, ok
+	default:
+		return "", false
+	}
+}
+
+func (r *valuesCaseAliasRewriter) encodedColumnName(col *tree.ColumnItem) (string, bool) {
+	original := string(col.ColumnName)
+	if col.TableName == nil {
+		encoded, ok := r.unqualified[original]
+		return encoded, ok
+	}
+	if col.TableName.NumParts != 1 {
+		return "", false
+	}
+	columns := r.qualified[strings.ToLower(col.TableName.Parts[0])]
+	encoded, ok := columns[original]
+	return encoded, ok
 }
 
 func applySelectColumnAuth(node *tree.SelectClause, from vitess.TableExprs) {

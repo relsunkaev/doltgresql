@@ -35,6 +35,13 @@ func TestValuesQuotedCaseDistinctAggregateColumnsRepro(t *testing.T) {
 						{Numeric("3.5"), int64(30)},
 					},
 				},
+				{
+					Query: `SELECT SUM(v."Val"), SUM(v."val")
+						FROM (VALUES(1, 10), (2.5, 20)) v("Val", "val");`,
+					Expected: []sql.Row{
+						{Numeric("3.5"), int64(30)},
+					},
+				},
 			},
 		},
 	})
