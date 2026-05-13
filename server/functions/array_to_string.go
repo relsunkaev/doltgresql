@@ -17,7 +17,6 @@ package functions
 import (
 	"strings"
 
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -53,7 +52,7 @@ var array_to_string_anyarray_text_text = framework.Function3{
 	Strict:             false,
 	Callable: func(ctx *sql.Context, paramsAndReturn [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		if val1 == nil {
-			return nil, errors.Errorf("could not determine polymorphic type because input has type unknown")
+			return nil, nil
 		} else if val2 == nil {
 			return nil, nil
 		}
