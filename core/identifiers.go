@@ -22,6 +22,7 @@ import (
 const (
 	physicalColumnNamePrefix = "__doltgres_column_name_"
 	physicalIndexNamePrefix  = "__doltgres_index_name_"
+	physicalViewNamePrefix   = "__doltgres_view_name_"
 )
 
 // IsValidPostgresIdentifier returns true according to Postgres quoted identifier rules.
@@ -78,6 +79,28 @@ func DecodePhysicalIndexName(name string) string {
 		return name
 	}
 	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalIndexNamePrefix))
+	if err != nil {
+		return name
+	}
+	return string(decoded)
+}
+
+// EncodePhysicalViewName maps PostgreSQL's case-sensitive view identifiers
+// onto Dolt schema-fragment names, which are keyed case-insensitively.
+func EncodePhysicalViewName(name string) string {
+	if name == strings.ToLower(name) && !strings.HasPrefix(name, physicalViewNamePrefix) {
+		return name
+	}
+	return physicalViewNamePrefix + hex.EncodeToString([]byte(name))
+}
+
+// DecodePhysicalViewName returns the PostgreSQL-facing view name for a view
+// that was encoded by EncodePhysicalViewName.
+func DecodePhysicalViewName(name string) string {
+	if !strings.HasPrefix(name, physicalViewNamePrefix) {
+		return name
+	}
+	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalViewNamePrefix))
 	if err != nil {
 		return name
 	}
