@@ -4706,6 +4706,135 @@
       ]
     },
     {
+      "id": "session-replication-role-probe-test-testsessionreplicationroleprobe-0001-show-session_replication_role",
+      "source": "testing/go/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SET session_replication_role = 'replica';"
+      ],
+      "query": "SHOW session_replication_role;",
+      "expectedRows": [
+        [
+          {
+            "value": "replica"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "session-replication-role-probe-test-testsessionreplicationroleprobe-0002-show-session_replication_role",
+      "source": "testing/go/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SET session_replication_role = 'replica';",
+        "SHOW session_replication_role;",
+        "SET session_replication_role = 'origin';"
+      ],
+      "query": "SHOW session_replication_role;",
+      "expectedRows": [
+        [
+          {
+            "value": "origin"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "session-replication-role-probe-test-testsessionreplicationroleprobe-0003-insert-into-c-values-2",
+      "source": "testing/go/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE p (id INT PRIMARY KEY);",
+        "CREATE TABLE c (id INT PRIMARY KEY, pid INT REFERENCES p(id));",
+        "SET session_replication_role = 'replica';",
+        "INSERT INTO c VALUES (1, 999);",
+        "SET session_replication_role = 'origin';"
+      ],
+      "query": "INSERT INTO c VALUES (2, 999);",
+      "expectedSqlstate": "23503",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "session-replication-role-probe-test-testsessionreplicationroleprobe-0004-select-count-*-::text-from",
+      "source": "testing/go/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, label TEXT);",
+        "CREATE TABLE audit_log (main_id INT, label TEXT);",
+        "CREATE FUNCTION log_main_insert() RETURNS trigger AS $$\nBEGIN\n\tINSERT INTO audit_log VALUES (NEW.id, NEW.label);\n\tRETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_log_main_insert AFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION log_main_insert();",
+        "SET session_replication_role = 'replica';",
+        "INSERT INTO main VALUES (1, 'suppressed');"
+      ],
+      "query": "SELECT count(*)::TEXT FROM audit_log;",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "session-replication-role-probe-test-testsessionreplicationroleprobe-0005-select-count-*-::text-from",
+      "source": "testing/go/session_replication_role_probe_test.go:TestSessionReplicationRoleProbe",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, label TEXT);",
+        "CREATE TABLE audit_log (main_id INT, label TEXT);",
+        "CREATE FUNCTION log_main_insert() RETURNS trigger AS $$\nBEGIN\n\tINSERT INTO audit_log VALUES (NEW.id, NEW.label);\n\tRETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_log_main_insert AFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION log_main_insert();",
+        "SET session_replication_role = 'replica';",
+        "INSERT INTO main VALUES (1, 'suppressed');",
+        "SELECT count(*)::TEXT FROM audit_log;",
+        "SET session_replication_role = 'origin';",
+        "INSERT INTO main VALUES (2, 'logged');"
+      ],
+      "query": "SELECT count(*)::TEXT FROM audit_log;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "set-operations-test-testsetoperations-0001-select-*-from-b-intersect",
       "source": "testing/go/set_operations_test.go:TestSetOperations",
       "ordinal": 1,
