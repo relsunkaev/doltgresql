@@ -62,7 +62,7 @@ func TestCsvDataLoader(t *testing.T) {
 
 	// Tests that a basic CSV document can be loaded as a single chunk.
 	t.Run("basic case", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		// Load all the data as a single chunk
@@ -84,7 +84,7 @@ func TestCsvDataLoader(t *testing.T) {
 	// Tests when a CSV record is split across two chunks of data, and the
 	// partial record must be buffered and prepended to the next chunk.
 	t.Run("record split across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -115,7 +115,7 @@ func TestCsvDataLoader(t *testing.T) {
 	// Tests when a CSV record is split across two chunks of data, and a
 	// header row is present.
 	t.Run("record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", true, "", false)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", true, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -146,7 +146,7 @@ func TestCsvDataLoader(t *testing.T) {
 	// Tests a CSV record that contains a quoted newline character and is split
 	// across two chunks.
 	t.Run("quoted newlines across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, ",", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -177,7 +177,7 @@ func TestCsvDataLoader(t *testing.T) {
 	// Tests when a PSV (i.e. delimiter='|') record is split across two chunks of data,
 	// and a header row is present.
 	t.Run("delimiter='|', record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, "|", true, "", false)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, pkSchema.Schema, "|", true, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -206,7 +206,7 @@ func TestCsvDataLoader(t *testing.T) {
 	})
 
 	t.Run("default marker", func(t *testing.T) {
-		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, defaultSchema.Schema, ",", false, "DEFAULT", true)
+		dataLoader, err := dataloader.NewCsvDataLoader(pkCols, defaultSchema.Schema, ",", false, "DEFAULT", true, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		reader := bytes.NewReader([]byte("1,DEFAULT,DEFAULT\n2,9,explicit\n"))

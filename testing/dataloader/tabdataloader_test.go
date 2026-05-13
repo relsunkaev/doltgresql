@@ -60,7 +60,7 @@ func TestTabDataLoader(t *testing.T) {
 
 	// Tests that a basic tab delimited doc can be loaded as a single chunk.
 	t.Run("basic case", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -84,7 +84,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and the
 	// partial record must be buffered and prepended to the next chunk.
 	t.Run("record split across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -115,7 +115,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and a
 	// header row is present.
 	t.Run("record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", true, "", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", true, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -147,7 +147,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests a record that contains a quoted newline character and is split
 	// across two chunks.
 	t.Run("quoted newlines across two chunks", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "\t", "\\N", false, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -179,7 +179,7 @@ func TestTabDataLoader(t *testing.T) {
 	// Tests when a record is split across two chunks of data, and a
 	// header row is present.
 	t.Run("delimiter='|', record split across two chunks, with header", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "|", "\\N", true, "", false)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, pkSchema.Schema, "|", "\\N", true, "", false, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row
@@ -209,7 +209,7 @@ func TestTabDataLoader(t *testing.T) {
 	})
 
 	t.Run("default marker", func(t *testing.T) {
-		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, defaultSchema.Schema, "\t", "\\N", false, "DEFAULT", true)
+		dataLoader, err := dataloader.NewTabularDataLoader(pkCols, defaultSchema.Schema, "\t", "\\N", false, "DEFAULT", true, dataloader.LoadErrorPolicy{})
 		require.NoError(t, err)
 
 		var rows []sql.Row

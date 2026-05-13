@@ -50,6 +50,46 @@ type DefaultSchemaLoader interface {
 type LoadDataResults struct {
 	// RowsLoaded contains the total number of rows inserted during a load data operation.
 	RowsLoaded int32
+	// RowsRejected contains the total number of rows skipped by COPY ON_ERROR handling.
+	RowsRejected int32
+}
+
+// LoadErrorPolicy describes whether COPY should skip row-level input errors.
+type LoadErrorPolicy struct {
+	Ignore         bool
+	RejectLimit    int32
+	RejectLimitSet bool
+}
+
+type loadRowError struct {
+	err error
+}
+
+func (e *loadRowError) Error() string {
+	return e.err.Error()
+}
+
+func (e *loadRowError) Unwrap() error {
+	return e.err
+}
+
+func newLoadRowError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return &loadRowError{err: err}
+}
+
+func (p LoadErrorPolicy) handleRowError(results *LoadDataResults, err error) (bool, error) {
+	rowErr, ok := err.(*loadRowError)
+	if !ok || !p.Ignore {
+		return false, err
+	}
+	results.RowsRejected++
+	if p.RejectLimitSet && results.RowsRejected > p.RejectLimit {
+		return false, errors.Errorf("COPY rejected %d rows, exceeding REJECT_LIMIT %d: %v", results.RowsRejected, p.RejectLimit, rowErr.err)
+	}
+	return true, nil
 }
 
 // getColumnTypes returns the types of the columns in the schema that match the provided column names, in the order

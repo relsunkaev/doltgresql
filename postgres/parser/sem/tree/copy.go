@@ -53,12 +53,18 @@ type CopyTo struct {
 
 // CopyOptions describes options for COPY execution.
 type CopyOptions struct {
-	CopyFormat CopyFormat
-	Header     bool
-	Freeze     bool
-	Delimiter  string
-	Default    string
-	DefaultSet bool
+	CopyFormat      CopyFormat
+	Header          bool
+	Freeze          bool
+	OnError         CopyOnError
+	OnErrorSet      bool
+	RejectLimit     int32
+	RejectLimitSet  bool
+	LogVerbosity    CopyLogVerbosity
+	LogVerbositySet bool
+	Delimiter       string
+	Default         string
+	DefaultSet      bool
 }
 
 var _ NodeFormatter = &CopyOptions{}
@@ -146,6 +152,24 @@ func (o *CopyOptions) Format(ctx *FmtCtx) {
 		maybeAddSep()
 		ctx.WriteString("FREEZE")
 	}
+	if o.OnErrorSet {
+		maybeAddSep()
+		switch o.OnError {
+		case CopyOnErrorIgnore:
+			ctx.WriteString("ON_ERROR IGNORE")
+		}
+	}
+	if o.RejectLimitSet {
+		maybeAddSep()
+		ctx.Printf("REJECT_LIMIT %d", o.RejectLimit)
+	}
+	if o.LogVerbositySet {
+		maybeAddSep()
+		switch o.LogVerbosity {
+		case CopyLogVerbositySilent:
+			ctx.WriteString("LOG_VERBOSITY SILENT")
+		}
+	}
 	if o.DefaultSet {
 		maybeAddSep()
 		ctx.WriteString("DEFAULT '" + o.Default + "'")
@@ -196,6 +220,30 @@ func (o *CopyOptions) CombineWith(other *CopyOptions) error {
 		o.DefaultSet = true
 	}
 
+	if other.OnErrorSet {
+		if o.OnErrorSet {
+			return errors.New("on_error option specified multiple times")
+		}
+		o.OnError = other.OnError
+		o.OnErrorSet = true
+	}
+
+	if other.RejectLimitSet {
+		if o.RejectLimitSet {
+			return errors.New("reject_limit option specified multiple times")
+		}
+		o.RejectLimit = other.RejectLimit
+		o.RejectLimitSet = true
+	}
+
+	if other.LogVerbositySet {
+		if o.LogVerbositySet {
+			return errors.New("log_verbosity option specified multiple times")
+		}
+		o.LogVerbosity = other.LogVerbosity
+		o.LogVerbositySet = true
+	}
+
 	return nil
 }
 
@@ -207,4 +255,22 @@ const (
 	CopyFormatText CopyFormat = iota
 	CopyFormatBinary
 	CopyFormatCsv
+)
+
+// CopyOnError identifies COPY FROM row error handling.
+type CopyOnError int
+
+// Valid values for CopyOnError.
+const (
+	CopyOnErrorStop CopyOnError = iota
+	CopyOnErrorIgnore
+)
+
+// CopyLogVerbosity identifies COPY diagnostics verbosity.
+type CopyLogVerbosity int
+
+// Valid values for CopyLogVerbosity.
+const (
+	CopyLogVerbosityDefault CopyLogVerbosity = iota
+	CopyLogVerbositySilent
 )

@@ -38,6 +38,7 @@ type CsvDataLoader struct {
 	delimiter     string
 	defaultValue  string
 	defaultSet    bool
+	errorPolicy   LoadErrorPolicy
 }
 
 func (cdl *CsvDataLoader) SetNextDataChunk(ctx *sql.Context, data *bufio.Reader) error {
@@ -52,7 +53,7 @@ const defaultCsvDelimiter = ","
 // NewCsvDataLoader creates a new DataLoader instance that will produce rows for the schema provided.
 // |header| is true, the first line of the data will be treated as a header and ignored. If |delimiter| is not the empty
 // string, it will be used as the delimiter separating value.
-func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, header bool, defaultValue string, defaultSet bool) (*CsvDataLoader, error) {
+func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, header bool, defaultValue string, defaultSet bool, errorPolicy LoadErrorPolicy) (*CsvDataLoader, error) {
 	colTypes, reducedSch, err := getColumnTypes(colNames, sch)
 	if err != nil {
 		return nil, err
@@ -69,6 +70,7 @@ func NewCsvDataLoader(colNames []string, sch sql.Schema, delimiter string, heade
 		delimiter:    delimiter,
 		defaultValue: defaultValue,
 		defaultSet:   defaultSet,
+		errorPolicy:  errorPolicy,
 	}, nil
 }
 
@@ -100,6 +102,7 @@ func (cdl *CsvDataLoader) nextRow(ctx *sql.Context, reader *csvReader) (sql.Row,
 			if len(record) == 1 && record[0] == "\\." {
 				return nil, false, nil
 			}
+			return nil, false, newLoadRowError(err)
 		}
 
 		if err != io.EOF {
@@ -122,9 +125,9 @@ func (cdl *CsvDataLoader) nextRow(ctx *sql.Context, reader *csvReader) (sql.Row,
 	}
 
 	if len(record) > len(cdl.colTypes) {
-		return nil, false, errors.Errorf("extra data after last expected column")
+		return nil, false, newLoadRowError(errors.Errorf("extra data after last expected column"))
 	} else if len(record) < len(cdl.colTypes) {
-		return nil, false, errors.Errorf(`missing data for column "%s"`, cdl.sch[len(record)].Name)
+		return nil, false, newLoadRowError(errors.Errorf(`missing data for column "%s"`, cdl.sch[len(record)].Name))
 	}
 
 	// Cast the values using I/O input
@@ -140,7 +143,7 @@ func (cdl *CsvDataLoader) nextRow(ctx *sql.Context, reader *csvReader) (sql.Row,
 		} else {
 			row[i], err = cdl.colTypes[i].IoInput(ctx, fmt.Sprintf("%v", record[i]))
 			if err != nil {
-				return nil, false, err
+				return nil, false, newLoadRowError(err)
 			}
 		}
 	}
@@ -191,19 +194,27 @@ type csvRowIter struct {
 }
 
 func (c csvRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	row, hasNext, err := c.cdl.nextRow(ctx, c.reader)
-	if err != nil {
-		return nil, err
-	}
+	for {
+		row, hasNext, err := c.cdl.nextRow(ctx, c.reader)
+		if err != nil {
+			skip, err := c.cdl.errorPolicy.handleRowError(&c.cdl.results, err)
+			if err != nil {
+				return nil, err
+			}
+			if skip {
+				continue
+			}
+		}
 
-	// TODO: this isn't the best way to handle the count of rows, something like a RowUpdateAccumulator would be better
-	if hasNext {
-		c.cdl.results.RowsLoaded++
-	} else {
-		return nil, io.EOF
-	}
+		// TODO: this isn't the best way to handle the count of rows, something like a RowUpdateAccumulator would be better
+		if hasNext {
+			c.cdl.results.RowsLoaded++
+		} else {
+			return nil, io.EOF
+		}
 
-	return row, nil
+		return row, nil
+	}
 }
 
 func (c csvRowIter) Close(context *sql.Context) error {

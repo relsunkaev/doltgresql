@@ -2260,11 +2260,16 @@ func (h *ConnectionHandler) initializeCopyFromState(sqlCtx *sql.Context, copySta
 	}
 
 	var dataLoader dataloader.DataLoader
+	errorPolicy := dataloader.LoadErrorPolicy{
+		Ignore:         copyFromStdinNode.CopyOptions.OnError == tree.CopyOnErrorIgnore,
+		RejectLimit:    copyFromStdinNode.CopyOptions.RejectLimit,
+		RejectLimitSet: copyFromStdinNode.CopyOptions.RejectLimitSet,
+	}
 	switch copyFromStdinNode.CopyOptions.CopyFormat {
 	case tree.CopyFormatText:
-		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet)
+		dataLoader, err = dataloader.NewTabularDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, "", copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet, errorPolicy)
 	case tree.CopyFormatCsv:
-		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet)
+		dataLoader, err = dataloader.NewCsvDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx), copyFromStdinNode.CopyOptions.Delimiter, copyFromStdinNode.CopyOptions.Header, copyFromStdinNode.CopyOptions.Default, copyFromStdinNode.CopyOptions.DefaultSet, errorPolicy)
 	case tree.CopyFormatBinary:
 		dataLoader, err = dataloader.NewBinaryDataLoader(insertNode.ColumnNames, tbl.Schema(sqlCtx))
 	default:

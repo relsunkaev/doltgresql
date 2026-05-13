@@ -40,6 +40,7 @@ type TabularDataLoader struct {
 	removeHeader  bool
 	defaultValue  string
 	defaultSet    bool
+	errorPolicy   LoadErrorPolicy
 }
 
 var _ DataLoader = (*TabularDataLoader)(nil)
@@ -47,7 +48,7 @@ var _ DataLoader = (*TabularDataLoader)(nil)
 // NewTabularDataLoader creates a new TabularDataLoader to insert into the specified |table| using the specified
 // |delimiterChar| and |nullChar|. If |header| is true, the first line of the data will be treated as a header and
 // ignored.
-func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar, nullChar string, header bool, defaultValue string, defaultSet bool) (*TabularDataLoader, error) {
+func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar, nullChar string, header bool, defaultValue string, defaultSet bool, errorPolicy LoadErrorPolicy) (*TabularDataLoader, error) {
 	colTypes, reducedSch, err := getColumnTypes(colNames, tableSch)
 	if err != nil {
 		return nil, err
@@ -69,6 +70,7 @@ func NewTabularDataLoader(colNames []string, tableSch sql.Schema, delimiterChar,
 		removeHeader:  header,
 		defaultValue:  defaultValue,
 		defaultSet:    defaultSet,
+		errorPolicy:   errorPolicy,
 	}, nil
 }
 
@@ -127,9 +129,9 @@ func (tdl *TabularDataLoader) nextRow(ctx *sql.Context, data *bufio.Reader) (sql
 		// Split the values by the delimiter, ensuring the correct number of values have been read
 		values := strings.Split(line, tdl.delimiterChar)
 		if len(values) > len(tdl.colTypes) {
-			return nil, false, errors.Errorf("extra data after last expected column")
+			return nil, false, newLoadRowError(errors.Errorf("extra data after last expected column"))
 		} else if len(values) < len(tdl.colTypes) {
-			return nil, false, errors.Errorf(`missing data for column "%s"`, tdl.sch[len(values)].Name)
+			return nil, false, newLoadRowError(errors.Errorf(`missing data for column "%s"`, tdl.sch[len(values)].Name))
 		}
 
 		// Cast the values using I/O input
@@ -147,7 +149,7 @@ func (tdl *TabularDataLoader) nextRow(ctx *sql.Context, data *bufio.Reader) (sql
 				values[i] = strings.ReplaceAll(values[i], `\\`, `\`)
 				row[i], err = tdl.colTypes[i].IoInput(ctx, values[i])
 				if err != nil {
-					return nil, false, err
+					return nil, false, newLoadRowError(err)
 				}
 			}
 		}
@@ -204,19 +206,27 @@ type tabularRowIter struct {
 }
 
 func (t tabularRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	row, hasNext, err := t.tdl.nextRow(ctx, t.reader)
-	if err != nil {
-		return nil, err
-	}
+	for {
+		row, hasNext, err := t.tdl.nextRow(ctx, t.reader)
+		if err != nil {
+			skip, err := t.tdl.errorPolicy.handleRowError(&t.tdl.results, err)
+			if err != nil {
+				return nil, err
+			}
+			if skip {
+				continue
+			}
+		}
 
-	// TODO: this isn't the best way to handle the count of rows, something like a RowUpdateAccumulator would be better
-	if hasNext {
-		t.tdl.results.RowsLoaded++
-	} else {
-		return nil, io.EOF
-	}
+		// TODO: this isn't the best way to handle the count of rows, something like a RowUpdateAccumulator would be better
+		if hasNext {
+			t.tdl.results.RowsLoaded++
+		} else {
+			return nil, io.EOF
+		}
 
-	return row, nil
+		return row, nil
+	}
 }
 
 func (t tabularRowIter) Close(context *sql.Context) error {
