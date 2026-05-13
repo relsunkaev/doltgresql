@@ -6244,6 +6244,58 @@
       ]
     },
     {
+      "id": "operator-definition-repro-test-testcreateoperatorinstallscallableoperatorrepro-0001-select-2-===-4-2",
+      "source": "testing/go/operator_definition_repro_test.go:TestCreateOperatorInstallsCallableOperatorRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION same_parity_operator(left_value INT, right_value INT)\n\t\t\t\t\tRETURNS BOOL\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT (left_value % 2) = (right_value % 2) $$;",
+        "CREATE OPERATOR === (\n\t\t\t\t\tLEFTARG = INT,\n\t\t\t\t\tRIGHTARG = INT,\n\t\t\t\t\tPROCEDURE = same_parity_operator\n\t\t\t\t);"
+      ],
+      "query": "SELECT 2 === 4, 2 === 3;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "operator-definition-repro-test-testdropoperatorifexistsdropsexistingoperatorrepro-0001-select-count-*-from-pg_operator",
+      "source": "testing/go/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION drop_if_exists_operator_func(left_value INT, right_value INT)\n\t\t\t\t\tRETURNS BOOL\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT (left_value % 2) = (right_value % 2) $$;",
+        "CREATE OPERATOR === (\n\t\t\t\t\tLEFTARG = INT,\n\t\t\t\t\tRIGHTARG = INT,\n\t\t\t\t\tPROCEDURE = drop_if_exists_operator_func\n\t\t\t\t);",
+        "DROP OPERATOR IF EXISTS === (integer, integer);"
+      ],
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_operator\n\t\t\t\t\t\tWHERE oprname = '==='\n\t\t\t\t\t\t  AND oprleft = 'integer'::regtype\n\t\t\t\t\t\t  AND oprright = 'integer'::regtype;",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "pg-matviews-probe-test-testpgmatviewsprobe-0001-select-count-*-::text-from",
       "source": "testing/go/pg_matviews_probe_test.go:TestPgMatviewsProbe",
       "ordinal": 1,
