@@ -18,7 +18,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropSchema wraps GMS DROP SCHEMA execution to clean Doltgres auth metadata.
@@ -62,6 +64,7 @@ func (d *DropSchema) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql
 	if err != nil {
 		return nil, err
 	}
+	comments.RemoveObject(id.NewNamespace(d.gmsDropSchema.DbName).AsId(), "pg_namespace")
 	return iter, nil
 }
 
