@@ -80,6 +80,7 @@ const (
 	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
 	ruleId_AssignInheritedTableScans                                              // assignInheritedTableScans
 	ruleId_AssignInheritedAlterDefaults                                           // assignInheritedAlterDefaults
+	ruleId_AssignInheritedNotNull                                                 // assignInheritedNotNull
 	ruleId_AssignIndexStats                                                       // assignIndexStats
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
 	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
@@ -155,6 +156,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignUnpopulatedMatviewScans, Apply: AssignUnpopulatedMaterializedViewScans},
 		analyzer.Rule{Id: ruleId_AssignInheritedTableScans, Apply: AssignInheritedTableScans},
 		analyzer.Rule{Id: ruleId_AssignInheritedAlterDefaults, Apply: AssignInheritedAlterDefaults},
+		analyzer.Rule{Id: ruleId_AssignInheritedNotNull, Apply: AssignInheritedNotNull},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},
