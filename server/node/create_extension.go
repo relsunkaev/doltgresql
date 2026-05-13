@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -204,13 +205,25 @@ func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *ex
 	if owner == "" {
 		owner = "postgres"
 	}
-	return extCollection.AddLoadedExtension(ctx, extensions.Extension{
-		ExtName:       id.NewExtension(c.Name),
+	extID := id.NewExtension(c.Name)
+	if err := extCollection.AddLoadedExtension(ctx, extensions.Extension{
+		ExtName:       extID,
 		Namespace:     namespace,
 		Owner:         owner,
 		Relocatable:   ext.Control.Relocatable,
 		LibIdentifier: extensions.CreateLibraryIdentifier(c.Name, ext.Control.DefaultVersion),
-	})
+	}); err != nil {
+		return err
+	}
+	setExtensionControlComment(extID, ext.Control.Comment)
+	return nil
+}
+
+func setExtensionControlComment(extID id.Extension, description string) {
+	if description == "" {
+		return
+	}
+	comments.Set(commentObjectKey(extID.AsId(), "pg_extension", 0), &description)
 }
 
 func (c *CreateExtension) resolveTargetNamespace(ctx *sql.Context, ext *pg_extension.ExtensionFiles) (id.Namespace, error) {
