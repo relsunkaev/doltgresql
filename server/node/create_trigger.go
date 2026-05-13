@@ -41,6 +41,7 @@ type CreateTrigger struct {
 	Events            []triggers.TriggerEvent
 	ForEachRow        bool
 	When              []plpgsql.InterpreterOperation
+	WhenExpression    string
 	OldTransitionName string
 	NewTransitionName string
 	Arguments         []string
@@ -59,6 +60,7 @@ func NewCreateTrigger(
 	events []triggers.TriggerEvent,
 	forEachRow bool,
 	when []plpgsql.InterpreterOperation,
+	whenExpression string,
 	oldTransitionName string,
 	newTransitionName string,
 	arguments []string,
@@ -71,6 +73,7 @@ func NewCreateTrigger(
 		Events:            events,
 		ForEachRow:        forEachRow,
 		When:              when,
+		WhenExpression:    whenExpression,
 		OldTransitionName: oldTransitionName,
 		NewTransitionName: newTransitionName,
 		Arguments:         arguments,
@@ -138,6 +141,7 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		Events:              c.Events,
 		ForEachRow:          c.ForEachRow,
 		When:                c.When,
+		WhenExpression:      c.WhenExpression,
 		Deferrable:          triggers.TriggerDeferrable_NotDeferrable,
 		ReferencedTableName: "",
 		Constraint:          false,

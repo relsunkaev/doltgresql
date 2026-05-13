@@ -122,7 +122,7 @@ func pgTriggerToRow(schema sql.Schema, trigger triggers.Trigger) sql.Row {
 		int16(len(trigger.Arguments)),                                       // tgnargs
 		pgTriggerAttrs(schema, trigger),                                     // tgattr
 		pgTriggerArgs(trigger.Arguments),                                    // tgargs
-		nil,                                                                 // tgqual
+		emptyStringAsNil(trigger.WhenExpression),                            // tgqual
 		emptyStringAsNil(trigger.OldTransitionName),                         // tgoldtable
 		emptyStringAsNil(trigger.NewTransitionName),                         // tgnewtable
 		id.NewTable(PgCatalogName, PgTriggerName).AsId(),                    // tableoid

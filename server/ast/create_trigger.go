@@ -94,16 +94,18 @@ func nodeCreateTrigger(ctx *Context, node *tree.CreateTrigger) (_ vitess.Stateme
 	// we want to retain the parser validation of using an expression, however we cannot rely on the expression's
 	// String() function to return the **exact** same string, so we capture it with a regex.
 	var whenOps []plpgsql.InterpreterOperation
+	var whenExpression string
 	if node.When != nil {
 		matches := createTriggerWhenCapture.FindStringSubmatch(ctx.originalQuery)
 		if len(matches) != 2 {
 			return nil, errors.New("unable to parse WHEN expression from CREATE TRIGGER")
 		}
+		whenExpression = strings.TrimSpace(matches[1])
 		whenOps, err = plpgsql.Parse(fmt.Sprintf(`CREATE FUNCTION when_wrapper() RETURNS TRIGGER AS $$
 BEGIN
 	RETURN %s;
 END;
-$$ LANGUAGE plpgsql;`, matches[1]))
+$$ LANGUAGE plpgsql;`, whenExpression))
 		if err != nil {
 			return nil, err
 		}
@@ -117,6 +119,7 @@ $$ LANGUAGE plpgsql;`, matches[1]))
 			events,
 			node.ForEachRow,
 			whenOps,
+			whenExpression,
 			oldTransitionName,
 			newTransitionName,
 			node.Args.ToStrings(),

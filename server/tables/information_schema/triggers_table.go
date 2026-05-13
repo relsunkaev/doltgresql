@@ -106,7 +106,7 @@ func informationSchemaTriggerRow(
 		schema.Item.SchemaName(),                    // event_object_schema
 		table.Item.Name(),                           // event_object_table
 		actionOrder,                                 // action_order
-		nil,                                         // action_condition
+		emptyStringAsNil(trigger.WhenExpression),    // action_condition
 		trigger.Definition,                          // action_statement
 		triggerOrientation(trigger),                 // action_orientation
 		triggerTimingName(trigger.Timing),           // action_timing

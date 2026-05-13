@@ -92,6 +92,7 @@ type Trigger struct {
 	Events              []TriggerEvent
 	ForEachRow          bool // When false, represents FOR EACH STATEMENT
 	When                []plpgsql.InterpreterOperation
+	WhenExpression      string
 	Deferrable          TriggerDeferrable
 	ReferencedTableName id.Table // FROM referenced_table_name
 	Constraint          bool
