@@ -21,6 +21,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"math"
+	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -776,6 +777,10 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			return NormalizeNetworkValueToString(dt, types.InetValue{Addr: val.Addr().Unmap(), Bits: uint8(val.Bits())})
 		case netip.Addr:
 			return NormalizeNetworkValueToString(dt, types.InetValue{Addr: val.Unmap(), Bits: 32})
+		}
+	case types.Macaddr.ID:
+		if val, ok := v.(net.HardwareAddr); ok {
+			return types.FormatMacaddr(val)
 		}
 	}
 

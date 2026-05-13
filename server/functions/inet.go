@@ -32,6 +32,10 @@ func initInet() {
 	framework.RegisterFunction(inet_send)
 	framework.RegisterFunction(inet_host)
 	framework.RegisterFunction(inet_masklen)
+	framework.RegisterFunction(macaddr_in)
+	framework.RegisterFunction(macaddr_out)
+	framework.RegisterFunction(macaddr_recv)
+	framework.RegisterFunction(macaddr_send)
 }
 
 var cidr_in = framework.Function1{
@@ -75,6 +79,50 @@ var cidr_send = framework.Function1{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
 		return pgtypes.Cidr.SerializeValue(ctx, val)
+	},
+}
+
+var macaddr_in = framework.Function1{
+	Name:       "macaddr_in",
+	Return:     pgtypes.Macaddr,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Cstring},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.ParseMacaddr(val.(string))
+	},
+}
+
+var macaddr_out = framework.Function1{
+	Name:       "macaddr_out",
+	Return:     pgtypes.Cstring,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Macaddr},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.FormatMacaddr(val.(pgtypes.MacaddrValue)), nil
+	},
+}
+
+var macaddr_recv = framework.Function1{
+	Name:       "macaddr_recv",
+	Return:     pgtypes.Macaddr,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Internal},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		data := val.([]byte)
+		if data == nil {
+			return nil, nil
+		}
+		return pgtypes.Macaddr.DeserializeValue(ctx, data)
+	},
+}
+
+var macaddr_send = framework.Function1{
+	Name:       "macaddr_send",
+	Return:     pgtypes.Bytea,
+	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Macaddr},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
+		return pgtypes.Macaddr.SerializeValue(ctx, val)
 	},
 }
 

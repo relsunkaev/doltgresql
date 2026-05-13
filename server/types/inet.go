@@ -15,6 +15,7 @@
 package types
 
 import (
+	"net"
 	"net/netip"
 	"strconv"
 	"strings"
@@ -35,6 +36,8 @@ type InetValue struct {
 	Addr netip.Addr
 	Bits uint8
 }
+
+type MacaddrValue = net.HardwareAddr
 
 // Inet is PostgreSQL's network address type. This currently implements the IPv4 subset needed by the test suite.
 var Inet = &DoltgresType{
@@ -112,6 +115,44 @@ var Cidr = &DoltgresType{
 	DeserializationFunc: deserializeTypeInet,
 }
 
+// Macaddr is PostgreSQL's 6-byte MAC address type.
+var Macaddr = &DoltgresType{
+	ID:                  toInternal("macaddr"),
+	TypLength:           int16(6),
+	PassedByVal:         false,
+	TypType:             TypeType_Base,
+	TypCategory:         TypeCategory_NetworkAddressTypes,
+	IsPreferred:         false,
+	IsDefined:           true,
+	Delimiter:           ",",
+	RelID:               id.Null,
+	SubscriptFunc:       toFuncID("-"),
+	Elem:                id.NullType,
+	Array:               toInternal("_macaddr"),
+	InputFunc:           toFuncID("macaddr_in", toInternal("cstring")),
+	OutputFunc:          toFuncID("macaddr_out", toInternal("macaddr")),
+	ReceiveFunc:         toFuncID("macaddr_recv", toInternal("internal")),
+	SendFunc:            toFuncID("macaddr_send", toInternal("macaddr")),
+	ModInFunc:           toFuncID("-"),
+	ModOutFunc:          toFuncID("-"),
+	AnalyzeFunc:         toFuncID("-"),
+	Align:               TypeAlignment_Int,
+	Storage:             TypeStorage_Plain,
+	NotNull:             false,
+	BaseTypeID:          id.NullType,
+	TypMod:              -1,
+	NDims:               0,
+	TypCollation:        id.NullCollation,
+	DefaulBin:           "",
+	Default:             "",
+	Acl:                 nil,
+	Checks:              nil,
+	attTypMod:           -1,
+	CompareFunc:         toFuncID("-"),
+	SerializationFunc:   serializeTypeMacaddr,
+	DeserializationFunc: deserializeTypeMacaddr,
+}
+
 // ParseInet converts PostgreSQL inet text input into an InetValue.
 func ParseInet(input string) (InetValue, error) {
 	trimmed := strings.TrimSpace(input)
@@ -168,6 +209,15 @@ func ParseCidr(input string) (InetValue, error) {
 	return InetValue{Addr: addr, Bits: 32}, nil
 }
 
+// ParseMacaddr converts PostgreSQL macaddr text input into a HardwareAddr.
+func ParseMacaddr(input string) (net.HardwareAddr, error) {
+	addr, err := net.ParseMAC(strings.TrimSpace(input))
+	if err != nil || len(addr) != 6 {
+		return nil, ErrInvalidSyntaxForType.New("macaddr", input)
+	}
+	return append(net.HardwareAddr(nil), addr...), nil
+}
+
 // FormatInet converts an InetValue to PostgreSQL's canonical text form.
 func FormatInet(value InetValue) string {
 	if value.Bits == 32 {
@@ -179,6 +229,11 @@ func FormatInet(value InetValue) string {
 // FormatCidr converts an InetValue to PostgreSQL's canonical cidr text form.
 func FormatCidr(value InetValue) string {
 	return value.prefix().String()
+}
+
+// FormatMacaddr converts a HardwareAddr to PostgreSQL's canonical macaddr text form.
+func FormatMacaddr(value net.HardwareAddr) string {
+	return value.String()
 }
 
 // Host returns the address without the network mask.
@@ -221,4 +276,22 @@ func deserializeTypeInet(ctx *sql.Context, t *DoltgresType, data []byte) (any, e
 		Addr: netip.AddrFrom4([4]byte{data[4], data[5], data[6], data[7]}),
 		Bits: data[1],
 	}, nil
+}
+
+func serializeTypeMacaddr(ctx *sql.Context, t *DoltgresType, val any) ([]byte, error) {
+	addr := val.(net.HardwareAddr)
+	if len(addr) != 6 {
+		return nil, errors.Errorf("invalid macaddr data length: %d", len(addr))
+	}
+	return append([]byte(nil), addr...), nil
+}
+
+func deserializeTypeMacaddr(ctx *sql.Context, t *DoltgresType, data []byte) (any, error) {
+	if len(data) == 0 {
+		return nil, nil
+	}
+	if len(data) != 6 {
+		return nil, errors.Errorf("invalid macaddr data length: %d", len(data))
+	}
+	return append(net.HardwareAddr(nil), data...), nil
 }
