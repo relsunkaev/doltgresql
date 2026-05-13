@@ -320,7 +320,7 @@ func routineOwner(fn FunctionInterface) string {
 // String implements the interface sql.Expression.
 func (c *CompiledFunction) String() string {
 	sb := strings.Builder{}
-	sb.WriteString(c.Name + "(")
+	sb.WriteString(c.stringName() + "(")
 	for i, param := range c.Arguments {
 		// Aliases will output the string "x as x", which is an artifact of how we build the AST, so we'll bypass it
 		if alias, ok := param.(*expression.Alias); ok {
@@ -333,6 +333,26 @@ func (c *CompiledFunction) String() string {
 	}
 	sb.WriteString(")")
 	return sb.String()
+}
+
+func (c *CompiledFunction) stringName() string {
+	if c.IsOperator || !c.overload.Valid() {
+		return c.Name
+	}
+	functionID := c.overload.Function().InternalID()
+	if !functionID.IsValid() || functionID.Section() != id.Section_Function {
+		return c.Name
+	}
+	resolvedFunction := id.Function(functionID)
+	schemaName := resolvedFunction.SchemaName()
+	if schemaName == "" || strings.EqualFold(schemaName, "pg_catalog") {
+		return c.Name
+	}
+	return quoteFunctionIdentifier(schemaName) + "." + quoteFunctionIdentifier(resolvedFunction.FunctionName())
+}
+
+func quoteFunctionIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
 // OverloadString returns the name of the function represented by the given overload.
