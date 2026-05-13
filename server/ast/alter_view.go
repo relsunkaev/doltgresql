@@ -43,6 +43,27 @@ func nodeAlterView(ctx *Context, stmt *tree.AlterView) (sqlparser.Statement, err
 		}, nil
 	}
 
+	if rename, ok := stmt.Cmd.(*tree.AlterViewRenameTo); ok {
+		treeName := stmt.Name.ToTableName()
+		viewName, err := nodeTableName(ctx, &treeName)
+		if err != nil {
+			return nil, err
+		}
+		newName, err := nodeUnresolvedObjectName(ctx, rename.Rename)
+		if err != nil {
+			return nil, err
+		}
+		return sqlparser.InjectedStatement{
+			Statement: pgnodes.NewAlterViewRename(
+				stmt.IfExists,
+				viewName.SchemaQualifier.String(),
+				viewName.Name.String(),
+				newName.SchemaQualifier.String(),
+				newName.Name.String(),
+			),
+		}, nil
+	}
+
 	if setSchema, ok := stmt.Cmd.(*tree.AlterViewSetSchema); ok {
 		treeName := stmt.Name.ToTableName()
 		viewName, err := nodeTableName(ctx, &treeName)
