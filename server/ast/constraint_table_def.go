@@ -36,10 +36,6 @@ func nodeCheckConstraintTableDef(
 	tableName vitess.TableName,
 	ifExists bool) (*vitess.DDL, error) {
 
-	if node.NoInherit {
-		return nil, errors.Errorf("NO INHERIT is not yet supported for check constraints")
-	}
-
 	expr, err := nodeExpr(ctx, node.Expr)
 	if err != nil {
 		return nil, err

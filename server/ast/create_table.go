@@ -598,9 +598,6 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 }
 
 func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, noInherit bool, notEnforced bool) (pgnodes.TypedTableCheckConstraint, error) {
-	if noInherit {
-		return pgnodes.TypedTableCheckConstraint{}, errors.Errorf("NO INHERIT is not yet supported for check constraints")
-	}
 	if notEnforced {
 		return pgnodes.TypedTableCheckConstraint{}, errors.Errorf("NOT ENFORCED is not yet supported for typed table check constraints")
 	}
