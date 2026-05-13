@@ -25,7 +25,9 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	coreprocedures "github.com/dolthub/doltgresql/core/procedures"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -163,6 +165,16 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		}
 	}
 
+	if dependency, err := routineTypeDependency(ctx, typ.ID); err != nil {
+		return nil, err
+	} else if dependency != "" {
+		if c.cascade {
+			// TODO: handle cascade
+			return nil, errors.Errorf(`cascading type drops are not yet supported`)
+		}
+		return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - %s`, c.typName, dependency)
+	}
+
 	if err = collection.DropType(ctx, typeID); err != nil {
 		return nil, err
 	}
@@ -200,6 +212,45 @@ func clearTypeComment(typeID id.Type) {
 		ClassOID: comments.ClassOID("pg_type"),
 		ObjSubID: 0,
 	}, nil)
+}
+
+func routineTypeDependency(ctx *sql.Context, typeID id.Type) (string, error) {
+	funcsColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	dependency := ""
+	err = funcsColl.IterateFunctions(ctx, func(function corefunctions.Function) (stop bool, err error) {
+		if function.ReturnType == typeID || function.AggregateStateType == typeID {
+			dependency = fmt.Sprintf("function %s depends on type %s", function.ID.FunctionName(), typeID.TypeName())
+			return true, nil
+		}
+		for _, paramType := range function.ParameterTypes {
+			if paramType == typeID {
+				dependency = fmt.Sprintf("function %s depends on type %s", function.ID.FunctionName(), typeID.TypeName())
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	if err != nil || dependency != "" {
+		return dependency, err
+	}
+
+	procsColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	err = procsColl.IterateProcedures(ctx, func(procedure coreprocedures.Procedure) (stop bool, err error) {
+		for _, paramType := range procedure.ParameterTypes {
+			if paramType == typeID {
+				dependency = fmt.Sprintf("procedure %s depends on type %s", procedure.ID.ProcedureName(), typeID.TypeName())
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	return dependency, err
 }
 
 // Schema implements the interface sql.ExecSourceRel.
