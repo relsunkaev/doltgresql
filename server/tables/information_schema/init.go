@@ -32,9 +32,12 @@ func Init() {
 	// upstream initializer copies this map into the table set after the
 	// defaults, so map keys take precedence).
 	information_schema.NewInformationSchemaTablesToAdd = map[string]sql.Table{
-		ConstraintColumnUsageViewName:        newConstraintColumnUsageView(),
-		SequencesTableName:                   newSequencesTable(),
-		TableConstraintsViewName:             newTableConstraintsView(),
-		information_schema.TriggersTableName: newTriggersTable(),
+		ConstraintColumnUsageViewName:                newConstraintColumnUsageView(),
+		information_schema.ColumnPrivilegesTableName: newColumnPrivilegesTable(),
+		RoutinePrivilegesTableName:                   newRoutinePrivilegesTable(),
+		SequencesTableName:                           newSequencesTable(),
+		TableConstraintsViewName:                     newTableConstraintsView(),
+		information_schema.TablePrivilegesTableName:  newTablePrivilegesTable(),
+		information_schema.TriggersTableName:         newTriggersTable(),
 	}
 }
