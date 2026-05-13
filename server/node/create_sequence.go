@@ -22,6 +22,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -108,27 +109,36 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 	var tableSch sql.Schema
 	var tableColumn *sql.Column
 	if c.sequence.OwnerTable.IsValid() {
+		temporaryOwnerTable, temporaryOwnerExists := temporarySequenceOwnerTable(ctx, c.database, c.sequence.OwnerTable.TableName())
 		// The table will only have its name set, so we need to fill in the schema as well
 		c.sequence.OwnerTable = id.NewTable(schema, c.sequence.OwnerTable.TableName())
 		relationType, err = core.GetRelationTypeForDatabase(ctx, c.database, schema, c.sequence.OwnerTable.TableName())
 		if err != nil {
 			return nil, err
 		}
+		if relationType == core.RelationType_DoesNotExist && temporaryOwnerExists {
+			relationType = core.RelationType_Table
+		}
 		if relationType == core.RelationType_DoesNotExist {
 			return nil, errors.Errorf(`relation "%s" does not exist`, c.sequence.OwnerTable.TableName())
 		} else if relationType != core.RelationType_Table {
 			return nil, errors.Errorf(`sequence cannot be owned by relation "%s"`, c.sequence.OwnerTable.TableName())
 		}
-		if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema}); err != nil {
-			return nil, errors.Wrap(err, "permission denied")
+		if !temporaryOwnerExists {
+			if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema}); err != nil {
+				return nil, errors.Wrap(err, "permission denied")
+			}
 		}
 
-		table, err = core.GetSqlTableFromContext(ctx, c.database, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
-		if err != nil {
-			return nil, err
-		}
+		table = temporaryOwnerTable
 		if table == nil {
-			return nil, errors.Errorf(`table "%s" cannot be found but says it exists`, c.sequence.OwnerTable.TableName())
+			table, err = core.GetSqlTableFromContext(ctx, c.database, doltdb.TableName{Name: c.sequence.OwnerTable.TableName(), Schema: schema})
+			if err != nil {
+				return nil, err
+			}
+			if table == nil {
+				return nil, errors.Errorf(`table "%s" cannot be found but says it exists`, c.sequence.OwnerTable.TableName())
+			}
 		}
 		tableSch = table.Schema(ctx)
 		for _, col := range tableSch {
@@ -222,6 +232,30 @@ func (c *CreateSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		}
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func temporarySequenceOwnerTable(ctx *sql.Context, database string, tableName string) (sql.Table, bool) {
+	session := dsess.DSessFromSess(ctx.Session)
+	candidates := []string{database, ctx.GetCurrentDatabase()}
+	for i, candidate := range candidates {
+		if candidate == "" {
+			continue
+		}
+		seen := false
+		for _, previous := range candidates[:i] {
+			if strings.EqualFold(previous, candidate) {
+				seen = true
+				break
+			}
+		}
+		if seen {
+			continue
+		}
+		if table, ok := session.GetTemporaryTable(ctx, candidate, tableName); ok {
+			return table, true
+		}
+	}
+	return nil, false
 }
 
 // Schema implements the interface sql.ExecSourceRel.

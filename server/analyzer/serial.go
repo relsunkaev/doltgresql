@@ -141,10 +141,14 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			maxValue = 9223372036854775807
 		}
 
+		persistence := sequences.Persistence_Permanent
+		if createTable.Temporary() {
+			persistence = sequences.Persistence_Temporary
+		}
 		seq := &sequences.Sequence{
 			Id:          id.NewSequence("", sequenceName),
 			DataTypeID:  col.Type.(*pgtypes.DoltgresType).ID,
-			Persistence: sequences.Persistence_Permanent,
+			Persistence: persistence,
 			Start:       1,
 			Current:     1,
 			Increment:   1,

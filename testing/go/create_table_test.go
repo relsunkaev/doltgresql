@@ -451,6 +451,18 @@ func TestCreateTable(t *testing.T) {
 					Query:    "CREATE TEMP TABLE temp (id serial primary key)",
 					Expected: []sql.Row{},
 				},
+				{
+					Query:    "INSERT INTO temp DEFAULT VALUES",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "INSERT INTO temp DEFAULT VALUES",
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    "SELECT id FROM temp ORDER BY id",
+					Expected: []sql.Row{{1}, {2}},
+				},
 			},
 		},
 		{
