@@ -275,6 +275,13 @@ func checkPrivilegeOnTableColumn(ctx *sql.Context, state AuthorizationQueryState
 	if systemCatalogTableReadable(schemaName, tableName, privileges) {
 		return nil
 	}
+	tableExists, err := tableExistsForPrivilegeCheck(ctx, schemaName, tableName)
+	if err != nil {
+		return err
+	}
+	if !tableExists {
+		return nil
+	}
 	if tableOwnedByRole(ctx, schemaName, tableName, state.role.Name) {
 		return nil
 	}
@@ -419,6 +426,13 @@ func checkPrivilegeOnTable(ctx *sql.Context, state AuthorizationQueryState, sche
 	if systemCatalogTableReadable(schemaName, tableName, privileges) {
 		return nil
 	}
+	tableExists, err := tableExistsForPrivilegeCheck(ctx, schemaName, tableName)
+	if err != nil {
+		return err
+	}
+	if !tableExists {
+		return nil
+	}
 	roleTableKey := TablePrivilegeKey{
 		Role:  state.role.ID(),
 		Table: doltdb.TableName{Name: tableName, Schema: schemaName},
@@ -453,6 +467,14 @@ func systemCatalogTableReadable(schemaName, tableName string, privileges []Privi
 		return true
 	}
 	return strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid")
+}
+
+func tableExistsForPrivilegeCheck(ctx *sql.Context, schemaName, tableName string) (bool, error) {
+	table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: tableName, Schema: schemaName})
+	if err != nil {
+		return false, err
+	}
+	return table != nil, nil
 }
 
 func tableOwnedByRole(ctx *sql.Context, schemaName, tableName, roleName string) bool {
