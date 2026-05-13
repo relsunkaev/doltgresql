@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -187,7 +188,7 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 		if f.ReturnType.ID == pgtypes.Void.ID {
 			return nil, nil
 		}
-		return coerceSQLFunctionReturn(ctx, res, f.ReturnType)
+		return coerceSQLFunctionReturn(ctx, runner, res, f.ReturnType)
 	}
 
 	// single statement
@@ -217,7 +218,7 @@ func CallSqlFunction(ctx *sql.Context, f SQLFunction, runner sql.StatementRunner
 			if err != nil {
 				return nil, err
 			}
-			return coerceSQLFunctionReturn(subCtx, res, f.ReturnType)
+			return coerceSQLFunctionReturn(subCtx, runner, res, f.ReturnType)
 		}
 		// multiple column row result
 		if f.ReturnType.TypCategory == pgtypes.TypeCategory_CompositeTypes {
@@ -263,7 +264,14 @@ func sqlFunctionResultFromRows(sch sql.Schema, rows []sql.Row) (sqlFunctionScala
 	return sqlFunctionScalarReturn{val: rows[0][0], typ: fromType}, nil
 }
 
-func coerceSQLFunctionReturn(ctx *sql.Context, res sqlFunctionScalarReturn, targetType *pgtypes.DoltgresType) (any, error) {
+func coerceSQLFunctionReturn(ctx *sql.Context, runner sql.StatementRunner, res sqlFunctionScalarReturn, targetType *pgtypes.DoltgresType) (any, error) {
+	if targetType.TypType == pgtypes.TypeType_Domain {
+		return coerceSQLFunctionDomainReturn(ctx, runner, res, targetType)
+	}
+	return coerceSQLFunctionReturnToType(ctx, res, targetType)
+}
+
+func coerceSQLFunctionReturnToType(ctx *sql.Context, res sqlFunctionScalarReturn, targetType *pgtypes.DoltgresType) (any, error) {
 	if res.val == nil {
 		return nil, nil
 	}
@@ -279,6 +287,55 @@ func coerceSQLFunctionReturn(ctx *sql.Context, res sqlFunctionScalarReturn, targ
 		return targetType.IoInput(ctx, str)
 	}
 	return nil, errors.New("no valid cast for return value")
+}
+
+func coerceSQLFunctionDomainReturn(ctx *sql.Context, runner sql.StatementRunner, res sqlFunctionScalarReturn, targetType *pgtypes.DoltgresType) (any, error) {
+	if res.val == nil {
+		if targetType.NotNull {
+			return nil, pgtypes.ErrDomainDoesNotAllowNullValues.New(targetType.Name())
+		}
+		return nil, nil
+	}
+	baseType, err := targetType.DomainUnderlyingBaseTypeWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	castValue, err := coerceSQLFunctionReturnToType(ctx, res, baseType)
+	if err != nil {
+		return nil, err
+	}
+	formattedValue, err := targetType.FormatValueWithContext(ctx, castValue)
+	if err != nil {
+		return nil, err
+	}
+	query := fmt.Sprintf("SELECT %s::%s", lex.EscapeSQLString(formattedValue), sqlFunctionTypeName(targetType))
+	return sql.RunInterpreted(ctx, func(subCtx *sql.Context) (any, error) {
+		sch, rowIter, _, err := runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		rows, err := sql.RowIterToRows(subCtx, rowIter)
+		if err != nil {
+			return nil, err
+		}
+		res, err := sqlFunctionResultFromRows(sch, rows)
+		if err != nil {
+			return nil, err
+		}
+		return res.val, nil
+	})
+}
+
+func sqlFunctionTypeName(typ *pgtypes.DoltgresType) string {
+	name := quoteSQLFunctionIdentifier(typ.ID.TypeName())
+	if schema := typ.ID.SchemaName(); schema != "" {
+		name = quoteSQLFunctionIdentifier(schema) + "." + name
+	}
+	return name
+}
+
+func quoteSQLFunctionIdentifier(identifier string) string {
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
 // ParamTypAndValue contains the parameter type and

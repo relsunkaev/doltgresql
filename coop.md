@@ -10,6 +10,15 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 09:56 America/Phoenix
+
+- Lane complete: SQL function return values enforcing domain constraints from `TestSqlFunctionReturnEnforcesDomainConstraintsRepro`.
+- Files touched: `server/functions/framework/sql_function.go` only. Avoided active alpha sequence files, dirty grant/RLS files, parser files, oracle files, and Alpha-owned full `./testing/go`.
+- Red proof in clean verifier `/Users/ramazan/.cache/doltgresql-delta-routine-post` at `a9368ebf`: `go test -vet=off ./testing/go -run '^TestSqlFunctionReturnEnforcesDomainConstraintsRepro$' -count=1 -v` failed because `SELECT function_return_invalid_domain();` returned without `function_return_positive_domain_check`.
+- Fix: SQL function return coercion now handles domain return types explicitly by coercing to the domain base type and validating the result through the existing domain cast/analyzer path, including domain `NOT NULL` handling.
+- Exact post-fix proof in clean verifier `/Users/ramazan/.cache/doltgresql-delta-domain-post-836db199` at `836db199` plus delta patch after `./postgres/parser/build.sh`: `go test -vet=off ./server/functions/framework -run '^$' -count=1`; `go test -vet=off ./testing/go -run '^(TestSqlFunctionReturnEnforcesDomainConstraintsRepro|TestPlpgsqlFunctionReturnDomainValueRepro|TestSqlFunctionArgumentResolvesDomainInputRepro)$' -count=1 -v`.
+- Next action: commit this slice, then refresh active lanes before claiming another unowned focused failure.
+
 ### gamma - 2026-05-13 02:00 America/Phoenix
 
 - Lane complete: COPY server-file/program privilege parsing from `TestCopyToServerFileRequiresPrivilegeRepro`, `TestCopyFromProgramRequiresPrivilegeRepro`, and `TestCopyToProgramRequiresPrivilegeRepro`.
