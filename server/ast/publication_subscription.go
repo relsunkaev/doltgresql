@@ -62,6 +62,7 @@ func nodeAlterPublication(ctx *Context, node *tree.AlterPublication) (vitess.Sta
 			Name:      string(node.Name),
 			Action:    action,
 			NewName:   string(node.NewName),
+			Owner:     node.Owner,
 			Tables:    tables,
 			Schemas:   append([]string(nil), node.Targets.Schemas...),
 			Options:   nodeKVOptions(node.Options),
@@ -180,6 +181,8 @@ func nodePublicationAlterAction(action tree.PublicationAlterAction) (pgnodes.Pub
 		return pgnodes.PublicationAlterSetOptions, nil
 	case tree.PublicationAlterRename:
 		return pgnodes.PublicationAlterRename, nil
+	case tree.PublicationAlterOwner:
+		return pgnodes.PublicationAlterOwner, nil
 	default:
 		return "", errors.Errorf("unknown ALTER PUBLICATION action: %s", action)
 	}

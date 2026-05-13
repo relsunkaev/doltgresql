@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/doltgresql/core/subscriptions"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -65,6 +66,11 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	if strings.HasPrefix(strings.ToLower(c.Name), "dolt") {
 		return nil, errors.Errorf("publications cannot be prefixed with 'dolt'")
 	}
+	if c.AllTables || len(c.Schemas) > 0 {
+		if err := requireSuperuser(ctx, "create publication for all tables or tables in schema"); err != nil {
+			return nil, err
+		}
+	}
 	collection, err := core.GetPublicationsCollectionFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -80,6 +86,9 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	}
 	pub.Tables, err = resolvePublicationTables(ctx, c.Tables)
 	if err != nil {
+		return nil, err
+	}
+	if err = checkPublicationTableOwnership(ctx, pub.Tables, true); err != nil {
 		return nil, err
 	}
 	pub.Schemas, err = resolvePublicationSchemas(ctx, c.Schemas)
@@ -118,6 +127,7 @@ const (
 	PublicationAlterDropSchemas PublicationAlterAction = "drop_schemas"
 	PublicationAlterSetOptions  PublicationAlterAction = "set_options"
 	PublicationAlterRename      PublicationAlterAction = "rename"
+	PublicationAlterOwner       PublicationAlterAction = "owner"
 )
 
 // AlterPublication handles ALTER PUBLICATION.
@@ -125,6 +135,7 @@ type AlterPublication struct {
 	Name      string
 	Action    PublicationAlterAction
 	NewName   string
+	Owner     string
 	Tables    []PublicationTableSpec
 	Schemas   []string
 	Options   map[string]string
@@ -153,15 +164,26 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	if !pub.ID.IsValid() {
 		return nil, errors.Errorf(`publication "%s" does not exist`, a.Name)
 	}
+	if err = checkPublicationOwnership(ctx, pub); err != nil {
+		return nil, err
+	}
 	switch a.Action {
 	case PublicationAlterAddTables:
 		tables, err := resolvePublicationTables(ctx, a.Tables)
 		if err != nil {
 			return nil, err
 		}
+		if err = checkPublicationTableOwnership(ctx, tables, false); err != nil {
+			return nil, err
+		}
 		schemas, err := resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
 			return nil, err
+		}
+		if len(schemas) > 0 {
+			if err = requireSuperuser(ctx, "alter publication add tables in schema"); err != nil {
+				return nil, err
+			}
 		}
 		combinedSchemas := append(slices.Clone(pub.Schemas), schemas...)
 		if err = validatePublicationSchemaMembership(publications.Publication{
@@ -186,9 +208,17 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if err != nil {
 			return nil, err
 		}
+		if err = checkPublicationTableOwnership(ctx, pub.Tables, false); err != nil {
+			return nil, err
+		}
 		pub.Schemas, err = resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
 			return nil, err
+		}
+		if len(pub.Schemas) > 0 {
+			if err = requireSuperuser(ctx, "alter publication set tables in schema"); err != nil {
+				return nil, err
+			}
 		}
 		if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionColumnList); err != nil {
 			return nil, err
@@ -209,6 +239,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterAddSchemas:
+		if err = requireSuperuser(ctx, "alter publication add tables in schema"); err != nil {
+			return nil, err
+		}
 		schemas, err := resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
 			return nil, err
@@ -220,6 +253,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 			return nil, err
 		}
 	case PublicationAlterSetSchemas:
+		if err = requireSuperuser(ctx, "alter publication set tables in schema"); err != nil {
+			return nil, err
+		}
 		pub.AllTables = false
 		pub.Schemas, err = resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
@@ -253,6 +289,11 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		}
 		pub.ID = newID
 		return sql.RowsToRowIter(), collection.AddPublication(ctx, pub)
+	case PublicationAlterOwner:
+		if !auth.RoleExists(a.Owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
+		}
+		pub.Owner = id.NewId(id.Section_User, a.Owner)
 	default:
 		return nil, errors.Errorf("unknown ALTER PUBLICATION action: %s", a.Action)
 	}
@@ -294,15 +335,26 @@ func (d *DropPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	pubs := make([]publications.Publication, 0, len(d.Names))
 	for _, name := range d.Names {
 		pubID := id.NewPublication(name)
-		if !collection.HasPublication(ctx, pubID) {
+		pub, err := collection.GetPublication(ctx, pubID)
+		if err != nil {
+			return nil, err
+		}
+		if !pub.ID.IsValid() {
 			if d.IfExists {
 				continue
 			}
 			return nil, errors.Errorf(`publication "%s" does not exist`, name)
 		}
-		if err = collection.DropPublication(ctx, pubID); err != nil {
+		if err = checkPublicationOwnership(ctx, pub); err != nil {
+			return nil, err
+		}
+		pubs = append(pubs, pub)
+	}
+	for _, pub := range pubs {
+		if err = collection.DropPublication(ctx, pub.ID); err != nil {
 			return nil, err
 		}
 	}
@@ -341,6 +393,9 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 	if strings.HasPrefix(strings.ToLower(c.Name), "dolt") {
 		return nil, errors.Errorf("subscriptions cannot be prefixed with 'dolt'")
 	}
+	if err := requireSuperuser(ctx, "create subscription"); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 	if len(c.Publications) == 0 {
 		return nil, errors.New("CREATE SUBSCRIPTION requires at least one publication")
 	}
@@ -359,6 +414,7 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 		return nil, err
 	}
 	sub := subscriptions.NewSubscription(c.Name)
+	sub.Owner = id.NewId(id.Section_User, ctx.Client().User)
 	sub.ConnInfo = c.ConnInfo
 	sub.Publications = slices.Clone(c.Publications)
 	sub.SlotName = c.Name
@@ -431,6 +487,9 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	}
 	if !sub.ID.IsValid() {
 		return nil, errors.Errorf(`subscription "%s" does not exist`, a.Name)
+	}
+	if err = checkSubscriptionOwnership(ctx, sub); err != nil {
+		return nil, err
 	}
 	switch a.Action {
 	case SubscriptionAlterConnection:
@@ -509,8 +568,10 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		sub.ID = newID
 		return sql.RowsToRowIter(), collection.AddSubscription(ctx, sub)
 	case SubscriptionAlterOwner:
-		// Object ownership is not modeled in Doltgres catalogs yet. Accepting
-		// this statement after existence validation preserves PostgreSQL client compatibility.
+		if !auth.RoleExists(a.Owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
+		}
+		sub.Owner = id.NewId(id.Section_User, a.Owner)
 	default:
 		return nil, errors.Errorf("unknown ALTER SUBSCRIPTION action: %s", a.Action)
 	}
@@ -553,11 +614,18 @@ func (d *DropSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		return nil, err
 	}
 	subID := id.NewSubscription(d.Name)
-	if !collection.HasSubscription(ctx, subID) {
+	sub, err := collection.GetSubscription(ctx, subID)
+	if err != nil {
+		return nil, err
+	}
+	if !sub.ID.IsValid() {
 		if d.IfExists {
 			return sql.RowsToRowIter(), nil
 		}
 		return nil, errors.Errorf(`subscription "%s" does not exist`, d.Name)
+	}
+	if err = checkSubscriptionOwnership(ctx, sub); err != nil {
+		return nil, err
 	}
 	if err = collection.DropSubscription(ctx, subID); err != nil {
 		return nil, err
@@ -574,6 +642,67 @@ func (d *DropSubscription) WithResolvedChildren(ctx context.Context, children []
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return d, nil
+}
+
+func requireSuperuser(ctx *sql.Context, operation string) error {
+	var role auth.Role
+	auth.LockRead(func() {
+		role = auth.GetRole(ctx.Client().User)
+	})
+	if role.IsValid() && role.IsSuperUser {
+		return nil
+	}
+	return errors.Errorf("must be superuser to %s", operation)
+}
+
+func checkPublicationTableOwnership(ctx *sql.Context, relations []publications.PublicationRelation, wrapPermission bool) error {
+	for _, relation := range relations {
+		err := checkTableOwnership(ctx, doltdb.TableName{
+			Schema: relation.Table.SchemaName(),
+			Name:   relation.Table.TableName(),
+		})
+		if err == nil {
+			continue
+		}
+		if wrapPermission {
+			return errors.Wrap(err, "permission denied")
+		}
+		return err
+	}
+	return nil
+}
+
+func checkPublicationOwnership(ctx *sql.Context, pub publications.Publication) error {
+	owner := ownerNameFromID(pub.Owner)
+	var allowed bool
+	auth.LockRead(func() {
+		userRole := auth.GetRole(ctx.Client().User)
+		allowed = roleCanOperateAsOwner(userRole, owner)
+	})
+	if allowed {
+		return nil
+	}
+	return errors.Errorf("permission denied for publication %s", pub.ID.PublicationName())
+}
+
+func checkSubscriptionOwnership(ctx *sql.Context, sub subscriptions.Subscription) error {
+	owner := ownerNameFromID(sub.Owner)
+	var allowed bool
+	auth.LockRead(func() {
+		userRole := auth.GetRole(ctx.Client().User)
+		allowed = roleCanOperateAsOwner(userRole, owner)
+	})
+	if allowed {
+		return nil
+	}
+	return errors.Errorf("permission denied for subscription %s", sub.ID.SubscriptionName())
+}
+
+func ownerNameFromID(owner id.Id) string {
+	if owner.Section() == id.Section_User {
+		return owner.Segment(0)
+	}
+	return "postgres"
 }
 
 func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([]publications.PublicationRelation, error) {

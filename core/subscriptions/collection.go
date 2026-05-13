@@ -40,6 +40,7 @@ import (
 // Subscription represents logical replication subscription metadata.
 type Subscription struct {
 	ID             id.Subscription
+	Owner          id.Id
 	SkipLSN        string
 	Enabled        bool
 	Binary         bool
@@ -83,10 +84,15 @@ func NewCollection(ctx context.Context, underlyingMap prolly.AddressMap, ns tree
 func NewSubscription(name string) Subscription {
 	return Subscription{
 		ID:            id.NewSubscription(name),
+		Owner:         defaultSubscriptionOwner(),
 		SkipLSN:       "0/0",
 		TwoPhaseState: "d",
 		SyncCommit:    "off",
 	}
+}
+
+func defaultSubscriptionOwner() id.Id {
+	return id.NewOID(10).AsId()
 }
 
 // GetSubscription returns the subscription with the given ID.
@@ -237,8 +243,9 @@ func (subscription Subscription) Serialize(ctx context.Context) ([]byte, error) 
 	}
 	subscription.normalize()
 	writer := utils.NewWriter(256)
-	writer.VariableUint(0)
+	writer.VariableUint(1)
 	writer.Id(subscription.ID.AsId())
+	writer.Id(subscription.Owner)
 	writer.String(subscription.SkipLSN)
 	writer.Bool(subscription.Enabled)
 	writer.Bool(subscription.Binary)
@@ -259,11 +266,16 @@ func DeserializeSubscription(ctx context.Context, data []byte) (Subscription, er
 	}
 	reader := utils.NewReader(data)
 	version := reader.VariableUint()
-	if version > 0 {
+	if version > 1 {
 		return Subscription{}, errors.Errorf("version %d of subscriptions is not supported, please upgrade the server", version)
 	}
 	sub := Subscription{}
 	sub.ID = id.Subscription(reader.Id())
+	if version >= 1 {
+		sub.Owner = reader.Id()
+	} else {
+		sub.Owner = defaultSubscriptionOwner()
+	}
 	sub.SkipLSN = reader.String()
 	sub.Enabled = reader.Bool()
 	sub.Binary = reader.Bool()
@@ -282,6 +294,9 @@ func DeserializeSubscription(ctx context.Context, data []byte) (Subscription, er
 }
 
 func (subscription *Subscription) normalize() {
+	if !subscription.Owner.IsValid() {
+		subscription.Owner = defaultSubscriptionOwner()
+	}
 	if subscription.SkipLSN == "" {
 		subscription.SkipLSN = "0/0"
 	}
@@ -312,8 +327,8 @@ func compactStringsPreservingOrder(values []string) []string {
 
 func (subscription Subscription) summary() string {
 	subscription.normalize()
-	return fmt.Sprintf("%s enabled=%t binary=%t stream=%t twophase=%s conn=%s slot=%s pubs=%v",
-		subscription.ID.SubscriptionName(), subscription.Enabled, subscription.Binary, subscription.Stream,
+	return fmt.Sprintf("%s owner=%s enabled=%t binary=%t stream=%t twophase=%s conn=%s slot=%s pubs=%v",
+		subscription.ID.SubscriptionName(), subscription.Owner.String(), subscription.Enabled, subscription.Binary, subscription.Stream,
 		subscription.TwoPhaseState, subscription.ConnInfo, subscription.SlotName, subscription.Publications)
 }
 

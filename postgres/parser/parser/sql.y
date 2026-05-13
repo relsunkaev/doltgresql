@@ -1912,6 +1912,10 @@ alter_publication_stmt:
   {
     $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterRename, NewName: tree.Name($6)}
   }
+| ALTER PUBLICATION name owner_to
+  {
+    $$.val = &tree.AlterPublication{Name: tree.Name($3), Action: tree.PublicationAlterOwner, Owner: $4}
+  }
 | ALTER PUBLICATION error // SHOW HELP: ALTER PUBLICATION
 
 // %Help: ALTER SUBSCRIPTION - change a subscription

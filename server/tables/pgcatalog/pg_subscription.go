@@ -111,7 +111,7 @@ func (iter *pgSubscriptionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		id.NewDatabase(ctx.GetCurrentDatabase()).AsId(),
 		skipLSN,
 		sub.ID.SubscriptionName(),
-		catalogOwnerOID(),
+		subscriptionOwnerOID(sub.Owner),
 		sub.Enabled,
 		sub.Binary,
 		sub.Stream,
@@ -122,6 +122,13 @@ func (iter *pgSubscriptionRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		sub.SyncCommit,
 		stringSliceToAny(sub.Publications),
 	}, nil
+}
+
+func subscriptionOwnerOID(owner id.Id) id.Id {
+	if owner.IsValid() {
+		return owner
+	}
+	return catalogOwnerOID()
 }
 
 // Close implements the interface sql.RowIter.

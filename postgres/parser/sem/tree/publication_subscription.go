@@ -112,6 +112,7 @@ const (
 	PublicationAlterDropSchemas PublicationAlterAction = "DROP TABLES IN SCHEMA"
 	PublicationAlterSetOptions  PublicationAlterAction = "SET"
 	PublicationAlterRename      PublicationAlterAction = "RENAME"
+	PublicationAlterOwner       PublicationAlterAction = "OWNER"
 )
 
 // AlterPublication represents an ALTER PUBLICATION statement.
@@ -121,6 +122,7 @@ type AlterPublication struct {
 	Targets PublicationTargets
 	Options KVOptions
 	NewName Name
+	Owner   string
 }
 
 // Format implements the NodeFormatter interface.
@@ -131,6 +133,11 @@ func (node *AlterPublication) Format(ctx *FmtCtx) {
 	if node.Action == PublicationAlterRename {
 		ctx.WriteString("RENAME TO ")
 		ctx.FormatNode(&node.NewName)
+		return
+	}
+	if node.Action == PublicationAlterOwner {
+		ctx.WriteString("OWNER TO ")
+		ctx.WriteString(node.Owner)
 		return
 	}
 	ctx.WriteString(string(node.Action))
