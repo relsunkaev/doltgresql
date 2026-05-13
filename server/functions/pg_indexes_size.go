@@ -17,6 +17,7 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +35,6 @@ var pg_indexes_size_regclass = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: Total disk space used by indexes attached to the specified table
-		return int64(0), nil
+		return estimatedTableIndexSizeByID(ctx, val.(id.Id))
 	},
 }

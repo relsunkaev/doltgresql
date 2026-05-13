@@ -17,6 +17,7 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +35,15 @@ var pg_total_relation_size_regclass = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: Total disk space used by the specified table, including all indexes and TOAST data
-		return int64(0), nil
+		relationID := val.(id.Id)
+		tableSize, err := estimatedTableDataSizeByID(ctx, relationID)
+		if err != nil {
+			return nil, err
+		}
+		indexSize, err := estimatedTableIndexSizeByID(ctx, relationID)
+		if err != nil {
+			return nil, err
+		}
+		return tableSize + indexSize, nil
 	},
 }

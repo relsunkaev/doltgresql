@@ -17,6 +17,7 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -34,7 +35,6 @@ var pg_table_size_regclass = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: Disk space used by the specified table, excluding indexes (but including TOAST, free space map, and visibility map)
-		return int64(0), nil
+		return estimatedTableDataSizeByID(ctx, val.(id.Id))
 	},
 }

@@ -15,12 +15,17 @@
 package functions
 
 import (
+	"io"
+
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+const estimatedRelationPageSize = int64(8192)
 
 // initPgRelationSize registers the functions to the catalog.
 func initPgRelationSize() {
@@ -36,9 +41,7 @@ var pg_relation_size_regclass = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: on-disk size in bytes of one fork of that relation
-		//  used by 'main' by default.
-		return int64(0), nil
+		return estimatedRelationSizeForRegclass(ctx, val)
 	},
 }
 
@@ -55,8 +58,115 @@ var pg_relation_size_regclass_text = framework.Function2{
 		default:
 			return nil, errors.Errorf("invalid fork name")
 		}
-		// TODO: on-disk size in bytes of one fork of that relation
-		//  used by the specified fork ('main', 'fsm', 'vm', or 'init')
-		return int64(0), nil
+		return estimatedRelationSizeForRegclass(ctx, val1)
 	},
+}
+
+func estimatedRelationSizeForRegclass(ctx *sql.Context, val any) (int64, error) {
+	relationID := val.(id.Id)
+	switch relationID.Section() {
+	case id.Section_Table:
+		return estimatedTableDataSizeByID(ctx, relationID)
+	case id.Section_Index:
+		return estimatedIndexSizeByID(ctx, relationID)
+	default:
+		return 0, nil
+	}
+}
+
+func estimatedTableDataSizeByID(ctx *sql.Context, relationID id.Id) (int64, error) {
+	var size int64
+	err := RunCallback(ctx, relationID, Callbacks{
+		Table: func(ctx *sql.Context, _ ItemSchema, table ItemTable) (cont bool, err error) {
+			size, err = estimatedTableDataSize(ctx, table.Item)
+			return false, err
+		},
+	})
+	return size, err
+}
+
+func estimatedTableIndexSizeByID(ctx *sql.Context, relationID id.Id) (int64, error) {
+	var size int64
+	err := RunCallback(ctx, relationID, Callbacks{
+		Table: func(ctx *sql.Context, _ ItemSchema, table ItemTable) (cont bool, err error) {
+			size, err = estimatedTableIndexSize(ctx, table.Item)
+			return false, err
+		},
+	})
+	return size, err
+}
+
+func estimatedIndexSizeByID(ctx *sql.Context, relationID id.Id) (int64, error) {
+	var size int64
+	err := RunCallback(ctx, relationID, Callbacks{
+		Index: func(ctx *sql.Context, _ ItemSchema, table ItemTable, _ ItemIndex) (cont bool, err error) {
+			size, err = estimatedSingleIndexSize(ctx, table.Item)
+			return false, err
+		},
+	})
+	return size, err
+}
+
+func estimatedTableDataSize(ctx *sql.Context, table sql.Table) (int64, error) {
+	hasRows, err := tableHasRows(ctx, table)
+	if err != nil || !hasRows {
+		return 0, err
+	}
+	return estimatedRelationPageSize, nil
+}
+
+func estimatedTableIndexSize(ctx *sql.Context, table sql.Table) (int64, error) {
+	indexedTable, ok := table.(sql.IndexAddressable)
+	if !ok {
+		return 0, nil
+	}
+	indexes, err := indexedTable.GetIndexes(ctx)
+	if err != nil || len(indexes) == 0 {
+		return 0, err
+	}
+	singleIndexSize, err := estimatedSingleIndexSize(ctx, table)
+	if err != nil || singleIndexSize == 0 {
+		return 0, err
+	}
+	return int64(len(indexes)) * singleIndexSize, nil
+}
+
+func estimatedSingleIndexSize(ctx *sql.Context, table sql.Table) (int64, error) {
+	hasRows, err := tableHasRows(ctx, table)
+	if err != nil || !hasRows {
+		return 0, err
+	}
+	return estimatedRelationPageSize, nil
+}
+
+func tableHasRows(ctx *sql.Context, table sql.Table) (bool, error) {
+	partitions, err := table.Partitions(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer partitions.Close(ctx)
+	for {
+		partition, err := partitions.Next(ctx)
+		if err == io.EOF {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		rows, err := table.PartitionRows(ctx, partition)
+		if err != nil {
+			return false, err
+		}
+		_, nextErr := rows.Next(ctx)
+		closeErr := rows.Close(ctx)
+		if nextErr == nil {
+			return true, closeErr
+		}
+		if nextErr != io.EOF {
+			return false, nextErr
+		}
+		if closeErr != nil {
+			return false, closeErr
+		}
+	}
 }
