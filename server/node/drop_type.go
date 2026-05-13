@@ -109,11 +109,6 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	} else if ok {
 		return nil, errors.Errorf("cannot drop type %s because extension %s requires it", typ.String(), extension)
 	}
-	if c.cascade {
-		// TODO: handle cascade
-		return nil, errors.Errorf(`cascading type drops are not yet supported`)
-	}
-
 	if _, ok := types.IDToBuiltInDoltgresType[typ.ID]; ok {
 		return nil, types.ErrCannotDropSystemType.New(typ.String())
 	}
@@ -147,6 +142,10 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			for _, col := range t.Schema(ctx) {
 				if dt, isDoltgresType := col.Type.(*types.DoltgresType); isDoltgresType {
 					if dt.Name() == typ.Name() {
+						if c.cascade {
+							// TODO: handle cascade
+							return nil, errors.Errorf(`cascading type drops are not yet supported`)
+						}
 						// TODO: issue a detail (list of all columns and tables that uses this type)
 						//  and a hint (when we support CASCADE)
 						return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - column %s of table %s depends on type %s'`, c.typName, col.Name, t.Name(), c.typName)
