@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
@@ -28,14 +30,15 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 	if node == nil {
 		return nil, nil
 	}
-	if node.Using != "" {
-		return nil, errors.Errorf("CREATE MATERIALIZED VIEW USING is not yet supported")
+	if node.Using != "" && !strings.EqualFold(node.Using, "heap") {
+		return nil, errors.Errorf(`access method "%s" does not exist`, node.Using)
 	}
-	if len(node.Params) > 0 {
-		return nil, errors.Errorf("CREATE MATERIALIZED VIEW storage parameters are not yet supported")
+	relOptions, err := nodeTableRelOptions(node.Params)
+	if err != nil {
+		return nil, err
 	}
-	if node.Tablespace != "" {
-		return nil, errors.Errorf("CREATE MATERIALIZED VIEW TABLESPACE is not yet supported")
+	if node.Tablespace != "" && !strings.EqualFold(string(node.Tablespace), "pg_default") {
+		return nil, errors.Errorf(`tablespace "%s" does not exist`, string(node.Tablespace))
 	}
 	if node.CheckOption != tree.ViewCheckOptionUnspecified {
 		return nil, errors.Errorf("CREATE MATERIALIZED VIEW WITH CHECK OPTION is not yet supported")
@@ -53,6 +56,10 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 		setMaterializedViewNoDataLimit(selectStmt)
 	}
 	definition := createViewSelectDefinition(ctx, node.AsSource.String())
+	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated("", definition, !node.WithNoData)
+	if len(relOptions) > 0 {
+		comment = tablemetadata.SetRelOptions(comment, relOptions)
+	}
 	return &vitess.DDL{
 		Action:      vitess.CreateStr,
 		Table:       tableName,
@@ -61,7 +68,7 @@ func nodeCreateMaterializedView(ctx *Context, node *tree.CreateMaterializedView)
 			TableOpts: []*vitess.TableOption{
 				{
 					Name:  "comment",
-					Value: tablemetadata.SetMaterializedViewDefinitionWithPopulated("", definition, !node.WithNoData),
+					Value: comment,
 				},
 			},
 		},

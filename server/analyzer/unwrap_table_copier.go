@@ -168,10 +168,24 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 	if !strings.EqualFold(string(node.Name.ObjectName), tableName) {
 		return materializedViewInfo{}, false
 	}
+	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated("", node.AsSource.String(), !node.WithNoData)
+	if len(node.Params) > 0 {
+		comment = tablemetadata.SetRelOptions(comment, materializedViewRelOptions(node.Params))
+	}
 	return materializedViewInfo{
-		comment:       tablemetadata.SetMaterializedViewDefinitionWithPopulated("", node.AsSource.String(), !node.WithNoData),
+		comment:       comment,
 		columnAliases: materializedViewColumnAliases(node.ColumnNames),
 	}, true
+}
+
+func materializedViewRelOptions(params tree.StorageParams) []string {
+	relOptions := make([]string, 0, len(params))
+	for _, param := range params {
+		key := strings.ToLower(strings.TrimSpace(string(param.Key)))
+		value := strings.Trim(tree.AsString(param.Value), "'")
+		relOptions = append(relOptions, key+"="+value)
+	}
+	return relOptions
 }
 
 func materializedViewColumnAliases(names tree.NameList) []string {
