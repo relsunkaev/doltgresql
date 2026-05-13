@@ -255,6 +255,7 @@ func Init() {
 	initToTimestamp()
 	initTranslate()
 	initTrimScale()
+	initTrimArray()
 	initTrunc()
 	initTxidCurrent()
 	initUnicodeInformation()

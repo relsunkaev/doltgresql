@@ -1794,6 +1794,19 @@ func TestTrimArrayRemovesTrailingElementsRepro(t *testing.T) {
 					Query:    `SELECT trim_array(ARRAY[1,2,3,4], 2);`,
 					Expected: []sql.Row{{"{1,2}"}},
 				},
+				{
+					Query: `SELECT trim_array(ARRAY[1,2,3,4], 0),
+							trim_array(ARRAY[1,2,3,4], 4);`,
+					Expected: []sql.Row{{"{1,2,3,4}", "{}"}},
+				},
+				{
+					Query:       `SELECT trim_array(ARRAY[1,2,3,4], -1);`,
+					ExpectedErr: `number of elements to trim must be between 0 and array length`,
+				},
+				{
+					Query:       `SELECT trim_array(ARRAY[1,2,3,4], 5);`,
+					ExpectedErr: `number of elements to trim must be between 0 and array length`,
+				},
 			},
 		},
 	})
