@@ -172,6 +172,9 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 	if len(node.Params) > 0 {
 		comment = tablemetadata.SetRelOptions(comment, materializedViewRelOptions(node.Params))
 	}
+	if user := ctx.Client().User; user != "" {
+		comment = tablemetadata.SetOwner(comment, user)
+	}
 	return materializedViewInfo{
 		comment:       comment,
 		columnAliases: materializedViewColumnAliases(node.ColumnNames),
