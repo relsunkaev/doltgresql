@@ -271,11 +271,25 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				Expr:          vitess.NewColName(string(node.PartitionBy.Elems[0].Column)),
 			}
 		}
+		setTableMetadataCommentOption(ddl.TableSpec, func(comment string) string {
+			return tablemetadata.SetPartitionKeyDef(comment, partitionKeyDef(node.PartitionBy))
+		})
 	}
 	if node.PartitionOf.Table() != "" {
 		return nil, errors.Errorf("PARTITION OF is not yet supported")
 	}
 	return ddl, nil
+}
+
+func partitionKeyDef(partitionBy *tree.PartitionBy) string {
+	if partitionBy == nil {
+		return ""
+	}
+	elems := make([]string, len(partitionBy.Elems))
+	for i := range partitionBy.Elems {
+		elems[i] = tree.AsString(&partitionBy.Elems[i])
+	}
+	return string(partitionBy.Type) + " (" + strings.Join(elems, ", ") + ")"
 }
 
 func createTableAuthInfo(tableName vitess.TableName, isTemporary bool) vitess.AuthInformation {

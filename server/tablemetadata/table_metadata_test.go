@@ -154,6 +154,27 @@ func TestRelPersistenceMetadata(t *testing.T) {
 	}
 }
 
+func TestPartitionKeyDefMetadata(t *testing.T) {
+	comment := SetPartitionKeyDef("", " LIST (id) ")
+	if got := PartitionKeyDef(comment); got != "LIST (id)" {
+		t.Fatalf("unexpected partition key definition: %q", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
+	if got := PartitionKeyDef(comment); got != "LIST (id)" {
+		t.Fatalf("expected partition metadata to be preserved, got %q", got)
+	}
+	if got := PrimaryKeyConstraintName(comment); got != "items_pkey" {
+		t.Fatalf("expected primary key metadata to be preserved, got %q", got)
+	}
+
+	comment = SetPrimaryKeyConstraintName(comment, "")
+	comment = SetPartitionKeyDef(comment, "")
+	if comment != "" {
+		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	}
+}
+
 func TestColumnOptionsMetadata(t *testing.T) {
 	comment := SetColumnOptions("", "category", []string{" N_DISTINCT = 100 ", "n_distinct_inherited=200"})
 	got := ColumnOptions(comment, "category")

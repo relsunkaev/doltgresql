@@ -17,7 +17,9 @@ package functions
 import (
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -34,7 +36,18 @@ var pg_get_partkeydef_oid = framework.Function1{
 	IsNonDeterministic: true,
 	Strict:             true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO: real implementation
-		return "", nil
+		var result string
+		err := RunCallback(ctx, val.(id.Id), Callbacks{
+			Table: func(ctx *sql.Context, schema ItemSchema, table ItemTable) (cont bool, err error) {
+				if commented, ok := table.Item.(sql.CommentedTable); ok {
+					result = tablemetadata.PartitionKeyDef(commented.Comment())
+				}
+				return false, nil
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
 	},
 }

@@ -160,6 +160,9 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			if tablemetadata.IsForeignTable(comment) {
 				kind = "f"
 			}
+			if tablemetadata.PartitionKeyDef(comment) != "" {
+				kind = "p"
+			}
 			if typeID, ok := tablemetadata.OfType(comment); ok {
 				relOfType = typeID.AsId()
 			}
@@ -674,7 +677,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 		} else {
 			relam = id.NewAccessMethod("btree").AsId()
 		}
-	} else if class.kind == "r" || class.kind == "m" || class.kind == "t" {
+	} else if class.kind == "r" || class.kind == "m" || class.kind == "t" || class.kind == "p" {
 		relam = id.NewAccessMethod("heap").AsId()
 	}
 
@@ -682,7 +685,7 @@ func pgClassToRow(class *pgClass) sql.Row {
 	switch class.kind {
 	case "S":
 		relacl = aclTextArray(auth.SequenceACLItems(class.schemaName, class.name))
-	case "r", "m", "v":
+	case "r", "m", "p", "v":
 		relacl = aclTextArray(auth.TableACLItems(class.schemaName, class.name))
 	}
 	rlsState, _ := rowsecurity.Get("", class.schemaName, class.name)

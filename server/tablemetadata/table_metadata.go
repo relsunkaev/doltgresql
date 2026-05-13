@@ -37,6 +37,7 @@ type Metadata struct {
 	Owner                       string                       `json:"owner,omitempty"`
 	RelOptions                  []string                     `json:"relOptions,omitempty"`
 	RelPersistence              string                       `json:"relPersistence,omitempty"`
+	PartitionKeyDef             string                       `json:"partitionKeyDef,omitempty"`
 	ForeignTable                bool                         `json:"foreignTable,omitempty"`
 	ForeignServer               string                       `json:"foreignServer,omitempty"`
 	ForeignOptions              []string                     `json:"foreignOptions,omitempty"`
@@ -76,6 +77,7 @@ func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
 	metadata.PrimaryKeyIndexComment = strings.TrimSpace(metadata.PrimaryKeyIndexComment)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
+	metadata.PartitionKeyDef = strings.TrimSpace(metadata.PartitionKeyDef)
 	metadata.ForeignServer = strings.TrimSpace(metadata.ForeignServer)
 	NormalizeRelOptions(metadata.RelOptions)
 	NormalizeRelOptions(metadata.ForeignOptions)
@@ -105,6 +107,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	metadata.PrimaryKeyIndexComment = strings.TrimSpace(metadata.PrimaryKeyIndexComment)
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
+	metadata.PartitionKeyDef = strings.TrimSpace(metadata.PartitionKeyDef)
 	NormalizeRelOptions(metadata.RelOptions)
 	metadata.ForeignServer = strings.TrimSpace(metadata.ForeignServer)
 	NormalizeRelOptions(metadata.ForeignOptions)
@@ -362,6 +365,28 @@ func SetRelPersistence(comment string, relPersistence string) string {
 		relPersistence = ""
 	}
 	metadata.RelPersistence = strings.TrimSpace(relPersistence)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// PartitionKeyDef returns the PostgreSQL partition key definition encoded in a
+// Doltgres table metadata comment.
+func PartitionKeyDef(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.PartitionKeyDef
+}
+
+// SetPartitionKeyDef returns a table metadata comment with the given
+// PostgreSQL partition key definition. An empty definition clears only the
+// partition metadata.
+func SetPartitionKeyDef(comment string, definition string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.PartitionKeyDef = strings.TrimSpace(definition)
 	if metadata.empty() {
 		return ""
 	}
@@ -915,6 +940,7 @@ func (metadata Metadata) empty() bool {
 		metadata.OfTypeName == "" &&
 		metadata.Owner == "" &&
 		metadata.RelPersistence == "" &&
+		metadata.PartitionKeyDef == "" &&
 		len(metadata.RelOptions) == 0 &&
 		!metadata.ForeignTable &&
 		metadata.ForeignServer == "" &&
