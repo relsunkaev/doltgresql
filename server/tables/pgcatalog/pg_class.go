@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -26,6 +27,8 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -184,6 +187,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			return true, nil
 		},
 		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+			relOptions, err := viewRelOptions(view.Item.CreateViewStatement)
+			if err != nil {
+				return false, err
+			}
 			class := &pgClass{
 				oid:             view.OID.AsId(),
 				oidNative:       id.Cache().ToOID(view.OID.AsId()),
@@ -195,6 +202,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				relType:         id.NewType(view.OID.SchemaName(), view.OID.SchemaName()).AsId(),
 				owner:           auth.GetRelationOwner(doltdb.TableName{Name: view.Item.Name, Schema: schema.Item.SchemaName()}),
+				reloptions:      relOptions,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -595,6 +603,46 @@ func pgClassRelOptions(comment string) []any {
 	if len(relOptions) == 0 {
 		relOptions = tablemetadata.RelOptions(comment)
 	}
+	return relOptionsToAny(relOptions)
+}
+
+func viewRelOptions(createViewStatement string) ([]any, error) {
+	if createViewStatement == "" {
+		return nil, nil
+	}
+	stmts, err := parser.Parse(createViewStatement)
+	if err != nil {
+		return nil, err
+	}
+	if len(stmts) == 0 {
+		return nil, nil
+	}
+	createView, ok := stmts[0].AST.(*tree.CreateView)
+	if !ok {
+		return nil, nil
+	}
+	var relOptions []string
+	for _, opt := range createView.Options {
+		switch strings.ToLower(opt.Name) {
+		case "check_option":
+			if opt.CheckOpt != "" {
+				relOptions = append(relOptions, "check_option="+strings.ToLower(opt.CheckOpt))
+			}
+		case "security_barrier", "security_invoker":
+			relOptions = append(relOptions, strings.ToLower(opt.Name)+"="+fmt.Sprintf("%t", opt.Security))
+		}
+	}
+	switch createView.CheckOption {
+	case tree.ViewCheckOptionCascaded:
+		relOptions = append(relOptions, "check_option=cascaded")
+	case tree.ViewCheckOptionLocal:
+		relOptions = append(relOptions, "check_option=local")
+	}
+	tablemetadata.NormalizeRelOptions(relOptions)
+	return relOptionsToAny(relOptions), nil
+}
+
+func relOptionsToAny(relOptions []string) []any {
 	if len(relOptions) == 0 {
 		return nil
 	}

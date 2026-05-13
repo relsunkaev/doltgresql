@@ -68,6 +68,40 @@ func TestCreateViewSecurityInvokerPersistsReloptionRepro(t *testing.T) {
 	})
 }
 
+// TestCreateViewBareSecurityOptionsPersistTrueReloptionsRepro reproduces a
+// view reloption parsing bug: PostgreSQL treats bare boolean view options as
+// true.
+func TestCreateViewBareSecurityOptionsPersistTrueReloptionsRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE VIEW bare security options persist true reloptions",
+			SetUpScript: []string{
+				`CREATE VIEW bare_security_barrier_view
+					WITH (security_barrier)
+					AS SELECT 1 AS id;`,
+				`CREATE VIEW bare_security_invoker_view
+					WITH (security_invoker)
+					AS SELECT 1 AS id;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT relname, CAST(reloptions AS TEXT)
+						FROM pg_catalog.pg_class
+						WHERE relname IN (
+							'bare_security_barrier_view',
+							'bare_security_invoker_view'
+						)
+						ORDER BY relname;`,
+					Expected: []sql.Row{
+						{"bare_security_barrier_view", "{security_barrier=true}"},
+						{"bare_security_invoker_view", "{security_invoker=true}"},
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateOrReplaceViewSecurityInvokerPersistsReloptionRepro reproduces a
 // view security metadata bug: PostgreSQL persists security_invoker=true in view
 // reloptions when CREATE OR REPLACE VIEW sets the option.

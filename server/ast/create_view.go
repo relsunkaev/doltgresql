@@ -49,7 +49,9 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 					return nil, errors.Errorf(`"ERROR:  syntax error at or near "%s"`, opt.Name)
 				}
 			case "security_barrier":
-				return nil, errors.Errorf("CREATE VIEW '%s' option is not yet supported", opt.Name)
+				// Persisted as a reloption for PostgreSQL catalog compatibility.
+				// The planner does not currently implement security-barrier
+				// rewrite semantics.
 			case "security_invoker":
 				if opt.Security {
 					sqlSecurity = "invoker"
@@ -64,7 +66,7 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 
 	if checkOption != tree.ViewCheckOptionUnspecified && node.CheckOption != tree.ViewCheckOptionUnspecified {
 		return nil, errors.Errorf(`ERROR:  parameter "check_option" specified more than once`)
-	} else {
+	} else if checkOption == tree.ViewCheckOptionUnspecified {
 		checkOption = node.CheckOption
 	}
 
@@ -73,7 +75,9 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 	case tree.ViewCheckOptionCascaded:
 		vCheckOpt = vitess.ViewCheckOptionCascaded
 	case tree.ViewCheckOptionLocal:
-		vCheckOpt = vitess.ViewCheckOptionLocal
+		// GMS rejects LOCAL CHECK OPTION during planning, while Doltgres still
+		// needs to persist the metadata in the stored CREATE VIEW statement.
+		vCheckOpt = vitess.ViewCheckOptionUnspecified
 	default:
 	}
 

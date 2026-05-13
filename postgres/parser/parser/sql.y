@@ -10147,7 +10147,7 @@ view_options:
 view_option:
   CHECK_OPTION { $$.val = tree.ViewOption{Name: $1, CheckOpt: "cascaded"} }
 | CHECK_OPTION '=' SCONST { $$.val = tree.ViewOption{Name: $1, CheckOpt: $3} }
-| SECURITY_BARRIER { $$.val = tree.ViewOption{Name: $1, Security: false} }
+| SECURITY_BARRIER { $$.val = tree.ViewOption{Name: $1, Security: true} }
 | SECURITY_BARRIER '=' TRUE { $$.val = tree.ViewOption{Name: $1, Security: true} }
 | SECURITY_BARRIER '=' FALSE { $$.val = tree.ViewOption{Name: $1, Security: false} }
 | SECURITY_BARRIER '=' non_reserved_word_or_sconst
@@ -10156,7 +10156,7 @@ view_option:
     if err != nil { return setErr(sqllex, err) }
     $$.val = tree.ViewOption{Name: $1, Security: v}
   }
-| SECURITY_INVOKER { $$.val = tree.ViewOption{Name: $1, Security: false} }
+| SECURITY_INVOKER { $$.val = tree.ViewOption{Name: $1, Security: true} }
 | SECURITY_INVOKER '=' TRUE { $$.val = tree.ViewOption{Name: $1, Security: true} }
 | SECURITY_INVOKER '=' FALSE { $$.val = tree.ViewOption{Name: $1, Security: false} }
 | SECURITY_INVOKER '=' non_reserved_word_or_sconst
