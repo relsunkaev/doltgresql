@@ -289,3 +289,54 @@ func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro reproduces an RLS
+// expression-parsing bug: PostgreSQL treats current_user = owner_name the same
+// as owner_name = current_user, but Doltgres only recognizes the latter form.
+func TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_reversed_policy_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_reversed_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_reversed_policy_reader; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_reversed_policy_reader",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SELECT policy current_user equals owner column allows matching rows",
+			SetUpScript: []string{
+				`CREATE USER rls_reversed_policy_reader PASSWORD 'reader';`,
+				`CREATE TABLE rls_reversed_policy_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`INSERT INTO rls_reversed_policy_docs VALUES
+					(1, 'rls_reversed_policy_reader', 'visible'),
+					(2, 'other_user', 'hidden');`,
+				`GRANT USAGE ON SCHEMA public TO rls_reversed_policy_reader;`,
+				`GRANT SELECT ON rls_reversed_policy_docs TO rls_reversed_policy_reader;`,
+				`CREATE POLICY rls_reversed_policy_docs_select
+					ON rls_reversed_policy_docs
+					FOR SELECT
+					USING (current_user = owner_name);`,
+				`ALTER TABLE rls_reversed_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM rls_reversed_policy_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{{1, "visible"}},
+					Username: `rls_reversed_policy_reader`,
+					Password: `reader`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-select-policy-reversed-current-user",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}

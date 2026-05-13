@@ -352,6 +352,43 @@
       ]
     },
     {
+      "id": "rls-select-policy-reversed-current-user",
+      "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro",
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE USER rls_reversed_policy_reader PASSWORD 'reader';",
+        "CREATE TABLE rls_reversed_policy_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rls_reversed_policy_docs VALUES\n\t\t\t\t\t(1, 'rls_reversed_policy_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA public TO rls_reversed_policy_reader;",
+        "GRANT SELECT ON rls_reversed_policy_docs TO rls_reversed_policy_reader;",
+        "CREATE POLICY rls_reversed_policy_docs_select\n\t\t\t\t\tON rls_reversed_policy_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (current_user = owner_name);",
+        "ALTER TABLE rls_reversed_policy_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_reversed_policy_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_reversed_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_reversed_policy_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_reversed_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_reversed_policy_reader; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_reversed_policy_reader"
+      ]
+    },
+    {
       "id": "rls-policy-role-list-allows-listed-role",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
       "oracle": "postgres",
