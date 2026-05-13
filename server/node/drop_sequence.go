@@ -107,6 +107,14 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err = collection.DropSequence(ctx, sequenceID); err != nil {
 		return nil, err
 	}
+	var persistErr error
+	auth.LockWrite(func() {
+		auth.RemoveAllSequencePrivileges(schema, c.sequence)
+		persistErr = auth.PersistChanges()
+	})
+	if persistErr != nil {
+		return nil, persistErr
+	}
 	return sql.RowsToRowIter(), nil
 }
 

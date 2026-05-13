@@ -160,6 +160,16 @@ func RemoveSequencePrivilege(key SequencePrivilegeKey, privilege GrantedPrivileg
 	}
 }
 
+// RemoveAllSequencePrivileges removes explicit privilege entries for a dropped
+// sequence. Schema-wide entries for all sequences are left intact.
+func RemoveAllSequencePrivileges(schema, sequence string) {
+	for key := range globalDatabase.sequencePrivileges.Data {
+		if key.Schema == schema && key.Name == sequence {
+			delete(globalDatabase.sequencePrivileges.Data, key)
+		}
+	}
+}
+
 // serialize writes the SequencePrivileges to the given writer.
 func (sp *SequencePrivileges) serialize(writer *utils.Writer) {
 	// Version 1
