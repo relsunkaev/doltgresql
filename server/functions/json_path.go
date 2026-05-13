@@ -16,6 +16,7 @@ package functions
 
 import (
 	"io"
+	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
@@ -362,11 +363,106 @@ func jsonPathSplitComparison(path string) (string, string, string, bool) {
 }
 
 func jsonPathLiteral(text string) (pgtypes.JsonValue, error) {
+	if normalized, ok := jsonPathNormalizeNumericLiteral(text); ok {
+		text = normalized
+	}
 	doc, err := pgtypes.UnmarshalToJsonDocument([]byte(text))
 	if err != nil {
 		return nil, err
 	}
 	return doc.Value, nil
+}
+
+func jsonPathNormalizeNumericLiteral(text string) (string, bool) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return "", false
+	}
+	sign := ""
+	if text[0] == '-' || text[0] == '+' {
+		sign = text[:1]
+		text = text[1:]
+	}
+	if text == "" {
+		return "", false
+	}
+	if len(text) > 2 && text[0] == '0' {
+		switch text[1] {
+		case 'x', 'X':
+			return jsonPathNormalizeBasedIntegerLiteral(sign, text[2:], 16)
+		case 'o', 'O':
+			return jsonPathNormalizeBasedIntegerLiteral(sign, text[2:], 8)
+		case 'b', 'B':
+			return jsonPathNormalizeBasedIntegerLiteral(sign, text[2:], 2)
+		}
+	}
+	if !strings.Contains(text, "_") {
+		return "", false
+	}
+	normalized := strings.ReplaceAll(text, "_", "")
+	if !jsonPathIsDecimalNumber(normalized) {
+		return "", false
+	}
+	if sign == "+" {
+		sign = ""
+	}
+	return sign + normalized, true
+}
+
+func jsonPathNormalizeBasedIntegerLiteral(sign string, digits string, base int) (string, bool) {
+	digits = strings.ReplaceAll(digits, "_", "")
+	if digits == "" {
+		return "", false
+	}
+	value := new(big.Int)
+	if _, ok := value.SetString(digits, base); !ok {
+		return "", false
+	}
+	if sign == "-" {
+		value.Neg(value)
+	}
+	return value.String(), true
+}
+
+func jsonPathIsDecimalNumber(text string) bool {
+	i := 0
+	if i >= len(text) {
+		return false
+	}
+	switch {
+	case text[i] == '0':
+		i++
+	case text[i] >= '1' && text[i] <= '9':
+		for i < len(text) && text[i] >= '0' && text[i] <= '9' {
+			i++
+		}
+	default:
+		return false
+	}
+	if i < len(text) && text[i] == '.' {
+		i++
+		start := i
+		for i < len(text) && text[i] >= '0' && text[i] <= '9' {
+			i++
+		}
+		if i == start {
+			return false
+		}
+	}
+	if i < len(text) && (text[i] == 'e' || text[i] == 'E') {
+		i++
+		if i < len(text) && (text[i] == '-' || text[i] == '+') {
+			i++
+		}
+		start := i
+		for i < len(text) && text[i] >= '0' && text[i] <= '9' {
+			i++
+		}
+		if i == start {
+			return false
+		}
+	}
+	return i == len(text)
 }
 
 func jsonPathSingleBooleanResult(values []pgtypes.JsonValue) (any, error) {
