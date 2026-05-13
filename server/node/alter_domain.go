@@ -125,6 +125,9 @@ func (a *AlterDomain) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) 
 			checkName = generateCheckNameForDomain(a.Name, domainCheckNames(domain))
 		}
 		check := &sql.CheckConstraint{Name: checkName, Expr: a.CheckExpr, Enforced: true}
+		if err = validateDomainCheckConstraintExpression(ctx, check); err != nil {
+			return nil, err
+		}
 		checkDef, err := plan.NewCheckDefinition(ctx, check, sql.GetSchemaFormatter(a.overrides))
 		if err != nil {
 			return nil, err

@@ -109,6 +109,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 			c.CheckConstraintNames[i] = checkName
 			check.Name = checkName
 		}
+		if err = validateDomainCheckConstraintExpression(ctx, check); err != nil {
+			return nil, err
+		}
 		checkDefs[i], err = plan.NewCheckDefinition(ctx, check, sql.GetSchemaFormatter(c.overrides))
 		if err != nil {
 			return nil, err
