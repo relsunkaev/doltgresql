@@ -64,6 +64,7 @@ func (d *DropDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r s
 	}
 	auth.LockWrite(func() {
 		auth.RemoveDatabaseMetadata(d.gmsDropDB.DbName)
+		auth.RemoveAllDatabasePrivileges(d.gmsDropDB.DbName)
 		err = auth.PersistChanges()
 	})
 	if err != nil {
