@@ -70,12 +70,25 @@ func (a *AlterDefaultPrivileges) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIt
 		}
 		ownerNames = []string{owner}
 	}
+	currentUser := ctx.Client().User
+	if currentUser == "" {
+		currentUser = "postgres"
+	}
 
 	auth.LockWrite(func() {
+		currentRole := auth.GetRole(currentUser)
+		if !currentRole.IsValid() {
+			err = errors.Errorf(`role "%s" does not exist`, currentUser)
+			return
+		}
 		for _, ownerName := range ownerNames {
 			owner := auth.GetRole(ownerName)
 			if !owner.IsValid() {
 				err = errors.Errorf(`role "%s" does not exist`, ownerName)
+				return
+			}
+			if !canAlterDefaultPrivilegesForRole(currentRole, owner) {
+				err = errors.New("permission denied to alter default privileges")
 				return
 			}
 			for _, granteeName := range a.Grantees {
@@ -113,6 +126,17 @@ func (a *AlterDefaultPrivileges) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIt
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func canAlterDefaultPrivilegesForRole(currentRole auth.Role, owner auth.Role) bool {
+	if !currentRole.IsValid() || !owner.IsValid() {
+		return false
+	}
+	if currentRole.IsSuperUser || currentRole.ID() == owner.ID() {
+		return true
+	}
+	groupID, _, _ := auth.IsRoleAMember(currentRole.ID(), owner.ID())
+	return groupID.IsValid()
 }
 
 func (a *AlterDefaultPrivileges) resolvedSchemas(ctx *sql.Context) ([]string, error) {
