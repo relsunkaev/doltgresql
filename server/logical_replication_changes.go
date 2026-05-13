@@ -43,8 +43,10 @@ import (
 type replicationChangeAction byte
 
 var (
-	publicationRowFilterIsNotUnknown = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
-	publicationRowFilterIsUnknown    = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
+	publicationRowFilterIsNotDistinctFromNull = regexp.MustCompile(`(?i)\bis\s+not\s+distinct\s+from\s+null\b`)
+	publicationRowFilterIsDistinctFromNull    = regexp.MustCompile(`(?i)\bis\s+distinct\s+from\s+null\b`)
+	publicationRowFilterIsNotUnknown          = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
+	publicationRowFilterIsUnknown             = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
 )
 
 const (
@@ -677,6 +679,8 @@ func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
 }
 
 func normalizePublicationRowFilter(rowFilter string) string {
+	rowFilter = publicationRowFilterIsNotDistinctFromNull.ReplaceAllString(rowFilter, "IS NULL")
+	rowFilter = publicationRowFilterIsDistinctFromNull.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
 	return rowFilter

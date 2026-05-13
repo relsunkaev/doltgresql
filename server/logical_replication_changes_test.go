@@ -60,3 +60,10 @@ func relationMessageFirstColumnFlag(t *testing.T, message []byte) byte {
 	require.Less(t, offset, len(message))
 	return message[offset]
 }
+
+func TestNormalizePublicationRowFilterUnknownPredicates(t *testing.T) {
+	require.Equal(t, "visible IS NULL", normalizePublicationRowFilter("visible IS UNKNOWN"))
+	require.Equal(t, "visible IS NOT NULL", normalizePublicationRowFilter("visible IS NOT UNKNOWN"))
+	require.Equal(t, "visible IS NULL", normalizePublicationRowFilter("visible IS NOT DISTINCT FROM NULL"))
+	require.Equal(t, "visible IS NOT NULL", normalizePublicationRowFilter("visible IS DISTINCT FROM NULL"))
+}
