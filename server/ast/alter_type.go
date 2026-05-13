@@ -15,10 +15,13 @@
 package ast
 
 import (
+	"github.com/cockroachdb/errors"
+
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // nodeAlterType handles *tree.AlterType nodes.
@@ -71,6 +74,40 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 				string(cmd.ColName),
 				string(cmd.NewColName),
 				cmd.DropBehavior == tree.DropCascade,
+			),
+		}, nil
+	case *tree.AlterTypeAlterAttribute:
+		tn := node.Type.ToTableName()
+		actions := make([]pgnodes.AlterTypeAttributeAction, len(cmd.Actions))
+		for i, action := range cmd.Actions {
+			var dataType *pgtypes.DoltgresType
+			typeName := ""
+			if action.TypeName != nil {
+				typeName = action.TypeName.SQLString()
+				_, dataType, err := nodeResolvableTypeReference(ctx, action.TypeName, false)
+				if err != nil {
+					return nil, err
+				}
+				if dataType == pgtypes.Record {
+					return nil, errors.Errorf(`column "%s" has pseudo-type record`, action.ColName)
+				}
+			}
+			actions[i] = pgnodes.AlterTypeAttributeAction{
+				Action:    action.Action,
+				AttrName:  string(action.ColName),
+				IfExists:  action.IfExists,
+				TypeName:  typeName,
+				Typ:       dataType,
+				Collation: action.Collate,
+				Cascade:   action.DropBehavior == tree.DropCascade,
+			}
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeAlterAttribute(
+				tn.Catalog(),
+				tn.Schema(),
+				tn.Object(),
+				actions,
 			),
 		}, nil
 	case *tree.AlterTypeAddValue:

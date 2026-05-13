@@ -141,6 +141,10 @@ func TestAlterCompositeTypeAddAttributeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
+					Query:       `ALTER TYPE mutable_composite_add ADD ATTRIBUTE b TEXT;`,
+					ExpectedErr: `already exists`,
+				},
+				{
 					Query:    `SELECT ROW(1, 'x')::mutable_composite_add::text;`,
 					Expected: []sql.Row{{"(1,x)"}},
 				},
@@ -161,6 +165,9 @@ func TestAlterCompositeTypeDropAttributeRepro(t *testing.T) {
 				`ALTER TYPE mutable_composite_drop DROP ATTRIBUTE b;`,
 			},
 			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TYPE mutable_composite_drop DROP ATTRIBUTE IF EXISTS b;`,
+				},
 				{
 					Query:    `SELECT ROW(1)::mutable_composite_drop::text;`,
 					Expected: []sql.Row{{"(1)"}},
