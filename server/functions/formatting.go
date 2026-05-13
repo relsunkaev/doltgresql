@@ -1695,8 +1695,13 @@ func tsToChar(t *tmToChar, format string, isInterval bool) (string, error) {
 			if t.gmtoff < 0 {
 				sign = "-"
 			}
-			s += fmt.Sprintf("%s%s:%s", sign, getStringFromIntWithWidth(width, int(math.Abs(float64(t.gmtoff/duration.SecsPerHour)))),
-				getStringFromIntWithWidth(2, int(math.Abs(float64(t.gmtoff%duration.SecsPerHour)/duration.SecsPerMinute))))
+			offsetHour := getStringFromIntWithWidth(width, int(math.Abs(float64(t.gmtoff/duration.SecsPerHour))))
+			offsetMinute := int(math.Abs(float64(t.gmtoff%duration.SecsPerHour) / duration.SecsPerMinute))
+			if offsetMinute == 0 {
+				s += fmt.Sprintf("%s%s", sign, offsetHour)
+			} else {
+				s += fmt.Sprintf("%s%s:%s", sign, offsetHour, getStringFromIntWithWidth(2, offsetMinute))
+			}
 		case DCH_A_D, DCH_B_C:
 			if isInterval {
 				return "", errors.Errorf("invalid format specification for an interval value")

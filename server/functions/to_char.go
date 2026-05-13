@@ -46,12 +46,9 @@ var to_char_timestamp_text = framework.Function2{
 		timestamp := val1.(time.Time)
 		format := val2.(string)
 
-		loc, err := GetServerLocation(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		ttc := timestampTtc(time.Date(timestamp.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second(), timestamp.Nanosecond(), loc))
+		ttc := timestampTtc(time.Date(timestamp.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), timestamp.Minute(), timestamp.Second(), timestamp.Nanosecond(), time.UTC))
+		ttc.gmtoff = 0
+		ttc.tzn = ""
 		return tsToChar(ttc, format, false)
 	},
 }
@@ -87,10 +84,10 @@ func timestampTtc(ts time.Time) *tmToChar {
 	ttc.min = ts.Minute()
 	ttc.sec = ts.Second()
 	ttc.fsec = int64(ts.Nanosecond() / 1000)
-	_, ttc.gmtoff = ts.Zone()
-	tzn := ts.Location().String() // TODO: should be timezone abbreviation
+	tzn, gmtoff := ts.Zone()
+	ttc.gmtoff = gmtoff
 	if strings.HasPrefix(tzn, "fixed") {
-		tzn = " "
+		tzn = ""
 	}
 	ttc.tzn = tzn
 
