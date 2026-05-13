@@ -82,9 +82,13 @@ func (o *Overloads) overloadsForParams(numParams int) []Overload {
 				argTypes := make([]*pgtypes.DoltgresType, numParams)
 				copy(paramTypes, params)
 				copy(argTypes, params)
+				extraParamType := pgtypes.Any
+				if lastParam := params[len(params)-1]; lastParam.IsPolymorphicType() {
+					extraParamType = lastParam
+				}
 				for i := len(params); i < numParams; i++ {
-					paramTypes[i] = pgtypes.Any
-					argTypes[i] = pgtypes.Any
+					paramTypes[i] = extraParamType
+					argTypes[i] = extraParamType
 				}
 				results = append(results, Overload{
 					function:   overload,

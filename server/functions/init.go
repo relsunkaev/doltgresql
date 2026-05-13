@@ -141,6 +141,7 @@ func Init() {
 	initGenRandomUuid()
 	initGenerateSeries()
 	initGenerateSubscripts()
+	initGreatestLeast()
 	initHashText()
 	initInitcap()
 	initLcm()
