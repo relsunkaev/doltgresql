@@ -838,6 +838,16 @@ func TestSelectIntoCreatesTableRepro(t *testing.T) {
 					Query:    `SELECT id, label FROM select_into_created;`,
 					Expected: []sql.Row{{2, "two"}},
 				},
+				{
+					Query: `SELECT label
+						INTO TABLE select_into_table_keyword
+						FROM select_into_source
+						WHERE id = 1;`,
+				},
+				{
+					Query:    `SELECT label FROM select_into_table_keyword;`,
+					Expected: []sql.Row{{"one"}},
+				},
 			},
 		},
 	})

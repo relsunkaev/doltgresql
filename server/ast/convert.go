@@ -284,6 +284,9 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 	case *tree.Scrub:
 		return nodeScrub(ctx, stmt)
 	case *tree.Select:
+		if converted, ok, err := nodeSelectInto(ctx, stmt); ok || err != nil {
+			return converted, err
+		}
 		return nodeSelect(ctx, stmt)
 	case *tree.SelectClause:
 		return nodeSelectClause(ctx, stmt)

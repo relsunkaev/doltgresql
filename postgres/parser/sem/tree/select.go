@@ -94,6 +94,7 @@ type SelectClause struct {
 	Distinct     bool
 	DistinctOn   DistinctOn
 	Exprs        SelectExprs
+	Into         *SelectInto
 	From         From
 	Where        *Where
 	GroupBy      GroupBy
@@ -119,6 +120,10 @@ func (node *SelectClause) Format(ctx *FmtCtx) {
 			}
 		}
 		ctx.FormatNode(&node.Exprs)
+		if node.Into != nil {
+			ctx.WriteByte(' ')
+			ctx.FormatNode(node.Into)
+		}
 		if len(node.From.Tables) > 0 {
 			ctx.WriteByte(' ')
 			ctx.FormatNode(&node.From)
@@ -140,6 +145,24 @@ func (node *SelectClause) Format(ctx *FmtCtx) {
 			ctx.FormatNode(&node.Window)
 		}
 	}
+}
+
+// SelectInto represents a SELECT INTO target table.
+type SelectInto struct {
+	Table       TableName
+	Persistence Persistence
+}
+
+// Format implements the NodeFormatter interface.
+func (node *SelectInto) Format(ctx *FmtCtx) {
+	ctx.WriteString("INTO ")
+	switch node.Persistence {
+	case PersistenceTemporary:
+		ctx.WriteString("TEMPORARY ")
+	case PersistenceUnlogged:
+		ctx.WriteString("UNLOGGED ")
+	}
+	ctx.FormatNode(&node.Table)
 }
 
 // SelectExprs represents SELECT expressions.

@@ -296,6 +296,12 @@ func (u *sqlSymUnion) slct() *tree.Select {
 func (u *sqlSymUnion) selectStmt() tree.SelectStatement {
     return u.val.(tree.SelectStatement)
 }
+func (u *sqlSymUnion) selectInto() *tree.SelectInto {
+    if into, ok := u.val.(*tree.SelectInto); ok {
+        return into
+    }
+    return nil
+}
 func (u *sqlSymUnion) colDef() *tree.ColumnTableDef {
     return u.val.(*tree.ColumnTableDef)
 }
@@ -1211,6 +1217,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %type <*tree.Select> select_no_parens
 %type <tree.SelectStatement> select_clause select_with_parens simple_select empty_select values_clause table_clause simple_select_clause
+%type <*tree.SelectInto> opt_select_into
 %type <tree.LockingClause> for_locking_clause opt_for_locking_clause for_locking_items
 %type <*tree.LockingItem> for_locking_item
 %type <tree.LockingStrength> for_locking_strength
@@ -11718,21 +11725,22 @@ empty_select:
 //        [ OFFSET <expr> [ ROW | ROWS ] ]
 // %SeeAlso: WEBDOCS/select-clause.html
 simple_select_clause:
-  SELECT opt_join_hint_comment opt_all_clause target_list
+  SELECT opt_join_hint_comment opt_all_clause target_list opt_select_into
     from_clause opt_where_clause
     group_clause having_clause window_clause
   {
     $$.val = &tree.SelectClause{
       BlockComment: $2,
       Exprs:   $4.selExprs(),
-      From:    $5.from(),
-      Where:   tree.NewWhere(tree.AstWhere, $6.expr()),
-      GroupBy: $7.groupBy(),
-      Having:  tree.NewWhere(tree.AstHaving, $8.expr()),
-      Window:  $9.window(),
+      Into:    $5.selectInto(),
+      From:    $6.from(),
+      Where:   tree.NewWhere(tree.AstWhere, $7.expr()),
+      GroupBy: $8.groupBy(),
+      Having:  tree.NewWhere(tree.AstHaving, $9.expr()),
+      Window:  $10.window(),
     }
   }
-| SELECT opt_join_hint_comment distinct_clause target_list
+| SELECT opt_join_hint_comment distinct_clause target_list opt_select_into
     from_clause opt_where_clause
     group_clause having_clause window_clause
   {
@@ -11740,14 +11748,15 @@ simple_select_clause:
       BlockComment: $2,    
       Distinct: $3.bool(),
       Exprs:    $4.selExprs(),
-      From:     $5.from(),
-      Where:    tree.NewWhere(tree.AstWhere, $6.expr()),
-      GroupBy:  $7.groupBy(),
-      Having:   tree.NewWhere(tree.AstHaving, $8.expr()),
-      Window:   $9.window(),
+      Into:     $5.selectInto(),
+      From:     $6.from(),
+      Where:    tree.NewWhere(tree.AstWhere, $7.expr()),
+      GroupBy:  $8.groupBy(),
+      Having:   tree.NewWhere(tree.AstHaving, $9.expr()),
+      Window:   $10.window(),
     }
   }
-| SELECT opt_join_hint_comment distinct_on_clause target_list
+| SELECT opt_join_hint_comment distinct_on_clause target_list opt_select_into
     from_clause opt_where_clause
     group_clause having_clause window_clause
   {
@@ -11756,11 +11765,32 @@ simple_select_clause:
       Distinct:   true,
       DistinctOn: $3.distinctOn(),
       Exprs:      $4.selExprs(),
-      From:       $5.from(),
-      Where:      tree.NewWhere(tree.AstWhere, $6.expr()),
-      GroupBy:    $7.groupBy(),
-      Having:     tree.NewWhere(tree.AstHaving, $8.expr()),
-      Window:     $9.window(),
+      Into:       $5.selectInto(),
+      From:       $6.from(),
+      Where:      tree.NewWhere(tree.AstWhere, $7.expr()),
+      GroupBy:    $8.groupBy(),
+      Having:     tree.NewWhere(tree.AstHaving, $9.expr()),
+      Window:     $10.window(),
+    }
+  }
+
+opt_select_into:
+  /* EMPTY */
+  {
+    $$.val = (*tree.SelectInto)(nil)
+  }
+| INTO table_name
+  {
+    $$.val = &tree.SelectInto{
+      Table: $2.unresolvedObjectName().ToTableName(),
+      Persistence: tree.PersistencePermanent,
+    }
+  }
+| INTO TABLE table_name
+  {
+    $$.val = &tree.SelectInto{
+      Table: $3.unresolvedObjectName().ToTableName(),
+      Persistence: tree.PersistencePermanent,
     }
   }
 

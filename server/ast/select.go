@@ -78,6 +78,9 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	if node == nil {
 		return nil, nil
 	}
+	if selectInto := selectIntoClause(node); selectInto != nil {
+		return nil, errors.Errorf("SELECT INTO is only supported as a top-level statement")
+	}
 	if len(node.Locking) > 0 {
 		if err := validateLockingClauseTarget(node.Select); err != nil {
 			return nil, err
@@ -128,6 +131,34 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	default:
 		return nil, errors.Errorf("SELECT has encountered an unknown clause: `%T`", selectStmt)
 	}
+}
+
+func nodeSelectInto(ctx *Context, node *tree.Select) (vitess.Statement, bool, error) {
+	selectInto := selectIntoClause(node)
+	if selectInto == nil {
+		return nil, false, nil
+	}
+	selectCopy := *node
+	clauseCopy := *selectCopy.Select.(*tree.SelectClause)
+	clauseCopy.Into = nil
+	selectCopy.Select = &clauseCopy
+	stmt, err := nodeCreateTable(ctx, &tree.CreateTable{
+		Table:       selectInto.Table,
+		Persistence: selectInto.Persistence,
+		AsSource:    &selectCopy,
+	})
+	return stmt, true, err
+}
+
+func selectIntoClause(node *tree.Select) *tree.SelectInto {
+	if node == nil {
+		return nil
+	}
+	clause, ok := node.Select.(*tree.SelectClause)
+	if !ok {
+		return nil
+	}
+	return clause.Into
 }
 
 func validateLockingClauseTarget(node tree.SelectStatement) error {
