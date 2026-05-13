@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -129,6 +130,16 @@ func (a *AlterTypeSetSchema) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, 
 		return nil, err
 	}
 	if err = rename.renameDependentViews(ctx, oldTypeID, typ.Array, updatedType.ID, updatedType.Array); err != nil {
+		return nil, err
+	}
+	auth.LockWrite(func() {
+		auth.RenameTypePrivileges(schema, a.TypeName, targetSchema, a.TypeName)
+		if typ.Array.IsValid() {
+			auth.RenameTypePrivileges(schema, typ.Array.TypeName(), targetSchema, updatedType.Array.TypeName())
+		}
+		err = auth.PersistChanges()
+	})
+	if err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil

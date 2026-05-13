@@ -165,6 +165,16 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
 		return nil, err
 	}
+	auth.LockWrite(func() {
+		auth.RemoveAllTypePrivileges(schema, c.typName)
+		if typ.IsDefined {
+			auth.RemoveAllTypePrivileges(schema, fmt.Sprintf(`_%s`, c.typName))
+		}
+		err = auth.PersistChanges()
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return sql.RowsToRowIter(), nil
 }

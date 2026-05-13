@@ -128,6 +128,34 @@ func RemoveTypePrivilege(key TypePrivilegeKey, privilege GrantedPrivilege, grant
 	}
 }
 
+// RemoveAllTypePrivileges removes explicit privilege entries for a dropped
+// type. Schema-wide entries for all types are left intact.
+func RemoveAllTypePrivileges(schema, typ string) {
+	for key := range globalDatabase.typePrivileges.Data {
+		if key.Schema == schema && key.Name == typ {
+			delete(globalDatabase.typePrivileges.Data, key)
+		}
+	}
+}
+
+// RenameTypePrivileges renames all explicit privilege entries for a type.
+func RenameTypePrivileges(oldSchema, oldType, newSchema, newType string) {
+	var renamed []TypePrivilegeValue
+	for key, value := range globalDatabase.typePrivileges.Data {
+		if key.Schema != oldSchema || key.Name != oldType {
+			continue
+		}
+		delete(globalDatabase.typePrivileges.Data, key)
+		key.Schema = newSchema
+		key.Name = newType
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.typePrivileges.Data[value.Key] = value
+	}
+}
+
 func (tp *TypePrivileges) serialize(writer *utils.Writer) {
 	writer.Uint64(uint64(len(tp.Data)))
 	for _, value := range tp.Data {
