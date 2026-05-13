@@ -84,6 +84,12 @@ func newCompiledFunctionInternal(
 		fnOverloads: fnOverloads,
 		runner:      runner,
 	}
+	args, err := orderNamedFunctionArguments(name, args, fnOverloads)
+	if err != nil {
+		c.stashedErr = err
+		return c
+	}
+	c.Arguments = args
 	// First we'll analyze all the parameters.
 	originalTypes, err := c.analyzeParameters(ctx)
 	if err != nil {
@@ -164,6 +170,95 @@ func newCompiledFunctionInternal(
 	c.overload = overload
 	c.originalTypes = originalTypes
 	return c
+}
+
+func orderNamedFunctionArguments(name string, args []sql.Expression, fnOverloads []Overload) ([]sql.Expression, error) {
+	hasNamedArg := false
+	for _, arg := range args {
+		if _, _, ok := namedArgument(arg); ok {
+			hasNamedArg = true
+			break
+		}
+	}
+	if !hasNamedArg {
+		return args, nil
+	}
+
+	for _, overload := range fnOverloads {
+		ordered, ok, err := orderNamedFunctionArgumentsForOverload(args, overload.function)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return ordered, nil
+		}
+	}
+	return nil, cerrors.Errorf("function %s has no matching named parameters", name)
+}
+
+func orderNamedFunctionArgumentsForOverload(args []sql.Expression, fn FunctionInterface) ([]sql.Expression, bool, error) {
+	namer, ok := fn.(ParameterNamer)
+	if !ok {
+		return nil, false, nil
+	}
+	parameterNames := namer.GetParameterNames()
+	if len(parameterNames) < len(args) {
+		return nil, false, nil
+	}
+
+	ordered := make([]sql.Expression, len(args))
+	used := make([]bool, len(args))
+	seenNamed := false
+	for argIdx, arg := range args {
+		argName, child, named := namedArgument(arg)
+		if !named {
+			if seenNamed {
+				return nil, false, cerrors.Errorf("positional argument cannot follow named argument")
+			}
+			if argIdx >= len(ordered) || used[argIdx] {
+				return nil, false, nil
+			}
+			ordered[argIdx] = arg
+			used[argIdx] = true
+			continue
+		}
+
+		seenNamed = true
+		paramIdx := -1
+		for i, parameterName := range parameterNames {
+			if strings.EqualFold(parameterName, argName) {
+				paramIdx = i
+				break
+			}
+		}
+		if paramIdx < 0 || paramIdx >= len(ordered) {
+			return nil, false, nil
+		}
+		if used[paramIdx] {
+			return nil, false, cerrors.Errorf("function argument %s specified more than once", argName)
+		}
+		ordered[paramIdx] = child
+		used[paramIdx] = true
+	}
+
+	for _, arg := range ordered {
+		if arg == nil {
+			return nil, false, nil
+		}
+	}
+	return ordered, true, nil
+}
+
+func namedArgument(arg sql.Expression) (string, sql.Expression, bool) {
+	switch arg := arg.(type) {
+	case *NamedArgument:
+		return arg.ArgumentName(), arg.Argument(), true
+	case *expression.Alias:
+		if named, ok := arg.Child.(*NamedArgument); ok {
+			return named.ArgumentName(), named.Argument(), true
+		}
+	}
+	return "", nil, false
 }
 
 // FunctionName implements the interface sql.Expression.

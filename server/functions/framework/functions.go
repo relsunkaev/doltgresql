@@ -58,6 +58,22 @@ type AggregateFunctionInterface interface {
 	NewBuffer(*sql.Context, sql.StatementRunner, []sql.Expression) (sql.AggregationBuffer, error)
 }
 
+// ParameterNamer is implemented by functions that expose PostgreSQL argument names.
+type ParameterNamer interface {
+	GetParameterNames() []string
+}
+
+func parameterNames(names []string) []string {
+	for _, name := range names {
+		if name != "" {
+			result := make([]string, len(names))
+			copy(result, names)
+			return result
+		}
+	}
+	return nil
+}
+
 // Function0 is a function that does not take any parameters.
 type Function0 struct {
 	Name               string
@@ -74,6 +90,7 @@ type Function1 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [1]*pgtypes.DoltgresType
+	ParameterNames     [1]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -102,6 +119,7 @@ type Function2 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [2]*pgtypes.DoltgresType
+	ParameterNames     [2]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -130,6 +148,7 @@ type Function3 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [3]*pgtypes.DoltgresType
+	ParameterNames     [3]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -144,6 +163,7 @@ type Function4 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [4]*pgtypes.DoltgresType
+	ParameterNames     [4]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -158,6 +178,7 @@ type Function5 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [5]*pgtypes.DoltgresType
+	ParameterNames     [5]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -172,6 +193,7 @@ type Function6 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [6]*pgtypes.DoltgresType
+	ParameterNames     [6]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -186,6 +208,7 @@ type Function7 struct {
 	Name               string
 	Return             *pgtypes.DoltgresType
 	Parameters         [7]*pgtypes.DoltgresType
+	ParameterNames     [7]string
 	Variadic           bool
 	IsNonDeterministic bool
 	Strict             bool
@@ -203,6 +226,27 @@ var _ FunctionInterface = Function4{}
 var _ FunctionInterface = Function5{}
 var _ FunctionInterface = Function6{}
 var _ FunctionInterface = Function7{}
+
+// GetParameterNames returns the names of all parameters.
+func (f Function1) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function2) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function3) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function4) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function5) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function6) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
+
+// GetParameterNames returns the names of all parameters.
+func (f Function7) GetParameterNames() []string { return parameterNames(f.ParameterNames[:]) }
 
 // GetName implements the FunctionInterface interface.
 func (f Function0) GetName() string { return f.Name }

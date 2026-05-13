@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
+	"github.com/dolthub/doltgresql/server/functions/framework"
 )
 
 const qualifiedFunctionNamePrefix = "__doltgres_qualified_function__"
@@ -86,6 +87,9 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	}
 	exprs, err := nodeExprsToSelectExprs(ctx, node.Exprs)
 	if err != nil {
+		return nil, err
+	}
+	if err = applyFuncArgNames(exprs, node.ArgNames); err != nil {
 		return nil, err
 	}
 	if node.AggType == tree.OrderedSetAgg {
@@ -223,6 +227,31 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			TargetNames: []string{qualifier.String(), name.String()},
 		},
 	}, nil
+}
+
+func applyFuncArgNames(exprs vitess.SelectExprs, argNames []string) error {
+	if len(argNames) == 0 {
+		return nil
+	}
+	for i, argName := range argNames {
+		if argName == "" {
+			continue
+		}
+		if i >= len(exprs) {
+			return errors.Errorf("function argument name %s has no matching expression", argName)
+		}
+		aliasedExpr, ok := exprs[i].(*vitess.AliasedExpr)
+		if !ok {
+			return errors.Errorf("function argument %d cannot be named", i+1)
+		}
+		aliasedExpr.Expr = vitess.InjectedExpr{
+			Expression: framework.NewNamedArgument(argName),
+			Children:   vitess.Exprs{aliasedExpr.Expr},
+		}
+		aliasedExpr.As = vitess.NewColIdent("")
+		aliasedExpr.InputExpression = ""
+	}
+	return nil
 }
 
 func qualifiedFunctionName(database string, schema string, function string) string {

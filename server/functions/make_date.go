@@ -33,7 +33,12 @@ var make_date = framework.Function3{
 	Name:       "make_date",
 	Return:     pgtypes.Date,
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Int32, pgtypes.Int32, pgtypes.Int32},
-	Strict:     true,
+	ParameterNames: [3]string{
+		"year",
+		"month",
+		"day",
+	},
+	Strict: true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
 		year, month, day := val1.(int32), val2.(int32), val3.(int32)
 		if year == 0 {

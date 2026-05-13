@@ -62,6 +62,11 @@ func (sqlFunc SQLFunction) GetParameters() []*pgtypes.DoltgresType {
 	return sqlFunc.ParameterTypes
 }
 
+// GetParameterNames returns the names of all parameters.
+func (sqlFunc SQLFunction) GetParameterNames() []string {
+	return sqlFunc.ParameterNames
+}
+
 // GetReturn implements the interface FunctionInterface.
 func (sqlFunc SQLFunction) GetReturn() *pgtypes.DoltgresType {
 	return sqlFunc.ReturnType

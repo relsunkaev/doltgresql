@@ -1327,9 +1327,10 @@ func NewTypedUnaryExpr(op UnaryOperator, expr TypedExpr, typ *types.T) *UnaryExp
 
 // FuncExpr represents a function call.
 type FuncExpr struct {
-	Func  ResolvableFunctionReference
-	Type  funcType
-	Exprs Exprs
+	Func     ResolvableFunctionReference
+	Type     funcType
+	Exprs    Exprs
+	ArgNames []string
 	// Filter is used for filters on aggregates: SUM(k) FILTER (WHERE k > 0)
 	Filter    Expr
 	WindowDef *WindowDef
@@ -1447,6 +1448,10 @@ func (node *FuncExpr) Format(ctx *FmtCtx) {
 		for i, e := range node.Exprs {
 			if i > 0 {
 				ctx.WriteString(", ")
+			}
+			if i < len(node.ArgNames) && node.ArgNames[i] != "" {
+				ctx.WriteString(node.ArgNames[i])
+				ctx.WriteString(" => ")
 			}
 			ctx.FormatNode(e)
 		}

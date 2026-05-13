@@ -287,6 +287,15 @@ func (u *sqlSymUnion) callArg() tree.CallArg {
 func (u *sqlSymUnion) callArgs() tree.CallArgs {
     return u.val.(tree.CallArgs)
 }
+func splitCallArgs(args tree.CallArgs) (tree.Exprs, []string) {
+    exprs := make(tree.Exprs, len(args))
+    names := make([]string, len(args))
+    for i, arg := range args {
+      exprs[i] = arg.Expr
+      names[i] = arg.Name
+    }
+    return exprs, names
+}
 func (u *sqlSymUnion) ctes() []*tree.CTE {
     return u.val.([]*tree.CTE)
 }
@@ -1508,8 +1517,8 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.InitiallyMode> opt_initially
 
 %type <tree.Expr> func_application func_expr_common_subexpr special_function
-%type <tree.CallArg> call_arg
-%type <tree.CallArgs> call_arg_list
+%type <tree.CallArg> call_arg named_func_arg
+%type <tree.CallArgs> call_arg_list func_named_arg_list
 %type <tree.Expr> func_expr func_expr_windowless
 %type <empty> opt_with
 %type <*tree.With> with_clause opt_with_clause
@@ -3986,12 +3995,7 @@ call_stmt:
 | CALL func_name '(' call_arg_list ')'
   {
     args := $4.callArgs()
-    exprs := make(tree.Exprs, len(args))
-    names := make([]string, len(args))
-    for i, arg := range args {
-      exprs[i] = arg.Expr
-      names[i] = arg.Name
-    }
+    exprs, names := splitCallArgs(args)
     $$.val = &tree.Call{
       Procedure: &tree.FuncExpr{Func: $2.resolvableFuncRefFromName(), Exprs: exprs},
       ArgNames: names,
@@ -4016,6 +4020,31 @@ call_arg:
 | name EQUALS_GREATER a_expr
   {
     $$.val = tree.CallArg{Name: $1, Expr: $3.expr()}
+  }
+
+named_func_arg:
+  name EQUALS_GREATER a_expr
+  {
+    $$.val = tree.CallArg{Name: $1, Expr: $3.expr()}
+  }
+
+func_named_arg_list:
+  named_func_arg
+  {
+    $$.val = tree.CallArgs{$1.callArg()}
+  }
+| expr_list ',' named_func_arg
+  {
+    exprs := $1.exprs()
+    args := make(tree.CallArgs, len(exprs), len(exprs)+1)
+    for i, expr := range exprs {
+      args[i] = tree.CallArg{Expr: expr}
+    }
+    $$.val = append(args, $3.callArg())
+  }
+| func_named_arg_list ',' named_func_arg
+  {
+    $$.val = append($1.callArgs(), $3.callArg())
   }
 
 // The COPY grammar in postgres has 3 different versions, all of which are supported by postgres:
@@ -14621,6 +14650,11 @@ func_application:
 | func_name '(' expr_list opt_sort_clause ')'
   {
     $$.val = &tree.FuncExpr{Func: $1.resolvableFuncRefFromName(), Exprs: $3.exprs(), OrderBy: $4.orderBy(), AggType: tree.GeneralAgg}
+  }
+| func_name '(' func_named_arg_list ')'
+  {
+    exprs, names := splitCallArgs($3.callArgs())
+    $$.val = &tree.FuncExpr{Func: $1.resolvableFuncRefFromName(), Exprs: exprs, ArgNames: names, AggType: tree.GeneralAgg}
   }
 | func_name '(' VARIADIC a_expr opt_sort_clause ')' { return unimplemented(sqllex, "variadic") }
 | func_name '(' expr_list ',' VARIADIC a_expr opt_sort_clause ')' { return unimplemented(sqllex, "variadic") }
