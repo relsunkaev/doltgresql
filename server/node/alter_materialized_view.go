@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -87,10 +89,16 @@ func (a *AlterMaterializedViewRenameColumn) RowIter(ctx *sql.Context, _ sql.Row)
 		}
 		return nil, errors.Errorf(`relation "%s" does not exist`, a.name)
 	}
-	if !tablemetadata.IsMaterializedView(tableComment(target.table)) {
-		return nil, errors.Errorf(`relation "%s" is not a materialized view`, a.name)
-	}
 	comment := tableComment(target.table)
+	isMaterializedView := tablemetadata.IsMaterializedView(comment)
+
+	var updatedComment string
+	if isMaterializedView {
+		updatedComment, err = materializedViewCommentAfterRenameColumn(ctx, target.table, comment, a.oldColumn, a.newColumn)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	query := fmt.Sprintf(
 		"ALTER TABLE %s RENAME COLUMN %s TO %s",
@@ -101,7 +109,10 @@ func (a *AlterMaterializedViewRenameColumn) RowIter(ctx *sql.Context, _ sql.Row)
 	if err = a.runStatement(ctx, query); err != nil {
 		return nil, err
 	}
-	if err = modifyTableComment(ctx, target.db, target.table.Name(), comment); err != nil {
+	if !isMaterializedView {
+		return sql.RowsToRowIter(), nil
+	}
+	if err = modifyTableComment(ctx, target.db, target.table.Name(), updatedComment); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
@@ -152,4 +163,38 @@ func (a *AlterMaterializedViewRenameColumn) runStatement(ctx *sql.Context, query
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
 	return err
+}
+
+func materializedViewCommentAfterRenameColumn(ctx *sql.Context, table sql.Table, comment string, oldColumn string, newColumn string) (string, error) {
+	definition, err := materializedViewDefinitionAfterRenameColumn(ctx, table, tablemetadata.MaterializedViewDefinition(comment), oldColumn, newColumn)
+	if err != nil {
+		return "", err
+	}
+	return tablemetadata.SetMaterializedViewDefinitionWithPopulated(
+		comment,
+		definition,
+		tablemetadata.IsMaterializedViewPopulated(comment),
+	), nil
+}
+
+func materializedViewDefinitionAfterRenameColumn(ctx *sql.Context, table sql.Table, definition string, oldColumn string, newColumn string) (string, error) {
+	schema := table.Schema(ctx)
+	columnIndex := schema.IndexOfColName(oldColumn)
+	if columnIndex < 0 {
+		return definition, nil
+	}
+	statements, err := parser.Parse(definition)
+	if err != nil || len(statements) != 1 {
+		return definition, err
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return definition, nil
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok || columnIndex >= len(selectClause.Exprs) {
+		return definition, nil
+	}
+	selectClause.Exprs[columnIndex].As = tree.UnrestrictedName(newColumn)
+	return selectStmt.String(), nil
 }

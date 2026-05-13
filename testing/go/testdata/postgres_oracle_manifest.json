@@ -4320,6 +4320,173 @@
       ]
     },
     {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0017-select-id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 17,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);",
+        "CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;",
+        "ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;"
+      ],
+      "query": "SELECT id, amount FROM source_mv ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0018-select-v-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 18,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);",
+        "CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;",
+        "ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;",
+        "SELECT id, amount FROM source_mv ORDER BY id;"
+      ],
+      "query": "SELECT v FROM source_mv;",
+      "expectedSqlstate": "42703",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0019-select-relkind-from-pg_class-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 19,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);",
+        "CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;",
+        "ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;",
+        "SELECT id, amount FROM source_mv ORDER BY id;"
+      ],
+      "query": "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "m"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0020-select-matviewname-ispopulated::text-trim-trailing",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 20,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);",
+        "CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;",
+        "ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;",
+        "SELECT id, amount FROM source_mv ORDER BY id;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';"
+      ],
+      "query": "SELECT matviewname, ispopulated::text,\n\t\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "source_mv"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "SELECT id, v AS amount FROM source"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0021-select-id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 21,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE TABLE ordinary_table (id INT PRIMARY KEY, v INT);",
+        "CREATE MATERIALIZED VIEW source_mv AS SELECT id, v FROM source;",
+        "ALTER MATERIALIZED VIEW source_mv RENAME COLUMN v TO amount;",
+        "SELECT id, amount FROM source_mv ORDER BY id;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT matviewname, ispopulated::text,\n\t\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = v + 1;",
+        "REFRESH MATERIALIZED VIEW source_mv;"
+      ],
+      "query": "SELECT id, amount FROM source_mv ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "101"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "201"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,
