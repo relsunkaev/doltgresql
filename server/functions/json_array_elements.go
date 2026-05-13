@@ -162,6 +162,10 @@ func jsonbContainsValue(container pgtypes.JsonValue, contained pgtypes.JsonValue
 }
 
 func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.JsonValue, createMissing bool) (pgtypes.JsonValue, error) {
+	return jsonbSetValueAt(target, path, newValue, createMissing, 1)
+}
+
+func jsonbSetValueAt(target pgtypes.JsonValue, path []string, newValue pgtypes.JsonValue, createMissing bool, position int) (pgtypes.JsonValue, error) {
 	if len(path) == 0 {
 		return pgtypes.JsonValueCopy(newValue), nil
 	}
@@ -179,7 +183,7 @@ func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.Jso
 			return newObject, nil
 		}
 		if idx, ok := newObject.Index[key]; ok {
-			nested, err := jsonbSetValue(newObject.Items[idx].Value, path[1:], newValue, createMissing)
+			nested, err := jsonbSetValueAt(newObject.Items[idx].Value, path[1:], newValue, createMissing, position+1)
 			if err != nil {
 				return nil, err
 			}
@@ -190,7 +194,7 @@ func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.Jso
 		newArray := pgtypes.JsonValueCopy(value).(pgtypes.JsonValueArray)
 		idx, ok := jsonArrayPathIndex(path[0], len(newArray))
 		if !ok {
-			return newArray, nil
+			return nil, errors.Errorf("path element at position %d is not an integer: %q", position, path[0])
 		}
 		if len(path) == 1 {
 			if idx >= 0 && idx < len(newArray) {
@@ -206,7 +210,7 @@ func jsonbSetValue(target pgtypes.JsonValue, path []string, newValue pgtypes.Jso
 		if idx < 0 || idx >= len(newArray) {
 			return newArray, nil
 		}
-		nested, err := jsonbSetValue(newArray[idx], path[1:], newValue, createMissing)
+		nested, err := jsonbSetValueAt(newArray[idx], path[1:], newValue, createMissing, position+1)
 		if err != nil {
 			return nil, err
 		}
