@@ -56,3 +56,20 @@ func TestParseVacuumAnalyzeRecentOptions(t *testing.T) {
 		}
 	}
 }
+
+func TestParsePointTypeCastExpression(t *testing.T) {
+	queries := []string{
+		`SELECT ('(1,2)'::point + '(3,4)'::point)::text;`,
+		`CREATE TABLE point_items (id INT, p point);`,
+		`SELECT NULL::geometry(POINT);`,
+	}
+	for _, query := range queries {
+		statements, err := Parse(query)
+		if err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		if len(statements) != 1 {
+			t.Fatalf("%s: expected 1 statement, got %d", query, len(statements))
+		}
+	}
+}

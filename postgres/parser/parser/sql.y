@@ -13113,7 +13113,13 @@ simple_typename:
 | bit_with_length
 | character_with_length
 | interval_type
-| POINT error { return unimplementedWithIssueDetail(sqllex, 21286, "point") } // needed or else it generates a syntax error.
+| POINT
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"point"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = typ
+  }
 | POLYGON error { return unimplementedWithIssueDetail(sqllex, 21286, "polygon") } // needed or else it generates a syntax error.
 
 geo_shape_type:
