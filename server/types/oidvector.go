@@ -15,6 +15,7 @@
 package types
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -61,7 +62,10 @@ var Oidvector = &DoltgresType{
 // serializeTypeOidvector handles serialization from the standard representation to our serialized representation that is
 // written in Dolt.
 func serializeTypeOidvector(ctx *sql.Context, t *DoltgresType, val any) ([]byte, error) {
-	vals := val.([]any)
+	vals, ok := ArrayElements(val)
+	if !ok {
+		return nil, errors.Errorf("expected oidvector value but received %T", val)
+	}
 	return serializeArray(ctx, vals, Oid)
 }
 

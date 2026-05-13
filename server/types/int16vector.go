@@ -15,6 +15,7 @@
 package types
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -60,7 +61,10 @@ var Int16vector = &DoltgresType{
 // serializeTypeInt16Vector handles serialization from the standard representation to our serialized representation that is
 // written in Dolt.
 func serializeTypeInt16Vector(ctx *sql.Context, t *DoltgresType, val any) ([]byte, error) {
-	vals := val.([]any)
+	vals, ok := ArrayElements(val)
+	if !ok {
+		return nil, errors.Errorf("expected int2vector value but received %T", val)
+	}
 	return serializeArray(ctx, vals, Int16)
 }
 
