@@ -3349,6 +3349,47 @@
       ]
     },
     {
+      "id": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0001-insert-into-insert_duplicate_column_items-id-a",
+      "source": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE insert_duplicate_column_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\ta INT,\n\t\t\t\t\tb INT\n\t\t\t\t);"
+      ],
+      "query": "INSERT INTO insert_duplicate_column_items (id, a, a)\n\t\t\t\t\t\tVALUES (1, 10, 20);",
+      "expectedSqlstate": "42701",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0002-select-count-*-from-insert_duplicate_column_items",
+      "source": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE insert_duplicate_column_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\ta INT,\n\t\t\t\t\tb INT\n\t\t\t\t);"
+      ],
+      "query": "SELECT count(*) FROM insert_duplicate_column_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "json-correctness-repro-test-testjsonextractionpreservesjsonsubdocumenttextrepro-0001-select-{-a-:-{",
       "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
       "ordinal": 1,

@@ -1,0 +1,59 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map insert_correctness_repro_test.go --oracle-test-name TestInsertRejectsDuplicateTargetColumnsRepro --oracle-script-name INSERT rejects duplicate target columns --force-postgres-oracle",
+  "sourceFile": "testing/go/insert_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro#0001",
+      "source": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 1,
+      "scriptName": "INSERT rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0001-insert-into-insert_duplicate_column_items-id-a",
+      "suggestedId": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0001-insert-into-insert_duplicate_column_items-id-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42701",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO insert_duplicate_column_items (id, a, a)\n\t\t\t\t\t\tVALUES (1, 10, 20);",
+      "querySha256": "4d2a6455d60d160d4a56d016fa9a97ccb3edf2a7c02b88952f516d07c68658a0",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro#0002",
+      "source": "testing/go/insert_correctness_repro_test.go:TestInsertRejectsDuplicateTargetColumnsRepro",
+      "ordinal": 2,
+      "scriptName": "INSERT rejects duplicate target columns",
+      "oracle": "postgres",
+      "postgresId": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0002-select-count-*-from-insert_duplicate_column_items",
+      "suggestedId": "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0002-select-count-*-from-insert_duplicate_column_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM insert_duplicate_column_items;",
+      "querySha256": "19572d416f2a1c0b36a09470909d54866d3962943968b1fdd630aa06e086b426",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
