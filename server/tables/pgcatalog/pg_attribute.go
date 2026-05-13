@@ -115,6 +115,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					tablemetadata.ColumnStorage(comment, col.Name),
 					tablemetadata.ColumnCompression(comment, col.Name),
 					attstattarget,
+					tablemetadata.ColumnIdentity(comment, col.Name),
 				)
 				attrelidIdx.Add(attr)
 				attrelidAttnameIdx.Add(attr)
@@ -156,10 +157,10 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	return nil
 }
 
-func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string, attstorage string, attcompression string, attstattarget int16) *pgAttribute {
+func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string, attstorage string, attcompression string, attstattarget int16, attidentity string) *pgAttribute {
 	typeMeta := attributeTypeMetadata(col.Type)
 	generated := ""
-	if col.Generated != nil {
+	if col.Generated != nil && attidentity == "" {
 		generated = "s"
 	}
 	if attstorage == "" {
@@ -179,6 +180,7 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		attalign:       typeMeta.attalign,
 		attnotnull:     !col.Nullable,
 		atthasdef:      col.Default != nil,
+		attidentity:    attidentity,
 		attgenerated:   generated,
 		attstorage:     attstorage,
 		attcompression: attcompression,
@@ -265,7 +267,7 @@ func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView
 		if err != nil {
 			return nil, err
 		}
-		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil, "", "", -1))
+		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil, "", "", -1, ""))
 	}
 	return attrs, nil
 }
@@ -650,6 +652,7 @@ type pgAttribute struct {
 	attalign       string
 	attnotnull     bool
 	atthasdef      bool
+	attidentity    string
 	attgenerated   string
 	attstorage     string
 	attcompression string
@@ -734,7 +737,7 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		attr.attnotnull,     // attnotnull
 		attr.atthasdef,      // atthasdef
 		false,               // atthasmissing
-		"",                  // attidentity
+		attr.attidentity,    // attidentity
 		attr.attgenerated,   // attgenerated
 		false,               // attisdropped
 		true,                // attislocal

@@ -221,6 +221,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if err = assignTableDefs(ctx, node.Defs, ddl); err != nil {
 			return nil, err
 		}
+		setColumnIdentityMetadata(ddl.TableSpec, node.Defs)
 	}
 	if len(relOptions) > 0 {
 		if ddl.TableSpec == nil {
@@ -267,6 +268,26 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, errors.Errorf("PARTITION OF is not yet supported")
 	}
 	return ddl, nil
+}
+
+func setColumnIdentityMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs) {
+	if tableSpec == nil {
+		return
+	}
+	for _, def := range defs {
+		columnDef, ok := def.(*tree.ColumnTableDef)
+		if !ok || !columnDef.IsComputed() || columnDef.Computed.Expr != nil {
+			continue
+		}
+		identity := "a"
+		if columnDef.Computed.ByDefault {
+			identity = "d"
+		}
+		columnName := string(columnDef.Name)
+		setTableMetadataCommentOption(tableSpec, func(comment string) string {
+			return tablemetadata.SetColumnIdentity(comment, columnName, identity)
+		})
+	}
 }
 
 // forceLimitZero rewrites a SelectStatement so it produces no rows while still

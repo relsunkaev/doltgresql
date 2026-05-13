@@ -26,6 +26,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core/id"
 	partypes "github.com/dolthub/doltgresql/postgres/parser/types"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -128,11 +129,13 @@ func columnsRowIter(ctx *sql.Context, catalog sql.Catalog, allColsWithDefaultVal
 // are used to define all row values. These include the current ordinal
 // position, so this column will get the next position number, sql.Column
 // object, database name, and table name.
-func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName, schName, tblName string) sql.Row {
+func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName, schName, tblName string, identity string) sql.Row {
 	var (
-		ordinalPos  = int32(curOrdPos + 1)
-		nullable    = "NO"
-		isGenerated = "NEVER"
+		ordinalPos         = int32(curOrdPos + 1)
+		nullable           = "NO"
+		isGenerated        = "NEVER"
+		isIdentity         = "NO"
+		identityGeneration any
 	)
 
 	dataType, udtName := getDataAndUdtType(ctx, col.Type, col.Name)
@@ -145,12 +148,25 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 		isGenerated = "ALWAYS"
 	}
 	generationExpression := getGenerationExpression(col)
+	if identity != "" {
+		isGenerated = "NEVER"
+		generationExpression = nil
+		isIdentity = "YES"
+		if identity == "a" {
+			identityGeneration = "ALWAYS"
+		} else {
+			identityGeneration = "BY DEFAULT"
+		}
+	}
 
 	charName, collName, charMaxLen, charOctetLen := getCharAndCollNamesAndCharMaxAndOctetLens(ctx, col.Type)
 	numericPrecision, numericPrecisionRadix, numericScale := getColumnPrecisionAndScale(col.Type)
 	datetimePrecision := getDatetimePrecision(col.Type)
 
-	columnDefault := information_schema.GetColumnDefault(ctx, col.Default)
+	var columnDefault any = information_schema.GetColumnDefault(ctx, col.Default)
+	if identity != "" {
+		columnDefault = nil
+	}
 
 	return sql.Row{
 		catName,               // table_catalog
@@ -187,8 +203,8 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 		nil,                   // maximum_cardinality TODO
 		nil,                   // dtd_identifier TODO
 		"NO",                  // is_self_referencing TODO
-		"NO",                  // is_identity TODO
-		nil,                   // identity_generation TODO
+		isIdentity,            // is_identity
+		identityGeneration,    // identity_generation
 		nil,                   // identity_start TODO
 		nil,                   // identity_increment TODO
 		nil,                   // identity_maximum TODO
@@ -215,8 +231,9 @@ func getRowsFromTable(ctx *sql.Context, db information_schema.DbWithNames, t sql
 	var rows []sql.Row
 
 	tblName := t.Name()
+	comment := tableComment(t)
 	for i, col := range information_schema.SchemaForTable(t, db.Database, allColsWithDefaultValue) {
-		r := getRowFromColumn(ctx, i, col, db.CatalogName, db.SchemaName, tblName)
+		r := getRowFromColumn(ctx, i, col, db.CatalogName, db.SchemaName, tblName, tablemetadata.ColumnIdentity(comment, col.Name))
 		if r != nil {
 			rows = append(rows, r)
 		}

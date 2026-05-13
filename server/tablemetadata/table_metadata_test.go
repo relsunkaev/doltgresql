@@ -189,6 +189,7 @@ func TestColumnAttributeMetadata(t *testing.T) {
 	comment := SetColumnStorage("", "payload", "e")
 	comment = SetColumnCompression(comment, "payload", "p")
 	comment = SetColumnStatisticsTarget(comment, "payload", 42)
+	comment = SetColumnIdentity(comment, "id", "d")
 
 	if got := ColumnStorage(comment, "payload"); got != "e" {
 		t.Fatalf("unexpected column storage: %q", got)
@@ -199,11 +200,15 @@ func TestColumnAttributeMetadata(t *testing.T) {
 	if got, ok := ColumnStatisticsTarget(comment, "payload"); !ok || got != 42 {
 		t.Fatalf("unexpected column statistics target: %d, %v", got, ok)
 	}
+	if got := ColumnIdentity(comment, "id"); got != "d" {
+		t.Fatalf("unexpected column identity: %q", got)
+	}
 
 	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
 	comment = SetColumnStorage(comment, "payload", "")
 	comment = SetColumnCompression(comment, "payload", "")
 	comment = SetColumnStatisticsTarget(comment, "payload", -1)
+	comment = SetColumnIdentity(comment, "id", "")
 	if got := PrimaryKeyConstraintName(comment); got != "items_pkey" {
 		t.Fatalf("expected unrelated metadata to be preserved, got %q", got)
 	}
@@ -215,6 +220,9 @@ func TestColumnAttributeMetadata(t *testing.T) {
 	}
 	if got, ok := ColumnStatisticsTarget(comment, "payload"); ok || got != -1 {
 		t.Fatalf("expected statistics metadata to be cleared, got %d, %v", got, ok)
+	}
+	if got := ColumnIdentity(comment, "id"); got != "" {
+		t.Fatalf("expected identity metadata to be cleared, got %q", got)
 	}
 
 	comment = SetPrimaryKeyConstraintName(comment, "")

@@ -27,6 +27,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 type AlterTableIdentityGeneration uint8
@@ -126,11 +127,13 @@ func (a *AlterTableIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 	}
 	if a.drop || a.generation != AlterTableIdentityGenerationUnchanged {
 		updated := column.Copy()
+		identity := ""
 		switch {
 		case a.drop:
 			updated.Default = nil
 			updated.Generated = nil
 		case a.generation == AlterTableIdentityGenerationAlways:
+			identity = "a"
 			expr := updated.Generated
 			if expr == nil {
 				expr = updated.Default
@@ -141,6 +144,7 @@ func (a *AlterTableIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 			updated.Generated = expr
 			updated.Default = nil
 		case a.generation == AlterTableIdentityGenerationByDefault:
+			identity = "d"
 			expr := updated.Default
 			if expr == nil {
 				expr = updated.Generated
@@ -154,8 +158,23 @@ func (a *AlterTableIdentity) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 		if err = alterable.ModifyColumn(ctx, column.Name, updated, nil); err != nil {
 			return nil, err
 		}
+		if err = updateIdentityColumnMetadata(ctx, table, updated.Name, identity); err != nil {
+			return nil, err
+		}
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func updateIdentityColumnMetadata(ctx *sql.Context, table sql.Table, columnName string, identity string) error {
+	commented, ok := table.(sql.CommentedTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	return alterable.ModifyComment(ctx, tablemetadata.SetColumnIdentity(commented.Comment(), columnName, identity))
 }
 
 func findIdentityColumn(ctx *sql.Context, table sql.Table, columnName string) *sql.Column {
