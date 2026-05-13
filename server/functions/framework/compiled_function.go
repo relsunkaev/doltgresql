@@ -17,6 +17,7 @@ package framework
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	cerrors "github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -28,6 +29,7 @@ import (
 	"github.com/dolthub/doltgresql/core/extensions"
 	"github.com/dolthub/doltgresql/core/extensions/pg_extension"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functionstats"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -437,7 +439,17 @@ func (c *CompiledFunction) Eval(ctx *sql.Context, row sql.Row) (interface{}, err
 	args = c.overload.params.coalesceVariadicValues(args)
 
 	// Call the function
-	switch f := c.overload.Function().(type) {
+	fn := c.overload.Function()
+	start := time.Now()
+	ret, err := c.callResolvedFunction(ctx, fn, args)
+	if err == nil {
+		recordTrackedFunctionCall(ctx, fn, time.Since(start))
+	}
+	return ret, err
+}
+
+func (c *CompiledFunction) callResolvedFunction(ctx *sql.Context, fn FunctionInterface, args []any) (interface{}, error) {
+	switch f := fn.(type) {
 	case Function0:
 		return f.Callable(ctx)
 	case Function1:
@@ -499,6 +511,31 @@ func (c *CompiledFunction) Eval(ctx *sql.Context, row sql.Row) (interface{}, err
 	default:
 		return nil, cerrors.Errorf("unknown function type in CompiledFunction::Eval %T", f)
 	}
+}
+
+func recordTrackedFunctionCall(ctx *sql.Context, fn FunctionInterface, elapsed time.Duration) {
+	if ctx == nil || ctx.Session == nil || fn == nil {
+		return
+	}
+	trackFunctions, err := ctx.GetSessionVariable(ctx, "track_functions")
+	if err != nil {
+		return
+	}
+	switch strings.ToLower(fmt.Sprint(trackFunctions)) {
+	case "all":
+	case "pl":
+		if _, ok := fn.(InterpretedFunction); !ok {
+			return
+		}
+	default:
+		return
+	}
+
+	functionID := id.Function(fn.InternalID())
+	if !functionID.AsId().IsValid() || functionID.SchemaName() == "pg_catalog" {
+		return
+	}
+	functionstats.Record(ctx.Session.ID(), functionID, elapsed)
 }
 
 // EvalRowIter implements sql.RowIterExpression

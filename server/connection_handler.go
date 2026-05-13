@@ -64,6 +64,7 @@ import (
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/functionstats"
 	"github.com/dolthub/doltgresql/server/largeobject"
 	"github.com/dolthub/doltgresql/server/node"
 	"github.com/dolthub/doltgresql/server/notifications"
@@ -231,6 +232,7 @@ func (h *ConnectionHandler) HandleConnection() {
 		h.closeReplicationSender()
 		replsource.DropTemporarySlotsForPID(int32(h.mysqlConn.ConnectionID))
 		sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+		functionstats.DeleteAll(h.mysqlConn.ConnectionID)
 		globalCancelRegistry.unregister(h.mysqlConn.ConnectionID, h.cancelSecretKey)
 		_ = auth.RollbackTransaction(h.mysqlConn.ConnectionID)
 		h.doltgresHandler.ConnectionClosed(h.mysqlConn)
@@ -4514,6 +4516,7 @@ func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
 		delete(h.preparedStatements, name)
 	}
 	sessionstate.DeleteAllPreparedStatements(h.mysqlConn.ConnectionID)
+	functionstats.DeleteAll(h.mysqlConn.ConnectionID)
 	notifications.UnlistenAll(h.mysqlConn.ConnectionID)
 
 	err := h.doltgresHandler.ComResetConnection(h.mysqlConn)

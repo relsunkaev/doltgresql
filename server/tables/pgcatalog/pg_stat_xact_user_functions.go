@@ -15,8 +15,6 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/tables"
@@ -43,8 +41,7 @@ func (p PgStatXactUserFunctionsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatXactUserFunctionsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_xact_user_functions row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(pgStatUserFunctionRows(ctx)...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -63,20 +60,4 @@ var pgStatXactUserFunctionsSchema = sql.Schema{
 	{Name: "calls", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgStatXactUserFunctionsName},
 	{Name: "total_time", Type: pgtypes.Float64, Default: nil, Nullable: true, Source: PgStatXactUserFunctionsName},
 	{Name: "self_time", Type: pgtypes.Float64, Default: nil, Nullable: true, Source: PgStatXactUserFunctionsName},
-}
-
-// pgStatXactUserFunctionsRowIter is the sql.RowIter for the pg_stat_xact_user_functions table.
-type pgStatXactUserFunctionsRowIter struct {
-}
-
-var _ sql.RowIter = (*pgStatXactUserFunctionsRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatXactUserFunctionsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatXactUserFunctionsRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

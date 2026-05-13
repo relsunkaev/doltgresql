@@ -15,10 +15,9 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/functionstats"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +42,7 @@ func (p PgStatUserFunctionsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatUserFunctionsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stat_user_functions row iter
-	return emptyRowIter()
+	return sql.RowsToRowIter(pgStatUserFunctionRows(ctx)...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -65,18 +63,21 @@ var pgStatUserFunctionsSchema = sql.Schema{
 	{Name: "self_time", Type: pgtypes.Float64, Default: nil, Nullable: true, Source: PgStatUserFunctionsName},
 }
 
-// pgStatUserFunctionsRowIter is the sql.RowIter for the pg_stat_user_functions table.
-type pgStatUserFunctionsRowIter struct {
-}
-
-var _ sql.RowIter = (*pgStatUserFunctionsRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatUserFunctionsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatUserFunctionsRowIter) Close(ctx *sql.Context) error {
-	return nil
+func pgStatUserFunctionRows(ctx *sql.Context) []sql.Row {
+	if ctx == nil || ctx.Session == nil {
+		return nil
+	}
+	stats := functionstats.List(ctx.Session.ID())
+	rows := make([]sql.Row, 0, len(stats))
+	for _, stat := range stats {
+		rows = append(rows, sql.Row{
+			stat.FuncID.AsId(),
+			stat.FuncID.SchemaName(),
+			stat.FuncID.FunctionName(),
+			stat.Calls,
+			stat.TotalTimeMS,
+			stat.SelfTimeMS,
+		})
+	}
+	return rows
 }
