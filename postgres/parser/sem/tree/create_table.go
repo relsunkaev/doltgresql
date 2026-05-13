@@ -253,6 +253,23 @@ func isBuiltinPGCollation(collation string) bool {
 	return false
 }
 
+func isUserDefinedCollationName(collation string) bool {
+	if collation == "" {
+		return false
+	}
+	for i := 0; i < len(collation); i++ {
+		c := collation[i]
+		if c == '_' || c == '$' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') {
+			continue
+		}
+		if i > 0 && '0' <= c && c <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
 func (*ColumnTableDef) tableDef()               {}
 func (*IndexTableDef) tableDef()                {}
 func (*ForeignKeyConstraintTableDef) tableDef() {}
@@ -385,7 +402,7 @@ func NewColumnTableDef(
 		// "en_US.utf8") don't all parse as RFC-5646 language tags,
 		// so bypass language.Parse for those and let the catalog
 		// validate when the collation is actually resolved.
-		if !isBuiltinPGCollation(collation) {
+		if !isBuiltinPGCollation(collation) && !isUserDefinedCollationName(collation) {
 			if _, err := language.Parse(collation); err != nil {
 				return nil, pgerror.Wrapf(err, pgcode.Syntax, "invalid locale %s", collation)
 			}

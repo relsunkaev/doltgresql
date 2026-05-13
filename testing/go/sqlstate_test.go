@@ -136,8 +136,8 @@ func TestSQLStateCodes(t *testing.T) {
 			code: "42501",
 		},
 		{
-			name: "CREATE COLLATION unsupported boundary -> 0A000",
-			sql:  "CREATE COLLATION case_insensitive (provider = icu, locale = 'und-u-ks-level2', deterministic = false);",
+			name: "CREATE COLLATION unsupported provider boundary -> 0A000",
+			sql:  "CREATE COLLATION libc_collation (provider = libc, locale = 'C');",
 			code: "0A000",
 		},
 		{

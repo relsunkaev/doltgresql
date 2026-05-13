@@ -3860,6 +3860,9 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedCreatePolicy(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok := convertedCreateCollation(query); ok {
+		return []ConvertedQuery{converted}, nil
+	}
 	if converted, ok := convertedCreateTextSearchConfiguration(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
@@ -3982,6 +3985,7 @@ var (
 	dropCastPattern              = regexp.MustCompile(`(?is)^\s*drop\s+cast\s+(if\s+exists\s+)?\(\s*([a-z_][a-z0-9_."$]*)\s+as\s+([a-z_][a-z0-9_."$]*)\s*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	createOperatorPattern        = regexp.MustCompile(`(?is)^\s*create\s+operator\s+(\S+)\s*\((.*)\)\s*;?\s*$`)
 	createPolicyPattern          = regexp.MustCompile(`(?is)^\s*create\s+policy\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s+for\s+(select|insert|update|delete|all)(.*)\s*;?\s*$`)
+	createCollationPattern       = regexp.MustCompile(`(?is)^\s*create\s+collation\s+(?:if\s+not\s+exists\s+)?([a-z_][a-z0-9_."$]*)\s*\((.*)\)\s*;?\s*$`)
 	policyUsingPattern           = regexp.MustCompile(`(?is)\busing\s*\(([^)]*)\)`)
 	policyCheckPattern           = regexp.MustCompile(`(?is)\bwith\s+check\s*\(([^)]*)\)`)
 	policyRolesPattern           = regexp.MustCompile(`(?is)\bto\s+(.+?)(?:\busing\s*\(|\bwith\s+check\s*\(|$)`)
@@ -3996,6 +4000,7 @@ var (
 	dropOperatorFamilyPattern    = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropPolicyIfExistsPattern    = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropRuleIfExistsPattern      = regexp.MustCompile(`(?is)^\s*drop\s+rule\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropCollationIfExistsPattern = regexp.MustCompile(`(?is)^\s*drop\s+collation\s+if\s+exists\s+[a-z_][a-z0-9_."$]*\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropTextSearchPattern        = regexp.MustCompile(`(?is)^\s*drop\s+text\s+search\s+(configuration|dictionary|parser|template)\s+if\s+exists\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	securityLabelPattern         = regexp.MustCompile(`(?is)^\s*security\s+label\b`)
 	selectStatementPattern       = regexp.MustCompile(`(?is)^\s*select\s+(.+?)\s*;?\s*$`)
@@ -4227,6 +4232,32 @@ func convertedCreatePolicy(query string) (ConvertedQuery, bool) {
 	}, true
 }
 
+func convertedCreateCollation(query string) (ConvertedQuery, bool) {
+	matches := createCollationPattern.FindStringSubmatch(query)
+	if matches == nil || !isSupportedCreateCollationBody(matches[2]) {
+		return ConvertedQuery{}, false
+	}
+	return ConvertedQuery{
+		String: query,
+		AST: sqlparser.InjectedStatement{
+			Statement: node.NoOp{},
+		},
+		StatementTag: "CREATE COLLATION",
+	}, true
+}
+
+func isSupportedCreateCollationBody(body string) bool {
+	options := map[string]string{}
+	for _, option := range splitTopLevelComma(body) {
+		key, value, ok := strings.Cut(option, "=")
+		if !ok {
+			continue
+		}
+		options[strings.ToLower(strings.TrimSpace(key))] = strings.Trim(strings.TrimSpace(value), "'")
+	}
+	return strings.EqualFold(options["provider"], "icu") && strings.TrimSpace(options["locale"]) != ""
+}
+
 func rowSecurityPolicyRoles(body string) []string {
 	matches := policyRolesPattern.FindStringSubmatch(body)
 	if matches == nil {
@@ -4389,6 +4420,8 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 			},
 			StatementTag: "DROP RULE",
 		}, true
+	case dropCollationIfExistsPattern.MatchString(query):
+		statementTag = "DROP COLLATION"
 	default:
 		return ConvertedQuery{}, false
 	}

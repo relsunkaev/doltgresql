@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	doltsqle "github.com/dolthub/dolt/go/libraries/doltcore/sqle"
@@ -35,10 +36,11 @@ type citextUniqueIndex struct {
 	nullsNotDistinct bool
 }
 
-// CitextUniqueTable enforces PostgreSQL citext equality for unique indexes.
+// CitextUniqueTable enforces PostgreSQL citext and nondeterministic ICU
+// collation equality for unique indexes.
 // Native Dolt unique indexes compare the stored string bytes, while citext
-// uniqueness must compare case-insensitively and still preserve the original
-// text value in the table row.
+// and nondeterministic ICU collation uniqueness must compare
+// case-insensitively and still preserve the original text value in the table row.
 type CitextUniqueTable struct {
 	underlying sql.Table
 	indexes    []citextUniqueIndex
@@ -53,7 +55,7 @@ var _ sql.IndexAddressable = (*CitextUniqueTable)(nil)
 var _ sql.IndexedTable = (*CitextUniqueTable)(nil)
 
 // WrapCitextUniqueTable wraps table when it has a unique btree index that
-// includes at least one citext column.
+// includes at least one citext or nondeterministic ICU-collated text column.
 func WrapCitextUniqueTable(ctx *sql.Context, table sql.Table) (sql.Table, bool, error) {
 	if _, ok := table.(*CitextUniqueTable); ok {
 		return table, false, nil
@@ -77,11 +79,11 @@ func WrapCitextUniqueTable(ctx *sql.Context, table sql.Table) (sql.Table, bool, 
 			continue
 		}
 		columnTypes := index.ColumnExpressionTypes(ctx)
-		hasCitext := false
+		requiresCaseInsensitiveEquality := false
 		for i, column := range logicalColumns {
 			if column.Expression {
-				if i < len(columnTypes) && isCitextType(columnTypes[i].Type) {
-					hasCitext = true
+				if i < len(columnTypes) && usesCaseInsensitiveUniqueEquality(columnTypes[i].Type) {
+					requiresCaseInsensitiveEquality = true
 				}
 				continue
 			}
@@ -89,11 +91,11 @@ func WrapCitextUniqueTable(ctx *sql.Context, table sql.Table) (sql.Table, bool, 
 			if columnIndex < 0 {
 				return nil, false, sql.ErrKeyColumnDoesNotExist.New(column.StorageName)
 			}
-			if isCitextType(tableSchema[columnIndex].Type) {
-				hasCitext = true
+			if usesCaseInsensitiveUniqueEquality(tableSchema[columnIndex].Type) {
+				requiresCaseInsensitiveEquality = true
 			}
 		}
-		if !hasCitext {
+		if !requiresCaseInsensitiveEquality {
 			continue
 		}
 		if indexmetadata.AccessMethod(index.IndexType(), index.Comment()) != indexmetadata.AccessMethodBtree {
@@ -130,6 +132,31 @@ func WrapCitextUniqueTable(ctx *sql.Context, table sql.Table) (sql.Table, bool, 
 func isCitextType(typ sql.Type) bool {
 	doltgresType, ok := typ.(*pgtypes.DoltgresType)
 	return ok && doltgresType.ID.TypeName() == "citext"
+}
+
+func usesCaseInsensitiveUniqueEquality(typ sql.Type) bool {
+	return isCitextType(typ) || isNondeterministicICUCollatedTextType(typ)
+}
+
+func isNondeterministicICUCollatedTextType(typ sql.Type) bool {
+	doltgresType, ok := typ.(*pgtypes.DoltgresType)
+	if !ok {
+		return false
+	}
+	switch doltgresType.ID.TypeName() {
+	case "text", "varchar", "char", "bpchar", "name":
+	default:
+		return false
+	}
+	if !doltgresType.TypCollation.IsValid() {
+		return false
+	}
+	switch strings.ToLower(doltgresType.TypCollation.CollationName()) {
+	case "", "c", "posix", "default", "ucs_basic", "und-x-icu":
+		return false
+	default:
+		return true
+	}
 }
 
 func (t *CitextUniqueTable) Underlying() sql.Table {
@@ -366,6 +393,13 @@ func (i citextUniqueIndex) valuesMatch(ctx *sql.Context, columnIndex int, left a
 		return i.nullsNotDistinct && left == nil && right == nil, nil
 	}
 	if columnIndex < len(i.columnTypes) && i.columnTypes[columnIndex] != nil {
+		if isNondeterministicICUCollatedTextType(i.columnTypes[columnIndex]) {
+			leftString, leftOK := left.(string)
+			rightString, rightOK := right.(string)
+			if leftOK && rightOK {
+				return strings.ToLower(leftString) == strings.ToLower(rightString), nil
+			}
+		}
 		cmp, err := i.columnTypes[columnIndex].Compare(ctx, left, right)
 		if err != nil {
 			return false, err
