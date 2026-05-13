@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
@@ -104,23 +105,33 @@ func validateViewReplacementSchema(existingSchema sql.Schema, replacementSchema 
 	}
 	for i, existingCol := range existingSchema {
 		replacementCol := replacementSchema[i]
-		if existingCol.Name != replacementCol.Name {
+		existingName := comparableViewColumnName(existingCol.Name)
+		replacementName := comparableViewColumnName(replacementCol.Name)
+		if existingName != replacementName {
 			return pgerror.Newf(
 				pgcode.InvalidTableDefinition,
 				`cannot change name of view column "%s" to "%s"`,
-				existingCol.Name,
-				replacementCol.Name,
+				existingName,
+				replacementName,
 			)
 		}
 		if !existingCol.Type.Equals(replacementCol.Type) {
 			return pgerror.Newf(
 				pgcode.InvalidTableDefinition,
 				`cannot change data type of view column "%s" from %s to %s`,
-				existingCol.Name,
+				existingName,
 				existingCol.Type.String(),
 				replacementCol.Type.String(),
 			)
 		}
 	}
 	return nil
+}
+
+func comparableViewColumnName(name string) string {
+	name = core.DecodePhysicalColumnName(name)
+	if displayName, ok := pgast.AnonColumnAliasDisplayName(name); ok {
+		return displayName
+	}
+	return name
 }

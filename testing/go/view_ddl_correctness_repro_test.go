@@ -291,6 +291,31 @@ func TestCreateOrReplaceViewAllowsAppendingColumnsGuard(t *testing.T) {
 	})
 }
 
+// TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro covers PostgreSQL's
+// replacement check for unaliased expressions: the user-facing output name is
+// stable even though Doltgres keeps an internal unique alias for GMS.
+func TestCreateOrReplaceViewAllowsStableAnonymousColumnRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "CREATE OR REPLACE VIEW allows stable anonymous column",
+			SetUpScript: []string{
+				`CREATE VIEW replace_view_anonymous_column AS
+					SELECT 1;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `CREATE OR REPLACE VIEW replace_view_anonymous_column AS
+						SELECT 1;`,
+				},
+				{
+					Query:    `SELECT * FROM replace_view_anonymous_column;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateMaterializedViewWithDataGuard covers materialized-view DDL
 // semantics: PostgreSQL accepts an explicit WITH DATA clause and populates the
 // materialized view immediately.
