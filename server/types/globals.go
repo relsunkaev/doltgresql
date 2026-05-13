@@ -246,7 +246,7 @@ func init() {
 		toInternal("line"):             Unknown,
 		toInternal("lseg"):             Unknown,
 		toInternal("macaddr"):          Macaddr,
-		toInternal("money"):            Unknown,
+		toInternal("money"):            Money,
 		toInternal("name"):             Name,
 		toInternal("numeric"):          Numeric,
 		toInternal("numrange"):         Unknown,

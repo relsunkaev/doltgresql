@@ -782,6 +782,13 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 		if val, ok := v.(net.HardwareAddr); ok {
 			return types.FormatMacaddr(val)
 		}
+	case types.Money.ID:
+		switch val := v.(type) {
+		case int64:
+			return types.FormatMoney(types.MoneyValue(val))
+		case []byte:
+			return string(val)
+		}
 	}
 
 	switch val := v.(type) {
