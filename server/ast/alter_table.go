@@ -87,6 +87,20 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 					cmd.Owner,
 				),
 			}, nil
+		case *tree.AlterTableRenameConstraint:
+			return vitess.InjectedStatement{
+				Statement: pgnodes.NewRenameConstraint(
+					node.IfExists,
+					tableName.SchemaQualifier.String(),
+					tableName.Name.String(),
+					string(cmd.Constraint),
+					string(cmd.NewName),
+				),
+				Auth: vitess.AuthInformation{
+					AuthType:   auth.AuthType_IGNORE,
+					TargetType: auth.AuthTargetType_Ignore,
+				},
+			}, nil
 		}
 	}
 	statements, noOps, err := nodeAlterTableCmds(ctx, node.Cmds, tableName, node.IfExists)

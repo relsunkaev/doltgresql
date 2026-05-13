@@ -48,5 +48,27 @@ func TestAlterTableRenameConstraintRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "ALTER TABLE RENAME CONSTRAINT preserves comments",
+			SetUpScript: []string{
+				`CREATE TABLE rename_constraint_comment_items (
+					id INT,
+					amount INT CONSTRAINT amount_positive_comment CHECK (amount > 0)
+				);`,
+				`COMMENT ON CONSTRAINT amount_positive_comment
+					ON rename_constraint_comment_items IS 'kept constraint comment';`,
+				`ALTER TABLE rename_constraint_comment_items
+					RENAME CONSTRAINT amount_positive_comment TO amount_above_zero_comment;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT obj_description(oid, 'pg_constraint')
+						FROM pg_catalog.pg_constraint
+						WHERE conrelid = 'rename_constraint_comment_items'::regclass
+							AND conname = 'amount_above_zero_comment';`,
+					Expected: []sql.Row{{"kept constraint comment"}},
+				},
+			},
+		},
 	})
 }
