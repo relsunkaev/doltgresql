@@ -297,6 +297,17 @@ func oracleSelftestEntries() []entry {
 			)),
 			ColumnModes: []string{"numeric", "numeric", "json", "array", "timestamptz", "structural"},
 		},
+		{
+			ID:      "oracle-selftest-text-values-that-look-like-arrays-stay-text",
+			Source:  "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+			Oracle:  "postgres",
+			Compare: "structural",
+			Query:   `SELECT '[{"a": 1}]'::text, '[1, 2]'::text`,
+			ExpectedRows: rows(row(
+				value(`[{"a": 1}]`),
+				value(`[1, 2]`),
+			)),
+		},
 	}
 }
 
@@ -814,9 +825,6 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 		case "array":
 			return normalizeGeneratedPostgresArray(v)
 		default:
-			if normalized, ok := normalizeGeneratedPostgresBracketArray(v); ok {
-				return normalized
-			}
 			return v
 		}
 	default:
@@ -831,9 +839,6 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 			}
 		}
 		text := fmt.Sprint(v)
-		if normalized, ok := normalizeGeneratedPostgresBracketArray(text); ok {
-			return normalized
-		}
 		if mode == "numeric" {
 			return normalizeGeneratedPostgresNumeric(text)
 		}

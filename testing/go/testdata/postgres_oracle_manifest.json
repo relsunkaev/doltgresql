@@ -66,6 +66,23 @@
       ]
     },
     {
+      "id": "oracle-selftest-text-values-that-look-like-arrays-stay-text",
+      "source": "testing/go/postgres_oracle_manifest_test.go:TestPostgresOracleManifest",
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT '[{\"a\": 1}]'::text, '[1, 2]'::text",
+      "expectedRows": [
+        [
+          {
+            "value": "[{\"a\": 1}]"
+          },
+          {
+            "value": "[1, 2]"
+          }
+        ]
+      ]
+    },
+    {
       "id": "drop-operator-if-exists-removes-existing-operator",
       "source": "testing/go/operator_definition_repro_test.go:TestDropOperatorIfExistsDropsExistingOperatorRepro",
       "oracle": "postgres",
@@ -2409,6 +2426,285 @@
         [
           {
             "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonextractionpreservesjsonsubdocumenttextrepro-0001-select-{-a-:-{",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT ('{\"a\": { \"b\" : 1, \"c\" : 2 }}'::json -> 'a')::text,\n\t\t\t\t\t\t('{\"a\": { \"b\" : 1, \"c\" : 2 }}'::json #> ARRAY['a'])::text,\n\t\t\t\t\t\t('[{ \"b\" : 1, \"c\" : 2 }]'::json -> 0)::text,\n\t\t\t\t\t\tjson_extract_path('{\"a\": { \"b\" : 1, \"c\" : 2 }}'::json, 'a')::text,\n\t\t\t\t\t\tjson_extract_path_text('{\"a\": { \"b\" : 1, \"c\" : 2 }}'::json, 'a');",
+      "expectedRows": [
+        [
+          {
+            "value": "{ \"b\" : 1, \"c\" : 2 }"
+          },
+          {
+            "value": "{ \"b\" : 1, \"c\" : 2 }"
+          },
+          {
+            "value": "{ \"b\" : 1, \"c\" : 2 }"
+          },
+          {
+            "value": "{ \"b\" : 1, \"c\" : 2 }"
+          },
+          {
+            "value": "{ \"b\" : 1, \"c\" : 2 }"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonextractionpreservesjsonobjectkeyorderrepro-0001-select-{-z-:0-a",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonObjectKeyOrderRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT ('{\"z\":0,\"a\":{\"b\":1,\"a\":2}}'::json -> 'a')::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsoneachpreservesjsonobjectorderandduplicatesrepro-0001-select-string_agg-key-||-:",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT string_agg(key || ':' || value::text, ',')\n\t\t\t\t\t\tFROM json_each('{\"b\":1,\"a\":2}'::json);",
+      "expectedRows": [
+        [
+          {
+            "value": "b:1,a:2"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsoneachpreservesjsonobjectorderandduplicatesrepro-0002-select-string_agg-key-||-:",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT string_agg(key || ':' || value::text, ',')\n\t\t\t\t\t\tFROM json_each('{\"b\":1,\"a\":2}'::json);"
+      ],
+      "query": "SELECT string_agg(key || ':' || value::text, ',')\n\t\t\t\t\t\tFROM json_each('{\"a\":1,\"a\":2}'::json);",
+      "expectedRows": [
+        [
+          {
+            "value": "a:1,a:2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonobjectkeyspreservesjsonobjectorderandduplicatesrepro-0001-select-string_agg-key-from-json_object_keys",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT string_agg(key, ',')\n\t\t\t\t\t\tFROM json_object_keys('{\"b\":1,\"a\":2}'::json) AS key;",
+      "expectedRows": [
+        [
+          {
+            "value": "b,a"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonobjectkeyspreservesjsonobjectorderandduplicatesrepro-0002-select-string_agg-key-from-json_object_keys",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT string_agg(key, ',')\n\t\t\t\t\t\tFROM json_object_keys('{\"b\":1,\"a\":2}'::json) AS key;"
+      ],
+      "query": "SELECT string_agg(key, ',')\n\t\t\t\t\t\tFROM json_object_keys('{\"a\":1,\"a\":2}'::json) AS key;",
+      "expectedRows": [
+        [
+          {
+            "value": "a,a"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonarrayelementspreservesjsonelementtextrepro-0001-select-string_agg-value::text-|-from",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT string_agg(value::text, '|')\n\t\t\t\t\t\tFROM json_array_elements('[{\"b\":1,\"a\":2},{\"a\":1,\"a\":2},{ \"c\" : 3 }]'::json) AS value;",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}|{\"a\":1,\"a\":2}|{ \"c\" : 3 }"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonarrayelementspreservesjsonelementtextrepro-0002-select-string_agg-value-|-from",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonArrayElementsPreservesJsonElementTextRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT string_agg(value::text, '|')\n\t\t\t\t\t\tFROM json_array_elements('[{\"b\":1,\"a\":2},{\"a\":1,\"a\":2},{ \"c\" : 3 }]'::json) AS value;"
+      ],
+      "query": "SELECT string_agg(value, '|')\n\t\t\t\t\t\tFROM json_array_elements_text('[{\"b\":1,\"a\":2},{\"a\":1,\"a\":2},{ \"c\" : 3 }]'::json) AS value;",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}|{\"a\":1,\"a\":2}|{ \"c\" : 3 }"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonaggregatespreservejsoninputtextrepro-0001-select-json_agg-doc-::text-from",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT json_agg(doc)::text\n\t\t\t\t\t\tFROM (VALUES ('{\"b\":1,\"a\":2}'::json),\n\t\t\t\t\t\t\t('{\"a\":1,\"a\":2}'::json),\n\t\t\t\t\t\t\t('{ \"c\" : 3 }'::json)) AS v(doc);",
+      "expectedRows": [
+        [
+          {
+            "value": "[{\"b\":1,\"a\":2}, {\"a\":1,\"a\":2}, { \"c\" : 3 }]"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonaggregatespreservejsoninputtextrepro-0002-select-json_object_agg-k-doc-::text",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonAggregatesPreserveJsonInputTextRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT json_agg(doc)::text\n\t\t\t\t\t\tFROM (VALUES ('{\"b\":1,\"a\":2}'::json),\n\t\t\t\t\t\t\t('{\"a\":1,\"a\":2}'::json),\n\t\t\t\t\t\t\t('{ \"c\" : 3 }'::json)) AS v(doc);"
+      ],
+      "query": "SELECT json_object_agg(k, doc)::text\n\t\t\t\t\t\tFROM (VALUES ('x', '{\"b\":1,\"a\":2}'::json),\n\t\t\t\t\t\t\t('y', '{\"a\":1,\"a\":2}'::json)) AS v(k, doc);",
+      "expectedRows": [
+        [
+          {
+            "value": "{ \"x\" : {\"b\":1,\"a\":2}, \"y\" : {\"a\":1,\"a\":2} }"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsontorecordpreservesnestedjsontextrepro-0001-select-nested::text-from-json_to_record-{",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT nested::text\n\t\t\t\t\t\tFROM json_to_record('{\"nested\":{\"b\":1,\"a\":2}}'::json) AS r(nested json);",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsontorecordpreservesnestedjsontextrepro-0002-select-nested::text-from-json_to_record-{",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonToRecordPreservesNestedJsonTextRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT nested::text\n\t\t\t\t\t\tFROM json_to_record('{\"nested\":{\"b\":1,\"a\":2}}'::json) AS r(nested json);"
+      ],
+      "query": "SELECT nested::text\n\t\t\t\t\t\tFROM json_to_record('{\"nested\":{\"a\":1,\"a\":2}}'::json) AS r(nested json);",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\":1,\"a\":2}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonpopulaterecordpreservesnestedjsontextrepro-0001-select-json_populate_record-null::json_populate_plain_row-{-nested",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TYPE json_populate_plain_row AS (nested JSON);"
+      ],
+      "query": "SELECT (json_populate_record(NULL::json_populate_plain_row,\n\t\t\t\t\t\t'{\"nested\":{\"b\":1,\"a\":2}}'::json)).nested::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"b\":1,\"a\":2}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "json-correctness-repro-test-testjsonpopulaterecordpreservesnestedjsontextrepro-0002-select-json_populate_record-null::json_populate_plain_row-{-nested",
+      "source": "testing/go/json_correctness_repro_test.go:TestJsonPopulateRecordPreservesNestedJsonTextRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TYPE json_populate_plain_row AS (nested JSON);",
+        "SELECT (json_populate_record(NULL::json_populate_plain_row,\n\t\t\t\t\t\t'{\"nested\":{\"b\":1,\"a\":2}}'::json)).nested::text;"
+      ],
+      "query": "SELECT (json_populate_record(NULL::json_populate_plain_row,\n\t\t\t\t\t\t'{\"nested\":{\"a\":1,\"a\":2}}'::json)).nested::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "{\"a\":1,\"a\":2}"
           }
         ]
       ],
