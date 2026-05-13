@@ -61,9 +61,11 @@ func nodeCreateDomain(ctx *Context, node *tree.CreateDomain) (vitess.Statement, 
 
 	var definedNotNull, definedNull bool
 	var checkConstraintNames []string
+	var checkConstraintRawExprs []string
 	var checkConstraintExprs []vitess.Expr
 	for _, constraint := range node.Constraints {
 		if constraint.Check != nil {
+			checkConstraintRawExprs = append(checkConstraintRawExprs, constraint.Check.String())
 			check, err := verifyAndReplaceValue(node.DataType, constraint.Check)
 			if err != nil {
 				return nil, err
@@ -99,6 +101,7 @@ func nodeCreateDomain(ctx *Context, node *tree.CreateDomain) (vitess.Statement, 
 			HasDefault:           node.Default != nil,
 			IsNotNull:            definedNotNull,
 			CheckConstraintNames: checkConstraintNames,
+			CheckConstraintExprs: checkConstraintRawExprs,
 		},
 		Children: children,
 	}, nil

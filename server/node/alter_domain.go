@@ -49,6 +49,7 @@ type AlterDomain struct {
 	Action         AlterDomainAction
 	DefaultExpr    sql.Expression
 	ConstraintName string
+	CheckExprText  string
 	CheckExpr      sql.Expression
 	NotValid       bool
 	overrides      sql.EngineOverrides
@@ -74,13 +75,14 @@ func NewAlterDomainDropNotNull(databaseName, schemaName, name string) *AlterDoma
 	return &AlterDomain{DatabaseName: databaseName, SchemaName: schemaName, Name: name, Action: AlterDomainDropNotNull}
 }
 
-func NewAlterDomainAddConstraint(databaseName, schemaName, name, constraintName string, notValid bool) *AlterDomain {
+func NewAlterDomainAddConstraint(databaseName, schemaName, name, constraintName string, checkExprText string, notValid bool) *AlterDomain {
 	return &AlterDomain{
 		DatabaseName:   databaseName,
 		SchemaName:     schemaName,
 		Name:           name,
 		Action:         AlterDomainAddConstraint,
 		ConstraintName: constraintName,
+		CheckExprText:  checkExprText,
 		NotValid:       notValid,
 	}
 }
@@ -131,6 +133,9 @@ func (a *AlterDomain) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) 
 		checkDef, err := plan.NewCheckDefinition(ctx, check, sql.GetSchemaFormatter(a.overrides))
 		if err != nil {
 			return nil, err
+		}
+		if a.CheckExprText != "" {
+			checkDef.CheckExpression = a.CheckExprText
 		}
 		if !a.NotValid {
 			if err = a.validateDomainCheckUsages(ctx, domain.ID, domain, check); err != nil {

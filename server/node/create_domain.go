@@ -40,6 +40,7 @@ type CreateDomain struct {
 	DefaultExpr          sql.Expression
 	IsNotNull            bool
 	CheckConstraintNames []string
+	CheckConstraintExprs []string
 	CheckConstraints     sql.CheckConstraints
 	overrides            sql.EngineOverrides
 }
@@ -115,6 +116,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 		checkDefs[i], err = plan.NewCheckDefinition(ctx, check, sql.GetSchemaFormatter(c.overrides))
 		if err != nil {
 			return nil, err
+		}
+		if i < len(c.CheckConstraintExprs) && c.CheckConstraintExprs[i] != "" {
+			checkDefs[i].CheckExpression = c.CheckConstraintExprs[i]
 		}
 	}
 
@@ -234,6 +238,7 @@ func (c *CreateDomain) WithResolvedChildren(ctx context.Context, children []any)
 		DefaultExpr:          defExpr,
 		IsNotNull:            c.IsNotNull,
 		CheckConstraintNames: c.CheckConstraintNames,
+		CheckConstraintExprs: c.CheckConstraintExprs,
 		CheckConstraints:     checks,
 	}, nil
 }

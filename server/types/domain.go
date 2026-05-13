@@ -26,7 +26,7 @@ import (
 var ErrDomainDoesNotAllowNullValues = errors.NewKind(`domain %s does not allow null values`)
 
 // ErrDomainValueViolatesCheckConstraint is returned when given value violates a domain check.
-var ErrDomainValueViolatesCheckConstraint = errors.NewKind(`value for domain %s violates check constraint "%s"`)
+var ErrDomainValueViolatesCheckConstraint = errors.NewKind(`Check constraint "%[2]s" violated: value for domain %[1]s violates check constraint "%[2]s"`)
 
 // NewDomainType creates new instance of domain DoltgresType.
 func NewDomainType(

@@ -127,6 +127,7 @@ func nodeAlterDomain(ctx *Context, stmt *tree.AlterDomain) (vitess.Statement, er
 				domainName.Schema(),
 				domainName.Object(),
 				string(constraint.Constraint.Constraint),
+				constraint.Constraint.Check.String(),
 				constraint.NotValid,
 			),
 			Children: []vitess.Expr{expr},

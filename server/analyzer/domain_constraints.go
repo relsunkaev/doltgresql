@@ -397,5 +397,12 @@ func parseAndReplaceDomainCheckConstraint(ctx *sql.Context, a *analyzer.Analyzer
 	if len(convertedSelectStmt.From) == 1 {
 		tblExpr = convertedSelectStmt.From[0]
 	}
-	return builder.BuildScalarWithTable(ae.Expr, tblExpr), nil
+	resolvedExpr := builder.BuildScalarWithTable(ae.Expr, tblExpr)
+	resolvedExpr, _, err = transform.Expr(ctx, resolvedExpr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		if interp, ok := expr.(procedures.InterpreterExpr); ok {
+			return interp.SetStatementRunner(ctx, a.Runner), transform.NewTree, nil
+		}
+		return expr, transform.SameTree, nil
+	})
+	return resolvedExpr, err
 }
