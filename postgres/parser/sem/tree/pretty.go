@@ -1186,7 +1186,12 @@ func (node *Delete) doc(p *PrettyCfg) pretty.Doc {
 	items := make([]pretty.TableRow, 0, 6)
 	items = append(items,
 		node.With.docRow(p),
-		p.row("DELETE FROM", p.Doc(node.Table)),
+		p.row("DELETE FROM", p.Doc(node.Table)))
+	if len(node.Using) > 0 {
+		items = append(items,
+			p.row("USING", p.Doc(&node.Using)))
+	}
+	items = append(items,
 		node.Where.docRow(p),
 		node.OrderBy.docRow(p))
 	items = append(items, node.Limit.docTable(p)...)

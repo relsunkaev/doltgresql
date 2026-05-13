@@ -54,7 +54,7 @@ func nodeDelete(ctx *Context, node *tree.Delete) (*vitess.Delete, error) {
 			appendAdditionalColumnAuth(&tableExpr.Auth, auth.AuthType_SELECT, tableTarget, readColumns, columnsOK)
 		}
 	}
-	where, err := nodeWhere(ctx, node.Where)
+	where, err := nodeDeleteWhere(ctx, node)
 	if err != nil {
 		return nil, err
 	}
@@ -74,4 +74,34 @@ func nodeDelete(ctx *Context, node *tree.Delete) (*vitess.Delete, error) {
 		Limit:      limit,
 		Returning:  returningExprs,
 	}, nil
+}
+
+func nodeDeleteWhere(ctx *Context, node *tree.Delete) (*vitess.Where, error) {
+	if len(node.Using) == 0 {
+		return nodeWhere(ctx, node.Where)
+	}
+	ctx.Auth().PushAuthType(auth.AuthType_SELECT)
+	usingTableExprs, err := nodeTableExprs(ctx, node.Using)
+	ctx.Auth().PopAuthType()
+	if err != nil {
+		return nil, err
+	}
+	var usingWhere *vitess.Where
+	if node.Where != nil {
+		usingWhere, err = nodeWhere(ctx, node.Where)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return vitess.NewWhere(vitess.WhereStr, &vitess.ExistsExpr{
+		Subquery: &vitess.Subquery{
+			Select: &vitess.Select{
+				SelectExprs: vitess.SelectExprs{
+					&vitess.AliasedExpr{Expr: vitess.NewIntVal([]byte("1"))},
+				},
+				From:  usingTableExprs,
+				Where: usingWhere,
+			},
+		},
+	}), nil
 }
