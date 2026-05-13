@@ -75,8 +75,9 @@ func SetTableMode(database, schema, table string, enabled *bool, forced *bool) {
 	registry.tables[key] = state
 }
 
-// AddPolicy adds or replaces a row-level security policy.
-func AddPolicy(database, schema, table string, policy Policy) {
+// AddPolicy adds a row-level security policy. It returns false when a policy
+// with the same name already exists for the table.
+func AddPolicy(database, schema, table string, policy Policy) bool {
 	registry.Lock()
 	defer registry.Unlock()
 	key := makeKey(database, schema, table)
@@ -86,15 +87,14 @@ func AddPolicy(database, schema, table string, policy Policy) {
 	for i := range policy.Roles {
 		policy.Roles[i] = normalizeIdentifier(policy.Roles[i])
 	}
-	for i, existing := range state.Policies {
+	for _, existing := range state.Policies {
 		if existing.Name == policy.Name {
-			state.Policies[i] = policy
-			registry.tables[key] = state
-			return
+			return false
 		}
 	}
 	state.Policies = append(state.Policies, policy)
 	registry.tables[key] = state
+	return true
 }
 
 // RenameTable moves row-level security state to a renamed table.

@@ -22,6 +22,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/rowsecurity"
 )
 
@@ -93,7 +95,13 @@ func (c *CreatePolicy) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 	if err := checkTableOwnership(ctx, c.TableName); err != nil {
 		return nil, err
 	}
-	rowsecurity.AddPolicy(ctx.GetCurrentDatabase(), c.TableName.Schema, c.TableName.Name, c.Policy)
+	if !rowsecurity.AddPolicy(ctx.GetCurrentDatabase(), c.TableName.Schema, c.TableName.Name, c.Policy) {
+		return nil, pgerror.Newf(pgcode.DuplicateObject,
+			`policy "%s" for table "%s" already exists`,
+			c.Policy.Name,
+			c.TableName.Name,
+		)
+	}
 	return sql.RowsToRowIter(), nil
 }
 
