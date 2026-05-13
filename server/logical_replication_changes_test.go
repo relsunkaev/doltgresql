@@ -68,6 +68,9 @@ func TestNormalizePublicationRowFilterUnknownPredicates(t *testing.T) {
 	require.Equal(t, "visible IS NOT NULL", normalizePublicationRowFilter("visible IS DISTINCT FROM NULL"))
 	require.Equal(t, "NOT (customer_id <=> 5)", normalizePublicationRowFilter("customer_id IS DISTINCT FROM 5"))
 	require.Equal(t, "(status <=> 'ready')", normalizePublicationRowFilter("status IS NOT DISTINCT FROM 'ready'"))
+	require.Equal(t, "code < 'm'", normalizePublicationRowFilter("code::varchar < 'm'"))
+	require.Equal(t, "code = 'alpha'", normalizePublicationRowFilter("code = 'alpha'::TEXT"))
+	require.Equal(t, "code = 'alpha'", normalizePublicationRowFilter("code::character varying = 'alpha'"))
 }
 
 func TestPublicationRowFilterDistinctFromPredicates(t *testing.T) {
@@ -191,6 +194,59 @@ func TestPublicationRowFilterCoalescePredicates(t *testing.T) {
 			expr, err := parsePublicationRowFilter(tt.filter)
 			require.NoError(t, err)
 			match, err := evalPublicationFilterBool(ctx, expr, tt.values)
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
+func TestPublicationRowFilterTextCastPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "left varchar cast compares as text",
+			filter: "code::varchar < 'm'",
+			value:  rowFilterValue{data: []byte("alpha")},
+			match:  true,
+		},
+		{
+			name:   "left text cast rejects non-match",
+			filter: "code::text < 'm'",
+			value:  rowFilterValue{data: []byte("zulu")},
+			match:  false,
+		},
+		{
+			name:   "right text cast compares as text",
+			filter: "code = 'alpha'::text",
+			value:  rowFilterValue{data: []byte("alpha")},
+			match:  true,
+		},
+		{
+			name:   "character varying cast compares as text",
+			filter: "code::character varying = 'alpha'",
+			value:  rowFilterValue{data: []byte("alpha")},
+			match:  true,
+		},
+		{
+			name:   "null cast operand does not match comparison",
+			filter: "code::varchar = 'alpha'",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"code": tt.value,
+			})
 			require.NoError(t, err)
 			require.Equal(t, tt.match, match)
 		})

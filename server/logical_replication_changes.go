@@ -48,6 +48,7 @@ var (
 	publicationRowFilterSimpleOperand         = `(?:[a-z_][a-z0-9_]*|true|false|null|[0-9]+(?:\.[0-9]+)?|'(?:''|[^'])*')`
 	publicationRowFilterIsNotDistinctFrom     = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+not\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
 	publicationRowFilterIsDistinctFrom        = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
+	publicationRowFilterTextCast              = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s*::\s*(?:text|varchar|character\s+varying)\b`)
 	publicationRowFilterIsNotUnknown          = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
 	publicationRowFilterIsUnknown             = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
 )
@@ -686,6 +687,7 @@ func normalizePublicationRowFilter(rowFilter string) string {
 	rowFilter = publicationRowFilterIsDistinctFromNull.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsNotDistinctFrom.ReplaceAllString(rowFilter, "($1 <=> $2)")
 	rowFilter = publicationRowFilterIsDistinctFrom.ReplaceAllString(rowFilter, "NOT ($1 <=> $2)")
+	rowFilter = publicationRowFilterTextCast.ReplaceAllString(rowFilter, "$1")
 	rowFilter = publicationRowFilterIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
 	return rowFilter
