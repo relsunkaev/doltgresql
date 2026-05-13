@@ -93,6 +93,14 @@ func TestCopy(t *testing.T) {
 					Query:             "COPY regions (\"Id\", \"Code\", \"Capital\", \"Name\") FROM stdin;\n",
 					CopyFromStdInFile: "tab-load-with-quoted-column-names.sql",
 				},
+				{
+					Query: `SELECT "Id", "Code", "Capital", "Name" FROM regions ORDER BY "Id";`,
+					Expected: []sql.Row{
+						{1, "01", "97105", "Guadeloupe"},
+						{2, "02", "97209", "Martinique"},
+						{3, "03", "97302", "Guyane"},
+					},
+				},
 			},
 		},
 		{

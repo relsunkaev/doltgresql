@@ -2848,13 +2848,13 @@ func getInsertableTable(node sql.Node) sql.InsertableTable {
 
 func validateCopyFromGeneratedColumns(columns tree.NameList, schema sql.Schema, tableName string) error {
 	for _, column := range columns {
-		idx := schema.IndexOfColName(string(column))
+		idx := schema.IndexOfColName(core.EncodePhysicalColumnName(string(column)))
 		if idx < 0 {
 			continue
 		}
 		col := schema[idx]
 		if col.Generated != nil && !col.AutoIncrement {
-			return errors.Errorf(`The value specified for generated column "%s" in table "%s" is not allowed.`, col.Name, tableName)
+			return errors.Errorf(`The value specified for generated column "%s" in table "%s" is not allowed.`, core.DecodePhysicalColumnName(col.Name), tableName)
 		}
 	}
 	return nil

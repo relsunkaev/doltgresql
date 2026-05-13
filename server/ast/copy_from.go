@@ -18,6 +18,7 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
@@ -34,7 +35,7 @@ func nodeCopyFrom(ctx *Context, node *tree.CopyFrom) (vitess.Statement, error) {
 	if len(node.Columns) > 0 {
 		columns = make([]vitess.ColIdent, len(node.Columns))
 		for i := range node.Columns {
-			columns[i] = vitess.NewColIdent(string(node.Columns[i]))
+			columns[i] = vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.Columns[i])))
 		}
 	}
 
