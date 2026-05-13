@@ -3,6 +3,20 @@
   "canonicalPostgresMajor": 16,
   "normalizationProfile": "pg16-structural-v1",
   "defaultOracle": "internal",
+  "inventory": {
+    "scope": "testing/go/*_test.go ScriptTest expectation literals",
+    "assertionsDefaultOracle": "internal",
+    "postgresOverrides": "entries where oracle == postgres",
+    "assertionFields": [
+      "Expected",
+      "ExpectedRaw",
+      "ExpectedErr",
+      "ExpectedTag",
+      "ExpectedColNames",
+      "ExpectedColTypes",
+      "ExpectedNotices"
+    ]
+  },
   "entries": [
     {
       "id": "oracle-selftest-sqlstate-division-by-zero",

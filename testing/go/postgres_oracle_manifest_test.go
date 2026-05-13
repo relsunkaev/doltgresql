@@ -19,6 +19,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -38,11 +41,19 @@ import (
 const postgresOracleDefaultDSN = "postgres://postgres:password@127.0.0.1:5432/postgres?sslmode=disable"
 
 type postgresOracleManifest struct {
-	Version                int                   `json:"version"`
-	CanonicalPostgresMajor int                   `json:"canonicalPostgresMajor"`
-	NormalizationProfile   string                `json:"normalizationProfile"`
-	DefaultOracle          string                `json:"defaultOracle"`
-	Entries                []postgresOracleEntry `json:"entries"`
+	Version                int                     `json:"version"`
+	CanonicalPostgresMajor int                     `json:"canonicalPostgresMajor"`
+	NormalizationProfile   string                  `json:"normalizationProfile"`
+	DefaultOracle          string                  `json:"defaultOracle"`
+	Inventory              postgresOracleInventory `json:"inventory"`
+	Entries                []postgresOracleEntry   `json:"entries"`
+}
+
+type postgresOracleInventory struct {
+	Scope                   string   `json:"scope"`
+	AssertionsDefaultOracle string   `json:"assertionsDefaultOracle"`
+	PostgresOverrides       string   `json:"postgresOverrides"`
+	AssertionFields         []string `json:"assertionFields"`
 }
 
 type postgresOracleEntry struct {
@@ -69,6 +80,18 @@ type postgresCell struct {
 
 func TestPostgresOracleManifestSchema(t *testing.T) {
 	validatePostgresOracleManifest(t, loadPostgresOracleManifest(t))
+}
+
+func TestPostgresOracleManifestInventory(t *testing.T) {
+	manifest := loadPostgresOracleManifest(t)
+	validatePostgresOracleManifest(t, manifest)
+	inventory := scanScriptTestExpectationInventory(t, manifest.Inventory.AssertionFields)
+
+	require.Greater(t, inventory.TestFunctions, 250)
+	require.Greater(t, inventory.ExpectationLiterals, 10000)
+	require.Equal(t, manifest.DefaultOracle, manifest.Inventory.AssertionsDefaultOracle)
+	require.Equal(t, "entries where oracle == postgres", manifest.Inventory.PostgresOverrides)
+	require.NotEmpty(t, postgresOracleEntries(manifest))
 }
 
 func TestPostgresOracleManifest(t *testing.T) {
@@ -104,6 +127,9 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 	require.Equal(t, 16, manifest.CanonicalPostgresMajor)
 	require.Equal(t, "pg16-structural-v1", manifest.NormalizationProfile)
 	require.Equal(t, "internal", manifest.DefaultOracle)
+	require.Equal(t, "testing/go/*_test.go ScriptTest expectation literals", manifest.Inventory.Scope)
+	require.Equal(t, "internal", manifest.Inventory.AssertionsDefaultOracle)
+	require.NotEmpty(t, manifest.Inventory.AssertionFields)
 	require.NotEmpty(t, manifest.Entries)
 
 	seen := map[string]struct{}{}
@@ -131,6 +157,75 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 			}
 		}
 	}
+}
+
+type scriptTestExpectationInventory struct {
+	TestFunctions       int
+	ExpectationLiterals int
+}
+
+func scanScriptTestExpectationInventory(t testing.TB, assertionFields []string) scriptTestExpectationInventory {
+	t.Helper()
+	require.NotEmpty(t, assertionFields)
+	fieldSet := map[string]struct{}{}
+	for _, field := range assertionFields {
+		fieldSet[field] = struct{}{}
+	}
+
+	files, err := filepath.Glob("*_test.go")
+	require.NoError(t, err)
+	require.NotEmpty(t, files)
+
+	var inventory scriptTestExpectationInventory
+	for _, file := range files {
+		if file == "postgres_oracle_manifest_test.go" {
+			continue
+		}
+		fset := token.NewFileSet()
+		parsed, err := parser.ParseFile(fset, file, nil, 0)
+		require.NoError(t, err)
+		ast.Inspect(parsed, func(node ast.Node) bool {
+			switch typed := node.(type) {
+			case *ast.FuncDecl:
+				if strings.HasPrefix(typed.Name.Name, "Test") {
+					inventory.TestFunctions++
+				}
+			case *ast.CompositeLit:
+				if compositeHasExpectationField(typed, fieldSet) {
+					inventory.ExpectationLiterals++
+				}
+			}
+			return true
+		})
+	}
+	return inventory
+}
+
+func compositeHasExpectationField(lit *ast.CompositeLit, fieldSet map[string]struct{}) bool {
+	for _, element := range lit.Elts {
+		kv, ok := element.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		key, ok := kv.Key.(*ast.Ident)
+		if !ok {
+			continue
+		}
+		if _, ok = fieldSet[key.Name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func postgresOracleEntries(manifest postgresOracleManifest) []postgresOracleEntry {
+	entries := make([]postgresOracleEntry, 0)
+	for _, entry := range manifest.Entries {
+		if entry.Oracle == "postgres" {
+			entries = append(entries, entry)
+		}
+	}
+	return entries
 }
 
 func requireOracleSourceExists(t testing.TB, entry postgresOracleEntry) {
