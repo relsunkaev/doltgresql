@@ -654,20 +654,33 @@ func (t *DoltgresType) convertCompositeValue(ctx context.Context, v interface{})
 }
 
 func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}) (interface{}, bool, error) {
-	typmod := t.GetAttTypMod()
+	targetType := t
+	if t.TypType == TypeType_Domain {
+		if sqlCtx, ok := ctx.(*sql.Context); ok {
+			baseType, err := t.DomainUnderlyingBaseTypeWithContext(sqlCtx)
+			if err != nil {
+				return nil, true, err
+			}
+			targetType = baseType
+		} else {
+			targetType = t.DomainUnderlyingBaseType()
+		}
+	}
+
+	typmod := targetType.GetAttTypMod()
 	if typmod == -1 {
 		return nil, false, nil
 	}
 
-	if t.IsArrayType() {
+	if targetType.IsArrayType() {
 		vals, ok := v.([]any)
 		if !ok {
 			return nil, false, nil
 		}
-		baseType := t.ArrayBaseType()
+		baseType := targetType.ArrayBaseType()
 		if sqlCtx, ok := ctx.(*sql.Context); ok {
 			var err error
-			baseType, err = t.ResolveArrayBaseType(sqlCtx)
+			baseType, err = targetType.ResolveArrayBaseType(sqlCtx)
 			if err != nil {
 				return nil, true, err
 			}
@@ -676,7 +689,7 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 		return converted, true, err
 	}
 
-	switch t.ID.TypeName() {
+	switch targetType.ID.TypeName() {
 	case "bpchar", "char", "varchar":
 		str, ok, err := sql.Unwrap[string](ctx, v)
 		if err != nil || !ok {
@@ -686,7 +699,7 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 		if !ok {
 			return nil, false, nil
 		}
-		converted, err := t.IoInput(sqlCtx, str)
+		converted, err := targetType.IoInput(sqlCtx, str)
 		return converted, true, err
 	case "numeric":
 		if dec, ok := v.(decimal.Decimal); ok {
