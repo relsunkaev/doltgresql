@@ -72,6 +72,7 @@ import (
 	"github.com/dolthub/doltgresql/server/rowsecurity"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
+	pgtables "github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -220,6 +221,7 @@ func NewConnectionHandler(conn net.Conn, handler mysql.Handler, sel server.Serve
 	// TODO: possibly should define engine and session manager ourselves
 	//  instead of depending on the GetRunningServer method.
 	server := sqlserver.GetRunningServer()
+	server.Engine.Analyzer.Catalog.DbProvider = pgtables.WrapDatabaseProvider(server.Engine.Analyzer.Catalog.DbProvider)
 	doltgresHandler := &DoltgresHandler{
 		e:                 server.Engine,
 		sm:                server.SessionManager(),
