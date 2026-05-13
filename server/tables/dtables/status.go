@@ -16,6 +16,7 @@ package dtables
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/env"
@@ -121,9 +122,16 @@ var _ sql.RowIter = (*doltgresDoltStatusRowIter)(nil)
 // Next converts the 'staged' column from [doltdtables.StatusTable.Schema] from a byte into a bool since, unlike the
 // MySQL wire protocol, Doltgres has a real bool type.
 func (i *doltgresDoltStatusRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	row, err := i.rowIter.Next(ctx)
-	if err != nil {
-		return nil, err
+	var row sql.Row
+	for {
+		var err error
+		row, err = i.rowIter.Next(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !isDoltgresInternalSchemasStatusRow(row) {
+			break
+		}
 	}
 
 	// Dolt uses byte to avoid MySQL wire protocol ambiguity on tinyint(1) and bool.
@@ -141,4 +149,16 @@ func (i *doltgresDoltStatusRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 // Close closes the wrapped [doltdtables.StatusTable] [sql.RowIter].
 func (i *doltgresDoltStatusRowIter) Close(ctx *sql.Context) error {
 	return i.rowIter.Close(ctx)
+}
+
+func isDoltgresInternalSchemasStatusRow(row sql.Row) bool {
+	if len(row) == 0 {
+		return false
+	}
+	tableName, ok := row[0].(string)
+	if !ok {
+		return false
+	}
+	return strings.EqualFold(tableName, doltdb.SchemasTableName) ||
+		strings.HasSuffix(strings.ToLower(tableName), "."+doltdb.SchemasTableName)
 }

@@ -18,15 +18,19 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dprocedures"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/types"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -77,6 +81,10 @@ func varArgCallableForDoltProcedure(p *plan.ExternalProcedure, funcVal reflect.V
 		if !ok {
 			return nil, sql.ErrExternalProcedureInvalidParamType.New(reflect.TypeOf(val1).String())
 		}
+		values, err = rewriteDoltProcedureArgs(ctx, p.Name, values)
+		if err != nil {
+			return nil, err
+		}
 
 		funcParams := make([]reflect.Value, len(values)+1)
 		funcParams[0] = reflect.ValueOf(ctx)
@@ -117,6 +125,77 @@ func varArgCallableForDoltProcedure(p *plan.ExternalProcedure, funcVal reflect.V
 
 		return drainRowIter(ctx, rowIter)
 	}
+}
+
+func rewriteDoltProcedureArgs(ctx *sql.Context, procedureName string, values []any) ([]any, error) {
+	if !strings.EqualFold(procedureName, "dolt_reset") || len(values) != 1 {
+		return values, nil
+	}
+
+	arg, ok := values[0].(string)
+	if !ok || arg == "." || strings.HasPrefix(arg, "-") {
+		return values, nil
+	}
+
+	schemaName, ok, err := schemaForDoltgresView(ctx, arg)
+	if err != nil || !ok {
+		return values, err
+	}
+
+	rewritten := append([]any(nil), values...)
+	rewritten[0] = schemaName + "." + doltdb.SchemasTableName
+	return rewritten, nil
+}
+
+func schemaForDoltgresView(ctx *sql.Context, relationName string) (string, bool, error) {
+	if schemaName, name, ok := strings.Cut(relationName, "."); ok {
+		exists, err := doltgresViewExists(ctx, schemaName, name)
+		return schemaName, exists, err
+	}
+
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return "", false, err
+	}
+	for _, schemaName := range searchPath {
+		exists, err := doltgresViewExists(ctx, schemaName, relationName)
+		if err != nil || exists {
+			return schemaName, exists, err
+		}
+	}
+	return "", false, nil
+}
+
+func doltgresViewExists(ctx *sql.Context, schemaName string, viewName string) (bool, error) {
+	doltSession := dsess.DSessFromSess(ctx.Session)
+	db, err := doltSession.Provider().Database(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return false, err
+	}
+
+	if schemaName != "" {
+		schemaDb, ok := db.(sql.SchemaDatabase)
+		if !ok || !schemaDb.SupportsDatabaseSchemas() {
+			return false, nil
+		}
+		schema, ok, err := schemaDb.GetSchema(ctx, schemaName)
+		if err != nil || !ok {
+			return false, err
+		}
+		viewDb, ok := schema.(sql.ViewDatabase)
+		if !ok {
+			return false, nil
+		}
+		_, ok, err = viewDb.GetViewDefinition(ctx, viewName)
+		return ok, err
+	}
+
+	viewDb, ok := db.(sql.ViewDatabase)
+	if !ok {
+		return false, nil
+	}
+	_, ok, err = viewDb.GetViewDefinition(ctx, viewName)
+	return ok, err
 }
 
 // noArgCallableForDoltProcedure creates a callable function that does not take any parameters. This is equivalent to
