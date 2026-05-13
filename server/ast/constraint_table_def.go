@@ -56,7 +56,7 @@ func nodeCheckConstraintTableDef(
 					Name: node.Name.String(),
 					Details: &vitess.CheckConstraintDefinition{
 						Expr:     expr,
-						Enforced: true,
+						Enforced: !node.NotEnforced,
 					},
 				},
 			},

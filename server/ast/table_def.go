@@ -42,7 +42,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			Name: string(node.Name),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
-				Enforced: true,
+				Enforced: !node.NotEnforced,
 			},
 		})
 		return nil

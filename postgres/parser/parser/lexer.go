@@ -110,6 +110,8 @@ func (l *lexer) Lex(lval *sqlSymType) int {
 			}
 		case NOT:
 			switch nextID {
+			case ENFORCED:
+				lval.id = NOT_ENFORCED_LA
 			case BETWEEN, DEFERRABLE, IN, LIKE, ILIKE, SIMILAR:
 				lval.id = NOT_LA
 			}

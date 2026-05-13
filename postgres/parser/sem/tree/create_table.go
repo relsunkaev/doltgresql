@@ -763,9 +763,10 @@ func (*ForeignKeyConstraintTableDef) constraintTableDef() {}
 // CheckConstraintTableDef represents a check constraint within a CREATE
 // TABLE statement.
 type CheckConstraintTableDef struct {
-	Name      Name
-	Expr      Expr
-	NoInherit bool
+	Name        Name
+	Expr        Expr
+	NoInherit   bool
+	NotEnforced bool
 }
 
 // SetName implements the ConstraintTableDef interface.
@@ -785,6 +786,9 @@ func (node *CheckConstraintTableDef) Format(ctx *FmtCtx) {
 	ctx.WriteByte(')')
 	if node.NoInherit {
 		ctx.WriteString(" NO INHERIT")
+	}
+	if node.NotEnforced {
+		ctx.WriteString(" NOT ENFORCED")
 	}
 }
 

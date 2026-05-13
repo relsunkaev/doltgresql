@@ -865,7 +865,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> DEFAULT DEFAULTS DEFERRABLE DEFERRED DEFINER DELETE DELIMITER DEPENDS DESC DESCRIBE DESERIALFUNC DESTINATION
 %token <str> DETACH DETACHED DICTIONARY DISABLE DISABLE_PAGE_SKIPPING DISCARD DISTINCT DO DOMAIN DOUBLE DROP
 
-%token <str> EACH ELEMENT ELSE ENABLE ENCODING ENCRYPTION_PASSPHRASE ENCRYPTED END ENUM ENUMS ESCAPE EVENT
+%token <str> EACH ELEMENT ELSE ENABLE ENCODING ENFORCED ENCRYPTION_PASSPHRASE ENCRYPTED END ENUM ENUMS ESCAPE EVENT
 %token <str> EXCEPT EXCLUDE EXCLUDING EXCLUSIVE EXISTS EXECUTE EXECUTION EXPERIMENTAL
 %token <str> EXPERIMENTAL_FINGERPRINTS EXPERIMENTAL_REPLICA
 %token <str> EXPERIMENTAL_AUDIT EXPIRATION EXPLAIN EXPORT EXPRESSION
@@ -959,8 +959,10 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 // NOT, at least with respect to their left-hand subexpression. WITH_LA is
 // needed to make the grammar LALR(1). GENERATED_ALWAYS is needed to support
 // the Postgres syntax for computed columns along with our family related
-// extensions (CREATE FAMILY/CREATE FAMILY family_name).
-%token NOT_LA WITH_LA AS_LA GENERATED_ALWAYS
+// extensions (CREATE FAMILY/CREATE FAMILY family_name). NOT_ENFORCED_LA keeps
+// CHECK constraint suffixes distinct from other optional tails that start with
+// NOT.
+%token NOT_LA WITH_LA AS_LA GENERATED_ALWAYS NOT_ENFORCED_LA
 
 %union {
   id    int32
@@ -1484,7 +1486,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*types.T> geo_shape_type
 %type <*types.T> const_geo
 %type <str> extract_arg
-%type <bool> opt_varying opt_no_inherit
+%type <bool> opt_varying opt_no_inherit opt_not_enforced
 
 %type <*tree.NumVal> signed_iconst only_signed_iconst
 %type <*tree.NumVal> signed_fconst only_signed_fconst
@@ -9222,6 +9224,16 @@ opt_no_inherit:
     $$.val = true
   }
 
+opt_not_enforced:
+  /* EMPTY */
+  {
+    $$.val = false
+  }
+| NOT_ENFORCED_LA ENFORCED
+  {
+    $$.val = true
+  }
+
 table_constraint:
   CONSTRAINT constraint_name table_constraint_elem opt_deferrable_mode opt_initially
   {
@@ -9245,11 +9257,12 @@ table_constraint:
 // column definition. col_qualification_elem specifies the embedded form.
 // - thomas 1997-12-03
 table_constraint_elem:
-  CHECK '(' a_expr ')' opt_no_inherit
+  CHECK '(' a_expr ')' opt_no_inherit opt_not_enforced
   {
     $$.val = &tree.CheckConstraintTableDef{
       Expr: $3.expr(),
       NoInherit: $5.bool(),
+      NotEnforced: $6.bool(),
     }
   }
 | UNIQUE opt_nulls_distinct '(' index_params ')' constraint_index_params
@@ -16336,6 +16349,7 @@ unreserved_keyword:
 | EACH
 | ENABLE
 | ENCODING
+| ENFORCED
 | ENCRYPTED
 | ENCRYPTION_PASSPHRASE
 | ENUM

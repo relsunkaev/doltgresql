@@ -465,7 +465,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				options.UniqueConstraints = append(options.UniqueConstraints, constraint)
 			}
 		case *tree.CheckConstraintTableDef:
-			check, err := nodeTypedTableCheckConstraint(ctx, string(def.Name), def.Expr, def.NoInherit)
+			check, err := nodeTypedTableCheckConstraint(ctx, string(def.Name), def.Expr, def.NoInherit, def.NotEnforced)
 			if err != nil {
 				return options, children, err
 			}
@@ -507,7 +507,7 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 		childIndex++
 	}
 	for _, checkExpr := range def.CheckExprs {
-		check, err := nodeTypedTableCheckConstraint(ctx, string(checkExpr.ConstraintName), checkExpr.Expr, checkExpr.NoInherit)
+		check, err := nodeTypedTableCheckConstraint(ctx, string(checkExpr.ConstraintName), checkExpr.Expr, checkExpr.NoInherit, false)
 		if err != nil {
 			return option, nil, nil, nil, err
 		}
@@ -562,9 +562,12 @@ func nodeTypedTableColumnOptions(ctx *Context, tableName string, def *tree.Colum
 	return option, defaultExpr, checks, foreignKeys, nil
 }
 
-func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, noInherit bool) (pgnodes.TypedTableCheckConstraint, error) {
+func nodeTypedTableCheckConstraint(ctx *Context, name string, expr tree.Expr, noInherit bool, notEnforced bool) (pgnodes.TypedTableCheckConstraint, error) {
 	if noInherit {
 		return pgnodes.TypedTableCheckConstraint{}, errors.Errorf("NO INHERIT is not yet supported for check constraints")
+	}
+	if notEnforced {
+		return pgnodes.TypedTableCheckConstraint{}, errors.Errorf("NOT ENFORCED is not yet supported for typed table check constraints")
 	}
 	if _, err := nodeExpr(ctx, expr); err != nil {
 		return pgnodes.TypedTableCheckConstraint{}, err

@@ -26,7 +26,7 @@ import (
 func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "CHECK NOT ENFORCED allows violating rows",
+			Name: "table CHECK NOT ENFORCED allows violating rows",
 			SetUpScript: []string{
 				`CREATE TABLE check_not_enforced_items (
 					id INT PRIMARY KEY,
@@ -41,6 +41,30 @@ func TestPostgres18CheckConstraintNotEnforcedRepro(t *testing.T) {
 				{
 					Query:    `SELECT qty FROM check_not_enforced_items WHERE id = 1;`,
 					Expected: []sql.Row{{-5}},
+				},
+				{
+					Query:    `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'qty_positive';`,
+					Expected: []sql.Row{{"CHECK ((qty > 0)) NOT ENFORCED"}},
+				},
+			},
+		},
+		{
+			Name: "NOT ENFORCED check does not disable enforced checks",
+			SetUpScript: []string{
+				`CREATE TABLE mixed_check_enforcement_items (
+					id INT PRIMARY KEY,
+					qty INT,
+					CONSTRAINT qty_positive_metadata CHECK (qty > 0) NOT ENFORCED,
+					CONSTRAINT qty_floor CHECK (qty > -10)
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO mixed_check_enforcement_items VALUES (1, -5);`,
+				},
+				{
+					Query:       `INSERT INTO mixed_check_enforcement_items VALUES (2, -20);`,
+					ExpectedErr: `Check constraint "qty_floor" violated`,
 				},
 			},
 		},
