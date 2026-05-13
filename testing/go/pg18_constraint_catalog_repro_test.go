@@ -35,11 +35,11 @@ func TestPostgres18NotNullConstraintCatalogRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT contype, conkey::text
+					Query: `SELECT contype, conkey::text, connoinherit
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'pg18_not_null_constraint_items'::regclass
 							AND contype = 'n';`,
-					Expected: []sql.Row{{"n", "{2}"}},
+					Expected: []sql.Row{{"n", "{2}", "f"}},
 				},
 			},
 		},

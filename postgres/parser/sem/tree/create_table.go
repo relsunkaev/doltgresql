@@ -274,6 +274,7 @@ func (*ColumnTableDef) tableDef()               {}
 func (*IndexTableDef) tableDef()                {}
 func (*ForeignKeyConstraintTableDef) tableDef() {}
 func (*CheckConstraintTableDef) tableDef()      {}
+func (*NotNullConstraintTableDef) tableDef()    {}
 func (*ExcludeConstraintTableDef) tableDef()    {}
 func (*LikeTableDef) tableDef()                 {}
 
@@ -312,6 +313,7 @@ type ColumnTableDef struct {
 	Nullable    struct {
 		Nullability    Nullability
 		ConstraintName Name
+		NoInherit      bool
 	}
 	// only UNIQUE, PRIMARY KEY, EXCLUDE, and REFERENCES (foreign key) constraints accept this clause
 	PrimaryKey struct {
@@ -430,6 +432,7 @@ func NewColumnTableDef(
 			}
 			d.Nullable.Nullability = NotNull
 			d.Nullable.ConstraintName = c.Name
+			d.Nullable.NoInherit = t.NoInherit
 		case NullConstraint:
 			if d.Nullable.Nullability == NotNull {
 				return nil, pgerror.Newf(pgcode.Syntax,
@@ -520,6 +523,9 @@ func (node *ColumnTableDef) Format(ctx *FmtCtx) {
 		ctx.WriteString(" NULL")
 	case NotNull:
 		ctx.WriteString(" NOT NULL")
+		if node.Nullable.NoInherit {
+			ctx.WriteString(" NO INHERIT")
+		}
 	default:
 	}
 	for _, checkExpr := range node.CheckExprs {
@@ -677,7 +683,9 @@ func (UniqueConstraint) columnQualification()       {}
 func (*ColumnFKConstraint) columnQualification()    {}
 
 // NotNullConstraint represents NOT NULL on a column.
-type NotNullConstraint struct{}
+type NotNullConstraint struct {
+	NoInherit bool
+}
 
 // NullConstraint represents NULL on a column.
 type NullConstraint struct{}
@@ -773,6 +781,7 @@ type ConstraintTableDef interface {
 }
 
 func (*CheckConstraintTableDef) constraintTableDef()      {}
+func (*NotNullConstraintTableDef) constraintTableDef()    {}
 func (*UniqueConstraintTableDef) constraintTableDef()     {}
 func (*ExcludeConstraintTableDef) constraintTableDef()    {}
 func (*ForeignKeyConstraintTableDef) constraintTableDef() {}
@@ -806,6 +815,33 @@ func (node *CheckConstraintTableDef) Format(ctx *FmtCtx) {
 	}
 	if node.NotEnforced {
 		ctx.WriteString(" NOT ENFORCED")
+	}
+}
+
+// NotNullConstraintTableDef represents a PostgreSQL table-level NOT NULL
+// constraint over a single column.
+type NotNullConstraintTableDef struct {
+	Name      Name
+	Column    Name
+	NoInherit bool
+}
+
+// SetName implements the ConstraintTableDef interface.
+func (node *NotNullConstraintTableDef) SetName(name Name) {
+	node.Name = name
+}
+
+// Format implements the NodeFormatter interface.
+func (node *NotNullConstraintTableDef) Format(ctx *FmtCtx) {
+	if node.Name != "" {
+		ctx.WriteString("CONSTRAINT ")
+		ctx.FormatNode(&node.Name)
+		ctx.WriteByte(' ')
+	}
+	ctx.WriteString("NOT NULL ")
+	ctx.FormatNode(&node.Column)
+	if node.NoInherit {
+		ctx.WriteString(" NO INHERIT")
 	}
 }
 

@@ -217,6 +217,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			ddl.TableSpec = &vitess.TableSpec{}
 		}
 		setColumnIdentityMetadata(ddl.TableSpec, node.Defs)
+		setNotNullConstraintMetadata(ddl.TableSpec, node.Defs)
 	}
 	if len(relOptions) > 0 {
 		if ddl.TableSpec == nil {
@@ -320,6 +321,40 @@ func setColumnIdentityMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs)
 		setTableMetadataCommentOption(tableSpec, func(comment string) string {
 			return tablemetadata.SetColumnIdentity(comment, columnName, identity)
 		})
+	}
+}
+
+func setNotNullConstraintMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs) {
+	if tableSpec == nil {
+		return
+	}
+	for _, def := range defs {
+		switch def := def.(type) {
+		case *tree.ColumnTableDef:
+			if def.Nullable.Nullability != tree.NotNull {
+				continue
+			}
+			name := string(def.Nullable.ConstraintName)
+			noInherit := def.Nullable.NoInherit
+			if name == "" && !noInherit {
+				continue
+			}
+			columnName := string(def.Name)
+			setTableMetadataCommentOption(tableSpec, func(comment string) string {
+				return tablemetadata.SetNotNullConstraint(comment, columnName, tablemetadata.NotNullConstraint{
+					Name:      name,
+					NoInherit: noInherit,
+				})
+			})
+		case *tree.NotNullConstraintTableDef:
+			columnName := string(def.Column)
+			setTableMetadataCommentOption(tableSpec, func(comment string) string {
+				return tablemetadata.SetNotNullConstraint(comment, columnName, tablemetadata.NotNullConstraint{
+					Name:      string(def.Name),
+					NoInherit: def.NoInherit,
+				})
+			})
+		}
 	}
 }
 

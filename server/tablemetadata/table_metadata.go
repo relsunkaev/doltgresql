@@ -27,27 +27,28 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // Metadata stores PostgreSQL table metadata that Dolt's native schema metadata
 // does not currently expose.
 type Metadata struct {
-	PrimaryKeyConstraint        string              `json:"primaryKeyConstraint,omitempty"`
-	PrimaryKeyIndexComment      string              `json:"primaryKeyIndexComment,omitempty"`
-	MaterializedView            bool                `json:"materializedView,omitempty"`
-	MaterializedViewDefinition  string              `json:"materializedViewDefinition,omitempty"`
-	MaterializedViewUnpopulated bool                `json:"materializedViewUnpopulated,omitempty"`
-	OfTypeSchema                string              `json:"ofTypeSchema,omitempty"`
-	OfTypeName                  string              `json:"ofTypeName,omitempty"`
-	Owner                       string              `json:"owner,omitempty"`
-	RelOptions                  []string            `json:"relOptions,omitempty"`
-	RelPersistence              string              `json:"relPersistence,omitempty"`
-	ForeignTable                bool                `json:"foreignTable,omitempty"`
-	ForeignServer               string              `json:"foreignServer,omitempty"`
-	ForeignOptions              []string            `json:"foreignOptions,omitempty"`
-	ColumnOptions               map[string][]string `json:"columnOptions,omitempty"`
-	ColumnStorage               map[string]string   `json:"columnStorage,omitempty"`
-	ColumnCompression           map[string]string   `json:"columnCompression,omitempty"`
-	ColumnStatisticsTargets     map[string]int16    `json:"columnStatisticsTargets,omitempty"`
-	ColumnIdentity              map[string]string   `json:"columnIdentity,omitempty"`
-	ColumnMissingValues         map[string]string   `json:"columnMissingValues,omitempty"`
-	DroppedColumns              []DroppedColumn     `json:"droppedColumns,omitempty"`
-	ExtendedStatistics          []ExtendedStatistic `json:"extendedStatistics,omitempty"`
+	PrimaryKeyConstraint        string                       `json:"primaryKeyConstraint,omitempty"`
+	PrimaryKeyIndexComment      string                       `json:"primaryKeyIndexComment,omitempty"`
+	MaterializedView            bool                         `json:"materializedView,omitempty"`
+	MaterializedViewDefinition  string                       `json:"materializedViewDefinition,omitempty"`
+	MaterializedViewUnpopulated bool                         `json:"materializedViewUnpopulated,omitempty"`
+	OfTypeSchema                string                       `json:"ofTypeSchema,omitempty"`
+	OfTypeName                  string                       `json:"ofTypeName,omitempty"`
+	Owner                       string                       `json:"owner,omitempty"`
+	RelOptions                  []string                     `json:"relOptions,omitempty"`
+	RelPersistence              string                       `json:"relPersistence,omitempty"`
+	ForeignTable                bool                         `json:"foreignTable,omitempty"`
+	ForeignServer               string                       `json:"foreignServer,omitempty"`
+	ForeignOptions              []string                     `json:"foreignOptions,omitempty"`
+	ColumnOptions               map[string][]string          `json:"columnOptions,omitempty"`
+	ColumnStorage               map[string]string            `json:"columnStorage,omitempty"`
+	ColumnCompression           map[string]string            `json:"columnCompression,omitempty"`
+	ColumnStatisticsTargets     map[string]int16             `json:"columnStatisticsTargets,omitempty"`
+	ColumnIdentity              map[string]string            `json:"columnIdentity,omitempty"`
+	ColumnMissingValues         map[string]string            `json:"columnMissingValues,omitempty"`
+	NotNullConstraints          map[string]NotNullConstraint `json:"notNullConstraints,omitempty"`
+	DroppedColumns              []DroppedColumn              `json:"droppedColumns,omitempty"`
+	ExtendedStatistics          []ExtendedStatistic          `json:"extendedStatistics,omitempty"`
 }
 
 // DroppedColumn stores the original attribute slot for a dropped table column.
@@ -61,6 +62,13 @@ type ExtendedStatistic struct {
 	Name    string   `json:"name,omitempty"`
 	Columns []string `json:"columns,omitempty"`
 	Kinds   []string `json:"kinds,omitempty"`
+}
+
+// NotNullConstraint stores PostgreSQL metadata for a column NOT NULL
+// constraint that Dolt's native schema only represents as column nullability.
+type NotNullConstraint struct {
+	Name      string `json:"name,omitempty"`
+	NoInherit bool   `json:"noInherit,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -77,6 +85,7 @@ func EncodeComment(metadata Metadata) string {
 	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
+	normalizeNotNullConstraints(metadata.NotNullConstraints)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	encoded, _ := json.Marshal(metadata)
@@ -105,6 +114,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
+	normalizeNotNullConstraints(metadata.NotNullConstraints)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	return metadata, true
@@ -301,6 +311,17 @@ func ColumnIdentity(comment string, column string) string {
 		return ""
 	}
 	return metadata.ColumnIdentity[strings.TrimSpace(column)]
+}
+
+// NotNullConstraintMetadata returns PostgreSQL NOT NULL constraint metadata for
+// a column, if the table comment carries explicit metadata for it.
+func NotNullConstraintMetadata(comment string, column string) (NotNullConstraint, bool) {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.NotNullConstraints) == 0 {
+		return NotNullConstraint{}, false
+	}
+	constraint, ok := metadata.NotNullConstraints[strings.TrimSpace(column)]
+	return constraint, ok
 }
 
 // ColumnMissingValue returns the PostgreSQL attmissingval element encoded for a
@@ -540,6 +561,35 @@ func SetColumnIdentity(comment string, column string, identity string) string {
 	return EncodeComment(metadata)
 }
 
+// SetNotNullConstraint returns a table metadata comment with PostgreSQL
+// constraint metadata for a column NOT NULL constraint.
+func SetNotNullConstraint(comment string, column string, constraint NotNullConstraint) string {
+	column = strings.TrimSpace(column)
+	constraint.Name = strings.TrimSpace(constraint.Name)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.NotNullConstraints == nil {
+		metadata.NotNullConstraints = make(map[string]NotNullConstraint)
+	}
+	if constraint.Name == "" && !constraint.NoInherit {
+		delete(metadata.NotNullConstraints, column)
+	} else {
+		metadata.NotNullConstraints[column] = constraint
+	}
+	if len(metadata.NotNullConstraints) == 0 {
+		metadata.NotNullConstraints = nil
+	}
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
 // SetColumnMissingValue returns a table metadata comment with PostgreSQL
 // attmissingval metadata for a single column.
 func SetColumnMissingValue(comment string, column string, value string) string {
@@ -579,6 +629,7 @@ func AddDroppedColumn(comment string, column string, attnum int16) string {
 	delete(metadata.ColumnStatisticsTargets, column)
 	delete(metadata.ColumnIdentity, column)
 	delete(metadata.ColumnMissingValues, column)
+	delete(metadata.NotNullConstraints, column)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
 	if len(metadata.ColumnOptions) == 0 {
 		metadata.ColumnOptions = nil
@@ -597,6 +648,9 @@ func AddDroppedColumn(comment string, column string, attnum int16) string {
 	}
 	if len(metadata.ColumnMissingValues) == 0 {
 		metadata.ColumnMissingValues = nil
+	}
+	if len(metadata.NotNullConstraints) == 0 {
+		metadata.NotNullConstraints = nil
 	}
 	if metadata.empty() {
 		return ""
@@ -759,6 +813,21 @@ func normalizeColumnIdentity(values map[string]string) {
 	}
 }
 
+func normalizeNotNullConstraints(values map[string]NotNullConstraint) {
+	for column, constraint := range values {
+		trimmedColumn := strings.TrimSpace(column)
+		constraint.Name = strings.TrimSpace(constraint.Name)
+		if trimmedColumn == "" || (constraint.Name == "" && !constraint.NoInherit) {
+			delete(values, column)
+			continue
+		}
+		if trimmedColumn != column {
+			delete(values, column)
+		}
+		values[trimmedColumn] = constraint
+	}
+}
+
 func normalizeColumnMissingValues(values map[string]string) {
 	for column, value := range values {
 		trimmedColumn := strings.TrimSpace(column)
@@ -856,6 +925,7 @@ func (metadata Metadata) empty() bool {
 		len(metadata.ColumnStatisticsTargets) == 0 &&
 		len(metadata.ColumnIdentity) == 0 &&
 		len(metadata.ColumnMissingValues) == 0 &&
+		len(metadata.NotNullConstraints) == 0 &&
 		len(metadata.DroppedColumns) == 0 &&
 		len(metadata.ExtendedStatistics) == 0
 }

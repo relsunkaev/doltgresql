@@ -2458,6 +2458,14 @@ alter_table_action:
   {
     $$.val = &tree.AlterTableAlterConstraint{Constraint: tree.Name($3), Deferrable: $4.deferrableMode(), Initially: $5.initiallyMode()}
   }
+| ALTER CONSTRAINT constraint_name INHERIT
+  {
+    $$.val = &tree.AlterTableAlterConstraint{Constraint: tree.Name($3), SetInherit: true, Inherit: true}
+  }
+| ALTER CONSTRAINT constraint_name NO INHERIT
+  {
+    $$.val = &tree.AlterTableAlterConstraint{Constraint: tree.Name($3), SetInherit: true, Inherit: false}
+  }
   // ALTER TABLE <name> VALIDATE CONSTRAINT ...
 | VALIDATE CONSTRAINT constraint_name
   {
@@ -9255,9 +9263,9 @@ col_qualification:
 // conflict on NOT (since NOT might start a subsequent NOT NULL constraint, or
 // be part of a_expr NOT LIKE or similar constructs).
 col_qualification_elem:
-  NOT NULL
+  NOT NULL opt_no_inherit
   {
-    $$.val = tree.NotNullConstraint{}
+    $$.val = tree.NotNullConstraint{NoInherit: $3.bool()}
   }
 | NULL
   {
@@ -9390,6 +9398,13 @@ table_constraint_elem:
       Expr: $3.expr(),
       NoInherit: $5.bool(),
       NotEnforced: $6.bool(),
+    }
+  }
+| NOT NULL column_name opt_no_inherit
+  {
+    $$.val = &tree.NotNullConstraintTableDef{
+      Column: tree.Name($3),
+      NoInherit: $4.bool(),
     }
   }
 | UNIQUE opt_nulls_distinct '(' index_params ')' constraint_index_params

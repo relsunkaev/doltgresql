@@ -275,12 +275,21 @@ type AlterTableAlterConstraint struct {
 	Constraint Name
 	Deferrable DeferrableMode
 	Initially  InitiallyMode
+	SetInherit bool
+	Inherit    bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *AlterTableAlterConstraint) Format(ctx *FmtCtx) {
 	ctx.WriteString(" ALTER CONSTRAINT ")
 	ctx.FormatNode(&node.Constraint)
+	if node.SetInherit {
+		if !node.Inherit {
+			ctx.WriteString(" NO")
+		}
+		ctx.WriteString(" INHERIT")
+		return
+	}
 	switch node.Deferrable {
 	case Deferrable:
 		ctx.WriteString(" DEFERRABLE")

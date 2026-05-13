@@ -53,3 +53,9 @@ func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
 
 	require.Equal(t, `null value in column "id" violates not-null constraint (errno 1105) (sqlstate HY000)`, sanitized)
 }
+
+func TestSanitizeErrorMessageFormatsProvidedNullNonNullableColumn(t *testing.T) {
+	sanitized := sanitizeErrorMessage("column name 'label' is non-nullable but attempted to set a value of null (errno 1048) (sqlstate HY000)")
+
+	require.Equal(t, `null value in column "label" violates not-null constraint: column name 'label' is non-nullable but attempted to set a value of null (errno 1048) (sqlstate HY000)`, sanitized)
+}

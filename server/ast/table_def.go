@@ -16,6 +16,7 @@ package ast
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -91,6 +92,17 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			Name:    string(node.Name),
 			Details: fkDef,
 		})
+		return nil
+	case *tree.NotNullConstraintTableDef:
+		if target.TableSpec == nil {
+			target.TableSpec = &vitess.TableSpec{}
+		}
+		column := tableSpecColumn(target.TableSpec, string(node.Column))
+		if column == nil {
+			return errors.Errorf(`column "%s" named in NOT NULL constraint does not exist`, node.Column)
+		}
+		column.Type.Null = false
+		column.Type.NotNull = true
 		return nil
 	case *tree.IndexTableDef:
 		if target.TableSpec == nil {
@@ -187,9 +199,11 @@ func assignTableDefs(ctx *Context, node tree.TableDefs, target *vitess.DDL) erro
 	copy(sortedNode, node)
 	sort.Slice(sortedNode, func(i, j int) bool {
 		var cmps [2]int
-		for cmpsIdx := range []tree.TableDef{sortedNode[i], sortedNode[j]} {
-			switch sortedNode[i].(type) {
+		for cmpsIdx, def := range []tree.TableDef{sortedNode[i], sortedNode[j]} {
+			switch def.(type) {
 			case *tree.IndexTableDef:
+				cmps[cmpsIdx] = 1
+			case *tree.NotNullConstraintTableDef:
 				cmps[cmpsIdx] = 1
 			case *tree.UniqueConstraintTableDef:
 				cmps[cmpsIdx] = 2
@@ -202,6 +216,18 @@ func assignTableDefs(ctx *Context, node tree.TableDefs, target *vitess.DDL) erro
 	for i := range sortedNode {
 		if err := assignTableDef(ctx, sortedNode[i], target); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func tableSpecColumn(tableSpec *vitess.TableSpec, name string) *vitess.ColumnDefinition {
+	if tableSpec == nil {
+		return nil
+	}
+	for _, column := range tableSpec.Columns {
+		if strings.EqualFold(column.Name.String(), name) {
+			return column
 		}
 	}
 	return nil

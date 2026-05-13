@@ -108,6 +108,21 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 				},
 			}, nil
 		case *tree.AlterTableAlterConstraint:
+			if cmd.SetInherit {
+				return vitess.InjectedStatement{
+					Statement: pgnodes.NewAlterNotNullConstraintInheritance(
+						node.IfExists,
+						tableName.SchemaQualifier.String(),
+						tableName.Name.String(),
+						string(cmd.Constraint),
+						cmd.Inherit,
+					),
+					Auth: vitess.AuthInformation{
+						AuthType:   auth.AuthType_IGNORE,
+						TargetType: auth.AuthTargetType_Ignore,
+					},
+				}, nil
+			}
 			timing, err := alterConstraintTiming(cmd)
 			if err != nil {
 				return nil, err

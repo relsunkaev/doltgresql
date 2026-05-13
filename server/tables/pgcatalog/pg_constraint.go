@@ -26,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -409,11 +410,22 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 	// Then we iterate over everything to fill our constraints
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			tableComment := ""
+			if commented, ok := table.Item.(sql.CommentedTable); ok {
+				tableComment = commented.Comment()
+			}
 			for i, col := range table.Item.Schema(ctx) {
 				if col.Nullable || col.PrimaryKey || col.HiddenSystem {
 					continue
 				}
 				constraintName := notNullConstraintName(table.Item.Name(), col.Name)
+				constraintNoInherit := false
+				if metadata, ok := tablemetadata.NotNullConstraintMetadata(tableComment, col.Name); ok {
+					if metadata.Name != "" {
+						constraintName = metadata.Name
+					}
+					constraintNoInherit = metadata.NoInherit
+				}
 				constraintOid := id.NewCheck(schema.Item.SchemaName(), table.Item.Name(), constraintName)
 				constraint := &pgConstraint{
 					oid:             constraintOid.AsId(),
@@ -426,6 +438,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 					tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
 					typeOid:         id.Id(id.NewOID(0)),
 					conKey:          []any{int16(i + 1)},
+					conNoInherit:    constraintNoInherit,
 				}
 				oidIdx.Add(constraint)
 				relidTypNameIdx.Add(constraint)
@@ -720,6 +733,7 @@ type pgConstraint struct {
 	fkMatchType     string // f = full, p = partial, s = simple
 	conKey          []any
 	conFkey         []any
+	conNoInherit    bool
 }
 
 // pgConstraintTableScanIter is the sql.RowIter for the pg_constraint table.
@@ -761,6 +775,10 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 	} else {
 		conFkey = constraint.conFkey
 	}
+	conNoInherit := true
+	if constraint.conType == "n" {
+		conNoInherit = constraint.conNoInherit
+	}
 
 	return sql.Row{
 		constraint.oid,           // oid
@@ -780,7 +798,7 @@ func pgConstraintToRow(constraint *pgConstraint) sql.Row {
 		constraint.fkMatchType,   // confmatchtype
 		true,                     // conislocal
 		int16(0),                 // coninhcount
-		true,                     // connoinherit
+		conNoInherit,             // connoinherit
 		conKey,                   // conkey
 		conFkey,                  // confkey
 		nil,                      // conpfeqop
