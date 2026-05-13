@@ -116,13 +116,35 @@ func nodeCreateProcedure(ctx *Context, node *tree.CreateProcedure) (vitess.State
 			}
 		case "sql":
 			as, ok := options[tree.OptionAs1]
-			if !ok {
-				return nil, errors.Errorf("CREATE PROCEDURE definition needed for LANGUAGE SQL")
+			if ok {
+				sqlDef, sqlDefParsedStmts, err = handleLanguageSQLAs(as.Definition, params)
+				if err != nil {
+					return nil, err
+				}
+				break
 			}
-			sqlDef, sqlDefParsedStmts, err = handleLanguageSQLAs(as.Definition, params)
-			if err != nil {
-				return nil, err
+			sqlBody, ok := options[tree.OptionSqlBody]
+			if ok {
+				var stmts []parser.Statement
+				switch body := sqlBody.SqlBody.(type) {
+				case *tree.BeginEndBlock:
+					stmts = make([]parser.Statement, len(body.Statements))
+					for i, s := range body.Statements {
+						stmts[i] = parser.Statement{
+							AST: s,
+							SQL: s.String(),
+						}
+					}
+				default:
+					return nil, errors.Errorf("Expected BEGIN in CREATE PROCEDURE definition, got %T", sqlBody.SqlBody)
+				}
+				sqlDef, sqlDefParsedStmts, err = convertSQLStmts(stmts, params)
+				if err != nil {
+					return nil, err
+				}
+				break
 			}
+			return nil, errors.Errorf("CREATE PROCEDURE definition needed for LANGUAGE SQL")
 		case "c":
 			symbolOption, ok := options[tree.OptionAs2]
 			if !ok {
