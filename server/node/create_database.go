@@ -70,6 +70,9 @@ func (c *CreateDatabase) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := rejectDatabaseDDLInTransaction(ctx, "CREATE DATABASE"); err != nil {
+		return nil, err
+	}
 	if err := checkCreateDatabasePrivilege(ctx); err != nil {
 		return nil, err
 	}
@@ -114,6 +117,9 @@ func (c *CreateDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r
 	if c.gmsCreateDB == nil {
 		return c.RowIter(ctx, r)
 	}
+	if err := rejectDatabaseDDLInTransaction(ctx, "CREATE DATABASE"); err != nil {
+		return nil, err
+	}
 	if err := checkCreateDatabasePrivilege(ctx); err != nil {
 		return nil, err
 	}
@@ -145,6 +151,13 @@ func checkCreateDatabasePrivilege(ctx *sql.Context) error {
 	}
 	if !user.IsSuperUser && !user.CanCreateDB {
 		return errors.Errorf(`permission denied to create database`)
+	}
+	return nil
+}
+
+func rejectDatabaseDDLInTransaction(ctx *sql.Context, statement string) error {
+	if ctx.GetIgnoreAutoCommit() {
+		return errors.Errorf("%s cannot run inside a transaction block", statement)
 	}
 	return nil
 }

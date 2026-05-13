@@ -57,6 +57,9 @@ func (d *DropDatabase) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (d *DropDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
+	if err := rejectDatabaseDDLInTransaction(ctx, "DROP DATABASE"); err != nil {
+		return nil, err
+	}
 	if strings.EqualFold(d.gmsDropDB.DbName, ctx.GetCurrentDatabase()) {
 		return nil, errors.New("cannot drop the currently open database")
 	}
