@@ -28,6 +28,7 @@ func TestDropDatabaseClearsCommentRepro(t *testing.T) {
 		{
 			Name: "DROP DATABASE clears database comment before recreate",
 			SetUpScript: []string{
+				`DROP DATABASE IF EXISTS drop_recreate_comment_database;`,
 				`CREATE DATABASE drop_recreate_comment_database;`,
 				`COMMENT ON DATABASE drop_recreate_comment_database
 					IS 'old private database';`,

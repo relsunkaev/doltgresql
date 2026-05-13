@@ -1849,6 +1849,33 @@
       "expectedErrorSeverity": "ERROR"
     },
     {
+      "id": "database-comment-drop-repro-test-testdropdatabaseclearscommentrepro-0001-select-shobj_description-select-oid-from",
+      "source": "testing/go/database_comment_drop_repro_test.go:TestDropDatabaseClearsCommentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "DROP DATABASE IF EXISTS drop_recreate_comment_database;",
+        "CREATE DATABASE drop_recreate_comment_database;",
+        "COMMENT ON DATABASE drop_recreate_comment_database\n\t\t\t\t\tIS 'old private database';",
+        "DROP DATABASE drop_recreate_comment_database;",
+        "CREATE DATABASE drop_recreate_comment_database;"
+      ],
+      "query": "SELECT shobj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_database\n\t\t\t\t\t\t WHERE datname = 'drop_recreate_comment_database'),\n\t\t\t\t\t\t'pg_database');",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i",
       "source": "testing/go/delete_correctness_repro_test.go:TestDeleteUsingDeletesJoinedRowsRepro",
       "ordinal": 1,
