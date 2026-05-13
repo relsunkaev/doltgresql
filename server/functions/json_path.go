@@ -50,14 +50,14 @@ func JsonPathExists(ctx *sql.Context, target any, path any) (bool, error) {
 
 // JsonPathMatch implements the shared JSON path match behavior used by the
 // jsonb_path_match function and @@ operator.
-func JsonPathMatch(ctx *sql.Context, target any, path any) (bool, error) {
+func JsonPathMatch(ctx *sql.Context, target any, path any) (any, error) {
 	doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, target)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	pathText, err := jsonPathText(ctx, path)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	return jsonPathMatch(doc.Value, pathText)
 }
@@ -283,22 +283,22 @@ func jsonPathArrayIndex(values []pgtypes.JsonValue, idx int) []pgtypes.JsonValue
 	return out
 }
 
-func jsonPathMatch(root pgtypes.JsonValue, path string) (bool, error) {
+func jsonPathMatch(root pgtypes.JsonValue, path string) (any, error) {
 	lhsPath, op, rhsText, ok := jsonPathSplitComparison(path)
 	if !ok {
 		values, err := jsonPathEval(root, path)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		return len(values) == 1 && jsonPathValueBool(values[0]), nil
+		return jsonPathSingleBooleanResult(values)
 	}
 	lhsValues, err := jsonPathEval(root, lhsPath)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	rhs, err := jsonPathLiteral(rhsText)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	for _, lhs := range lhsValues {
 		cmp := pgtypes.JsonValueCompare(lhs, rhs)
@@ -369,9 +369,16 @@ func jsonPathLiteral(text string) (pgtypes.JsonValue, error) {
 	return doc.Value, nil
 }
 
-func jsonPathValueBool(value pgtypes.JsonValue) bool {
-	if b, ok := value.(pgtypes.JsonValueBoolean); ok {
-		return bool(b)
+func jsonPathSingleBooleanResult(values []pgtypes.JsonValue) (any, error) {
+	if len(values) != 1 {
+		return nil, errors.New("single boolean result is expected")
 	}
-	return false
+	switch value := values[0].(type) {
+	case pgtypes.JsonValueBoolean:
+		return bool(value), nil
+	case pgtypes.JsonValueNull:
+		return nil, nil
+	default:
+		return nil, errors.New("single boolean result is expected")
+	}
 }
