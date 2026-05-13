@@ -236,7 +236,7 @@ func (j *jsonAggBuffer) Update(ctx *sql.Context, row sql.Row) error {
 		return err
 	}
 	if j.j.distinct {
-		key, err := jsonAggDistinctKey(ctx, evalRow)
+		key, err := jsonAggDistinctKeyForExpressions(ctx, evalRow, j.j.selectExprs)
 		if err != nil {
 			return err
 		}
@@ -252,19 +252,57 @@ func (j *jsonAggBuffer) Update(ctx *sql.Context, row sql.Row) error {
 	return nil
 }
 
+func jsonAggDistinctKeyForExpressions(ctx *sql.Context, row sql.Row, exprs []sql.Expression) (string, error) {
+	sb := strings.Builder{}
+	for i, val := range row {
+		if i > 0 {
+			sb.WriteRune(0)
+		}
+		typ := jsonAggDoltgresType(ctx, exprs[i])
+		key, err := jsonAggDistinctKeyPart(ctx, typ, val)
+		if err != nil {
+			return "", err
+		}
+		sb.WriteString(key)
+	}
+	return sb.String(), nil
+}
+
 func jsonAggDistinctKey(ctx *sql.Context, row sql.Row) (string, error) {
 	sb := strings.Builder{}
 	for i, val := range row {
 		if i > 0 {
 			sb.WriteRune(0)
 		}
-		res, err := sql.UnwrapAny(ctx, val)
+		key, err := jsonAggDistinctKeyPart(ctx, nil, val)
 		if err != nil {
 			return "", err
 		}
-		sb.WriteString(fmt.Sprintf("%T:%#v", res, res))
+		sb.WriteString(key)
 	}
 	return sb.String(), nil
+}
+
+func jsonAggDistinctKeyPart(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (string, error) {
+	res, err := sql.UnwrapAny(ctx, val)
+	if err != nil {
+		return "", err
+	}
+	if typ != nil {
+		switch typ.ID.TypeName() {
+		case "json":
+			return "", errors.New("could not identify an equality operator for type json")
+		case "jsonb":
+			value, err := pgtypes.JsonValueFromSQLValue(ctx, typ, res)
+			if err != nil {
+				return "", err
+			}
+			sb := strings.Builder{}
+			pgtypes.JsonValueFormatter(&sb, value)
+			return "jsonb:" + sb.String(), nil
+		}
+	}
+	return fmt.Sprintf("%T:%#v", res, res), nil
 }
 
 func jsonAggDoltgresType(ctx *sql.Context, expr sql.Expression) *pgtypes.DoltgresType {
