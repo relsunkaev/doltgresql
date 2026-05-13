@@ -26,22 +26,17 @@ import (
 func TestGeneratedColumnsProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        "GENERATED ALWAYS AS ... STORED computes on insert",
-			SetUpScript: []string{},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE TABLE rectangles (
+			Name: "GENERATED ALWAYS AS ... STORED computes on insert",
+			SetUpScript: []string{
+				`CREATE TABLE rectangles (
 						id INT PRIMARY KEY,
 						width INT,
 						height INT,
 						area INT GENERATED ALWAYS AS (width * height) STORED
 					);`,
-					Expected: []sql.Row{},
-				},
-				{
-					Query:    `INSERT INTO rectangles (id, width, height) VALUES (1, 4, 5), (2, 2, 3);`,
-					Expected: []sql.Row{},
-				},
+				`INSERT INTO rectangles (id, width, height) VALUES (1, 4, 5), (2, 2, 3);`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, area FROM rectangles ORDER BY id;`,
 					Expected: []sql.Row{
@@ -77,22 +72,17 @@ func TestGeneratedColumnsProbe(t *testing.T) {
 			},
 		},
 		{
-			Name:        "generated column updates when source columns change",
-			SetUpScript: []string{},
-			Assertions: []ScriptTestAssertion{
-				{
-					Query: `CREATE TABLE prices (
+			Name: "generated column updates when source columns change",
+			SetUpScript: []string{
+				`CREATE TABLE prices (
 						id INT PRIMARY KEY,
 						subtotal INT,
 						tax_pct INT,
 						total INT GENERATED ALWAYS AS (subtotal + (subtotal * tax_pct) / 100) STORED
 					);`,
-					Expected: []sql.Row{},
-				},
-				{
-					Query:    `INSERT INTO prices (id, subtotal, tax_pct) VALUES (1, 100, 10);`,
-					Expected: []sql.Row{},
-				},
+				`INSERT INTO prices (id, subtotal, tax_pct) VALUES (1, 100, 10);`,
+			},
+			Assertions: []ScriptTestAssertion{
 				{
 					Query:    `SELECT total FROM prices WHERE id = 1;`,
 					Expected: []sql.Row{{int32(110)}},

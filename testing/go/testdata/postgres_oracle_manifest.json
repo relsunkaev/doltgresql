@@ -2624,6 +2624,152 @@
       ]
     },
     {
+      "id": "generated-columns-probe-test-testgeneratedcolumnsprobe-0001-select-id-area-from-rectangles",
+      "source": "testing/go/generated_columns_probe_test.go:TestGeneratedColumnsProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE rectangles (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\twidth INT,\n\t\t\t\t\t\theight INT,\n\t\t\t\t\t\tarea INT GENERATED ALWAYS AS (width * height) STORED\n\t\t\t\t\t);",
+        "INSERT INTO rectangles (id, width, height) VALUES (1, 4, 5), (2, 2, 3);"
+      ],
+      "query": "SELECT id, area FROM rectangles ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "generated-columns-probe-test-testgeneratedcolumnsprobe-0002-select-column_name-is_generated-from-information_schema.columns",
+      "source": "testing/go/generated_columns_probe_test.go:TestGeneratedColumnsProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE box (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tside INT,\n\t\t\t\t\tarea INT GENERATED ALWAYS AS (side * side) STORED\n\t\t\t\t);"
+      ],
+      "query": "SELECT column_name, is_generated\n\t\t\t\t\t\tFROM information_schema.columns\n\t\t\t\t\t\tWHERE table_name = 'box'\n\t\t\t\t\t\tORDER BY ordinal_position;",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "NEVER"
+          }
+        ],
+        [
+          {
+            "value": "side"
+          },
+          {
+            "value": "NEVER"
+          }
+        ],
+        [
+          {
+            "value": "area"
+          },
+          {
+            "value": "ALWAYS"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "generated-columns-probe-test-testgeneratedcolumnsprobe-0003-select-total-from-prices-where",
+      "source": "testing/go/generated_columns_probe_test.go:TestGeneratedColumnsProbe",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prices (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tsubtotal INT,\n\t\t\t\t\t\ttax_pct INT,\n\t\t\t\t\t\ttotal INT GENERATED ALWAYS AS (subtotal + (subtotal * tax_pct) / 100) STORED\n\t\t\t\t\t);",
+        "INSERT INTO prices (id, subtotal, tax_pct) VALUES (1, 100, 10);"
+      ],
+      "query": "SELECT total FROM prices WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "110"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "generated-columns-probe-test-testgeneratedcolumnsprobe-0004-update-prices-set-tax_pct-=",
+      "source": "testing/go/generated_columns_probe_test.go:TestGeneratedColumnsProbe",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prices (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tsubtotal INT,\n\t\t\t\t\t\ttax_pct INT,\n\t\t\t\t\t\ttotal INT GENERATED ALWAYS AS (subtotal + (subtotal * tax_pct) / 100) STORED\n\t\t\t\t\t);",
+        "INSERT INTO prices (id, subtotal, tax_pct) VALUES (1, 100, 10);",
+        "SELECT total FROM prices WHERE id = 1;"
+      ],
+      "query": "UPDATE prices SET tax_pct = 20 WHERE id = 1;",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "generated-columns-probe-test-testgeneratedcolumnsprobe-0005-select-total-from-prices-where",
+      "source": "testing/go/generated_columns_probe_test.go:TestGeneratedColumnsProbe",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prices (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tsubtotal INT,\n\t\t\t\t\t\ttax_pct INT,\n\t\t\t\t\t\ttotal INT GENERATED ALWAYS AS (subtotal + (subtotal * tax_pct) / 100) STORED\n\t\t\t\t\t);",
+        "INSERT INTO prices (id, subtotal, tax_pct) VALUES (1, 100, 10);",
+        "SELECT total FROM prices WHERE id = 1;",
+        "UPDATE prices SET tax_pct = 20 WHERE id = 1;"
+      ],
+      "query": "SELECT total FROM prices WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "120"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "geometric-type-correctness-repro-test-testpointadditionoperatorrepro-0001-select-1-2-::point-+",
       "source": "testing/go/geometric_type_correctness_repro_test.go:TestPointAdditionOperatorRepro",
       "ordinal": 1,
