@@ -83,7 +83,11 @@ func (d *DropView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.R
 		if err = id.ValidateOperation(ctx, id.Section_View, id.Operation_Delete, drop.Database().Name(), viewID, id.Null); err != nil {
 			return nil, err
 		}
-		targets = append(targets, dropViewTarget{dbName: drop.Database().Name(), viewID: viewID})
+		targets = append(targets, dropViewTarget{
+			dbName:   drop.Database().Name(),
+			viewID:   viewID,
+			relation: doltdb.TableName{Name: drop.ViewName, Schema: schemaName},
+		})
 	}
 
 	dropViewIter, err := b.Build(ctx, d.gmsDropView, r)
@@ -96,12 +100,26 @@ func (d *DropView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.R
 			return nil, err
 		}
 	}
+	if len(targets) > 0 {
+		var persistErr error
+		auth.LockWrite(func() {
+			for _, target := range targets {
+				auth.RemoveRelationOwner(target.relation)
+				auth.RemoveAllTablePrivileges(target.relation)
+			}
+			persistErr = auth.PersistChanges()
+		})
+		if persistErr != nil {
+			return nil, persistErr
+		}
+	}
 	return dropViewIter, nil
 }
 
 type dropViewTarget struct {
-	dbName string
-	viewID id.Id
+	dbName   string
+	viewID   id.Id
+	relation doltdb.TableName
 }
 
 func dropViewExists(ctx *sql.Context, drop *plan.SingleDropView) (bool, error) {

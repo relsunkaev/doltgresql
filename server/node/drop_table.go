@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // DropTable is a node that implements functionality specifically relevant to Doltgres' table dropping needs.
@@ -83,7 +84,7 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		if err := id.ValidateOperation(ctx, id.Section_Table, id.Operation_Delete, dbName, tableID, id.Null); err != nil {
 			return nil, err
 		}
-		targets = append(targets, dropTableTarget{dbName: dbName, tableID: tableID})
+		targets = append(targets, dropTableTarget{dbName: dbName, tableID: tableID, relation: doltTableName})
 	}
 
 	dropTableIter, err := b.Build(ctx, c.gmsDropTable, r)
@@ -96,12 +97,26 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 			return nil, err
 		}
 	}
+	if len(targets) > 0 {
+		var persistErr error
+		auth.LockWrite(func() {
+			for _, target := range targets {
+				auth.RemoveRelationOwner(target.relation)
+				auth.RemoveAllTablePrivileges(target.relation)
+			}
+			persistErr = auth.PersistChanges()
+		})
+		if persistErr != nil {
+			return nil, persistErr
+		}
+	}
 	return dropTableIter, err
 }
 
 type dropTableTarget struct {
-	dbName  string
-	tableID id.Id
+	dbName   string
+	tableID  id.Id
+	relation doltdb.TableName
 }
 
 // Schema implements the interface sql.ExecBuilderNode.
