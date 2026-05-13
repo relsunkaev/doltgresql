@@ -15,21 +15,17 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeRenameTable handles *tree.RenameTable nodes.
-func nodeRenameTable(ctx *Context, node *tree.RenameTable) (*vitess.DDL, error) {
+func nodeRenameTable(ctx *Context, node *tree.RenameTable) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
-	}
-	if node.IsSequence {
-		return nil, errors.Errorf("RENAME SEQUENCE is not yet supported")
 	}
 	fromName, err := nodeUnresolvedObjectName(ctx, node.Name)
 	if err != nil {
@@ -38,6 +34,21 @@ func nodeRenameTable(ctx *Context, node *tree.RenameTable) (*vitess.DDL, error) 
 	toName, err := nodeUnresolvedObjectName(ctx, node.NewName)
 	if err != nil {
 		return nil, err
+	}
+	if node.IsSequence {
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewRenameSequence(
+				fromName.SchemaQualifier.String(),
+				fromName.Name.String(),
+				toName.SchemaQualifier.String(),
+				toName.Name.String(),
+				node.IfExists,
+			),
+			Auth: vitess.AuthInformation{
+				AuthType:   auth.AuthType_IGNORE,
+				TargetType: auth.AuthTargetType_Ignore,
+			},
+		}, nil
 	}
 	return &vitess.DDL{
 		Action:     vitess.RenameStr,

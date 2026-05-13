@@ -170,6 +170,24 @@ func RemoveAllSequencePrivileges(schema, sequence string) {
 	}
 }
 
+// RenameSequencePrivileges renames all explicit privilege entries for a sequence.
+func RenameSequencePrivileges(oldSchema, oldSequence, newSchema, newSequence string) {
+	var renamed []SequencePrivilegeValue
+	for key, value := range globalDatabase.sequencePrivileges.Data {
+		if key.Schema != oldSchema || key.Name != oldSequence {
+			continue
+		}
+		delete(globalDatabase.sequencePrivileges.Data, key)
+		key.Schema = newSchema
+		key.Name = newSequence
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.sequencePrivileges.Data[value.Key] = value
+	}
+}
+
 // serialize writes the SequencePrivileges to the given writer.
 func (sp *SequencePrivileges) serialize(writer *utils.Writer) {
 	// Version 1

@@ -336,6 +336,38 @@ func TestAlterSequenceRenameToRepro(t *testing.T) {
 	})
 }
 
+func TestAlterSequenceRenameEdgeCasesRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER SEQUENCE RENAME TO rejects existing target",
+			SetUpScript: []string{
+				`CREATE SEQUENCE rename_sequence_existing_old;`,
+				`CREATE SEQUENCE rename_sequence_existing_new;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER SEQUENCE rename_sequence_existing_old
+						RENAME TO rename_sequence_existing_new;`,
+					ExpectedErr: `already exists`,
+				},
+				{
+					Query:    `SELECT nextval('rename_sequence_existing_old');`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+		{
+			Name: "ALTER SEQUENCE IF EXISTS missing sequence no-ops",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER SEQUENCE IF EXISTS rename_sequence_missing_seq
+						RENAME TO rename_sequence_ignored_seq;`,
+				},
+			},
+		},
+	})
+}
+
 // TestCreateQualifiedSequenceOwnedByUnqualifiedTableRepro reproduces a
 // correctness bug: an unqualified OWNED BY table should resolve through the
 // search path, so public.seq can be owned by table.id when table is in public.
