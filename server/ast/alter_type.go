@@ -50,6 +50,17 @@ func nodeAlterType(ctx *Context, node *tree.AlterType) (vitess.Statement, error)
 				false,
 			),
 		}, nil
+	case *tree.AlterTypeSetSchema:
+		typeName := node.Type.ToTableName()
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterTypeSetSchema(
+				typeName.Catalog(),
+				typeName.Schema(),
+				typeName.Object(),
+				cmd.Schema,
+				false,
+			),
+		}, nil
 	case *tree.AlterTypeRenameAttribute:
 		tn := node.Type.ToTableName()
 		return vitess.InjectedStatement{

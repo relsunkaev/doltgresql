@@ -37,7 +37,7 @@ func AssignUpdateCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 	var newUpdate sql.Node
 	switch child := update.Child.(type) {
 	case *plan.UpdateSource:
-		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, child)
+		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, a, child)
 		if err != nil {
 			return nil, transform.NewTree, err
 		}
@@ -50,7 +50,7 @@ func AssignUpdateCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		if !ok {
 			return nil, transform.NewTree, errors.Errorf("UPDATE: assumption that Foreign Key child is always UpdateSource is incorrect: %T", child.OriginalNode)
 		}
-		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, updateSource)
+		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, a, updateSource)
 		if err != nil {
 			return nil, transform.NewTree, err
 		}
@@ -68,7 +68,7 @@ func AssignUpdateCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			return nil, transform.NewTree, fmt.Errorf("UPDATE: unknown source type: %T", child.Child)
 		}
 
-		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, updateSource)
+		newUpdateSource, err := assignUpdateCastsHandleSource(ctx, a, updateSource)
 		if err != nil {
 			return nil, transform.NewTree, err
 		}
@@ -87,9 +87,9 @@ func AssignUpdateCasts(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 }
 
 // assignUpdateCastsHandleSource handles the *plan.UpdateSource portion of AssignUpdateCasts.
-func assignUpdateCastsHandleSource(ctx *sql.Context, updateSource *plan.UpdateSource) (*plan.UpdateSource, error) {
+func assignUpdateCastsHandleSource(ctx *sql.Context, a *analyzer.Analyzer, updateSource *plan.UpdateSource) (*plan.UpdateSource, error) {
 	updateExprs := updateSource.UpdateExprs
-	newUpdateExprs, err := assignUpdateFieldCasts(ctx, updateExprs.AllExpressions())
+	newUpdateExprs, err := assignUpdateFieldCasts(ctx, a, updateExprs.AllExpressions())
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func assignUpdateCastsHandleSource(ctx *sql.Context, updateSource *plan.UpdateSo
 	), nil
 }
 
-func assignUpdateFieldCasts(ctx *sql.Context, updateExprs []sql.Expression) ([]sql.Expression, error) {
+func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs []sql.Expression) ([]sql.Expression, error) {
 	newUpdateExprs := make([]sql.Expression, len(updateExprs))
 	for i, updateExpr := range updateExprs {
 		setField, ok := updateExpr.(*expression.SetField)
@@ -122,12 +122,16 @@ func assignUpdateFieldCasts(ctx *sql.Context, updateExprs []sql.Expression) ([]s
 		}
 		fromSqlType := setField.RightChild.Type(ctx)
 		if fromSqlType == nil {
-			newSetField, err := setField.WithChildren(ctx, setField.LeftChild, expression.NewLiteral(nil, toType))
+			defaultExpr, err := updateDefaultExpression(ctx, a, setField, toType)
+			if err != nil {
+				return nil, err
+			}
+			newSetField, err := setField.WithChildren(ctx, setField.LeftChild, defaultExpr)
 			if err != nil {
 				return nil, err
 			}
 			setField = newSetField.(*expression.SetField)
-			fromSqlType = toType
+			fromSqlType = setField.RightChild.Type(ctx)
 		}
 		fromType, ok := fromSqlType.(*pgtypes.DoltgresType)
 		if !ok {
@@ -145,4 +149,21 @@ func assignUpdateFieldCasts(ctx *sql.Context, updateExprs []sql.Expression) ([]s
 		}
 	}
 	return newUpdateExprs, nil
+}
+
+func updateDefaultExpression(ctx *sql.Context, a *analyzer.Analyzer, setField *expression.SetField, toType *pgtypes.DoltgresType) (sql.Expression, error) {
+	if toType.TypType == pgtypes.TypeType_Domain && toType.Default != "" {
+		tableName := ""
+		if getField, ok := setField.LeftChild.(*expression.GetField); ok {
+			tableName = getField.Table()
+		}
+		defaultValue, err := getDomainDefault(ctx, a, toType.Default, tableName, toType, setField.LeftChild.IsNullable(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if defaultValue != nil {
+			return defaultValue, nil
+		}
+	}
+	return expression.NewLiteral(nil, toType), nil
 }

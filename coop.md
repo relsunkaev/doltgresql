@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-12 16:56 America/Phoenix
+
+- Lane: `ALTER DOMAIN` implementation for current failing domain correctness repros.
+- Red on current clean verifier at `ee0b0d87`: `TestAlterDomainSetDefaultAppliesToColumnsRepro`, `TestAlterDomainAddConstraintValidatesExistingRowsRepro`, `TestAlterDomainSetNotNullValidatesExistingRowsRepro`, and `TestAlterDomainSetSchemaMovesDomainRepro` all still fail because `ALTER DOMAIN is not yet supported`.
+- Expected files: likely `server/ast/*domain*`, `server/node/*domain*`, domain/type metadata plumbing, and focused tests only if the existing repros need edge coverage.
+- Avoiding: dirty peer-owned `server/functions/sqrt.go`; alpha's full `./testing/go` manifest at `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl`; peer auth/alter focused runs.
+- Result: implemented `ALTER DOMAIN` metadata actions plus shared `ALTER TYPE/DOMAIN ... SET SCHEMA`; also fixed `UPDATE ... SET col = DEFAULT` for domain defaults.
+- Green in clean verifier `/tmp/doltgresql-delta-identity.Cc43Bb` with formatted files:
+  - `GOCACHE=/tmp/doltgresql-delta-identity-gocache3 CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(DomainDefaultAppliesToColumnRepro|UpdateSetDefaultUsesDomainDefaultRepro|DomainCastEnforcesConstraintsGuard|NestedDomainEnforcesBaseDomainConstraintsRepro|AlterDomain(AddConstraintValidatesExistingRows|SetNotNullValidatesExistingRows|SetSchemaMovesDomain|SetDefaultAppliesToColumns)Repro|AlterTypeSetSchemaMovesEnumRepro)$' -count=1 -v`
+  - `GOCACHE=/tmp/doltgresql-delta-identity-gocache3 CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/analyzer ./server/node ./server/ast -run 'AlterDomain|AlterTypeSetSchema|AssignUpdate|Domain|Default' -count=1`
+- Next action: stage this lane only; alpha's latest full manifest still failed in auth-owned tests, so no new full-suite claim from delta yet.
+
 ### gamma - 2026-05-12 13:14 America/Phoenix
 
 - Lane: establishing current `./testing/go` failure set.
