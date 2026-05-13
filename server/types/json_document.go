@@ -16,6 +16,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strconv"
@@ -897,9 +898,9 @@ func JsonValueFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonVa
 	case uint64:
 		return JsonValueNumber(decimal.NewFromUint64(v)), nil
 	case float32:
-		return JsonValueNumber(decimal.NewFromFloat32(v)), nil
+		return jsonValueFromFloat64(float64(v), 32), nil
 	case float64:
-		return JsonValueNumber(decimal.NewFromFloat(v)), nil
+		return jsonValueFromFloat64(v, 64), nil
 	case decimal.Decimal:
 		return JsonValueNumber(v), nil
 	case []any:
@@ -912,6 +913,14 @@ func JsonValueFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonVa
 		}
 		return array, nil
 	case time.Time:
+		if typ != nil {
+			switch typ.ID.TypeName() {
+			case "date":
+				return JsonValueString(v.Format("2006-01-02")), nil
+			case "timestamp":
+				return JsonValueString(v.Format("2006-01-02T15:04:05.999999")), nil
+			}
+		}
 		return JsonValueString(v.Format("2006-01-02T15:04:05.999999Z07:00")), nil
 	}
 	if typ != nil {
@@ -1036,7 +1045,7 @@ func ConvertToJsonDocument(val interface{}) (JsonValue, error) {
 		return JsonValueString(jsonParsedStringEscape(val)), nil
 	case float64:
 		// TODO: handle this as a proper numeric as float64 is not precise enough
-		return JsonValueNumber(decimal.NewFromFloat(val)), nil
+		return jsonValueFromFloat64(val, 64), nil
 	case bool:
 		return JsonValueBoolean(val), nil
 	case nil:
@@ -1044,4 +1053,19 @@ func ConvertToJsonDocument(val interface{}) (JsonValue, error) {
 	default:
 		return nil, errors.Errorf("unexpected type while constructing JsonDocument: %T", val)
 	}
+}
+
+func jsonValueFromFloat64(val float64, bitSize int) JsonValue {
+	switch {
+	case math.IsNaN(val):
+		return JsonValueString(jsonStringEscape("NaN"))
+	case math.IsInf(val, 1):
+		return JsonValueString(jsonStringEscape("Infinity"))
+	case math.IsInf(val, -1):
+		return JsonValueString(jsonStringEscape("-Infinity"))
+	}
+	if bitSize == 32 {
+		return JsonValueNumber(decimal.NewFromFloat32(float32(val)))
+	}
+	return JsonValueNumber(decimal.NewFromFloat(val))
 }

@@ -148,7 +148,7 @@ var json_build_array = framework.Function1N{
 		if err != nil {
 			return nil, err
 		}
-		return jsonValueOutput(ctx, value)
+		return jsonBuildValueOutput(ctx, value)
 	},
 }
 
@@ -171,7 +171,7 @@ var json_build_object = framework.Function1N{
 		if err != nil {
 			return nil, err
 		}
-		return jsonValueOutput(ctx, value)
+		return jsonBuildValueOutput(ctx, value)
 	},
 }
 
@@ -560,6 +560,44 @@ func jsonValueOutput(ctx *sql.Context, value pgtypes.JsonValue) (string, error) 
 	sb := strings.Builder{}
 	pgtypes.JsonValueFormatterCompact(&sb, value)
 	return sb.String(), nil
+}
+
+func jsonBuildValueOutput(ctx *sql.Context, value pgtypes.JsonValue) (string, error) {
+	sb := strings.Builder{}
+	jsonBuildValueFormatter(&sb, value)
+	return sb.String(), nil
+}
+
+func jsonBuildValueFormatter(sb *strings.Builder, value pgtypes.JsonValue) {
+	switch value := value.(type) {
+	case pgtypes.JsonValueObject:
+		sb.WriteRune('{')
+		for i, item := range value.Items {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			jsonWriteKeyString(sb, item.Key)
+			sb.WriteString(" : ")
+			jsonBuildValueFormatter(sb, item.Value)
+		}
+		sb.WriteRune('}')
+	case pgtypes.JsonValueArray:
+		sb.WriteRune('[')
+		for i, item := range value {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			jsonBuildValueFormatter(sb, item)
+		}
+		sb.WriteRune(']')
+	default:
+		pgtypes.JsonValueFormatterCompact(sb, value)
+	}
+}
+
+func jsonWriteKeyString(sb *strings.Builder, value string) {
+	bytes, _ := json.MarshalWithOption(value, json.DisableHTMLEscape())
+	sb.Write(bytes)
 }
 
 func jsonValueOutputPretty(ctx *sql.Context, value pgtypes.JsonValue) (string, error) {
