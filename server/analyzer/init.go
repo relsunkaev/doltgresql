@@ -139,6 +139,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ResolveAlterColumn, Apply: resolveAlterColumn})
 	analyzer.OnceBeforeDefault = replaceAnalyzerRuleByName(analyzer.OnceBeforeDefault, "validateGroupBy",
 		analyzer.Rule{Id: ruleId_ValidateGroupBy, Apply: ValidateGroupBy})
+	analyzer.OnceBeforeDefault = wrapAnalyzerRuleByName(analyzer.OnceBeforeDefault, "simplifyFilters", skipRuleForNonDeterministicFilters)
 	analyzer.DefaultRules = replaceAnalyzerRuleByName(analyzer.DefaultRules, "validateCheckConstraints",
 		analyzer.Rule{Id: ruleId_ValidateCheckConstraints, Apply: ValidateCheckConstraints})
 
@@ -166,6 +167,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignSelectiveLookupJoinHints, Apply: AssignSelectiveLookupJoinHints},
 		analyzer.Rule{Id: ruleId_PreferOrderedSortOptionIndexes, Apply: PreferOrderedSortOptionIndexes},
 	)
+	analyzer.OnceAfterDefault = wrapAnalyzerRuleByName(analyzer.OnceAfterDefault, "optimizeJoins", skipRuleForNonDeterministicFilters)
 
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
 		analyzer.Rule{Id: ruleId_WrapPrimaryKeyMetadata, Apply: wrapPrimaryKeyMetadata},
