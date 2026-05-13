@@ -149,17 +149,18 @@ func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
 	exprs := index.Expressions()
 	logical := make([]LogicalColumn, len(exprs))
 	for i, expr := range exprs {
-		definition := unqualifiedIndexExpression(expr)
-		storageName := definition
-		if citextColumn, ok := lowerCitextLogicalColumn(tableSchema, definition); ok {
+		storageName := unqualifiedIndexExpression(expr)
+		definition := core.DecodePhysicalColumnName(storageName)
+		if citextColumn, ok := lowerCitextLogicalColumn(tableSchema, storageName); ok {
 			logical[i] = LogicalColumn{
 				Definition:  citextColumn.Name,
 				StorageName: citextColumn.Name,
 			}
 			continue
 		}
-		if col, ok := schemaColumn(tableSchema, definition); ok {
+		if col, ok := schemaColumn(tableSchema, storageName); ok {
 			storageName = col.Name
+			definition = core.DecodePhysicalColumnName(col.Name)
 			if col.HiddenSystem && col.Generated != nil && col.Generated.Expr != nil {
 				if citextColumn, ok := hiddenLowerCitextLogicalColumn(tableSchema, col); ok {
 					logical[i] = LogicalColumn{
@@ -180,7 +181,7 @@ func LogicalColumns(index sql.Index, tableSchema sql.Schema) []LogicalColumn {
 		logical[i] = LogicalColumn{
 			Definition:  definition,
 			StorageName: storageName,
-			Expression:  schemaIndexOfColName(tableSchema, definition) < 0,
+			Expression:  schemaIndexOfColName(tableSchema, storageName) < 0,
 		}
 	}
 	return logical

@@ -20,6 +20,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 )
 
@@ -69,7 +70,7 @@ func nodeIndexElemList(ctx *Context, node tree.IndexElemList) ([]*vitess.IndexFi
 		}
 
 		vitessIndexColumns = append(vitessIndexColumns, &vitess.IndexField{
-			Column:     vitess.NewColIdent(string(inputColumn.Column)),
+			Column:     vitess.NewColIdent(core.EncodePhysicalColumnName(string(inputColumn.Column))),
 			Order:      order,
 			Expression: expr,
 		})
