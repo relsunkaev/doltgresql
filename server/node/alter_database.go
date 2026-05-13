@@ -160,6 +160,9 @@ func (r *RenameDatabase) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (r *RenameDatabase) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := rejectDatabaseDDLInTransaction(ctx, "ALTER DATABASE RENAME"); err != nil {
+		return nil, err
+	}
 	if err := databaseExists(ctx, r.Name); err != nil {
 		return nil, err
 	}

@@ -266,7 +266,7 @@ func clearsContextOnSuccess(child sql.Node) bool {
 
 func usesStatementSavepoint(child sql.Node) bool {
 	switch child.(type) {
-	case *plan.Commit, *plan.Rollback, *plan.StartTransaction, *plan.CreateSavepoint, *plan.RollbackSavepoint, *plan.ReleaseSavepoint:
+	case *plan.Commit, *plan.Rollback, *plan.StartTransaction, *plan.CreateSavepoint, *plan.RollbackSavepoint, *plan.ReleaseSavepoint, *RenameDatabase:
 		return false
 	default:
 		return true
