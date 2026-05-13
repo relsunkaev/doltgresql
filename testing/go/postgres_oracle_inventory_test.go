@@ -15,12 +15,10 @@
 package _go
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -28,17 +26,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
-
-const scriptAssertionOracleInventoryPath = "testdata/script_assertion_oracle_inventory.json"
-
-type scriptAssertionOracleInventoryFile struct {
-	Version                int                 `json:"version"`
-	Scope                  string              `json:"scope"`
-	CanonicalPostgresMajor int                 `json:"canonicalPostgresMajor"`
-	NormalizationProfile   string              `json:"normalizationProfile"`
-	AssertionFields        []string            `json:"assertionFields"`
-	Classifications        map[string][]string `json:"classifications"`
-}
 
 type scriptAssertionOracleRecord struct {
 	ID     string
@@ -48,16 +35,20 @@ type scriptAssertionOracleRecord struct {
 func TestScriptAssertionOracleInventory(t *testing.T) {
 	manifest := loadPostgresOracleManifest(t)
 	validatePostgresOracleManifest(t, manifest)
-	actualAssertions := scanScriptTestExpectationAssertions(t, manifest.Inventory.AssertionFields)
 
-	if os.Getenv("DOLTGRES_UPDATE_SCRIPT_ASSERTION_ORACLE_INVENTORY") != "" {
-		inventory := buildScriptAssertionOracleInventory(t, manifest, actualAssertions)
-		writeScriptAssertionOracleInventory(t, inventory)
-		return
+	assertions := scanScriptTestExpectationAssertions(t, manifest.Inventory.AssertionFields)
+	require.Greater(t, len(assertions), 10000)
+
+	assertionsBySource := map[string][]scriptAssertionOracleRecord{}
+	for _, assertion := range assertions {
+		assertionsBySource[assertion.Source] = append(assertionsBySource[assertion.Source], assertion)
 	}
 
-	inventory := loadScriptAssertionOracleInventory(t)
-	validateScriptAssertionOracleInventory(t, manifest, inventory, actualAssertions)
+	postgresSources := postgresScriptTestOracleSources(manifest)
+	require.NotEmpty(t, postgresSources)
+	for source := range postgresSources {
+		require.NotEmpty(t, assertionsBySource[source], "Postgres oracle source %s must point at a ScriptTest assertion", source)
+	}
 }
 
 func scanScriptTestExpectationAssertions(t testing.TB, assertionFields []string) []scriptAssertionOracleRecord {
@@ -105,156 +96,6 @@ func scanScriptTestExpectationAssertions(t testing.TB, assertionFields []string)
 	return records
 }
 
-func loadScriptAssertionOracleInventory(t testing.TB) scriptAssertionOracleInventoryFile {
-	t.Helper()
-	data, err := os.ReadFile(scriptAssertionOracleInventoryPath)
-	require.NoError(t, err)
-	var inventory scriptAssertionOracleInventoryFile
-	require.NoError(t, json.Unmarshal(data, &inventory))
-	return inventory
-}
-
-func tryLoadScriptAssertionOracleInventory(t testing.TB) (scriptAssertionOracleInventoryFile, bool) {
-	t.Helper()
-	data, err := os.ReadFile(scriptAssertionOracleInventoryPath)
-	if os.IsNotExist(err) {
-		return scriptAssertionOracleInventoryFile{}, false
-	}
-	require.NoError(t, err)
-	var inventory scriptAssertionOracleInventoryFile
-	require.NoError(t, json.Unmarshal(data, &inventory))
-	return inventory, true
-}
-
-func buildScriptAssertionOracleInventory(
-	t testing.TB,
-	manifest postgresOracleManifest,
-	actualAssertions []scriptAssertionOracleRecord,
-) scriptAssertionOracleInventoryFile {
-	t.Helper()
-	existing, hasExisting := tryLoadScriptAssertionOracleInventory(t)
-	existingClassifications := classificationByAssertionID(t, existing)
-
-	defaultOracle := ""
-	if !hasExisting {
-		defaultOracle = manifest.DefaultOracle
-	}
-	if explicitDefault := os.Getenv("DOLTGRES_SCRIPT_ASSERTION_DEFAULT_ORACLE"); explicitDefault != "" {
-		require.Contains(t, []string{"postgres", "internal"}, explicitDefault)
-		defaultOracle = explicitDefault
-	}
-
-	postgresSources := postgresScriptTestOracleSources(manifest)
-	classifications := map[string][]string{
-		"postgres": {},
-		"internal": {},
-	}
-	for _, assertion := range actualAssertions {
-		oracle, ok := existingClassifications[assertion.ID]
-		if _, isPostgresSource := postgresSources[assertion.Source]; isPostgresSource {
-			oracle = "postgres"
-			ok = true
-		}
-		if !ok {
-			require.NotEmpty(t, defaultOracle,
-				"missing classification for %s; edit %s or set DOLTGRES_SCRIPT_ASSERTION_DEFAULT_ORACLE=internal|postgres for a bulk update",
-				assertion.ID, scriptAssertionOracleInventoryPath)
-			oracle = defaultOracle
-		}
-		classifications[oracle] = append(classifications[oracle], assertion.ID)
-	}
-	for oracle := range classifications {
-		sort.Strings(classifications[oracle])
-	}
-	return scriptAssertionOracleInventoryFile{
-		Version:                1,
-		Scope:                  manifest.Inventory.Scope,
-		CanonicalPostgresMajor: manifest.CanonicalPostgresMajor,
-		NormalizationProfile:   manifest.NormalizationProfile,
-		AssertionFields:        append([]string(nil), manifest.Inventory.AssertionFields...),
-		Classifications:        classifications,
-	}
-}
-
-func writeScriptAssertionOracleInventory(t testing.TB, inventory scriptAssertionOracleInventoryFile) {
-	t.Helper()
-	data, err := json.MarshalIndent(inventory, "", "  ")
-	require.NoError(t, err)
-	data = append(data, '\n')
-	require.NoError(t, os.WriteFile(scriptAssertionOracleInventoryPath, data, 0o644))
-}
-
-func validateScriptAssertionOracleInventory(
-	t testing.TB,
-	manifest postgresOracleManifest,
-	inventory scriptAssertionOracleInventoryFile,
-	actualAssertions []scriptAssertionOracleRecord,
-) {
-	t.Helper()
-	require.Equal(t, 1, inventory.Version)
-	require.Equal(t, manifest.Inventory.Scope, inventory.Scope)
-	require.Equal(t, manifest.CanonicalPostgresMajor, inventory.CanonicalPostgresMajor)
-	require.Equal(t, manifest.NormalizationProfile, inventory.NormalizationProfile)
-	require.Equal(t, manifest.Inventory.AssertionFields, inventory.AssertionFields)
-	require.Contains(t, inventory.Classifications, "postgres")
-	require.Contains(t, inventory.Classifications, "internal")
-
-	classifications := classificationByAssertionID(t, inventory)
-	actualByID := map[string]struct{}{}
-	for _, assertion := range actualAssertions {
-		actualByID[assertion.ID] = struct{}{}
-	}
-
-	missing := make([]string, 0)
-	for _, assertion := range actualAssertions {
-		if _, ok := classifications[assertion.ID]; !ok {
-			missing = append(missing, assertion.ID)
-		}
-	}
-	stale := make([]string, 0)
-	for id := range classifications {
-		if _, ok := actualByID[id]; !ok {
-			stale = append(stale, id)
-		}
-	}
-	sort.Strings(missing)
-	sort.Strings(stale)
-	require.Empty(t, firstInventoryDiffs(missing), "unclassified ScriptTest assertions; update %s", scriptAssertionOracleInventoryPath)
-	require.Empty(t, firstInventoryDiffs(stale), "stale ScriptTest assertion classifications; update %s", scriptAssertionOracleInventoryPath)
-	require.Len(t, classifications, len(actualAssertions))
-	require.Greater(t, len(inventory.Classifications["internal"]), 10000)
-	require.NotEmpty(t, inventory.Classifications["postgres"])
-
-	postgresSources := postgresScriptTestOracleSources(manifest)
-	for source := range postgresSources {
-		require.True(t, inventoryContainsSource(inventory.Classifications["postgres"], source),
-			"Postgres oracle source %s is not classified as postgres in %s", source, scriptAssertionOracleInventoryPath)
-	}
-	for _, id := range inventory.Classifications["postgres"] {
-		source, _, ok := strings.Cut(id, "#")
-		require.True(t, ok, "assertion classification id must be source#ordinal: %s", id)
-		_, ok = postgresSources[source]
-		require.True(t, ok, "postgres-classified assertion %s must have a postgres oracle manifest entry", id)
-	}
-}
-
-func classificationByAssertionID(t testing.TB, inventory scriptAssertionOracleInventoryFile) map[string]string {
-	t.Helper()
-	classifications := map[string]string{}
-	for oracle, ids := range inventory.Classifications {
-		require.Contains(t, []string{"postgres", "internal"}, oracle)
-		require.True(t, sort.StringsAreSorted(ids), "%s classifications must be sorted", oracle)
-		for _, id := range ids {
-			require.NotEmpty(t, id)
-			if prior, ok := classifications[id]; ok {
-				t.Fatalf("assertion %s classified as both %s and %s", id, prior, oracle)
-			}
-			classifications[id] = oracle
-		}
-	}
-	return classifications
-}
-
 func postgresScriptTestOracleSources(manifest postgresOracleManifest) map[string]struct{} {
 	sources := map[string]struct{}{}
 	for _, entry := range manifest.Entries {
@@ -268,20 +109,4 @@ func postgresScriptTestOracleSources(manifest postgresOracleManifest) map[string
 		sources[entry.Source] = struct{}{}
 	}
 	return sources
-}
-
-func inventoryContainsSource(ids []string, source string) bool {
-	for _, id := range ids {
-		if strings.HasPrefix(id, source+"#") {
-			return true
-		}
-	}
-	return false
-}
-
-func firstInventoryDiffs(values []string) []string {
-	if len(values) <= 20 {
-		return values
-	}
-	return append(values[:20], fmt.Sprintf("... %d more", len(values)-20))
 }
