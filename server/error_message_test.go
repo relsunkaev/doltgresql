@@ -18,6 +18,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dolthub/vitess/go/mysql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
@@ -67,6 +68,12 @@ func TestErrMessageToSQLStateFormatsMaterializedViewAliasErrors(t *testing.T) {
 	require.Equal(t, pgcode.Syntax.String(), code)
 
 	code, ok = errMessageToSQLState(`column "account_id" specified more than once`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.DuplicateColumn.String(), code)
+}
+
+func TestMysqlErrnoToSQLStateFormatsDuplicateInsertTargetColumns(t *testing.T) {
+	code, ok := mysqlErrnoToSQLState(mysql.ERFieldSpecifiedTwice)
 	require.True(t, ok)
 	require.Equal(t, pgcode.DuplicateColumn.String(), code)
 }

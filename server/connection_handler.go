@@ -4332,6 +4332,8 @@ func mysqlErrnoToSQLState(errno int) (string, bool) {
 		return pgcode.UndefinedTable.String(), true
 	case mysql.ERBadFieldError:
 		return pgcode.UndefinedColumn.String(), true
+	case mysql.ERFieldSpecifiedTwice:
+		return pgcode.DuplicateColumn.String(), true
 	case mysql.ERLockDeadlock:
 		return pgcode.SerializationFailure.String(), true
 	}

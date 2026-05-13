@@ -119,6 +119,11 @@ func TestSQLStateCodes(t *testing.T) {
 			code: "42703",
 		},
 		{
+			name: "duplicate insert target column -> 42701",
+			sql:  "INSERT INTO parent (id, name, name) VALUES (3, 'a', 'b');",
+			code: "42701",
+		},
+		{
 			// DO NOTHING multi-unique with a non-target conflict
 			// surfaces the unique-violation through the pre-check
 			// wrapper (rather than being silently swallowed by
