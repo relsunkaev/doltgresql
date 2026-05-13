@@ -52,6 +52,7 @@ func initTypeFunctions() {
 	initOidvector()
 	initPgLsn()
 	initPgSnapshot()
+	initPoint()
 	initRecord()
 	initRegclass()
 	initRegconfig()

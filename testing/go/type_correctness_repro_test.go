@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // TestUnboundedVarcharPrimaryKeyPreservesRowsGuard guards that unbounded
@@ -1974,8 +1975,8 @@ func TestCommonBuiltinTypesRoundTripRepro(t *testing.T) {
 				{
 					Query: `SELECT id, p FROM point_round_trip_items ORDER BY id;`,
 					Expected: []sql.Row{
-						{1, "(1,2)"},
-						{2, "(3,4)"},
+						{1, pgtype.Point{P: pgtype.Vec2{X: 1, Y: 2}, Valid: true}},
+						{2, pgtype.Point{P: pgtype.Vec2{X: 3, Y: 4}, Valid: true}},
 					},
 				},
 			},

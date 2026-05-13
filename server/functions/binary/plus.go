@@ -61,12 +61,29 @@ func initBinaryPlus() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, numeric_add)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, numeric_pl_pg_lsn)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, pg_lsn_pli)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, point_pl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, time_pl_interval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timedate_pl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timetz_pl_interval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timetzdate_pl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timestamp_pl_interval)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryPlus, timestamptz_pl_interval)
+}
+
+// point_pl_callable is the callable logic for the point_pl function.
+func point_pl_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+	left := val1.(pgtypes.PointValue)
+	right := val2.(pgtypes.PointValue)
+	return pgtypes.PointValue{X: left.X + right.X, Y: left.Y + right.Y}, nil
+}
+
+// point_pl represents the PostgreSQL function of the same name, taking the same parameters.
+var point_pl = framework.Function2{
+	Name:       "point_pl",
+	Return:     pgtypes.Point,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Point, pgtypes.Point},
+	Strict:     true,
+	Callable:   point_pl_callable,
 }
 
 // float4pl_callable is the callable logic for the float4pl function.
