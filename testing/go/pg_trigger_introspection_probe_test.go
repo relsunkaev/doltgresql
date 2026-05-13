@@ -60,14 +60,14 @@ func TestPgTriggerIntrospectionProbe(t *testing.T) {
 				},
 				{
 					Query: `SELECT trigger_name, event_manipulation,
-							event_object_schema, event_object_table,
+							(event_object_schema = current_schema())::text, event_object_table,
 							action_timing, action_orientation
 						FROM information_schema.triggers
 						WHERE trigger_name = 'tg_audit_main';`,
 					Expected: []sql.Row{{
 						"tg_audit_main",
 						"INSERT",
-						"public",
+						"true",
 						"main",
 						"AFTER",
 						"ROW",
@@ -82,7 +82,7 @@ func TestPgTriggerIntrospectionProbe(t *testing.T) {
 				{
 					Query: `SELECT hastriggers
 						FROM pg_tables
-						WHERE schemaname = 'public'
+						WHERE schemaname = current_schema()
 							AND tablename = 'main';`,
 					Expected: []sql.Row{{"t"}},
 				},

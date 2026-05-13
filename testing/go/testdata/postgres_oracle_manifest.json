@@ -4229,6 +4229,146 @@
       ]
     },
     {
+      "id": "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0001-select-tgname-tgtype::int-tgenabled-tgisinternal",
+      "source": "testing/go/pg_trigger_introspection_probe_test.go:TestPgTriggerIntrospectionProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
+        "CREATE TABLE audit_log (id SERIAL PRIMARY KEY, main_id INT);",
+        "CREATE FUNCTION audit_main_insert() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tINSERT INTO audit_log (main_id) VALUES (NEW.id);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_audit_main\n\t\t\t\t\tAFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION audit_main_insert();"
+      ],
+      "query": "SELECT tgname, tgtype::int, tgenabled, tgisinternal,\n\t\t\t\t\t\t\ttgnargs::int, pg_get_triggerdef(oid) <> ''\n\t\t\t\t\t\tFROM pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'tg_audit_main';",
+      "expectedRows": [
+        [
+          {
+            "value": "tg_audit_main"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "O"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0002-select-trigger_name-event_manipulation-event_object_schema-=",
+      "source": "testing/go/pg_trigger_introspection_probe_test.go:TestPgTriggerIntrospectionProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
+        "CREATE TABLE audit_log (id SERIAL PRIMARY KEY, main_id INT);",
+        "CREATE FUNCTION audit_main_insert() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tINSERT INTO audit_log (main_id) VALUES (NEW.id);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_audit_main\n\t\t\t\t\tAFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION audit_main_insert();",
+        "SELECT tgname, tgtype::int, tgenabled, tgisinternal,\n\t\t\t\t\t\t\ttgnargs::int, pg_get_triggerdef(oid) <> ''\n\t\t\t\t\t\tFROM pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'tg_audit_main';"
+      ],
+      "query": "SELECT trigger_name, event_manipulation,\n\t\t\t\t\t\t\t(event_object_schema = current_schema())::text, event_object_table,\n\t\t\t\t\t\t\taction_timing, action_orientation\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'tg_audit_main';",
+      "expectedRows": [
+        [
+          {
+            "value": "tg_audit_main"
+          },
+          {
+            "value": "INSERT"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "main"
+          },
+          {
+            "value": "AFTER"
+          },
+          {
+            "value": "ROW"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0003-select-relhastriggers-from-pg_class-where",
+      "source": "testing/go/pg_trigger_introspection_probe_test.go:TestPgTriggerIntrospectionProbe",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
+        "CREATE TABLE audit_log (id SERIAL PRIMARY KEY, main_id INT);",
+        "CREATE FUNCTION audit_main_insert() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tINSERT INTO audit_log (main_id) VALUES (NEW.id);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_audit_main\n\t\t\t\t\tAFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION audit_main_insert();",
+        "SELECT tgname, tgtype::int, tgenabled, tgisinternal,\n\t\t\t\t\t\t\ttgnargs::int, pg_get_triggerdef(oid) <> ''\n\t\t\t\t\t\tFROM pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'tg_audit_main';",
+        "SELECT trigger_name, event_manipulation,\n\t\t\t\t\t\t\t(event_object_schema = current_schema())::text, event_object_table,\n\t\t\t\t\t\t\taction_timing, action_orientation\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'tg_audit_main';"
+      ],
+      "query": "SELECT relhastriggers\n\t\t\t\t\t\tFROM pg_class\n\t\t\t\t\t\tWHERE relname = 'main';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0004-select-hastriggers-from-pg_tables-where",
+      "source": "testing/go/pg_trigger_introspection_probe_test.go:TestPgTriggerIntrospectionProbe",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
+        "CREATE TABLE audit_log (id SERIAL PRIMARY KEY, main_id INT);",
+        "CREATE FUNCTION audit_main_insert() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tINSERT INTO audit_log (main_id) VALUES (NEW.id);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER tg_audit_main\n\t\t\t\t\tAFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION audit_main_insert();",
+        "SELECT tgname, tgtype::int, tgenabled, tgisinternal,\n\t\t\t\t\t\t\ttgnargs::int, pg_get_triggerdef(oid) <> ''\n\t\t\t\t\t\tFROM pg_trigger\n\t\t\t\t\t\tWHERE tgname = 'tg_audit_main';",
+        "SELECT trigger_name, event_manipulation,\n\t\t\t\t\t\t\t(event_object_schema = current_schema())::text, event_object_table,\n\t\t\t\t\t\t\taction_timing, action_orientation\n\t\t\t\t\t\tFROM information_schema.triggers\n\t\t\t\t\t\tWHERE trigger_name = 'tg_audit_main';",
+        "SELECT relhastriggers\n\t\t\t\t\t\tFROM pg_class\n\t\t\t\t\t\tWHERE relname = 'main';"
+      ],
+      "query": "SELECT hastriggers\n\t\t\t\t\t\tFROM pg_tables\n\t\t\t\t\t\tWHERE schemaname = current_schema()\n\t\t\t\t\t\t\tAND tablename = 'main';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
       "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
       "ordinal": 1,
