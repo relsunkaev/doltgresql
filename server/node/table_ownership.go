@@ -33,13 +33,30 @@ func checkTableOwnership(ctx *sql.Context, tableName doltdb.TableName) error {
 		return nil
 	}
 	var userRole auth.Role
+	var operatesAsOwner bool
 	auth.LockRead(func() {
 		userRole = auth.GetRole(ctx.Client().User)
+		operatesAsOwner = roleCanOperateAsOwner(userRole, owner)
 	})
-	if userRole.IsValid() && userRole.IsSuperUser {
+	if userRole.IsValid() && operatesAsOwner {
 		return nil
 	}
 	return errors.Errorf("must be owner of table %s", tableName.Name)
+}
+
+func roleCanOperateAsOwner(userRole auth.Role, owner string) bool {
+	if !userRole.IsValid() {
+		return false
+	}
+	if userRole.IsSuperUser || userRole.Name == owner {
+		return true
+	}
+	ownerRole := auth.GetRole(owner)
+	if !ownerRole.IsValid() {
+		return false
+	}
+	memberID, inheritsPrivileges, _ := auth.IsRoleAMember(userRole.ID(), ownerRole.ID())
+	return memberID.IsValid() && inheritsPrivileges
 }
 
 func tableOwner(ctx *sql.Context, tableName doltdb.TableName) (string, error) {

@@ -418,6 +418,7 @@ func CreateServerWithPort(t testing.TB, database string, port int) (context.Cont
 	replsource.ResetForTests()
 	replicaidentity.ResetForTests()
 	rowsecurity.ResetForTests()
+	auth.ResetForTests(nil, nil)
 	controller, err := dserver.RunInMemory(&servercfg.DoltgresConfig{
 		DoltgresConfig: cfgdetails.DoltgresConfig{
 			ListenerConfig: &cfgdetails.DoltgresListenerConfig{
@@ -428,7 +429,6 @@ func CreateServerWithPort(t testing.TB, database string, port int) (context.Cont
 		},
 	}, dserver.NewListener)
 	require.NoError(t, err)
-	auth.ClearDatabase()
 	fmt.Printf("port is %d\n", port)
 
 	ctx := context.Background()
@@ -480,9 +480,9 @@ func createServerLocalWithFileSystemAndPort(t testing.TB, database string, port 
 			LogLevelStr: &testServerLogLevel,
 		},
 	}
+	auth.ResetForTests(doltEnv, cfg)
 	controller, err := dserver.RunOnDisk(ctx, cfg, doltEnv)
 	require.NoError(t, err)
-	auth.ResetForTests(doltEnv, cfg)
 	fmt.Printf("port is %d\n", port)
 
 	connection := newTestDatabaseConnection(t, ctx, database, serverHost, port)

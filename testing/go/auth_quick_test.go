@@ -255,7 +255,7 @@ func TestAuthQuick(t *testing.T) {
 				"CREATE TABLE mysch.new_table (pk BIGINT PRIMARY KEY);",
 				"DROP TABLE mysch.new_table;",
 			},
-			ExpectedErr: "permission denied for table",
+			ExpectedErr: "must be owner",
 		},
 		{
 			Queries: []string{
@@ -264,7 +264,7 @@ func TestAuthQuick(t *testing.T) {
 				"CREATE TABLE mysch.new_table (pk BIGINT PRIMARY KEY);",
 				"DROP TABLE mysch.new_table;",
 			},
-			ExpectedErr: "permission denied for table",
+			ExpectedErr: "must be owner",
 		},
 		{
 			Queries: []string{
@@ -272,6 +272,7 @@ func TestAuthQuick(t *testing.T) {
 				"GRANT DROP ON mysch.new_table TO tester;",
 				"DROP TABLE mysch.new_table;",
 			},
+			ExpectedErr: "must be owner",
 		},
 		{
 			Queries: []string{

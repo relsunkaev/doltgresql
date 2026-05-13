@@ -112,7 +112,11 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 	case AuthType_DELETE:
 		privileges = []Privilege{Privilege_DELETE}
 	case AuthType_DROPTABLE:
-		privileges = []Privilege{Privilege_DROP}
+		// PostgreSQL table drops are ownership checks, not table GRANT
+		// privilege checks. DropTable performs the ownership validation with
+		// relation metadata after planning, so do not let the generic SQL auth
+		// layer accept or reject table DROP based on Dolt/MySQL DROP grants.
+		return nil
 	case AuthType_EXECUTE:
 		privileges = []Privilege{Privilege_EXECUTE}
 	case AuthType_INSERT:

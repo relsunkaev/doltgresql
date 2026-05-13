@@ -2394,6 +2394,36 @@ func TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro(t *testing.T) {
 	})
 }
 
+// TestDropTableAllowsMemberOfOwningRoleRepro reproduces a PostgreSQL
+// authorization bug: table ownership checks should accept members of the owning
+// role, not only sessions running as the literal owner role.
+func TestDropTableAllowsMemberOfOwningRoleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TABLE allows member of owning role",
+			SetUpScript: []string{
+				`CREATE USER drop_table_owner_member PASSWORD 'dropper';`,
+				`CREATE ROLE drop_table_owner_role;`,
+				`CREATE TABLE drop_table_owner_member_private (id INT PRIMARY KEY);`,
+				`ALTER TABLE drop_table_owner_member_private OWNER TO drop_table_owner_role;`,
+				`GRANT USAGE ON SCHEMA public TO drop_table_owner_member;`,
+				`GRANT drop_table_owner_role TO drop_table_owner_member;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `DROP TABLE drop_table_owner_member_private;`,
+					Username: `drop_table_owner_member`,
+					Password: `dropper`,
+				},
+				{
+					Query:    `SELECT to_regclass('drop_table_owner_member_private') IS NULL;`,
+					Expected: []sql.Row{{"t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestCreateViewRequiresSchemaCreatePrivilegeRepro reproduces a security bug:
 // Doltgres allows a role without CREATE on the target schema to create a view.
 func TestCreateViewRequiresSchemaCreatePrivilegeRepro(t *testing.T) {

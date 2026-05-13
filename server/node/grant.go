@@ -608,7 +608,10 @@ func (g *Grant) grantRole(ctx *sql.Context) error {
 			if member.ID() == group.ID() {
 				return errors.New("role cannot be a member of itself")
 			}
-			if groupID, _, _ := auth.IsRoleAMember(group.ID(), member.ID()); groupID.IsValid() {
+			// Superusers behave as members of every role for privilege checks, but
+			// that virtual membership is not a catalog edge and does not make
+			// granting a superuser role circular.
+			if groupID, _, _ := auth.IsRoleAMember(group.ID(), member.ID()); groupID.IsValid() && !group.IsSuperUser {
 				return errors.New("role memberships cannot be circular")
 			}
 			memberGroupID, _, withAdminOption := auth.IsRoleAMember(userRole.ID(), group.ID())

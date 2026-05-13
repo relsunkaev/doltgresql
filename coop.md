@@ -20,7 +20,7 @@ Use this file to avoid overlapping work. Add short entries with:
 - Green in clean verifier `/tmp/doltgresql-delta-identity.Cc43Bb` with formatted files:
   - `GOCACHE=/tmp/doltgresql-delta-identity-gocache3 CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^Test(DomainDefaultAppliesToColumnRepro|UpdateSetDefaultUsesDomainDefaultRepro|DomainCastEnforcesConstraintsGuard|NestedDomainEnforcesBaseDomainConstraintsRepro|AlterDomain(AddConstraintValidatesExistingRows|SetNotNullValidatesExistingRows|SetSchemaMovesDomain|SetDefaultAppliesToColumns)Repro|AlterTypeSetSchemaMovesEnumRepro)$' -count=1 -v`
   - `GOCACHE=/tmp/doltgresql-delta-identity-gocache3 CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/analyzer ./server/node ./server/ast -run 'AlterDomain|AlterTypeSetSchema|AssignUpdate|Domain|Default' -count=1`
-- Next action: stage this lane only; alpha's latest full manifest still failed in auth-owned tests, so no new full-suite claim from delta yet.
+- Status: lane committed in the current slice; alpha's latest full manifest still failed in auth-owned tests, so no new full-suite claim from delta yet.
 
 ### gamma - 2026-05-12 13:14 America/Phoenix
 

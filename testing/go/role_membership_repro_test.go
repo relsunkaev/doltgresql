@@ -41,6 +41,32 @@ func TestGrantRoleRejectsCircularMembershipRepro(t *testing.T) {
 	})
 }
 
+// TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro reproduces a role
+// membership bug: the superuser's virtual membership in every role should not
+// make GRANTing the superuser role look circular.
+func TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT superuser role does not trip circular membership guard",
+			SetUpScript: []string{
+				`CREATE USER grant_superuser_member PASSWORD 'member';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `GRANT postgres TO grant_superuser_member;`,
+				},
+				{
+					Query: `SELECT pg_get_userbyid(roleid), pg_get_userbyid(member)
+						FROM pg_catalog.pg_auth_members
+						WHERE pg_get_userbyid(roleid) = 'postgres'
+							AND pg_get_userbyid(member) = 'grant_superuser_member';`,
+					Expected: []sql.Row{{"postgres", "grant_superuser_member"}},
+				},
+			},
+		},
+	})
+}
+
 // TestGrantRoleRejectsSelfMembershipRepro reproduces a security/availability
 // bug: Doltgres does not return a normal SQL error when a role is granted to
 // itself.
