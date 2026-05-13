@@ -141,9 +141,74 @@ func columnDefaultValueText(def *sql.ColumnDefaultValue) string {
 		return ""
 	}
 	if def.Expr != nil {
-		return stripRedundantOuterParens(def.Expr.String())
+		return annotateFunctionStringLiteralDefaults(stripRedundantOuterParens(def.Expr.String()))
 	}
 	return def.String()
+}
+
+func annotateFunctionStringLiteralDefaults(expr string) string {
+	if expr == "" {
+		return expr
+	}
+	var builder strings.Builder
+	functionCallStack := make([]bool, 0, 4)
+	for i := 0; i < len(expr); {
+		switch expr[i] {
+		case '\'':
+			next := copySingleQuotedString(&builder, expr, i)
+			if len(functionCallStack) > 0 && functionCallStack[len(functionCallStack)-1] && !nextTokenIsTypeCast(expr, next) {
+				builder.WriteString("::text")
+			}
+			i = next
+		case '(':
+			functionCallStack = append(functionCallStack, previousTokenLooksLikeFunctionName(expr, i))
+			builder.WriteByte(expr[i])
+			i++
+		case ')':
+			if len(functionCallStack) > 0 {
+				functionCallStack = functionCallStack[:len(functionCallStack)-1]
+			}
+			builder.WriteByte(expr[i])
+			i++
+		default:
+			builder.WriteByte(expr[i])
+			i++
+		}
+	}
+	return builder.String()
+}
+
+func nextTokenIsTypeCast(expr string, idx int) bool {
+	for idx < len(expr) {
+		switch expr[idx] {
+		case ' ', '\t', '\n', '\r':
+			idx++
+			continue
+		}
+		return idx+1 < len(expr) && expr[idx] == ':' && expr[idx+1] == ':'
+	}
+	return false
+}
+
+func previousTokenLooksLikeFunctionName(expr string, idx int) bool {
+	idx--
+	for idx >= 0 {
+		switch expr[idx] {
+		case ' ', '\t', '\n', '\r':
+			idx--
+			continue
+		}
+		return isIdentifierPart(expr[idx]) || expr[idx] == '"'
+	}
+	return false
+}
+
+func isIdentifierPart(c byte) bool {
+	return (c >= 'a' && c <= 'z') ||
+		(c >= 'A' && c <= 'Z') ||
+		(c >= '0' && c <= '9') ||
+		c == '_' ||
+		c == '.'
 }
 
 func stripRedundantOuterParens(expr string) string {
