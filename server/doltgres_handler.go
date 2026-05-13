@@ -268,6 +268,7 @@ func castSQLError(err error) error {
 		pgcode.Grouping,
 		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,
+		pgcode.InsufficientPrivilege,
 		pgcode.LockNotAvailable,
 		pgcode.ObjectNotInPrerequisiteState,
 		pgcode.RaiseException,

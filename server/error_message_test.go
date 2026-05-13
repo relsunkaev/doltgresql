@@ -65,7 +65,7 @@ func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
 }
 
 func TestCastSQLErrorPreservesExplicitPGCodes(t *testing.T) {
-	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation} {
+	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException, pgcode.CheckViolation, pgcode.InsufficientPrivilege} {
 		err := pgerror.New(code, "plpgsql error")
 		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
 	}
@@ -117,6 +117,19 @@ func TestErrMessageToSQLStateFormatsTemporaryTablePersistentSchema(t *testing.T)
 	require.True(t, ok)
 	require.Equal(t, pgcode.InvalidTableDefinition.String(), code)
 	require.Equal(t, pgcode.InvalidTableDefinition.String(), errorResponseCode(errors.New(msg)))
+}
+
+func TestErrMessageToSQLStateFormatsInsufficientPrivilege(t *testing.T) {
+	for _, msg := range []string{
+		`permission denied to create database`,
+		`permission denied: must be owner of database protected_db`,
+		`must be owner of table protected_items`,
+	} {
+		code, ok := errMessageToSQLState(msg)
+		require.True(t, ok)
+		require.Equal(t, pgcode.InsufficientPrivilege.String(), code)
+		require.Equal(t, pgcode.InsufficientPrivilege.String(), errorResponseCode(errors.New(msg)))
+	}
 }
 
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {

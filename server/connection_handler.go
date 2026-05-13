@@ -4370,6 +4370,9 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.FeatureNotSupported.String(), true
 	case msg == "cannot create temporary relation in non-temporary schema":
 		return pgcode.InvalidTableDefinition.String(), true
+	case strings.HasPrefix(msg, "permission denied"),
+		strings.HasPrefix(msg, "must be owner"):
+		return pgcode.InsufficientPrivilege.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):
