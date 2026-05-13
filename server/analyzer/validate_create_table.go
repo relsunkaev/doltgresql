@@ -17,6 +17,7 @@ package analyzer
 import (
 	"fmt"
 	"hash/fnv"
+	"regexp"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -27,6 +28,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -187,6 +190,10 @@ func schToColMap(sch sql.Schema) map[string]*sql.Column {
 //
 // TODO: there are other constraints on indexes that we could enforce and are not yet (e.g. JSON as an index)
 func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.IndexDef) error {
+	if err := validateIndexExpressionClasses(ctx, idxDef); err != nil {
+		return err
+	}
+
 	seenCols := make(map[string]struct{})
 	for _, idxCol := range idxDef.Columns {
 		if idxCol.Expression != nil {
@@ -229,6 +236,241 @@ func validateIndex(ctx *sql.Context, colMap map[string]*sql.Column, idxDef *sql.
 	}
 
 	return nil
+}
+
+func validateIndexExpressionClasses(ctx *sql.Context, idxDef *sql.IndexDef) error {
+	for _, idxCol := range idxDef.Columns {
+		if idxCol.Expression == nil {
+			continue
+		}
+		if err := validateIndexExpressionClass(ctx, idxCol.Expression, "index expression", "index expressions"); err != nil {
+			return err
+		}
+	}
+
+	metadata, ok := indexmetadata.DecodeComment(idxDef.Comment)
+	if !ok || strings.TrimSpace(metadata.Predicate) == "" {
+		return nil
+	}
+	return validateIndexPredicateText(ctx, metadata.Predicate)
+}
+
+func validateIndexExpressionClass(ctx *sql.Context, expr sql.Expression, singular string, plural string) error {
+	if expr == nil {
+		return nil
+	}
+	if err := validateIndexExpressionText(ctx, expr.String(), singular, plural); err != nil {
+		return err
+	}
+	var err error
+	sql.Inspect(ctx, expr, func(ctx *sql.Context, e sql.Expression) bool {
+		switch e.(type) {
+		case *plan.Subquery:
+			err = errors.Errorf("cannot use subquery in %s", singular)
+			return false
+		case sql.Aggregation:
+			err = errors.Errorf("aggregate functions are not allowed in %s", plural)
+			return false
+		case sql.WindowAggregation:
+			err = errors.Errorf("window functions are not allowed in %s", plural)
+			return false
+		}
+		if windowExpr, ok := e.(sql.WindowAdaptableExpression); ok && windowExpr.Window() != nil {
+			err = errors.Errorf("window functions are not allowed in %s", plural)
+			return false
+		}
+		if rowIterExpr, ok := e.(sql.RowIterExpression); ok && rowIterExpr.ReturnsRowIter() {
+			err = errors.Errorf("set-returning functions are not allowed in %s", plural)
+			return false
+		}
+		if fn, ok := e.(sql.FunctionExpression); ok {
+			if functionErr := validateIndexFunctionName(ctx, fn.FunctionName(), singular, plural); functionErr != nil {
+				err = functionErr
+				return false
+			}
+		}
+		if nondeterministic, ok := e.(sql.NonDeterministicExpression); ok && nondeterministic.IsNonDeterministic() {
+			err = errors.Errorf("functions in %s must be marked IMMUTABLE", singular)
+			return false
+		}
+		return true
+	})
+	return err
+}
+
+func validateIndexPredicateText(ctx *sql.Context, predicate string) error {
+	lower := strings.ToLower(predicate)
+	if strings.Contains(lower, "select ") || strings.Contains(lower, "(select") {
+		return errors.New("cannot use subquery in index predicate")
+	}
+	return validateIndexExpressionText(ctx, predicate, "index predicate", "index predicates")
+}
+
+func validateIndexExpressionText(ctx *sql.Context, expr string, singular string, plural string) error {
+	lower := strings.ToLower(expr)
+	if strings.Contains(lower, " over (") {
+		return errors.Errorf("window functions are not allowed in %s", plural)
+	}
+	for _, name := range indexAggregateFunctions {
+		if containsFunctionCall(lower, name) {
+			return errors.Errorf("aggregate functions are not allowed in %s", plural)
+		}
+	}
+	for _, name := range indexWindowFunctions {
+		if containsFunctionCall(lower, name) {
+			return errors.Errorf("window functions are not allowed in %s", plural)
+		}
+	}
+	for _, name := range indexSetReturningFunctions {
+		if containsFunctionCall(lower, name) {
+			return errors.Errorf("set-returning functions are not allowed in %s", plural)
+		}
+	}
+	for _, name := range indexVolatileFunctions {
+		if containsFunctionCall(lower, name) {
+			return errors.Errorf("functions in %s must be marked IMMUTABLE", singular)
+		}
+	}
+	for _, name := range indexFunctionCalls(lower) {
+		if err := validateIndexFunctionName(ctx, name, singular, plural); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateIndexFunctionName(ctx *sql.Context, name string, singular string, plural string) error {
+	lower := strings.ToLower(name)
+	switch {
+	case stringInList(lower, indexAggregateFunctions):
+		return errors.Errorf("aggregate functions are not allowed in %s", plural)
+	case stringInList(lower, indexWindowFunctions):
+		return errors.Errorf("window functions are not allowed in %s", plural)
+	case stringInList(lower, indexSetReturningFunctions):
+		return errors.Errorf("set-returning functions are not allowed in %s", plural)
+	case stringInList(lower, indexVolatileFunctions):
+		return errors.Errorf("functions in %s must be marked IMMUTABLE", singular)
+	}
+	if indexFunctionNameIsMutable(ctx, lower) {
+		return errors.Errorf("functions in %s must be marked IMMUTABLE", singular)
+	}
+	return nil
+}
+
+func indexFunctionNameIsMutable(ctx *sql.Context, name string) bool {
+	funcCollection, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	schemas := []string{"pg_catalog"}
+	if currentSchema, err := core.GetCurrentSchema(ctx); err == nil && currentSchema != "" && !strings.EqualFold(currentSchema, "pg_catalog") {
+		schemas = append([]string{currentSchema}, schemas...)
+	}
+	for _, schema := range schemas {
+		overloads, err := funcCollection.GetFunctionOverloads(ctx, id.NewFunction(schema, name))
+		if err != nil || len(overloads) == 0 {
+			continue
+		}
+		for _, overload := range overloads {
+			if overload.Volatility != "" {
+				if overload.Volatility != "i" {
+					return true
+				}
+				continue
+			}
+			if overload.IsNonDeterministic {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
+func indexFunctionCalls(expr string) []string {
+	matches := indexFunctionCallPattern.FindAllStringSubmatch(expr, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(matches))
+	seen := make(map[string]struct{}, len(matches))
+	for _, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		name := strings.ToLower(match[1])
+		if _, ok := indexExpressionKeywords[name]; ok {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		names = append(names, name)
+	}
+	return names
+}
+
+var indexFunctionCallPattern = regexp.MustCompile(`(?i)([a-z_][a-z0-9_$]*)\s*\(`)
+
+var indexExpressionKeywords = map[string]struct{}{
+	"case":     {},
+	"cast":     {},
+	"coalesce": {},
+	"extract":  {},
+	"greatest": {},
+	"least":    {},
+	"nullif":   {},
+}
+
+var indexAggregateFunctions = []string{
+	"avg",
+	"bit_and",
+	"bit_or",
+	"bit_xor",
+	"bool_and",
+	"bool_or",
+	"count",
+	"every",
+	"json_agg",
+	"json_object_agg",
+	"max",
+	"min",
+	"sum",
+}
+
+var indexWindowFunctions = []string{
+	"cume_dist",
+	"dense_rank",
+	"first_value",
+	"lag",
+	"last_value",
+	"lead",
+	"ntile",
+	"percent_rank",
+	"rank",
+	"row_number",
+}
+
+var indexSetReturningFunctions = []string{
+	"generate_series",
+	"json_array_elements",
+	"json_array_elements_text",
+	"jsonb_array_elements",
+	"jsonb_array_elements_text",
+	"regexp_matches",
+	"regexp_split_to_table",
+	"string_to_table",
+}
+
+var indexVolatileFunctions = []string{
+	"clock_timestamp",
+	"current_timestamp",
+	"localtimestamp",
+	"now",
+	"random",
+	"timeofday",
+	"transaction_timestamp",
 }
 
 func validateBtreeOpClassTypes(colMap map[string]*sql.Column, idxDef *sql.IndexDef) error {

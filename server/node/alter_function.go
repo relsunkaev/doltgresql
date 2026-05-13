@@ -154,6 +154,7 @@ func (a *AlterFunctionOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter
 	}
 	if a.Metadata.Volatility != nil {
 		function.Volatility = *a.Metadata.Volatility
+		function.IsNonDeterministic = function.Volatility != "i"
 	}
 	if a.Metadata.Parallel != nil {
 		function.Parallel = *a.Metadata.Parallel

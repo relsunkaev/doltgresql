@@ -223,7 +223,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		ParameterModes:     paramModes,
 		ParameterDefaults:  paramDefaults,
 		Variadic:           false, // TODO: implement this
-		IsNonDeterministic: true,
+		IsNonDeterministic: c.OptionMetadata.Volatility != "i",
 		Strict:             c.Strict,
 		SecurityDefiner:    c.OptionMetadata.SecurityDefiner,
 		LeakProof:          c.OptionMetadata.LeakProof,
