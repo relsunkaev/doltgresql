@@ -73,6 +73,42 @@ func TestDropRuleIfExistsMissingRepro(t *testing.T) {
 	})
 }
 
+// TestDropRuleIfExistsRemovesExistingRuleRepro reproduces a data consistency
+// bug: CREATE RULE is implemented through a trigger rewrite, but DROP RULE IF
+// EXISTS is currently converted to a no-op, so the side-effect trigger remains.
+func TestDropRuleIfExistsRemovesExistingRuleRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP RULE IF EXISTS removes existing rule side effects",
+			SetUpScript: []string{
+				`CREATE TABLE drop_rule_source_items (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`CREATE TABLE drop_rule_audit_items (
+					source_id INT,
+					label TEXT
+				);`,
+				`CREATE RULE drop_rule_source_items_audit AS
+					ON INSERT TO drop_rule_source_items
+					DO ALSO
+					INSERT INTO drop_rule_audit_items VALUES (NEW.id, NEW.label);`,
+				`DROP RULE IF EXISTS drop_rule_source_items_audit
+					ON drop_rule_source_items;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO drop_rule_source_items VALUES (1, 'after drop');`,
+				},
+				{
+					Query:    `SELECT COUNT(*) FROM drop_rule_audit_items;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterRuleMissingReachesValidationRepro reproduces a rewrite-rule
 // compatibility gap: PostgreSQL parses ALTER RULE and validates that the target
 // rule exists on the relation.
