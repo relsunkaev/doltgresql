@@ -23,6 +23,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -40,7 +41,10 @@ import (
 
 const postgresOracleDefaultDSN = "postgres://postgres:password@127.0.0.1:5432/postgres?sslmode=disable"
 
+//go:generate go run gen_postgres_oracle_manifest.go
+
 type postgresOracleManifest struct {
+	GeneratedBy            string                  `json:"generatedBy"`
 	Version                int                     `json:"version"`
 	CanonicalPostgresMajor int                     `json:"canonicalPostgresMajor"`
 	NormalizationProfile   string                  `json:"normalizationProfile"`
@@ -80,6 +84,16 @@ type postgresCell struct {
 
 func TestPostgresOracleManifestSchema(t *testing.T) {
 	validatePostgresOracleManifest(t, loadPostgresOracleManifest(t))
+}
+
+func TestPostgresOracleManifestGenerated(t *testing.T) {
+	expected, err := os.ReadFile("testdata/postgres_oracle_manifest.json")
+	require.NoError(t, err)
+
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--stdout")
+	actual, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(actual))
+	require.Equal(t, string(expected), string(actual), "run go generate ./testing/go after editing oracle manifest inputs")
 }
 
 func TestPostgresOracleManifestInventory(t *testing.T) {
@@ -123,6 +137,7 @@ func TestPostgresOracleManifest(t *testing.T) {
 
 func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifest) {
 	t.Helper()
+	require.Equal(t, "go generate ./testing/go", manifest.GeneratedBy)
 	require.Equal(t, 1, manifest.Version)
 	require.Equal(t, 16, manifest.CanonicalPostgresMajor)
 	require.Equal(t, "pg16-structural-v1", manifest.NormalizationProfile)

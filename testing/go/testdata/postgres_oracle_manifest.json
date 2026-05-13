@@ -1,4 +1,5 @@
 {
+  "generatedBy": "go generate ./testing/go",
   "version": 1,
   "canonicalPostgresMajor": 16,
   "normalizationProfile": "pg16-structural-v1",
@@ -33,15 +34,36 @@
       "oracle": "postgres",
       "compare": "structural",
       "query": "SELECT 1.2300::numeric, '-0'::numeric, '{\"b\":2,\"a\":1}'::jsonb, ARRAY[1, 2]::int[], now(), pg_backend_pid()",
-      "expectedRows": [[
-        {"value": "1.23"},
-        {"value": "0"},
-        {"value": "{\"a\":1,\"b\":2}"},
-        {"value": "{1,2}"},
-        {"any": true},
-        {"regex": "^[0-9]+$"}
-      ]],
-      "columnModes": ["numeric", "numeric", "json", "array", "timestamptz", "structural"]
+      "expectedRows": [
+        [
+          {
+            "value": "1.23"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "{\"a\":1,\"b\":2}"
+          },
+          {
+            "value": "{1,2}"
+          },
+          {
+            "any": true
+          },
+          {
+            "regex": "^[0-9]+$"
+          }
+        ]
+      ],
+      "columnModes": [
+        "numeric",
+        "numeric",
+        "json",
+        "array",
+        "timestamptz",
+        "structural"
+      ]
     },
     {
       "id": "drop-operator-if-exists-removes-existing-operator",
@@ -56,9 +78,19 @@
         "DROP OPERATOR IF EXISTS === (integer, integer)"
       ],
       "query": "SELECT COUNT(*) FROM pg_catalog.pg_operator WHERE oprname = '===' AND oprnamespace = '{{schema}}'::regnamespace AND oprleft = 'integer'::regtype AND oprright = 'integer'::regtype",
-      "expectedRows": [[{"value": "0"}]],
-      "columnModes": ["structural"],
-      "cleanup": ["DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"]
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural"
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     },
     {
       "id": "drop-text-search-configuration-if-exists-removes-existing-config",
@@ -72,9 +104,19 @@
         "DROP TEXT SEARCH CONFIGURATION IF EXISTS drop_existing_ts_config_repro"
       ],
       "query": "SELECT COUNT(*) FROM pg_catalog.pg_ts_config WHERE cfgname = 'drop_existing_ts_config_repro' AND cfgnamespace = '{{schema}}'::regnamespace",
-      "expectedRows": [[{"value": "0"}]],
-      "columnModes": ["structural"],
-      "cleanup": ["DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"]
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural"
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     },
     {
       "id": "drop-rule-if-exists-removes-existing-rule-side-effects",
@@ -91,9 +133,19 @@
         "INSERT INTO drop_rule_source_items VALUES (1, 'after drop')"
       ],
       "query": "SELECT COUNT(*) FROM drop_rule_audit_items",
-      "expectedRows": [[{"value": "0"}]],
-      "columnModes": ["structural"],
-      "cleanup": ["DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"]
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural"
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     },
     {
       "id": "rls-policy-role-list-allows-listed-role",
@@ -113,11 +165,20 @@
         "SET ROLE {{schema}}_allowed"
       ],
       "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
-      "expectedRows": [[
-        {"value": "1"},
-        {"value": "allowed row"}
-      ]],
-      "columnModes": ["structural", "structural"],
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "allowed row"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
       "cleanup": [
         "RESET ROLE",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
@@ -144,7 +205,10 @@
       ],
       "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
       "expectedRows": [],
-      "columnModes": ["structural", "structural"],
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
       "cleanup": [
         "RESET ROLE",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
