@@ -33,13 +33,17 @@ func nodeCreatePublication(ctx *Context, node *tree.CreatePublication) (vitess.S
 	if err != nil {
 		return nil, err
 	}
+	options, err := nodeReplicationKVOptions(node.Options)
+	if err != nil {
+		return nil, err
+	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.CreatePublication{
 			Name:      string(node.Name),
 			AllTables: node.Targets.AllTables,
 			Tables:    tables,
 			Schemas:   append([]string(nil), node.Targets.Schemas...),
-			Options:   nodeKVOptions(node.Options),
+			Options:   options,
 		},
 	}, nil
 }
@@ -57,6 +61,10 @@ func nodeAlterPublication(ctx *Context, node *tree.AlterPublication) (vitess.Sta
 	if err != nil {
 		return nil, err
 	}
+	options, err := nodeReplicationKVOptions(node.Options)
+	if err != nil {
+		return nil, err
+	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.AlterPublication{
 			Name:      string(node.Name),
@@ -65,7 +73,7 @@ func nodeAlterPublication(ctx *Context, node *tree.AlterPublication) (vitess.Sta
 			Owner:     node.Owner,
 			Tables:    tables,
 			Schemas:   append([]string(nil), node.Targets.Schemas...),
-			Options:   nodeKVOptions(node.Options),
+			Options:   options,
 			AllTables: node.Targets.AllTables,
 		},
 	}, nil
@@ -225,15 +233,7 @@ func nodeSubscriptionAlterAction(action tree.SubscriptionAlterAction) (pgnodes.S
 	}
 }
 
-func nodeKVOptions(options tree.KVOptions) map[string]string {
-	ret := make(map[string]string, len(options))
-	for _, option := range options {
-		ret[strings.ToLower(string(option.Key))] = nodeOptionValue(option.Value)
-	}
-	return ret
-}
-
-func nodeSubscriptionKVOptions(options tree.KVOptions) (map[string]string, error) {
+func nodeReplicationKVOptions(options tree.KVOptions) (map[string]string, error) {
 	ret := make(map[string]string, len(options))
 	seen := make(map[string]struct{}, len(options))
 	for _, option := range options {
@@ -245,6 +245,10 @@ func nodeSubscriptionKVOptions(options tree.KVOptions) (map[string]string, error
 		ret[key] = nodeOptionValue(option.Value)
 	}
 	return ret, nil
+}
+
+func nodeSubscriptionKVOptions(options tree.KVOptions) (map[string]string, error) {
+	return nodeReplicationKVOptions(options)
 }
 
 func nodeOptionValue(expr tree.Expr) string {

@@ -883,13 +883,16 @@ func applyPublicationOptions(pub *publications.Publication, options map[string]s
 		value := strings.TrimSpace(raw)
 		switch key {
 		case "publish":
-			if value == "" || strings.EqualFold(value, "true") {
+			if strings.EqualFold(value, "true") {
 				return errors.New(`publication option "publish" requires a comma-separated action list`)
 			}
 			pub.PublishInsert = false
 			pub.PublishUpdate = false
 			pub.PublishDelete = false
 			pub.PublishTruncate = false
+			if value == "" {
+				continue
+			}
 			for _, action := range strings.Split(value, ",") {
 				switch strings.ToLower(strings.TrimSpace(action)) {
 				case "insert":
