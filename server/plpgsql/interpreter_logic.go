@@ -166,6 +166,9 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if err != nil || result != nil {
 		return result, err
 	}
+	if iFunc.IsSRF() {
+		return sql.RowsToRowIter(), nil
+	}
 	return procedureOutputRow(iFunc, stack), nil
 }
 
