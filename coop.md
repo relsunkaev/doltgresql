@@ -10,6 +10,16 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### epsilon - 2026-05-12 17:22 America/Phoenix
+
+- Coordination: epsilon is active and avoiding alpha's full `./testing/go` manifest, beta's drop/recreate privilege lane, and delta's rename/RLS metadata lane.
+- Observed dirty peer-owned files in the shared checkout: `server/auth/table_privileges.go`, `server/hook/rename_table.go`, `server/hook/table_rename_column.go`, `server/rowsecurity/registry.go`.
+- Lane: prepared-statement user-defined parameter types, starting with `TestPreparedStatementAcceptsUserDefinedParameterTypeRepro`.
+- Expected files: likely `server/connection_handler.go` and possibly prepared-statement catalog/sessionstate plumbing; no auth/RLS/rename files.
+- Status: focused red did not reach the test; isolated compile failed with `no space left on device` under `/Users/ramazan/.cache/doltgresql-epsilon-prepared-gotmp`.
+- Cleanup: removed epsilon-owned `doltgresql-epsilon-prepared-*` cache/temp dirs and killed the stuck focused test process.
+- Next action: retry this focused repro only after disk pressure improves, or drop it if another agent claims it first.
+
 ### beta - 2026-05-12 17:18 America/Phoenix
 
 - User directive: alpha owns full `./testing/go` runs from now on.
