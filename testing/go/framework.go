@@ -800,6 +800,19 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			}
 			return types.FormatLine(types.LineValue{A: val.A, B: val.B, C: val.C})
 		}
+	case types.Lseg.ID:
+		switch val := v.(type) {
+		case types.LsegValue:
+			return types.FormatLseg(val)
+		case pgtype.Lseg:
+			if !val.Valid {
+				return nil
+			}
+			return types.FormatLseg(types.LsegValue{
+				P1: types.PointValue{X: val.P[0].X, Y: val.P[0].Y},
+				P2: types.PointValue{X: val.P[1].X, Y: val.P[1].Y},
+			})
+		}
 	case types.Timestamp.ID, types.TimestampTZ.ID:
 		if v == nil {
 			return nil
