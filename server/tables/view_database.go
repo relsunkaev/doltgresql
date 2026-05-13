@@ -37,12 +37,44 @@ func (d Database) DropView(ctx *sql.Context, name string) error {
 // GetViewDefinition resolves a PostgreSQL logical view name to its physical
 // schema-fragment name, then exposes the logical name back to callers.
 func (d Database) GetViewDefinition(ctx *sql.Context, name string) (sql.ViewDefinition, bool, error) {
-	view, ok, err := d.Database.GetViewDefinition(ctx, core.EncodePhysicalViewName(name))
+	view, ok, err := getLogicalViewDefinition(ctx, d.Database, name)
+	if err != nil || ok {
+		return view, ok, err
+	}
+	if d.Database.Schema() != "" {
+		return sql.ViewDefinition{}, false, nil
+	}
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return sql.ViewDefinition{}, false, err
+	}
+	for _, schemaName := range searchPath {
+		schema, ok, err := d.Database.GetSchema(ctx, schemaName)
+		if err != nil {
+			return sql.ViewDefinition{}, false, err
+		}
+		if !ok {
+			continue
+		}
+		viewDb, ok := schema.(sql.ViewDatabase)
+		if !ok {
+			continue
+		}
+		view, ok, err = getLogicalViewDefinition(ctx, viewDb, name)
+		if err != nil || ok {
+			return view, ok, err
+		}
+	}
+	return sql.ViewDefinition{}, false, nil
+}
+
+func getLogicalViewDefinition(ctx *sql.Context, viewDb sql.ViewDatabase, name string) (sql.ViewDefinition, bool, error) {
+	view, ok, err := viewDb.GetViewDefinition(ctx, core.EncodePhysicalViewName(name))
 	if err != nil || ok {
 		view.Name = core.DecodePhysicalViewName(view.Name)
 		return view, ok, err
 	}
-	view, ok, err = d.Database.GetViewDefinition(ctx, name)
+	view, ok, err = viewDb.GetViewDefinition(ctx, name)
 	view.Name = core.DecodePhysicalViewName(view.Name)
 	return view, ok, err
 }
