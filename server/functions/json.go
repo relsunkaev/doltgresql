@@ -213,7 +213,7 @@ var to_json_anyelement = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
 	Strict:     false,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
-		value, err := jsonValueFromAnyElement(ctx, t[0], val)
+		value, err := jsonValueFromAnyElement(ctx, t[0], val, false)
 		if err != nil {
 			return nil, err
 		}

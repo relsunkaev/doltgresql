@@ -253,7 +253,7 @@ var to_jsonb_anyelement = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyElement},
 	Strict:     false,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
-		value, err := jsonValueFromAnyElement(ctx, t[0], val)
+		value, err := jsonValueFromAnyElement(ctx, t[0], val, true)
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +261,7 @@ var to_jsonb_anyelement = framework.Function1{
 	},
 }
 
-func jsonValueFromAnyElement(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (pgtypes.JsonValue, error) {
+func jsonValueFromAnyElement(ctx *sql.Context, typ *pgtypes.DoltgresType, val any, sortRecordKeys bool) (pgtypes.JsonValue, error) {
 	res, err := sql.UnwrapAny(ctx, val)
 	if err != nil {
 		return nil, err
@@ -270,7 +270,7 @@ func jsonValueFromAnyElement(ctx *sql.Context, typ *pgtypes.DoltgresType, val an
 		return pgtypes.JsonValueNull(0), nil
 	}
 	if record, ok := res.([]pgtypes.RecordValue); ok {
-		return jsonValueFromRecord(ctx, typ, record, true)
+		return jsonValueFromRecord(ctx, typ, record, sortRecordKeys)
 	}
 	return pgtypes.JsonValueFromSQLValue(ctx, typ, res)
 }
