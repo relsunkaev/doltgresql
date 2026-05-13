@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -70,7 +71,7 @@ func (r *ReindexIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, erro
 	if !ok {
 		return nil, errors.Errorf(`index "%s" does not exist`, r.index)
 	}
-	if _, err = core.GetSchemaName(ctx, nil, r.schema); err != nil {
+	if err = checkIndexTableOwnership(ctx, doltdb.TableName{Schema: located.schema, Name: located.tableName}); err != nil {
 		return nil, err
 	}
 	if err = reindexJsonbGinIndexIfRequested(located); err != nil {
@@ -156,6 +157,9 @@ func (r *ReindexTable) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, erro
 		return nil, err
 	} else if !ok {
 		return nil, sql.ErrTableNotFound.New(r.table)
+	}
+	if err = checkIndexTableOwnership(ctx, doltdb.TableName{Schema: schemaName, Name: r.table}); err != nil {
+		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
 }

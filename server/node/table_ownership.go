@@ -15,6 +15,8 @@
 package node
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -42,6 +44,14 @@ func checkTableOwnership(ctx *sql.Context, tableName doltdb.TableName) error {
 		return nil
 	}
 	return errors.Errorf("must be owner of table %s", tableName.Name)
+}
+
+func checkIndexTableOwnership(ctx *sql.Context, tableName doltdb.TableName) error {
+	err := checkTableOwnership(ctx, tableName)
+	if err != nil && strings.HasPrefix(err.Error(), "must be owner of table ") {
+		return errors.Errorf("permission denied for table %s", tableName.Name)
+	}
+	return err
 }
 
 func roleCanOperateAsOwner(userRole auth.Role, owner string) bool {

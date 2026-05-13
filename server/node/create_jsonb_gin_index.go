@@ -121,6 +121,9 @@ func (c *CreateJsonbGinIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter,
 			return sql.RowsToRowIter(), nil
 		}
 	}
+	if err = checkIndexTableOwnership(ctx, doltdb.TableName{Schema: schemaName, Name: c.tableName}); err != nil {
+		return nil, err
+	}
 
 	columnIndex, anchorColumn, err := c.validateTable(ctx, table)
 	if err != nil {

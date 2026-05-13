@@ -73,6 +73,7 @@ const (
 	ruleId_SuppressDeferrableForeignKeys                                          // suppressDeferrableForeignKeys
 	ruleId_UnwrapTableCopierCreateTable                                           // unwrapTableCopierCreateTable
 	ruleId_PreserveTableMetadata                                                  // preserveTableMetadata
+	ruleId_ValidateCreateIndexOwnership                                           // validateCreateIndexOwnership
 	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
 	ruleId_AssignIndexStats                                                       // assignIndexStats
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
@@ -151,6 +152,7 @@ func Init() {
 	analyzer.OnceAfterDefault = append(analyzer.OnceAfterDefault,
 		analyzer.Rule{Id: ruleId_WrapPrimaryKeyMetadata, Apply: wrapPrimaryKeyMetadata},
 		analyzer.Rule{Id: ruleId_PreserveTableMetadata, Apply: preserveTableMetadata},
+		analyzer.Rule{Id: ruleId_ValidateCreateIndexOwnership, Apply: validateCreateIndexOwnership},
 		analyzer.Rule{Id: ruleId_ReplaceSerial, Apply: ReplaceSerial},
 		analyzer.Rule{Id: ruleId_UnwrapTableCopierCreateTable, Apply: UnwrapTableCopierCreateTable},
 		analyzer.Rule{Id: ruleId_ReplaceArithmeticExpressions, Apply: ReplaceArithmeticExpressions},

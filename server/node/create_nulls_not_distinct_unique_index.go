@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -136,6 +137,9 @@ func (c *CreateNullsNotDistinctUniqueIndex) RowIter(ctx *sql.Context, _ sql.Row)
 		if exists {
 			return sql.RowsToRowIter(), nil
 		}
+	}
+	if err = checkIndexTableOwnership(ctx, doltdb.TableName{Schema: schemaName, Name: c.table}); err != nil {
+		return nil, err
 	}
 	alterable, ok := table.(sql.IndexAlterableTable)
 	if !ok {

@@ -675,11 +675,7 @@ func locateIndexOnTable(ctx *sql.Context, db sql.Database, schemaName string, ta
 }
 
 func checkLocatedIndexTableOwnership(ctx *sql.Context, located *locatedIndex) error {
-	err := checkTableOwnership(ctx, doltdb.TableName{Schema: located.schema, Name: located.tableName})
-	if err != nil && strings.HasPrefix(err.Error(), "must be owner of table ") {
-		return errors.Errorf("permission denied for table %s", located.tableName)
-	}
-	return err
+	return checkIndexTableOwnership(ctx, doltdb.TableName{Schema: located.schema, Name: located.tableName})
 }
 
 func indexNameMatches(index sql.Index, table sql.Table, name string) bool {
