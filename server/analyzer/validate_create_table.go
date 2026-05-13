@@ -345,7 +345,7 @@ func resolveAlterColumn(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, scop
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
-			sch, err = analyzer.ValidateRenameColumn(ctx, initialSch, sch, n.(*plan.RenameColumn))
+			sch, err = validateRenameColumn(ctx, initialSch, sch, n.(*plan.RenameColumn))
 			if err != nil {
 				return nil, transform.SameTree, err
 			}
@@ -442,6 +442,37 @@ func resolveAlterColumn(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, scop
 	}
 
 	return n, same, nil
+}
+
+func validateRenameColumn(_ *sql.Context, initialSch, sch sql.Schema, rc *plan.RenameColumn) (sql.Schema, error) {
+	nameable := rc.Table.(sql.Nameable)
+
+	if err := analyzer.ValidateIdentifier(rc.NewColumnName); err != nil {
+		return nil, err
+	}
+
+	if sch.Contains(rc.NewColumnName, nameable.Name()) {
+		return nil, sql.ErrColumnExists.New(rc.NewColumnName)
+	}
+
+	if !initialSch.Contains(rc.ColumnName, nameable.Name()) || !sch.Contains(rc.ColumnName, nameable.Name()) {
+		return nil, sql.ErrTableColumnNotFound.New(nameable.Name(), rc.ColumnName)
+	}
+
+	return renameInSchema(sch, rc.ColumnName, rc.NewColumnName, nameable.Name()), nil
+}
+
+func renameInSchema(sch sql.Schema, oldColumnName, newColumnName, tableName string) sql.Schema {
+	idx := sch.IndexOf(oldColumnName, tableName)
+	schCopy := make(sql.Schema, len(sch))
+	for i := range sch {
+		columnCopy := *sch[i]
+		if i == idx {
+			columnCopy.Name = newColumnName
+		}
+		schCopy[i] = &columnCopy
+	}
+	return schCopy
 }
 
 // Returns the underlying table name for the node given

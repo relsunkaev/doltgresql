@@ -16,6 +16,7 @@ package hook
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -24,6 +25,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/rowsecurity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -50,6 +53,16 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 		return err
 	}
 	tableName := doltTable.TableName()
+	freshTable, ok, err := n.Database().GetTableInsensitive(ctx, tableName.Name)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(tableName.Name)
+	}
+	if err = rewriteRenamedColumnCheckConstraints(ctx, freshTable, n.ColumnName, n.NewColumnName); err != nil {
+		return err
+	}
 	var persistErr error
 	auth.LockWrite(func() {
 		auth.RenameTableColumnPrivileges(tableName, n.ColumnName, n.NewColumnName)
@@ -109,4 +122,95 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 		}
 	}
 	return nil
+}
+
+func rewriteRenamedColumnCheckConstraints(ctx *sql.Context, table sql.Table, oldColumnName, newColumnName string) error {
+	checkTable, ok := table.(sql.CheckTable)
+	if !ok {
+		checkTable, ok = sql.GetUnderlyingTable(table).(sql.CheckTable)
+	}
+	if !ok {
+		return nil
+	}
+	checkAlterable, ok := table.(sql.CheckAlterableTable)
+	if !ok {
+		checkAlterable, ok = sql.GetUnderlyingTable(table).(sql.CheckAlterableTable)
+	}
+	if !ok {
+		return nil
+	}
+	checks, err := checkTable.GetChecks(ctx)
+	if err != nil {
+		return err
+	}
+	for _, check := range checks {
+		rewritten, changed, err := rewriteCheckConstraintColumnReference(check, oldColumnName, newColumnName)
+		if err != nil {
+			return err
+		}
+		if !changed {
+			continue
+		}
+		if err = checkAlterable.DropCheck(ctx, check.Name); err != nil {
+			return err
+		}
+		if err = checkAlterable.CreateCheck(ctx, &rewritten); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func rewriteCheckConstraintColumnReference(check sql.CheckDefinition, oldColumnName, newColumnName string) (sql.CheckDefinition, bool, error) {
+	if !strings.Contains(strings.ToLower(check.CheckExpression), strings.ToLower(oldColumnName)) {
+		return check, false, nil
+	}
+	statements, err := parser.Parse("SELECT " + check.CheckExpression)
+	if err != nil || len(statements) != 1 {
+		return check, false, err
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return check, false, nil
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok || len(selectClause.Exprs) != 1 {
+		return check, false, nil
+	}
+	rewrittenExpr, changed, err := rewriteColumnReferenceExpr(selectClause.Exprs[0].Expr, oldColumnName, newColumnName)
+	if err != nil || !changed {
+		return check, changed, err
+	}
+	check.CheckExpression = rewrittenExpr.String()
+	return check, true, nil
+}
+
+func rewriteColumnReferenceExpr(expr tree.Expr, oldColumnName, newColumnName string) (tree.Expr, bool, error) {
+	if expr == nil {
+		return nil, false, nil
+	}
+	changed := false
+	rewritten, err := tree.SimpleVisit(expr, func(expr tree.Expr) (bool, tree.Expr, error) {
+		switch typedExpr := expr.(type) {
+		case *tree.UnresolvedName:
+			if typedExpr.NumParts == 0 || !strings.EqualFold(typedExpr.Parts[0], oldColumnName) {
+				return true, expr, nil
+			}
+			rewrittenName := *typedExpr
+			rewrittenName.Parts[0] = newColumnName
+			changed = true
+			return true, &rewrittenName, nil
+		case *tree.ColumnItem:
+			if !strings.EqualFold(string(typedExpr.ColumnName), oldColumnName) {
+				return true, expr, nil
+			}
+			rewrittenColumn := *typedExpr
+			rewrittenColumn.ColumnName = tree.Name(newColumnName)
+			changed = true
+			return true, &rewrittenColumn, nil
+		default:
+			return true, expr, nil
+		}
+	})
+	return rewritten, changed, err
 }

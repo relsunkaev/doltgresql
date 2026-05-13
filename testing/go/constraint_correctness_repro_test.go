@@ -863,22 +863,29 @@ func TestRenameColumnUsedByCheckConstraintKeepsConstraintUsableRepro(t *testing.
 
 	_, err := conn.Current.Exec(ctx, `CREATE TABLE check_rename_items (
 		id INT PRIMARY KEY,
-		amount INT CONSTRAINT amount_positive CHECK (amount > 0)
+		amount INT,
+		amount_total INT,
+		CONSTRAINT amount_positive CHECK (amount > 0),
+		CONSTRAINT amount_total_gt_amount CHECK (amount_total > amount)
 	);`)
 	require.NoError(t, err)
 
 	_, err = conn.Current.Exec(ctx, `ALTER TABLE check_rename_items RENAME COLUMN amount TO value;`)
 	require.NoError(t, err)
 
-	_, err = conn.Current.Exec(ctx, `INSERT INTO check_rename_items VALUES (1, 10);`)
+	_, err = conn.Current.Exec(ctx, `INSERT INTO check_rename_items VALUES (1, 10, 15);`)
 	require.NoError(t, err)
 
-	_, err = conn.Current.Exec(ctx, `INSERT INTO check_rename_items VALUES (2, -1);`)
+	_, err = conn.Current.Exec(ctx, `INSERT INTO check_rename_items VALUES (2, -1, 15);`)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), `Check constraint "amount_positive" violated`)
 
+	_, err = conn.Current.Exec(ctx, `INSERT INTO check_rename_items VALUES (3, 10, 5);`)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `Check constraint "amount_total_gt_amount" violated`)
+
 	var count int64
-	require.NoError(t, conn.Current.QueryRow(ctx, `SELECT COUNT(*) FROM check_rename_items WHERE id = 1 AND value = 10;`).Scan(&count))
+	require.NoError(t, conn.Current.QueryRow(ctx, `SELECT COUNT(*) FROM check_rename_items WHERE id = 1 AND value = 10 AND amount_total = 15;`).Scan(&count))
 	require.Equal(t, int64(1), count)
 }
 
