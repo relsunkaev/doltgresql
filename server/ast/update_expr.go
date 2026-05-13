@@ -34,17 +34,41 @@ func nodeUpdateExpr(ctx *Context, node *tree.UpdateExpr) (vitess.AssignmentExprs
 	}
 	var assignmentExprs []*vitess.AssignmentExpr
 	for i, name := range node.Names {
+		targetName := &vitess.ColName{
+			Name: vitess.NewColIdent(string(name)),
+		}
 		assignmentExpr := expr
 		if len(node.Names) > 1 {
+			if len(node.Indirection) > 0 {
+				return nil, fmt.Errorf("array subscript assignment is not supported in tuple update targets")
+			}
 			assignmentExpr = vitess.InjectedExpr{
 				Expression: pgexprs.NewRowValueField(i),
 				Children:   vitess.Exprs{expr},
 			}
+		} else if len(node.Indirection) > 0 {
+			if len(node.Indirection) > 1 {
+				return nil, fmt.Errorf("multi dimensional array subscript assignment is not yet supported")
+			}
+			subscript := node.Indirection[0]
+			if subscript.Slice {
+				return nil, fmt.Errorf("array slice assignment is not yet supported")
+			}
+			indexExpr, err := nodeExpr(ctx, subscript.Begin)
+			if err != nil {
+				return nil, err
+			}
+			assignmentExpr = vitess.InjectedExpr{
+				Expression: &pgexprs.ArraySetElement{},
+				Children: vitess.Exprs{
+					&vitess.ColName{Name: vitess.NewColIdent(string(name))},
+					indexExpr,
+					expr,
+				},
+			}
 		}
 		assignmentExprs = append(assignmentExprs, &vitess.AssignmentExpr{
-			Name: &vitess.ColName{
-				Name: vitess.NewColIdent(string(name)),
-			},
+			Name: targetName,
 			Expr: assignmentExpr,
 		})
 	}

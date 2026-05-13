@@ -1296,6 +1296,13 @@ func (stmt *Update) copyNode() *Update {
 	stmtCopy.Exprs = make(UpdateExprs, len(stmt.Exprs))
 	for i, e := range stmt.Exprs {
 		eCopy := *e
+		if len(e.Indirection) > 0 {
+			eCopy.Indirection = make(ArraySubscripts, len(e.Indirection))
+			for j, subscript := range e.Indirection {
+				subscriptCopy := *subscript
+				eCopy.Indirection[j] = &subscriptCopy
+			}
+		}
 		stmtCopy.Exprs[i] = &eCopy
 	}
 	if stmt.Where != nil {
@@ -1309,6 +1316,26 @@ func (stmt *Update) copyNode() *Update {
 func (stmt *Update) walkStmt(v Visitor) Statement {
 	ret := stmt
 	for i, expr := range stmt.Exprs {
+		for j, subscript := range expr.Indirection {
+			if subscript.Begin != nil {
+				e, changed := WalkExpr(v, subscript.Begin)
+				if changed {
+					if ret == stmt {
+						ret = stmt.copyNode()
+					}
+					ret.Exprs[i].Indirection[j].Begin = e
+				}
+			}
+			if subscript.End != nil {
+				e, changed := WalkExpr(v, subscript.End)
+				if changed {
+					if ret == stmt {
+						ret = stmt.copyNode()
+					}
+					ret.Exprs[i].Indirection[j].End = e
+				}
+			}
+		}
 		e, changed := WalkExpr(v, expr.Expr)
 		if changed {
 			if ret == stmt {

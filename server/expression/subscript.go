@@ -173,6 +173,151 @@ func (s Subscript) WithResolvedChildren(ctx context.Context, children []any) (an
 	return NewSubscript(child, index), nil
 }
 
+// ArraySetElement returns a copy of a one-dimensional array with one element updated.
+type ArraySetElement struct {
+	Array sql.Expression
+	Index sql.Expression
+	Value sql.Expression
+}
+
+var _ vitess.Injectable = (*ArraySetElement)(nil)
+var _ sql.Expression = (*ArraySetElement)(nil)
+
+// NewArraySetElement creates a new array element assignment expression.
+func NewArraySetElement(array, index, value sql.Expression) *ArraySetElement {
+	return &ArraySetElement{
+		Array: array,
+		Index: index,
+		Value: value,
+	}
+}
+
+// Resolved implements the sql.Expression interface.
+func (s ArraySetElement) Resolved() bool {
+	return s.Array != nil && s.Index != nil && s.Value != nil &&
+		s.Array.Resolved() && s.Index.Resolved() && s.Value.Resolved()
+}
+
+// String implements the sql.Expression interface.
+func (s ArraySetElement) String() string {
+	if s.Array == nil || s.Index == nil || s.Value == nil {
+		return "array_set_element(unresolved, unresolved, unresolved)"
+	}
+	return fmt.Sprintf("array_set_element(%s, %s, %s)", s.Array, s.Index, s.Value)
+}
+
+// Type implements the sql.Expression interface.
+func (s ArraySetElement) Type(ctx *sql.Context) sql.Type {
+	if s.Array == nil {
+		return nil
+	}
+	return s.Array.Type(ctx)
+}
+
+// IsNullable implements the sql.Expression interface.
+func (s ArraySetElement) IsNullable(ctx *sql.Context) bool {
+	return s.Array == nil || s.Array.IsNullable(ctx)
+}
+
+// Eval implements the sql.Expression interface.
+func (s ArraySetElement) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
+	indexVal, err := s.Index.Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	if indexVal == nil {
+		return s.Array.Eval(ctx, row)
+	}
+	index, ok := indexVal.(int32)
+	if !ok {
+		converted, _, err := types.Int32.Convert(ctx, indexVal)
+		if err != nil {
+			return nil, err
+		}
+		index = converted.(int32)
+	}
+
+	value, err := s.Value.Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	arrayType, ok := s.Array.Type(ctx).(*types.DoltgresType)
+	if !ok {
+		return nil, fmt.Errorf("unsupported array assignment target type %T", s.Array.Type(ctx))
+	}
+	baseType, err := arrayType.ResolveArrayBaseType(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if value != nil {
+		value, _, err = baseType.Convert(ctx, value)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	arrayVal, err := s.Array.Eval(ctx, row)
+	if err != nil {
+		return nil, err
+	}
+	elements, ok := types.ArrayElements(arrayVal)
+	if arrayVal != nil && !ok {
+		return nil, fmt.Errorf("unsupported type %T for array assignment", arrayVal)
+	}
+
+	lowerBound := index
+	if arrayVal != nil {
+		lowerBound = arrayLowerBound(ctx, s.Array)
+		if types.ArrayHasNonDefaultLowerBounds(types.ArrayLowerBounds(arrayVal)) {
+			lowerBound = types.ArrayLowerBound(arrayVal, 1)
+		}
+	}
+
+	upperBound := lowerBound + int32(len(elements)) - 1
+	newLowerBound := lowerBound
+	if len(elements) == 0 || index < newLowerBound {
+		newLowerBound = index
+	}
+	newUpperBound := upperBound
+	if len(elements) == 0 || index > newUpperBound {
+		newUpperBound = index
+	}
+
+	newElements := make([]any, int(newUpperBound-newLowerBound)+1)
+	copy(newElements[int(lowerBound-newLowerBound):], elements)
+	newElements[int(index-newLowerBound)] = value
+	return types.NewArrayValue(newElements, []int32{newLowerBound}), nil
+}
+
+// Children implements the sql.Expression interface.
+func (s ArraySetElement) Children() []sql.Expression {
+	return []sql.Expression{s.Array, s.Index, s.Value}
+}
+
+// WithChildren implements the sql.Expression interface.
+func (s ArraySetElement) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
+	if len(children) != 3 {
+		return nil, fmt.Errorf("expected 3 children, got %d", len(children))
+	}
+	return NewArraySetElement(children[0], children[1], children[2]), nil
+}
+
+// WithResolvedChildren implements the vitess.Injectable interface.
+func (s ArraySetElement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 3 {
+		return nil, fmt.Errorf("expected 3 children, got %d", len(children))
+	}
+	expressions := make([]sql.Expression, len(children))
+	for i, child := range children {
+		expr, ok := child.(sql.Expression)
+		if !ok {
+			return nil, fmt.Errorf("expected child to be an expression but has type `%T`", child)
+		}
+		expressions[i] = expr
+	}
+	return NewArraySetElement(expressions[0], expressions[1], expressions[2]), nil
+}
+
 // SliceSubscript represents a one-dimensional array slice expression, e.g. `a[2:3]`.
 type SliceSubscript struct {
 	Child    sql.Expression
