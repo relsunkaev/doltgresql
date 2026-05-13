@@ -15,10 +15,14 @@
 package pgcatalog
 
 import (
-	"io"
+	"strings"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/env"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dtables"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +47,51 @@ func (p PgStatsHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatsHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_stats row iter
-	return emptyRowIter()
+	doltSession := dsess.DSessFromSess(ctx.Session)
+	statsProvider, ok := doltSession.StatsProvider().(dtables.BranchStatsProvider)
+	if !ok {
+		return emptyRowIter()
+	}
+
+	branch := pgStatsBranch(ctx, doltSession)
+	dbName := strings.ToLower(ctx.GetCurrentDatabase())
+	var rows []sql.Row
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			schemaName := schema.Item.SchemaName()
+			tableName := table.Item.Name()
+			tableStats, err := statsProvider.GetTableDoltStats(ctx, branch, dbName, strings.ToLower(schemaName), strings.ToLower(tableName))
+			if err != nil || len(tableStats) == 0 {
+				return err == nil, err
+			}
+			for _, col := range table.Item.Schema(ctx) {
+				if col.HiddenSystem {
+					continue
+				}
+				rows = append(rows, sql.Row{
+					schemaName, // schemaname
+					tableName,  // tablename
+					col.Name,   // attname
+					false,      // inherited
+					float32(0), // null_frac
+					int32(0),   // avg_width
+					float32(0), // n_distinct
+					nil,        // most_common_vals
+					nil,        // most_common_freqs
+					nil,        // histogram_bounds
+					nil,        // correlation
+					nil,        // most_common_elems
+					nil,        // most_common_elem_freqs
+					nil,        // elem_count_histogram
+				})
+			}
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -73,18 +120,13 @@ var pgStatsSchema = sql.Schema{
 	{Name: "elem_count_histogram", Type: pgtypes.Float32Array, Default: nil, Nullable: true, Source: PgStatsName},
 }
 
-// pgStatsRowIter is the sql.RowIter for the pg_stats table.
-type pgStatsRowIter struct {
-}
-
-var _ sql.RowIter = (*pgStatsRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatsRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatsRowIter) Close(ctx *sql.Context) error {
-	return nil
+func pgStatsBranch(ctx *sql.Context, doltSession *dsess.DoltSession) string {
+	if doltSession == nil {
+		return env.DefaultInitBranch
+	}
+	branch, err := doltSession.GetBranch(ctx)
+	if err != nil || branch == "" {
+		return env.DefaultInitBranch
+	}
+	return strings.ToLower(branch)
 }
