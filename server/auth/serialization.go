@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(15)
+	writer.Uint32(16)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -126,6 +126,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV14(reader)
 	case 15:
 		return db.deserializeV15(reader)
+	case 16:
+		return db.deserializeV16(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -236,6 +238,10 @@ func (db *Database) deserializeV15(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 15)
 }
 
+func (db *Database) deserializeV16(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 16)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -247,7 +253,10 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.rolesByName[r.Name] = r.id
 		db.rolesByID[r.id] = r
 	}
-	if version >= 12 {
+	if version >= 16 {
+		// Read database metadata
+		db.databaseMetadata.deserialize(2, reader)
+	} else if version >= 12 {
 		// Read database metadata
 		db.databaseMetadata.deserialize(1, reader)
 	} else {

@@ -44,7 +44,12 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 		logrus.Warnf("unsupported clause ENCODING, ignoring")
 	}
 	if len(node.Strategy) > 0 {
-		return nil, errors.Errorf("STRATEGY clause is not yet supported")
+		switch strings.ToUpper(node.Strategy) {
+		case "WAL_LOG", "FILE_COPY":
+			logrus.Warnf("unsupported clause STRATEGY, ignoring")
+		default:
+			return nil, errors.Errorf("unrecognized CREATE DATABASE strategy %s", node.Strategy)
+		}
 	}
 	if len(node.Locale) > 0 {
 		logrus.Warnf("unsupported clause LC_LOCALE, ignoring")
@@ -73,33 +78,14 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 	if len(node.CType) > 0 {
 		logrus.Warnf("CTYPE clause is not yet supported, ignoring")
 	}
-	if len(node.IcuLocale) > 0 {
-		return nil, errors.Errorf("ICU_LOCALE clause is not yet supported")
-	}
-	if len(node.IcuRules) > 0 {
-		return nil, errors.Errorf("TEMPLATE clause is not yet supported")
-	}
-	if len(node.LocaleProvider) > 0 {
-		return nil, errors.Errorf("LOCALE_PROVIDER clause is not yet supported")
-	}
-	if len(node.CollationVersion) > 0 {
-		return nil, errors.Errorf("COLLATION_VERSION clause is not yet supported")
-	}
 	if len(node.Tablespace) > 0 && !strings.EqualFold(node.Tablespace, "pg_default") {
 		// pg_default is the only tablespace doltgres exposes. Accepting it as
 		// a no-op lets dump/restore scripts that spell out the default run
 		// unchanged; any other target name does not resolve here.
 		return nil, errors.Errorf(`tablespace "%s" does not exist`, node.Tablespace)
 	}
-	// TODO: some clauses have default values in case of not being defined.
-	// ALLOW_CONNECTIONS defaults to TRUE
-	// CONNECTION LIMIT defaults to -1
-	// IS_TEMPLATE defaults to FALSE
-	if node.Oid != nil {
-		return nil, errors.Errorf("OID clause is not yet supported")
-	}
 
-	if node.Owner != "" || node.AllowConnections != nil || node.ConnectionLimit != nil || node.IsTemplate != nil {
+	if hasCreateDatabaseMetadataUpdate(node) {
 		update, err := createDatabaseMetadataUpdate(node)
 		if err != nil {
 			return nil, err
@@ -120,6 +106,21 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 		IfNotExists:      node.IfNotExists,
 		CharsetCollate:   charsets,
 	}, nil
+}
+
+func hasCreateDatabaseMetadataUpdate(node *tree.CreateDatabase) bool {
+	return node.Owner != "" ||
+		node.AllowConnections != nil ||
+		node.ConnectionLimit != nil ||
+		node.IsTemplate != nil ||
+		node.Oid != nil ||
+		node.Locale != "" ||
+		node.Collate != "" ||
+		node.CType != "" ||
+		node.IcuLocale != "" ||
+		node.IcuRules != "" ||
+		node.LocaleProvider != "" ||
+		node.CollationVersion != ""
 }
 
 func createDatabaseMetadataUpdate(node *tree.CreateDatabase) (auth.DatabaseMetadataUpdate, error) {
@@ -149,7 +150,61 @@ func createDatabaseMetadataUpdate(node *tree.CreateDatabase) (auth.DatabaseMetad
 		}
 		update.IsTemplate = &value
 	}
+	if node.Oid != nil {
+		value, err := databaseIntOption(node.Oid)
+		if err != nil {
+			return update, err
+		}
+		if value < 0 {
+			return update, errors.Errorf("OID must not be negative")
+		}
+		oid := uint32(value)
+		update.Oid = &oid
+	}
+	if node.Locale != "" {
+		locale := node.Locale
+		update.Collate = &locale
+		update.CType = &locale
+	}
+	if node.Collate != "" {
+		collate := node.Collate
+		update.Collate = &collate
+	}
+	if node.CType != "" {
+		ctype := node.CType
+		update.CType = &ctype
+	}
+	if node.IcuLocale != "" {
+		icuLocale := node.IcuLocale
+		update.IcuLocale = &icuLocale
+	}
+	if node.IcuRules != "" {
+		icuRules := node.IcuRules
+		update.IcuRules = &icuRules
+	}
+	if node.LocaleProvider != "" {
+		provider, err := databaseLocaleProvider(node.LocaleProvider)
+		if err != nil {
+			return update, err
+		}
+		update.LocaleProvider = &provider
+	}
+	if node.CollationVersion != "" {
+		collationVersion := node.CollationVersion
+		update.CollationVersion = &collationVersion
+	}
 	return update, nil
+}
+
+func databaseLocaleProvider(provider string) (string, error) {
+	switch strings.ToLower(provider) {
+	case "libc", "c":
+		return "c", nil
+	case "icu", "i":
+		return "i", nil
+	default:
+		return "", errors.Errorf("unrecognized locale provider %s", provider)
+	}
 }
 
 var postgresEncodingNames = map[string]struct{}{

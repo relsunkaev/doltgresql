@@ -26,6 +26,13 @@ type DatabaseMetadataValue struct {
 	AllowConnections bool
 	ConnectionLimit  int32
 	IsTemplate       bool
+	Oid              uint32
+	LocaleProvider   string
+	Collate          string
+	CType            string
+	IcuLocale        string
+	IcuRules         string
+	CollationVersion string
 }
 
 // DatabaseMetadataUpdate contains optional ALTER DATABASE metadata updates.
@@ -34,6 +41,13 @@ type DatabaseMetadataUpdate struct {
 	AllowConnections *bool
 	ConnectionLimit  *int32
 	IsTemplate       *bool
+	Oid              *uint32
+	LocaleProvider   *string
+	Collate          *string
+	CType            *string
+	IcuLocale        *string
+	IcuRules         *string
+	CollationVersion *string
 }
 
 // DatabaseMetadata contains explicit PostgreSQL database metadata keyed by database name.
@@ -57,6 +71,7 @@ func DefaultDatabaseMetadata() DatabaseMetadataValue {
 		AllowConnections: true,
 		ConnectionLimit:  -1,
 		IsTemplate:       false,
+		LocaleProvider:   "i",
 	}
 }
 
@@ -70,6 +85,15 @@ func GetDatabaseMetadata(database string) DatabaseMetadataValue {
 		metadata.AllowConnections = explicit.AllowConnections
 		metadata.ConnectionLimit = explicit.ConnectionLimit
 		metadata.IsTemplate = explicit.IsTemplate
+		metadata.Oid = explicit.Oid
+		if explicit.LocaleProvider != "" {
+			metadata.LocaleProvider = explicit.LocaleProvider
+		}
+		metadata.Collate = explicit.Collate
+		metadata.CType = explicit.CType
+		metadata.IcuLocale = explicit.IcuLocale
+		metadata.IcuRules = explicit.IcuRules
+		metadata.CollationVersion = explicit.CollationVersion
 	}
 	return metadata
 }
@@ -91,6 +115,27 @@ func UpdateDatabaseMetadata(database string, update DatabaseMetadataUpdate) {
 	}
 	if update.IsTemplate != nil {
 		metadata.IsTemplate = *update.IsTemplate
+	}
+	if update.Oid != nil {
+		metadata.Oid = *update.Oid
+	}
+	if update.LocaleProvider != nil {
+		metadata.LocaleProvider = *update.LocaleProvider
+	}
+	if update.Collate != nil {
+		metadata.Collate = *update.Collate
+	}
+	if update.CType != nil {
+		metadata.CType = *update.CType
+	}
+	if update.IcuLocale != nil {
+		metadata.IcuLocale = *update.IcuLocale
+	}
+	if update.IcuRules != nil {
+		metadata.IcuRules = *update.IcuRules
+	}
+	if update.CollationVersion != nil {
+		metadata.CollationVersion = *update.CollationVersion
 	}
 	globalDatabase.databaseMetadata.Data[database] = metadata
 }
@@ -122,6 +167,13 @@ func (metadata *DatabaseMetadata) serialize(writer *utils.Writer) {
 		writer.Bool(value.AllowConnections)
 		writer.Int32(value.ConnectionLimit)
 		writer.Bool(value.IsTemplate)
+		writer.Uint32(value.Oid)
+		writer.String(value.LocaleProvider)
+		writer.String(value.Collate)
+		writer.String(value.CType)
+		writer.String(value.IcuLocale)
+		writer.String(value.IcuRules)
+		writer.String(value.CollationVersion)
 	}
 }
 
@@ -139,6 +191,15 @@ func (metadata *DatabaseMetadata) deserialize(version uint32, reader *utils.Read
 			AllowConnections: reader.Bool(),
 			ConnectionLimit:  reader.Int32(),
 			IsTemplate:       reader.Bool(),
+		}
+		if version >= 2 {
+			value.Oid = reader.Uint32()
+			value.LocaleProvider = reader.String()
+			value.Collate = reader.String()
+			value.CType = reader.String()
+			value.IcuLocale = reader.String()
+			value.IcuRules = reader.String()
+			value.CollationVersion = reader.String()
 		}
 		if database != "" {
 			metadata.Data[database] = value

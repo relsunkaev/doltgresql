@@ -117,6 +117,9 @@ func (iter *pgDatabaseRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 	db := iter.dbs[iter.idx-1]
 	dbOid := id.NewDatabase(db.Name()).AsId()
 	metadata := auth.GetDatabaseMetadata(db.Name())
+	if metadata.Oid != 0 {
+		dbOid = id.NewOID(metadata.Oid).AsId()
+	}
 	ownerOid := id.NewId(id.Section_User, metadata.Owner)
 
 	// TODO: Add the rest of the pg_database columns
@@ -125,20 +128,27 @@ func (iter *pgDatabaseRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		db.Name(),                 // datname
 		ownerOid,                  // datdba
 		int32(6),                  // encoding
-		"i",                       // datlocprovider
+		metadata.LocaleProvider,   // datlocprovider
 		metadata.IsTemplate,       // datistemplate
 		metadata.AllowConnections, // datallowconn
 		metadata.ConnectionLimit,  // datconnlimit
 		uint32(0),                 // datfrozenxid
 		uint32(0),                 // datminmxid
 		id.Null,                   // dattablespace
-		"",                        // datcollate
-		"",                        // datctype
-		nil,                       // daticulocale
-		"",                        // daticurules
-		nil,                       // datcollversion
-		aclTextArray(auth.DatabaseACLItems(db.Name())), // datacl
+		metadata.Collate,          // datcollate
+		metadata.CType,            // datctype
+		nullableCatalogString(metadata.IcuLocale),        // daticulocale
+		metadata.IcuRules,                                // daticurules
+		nullableCatalogString(metadata.CollationVersion), // datcollversion
+		aclTextArray(auth.DatabaseACLItems(db.Name())),   // datacl
 	}, nil
+}
+
+func nullableCatalogString(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 // Close implements the interface sql.RowIter.
