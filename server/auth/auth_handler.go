@@ -121,6 +121,8 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 		return nil
 	case AuthType_CREATE:
 		privileges = []Privilege{Privilege_CREATE}
+	case AuthType_CONNECT:
+		privileges = []Privilege{Privilege_CONNECT}
 	case AuthType_DELETE:
 		privileges = []Privilege{Privilege_DELETE}
 	case AuthType_DROPTABLE:

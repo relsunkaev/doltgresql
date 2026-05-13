@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestRevokedDatabaseConnectPreventsNewSessionRepro reproduces a security bug:
 // revoking CONNECT on the database from PUBLIC does not prevent a normal user
@@ -33,6 +37,27 @@ func TestRevokedDatabaseConnectPreventsNewSessionRepro(t *testing.T) {
 					ExpectedErr: `permission denied`,
 					Username:    `no_connect`,
 					Password:    `pw`,
+				},
+			},
+		},
+	})
+}
+
+func TestGrantedDatabaseConnectAllowsNewSessionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "GRANT CONNECT ON DATABASE allows new sessions",
+			SetUpScript: []string{
+				`CREATE USER can_connect PASSWORD 'pw';`,
+				`REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;`,
+				`GRANT CONNECT ON DATABASE postgres TO can_connect;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT 1;`,
+					Expected: []sql.Row{{1}},
+					Username: `can_connect`,
+					Password: `pw`,
 				},
 			},
 		},

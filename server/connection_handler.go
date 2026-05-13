@@ -477,6 +477,51 @@ func (h *ConnectionHandler) chooseInitialParameters(startupMessage *pgproto3.Sta
 		})
 		return err
 	}
+	if err != nil {
+		return nil
+	}
+	if err = h.checkDatabaseConnectPrivilege(db); err != nil {
+		_ = h.send(&pgproto3.ErrorResponse{
+			Severity: string(ErrorResponseSeverity_Fatal),
+			Code:     pgcode.InsufficientPrivilege.String(),
+			Message:  err.Error(),
+			Routine:  "InitPostgres",
+		})
+		return err
+	}
+	return nil
+}
+
+func (h *ConnectionHandler) checkDatabaseConnectPrivilege(database string) error {
+	var allowed bool
+	var err error
+	auth.LockRead(func() {
+		role := auth.GetRole(h.mysqlConn.User)
+		if !role.IsValid() {
+			err = errors.Errorf(`role "%s" does not exist`, h.mysqlConn.User)
+			return
+		}
+		publicRole := auth.GetRole("public")
+		if !publicRole.IsValid() {
+			err = errors.New(`role "public" does not exist`)
+			return
+		}
+		roleKey := auth.DatabasePrivilegeKey{
+			Role: role.ID(),
+			Name: database,
+		}
+		publicKey := auth.DatabasePrivilegeKey{
+			Role: publicRole.ID(),
+			Name: database,
+		}
+		allowed = auth.HasDatabasePrivilege(roleKey, auth.Privilege_CONNECT) || auth.HasDatabasePrivilege(publicKey, auth.Privilege_CONNECT)
+	})
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errors.Errorf("permission denied for database %s", database)
+	}
 	return nil
 }
 
