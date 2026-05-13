@@ -71,7 +71,7 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 	if persistErr != nil {
 		return persistErr
 	}
-	rowsecurity.RenameColumn(ctx.GetCurrentDatabase(), tableName.Schema, tableName.Name, n.ColumnName, n.NewColumnName)
+	rowsecurity.RenameColumn(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), tableName.Schema, tableName.Name, n.ColumnName, n.NewColumnName)
 	tableAsType := id.NewType(tableName.Schema, tableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
 	if err != nil {

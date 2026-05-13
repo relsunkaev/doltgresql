@@ -4059,11 +4059,13 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		auth.BeginTransaction(connectionID)
 		deferrable.Begin(connectionID)
 		largeobject.BeginTransaction(connectionID)
+		rowsecurity.BeginTransaction(connectionID)
 		notifications.Begin(connectionID)
 	case isCommitQuery(query):
 		functions.EndSessionTxid(connectionID)
 		deferrable.Commit(connectionID)
 		auth.CommitTransaction(connectionID)
+		rowsecurity.CommitTransaction(connectionID)
 		if err := largeobject.CommitTransaction(connectionID); err != nil {
 			return err
 		}
@@ -4078,6 +4080,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 			return err
 		}
 		largeobject.RollbackTransaction(connectionID)
+		rowsecurity.RollbackTransaction(connectionID)
 		if ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String); err == nil {
 			core.ClearContextValues(ctx)
 		}

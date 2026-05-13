@@ -46,11 +46,18 @@ type tableKey struct {
 	table    string
 }
 
+type transactionSnapshot struct {
+	captured bool
+	tables   map[tableKey]State
+}
+
 var registry = struct {
 	sync.RWMutex
-	tables map[tableKey]State
+	tables       map[tableKey]State
+	transactions map[uint32]transactionSnapshot
 }{
-	tables: map[tableKey]State{},
+	tables:       map[tableKey]State{},
+	transactions: map[uint32]transactionSnapshot{},
 }
 
 // ResetForTests clears all in-memory row-level security state.
@@ -58,12 +65,42 @@ func ResetForTests() {
 	registry.Lock()
 	defer registry.Unlock()
 	registry.tables = map[tableKey]State{}
+	registry.transactions = map[uint32]transactionSnapshot{}
+}
+
+// BeginTransaction starts tracking row-level security metadata mutations for a connection.
+func BeginTransaction(connectionID uint32) {
+	registry.Lock()
+	defer registry.Unlock()
+	registry.transactions[connectionID] = transactionSnapshot{}
+}
+
+// CommitTransaction persists any row-level security metadata mutations for a connection.
+func CommitTransaction(connectionID uint32) {
+	registry.Lock()
+	defer registry.Unlock()
+	delete(registry.transactions, connectionID)
+}
+
+// RollbackTransaction restores row-level security metadata to its transaction-start state.
+func RollbackTransaction(connectionID uint32) {
+	registry.Lock()
+	defer registry.Unlock()
+	snapshot, ok := registry.transactions[connectionID]
+	if !ok {
+		return
+	}
+	if snapshot.captured {
+		registry.tables = cloneStateMap(snapshot.tables)
+	}
+	delete(registry.transactions, connectionID)
 }
 
 // SetTableMode updates the row-level security mode for a table.
-func SetTableMode(database, schema, table string, enabled *bool, forced *bool) {
+func SetTableMode(connectionID uint32, database, schema, table string, enabled *bool, forced *bool) {
 	registry.Lock()
 	defer registry.Unlock()
+	trackMutationLocked(connectionID)
 	key := makeKey(database, schema, table)
 	state := registry.tables[key]
 	if enabled != nil {
@@ -77,7 +114,7 @@ func SetTableMode(database, schema, table string, enabled *bool, forced *bool) {
 
 // AddPolicy adds a row-level security policy. It returns false when a policy
 // with the same name already exists for the table.
-func AddPolicy(database, schema, table string, policy Policy) bool {
+func AddPolicy(connectionID uint32, database, schema, table string, policy Policy) bool {
 	registry.Lock()
 	defer registry.Unlock()
 	key := makeKey(database, schema, table)
@@ -92,13 +129,14 @@ func AddPolicy(database, schema, table string, policy Policy) bool {
 			return false
 		}
 	}
+	trackMutationLocked(connectionID)
 	state.Policies = append(state.Policies, policy)
 	registry.tables[key] = state
 	return true
 }
 
 // RenameTable moves row-level security state to a renamed table.
-func RenameTable(database, oldSchema, oldTable, newSchema, newTable string) {
+func RenameTable(connectionID uint32, database, oldSchema, oldTable, newSchema, newTable string) {
 	registry.Lock()
 	defer registry.Unlock()
 	oldKey := makeKey(database, oldSchema, oldTable)
@@ -106,12 +144,13 @@ func RenameTable(database, oldSchema, oldTable, newSchema, newTable string) {
 	if !ok {
 		return
 	}
+	trackMutationLocked(connectionID)
 	delete(registry.tables, oldKey)
 	registry.tables[makeKey(database, newSchema, newTable)] = state
 }
 
 // RenameColumn rewrites policy column references for a renamed table column.
-func RenameColumn(database, schema, table, oldColumn, newColumn string) {
+func RenameColumn(connectionID uint32, database, schema, table, oldColumn, newColumn string) {
 	registry.Lock()
 	defer registry.Unlock()
 	key := makeKey(database, schema, table)
@@ -119,6 +158,7 @@ func RenameColumn(database, schema, table, oldColumn, newColumn string) {
 	if !ok {
 		return
 	}
+	trackMutationLocked(connectionID)
 	oldColumn = normalizeIdentifier(oldColumn)
 	newColumn = normalizeIdentifier(newColumn)
 	for i := range state.Policies {
@@ -140,8 +180,7 @@ func Get(database, schema, table string) (State, bool) {
 	if !ok {
 		return State{}, false
 	}
-	state.Policies = append([]Policy(nil), state.Policies...)
-	return state, true
+	return cloneState(state), true
 }
 
 // PolicyForCommand returns the first policy that applies to command.
@@ -184,6 +223,41 @@ func policyAppliesToRole(policy Policy, user string) bool {
 		}
 	}
 	return false
+}
+
+func trackMutationLocked(connectionID uint32) {
+	snapshot, ok := registry.transactions[connectionID]
+	if !ok || snapshot.captured {
+		return
+	}
+	snapshot.captured = true
+	snapshot.tables = cloneStateMap(registry.tables)
+	registry.transactions[connectionID] = snapshot
+}
+
+func cloneStateMap(tables map[tableKey]State) map[tableKey]State {
+	clone := make(map[tableKey]State, len(tables))
+	for key, state := range tables {
+		clone[key] = cloneState(state)
+	}
+	return clone
+}
+
+func cloneState(state State) State {
+	state.Policies = clonePolicies(state.Policies)
+	return state
+}
+
+func clonePolicies(policies []Policy) []Policy {
+	if len(policies) == 0 {
+		return nil
+	}
+	clone := make([]Policy, len(policies))
+	for i, policy := range policies {
+		clone[i] = policy
+		clone[i].Roles = append([]string(nil), policy.Roles...)
+	}
+	return clone
 }
 
 // NormalizeName normalizes an SQL identifier for registry lookup.

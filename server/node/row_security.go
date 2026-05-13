@@ -54,7 +54,7 @@ func (a *AlterTableRowSecurity) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIte
 	if err := checkTableOwnership(ctx, a.TableName); err != nil {
 		return nil, err
 	}
-	rowsecurity.SetTableMode(ctx.GetCurrentDatabase(), a.TableName.Schema, a.TableName.Name, a.Enabled, a.Forced)
+	rowsecurity.SetTableMode(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), a.TableName.Schema, a.TableName.Name, a.Enabled, a.Forced)
 	return sql.RowsToRowIter(), nil
 }
 
@@ -95,7 +95,7 @@ func (c *CreatePolicy) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 	if err := checkTableOwnership(ctx, c.TableName); err != nil {
 		return nil, err
 	}
-	if !rowsecurity.AddPolicy(ctx.GetCurrentDatabase(), c.TableName.Schema, c.TableName.Name, c.Policy) {
+	if !rowsecurity.AddPolicy(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), c.TableName.Schema, c.TableName.Name, c.Policy) {
 		return nil, pgerror.Newf(pgcode.DuplicateObject,
 			`policy "%s" for table "%s" already exists`,
 			c.Policy.Name,
