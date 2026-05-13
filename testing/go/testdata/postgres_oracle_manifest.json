@@ -2271,6 +2271,69 @@
       ]
     },
     {
+      "id": "dump-version-identity-probe-test-testdumpversionidentity-0001-select-version-like-postgresql-%",
+      "source": "testing/go/dump_version_identity_probe_test.go:TestDumpVersionIdentity",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT version() LIKE 'PostgreSQL %';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "dump-version-identity-probe-test-testdumpversionidentity-0002-select-length-current_setting-server_version-::text",
+      "source": "testing/go/dump_version_identity_probe_test.go:TestDumpVersionIdentity",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT length(current_setting('server_version'))::text > '0'\n\t\t\t\t\t\tAS has_version;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "dump-version-identity-probe-test-testdumpversionidentity-0003-select-current_setting-server_version_num-::int->=",
+      "source": "testing/go/dump_version_identity_probe_test.go:TestDumpVersionIdentity",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT\n\t\t\t\t\t\tcurrent_setting('server_version_num')::int >= 90000\n\t\t\t\t\t\tAS recent_enough;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "dump-version-identity-probe-test-testdumpversionidentity-0004-select-pg_catalog.version-like-postgresql-%",
+      "source": "testing/go/dump_version_identity_probe_test.go:TestDumpVersionIdentity",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT pg_catalog.version() LIKE 'PostgreSQL %',\n\t\t\t\t\t\tpg_catalog.current_setting('server_version') = current_setting('server_version');",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
       "id": "explicit-collation-probe-test-testexplicitcollationprobe-0001-select-c-from-letters-order",
       "source": "testing/go/explicit_collation_probe_test.go:TestExplicitCollationProbe",
       "ordinal": 1,
