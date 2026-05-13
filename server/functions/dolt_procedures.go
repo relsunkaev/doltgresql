@@ -176,13 +176,13 @@ func drainRowIter(ctx *sql.Context, rowIter sql.RowIter) (any, error) {
 	// The conversion to []text needs []any, not sql.Row
 	rowSlice := make([]any, len(row))
 	for i := range row {
-		fromType, err := typeForElement(row[i])
+		fromType, val, err := typeForElement(row[i])
 		if err != nil {
 			return nil, err
 		}
 
 		castFn := framework.GetExplicitCast(fromType, pgtypes.Text)
-		textVal, err := castFn(ctx, row[i], pgtypes.Text)
+		textVal, err := castFn(ctx, val, pgtypes.Text)
 		if err != nil {
 			return nil, err
 		}
@@ -192,18 +192,25 @@ func drainRowIter(ctx *sql.Context, rowIter sql.RowIter) (any, error) {
 	return rowSlice, nil
 }
 
-func typeForElement(v any) (*pgtypes.DoltgresType, error) {
+func typeForElement(v any) (*pgtypes.DoltgresType, any, error) {
 	switch x := v.(type) {
+	case int:
+		if strconv.IntSize == 32 {
+			return pgtypes.Int32, int32(x), nil
+		}
+		return pgtypes.Int64, int64(x), nil
 	case int64:
-		return pgtypes.Int64, nil
+		return pgtypes.Int64, x, nil
 	case int32:
-		return pgtypes.Int32, nil
-	case int16, int8:
-		return pgtypes.Int16, nil
+		return pgtypes.Int32, x, nil
+	case int16:
+		return pgtypes.Int16, x, nil
+	case int8:
+		return pgtypes.Int16, int16(x), nil
 	case string:
-		return pgtypes.Text, nil
+		return pgtypes.Text, x, nil
 	default:
-		return nil, errors.Errorf("dolt_procedures: unsupported type %T", x)
+		return nil, nil, errors.Errorf("dolt_procedures: unsupported type %T", x)
 	}
 }
 

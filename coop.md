@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 11:12 America/Phoenix
+
+- Lane complete locally: Dolt procedure result type handling for `DOLT_STASH` from `TestDoltStashPushPopRestoresTrackedRowRepro` and `TestDoltStashPushPopRestoresUntrackedTableRepro`.
+- Files touched: `server/functions/dolt_procedures.go` only. Avoided active view-root/common-extension lanes, dirty comment/grant/oracle files, and Alpha-owned full `./testing/go`.
+- Shared dirty-checkout signal at `17e803b2`: focused run failed both repros because `SELECT DOLT_STASH(...)` returned `dolt_procedures: unsupported type int`, so push/pop never restored row or table state.
+- Clean verifier red proof in `/Users/ramazan/.cache/doltgresql-delta-stash-verifier-VHRyTP` at `17e803b2` after `./postgres/parser/build.sh`: `go test -vet=off ./testing/go -run '^(TestDoltStashPushPopRestoresTrackedRowRepro|TestDoltStashPushPopRestoresUntrackedTableRepro)$' -count=1 -v` failed with the same `dolt_procedures: unsupported type int` error.
+- Fix: normalize Go `int`/`int8` Dolt procedure result values to PostgreSQL integer value types before the existing text-array cast path, so `DOLT_STASH` can return `{0}` instead of failing result conversion.
+- Green proof in clean detached verifier `/Users/ramazan/.cache/doltgresql-delta-stash-current-ydx0y2` at `798e16e9` plus delta patch after `./postgres/parser/build.sh` and symlinking local `third_party/dolt`:
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestDoltStashPushPopRestoresTrackedRowRepro|TestDoltStashPushPopRestoresUntrackedTableRepro|TestDoltStash)$' -count=1 -v`
+- Next action: stage only delta-owned files plus this coop hunk, commit, then run exact post-commit proof at the new commit.
+
 ### delta - 2026-05-13 10:52 America/Phoenix
 
 - Lane complete locally: quoted database identifier/catalog case sensitivity from `TestQuotedDatabaseNamesAreCaseSensitiveRepro`.
