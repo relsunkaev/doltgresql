@@ -205,12 +205,15 @@ type replicationStartOptions struct {
 }
 
 func (h *ConnectionHandler) parseStartReplicationOptions(statement string) (replicationStartOptions, error) {
+	options := replicationStartOptions{
+		messages: true,
+	}
+	if !strings.Contains(statement, "(") && !strings.Contains(statement, ")") {
+		return options, nil
+	}
 	values, err := parseReplicationPluginOptions(statement)
 	if err != nil {
 		return replicationStartOptions{}, err
-	}
-	options := replicationStartOptions{
-		messages: true,
 	}
 	protoVersion, ok := values["proto_version"]
 	if !ok {
