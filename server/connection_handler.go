@@ -3624,7 +3624,7 @@ var (
 	createRuleDoAlsoPattern   = regexp.MustCompile(`(?is)^\s*create\s+rule\s+([a-z_][a-z0-9_"$]*)\s+as\s+on\s+insert\s+to\s+([a-z_][a-z0-9_."$]*)\s+do\s+also\s+(insert\s+into\s+.+?)\s*;?\s*$`)
 	alterSystemPattern        = regexp.MustCompile(`(?is)^\s*alter\s+system\s+(?:set|reset)\b.+;?\s*$`)
 	clusterIndexPattern       = regexp.MustCompile(`(?is)^\s*cluster\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s+on\s+((?:"[^"]+"|[a-z_][a-z0-9_$]*)(?:\.(?:"[^"]+"|[a-z_][a-z0-9_$]*))?)\s*;?\s*$`)
-	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+\S+\s*\(\s*[^)]*\)\s*(?:cascade|restrict)?\s*;?\s*$`)
+	dropOperatorPattern       = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+if\s+exists\s+(\S+)\s*\(\s*([^,)]*)\s*,\s*([^)]*)\)\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorClassPattern  = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+class\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropOperatorFamilyPattern = regexp.MustCompile(`(?is)^\s*drop\s+operator\s+family\s+if\s+exists\s+\S+\s+using\s+\S+\s*(?:cascade|restrict)?\s*;?\s*$`)
 	dropPolicyIfExistsPattern = regexp.MustCompile(`(?is)^\s*drop\s+policy\s+if\s+exists\s+([a-z_][a-z0-9_"$]*)\s+on\s+([a-z_][a-z0-9_."$]*)\s*(?:cascade|restrict)?\s*;?\s*$`)
@@ -3949,7 +3949,15 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	statementTag := ""
 	switch {
 	case dropOperatorPattern.MatchString(query):
-		statementTag = "DROP OPERATOR"
+		matches := dropOperatorPattern.FindStringSubmatch(query)
+		namespace, name := splitQualifiedCatalogName(matches[1])
+		return ConvertedQuery{
+			String: query,
+			AST: sqlparser.InjectedStatement{
+				Statement: node.NewDropOperator(namespace, name, matches[2], matches[3], true),
+			},
+			StatementTag: "DROP OPERATOR",
+		}, true
 	case dropOperatorClassPattern.MatchString(query):
 		statementTag = "DROP OPERATOR CLASS"
 	case dropOperatorFamilyPattern.MatchString(query):
@@ -3957,6 +3965,16 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	case dropTextSearchPattern.MatchString(query):
 		matches := dropTextSearchPattern.FindStringSubmatch(query)
 		statementTag = "DROP TEXT SEARCH " + strings.ToUpper(matches[1])
+		if strings.EqualFold(matches[1], "configuration") {
+			namespace, name := splitQualifiedCatalogName(matches[2])
+			return ConvertedQuery{
+				String: query,
+				AST: sqlparser.InjectedStatement{
+					Statement: node.NewDropTextSearchConfiguration(namespace, name, true),
+				},
+				StatementTag: statementTag,
+			}, true
+		}
 	case dropPolicyIfExistsPattern.MatchString(query):
 		statementTag = "DROP POLICY"
 	case dropRuleIfExistsPattern.MatchString(query):

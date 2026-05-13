@@ -42,6 +42,16 @@ func CreateTextSearchConfig(config TextSearchConfig) {
 	globalDatabase.textSearchConfigs.Data[textSearchConfigKey(config.Namespace, config.Name)] = config
 }
 
+// DropTextSearchConfig removes a user-defined text-search configuration.
+func DropTextSearchConfig(namespace id.Namespace, name string) bool {
+	key := textSearchConfigKey(namespace, name)
+	if _, ok := globalDatabase.textSearchConfigs.Data[key]; !ok {
+		return false
+	}
+	delete(globalDatabase.textSearchConfigs.Data, key)
+	return true
+}
+
 // GetAllTextSearchConfigs returns all text-search configurations in deterministic order.
 func GetAllTextSearchConfigs() []TextSearchConfig {
 	configs := make([]TextSearchConfig, 0, len(globalDatabase.textSearchConfigs.Data))

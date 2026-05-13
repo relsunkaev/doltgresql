@@ -17,6 +17,7 @@ package node
 import (
 	"context"
 
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -24,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // CreateTextSearchConfiguration implements CREATE TEXT SEARCH CONFIGURATION ... (COPY = ...).
@@ -92,4 +94,74 @@ func (c *CreateTextSearchConfiguration) WithResolvedChildren(ctx context.Context
 		return nil, ErrVitessChildCount.New(0, len(children))
 	}
 	return c, nil
+}
+
+// DropTextSearchConfiguration implements DROP TEXT SEARCH CONFIGURATION.
+type DropTextSearchConfiguration struct {
+	Namespace string
+	Name      string
+	IfExists  bool
+}
+
+var _ sql.ExecSourceRel = (*DropTextSearchConfiguration)(nil)
+var _ vitess.Injectable = (*DropTextSearchConfiguration)(nil)
+
+// NewDropTextSearchConfiguration returns a new *DropTextSearchConfiguration.
+func NewDropTextSearchConfiguration(namespace string, name string, ifExists bool) *DropTextSearchConfiguration {
+	return &DropTextSearchConfiguration{Namespace: namespace, Name: name, IfExists: ifExists}
+}
+
+// Children implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) Children() []sql.Node { return nil }
+
+// IsReadOnly implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) IsReadOnly() bool { return false }
+
+// Resolved implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) Resolved() bool { return true }
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	schemaName := d.Namespace
+	var err error
+	if schemaName == "" {
+		schemaName, err = core.GetCurrentSchema(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	namespace := id.NewNamespace(schemaName)
+	auth.LockWrite(func() {
+		if ok := auth.DropTextSearchConfig(namespace, d.Name); !ok {
+			if !d.IfExists {
+				err = errors.Errorf(`text search configuration "%s" does not exist`, d.Name)
+			}
+			return
+		}
+		comments.RemoveObject(id.NewId(id.Section_TextSearchConfig, schemaName, d.Name), "pg_ts_config")
+		err = auth.PersistChanges()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+// Schema implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) Schema(ctx *sql.Context) sql.Schema { return nil }
+
+// String implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) String() string { return "DROP TEXT SEARCH CONFIGURATION" }
+
+// WithChildren implements the interface sql.ExecSourceRel.
+func (d *DropTextSearchConfiguration) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(d, children...)
+}
+
+// WithResolvedChildren implements the interface vitess.Injectable.
+func (d *DropTextSearchConfiguration) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return d, nil
 }
