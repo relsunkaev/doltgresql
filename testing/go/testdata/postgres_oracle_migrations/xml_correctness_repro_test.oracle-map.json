@@ -1,0 +1,105 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map xml_correctness_repro_test.go --oracle-test-name TestXmlCommentFunctionRepro,TestXmlElementFunctionRepro,TestXmlForestFunctionRepro,TestXmlParseDocumentRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/xml_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/xml_correctness_repro_test.go:TestXmlParseDocumentRepro#0001",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlParseDocumentRepro",
+      "ordinal": 1,
+      "scriptName": "XMLPARSE document returns XML text",
+      "oracle": "postgres",
+      "postgresId": "xml-correctness-repro-test-testxmlparsedocumentrepro-0001-select-xmlparse-document-<doc/>-::text",
+      "suggestedId": "xml-correctness-repro-test-testxmlparsedocumentrepro-0001-select-xmlparse-document-<doc/>-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT XMLPARSE(DOCUMENT '<doc/>')::text;",
+      "querySha256": "dacf1e57f0db981397c4066b4961c1e3964b77e9b41c117c9e12f01a5c8798e6",
+      "expectedRows": [
+        [
+          {
+            "value": "<doc/>"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/xml_correctness_repro_test.go:TestXmlCommentFunctionRepro#0001",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlCommentFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "xmlcomment constructs XML comments",
+      "oracle": "postgres",
+      "postgresId": "xml-correctness-repro-test-testxmlcommentfunctionrepro-0001-select-xmlcomment-hello-::text",
+      "suggestedId": "xml-correctness-repro-test-testxmlcommentfunctionrepro-0001-select-xmlcomment-hello-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT xmlcomment('hello')::text;",
+      "querySha256": "8c59ab26d9dbbfe7f642f83b81ebbc6c8efe034617fb16c1a828a58535326f11",
+      "expectedRows": [
+        [
+          {
+            "value": "<!--hello-->"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/xml_correctness_repro_test.go:TestXmlElementFunctionRepro#0001",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlElementFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "xmlelement constructs XML elements",
+      "oracle": "postgres",
+      "postgresId": "xml-correctness-repro-test-testxmlelementfunctionrepro-0001-select-xmlelement-name-foo-::text",
+      "suggestedId": "xml-correctness-repro-test-testxmlelementfunctionrepro-0001-select-xmlelement-name-foo-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT xmlelement(name foo)::text;",
+      "querySha256": "9b1eb406963510338d6e238a839a4436f751f0d8924c0be20aa4cb68ad2c6b2d",
+      "expectedRows": [
+        [
+          {
+            "value": "<foo/>"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/xml_correctness_repro_test.go:TestXmlForestFunctionRepro#0001",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlForestFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "xmlforest constructs XML fragments",
+      "oracle": "postgres",
+      "postgresId": "xml-correctness-repro-test-testxmlforestfunctionrepro-0001-select-xmlforest-abc-as-foo",
+      "suggestedId": "xml-correctness-repro-test-testxmlforestfunctionrepro-0001-select-xmlforest-abc-as-foo",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT xmlforest('abc' AS foo, 123 AS bar)::text;",
+      "querySha256": "c44ccd749fa2c2834607400ec28f24687894ddbbc156b51469fa7c21c6b9c95a",
+      "expectedRows": [
+        [
+          {
+            "value": "<foo>abc</foo><bar>123</bar>"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

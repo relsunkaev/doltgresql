@@ -6175,6 +6175,66 @@
       "cleanup": [
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
+    },
+    {
+      "id": "xml-correctness-repro-test-testxmlparsedocumentrepro-0001-select-xmlparse-document-<doc/>-::text",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlParseDocumentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT XMLPARSE(DOCUMENT '<doc/>')::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "<doc/>"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "xml-correctness-repro-test-testxmlcommentfunctionrepro-0001-select-xmlcomment-hello-::text",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlCommentFunctionRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT xmlcomment('hello')::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "<!--hello-->"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "xml-correctness-repro-test-testxmlelementfunctionrepro-0001-select-xmlelement-name-foo-::text",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlElementFunctionRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT xmlelement(name foo)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "<foo/>"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "xml-correctness-repro-test-testxmlforestfunctionrepro-0001-select-xmlforest-abc-as-foo",
+      "source": "testing/go/xml_correctness_repro_test.go:TestXmlForestFunctionRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT xmlforest('abc' AS foo, 123 AS bar)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "<foo>abc</foo><bar>123</bar>"
+          }
+        ]
+      ]
     }
   ]
 }
