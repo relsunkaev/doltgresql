@@ -108,11 +108,17 @@ func (pgt *Collection) RenameRootObject(ctx context.Context, oldName id.Id, newN
 	}
 	oldTriggerName := id.Trigger(oldName)
 	newTriggerName := id.Trigger(newName)
+	if pgt.HasTrigger(ctx, newTriggerName) {
+		return errors.Errorf(`trigger "%s" for relation "%s" already exists`, newTriggerName.TriggerName(), newTriggerName.TableName())
+	}
 	t, err := pgt.GetTrigger(ctx, oldTriggerName)
 	if err != nil {
 		return err
 	}
-	if err = pgt.DropTrigger(ctx, newTriggerName); err != nil {
+	if !t.ID.IsValid() {
+		return errors.Errorf(`trigger "%s" for table "%s" does not exist`, oldTriggerName.TriggerName(), oldTriggerName.TableName())
+	}
+	if err = pgt.DropTrigger(ctx, oldTriggerName); err != nil {
 		return err
 	}
 	t.ID = newTriggerName

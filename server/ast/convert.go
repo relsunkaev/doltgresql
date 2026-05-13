@@ -71,6 +71,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeAlterTableSetSchema(ctx, stmt)
 	case *tree.AlterType:
 		return nodeAlterType(ctx, stmt)
+	case *tree.AlterTrigger:
+		return nodeAlterTrigger(ctx, stmt)
 	case *tree.AlterUserMapping:
 		return nodeAlterUserMapping(ctx, stmt)
 	case *tree.AlterView:
