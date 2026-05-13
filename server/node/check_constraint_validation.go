@@ -22,7 +22,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 )
 
-func validateDomainCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstraint) error {
+func validateCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstraint) error {
 	if check == nil || check.Expr == nil {
 		return nil
 	}

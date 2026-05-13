@@ -103,6 +103,11 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	if leftParen != -1 && rightParen != -1 && rightParen > leftParen {
 		return nil, fmt.Errorf("table name `%s` cannot contain a parenthesized portion", c.gmsCreateTable.Name())
 	}
+	for _, check := range c.gmsCreateTable.Checks() {
+		if err := validateCheckConstraintExpression(ctx, check); err != nil {
+			return nil, err
+		}
+	}
 
 	tableAlreadyExisted := false
 	if c.gmsCreateTable.IfNotExists() {

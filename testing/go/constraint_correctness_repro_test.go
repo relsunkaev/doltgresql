@@ -1328,6 +1328,19 @@ func TestCheckConstraintsRejectNonScalarExpressionsRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "ALTER TABLE ADD CHECK rejects set-returning expressions",
+			SetUpScript: []string{
+				`CREATE TABLE alter_check_srf_items (id INT);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE alter_check_srf_items
+						ADD CONSTRAINT alter_check_srf_check CHECK (generate_series(1, 2) > 0);`,
+					ExpectedErr: `set-returning functions are not allowed in check constraints`,
+				},
+			},
+		},
 	})
 }
 

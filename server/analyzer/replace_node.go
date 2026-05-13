@@ -41,10 +41,7 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 	case *plan.DropView:
 		return pgnodes.NewDropView(node), transform.NewTree, nil
 	case *plan.CreateCheck:
-		if !node.Check.Enforced {
-			return pgnodes.NewCreateCheck(node, a.Overrides), transform.NewTree, nil
-		}
-		return node, transform.SameTree, nil
+		return pgnodes.NewCreateCheck(node, a.Overrides), transform.NewTree, nil
 	case *plan.DropCheck:
 		return pgnodes.NewDropCheck(node), transform.NewTree, nil
 	case *plan.InsertInto:

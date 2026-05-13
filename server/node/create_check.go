@@ -51,6 +51,9 @@ func (c *CreateCheck) Resolved() bool {
 
 // BuildRowIter implements sql.ExecBuilderNode.
 func (c *CreateCheck) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
+	if err := validateCheckConstraintExpression(ctx, c.gmsCreateCheck.Check); err != nil {
+		return nil, err
+	}
 	if c.gmsCreateCheck.Check.Enforced {
 		return b.Build(ctx, c.gmsCreateCheck, r)
 	}
