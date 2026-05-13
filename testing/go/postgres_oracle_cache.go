@@ -25,6 +25,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -192,12 +194,34 @@ func postgresOracleStringRows(rows []sql.Row) []sql.Row {
 			if value == nil {
 				stringRow[columnIndex] = nil
 			} else {
-				stringRow[columnIndex] = fmt.Sprint(value)
+				stringRow[columnIndex] = postgresOracleStringValue(value)
 			}
 		}
 		stringRows[rowIndex] = stringRow
 	}
 	return stringRows
+}
+
+func postgresOracleStringValue(value any) string {
+	switch v := value.(type) {
+	case pgtype.Numeric:
+		return postgresOracleNumericString(v)
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
+func postgresOracleNumericString(value pgtype.Numeric) string {
+	if !value.Valid {
+		return "<null>"
+	}
+	if value.NaN {
+		return "NaN"
+	}
+	if value.Int == nil || value.Int.Sign() == 0 {
+		return "0"
+	}
+	return decimal.NewFromBigInt(value.Int, value.Exp).String()
 }
 
 func requirePostgresOracleCachedSQLState(t testing.TB, err error, entry *postgresOracleCachedEntry) {

@@ -769,6 +769,312 @@
       ]
     },
     {
+      "id": "aggregate-distinct-test-testaggregatedistinct-0001-select-entity_id-length-string_agg-distinct",
+      "source": "testing/go/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE tags (\n\t\t\t\t\tentity_id INT,\n\t\t\t\t\ttag TEXT\n\t\t\t\t);",
+        "INSERT INTO tags VALUES\n\t\t\t\t\t(1, 'a'),\n\t\t\t\t\t(1, 'b'),\n\t\t\t\t\t(1, 'a'),\n\t\t\t\t\t(2, 'c'),\n\t\t\t\t\t(2, 'c'),\n\t\t\t\t\t(2, 'd');"
+      ],
+      "query": "SELECT entity_id,\n\t\t\t\t\t\tlength(string_agg(DISTINCT tag, '')) AS distinct_tag_chars\n\t\t\t\t\t\tFROM tags\n\t\t\t\t\t\tGROUP BY entity_id\n\t\t\t\t\t\tORDER BY entity_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-distinct-test-testaggregatedistinct-0002-select-entity_id-string_agg-distinct-tag",
+      "source": "testing/go/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE tags (\n\t\t\t\t\tentity_id INT,\n\t\t\t\t\ttag TEXT\n\t\t\t\t);",
+        "INSERT INTO tags VALUES\n\t\t\t\t\t(1, 'a'),\n\t\t\t\t\t(1, 'b'),\n\t\t\t\t\t(1, 'a'),\n\t\t\t\t\t(2, 'c'),\n\t\t\t\t\t(2, 'c'),\n\t\t\t\t\t(2, 'd');",
+        "SELECT entity_id,\n\t\t\t\t\t\tlength(string_agg(DISTINCT tag, '')) AS distinct_tag_chars\n\t\t\t\t\t\tFROM tags\n\t\t\t\t\t\tGROUP BY entity_id\n\t\t\t\t\t\tORDER BY entity_id;"
+      ],
+      "query": "SELECT entity_id,\n\t\t\t\t\t\tstring_agg(DISTINCT tag, ',' ORDER BY tag DESC) AS tags\n\t\t\t\t\t\tFROM tags\n\t\t\t\t\t\tGROUP BY entity_id\n\t\t\t\t\t\tORDER BY entity_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "b,a"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "d,c"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-distinct-test-testaggregatedistinct-0003-select-user_id-array_length-array_agg-distinct",
+      "source": "testing/go/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE memberships (\n\t\t\t\t\tuser_id INT,\n\t\t\t\t\tgroup_id INT\n\t\t\t\t);",
+        "INSERT INTO memberships VALUES\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(1, 20),\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(2, 30),\n\t\t\t\t\t(2, 30),\n\t\t\t\t\t(2, 40);"
+      ],
+      "query": "SELECT user_id,\n\t\t\t\t\t\tarray_length(array_agg(DISTINCT group_id), 1) AS distinct_count\n\t\t\t\t\t\tFROM memberships\n\t\t\t\t\t\tGROUP BY user_id\n\t\t\t\t\t\tORDER BY user_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-distinct-test-testaggregatedistinct-0004-select-user_id-array_agg-distinct-group_id",
+      "source": "testing/go/aggregate_distinct_test.go:TestAggregateDistinct",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE memberships (\n\t\t\t\t\tuser_id INT,\n\t\t\t\t\tgroup_id INT\n\t\t\t\t);",
+        "INSERT INTO memberships VALUES\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(1, 20),\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(2, 30),\n\t\t\t\t\t(2, 30),\n\t\t\t\t\t(2, 40);",
+        "SELECT user_id,\n\t\t\t\t\t\tarray_length(array_agg(DISTINCT group_id), 1) AS distinct_count\n\t\t\t\t\t\tFROM memberships\n\t\t\t\t\t\tGROUP BY user_id\n\t\t\t\t\t\tORDER BY user_id;"
+      ],
+      "query": "SELECT user_id,\n\t\t\t\t\t\tarray_agg(DISTINCT group_id ORDER BY group_id DESC) AS group_ids\n\t\t\t\t\t\tFROM memberships\n\t\t\t\t\t\tGROUP BY user_id\n\t\t\t\t\t\tORDER BY user_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{20,10}"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "{40,30}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-filter-test-testaggregatefilter-0001-select-count-*-as-total",
+      "source": "testing/go/aggregate_filter_test.go:TestAggregateFilter",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE orders (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tstatus TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO orders VALUES\n\t\t\t\t\t(1, 'paid', 100),\n\t\t\t\t\t(2, 'pending', 50),\n\t\t\t\t\t(3, 'paid', 200),\n\t\t\t\t\t(4, 'cancelled', 75),\n\t\t\t\t\t(5, 'paid', 25);"
+      ],
+      "query": "SELECT\n\t\t\t\t\t\tcount(*) AS total,\n\t\t\t\t\t\tcount(*) FILTER (WHERE status = 'paid') AS paid_count,\n\t\t\t\t\t\tcount(*) FILTER (WHERE status = 'pending') AS pending_count\n\t\t\t\t\tFROM orders;",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-filter-test-testaggregatefilter-0002-select-sum-amount-::text-as",
+      "source": "testing/go/aggregate_filter_test.go:TestAggregateFilter",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE orders (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tstatus TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO orders VALUES\n\t\t\t\t\t(1, 'paid', 100),\n\t\t\t\t\t(2, 'pending', 50),\n\t\t\t\t\t(3, 'paid', 200),\n\t\t\t\t\t(4, 'cancelled', 75),\n\t\t\t\t\t(5, 'paid', 25);",
+        "SELECT\n\t\t\t\t\t\tcount(*) AS total,\n\t\t\t\t\t\tcount(*) FILTER (WHERE status = 'paid') AS paid_count,\n\t\t\t\t\t\tcount(*) FILTER (WHERE status = 'pending') AS pending_count\n\t\t\t\t\tFROM orders;"
+      ],
+      "query": "SELECT\n\t\t\t\t\t\tsum(amount)::text AS total_revenue,\n\t\t\t\t\t\tsum(amount) FILTER (WHERE status = 'paid')::text AS paid_revenue,\n\t\t\t\t\t\tsum(amount) FILTER (WHERE status = 'cancelled')::text AS cancelled_revenue\n\t\t\t\t\tFROM orders;",
+      "expectedRows": [
+        [
+          {
+            "value": "450"
+          },
+          {
+            "value": "325"
+          },
+          {
+            "value": "75"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-filter-test-testaggregatefilter-0003-select-day-sum-n-filter",
+      "source": "testing/go/aggregate_filter_test.go:TestAggregateFilter",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tday TEXT,\n\t\t\t\t\tkind TEXT,\n\t\t\t\t\tn INT\n\t\t\t\t);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, '2026-05-01', 'click', 10),\n\t\t\t\t\t(2, '2026-05-01', 'view', 100),\n\t\t\t\t\t(3, '2026-05-01', 'click', 5),\n\t\t\t\t\t(4, '2026-05-02', 'view', 200),\n\t\t\t\t\t(5, '2026-05-02', 'click', 20);"
+      ],
+      "query": "SELECT day,\n\t\t\t\t\t\tsum(n) FILTER (WHERE kind = 'click')::text AS clicks,\n\t\t\t\t\t\tsum(n) FILTER (WHERE kind = 'view')::text AS views\n\t\t\t\t\tFROM events\n\t\t\t\t\tGROUP BY day\n\t\t\t\t\tORDER BY day;",
+      "expectedRows": [
+        [
+          {
+            "value": "2026-05-01"
+          },
+          {
+            "value": "15"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2026-05-02"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-filter-test-testaggregatefilter-0004-select-sum-v-filter-where",
+      "source": "testing/go/aggregate_filter_test.go:TestAggregateFilter",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t (k INT, v INT);",
+        "INSERT INTO t VALUES (1, 10), (2, 20);"
+      ],
+      "query": "SELECT\n\t\t\t\t\t\tsum(v) FILTER (WHERE k > 100) AS no_match,\n\t\t\t\t\t\tcount(*) FILTER (WHERE k > 100) AS no_match_count\n\t\t\t\t\tFROM t;",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-filter-test-testaggregatefilter-0005-select-region-sum-amount-coalesce",
+      "source": "testing/go/aggregate_filter_test.go:TestAggregateFilter",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE sales (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tregion TEXT,\n\t\t\t\t\tamount INT,\n\t\t\t\t\trefunded BOOL\n\t\t\t\t);",
+        "INSERT INTO sales VALUES\n\t\t\t\t\t(1, 'US', 100, false),\n\t\t\t\t\t(2, 'US', 200, true),\n\t\t\t\t\t(3, 'EU', 50, false),\n\t\t\t\t\t(4, 'EU', 75, true),\n\t\t\t\t\t(5, 'US', 300, false);"
+      ],
+      "query": "SELECT region,\n\t\t\t\t\t\t(sum(amount) - COALESCE(sum(amount) FILTER (WHERE refunded), 0))::text AS net\n\t\t\t\t\tFROM sales\n\t\t\t\t\tGROUP BY region\n\t\t\t\t\tORDER BY region;",
+      "expectedRows": [
+        [
+          {
+            "value": "EU"
+          },
+          {
+            "value": "50"
+          }
+        ],
+        [
+          {
+            "value": "US"
+          },
+          {
+            "value": "400"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "bit-string-correctness-repro-test-testbitstringoperatorsandfunctionsrepro-0001-select-flags::text-flex::text-flags-&",
       "source": "testing/go/bit_string_correctness_repro_test.go:TestBitStringOperatorsAndFunctionsRepro",
       "ordinal": 1,
@@ -800,6 +1106,782 @@
           },
           {
             "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "cast-correctness-repro-test-testcreatecastfunctionisusedbyexplicitcastrepro-0001-select-green-::cast_color-::int",
+      "source": "testing/go/cast_correctness_repro_test.go:TestCreateCastFunctionIsUsedByExplicitCastRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TYPE cast_color AS ENUM ('red', 'green');",
+        "CREATE FUNCTION cast_color_to_int(input_color cast_color)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT CASE WHEN input_color = 'red'::cast_color THEN 1 ELSE 2 END $$;",
+        "CREATE CAST (cast_color AS INT)\n\t\t\t\t\tWITH FUNCTION cast_color_to_int(cast_color);"
+      ],
+      "query": "SELECT ('green'::cast_color)::INT;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0001-select-0",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 0",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0002-select-0.5",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0"
+      ],
+      "query": "SELECT 0.5",
+      "expectedRows": [
+        [
+          {
+            "value": "0.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0003-select-0.50",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5"
+      ],
+      "query": "SELECT 0.50",
+      "expectedRows": [
+        [
+          {
+            "value": "0.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0004-select-0.5",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50"
+      ],
+      "query": "SELECT -0.5",
+      "expectedRows": [
+        [
+          {
+            "value": "-0.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0005-select-12345671297673227365.5123624235623456",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5"
+      ],
+      "query": "SELECT 12345671297673227365.5123624235623456",
+      "expectedRows": [
+        [
+          {
+            "value": "12345671297673227365.5123624235623456"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0006-select-1",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 6,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456"
+      ],
+      "query": "SELECT 1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0007-select-1",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 7,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1"
+      ],
+      "query": "SELECT -1",
+      "expectedRows": [
+        [
+          {
+            "value": "-1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0008-select-70000",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 8,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1"
+      ],
+      "query": "SELECT 70000",
+      "expectedRows": [
+        [
+          {
+            "value": "70000"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0009-select-5000000000",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 9,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1",
+        "SELECT 70000"
+      ],
+      "query": "SELECT 5000000000",
+      "expectedRows": [
+        [
+          {
+            "value": "5000000000"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0010-select-9223372036854775808",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 10,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1",
+        "SELECT 70000",
+        "SELECT 5000000000"
+      ],
+      "query": "SELECT 9223372036854775808",
+      "expectedRows": [
+        [
+          {
+            "value": "9223372036854775808"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0011-select",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 11,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1",
+        "SELECT 70000",
+        "SELECT 5000000000",
+        "SELECT 9223372036854775808"
+      ],
+      "query": "SELECT ''",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0012-select-test",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 12,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1",
+        "SELECT 70000",
+        "SELECT 5000000000",
+        "SELECT 9223372036854775808",
+        "SELECT ''"
+      ],
+      "query": "SELECT 'test'",
+      "expectedRows": [
+        [
+          {
+            "value": "test"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0013-select-0",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 13,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 0",
+        "SELECT 0.5",
+        "SELECT 0.50",
+        "SELECT -0.5",
+        "SELECT 12345671297673227365.5123624235623456",
+        "SELECT 1",
+        "SELECT -1",
+        "SELECT 70000",
+        "SELECT 5000000000",
+        "SELECT 9223372036854775808",
+        "SELECT ''",
+        "SELECT 'test'"
+      ],
+      "query": "SELECT '0'",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0014-select-abs-1",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 14,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT abs(1)",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0015-select-abs-1.5",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 15,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)"
+      ],
+      "query": "SELECT abs(1.5)",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0016-select-abs-5000000000",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 16,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)"
+      ],
+      "query": "SELECT abs(5000000000)",
+      "expectedRows": [
+        [
+          {
+            "value": "5000000000"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0017-select-abs-9223372036854775808",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 17,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)"
+      ],
+      "query": "SELECT abs(9223372036854775808)",
+      "expectedRows": [
+        [
+          {
+            "value": "9223372036854775808"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0018-select-abs-1",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 18,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)",
+        "SELECT abs(9223372036854775808)"
+      ],
+      "query": "SELECT abs('1')",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0019-select-abs-1.5",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 19,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)",
+        "SELECT abs(9223372036854775808)",
+        "SELECT abs('1')"
+      ],
+      "query": "SELECT abs('1.5')",
+      "expectedRows": [
+        [
+          {
+            "value": "1.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0020-select-abs-12345671297673227365.5123624235623456",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 20,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)",
+        "SELECT abs(9223372036854775808)",
+        "SELECT abs('1')",
+        "SELECT abs('1.5')"
+      ],
+      "query": "SELECT abs('12345671297673227365.5123624235623456')",
+      "expectedRows": [
+        [
+          {
+            "value": "1.2345671297673228e+19"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0021-select-factorial-1",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 21,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)",
+        "SELECT abs(9223372036854775808)",
+        "SELECT abs('1')",
+        "SELECT abs('1.5')",
+        "SELECT abs('12345671297673227365.5123624235623456')"
+      ],
+      "query": "SELECT factorial('1')",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "coercion-test-testcoercion-0022-select-factorial-1.5",
+      "source": "testing/go/coercion_test.go:TestCoercion",
+      "ordinal": 22,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT abs(1)",
+        "SELECT abs(1.5)",
+        "SELECT abs(5000000000)",
+        "SELECT abs(9223372036854775808)",
+        "SELECT abs('1')",
+        "SELECT abs('1.5')",
+        "SELECT abs('12345671297673227365.5123624235623456')",
+        "SELECT factorial('1')"
+      ],
+      "query": "SELECT factorial('1.5')",
+      "expectedSqlstate": "22P02",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "distinct-on-test-testdistincton-0001-select-distinct-on-customer_id-customer_id",
+      "source": "testing/go/distinct_on_test.go:TestDistinctOn",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE orders (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tcustomer_id INT,\n\t\t\t\t\tplaced_at TIMESTAMP,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO orders VALUES\n\t\t\t\t\t(1, 100, '2026-01-01 09:00:00', 50),\n\t\t\t\t\t(2, 100, '2026-01-02 10:00:00', 75),\n\t\t\t\t\t(3, 100, '2026-01-03 11:00:00', 200),\n\t\t\t\t\t(4, 200, '2026-01-01 09:30:00', 30),\n\t\t\t\t\t(5, 200, '2026-01-04 12:00:00', 90);"
+      ],
+      "query": "SELECT DISTINCT ON (customer_id) customer_id, id, amount\n\t\t\t\t\t\tFROM orders\n\t\t\t\t\t\tORDER BY customer_id, placed_at DESC;",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "200"
+          }
+        ],
+        [
+          {
+            "value": "200"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "90"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "distinct-on-test-testdistincton-0002-select-distinct-on-tenant-stream",
+      "source": "testing/go/distinct_on_test.go:TestDistinctOn",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\ttenant TEXT,\n\t\t\t\t\tstream TEXT,\n\t\t\t\t\tseq INT,\n\t\t\t\t\tpayload TEXT\n\t\t\t\t);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, 'a', 'x', 1, 'a-x-1'),\n\t\t\t\t\t(2, 'a', 'x', 5, 'a-x-5'),\n\t\t\t\t\t(3, 'a', 'y', 2, 'a-y-2'),\n\t\t\t\t\t(4, 'b', 'x', 3, 'b-x-3'),\n\t\t\t\t\t(5, 'b', 'x', 4, 'b-x-4');"
+      ],
+      "query": "SELECT DISTINCT ON (tenant, stream) tenant, stream, seq, payload\n\t\t\t\t\t\tFROM events\n\t\t\t\t\t\tORDER BY tenant, stream, seq DESC;",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "x"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "a-x-5"
+          }
+        ],
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "y"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "a-y-2"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "x"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "b-x-4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "distinct-on-test-testdistincton-0003-select-distinct-on-sku-sku",
+      "source": "testing/go/distinct_on_test.go:TestDistinctOn",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prices (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tsku TEXT,\n\t\t\t\t\tprice INT,\n\t\t\t\t\tregion TEXT\n\t\t\t\t);",
+        "INSERT INTO prices VALUES\n\t\t\t\t\t(1, 'a', 10, 'us'),\n\t\t\t\t\t(2, 'a', 12, 'eu'),\n\t\t\t\t\t(3, 'a', 9, 'us'),\n\t\t\t\t\t(4, 'b', 5, 'us'),\n\t\t\t\t\t(5, 'b', 7, 'eu');"
+      ],
+      "query": "SELECT DISTINCT ON (sku) sku, price\n\t\t\t\t\t\tFROM prices\n\t\t\t\t\t\tWHERE region = 'us'\n\t\t\t\t\t\tORDER BY sku, price ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "9"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "distinct-on-test-testdistincton-0004-select-distinct-on-k-k",
+      "source": "testing/go/distinct_on_test.go:TestDistinctOn",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t (k INT, v INT, ts INT);",
+        "INSERT INTO t VALUES\n\t\t\t\t\t(1, 10, 100),\n\t\t\t\t\t(1, 11, 200),\n\t\t\t\t\t(NULL, 20, 50),\n\t\t\t\t\t(NULL, 21, 60);"
+      ],
+      "query": "SELECT DISTINCT ON (k) k, v\n\t\t\t\t\t\tFROM t\n\t\t\t\t\t\tORDER BY k, ts DESC;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "null": true
+          },
+          {
+            "value": "21"
           }
         ]
       ],
@@ -1039,6 +2121,21 @@
       ]
     },
     {
+      "id": "geometric-type-correctness-repro-test-testpointadditionoperatorrepro-0001-select-1-2-::point-+",
+      "source": "testing/go/geometric_type_correctness_repro_test.go:TestPointAdditionOperatorRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT ('(1,2)'::point + '(3,4)'::point)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "(4,6)"
+          }
+        ]
+      ]
+    },
+    {
       "id": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3",
       "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
       "ordinal": 1,
@@ -1086,6 +2183,186 @@
       ]
     },
     {
+      "id": "lateral-test-testlateraljoins-0001-select-c.id-c.name-o.amount-as",
+      "source": "testing/go/lateral_test.go:TestLateralJoins",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE customers (id INT PRIMARY KEY, name TEXT);",
+        "CREATE TABLE orders (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tcustomer_id INT,\n\t\t\t\t\tplaced_at INT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO customers VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Cara');",
+        "INSERT INTO orders VALUES\n\t\t\t\t\t(10, 1, 100, 50),\n\t\t\t\t\t(11, 1, 200, 75),\n\t\t\t\t\t(12, 1, 300, 200),\n\t\t\t\t\t(13, 2, 150, 30);"
+      ],
+      "query": "SELECT c.id, c.name, o.amount AS latest_amount\n\t\t\t\t\t\tFROM customers c\n\t\t\t\t\t\tLEFT JOIN LATERAL (\n\t\t\t\t\t\t\tSELECT amount FROM orders\n\t\t\t\t\t\t\tWHERE customer_id = c.id\n\t\t\t\t\t\t\tORDER BY placed_at DESC\n\t\t\t\t\t\t\tLIMIT 1\n\t\t\t\t\t\t) o ON true\n\t\t\t\t\t\tORDER BY c.id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "Alice"
+          },
+          {
+            "value": "200"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "Bob"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "Cara"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "lateral-test-testlateraljoins-0002-select-d.name-as-dept-e.name",
+      "source": "testing/go/lateral_test.go:TestLateralJoins",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE departments (id INT PRIMARY KEY, name TEXT);",
+        "CREATE TABLE employees (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tdepartment_id INT,\n\t\t\t\t\tname TEXT,\n\t\t\t\t\tsalary INT\n\t\t\t\t);",
+        "INSERT INTO departments VALUES (1, 'Eng'), (2, 'Sales');",
+        "INSERT INTO employees VALUES\n\t\t\t\t\t(10, 1, 'A', 100),\n\t\t\t\t\t(11, 1, 'B', 90),\n\t\t\t\t\t(12, 1, 'C', 80),\n\t\t\t\t\t(13, 2, 'D', 70),\n\t\t\t\t\t(14, 2, 'E', 60);"
+      ],
+      "query": "SELECT d.name AS dept, e.name AS emp, e.salary\n\t\t\t\t\t\tFROM departments d\n\t\t\t\t\t\tCROSS JOIN LATERAL (\n\t\t\t\t\t\t\tSELECT name, salary FROM employees\n\t\t\t\t\t\t\tWHERE department_id = d.id\n\t\t\t\t\t\t\tORDER BY salary DESC\n\t\t\t\t\t\t\tLIMIT 2\n\t\t\t\t\t\t) e\n\t\t\t\t\t\tORDER BY d.id, e.salary DESC;",
+      "expectedRows": [
+        [
+          {
+            "value": "Eng"
+          },
+          {
+            "value": "A"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "Eng"
+          },
+          {
+            "value": "B"
+          },
+          {
+            "value": "90"
+          }
+        ],
+        [
+          {
+            "value": "Sales"
+          },
+          {
+            "value": "D"
+          },
+          {
+            "value": "70"
+          }
+        ],
+        [
+          {
+            "value": "Sales"
+          },
+          {
+            "value": "E"
+          },
+          {
+            "value": "60"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "lateral-test-testlateraljoins-0003-select-p.id-p.price-p.qty-t.total",
+      "source": "testing/go/lateral_test.go:TestLateralJoins",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE products (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tprice INT,\n\t\t\t\t\tqty INT\n\t\t\t\t);",
+        "INSERT INTO products VALUES (1, 100, 5), (2, 50, 10), (3, 200, 1);"
+      ],
+      "query": "SELECT p.id, p.price, p.qty, t.total\n\t\t\t\t\t\tFROM products p\n\t\t\t\t\t\tCROSS JOIN LATERAL (SELECT p.price * p.qty AS total) t\n\t\t\t\t\t\tORDER BY p.id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "500"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "50"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "500"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "200"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,
@@ -1125,6 +2402,356 @@
           },
           {
             "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0001-insert-into-kv-values-1",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (\n\t\t\t\t\tk INT PRIMARY KEY,\n\t\t\t\t\tv INT,\n\t\t\t\t\tupdated_at INT\n\t\t\t\t);"
+      ],
+      "query": "INSERT INTO kv VALUES (1, 10, 100) RETURNING k, v, updated_at;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0002-insert-into-kv-values-2",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (\n\t\t\t\t\tk INT PRIMARY KEY,\n\t\t\t\t\tv INT,\n\t\t\t\t\tupdated_at INT\n\t\t\t\t);",
+        "INSERT INTO kv VALUES (1, 10, 100) RETURNING k, v, updated_at;"
+      ],
+      "query": "INSERT INTO kv VALUES (2, 20, 200), (3, 30, 300) RETURNING k, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0003-insert-into-kv-values-1",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);"
+      ],
+      "query": "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0004-select-k-v-from-kv",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;"
+      ],
+      "query": "SELECT k, v FROM kv WHERE k = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0005-insert-into-kv-values-2",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+        "SELECT k, v FROM kv WHERE k = 1;"
+      ],
+      "query": "INSERT INTO kv VALUES (2, 20)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0006-select-k-v-from-kv",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 6,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+        "SELECT k, v FROM kv WHERE k = 1;",
+        "INSERT INTO kv VALUES (2, 20)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;"
+      ],
+      "query": "SELECT k, v FROM kv ORDER BY k;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0007-insert-into-kv-values-1",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 7,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);"
+      ],
+      "query": "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "99"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0008-select-k-v-from-kv",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 8,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;"
+      ],
+      "query": "SELECT k, v FROM kv WHERE k = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "99"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0009-insert-into-kv-values-1",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 9,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);"
+      ],
+      "query": "INSERT INTO kv VALUES (1, 11), (2, 22)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0010-select-k-v-from-kv",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 10,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 11), (2, 22)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;"
+      ],
+      "query": "SELECT k, v FROM kv ORDER BY k;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "11"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "on-conflict-returning-test-testinsertonconflictreturning-0015-select-k-v-from-kv",
+      "source": "testing/go/on_conflict_returning_test.go:TestInsertOnConflictReturning",
+      "ordinal": 15,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE kv (k INT PRIMARY KEY, v INT);",
+        "INSERT INTO kv VALUES (1, 10);",
+        "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+        "INSERT INTO kv VALUES (2, 20)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
+        "INSERT INTO kv VALUES (1, 11)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;",
+        "INSERT INTO kv VALUES (1, 12), (3, 30)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;"
+      ],
+      "query": "SELECT k, v FROM kv ORDER BY k;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "12"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "30"
           }
         ]
       ],

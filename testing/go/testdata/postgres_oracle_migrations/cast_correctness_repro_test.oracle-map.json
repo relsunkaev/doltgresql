@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map cast_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/cast_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/cast_correctness_repro_test.go:TestCreateCastFunctionIsUsedByExplicitCastRepro#0001",
+      "source": "testing/go/cast_correctness_repro_test.go:TestCreateCastFunctionIsUsedByExplicitCastRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE CAST function is used by explicit casts",
+      "oracle": "postgres",
+      "postgresId": "cast-correctness-repro-test-testcreatecastfunctionisusedbyexplicitcastrepro-0001-select-green-::cast_color-::int",
+      "suggestedId": "cast-correctness-repro-test-testcreatecastfunctionisusedbyexplicitcastrepro-0001-select-green-::cast_color-::int",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ('green'::cast_color)::INT;",
+      "querySha256": "51b6db25525ce70bf95a0dcb83a09ca9e550659d8a5c79ae2bcfde6533dd4288",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
