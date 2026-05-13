@@ -351,7 +351,7 @@ func arrayBinaryDimensions(vals []any) []int32 {
 			if val == nil {
 				continue
 			}
-			nested, ok := val.([]any)
+			nested, ok := pgtypes.ArrayElements(val)
 			if !ok {
 				return dimensions
 			}
@@ -382,7 +382,7 @@ func validateArrayBinaryShape(vals []any, dimensions []int32, depth int) (bool, 
 			hasNull = true
 			continue
 		}
-		nested, ok := val.([]any)
+		nested, ok := pgtypes.ArrayElements(val)
 		if leafDepth {
 			if ok {
 				return false, errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
@@ -421,7 +421,11 @@ func writeArrayBinaryElements(ctx *sql.Context, writer *utils.WireRW, vals []any
 		return nil
 	}
 	for _, val := range vals {
-		if err := writeArrayBinaryElements(ctx, writer, val.([]any), dimensions, depth+1, baseType); err != nil {
+		nested, ok := pgtypes.ArrayElements(val)
+		if !ok {
+			return errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
+		}
+		if err := writeArrayBinaryElements(ctx, writer, nested, dimensions, depth+1, baseType); err != nil {
 			return err
 		}
 	}

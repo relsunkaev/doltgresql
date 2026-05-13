@@ -234,6 +234,9 @@ func (a *arrayAggBuffer) Eval(ctx *sql.Context) (interface{}, error) {
 		result[i] = row[(len(row) - 1)]
 	}
 
+	if dt, ok := a.a.selectExprs[0].Type(ctx).(*types.DoltgresType); ok && dt.IsArrayType() {
+		return types.ArrayValue{Elements: result}, nil
+	}
 	return result, nil
 }
 

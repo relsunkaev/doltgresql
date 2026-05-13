@@ -608,11 +608,26 @@ func ReadRows(rows pgx.Rows, normalizeRows bool) (readRows []sql.Row, readRawRow
 						row[i] = nestFlatArray(flatArray, dimensions)
 					}
 				}
+			} else if ok && dt.IsArrayType() && field.Format == pgtype.TextFormatCode && rawSlice[i] != nil {
+				if _, ok := row[i].([]any); ok && textArrayHasNestedShape(rawSlice[i]) {
+					parsed, err := dt.IoInput(sql.NewEmptyContext(), string(rawSlice[i]))
+					if err != nil {
+						return nil, nil, err
+					}
+					row[i] = parsed
+				}
 			}
 		}
 		slices = append(slices, row)
 	}
 	return NormalizeRows(rows.FieldDescriptions(), slices, normalizeRows), rawSlices, nil
+}
+
+func textArrayHasNestedShape(raw []byte) bool {
+	if len(raw) < 2 {
+		return false
+	}
+	return (raw[0] == '{' && raw[1] == '{') || raw[0] == '['
 }
 
 func multidimensionalArrayHeader(raw []byte) ([]int32, bool) {

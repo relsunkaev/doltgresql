@@ -188,7 +188,7 @@ func arrayStringDimensions(arr []any) []int32 {
 		return nil
 	}
 	dimensions := []int32{int32(len(arr))}
-	nested, ok := arr[0].([]any)
+	nested, ok := ArrayElements(arr[0])
 	if !ok {
 		return dimensions
 	}
@@ -205,7 +205,7 @@ func writeArrayToString(ctx *sql.Context, sb *strings.Builder, arr []any, baseTy
 			sb.WriteString("NULL")
 			continue
 		}
-		if nested, ok := v.([]any); ok {
+		if nested, ok := ArrayElements(v); ok {
 			if err := writeArrayToString(ctx, sb, nested, baseType, trimBool); err != nil {
 				return err
 			}
