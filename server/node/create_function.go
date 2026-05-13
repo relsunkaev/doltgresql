@@ -241,7 +241,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 		return nil, err
 	}
 	if !replacedExisting {
-		if err = auth.ApplyDefaultPrivilegesToRoutine(owner, schemaName, c.FunctionName); err != nil {
+		if err = auth.ApplyDefaultPrivilegesToRoutine(owner, schemaName, c.FunctionName, auth.RoutineArgTypesKey(paramTypes)); err != nil {
 			return nil, err
 		}
 	}

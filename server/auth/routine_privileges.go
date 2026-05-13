@@ -15,6 +15,12 @@
 package auth
 
 import (
+	"strings"
+
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/go-mysql-server/sql"
+
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -24,7 +30,7 @@ type RoutinePrivileges struct {
 }
 
 // RoutinePrivilegeKey points to a specific routine object. An empty Name represents all routines in the schema.
-// ArgTypes is a comma-separated list of argument type SQL strings, e.g. "integer,text".
+// ArgTypes is a comma-separated list of canonical argument type names, e.g. "int4,text".
 type RoutinePrivilegeKey struct {
 	Role     RoleID
 	Schema   string
@@ -41,6 +47,65 @@ type RoutinePrivilegeValue struct {
 // NewRoutinePrivileges returns a new *RoutinePrivileges.
 func NewRoutinePrivileges() *RoutinePrivileges {
 	return &RoutinePrivileges{make(map[RoutinePrivilegeKey]RoutinePrivilegeValue)}
+}
+
+// RoutineArgTypesKey returns the canonical key fragment used for routine overload privileges.
+func RoutineArgTypesKey(params []id.Type) string {
+	parts := make([]string, len(params))
+	for i, param := range params {
+		parts[i] = RoutineArgTypeKey(param)
+	}
+	return strings.Join(parts, ",")
+}
+
+// RoutineArgTypeKey returns the canonical key fragment used for a single routine argument type.
+func RoutineArgTypeKey(param id.Type) string {
+	schema := param.SchemaName()
+	name := param.TypeName()
+	if schema == "" || strings.EqualFold(schema, "pg_catalog") {
+		return name
+	}
+	return schema + "." + name
+}
+
+// CheckRoutineExecutePrivilege checks EXECUTE for a resolved routine overload.
+func CheckRoutineExecutePrivilege(ctx *sql.Context, schemaName string, routineName string, argTypes string, owner string) error {
+	var userRole, publicRole Role
+	var hasExecute bool
+	LockRead(func() {
+		userRole = GetRole(ctx.Client().User)
+		publicRole = GetRole("public")
+		if !userRole.IsValid() {
+			return
+		}
+		if owner == "" {
+			owner = "postgres"
+		}
+		if strings.EqualFold(owner, userRole.Name) || userRole.IsSuperUser {
+			hasExecute = true
+			return
+		}
+		roleKey := RoutinePrivilegeKey{
+			Role:     userRole.ID(),
+			Schema:   schemaName,
+			Name:     routineName,
+			ArgTypes: argTypes,
+		}
+		publicKey := RoutinePrivilegeKey{
+			Role:     publicRole.ID(),
+			Schema:   schemaName,
+			Name:     routineName,
+			ArgTypes: argTypes,
+		}
+		hasExecute = HasRoutinePrivilege(roleKey, Privilege_EXECUTE) || HasRoutinePrivilege(publicKey, Privilege_EXECUTE)
+	})
+	if !userRole.IsValid() {
+		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
+	}
+	if !hasExecute {
+		return errors.Errorf("permission denied for routine %s", routineName)
+	}
+	return nil
 }
 
 // AddRoutinePrivilege adds the given routine privilege to the global database.

@@ -186,8 +186,9 @@ func checkFunctionExecutePrivilege(ctx *sql.Context, fn functions.Function) erro
 	if owner == ctx.Client().User || userRole.IsSuperUser {
 		return nil
 	}
-	roleKey := auth.RoutinePrivilegeKey{Role: userRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName()}
-	publicKey := auth.RoutinePrivilegeKey{Role: publicRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName()}
+	argTypes := auth.RoutineArgTypesKey(fn.ParameterTypes)
+	roleKey := auth.RoutinePrivilegeKey{Role: userRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName(), ArgTypes: argTypes}
+	publicKey := auth.RoutinePrivilegeKey{Role: publicRole.ID(), Schema: fn.ID.SchemaName(), Name: fn.ID.FunctionName(), ArgTypes: argTypes}
 	if !auth.HasRoutinePrivilege(roleKey, auth.Privilege_EXECUTE) && !auth.HasRoutinePrivilege(publicKey, auth.Privilege_EXECUTE) {
 		return errors.Errorf("permission denied for routine %s", fn.ID.FunctionName())
 	}

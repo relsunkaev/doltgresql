@@ -121,12 +121,14 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	case privilege.Function, privilege.Procedure, privilege.Routine:
 		routines := make([]auth.RoutinePrivilegeKey, 0, len(node.Targets.Routines)+len(node.Targets.InSchema))
 		for _, r := range node.Targets.Routines {
+			argTypes, err := routineArgTypesKey(ctx, r.Args)
+			if err != nil {
+				return nil, err
+			}
 			routines = append(routines, auth.RoutinePrivilegeKey{
-				Schema: routineSchema(r.Name),
-				Name:   r.Name.Parts[0],
-				// TODO: there can be 2 routines with the same name but different argument types
-				//  need a fix for getting argument types from parsing CALL statement
-				//ArgTypes: routineArgTypesKey(r.Args),
+				Schema:   routineSchema(r.Name),
+				Name:     r.Name.Parts[0],
+				ArgTypes: argTypes,
 			})
 		}
 		for _, schema := range node.Targets.InSchema {

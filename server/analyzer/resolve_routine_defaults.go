@@ -146,6 +146,9 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 		}); err != nil {
 			return nil, transform.SameTree, err
 		}
+		if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
+			return nil, transform.SameTree, err
+		}
 		n.SetResolvedProcedure(compiledFunction, outputSchema)
 		return node, same, nil
 	default:

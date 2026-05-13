@@ -79,6 +79,9 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 				hasSRF = hasSRF || rowIterExpr.ReturnsRowIter()
 			}
 			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
+				if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
+					return nil, transform.SameTree, err
+				}
 				// TODO: need better way to detect sequence usage
 				switch compiledFunction.FunctionName() {
 				case "nextval", "setval", "currval":
@@ -119,6 +122,9 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 		// Check if there is set returning function in the projection expressions (e.g. SELECT unnest() [FROM table/srf])
 		exprs, sameExprs, err := transform.Exprs(ctx, projectNode.Projections, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
 			if compiledFunction, ok := expr.(*framework.CompiledFunction); ok {
+				if err := checkResolvedRoutineExecutePrivilege(ctx, compiledFunction); err != nil {
+					return nil, transform.SameTree, err
+				}
 				if quickFunction := compiledFunction.GetQuickFunction(); quickFunction != nil {
 					return quickFunction, transform.NewTree, nil
 				}

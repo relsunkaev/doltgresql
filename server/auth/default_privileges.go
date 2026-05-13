@@ -157,7 +157,7 @@ func ApplyDefaultPrivilegesToSequence(ownerName string, schema string, sequence 
 }
 
 // ApplyDefaultPrivilegesToRoutine grants matching default privileges to a newly-created function or procedure.
-func ApplyDefaultPrivilegesToRoutine(ownerName string, schema string, routine string) error {
+func ApplyDefaultPrivilegesToRoutine(ownerName string, schema string, routine string, argTypes string) error {
 	var err error
 	LockWrite(func() {
 		owner := GetRole(ownerName)
@@ -168,9 +168,10 @@ func ApplyDefaultPrivilegesToRoutine(ownerName string, schema string, routine st
 			for privilege, grantedMap := range value.Privileges {
 				for grantedPrivilege, withGrantOption := range grantedMap {
 					AddRoutinePrivilege(RoutinePrivilegeKey{
-						Role:   value.Key.Grantee,
-						Schema: schema,
-						Name:   routine,
+						Role:     value.Key.Grantee,
+						Schema:   schema,
+						Name:     routine,
+						ArgTypes: argTypes,
 					}, GrantedPrivilege{
 						Privilege: privilege,
 						GrantedBy: grantedPrivilege.GrantedBy,

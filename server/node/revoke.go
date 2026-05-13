@@ -214,6 +214,7 @@ func (r *Revoke) common(ctx *sql.Context) (roles []auth.Role, userRole auth.Role
 			// TODO: grab the actual error message
 			return nil, auth.Role{}, 0, errors.Errorf(`role "%s" does not have permission to revoke this privilege`, userRole.Name)
 		}
+		grantedByID = grantedByRole.ID()
 	} else {
 		grantedByID = userRole.ID()
 	}

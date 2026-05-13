@@ -223,8 +223,9 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 		if len(auth.TargetNames)%2 != 0 {
 			return errors.Errorf("function identifiers has an unsupported count: %d", len(auth.TargetNames))
 		}
+		argTypes, argTypesKnown := auth.Extra.(string)
 		for i := 0; i < len(auth.TargetNames); i += 2 {
-			err := checkPrivilegeOnRoutine(ctx, state, auth.TargetNames[i], auth.TargetNames[i+1], privileges)
+			err := checkPrivilegeOnRoutine(ctx, state, auth.TargetNames[i], auth.TargetNames[i+1], argTypes, argTypesKnown, privileges)
 			if err != nil {
 				return err
 			}
@@ -525,7 +526,10 @@ func sequenceOwnedByRole(ctx *sql.Context, schemaName, seqName, roleName string)
 }
 
 // checkPrivilegeOnRoutine checks privileges for given function or procedure provided with schema name.
-func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, schemaName, routineName string, privileges []Privilege) error {
+func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, schemaName, routineName string, argTypes string, argTypesKnown bool, privileges []Privilege) error {
+	if !argTypesKnown {
+		return nil
+	}
 	// TODO: handle database
 	schName, err := core.GetSchemaName(ctx, nil, schemaName)
 	if err != nil {
@@ -534,16 +538,16 @@ func checkPrivilegeOnRoutine(ctx *sql.Context, state AuthorizationQueryState, sc
 		return nil
 	}
 	roleRoutineKey := RoutinePrivilegeKey{
-		Role:   state.role.ID(),
-		Schema: schName,
-		Name:   routineName,
-		//ArgTypes: auth.Extra.(string),
+		Role:     state.role.ID(),
+		Schema:   schName,
+		Name:     routineName,
+		ArgTypes: argTypes,
 	}
 	publicRoutineKey := RoutinePrivilegeKey{
-		Role:   state.public.ID(),
-		Schema: schName,
-		Name:   routineName,
-		//ArgTypes: auth.Extra.(string),
+		Role:     state.public.ID(),
+		Schema:   schName,
+		Name:     routineName,
+		ArgTypes: argTypes,
 	}
 	for _, privilege := range privileges {
 		if !HasRoutinePrivilege(roleRoutineKey, privilege) && !HasRoutinePrivilege(publicRoutineKey, privilege) {

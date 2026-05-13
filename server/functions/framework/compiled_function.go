@@ -292,6 +292,28 @@ func (c *CompiledFunction) StashedError() error {
 	return c.stashedErr
 }
 
+// ResolvedRoutine returns the resolved routine ID and owner for authorization checks.
+func (c *CompiledFunction) ResolvedRoutine() (id.Id, string, bool) {
+	if c == nil || c.stashedErr != nil || !c.overload.Valid() {
+		return id.Null, "", false
+	}
+	fn := c.overload.Function()
+	return fn.InternalID(), routineOwner(fn), true
+}
+
+func routineOwner(fn FunctionInterface) string {
+	switch f := fn.(type) {
+	case SQLFunction:
+		return f.Owner
+	case InterpretedFunction:
+		return f.Owner
+	case CFunction:
+		return f.Owner
+	default:
+		return ""
+	}
+}
+
 // String implements the interface sql.Expression.
 func (c *CompiledFunction) String() string {
 	sb := strings.Builder{}

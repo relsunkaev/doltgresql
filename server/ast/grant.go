@@ -15,12 +15,11 @@
 package ast
 
 import (
-	"strings"
-
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/privilege"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
@@ -129,12 +128,14 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	case privilege.Function, privilege.Procedure, privilege.Routine:
 		routines := make([]auth.RoutinePrivilegeKey, 0, len(node.Targets.Routines)+len(node.Targets.InSchema))
 		for _, r := range node.Targets.Routines {
+			argTypes, err := routineArgTypesKey(ctx, r.Args)
+			if err != nil {
+				return nil, err
+			}
 			routines = append(routines, auth.RoutinePrivilegeKey{
-				Schema: routineSchema(r.Name),
-				Name:   r.Name.Parts[0],
-				// TODO: there can be 2 routines with the same name but different argument types
-				//  need a fix for getting argument types from parsing CALL statement
-				//ArgTypes: routineArgTypesKey(r.Args),
+				Schema:   routineSchema(r.Name),
+				Name:     r.Name.Parts[0],
+				ArgTypes: argTypes,
 			})
 		}
 		for _, schema := range node.Targets.InSchema {
@@ -271,12 +272,19 @@ func typeSchema(name *tree.UnresolvedObjectName) string {
 }
 
 // routineArgTypesKey builds a canonical string key from a RoutineArgs list using only the argument types.
-func routineArgTypesKey(args tree.RoutineArgs) string {
-	parts := make([]string, len(args))
+func routineArgTypesKey(ctx *Context, args tree.RoutineArgs) (string, error) {
+	types := make([]id.Type, len(args))
 	for i, arg := range args {
-		parts[i] = arg.Type.SQLString()
+		_, dt, err := nodeResolvableTypeReference(ctx, arg.Type, false)
+		if err != nil {
+			return "", err
+		}
+		if dt == nil {
+			return "", errors.Errorf("routine argument type could not be resolved")
+		}
+		types[i] = dt.ID
 	}
-	return strings.Join(parts, ",")
+	return auth.RoutineArgTypesKey(types), nil
 }
 
 // convertPrivilegeKind converts a privilege from its parser representation to the server representation.
