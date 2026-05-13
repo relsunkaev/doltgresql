@@ -4367,12 +4367,11 @@ func rewriteAdvancedGroupByQuery(query string) (string, bool) {
 		queries = append(queries, advancedGroupBySelect(tableName, firstCol, secondCol, amountCol, groupingSet))
 	}
 	return fmt.Sprintf(
-		"SELECT COALESCE(%s_key, '%s') AS %s, COALESCE(%s_key, '%s') AS %s, %s FROM (%s) AS grouping_rewrite ORDER BY %s_key IS NULL, %s_key, %s_key IS NULL, %s_key",
+		"SELECT COALESCE(%s_key, '%s') AS %s, COALESCE(%s_key, '%s') AS %s, %s FROM (%s) AS grouping_rewrite ORDER BY 1, 2",
 		firstCol, firstAll, firstAlias,
 		secondCol, secondAll, secondAlias,
 		totalAlias,
 		strings.Join(queries, " UNION ALL "),
-		firstCol, firstCol, secondCol, secondCol,
 	), true
 }
 
