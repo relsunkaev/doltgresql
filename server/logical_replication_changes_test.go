@@ -330,6 +330,102 @@ func TestPublicationRowFilterBetweenPredicates(t *testing.T) {
 	}
 }
 
+func TestPublicationRowFilterNullTruthPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		values map[string]rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "not in with null tuple member remains unknown",
+			filter: "customer_id NOT IN (1, NULL)",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("2")}},
+			match:  false,
+		},
+		{
+			name:   "not around in with null tuple member remains unknown",
+			filter: "NOT (customer_id IN (1, NULL))",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("2")}},
+			match:  false,
+		},
+		{
+			name:   "not in with null input remains unknown",
+			filter: "customer_id NOT IN (1, 2)",
+			values: map[string]rowFilterValue{"customer_id": {null: true}},
+			match:  false,
+		},
+		{
+			name:   "not null comparison remains unknown",
+			filter: "NOT (customer_id = NULL)",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("2")}},
+			match:  false,
+		},
+		{
+			name:   "not around between null input remains unknown",
+			filter: "NOT (score BETWEEN 10 AND 20)",
+			values: map[string]rowFilterValue{"score": {null: true}},
+			match:  false,
+		},
+		{
+			name:   "in matches before null tuple member",
+			filter: "customer_id IN (1, NULL)",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("1")}},
+			match:  true,
+		},
+		{
+			name:   "not in rejects matching value before null tuple member",
+			filter: "customer_id NOT IN (1, NULL)",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("1")}},
+			match:  false,
+		},
+		{
+			name:   "not in accepts nonmatching value without null tuple member",
+			filter: "customer_id NOT IN (1, 2)",
+			values: map[string]rowFilterValue{"customer_id": {data: []byte("3")}},
+			match:  true,
+		},
+		{
+			name:   "unknown or true is true",
+			filter: "customer_id = NULL OR label = 'shown'",
+			values: map[string]rowFilterValue{
+				"customer_id": {data: []byte("2")},
+				"label":       {data: []byte("shown")},
+			},
+			match: true,
+		},
+		{
+			name:   "unknown and true is unknown",
+			filter: "customer_id = NULL AND label = 'shown'",
+			values: map[string]rowFilterValue{
+				"customer_id": {data: []byte("2")},
+				"label":       {data: []byte("shown")},
+			},
+			match: false,
+		},
+		{
+			name:   "unknown or false is unknown",
+			filter: "customer_id = NULL OR label = 'hidden'",
+			values: map[string]rowFilterValue{
+				"customer_id": {data: []byte("2")},
+				"label":       {data: []byte("shown")},
+			},
+			match: false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, tt.values)
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
 func TestPublicationRowFilterArithmeticPredicates(t *testing.T) {
 	tests := []struct {
 		name   string

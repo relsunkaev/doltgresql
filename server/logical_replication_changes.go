@@ -88,6 +88,14 @@ type rowFilterValue struct {
 	typeOID uint32
 }
 
+type rowFilterTruth uint8
+
+const (
+	rowFilterTruthFalse rowFilterTruth = iota
+	rowFilterTruthTrue
+	rowFilterTruthUnknown
+)
+
 type replicationProjectedRow struct {
 	newRow       Row
 	oldRow       Row
@@ -796,166 +804,241 @@ func (capture *replicationChangeCapture) rowMatchesPublicationFilter(ctx *sql.Co
 }
 
 func evalPublicationFilterBool(ctx *sql.Context, expr vitess.Expr, values map[string]rowFilterValue) (bool, error) {
+	truth, err := evalPublicationFilterTruth(ctx, expr, values)
+	if err != nil {
+		return false, err
+	}
+	return truth == rowFilterTruthTrue, nil
+}
+
+func evalPublicationFilterTruth(ctx *sql.Context, expr vitess.Expr, values map[string]rowFilterValue) (rowFilterTruth, error) {
 	switch typed := expr.(type) {
 	case *vitess.AndExpr:
-		left, err := evalPublicationFilterBool(ctx, typed.Left, values)
-		if err != nil || !left {
+		left, err := evalPublicationFilterTruth(ctx, typed.Left, values)
+		if err != nil || left == rowFilterTruthFalse {
 			return left, err
 		}
-		return evalPublicationFilterBool(ctx, typed.Right, values)
+		right, err := evalPublicationFilterTruth(ctx, typed.Right, values)
+		if err != nil || left == rowFilterTruthTrue {
+			return right, err
+		}
+		if right == rowFilterTruthFalse {
+			return rowFilterTruthFalse, nil
+		}
+		return rowFilterTruthUnknown, nil
 	case *vitess.OrExpr:
-		left, err := evalPublicationFilterBool(ctx, typed.Left, values)
-		if err != nil || left {
+		left, err := evalPublicationFilterTruth(ctx, typed.Left, values)
+		if err != nil || left == rowFilterTruthTrue {
 			return left, err
 		}
-		return evalPublicationFilterBool(ctx, typed.Right, values)
+		right, err := evalPublicationFilterTruth(ctx, typed.Right, values)
+		if err != nil || left == rowFilterTruthFalse {
+			return right, err
+		}
+		if right == rowFilterTruthTrue {
+			return rowFilterTruthTrue, nil
+		}
+		return rowFilterTruthUnknown, nil
 	case *vitess.NotExpr:
-		value, err := evalPublicationFilterBool(ctx, typed.Expr, values)
-		return !value, err
+		value, err := evalPublicationFilterTruth(ctx, typed.Expr, values)
+		if err != nil {
+			return rowFilterTruthFalse, err
+		}
+		return rowFilterNotTruth(value), nil
 	case *vitess.ParenExpr:
-		return evalPublicationFilterBool(ctx, typed.Expr, values)
+		return evalPublicationFilterTruth(ctx, typed.Expr, values)
 	case *vitess.ComparisonExpr:
-		return evalPublicationFilterComparison(ctx, typed, values)
+		return evalPublicationFilterComparisonTruth(ctx, typed, values)
 	case *vitess.RangeCond:
-		return evalPublicationFilterRange(ctx, typed, values)
+		return evalPublicationFilterRangeTruth(ctx, typed, values)
 	case *vitess.IsExpr:
 		value, err := evalPublicationFilterScalar(typed.Expr, values)
 		if err != nil {
-			return false, err
+			return rowFilterTruthFalse, err
 		}
 		switch strings.ToLower(typed.Operator) {
 		case vitess.IsNullStr:
-			return value.null, nil
+			return rowFilterTruthFromBool(value.null), nil
 		case vitess.IsNotNullStr:
-			return !value.null, nil
+			return rowFilterTruthFromBool(!value.null), nil
 		case vitess.IsTrueStr:
 			boolValue, ok := rowFilterValueBool(ctx, value)
-			return ok && boolValue, nil
+			return rowFilterTruthFromBool(ok && boolValue), nil
 		case vitess.IsNotTrueStr:
 			boolValue, ok := rowFilterValueBool(ctx, value)
-			return !ok || !boolValue, nil
+			return rowFilterTruthFromBool(!ok || !boolValue), nil
 		case vitess.IsFalseStr:
 			boolValue, ok := rowFilterValueBool(ctx, value)
-			return ok && !boolValue, nil
+			return rowFilterTruthFromBool(ok && !boolValue), nil
 		case vitess.IsNotFalseStr:
 			boolValue, ok := rowFilterValueBool(ctx, value)
-			return !ok || boolValue, nil
+			return rowFilterTruthFromBool(!ok || boolValue), nil
 		default:
-			return false, errors.Errorf("publication row filter operator %q is not supported", typed.Operator)
+			return rowFilterTruthFalse, errors.Errorf("publication row filter operator %q is not supported", typed.Operator)
 		}
 	case *vitess.ColName, *vitess.SQLVal, vitess.BoolVal, *vitess.NullVal:
 		value, err := evalPublicationFilterScalar(expr, values)
 		if err != nil {
-			return false, err
+			return rowFilterTruthFalse, err
 		}
 		boolValue, ok := rowFilterValueBool(ctx, value)
 		if !ok {
-			return false, nil
+			return rowFilterTruthUnknown, nil
 		}
-		return boolValue, nil
+		return rowFilterTruthFromBool(boolValue), nil
 	default:
-		return false, errors.Errorf("publication row filter expression %T is not supported", expr)
+		return rowFilterTruthFalse, errors.Errorf("publication row filter expression %T is not supported", expr)
 	}
 }
 
-func evalPublicationFilterRange(ctx *sql.Context, expr *vitess.RangeCond, values map[string]rowFilterValue) (bool, error) {
+func rowFilterTruthFromBool(value bool) rowFilterTruth {
+	if value {
+		return rowFilterTruthTrue
+	}
+	return rowFilterTruthFalse
+}
+
+func rowFilterNotTruth(value rowFilterTruth) rowFilterTruth {
+	switch value {
+	case rowFilterTruthTrue:
+		return rowFilterTruthFalse
+	case rowFilterTruthFalse:
+		return rowFilterTruthTrue
+	default:
+		return rowFilterTruthUnknown
+	}
+}
+
+func evalPublicationFilterRangeTruth(ctx *sql.Context, expr *vitess.RangeCond, values map[string]rowFilterValue) (rowFilterTruth, error) {
 	left, err := evalPublicationFilterScalar(expr.Left, values)
 	if err != nil {
-		return false, err
+		return rowFilterTruthFalse, err
 	}
 	from, err := evalPublicationFilterScalar(expr.From, values)
 	if err != nil {
-		return false, err
+		return rowFilterTruthFalse, err
 	}
 	to, err := evalPublicationFilterScalar(expr.To, values)
 	if err != nil {
-		return false, err
+		return rowFilterTruthFalse, err
 	}
 	lower, ok := rowFilterValuesCompare(ctx, left, from)
 	if !ok {
-		return false, nil
+		return rowFilterTruthUnknown, nil
 	}
 	upper, ok := rowFilterValuesCompare(ctx, left, to)
 	if !ok {
-		return false, nil
+		return rowFilterTruthUnknown, nil
 	}
 	between := lower >= 0 && upper <= 0
 	switch strings.ToLower(expr.Operator) {
 	case vitess.BetweenStr:
-		return between, nil
+		return rowFilterTruthFromBool(between), nil
 	case vitess.NotBetweenStr:
-		return !between, nil
+		return rowFilterNotTruth(rowFilterTruthFromBool(between)), nil
 	default:
-		return false, errors.Errorf("publication row filter range operator %q is not supported", expr.Operator)
+		return rowFilterTruthFalse, errors.Errorf("publication row filter range operator %q is not supported", expr.Operator)
 	}
 }
 
-func evalPublicationFilterComparison(ctx *sql.Context, expr *vitess.ComparisonExpr, values map[string]rowFilterValue) (bool, error) {
+func evalPublicationFilterComparisonTruth(ctx *sql.Context, expr *vitess.ComparisonExpr, values map[string]rowFilterValue) (rowFilterTruth, error) {
 	left, err := evalPublicationFilterScalar(expr.Left, values)
 	if err != nil {
-		return false, err
+		return rowFilterTruthFalse, err
 	}
 	if strings.EqualFold(expr.Operator, vitess.InStr) || strings.EqualFold(expr.Operator, vitess.NotInStr) {
 		tuple, ok := expr.Right.(vitess.ValTuple)
 		if !ok {
-			return false, errors.Errorf("publication row filter IN requires a literal tuple")
+			return rowFilterTruthFalse, errors.Errorf("publication row filter IN requires a literal tuple")
 		}
+		if left.null {
+			return rowFilterTruthUnknown, nil
+		}
+		unknown := false
 		matches := false
 		for _, tupleExpr := range tuple {
 			right, err := evalPublicationFilterScalar(tupleExpr, values)
 			if err != nil {
-				return false, err
+				return rowFilterTruthFalse, err
+			}
+			if right.null {
+				unknown = true
+				continue
 			}
 			if rowFilterValuesEqual(ctx, left, right) {
 				matches = true
 				break
 			}
 		}
-		if strings.EqualFold(expr.Operator, vitess.NotInStr) {
-			return !matches, nil
+		result := rowFilterTruthFalse
+		if matches {
+			result = rowFilterTruthTrue
+		} else if unknown {
+			result = rowFilterTruthUnknown
 		}
-		return matches, nil
+		if strings.EqualFold(expr.Operator, vitess.NotInStr) {
+			return rowFilterNotTruth(result), nil
+		}
+		return result, nil
 	}
 	right, err := evalPublicationFilterScalar(expr.Right, values)
 	if err != nil {
-		return false, err
+		return rowFilterTruthFalse, err
 	}
 	switch strings.ToLower(expr.Operator) {
 	case vitess.EqualStr:
-		return rowFilterValuesEqual(ctx, left, right), nil
+		if left.null || right.null {
+			return rowFilterTruthUnknown, nil
+		}
+		return rowFilterTruthFromBool(rowFilterValuesEqual(ctx, left, right)), nil
 	case vitess.NullSafeEqualStr:
 		if left.null || right.null {
-			return left.null && right.null, nil
+			return rowFilterTruthFromBool(left.null && right.null), nil
 		}
-		return rowFilterValuesEqual(ctx, left, right), nil
+		return rowFilterTruthFromBool(rowFilterValuesEqual(ctx, left, right)), nil
 	case vitess.LikeStr, vitess.NotLikeStr:
 		match, ok, err := rowFilterValuesLike(left, right)
 		if err != nil || !ok {
-			return false, err
+			if err != nil {
+				return rowFilterTruthFalse, err
+			}
+			return rowFilterTruthUnknown, nil
 		}
 		if strings.EqualFold(expr.Operator, vitess.NotLikeStr) {
-			return !match, nil
+			return rowFilterTruthFromBool(!match), nil
 		}
-		return match, nil
+		return rowFilterTruthFromBool(match), nil
 	case vitess.NotEqualStr, "<>":
 		if left.null || right.null {
-			return false, nil
+			return rowFilterTruthUnknown, nil
 		}
-		return !rowFilterValuesEqual(ctx, left, right), nil
+		return rowFilterTruthFromBool(!rowFilterValuesEqual(ctx, left, right)), nil
 	case vitess.LessThanStr:
 		cmp, ok := rowFilterValuesCompare(ctx, left, right)
-		return ok && cmp < 0, nil
+		if !ok {
+			return rowFilterTruthUnknown, nil
+		}
+		return rowFilterTruthFromBool(cmp < 0), nil
 	case vitess.LessEqualStr:
 		cmp, ok := rowFilterValuesCompare(ctx, left, right)
-		return ok && cmp <= 0, nil
+		if !ok {
+			return rowFilterTruthUnknown, nil
+		}
+		return rowFilterTruthFromBool(cmp <= 0), nil
 	case vitess.GreaterThanStr:
 		cmp, ok := rowFilterValuesCompare(ctx, left, right)
-		return ok && cmp > 0, nil
+		if !ok {
+			return rowFilterTruthUnknown, nil
+		}
+		return rowFilterTruthFromBool(cmp > 0), nil
 	case vitess.GreaterEqualStr:
 		cmp, ok := rowFilterValuesCompare(ctx, left, right)
-		return ok && cmp >= 0, nil
+		if !ok {
+			return rowFilterTruthUnknown, nil
+		}
+		return rowFilterTruthFromBool(cmp >= 0), nil
 	default:
-		return false, errors.Errorf("publication row filter comparison operator %q is not supported", expr.Operator)
+		return rowFilterTruthFalse, errors.Errorf("publication row filter comparison operator %q is not supported", expr.Operator)
 	}
 }
 
