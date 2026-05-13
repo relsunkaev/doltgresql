@@ -22,7 +22,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropLanguage implements DROP LANGUAGE.
@@ -62,7 +64,8 @@ func (d *DropLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 	}
 	var err error
 	auth.LockWrite(func() {
-		if _, ok := auth.GetLanguage(d.Name); !ok {
+		lang, ok := auth.GetLanguage(d.Name)
+		if !ok {
 			if !d.IfExists {
 				err = errors.Errorf(`language "%s" does not exist`, d.Name)
 			}
@@ -75,6 +78,7 @@ func (d *DropLanguage) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error)
 			err = errors.Errorf(`language "%s" does not exist`, d.Name)
 			return
 		}
+		comments.RemoveObject(id.NewId(id.Section_FunctionLanguage, lang.Name), "pg_language")
 		err = auth.PersistChanges()
 	})
 	if err != nil {
