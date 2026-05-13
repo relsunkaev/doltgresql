@@ -79,3 +79,56 @@ func TestRowLevelSecurityMultipleSelectPoliciesCombineRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRowLevelSecuritySelectPolicyUsingTrueRepro reproduces a data consistency
+// bug: PostgreSQL treats USING (true) as an allow-all permissive policy, but
+// Doltgres rewrites unsupported policy expressions as false.
+func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_true_policy_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_policy_reader; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_true_policy_reader",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SELECT policy USING true allows all rows",
+			SetUpScript: []string{
+				`CREATE USER rls_true_policy_reader PASSWORD 'reader';`,
+				`CREATE TABLE rls_true_policy_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_true_policy_docs VALUES
+					(1, 'visible'),
+					(2, 'also visible');`,
+				`GRANT USAGE ON SCHEMA public TO rls_true_policy_reader;`,
+				`GRANT SELECT ON rls_true_policy_docs TO rls_true_policy_reader;`,
+				`CREATE POLICY rls_true_policy_docs_select
+					ON rls_true_policy_docs
+					FOR SELECT
+					USING (true);`,
+				`ALTER TABLE rls_true_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT id, label
+						FROM rls_true_policy_docs
+						ORDER BY id;`,
+					Expected: []sql.Row{
+						{1, "visible"},
+						{2, "also visible"},
+					},
+					Username: `rls_true_policy_reader`,
+					Password: `reader`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-select-policy-using-true-allows-all",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
