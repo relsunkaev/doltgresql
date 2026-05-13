@@ -733,6 +733,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		if queries[0].AST == nil {
 			return true, h.send(&pgproto3.EmptyQueryResponse{})
 		}
+		if err = h.rejectLockTableOutsideTransaction(queries[0]); err != nil {
+			return true, err
+		}
 		handled, endOfMessages, err = h.handleQueryOutsideEngine(queries[0])
 		if handled {
 			h.releaseXactAdvisoryLocksIfOutsideTransaction()
@@ -753,6 +756,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 	}
 
 	for _, query := range queries {
+		if err = h.rejectLockTableOutsideTransaction(query); err != nil {
+			return true, err
+		}
 		handled, _, err = h.handleQueryOutsideEngine(query)
 		if err != nil {
 			return true, err
@@ -1295,6 +1301,13 @@ func (h *ConnectionHandler) rejectConcurrentIndexInTransaction(query ConvertedQu
 			"DROP INDEX CONCURRENTLY cannot run inside a transaction block")
 	}
 	return nil
+}
+
+func (h *ConnectionHandler) rejectLockTableOutsideTransaction(query ConvertedQuery) error {
+	if h.inTransaction || strings.ToUpper(query.StatementTag) != "LOCK TABLE" {
+		return nil
+	}
+	return pgerror.New(pgcode.NoActiveSQLTransaction, "LOCK TABLE can only be used in transaction blocks")
 }
 
 func (h *ConnectionHandler) rejectReadOnlyTransactionWrite(query ConvertedQuery) error {
@@ -2295,6 +2308,9 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	}
 
 	// Certain statement types get handled directly by the handler instead of being passed to the engine
+	if err := h.rejectLockTableOutsideTransaction(query); err != nil {
+		return err
+	}
 	handled, _, err := h.handleQueryOutsideEngine(query)
 	if handled {
 		return err
