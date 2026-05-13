@@ -25,6 +25,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/shopspring/decimal"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/postgres/parser/timeofday"
@@ -373,7 +374,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			tableName.SchemaQualifier = vitess.NewTableIdent(node.TableName.Parts[1])
 		}
 		return &vitess.ColName{
-			Name:      vitess.NewColIdent(string(node.ColumnName)),
+			Name:      vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.ColumnName))),
 			Qualifier: tableName,
 		}, nil
 	case *tree.CommentOnColumn:
@@ -1117,7 +1118,7 @@ func unresolvedNameToColName(name *tree.UnresolvedName) (*vitess.ColName, error)
 	}
 
 	return &vitess.ColName{
-		Name:      vitess.NewColIdent(name.Parts[0]),
+		Name:      vitess.NewColIdent(core.EncodePhysicalColumnName(name.Parts[0])),
 		Qualifier: tableName,
 	}, nil
 }

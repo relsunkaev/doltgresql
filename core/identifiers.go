@@ -14,6 +14,13 @@
 
 package core
 
+import (
+	"encoding/hex"
+	"strings"
+)
+
+const physicalColumnNamePrefix = "__doltgres_column_name_"
+
 // IsValidPostgresIdentifier returns true according to Postgres quoted identifier rules.
 // Quoted identifiers can contain any character except the null character (code zero),
 // including supplementary Unicode (emoji, code points above U+FFFF) unlike MySQL.
@@ -28,4 +35,26 @@ func IsValidPostgresIdentifier(name string) bool {
 		}
 	}
 	return true
+}
+
+// EncodePhysicalColumnName maps PostgreSQL's case-sensitive column identifiers
+// onto GMS column names, which are otherwise validated case-insensitively.
+func EncodePhysicalColumnName(name string) string {
+	if name == strings.ToLower(name) && !strings.HasPrefix(name, physicalColumnNamePrefix) {
+		return name
+	}
+	return physicalColumnNamePrefix + hex.EncodeToString([]byte(name))
+}
+
+// DecodePhysicalColumnName returns the PostgreSQL-facing column name for a
+// column that was encoded by EncodePhysicalColumnName.
+func DecodePhysicalColumnName(name string) string {
+	if !strings.HasPrefix(name, physicalColumnNamePrefix) {
+		return name
+	}
+	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalColumnNamePrefix))
+	if err != nil {
+		return name
+	}
+	return string(decoded)
 }

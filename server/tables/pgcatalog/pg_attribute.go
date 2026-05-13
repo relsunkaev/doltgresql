@@ -191,7 +191,7 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 	return &pgAttribute{
 		attrelid:       relationID,
 		attrelidNative: id.Cache().ToOID(relationID),
-		attname:        col.Name,
+		attname:        core.DecodePhysicalColumnName(col.Name),
 		schemaName:     schemaName,
 		tableName:      tableName,
 		atttypid:       typeMeta.typeOid,
@@ -273,7 +273,7 @@ func indexAttributes(ctx *sql.Context, table sql.Table, idx sql.Index, relationI
 		attrs = append(attrs, &pgAttribute{
 			attrelid:       relationID,
 			attrelidNative: id.Cache().ToOID(relationID),
-			attname:        col.Name,
+			attname:        core.DecodePhysicalColumnName(col.Name),
 			atttypid:       typeMeta.typeOid,
 			attlen:         typeMeta.attlen,
 			attnum:         int16(len(attrs) + 1),

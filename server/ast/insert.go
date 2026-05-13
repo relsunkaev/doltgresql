@@ -19,6 +19,7 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
@@ -94,7 +95,7 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 	if len(node.Columns) > 0 {
 		columns = make([]vitess.ColIdent, len(node.Columns))
 		for i := range node.Columns {
-			columns[i] = vitess.NewColIdent(string(node.Columns[i]))
+			columns[i] = vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.Columns[i])))
 		}
 	}
 	with, err := nodeWith(ctx, node.With)

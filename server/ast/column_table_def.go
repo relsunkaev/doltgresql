@@ -21,6 +21,7 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -149,7 +150,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema str
 	}
 
 	colDef := &vitess.ColumnDefinition{
-		Name: vitess.NewColIdent(string(node.Name)),
+		Name: vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.Name))),
 		Type: vitess.ColumnType{
 			Type:          convertType.Type,
 			ResolvedType:  resolvedType,

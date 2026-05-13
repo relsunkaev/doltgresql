@@ -128,11 +128,10 @@ func validateIdentifiers(ct *plan.CreateTable) error {
 		if err != nil {
 			return err
 		}
-		lower := strings.ToLower(col.Name)
-		if colNames[lower] {
+		if colNames[col.Name] {
 			return sql.ErrDuplicateColumn.New(col.Name)
 		}
-		colNames[lower] = true
+		colNames[col.Name] = true
 	}
 
 	for _, chDef := range ct.Checks() {

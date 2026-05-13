@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/vitess/go/vt/proto/query"
 	"github.com/lib/pq/oid"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	partypes "github.com/dolthub/doltgresql/postgres/parser/types"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -169,50 +170,50 @@ func getRowFromColumn(ctx *sql.Context, curOrdPos int, col *sql.Column, catName,
 	}
 
 	return sql.Row{
-		catName,               // table_catalog
-		schName,               // table_schema
-		tblName,               // table_name
-		col.Name,              // column_name
-		ordinalPos,            // ordinal_position
-		columnDefault,         // column_default
-		nullable,              // is_nullable
-		dataType,              // data_type
-		charMaxLen,            // character_maximum_length
-		charOctetLen,          // character_octet_length
-		numericPrecision,      // numeric_precision
-		numericPrecisionRadix, // numeric_precision_radix
-		numericScale,          // numeric_scale
-		datetimePrecision,     // datetime_precision
-		nil,                   // interval_type TODO
-		nil,                   // interval_precision TODO
-		nil,                   // character_set_catalog TODO
-		nil,                   // character_set_schema TODO
-		charName,              // character_set_name
-		nil,                   // collation_catalog TODO
-		nil,                   // collation_schema TODO
-		collName,              // collation_name
-		domainCatalog,         // domain_catalog
-		domainSchema,          // domain_schema
-		domainName,            // domain_name
-		catName,               // udt_catalog
-		"pg_catalog",          // udt_schema
-		udtName,               // udt_name
-		nil,                   // scope_catalog TODO
-		nil,                   // scope_schema TODO
-		nil,                   // scope_name TODO
-		nil,                   // maximum_cardinality TODO
-		nil,                   // dtd_identifier TODO
-		"NO",                  // is_self_referencing TODO
-		isIdentity,            // is_identity
-		identityGeneration,    // identity_generation
-		nil,                   // identity_start TODO
-		nil,                   // identity_increment TODO
-		nil,                   // identity_maximum TODO
-		nil,                   // identity_minimum TODO
-		"NO",                  // identity_cycle TODO
-		isGenerated,           // is_generated
-		generationExpression,  // generation_expression
-		"YES",                 // is_updatable
+		catName,                                 // table_catalog
+		schName,                                 // table_schema
+		tblName,                                 // table_name
+		core.DecodePhysicalColumnName(col.Name), // column_name
+		ordinalPos,                              // ordinal_position
+		columnDefault,                           // column_default
+		nullable,                                // is_nullable
+		dataType,                                // data_type
+		charMaxLen,                              // character_maximum_length
+		charOctetLen,                            // character_octet_length
+		numericPrecision,                        // numeric_precision
+		numericPrecisionRadix,                   // numeric_precision_radix
+		numericScale,                            // numeric_scale
+		datetimePrecision,                       // datetime_precision
+		nil,                                     // interval_type TODO
+		nil,                                     // interval_precision TODO
+		nil,                                     // character_set_catalog TODO
+		nil,                                     // character_set_schema TODO
+		charName,                                // character_set_name
+		nil,                                     // collation_catalog TODO
+		nil,                                     // collation_schema TODO
+		collName,                                // collation_name
+		domainCatalog,                           // domain_catalog
+		domainSchema,                            // domain_schema
+		domainName,                              // domain_name
+		catName,                                 // udt_catalog
+		"pg_catalog",                            // udt_schema
+		udtName,                                 // udt_name
+		nil,                                     // scope_catalog TODO
+		nil,                                     // scope_schema TODO
+		nil,                                     // scope_name TODO
+		nil,                                     // maximum_cardinality TODO
+		nil,                                     // dtd_identifier TODO
+		"NO",                                    // is_self_referencing TODO
+		isIdentity,                              // is_identity
+		identityGeneration,                      // identity_generation
+		nil,                                     // identity_start TODO
+		nil,                                     // identity_increment TODO
+		nil,                                     // identity_maximum TODO
+		nil,                                     // identity_minimum TODO
+		"NO",                                    // identity_cycle TODO
+		isGenerated,                             // is_generated
+		generationExpression,                    // generation_expression
+		"YES",                                   // is_updatable
 	}
 }
 
