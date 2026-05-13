@@ -19,6 +19,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strings"
 	"time"
 
@@ -40,6 +41,11 @@ import (
 )
 
 type replicationChangeAction byte
+
+var (
+	publicationRowFilterIsNotUnknown = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
+	publicationRowFilterIsUnknown    = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
+)
 
 const (
 	replicationChangeInsert   replicationChangeAction = 'I'
@@ -658,6 +664,7 @@ func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
 	if rowFilter == "" {
 		return nil, nil
 	}
+	rowFilter = normalizePublicationRowFilter(rowFilter)
 	statement, err := vitess.Parse("SELECT 1 WHERE " + rowFilter)
 	if err != nil {
 		return nil, err
@@ -667,6 +674,12 @@ func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
 		return nil, errors.Errorf("publication row filter did not parse as a WHERE expression")
 	}
 	return selectStatement.Where.Expr, nil
+}
+
+func normalizePublicationRowFilter(rowFilter string) string {
+	rowFilter = publicationRowFilterIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
+	rowFilter = publicationRowFilterIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
+	return rowFilter
 }
 
 func (capture *replicationChangeCapture) rowMatchesPublicationFilter(ctx *sql.Context, row Row, expr vitess.Expr) (bool, error) {
@@ -718,9 +731,31 @@ func evalPublicationFilterBool(ctx *sql.Context, expr vitess.Expr, values map[st
 			return value.null, nil
 		case vitess.IsNotNullStr:
 			return !value.null, nil
+		case vitess.IsTrueStr:
+			boolValue, ok := rowFilterValueBool(ctx, value)
+			return ok && boolValue, nil
+		case vitess.IsNotTrueStr:
+			boolValue, ok := rowFilterValueBool(ctx, value)
+			return !ok || !boolValue, nil
+		case vitess.IsFalseStr:
+			boolValue, ok := rowFilterValueBool(ctx, value)
+			return ok && !boolValue, nil
+		case vitess.IsNotFalseStr:
+			boolValue, ok := rowFilterValueBool(ctx, value)
+			return !ok || boolValue, nil
 		default:
 			return false, errors.Errorf("publication row filter operator %q is not supported", typed.Operator)
 		}
+	case *vitess.ColName, *vitess.SQLVal, vitess.BoolVal, *vitess.NullVal:
+		value, err := evalPublicationFilterScalar(expr, values)
+		if err != nil {
+			return false, err
+		}
+		boolValue, ok := rowFilterValueBool(ctx, value)
+		if !ok {
+			return false, nil
+		}
+		return boolValue, nil
 	default:
 		return false, errors.Errorf("publication row filter expression %T is not supported", expr)
 	}
@@ -791,6 +826,11 @@ func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterVa
 		return value, nil
 	case *vitess.SQLVal:
 		return rowFilterValue{data: append([]byte(nil), typed.Val...)}, nil
+	case vitess.BoolVal:
+		if bool(typed) {
+			return rowFilterValue{data: []byte("true"), typeOID: id.Cache().ToOID(pgtypes.Bool.ID.AsId())}, nil
+		}
+		return rowFilterValue{data: []byte("false"), typeOID: id.Cache().ToOID(pgtypes.Bool.ID.AsId())}, nil
 	case *vitess.NullVal:
 		return rowFilterValue{null: true}, nil
 	case *vitess.ParenExpr:
@@ -798,6 +838,18 @@ func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterVa
 	default:
 		return rowFilterValue{}, errors.Errorf("publication row filter scalar expression %T is not supported", expr)
 	}
+}
+
+func rowFilterValueBool(ctx *sql.Context, value rowFilterValue) (bool, bool) {
+	if value.null {
+		return false, false
+	}
+	parsed, err := pgtypes.Bool.IoInput(ctx, strings.TrimSpace(string(value.data)))
+	if err != nil {
+		return false, false
+	}
+	boolValue, ok := parsed.(bool)
+	return boolValue, ok
 }
 
 func rowFilterValuesEqual(ctx *sql.Context, left rowFilterValue, right rowFilterValue) bool {
@@ -855,6 +907,10 @@ func rowFilterTypedCompare(ctx *sql.Context, left rowFilterValue, right rowFilte
 
 func rowFilterComparableType(value rowFilterValue) *pgtypes.DoltgresType {
 	switch value.typeOID {
+	case id.Cache().ToOID(pgtypes.Bool.ID.AsId()):
+		return pgtypes.Bool
+	case id.Cache().ToOID(pgtypes.BpChar.ID.AsId()):
+		return pgtypes.BpChar
 	case id.Cache().ToOID(pgtypes.Bytea.ID.AsId()):
 		return pgtypes.Bytea
 	case id.Cache().ToOID(pgtypes.Date.ID.AsId()):
@@ -867,6 +923,8 @@ func rowFilterComparableType(value rowFilterValue) *pgtypes.DoltgresType {
 		return pgtypes.Timestamp
 	case id.Cache().ToOID(pgtypes.TimestampTZ.ID.AsId()):
 		return pgtypes.TimestampTZ
+	case id.Cache().ToOID(pgtypes.Time.ID.AsId()):
+		return pgtypes.Time
 	case id.Cache().ToOID(pgtypes.Uuid.ID.AsId()):
 		return pgtypes.Uuid
 	default:
