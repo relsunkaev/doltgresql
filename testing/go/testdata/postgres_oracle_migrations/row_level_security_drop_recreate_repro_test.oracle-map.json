@@ -1,0 +1,99 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_drop_recreate_repro_test.go",
+  "sourceFile": "testing/go/row_level_security_drop_recreate_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro#0001",
+      "source": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TABLE clears row-level security state before recreate",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0001-select-id-label-from-drop_recreate_rls_docs",
+      "suggestedId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0001-select-id-label-from-drop_recreate_rls_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_recreate_rls_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_recreate_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "fe261fc35c08383cb20e12186a09bd9de40915a2c0264b18e2a2372450749279",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "old visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro#0002",
+      "source": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro",
+      "ordinal": 2,
+      "scriptName": "DROP TABLE clears row-level security state before recreate",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "suggestedId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'drop_recreate_rls_docs'::regclass;",
+      "querySha256": "2b3a9dbe39b18a55ebc3fe8024de7aa660e7fc74ba1c25226f6250516dc7545f",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro#0003",
+      "source": "testing/go/row_level_security_drop_recreate_repro_test.go:TestDropTableClearsRowLevelSecurityStateRepro",
+      "ordinal": 3,
+      "scriptName": "DROP TABLE clears row-level security state before recreate",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0003-select-id-label-from-drop_recreate_rls_docs",
+      "suggestedId": "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0003-select-id-label-from-drop_recreate_rls_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_recreate_rls_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_recreate_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "fe261fc35c08383cb20e12186a09bd9de40915a2c0264b18e2a2372450749279",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "new visible"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "new unrestricted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
