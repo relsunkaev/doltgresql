@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 00:29 America/Phoenix
+
+- Lane: `DELETE ... USING` joined target deletion from `TestDeleteUsingDeletesJoinedRowsRepro`.
+- Expected files: PostgreSQL DELETE parser/tree conversion and Doltgres AST bridge, likely `postgres/parser/parser/sql.y`, `postgres/parser/sem/tree/delete.go`, generated parser output if required, and `server/ast/delete.go`. Avoiding alpha truncate files, epsilon drop-language/database privilege files, auditor grant/RLS/oracle files, and alpha full-suite ownership.
+- Red proof: focused run failed at parse time with `at or near "where": syntax error: unimplemented: this syntax`.
+- Fix: parse `USING` into `tree.Delete`, format/pretty-print it, and lower PostgreSQL `DELETE ... USING` to a simple target delete with a correlated `EXISTS (SELECT 1 FROM using ... WHERE ...)` predicate.
+- Focused green with gamma-private caches:
+  - `go test -vet=off ./testing/go -run '^TestDeleteUsingDeletesJoinedRowsRepro$' -count=1 -v`
+  - `go test -vet=off ./postgres/parser/parser ./postgres/parser/sem/tree ./server/ast -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestDelete|TestDeleteUsingDeletesJoinedRowsRepro)$' -count=1 -v`
+- Adjacent note: a broader `DELETE RETURNING` smoke still exposes an unrelated PL/pgSQL panic in `TestDeleteReturningFunctionSucceedsAfterDeleteRepro`.
+- Lane committed: `b7654009 fix: support delete using joins`.
+
 ### gamma - 2026-05-13 00:20 America/Phoenix
 
 - Lane: `array_position(NULL, NULL)` overload rejection from `TestArrayFunctions/array_position_and_array_positions`.
