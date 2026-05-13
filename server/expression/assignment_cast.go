@@ -32,6 +32,9 @@ type AssignmentCast struct {
 	toType         *pgtypes.DoltgresType
 	domainNullable bool
 	domainChecks   sql.CheckConstraints
+	domainElemType *pgtypes.DoltgresType
+	domainElemNull bool
+	domainElemChk  sql.CheckConstraints
 }
 
 var _ sql.Expression = (*AssignmentCast)(nil)
@@ -82,14 +85,13 @@ func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		return nil, err
 	}
 	if ac.toType.TypType == pgtypes.TypeType_Domain {
-		for _, check := range ac.domainChecks {
-			res, err := sql.EvaluateCondition(ctx, check.Expr, sql.Row{castResult})
-			if err != nil {
-				return nil, err
-			}
-			if sql.IsFalse(res) {
-				return nil, pgtypes.ErrDomainValueViolatesCheckConstraint.New(ac.toType.Name(), check.Name)
-			}
+		if err = validateDomainValue(ctx, ac.toType, ac.domainNullable, ac.domainChecks, castResult); err != nil {
+			return nil, err
+		}
+	}
+	if ac.domainElemType != nil {
+		if err = validateDomainArrayElements(ctx, ac.domainElemType, ac.domainElemNull, ac.domainElemChk, castResult); err != nil {
+			return nil, err
 		}
 	}
 	return castResult, nil
@@ -130,6 +132,15 @@ func (ac *AssignmentCast) WithDomainConstraints(nullable bool, checks sql.CheckC
 	newCast := *ac
 	newCast.domainNullable = nullable
 	newCast.domainChecks = checks
+	return &newCast
+}
+
+// WithDomainElementConstraints returns a copy of the expression with array element domain constraints defined.
+func (ac *AssignmentCast) WithDomainElementConstraints(domainType *pgtypes.DoltgresType, nullable bool, checks sql.CheckConstraints) sql.Expression {
+	newCast := *ac
+	newCast.domainElemType = domainType
+	newCast.domainElemNull = nullable
+	newCast.domainElemChk = checks
 	return &newCast
 }
 

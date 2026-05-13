@@ -38,6 +38,9 @@ type ExplicitCast struct {
 	castToType     *pgtypes.DoltgresType
 	domainNullable bool
 	domainChecks   sql.CheckConstraints
+	domainElemType *pgtypes.DoltgresType
+	domainElemNull bool
+	domainElemChk  sql.CheckConstraints
 	runner         sql.StatementRunner
 }
 
@@ -164,14 +167,13 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	}
 
 	if c.castToType.TypType == pgtypes.TypeType_Domain {
-		for _, check := range c.domainChecks {
-			res, err := sql.EvaluateCondition(ctx, check.Expr, sql.Row{castResult})
-			if err != nil {
-				return nil, err
-			}
-			if sql.IsFalse(res) {
-				return nil, pgtypes.ErrDomainValueViolatesCheckConstraint.New(c.castToType.Name(), check.Name)
-			}
+		if err = validateDomainValue(ctx, c.castToType, c.domainNullable, c.domainChecks, castResult); err != nil {
+			return nil, err
+		}
+	}
+	if c.domainElemType != nil {
+		if err = validateDomainArrayElements(ctx, c.domainElemType, c.domainElemNull, c.domainElemChk, castResult); err != nil {
+			return nil, err
 		}
 	}
 
@@ -338,6 +340,9 @@ func (c *ExplicitCast) WithResolvedChildren(ctx context.Context, children []any)
 		castToType:     c.castToType,
 		domainNullable: c.domainNullable,
 		domainChecks:   c.domainChecks,
+		domainElemType: c.domainElemType,
+		domainElemNull: c.domainElemNull,
+		domainElemChk:  c.domainElemChk,
 		runner:         c.runner,
 	}, nil
 }
@@ -354,6 +359,15 @@ func (c *ExplicitCast) WithDomainConstraints(nullable bool, checks sql.CheckCons
 	ec := *c
 	ec.domainNullable = nullable
 	ec.domainChecks = checks
+	return &ec
+}
+
+// WithDomainElementConstraints returns a copy of the expression with array element domain constraints defined.
+func (c *ExplicitCast) WithDomainElementConstraints(domainType *pgtypes.DoltgresType, nullable bool, checks sql.CheckConstraints) sql.Expression {
+	ec := *c
+	ec.domainElemType = domainType
+	ec.domainElemNull = nullable
+	ec.domainElemChk = checks
 	return &ec
 }
 

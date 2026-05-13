@@ -307,33 +307,69 @@ func getCast(mutex *sync.RWMutex,
 	// If there isn't a direct mapping, then we need to check if the types are array variants.
 	// As long as the base types are convertable, the array variants are also convertable.
 	if fromType.IsArrayType() && toType.IsArrayType() {
-		fromBaseType := fromType.ArrayBaseType()
-		toBaseType := toType.ArrayBaseType()
+		fromBaseType, fromBaseErr := fromType.ResolveArrayBaseType(nil)
+		toBaseType, toBaseErr := toType.ResolveArrayBaseType(nil)
+		if fromBaseErr != nil || toBaseErr != nil {
+			return runtimeArrayCast(fromType, toType, outerFunc)
+		}
 		if baseCast := outerFunc(fromBaseType, toBaseType); baseCast != nil {
 			// We use a closure that can unwrap the slice, since conversion functions expect a singular non-nil value
 			return func(ctx *sql.Context, vals any, targetType *pgtypes.DoltgresType) (any, error) {
-				var err error
-				oldVals := vals.([]any)
-				newVals := make([]any, len(oldVals))
-				for i, oldVal := range oldVals {
-					if oldVal == nil {
-						continue
-					}
-					// Some errors are optional depending on the context, so we'll still process all values even
-					// after an error is received.
-					var nErr error
-					targetBaseType := targetType.ArrayBaseType()
-					newVals[i], nErr = baseCast(ctx, oldVal, targetBaseType)
-					if nErr != nil && err == nil {
-						err = nErr
-					}
+				targetBaseType, err := targetType.ResolveArrayBaseType(ctx)
+				if err != nil {
+					return nil, err
 				}
-				return newVals, err
+				return castArrayValues(ctx, vals.([]any), targetBaseType, baseCast)
 			}
 		}
 
 	}
 	return nil
+}
+
+func runtimeArrayCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType, outerFunc getCastFunction) pgtypes.TypeCastFunction {
+	return func(ctx *sql.Context, vals any, targetType *pgtypes.DoltgresType) (any, error) {
+		if targetType == nil {
+			targetType = toType
+		}
+		fromBaseType, err := fromType.ResolveArrayBaseType(ctx)
+		if err != nil {
+			return nil, err
+		}
+		targetBaseType, err := targetType.ResolveArrayBaseType(ctx)
+		if err != nil {
+			return nil, err
+		}
+		baseCast := outerFunc(fromBaseType, targetBaseType)
+		if baseCast == nil {
+			return nil, errors.Errorf("cannot find cast function from %s to %s", fromBaseType.String(), targetBaseType.String())
+		}
+		return castArrayValues(ctx, vals.([]any), targetBaseType, baseCast)
+	}
+}
+
+func castArrayValues(ctx *sql.Context, oldVals []any, targetBaseType *pgtypes.DoltgresType, baseCast pgtypes.TypeCastFunction) ([]any, error) {
+	var err error
+	newVals := make([]any, len(oldVals))
+	for i, oldVal := range oldVals {
+		if oldVal == nil {
+			continue
+		}
+		if nested, ok := oldVal.([]any); ok {
+			var nErr error
+			newVals[i], nErr = castArrayValues(ctx, nested, targetBaseType, baseCast)
+			if nErr != nil && err == nil {
+				err = nErr
+			}
+			continue
+		}
+		var nErr error
+		newVals[i], nErr = baseCast(ctx, oldVal, targetBaseType)
+		if nErr != nil && err == nil {
+			err = nErr
+		}
+	}
+	return newVals, err
 }
 
 // getSizingOrIdentityCast returns an identity cast if the two types are exactly the same, and a sizing cast if they

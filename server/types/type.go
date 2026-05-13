@@ -151,6 +151,16 @@ func (t *DoltgresType) ArrayBaseType() *DoltgresType {
 }
 
 func (t *DoltgresType) ResolveArrayBaseType(ctx *sql.Context) (*DoltgresType, error) {
+	if t.TypType == TypeType_Domain {
+		baseType, err := t.DomainUnderlyingBaseTypeWithContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if baseType != t && (baseType.IsArrayType() || (baseType.IsArrayCategory() && baseType.Elem != id.NullType)) {
+			return baseType.ResolveArrayBaseType(ctx)
+		}
+	}
+
 	if !t.IsArrayType() && !(t.IsArrayCategory() && t.Elem != id.NullType) {
 		return t, nil
 	}
@@ -1031,7 +1041,7 @@ func (t *DoltgresType) IoOutput(ctx *sql.Context, val any) (string, error) {
 
 	var o any
 	var err error
-	if t.ModInFunc != 0 || t.IsArrayType() || t.IsCompositeType() {
+	if t.ModInFunc != 0 || t.IsArrayType() || (t.TypType == TypeType_Domain && t.IsArrayCategory()) || t.IsCompositeType() {
 		send := globalFunctionRegistry.GetFunction(ctx, t.OutputFunc)
 		resolvedTypes := send.ResolvedTypes()
 		resolvedTypes[0] = t
@@ -1591,7 +1601,7 @@ func (t *DoltgresType) SerializationCompatible(other val.TupleTypeHandler) bool 
 func (t *DoltgresType) CallSend(ctx *sql.Context, val any) ([]byte, error) {
 	var o any
 	var err error
-	if t.ModInFunc != 0 || t.IsArrayType() {
+	if t.ModInFunc != 0 || t.IsArrayType() || (t.TypType == TypeType_Domain && t.IsArrayCategory()) {
 		send := globalFunctionRegistry.GetFunction(ctx, t.SendFunc)
 		resolvedTypes := send.ResolvedTypes()
 		resolvedTypes[0] = t

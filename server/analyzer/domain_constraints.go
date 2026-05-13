@@ -235,6 +235,23 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 				}
 				same = transform.NewTree
 				expr = e.WithDomainConstraints(!rt.NotNull, colChecks)
+			} else if ok {
+				elemDomain, err := resolveArrayElementDomainType(ctx, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				if elemDomain != nil {
+					checkDefs, err := collectDomainCheckDefinitions(ctx, elemDomain)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+					colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, elemDomain)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+					same = transform.NewTree
+					expr = e.WithDomainElementConstraints(elemDomain, !elemDomain.NotNull, colChecks)
+				}
 			}
 			return expr, same, nil
 		case *expression.AssignmentCast:
@@ -249,6 +266,23 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 				}
 				same = transform.NewTree
 				expr = e.WithDomainConstraints(!rt.NotNull, colChecks)
+			} else if ok {
+				elemDomain, err := resolveArrayElementDomainType(ctx, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				if elemDomain != nil {
+					checkDefs, err := collectDomainCheckDefinitions(ctx, elemDomain)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+					colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, elemDomain)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+					same = transform.NewTree
+					expr = e.WithDomainElementConstraints(elemDomain, !elemDomain.NotNull, colChecks)
+				}
 			}
 			return expr, same, nil
 		default:
@@ -256,6 +290,20 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 			return e, transform.SameTree, nil
 		}
 	})
+}
+
+func resolveArrayElementDomainType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if !typ.IsArrayType() {
+		return nil, nil
+	}
+	elemType, err := typ.ResolveArrayBaseType(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if elemType.TypType != pgtypes.TypeType_Domain {
+		return nil, nil
+	}
+	return elemType, nil
 }
 
 func collectDomainCheckDefinitions(ctx *sql.Context, dt *pgtypes.DoltgresType) ([]*sql.CheckDefinition, error) {
