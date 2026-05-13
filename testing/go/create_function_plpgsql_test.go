@@ -741,7 +741,7 @@ $$ LANGUAGE plpgsql;`},
 					var1 := input;
 					RETURN var1;
 				END;
-				$$ LANGUAGE plpgsql;`, // TODO: this is incorrect, cannot raise both NOTICE USING MESSAGE and DEBUG USING MESSAGE, need to fix
+				$$ LANGUAGE plpgsql;`,
 				`CREATE FUNCTION interpreted_raise2(input TEXT) RETURNS TEXT AS $$
 				DECLARE
 					var1 TEXT;
@@ -754,22 +754,8 @@ $$ LANGUAGE plpgsql;`},
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT interpreted_raise1('123');",
-					Expected: []sql.Row{{"123"}},
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "WARNING",
-							Message:  "MyMessage",
-						},
-						{
-							Severity: "NOTICE",
-							Message:  "'MyNoticeMessage'",
-						},
-						{
-							Severity: "DEBUG",
-							Message:  "'DebugMessage'",
-						},
-					},
+					Query:       "SELECT interpreted_raise1('123');",
+					ExpectedErr: "RAISE option already specified: MESSAGE",
 				},
 				{
 					Query:       "SELECT interpreted_raise2('123');",
