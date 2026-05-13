@@ -1088,6 +1088,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> drop_extension_stmt
 %type <tree.Statement> drop_language_stmt
 %type <tree.Statement> drop_function_stmt
+%type <tree.Statement> drop_routine_stmt
 %type <tree.Statement> drop_procedure_stmt
 %type <tree.Statement> drop_aggregate_stmt
 %type <tree.Statement> drop_foreign_table_stmt drop_foreign_data_wrapper_stmt drop_foreign_server_stmt drop_user_mapping_stmt
@@ -5426,6 +5427,16 @@ drop_function_stmt:
     $$.val = &tree.DropFunction{Functions: $5.routineWithArgs(), IfExists: true, DropBehavior: $6.dropBehavior()}
   }
 
+drop_routine_stmt:
+  DROP ROUTINE function_name_with_args_list opt_drop_behavior
+  {
+    $$.val = &tree.DropRoutine{Routines: $3.routineWithArgs(), DropBehavior: $4.dropBehavior()}
+  }
+| DROP ROUTINE IF EXISTS function_name_with_args_list opt_drop_behavior
+  {
+    $$.val = &tree.DropRoutine{Routines: $5.routineWithArgs(), IfExists: true, DropBehavior: $6.dropBehavior()}
+  }
+
 function_name_with_args_list:
   db_object_name opt_routine_arg_with_default_list
   {
@@ -5652,6 +5663,7 @@ drop_stmt:
 | drop_role_stmt     // EXTEND WITH HELP: DROP ROLE
 | drop_schedule_stmt // EXTEND WITH HELP: DROP SCHEDULES
 | drop_function_stmt // EXTEND WITH HELP: DROP FUNCTION
+| drop_routine_stmt // EXTEND WITH HELP: DROP ROUTINE
 | drop_procedure_stmt // EXTEND WITH HELP: DROP PROCEDURE
 | drop_domain_stmt   // EXTEND WITH HELP: DROP DOMAIN
 | drop_extension_stmt // EXTEND WITH HELP: DROP EXTENSION

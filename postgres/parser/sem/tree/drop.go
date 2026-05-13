@@ -212,6 +212,35 @@ func (node *DropFunction) Format(ctx *FmtCtx) {
 	}
 }
 
+var _ Statement = &DropRoutine{}
+
+// DropRoutine represents a DROP ROUTINE statement.
+type DropRoutine struct {
+	Routines     []RoutineWithArgs
+	IfExists     bool
+	DropBehavior DropBehavior
+}
+
+// Format implements the NodeFormatter interface.
+func (node *DropRoutine) Format(ctx *FmtCtx) {
+	ctx.WriteString("DROP ROUTINE ")
+	if node.IfExists {
+		ctx.WriteString("IF EXISTS ")
+	}
+	for i, f := range node.Routines {
+		if i != 0 {
+			ctx.WriteString(", ")
+		}
+		ctx.FormatNode(&f)
+	}
+	switch node.DropBehavior {
+	case DropDefault:
+	default:
+		ctx.WriteByte(' ')
+		ctx.WriteString(dropBehaviorName[node.DropBehavior])
+	}
+}
+
 // RoutineWithArgs represents the routine name and its arguments, if any, for DROP { FUNCTION | PROCEDURE } statement.
 type RoutineWithArgs struct {
 	Name *UnresolvedObjectName

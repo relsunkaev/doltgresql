@@ -98,6 +98,35 @@ func TestDropRoutineFunctionRepro(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "DROP ROUTINE removes procedure",
+			SetUpScript: []string{
+				`CREATE TABLE drop_routine_proc_audit (value INT);`,
+				`CREATE PROCEDURE drop_routine_proc_value()
+					LANGUAGE SQL AS $$ INSERT INTO drop_routine_proc_audit VALUES (7) $$;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP ROUTINE drop_routine_proc_value();`,
+				},
+				{
+					Query:       `CALL drop_routine_proc_value();`,
+					ExpectedErr: `does not exist`,
+				},
+				{
+					Query:    `SELECT count(*) FROM drop_routine_proc_audit;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+		{
+			Name: "DROP ROUTINE IF EXISTS accepts missing routine",
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP ROUTINE IF EXISTS drop_routine_missing();`,
+				},
+			},
+		},
 	})
 }
 
