@@ -164,11 +164,12 @@ func TestMaterializedViewProbe(t *testing.T) {
 					},
 				},
 				{
-					Query: `SELECT schemaname, matviewname, ispopulated::text, definition
-						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'renamed_mv';`,
+					Query: `SELECT (schemaname = current_schema())::text, matviewname, ispopulated::text,
+								trim(trailing ';' from regexp_replace(trim(definition), '\s+', ' ', 'g')) AS definition
+							FROM pg_matviews
+							WHERE schemaname = current_schema() AND matviewname = 'renamed_mv';`,
 					Expected: []sql.Row{
-						{"public", "renamed_mv", "true", "SELECT id, v FROM source"},
+						{"true", "renamed_mv", "true", "SELECT id, v FROM source"},
 					},
 				},
 				{

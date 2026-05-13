@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name CREATE MATERIALIZED VIEW snapshot probe,DROP MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name ALTER MATERIALIZED VIEW RENAME TO preserves metadata,CREATE MATERIALIZED VIEW snapshot probe,DROP MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
   "sourceFile": "testing/go/materialized_view_probe_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -297,6 +297,131 @@
       "errorSeverity": "ERROR",
       "query": "SELECT * FROM source_mv;",
       "querySha256": "08ccaaf110e7b0b4ec1e90d5870785022a1e661e7c64921f53a54d0de0ceb068",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0012",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 12,
+      "scriptName": "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0012-select-id-v-from-renamed_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0012-select-id-v-from-renamed_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM renamed_mv ORDER BY id;",
+      "querySha256": "2a60f6a1a2972673e8412bb188230d3d85fb0337baf2a1a44debb81d06d3fc4e",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0013",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 13,
+      "scriptName": "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0013-select-count-*-::text-from",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0013-select-count-*-::text-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT count(*)::text FROM source_mv;",
+      "querySha256": "9dfdec3f1fa84083b6efd53eef10814b05cb128c15b3b060cc869d4bb09d6f84",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0014",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 14,
+      "scriptName": "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0014-select-relkind-from-pg_class-where",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0014-select-relkind-from-pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relkind FROM pg_class WHERE relname = 'renamed_mv';",
+      "querySha256": "60d03be827b69fe12abadd8bbe3333f6a09bb3385fb9c4c257c375b6d9d22a11",
+      "expectedRows": [
+        [
+          {
+            "value": "m"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0015",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 15,
+      "scriptName": "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0015-select-schemaname-=-current_schema-::text",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0015-select-schemaname-=-current_schema-::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (schemaname = current_schema())::text, matviewname, ispopulated::text,\n\t\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'renamed_mv';",
+      "querySha256": "74df3597ee7c3cccdbb9cf3571f7a9546e89c21e5479c80a9fefb0fcfd8f8399",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "renamed_mv"
+          },
+          {
+            "value": "true"
+          },
+          {
+            "value": "SELECT id, v FROM source"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0016",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 16,
+      "scriptName": "ALTER MATERIALIZED VIEW RENAME TO preserves metadata",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0016-select-count-*-::text-from",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0016-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text FROM pg_matviews WHERE matviewname = 'source_mv';",
+      "querySha256": "16294008abf27871b291fd1139c4d28875617c42cd54819d034efecff0011f00",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     }
