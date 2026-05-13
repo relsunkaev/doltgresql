@@ -150,6 +150,123 @@ func nodeSelectInto(ctx *Context, node *tree.Select) (vitess.Statement, bool, er
 	return stmt, true, err
 }
 
+func nodeDataModifyingCTESelect(ctx *Context, node *tree.Select) (vitess.Statement, bool, error) {
+	if node == nil || node.With == nil || node.With.Recursive || len(node.With.CTEList) != 1 {
+		return nil, false, nil
+	}
+	selectClause, ok := node.Select.(*tree.SelectClause)
+	if !ok || !simpleSelectFromSingleCTE(selectClause, string(node.With.CTEList[0].Name.Alias)) {
+		return nil, false, nil
+	}
+	if len(node.Locking) > 0 || node.Limit != nil {
+		return nil, false, nil
+	}
+
+	cte := node.With.CTEList[0]
+	if !outerSelectMatchesReturning(selectClause.Exprs, returningExprsForStatement(cte.Stmt)) {
+		return nil, false, nil
+	}
+	switch stmt := cte.Stmt.(type) {
+	case *tree.Insert:
+		converted, err := nodeInsert(ctx, stmt)
+		return converted, true, err
+	case *tree.Update:
+		converted, err := nodeUpdate(ctx, stmt)
+		return converted, true, err
+	case *tree.Delete:
+		converted, err := nodeDelete(ctx, stmt)
+		return converted, true, err
+	default:
+		return nil, false, nil
+	}
+}
+
+func simpleSelectFromSingleCTE(selectClause *tree.SelectClause, cteName string) bool {
+	if selectClause == nil || cteName == "" {
+		return false
+	}
+	if selectClause.Distinct || len(selectClause.DistinctOn) > 0 || selectClause.Into != nil ||
+		selectClause.Where != nil || len(selectClause.GroupBy) > 0 || selectClause.Having != nil ||
+		len(selectClause.Window) > 0 || selectClause.TableSelect || len(selectClause.From.Tables) != 1 {
+		return false
+	}
+	aliased, ok := selectClause.From.Tables[0].(*tree.AliasedTableExpr)
+	if !ok || aliased.IndexFlags != nil || aliased.Ordinality || aliased.Lateral || aliased.AsOf != nil {
+		return false
+	}
+	if aliased.As.Alias != "" || len(aliased.As.Cols) > 0 || len(aliased.As.ColDefs) > 0 {
+		return false
+	}
+	tableName, ok := aliased.Expr.(*tree.TableName)
+	return ok && tableName.Table() == cteName
+}
+
+func returningExprsForStatement(stmt tree.Statement) tree.SelectExprs {
+	switch stmt := stmt.(type) {
+	case *tree.Insert:
+		return returningExprs(stmt.Returning)
+	case *tree.Update:
+		return returningExprs(stmt.Returning)
+	case *tree.Delete:
+		return returningExprs(stmt.Returning)
+	default:
+		return nil
+	}
+}
+
+func returningExprs(returning tree.ReturningClause) tree.SelectExprs {
+	if exprs, ok := returning.(*tree.ReturningExprs); ok {
+		return tree.SelectExprs(*exprs)
+	}
+	return nil
+}
+
+func outerSelectMatchesReturning(outer tree.SelectExprs, returning tree.SelectExprs) bool {
+	if len(outer) == 1 {
+		if _, ok := outer[0].Expr.(tree.UnqualifiedStar); ok {
+			return len(returning) > 0
+		}
+	}
+	if len(outer) == 0 || len(outer) != len(returning) {
+		return false
+	}
+	for i := range outer {
+		if outer[i].As != "" || returning[i].As != "" {
+			return false
+		}
+		if !sameSimpleSelectExpr(outer[i].Expr, returning[i].Expr) {
+			return false
+		}
+	}
+	return true
+}
+
+func sameSimpleSelectExpr(left tree.Expr, right tree.Expr) bool {
+	leftName, ok := simpleSelectExprName(left)
+	if !ok {
+		return false
+	}
+	rightName, ok := simpleSelectExprName(right)
+	return ok && leftName == rightName
+}
+
+func simpleSelectExprName(expr tree.Expr) (string, bool) {
+	switch expr := expr.(type) {
+	case *tree.UnresolvedName:
+		if expr.Star || expr.NumParts != 1 {
+			return "", false
+		}
+		return expr.Parts[0], true
+	case *tree.ColumnItem:
+		if expr.TableName != nil {
+			return "", false
+		}
+		return expr.Column(), true
+	default:
+		return "", false
+	}
+}
+
 func selectIntoClause(node *tree.Select) *tree.SelectInto {
 	if node == nil {
 		return nil
