@@ -36,6 +36,7 @@ import (
 	"github.com/dolthub/doltgresql/core/publications"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 type replicationChangeAction byte
@@ -69,8 +70,9 @@ type publicationChangeTarget struct {
 }
 
 type rowFilterValue struct {
-	data []byte
-	null bool
+	data    []byte
+	null    bool
+	typeOID uint32
 }
 
 type replicationProjectedRow struct {
@@ -406,7 +408,7 @@ func publishReplicationCaptures(ctx *sql.Context, captures []*replicationChangeC
 		}
 		relationID := id.Cache().ToOID(id.NewTable(schema, capture.table).AsId())
 		for _, target := range targets {
-			fields, rows, err := capture.projectRowsForPublication(target)
+			fields, rows, err := capture.projectRowsForPublication(ctx, target)
 			if err != nil {
 				return err
 			}
@@ -548,7 +550,7 @@ func publicationChangeTargetFor(pub publications.Publication, columns []string, 
 	}
 }
 
-func (capture *replicationChangeCapture) projectRowsForPublication(target publicationChangeTarget) ([]pgproto3.FieldDescription, []replicationProjectedRow, error) {
+func (capture *replicationChangeCapture) projectRowsForPublication(ctx *sql.Context, target publicationChangeTarget) ([]pgproto3.FieldDescription, []replicationProjectedRow, error) {
 	indexes, err := capture.publicationColumnIndexes(target.columns)
 	if err != nil {
 		return nil, nil, err
@@ -563,7 +565,7 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 	}
 	rows := make([]replicationProjectedRow, 0, len(capture.rows))
 	for rowIdx, row := range capture.rows {
-		newMatches, err := capture.rowMatchesPublicationFilter(row, filterExpr)
+		newMatches, err := capture.rowMatchesPublicationFilter(ctx, row, filterExpr)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -577,7 +579,7 @@ func (capture *replicationChangeCapture) projectRowsForPublication(target public
 		}
 		oldMatches := false
 		if rowIdx < len(capture.oldRows) {
-			oldMatches, err = capture.rowMatchesPublicationFilter(capture.oldRows[rowIdx], filterExpr)
+			oldMatches, err = capture.rowMatchesPublicationFilter(ctx, capture.oldRows[rowIdx], filterExpr)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -667,7 +669,7 @@ func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
 	return selectStatement.Where.Expr, nil
 }
 
-func (capture *replicationChangeCapture) rowMatchesPublicationFilter(row Row, expr vitess.Expr) (bool, error) {
+func (capture *replicationChangeCapture) rowMatchesPublicationFilter(ctx *sql.Context, row Row, expr vitess.Expr) (bool, error) {
 	if expr == nil {
 		return true, nil
 	}
@@ -679,32 +681,33 @@ func (capture *replicationChangeCapture) rowMatchesPublicationFilter(row Row, ex
 		} else {
 			value.data = row.val[i]
 		}
+		value.typeOID = field.DataTypeOID
 		values[strings.ToLower(string(field.Name))] = value
 	}
-	return evalPublicationFilterBool(expr, values)
+	return evalPublicationFilterBool(ctx, expr, values)
 }
 
-func evalPublicationFilterBool(expr vitess.Expr, values map[string]rowFilterValue) (bool, error) {
+func evalPublicationFilterBool(ctx *sql.Context, expr vitess.Expr, values map[string]rowFilterValue) (bool, error) {
 	switch typed := expr.(type) {
 	case *vitess.AndExpr:
-		left, err := evalPublicationFilterBool(typed.Left, values)
+		left, err := evalPublicationFilterBool(ctx, typed.Left, values)
 		if err != nil || !left {
 			return left, err
 		}
-		return evalPublicationFilterBool(typed.Right, values)
+		return evalPublicationFilterBool(ctx, typed.Right, values)
 	case *vitess.OrExpr:
-		left, err := evalPublicationFilterBool(typed.Left, values)
+		left, err := evalPublicationFilterBool(ctx, typed.Left, values)
 		if err != nil || left {
 			return left, err
 		}
-		return evalPublicationFilterBool(typed.Right, values)
+		return evalPublicationFilterBool(ctx, typed.Right, values)
 	case *vitess.NotExpr:
-		value, err := evalPublicationFilterBool(typed.Expr, values)
+		value, err := evalPublicationFilterBool(ctx, typed.Expr, values)
 		return !value, err
 	case *vitess.ParenExpr:
-		return evalPublicationFilterBool(typed.Expr, values)
+		return evalPublicationFilterBool(ctx, typed.Expr, values)
 	case *vitess.ComparisonExpr:
-		return evalPublicationFilterComparison(typed, values)
+		return evalPublicationFilterComparison(ctx, typed, values)
 	case *vitess.IsExpr:
 		value, err := evalPublicationFilterScalar(typed.Expr, values)
 		if err != nil {
@@ -723,7 +726,7 @@ func evalPublicationFilterBool(expr vitess.Expr, values map[string]rowFilterValu
 	}
 }
 
-func evalPublicationFilterComparison(expr *vitess.ComparisonExpr, values map[string]rowFilterValue) (bool, error) {
+func evalPublicationFilterComparison(ctx *sql.Context, expr *vitess.ComparisonExpr, values map[string]rowFilterValue) (bool, error) {
 	left, err := evalPublicationFilterScalar(expr.Left, values)
 	if err != nil {
 		return false, err
@@ -739,7 +742,7 @@ func evalPublicationFilterComparison(expr *vitess.ComparisonExpr, values map[str
 			if err != nil {
 				return false, err
 			}
-			if rowFilterValuesEqual(left, right) {
+			if rowFilterValuesEqual(ctx, left, right) {
 				matches = true
 				break
 			}
@@ -755,23 +758,23 @@ func evalPublicationFilterComparison(expr *vitess.ComparisonExpr, values map[str
 	}
 	switch strings.ToLower(expr.Operator) {
 	case vitess.EqualStr:
-		return rowFilterValuesEqual(left, right), nil
+		return rowFilterValuesEqual(ctx, left, right), nil
 	case vitess.NotEqualStr, "<>":
 		if left.null || right.null {
 			return false, nil
 		}
-		return !rowFilterValuesEqual(left, right), nil
+		return !rowFilterValuesEqual(ctx, left, right), nil
 	case vitess.LessThanStr:
-		cmp, ok := rowFilterValuesCompare(left, right)
+		cmp, ok := rowFilterValuesCompare(ctx, left, right)
 		return ok && cmp < 0, nil
 	case vitess.LessEqualStr:
-		cmp, ok := rowFilterValuesCompare(left, right)
+		cmp, ok := rowFilterValuesCompare(ctx, left, right)
 		return ok && cmp <= 0, nil
 	case vitess.GreaterThanStr:
-		cmp, ok := rowFilterValuesCompare(left, right)
+		cmp, ok := rowFilterValuesCompare(ctx, left, right)
 		return ok && cmp > 0, nil
 	case vitess.GreaterEqualStr:
-		cmp, ok := rowFilterValuesCompare(left, right)
+		cmp, ok := rowFilterValuesCompare(ctx, left, right)
 		return ok && cmp >= 0, nil
 	default:
 		return false, errors.Errorf("publication row filter comparison operator %q is not supported", expr.Operator)
@@ -797,9 +800,12 @@ func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterVa
 	}
 }
 
-func rowFilterValuesEqual(left rowFilterValue, right rowFilterValue) bool {
+func rowFilterValuesEqual(ctx *sql.Context, left rowFilterValue, right rowFilterValue) bool {
 	if left.null || right.null {
 		return false
+	}
+	if cmp, ok := rowFilterTemporalCompare(ctx, left, right); ok {
+		return cmp == 0
 	}
 	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
 		if rightNum, ok := parseRowFilterNumeric(right.data); ok {
@@ -809,9 +815,12 @@ func rowFilterValuesEqual(left rowFilterValue, right rowFilterValue) bool {
 	return string(left.data) == string(right.data)
 }
 
-func rowFilterValuesCompare(left rowFilterValue, right rowFilterValue) (int, bool) {
+func rowFilterValuesCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
 	if left.null || right.null {
 		return 0, false
+	}
+	if cmp, ok := rowFilterTemporalCompare(ctx, left, right); ok {
+		return cmp, true
 	}
 	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
 		if rightNum, ok := parseRowFilterNumeric(right.data); ok {
@@ -819,6 +828,49 @@ func rowFilterValuesCompare(left rowFilterValue, right rowFilterValue) (int, boo
 		}
 	}
 	return bytes.Compare(left.data, right.data), true
+}
+
+func rowFilterTemporalCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
+	doltgresType := rowFilterTemporalType(left)
+	if doltgresType == nil {
+		doltgresType = rowFilterTemporalType(right)
+	}
+	if doltgresType == nil {
+		return 0, false
+	}
+	leftTime, ok := parseRowFilterTemporal(ctx, doltgresType, left.data)
+	if !ok {
+		return 0, false
+	}
+	rightTime, ok := parseRowFilterTemporal(ctx, doltgresType, right.data)
+	if !ok {
+		return 0, false
+	}
+	return leftTime.UTC().Compare(rightTime.UTC()), true
+}
+
+func rowFilterTemporalType(value rowFilterValue) *pgtypes.DoltgresType {
+	switch value.typeOID {
+	case id.Cache().ToOID(pgtypes.TimestampTZ.ID.AsId()):
+		return pgtypes.TimestampTZ
+	case id.Cache().ToOID(pgtypes.Timestamp.ID.AsId()):
+		return pgtypes.Timestamp
+	default:
+		return nil
+	}
+}
+
+func parseRowFilterTemporal(ctx *sql.Context, doltgresType *pgtypes.DoltgresType, data []byte) (time.Time, bool) {
+	input := strings.TrimSpace(string(data))
+	if input == "" {
+		return time.Time{}, false
+	}
+	value, err := doltgresType.IoInput(ctx, input)
+	if err != nil {
+		return time.Time{}, false
+	}
+	t, ok := value.(time.Time)
+	return t, ok
 }
 
 func parseRowFilterNumeric(data []byte) (*big.Rat, bool) {
