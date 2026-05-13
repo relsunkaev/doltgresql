@@ -106,9 +106,9 @@ func TestDynamicViewRebuild(t *testing.T) {
 				`INSERT INTO accounts VALUES (1, 50), (2, NULL), (3, 200);`,
 				`CREATE VIEW account_status AS
 					SELECT id,
-						CASE WHEN balance IS NULL THEN 'unknown'
-						     WHEN balance < 100 THEN 'low'
-						     ELSE 'ok' END AS status
+						CASE WHEN balance IS NULL THEN COALESCE('unknown', 'missing')
+						     WHEN balance < 100 THEN COALESCE('low', 'small')
+						     ELSE COALESCE('ok', 'healthy') END AS status
 					FROM accounts;`,
 			},
 			Assertions: []ScriptTestAssertion{
@@ -122,16 +122,19 @@ func TestDynamicViewRebuild(t *testing.T) {
 				},
 				{
 					Query: `CREATE OR REPLACE VIEW account_status AS
-						SELECT id, COALESCE(balance, 0) AS effective_balance
+						SELECT id,
+							CASE WHEN balance IS NULL THEN COALESCE('missing', 'unknown')
+							     WHEN balance < 100 THEN COALESCE('small', 'low')
+							     ELSE COALESCE('healthy', 'ok') END AS status
 						FROM accounts;`,
 					Expected: []sql.Row{},
 				},
 				{
-					Query: `SELECT id, effective_balance FROM account_status ORDER BY id;`,
+					Query: `SELECT id, status FROM account_status ORDER BY id;`,
 					Expected: []sql.Row{
-						{int32(1), int32(50)},
-						{int32(2), int32(0)},
-						{int32(3), int32(200)},
+						{int32(1), "small"},
+						{int32(2), "missing"},
+						{int32(3), "healthy"},
 					},
 				},
 			},

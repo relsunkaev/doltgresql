@@ -62,6 +62,7 @@ const (
 	ruleId_ValidateColumnDefaults                                                 // validateColumnDefaults
 	ruleId_ValidateCreateTable                                                    // validateCreateTable
 	ruleId_ValidateCreateSchema                                                   // validateCreateSchema
+	ruleId_ValidateCreateOrReplaceView                                            // validateCreateOrReplaceView
 	ruleId_ResolveAlterColumn                                                     // resolveAlterColumn
 	ruleId_ValidateCreateFunction                                                 // validateCreateFunction
 	ruleId_ResolveValuesTypes                                                     // resolveValuesTypes
@@ -193,6 +194,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_EnforceForeignKeyMatchFull, Apply: EnforceForeignKeyMatchFull},
 		analyzer.Rule{Id: ruleId_SuppressDeferrableForeignKeys, Apply: SuppressDeferrableForeignKeys},
 		analyzer.Rule{Id: ruleId_SuppressReplicaRoleForeignKeys, Apply: SuppressReplicaRoleForeignKeys},
+		analyzer.Rule{Id: ruleId_ValidateCreateOrReplaceView, Apply: ValidateCreateOrReplaceView},
 		analyzer.Rule{Id: ruleId_ReplaceNode, Apply: ReplaceNode},
 		analyzer.Rule{Id: ruleId_InsertContextRootFinalizer, Apply: InsertContextRootFinalizer},
 	)

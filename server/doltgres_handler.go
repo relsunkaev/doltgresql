@@ -265,6 +265,7 @@ func castSQLError(err error) error {
 		pgcode.DuplicateObject,
 		pgcode.FeatureNotSupported,
 		pgcode.Grouping,
+		pgcode.InvalidTableDefinition,
 		pgcode.InvalidParameterValue,
 		pgcode.LockNotAvailable,
 		pgcode.ObjectNotInPrerequisiteState,
