@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map trigger_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/trigger_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/trigger_comment_drop_repro_test.go:TestDropTriggerClearsCommentRepro#0001",
+      "source": "testing/go/trigger_comment_drop_repro_test.go:TestDropTriggerClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TRIGGER clears trigger comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "trigger-comment-drop-repro-test-testdroptriggerclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "trigger-comment-drop-repro-test-testdroptriggerclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_trigger\n\t\t\t\t\t\t WHERE tgname = 'drop_recreate_comment_trigger'\n\t\t\t\t\t\t   AND tgrelid = 'drop_recreate_comment_trigger_table'::regclass),\n\t\t\t\t\t\t'pg_trigger');",
+      "querySha256": "7c7decab42f17023cc25011ed429e1202f0f8a735aa734d1ed6e238b7a6cdfa1",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

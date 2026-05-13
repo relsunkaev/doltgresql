@@ -1,0 +1,39 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map schema_comment_drop_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/schema_comment_drop_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/schema_comment_drop_repro_test.go:TestDropSchemaClearsCommentRepro#0001",
+      "source": "testing/go/schema_comment_drop_repro_test.go:TestDropSchemaClearsCommentRepro",
+      "ordinal": 1,
+      "scriptName": "DROP SCHEMA clears schema comment before recreate",
+      "oracle": "postgres",
+      "postgresId": "schema-comment-drop-repro-test-testdropschemaclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "suggestedId": "schema-comment-drop-repro-test-testdropschemaclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_namespace\n\t\t\t\t\t\t WHERE nspname = 'drop_recreate_comment_schema'),\n\t\t\t\t\t\t'pg_namespace');",
+      "querySha256": "6fbfc8f905357517b58ca3e57ebaf48d5ce164a26f3839431ab96a76c30982e2",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
