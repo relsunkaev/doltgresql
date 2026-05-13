@@ -30,6 +30,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/rootobject/objinterface"
 	"github.com/dolthub/doltgresql/server/plpgsql"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // ParameterMode represents the mode of the given parameter (whether it's IN, OUT, INOUT, or VARIADIC).
@@ -208,6 +209,7 @@ func (pgp *Collection) resolveName(_ context.Context, schemaName string, formatt
 			default:
 				return id.NullProcedure, nil
 			}
+			typeIDs[i] = normalizeProcedureTypeID(typeIDs[i])
 		}
 	}
 
@@ -232,10 +234,7 @@ OuterLoop:
 				continue
 			}
 			for i, param := range procID.Parameters() {
-				if len(typeIDs[i].TypeName()) > 0 && !strings.EqualFold(typeIDs[i].TypeName(), param.TypeName()) {
-					continue OuterLoop
-				}
-				if len(typeIDs[i].SchemaName()) > 0 && !strings.EqualFold(typeIDs[i].SchemaName(), param.SchemaName()) {
+				if !procedureTypeIDsMatch(typeIDs[i], param) {
 					continue OuterLoop
 				}
 			}
@@ -447,7 +446,9 @@ func ProcedureIDToTableName(procID id.Procedure) doltdb.TableName {
 	paramTypes := procID.Parameters()
 	strTypes := make([]string, len(paramTypes))
 	for i, paramType := range paramTypes {
-		if paramType.SchemaName() == "pg_catalog" || paramType.SchemaName() == procID.SchemaName() {
+		if typeName := procedureDisplayTypeName(paramType); typeName != "" {
+			strTypes[i] = typeName
+		} else if paramType.SchemaName() == "pg_catalog" || paramType.SchemaName() == procID.SchemaName() {
 			strTypes[i] = paramType.TypeName()
 		} else {
 			strTypes[i] = fmt.Sprintf("%s.%s", paramType.SchemaName(), paramType.TypeName())
@@ -457,6 +458,42 @@ func ProcedureIDToTableName(procID id.Procedure) doltdb.TableName {
 		Name:   fmt.Sprintf("%s(%s)", procID.ProcedureName(), strings.Join(strTypes, ",")),
 		Schema: procID.SchemaName(),
 	}
+}
+
+func normalizeProcedureTypeID(typeID id.Type) id.Type {
+	schemaName := typeID.SchemaName()
+	if schemaName != "" && !strings.EqualFold(schemaName, "pg_catalog") {
+		return typeID
+	}
+	if normalized, ok := pgtypes.NameToInternalID[strings.ToLower(typeID.TypeName())]; ok {
+		return normalized
+	}
+	return typeID
+}
+
+func procedureTypeIDsMatch(requested id.Type, stored id.Type) bool {
+	if requested.TypeName() == "" {
+		return true
+	}
+	normalizedRequested := normalizeProcedureTypeID(requested)
+	normalizedStored := normalizeProcedureTypeID(stored)
+	if !strings.EqualFold(normalizedRequested.TypeName(), normalizedStored.TypeName()) {
+		return false
+	}
+	if requested.SchemaName() == "" {
+		return true
+	}
+	return strings.EqualFold(normalizedRequested.SchemaName(), normalizedStored.SchemaName())
+}
+
+func procedureDisplayTypeName(typeID id.Type) string {
+	if typ := pgtypes.GetTypeByID(typeID); typ != nil {
+		if typ.InternalName != "" {
+			return typ.InternalName
+		}
+		return typ.Name()
+	}
+	return ""
 }
 
 // ParameterModesFromString returns a ParameterMode slice from the given string. It is assumed that this string was
