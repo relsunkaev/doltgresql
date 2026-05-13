@@ -32,7 +32,7 @@ func (pgt *Collection) DeserializeRootObject(ctx context.Context, data []byte) (
 
 // DiffRootObjects implements the interface objinterface.Collection.
 func (pgt *Collection) DiffRootObjects(ctx context.Context, fromHash string, ours objinterface.RootObject, theirs objinterface.RootObject, ancestor objinterface.RootObject) ([]objinterface.RootObjectDiff, objinterface.RootObject, error) {
-	return nil, nil, errors.New("trigger conflict detection has not yet been implemented")
+	return objinterface.DiffSerializedRootObjects(ctx, fromHash, ours, theirs, ancestor)
 }
 
 // DropRootObject implements the interface objinterface.Collection.

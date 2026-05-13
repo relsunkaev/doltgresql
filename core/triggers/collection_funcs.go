@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/dolt/go/store/prolly"
 
 	"github.com/dolthub/doltgresql/core/id"
+	pgmerge "github.com/dolthub/doltgresql/core/merge"
 	"github.com/dolthub/doltgresql/core/rootobject/objinterface"
 	"github.com/dolthub/doltgresql/flatbuffers/gen/serial"
 )
@@ -62,8 +63,7 @@ func (*Collection) HandleMerge(ctx context.Context, mro merge.MergeRootObject) (
 			ConstraintViolations: 0,
 		}, nil
 	}
-	// TODO: figure out a decent merge strategy
-	return nil, nil, errors.Errorf("unable to merge `%s`", theirTrigger.Name().String())
+	return pgmerge.CreateConflict(ctx, mro.RightSrc, ourTrigger, theirTrigger, mro.AncestorRootObj)
 }
 
 // LoadCollection implements the interface objinterface.Collection.

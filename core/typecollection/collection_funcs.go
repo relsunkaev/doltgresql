@@ -39,17 +39,41 @@ var storage = objinterface.RootObjectSerializer{
 
 // HandleMerge implements the interface objinterface.Collection.
 func (*TypeCollection) HandleMerge(ctx context.Context, mro merge.MergeRootObject) (doltdb.RootObject, *merge.MergeStats, error) {
-	ourType := mro.OurRootObj.(TypeWrapper).Type
-	theirType := mro.TheirRootObj.(TypeWrapper).Type
+	ourObj := mro.OurRootObj.(TypeWrapper)
+	theirObj := mro.TheirRootObj.(TypeWrapper)
+	ourType := ourObj.Type
+	theirType := theirObj.Type
 	// Ensure that they have the same identifier
 	if ourType.ID != theirType.ID {
 		return nil, nil, errors.Newf("attempted to merge different types: `%s` and `%s`",
 			ourType.ID.TypeName(), theirType.ID.TypeName())
 	}
+	ourHash, err := ourObj.HashOf(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	theirHash, err := theirObj.HashOf(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ourHash.Equal(theirHash) {
+		return mro.OurRootObj, &merge.MergeStats{
+			Operation:            merge.TableUnmodified,
+			Adds:                 0,
+			Deletes:              0,
+			Modifications:        0,
+			DataConflicts:        0,
+			SchemaConflicts:      0,
+			RootObjectConflicts:  0,
+			ConstraintViolations: 0,
+		}, nil
+	}
+	if mro.AncestorRootObj == nil {
+		return merge2.CreateConflict(ctx, mro.RightSrc, ourObj, theirObj, nil)
+	}
 	// Different types with the same name cannot be merged. (e.g.: 'domain' type and 'base' type with the same name)
 	if ourType.TypType != theirType.TypType {
-		return nil, nil, errors.Errorf(`cannot merge type "%s" because type types do not match: '%s' and '%s'"`,
-			theirType.ID.TypeName(), ourType.TypType, theirType.TypType)
+		return merge2.CreateConflict(ctx, mro.RightSrc, ourObj, theirObj, mro.AncestorRootObj)
 	}
 	// Check if an ancestor is present
 	var ancType pgtypes.DoltgresType
@@ -62,8 +86,7 @@ func (*TypeCollection) HandleMerge(ctx context.Context, mro merge.MergeRootObjec
 	switch theirType.TypType {
 	case pgtypes.TypeType_Domain:
 		if ourType.BaseTypeID != theirType.BaseTypeID {
-			// TODO: we can extend on this in the future (e.g.: maybe uses preferred type?)
-			return nil, nil, errors.Errorf(`base types of domain type "%s" do not match`, theirType.ID.TypeName())
+			return merge2.CreateConflict(ctx, mro.RightSrc, ourObj, theirObj, mro.AncestorRootObj)
 		}
 		var err error
 		mergedType.Default = merge2.ResolveMergeValues(ourType.Default, theirType.Default, ancType.Default, hasAncestor, func(ourDefault, theirDefault string) string {
@@ -77,7 +100,7 @@ func (*TypeCollection) HandleMerge(ctx context.Context, mro merge.MergeRootObjec
 			}
 		})
 		if err != nil {
-			return nil, nil, err
+			return merge2.CreateConflict(ctx, mro.RightSrc, ourObj, theirObj, mro.AncestorRootObj)
 		}
 		// if either of types defined as NOT NULL, take NOT NULL
 		mergedType.NotNull = merge2.ResolveMergeValues(ourType.NotNull, theirType.NotNull, ancType.NotNull, hasAncestor, func(ourNotNull, theirNotNull bool) bool {
@@ -97,8 +120,7 @@ func (*TypeCollection) HandleMerge(ctx context.Context, mro merge.MergeRootObjec
 			ConstraintViolations: 0,
 		}, nil
 	default:
-		// TODO: support merge for other types. (base, range, etc.)
-		return nil, nil, errors.Newf("cannot merge `%s` due to unsupported type", ourType.ID.TypeName())
+		return merge2.CreateConflict(ctx, mro.RightSrc, ourObj, theirObj, mro.AncestorRootObj)
 	}
 }
 

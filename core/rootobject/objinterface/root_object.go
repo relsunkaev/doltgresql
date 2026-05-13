@@ -15,6 +15,7 @@
 package objinterface
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 
@@ -47,6 +48,38 @@ type Conflict interface {
 	Diffs(ctx context.Context) ([]RootObjectDiff, RootObject, error)
 	// FieldType returns the type associated with the given field name. Returns nil if the name does not match a field.
 	FieldType(ctx context.Context, name string) *pgtypes.DoltgresType
+}
+
+// DiffSerializedRootObjects produces a single coarse diff for root object kinds
+// that do not yet expose field-level merge semantics.
+func DiffSerializedRootObjects(ctx context.Context, fromHash string, ours RootObject, theirs RootObject, ancestor RootObject) ([]RootObjectDiff, RootObject, error) {
+	ourData, err := ours.Serialize(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	theirData, err := theirs.Serialize(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	if bytes.Equal(ourData, theirData) {
+		return nil, ours, nil
+	}
+	diff := RootObjectDiff{
+		Type:        pgtypes.Text,
+		FromHash:    fromHash,
+		FieldName:   FIELD_NAME_ROOT_OBJECT,
+		OurValue:    FIELD_NAME_OURS,
+		TheirValue:  FIELD_NAME_THEIRS,
+		OurChange:   RootObjectDiffChange_Modified,
+		TheirChange: RootObjectDiffChange_Modified,
+	}
+	if ancestor != nil {
+		diff.AncestorValue = FIELD_NAME_ANCESTOR
+	} else {
+		diff.OurChange = RootObjectDiffChange_Added
+		diff.TheirChange = RootObjectDiffChange_Added
+	}
+	return []RootObjectDiff{diff}, ours, nil
 }
 
 // RootObjectDiffChange specifies the type of change that occurred from the ancestor value.
