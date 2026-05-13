@@ -15,6 +15,8 @@
 package node
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
@@ -55,6 +57,9 @@ func (d *DropDatabase) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (d *DropDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
+	if strings.EqualFold(d.gmsDropDB.DbName, ctx.GetCurrentDatabase()) {
+		return nil, errors.New("cannot drop the currently open database")
+	}
 	if d.gmsDropDB.Catalog.HasDatabase(ctx, d.gmsDropDB.DbName) {
 		if err := checkDatabaseOwnership(ctx, d.gmsDropDB.DbName); err != nil {
 			return nil, errors.Wrap(err, "permission denied")
