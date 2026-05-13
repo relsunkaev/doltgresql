@@ -204,6 +204,35 @@ func TestPostgresOraclePromotedMapGenerated(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSkipsBindVars(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "limit_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "limit_test.go",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		Assertions []struct {
+			Oracle     string   `json:"oracle"`
+			Query      string   `json:"query"`
+			NonLiteral []string `json:"nonLiteral"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Len(t, generated.Assertions, 4)
+	for _, assertion := range generated.Assertions {
+		if strings.Contains(assertion.Query, "LIMIT $1") {
+			require.Equal(t, "internal", assertion.Oracle)
+			require.Contains(t, assertion.NonLiteral, "BindVars")
+			continue
+		}
+		require.Equal(t, "postgres", assertion.Oracle)
+	}
+}
+
 func TestPostgresOraclePromotedMapSupportsTestNameFilter(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "publication_subscription_test.oracle-map.json")
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",

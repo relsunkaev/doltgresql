@@ -559,7 +559,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
-		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username") {
+		if assertion.Query == "" || hasAnyNonLiteral(assertion.NonLiteral, "Query", "Username", "BindVars", "CopyFromStdInFile") {
 			continue
 		}
 		if !forcePostgresOracle && len(assertion.NonLiteral) > 0 {
@@ -1173,6 +1173,12 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 	username, nonLiteral := candidateStringLiteral(fields["Username"], "Username", candidate.NonLiteral)
 	candidate.Username = username
 	candidate.NonLiteral = nonLiteral
+	if fields["BindVars"] != nil {
+		candidate.NonLiteral = append(candidate.NonLiteral, "BindVars")
+	}
+	if fields["CopyFromStdInFile"] != nil {
+		candidate.NonLiteral = append(candidate.NonLiteral, "CopyFromStdInFile")
+	}
 	if expectedKind == "rows" {
 		if _, err := expectedRowsFromExpr(fields["Expected"]); err != nil {
 			candidate.NonLiteral = append(candidate.NonLiteral, "Expected")

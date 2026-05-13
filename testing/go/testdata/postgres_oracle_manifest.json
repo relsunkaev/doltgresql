@@ -4097,6 +4097,114 @@
       ]
     },
     {
+      "id": "limit-test-testlimitoffset-0001-select-*-from-t-limit",
+      "source": "testing/go/limit_test.go:TestLimitOffset",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t (i INT PRIMARY KEY, c int)",
+        "INSERT INTO t VALUES (1, 1), (2, 2), (3, 3), (4, 4)"
+      ],
+      "query": "SELECT * FROM t LIMIT 2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "limit-test-testlimitoffset-0003-select-*-from-t-limit",
+      "source": "testing/go/limit_test.go:TestLimitOffset",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t (i INT PRIMARY KEY, c int)",
+        "INSERT INTO t VALUES (1, 1), (2, 2), (3, 3), (4, 4)",
+        "SELECT * FROM t LIMIT 2"
+      ],
+      "query": "SELECT * FROM t LIMIT 2 OFFSET 2",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "limit-test-testlimitoffset-0004-select-*-from-t-order",
+      "source": "testing/go/limit_test.go:TestLimitOffset",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t (i INT PRIMARY KEY, c int)",
+        "INSERT INTO t VALUES (1, 1), (2, 2), (3, 3), (4, 4)",
+        "SELECT * FROM t LIMIT 2",
+        "SELECT * FROM t LIMIT 2 OFFSET 2"
+      ],
+      "query": "SELECT * FROM t order by c asc LIMIT 2 OFFSET 2",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "materialized-view-probe-test-testmaterializedviewprobe-0001-select-id-v-from-source_mv",
       "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
       "ordinal": 1,
