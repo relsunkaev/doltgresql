@@ -4386,6 +4386,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		strings.HasPrefix(msg, "date/time field value out of range"),
 		strings.HasPrefix(msg, "timestamp out of range"):
 		return pgcode.DatetimeFieldOverflow.String(), true
+	case strings.HasPrefix(msg, "numeric field overflow"):
+		return pgcode.NumericValueOutOfRange.String(), true
+	case strings.HasPrefix(msg, "value too long for type "):
+		return pgcode.StringDataRightTruncation.String(), true
 	case strings.HasPrefix(msg, "invalid input syntax for type "):
 		return pgcode.InvalidTextRepresentation.String(), true
 	case strings.HasPrefix(msg, "function: '") && strings.Contains(msg, "' not found; function does not exist"):
