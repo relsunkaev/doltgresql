@@ -408,6 +408,33 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 
 	// Then we iterate over everything to fill our constraints
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			for i, col := range table.Item.Schema(ctx) {
+				if col.Nullable || col.PrimaryKey || col.HiddenSystem {
+					continue
+				}
+				constraintName := notNullConstraintName(table.Item.Name(), col.Name)
+				constraintOid := id.NewCheck(schema.Item.SchemaName(), table.Item.Name(), constraintName)
+				constraint := &pgConstraint{
+					oid:             constraintOid.AsId(),
+					oidNative:       id.Cache().ToOID(constraintOid.AsId()),
+					name:            constraintName,
+					schemaOid:       schema.OID.AsId(),
+					schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
+					conType:         "n",
+					tableOid:        table.OID.AsId(),
+					tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
+					typeOid:         id.Id(id.NewOID(0)),
+					conKey:          []any{int16(i + 1)},
+				}
+				oidIdx.Add(constraint)
+				relidTypNameIdx.Add(constraint)
+				nameSchemaIdx.Add(constraint)
+				typIdx.Add(constraint)
+				constraints = append(constraints, constraint)
+			}
+			return true, nil
+		},
 		Check: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, check functions.ItemCheck) (cont bool, err error) {
 			constraint := &pgConstraint{
 				oid:             check.OID.AsId(),
@@ -557,6 +584,10 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 	}
 
 	return nil
+}
+
+func notNullConstraintName(tableName string, columnName string) string {
+	return fmt.Sprintf("%s_%s_not_null", tableName, columnName)
 }
 
 func foreignKeyReferencedIndexOID(ctx *sql.Context, schema functions.ItemSchema, parentTable sql.Table, foreignKey sql.ForeignKeyConstraint) (id.Id, error) {
