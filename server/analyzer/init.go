@@ -85,6 +85,7 @@ const (
 	ruleId_ResolveDropColumnIfExists                                              // resolveDropColumnIfExists
 	ruleId_ValidateOrderBy                                                        // validateOrderBy
 	ruleId_ValidateCheckConstraints                                               // validateCheckConstraints
+	ruleId_AssignFetchWithTies                                                    // assignFetchWithTies
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -168,6 +169,8 @@ func Init() {
 	)
 	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "replaceIdxSort", true,
 		analyzer.Rule{Id: ruleId_PruneNotNullSortProbes, Apply: PruneNotNullSortProbes})
+	analyzer.OnceAfterDefault = insertAnalyzerRulesByName(analyzer.OnceAfterDefault, "insertTopNNodes", true,
+		analyzer.Rule{Id: ruleId_AssignFetchWithTies, Apply: AssignFetchWithTies})
 
 	// The auto-commit rule writes the contents of the context, so we need to insert our finalizer before that.
 	// We also should optimize functions last, since other rules may change the underlying expressions, potentially changing their return types.

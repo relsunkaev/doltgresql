@@ -917,6 +917,21 @@ func TestFetchFirstWithTiesIncludesPeerRowsRepro(t *testing.T) {
 						{3, 20},
 					},
 				},
+				{
+					Query: `SELECT id, score
+						FROM fetch_ties_items
+						ORDER BY score
+						OFFSET 1 ROW
+						FETCH FIRST 1 ROW WITH TIES;`,
+					Expected: []sql.Row{
+						{2, 20},
+						{3, 20},
+					},
+				},
+				{
+					Query:       `SELECT id FROM fetch_ties_items FETCH FIRST 1 ROW WITH TIES;`,
+					ExpectedErr: "WITH TIES cannot be specified without ORDER BY",
+				},
 			},
 		},
 	})

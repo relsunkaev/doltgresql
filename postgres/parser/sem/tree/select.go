@@ -731,6 +731,7 @@ func (node *Order) Equal(other *Order) bool {
 type Limit struct {
 	Offset, Count Expr
 	LimitAll      bool
+	WithTies      bool
 }
 
 // Format implements the NodeFormatter interface.
@@ -750,6 +751,12 @@ func (node *Limit) Format(ctx *FmtCtx) {
 		}
 		ctx.WriteString("OFFSET ")
 		ctx.FormatNode(node.Offset)
+	}
+	if node.WithTies {
+		if needSpace || node.Offset != nil {
+			ctx.WriteByte(' ')
+		}
+		ctx.WriteString("WITH TIES")
 	}
 }
 

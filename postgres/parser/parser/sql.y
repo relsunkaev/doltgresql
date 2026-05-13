@@ -12341,6 +12341,7 @@ select_limit:
     if $2.limit() != nil {
       $$.val.(*tree.Limit).Count = $2.limit().Count
       $$.val.(*tree.Limit).LimitAll = $2.limit().LimitAll
+      $$.val.(*tree.Limit).WithTies = $2.limit().WithTies
     }
   }
 | limit_clause
@@ -12377,10 +12378,21 @@ limit_clause:
   {
     $$.val = &tree.Limit{Count: $3.expr()}
   }
+| FETCH first_or_next select_fetch_first_value row_or_rows WITH TIES
+  {
+    $$.val = &tree.Limit{Count: $3.expr(), WithTies: true}
+  }
 | FETCH first_or_next row_or_rows ONLY
 	{
     $$.val = &tree.Limit{
       Count: tree.NewNumVal(constant.MakeInt64(1), "" /* origString */, false /* negative */),
+    }
+  }
+| FETCH first_or_next row_or_rows WITH TIES
+	{
+    $$.val = &tree.Limit{
+      Count: tree.NewNumVal(constant.MakeInt64(1), "" /* origString */, false /* negative */),
+      WithTies: true,
     }
   }
 

@@ -524,6 +524,9 @@ func (node *Limit) docTable(p *PrettyCfg) []pretty.TableRow {
 		}
 		res = append(res, p.row("OFFSET", p.Doc(e)))
 	}
+	if node.WithTies {
+		res = append(res, p.row("WITH TIES", pretty.Nil))
+	}
 	return res
 }
 

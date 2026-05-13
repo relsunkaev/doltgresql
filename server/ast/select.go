@@ -99,6 +99,10 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 	if err != nil {
 		return nil, err
 	}
+	withTies := node.Limit != nil && node.Limit.WithTies
+	if withTies && len(orderBy) == 0 {
+		return nil, errors.Errorf("WITH TIES cannot be specified without ORDER BY")
+	}
 	with, err := nodeWith(ctx, node.With)
 	if err != nil {
 		return nil, err
@@ -117,12 +121,18 @@ func nodeSelect(ctx *Context, node *tree.Select) (vitess.SelectStatement, error)
 		return selectStmt, nil
 	case *vitess.Select:
 		expandDistinctOnForNullOrdering(selectStmt, orderBy)
+		if withTies {
+			selectStmt.QueryOpts.SQLCalcFoundRows = true
+		}
 		selectStmt.OrderBy = orderBy
 		selectStmt.With = with
 		selectStmt.Limit = limit
 		selectStmt.Lock = lock
 		return selectStmt, nil
 	case *vitess.SetOp:
+		if withTies {
+			return nil, errors.Errorf("WITH TIES is not yet supported for set operations")
+		}
 		selectStmt.OrderBy = orderBy
 		selectStmt.With = with
 		selectStmt.Limit = limit
