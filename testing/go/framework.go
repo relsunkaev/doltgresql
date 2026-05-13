@@ -266,7 +266,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				return
 			}
 			if assertion.postgresOracleCached != nil && assertion.postgresOracleCached.ExpectedSQLState != "" {
-				_, err := conn.Exec(ctx, assertion.Query, assertion.BindVars...)
+				_, err := conn.Exec(ctx, assertion.Query, scriptQueryArgs(assertion.BindVars)...)
 				requirePostgresOracleCachedSQLState(t, err, assertion.postgresOracleCached)
 				return
 			}
@@ -278,7 +278,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 			if assertion.CopyFromStdInFile != "" {
 				copyFromStdin(t, conn.Current, assertion.Query, assertion.CopyFromStdInFile)
 			} else if assertion.SkipResultsCheck || (assertion.ExpectedErr != "" && cachedExpectedRows == nil) {
-				_, err := conn.Exec(ctx, assertion.Query, assertion.BindVars...)
+				_, err := conn.Exec(ctx, assertion.Query, scriptQueryArgs(assertion.BindVars)...)
 				if assertion.ExpectedErr != "" {
 					require.Error(t, err)
 					assert.Contains(t, err.Error(), assertion.ExpectedErr)
@@ -286,7 +286,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 					require.NoError(t, err)
 				}
 			} else if assertion.ExpectedTag != "" {
-				commandTag, err := conn.Exec(ctx, assertion.Query)
+				commandTag, err := conn.Exec(ctx, assertion.Query, scriptQueryArgs(assertion.BindVars)...)
 				require.NoError(t, err)
 				tag := assertion.ExpectedTag
 				if tag == EmptyCommandTag {
@@ -295,7 +295,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 
 				assert.Equal(t, tag, commandTag.String())
 			} else {
-				rows, err := conn.Query(ctx, assertion.Query, assertion.BindVars...)
+				rows, err := conn.Query(ctx, assertion.Query, scriptQueryArgs(assertion.BindVars)...)
 				require.NoError(t, err)
 				readRows, readRawRows, err := ReadRows(rows, normalizeRows)
 				require.NoError(t, err)
@@ -375,6 +375,15 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 			}
 		})
 	}
+}
+
+func scriptQueryArgs(bindVars []any) []any {
+	if len(bindVars) > 0 {
+		return bindVars
+	}
+	// Script assertions model independent SQL statements; pgx's default
+	// statement cache would otherwise preserve result shapes across DDL.
+	return []any{pgx.QueryExecModeExec}
 }
 
 func copyFromStdin(t *testing.T, conn *pgx.Conn, query string, filename string) {
