@@ -1012,8 +1012,11 @@ func resolveSourceTableMeta(ctx *sql.Context, source, databaseSource string) *so
 }
 
 // resultForOkIter reads a maximum of one result row from a result iterator.
-func resultForOkIter(ctx *sql.Context, iter sql.RowIter) (*Result, error) {
+func resultForOkIter(ctx *sql.Context, iter sql.RowIter) (result *Result, err error) {
 	defer trace.StartRegion(ctx, "DoltgresHandler.resultForOkIter").End()
+	defer func() {
+		err = closeResultIter(ctx, iter, err)
+	}()
 
 	row, err := iter.Next(ctx)
 	if err != nil {
@@ -1023,10 +1026,9 @@ func resultForOkIter(ctx *sql.Context, iter sql.RowIter) (*Result, error) {
 		return nil, err
 	}
 	_, err = iter.Next(ctx)
-	if err != io.EOF {
+	if err == nil {
 		return nil, errors.Errorf("result schema iterator returned more than one row")
-	}
-	if err := iter.Close(ctx); err != nil {
+	} else if err != io.EOF {
 		return nil, err
 	}
 
@@ -1036,20 +1038,25 @@ func resultForOkIter(ctx *sql.Context, iter sql.RowIter) (*Result, error) {
 }
 
 // resultForEmptyIter ensures that an expected empty iterator returns no rows.
-func resultForEmptyIter(ctx *sql.Context, iter sql.RowIter) (*Result, error) {
+func resultForEmptyIter(ctx *sql.Context, iter sql.RowIter) (result *Result, err error) {
 	defer trace.StartRegion(ctx, "DoltgresHandler.resultForEmptyIter").End()
-	if _, err := iter.Next(ctx); err != io.EOF {
+	defer func() {
+		err = closeResultIter(ctx, iter, err)
+	}()
+	if _, err := iter.Next(ctx); err == nil {
 		return nil, errors.Errorf("result schema iterator returned more than zero rows")
-	}
-	if err := iter.Close(ctx); err != nil {
+	} else if err != io.EOF {
 		return nil, err
 	}
 	return &Result{Fields: nil}, nil
 }
 
 // resultForMax1RowIter ensures that an empty iterator returns at most one row
-func resultForMax1RowIter(ctx *sql.Context, schema sql.Schema, iter sql.RowIter, resultFields []pgproto3.FieldDescription, formatCodes []int16) (*Result, error) {
+func resultForMax1RowIter(ctx *sql.Context, schema sql.Schema, iter sql.RowIter, resultFields []pgproto3.FieldDescription, formatCodes []int16) (result *Result, err error) {
 	defer trace.StartRegion(ctx, "DoltgresHandler.resultForMax1RowIter").End()
+	defer func() {
+		err = closeResultIter(ctx, iter, err)
+	}()
 	row, err := iter.Next(ctx)
 	if err == io.EOF {
 		return &Result{Fields: resultFields}, nil
@@ -1058,9 +1065,9 @@ func resultForMax1RowIter(ctx *sql.Context, schema sql.Schema, iter sql.RowIter,
 	}
 
 	if _, err = iter.Next(ctx); err != io.EOF {
-		return nil, errors.Errorf("result max1Row iterator returned more than one row")
-	}
-	if err := iter.Close(ctx); err != nil {
+		if err == nil {
+			return nil, errors.Errorf("result max1Row iterator returned more than one row")
+		}
 		return nil, err
 	}
 
@@ -1072,6 +1079,20 @@ func resultForMax1RowIter(ctx *sql.Context, schema sql.Schema, iter sql.RowIter,
 	ctx.GetLogger().Tracef("spooling result row %s", outputRow)
 
 	return &Result{Fields: resultFields, Rows: []Row{{outputRow}}, RowsAffected: 1}, nil
+}
+
+func closeResultIter(ctx *sql.Context, iter sql.RowIter, err error) error {
+	closeErr := iter.Close(ctx)
+	if closeErr == nil {
+		return err
+	}
+	if err == nil {
+		return closeErr
+	}
+	if closeErr.Error() == err.Error() || strings.Contains(closeErr.Error(), err.Error()) {
+		return err
+	}
+	return fmt.Errorf("%w; close result iterator failed: %v", err, closeErr)
 }
 
 // resultForDefaultIter reads batches of rows from the iterator

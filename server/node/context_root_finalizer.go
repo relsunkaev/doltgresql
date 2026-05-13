@@ -69,8 +69,18 @@ func (rf *ContextRootFinalizer) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (rf *ContextRootFinalizer) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
+	iter := &rootFinalizerIter{
+		clearContextAfterClose: clearsContextOnSuccess(rf.child),
+		useStatementSavepoint:  usesStatementSavepoint(rf.child),
+	}
+	if err := iter.ensureStatementSavepoint(ctx); err != nil {
+		iter.hadErr = true
+		iter.err = err
+		return nil, err
+	}
 	childIter, err := b.Build(ctx, rf.child, r)
 	if err != nil {
+		err = iter.rollbackStatementSavepoint(ctx, err)
 		deferrable.DiscardPendingForeignKeys(ctx)
 		core.ClearContextValues(ctx)
 		return nil, err
@@ -78,11 +88,8 @@ func (rf *ContextRootFinalizer) BuildRowIter(ctx *sql.Context, b sql.NodeExecBui
 	if childIter == nil {
 		childIter = sql.RowsToRowIter()
 	}
-	return &rootFinalizerIter{
-		childIter:              childIter,
-		clearContextAfterClose: clearsContextOnSuccess(rf.child),
-		useStatementSavepoint:  usesStatementSavepoint(rf.child),
-	}, nil
+	iter.childIter = childIter
+	return iter, nil
 }
 
 // Schema implements the interface sql.ExecBuilderNode.
