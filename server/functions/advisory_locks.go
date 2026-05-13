@@ -313,7 +313,11 @@ func releaseAdvisoryLock(ctx *sql.Context, name string) (bool, error) {
 
 // getLockSubsystem returns the active lock system for the SQL engine.
 func getLockSubsystem() *sql.LockSubsystem {
-	engine := sqlserver.GetRunningServer().Engine
+	server := sqlserver.GetRunningServer()
+	if server == nil {
+		return nil
+	}
+	engine := server.Engine
 	// This should be impossible if the server was initialized correctly, but for some test harnesses we
 	// take shortcuts that might invalidate that assumption
 	if engine == nil {

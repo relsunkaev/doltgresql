@@ -53,6 +53,12 @@ func recordXactLock(sessionID uint32, name string) {
 // autocommit mode, and connection close. It is safe to call when the
 // session holds no transaction-scope locks.
 func ReleaseSessionXactLocks(ctx *sql.Context) error {
+	return ReleaseSessionXactLocksWithSubsystem(ctx, getLockSubsystem())
+}
+
+// ReleaseSessionXactLocksWithSubsystem releases transaction-scope advisory locks
+// using the lock subsystem owned by the caller's server instance.
+func ReleaseSessionXactLocksWithSubsystem(ctx *sql.Context, ls *sql.LockSubsystem) error {
 	if ctx == nil || ctx.Session == nil {
 		return nil
 	}
@@ -66,7 +72,6 @@ func ReleaseSessionXactLocks(ctx *sql.Context) error {
 	if len(names) == 0 {
 		return nil
 	}
-	ls := getLockSubsystem()
 	if ls == nil {
 		return nil
 	}

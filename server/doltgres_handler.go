@@ -587,7 +587,7 @@ func (h *DoltgresHandler) maybeReleaseAllLocks(c *mysql.Conn) {
 		// discard any uncommitted SET LOCAL snapshots tracked on the
 		// session, so the next session reusing the connection id
 		// doesn't see stale rollback state.
-		_ = functions.ReleaseSessionXactLocks(ctx)
+		_ = functions.ReleaseSessionXactLocksWithSubsystem(ctx, h.e.LS)
 		node.ReleaseSessionRowLocks(c.ConnectionID)
 		_ = functions.ReleaseSessionXactVars(ctx)
 		functions.ReleaseSessionSharedAdvisoryLocks(c.ConnectionID)

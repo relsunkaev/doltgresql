@@ -688,7 +688,7 @@ func (h *ConnectionHandler) releaseXactAdvisoryLocksIfOutsideTransaction() {
 		return
 	}
 	if hasLocks {
-		_ = functions.ReleaseSessionXactLocks(ctx)
+		_ = functions.ReleaseSessionXactLocksWithSubsystem(ctx, h.doltgresHandler.e.LS)
 		node.ReleaseSessionRowLocks(h.mysqlConn.ConnectionID)
 	}
 	if hasVars {
