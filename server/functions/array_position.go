@@ -30,6 +30,8 @@ func initArrayPosition() {
 	framework.RegisterFunction(array_position_anyarray_anyelement_int32)
 	framework.RegisterFunction(array_position_int2array_oid)
 	framework.RegisterFunction(array_position_int2vector_int2)
+	framework.RegisterFunction(array_position_unknown_unknown)
+	framework.RegisterFunction(array_position_unknown_unknown_int32)
 	framework.RegisterFunction(array_positions_anyarray_anyelement)
 }
 
@@ -104,6 +106,26 @@ var array_position_anyarray_anyelement_int32 = framework.Function3{
 
 		// Element not found
 		return nil, nil
+	},
+}
+
+var array_position_unknown_unknown = framework.Function2{
+	Name:       "array_position",
+	Return:     pgtypes.Int32,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return nil, framework.ErrFunctionDoesNotExist.New("array_position(unknown, unknown)")
+	},
+}
+
+var array_position_unknown_unknown_int32 = framework.Function3{
+	Name:       "array_position",
+	Return:     pgtypes.Int32,
+	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Unknown, pgtypes.Unknown, pgtypes.Int32},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [4]*pgtypes.DoltgresType, val1 any, val2 any, val3 any) (any, error) {
+		return nil, framework.ErrFunctionDoesNotExist.New("array_position(unknown, unknown, integer)")
 	},
 }
 
