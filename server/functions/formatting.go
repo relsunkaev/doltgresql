@@ -713,36 +713,7 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			// TODO: implement this
 			return time.Time{}, errors.Errorf(`formatting TZ is not supported yet`)
 		case DCH_OF:
-			// OF is equivalent to TZH or TZH:TZM
-			// see TZH comments below
-			if input[inputPos] == '-' {
-				tfc.tzsign = -1
-				inputPos++
-			} else if input[inputPos] == '+' || input[inputPos] == ' ' {
-				tfc.tzsign = +1
-				inputPos++
-			} else {
-				if extraSkip > 0 && input[inputPos-1] == '-' {
-					tfc.tzsign = -1
-				} else {
-					tfc.tzsign = +1
-				}
-			}
-			v, l, err := fromCharParseIntLen(input[inputPos:], 2, formatNodes[i:], tfc.tzh)
-			if err != nil {
-				return time.Time{}, err
-			}
-			tfc.tzh = v
-			inputPos += l
-			if inputPos < len(input[inputPos:]) && input[inputPos] == ':' {
-				inputPos++
-				v, l, err = fromCharParseIntLen(input[inputPos:], 2, formatNodes[i:], tfc.tzm)
-				if err != nil {
-					return time.Time{}, err
-				}
-				tfc.tzm = v
-				inputPos += l
-			}
+			return time.Time{}, errors.Errorf(`formatting field "OF" is only supported in to_char; "OF" is not yet supported in to_date or to_timestamp`)
 		case DCH_TZH:
 			if input[inputPos] == '-' {
 				tfc.tzsign = -1
@@ -866,15 +837,18 @@ func getDateTimeFromFormat(ctx *sql.Context, input, format string) (time.Time, e
 			inputPos += l
 			inputPos += skipTh(n.suffix)
 		case DCH_ID:
-			v, l, err := fromCharParseIntLen(input[inputPos:], 1, formatNodes[i:], tfc.dd)
+			v, l, err := fromCharParseIntLen(input[inputPos:], 1, formatNodes[i:], tfc.d)
 			if err != nil {
 				return time.Time{}, err
 			}
-			// Shift numbering to match Gregorian where Sunday = 1
-			if v+1 > 7 {
+			if v < 1 || v > 7 {
+				return time.Time{}, errors.Errorf(`date/time field value out of range`)
+			}
+			// ISO ID is Monday=1..Sunday=7; internally weekdays are Sunday=1.
+			if v == 7 {
 				tfc.d = 1
 			} else {
-				tfc.d = v
+				tfc.d = v + 1
 			}
 			inputPos += l
 			inputPos += skipTh(n.suffix)
