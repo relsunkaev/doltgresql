@@ -155,8 +155,25 @@ func (b *sqlAggregateBuffer) Update(ctx *sql.Context, row sql.Row) error {
 	if err != nil {
 		return err
 	}
+	nextState, err = coerceSQLAggregateState(ctx, nextState, b.agg.StateType)
+	if err != nil {
+		return err
+	}
 	b.state = nextState
 	b.hasState = true
 	b.sawRow = true
 	return nil
+}
+
+func coerceSQLAggregateState(ctx *sql.Context, state any, stateType *pgtypes.DoltgresType) (any, error) {
+	if state == nil {
+		return nil, nil
+	}
+	if converted, _, err := stateType.Convert(ctx, state); err == nil {
+		return converted, nil
+	} else if str, ok := state.(string); ok {
+		return stateType.IoInput(ctx, str)
+	} else {
+		return nil, err
+	}
 }

@@ -318,7 +318,7 @@ func (f FunctionColumn) ResolvedType() *types.T {
 // Format implements the NodeFormatter interface.
 func (f FunctionColumn) Format(ctx *FmtCtx) {
 	if f.IsNull {
-		ctx.WriteString("NULL")
+		ctx.WriteString("NULL::" + f.Typ.String())
 		return
 	}
 	if f.StrVal == "" {
@@ -329,6 +329,10 @@ func (f FunctionColumn) Format(ctx *FmtCtx) {
 	case pgtypes.TypeCategory_ArrayTypes, pgtypes.TypeCategory_DateTimeTypes, pgtypes.TypeCategory_EnumTypes, pgtypes.TypeCategory_StringTypes, pgtypes.TypeCategory_UserDefinedTypes:
 		ctx.WriteString(pq.QuoteLiteral(f.StrVal))
 	default:
+		if f.StrVal == "" {
+			return
+		}
 		ctx.WriteString(f.StrVal)
 	}
+	ctx.WriteString("::" + f.Typ.String())
 }
