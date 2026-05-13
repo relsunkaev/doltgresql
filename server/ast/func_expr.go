@@ -150,6 +150,49 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 				Over: (*vitess.Over)(windowDef),
 			}, nil
 		}
+	case "lag", "lead":
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("%s DISTINCT with OVER is not supported", name.String())
+			}
+			if len(node.OrderBy) > 0 {
+				return nil, errors.Errorf("%s ORDER BY with OVER is not supported", name.String())
+			}
+			if len(exprs) < 1 || len(exprs) > 3 {
+				return nil, errors.Errorf("%s requires one, two, or three arguments", name.String())
+			}
+			marker := pgexprs.LagWindowMarker
+			if strings.EqualFold(name.String(), "lead") {
+				marker = pgexprs.LeadWindowMarker
+			}
+			return markedDoltgresWindowFunc(marker, exprs, windowDef), nil
+		}
+	case "nth_value":
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("nth_value DISTINCT with OVER is not supported")
+			}
+			if len(node.OrderBy) > 0 {
+				return nil, errors.Errorf("nth_value ORDER BY with OVER is not supported")
+			}
+			if len(exprs) != 2 {
+				return nil, errors.Errorf("nth_value requires two arguments")
+			}
+			return markedDoltgresWindowFunc(pgexprs.NthValueWindowMarker, exprs, windowDef), nil
+		}
+	case "ntile":
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("ntile DISTINCT with OVER is not supported")
+			}
+			if len(node.OrderBy) > 0 {
+				return nil, errors.Errorf("ntile ORDER BY with OVER is not supported")
+			}
+			if len(exprs) != 1 {
+				return nil, errors.Errorf("ntile requires one argument")
+			}
+			return markedDoltgresWindowFunc(pgexprs.NTileWindowMarker, exprs, windowDef), nil
+		}
 	case "bool_and", "bool_or":
 		if windowDef != nil {
 			if distinct {
@@ -284,6 +327,17 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			TargetNames: []string{qualifier.String(), name.String()},
 		},
 	}, nil
+}
+
+func markedDoltgresWindowFunc(marker string, exprs vitess.SelectExprs, windowDef *vitess.WindowDef) *vitess.FuncExpr {
+	markedExprs := make(vitess.SelectExprs, 0, len(exprs)+1)
+	markedExprs = append(markedExprs, &vitess.AliasedExpr{Expr: vitess.NewStrVal([]byte(marker))})
+	markedExprs = append(markedExprs, exprs...)
+	return &vitess.FuncExpr{
+		Name:  vitess.NewColIdent(pgexprs.ArrayAggWindowFunctionName),
+		Exprs: markedExprs,
+		Over:  (*vitess.Over)(windowDef),
+	}
 }
 
 func applyFuncArgNames(exprs vitess.SelectExprs, argNames []string) error {

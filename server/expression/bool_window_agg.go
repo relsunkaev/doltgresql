@@ -29,6 +29,10 @@ const (
 	BoolAndWindowMarker  = "__doltgres_bool_and_window"
 	BoolOrWindowMarker   = "__doltgres_bool_or_window"
 	CumeDistWindowMarker = "__doltgres_cume_dist_window"
+	LagWindowMarker      = "__doltgres_lag_window"
+	LeadWindowMarker     = "__doltgres_lead_window"
+	NthValueWindowMarker = "__doltgres_nth_value_window"
+	NTileWindowMarker    = "__doltgres_ntile_window"
 )
 
 // NewDoltgresWindowAggregate dispatches PostgreSQL aggregate-window calls
@@ -37,7 +41,7 @@ func NewDoltgresWindowAggregate(ctx *sql.Context, args ...sql.Expression) (sql.E
 	if len(args) == 1 {
 		return NewArrayAggWindow(ctx, args[0]), nil
 	}
-	if len(args) != 2 {
+	if len(args) < 2 {
 		return nil, fmt.Errorf("%s requires one array_agg argument or a marker plus child expression", ArrayAggWindowFunctionName)
 	}
 
@@ -47,11 +51,28 @@ func NewDoltgresWindowAggregate(ctx *sql.Context, args ...sql.Expression) (sql.E
 	}
 	switch marker {
 	case BoolAndWindowMarker:
+		if len(args) != 2 {
+			return nil, fmt.Errorf("bool_and window requires one argument")
+		}
 		return NewBoolWindowAgg(args[1], true), nil
 	case BoolOrWindowMarker:
+		if len(args) != 2 {
+			return nil, fmt.Errorf("bool_or window requires one argument")
+		}
 		return NewBoolWindowAgg(args[1], false), nil
 	case CumeDistWindowMarker:
+		if len(args) != 2 {
+			return nil, fmt.Errorf("cume_dist window requires zero arguments")
+		}
 		return NewCumeDistWindowAgg(), nil
+	case LagWindowMarker:
+		return NewValueWindowAgg(valueWindowLag, args[1:]...)
+	case LeadWindowMarker:
+		return NewValueWindowAgg(valueWindowLead, args[1:]...)
+	case NthValueWindowMarker:
+		return NewValueWindowAgg(valueWindowNthValue, args[1:]...)
+	case NTileWindowMarker:
+		return NewValueWindowAgg(valueWindowNTile, args[1:]...)
 	default:
 		return nil, fmt.Errorf("unknown Doltgres window aggregate marker %q", marker)
 	}
