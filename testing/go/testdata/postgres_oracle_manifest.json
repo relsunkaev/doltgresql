@@ -4333,6 +4333,138 @@
       ]
     },
     {
+      "id": "time-precision-typmod-test-testtimeprecisiontypmod-0001-select-attname-atttypmod-from-pg_catalog.pg_attribute",
+      "source": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prec_t (\n\t\t\t\t\tid   INT PRIMARY KEY,\n\t\t\t\t\tts0  TIMESTAMP(0),\n\t\t\t\t\tts3  TIMESTAMP(3),\n\t\t\t\t\tts6  TIMESTAMP(6),\n\t\t\t\t\ttsd  TIMESTAMP,\n\t\t\t\t\ttz3  TIMESTAMPTZ(3),\n\t\t\t\t\ttz6  TIMESTAMPTZ(6),\n\t\t\t\t\tt0   TIME(0),\n\t\t\t\t\tt3   TIME(3),\n\t\t\t\t\tt6   TIME(6)\n\t\t\t\t);"
+      ],
+      "query": "SELECT attname, atttypmod\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relname = 'prec_t' AND n.nspname = current_schema() AND a.attnum > 0\nORDER BY a.attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "ts0"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "ts3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "ts6"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "tsd"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "tz3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "tz6"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "t0"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "t3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "t6"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "time-precision-typmod-test-testtimeprecisiontypmod-0002-select-a.attname-format_type-a.atttypid-a.atttypmod",
+      "source": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE prec_fmt (id INT PRIMARY KEY, ts3 TIMESTAMP(3), t6 TIME(6));"
+      ],
+      "query": "SELECT a.attname, format_type(a.atttypid, a.atttypmod)\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relname = 'prec_fmt' AND n.nspname = current_schema() AND a.attname IN ('ts3', 't6')\nORDER BY a.attname;",
+      "expectedRows": [
+        [
+          {
+            "value": "t6"
+          },
+          {
+            "value": "time(6) without time zone"
+          }
+        ],
+        [
+          {
+            "value": "ts3"
+          },
+          {
+            "value": "timestamp(3) without time zone"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "to-char-correctness-repro-test-testtocharintervalpreservesfractionalsecondsrepro-0001-select-to_char-interval-1.234-seconds",
       "source": "testing/go/to_char_correctness_repro_test.go:TestToCharIntervalPreservesFractionalSecondsRepro",
       "ordinal": 1,

@@ -60,7 +60,7 @@ func TestTimePrecisionTypmod(t *testing.T) {
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE c.relname = 'prec_t' AND n.nspname = 'public' AND a.attnum > 0
+WHERE c.relname = 'prec_t' AND n.nspname = current_schema() AND a.attnum > 0
 ORDER BY a.attnum;`,
 					Expected: []sql.Row{
 						{"id", int32(-1)},
@@ -93,7 +93,7 @@ ORDER BY a.attnum;`,
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-WHERE c.relname = 'prec_fmt' AND n.nspname = 'public' AND a.attname IN ('ts3', 't6')
+WHERE c.relname = 'prec_fmt' AND n.nspname = current_schema() AND a.attname IN ('ts3', 't6')
 ORDER BY a.attname;`,
 					Expected: []sql.Row{
 						{"t6", "time(6) without time zone"},

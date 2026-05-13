@@ -1,0 +1,150 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map time_precision_typmod_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/time_precision_typmod_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod#0001",
+      "source": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod",
+      "ordinal": 1,
+      "scriptName": "TIMESTAMP(p) and friends preserve precision in atttypmod",
+      "oracle": "postgres",
+      "postgresId": "time-precision-typmod-test-testtimeprecisiontypmod-0001-select-attname-atttypmod-from-pg_catalog.pg_attribute",
+      "suggestedId": "time-precision-typmod-test-testtimeprecisiontypmod-0001-select-attname-atttypmod-from-pg_catalog.pg_attribute",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT attname, atttypmod\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relname = 'prec_t' AND n.nspname = current_schema() AND a.attnum > 0\nORDER BY a.attnum;",
+      "querySha256": "4770f2eef7fc6b4ae051b6163f1110610d18c1bd489d4af070f1e631c6bc860c",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "ts0"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "ts3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "ts6"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "tsd"
+          },
+          {
+            "value": "-1"
+          }
+        ],
+        [
+          {
+            "value": "tz3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "tz6"
+          },
+          {
+            "value": "6"
+          }
+        ],
+        [
+          {
+            "value": "t0"
+          },
+          {
+            "value": "0"
+          }
+        ],
+        [
+          {
+            "value": "t3"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "t6"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod#0002",
+      "source": "testing/go/time_precision_typmod_test.go:TestTimePrecisionTypmod",
+      "ordinal": 2,
+      "scriptName": "format_type renders the precision back into the type name",
+      "oracle": "postgres",
+      "postgresId": "time-precision-typmod-test-testtimeprecisiontypmod-0002-select-a.attname-format_type-a.atttypid-a.atttypmod",
+      "suggestedId": "time-precision-typmod-test-testtimeprecisiontypmod-0002-select-a.attname-format_type-a.atttypid-a.atttypmod",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT a.attname, format_type(a.atttypid, a.atttypmod)\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nJOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relname = 'prec_fmt' AND n.nspname = current_schema() AND a.attname IN ('ts3', 't6')\nORDER BY a.attname;",
+      "querySha256": "1539b586f6ceddfe75e820dbdf58e9cd11b524faed6f5da1116ed0ab52145b49",
+      "expectedRows": [
+        [
+          {
+            "value": "t6"
+          },
+          {
+            "value": "time(6) without time zone"
+          }
+        ],
+        [
+          {
+            "value": "ts3"
+          },
+          {
+            "value": "timestamp(3) without time zone"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
