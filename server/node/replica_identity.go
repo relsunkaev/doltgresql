@@ -26,6 +26,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 )
@@ -149,7 +151,7 @@ func (a *AlterTableReplicaIdentity) resolveIndex(ctx *sql.Context, schema string
 		return "", errors.Errorf(`index "%s" cannot be used as replica identity because not all columns are marked NOT NULL`, a.IndexName)
 	}
 	if foundName == "" {
-		return "", errors.Errorf(`index "%s" does not exist`, a.IndexName)
+		return "", pgerror.Newf(pgcode.UndefinedObject, `index "%s" does not exist`, a.IndexName)
 	}
 	return foundName, nil
 }
