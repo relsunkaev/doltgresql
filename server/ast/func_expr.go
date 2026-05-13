@@ -130,6 +130,26 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 				},
 			}, nil
 		}
+	case "cume_dist":
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("cume_dist DISTINCT with OVER is not supported")
+			}
+			if len(node.OrderBy) > 0 {
+				return nil, errors.Errorf("cume_dist ORDER BY with OVER is not supported")
+			}
+			if len(exprs) != 0 {
+				return nil, errors.Errorf("cume_dist requires zero arguments")
+			}
+			return &vitess.FuncExpr{
+				Name: vitess.NewColIdent(pgexprs.ArrayAggWindowFunctionName),
+				Exprs: vitess.SelectExprs{
+					&vitess.AliasedExpr{Expr: vitess.NewStrVal([]byte(pgexprs.CumeDistWindowMarker))},
+					&vitess.AliasedExpr{Expr: vitess.NewIntVal([]byte("0"))},
+				},
+				Over: (*vitess.Over)(windowDef),
+			}, nil
+		}
 	case "bool_and", "bool_or":
 		if windowDef != nil {
 			if distinct {

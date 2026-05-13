@@ -26,8 +26,9 @@ import (
 )
 
 const (
-	BoolAndWindowMarker = "__doltgres_bool_and_window"
-	BoolOrWindowMarker  = "__doltgres_bool_or_window"
+	BoolAndWindowMarker  = "__doltgres_bool_and_window"
+	BoolOrWindowMarker   = "__doltgres_bool_or_window"
+	CumeDistWindowMarker = "__doltgres_cume_dist_window"
 )
 
 // NewDoltgresWindowAggregate dispatches PostgreSQL aggregate-window calls
@@ -49,6 +50,8 @@ func NewDoltgresWindowAggregate(ctx *sql.Context, args ...sql.Expression) (sql.E
 		return NewBoolWindowAgg(args[1], true), nil
 	case BoolOrWindowMarker:
 		return NewBoolWindowAgg(args[1], false), nil
+	case CumeDistWindowMarker:
+		return NewCumeDistWindowAgg(), nil
 	default:
 		return nil, fmt.Errorf("unknown Doltgres window aggregate marker %q", marker)
 	}
@@ -226,4 +229,121 @@ func (b *boolWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterv
 		return nil, nil
 	}
 	return result, nil
+}
+
+type CumeDistWindowAgg struct {
+	window *sql.WindowDefinition
+	id     sql.ColumnId
+}
+
+var _ sql.WindowAdaptableExpression = (*CumeDistWindowAgg)(nil)
+
+func NewCumeDistWindowAgg() *CumeDistWindowAgg {
+	return &CumeDistWindowAgg{}
+}
+
+func (c *CumeDistWindowAgg) Resolved() bool {
+	for _, expr := range c.window.ToExpressions() {
+		if !expr.Resolved() {
+			return false
+		}
+	}
+	return true
+}
+
+func (c *CumeDistWindowAgg) String() string {
+	sb := strings.Builder{}
+	sb.WriteString("cume_dist()")
+	if c.window != nil {
+		sb.WriteString(" ")
+		sb.WriteString(c.window.String())
+	}
+	return sb.String()
+}
+
+func (c *CumeDistWindowAgg) Type(ctx *sql.Context) sql.Type {
+	return pgtypes.Float64
+}
+
+func (c *CumeDistWindowAgg) IsNullable(ctx *sql.Context) bool {
+	return false
+}
+
+func (c *CumeDistWindowAgg) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
+	panic("eval should never be called on a window aggregate")
+}
+
+func (c *CumeDistWindowAgg) Children() []sql.Expression {
+	return c.window.ToExpressions()
+}
+
+func (c CumeDistWindowAgg) WithChildren(ctx *sql.Context, children ...sql.Expression) (sql.Expression, error) {
+	expected := len(c.window.ToExpressions())
+	if len(children) != expected {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(children), expected)
+	}
+	window, err := c.window.FromExpressions(ctx, children)
+	if err != nil {
+		return nil, err
+	}
+	c.window = window
+	return &c, nil
+}
+
+func (c *CumeDistWindowAgg) Id() sql.ColumnId {
+	return c.id
+}
+
+func (c CumeDistWindowAgg) WithId(id sql.ColumnId) sql.IdExpression {
+	c.id = id
+	return &c
+}
+
+func (c *CumeDistWindowAgg) NewWindowFunction(ctx *sql.Context) (sql.WindowFunction, error) {
+	return (&cumeDistWindowFunction{}).WithWindow(ctx, c.Window())
+}
+
+func (c CumeDistWindowAgg) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) sql.WindowAdaptableExpression {
+	c.window = window
+	return &c
+}
+
+func (c *CumeDistWindowAgg) Window() *sql.WindowDefinition {
+	return c.window
+}
+
+type cumeDistWindowFunction struct {
+	orderBy        []sql.Expression
+	partitionStart int
+	partitionEnd   int
+}
+
+var _ sql.WindowFunction = (*cumeDistWindowFunction)(nil)
+
+func (c *cumeDistWindowFunction) WithWindow(ctx *sql.Context, window *sql.WindowDefinition) (sql.WindowFunction, error) {
+	next := *c
+	if window != nil {
+		next.orderBy = window.OrderBy.ToExpressions()
+	}
+	return &next, nil
+}
+
+func (c *cumeDistWindowFunction) Dispose(ctx *sql.Context) {}
+
+func (c *cumeDistWindowFunction) StartPartition(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) error {
+	c.partitionStart = interval.Start
+	c.partitionEnd = interval.End
+	return nil
+}
+
+func (c *cumeDistWindowFunction) DefaultFramer() sql.WindowFramer {
+	return gmsaggregation.NewPeerGroupFramer(c.orderBy)
+}
+
+func (c *cumeDistWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) (interface{}, error) {
+	total := c.partitionEnd - c.partitionStart
+	if total <= 0 || interval.End <= interval.Start {
+		return nil, nil
+	}
+	return float64(interval.End-c.partitionStart) / float64(total), nil
 }
