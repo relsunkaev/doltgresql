@@ -26,11 +26,13 @@ import (
 func TestPgMatviewsProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        "pg_matviews exists and returns zero rows when no matviews are defined",
-			SetUpScript: []string{},
+			Name: "pg_matviews exists and returns zero rows when no matviews are defined",
+			SetUpScript: []string{
+				`CREATE SCHEMA matviews_probe_schema;`,
+			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM pg_matviews;`,
+					Query:    `SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'matviews_probe_schema';`,
 					Expected: []sql.Row{{"0"}},
 				},
 				{
@@ -40,7 +42,7 @@ func TestPgMatviewsProbe(t *testing.T) {
 					Query: `SELECT schemaname, matviewname, matviewowner,
 							tablespace, hasindexes, ispopulated, definition
 						FROM pg_matviews
-						WHERE schemaname = 'public'
+						WHERE schemaname = 'matviews_probe_schema'
 						ORDER BY schemaname, matviewname;`,
 					ExpectedColNames: []string{
 						"schemaname",

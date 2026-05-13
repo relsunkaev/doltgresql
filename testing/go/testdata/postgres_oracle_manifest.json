@@ -3502,6 +3502,49 @@
       ]
     },
     {
+      "id": "pg-matviews-probe-test-testpgmatviewsprobe-0001-select-count-*-::text-from",
+      "source": "testing/go/pg_matviews_probe_test.go:TestPgMatviewsProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA matviews_probe_schema;"
+      ],
+      "query": "SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'matviews_probe_schema';",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS matviews_probe_schema CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-matviews-probe-test-testpgmatviewsprobe-0002-select-schemaname-matviewname-matviewowner-tablespace",
+      "source": "testing/go/pg_matviews_probe_test.go:TestPgMatviewsProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA matviews_probe_schema;",
+        "SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'matviews_probe_schema';"
+      ],
+      "query": "SELECT schemaname, matviewname, matviewowner,\n\t\t\t\t\t\t\ttablespace, hasindexes, ispopulated, definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = 'matviews_probe_schema'\n\t\t\t\t\t\tORDER BY schemaname, matviewname;",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS matviews_probe_schema CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "pg-notify-probe-test-testpgnotifyprobe-0001-select-pg_notify-my_channel-payload",
       "source": "testing/go/pg_notify_probe_test.go:TestPgNotifyProbe",
       "ordinal": 1,
