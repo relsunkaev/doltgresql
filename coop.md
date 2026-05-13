@@ -10,6 +10,21 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 11:48 America/Phoenix
+
+- Lane probe: current-head clean verifier for unowned remaining failures only. Candidates are outside active FK NOT VALID, PL/pgSQL SRF, deferrable unique/PK, and dirty grant/oracle lanes.
+- Expected files: none during probe; will add a narrower claim before editing.
+- Next action: run focused current-head probes in a detached worktree and claim only one failing, unowned lane.
+
+### delta - 2026-05-13 11:51 America/Phoenix
+
+- Lane active: CHECK expression enforcement for `TestCreateTable/check_constraint_with_a_function` and `TestCreateTable/check_constraint_with_JSONB_cast_expression`.
+- Expected files if red: CHECK creation/expression enforcement/cache invalidation only, likely `third_party/dolt/go/libraries/doltcore/sqle/dsess/session_cache.go` or adjacent check planning/evaluation code. Avoiding paused FK NOT VALID, active deferrable unique/PK, parser/table-def, dirty grant/oracle, and temp-table serial lanes.
+- Current clean verifier signal at `c745eb60` in `/Users/ramazan/Code/oss/doltgresql-verifiers/delta-probe-head-7148vU`: `go test -vet=off ./testing/go -run '^(TestCommonExtensionsProbe|TestCreateTable)$' -count=1 -v` failed `TestCreateTable` because invalid rows were accepted for CHECK expressions using `length(a) > 2` and `((payload->>'amount')::int) > 0`; separate temp-table serial failure is not claimed.
+- Fix: `SessionCache.ClearTableCache` now clears cached check definitions along with cached table objects, so a schema update performed during check creation cannot leave an immediately following insert planned against stale empty check metadata. Updated the two affected `TestCreateTable` expected error strings to the actual column CHECK names (`mytbl_a_check`, `json_checks_payload_check`).
+- Green proof in detached verifier `/Users/ramazan/Code/oss/doltgresql-verifiers/delta-probe-head-7148vU` at `c745eb60` plus delta patch and symlinked local `third_party/dolt`: `go test -vet=off ./testing/go -run '^TestCreateTable$/^(check_constraint_with_a_function|check_constraint_with_JSONB_cast_expression)$' -count=1 -v`; `go test -vet=off ./testing/go -run '^(TestAddCheckConstraintValidatesExistingRowsRepro|TestNotValidCheckConstraintEnforcesNewRowsRepro|TestCheckConstraintAcceptsImmutableFunctionRepro|TestMultipleColumnCheckConstraintsAreEnforcedRepro|TestCreateTableCheckConstraintNoInheritGuard|TestAlterTableAddCheckConstraintNoInheritRepro)$' -count=1 -v`; in `third_party/dolt/go`, `go test -vet=off ./libraries/doltcore/sqle/dsess -run '^$' -count=1`.
+- Next action: commit the submodule fix and superproject pointer with the narrow test expectation updates.
+
 ### delta - 2026-05-13 11:26 America/Phoenix
 
 - Lane complete locally: `ALTER TABLE ... ADD CHECK ... NOT VALID` and `VALIDATE CONSTRAINT` behavior from `TestNotValidCheckConstraintEnforcesNewRowsRepro`.

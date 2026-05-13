@@ -194,7 +194,7 @@ func TestCreateTable(t *testing.T) {
 				},
 				{
 					Query:       "insert into mytbl values ('de', 'abc');",
-					ExpectedErr: `Check constraint "mytbl_chk_`,
+					ExpectedErr: `Check constraint "mytbl_a_check" violated`,
 				},
 				{
 					Query:    "select * from mytbl;",
@@ -215,7 +215,7 @@ func TestCreateTable(t *testing.T) {
 				},
 				{
 					Query:       `INSERT INTO json_checks VALUES ('{"amount": -1}'::jsonb);`,
-					ExpectedErr: `Check constraint "json_checks_chk_`,
+					ExpectedErr: `Check constraint "json_checks_payload_check" violated`,
 				},
 				{
 					Query:    `SELECT payload FROM json_checks;`,
