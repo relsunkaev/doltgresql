@@ -29,6 +29,7 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
 	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 )
 
@@ -129,9 +130,12 @@ func (a *AlterTableReplicaIdentity) resolveIndex(ctx *sql.Context, schema string
 			if !strings.EqualFold(displayName, a.IndexName) && !strings.EqualFold(index.Item.ID(), a.IndexName) {
 				return true, nil
 			}
-			if !index.Item.IsUnique() {
+			if !indexmetadata.IsUnique(index.Item) {
 				nonUnique = true
 				return false, nil
+			}
+			if indexmetadata.Deferrable(index.Item.Comment()) {
+				return false, errors.Errorf(`cannot use non-immediate index "%s" as replica identity`, a.IndexName)
 			}
 			if !replicaIdentityIndexColumnsAreNotNull(ctx, sqlTable, index.Item) {
 				nullableColumn = true

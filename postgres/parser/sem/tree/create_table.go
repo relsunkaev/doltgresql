@@ -851,6 +851,8 @@ type UniqueConstraintTableDef struct {
 	IndexTableDef
 	NullsNotDistinct bool
 	PrimaryKey       bool
+	Deferrable       DeferrableMode
+	Initially        InitiallyMode
 }
 
 // SetName implements the TableDef interface.
@@ -877,6 +879,20 @@ func (node *UniqueConstraintTableDef) Format(ctx *FmtCtx) {
 	ctx.FormatNode(&node.Columns)
 	ctx.WriteByte(')')
 	ctx.FormatNode(&node.IndexParams)
+	switch node.Deferrable {
+	case Deferrable:
+		ctx.WriteString(" DEFERRABLE")
+		switch node.Initially {
+		case InitiallyImmediate:
+			ctx.WriteString(" INITIALLY IMMEDIATE")
+		case InitiallyDeferred:
+			ctx.WriteString(" INITIALLY DEFERRED")
+		default:
+		}
+	case NotDeferrable:
+		ctx.WriteString(" NOT DEFERRABLE")
+	default:
+	}
 }
 
 type ExcludeElement struct {

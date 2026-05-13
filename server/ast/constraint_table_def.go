@@ -111,6 +111,9 @@ func nodeUniqueConstraintTableDef(
 	if !node.PrimaryKey && bareIdentifier(indexTableDef.Name) == "" {
 		indexTableDef.Name = tree.Name(defaultUniqueConstraintNameForDef(tableName.Name.String(), node))
 	}
+	if node.PrimaryKey && uniqueConstraintIsDeferrable(node.Deferrable) && bareIdentifier(indexTableDef.Name) == "" {
+		indexTableDef.Name = tree.Name(defaultPrimaryKeyConstraintName(tableName.Name.String()))
+	}
 	indexDef, err := nodeIndexTableDefAllowingStorageParams(ctx, &indexTableDef)
 	if err != nil {
 		return nil, err
@@ -123,6 +126,9 @@ func nodeUniqueConstraintTableDef(
 	indexType := "unique"
 	if node.PrimaryKey {
 		indexType = "primary"
+	}
+	if uniqueConstraintIsDeferrable(node.Deferrable) {
+		indexType = ""
 	}
 
 	ddl := &vitess.DDL{
@@ -140,14 +146,15 @@ func nodeUniqueConstraintTableDef(
 	return ddl, nil
 }
 
-func uniqueConstraintIndexOptions(nullsNotDistinct bool) []*vitess.IndexOption {
-	if !nullsNotDistinct {
+func uniqueConstraintIndexOptions(nullsNotDistinct bool, primary bool, deferrable tree.DeferrableMode, initially tree.InitiallyMode) []*vitess.IndexOption {
+	if !nullsNotDistinct && !uniqueConstraintIsDeferrable(deferrable) {
 		return nil
 	}
 	metadata := indexmetadata.Metadata{
 		AccessMethod:     indexmetadata.AccessMethodBtree,
-		NullsNotDistinct: true,
+		NullsNotDistinct: nullsNotDistinct,
 	}
+	applyUniqueConstraintTimingMetadata(&metadata, primary, deferrable, initially)
 	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}
 }
 
@@ -160,7 +167,8 @@ func uniqueConstraintIndexOptionsForDef(node *tree.UniqueConstraintTableDef) ([]
 	if err != nil {
 		return nil, err
 	}
-	if len(includeColumns) == 0 && len(relOptions) == 0 && !node.NullsNotDistinct {
+	isDeferrable := uniqueConstraintIsDeferrable(node.Deferrable)
+	if len(includeColumns) == 0 && len(relOptions) == 0 && !node.NullsNotDistinct && !isDeferrable {
 		return nil, nil
 	}
 	metadata := indexmetadata.Metadata{
@@ -169,7 +177,30 @@ func uniqueConstraintIndexOptionsForDef(node *tree.UniqueConstraintTableDef) ([]
 		RelOptions:       relOptions,
 		NullsNotDistinct: node.NullsNotDistinct,
 	}
+	applyUniqueConstraintTimingMetadata(&metadata, node.PrimaryKey, node.Deferrable, node.Initially)
 	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}, nil
+}
+
+func uniqueConstraintIsDeferrable(deferrable tree.DeferrableMode) bool {
+	return deferrable == tree.Deferrable
+}
+
+func uniqueConstraintInitiallyDeferred(initially tree.InitiallyMode) bool {
+	return initially == tree.InitiallyDeferred
+}
+
+func applyUniqueConstraintTimingMetadata(metadata *indexmetadata.Metadata, primary bool, deferrable tree.DeferrableMode, initially tree.InitiallyMode) {
+	if metadata == nil || !uniqueConstraintIsDeferrable(deferrable) {
+		return
+	}
+	metadata.Unique = true
+	metadata.Deferrable = true
+	metadata.InitiallyDeferred = uniqueConstraintInitiallyDeferred(initially)
+	if primary {
+		metadata.Constraint = "primary"
+	} else {
+		metadata.Constraint = "unique"
+	}
 }
 
 func primaryKeyConstraintMetadataDDL(tableName vitess.TableName, ifExists bool, name string) *vitess.DDL {
@@ -235,6 +266,10 @@ func defaultUniqueConstraintNameForDef(tableName string, node *tree.UniqueConstr
 	return defaultUniqueConstraintName(tableName, columns)
 }
 
+func defaultPrimaryKeyConstraintName(tableName string) string {
+	return sanitizeIndexNamePart(tableName, "table") + "_pkey"
+}
+
 func defaultColumnCheckConstraintName(tableName string, column tree.Name) string {
 	return strings.Join([]string{
 		sanitizeIndexNamePart(tableName, "table"),
@@ -243,7 +278,7 @@ func defaultColumnCheckConstraintName(tableName string, column tree.Name) string
 	}, "_")
 }
 
-func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name, nullsNotDistinct bool) (*vitess.IndexDefinition, error) {
+func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Name, constraintName tree.Name, nullsNotDistinct bool, primary bool, deferrable tree.DeferrableMode, initially tree.InitiallyMode) (*vitess.IndexDefinition, error) {
 	columns := tree.IndexElemList{{Column: column}}
 	fields, err := nodeIndexElemList(ctx, columns)
 	if err != nil {
@@ -251,16 +286,26 @@ func columnUniqueIndexDefinition(ctx *Context, tableName string, column tree.Nam
 	}
 	indexName := bareIdentifier(constraintName)
 	if indexName == "" {
-		indexName = defaultUniqueConstraintName(tableName, columns)
+		if primary {
+			indexName = defaultPrimaryKeyConstraintName(tableName)
+		} else {
+			indexName = defaultUniqueConstraintName(tableName, columns)
+		}
+	}
+	nativeUnique := !uniqueConstraintIsDeferrable(deferrable)
+	indexType := "unique"
+	if !nativeUnique {
+		indexType = ""
 	}
 	return &vitess.IndexDefinition{
 		Info: &vitess.IndexInfo{
-			Type:   "unique",
-			Name:   vitess.NewColIdent(indexName),
-			Unique: true,
+			Type:    indexType,
+			Name:    vitess.NewColIdent(indexName),
+			Unique:  nativeUnique,
+			Primary: primary && nativeUnique,
 		},
 		Fields:  fields,
-		Options: uniqueConstraintIndexOptions(nullsNotDistinct),
+		Options: uniqueConstraintIndexOptions(nullsNotDistinct, primary, deferrable, initially),
 	}, nil
 }
 

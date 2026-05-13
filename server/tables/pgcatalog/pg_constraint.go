@@ -539,15 +539,20 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			return true, nil
 		},
 		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
-			conType := "p"
-			if index.Item.ID() != "PRIMARY" {
-				if index.Item.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Item.Comment()) {
-					conType = "u"
+			conType := ""
+			switch {
+			case index.Item.ID() == "PRIMARY" || indexmetadata.IsPrimaryConstraint(index.Item):
+				conType = "p"
+			case indexmetadata.IsUnique(index.Item) && !indexmetadata.IsStandaloneIndex(index.Item.Comment()):
+				if indexmetadata.Constraint(index.Item.Comment()) == "exclusion" {
+					conType = "x"
 				} else {
-					// If this isn't a primary key or a unique index, then it's a regular index, and not
-					// a constraint, so we don't need to report it in the pg_constraint table.
-					return true, nil
+					conType = "u"
 				}
+			default:
+				// If this isn't a primary key or a unique index, then it's a regular index, and not
+				// a constraint, so we don't need to report it in the pg_constraint table.
+				return true, nil
 			}
 
 			conKey := make([]any, len(index.Item.Expressions()))
@@ -562,6 +567,8 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				conType:         conType,
+				conDeferrable:   indexmetadata.Deferrable(index.Item.Comment()),
+				conDeferred:     indexmetadata.InitiallyDeferred(index.Item.Comment()),
 				tableOid:        table.OID.AsId(),
 				tableOidNative:  id.Cache().ToOID(table.OID.AsId()),
 				idxOid:          index.OID.AsId(),
@@ -626,7 +633,7 @@ func foreignKeyReferencedIndexOID(ctx *sql.Context, schema functions.ItemSchema,
 		return id.Null, err
 	}
 	for _, index := range indexes {
-		if index.ID() != "PRIMARY" && !index.IsUnique() {
+		if index.ID() != "PRIMARY" && !indexmetadata.IsUnique(index) {
 			continue
 		}
 		if indexMatchesColumns(index, foreignKey.ParentColumns) {

@@ -61,12 +61,15 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if node.Unique {
 			columnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
 		}
+		if node.PrimaryKey.IsPrimaryKey && uniqueConstraintIsDeferrable(node.UniqueDeferrable) {
+			columnDef.Type.KeyOpt = vitess.ColumnKeyOption(0)
+		}
 		target.TableSpec.AddColumn(columnDef)
 		if err := appendAdditionalColumnCheckConstraints(ctx, target.TableSpec, target.Table.Name.String(), node); err != nil {
 			return err
 		}
-		if node.Unique {
-			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName, node.UniqueNullsNotDistinct)
+		if node.Unique || (node.PrimaryKey.IsPrimaryKey && uniqueConstraintIsDeferrable(node.UniqueDeferrable)) {
+			indexDef, err := columnUniqueIndexDefinition(ctx, target.Table.Name.String(), node.Name, node.UniqueConstraintName, node.UniqueNullsNotDistinct, node.PrimaryKey.IsPrimaryKey, node.UniqueDeferrable, node.UniqueInitially)
 			if err != nil {
 				return err
 			}
@@ -149,6 +152,9 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if !node.PrimaryKey && bareIdentifier(indexTableDef.Name) == "" {
 			indexTableDef.Name = tree.Name(defaultUniqueConstraintNameForDef(target.Table.Name.String(), node))
 		}
+		if node.PrimaryKey && uniqueConstraintIsDeferrable(node.Deferrable) && bareIdentifier(indexTableDef.Name) == "" {
+			indexTableDef.Name = tree.Name(defaultPrimaryKeyConstraintName(target.Table.Name.String()))
+		}
 		if node.PrimaryKey {
 			setPrimaryKeyConstraintTableOption(target.TableSpec, bareIdentifier(indexTableDef.Name))
 		}
@@ -160,11 +166,12 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		if err != nil {
 			return err
 		}
-		indexDef.Info.Unique = true
-		indexDef.Info.Primary = node.PrimaryKey
+		nativeUnique := !uniqueConstraintIsDeferrable(node.Deferrable)
+		indexDef.Info.Unique = nativeUnique
+		indexDef.Info.Primary = node.PrimaryKey && nativeUnique
 		indexDef.Options = append(indexDef.Options, indexOptions...)
 		// If we're setting a primary key, then we need to make sure that all of the columns are also set to NOT NULL
-		if indexDef.Info.Primary {
+		if node.PrimaryKey {
 			tableColumns := utils.SliceToMapValues(target.TableSpec.Columns, func(col *vitess.ColumnDefinition) string {
 				return col.Name.String()
 			})

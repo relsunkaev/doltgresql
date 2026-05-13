@@ -581,6 +581,63 @@ func TestSetConstraintsDefersUniqueConstraintRepro(t *testing.T) {
 	})
 }
 
+// TestDeferrableUniqueConstraintViolationCheckedAtCommitRepro guards that
+// unresolved DEFERRABLE unique violations are checked at COMMIT.
+func TestDeferrableUniqueConstraintViolationCheckedAtCommitRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "deferrable unique violation is checked at commit",
+			SetUpScript: []string{
+				`CREATE TABLE deferred_unique_commit_items (
+					id INT PRIMARY KEY,
+					code INT UNIQUE DEFERRABLE INITIALLY DEFERRED
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `INSERT INTO deferred_unique_commit_items VALUES (1, 10), (2, 10);`,
+				},
+				{
+					Query:       `COMMIT;`,
+					ExpectedErr: `duplicate unique key`,
+				},
+			},
+		},
+	})
+}
+
+// TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro guards that
+// SET CONSTRAINTS IMMEDIATE validates pending unique constraints before
+// changing their timing.
+func TestSetConstraintsImmediateChecksDeferredUniqueConstraintRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "SET CONSTRAINTS IMMEDIATE checks deferred unique violations",
+			SetUpScript: []string{
+				`CREATE TABLE immediate_check_unique_items (
+					id INT PRIMARY KEY,
+					code INT UNIQUE DEFERRABLE INITIALLY DEFERRED
+				);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `BEGIN;`,
+				},
+				{
+					Query: `INSERT INTO immediate_check_unique_items VALUES (1, 10), (2, 10);`,
+				},
+				{
+					Query:       `SET CONSTRAINTS ALL IMMEDIATE;`,
+					ExpectedErr: `duplicate unique key`,
+				},
+			},
+		},
+	})
+}
+
 // TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro guards DEFERRABLE
 // INITIALLY DEFERRED foreign keys repaired before COMMIT.
 func TestDeferrableForeignKeyCanBeFixedBeforeCommitRepro(t *testing.T) {

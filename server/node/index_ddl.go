@@ -686,6 +686,9 @@ func isPrimaryKeyIndex(index sql.Index) bool {
 	if strings.EqualFold(index.ID(), "PRIMARY") {
 		return true
 	}
+	if indexmetadata.IsPrimaryConstraint(index) {
+		return true
+	}
 	primaryKeyIndex, ok := index.(interface {
 		IsPrimaryKey() bool
 	})
@@ -693,7 +696,7 @@ func isPrimaryKeyIndex(index sql.Index) bool {
 }
 
 func isConstraintBackedIndex(index sql.Index) bool {
-	return isPrimaryKeyIndex(index) || (index.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Comment()))
+	return isPrimaryKeyIndex(index) || (indexmetadata.IsUnique(index) && !indexmetadata.IsStandaloneIndex(index.Comment()))
 }
 
 func indexColumnsForRebuild(ctx *sql.Context, index sql.Index, table sql.Table) ([]sql.IndexColumn, error) {

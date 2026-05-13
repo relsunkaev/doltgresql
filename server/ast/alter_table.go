@@ -188,7 +188,7 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 
 func nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx *Context, cmd *tree.AlterTableAddConstraint, tableName vitess.TableName, ifExists bool) (vitess.Statement, bool, error) {
 	constraintDef, ok := cmd.ConstraintDef.(*tree.UniqueConstraintTableDef)
-	if !ok || constraintDef.PrimaryKey || !constraintDef.NullsNotDistinct {
+	if !ok || constraintDef.PrimaryKey || !constraintDef.NullsNotDistinct || uniqueConstraintIsDeferrable(constraintDef.Deferrable) {
 		return nil, false, nil
 	}
 	ddl, err := nodeUniqueConstraintTableDef(ctx, constraintDef, tableName, ifExists)
@@ -375,6 +375,8 @@ func nodeAlterTableCmds(
 						Columns: tree.IndexElemList{{Column: cmd.ColumnDef.Name}},
 					},
 					NullsNotDistinct: cmd.ColumnDef.UniqueNullsNotDistinct,
+					Deferrable:       cmd.ColumnDef.UniqueDeferrable,
+					Initially:        cmd.ColumnDef.UniqueInitially,
 				}, tableName, ifExists)
 				if err != nil {
 					return nil, nil, err

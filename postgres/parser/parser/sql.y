@@ -9396,6 +9396,10 @@ table_constraint:
       fk.Deferrable = $4.deferrableMode()
       fk.Initially = $5.initiallyMode()
     }
+    if unique, ok := $$.val.(*tree.UniqueConstraintTableDef); ok {
+      unique.Deferrable = $4.deferrableMode()
+      unique.Initially = $5.initiallyMode()
+    }
   }
 | table_constraint_elem opt_deferrable_mode opt_initially
   {
@@ -9403,6 +9407,10 @@ table_constraint:
     if fk, ok := $$.val.(*tree.ForeignKeyConstraintTableDef); ok {
       fk.Deferrable = $2.deferrableMode()
       fk.Initially = $3.initiallyMode()
+    }
+    if unique, ok := $$.val.(*tree.UniqueConstraintTableDef); ok {
+      unique.Deferrable = $2.deferrableMode()
+      unique.Initially = $3.initiallyMode()
     }
   }
 

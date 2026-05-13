@@ -4011,6 +4011,29 @@ func (h *ConnectionHandler) validateDeferredConstraints() error {
 			return sql.ErrForeignKeyChildViolation.New(fk.Name, fk.Table, fk.ParentTable, "deferred")
 		}
 	}
+	for _, check := range deferrable.PendingUniqueChecks(h.mysqlConn.ConnectionID) {
+		convertedChecks, err := h.convertQuery(check.Query)
+		if err != nil {
+			return err
+		}
+		if len(convertedChecks) != 1 {
+			return errors.Errorf("expected one deferred constraint check query, got %d", len(convertedChecks))
+		}
+		checkQuery := convertedChecks[0]
+		hasViolation := false
+		err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, checkQuery.String, checkQuery.AST, func(ctx *sql.Context, res *Result) error {
+			if len(res.Rows) > 0 {
+				hasViolation = true
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		if hasViolation {
+			return deferrable.UniqueViolationError(check.Constraint)
+		}
+	}
 	return nil
 }
 

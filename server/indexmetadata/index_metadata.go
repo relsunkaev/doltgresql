@@ -154,6 +154,8 @@ type Metadata struct {
 	SortOptions       []IndexColumnOption `json:"sortOptions,omitempty"`
 	Unique            bool                `json:"unique,omitempty"`
 	NullsNotDistinct  bool                `json:"nullsNotDistinct,omitempty"`
+	Deferrable        bool                `json:"deferrable,omitempty"`
+	InitiallyDeferred bool                `json:"initiallyDeferred,omitempty"`
 	Clustered         bool                `json:"clustered,omitempty"`
 	Constraint        string              `json:"constraint,omitempty"`
 	Gin               *GinMetadata        `json:"gin,omitempty"`
@@ -370,11 +372,41 @@ func NullsNotDistinct(comment string) bool {
 	return ok && metadata.NullsNotDistinct
 }
 
+// Deferrable returns whether this PostgreSQL constraint-backed index was
+// declared DEFERRABLE.
+func Deferrable(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.Deferrable
+}
+
+// InitiallyDeferred returns whether this PostgreSQL constraint-backed index was
+// declared INITIALLY DEFERRED.
+func InitiallyDeferred(comment string) bool {
+	metadata, ok := DecodeComment(comment)
+	return ok && metadata.InitiallyDeferred
+}
+
+// Constraint returns the PostgreSQL constraint ownership marker encoded on the
+// index metadata.
+func Constraint(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.Constraint
+}
+
 // IsUnique returns the PostgreSQL-facing uniqueness of index. Some PostgreSQL
 // shapes, such as partial unique indexes, are stored as non-unique Dolt indexes
 // and enforced by Doltgres wrappers.
 func IsUnique(index sql.Index) bool {
 	return index.IsUnique() || MetadataUnique(index.Comment())
+}
+
+// IsPrimaryConstraint returns whether index metadata marks this index as the
+// PostgreSQL primary-key constraint even when native storage cannot use PRIMARY.
+func IsPrimaryConstraint(index sql.Index) bool {
+	return strings.EqualFold(Constraint(index.Comment()), "primary")
 }
 
 // MetadataUnique returns whether the metadata marks a non-native unique index.

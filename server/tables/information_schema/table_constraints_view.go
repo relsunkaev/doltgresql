@@ -64,12 +64,20 @@ func tableConstraintsRowIter(ctx *sql.Context, _ sql.Catalog) (sql.RowIter, erro
 		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
 			constraintType := ""
 			switch {
-			case index.Item.ID() == "PRIMARY":
+			case index.Item.ID() == "PRIMARY" || indexmetadata.IsPrimaryConstraint(index.Item):
 				constraintType = "PRIMARY KEY"
-			case index.Item.IsUnique() && !indexmetadata.IsStandaloneIndex(index.Item.Comment()):
+			case indexmetadata.IsUnique(index.Item) && !indexmetadata.IsStandaloneIndex(index.Item.Comment()):
 				constraintType = "UNIQUE"
 			default:
 				return true, nil
+			}
+			isDeferrable := "NO"
+			if indexmetadata.Deferrable(index.Item.Comment()) {
+				isDeferrable = "YES"
+			}
+			initiallyDeferred := "NO"
+			if indexmetadata.InitiallyDeferred(index.Item.Comment()) {
+				initiallyDeferred = "YES"
 			}
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // constraint_catalog
@@ -79,8 +87,8 @@ func tableConstraintsRowIter(ctx *sql.Context, _ sql.Catalog) (sql.RowIter, erro
 				schema.Item.SchemaName(), // table_schema
 				table.Item.Name(),        // table_name
 				constraintType,           // constraint_type
-				"NO",                     // is_deferrable
-				"NO",                     // initially_deferred
+				isDeferrable,             // is_deferrable
+				initiallyDeferred,        // initially_deferred
 				"YES",                    // enforced
 			})
 			return true, nil

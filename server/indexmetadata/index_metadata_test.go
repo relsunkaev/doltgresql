@@ -35,6 +35,8 @@ func TestEncodeDecodeComment(t *testing.T) {
 		StatisticsTargets: []int16{100, -1},
 		Unique:            true,
 		NullsNotDistinct:  true,
+		Deferrable:        true,
+		InitiallyDeferred: true,
 		SortOptions: []IndexColumnOption{
 			{Direction: " DESC "},
 			{NullsOrder: " FIRST "},
@@ -99,6 +101,12 @@ func TestEncodeDecodeComment(t *testing.T) {
 	if !NullsNotDistinct(comment) {
 		t.Fatal("expected NULLS NOT DISTINCT accessor to decode metadata")
 	}
+	if !Deferrable(comment) {
+		t.Fatal("expected deferrable metadata accessor to decode metadata")
+	}
+	if !InitiallyDeferred(comment) {
+		t.Fatal("expected initially deferred metadata accessor to decode metadata")
+	}
 	if len(metadata.SortOptions) != 3 {
 		t.Fatalf("expected 3 sort options, got %d", len(metadata.SortOptions))
 	}
@@ -119,6 +127,9 @@ func TestEncodeDecodeComment(t *testing.T) {
 	}
 	if metadata.Constraint != ConstraintNone {
 		t.Fatalf("unexpected constraint marker: %q", metadata.Constraint)
+	}
+	if Constraint(comment) != ConstraintNone {
+		t.Fatalf("unexpected constraint accessor value: %q", Constraint(comment))
 	}
 	if !IsStandaloneIndex(comment) {
 		t.Fatal("expected standalone index marker")

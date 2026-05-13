@@ -49,11 +49,12 @@ type Check struct {
 }
 
 type txnState struct {
-	active     bool
-	dirty      map[string]sql.ForeignKeyConstraint
-	modes      map[string]bool
-	namedModes map[string]bool
-	allMode    *bool
+	active      bool
+	dirty       map[string]sql.ForeignKeyConstraint
+	dirtyUnique map[string]UniqueConstraint
+	modes       map[string]bool
+	namedModes  map[string]bool
+	allMode     *bool
 }
 
 type pendingForeignKeyTiming struct {
@@ -167,10 +168,11 @@ func Begin(connectionID uint32) {
 	registry.Lock()
 	defer registry.Unlock()
 	registry.txns[connectionID] = &txnState{
-		active:     true,
-		dirty:      make(map[string]sql.ForeignKeyConstraint),
-		modes:      make(map[string]bool),
-		namedModes: make(map[string]bool),
+		active:      true,
+		dirty:       make(map[string]sql.ForeignKeyConstraint),
+		dirtyUnique: make(map[string]UniqueConstraint),
+		modes:       make(map[string]bool),
+		namedModes:  make(map[string]bool),
 	}
 }
 

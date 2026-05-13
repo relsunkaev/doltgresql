@@ -90,7 +90,18 @@ func (s *SetConstraints) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 				return nil, sql.ErrForeignKeyChildViolation.New(fk.Name, fk.Table, fk.ParentTable, "deferred")
 			}
 		}
+		uniqueChecks := deferrable.PendingUniqueChecksForConstraints(connectionID, s.names, s.all)
+		for _, check := range uniqueChecks {
+			hasViolation, err := s.hasViolation(ctx, check.Query)
+			if err != nil {
+				return nil, err
+			}
+			if hasViolation {
+				return nil, deferrable.UniqueViolationError(check.Constraint)
+			}
+		}
 		deferrable.ClearPendingChecksForConstraints(connectionID, s.names, s.all)
+		deferrable.ClearPendingUniqueChecksForConstraints(connectionID, s.names, s.all)
 	}
 	deferrable.SetConstraints(connectionID, s.names, s.all, s.deferred)
 	return sql.RowsToRowIter(), nil

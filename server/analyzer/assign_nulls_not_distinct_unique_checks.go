@@ -87,6 +87,14 @@ func wrapPostgresUniqueTables(ctx *sql.Context, node sql.Node) (sql.Node, transf
 			table = wrappedTable
 			changed = true
 		}
+		wrappedTable, wrapped, err = pgnodes.WrapDeferrableUniqueTable(ctx, table)
+		if err != nil {
+			return node, transform.SameTree, err
+		}
+		if wrapped {
+			table = wrappedTable
+			changed = true
+		}
 		if !changed {
 			return node, transform.SameTree, nil
 		}
