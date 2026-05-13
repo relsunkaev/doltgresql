@@ -29,6 +29,7 @@ import (
 // tables).
 type Database struct {
 	sqle.Database
+	nameOverride string
 }
 
 var _ sql.DatabaseSchema = Database{}
@@ -117,6 +118,9 @@ func (d Database) GetTableNames(ctx *sql.Context) ([]string, error) {
 
 // Name implements the interface sql.DatabaseSchema.
 func (d Database) Name() string {
+	if d.nameOverride != "" {
+		return d.nameOverride
+	}
 	return d.Database.Name()
 }
 

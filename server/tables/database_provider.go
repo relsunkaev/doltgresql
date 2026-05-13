@@ -15,11 +15,15 @@
 package tables
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
 )
+
+const encodedDatabaseNamePrefix = "__doltgres_database_"
 
 type sequenceAwareDatabaseProvider struct {
 	provider sql.DatabaseProvider
@@ -40,21 +44,22 @@ func WrapDatabaseProvider(provider sql.DatabaseProvider) sql.DatabaseProvider {
 }
 
 func (p sequenceAwareDatabaseProvider) Database(ctx *sql.Context, name string) (sql.Database, error) {
-	database, err := p.provider.Database(ctx, name)
+	database, err := p.provider.Database(ctx, encodeDatabaseName(name))
 	if err != nil {
 		return nil, err
 	}
-	return wrapDatabase(database), nil
+	return wrapDatabaseWithName(database, name), nil
 }
 
 func (p sequenceAwareDatabaseProvider) HasDatabase(ctx *sql.Context, name string) bool {
-	return p.provider.HasDatabase(ctx, name)
+	_, err := p.Database(ctx, name)
+	return err == nil
 }
 
 func (p sequenceAwareDatabaseProvider) AllDatabases(ctx *sql.Context) []sql.Database {
 	databases := p.provider.AllDatabases(ctx)
 	for i, database := range databases {
-		databases[i] = wrapDatabase(database)
+		databases[i] = wrapDatabaseWithName(database, decodeDatabaseName(database.Name()))
 	}
 	return databases
 }
@@ -64,7 +69,7 @@ func (p sequenceAwareDatabaseProvider) CreateDatabase(ctx *sql.Context, name str
 	if !ok {
 		return sql.ErrImmutableDatabaseProvider.New()
 	}
-	return provider.CreateDatabase(ctx, name)
+	return provider.CreateDatabase(ctx, encodeDatabaseName(name))
 }
 
 func (p sequenceAwareDatabaseProvider) DropDatabase(ctx *sql.Context, name string) error {
@@ -72,15 +77,15 @@ func (p sequenceAwareDatabaseProvider) DropDatabase(ctx *sql.Context, name strin
 	if !ok {
 		return sql.ErrImmutableDatabaseProvider.New()
 	}
-	return provider.DropDatabase(ctx, name)
+	return provider.DropDatabase(ctx, encodeDatabaseName(name))
 }
 
 func (p sequenceAwareDatabaseProvider) CreateCollatedDatabase(ctx *sql.Context, name string, collation sql.CollationID) error {
 	if provider, ok := p.provider.(sql.CollatedDatabaseProvider); ok {
-		return provider.CreateCollatedDatabase(ctx, name, collation)
+		return provider.CreateCollatedDatabase(ctx, encodeDatabaseName(name), collation)
 	}
 	if provider, ok := p.provider.(sql.MutableDatabaseProvider); ok {
-		if err := provider.CreateDatabase(ctx, name); err != nil {
+		if err := provider.CreateDatabase(ctx, encodeDatabaseName(name)); err != nil {
 			return err
 		}
 		if database, err := p.Database(ctx, name); err == nil {
@@ -141,11 +146,36 @@ func (p sequenceAwareDatabaseProvider) WithTableFunctions(fns ...sql.TableFuncti
 }
 
 func wrapDatabase(database sql.Database) sql.Database {
-	if _, ok := database.(Database); ok {
-		return database
+	return wrapDatabaseWithName(database, decodeDatabaseName(database.Name()))
+}
+
+func wrapDatabaseWithName(database sql.Database, logicalName string) sql.Database {
+	if doltgresDatabase, ok := database.(Database); ok {
+		if logicalName != doltgresDatabase.Database.Name() {
+			doltgresDatabase.nameOverride = logicalName
+		}
+		return doltgresDatabase
 	}
 	if doltDatabase, ok := database.(sqle.Database); ok {
-		return Database{Database: doltDatabase}
+		return Database{Database: doltDatabase, nameOverride: logicalName}
 	}
 	return database
+}
+
+func encodeDatabaseName(name string) string {
+	if name == strings.ToLower(name) && !strings.HasPrefix(name, encodedDatabaseNamePrefix) {
+		return name
+	}
+	return encodedDatabaseNamePrefix + hex.EncodeToString([]byte(name))
+}
+
+func decodeDatabaseName(name string) string {
+	if !strings.HasPrefix(name, encodedDatabaseNamePrefix) {
+		return name
+	}
+	decoded, err := hex.DecodeString(strings.TrimPrefix(name, encodedDatabaseNamePrefix))
+	if err != nil {
+		return name
+	}
+	return string(decoded)
 }

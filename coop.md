@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 10:52 America/Phoenix
+
+- Lane complete locally: quoted database identifier/catalog case sensitivity from `TestQuotedDatabaseNamesAreCaseSensitiveRepro`.
+- Files touched: `server/tables/database.go`, `server/tables/database_provider.go`, `server/tables/init.go`, and `server/tables/pgcatalog/pg_database.go`. Avoided active quoted view/constraint/SET CONSTRAINTS/root-object lanes, dirty grant/oracle files, and Alpha-owned full `./testing/go`.
+- Red proof in clean detached verifier `/Users/ramazan/.cache/doltgresql-delta-function-post-ktGNwj` at `51de1133`: `go test -vet=off ./testing/go -run '^TestQuotedDatabaseNamesAreCaseSensitiveRepro$' -count=1 -v` failed because `CREATE DATABASE casedatabase;` collided with existing quoted `"CaseDatabase"` and `pg_database` only reported `CaseDatabase`.
+- Root cause: the underlying Dolt/GMS database providers key database names case-insensitively, so quoted mixed-case PostgreSQL database names need a distinct physical provider name while catalogs and SQL-visible database objects keep the logical name.
+- Fix: encode mixed-case/prefix-conflicting database names at provider create/drop/lookup boundaries, wrap Dolt databases with a logical name override, decode provider names during `AllDatabases`, and make `pg_database` enumerate through the wrapped provider so catalog rows expose logical names.
+- Green proof in clean detached verifier `/Users/ramazan/.cache/doltgresql-delta-database-verifier-9syX4G` at `21e0b7af` plus delta patch after `./postgres/parser/build.sh` and symlinking local `third_party/dolt`:
+  - `go test -vet=off ./server/tables ./server/tables/pgcatalog -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestQuotedDatabaseNamesAreCaseSensitiveRepro|TestQuotedFunctionNamesAreCaseSensitiveRepro)$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestCreateDatabase$|TestDropDatabase$|TestCreateDatabaseCatalogOptionsRepro|TestDropDatabaseWithForceDropsIdleDatabase)$' -count=1 -v`
+- Next action: stage only delta-owned files plus this coop hunk, commit, then run exact post-commit proof at the new commit.
+
 ### delta - 2026-05-13 10:35 America/Phoenix
 
 - Lane complete locally: quoted function identity/call case sensitivity from `TestQuotedFunctionNamesAreCaseSensitiveRepro`.

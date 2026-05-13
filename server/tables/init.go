@@ -25,7 +25,7 @@ import (
 // Init handles initialization of all Postgres-specific and Doltgres-specific tables.
 func Init() {
 	sqle.HandleSchema = func(_ *sql.Context, _ string, db sqle.Database) (sql.DatabaseSchema, error) {
-		return Database{db}, nil
+		return Database{Database: db}, nil
 	}
 	doltdb.IsValidIdentifier = core.IsValidPostgresIdentifier
 }
