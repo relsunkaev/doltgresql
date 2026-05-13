@@ -63,10 +63,11 @@ const (
 // version of the converted query, and is the recommended form to use. If AST is nil, then use the String version,
 // otherwise always prefer to AST.
 type ConvertedQuery struct {
-	String                         string
-	AST                            vitess.Statement
-	StatementTag                   string
-	UsesDefaultTransactionReadMode bool
+	String                           string
+	AST                              vitess.Statement
+	StatementTag                     string
+	UsesDefaultTransactionReadMode   bool
+	UsesExplicitTransactionIsolation bool
 }
 
 // copyFromStdinState tracks the metadata for an import of data into a table using a COPY FROM STDIN statement. When

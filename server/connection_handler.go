@@ -99,6 +99,9 @@ type ConnectionHandler struct {
 	// transactionStatementCount tracks successful statements after BEGIN for
 	// PostgreSQL's SET TRANSACTION "before any query" validation.
 	transactionStatementCount int
+	// transactionSnapshotAllowed tracks whether SET TRANSACTION SNAPSHOT is
+	// valid for the current explicit transaction's isolation mode.
+	transactionSnapshotAllowed bool
 	// pendingReplicationCaptures stores row changes produced inside an explicit transaction until COMMIT.
 	pendingReplicationCaptures []*replicationChangeCapture
 	// pendingReplicationAdvance records a row-producing transaction without an active logical sender.
@@ -1065,14 +1068,17 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 		}
 		h.inTransaction = true
 		h.transactionStatementCount = 0
+		h.transactionSnapshotAllowed = query.UsesExplicitTransactionIsolation
 		return true, true, h.beginTransaction(query, transactionCharacteristic)
 	case *sqlparser.Commit:
 		h.inTransaction = false
 		h.transactionStatementCount = 0
+		h.transactionSnapshotAllowed = false
 		h.closeNonHoldCursors()
 	case *sqlparser.Rollback:
 		h.inTransaction = false
 		h.transactionStatementCount = 0
+		h.transactionSnapshotAllowed = false
 		h.closeNonHoldCursors()
 	case *sqlparser.Deallocate:
 		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
@@ -1161,6 +1167,9 @@ func (h *ConnectionHandler) beginTransaction(query ConvertedQuery, transactionCh
 
 func (h *ConnectionHandler) setTransaction(stmt node.SetTransaction, query ConvertedQuery) error {
 	if stmt.Snapshot != "" {
+		if !h.inTransaction || !h.transactionSnapshotAllowed {
+			return pgerror.New(pgcode.InvalidParameterValue, "must have isolation level SERIALIZABLE or REPEATABLE READ")
+		}
 		return pgerror.New(pgcode.InvalidParameterValue, "invalid snapshot identifier")
 	}
 	if stmt.Isolation && h.transactionStatementCount > 0 {
@@ -1180,6 +1189,9 @@ func (h *ConnectionHandler) setTransaction(stmt node.SetTransaction, query Conve
 		if err := h.restartCurrentTransaction(query, transactionCharacteristic); err != nil {
 			return err
 		}
+	}
+	if h.inTransaction && stmt.Isolation {
+		h.transactionSnapshotAllowed = true
 	}
 	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
 	return h.finishNotifications(query)
@@ -1421,6 +1433,7 @@ func (h *ConnectionHandler) prepareTransaction(stmt node.PrepareTransaction, que
 	}
 	h.clearPendingReplication()
 	h.inTransaction = false
+	h.transactionSnapshotAllowed = false
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
 	})
@@ -4467,24 +4480,28 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 		vitessAST, err := ast.Convert(s[i])
 		stmtTag := s[i].AST.StatementTag()
 		usesDefaultTransactionReadMode := false
+		usesExplicitTransactionIsolation := false
 		if begin, ok := s[i].AST.(*tree.BeginTransaction); ok {
 			usesDefaultTransactionReadMode = begin.Modes.ReadWriteMode == tree.UnspecifiedReadWriteMode
+			usesExplicitTransactionIsolation = begin.Modes.Isolation != tree.UnspecifiedIsolation
 		}
 		if err != nil {
 			return nil, err
 		}
 		if vitessAST == nil {
 			converted[i] = ConvertedQuery{
-				String:                         s[i].AST.String(),
-				StatementTag:                   stmtTag,
-				UsesDefaultTransactionReadMode: usesDefaultTransactionReadMode,
+				String:                           s[i].AST.String(),
+				StatementTag:                     stmtTag,
+				UsesDefaultTransactionReadMode:   usesDefaultTransactionReadMode,
+				UsesExplicitTransactionIsolation: usesExplicitTransactionIsolation,
 			}
 		} else {
 			converted[i] = ConvertedQuery{
-				String:                         query,
-				AST:                            vitessAST,
-				StatementTag:                   stmtTag,
-				UsesDefaultTransactionReadMode: usesDefaultTransactionReadMode,
+				String:                           query,
+				AST:                              vitessAST,
+				StatementTag:                     stmtTag,
+				UsesDefaultTransactionReadMode:   usesDefaultTransactionReadMode,
+				UsesExplicitTransactionIsolation: usesExplicitTransactionIsolation,
 			}
 		}
 	}
