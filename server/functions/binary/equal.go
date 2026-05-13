@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/postgres/parser/duration"
@@ -470,7 +469,7 @@ var nameeqtext = framework.Function2{
 
 // numeric_eq_callable is the callable logic for the numeric_eq function.
 func numeric_eq_callable(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-	res, err := pgtypes.Numeric.Compare(ctx, val1.(decimal.Decimal), val2.(decimal.Decimal))
+	res, err := pgtypes.CompareNumericValues(val1, val2)
 	return res == 0, err
 }
 

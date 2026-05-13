@@ -678,7 +678,7 @@ func MakeScalar(family Family, o oid.Oid, precision, width int32, locale string)
 		}
 	}
 
-	if width < 0 {
+	if width < 0 && family != DecimalFamily {
 		panic(errors.AssertionFailedf("negative width is not allowed"))
 	}
 	switch family {
@@ -693,11 +693,6 @@ func MakeScalar(family Family, o oid.Oid, precision, width int32, locale string)
 		case 32, 64:
 		default:
 			panic(errors.AssertionFailedf("invalid width %d for FloatFamily type", width))
-		}
-	case DecimalFamily:
-		if width > precision {
-			panic(errors.AssertionFailedf(
-				"decimal scale %d cannot be larger than precision %d", width, precision))
 		}
 	case StringFamily, BytesFamily, CollatedStringFamily, BitFamily:
 		// These types can have any width.
@@ -815,21 +810,15 @@ func MakeCollatedString(strType *T, locale string) *T {
 
 // MakeDecimal constructs a new instance of a DECIMAL type (oid = T_numeric)
 // that has at most "precision" # of decimal digits (0 = unspecified number of
-// digits) and at most "scale" # of decimal digits after the decimal point
-// (0 = unspecified number of digits). scale must be <= precision.
+// digits) and "scale" # of decimal digits after the decimal point (0 =
+// unspecified number of digits). PostgreSQL allows negative scales and scales
+// greater than precision.
 func MakeDecimal(precision, scale int32) *T {
 	if precision == 0 && scale == 0 {
 		return Decimal
 	}
 	if precision < 0 {
 		panic(errors.AssertionFailedf("precision %d cannot be negative", precision))
-	}
-	if scale < 0 {
-		panic(errors.AssertionFailedf("scale %d cannot be negative", scale))
-	}
-	if scale > precision {
-		panic(errors.AssertionFailedf(
-			"scale %d cannot be larger than precision %d", scale, precision))
 	}
 	return &T{InternalType: InternalType{
 		Family:    DecimalFamily,
@@ -1166,7 +1155,7 @@ func (t *T) TypeModifier() int32 {
 	if t.Family() == ArrayFamily {
 		return t.ArrayContents().TypeModifier()
 	}
-	if width := t.Width(); width != 0 {
+	if width := t.Width(); width != 0 || (t.Family() == DecimalFamily && t.Precision() != 0) {
 		switch t.Family() {
 		case StringFamily:
 			// Postgres adds 4 to the attypmod for bounded string types, the
@@ -1179,7 +1168,7 @@ func (t *T) TypeModifier() int32 {
 			// bits and the scale in the lower bits of a 32-bit int, and adding
 			// 4 (the var header size). We mock this for clients' sake. See
 			// numeric.c.
-			typeModifier = ((t.Precision() << 16) | width) + 4
+			typeModifier = ((t.Precision() << 16) | (width & 0xFFFF)) + 4
 		}
 	}
 	return typeModifier
@@ -1475,7 +1464,7 @@ func (t *T) SQLStandardNameWithTypmod(haveTypmod bool, typmod int) string {
 		return fmt.Sprintf(
 			"numeric(%d,%d)",
 			(typmod>>16)&0xffff,
-			typmod&0xffff,
+			int16(typmod&0xffff),
 		)
 
 	case FloatFamily:
@@ -1750,7 +1739,7 @@ func (t *T) SQLString() string {
 		return doubleName
 	case DecimalFamily:
 		if t.Precision() > 0 {
-			if t.Width() > 0 {
+			if t.Width() != 0 {
 				return fmt.Sprintf("DECIMAL(%d,%d)", t.Precision(), t.Scale())
 			}
 			return fmt.Sprintf("DECIMAL(%d)", t.Precision())

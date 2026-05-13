@@ -13421,7 +13421,7 @@ opt_numeric_modifiers:
     }
     $$.val = dec
   }
-| '(' iconst32 ',' iconst32 ')'
+| '(' iconst32 ',' signed_iconst32 ')'
   {
     dec, err := newDecimal($2.int32(), $4.int32())
     if err != nil {

@@ -46,12 +46,15 @@ var numeric_in = framework.Function3{
 	Parameters: [3]*pgtypes.DoltgresType{pgtypes.Cstring, pgtypes.Oid, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [4]*pgtypes.DoltgresType, val1, val2, val3 any) (any, error) {
-		input := val1.(string)
-		val, err := decimal.NewFromString(strings.TrimSpace(input))
+		input := strings.TrimSpace(val1.(string))
+		typmod := val3.(int32)
+		if special, ok := pgtypes.ParseNumericSpecialValue(input); ok {
+			return pgtypes.GetAnyNumericValueWithTypmod(special, typmod)
+		}
+		val, err := decimal.NewFromString(input)
 		if err != nil {
 			return nil, pgtypes.ErrInvalidSyntaxForType.New("numeric", input)
 		}
-		typmod := val3.(int32)
 		return pgtypes.GetNumericValueWithTypmod(val, typmod)
 	},
 }
@@ -64,14 +67,7 @@ var numeric_out = framework.Function1{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
 		typ := t[0]
-		dec := val.(decimal.Decimal)
-		tm := typ.GetAttTypMod()
-		if tm == -1 {
-			return dec.StringFixed(dec.Exponent() * -1), nil
-		} else {
-			_, s := pgtypes.GetPrecisionAndScaleFromTypmod(tm)
-			return dec.StringFixed(s), nil
-		}
+		return pgtypes.FormatNumericValue(val, typ.GetAttTypMod())
 	},
 }
 
@@ -92,7 +88,7 @@ var numeric_recv = framework.Function3{
 		if err != nil {
 			return nil, err
 		}
-		return pgtypes.GetNumericValueWithTypmod(decimal.NewFromBigInt(out.Int, out.Exp), typmod)
+		return pgtypes.GetAnyNumericValueWithTypmod(out, typmod)
 	},
 }
 
@@ -103,7 +99,16 @@ var numeric_send = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.Numeric},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, t [2]*pgtypes.DoltgresType, val any) (any, error) {
-		dec := val.(decimal.Decimal)
+		if numeric, err := pgtypes.NumericValueToPgtype(val); err == nil && (numeric.NaN || numeric.InfinityModifier != pgtype.None) {
+			return numeric.EncodeBinary(nil, nil)
+		}
+		dec, ok, err := pgtypes.NumericValueAsDecimal(val)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("cannot encode non-finite numeric value %T", val)
+		}
 		writer := utils.NewWireWriter()
 		// Short-circuit if this is the zero value
 		if dec.IsZero() {
@@ -132,6 +137,9 @@ var numeric_send = framework.Function1{
 		var dscale int16
 		if typmod != -1 {
 			_, dscale32 := pgtypes.GetPrecisionAndScaleFromTypmod(typmod)
+			if dscale32 < 0 {
+				dscale32 = 0
+			}
 			dscale = int16(dscale32)
 		} else {
 			dscale = int16(len(fractPart))
@@ -221,8 +229,7 @@ var numeric_cmp = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Numeric, pgtypes.Numeric},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1, val2 any) (any, error) {
-		ab := val1.(decimal.Decimal)
-		bb := val2.(decimal.Decimal)
-		return int32(ab.Cmp(bb)), nil
+		res, err := pgtypes.CompareNumericValues(val1, val2)
+		return int32(res), err
 	},
 }

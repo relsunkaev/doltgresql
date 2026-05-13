@@ -15,10 +15,11 @@
 package cast
 
 import (
+	"math"
+
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/go-mysql-server/sql"
-	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -36,7 +37,13 @@ func numericAssignment() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Int16,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			d := val.(decimal.Decimal)
+			d, ok, err := pgtypes.NumericValueAsDecimal(val)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "smallint out of range")
+			}
 			if d.LessThan(pgtypes.NumericValueMinInt16) || d.GreaterThan(pgtypes.NumericValueMaxInt16) {
 				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "smallint out of range")
 			}
@@ -47,7 +54,13 @@ func numericAssignment() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Int32,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			d := val.(decimal.Decimal)
+			d, ok, err := pgtypes.NumericValueAsDecimal(val)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "integer out of range")
+			}
 			if d.LessThan(pgtypes.NumericValueMinInt32) || d.GreaterThan(pgtypes.NumericValueMaxInt32) {
 				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "integer out of range")
 			}
@@ -58,7 +71,13 @@ func numericAssignment() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Int64,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			d := val.(decimal.Decimal)
+			d, ok, err := pgtypes.NumericValueAsDecimal(val)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "bigint out of range")
+			}
 			if d.LessThan(pgtypes.NumericValueMinInt64) || d.GreaterThan(pgtypes.NumericValueMaxInt64) {
 				return nil, errors.Wrap(pgtypes.ErrCastOutOfRange, "bigint out of range")
 			}
@@ -73,7 +92,10 @@ func numericImplicit() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Float32,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			f, _ := val.(decimal.Decimal).Float64()
+			f, err := numericValueToFloat64(val)
+			if err != nil {
+				return nil, err
+			}
 			return float32(f), nil
 		},
 	})
@@ -81,7 +103,10 @@ func numericImplicit() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Float64,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			f, _ := val.(decimal.Decimal).Float64()
+			f, err := numericValueToFloat64(val)
+			if err != nil {
+				return nil, err
+			}
 			return f, nil
 		},
 	})
@@ -89,7 +114,29 @@ func numericImplicit() {
 		FromType: pgtypes.Numeric,
 		ToType:   pgtypes.Numeric,
 		Function: func(ctx *sql.Context, val any, targetType *pgtypes.DoltgresType) (any, error) {
-			return pgtypes.GetNumericValueWithTypmod(val.(decimal.Decimal), targetType.GetAttTypMod())
+			return pgtypes.GetAnyNumericValueWithTypmod(val, targetType.GetAttTypMod())
 		},
 	})
+}
+
+func numericValueToFloat64(val any) (float64, error) {
+	dec, ok, err := pgtypes.NumericValueAsDecimal(val)
+	if err != nil {
+		return 0, err
+	}
+	if ok {
+		f, _ := dec.Float64()
+		return f, nil
+	}
+	numeric, err := pgtypes.NumericValueToPgtype(val)
+	if err != nil {
+		return 0, err
+	}
+	if numeric.NaN {
+		return math.NaN(), nil
+	}
+	if numeric.InfinityModifier > 0 {
+		return math.Inf(1), nil
+	}
+	return math.Inf(-1), nil
 }

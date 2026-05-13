@@ -712,12 +712,6 @@ func newFloat(prec int64) (*types.T, error) {
 
 // newDecimal creates a type for DECIMAL with the given precision and scale.
 func newDecimal(prec, scale int32) (*types.T, error) {
-	if scale > prec {
-		err := pgerror.WithCandidateCode(
-			errors.Newf("scale (%d) must be between 0 and precision (%d)", scale, prec),
-			pgcode.InvalidParameterValue)
-		return nil, err
-	}
 	return types.MakeDecimal(prec, scale), nil
 }
 

@@ -31,6 +31,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/dolthub/vitess/go/sqltypes"
 	"github.com/dolthub/vitess/go/vt/proto/query"
+	"github.com/jackc/pgtype"
 	"github.com/shopspring/decimal"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -347,8 +348,9 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		bb := v2.(JsonDocument)
 		return JsonValueCompare(ab.Value, bb.Value), nil
 	case decimal.Decimal:
-		bb := v2.(decimal.Decimal)
-		return ab.Cmp(bb), nil
+		return CompareNumericValues(ab, v2)
+	case pgtype.Numeric:
+		return CompareNumericValues(ab, v2)
 	case timeofday.TimeOfDay:
 		bb := v2.(timeofday.TimeOfDay)
 		return ab.Compare(bb), nil
@@ -738,8 +740,9 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 		converted, err := targetType.IoInput(sqlCtx, str)
 		return converted, true, err
 	case "numeric":
-		if dec, ok := v.(decimal.Decimal); ok {
-			converted, err := GetNumericValueWithTypmod(dec, typmod)
+		switch v.(type) {
+		case decimal.Decimal, pgtype.Numeric:
+			converted, err := GetAnyNumericValueWithTypmod(v, typmod)
 			return converted, true, err
 		}
 	case "time":
