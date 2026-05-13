@@ -15,9 +15,13 @@
 package pgcatalog
 
 import (
+	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
+	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/core"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
@@ -25,8 +29,14 @@ import (
 	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	serverfunctions "github.com/dolthub/doltgresql/server/functions"
+	pgframework "github.com/dolthub/doltgresql/server/functions/framework"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
+)
+
+var (
+	nextvalQuotedArgPattern = regexp.MustCompile(`(?i)nextval\s*\(\s*'([^']+)'`)
+	nextvalBareArgPattern   = regexp.MustCompile(`(?i)nextval\s*\(\s*([A-Za-z0-9_."']+)`)
 )
 
 // PgDependName is a constant to the pg_depend name.
@@ -77,6 +87,7 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 	}
 
 	var rows []sql.Row
+	attrdefClassID := id.NewTable(PgCatalogName, PgAttrdefName).AsId()
 	if err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
 		View: func(ctx *sql.Context, schema serverfunctions.ItemSchema, view serverfunctions.ItemView) (cont bool, err error) {
 			refs, err := viewRelationDependencies(view.Item, schema.Item.SchemaName(), relationOids)
@@ -92,6 +103,24 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 					ref,             // refobjid
 					int32(0),        // refobjsubid
 					"n",             // deptype
+				})
+			}
+			return true, nil
+		},
+		ColumnDefault: func(ctx *sql.Context, schema serverfunctions.ItemSchema, table serverfunctions.ItemTable, col serverfunctions.ItemColumnDefault) (cont bool, err error) {
+			refs, err := columnDefaultSequenceDependencies(ctx, schema.Item.SchemaName(), col.Item.Column, relationOids)
+			if err != nil {
+				return false, err
+			}
+			for _, ref := range refs {
+				rows = append(rows, sql.Row{
+					attrdefClassID, // classid
+					col.OID.AsId(), // objid
+					int32(0),       // objsubid
+					classID,        // refclassid
+					ref,            // refobjid
+					int32(0),       // refobjsubid
+					"n",            // deptype
 				})
 			}
 			return true, nil
@@ -129,6 +158,100 @@ func pgDependRows(ctx *sql.Context) ([]sql.Row, error) {
 		return id.Cache().ToOID(rows[i][1].(id.Id)) < id.Cache().ToOID(rows[j][1].(id.Id))
 	})
 	return rows, nil
+}
+
+func columnDefaultSequenceDependencies(ctx *sql.Context, defaultSchema string, col *sql.Column, relationOids map[relationDependencyKey]id.Id) ([]id.Id, error) {
+	var defaultExpr sql.Expression
+	switch {
+	case col.Default != nil:
+		defaultExpr = col.Default
+	case col.Generated != nil:
+		defaultExpr = col.Generated
+	default:
+		return nil, nil
+	}
+	refs := make(map[id.Id]struct{})
+	transform.InspectExpr(ctx, defaultExpr, func(ctx *sql.Context, expr sql.Expression) bool {
+		fn, ok := expr.(*pgframework.CompiledFunction)
+		if !ok || !strings.EqualFold(fn.Name, "nextval") || len(fn.Arguments) != 1 {
+			return false
+		}
+		sequenceName, ok := nextvalSequenceName(fn.Arguments[0])
+		if !ok {
+			return false
+		}
+		if ref, ok := resolveSequenceDependency(sequenceName, defaultSchema, relationOids); ok {
+			refs[ref] = struct{}{}
+		}
+		return false
+	})
+	for _, sequenceName := range nextvalSequenceNamesFromDefaultText(defaultExpr.String()) {
+		if ref, ok := resolveSequenceDependency(sequenceName, defaultSchema, relationOids); ok {
+			refs[ref] = struct{}{}
+		}
+	}
+	result := make([]id.Id, 0, len(refs))
+	for ref := range refs {
+		result = append(result, ref)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return id.Cache().ToOID(result[i]) < id.Cache().ToOID(result[j])
+	})
+	return result, nil
+}
+
+func nextvalSequenceNamesFromDefaultText(defaultText string) []string {
+	matches := nextvalQuotedArgPattern.FindAllStringSubmatch(defaultText, -1)
+	if len(matches) == 0 {
+		matches = nextvalBareArgPattern.FindAllStringSubmatch(defaultText, -1)
+	}
+	sequenceNames := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		if sequenceName := cleanNextvalSequenceName(match[1]); sequenceName != "" {
+			sequenceNames = append(sequenceNames, sequenceName)
+		}
+	}
+	return sequenceNames
+}
+
+func nextvalSequenceName(arg sql.Expression) (string, bool) {
+	if literal, ok := arg.(*gmsexpression.Literal); ok {
+		if value, ok := literal.Val.(string); ok {
+			return cleanNextvalSequenceName(value), true
+		}
+	}
+	text := cleanNextvalSequenceName(arg.String())
+	return text, text != ""
+}
+
+func cleanNextvalSequenceName(name string) string {
+	name = strings.TrimSpace(name)
+	if beforeCast, _, ok := strings.Cut(name, "::"); ok {
+		name = beforeCast
+	}
+	name = strings.TrimSpace(name)
+	name = strings.Trim(name, "'")
+	return strings.TrimSpace(name)
+}
+
+func resolveSequenceDependency(sequenceName string, defaultSchema string, relationOids map[relationDependencyKey]id.Id) (id.Id, bool) {
+	if sequenceName == "" {
+		return id.Null, false
+	}
+	tableName, err := parser.ParseQualifiedTableName(sequenceName)
+	if err != nil {
+		oid, ok := relationOids[newRelationDependencyKey(defaultSchema, sequenceName)]
+		return oid, ok
+	}
+	schema := defaultSchema
+	if tableName.ExplicitSchema {
+		schema = string(tableName.SchemaName)
+	}
+	oid, ok := relationOids[newRelationDependencyKey(schema, tableName.Table())]
+	return oid, ok
 }
 
 type relationDependencyKey struct {
