@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 01:03 America/Phoenix
+
+- Lane: `to_char` `FF1..FF5` fractional-second precision from `TestToCharFractionalSecondPrecisionTokensRepro`.
+- Expected files: `server/functions/formatting.go` only. Avoiding delta hstore extension runtime files, alpha PL/pgSQL DELETE RETURNING, epsilon `pg_constraint.go`, beta domain files, auditor oracle artifacts, and dirty grant files.
+- Red proof: focused run returns `3 23 123 0123 00123 123456` for `FF1 FF2 FF3 FF4 FF5 FF6`; PostgreSQL expects leading fractional digits `1 12 123 1234 12345 123456`.
+- Fix: render `FFn` from the first n digits of the six-digit microsecond value while preserving existing `MS` and `US`.
+- Focused green:
+  - `go test -vet=off ./testing/go -run '^TestToCharFractionalSecondPrecisionTokensRepro$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestToCharFractionalSecondPrecisionTokensRepro|TestToCharIntervalPreservesFractionalSecondsRepro|TestToCharNumericFormatsPostgresPatternsRepro)$' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Lane committed: `f3e833d4 fix: render to_char fractional precision`.
+
 ### gamma - 2026-05-13 00:59 America/Phoenix
 
 - Lane: `to_char(interval, text)` fractional seconds from `TestToCharIntervalPreservesFractionalSecondsRepro`.
