@@ -15,6 +15,9 @@
 package ast
 
 import (
+	"strings"
+
+	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -69,6 +72,41 @@ func nodeAlterMaterializedView(ctx *Context, node *tree.AlterMaterializedView) (
 				cmd.Owner,
 			),
 		}, nil
+	case *tree.AlterTableSetStorage:
+		var relOptions []string
+		var resetKeys []string
+		var err error
+		if cmd.IsReset {
+			resetKeys = nodeIndexRelOptionResetKeys(cmd.Params)
+		} else {
+			relOptions, err = nodeTableRelOptions(cmd.Params)
+			if err != nil {
+				return nil, err
+			}
+		}
+		viewName, err := nodeUnresolvedObjectName(ctx, node.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewAlterMaterializedViewSetStorage(
+				node.IfExists,
+				viewName.SchemaQualifier.String(),
+				viewName.Name.String(),
+				relOptions,
+				resetKeys,
+			),
+		}, nil
+	case *tree.AlterTableSetTablespace:
+		if !strings.EqualFold(cmd.Tablespace, "pg_default") {
+			return nil, errors.Errorf(`tablespace "%s" does not exist`, cmd.Tablespace)
+		}
+		return NewNoOp(), nil
+	case *tree.AlterTableSetAccessMethod:
+		if cmd.Method != "" && !strings.EqualFold(cmd.Method, "heap") {
+			return nil, errors.Errorf(`access method "%s" does not exist`, cmd.Method)
+		}
+		return NewNoOp(), nil
 	default:
 		return NotYetSupportedError("ALTER MATERIALIZED VIEW command is not yet supported")
 	}

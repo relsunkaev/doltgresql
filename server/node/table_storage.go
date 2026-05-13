@@ -124,6 +124,39 @@ func (a *AlterTableSetStorage) WithResolvedChildren(ctx context.Context, childre
 	return a, nil
 }
 
+// AlterMaterializedViewSetStorage handles ALTER MATERIALIZED VIEW ... SET/RESET storage parameters.
+type AlterMaterializedViewSetStorage struct {
+	*AlterTableSetStorage
+}
+
+var _ sql.ExecSourceRel = (*AlterMaterializedViewSetStorage)(nil)
+var _ vitess.Injectable = (*AlterMaterializedViewSetStorage)(nil)
+
+// NewAlterMaterializedViewSetStorage returns a new *AlterMaterializedViewSetStorage.
+func NewAlterMaterializedViewSetStorage(ifExists bool, schema string, table string, relOptions []string, resetKeys []string) *AlterMaterializedViewSetStorage {
+	return &AlterMaterializedViewSetStorage{
+		AlterTableSetStorage: NewAlterTableSetStorage(ifExists, schema, table, relOptions, resetKeys),
+	}
+}
+
+// RowIter implements the interface sql.ExecSourceRel.
+func (a *AlterMaterializedViewSetStorage) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error) {
+	target, ok, err := findMaterializedViewRelation(ctx, a.target.table, a.target.schema)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		if a.target.ifExists {
+			return sql.RowsToRowIter(), nil
+		}
+		return nil, errors.Errorf(`relation "%s" does not exist`, a.target.table)
+	}
+	if !tablemetadata.IsMaterializedView(tableComment(target.table)) {
+		return nil, errors.Errorf(`relation "%s" is not a materialized view`, a.target.table)
+	}
+	return a.AlterTableSetStorage.RowIter(ctx, row)
+}
+
 func (a alterTableStorageTarget) resolveTable(ctx *sql.Context) (sql.Table, error) {
 	if a.schema != "" {
 		table, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{Name: a.table, Schema: a.schema})
