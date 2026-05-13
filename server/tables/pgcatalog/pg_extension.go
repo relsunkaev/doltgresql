@@ -55,15 +55,19 @@ func (p PgExtensionHandler) RowIter(ctx *sql.Context, partition sql.Partition) (
 		if !id.Id(namespace).IsValid() {
 			namespace = id.NewNamespace("public")
 		}
+		owner := ext.Owner
+		if owner == "" {
+			owner = "postgres"
+		}
 		rows = append(rows, sql.Row{
-			ext.ExtName.AsId(),                    // oid
-			ext.ExtName.Name(),                    // extname
-			id.NewId(id.Section_User, "postgres"), // extowner
-			namespace.AsId(),                      // extnamespace
-			ext.Relocatable,                       // extrelocatable
-			ext.LibIdentifier.Version().String(),  // extversion
-			nil,                                   // extconfig
-			nil,                                   // extcondition
+			ext.ExtName.AsId(),                   // oid
+			ext.ExtName.Name(),                   // extname
+			id.NewId(id.Section_User, owner),     // extowner
+			namespace.AsId(),                     // extnamespace
+			ext.Relocatable,                      // extrelocatable
+			ext.LibIdentifier.Version().String(), // extversion
+			nil,                                  // extconfig
+			nil,                                  // extcondition
 			id.NewTable(PgCatalogName, PgExtensionName).AsId(), // tableoid
 		})
 	}

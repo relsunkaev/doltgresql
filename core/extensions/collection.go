@@ -43,6 +43,7 @@ type Collection struct {
 type Extension struct {
 	ExtName       id.Extension
 	Namespace     id.Namespace
+	Owner         string
 	Relocatable   bool
 	LibIdentifier LibraryIdentifier
 	// TODO: keep track of what it references so I can later delete them

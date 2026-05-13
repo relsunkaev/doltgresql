@@ -24,8 +24,11 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	coreextensions "github.com/dolthub/doltgresql/core/extensions"
 	corefunctions "github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropExtension implements DROP EXTENSION.
@@ -81,6 +84,13 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 			}
 			return nil, errors.Errorf(`extension "%s" does not exist`, name)
 		}
+		ext, err := extCollection.GetLoadedExtension(ctx, extID)
+		if err != nil {
+			return nil, err
+		}
+		if err = checkExtensionOwnership(ctx, ext); err != nil {
+			return nil, errors.Wrap(err, "permission denied")
+		}
 		extensionsToDrop = append(extensionsToDrop, extID)
 	}
 	functionsToDrop := make([]id.Function, 0)
@@ -105,7 +115,30 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	if err = extCollection.DropLoadedExtension(ctx, extensionsToDrop...); err != nil {
 		return nil, err
 	}
+	for _, extID := range extensionsToDrop {
+		clearExtensionComment(extID)
+	}
 	return sql.RowsToRowIter(), nil
+}
+
+func clearExtensionComment(extID id.Extension) {
+	comments.Set(comments.Key{
+		ObjOID:   id.Cache().ToOID(extID.AsId()),
+		ClassOID: comments.ClassOID("pg_extension"),
+		ObjSubID: 0,
+	}, nil)
+}
+
+func checkExtensionOwnership(ctx *sql.Context, ext coreextensions.Extension) error {
+	owner := ext.Owner
+	if owner == "" {
+		owner = "postgres"
+	}
+	userRole := auth.GetRole(ctx.Client().User)
+	if userRole.IsValid() && roleCanOperateAsOwner(userRole, owner) {
+		return nil
+	}
+	return errors.Errorf("must be owner of extension %s", ext.ExtName.Name())
 }
 
 // Schema implements the interface sql.ExecSourceRel.

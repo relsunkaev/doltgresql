@@ -165,9 +165,14 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 }
 
 func (c *CreateExtension) addLoadedExtension(ctx *sql.Context, extCollection *extensions.Collection, ext *pg_extension.ExtensionFiles, namespace id.Namespace) error {
+	owner := ctx.Client().User
+	if owner == "" {
+		owner = "postgres"
+	}
 	return extCollection.AddLoadedExtension(ctx, extensions.Extension{
 		ExtName:       id.NewExtension(c.Name),
 		Namespace:     namespace,
+		Owner:         owner,
 		Relocatable:   ext.Control.Relocatable,
 		LibIdentifier: extensions.CreateLibraryIdentifier(c.Name, ext.Control.DefaultVersion),
 	})
