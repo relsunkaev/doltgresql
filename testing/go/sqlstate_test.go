@@ -230,7 +230,7 @@ func TestSQLStateDatetimeFieldOverflow(t *testing.T) {
 		},
 		{
 			name: "to_timestamp float8 output overflow",
-			sql:  `SELECT to_timestamp(9223372037.0);`,
+			sql:  `SELECT to_timestamp(9224318016000.0);`,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
