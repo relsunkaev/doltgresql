@@ -2135,22 +2135,29 @@ func getStringFromInt(v int) string {
 
 func makeNumTh(s string, suffix int) string {
 	if suffix&DCH_S_TH != 0 {
-		return s + strings.ToUpper(numth(s[len(s)-1]))
+		return s + strings.ToUpper(numth(s))
 	} else if suffix&DCH_S_th != 0 {
-		return s + numth(s[len(s)-1])
+		return s + numth(s)
 	} else {
 		return s
 	}
 }
 
-func numth(s uint8) string {
-	if s == '1' {
+func numth(s string) string {
+	if len(s) >= 2 && s[len(s)-2] == '1' {
+		switch s[len(s)-1] {
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			return "th"
+		}
+	}
+	switch s[len(s)-1] {
+	case '1':
 		return "st"
-	} else if s == '2' {
+	case '2':
 		return "nd"
-	} else if s == '3' {
+	case '3':
 		return "rd"
-	} else {
+	default:
 		return "th"
 	}
 }
