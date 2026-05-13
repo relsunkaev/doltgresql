@@ -3669,6 +3669,27 @@
       ]
     },
     {
+      "id": "keyword-catalog-repro-test-testpggetkeywordsexposesreservedwordsrepro-0001-select-word-catcode-catdesc-from",
+      "source": "testing/go/keyword_catalog_repro_test.go:TestPgGetKeywordsExposesReservedWordsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT word, catcode, catdesc\n\t\t\t\t\t\tFROM pg_catalog.pg_get_keywords()\n\t\t\t\t\t\tWHERE word = 'select';",
+      "expectedRows": [
+        [
+          {
+            "value": "select"
+          },
+          {
+            "value": "R"
+          },
+          {
+            "value": "reserved"
+          }
+        ]
+      ]
+    },
+    {
       "id": "lateral-test-testlateraljoins-0001-select-c.id-c.name-o.amount-as",
       "source": "testing/go/lateral_test.go:TestLateralJoins",
       "ordinal": 1,
