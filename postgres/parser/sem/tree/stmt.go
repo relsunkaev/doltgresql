@@ -560,6 +560,12 @@ func (*CreateDatabase) StatementType() StatementType { return DDL }
 func (*CreateDatabase) StatementTag() string { return "CREATE DATABASE" }
 
 // StatementType implements the Statement interface.
+func (*CreateTablespace) StatementType() StatementType { return DDL }
+
+// StatementTag returns a short string identifying the type of statement.
+func (*CreateTablespace) StatementTag() string { return "CREATE TABLESPACE" }
+
+// StatementType implements the Statement interface.
 func (*CreateDomain) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
@@ -1409,6 +1415,7 @@ func (n *CreateAggregate) String() string           { return AsString(n) }
 func (n *CreateAccessMethod) String() string        { return AsString(n) }
 func (n *CreateChangefeed) String() string          { return AsString(n) }
 func (n *CreateDatabase) String() string            { return AsString(n) }
+func (n *CreateTablespace) String() string          { return AsString(n) }
 func (n *CreateDomain) String() string              { return AsString(n) }
 func (n *CreateExtension) String() string           { return AsString(n) }
 func (n *CreateForeignDataWrapper) String() string  { return AsString(n) }

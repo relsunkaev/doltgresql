@@ -33,7 +33,7 @@ func PersistChanges() error {
 func (db *Database) serialize() []byte {
 	writer := utils.NewWriter(16384)
 	// Write the version
-	writer.Uint32(16)
+	writer.Uint32(17)
 	// Write the roles
 	writer.Uint32(uint32(len(db.rolesByID)))
 	for _, role := range db.rolesByID {
@@ -75,6 +75,8 @@ func (db *Database) serialize() []byte {
 	db.operators.serialize(writer)
 	// Write the text-search configurations
 	db.textSearchConfigs.serialize(writer)
+	// Write tablespace metadata
+	db.tablespaces.serialize(writer)
 	// Write foreign-data metadata
 	db.foreignDataWrappers.serialize(writer)
 	db.foreignServers.serialize(writer)
@@ -128,6 +130,8 @@ func (db *Database) deserialize(data []byte) error {
 		return db.deserializeV15(reader)
 	case 16:
 		return db.deserializeV16(reader)
+	case 17:
+		return db.deserializeV17(reader)
 	default:
 		return errors.Errorf("Authorization database format %d is not supported, please upgrade Doltgres", version)
 	}
@@ -242,6 +246,10 @@ func (db *Database) deserializeV16(reader *utils.Reader) error {
 	return db.deserializeCurrent(reader, 16)
 }
 
+func (db *Database) deserializeV17(reader *utils.Reader) error {
+	return db.deserializeCurrent(reader, 17)
+}
+
 func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) error {
 	// Read the roles
 	clear(db.rolesByName)
@@ -334,6 +342,12 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		} else {
 			db.textSearchConfigs.deserialize(0, reader)
 		}
+		if version >= 17 {
+			// Read tablespace metadata
+			db.tablespaces.deserialize(1, reader)
+		} else {
+			db.tablespaces.deserialize(0, reader)
+		}
 		if version >= 15 {
 			// Read foreign-data metadata
 			db.foreignDataWrappers.deserialize(1, reader)
@@ -370,6 +384,7 @@ func (db *Database) deserializeCurrent(reader *utils.Reader, version uint32) err
 		db.casts.deserialize(0, reader)
 		db.operators.deserialize(0, reader)
 		db.textSearchConfigs.deserialize(0, reader)
+		db.tablespaces.deserialize(0, reader)
 		db.foreignDataWrappers.deserialize(0, reader)
 		db.foreignServers.deserialize(0, reader)
 		db.userMappings.deserialize(0, reader)

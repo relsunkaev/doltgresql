@@ -117,6 +117,8 @@ func Convert(postgresStmt parser.Statement) (vitess.Statement, error) {
 		return nodeCreateChangefeed(ctx, stmt)
 	case *tree.CreateDatabase:
 		return nodeCreateDatabase(ctx, stmt)
+	case *tree.CreateTablespace:
+		return nodeCreateTablespace(ctx, stmt)
 	case *tree.CreateDomain:
 		return nodeCreateDomain(ctx, stmt)
 	case *tree.CreateExtension:

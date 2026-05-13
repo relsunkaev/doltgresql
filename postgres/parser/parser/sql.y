@@ -895,7 +895,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> LANGUAGE LARGE LAST LATERAL LATEST LC_CTYPE LC_COLLATE
 %token <str> LEADING LEAKPROOF LEASE LEAST LEFT LESS LEVEL LIKE LIMIT
 %token <str> LINESTRING LINESTRINGM LINESTRINGZ LINESTRINGZM LIST LISTEN
-%token <str> LOCAL LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCK LOCKED LOGGED LOGIN LOG_VERBOSITY LOOKUP LOW LSHIFT
+%token <str> LOCAL LOCATION LOCALE LOCALE_PROVIDER LOCALTIME LOCALTIMESTAMP LOCK LOCKED LOGGED LOGIN LOG_VERBOSITY LOOKUP LOW LSHIFT
 
 %token <str> MAIN MAPPING MATCH MATERIALIZED MAXVALUE MERGE METHOD MODE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY
 %token <str> MINITCOND MINUTE MINVALUE MINVFUNC MODIFYCLUSTERSETTING MODULUS MONTH MSFUNC MSPACE MSSPACE MSTYPE
@@ -1060,6 +1060,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.Statement> create_ddl_stmt
 %type <tree.Statement> create_ddl_stmt_schema_element
 %type <tree.Statement> create_database_stmt
+%type <tree.Statement> create_tablespace_stmt
 %type <tree.Statement> create_index_stmt
 %type <tree.Statement> create_role_stmt
 %type <tree.Statement> create_schedule_for_backup_stmt
@@ -1498,7 +1499,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <str> unrestricted_name type_function_name type_function_name_no_crdb_extra simple_ident
 %type <str> non_reserved_word
 %type <str> non_reserved_word_or_sconst
-%type <str> role_spec owner_to set_schema opt_role set_tablespace
+%type <str> role_spec owner_to set_schema opt_role set_tablespace opt_tablespace_owner
 %type <tree.Expr> zone_value
 %type <tree.Expr> string_or_placeholder
 %type <tree.Expr> string_or_placeholder_list
@@ -5674,6 +5675,7 @@ function_name_with_args_list:
 create_ddl_stmt:
   create_changefeed_stmt
 | create_database_stmt // EXTEND WITH HELP: CREATE DATABASE
+| create_tablespace_stmt // EXTEND WITH HELP: CREATE TABLESPACE
 | create_schema_stmt   // EXTEND WITH HELP: CREATE SCHEMA
 | create_type_stmt     // EXTEND WITH HELP: CREATE TYPE
 | create_domain_stmt    // EXTEND WITH HELP: CREATE DOMAIN
@@ -11367,6 +11369,27 @@ create_database_stmt:
    }
 | CREATE DATABASE error // SHOW HELP: CREATE DATABASE
 
+// %Help: CREATE TABLESPACE - define a new tablespace
+// %Category: DDL
+// %Text: CREATE TABLESPACE <name> [OWNER <role>] LOCATION <location>
+// %SeeAlso: WEBDOCS/sql-createtablespace.html
+create_tablespace_stmt:
+  CREATE TABLESPACE tablespace_name opt_tablespace_owner LOCATION SCONST opt_with_storage_parameter_list
+  {
+    $$.val = &tree.CreateTablespace{Name: tree.Name($3), Owner: $4, Location: $6, Options: $7.storageParams()}
+  }
+| CREATE TABLESPACE error // SHOW HELP: CREATE TABLESPACE
+
+opt_tablespace_owner:
+  /* EMPTY */
+  {
+    $$ = ""
+  }
+| OWNER role_spec
+  {
+    $$ = $2
+  }
+
 // Optional parameters can be written in any order, not only the order illustrated above.
 opt_create_database_options:
   /* EMPTY */
@@ -16581,6 +16604,7 @@ unreserved_keyword:
 | LIST
 | LISTEN
 | LOCAL
+| LOCATION
 | LOCALE
 | LOCALE_PROVIDER
 | LOCK

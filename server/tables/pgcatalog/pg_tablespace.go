@@ -20,6 +20,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -45,7 +46,7 @@ func (p PgTablespaceHandler) Name() string {
 // RowIter implements the interface tables.Handler.
 func (p PgTablespaceHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
 	owner := catalogOwnerOID()
-	return sql.RowsToRowIter(
+	rows := []sql.Row{
 		sql.Row{
 			id.NewOID(1663).AsId(), // oid
 			"pg_default",           // spcname
@@ -60,7 +61,19 @@ func (p PgTablespaceHandler) RowIter(ctx *sql.Context, partition sql.Partition) 
 			nil,                    // spcacl
 			nil,                    // spcoptions
 		},
-	), nil
+	}
+	auth.LockRead(func() {
+		for _, tablespace := range auth.GetAllTablespaces() {
+			rows = append(rows, sql.Row{
+				id.NewOID(tablespace.Oid).AsId(),            // oid
+				tablespace.Name,                             // spcname
+				id.NewId(id.Section_User, tablespace.Owner), // spcowner
+				nil, // spcacl
+				nil, // spcoptions
+			})
+		}
+	})
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.

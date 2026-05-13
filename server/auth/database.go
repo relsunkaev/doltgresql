@@ -61,6 +61,7 @@ type Database struct {
 	casts               *Casts
 	operators           *Operators
 	textSearchConfigs   *TextSearchConfigs
+	tablespaces         *Tablespaces
 	foreignDataWrappers *ForeignDataWrappers
 	foreignServers      *ForeignServers
 	userMappings        *UserMappings
@@ -93,6 +94,7 @@ func ClearDatabase() {
 	clear(globalDatabase.casts.Data)
 	clear(globalDatabase.operators.Data)
 	clear(globalDatabase.textSearchConfigs.Data)
+	clear(globalDatabase.tablespaces.Data)
 	clear(globalDatabase.foreignDataWrappers.Data)
 	clear(globalDatabase.foreignServers.Data)
 	clear(globalDatabase.userMappings.Data)
@@ -276,6 +278,7 @@ func dbInit(dEnv *env.DoltEnv, cfg Config) {
 		casts:               NewCasts(),
 		operators:           NewOperators(),
 		textSearchConfigs:   NewTextSearchConfigs(),
+		tablespaces:         NewTablespaces(),
 		foreignDataWrappers: NewForeignDataWrappers(),
 		foreignServers:      NewForeignServers(),
 		userMappings:        NewUserMappings(),

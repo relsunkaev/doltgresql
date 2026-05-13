@@ -947,6 +947,15 @@ func resolveCommentTablespace(name string) (id.Id, error) {
 	case "pg_global":
 		return id.NewOID(1664).AsId(), nil
 	default:
+		var oid uint32
+		auth.LockRead(func() {
+			if tablespace, ok := auth.GetTablespace(name); ok {
+				oid = tablespace.Oid
+			}
+		})
+		if oid != 0 {
+			return id.NewOID(oid).AsId(), nil
+		}
 		return id.Null, fmt.Errorf(`tablespace "%s" does not exist`, name)
 	}
 }
