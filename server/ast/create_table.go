@@ -121,11 +121,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				typeName.Name.String(),
 				typedTableOptions,
 			),
-			Auth: vitess.AuthInformation{
-				AuthType:    auth.AuthType_CREATE,
-				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
-				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
-			},
+			Auth:     createTableAuthInfo(tableName, isTemporary),
 			Children: typedTableChildren,
 		}, nil
 	}
@@ -146,11 +142,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				likeTableName.Name.String(),
 				createTableLikeOptions(likeDef.Options),
 			),
-			Auth: vitess.AuthInformation{
-				AuthType:    auth.AuthType_CREATE,
-				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
-				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
-			},
+			Auth: createTableAuthInfo(tableName, isTemporary),
 		}, nil
 	}
 	if node.AsExecute != nil {
@@ -171,11 +163,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				},
 				WithNoData: node.WithNoData,
 			},
-			Auth: vitess.AuthInformation{
-				AuthType:    auth.AuthType_CREATE,
-				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
-				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
-			},
+			Auth: createTableAuthInfo(tableName, isTemporary),
 		}, nil
 	}
 	if node.AsSource != nil {
@@ -215,11 +203,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		Temporary:   isTemporary,
 		OptSelect:   optSelect,
 		OptLike:     optLike,
-		Auth: vitess.AuthInformation{
-			AuthType:    auth.AuthType_CREATE,
-			TargetType:  auth.AuthTargetType_SchemaIdentifiers,
-			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
-		},
+		Auth:        createTableAuthInfo(tableName, isTemporary),
 	}
 	if node.AsSource != nil {
 		if err = validateCreateTableAsColumnDefs(node.Defs); err != nil {
@@ -285,6 +269,22 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		return nil, errors.Errorf("PARTITION OF is not yet supported")
 	}
 	return ddl, nil
+}
+
+func createTableAuthInfo(tableName vitess.TableName, isTemporary bool) vitess.AuthInformation {
+	authInfo := vitess.AuthInformation{
+		AuthType:    auth.AuthType_CREATE,
+		TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+		TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
+	}
+	if isTemporary {
+		auth.AppendAdditionalAuth(&authInfo, vitess.AuthInformation{
+			AuthType:    auth.AuthType_TEMPORARY,
+			TargetType:  auth.AuthTargetType_DatabaseIdentifiers,
+			TargetNames: []string{tableName.DbQualifier.String()},
+		})
+	}
+	return authInfo
 }
 
 func createTableOnCommitOption(onCommit tree.CreateTableOnCommitSetting) string {
