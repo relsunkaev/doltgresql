@@ -584,7 +584,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 		},
 		Type: func(ctx *sql.Context, schema functions.ItemSchema, typ functions.ItemType) (cont bool, err error) {
 			for _, check := range typ.Item.Checks {
-				checkOid := id.NewCheck(schema.Item.SchemaName(), "", check.Name)
+				checkOid := id.NewCheck(schema.Item.SchemaName(), typ.Item.Name(), check.Name)
 				constraint := &pgConstraint{
 					oid:             checkOid.AsId(),
 					oidNative:       id.Cache().ToOID(checkOid.AsId()),

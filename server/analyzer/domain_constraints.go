@@ -50,7 +50,7 @@ func AddDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node,
 		if updatable, err := plan.GetUpdatable(n.Child); err == nil && updatable != nil {
 			schema = updatable.Schema(ctx)
 		}
-		return loadDomainConstraints(ctx, a, n, schema, false)
+		return loadDomainConstraints(ctx, a, n, schema, true)
 	default:
 		return node, transform.SameTree, nil
 	}
@@ -206,7 +206,7 @@ func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, c
 	}
 	checks := make(sql.CheckConstraints, len(checkDefs))
 	for i, check := range checkDefs {
-		if useTableColumnReferences && baseType.IsCompositeType() && col.Source != "" {
+		if useTableColumnReferences && col.Source != "" {
 			q := fmt.Sprintf("select %s from %s", check.CheckExpression, col.Source)
 			checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, &tree.ColumnItem{
 				ColumnName: tree.Name(col.Name),
@@ -228,9 +228,14 @@ func getDomainCheckConstraintsForTable(ctx *sql.Context, a *analyzer.Analyzer, c
 			return nil, err
 		}
 		checkExpr, _, _ = transform.Expr(ctx, checkExpr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
-			switch expr.(type) {
+			switch e := expr.(type) {
 			case *node.DomainColumn:
 				return gmsexpression.NewGetField(colIdx, baseType, col.Name, col.Nullable), transform.NewTree, nil
+			case *gmsexpression.GetField:
+				if strings.EqualFold(e.Name(), "VALUE") {
+					return gmsexpression.NewGetField(colIdx, baseType, col.Name, col.Nullable), transform.NewTree, nil
+				}
+				return expr, transform.SameTree, nil
 			default:
 				return expr, transform.SameTree, nil
 			}

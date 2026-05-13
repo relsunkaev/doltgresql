@@ -167,14 +167,12 @@ func TestDomain(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					// TODO: the correct error msg: `domain year does not allow null values`
 					Query:       `INSERT INTO tbl_not_null VALUES (2, null)`,
-					ExpectedErr: `column name 'y' is non-nullable but attempted to set a value of null`,
+					ExpectedErr: `domain year does not allow null values`,
 				},
 				{
-					// TODO: the correct error msg: `domain year does not allow null values`
 					Query:       `INSERT INTO tbl_not_null(pk) VALUES (2)`,
-					ExpectedErr: `Field 'y' doesn't have a default value`,
+					ExpectedErr: `null value in column "y" violates not-null constraint`,
 				},
 				{
 					Query:    `SELECT * FROM tbl_not_null`,
@@ -199,9 +197,8 @@ func TestDomain(t *testing.T) {
 					ExpectedErr: `constraint "year_check_min"`,
 				},
 				{
-					// TODO: the correct error msg: `domain year does not allow null values`
 					Query:       `UPDATE test_table SET y = null WHERE pk = 1;`,
-					ExpectedErr: `column name 'y' is non-nullable but attempted to set a value of null`,
+					ExpectedErr: `domain year does not allow null values`,
 				},
 				{
 					Query:    `SELECT * FROM test_table`,
