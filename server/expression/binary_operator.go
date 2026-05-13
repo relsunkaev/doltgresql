@@ -23,6 +23,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/functions/framework"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -173,14 +175,22 @@ func (b *BinaryOperator) WithResolvedChildren(ctx context.Context, children []an
 	funcName := "internal_binary_operator_func_" + b.operator.String()
 	compiledFunc := framework.GetBinaryFunction(b.operator).Compile(sqlCtx, funcName, left, right)
 	if compiledFunc == nil {
-		return nil, errors.Errorf("operator does not exist: %s %s %s",
-			binaryOperatorTypeName(sqlCtx, left), b.operator.String(), binaryOperatorTypeName(sqlCtx, right))
+		return nil, binaryOperatorDoesNotExistError(sqlCtx, left, b.operator, right)
 	}
 	if framework.ErrFunctionDoesNotExist.Is(compiledFunc.StashedError()) {
-		return nil, errors.Errorf("operator does not exist: %s %s %s",
-			binaryOperatorTypeName(sqlCtx, left), b.operator.String(), binaryOperatorTypeName(sqlCtx, right))
+		return nil, binaryOperatorDoesNotExistError(sqlCtx, left, b.operator, right)
 	}
 	return newResolvedBinaryOperator(b.operator, compiledFunc), nil
+}
+
+func binaryOperatorDoesNotExistError(ctx *sql.Context, left sql.Expression, operator framework.Operator, right sql.Expression) error {
+	return pgerror.Newf(
+		pgcode.UndefinedFunction,
+		"operator does not exist: %s %s %s",
+		binaryOperatorTypeName(ctx, left),
+		operator.String(),
+		binaryOperatorTypeName(ctx, right),
+	)
 }
 
 func binaryOperatorTypeName(ctx *sql.Context, expr sql.Expression) string {
