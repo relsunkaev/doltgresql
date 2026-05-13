@@ -2580,6 +2580,18 @@
       ]
     },
     {
+      "id": "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=",
+      "source": "testing/go/icu_collation_probe_test.go:TestIcuCollationProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "CREATE COLLATION case_insensitive (\n\t\t\t\t\t\tprovider = icu,\n\t\t\t\t\t\tlocale = 'und-u-ks-level2',\n\t\t\t\t\t\tdeterministic = false\n\t\t\t\t\t);",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP COLLATION IF EXISTS case_insensitive;"
+      ]
+    },
+    {
       "id": "index-comment-drop-repro-test-testdropindexclearscommentrepro-0001-select-obj_description-drop_recreate_comment_index_idx-::regclass-pg_class",
       "source": "testing/go/index_comment_drop_repro_test.go:TestDropIndexClearsCommentRepro",
       "ordinal": 1,

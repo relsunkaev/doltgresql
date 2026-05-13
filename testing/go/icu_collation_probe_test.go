@@ -18,16 +18,16 @@ import (
 	"testing"
 )
 
-// TestIcuCollationProbe pins where ICU nondeterministic collations
-// stand today. PG 12+ apps that need case-insensitive equality on
-// string columns rely on ICU `deterministic = false` collations;
-// those that target locale-correct ordering rely on ICU locale
-// providers. Per the Schema/DDL TODO in
+// TestIcuCollationProbe pins the PostgreSQL behavior for ICU
+// nondeterministic collations. PG 12+ apps that need case-insensitive
+// equality on string columns rely on ICU `deterministic = false`
+// collations; those that target locale-correct ordering rely on ICU
+// locale providers. Per the Schema/DDL TODO in
 // docs/app-compatibility-checklist.md.
 func TestIcuCollationProbe(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name:        "CREATE COLLATION provider = icu is explicitly rejected",
+			Name:        "CREATE COLLATION provider = icu follows PostgreSQL",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
@@ -36,7 +36,11 @@ func TestIcuCollationProbe(t *testing.T) {
 						locale = 'und-u-ks-level2',
 						deterministic = false
 					);`,
-					ExpectedErr: "CREATE COLLATION is not yet supported",
+					ExpectedRaw: [][][]byte{},
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:      "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=",
+						Cleanup: []string{`DROP COLLATION IF EXISTS case_insensitive;`},
+					},
 				},
 			},
 		},

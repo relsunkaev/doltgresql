@@ -1,0 +1,35 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map icu_collation_probe_test.go --oracle-test-name TestIcuCollationProbe --force-postgres-oracle",
+  "sourceFile": "testing/go/icu_collation_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/icu_collation_probe_test.go:TestIcuCollationProbe#0001",
+      "source": "testing/go/icu_collation_probe_test.go:TestIcuCollationProbe",
+      "ordinal": 1,
+      "scriptName": "CREATE COLLATION provider = icu follows PostgreSQL",
+      "oracle": "postgres",
+      "postgresId": "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=",
+      "suggestedId": "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=",
+      "expectedKind": "rawRows",
+      "query": "CREATE COLLATION case_insensitive (\n\t\t\t\t\t\tprovider = icu,\n\t\t\t\t\t\tlocale = 'und-u-ks-level2',\n\t\t\t\t\t\tdeterministic = false\n\t\t\t\t\t);",
+      "querySha256": "8eb88bb83269d590347d4a6be16dc683d83f12bcfe57b395424d3d6def66c741",
+      "expectedRows": [],
+      "cleanup": [
+        "DROP COLLATION IF EXISTS case_insensitive;"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": true
+    }
+  ]
+}
