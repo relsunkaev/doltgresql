@@ -20,6 +20,7 @@ import (
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
@@ -102,6 +103,9 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 	rewritten := *c.gmsDropTable
 	rewritten.Tables = dropTables
 	gmsDropTable := &rewritten
+
+	restoreTempShadows := c.hideTemporaryShadowsForPersistentDrops(ctx, dropTables)
+	defer restoreTempShadows()
 	dropTableIter, err := b.Build(ctx, gmsDropTable, r)
 	if err != nil {
 		return nil, err
@@ -128,6 +132,57 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		}
 	}
 	return dropTableIter, err
+}
+
+func (c *DropTable) hideTemporaryShadowsForPersistentDrops(ctx *sql.Context, dropTables []sql.Node) func() {
+	session := dsess.DSessFromSess(ctx.Session)
+	type hiddenTempTable struct {
+		database string
+		table    sql.Table
+	}
+	hidden := make([]hiddenTempTable, 0)
+	seen := make(map[string]struct{}, len(dropTables))
+	for _, table := range dropTables {
+		resolved, ok := table.(*plan.ResolvedTable)
+		if !ok {
+			continue
+		}
+		if tempTarget := temporaryTableForDropTarget(resolved); tempTarget != nil && tempTarget.IsTemporary() {
+			continue
+		}
+		databaseName := resolved.Database().Name()
+		tableName := resolved.Name()
+		key := strings.ToLower(databaseName) + "." + strings.ToLower(tableName)
+		if _, ok = seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		if tempTable, ok := session.GetTemporaryTable(ctx, databaseName, tableName); ok {
+			session.DropTemporaryTable(ctx, databaseName, tableName)
+			hidden = append(hidden, hiddenTempTable{
+				database: databaseName,
+				table:    tempTable,
+			})
+		}
+	}
+	return func() {
+		for i := len(hidden) - 1; i >= 0; i-- {
+			session.AddTemporaryTable(ctx, hidden[i].database, hidden[i].table)
+		}
+	}
+}
+
+func temporaryTableForDropTarget(table sql.Table) sql.TemporaryTable {
+	switch table := table.(type) {
+	case sql.TemporaryTable:
+		return table
+	case sql.TableWrapper:
+		return temporaryTableForDropTarget(table.Underlying())
+	case *plan.ResolvedTable:
+		return temporaryTableForDropTarget(table.Table)
+	default:
+		return nil
+	}
 }
 
 func (c *DropTable) inheritanceExpandedDropTables(ctx *sql.Context) ([]sql.Node, error) {

@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/core"
@@ -43,6 +44,15 @@ func (d Database) GetTableInsensitive(ctx *sql.Context, tblName string) (sql.Tab
 			return NewVirtualTable(handler, d.Database), true, nil
 		}
 	}
+
+	if schemaName := d.Database.Schema(); schemaName != "" && !isTemporarySchemaName(schemaName) {
+		session := dsess.DSessFromSess(ctx.Session)
+		if table, ok := session.GetTemporaryTable(ctx, d.Database.Name(), tblName); ok {
+			session.DropTemporaryTable(ctx, d.Database.Name(), tblName)
+			defer session.AddTemporaryTable(ctx, d.Database.Name(), table)
+		}
+	}
+
 	if table, ok, err := d.Database.GetTableInsensitive(ctx, tblName); err != nil {
 		if !sql.ErrTableNotFound.Is(err) {
 			return table, ok, err
@@ -126,4 +136,9 @@ func (d Database) Name() string {
 
 func (d Database) SchemaName() string {
 	return d.Database.SchemaName()
+}
+
+func isTemporarySchemaName(schemaName string) bool {
+	schemaName = strings.ToLower(schemaName)
+	return schemaName == "pg_temp" || strings.HasPrefix(schemaName, "pg_temp_")
 }
