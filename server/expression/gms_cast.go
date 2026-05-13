@@ -371,7 +371,7 @@ func sumDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresTy
 	}
 	childType, ok := children[0].Type(ctx).(*pgtypes.DoltgresType)
 	if !ok {
-		return pgtypes.FromGmsType(children[0].Type(ctx)), true
+		childType = pgtypes.FromGmsType(children[0].Type(ctx))
 	}
 	switch {
 	case childType.Equals(pgtypes.Int16), childType.Equals(pgtypes.Int32):

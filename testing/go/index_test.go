@@ -113,7 +113,7 @@ WHERE tablename = 'jsonb_gin_build' AND indexname = 'jsonb_gin_build_doc_idx';`,
 					Query: `SELECT COUNT(*) > 0, MIN(format_version), SUM(row_count), COUNT(payload), COUNT(checksum)
 FROM dg_gin_jsonb_gin_build_jsonb_gin_build_doc_idx_posting_chunks;`,
 					Expected: []sql.Row{
-						{"t", 1, float64(22), 11, 11},
+						{"t", 1, int64(22), 11, 11},
 					},
 				},
 			},
