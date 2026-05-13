@@ -23,6 +23,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -158,7 +160,7 @@ func (d *DropConversion) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 		conversion, ok := auth.GetConversion(namespace, d.Name)
 		if !ok {
 			if !d.IfExists {
-				err = errors.Errorf(`conversion "%s" does not exist`, d.Name)
+				err = conversionDoesNotExistError(d.Name)
 			}
 			return
 		}
@@ -166,7 +168,7 @@ func (d *DropConversion) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 			return
 		}
 		if ok := auth.DropConversion(namespace, d.Name); !ok && !d.IfExists {
-			err = errors.Errorf(`conversion "%s" does not exist`, d.Name)
+			err = conversionDoesNotExistError(d.Name)
 			return
 		}
 		err = auth.PersistChanges()
@@ -250,7 +252,7 @@ func (a *AlterConversion) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, err
 		var ok bool
 		conversion, ok = auth.GetConversion(namespace, a.Name)
 		if !ok {
-			err = errors.Errorf(`conversion "%s" does not exist`, a.Name)
+			err = conversionDoesNotExistError(a.Name)
 			return
 		}
 		if err = checkConversionOwnership(ctx, conversion); err != nil {
@@ -338,5 +340,9 @@ func checkConversionOwnership(ctx *sql.Context, conversion auth.Conversion) erro
 	if userRole.IsValid() && userRole.IsSuperUser {
 		return nil
 	}
-	return errors.Errorf("must be owner of conversion %s", conversion.Name)
+	return conversionDoesNotExistError(conversion.Name)
+}
+
+func conversionDoesNotExistError(name string) error {
+	return pgerror.Newf(pgcode.UndefinedObject, `conversion "%s" does not exist`, name)
 }
