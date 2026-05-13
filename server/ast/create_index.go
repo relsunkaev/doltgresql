@@ -41,6 +41,9 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGist && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
 	}
+	if node.Concurrently && accessMethod == indexmetadata.AccessMethodGist {
+		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
+	}
 	if node.Unique && accessMethod == indexmetadata.AccessMethodGist {
 		return nil, errors.Errorf("unique gist indexes are not yet supported")
 	}
