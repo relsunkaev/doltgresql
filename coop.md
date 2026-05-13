@@ -1300,3 +1300,32 @@ Use this file to avoid overlapping work. Add short entries with:
 - Focused ALTER FUNCTION/ROUTINE repro group is green in the shared checkout:
   `GOCACHE=/tmp/doltgresql-alpha-alterfunc-gocache GOTMPDIR=/tmp/doltgresql-alpha-alterfunc-gotmp TMPDIR=/tmp/doltgresql-alpha-alterfunc-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterStatements|TestAlterFunction.*Repro|TestAlterRoutine.*Repro|TestFunctionOwnerCatalogEntryRepro)$' -count=1 -v`
 - Conclusion for peers: ALTER FUNCTION core support is not the current failing lane on this checkout; wait for the full manifest or work separate failures.
+
+### gamma - 2026-05-12 16:55 America/Phoenix
+
+- Coordination: alpha still owns the latest full manifest at `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl`; gamma did not start another full `./testing/go` run.
+- Latest alpha-read snapshot: `16` completed top-level tests passing, `0` top-level failures, `0` package failures, currently in `TestActiveRecordMigrationSmoke`.
+- Build-error side: clean focused verifier for `TestSqrtNumericMatchesPostgresPrecisionRepro` failed before reaching tests with source-agnostic Go build-cache/temp-workdir errors such as `can't create $WORK/.../_pkg_.a` and missing standard-library cache files under an isolated `GOCACHE`; this looks like the same environment/toolchain cache failure alpha and gamma hit earlier, not a Doltgres compile error.
+- Current source status: only gamma's uncommitted `server/functions/sqrt.go` precision patch is dirty. Package-level check remains green: `TMPDIR=/tmp/doltgresql-gamma-sqrt-gotmp GOTMPDIR=/tmp/doltgresql-gamma-sqrt-gotmp CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'Sqrt|sqrt' -count=1`.
+
+### beta - 2026-05-12 16:57 America/Phoenix
+
+- Lane complete: ON CONFLICT DO UPDATE now rewrites `EXCLUDED.col` inside function arguments that pass through `nodeSelectExpr`, fixing `TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro` without broadening `EXCLUDED` visibility to RETURNING.
+- Source touched: `server/ast/select.go`.
+- Red in clean verifier `/tmp/doltgresql-beta-excluded-red.2i4YhT` at `ee0b0d87`: `TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro` failed with `table not found: excluded`, leaving the row label `old` instead of `new-fn`.
+- Green in the same clean verifier plus beta patch:
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-beta-excluded-gocache-165217 GOTMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* TMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestOnConflictUpdateFunctionArgumentCanReferenceExcludedRepro|TestInsertOnConflictExcluded|TestInsertOnConflictDoUpdateWhere|TestOnConflictReturningCannotReferenceExcludedGuard)$' -count=1 -v`
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-beta-excluded-gocache-165217 GOTMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* TMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/ast -run '^$' -count=1`
+- Manifest coordination: alpha still owns `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl`; latest beta-read snapshot is `112` top-level started, `109` passed, `2` failed (`TestAuthQuick`, `TestAuthTests`), `0` skipped, still running.
+
+### alpha - 2026-05-12 17:13 America/Phoenix
+
+- Latest exact full-suite denominator remains `2667` top-level tests from `go test -list '^Test' ./testing/go`.
+- Last completed full manifest was `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl` from pre-auth-fix HEAD and ended at `109/2667` passing (`4.1%`), `2` top-level failures (`TestAuthQuick`, `TestAuthTests`), `2556` not reached due package abort.
+- Auth stop-the-run lane fixed and committed:
+  - `9934aa3c fix: reset auth persistence for in-memory tests`
+  - `30b16fe7 fix: enforce table drop ownership semantics`
+- Green focused proof:
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestRoleMembershipSurvivesRestart|TestInMemoryServerClearsOnDiskAuthStateAfterLocalServer|TestAuthTests)$' -count=1 -v`
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAuthQuick|TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro|TestDropTableAllowsMemberOfOwningRoleRepro|TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro)$' -count=1 -v`
+- Alpha is restarting the full manifest from committed HEAD `30b16fe7`; peers should keep avoiding duplicate full `./testing/go` runs and focus on isolated build/failure lanes.
