@@ -560,6 +560,84 @@ func (capture *replicationChangeCapture) publicationTargets(ctx *sql.Context, sc
 	return targets, err
 }
 
+func (capture *replicationChangeCapture) validateReplicaIdentity(ctx *sql.Context) error {
+	if capture == nil || (capture.action != replicationChangeUpdate && capture.action != replicationChangeDelete) {
+		return nil
+	}
+	table, schema, err := capture.resolveTable(ctx)
+	if err != nil {
+		return err
+	}
+	requiresIdentity, err := capture.hasPublicationRequiringReplicaIdentity(ctx, schema)
+	if err != nil || !requiresIdentity {
+		return err
+	}
+	setting := replicaidentity.Get(ctx.GetCurrentDatabase(), schema, table.Name())
+	keyColumns, err := relationReplicaIdentityColumns(ctx, table, setting)
+	if err != nil {
+		return err
+	}
+	if setting.Identity == replicaidentity.IdentityNothing || (setting.Identity != replicaidentity.IdentityFull && len(keyColumns) == 0) {
+		return errors.Errorf(`cannot %s table "%s" because it does not have a replica identity and publishes %s`,
+			replicationChangeActionSQL(capture.action), capture.table, replicationChangeActionSQL(capture.action))
+	}
+	return nil
+}
+
+func (capture *replicationChangeCapture) hasPublicationRequiringReplicaIdentity(ctx *sql.Context, schema string) (bool, error) {
+	collection, err := core.GetPublicationsCollectionFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	tableID := id.NewTable(schema, capture.table)
+	requiresIdentity := false
+	err = collection.IteratePublications(ctx, func(pub publications.Publication) (stop bool, err error) {
+		if !publicationRequiresReplicaIdentity(pub, capture.action) {
+			return false, nil
+		}
+		for _, relation := range pub.Tables {
+			if relation.Table == tableID {
+				requiresIdentity = true
+				return true, nil
+			}
+		}
+		if pub.AllTables {
+			requiresIdentity = true
+			return true, nil
+		}
+		for _, pubSchema := range pub.Schemas {
+			if strings.EqualFold(pubSchema, schema) {
+				requiresIdentity = true
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+	return requiresIdentity, err
+}
+
+func publicationRequiresReplicaIdentity(pub publications.Publication, action replicationChangeAction) bool {
+	switch action {
+	case replicationChangeUpdate:
+		return pub.PublishUpdate || pub.PublishDelete
+	case replicationChangeDelete:
+		return pub.PublishDelete
+	default:
+		return false
+	}
+}
+
+func replicationChangeActionSQL(action replicationChangeAction) string {
+	switch action {
+	case replicationChangeUpdate:
+		return "update"
+	case replicationChangeDelete:
+		return "delete"
+	default:
+		return "change"
+	}
+}
+
 func publicationChangeTargetFor(pub publications.Publication, columns []string, rowFilter string) publicationChangeTarget {
 	return publicationChangeTarget{
 		name:          pub.ID.PublicationName(),

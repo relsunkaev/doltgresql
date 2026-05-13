@@ -1873,6 +1873,9 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 
 	query := preparedData.Query
 	query.StatementTag = preparedData.Query.StatementTag
+	if err := h.validateReplicationChangeReplicaIdentity(query); err != nil {
+		return err
+	}
 	rowsAffected := int32(0)
 	executionQuery := query
 	executionPlan := boundPlan
@@ -2339,6 +2342,9 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 		return err
 	}
 	if err = h.rejectReadOnlyTransactionWrite(query); err != nil {
+		return err
+	}
+	if err = h.validateReplicationChangeReplicaIdentity(query); err != nil {
 		return err
 	}
 
@@ -3819,6 +3825,9 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	if err := h.rejectReadOnlyTransactionWrite(query); err != nil {
 		return err
 	}
+	if err := h.validateReplicationChangeReplicaIdentity(query); err != nil {
+		return err
+	}
 	if h.inTransaction && isTruncateQuery(query) {
 		return h.executeTransactionalTruncate(query)
 	}
@@ -4132,6 +4141,21 @@ func (h *ConnectionHandler) prepareReplicationChangeQuery(query ConvertedQuery) 
 	}
 	capture, ok = prepareReplicationChangeCapture(replicationQuery, fullRowColumns)
 	return capture, replicationQuery, ok, nil
+}
+
+func (h *ConnectionHandler) validateReplicationChangeReplicaIdentity(query ConvertedQuery) error {
+	capture, ok := replicationChangeCaptureFromStatement(query.AST)
+	if !ok {
+		return nil
+	}
+	if capture.action != replicationChangeUpdate && capture.action != replicationChangeDelete {
+		return nil
+	}
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	return capture.validateReplicaIdentity(sqlCtx)
 }
 
 // spoolRowsCallback returns a callback function that will send RowDescription message,
