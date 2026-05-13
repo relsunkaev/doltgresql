@@ -46,6 +46,14 @@ func nodeDelete(ctx *Context, node *tree.Delete) (*vitess.Delete, error) {
 	if err != nil {
 		return nil, err
 	}
+	if tableTarget, ok := aliasedTableAuthTarget(table); ok {
+		readExprs := returningReadExprs(node.Returning)
+		readExprs = append(readExprs, whereReadExpr(node.Where))
+		readColumns, columnsOK := dmlReadColumnAuthColumns(readExprs...)
+		if tableExpr, ok := table.(*vitess.AliasedTableExpr); ok {
+			appendAdditionalColumnAuth(&tableExpr.Auth, auth.AuthType_SELECT, tableTarget, readColumns, columnsOK)
+		}
+	}
 	where, err := nodeWhere(ctx, node.Where)
 	if err != nil {
 		return nil, err

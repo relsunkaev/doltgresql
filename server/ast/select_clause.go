@@ -215,8 +215,9 @@ func selectColumnAuthColumns(node *tree.SelectClause) ([]string, bool) {
 }
 
 type selectColumnAuthCollector struct {
-	columns map[string]string
-	valid   bool
+	columns                map[string]string
+	ignoredTableQualifiers map[string]struct{}
+	valid                  bool
 }
 
 func (c *selectColumnAuthCollector) walk(expr tree.Expr) bool {
@@ -234,6 +235,11 @@ func (c *selectColumnAuthCollector) VisitPre(expr tree.Expr) (bool, tree.Expr) {
 		if expr.Star || expr.NumParts == 0 || expr.NumParts > 3 {
 			c.valid = false
 			return false, expr
+		}
+		if expr.NumParts >= 2 {
+			if _, ok := c.ignoredTableQualifiers[strings.ToLower(expr.Parts[1])]; ok {
+				return false, expr
+			}
 		}
 		column := expr.Parts[0]
 		if column == "" {

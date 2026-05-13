@@ -125,10 +125,11 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 	if node.Override != tree.InsertOverrideNone {
 		rows = wrapIdentityOverrideRows(rows)
 	}
+	tableTarget := []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()}
 	insertAuth := vitess.AuthInformation{
 		AuthType:    auth.AuthType_INSERT,
 		TargetType:  auth.AuthTargetType_TableIdentifiers,
-		TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+		TargetNames: tableTarget,
 	}
 	if len(columns) > 0 {
 		insertColumns := make([]string, len(columns))
@@ -138,6 +139,18 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 		insertAuth.TargetType = auth.AuthTargetType_TableColumnIdents
 		insertAuth.TargetNames = tableColumnAuthTargets(insertAuth.TargetNames, insertColumns)
 	}
+	readExprs := returningReadExprs(node.Returning)
+	if node.OnConflict != nil && supportedOnConflictClause(node.OnConflict) && !isIgnore(node.OnConflict) {
+		readExprs = append(readExprs, updateSourceExprs(node.OnConflict.Exprs)...)
+		readExprs = append(readExprs, whereReadExpr(node.OnConflict.Where))
+		if updateColumns, ok := updateColumnAuthColumns(node.OnConflict.Exprs); ok {
+			appendAdditionalColumnAuth(&insertAuth, auth.AuthType_UPDATE, tableTarget, updateColumns, true)
+		} else {
+			appendAdditionalColumnAuth(&insertAuth, auth.AuthType_UPDATE, tableTarget, nil, false)
+		}
+	}
+	readColumns, ok := dmlReadColumnAuthColumns(readExprs...)
+	appendAdditionalColumnAuth(&insertAuth, auth.AuthType_SELECT, tableTarget, readColumns, ok)
 	return &vitess.Insert{
 		Action:    vitess.InsertStr,
 		Ignore:    ignore,

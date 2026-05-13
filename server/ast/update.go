@@ -72,8 +72,18 @@ func nodeUpdate(ctx *Context, node *tree.Update) (update *vitess.Update, err err
 	if err != nil {
 		return nil, err
 	}
+	tableTarget, hasTableTarget := aliasedTableAuthTarget(table)
 	if columns, ok := updateColumnAuthColumns(node.Exprs); ok {
 		applyAliasedTableColumnAuth(table, auth.AuthType_UPDATE, columns)
+	}
+	if hasTableTarget {
+		readExprs := returningReadExprs(node.Returning)
+		readExprs = append(readExprs, updateSourceExprs(node.Exprs)...)
+		readExprs = append(readExprs, whereReadExpr(node.Where))
+		readColumns, columnsOK := dmlReadColumnAuthColumns(readExprs...)
+		if tableExpr, ok := table.(*vitess.AliasedTableExpr); ok {
+			appendAdditionalColumnAuth(&tableExpr.Auth, auth.AuthType_SELECT, tableTarget, readColumns, columnsOK)
+		}
 	}
 	where, err := nodeWhere(ctx, node.Where)
 	if err != nil {

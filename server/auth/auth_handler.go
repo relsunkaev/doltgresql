@@ -95,6 +95,18 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 	if state.err != nil {
 		return state.err
 	}
+	if additional := GetAdditionalAuth(auth); len(additional) > 0 {
+		auth.Extra = nil
+		if err := h.HandleAuth(ctx, aqs, auth); err != nil {
+			return err
+		}
+		for _, additionalAuth := range additional {
+			if err := h.HandleAuth(ctx, aqs, additionalAuth); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	globalLock.RLock()
 	defer globalLock.RUnlock()
 
