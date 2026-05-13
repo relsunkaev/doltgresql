@@ -248,6 +248,7 @@ func annotatedScriptTestEntries() ([]entry, error) {
 			if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
 				continue
 			}
+			stringSlices := localStringSlices(fn.Body)
 			var inspectErr error
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
 				if inspectErr != nil {
@@ -263,7 +264,7 @@ func annotatedScriptTestEntries() ([]entry, error) {
 						continue
 					}
 					source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
-					generated, err := entriesFromScriptTest(source, scriptLit)
+					generated, err := entriesFromScriptTest(source, scriptLit, stringSlices)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s: %w", source, err)
 						return false
@@ -280,7 +281,7 @@ func annotatedScriptTestEntries() ([]entry, error) {
 	return entries, nil
 }
 
-func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit) ([]entry, error) {
+func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit, stringSlices map[string][]string) ([]entry, error) {
 	fields := compositeFields(scriptLit)
 	assertionsLit, ok := fields["Assertions"].(*ast.CompositeLit)
 	if !ok {
@@ -301,14 +302,14 @@ func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit) ([]entry,
 		return nil, nil
 	}
 
-	setup, err := stringSlice(fields["SetUpScript"])
+	setup, err := stringSlice(fields["SetUpScript"], stringSlices)
 	if err != nil {
 		return nil, fmt.Errorf("SetUpScript: %w", err)
 	}
 
 	entries := make([]entry, 0, len(assertionLits))
 	for _, assertionLit := range assertionLits {
-		generated, ok, err := entryFromScriptTestAssertion(source, setup, assertionLit)
+		generated, ok, err := entryFromScriptTestAssertion(source, setup, assertionLit, stringSlices)
 		if err != nil {
 			return nil, err
 		}
@@ -319,13 +320,13 @@ func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit) ([]entry,
 	return entries, nil
 }
 
-func entryFromScriptTestAssertion(source string, setup []string, assertionLit *ast.CompositeLit) (entry, bool, error) {
+func entryFromScriptTestAssertion(source string, setup []string, assertionLit *ast.CompositeLit, stringSlices map[string][]string) (entry, bool, error) {
 	fields := compositeFields(assertionLit)
 	metaExpr, ok := fields["PostgresOracle"]
 	if !ok {
 		return entry{}, false, nil
 	}
-	meta, err := parseOracleMeta(metaExpr)
+	meta, err := parseOracleMeta(metaExpr, stringSlices)
 	if err != nil {
 		return entry{}, false, fmt.Errorf("PostgresOracle: %w", err)
 	}
@@ -371,7 +372,7 @@ func entryFromScriptTestAssertion(source string, setup []string, assertionLit *a
 	return generated, true, nil
 }
 
-func parseOracleMeta(expr ast.Expr) (oracleMeta, error) {
+func parseOracleMeta(expr ast.Expr, stringSlices map[string][]string) (oracleMeta, error) {
 	lit, ok := expr.(*ast.CompositeLit)
 	if !ok {
 		return oracleMeta{}, fmt.Errorf("must be a ScriptTestPostgresOracle literal")
@@ -385,7 +386,7 @@ func parseOracleMeta(expr ast.Expr) (oracleMeta, error) {
 	if meta.Compare, err = optionalStringLiteral(fields["Compare"]); err != nil {
 		return oracleMeta{}, fmt.Errorf("Compare: %w", err)
 	}
-	if meta.ColumnModes, err = stringSlice(fields["ColumnModes"]); err != nil {
+	if meta.ColumnModes, err = stringSlice(fields["ColumnModes"], stringSlices); err != nil {
 		return oracleMeta{}, fmt.Errorf("ColumnModes: %w", err)
 	}
 	if meta.ExpectedSQLState, err = optionalStringLiteral(fields["ExpectedSQLState"]); err != nil {
@@ -394,7 +395,7 @@ func parseOracleMeta(expr ast.Expr) (oracleMeta, error) {
 	if meta.ExpectedErrorSeverity, err = optionalStringLiteral(fields["ExpectedErrorSeverity"]); err != nil {
 		return oracleMeta{}, fmt.Errorf("ExpectedErrorSeverity: %w", err)
 	}
-	if meta.Cleanup, err = stringSlice(fields["Cleanup"]); err != nil {
+	if meta.Cleanup, err = stringSlice(fields["Cleanup"], stringSlices); err != nil {
 		return oracleMeta{}, fmt.Errorf("Cleanup: %w", err)
 	}
 	return meta, nil
@@ -423,6 +424,31 @@ func isScriptTestSliceType(expr ast.Expr) bool {
 	}
 	ident, ok := array.Elt.(*ast.Ident)
 	return ok && ident.Name == "ScriptTest"
+}
+
+func localStringSlices(body *ast.BlockStmt) map[string][]string {
+	locals := map[string][]string{}
+	ast.Inspect(body, func(node ast.Node) bool {
+		assign, ok := node.(*ast.AssignStmt)
+		if !ok {
+			return true
+		}
+		for i, lhs := range assign.Lhs {
+			if i >= len(assign.Rhs) {
+				continue
+			}
+			ident, ok := lhs.(*ast.Ident)
+			if !ok {
+				continue
+			}
+			values, err := stringSlice(assign.Rhs[i], nil)
+			if err == nil {
+				locals[ident.Name] = values
+			}
+		}
+		return true
+	})
+	return locals
 }
 
 func expectedRows(expr ast.Expr) (*[][]cell, error) {
@@ -487,9 +513,17 @@ func cellFromExpr(expr ast.Expr) (cell, error) {
 	}
 }
 
-func stringSlice(expr ast.Expr) ([]string, error) {
+func stringSlice(expr ast.Expr, locals map[string][]string) ([]string, error) {
 	if expr == nil {
 		return nil, nil
+	}
+	if ident, ok := expr.(*ast.Ident); ok {
+		if locals != nil {
+			if values, ok := locals[ident.Name]; ok {
+				return append([]string(nil), values...), nil
+			}
+		}
+		return nil, fmt.Errorf("unknown string slice identifier %s", ident.Name)
 	}
 	lit, ok := expr.(*ast.CompositeLit)
 	if !ok {

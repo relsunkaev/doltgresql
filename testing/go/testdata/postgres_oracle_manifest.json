@@ -217,6 +217,74 @@
         "DROP ROLE IF EXISTS rls_policy_list_allowed",
         "DROP ROLE IF EXISTS rls_policy_list_unlisted"
       ]
+    },
+    {
+      "id": "rls-policy-role-list-allows-listed-insert",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE USER rls_insert_policy_list_allowed PASSWORD 'allowed';",
+        "CREATE USER rls_insert_policy_list_unlisted PASSWORD 'unlisted';",
+        "CREATE TABLE rls_insert_policy_list_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_allowed;",
+        "GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_unlisted;",
+        "GRANT INSERT, SELECT ON rls_insert_policy_list_docs\n\t\t\t\t\tTO rls_insert_policy_list_allowed, rls_insert_policy_list_unlisted;",
+        "CREATE POLICY rls_insert_policy_list_docs_owner_insert\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR INSERT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tWITH CHECK (owner_name = current_user);",
+        "CREATE POLICY rls_insert_policy_list_docs_owner_select\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rls_insert_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_insert_policy_list_allowed"
+      ],
+      "query": "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (1, 'rls_insert_policy_list_allowed', 'allowed insert')\n\t\t\t\t\t\tRETURNING id, label;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "allowed insert"
+          }
+        ]
+      ],
+      "columnModes": [
+        "structural",
+        "structural"
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_insert_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_unlisted"
+      ]
+    },
+    {
+      "id": "rls-policy-role-list-denies-unlisted-insert",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE USER rls_insert_policy_list_allowed PASSWORD 'allowed';",
+        "CREATE USER rls_insert_policy_list_unlisted PASSWORD 'unlisted';",
+        "CREATE TABLE rls_insert_policy_list_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_allowed;",
+        "GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_unlisted;",
+        "GRANT INSERT, SELECT ON rls_insert_policy_list_docs\n\t\t\t\t\tTO rls_insert_policy_list_allowed, rls_insert_policy_list_unlisted;",
+        "CREATE POLICY rls_insert_policy_list_docs_owner_insert\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR INSERT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tWITH CHECK (owner_name = current_user);",
+        "CREATE POLICY rls_insert_policy_list_docs_owner_select\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rls_insert_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rls_insert_policy_list_unlisted"
+      ],
+      "query": "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (2, 'rls_insert_policy_list_unlisted', 'unlisted insert')\n\t\t\t\t\t\tRETURNING id, label;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "DROP TABLE IF EXISTS rls_insert_policy_list_docs",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
+        "DROP ROLE IF EXISTS rls_insert_policy_list_unlisted"
+      ]
     }
   ]
 }

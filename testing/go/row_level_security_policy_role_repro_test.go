@@ -94,3 +94,76 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro reproduces the
+// same role-list applicability bug for write policies: an unlisted role can use
+// an INSERT policy that PostgreSQL only applies to the listed role.
+func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_insert_policy_list_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_insert_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_insert_policy_list_unlisted; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_insert_policy_list_allowed",
+		"DROP ROLE IF EXISTS rls_insert_policy_list_unlisted",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS policy role list restricts insert policy applicability",
+			SetUpScript: []string{
+				`CREATE USER rls_insert_policy_list_allowed PASSWORD 'allowed';`,
+				`CREATE USER rls_insert_policy_list_unlisted PASSWORD 'unlisted';`,
+				`CREATE TABLE rls_insert_policy_list_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_allowed;`,
+				`GRANT USAGE ON SCHEMA public TO rls_insert_policy_list_unlisted;`,
+				`GRANT INSERT, SELECT ON rls_insert_policy_list_docs
+					TO rls_insert_policy_list_allowed, rls_insert_policy_list_unlisted;`,
+				`CREATE POLICY rls_insert_policy_list_docs_owner_insert
+					ON rls_insert_policy_list_docs
+					FOR INSERT
+					TO rls_insert_policy_list_allowed
+					WITH CHECK (owner_name = current_user);`,
+				`CREATE POLICY rls_insert_policy_list_docs_owner_select
+					ON rls_insert_policy_list_docs
+					FOR SELECT
+					TO rls_insert_policy_list_allowed
+					USING (owner_name = current_user);`,
+				`ALTER TABLE rls_insert_policy_list_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO rls_insert_policy_list_docs
+						VALUES (1, 'rls_insert_policy_list_allowed', 'allowed insert')
+						RETURNING id, label;`,
+					Expected: []sql.Row{{1, "allowed insert"}},
+					Username: `rls_insert_policy_list_allowed`,
+					Password: `allowed`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-allows-listed-insert",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+				{
+					Query: `INSERT INTO rls_insert_policy_list_docs
+						VALUES (2, 'rls_insert_policy_list_unlisted', 'unlisted insert')
+						RETURNING id, label;`,
+					ExpectedErr: `violates row-level security policy`,
+					Username:    `rls_insert_policy_list_unlisted`,
+					Password:    `unlisted`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:                    "rls-policy-role-list-denies-unlisted-insert",
+						Compare:               "sqlstate",
+						ExpectedSQLState:      "42501",
+						ExpectedErrorSeverity: "ERROR",
+						Cleanup:               cleanup,
+					},
+				},
+			},
+		},
+	})
+}
