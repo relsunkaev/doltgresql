@@ -115,7 +115,7 @@ var to_char_interval_text = framework.Function2{
 		ttc.year = int(interval.Months) / monthsPerYear
 		ttc.mon = int(interval.Months) % monthsPerYear
 		ttc.mday = int(interval.Days)
-		t := interval.Nanos()
+		t := interval.Nanos() / int64(time.Microsecond)
 
 		tFrac := t / (usecsPerSecs * duration.SecsPerHour)
 		t -= tFrac * (usecsPerSecs * duration.SecsPerHour)
@@ -126,7 +126,7 @@ var to_char_interval_text = framework.Function2{
 		tFrac = t / usecsPerSecs
 		t -= tFrac * usecsPerSecs
 		ttc.sec = int(tFrac)
-		//ttc.usec = int(t)
+		ttc.fsec = t
 
 		return tsToChar(ttc, format, true)
 	},
