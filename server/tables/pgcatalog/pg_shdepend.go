@@ -19,6 +19,8 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +45,35 @@ func (p PgShdependHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgShdependHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_shdepend row iter
-	return emptyRowIter()
+	pgCatalogCache, err := getPgCatalogCache(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if pgCatalogCache.pgClasses == nil {
+		if err = cachePgClasses(ctx, pgCatalogCache); err != nil {
+			return nil, err
+		}
+	}
+
+	rows := make([]sql.Row, 0)
+	databaseID := id.NewDatabase(ctx.GetCurrentDatabase()).AsId()
+	pgClassID := id.NewTable(PgCatalogName, PgClassName).AsId()
+	pgAuthID := id.NewTable(PgCatalogName, PgAuthidName).AsId()
+	for _, class := range pgCatalogCache.pgClasses.classes {
+		if class.owner == "" || !auth.RoleExists(class.owner) {
+			continue
+		}
+		rows = append(rows, sql.Row{
+			databaseID,                             // dbid
+			pgClassID,                              // classid
+			class.oid,                              // objid
+			int32(0),                               // objsubid
+			pgAuthID,                               // refclassid
+			id.NewId(id.Section_User, class.owner), // refobjid
+			"o",                                    // deptype
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
