@@ -23,6 +23,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 )
 
 // ValidateGroupBy is the Postgres-flavored replacement for the GMS
@@ -107,9 +110,9 @@ func ValidateGroupBy(ctx *sql.Context, a *gmsanalyzer.Analyzer, n sql.Node, scop
 			for i, expr := range selectExprs {
 				if valid, col := expressionReferencesOnlyPostgresGroupBys(ctx, groupBys, groupByCols, expr, noGroupBy); !valid {
 					if noGroupBy {
-						err = sql.ErrNonAggregatedColumnWithoutGroupBy.New(i+1, col)
+						err = groupByValidationError(sql.ErrNonAggregatedColumnWithoutGroupBy.New(i+1, col))
 					} else {
-						err = analyzererrors.ErrValidationGroupBy.New(i+1, col)
+						err = groupByValidationError(analyzererrors.ErrValidationGroupBy.New(i+1, col))
 					}
 					return false
 				}
@@ -117,7 +120,7 @@ func ValidateGroupBy(ctx *sql.Context, a *gmsanalyzer.Analyzer, n sql.Node, scop
 			if !noGroupBy {
 				for i, expr := range orderByExprs {
 					if valid, col := expressionReferencesOnlyPostgresGroupBys(ctx, groupBys, groupByCols, expr, noGroupBy); !valid {
-						err = analyzererrors.ErrValidationGroupByOrderBy.New(i+1, col)
+						err = groupByValidationError(analyzererrors.ErrValidationGroupByOrderBy.New(i+1, col))
 						return false
 					}
 				}
@@ -134,6 +137,10 @@ func ValidateGroupBy(ctx *sql.Context, a *gmsanalyzer.Analyzer, n sql.Node, scop
 	})
 
 	return n, transform.SameTree, err
+}
+
+func groupByValidationError(err error) error {
+	return pgerror.WithCandidateCode(err, pgcode.Grouping)
 }
 
 func getGroupByEqualsDependencies(ctx *sql.Context, expr sql.Expression) []sql.Expression {
