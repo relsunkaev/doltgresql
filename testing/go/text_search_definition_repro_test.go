@@ -378,6 +378,31 @@ func TestDropTextSearchConfigurationIfExistsMissingRepro(t *testing.T) {
 	})
 }
 
+// TestDropTextSearchConfigurationIfExistsDropsExistingRepro reproduces a
+// catalog consistency bug: DROP TEXT SEARCH CONFIGURATION IF EXISTS is
+// currently converted to a no-op, so an existing configuration remains visible.
+func TestDropTextSearchConfigurationIfExistsDropsExistingRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP TEXT SEARCH CONFIGURATION IF EXISTS removes existing config",
+			SetUpScript: []string{
+				`CREATE TEXT SEARCH CONFIGURATION drop_existing_ts_config_repro
+					(COPY = pg_catalog.simple);`,
+				`DROP TEXT SEARCH CONFIGURATION IF EXISTS drop_existing_ts_config_repro;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_catalog.pg_ts_config
+						WHERE cfgname = 'drop_existing_ts_config_repro'
+						  AND cfgnamespace = 'public'::regnamespace;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
+
 // TestDropTextSearchDictionaryIfExistsMissingRepro reproduces a compatibility
 // gap: PostgreSQL accepts DROP TEXT SEARCH DICTIONARY IF EXISTS for absent
 // dictionaries.
