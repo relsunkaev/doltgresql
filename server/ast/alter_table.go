@@ -49,6 +49,10 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 		switch cmd := node.Cmds[0].(type) {
 		case *tree.AlterTableComputed:
 			return nodeAlterTableComputed(ctx, treeTableName, cmd)
+		case *tree.AlterTableDropExprIden:
+			if cmd.IsIdentity {
+				return nodeAlterTableDropIdentity(ctx, treeTableName, cmd)
+			}
 		case *tree.AlterTableReplicaIdentity:
 			return nodeAlterTableReplicaIdentity(treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableSetStorage:
@@ -810,8 +814,8 @@ func nodeAlterTablePartition(ctx *Context, node *tree.AlterTablePartition) (*vit
 
 // nodeAlterTableComputed converts a tree.AlterTableComputed instance into an equivalent CREATE/ALTER SEQUENCE statement.
 func nodeAlterTableComputed(ctx *Context, tableName tree.TableName, node *tree.AlterTableComputed) (vitess.Statement, error) {
-	if len(node.Defs) > 0 {
-		return NotYetSupportedError("ALTER TABLE variant is not yet supported")
+	if !node.IsAdd {
+		return nodeAlterTableAlterIdentity(ctx, tableName, node)
 	}
 	var persistence tree.Persistence
 	var seqName tree.TableName
@@ -856,4 +860,116 @@ func nodeAlterTableComputed(ctx *Context, tableName tree.TableName, node *tree.A
 		Persistence: persistence,
 		Options:     trimmedOptions,
 	})
+}
+
+func nodeAlterTableDropIdentity(ctx *Context, tableName tree.TableName, node *tree.AlterTableDropExprIden) (vitess.Statement, error) {
+	name, err := nodeTableName(ctx, &tableName)
+	if err != nil {
+		return nil, err
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableIdentity(
+			name.SchemaQualifier.String(),
+			name.Name.String(),
+			string(node.Column),
+			node.IfExists,
+			true,
+			pgnodes.AlterTableIdentityGenerationUnchanged,
+			nil,
+		),
+		Auth: vitess.AuthInformation{
+			AuthType:   auth.AuthType_IGNORE,
+			TargetType: auth.AuthTargetType_Ignore,
+		},
+	}, nil
+}
+
+func nodeAlterTableAlterIdentity(ctx *Context, tableName tree.TableName, node *tree.AlterTableComputed) (vitess.Statement, error) {
+	name, err := nodeTableName(ctx, &tableName)
+	if err != nil {
+		return nil, err
+	}
+	generation := pgnodes.AlterTableIdentityGenerationUnchanged
+	var options []pgnodes.AlterSequenceOption
+	for _, def := range node.Defs {
+		switch {
+		case def.ByDefault:
+			generation = pgnodes.AlterTableIdentityGenerationByDefault
+		case def.IsRestart:
+			intVal, err := alterTableIdentityRestartValue(def.Restart)
+			if err != nil {
+				return nil, err
+			}
+			options = append(options, pgnodes.AlterSequenceOption{
+				Name:   pgnodes.AlterSequenceOptionRestart,
+				IntVal: intVal,
+			})
+		case len(def.Options) > 0:
+			for _, option := range def.Options {
+				converted, err := alterTableIdentitySequenceOption(option)
+				if err != nil {
+					return nil, err
+				}
+				if converted.Name != "" {
+					options = append(options, converted)
+				}
+			}
+		default:
+			generation = pgnodes.AlterTableIdentityGenerationAlways
+		}
+	}
+	return vitess.InjectedStatement{
+		Statement: pgnodes.NewAlterTableIdentity(
+			name.SchemaQualifier.String(),
+			name.Name.String(),
+			string(node.Column),
+			false,
+			false,
+			generation,
+			options,
+		),
+		Auth: vitess.AuthInformation{
+			AuthType:   auth.AuthType_IGNORE,
+			TargetType: auth.AuthTargetType_Ignore,
+		},
+	}, nil
+}
+
+func alterTableIdentityRestartValue(expr tree.Expr) (*int64, error) {
+	if expr == nil {
+		return nil, nil
+	}
+	numVal, ok := expr.(*tree.NumVal)
+	if !ok {
+		return nil, errors.Errorf("RESTART value must be an integer literal")
+	}
+	val, err := numVal.AsInt64()
+	if err != nil {
+		return nil, err
+	}
+	return &val, nil
+}
+
+func alterTableIdentitySequenceOption(option tree.SequenceOption) (pgnodes.AlterSequenceOption, error) {
+	switch option.Name {
+	case tree.SeqOptStart:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionStart, IntVal: option.IntVal}, nil
+	case tree.SeqOptIncrement:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionIncrement, IntVal: option.IntVal}, nil
+	case tree.SeqOptMinValue:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionMinValue, IntVal: option.IntVal}, nil
+	case tree.SeqOptMaxValue:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionMaxValue, IntVal: option.IntVal}, nil
+	case tree.SeqOptCycle:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionCycle}, nil
+	case tree.SeqOptNoCycle:
+		return pgnodes.AlterSequenceOption{Name: pgnodes.AlterSequenceOptionNoCycle}, nil
+	case tree.SeqOptCache:
+		if option.IntVal == nil || *option.IntVal != 1 {
+			return pgnodes.AlterSequenceOption{}, errors.Errorf("sequence caching for values other than 1 are not yet supported")
+		}
+		return pgnodes.AlterSequenceOption{}, nil
+	default:
+		return pgnodes.AlterSequenceOption{}, errors.Errorf("%s is not yet supported", option.Name)
+	}
 }

@@ -2768,6 +2768,11 @@ alter_column_set_seq_elem:
   }
 
 opt_restart:
+  /* EMPTY */
+  {
+    $$.val = nil
+  }
+|
   opt_with signed_iconst
   {
     $$.val = $2.expr()

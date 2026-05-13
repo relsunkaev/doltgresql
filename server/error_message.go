@@ -23,11 +23,25 @@ import (
 )
 
 func sanitizeErrorMessage(message string) string {
+	message = formatMissingNonNullableColumnError(message)
 	message = formatColumnSpecifiedTwiceError(message)
 	if strings.Contains(message, "duplicate unique key given: [") {
 		message = formatSerializedJSONBInUniqueKeyError(message)
 	}
 	return escapeNullBytes(message)
+}
+
+func formatMissingNonNullableColumnError(message string) string {
+	const prefix = "Field '"
+	const suffix = "' doesn't have a default value"
+	if !strings.HasPrefix(message, prefix) {
+		return message
+	}
+	columnName, rest, ok := strings.Cut(strings.TrimPrefix(message, prefix), suffix)
+	if !ok {
+		return message
+	}
+	return `null value in column "` + columnName + `" violates not-null constraint` + rest
 }
 
 func formatColumnSpecifiedTwiceError(message string) string {

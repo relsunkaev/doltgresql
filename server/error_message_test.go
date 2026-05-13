@@ -44,3 +44,9 @@ func TestSanitizeErrorMessageFormatsDuplicateTargetColumn(t *testing.T) {
 
 	require.Equal(t, `column "a" specified more than once`, sanitized)
 }
+
+func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
+	sanitized := sanitizeErrorMessage("Field 'id' doesn't have a default value (errno 1105) (sqlstate HY000)")
+
+	require.Equal(t, `null value in column "id" violates not-null constraint (errno 1105) (sqlstate HY000)`, sanitized)
+}
