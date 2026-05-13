@@ -141,7 +141,15 @@ func dropProcedure(ctx *sql.Context, procColl *procedures.Collection, fn *Routin
 	if err = checkProcedureOwnership(ctx, proc); err != nil {
 		return err
 	}
-	return procColl.DropProcedure(ctx, procId)
+	if err = procColl.DropProcedure(ctx, procId); err != nil {
+		return err
+	}
+	var persistErr error
+	auth.LockWrite(func() {
+		auth.RemoveAllRoutinePrivileges(procId.SchemaName(), procId.ProcedureName())
+		persistErr = auth.PersistChanges()
+	})
+	return persistErr
 }
 
 func checkProcedureOwnership(ctx *sql.Context, proc procedures.Procedure) error {
