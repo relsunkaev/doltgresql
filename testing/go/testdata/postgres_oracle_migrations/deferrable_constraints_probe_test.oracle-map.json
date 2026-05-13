@@ -1,0 +1,125 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map deferrable_constraints_probe_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/deferrable_constraints_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe#0001",
+      "source": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe",
+      "ordinal": 1,
+      "scriptName": "DEFERRED FK autocommit violation is rejected at statement boundary",
+      "oracle": "postgres",
+      "postgresId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0001-insert-into-c-values-1",
+      "suggestedId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0001-insert-into-c-values-1",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23503",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO c VALUES (1, 999);",
+      "querySha256": "479775a1f141bda750edb129c2a593a483092c9de658438de2f0fbfb77dbd9b5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe#0002",
+      "source": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe",
+      "ordinal": 2,
+      "scriptName": "pg_constraint exposes DEFERRABLE timing flags",
+      "oracle": "postgres",
+      "postgresId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0002-select-conname-condeferrable-condeferred-from",
+      "suggestedId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0002-select-conname-condeferrable-condeferred-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, condeferrable, condeferred\n\t\t\t\t\t\tFROM pg_constraint\n\t\t\t\t\t\tWHERE conname IN (\n\t\t\t\t\t\t\t'child_deferred_catalog_parent_fk',\n\t\t\t\t\t\t\t'child_immediate_catalog_parent_fk',\n\t\t\t\t\t\t\t'child_not_deferrable_catalog_parent_fk'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY conname;",
+      "querySha256": "c72fdca2dc45b4dd6a82d368d336373d8a25870a85e885c8d8f676a6cda386c2",
+      "expectedRows": [
+        [
+          {
+            "value": "child_deferred_catalog_parent_fk"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ],
+        [
+          {
+            "value": "child_immediate_catalog_parent_fk"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "child_not_deferrable_catalog_parent_fk"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe#0003",
+      "source": "testing/go/deferrable_constraints_probe_test.go:TestDeferrableConstraintsProbe",
+      "ordinal": 3,
+      "scriptName": "pg_constraint exposes DEFERRABLE timing flags",
+      "oracle": "postgres",
+      "postgresId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0003-select-conname-pg_get_constraintdef-oid-from",
+      "suggestedId": "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0003-select-conname-pg_get_constraintdef-oid-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname, pg_get_constraintdef(oid)\n\t\t\t\t\t\tFROM pg_constraint\n\t\t\t\t\t\tWHERE conname IN (\n\t\t\t\t\t\t\t'child_deferred_catalog_parent_fk',\n\t\t\t\t\t\t\t'child_immediate_catalog_parent_fk',\n\t\t\t\t\t\t\t'child_not_deferrable_catalog_parent_fk'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY conname;",
+      "querySha256": "a5d02f067be1592df1b1f4e021e55a7f38125357d9ff91301ee874177bbd3c69",
+      "expectedRows": [
+        [
+          {
+            "value": "child_deferred_catalog_parent_fk"
+          },
+          {
+            "value": "FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE INITIALLY DEFERRED"
+          }
+        ],
+        [
+          {
+            "value": "child_immediate_catalog_parent_fk"
+          },
+          {
+            "value": "FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE"
+          }
+        ],
+        [
+          {
+            "value": "child_not_deferrable_catalog_parent_fk"
+          },
+          {
+            "value": "FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

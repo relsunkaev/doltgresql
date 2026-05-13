@@ -1,0 +1,128 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map alter_database_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/alter_database_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro#0001",
+      "source": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE ALLOW_CONNECTIONS persists datallowconn",
+      "oracle": "postgres",
+      "postgresId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where",
+      "suggestedId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datallowconn\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'alter_no_connections_db';",
+      "querySha256": "01755d05ab2e43b7af000722b7d456cf2e69421aae76faba81f77882d03943a0",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro#0002",
+      "source": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER DATABASE CONNECTION LIMIT persists datconnlimit",
+      "oracle": "postgres",
+      "postgresId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where",
+      "suggestedId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datconnlimit\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'alter_connection_limit_db';",
+      "querySha256": "0604f5c34bc3882b009fc2c68b8d4c0dc109eca1e31c4d387b0b7f2797f1126b",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro#0003",
+      "source": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseCatalogOptionsRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER DATABASE IS_TEMPLATE persists datistemplate",
+      "oracle": "postgres",
+      "postgresId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where",
+      "suggestedId": "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT datistemplate\n\t\t\t\t\t\tFROM pg_database\n\t\t\t\t\t\tWHERE datname = 'alter_template_option_db';",
+      "querySha256": "77b4d4838034c5c7d6cbe54e61df5927e138a981b15b1800f594afd214547460",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseSetPopulatesPgDbRoleSettingRepro#0001",
+      "source": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseSetPopulatesPgDbRoleSettingRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE SET populates pg_db_role_setting",
+      "oracle": "postgres",
+      "postgresId": "alter-database-correctness-repro-test-testalterdatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole-setdatabase::regdatabase::text-array_to_string-setconfig",
+      "suggestedId": "alter-database-correctness-repro-test-testalterdatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole-setdatabase::regdatabase::text-array_to_string-setconfig",
+      "compare": "sqlstate",
+      "expectedKind": "rows",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SELECT setrole, setdatabase::regdatabase::text,\n\t\t\t\t\t\t\tarray_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'database_setting_catalog'::regdatabase;",
+      "querySha256": "15120e401861fd6a19f5fdea212ed422a01ebea4faf09ceacd335338fb1536d0",
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseResetSettingRepro#0001",
+      "source": "testing/go/alter_database_correctness_repro_test.go:TestAlterDatabaseResetSettingRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER DATABASE RESET setting succeeds",
+      "oracle": "postgres",
+      "postgresId": "alter-database-correctness-repro-test-testalterdatabaseresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "suggestedId": "alter-database-correctness-repro-test-testalterdatabaseresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tJOIN pg_catalog.pg_database ON setdatabase = pg_database.oid\n\t\t\t\t\t\tWHERE datname = 'database_reset_setting_catalog';",
+      "querySha256": "1d4366f4d7627d8974c589fd34a98f23f2bb43eff84480f009b11cbc27894210",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

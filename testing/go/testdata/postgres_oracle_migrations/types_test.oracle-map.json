@@ -1,0 +1,424 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map types_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/types_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0001",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 1,
+      "scriptName": "Integer types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0001-select-*-from-test1-order",
+      "suggestedId": "types-test-testsametypes-0001-select-*-from-test1-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test1 ORDER BY 1;",
+      "querySha256": "fc2848203acbed58801021210ea47bc98aa5c530f34677f69c11e8a5285478b7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0002",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 2,
+      "scriptName": "Integer types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0002-select-*-from-test1-order",
+      "suggestedId": "types-test-testsametypes-0002-select-*-from-test1-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test1 ORDER BY v1;",
+      "querySha256": "03fe2113905bc2d8b152746a2be8053650ece492e5ca47658e592fd46010b452",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0003",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 3,
+      "scriptName": "Integer types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0003-select-*-from-test2-order",
+      "suggestedId": "types-test-testsametypes-0003-select-*-from-test2-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test2 ORDER BY 1;",
+      "querySha256": "787c73a3ab83d629cdcaf3c1dc88c7a945575be007c209fbfbc13adee57cd689",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0004",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 4,
+      "scriptName": "Integer types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0004-select-*-from-test2-order",
+      "suggestedId": "types-test-testsametypes-0004-select-*-from-test2-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test2 ORDER BY v1;",
+      "querySha256": "e761be24565fdb41aec44ebf46eb1fb0ca6817a2cb27b7b028ac1a469c8aa2da",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0005",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 5,
+      "scriptName": "Integer types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0005-select-int2-2-int4-3",
+      "suggestedId": "types-test-testsametypes-0005-select-int2-2-int4-3",
+      "expectedKind": "unknown",
+      "query": "select int2 '2', int4 '3', int8 '4'",
+      "querySha256": "04bf25ec5af082fde271a503c7b222bff5ade65c9653b1b0c75219b26fcb887e",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0006",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 6,
+      "scriptName": "Arbitrary precision types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0006-select-*-from-test-order",
+      "suggestedId": "types-test-testsametypes-0006-select-*-from-test-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test ORDER BY 1;",
+      "querySha256": "dc899eebf4e7498534ce1cd1e06152676626110fd34b27b376b8b9d290c58d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "14854.5"
+          },
+          {
+            "value": "2504.25"
+          }
+        ],
+        [
+          {
+            "value": "21525"
+          },
+          {
+            "value": "134574.7"
+          }
+        ],
+        [
+          {
+            "value": "566821525.5"
+          },
+          {
+            "value": "735134574.75"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0007",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 7,
+      "scriptName": "Floating point types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0007-select-*-from-test1-order",
+      "suggestedId": "types-test-testsametypes-0007-select-*-from-test1-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test1 ORDER BY 1;",
+      "querySha256": "fc2848203acbed58801021210ea47bc98aa5c530f34677f69c11e8a5285478b7",
+      "expectedRows": [
+        [
+          {
+            "value": "10.125"
+          },
+          {
+            "value": "20.4"
+          }
+        ],
+        [
+          {
+            "value": "40.875"
+          },
+          {
+            "value": "81.6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0008",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 8,
+      "scriptName": "Floating point types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0008-select-*-from-test2-order",
+      "suggestedId": "types-test-testsametypes-0008-select-*-from-test2-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test2 ORDER BY 1;",
+      "querySha256": "787c73a3ab83d629cdcaf3c1dc88c7a945575be007c209fbfbc13adee57cd689",
+      "expectedRows": [
+        [
+          {
+            "value": "10.125"
+          },
+          {
+            "value": "20.4"
+          }
+        ],
+        [
+          {
+            "value": "40.875"
+          },
+          {
+            "value": "81.6"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0009",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 9,
+      "scriptName": "Date and time types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0009-select-*-from-test-order",
+      "suggestedId": "types-test-testsametypes-0009-select-*-from-test-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test ORDER BY 1;",
+      "querySha256": "dc899eebf4e7498534ce1cd1e06152676626110fd34b27b376b8b9d290c58d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1986-08-02T17:04:22"
+          },
+          {
+            "value": "2023-09-03T00:00:00"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestSameTypes#0010",
+      "source": "testing/go/types_test.go:TestSameTypes",
+      "ordinal": 10,
+      "scriptName": "Text types",
+      "oracle": "postgres",
+      "postgresId": "types-test-testsametypes-0010-select-*-from-test-order",
+      "suggestedId": "types-test-testsametypes-0010-select-*-from-test-order",
+      "expectedKind": "unknown",
+      "query": "SELECT * FROM test ORDER BY 1;",
+      "querySha256": "dc899eebf4e7498534ce1cd1e06152676626110fd34b27b376b8b9d290c58d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "def"
+          },
+          {
+            "value": "ghi"
+          }
+        ],
+        [
+          {
+            "value": "jkl"
+          },
+          {
+            "value": "mno"
+          },
+          {
+            "value": "pqr"
+          }
+        ]
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestShellTypes#0001",
+      "source": "testing/go/types_test.go:TestShellTypes",
+      "ordinal": 1,
+      "scriptName": "shell type use cases",
+      "oracle": "postgres",
+      "postgresId": "types-test-testshelltypes-0001-create-type-undefined_type",
+      "suggestedId": "types-test-testshelltypes-0001-create-type-undefined_type",
+      "expectedKind": "unknown",
+      "query": "CREATE TYPE undefined_type;",
+      "querySha256": "fb74b3bb8bc4f94a8672dc02d87ebc9210416e385f98d310c3045d81416e9daa",
+      "expectedRows": [],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestShellTypes#0002",
+      "source": "testing/go/types_test.go:TestShellTypes",
+      "ordinal": 2,
+      "scriptName": "shell type use cases",
+      "oracle": "postgres",
+      "postgresId": "types-test-testshelltypes-0002-select-1::undefined_type",
+      "suggestedId": "types-test-testshelltypes-0002-select-1::undefined_type",
+      "compare": "sqlstate",
+      "expectedKind": "unknown",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "select 1::undefined_type;",
+      "querySha256": "7159e9958895fc8a059397380d5c3314dac7c43f07f828151d9614f979b2c204",
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestShellTypes#0003",
+      "source": "testing/go/types_test.go:TestShellTypes",
+      "ordinal": 3,
+      "scriptName": "shell type use cases",
+      "oracle": "postgres",
+      "postgresId": "types-test-testshelltypes-0003-drop-type-undefined_type",
+      "suggestedId": "types-test-testshelltypes-0003-drop-type-undefined_type",
+      "expectedKind": "unknown",
+      "query": "DROP TYPE undefined_type;",
+      "querySha256": "176a69b5fe1f804a60d32436bd66842f291183abbc53f0a281410039c8a2b6f1",
+      "expectedRows": [],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/types_test.go:TestShellTypes#0004",
+      "source": "testing/go/types_test.go:TestShellTypes",
+      "ordinal": 4,
+      "scriptName": "shell type use cases",
+      "oracle": "postgres",
+      "postgresId": "types-test-testshelltypes-0004-drop-type-if-exists-undefined_type",
+      "suggestedId": "types-test-testshelltypes-0004-drop-type-if-exists-undefined_type",
+      "expectedKind": "unknown",
+      "query": "DROP TYPE IF EXISTS undefined_type;",
+      "querySha256": "411a51158eefbf0f32ebee3ae907edb36965c9a80b61939e2c362d1fe646609d",
+      "expectedRows": [],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

@@ -1,0 +1,672 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map regression_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/regression_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0001",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 1,
+      "scriptName": "nullif",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0001-select-nullif-1-1",
+      "suggestedId": "regression-test-testregressions-0001-select-nullif-1-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select nullif(1, 1);",
+      "querySha256": "101ff77041c6782ff9e3e132e9ae41b5cb519e378a7b8fccc8ca3f071449c2eb",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0002",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 2,
+      "scriptName": "nullif",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0002-select-nullif-null",
+      "suggestedId": "regression-test-testregressions-0002-select-nullif-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select nullif('', null);",
+      "querySha256": "ce9770b9d5d2783c14f74f88475c75b951f2796e064b85b47b1beb4e7e37ed8c",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0003",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 3,
+      "scriptName": "nullif",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0003-select-nullif-10-a",
+      "suggestedId": "regression-test-testregressions-0003-select-nullif-10-a",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22P02",
+      "errorSeverity": "ERROR",
+      "query": "select nullif(10, 'a');",
+      "querySha256": "4a9e9527c64aee0bab283d7d49e72390ec99d7151c9a846b71a651b3c01b025c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0004",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 4,
+      "scriptName": "coalesce",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0004-select-coalesce-null-+-5",
+      "suggestedId": "regression-test-testregressions-0004-select-coalesce-null-+-5",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select coalesce(null + 5, 100);",
+      "querySha256": "185950348ea0c0bec5df015527bc3c2e1bf9ebd54e49e51009715f8d075b9a82",
+      "expectedRows": [
+        [
+          {
+            "value": "100"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0005",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 5,
+      "scriptName": "coalesce",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0005-select-coalesce-null-null-abc",
+      "suggestedId": "regression-test-testregressions-0005-select-coalesce-null-null-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select coalesce(null, null, 'abc');",
+      "querySha256": "8a2d948053d74a5366aa6902c8fa81a6ebd2c9222480aa159cb03ef9f00381bf",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0006",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 6,
+      "scriptName": "coalesce",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0006-select-coalesce-null-null",
+      "suggestedId": "regression-test-testregressions-0006-select-coalesce-null-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select coalesce(null, null);",
+      "querySha256": "62f1085f6fb870d73a489760f5c45e576864589c7f10cdf432bd82ce904319fd",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0007",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 7,
+      "scriptName": "case / when",
+      "oracle": "internal",
+      "suggestedId": "regression-test-testregressions-0007",
+      "expectedKind": "rows",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0008",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 8,
+      "scriptName": "case / when",
+      "oracle": "internal",
+      "suggestedId": "regression-test-testregressions-0008",
+      "expectedKind": "rows",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0009",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 9,
+      "scriptName": "ALL / DISTINCT in functions",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0009-select-all-count-*-from",
+      "suggestedId": "regression-test-testregressions-0009-select-all-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select all count(*) from t1;",
+      "querySha256": "088f82f38cafc5b0e978536da477dd873275ed0092bf8245c1aa3cca3e8a95d7",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0010",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 10,
+      "scriptName": "ALL / DISTINCT in functions",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0010-select-all-count-distinct-pk",
+      "suggestedId": "regression-test-testregressions-0010-select-all-count-distinct-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select all count(distinct pk) from t1;",
+      "querySha256": "07d81f1e644aceba548e3ded5944d31e7611bbcf7e5b545d866e54ab86afb04e",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0011",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 11,
+      "scriptName": "ALL / DISTINCT in functions",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0011-select-all-count-all-pk",
+      "suggestedId": "regression-test-testregressions-0011-select-all-count-all-pk",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select all count(all pk) from t1;",
+      "querySha256": "90eeb1b0d73e58c237648e4d7e78ec43c3e131f92f06905024041738a24f2db3",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0012",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 12,
+      "scriptName": "cross joins",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0012-select-*-from-t1-cross",
+      "suggestedId": "regression-test-testregressions-0012-select-*-from-t1-cross",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1 cross join t2 order by pk1, pk2;",
+      "querySha256": "dee80588973a10923e77cdae1cd575b77b3147597337871e007131d04cdf9ef2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0013",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 13,
+      "scriptName": "cross joins",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0013-select-*-from-t1-t2",
+      "suggestedId": "regression-test-testregressions-0013-select-*-from-t1-t2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from t1, t2 order by pk1, pk2;",
+      "querySha256": "15c3d5e2ab67acd53345f884ecc87255d2258fce0253432b169410db331568f9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0014",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 14,
+      "scriptName": "casting null as integer",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0014-select-all-+-58-from",
+      "suggestedId": "regression-test-testregressions-0014-select-all-+-58-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ALL + 58 FROM tab0 WHERE NULL NOT BETWEEN + 71 * CAST ( NULL AS INTEGER ) AND col4",
+      "querySha256": "d5623f1f5b819001a6de1cc089d8421cacee9d97610a554597992804416d9822",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0015",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 15,
+      "scriptName": "addition expression in prepared statement",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0015-select-1-in-select-x+y",
+      "suggestedId": "regression-test-testregressions-0015-select-1-in-select-x+y",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 1 IN (SELECT x+y FROM t1, t2);",
+      "querySha256": "ec39b3bdf23cb517410fe2a12b446e9643cc36275743ab2ca84d0feb1d5e9cd9",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0016",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 16,
+      "scriptName": "casting from float64 to int64 and float32",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0016-select-*-from-tab0-where",
+      "suggestedId": "regression-test-testregressions-0016-select-*-from-tab0-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM tab0 WHERE - - col0 * + - col4 >= ( + CAST ( col1 AS REAL ) );",
+      "querySha256": "4bc4e53e9df87167670ec1401f12cc737c53770b89c82265c2a1d6166b26b4f5",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0017",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 17,
+      "scriptName": "typecheck fails to detect doltgres types in GMS ",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0017-select-all-+-col2-*",
+      "suggestedId": "regression-test-testregressions-0017-select-all-+-col2-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ALL + col2 * + ( ( 43 ) ) - 47 + + col1 * CAST ( - ( + 63 ) / col0 AS INTEGER ) AS col0 FROM tab1 AS cor0;",
+      "querySha256": "bcba7cd90cb2d026592a339449ccda846eed87f866a8a0252fab5daeb1097016",
+      "expectedRows": [
+        [
+          {
+            "value": "4067"
+          }
+        ],
+        [
+          {
+            "value": "2490"
+          }
+        ],
+        [
+          {
+            "value": "2877"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0018",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 18,
+      "scriptName": "typecheck fails to detect doltgres types in GMS ",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0018-select-count-*-26-*",
+      "suggestedId": "regression-test-testregressions-0018-select-count-*-26-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT - COUNT ( * ) - 26 * + 96 AS col2 FROM tab0 WHERE + 2 * col0 NOT BETWEEN 33 * CAST ( + 7 / 91 AS REAL ) AND 52;",
+      "querySha256": "418a24aac526ff32905714dd6f4d7a235ce9d73440f6c9cdef76c55aa41aa061",
+      "expectedRows": [
+        [
+          {
+            "value": "-2498"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0019",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 19,
+      "scriptName": "typecheck fails to detect doltgres types in GMS ",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0019-select-cast-+-cast-73",
+      "suggestedId": "regression-test-testregressions-0019-select-cast-+-cast-73",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST ( + CAST ( 73 AS REAL ) AS INTEGER ) * 62 FROM tab2 WHERE NULL IS NULL;",
+      "querySha256": "71f8a1589c8c6928d15d0aee14dde9f695f31eb1e7c255f125bd6db630f61cca",
+      "expectedRows": [
+        [
+          {
+            "value": "4526"
+          }
+        ],
+        [
+          {
+            "value": "4526"
+          }
+        ],
+        [
+          {
+            "value": "4526"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0020",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 20,
+      "scriptName": "SERIAL type column definition",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0020-create-table-sbtest1-id-serial",
+      "suggestedId": "regression-test-testregressions-0020-create-table-sbtest1-id-serial",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE TABLE sbtest1(id SERIAL, k INTEGER DEFAULT '0' NOT NULL, c CHAR(120) DEFAULT '' NOT NULL, pad CHAR(60) DEFAULT '' NOT NULL, PRIMARY KEY (id));",
+      "querySha256": "ba80d3dea573abaf4c12b257a0a8c177ef63209398a33b5dd81b554d135a1122",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0021",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 21,
+      "scriptName": "SERIAL type column definition",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0021-insert-into-sbtest1-k-c",
+      "suggestedId": "regression-test-testregressions-0021-insert-into-sbtest1-k-c",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO sbtest1(k, c, pad) VALUES(4284, '8386864191', '67847967371'),(9261, '339736817', '3861551598704');",
+      "querySha256": "0244bbf7e35d2c90504102fead94a9de3d0cf56adb477a2a750275a169332e31",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0022",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 22,
+      "scriptName": "arithmetic op with null casted as integer",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0022-select-all-col0-*-cast",
+      "suggestedId": "regression-test-testregressions-0022-select-all-col0-*-cast",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ALL - col0 * CAST ( col0 AS REAL ) + col1 + CAST ( NULL AS INTEGER ) AS col0 FROM tab2 AS cor0;",
+      "querySha256": "6b466d66b8ac95f89df85b1e93323d23e24ec87b2cdb812c36bd4250e6250163",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0023",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 23,
+      "scriptName": "arithmetic op with null casted as integer",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0023-select-1.2-+-cast-null",
+      "suggestedId": "regression-test-testregressions-0023-select-1.2-+-cast-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select 1.2 + cast ( null as integer );",
+      "querySha256": "d4b653505240038b44915863cf51e238289ff3227d678cf47650903a9832f17c",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0024",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 24,
+      "scriptName": "inner join",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0024-select-*-from-j1_tbl-inner",
+      "suggestedId": "regression-test-testregressions-0024-select-*-from-j1_tbl-inner",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM J1_TBL INNER JOIN J2_TBL USING (i);",
+      "querySha256": "d08bcc1a5e768f00163dad67725159b11fc4712c37174e2c736229abf05a7f5c",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0025",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 25,
+      "scriptName": "json array elements edge cases",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0025-select-jsonb_array_elements-1-::jsonb",
+      "suggestedId": "regression-test-testregressions-0025-select-jsonb_array_elements-1-::jsonb",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "select jsonb_array_elements('1'::jsonb);",
+      "querySha256": "3c0a093263435f3c7c316bc8c026656cd87827deaf528f6c09c85acc6db0fad7",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0026",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 26,
+      "scriptName": "json array elements edge cases",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0026-select-json_array_elements-1-::json",
+      "suggestedId": "regression-test-testregressions-0026-select-json_array_elements-1-::json",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22023",
+      "errorSeverity": "ERROR",
+      "query": "select json_array_elements('1'::json);",
+      "querySha256": "afc772ee2e227687b852d20cad55c65036e32abc811b68383e4f1dba35003021",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0027",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 27,
+      "scriptName": "json array elements edge cases",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0027-select-count-*-from-jsonb_array_elements",
+      "suggestedId": "regression-test-testregressions-0027-select-count-*-from-jsonb_array_elements",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select count(*) from jsonb_array_elements('[]'::jsonb);",
+      "querySha256": "747fe7e1a9f6732a5b21ac8d68c7f46fa6c6caa51a489608517876f28d97367d",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0028",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 28,
+      "scriptName": "json array elements edge cases",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0028-select-count-*-from-json_array_elements",
+      "suggestedId": "regression-test-testregressions-0028-select-count-*-from-json_array_elements",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select count(*) from json_array_elements('[]'::json);",
+      "querySha256": "71d94b93549b60c0c46f5a0b665d5937be9d37b844029789ec3934f1bd0eb308",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/regression_test.go:TestRegressions#0029",
+      "source": "testing/go/regression_test.go:TestRegressions",
+      "ordinal": 29,
+      "scriptName": "use column in function when creating view",
+      "oracle": "postgres",
+      "postgresId": "regression-test-testregressions-0029-create-view-rw_view15-as-select",
+      "suggestedId": "regression-test-testregressions-0029-create-view-rw_view15-as-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl;",
+      "querySha256": "3dae9b41142e4ab090b39dc6425e482c36a21432c6627da679f2ccb27b80f636",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

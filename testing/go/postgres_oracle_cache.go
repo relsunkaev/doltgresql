@@ -15,10 +15,12 @@
 package _go
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -42,6 +44,7 @@ type postgresOracleCachedEntry struct {
 	ExpectedRows          *[][]postgresOracleCachedCell `json:"expectedRows"`
 	ExpectedSQLState      string                        `json:"expectedSqlstate"`
 	ExpectedErrorSeverity string                        `json:"expectedErrorSeverity"`
+	ColumnModes           []string                      `json:"columnModes"`
 }
 
 type postgresOracleCachedCell struct {
@@ -84,6 +87,8 @@ func attachPostgresOracleCache(t testing.TB, scripts []ScriptTest) []ScriptTest 
 			key := postgresOracleCacheKey(testName, ordinal)
 			if cached := cache.entriesByAssertion[key]; cached != nil {
 				cachedScripts[scriptIndex].Assertions[assertionIndex].postgresOracleCached = cached
+			} else if hasPostgresOracleMarker(cachedScripts[scriptIndex].Assertions[assertionIndex]) {
+				require.Failf(t, "missing cached PostgreSQL oracle entry", "missing cached PostgreSQL oracle entry for %s", key)
 			}
 		}
 	}
@@ -148,13 +153,23 @@ func postgresOracleCacheKey(testName string, ordinal int) string {
 }
 
 func isPostgresOracleCacheCandidate(assertion ScriptTestAssertion) bool {
-	return assertion.Expected != nil ||
+	return hasPostgresOracleMarker(assertion) ||
+		assertion.Expected != nil ||
 		assertion.ExpectedRaw != nil ||
 		assertion.ExpectedErr != "" ||
 		assertion.ExpectedTag != "" ||
 		assertion.ExpectedColNames != nil ||
 		assertion.ExpectedColTypes != nil ||
 		assertion.ExpectedNotices != nil
+}
+
+func hasPostgresOracleMarker(assertion ScriptTestAssertion) bool {
+	return assertion.PostgresOracle.ID != "" ||
+		assertion.PostgresOracle.Compare != "" ||
+		len(assertion.PostgresOracle.ColumnModes) != 0 ||
+		assertion.PostgresOracle.ExpectedSQLState != "" ||
+		assertion.PostgresOracle.ExpectedErrorSeverity != "" ||
+		len(assertion.PostgresOracle.Cleanup) != 0
 }
 
 func (assertion ScriptTestAssertion) postgresOracleCachedRows() ([]sql.Row, error) {
@@ -176,7 +191,7 @@ func (entry *postgresOracleCachedEntry) rows() ([]sql.Row, error) {
 			case cell.Null:
 				cachedRow = append(cachedRow, nil)
 			case cell.Value != nil:
-				cachedRow = append(cachedRow, *cell.Value)
+				cachedRow = append(cachedRow, entry.normalizeCachedExpectedValue(columnIndex, *cell.Value))
 			default:
 				return nil, fmt.Errorf("%s row %d column %d has no cached value", entry.ID, rowIndex, columnIndex)
 			}
@@ -186,7 +201,25 @@ func (entry *postgresOracleCachedEntry) rows() ([]sql.Row, error) {
 	return rows, nil
 }
 
+func (entry *postgresOracleCachedEntry) normalizeCachedExpectedValue(index int, value string) string {
+	mode := entry.columnMode(index)
+	switch mode {
+	case "schema", "explain":
+		return strings.ReplaceAll(value, "{{schema}}", "public")
+	default:
+		return value
+	}
+}
+
 func postgresOracleStringRows(rows []sql.Row) []sql.Row {
+	return postgresOracleStringRowsWithModes(rows, nil)
+}
+
+func (entry *postgresOracleCachedEntry) stringRows(rows []sql.Row) []sql.Row {
+	return postgresOracleStringRowsWithModes(rows, entry.ColumnModes)
+}
+
+func postgresOracleStringRowsWithModes(rows []sql.Row, modes []string) []sql.Row {
 	stringRows := make([]sql.Row, len(rows))
 	for rowIndex, row := range rows {
 		stringRow := make(sql.Row, len(row))
@@ -194,7 +227,7 @@ func postgresOracleStringRows(rows []sql.Row) []sql.Row {
 			if value == nil {
 				stringRow[columnIndex] = nil
 			} else {
-				stringRow[columnIndex] = postgresOracleStringValue(value)
+				stringRow[columnIndex] = postgresOracleStringValueWithMode(value, cachedPostgresOracleColumnMode(modes, columnIndex))
 			}
 		}
 		stringRows[rowIndex] = stringRow
@@ -203,12 +236,69 @@ func postgresOracleStringRows(rows []sql.Row) []sql.Row {
 }
 
 func postgresOracleStringValue(value any) string {
+	return postgresOracleStringValueWithMode(value, "")
+}
+
+func postgresOracleStringValueWithMode(value any, mode string) string {
+	if mode == "exact" {
+		return fmt.Sprint(value)
+	}
 	switch v := value.(type) {
 	case pgtype.Numeric:
 		return postgresOracleNumericString(v)
+	case []byte:
+		if mode == "bytea" {
+			return "\\x" + hex.EncodeToString(v)
+		}
+		text := string(v)
+		if mode == "schema" {
+			return normalizeCachedPostgresOracleSchema(text)
+		}
+		if mode == "explain" {
+			return normalizeCachedPostgresOracleExplain(text)
+		}
+		return text
 	default:
-		return fmt.Sprint(v)
+		text := fmt.Sprint(v)
+		if mode == "schema" {
+			return normalizeCachedPostgresOracleSchema(text)
+		}
+		if mode == "explain" {
+			return normalizeCachedPostgresOracleExplain(text)
+		}
+		return text
 	}
+}
+
+func (entry *postgresOracleCachedEntry) columnMode(index int) string {
+	return cachedPostgresOracleColumnMode(entry.ColumnModes, index)
+}
+
+func cachedPostgresOracleColumnMode(modes []string, index int) string {
+	if index < len(modes) && modes[index] != "" {
+		return modes[index]
+	}
+	return "structural"
+}
+
+var cachedPostgresOracleSchemaNamePattern = regexp.MustCompile(`dg_oracle_[0-9]+`)
+
+func normalizeCachedPostgresOracleSchema(value string) string {
+	return cachedPostgresOracleSchemaNamePattern.ReplaceAllString(value, "public")
+}
+
+var (
+	cachedPostgresOracleExplainActualTimePattern = regexp.MustCompile(`actual time=[0-9]+(?:\.[0-9]+)?\.\.[0-9]+(?:\.[0-9]+)?`)
+	cachedPostgresOracleExplainPlanningPattern   = regexp.MustCompile(`Planning Time: [0-9]+(?:\.[0-9]+)? ms`)
+	cachedPostgresOracleExplainExecutionPattern  = regexp.MustCompile(`Execution Time: [0-9]+(?:\.[0-9]+)? ms`)
+)
+
+func normalizeCachedPostgresOracleExplain(value string) string {
+	value = normalizeCachedPostgresOracleSchema(value)
+	value = cachedPostgresOracleExplainActualTimePattern.ReplaceAllString(value, "actual time=<time>..<time>")
+	value = cachedPostgresOracleExplainPlanningPattern.ReplaceAllString(value, "Planning Time: <time> ms")
+	value = cachedPostgresOracleExplainExecutionPattern.ReplaceAllString(value, "Execution Time: <time> ms")
+	return value
 }
 
 func postgresOracleNumericString(value pgtype.Numeric) string {

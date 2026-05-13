@@ -17,6 +17,7 @@ package _go
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -422,7 +423,7 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 		require.Contains(t, []string{"postgres", "internal"}, entry.Oracle, "oracle classification for %s", entry.ID)
 		require.Contains(t, []string{"exact", "structural", "regex", "sqlstate"}, entry.Compare, "comparison mode for %s", entry.ID)
 		for _, mode := range entry.ColumnModes {
-			require.Contains(t, []string{"exact", "structural", "numeric", "timestamp", "timestamptz", "array", "json"}, mode,
+			require.Contains(t, []string{"exact", "structural", "numeric", "timestamp", "timestamptz", "array", "json", "bytea", "schema", "explain"}, mode,
 				"column mode for %s", entry.ID)
 		}
 		if entry.Oracle == "postgres" {
@@ -547,6 +548,7 @@ func connectPostgresOracle(t testing.TB, ctx context.Context, dsn string) *pgx.C
 	config, err := pgx.ParseConfig(dsn)
 	require.NoError(t, err)
 	config.Database = "postgres"
+	config.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	conn, err := pgx.ConnectConfig(ctx, config)
 	require.NoError(t, err)
 	require.NoError(t, conn.Ping(ctx))
@@ -681,6 +683,12 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		return normalizePostgresOraclePgNumeric(v)
 	case []byte:
 		switch mode {
+		case "bytea":
+			return "\\x" + hex.EncodeToString(v)
+		case "explain":
+			return normalizePostgresOracleExplain(string(v))
+		case "schema":
+			return normalizePostgresOracleSchema(string(v))
 		case "json":
 			return normalizePostgresOracleJSON(string(v))
 		case "numeric":
@@ -697,6 +705,10 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		return v.Format("2006-01-02T15:04:05.999999999")
 	case string:
 		switch mode {
+		case "explain":
+			return normalizePostgresOracleExplain(v)
+		case "schema":
+			return normalizePostgresOracleSchema(v)
 		case "json":
 			return normalizePostgresOracleJSON(v)
 		case "numeric":
@@ -720,6 +732,12 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		text := fmt.Sprint(v)
 		if mode == "numeric" {
 			return normalizePostgresOracleNumeric(text)
+		}
+		if mode == "schema" {
+			return normalizePostgresOracleSchema(text)
+		}
+		if mode == "explain" {
+			return normalizePostgresOracleExplain(text)
 		}
 		return text
 	}
@@ -748,6 +766,8 @@ func normalizePostgresOracleChar(value any) string {
 
 func inferPostgresOracleMode(oid uint32) string {
 	switch oid {
+	case 17:
+		return "bytea"
 	case 114, 3802:
 		return "json"
 	case 1700:
@@ -785,6 +805,26 @@ func normalizePostgresOraclePgNumeric(value pgtype.Numeric) string {
 		return "0"
 	}
 	return decimal.NewFromBigInt(value.Int, value.Exp).String()
+}
+
+var postgresOracleSchemaNamePattern = regexp.MustCompile(`dg_oracle_[0-9]+`)
+
+func normalizePostgresOracleSchema(value string) string {
+	return postgresOracleSchemaNamePattern.ReplaceAllString(value, "{{schema}}")
+}
+
+var (
+	postgresOracleExplainActualTimePattern = regexp.MustCompile(`actual time=[0-9]+(?:\.[0-9]+)?\.\.[0-9]+(?:\.[0-9]+)?`)
+	postgresOracleExplainPlanningPattern   = regexp.MustCompile(`Planning Time: [0-9]+(?:\.[0-9]+)? ms`)
+	postgresOracleExplainExecutionPattern  = regexp.MustCompile(`Execution Time: [0-9]+(?:\.[0-9]+)? ms`)
+)
+
+func normalizePostgresOracleExplain(value string) string {
+	value = normalizePostgresOracleSchema(value)
+	value = postgresOracleExplainActualTimePattern.ReplaceAllString(value, "actual time=<time>..<time>")
+	value = postgresOracleExplainPlanningPattern.ReplaceAllString(value, "Planning Time: <time> ms")
+	value = postgresOracleExplainExecutionPattern.ReplaceAllString(value, "Execution Time: <time> ms")
+	return value
 }
 
 func normalizePostgresOracleJSON(value string) string {

@@ -329,7 +329,7 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				}
 
 				if cachedExpectedRows != nil {
-					actualRows := postgresOracleStringRows(readRows)
+					actualRows := assertion.postgresOracleCached.stringRows(readRows)
 					if orderBy {
 						assert.Equal(t, expectedRows, actualRows, "wrong result for query %s", assertion.Query)
 					} else {

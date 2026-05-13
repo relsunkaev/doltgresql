@@ -1,0 +1,192 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map composite_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/composite_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestCompositeAttributeTypmodsRoundStoredValuesRepro#0001",
+      "source": "testing/go/composite_correctness_repro_test.go:TestCompositeAttributeTypmodsRoundStoredValuesRepro",
+      "ordinal": 1,
+      "scriptName": "composite attribute typmods round stored values",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0001-select-item-.amount::text-item-.ts::text",
+      "suggestedId": "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0001-select-item-.amount::text-item-.ts::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (item).amount::text, (item).ts::text\n\t\t\t\t\t\tFROM composite_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "57a7eb9a1ef9d1e24b4049f0ec5e556e20041f181033ecc5f0c43396fc690484",
+      "expectedRows": [
+        [
+          {
+            "value": "123.46"
+          },
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestCompositeAttributeTypmodsRoundStoredValuesRepro#0002",
+      "source": "testing/go/composite_correctness_repro_test.go:TestCompositeAttributeTypmodsRoundStoredValuesRepro",
+      "ordinal": 2,
+      "scriptName": "composite attribute typmods round stored values",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0002-insert-into-composite_typmod_items-values-2",
+      "suggestedId": "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0002-insert-into-composite_typmod_items-values-2",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO composite_typmod_items VALUES\n\t\t\t\t\t\t(2, ROW(999.995, '2021-09-15 21:43:56.789')::composite_typmod_pair);",
+      "querySha256": "f91433a9650222a7e51a0c8b2426df0cc3885a77081f2acd6129f68184342bed",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestCompositeTimetzAttributeTypmodsRoundStoredValuesRepro#0001",
+      "source": "testing/go/composite_correctness_repro_test.go:TestCompositeTimetzAttributeTypmodsRoundStoredValuesRepro",
+      "ordinal": 1,
+      "scriptName": "composite timetz attribute typmods round stored values",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testcompositetimetzattributetypmodsroundstoredvaluesrepro-0001-select-item-.tz::text-from-composite_timetz_typmod_items",
+      "suggestedId": "composite-correctness-repro-test-testcompositetimetzattributetypmodsroundstoredvaluesrepro-0001-select-item-.tz::text-from-composite_timetz_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (item).tz::text\n\t\t\t\t\t\tFROM composite_timetz_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "56719b5205d7c011e8e849cdde3e22a99ec4c4ca0cd4bb9b5279f0b2ef8bf19b",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestCompositeArrayColumnRoundTripsValuesRepro#0001",
+      "source": "testing/go/composite_correctness_repro_test.go:TestCompositeArrayColumnRoundTripsValuesRepro",
+      "ordinal": 1,
+      "scriptName": "composite array column round trips values",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0001-select-id-lines-from-composite_array_orders",
+      "suggestedId": "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0001-select-id-lines-from-composite_array_orders",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, lines\n\t\t\t\t\t\tFROM composite_array_orders;",
+      "querySha256": "53016955ef3775389934efbcfcdad25d50945ebef905d15c464ab91a641c2203",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "{\"(abc,2)\",\"(def,3)\"}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestCompositeArrayColumnRoundTripsValuesRepro#0002",
+      "source": "testing/go/composite_correctness_repro_test.go:TestCompositeArrayColumnRoundTripsValuesRepro",
+      "ordinal": 2,
+      "scriptName": "composite array column round trips values",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0002-select-lines[2]-.sku-lines[2]-.qty",
+      "suggestedId": "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0002-select-lines[2]-.sku-lines[2]-.qty",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT (lines[2]).sku, (lines[2]).qty\n\t\t\t\t\t\tFROM composite_array_orders;",
+      "querySha256": "64c7e5499cfaf112412de51b7a6de9f4d56c13197fc2dd92023d30c34323c8ad",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeAddAttributeRepro#0001",
+      "source": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeAddAttributeRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TYPE ADD ATTRIBUTE updates composite shape",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0001-alter-type-mutable_composite_add-add-attribute",
+      "suggestedId": "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0001-alter-type-mutable_composite_add-add-attribute",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42701",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TYPE mutable_composite_add ADD ATTRIBUTE b TEXT;",
+      "querySha256": "4f2a0973e8552960233960386451a013142ccea555534ec21dea0d0a86b703ec",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeAddAttributeRepro#0002",
+      "source": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeAddAttributeRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TYPE ADD ATTRIBUTE updates composite shape",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0002-select-row-1-x-::mutable_composite_add::text",
+      "suggestedId": "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0002-select-row-1-x-::mutable_composite_add::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1, 'x')::mutable_composite_add::text;",
+      "querySha256": "2e0aae1852b64c8678d833d05348b63f7024a6a7e7d8bda56ccfba2e9136f008",
+      "expectedRows": [
+        [
+          {
+            "value": "(1,x)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeDropAttributeRepro#0001",
+      "source": "testing/go/composite_correctness_repro_test.go:TestAlterCompositeTypeDropAttributeRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TYPE DROP ATTRIBUTE updates composite shape",
+      "oracle": "postgres",
+      "postgresId": "composite-correctness-repro-test-testaltercompositetypedropattributerepro-0001-select-row-1-::mutable_composite_drop::text",
+      "suggestedId": "composite-correctness-repro-test-testaltercompositetypedropattributerepro-0001-select-row-1-::mutable_composite_drop::text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ROW(1)::mutable_composite_drop::text;",
+      "querySha256": "656771a748eea47ec5d4ee7418a55be0e79a46be64d6e1b201042b6bef1c15e8",
+      "expectedRows": [
+        [
+          {
+            "value": "(1)"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

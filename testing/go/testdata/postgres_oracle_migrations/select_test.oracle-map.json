@@ -1,0 +1,704 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map select_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/select_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/select_test.go:TestSelect#0001",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 1,
+      "scriptName": "SELECT empty",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0001-select",
+      "suggestedId": "select-test-testselect-0001-select",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT;",
+      "querySha256": "9621f7129076233ed17a556c372a56e92eea88d71f825819ebb6a6fa94a67a4c",
+      "expectedRows": [
+        []
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0002",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 2,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0002-select-*-from-test-order",
+      "suggestedId": "select-test-testselect-0002-select-*-from-test-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT * FROM test ORDER BY v1, v2;",
+      "querySha256": "be42fdbcb97b6fa81051d60533f953599425537f8d14cae1a17c4f561e2fa70a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0003",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 3,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0003-select-distinct-*-from-test",
+      "suggestedId": "select-test-testselect-0003-select-distinct-*-from-test",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT * FROM test ORDER BY v1, v2;",
+      "querySha256": "7c4b0ab37d4648e0621e6760b150648447f859e16a0d970461d02aea64e49c6a",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0004",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 4,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0004-select-distinct-on-v1-*",
+      "suggestedId": "select-test-testselect-0004-select-distinct-on-v1-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v1) * FROM test ORDER BY v1, v2;",
+      "querySha256": "f0006a3989c6af7764202213a19fd78bf02ab51bccbd507673b8f397d5f50ee5",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0005",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 5,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0005-select-distinct-on-v2-*",
+      "suggestedId": "select-test-testselect-0005-select-distinct-on-v2-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2, v1;",
+      "querySha256": "9491094188e6b39ad9d171a5dc6ac4a01f4bb3a21e08674a36461dd612f84fb8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0006",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 6,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0006-select-distinct-on-v1-*",
+      "suggestedId": "select-test-testselect-0006-select-distinct-on-v1-*",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "SELECT DISTINCT ON(v1) * FROM test ORDER BY v2, v1;",
+      "querySha256": "b37d3be08855daf43e9425540575a8e156f397486396ffaa7ca81a9cd6b32ea3",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0007",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 7,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0007-select-distinct-on-v2-*",
+      "suggestedId": "select-test-testselect-0007-select-distinct-on-v2-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2 DESC, v1 DESC;",
+      "querySha256": "42f8ffcbe8cb9cbaea4a1962fad339a577f2150ad1413d9d40572d36bf025390",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0008",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 8,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0008-select-distinct-on-v2-v1",
+      "suggestedId": "select-test-testselect-0008-select-distinct-on-v2-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2;",
+      "querySha256": "892ec948979e77b166c2af41fcad1415861c16a6913f07494a5c9e33d5a8fa3c",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0009",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 9,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0009-select-distinct-on-v2-v1",
+      "suggestedId": "select-test-testselect-0009-select-distinct-on-v2-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC;",
+      "querySha256": "256d9c9299d19669e056c6ed8b03addcd35a7528bfedf942517088d3586800c9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0010",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 10,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0010-select-distinct-on-v2-v1",
+      "suggestedId": "select-test-testselect-0010-select-distinct-on-v2-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 LIMIT 1;",
+      "querySha256": "d95d544e933e8bc722bf325784db4484caae71066871819c03bda2d527a1c6e2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0011",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 11,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0011-select-distinct-on-v2-v1",
+      "suggestedId": "select-test-testselect-0011-select-distinct-on-v2-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC LIMIT 1;",
+      "querySha256": "a862bbcb39d67126fc021da5866ccb60ce1f86f072b7f8e4eab9e1fc7ea3d49b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0012",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 12,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0012-select-distinct-on-v1-v2",
+      "suggestedId": "select-test-testselect-0012-select-distinct-on-v1-v2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v1, v2, v3) * FROM test2 ORDER BY v1, v2;",
+      "querySha256": "566a64ffc1b17b08f6c03658596d8ce97a66dc208dac502b4f87bf8c52dbbfc7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "4"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0013",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 13,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0013-select-distinct-on-v3-v1",
+      "suggestedId": "select-test-testselect-0013-select-distinct-on-v3-v1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT DISTINCT ON(v3) v1 FROM test2;",
+      "querySha256": "1812b0678b42d0d0b0bdb79f48ec3205e925e3b73df2a9b4e6d708c5b654586f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0014",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 14,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0014-select-distinct-on-v1-v3",
+      "suggestedId": "select-test-testselect-0014-select-distinct-on-v1-v3",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "SELECT DISTINCT ON(v1, v3) * FROM test2 ORDER BY v1, v2;",
+      "querySha256": "1035db1cb3f50630cb680ab616740e8e4c3cb098908d6eb508ff2786ddc4f99f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0015",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 15,
+      "scriptName": "SELECT DISTINCT ON",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0015-select-distinct-on-v2-*",
+      "suggestedId": "select-test-testselect-0015-select-distinct-on-v2-*",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P10",
+      "errorSeverity": "ERROR",
+      "query": "SELECT DISTINCT ON(v2) * FROM test2 ORDER BY v1, v2;",
+      "querySha256": "db04b937705ec6098f1ceb51fcaa0a6b75690b898ffcc812f94df49eeb6f4a2a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0016",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 16,
+      "scriptName": "select values",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0016-select-*-from-values-1",
+      "suggestedId": "select-test-testselect-0016-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22));",
+      "querySha256": "d0da4b6842c14192f921c3d553e8e142a4b912e0e7af0f3d74e886c97ef13829",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "峰哥"
+          },
+          {
+            "value": "18"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "王哥"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "张哥"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0017",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 17,
+      "scriptName": "select values",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0017-select-*-from-values-1",
+      "suggestedId": "select-test-testselect-0017-select-*-from-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age);",
+      "querySha256": "cff75d0cc3e3b37e501bb60c7f92f90ff2910525b65cae13a79802ea99c81753",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "峰哥"
+          },
+          {
+            "value": "18"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "王哥"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "张哥"
+          },
+          {
+            "value": "22"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0018",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 18,
+      "scriptName": "select values",
+      "oracle": "internal",
+      "suggestedId": "select-test-testselect-0018-select-*-from-values-1",
+      "expectedKind": "rows",
+      "query": "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
+      "querySha256": "0bdf4adb7625d9bd74fd3494432eb07397e7205e5861d272f303ada547ef5023",
+      "nonLiteral": [
+        "BindVars"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0019",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 19,
+      "scriptName": "SELECT with no select expressions",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0019-select-from-mytable",
+      "suggestedId": "select-test-testselect-0019-select-from-mytable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "select from mytable;",
+      "querySha256": "45a5faf5e95dcaeb2bdfb5b0fe7a3fd5bc25de6f1f2bef51ca415dd4525a7b2e",
+      "expectedRows": [
+        [],
+        []
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/select_test.go:TestSelect#0020",
+      "source": "testing/go/select_test.go:TestSelect",
+      "ordinal": 20,
+      "scriptName": "SELECT with no select expressions",
+      "oracle": "postgres",
+      "postgresId": "select-test-testselect-0020-select-exists-select-from-mytable",
+      "suggestedId": "select-test-testselect-0020-select-exists-select-from-mytable",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT EXISTS (SELECT FROM mytable where pk > 0);",
+      "querySha256": "9bf30b6ee3350505dc2ab66ef2e84462e59b1fbe77d58ad2859692a59d7ac2a4",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

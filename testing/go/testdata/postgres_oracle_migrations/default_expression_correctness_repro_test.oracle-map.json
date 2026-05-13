@@ -1,0 +1,127 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map default_expression_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/default_expression_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestCreateTableDefaultRejectsColumnReferencesRepro#0001",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestCreateTableDefaultRejectsColumnReferencesRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE default rejects column references",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testcreatetabledefaultrejectscolumnreferencesrepro-0001-create-table-default_column_reference_items-id-int",
+      "suggestedId": "default-expression-correctness-repro-test-testcreatetabledefaultrejectscolumnreferencesrepro-0001-create-table-default_column_reference_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE default_column_reference_items (\n\t\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\t\tsource_value TEXT,\n\t\t\t\t\t\tcopied_value TEXT DEFAULT (source_value)\n\t\t\t\t\t);",
+      "querySha256": "082916263de7a0bde5d798b9b96b267e117b464d71b4faa1c29468efcaf200ae",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestAlterColumnDefaultRejectsColumnReferencesRepro#0001",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestAlterColumnDefaultRejectsColumnReferencesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN SET DEFAULT rejects column references",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testaltercolumndefaultrejectscolumnreferencesrepro-0001-alter-table-alter_default_column_reference_items-alter-column",
+      "suggestedId": "default-expression-correctness-repro-test-testaltercolumndefaultrejectscolumnreferencesrepro-0001-alter-table-alter_default_column_reference_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_default_column_reference_items\n\t\t\t\t\t\tALTER COLUMN copied_value SET DEFAULT (source_value);",
+      "querySha256": "8a1e9e12bbe58ebdd6fe710cbf07713a539605a52481b3b7aef8e4cc1cbe1fc5",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro#0001",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro",
+      "ordinal": 1,
+      "scriptName": "DEFAULT rejects aggregate expressions",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0001-create-table-default_aggregate_items-id-int",
+      "suggestedId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0001-create-table-default_aggregate_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE default_aggregate_items (\n\t\t\t\t\t\tid INT DEFAULT (avg(1))\n\t\t\t\t\t);",
+      "querySha256": "30901f8f7ca794e537c65cb986364929894a537b12e4a483a153f9558d5c8c9c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro#0002",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro",
+      "ordinal": 2,
+      "scriptName": "DEFAULT rejects window expressions",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0002-create-table-default_window_items-id-int",
+      "suggestedId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0002-create-table-default_window_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P20",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE default_window_items (\n\t\t\t\t\t\tid INT DEFAULT (row_number() OVER ())\n\t\t\t\t\t);",
+      "querySha256": "1f4bba36b02b9e58bc865c6aafe399b0ca57ecaf30886deff95b332b6246f448",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro#0003",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestDefaultExpressionsRejectNonScalarExpressionsRepro",
+      "ordinal": 3,
+      "scriptName": "DEFAULT rejects set-returning expressions",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0003-create-table-default_srf_items-id-int",
+      "suggestedId": "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0003-create-table-default_srf_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE default_srf_items (\n\t\t\t\t\t\tid INT DEFAULT (generate_series(1, 2))\n\t\t\t\t\t);",
+      "querySha256": "8ff637702cc19548fe895dc09d1dd90be5bfa7ad55e3f20240f2dfe591db7309",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/default_expression_correctness_repro_test.go:TestAddColumnVolatileDefaultBackfillsEachExistingRowGuard#0001",
+      "source": "testing/go/default_expression_correctness_repro_test.go:TestAddColumnVolatileDefaultBackfillsEachExistingRowGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD COLUMN volatile default backfills each row",
+      "oracle": "postgres",
+      "postgresId": "default-expression-correctness-repro-test-testaddcolumnvolatiledefaultbackfillseachexistingrowguard-0001-select-count-distinct-uid::text-from",
+      "suggestedId": "default-expression-correctness-repro-test-testaddcolumnvolatiledefaultbackfillseachexistingrowguard-0001-select-count-distinct-uid::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(DISTINCT uid::text)\n\t\t\t\t\t\tFROM add_volatile_default_items;",
+      "querySha256": "9cd2d23531265a1239b16c440df054fd56d97cadb7b13977bfb96bc6cd72b80c",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

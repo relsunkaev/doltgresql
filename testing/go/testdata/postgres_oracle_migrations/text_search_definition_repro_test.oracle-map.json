@@ -1,0 +1,553 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map text_search_definition_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/text_search_definition_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestBuiltInTextSearchFunctionsMatchTermsRepro",
+      "ordinal": 1,
+      "scriptName": "built-in text-search functions match terms",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testbuiltintextsearchfunctionsmatchtermsrepro-0001-select-to_tsvector-simple-::regconfig-jumped",
+      "suggestedId": "text-search-definition-repro-test-testbuiltintextsearchfunctionsmatchtermsrepro-0001-select-to_tsvector-simple-::regconfig-jumped",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_tsvector('simple'::regconfig, 'jumped cats')::text,\n\t\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'jumped & cats')::text,\n\t\t\t\t\t\t\tto_tsvector('simple'::regconfig, 'jumped cats') @@\n\t\t\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'cats');",
+      "querySha256": "32343178da425b632bbe8896efb612fddf1ddf158d5ff07300fc0206fc3186f9",
+      "expectedRows": [
+        [
+          {
+            "value": "'cats':2 'jumped':1"
+          },
+          {
+            "value": "'jumped' & 'cats'"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestPlainToTsQueryFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "plainto_tsquery parses plain text",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testplaintotsqueryfunctionrepro-0001-select-plainto_tsquery-simple-::regconfig-fat",
+      "suggestedId": "text-search-definition-repro-test-testplaintotsqueryfunctionrepro-0001-select-plainto_tsquery-simple-::regconfig-fat",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT plainto_tsquery('simple'::regconfig, 'fat cats')::text;",
+      "querySha256": "4faf5fe8ece169d6baa7f1827eb208b24a737a2f9ef578f6ad19319cdf04ef38",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat' & 'cats'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestPhraseToTsQueryFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "phraseto_tsquery parses phrase text",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testphrasetotsqueryfunctionrepro-0001-select-phraseto_tsquery-simple-::regconfig-fat",
+      "suggestedId": "text-search-definition-repro-test-testphrasetotsqueryfunctionrepro-0001-select-phraseto_tsquery-simple-::regconfig-fat",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT phraseto_tsquery('simple'::regconfig, 'fat cats')::text;",
+      "querySha256": "919fc953409de7fb901cc2aa49069bc50e0c16743dde7fb67f7f0f639d96f37a",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat' <-> 'cats'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestWebsearchToTsQueryFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "websearch_to_tsquery parses web search text",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testwebsearchtotsqueryfunctionrepro-0001-select-websearch_to_tsquery-simple-::regconfig-fat",
+      "suggestedId": "text-search-definition-repro-test-testwebsearchtotsqueryfunctionrepro-0001-select-websearch_to_tsquery-simple-::regconfig-fat",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT websearch_to_tsquery('simple'::regconfig, 'fat cat')::text;",
+      "querySha256": "c56e9a2acc70f82c48f5b203af6f26ff6036b54529be399328b8d2fbce5b8f89",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat' & 'cat'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsHeadlineFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_headline highlights matching text",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsheadlinefunctionrepro-0001-select-ts_headline-simple-::regconfig-fat",
+      "suggestedId": "text-search-definition-repro-test-testtsheadlinefunctionrepro-0001-select-ts_headline-simple-::regconfig-fat",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_headline('simple'::regconfig, 'fat cats ate rats', to_tsquery('simple'::regconfig, 'cats'))::text;",
+      "querySha256": "48d433b064c500b27d68633123f8f4322c5c234e810ee7f0479681ebf737c545",
+      "expectedRows": [
+        [
+          {
+            "value": "fat <b>cats</b> ate rats"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsRankFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsRankFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_rank scores matching documents",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsrankfunctionrepro-0001-select-ts_rank-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsrankfunctionrepro-0001-select-ts_rank-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_rank(\n\t\t\t\t\t\tto_tsvector('simple'::regconfig, 'fat cats ate rats'),\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'cats')\n\t\t\t\t\t) > 0;",
+      "querySha256": "c8ce52abbe2e9f41daf65d38bc870acaa6be3497d65432423ae07579f505c2eb",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsRankCdFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_rank_cd scores matching documents",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsrankcdfunctionrepro-0001-select-ts_rank_cd-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsrankcdfunctionrepro-0001-select-ts_rank_cd-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_rank_cd(\n\t\t\t\t\t\tto_tsvector('simple'::regconfig, 'fat cats ate rats'),\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'cats')\n\t\t\t\t\t) > 0;",
+      "querySha256": "5b473f3918e491febf593d117aab2cdd21b08a253d8b96fa5d23e440497365f5",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsVectorToArrayFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "tsvector_to_array extracts lexemes",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsvectortoarrayfunctionrepro-0001-select-tsvector_to_array-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsvectortoarrayfunctionrepro-0001-select-tsvector_to_array-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tsvector_to_array(to_tsvector('simple'::regconfig, 'fat cats'))::text;",
+      "querySha256": "c0ed8f1999e49582f6b581d4f80baf3e9de16ecfebbc445b3ff9c19578a8ae97",
+      "expectedRows": [
+        [
+          {
+            "value": "{cats,fat}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestArrayToTsVectorFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "array_to_tsvector constructs sorted lexemes",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testarraytotsvectorfunctionrepro-0001-select-array_to_tsvector-array[-foo-bar",
+      "suggestedId": "text-search-definition-repro-test-testarraytotsvectorfunctionrepro-0001-select-array_to_tsvector-array[-foo-bar",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_tsvector(ARRAY['foo', 'bar', 'baz', 'bar'])::text;",
+      "querySha256": "bd0f0f41a995410242606aefe974653f200e65ce673f71b18d0b486358afcd5f",
+      "expectedRows": [
+        [
+          {
+            "value": "'bar' 'baz' 'foo'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsDeleteFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_delete removes a lexeme",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsdeletefunctionrepro-0001-select-ts_delete-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsdeletefunctionrepro-0001-select-ts_delete-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_delete(to_tsvector('simple'::regconfig, 'fat cats'), 'cats')::text;",
+      "querySha256": "208af3a4671cec8a9a1fe9b983f0e4ec5b027bd517dbec4de570c2624a51e531",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat':1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestSetWeightFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestSetWeightFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "setweight assigns lexeme weights",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testsetweightfunctionrepro-0001-select-setweight-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testsetweightfunctionrepro-0001-select-setweight-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT setweight(to_tsvector('simple'::regconfig, 'fat cats'), 'A')::text;",
+      "querySha256": "04700fdfc027180ec87967f1c359d5dbb71fc4a812d5cde1ea006f8c02447d3c",
+      "expectedRows": [
+        [
+          {
+            "value": "'cats':2A 'fat':1A"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestStripTsVectorFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "strip removes tsvector positions",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-teststriptsvectorfunctionrepro-0001-select-strip-to_tsvector-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-teststriptsvectorfunctionrepro-0001-select-strip-to_tsvector-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT strip(to_tsvector('simple'::regconfig, 'fat cats'))::text;",
+      "querySha256": "323de99d5b48f6ab9b1fdd0947bbf94e3afcef5e40e4f9f1a6dc4c15c38fb541",
+      "expectedRows": [
+        [
+          {
+            "value": "'cats' 'fat'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestNumNodeFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestNumNodeFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "numnode counts tsquery nodes",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testnumnodefunctionrepro-0001-select-numnode-to_tsquery-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testnumnodefunctionrepro-0001-select-numnode-to_tsquery-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT numnode(to_tsquery('simple'::regconfig, 'fat & cats'));",
+      "querySha256": "3b1319724e8fa4b2a45a27512abf0691485ca2bdb12e953dc1d94aa809c891f4",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestQueryTreeFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "querytree returns indexable tsquery text",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testquerytreefunctionrepro-0001-select-querytree-to_tsquery-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testquerytreefunctionrepro-0001-select-querytree-to_tsquery-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT querytree(to_tsquery('simple'::regconfig, 'fat & cats'));",
+      "querySha256": "d4da6e51e8533a15e09581853a93fc5516ec9c9200cf0b04e1d582dd4c1262db",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat' & 'cats'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsQueryPhraseFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "tsquery_phrase builds phrase query",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsqueryphrasefunctionrepro-0001-select-tsquery_phrase-to_tsquery-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsqueryphrasefunctionrepro-0001-select-tsquery_phrase-to_tsquery-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tsquery_phrase(\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'fat'),\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'cats')\n\t\t\t\t\t)::text;",
+      "querySha256": "ec38febebfc6cd1f8948961b649828f1286ae49043270e4523ae8fd7ccb6c480",
+      "expectedRows": [
+        [
+          {
+            "value": "'fat' <-> 'cats'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsRewriteFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_rewrite substitutes tsquery terms",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsrewritefunctionrepro-0001-select-ts_rewrite-to_tsquery-simple-::regconfig",
+      "suggestedId": "text-search-definition-repro-test-testtsrewritefunctionrepro-0001-select-ts_rewrite-to_tsquery-simple-::regconfig",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_rewrite(\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'fat'),\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'fat'),\n\t\t\t\t\t\tto_tsquery('simple'::regconfig, 'cat')\n\t\t\t\t\t)::text;",
+      "querySha256": "08445c62c478acdb1557bae1dbc873ff0a6685a08a757c9464c498ddf21711cd",
+      "expectedRows": [
+        [
+          {
+            "value": "'cat'"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestTsFilterFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestTsFilterFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "ts_filter keeps selected tsvector weights",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testtsfilterfunctionrepro-0001-select-ts_filter-base:1a-hidden:2b-rebel:3a",
+      "suggestedId": "text-search-definition-repro-test-testtsfilterfunctionrepro-0001-select-ts_filter-base:1a-hidden:2b-rebel:3a",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts_filter('base:1A hidden:2B rebel:3A'::tsvector, '{a}')::text;",
+      "querySha256": "5170e07b058a6cbbc658ad6b254f431e903656453728509ed18e5e3cb959263f",
+      "expectedRows": [
+        [
+          {
+            "value": "'base':1A 'rebel':3A"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestJsonToTsVectorFunctionRepro",
+      "ordinal": 1,
+      "scriptName": "json_to_tsvector extracts JSON string tokens",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testjsontotsvectorfunctionrepro-0001-select-json_to_tsvector-english-::regconfig-{",
+      "suggestedId": "text-search-definition-repro-test-testjsontotsvectorfunctionrepro-0001-select-json_to_tsvector-english-::regconfig-{",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT json_to_tsvector('english'::regconfig, '{\"a\": \"aaa in bbb\"}'::json, '\"string\"')::text;",
+      "querySha256": "faf1bc7b5296f5cf68a33a95761efb1585eb3f335df20c8056fc2789f19c28d2",
+      "expectedRows": [
+        [
+          {
+            "value": "'aaa':1 'bbb':3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TEXT SEARCH CONFIGURATION copy is usable",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where",
+      "suggestedId": "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT cfgname\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_config\n\t\t\t\t\t\tWHERE cfgname = 'copied_simple_config';",
+      "querySha256": "3024ca110c820cf2bfea96005c5ff531616b310ad24452e7f690fcd6dc5b2ad6",
+      "expectedRows": [
+        [
+          {
+            "value": "copied_simple_config"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro#0002",
+      "source": "testing/go/text_search_definition_repro_test.go:TestCreateTextSearchConfigurationCopyIsUsableRepro",
+      "ordinal": 2,
+      "scriptName": "CREATE TEXT SEARCH CONFIGURATION copy is usable",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0002-select-to_tsvector-copied_simple_config-jumped-cats",
+      "suggestedId": "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0002-select-to_tsvector-copied_simple_config-jumped-cats",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT to_tsvector('copied_simple_config', 'jumped cats');",
+      "querySha256": "dea514e74b20871bb0f9276cf57ef5ae542f652b238601d5654461673c6e4910",
+      "expectedRows": [
+        [
+          {
+            "value": "'cats':2 'jumped':1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestDropTextSearchConfigurationIfExistsDropsExistingRepro",
+      "ordinal": 1,
+      "scriptName": "DROP TEXT SEARCH CONFIGURATION IF EXISTS removes existing config",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testdroptextsearchconfigurationifexistsdropsexistingrepro-0001-select-count-*-from-pg_catalog.pg_ts_config",
+      "suggestedId": "text-search-definition-repro-test-testdroptextsearchconfigurationifexistsdropsexistingrepro-0001-select-count-*-from-pg_catalog.pg_ts_config",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_ts_config\n\t\t\t\t\t\tWHERE cfgname = 'drop_existing_ts_config_repro'\n\t\t\t\t\t\t  AND cfgnamespace = 'public'::regnamespace;",
+      "querySha256": "3afccfec5441df5c8f28cac93c55e64faa83708e525937fb36162f2df2921ca4",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0001",
+      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0001-alter-text-search-configuration-missing_ts_config_repro",
+      "suggestedId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0001-alter-text-search-configuration-missing_ts_config_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TEXT SEARCH CONFIGURATION missing_ts_config_repro RENAME TO renamed_ts_config_repro;",
+      "querySha256": "70c3221722a7b3e886fd8d9cfd7529652fe6019511045ae9dfb6d9b323fa6d13",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0002",
+      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0002-alter-text-search-dictionary-missing_ts_dictionary_repro",
+      "suggestedId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0002-alter-text-search-dictionary-missing_ts_dictionary_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TEXT SEARCH DICTIONARY missing_ts_dictionary_repro RENAME TO renamed_ts_dictionary_repro;",
+      "querySha256": "d7dc90f6a8736472d47c2c63106db633ca25a17489c08a056e3a184b149420c4",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0003",
+      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0003-alter-text-search-parser-missing_ts_parser_repro",
+      "suggestedId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0003-alter-text-search-parser-missing_ts_parser_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TEXT SEARCH PARSER missing_ts_parser_repro RENAME TO renamed_ts_parser_repro;",
+      "querySha256": "3948c8fd051c9aca038804a8d103f39397afb8eef98d2058577bb74f527c255b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro#0004",
+      "source": "testing/go/text_search_definition_repro_test.go:TestAlterTextSearchObjectsReachMissingObjectValidationRepro",
+      "ordinal": 4,
+      "scriptName": "ALTER TEXT SEARCH objects validate missing targets",
+      "oracle": "postgres",
+      "postgresId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0004-alter-text-search-template-missing_ts_template_repro",
+      "suggestedId": "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0004-alter-text-search-template-missing_ts_template_repro",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TEXT SEARCH TEMPLATE missing_ts_template_repro RENAME TO renamed_ts_template_repro;",
+      "querySha256": "a377a35762ed9b56a2e48be95121ba9fd4014dbd302b258a8376e52f70ede2e6",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

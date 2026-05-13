@@ -1,0 +1,42 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map access_method_definition_repro_test.go",
+  "sourceFile": "testing/go/access_method_definition_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/access_method_definition_repro_test.go:TestCreateAccessMethodPersistsPgAmRepro#0001",
+      "source": "testing/go/access_method_definition_repro_test.go:TestCreateAccessMethodPersistsPgAmRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE ACCESS METHOD persists pg_am row",
+      "oracle": "postgres",
+      "postgresId": "access-method-definition-repro-test-testcreateaccessmethodpersistspgamrepro-0001-select-amname-amtype-from-pg_catalog.pg_am",
+      "suggestedId": "access-method-definition-repro-test-testcreateaccessmethodpersistspgamrepro-0001-select-amname-amtype-from-pg_catalog.pg_am",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amname, amtype\n\t\t\t\t\t\tFROM pg_catalog.pg_am\n\t\t\t\t\t\tWHERE amname = 'heap_repro_am';",
+      "querySha256": "bb7209f035fc7a2c0f588333c8170ef975abb74cbd4aded23dacf2854810f18e",
+      "expectedRows": [
+        [
+          {
+            "value": "heap_repro_am"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

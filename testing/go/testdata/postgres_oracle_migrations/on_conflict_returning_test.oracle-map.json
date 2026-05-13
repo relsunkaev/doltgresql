@@ -21,8 +21,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0001-insert-into-kv-values-1",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0001-insert-into-kv-values-1",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (1, 10, 100) RETURNING k, v, updated_at;",
       "querySha256": "24d5ea35f6004b738f8eb5de5034cbda2b06224baa0175cc0a8f31ffae48c63e",
       "expectedRows": [
@@ -38,10 +37,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -52,8 +48,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0002-insert-into-kv-values-2",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0002-insert-into-kv-values-2",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (2, 20, 200), (3, 30, 300) RETURNING k, v;",
       "querySha256": "a5318ef63b55a3acb64d830b5b19cf463971dba3185a7f50b75495048d219c61",
       "expectedRows": [
@@ -74,10 +69,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -88,12 +80,11 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0003-insert-into-kv-values-1",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0003-insert-into-kv-values-1",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
       "querySha256": "04de6c10d3e2b9c3b4f330ab9b5de220d144cf1f65de5b5ac030de44525575e4",
       "expectedRows": [],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -104,8 +95,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0004-select-k-v-from-kv",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0004-select-k-v-from-kv",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "SELECT k, v FROM kv WHERE k = 1;",
       "querySha256": "c416e1a4fe5bd4f12cd139b50e456a6f222026dbfe025bb8484bb26c3c811893",
       "expectedRows": [
@@ -118,10 +108,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -132,8 +119,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0005-insert-into-kv-values-2",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0005-insert-into-kv-values-2",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (2, 20)\n\t\t\t\t\t\tON CONFLICT (k) DO NOTHING\n\t\t\t\t\t\tRETURNING k, v;",
       "querySha256": "5139ed8fb36ff1db532bc2c1bea9b217e294154f84b200e1774c8022a59cd386",
       "expectedRows": [
@@ -146,10 +132,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -160,8 +143,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0006-select-k-v-from-kv",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0006-select-k-v-from-kv",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "SELECT k, v FROM kv ORDER BY k;",
       "querySha256": "a7813217abcf2ec275e9e676767d8682f1118305f31fbd76c0975261f765bf47",
       "expectedRows": [
@@ -182,10 +164,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -196,8 +175,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0007-insert-into-kv-values-1",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0007-insert-into-kv-values-1",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (1, 99)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;",
       "querySha256": "96122ab026d60261b6e8686e6850be816c34ba3c03b07d8fdc5a08a4db6728a4",
       "expectedRows": [
@@ -210,10 +188,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -224,8 +199,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0008-select-k-v-from-kv",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0008-select-k-v-from-kv",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "SELECT k, v FROM kv WHERE k = 1;",
       "querySha256": "c416e1a4fe5bd4f12cd139b50e456a6f222026dbfe025bb8484bb26c3c811893",
       "expectedRows": [
@@ -238,10 +212,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -252,8 +223,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0009-insert-into-kv-values-1",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0009-insert-into-kv-values-1",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "INSERT INTO kv VALUES (1, 11), (2, 22)\n\t\t\t\t\t\tON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v\n\t\t\t\t\t\tRETURNING k, v;",
       "querySha256": "764796d82b77bfe7308737560ca25fd5fb66b06ab36a609c24b523f14b674b19",
       "expectedRows": [
@@ -274,10 +244,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -288,8 +255,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0010-select-k-v-from-kv",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0010-select-k-v-from-kv",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "SELECT k, v FROM kv ORDER BY k;",
       "querySha256": "a7813217abcf2ec275e9e676767d8682f1118305f31fbd76c0975261f765bf47",
       "expectedRows": [
@@ -310,10 +276,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     },
     {
@@ -376,8 +339,7 @@
       "oracle": "postgres",
       "postgresId": "on-conflict-returning-test-testinsertonconflictreturning-0015-select-k-v-from-kv",
       "suggestedId": "on-conflict-returning-test-testinsertonconflictreturning-0015-select-k-v-from-kv",
-      "compare": "structural",
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "query": "SELECT k, v FROM kv ORDER BY k;",
       "querySha256": "a7813217abcf2ec275e9e676767d8682f1118305f31fbd76c0975261f765bf47",
       "expectedRows": [
@@ -406,10 +368,7 @@
           }
         ]
       ],
-      "nonLiteral": [
-        "Expected"
-      ],
-      "needsCleanup": false,
+      "needsCleanup": true,
       "cleanupProvided": false
     }
   ]

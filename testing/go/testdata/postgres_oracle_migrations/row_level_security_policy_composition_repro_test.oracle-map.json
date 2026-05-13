@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --migration-candidates-dir",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_policy_composition_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/row_level_security_policy_composition_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -21,23 +21,30 @@
       "oracle": "postgres",
       "postgresId": "rls-multiple-select-policies-combine",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecuritymultipleselectpoliciescombinerepro-0001-select-id-label-from-rls_multi_policy_docs",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_multi_policy_reader",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_multi_policy_docs\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "9bccdb309ac94a5e45176718a0950ceffbe57bd8d6791b30435ce37a33f87550",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_multi_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_multi_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_multi_policy_reader; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_multi_policy_reader"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "owned"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "shared"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     },
     {
       "key": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecuritySelectPolicyUsingTrueRepro#0001",
@@ -47,23 +54,30 @@
       "oracle": "postgres",
       "postgresId": "rls-select-policy-using-true-allows-all",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecurityselectpolicyusingtruerepro-0001-select-id-label-from-rls_true_policy_docs",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_true_policy_reader",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_true_policy_docs\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "4db693d040f3d4f472f8c0aea08b2fe601e7162aa80aedc4c49e7809e5308a93",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_true_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_policy_reader; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_true_policy_reader"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "also visible"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     },
     {
       "key": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckTrueRepro#0001",
@@ -73,23 +87,22 @@
       "oracle": "postgres",
       "postgresId": "rls-insert-policy-check-true-allows-all",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecurityinsertpolicywithchecktruerepro-0001-insert-into-rls_true_insert_policy_docs-values-1",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_true_insert_policy_writer",
       "query": "INSERT INTO rls_true_insert_policy_docs\n\t\t\t\t\t\tVALUES (1, 'inserted')\n\t\t\t\t\t\tRETURNING id, label;",
       "querySha256": "5aa61e29575988494955fc17afde1e0b627653916f375c593fbab455ac8e5617",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_true_insert_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_insert_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_insert_policy_writer; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_true_insert_policy_writer"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     },
     {
       "key": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityUpdatePolicyUsingTrueRepro#0001",
@@ -99,23 +112,22 @@
       "oracle": "postgres",
       "postgresId": "rls-update-policy-using-true-allows-all",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecurityupdatepolicyusingtruerepro-0001-update-rls_true_update_policy_docs-set-label-=",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_true_update_policy_writer",
       "query": "UPDATE rls_true_update_policy_docs\n\t\t\t\t\t\tSET label = 'updated'\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING id, label;",
       "querySha256": "5a1102e509198050ec7cef02554cef9272b0e9953af987c56f31e68ff2ee6c0e",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_true_update_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_update_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_update_policy_writer; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_true_update_policy_writer"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "updated"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     },
     {
       "key": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityDeletePolicyUsingTrueRepro#0001",
@@ -125,23 +137,22 @@
       "oracle": "postgres",
       "postgresId": "rls-delete-policy-using-true-allows-all",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecuritydeletepolicyusingtruerepro-0001-delete-from-rls_true_delete_policy_docs-where-id",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_true_delete_policy_writer",
       "query": "DELETE FROM rls_true_delete_policy_docs\n\t\t\t\t\t\tWHERE id = 1\n\t\t\t\t\t\tRETURNING id, label;",
       "querySha256": "83355cec00e214920742582971c93246f3138f5a3cda00537e8cb76f5a409ed2",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_true_delete_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_delete_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_delete_policy_writer; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_true_delete_policy_writer"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "delete me"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     },
     {
       "key": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro#0001",
@@ -151,23 +162,22 @@
       "oracle": "postgres",
       "postgresId": "rls-select-policy-reversed-current-user",
       "suggestedId": "row-level-security-policy-composition-repro-test-testrowlevelsecurityselectpolicyreversedcurrentuserrepro-0001-select-id-label-from-rls_reversed_policy_docs",
-      "compare": "structural",
-      "columnModes": [
-        "structural",
-        "structural"
-      ],
-      "expectedKind": "rows",
+      "expectedKind": "unknown",
       "username": "rls_reversed_policy_reader",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_reversed_policy_docs\n\t\t\t\t\t\tORDER BY id;",
       "querySha256": "5d21953a134fb402f92f867ff1a19274d6ff489aa9057ac0535f63115f6e3ec4",
-      "cleanup": [
-        "RESET ROLE",
-        "DROP TABLE IF EXISTS rls_reversed_policy_docs",
-        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_reversed_policy_reader') THEN REVOKE USAGE ON SCHEMA public FROM rls_reversed_policy_reader; END IF; END $$",
-        "DROP ROLE IF EXISTS rls_reversed_policy_reader"
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
       ],
       "needsCleanup": true,
-      "cleanupProvided": true
+      "cleanupProvided": false
     }
   ]
 }

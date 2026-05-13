@@ -1,0 +1,183 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map create_table_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/create_table_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateZeroColumnTableRepro#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateZeroColumnTableRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE with zero columns",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatezerocolumntablerepro-0001-select-count-*-::text-from",
+      "suggestedId": "create-table-correctness-repro-test-testcreatezerocolumntablerepro-0001-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text FROM zero_column_items;",
+      "querySha256": "2e7c1a681788c1fbf7d29033b6330e03771cdc35a7785e2d92d1f3ed6a6e61b4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTablePrimaryKeyConstraintNameGuard#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTablePrimaryKeyConstraintNameGuard",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE preserves primary key constraint name",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0001-select-conname-from-pg_catalog.pg_constraint-where",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0001-select-conname-from-pg_catalog.pg_constraint-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'named_pk_items'::regclass\n\t\t\t\t\t\t\tAND contype = 'p';",
+      "querySha256": "33a19dbf67230d187a712b22f28a5e55c010e90cbb4ea2af83a916c7c0d5e303",
+      "expectedRows": [
+        [
+          {
+            "value": "named_pk_items_custom_pkey"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTablePrimaryKeyConstraintNameGuard#0002",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTablePrimaryKeyConstraintNameGuard",
+      "ordinal": 2,
+      "scriptName": "CREATE TABLE preserves primary key constraint name",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0002-select-conname-from-pg_catalog.pg_constraint-where",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0002-select-conname-from-pg_catalog.pg_constraint-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_constraint\n\t\t\t\t\t\tWHERE conrelid = 'named_pk_items'::regclass\n\t\t\t\t\t\t\tAND contype = 'p';",
+      "querySha256": "33a19dbf67230d187a712b22f28a5e55c010e90cbb4ea2af83a916c7c0d5e303",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTableReloptionsPersistRepro#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTableReloptionsPersistRepro",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE reloptions persist in pg_class",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetablereloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetablereloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'table_reloptions_items'::regclass;",
+      "querySha256": "f7850ffd7138c441d46a6fc32adc4fdd5de5108f2ae288ed2635d01cce855cb4",
+      "expectedRows": [
+        [
+          {
+            "value": "{fillfactor=30,autovacuum_enabled=false,autovacuum_analyze_scale_factor=0.2}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTableDefaultTablespace#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTableDefaultTablespace",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE with default tablespace",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetabledefaulttablespace-0001-select-id-label-from-table_default_tablespace_items",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetabledefaulttablespace-0001-select-id-label-from-table_default_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM table_default_tablespace_items;",
+      "querySha256": "9a22ef9a442e213fd7a122f9f9e8cd7cfa6f84034813fbd676e40d02071b9cde",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUnknownTablespaceErrors#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUnknownTablespaceErrors",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE rejects unknown tablespace",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetableunknowntablespaceerrors-0001-create-table-table_unknown_tablespace_items-id-int",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetableunknowntablespaceerrors-0001-create-table-table_unknown_tablespace_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE table_unknown_tablespace_items (\n\t\t\t\t\t\t\tid INT PRIMARY KEY\n\t\t\t\t\t\t) TABLESPACE custom_space;",
+      "querySha256": "abf81fb654e55d854da3811dbdff32e430aee1d22e2e3a2eaf2351fe99f35639",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUsingHeap#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUsingHeap",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE using heap access method",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetableusingheap-0001-select-id-label-from-table_using_heap_items",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetableusingheap-0001-select-id-label-from-table_using_heap_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM table_using_heap_items;",
+      "querySha256": "847b6f507b86a2dd113dc002ec5ae6ebe18f4c3f1c01d4888f9c231397085314",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUsingUnknownAccessMethodErrors#0001",
+      "source": "testing/go/create_table_correctness_repro_test.go:TestCreateTableUsingUnknownAccessMethodErrors",
+      "ordinal": 1,
+      "scriptName": "CREATE TABLE rejects non-heap access method",
+      "oracle": "postgres",
+      "postgresId": "create-table-correctness-repro-test-testcreatetableusingunknownaccessmethoderrors-0001-create-table-table_unknown_access_method_items-id-int",
+      "suggestedId": "create-table-correctness-repro-test-testcreatetableusingunknownaccessmethoderrors-0001-create-table-table_unknown_access_method_items-id-int",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE TABLE table_unknown_access_method_items (\n\t\t\t\t\t\t\tid INT PRIMARY KEY\n\t\t\t\t\t\t) USING btree;",
+      "querySha256": "8227e32d84b8536733ae12eadf40f64b673c0b4dc01b2149c4ef5ea5e92c23da",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

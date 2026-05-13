@@ -1,0 +1,115 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map provider_replication_boundary_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/provider_replication_boundary_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries#0001",
+      "source": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries",
+      "ordinal": 1,
+      "scriptName": "Aurora and RDS replication assumptions are explicit boundaries",
+      "oracle": "postgres",
+      "postgresId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0001-select-current_setting-rds.logical_replication-true",
+      "suggestedId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0001-select-current_setting-rds.logical_replication-true",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT current_setting('rds.logical_replication', true);",
+      "querySha256": "b96a0d45f8decbc4dccb9e6dcca3ffa6cc236660ce2c8f2d4e0b40b5d89478cb",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries#0002",
+      "source": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries",
+      "ordinal": 2,
+      "scriptName": "Aurora and RDS replication assumptions are explicit boundaries",
+      "oracle": "postgres",
+      "postgresId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0002-show-rds.logical_replication",
+      "suggestedId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0002-show-rds.logical_replication",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "SHOW rds.logical_replication;",
+      "querySha256": "42b3b58fb58a9a14178908b2cafa5afa8170b4de8d2f8c0415eadd3aa1174d39",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries#0003",
+      "source": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries",
+      "ordinal": 3,
+      "scriptName": "Aurora and RDS replication assumptions are explicit boundaries",
+      "oracle": "postgres",
+      "postgresId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0003-show-track_commit_timestamp",
+      "suggestedId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0003-show-track_commit_timestamp",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SHOW track_commit_timestamp;",
+      "querySha256": "efe3a50ff39f3eaded2578d96cd1f704f1f9150798205864794dc48642bfb409",
+      "expectedRows": [
+        [
+          {
+            "value": "off"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries#0004",
+      "source": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries",
+      "ordinal": 4,
+      "scriptName": "Aurora and RDS replication assumptions are explicit boundaries",
+      "oracle": "postgres",
+      "postgresId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0004-set-track_commit_timestamp-to-on",
+      "suggestedId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0004-set-track_commit_timestamp-to-on",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55P02",
+      "errorSeverity": "ERROR",
+      "query": "SET track_commit_timestamp TO 'on';",
+      "querySha256": "97e4fa67aea18c0e2975f168ba07264d0b5e59e2591e6c744d9b84153a761440",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries#0005",
+      "source": "testing/go/provider_replication_boundary_test.go:TestProviderSpecificReplicationBoundaries",
+      "ordinal": 5,
+      "scriptName": "Aurora and RDS replication assumptions are explicit boundaries",
+      "oracle": "postgres",
+      "postgresId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0005-create-extension-pglogical",
+      "suggestedId": "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0005-create-extension-pglogical",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "CREATE EXTENSION pglogical;",
+      "querySha256": "8bcc49ce68967970465d3b157c1ce21104978c7e92dc946c740dcbe3bd31aa0b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

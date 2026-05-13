@@ -1,0 +1,159 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map pg_class_pg_index_inspection_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/pg_class_pg_index_inspection_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0001",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 1,
+      "scriptName": "pg_class table existence and relkind",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0001-select-count-*-::text-from",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0001-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text\n\t\t\t\t\t\tFROM pg_class c\n\t\t\t\t\t\tJOIN pg_namespace n ON c.relnamespace = n.oid\n\t\t\t\t\t\tWHERE c.relname = 'widgets'\n\t\t\t\t\t\t\tAND n.nspname = 'public'\n\t\t\t\t\t\t\tAND c.relkind = 'r';",
+      "querySha256": "78b8c879367f7bdc894230e86fd9d6fb0ddf79d0efcc819428e1f3b6f7c17f0a",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0002",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 2,
+      "scriptName": "pg_index reports primary-key and unique flags",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0002-select-count-*-::text-from",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0002-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text\n\t\t\t\t\t\tFROM pg_index i\n\t\t\t\t\t\tJOIN pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'accounts_pkey'\n\t\t\t\t\t\t\tAND i.indisprimary = true\n\t\t\t\t\t\t\tAND i.indisunique = true;",
+      "querySha256": "6774c8534ede4cfd56b85700cd0a864614cece130e002327070e440fac31a2d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0003",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 3,
+      "scriptName": "pg_index reports primary-key and unique flags",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0003-select-count-*-::text-from",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0003-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text\n\t\t\t\t\t\tFROM pg_index i\n\t\t\t\t\t\tJOIN pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'accounts_email_uidx'\n\t\t\t\t\t\t\tAND i.indisprimary = false\n\t\t\t\t\t\t\tAND i.indisunique = true;",
+      "querySha256": "120db0d07939df959125455b8a1aaae49ca3031c86edf128bdfe692c370c7a21",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0004",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 4,
+      "scriptName": "pg_index reports primary-key and unique flags",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0004-select-count-*-::text-from",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0004-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text\n\t\t\t\t\t\tFROM pg_index i\n\t\t\t\t\t\tJOIN pg_class c ON i.indexrelid = c.oid\n\t\t\t\t\t\tWHERE c.relname = 'accounts_phone_idx'\n\t\t\t\t\t\t\tAND i.indisunique = false;",
+      "querySha256": "199f56999e1027ac1fc84e2037b540f669c6d1e9c488f047d6d418eba9de35a9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0005",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 5,
+      "scriptName": "pg_class -> pg_index join enumerates indexes per table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0005-select-count-*-::text-from",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0005-select-count-*-::text-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*)::text\n\t\t\t\t\t\tFROM pg_index i\n\t\t\t\t\t\tJOIN pg_class t ON i.indrelid = t.oid\n\t\t\t\t\t\tWHERE t.relname = 'orders';",
+      "querySha256": "ec610e00acde76e14985e4c4b6369cfb81b3adee1f38a21bbaee5bcebbe171df",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection#0006",
+      "source": "testing/go/pg_class_pg_index_inspection_test.go:TestPgClassPgIndexInspection",
+      "ordinal": 6,
+      "scriptName": "pg_class -> pg_index join enumerates indexes per table",
+      "oracle": "postgres",
+      "postgresId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0006-select-ic.relname-from-pg_index-i",
+      "suggestedId": "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0006-select-ic.relname-from-pg_index-i",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ic.relname\n\t\t\t\t\t\tFROM pg_index i\n\t\t\t\t\t\tJOIN pg_class t  ON i.indrelid  = t.oid\n\t\t\t\t\t\tJOIN pg_class ic ON i.indexrelid = ic.oid\n\t\t\t\t\t\tWHERE t.relname = 'orders'\n\t\t\t\t\t\tORDER BY ic.relname;",
+      "querySha256": "7e95ee234624653427b2d92a77b6c6e3b51cc12e726c29e90241246ce29eca3e",
+      "expectedRows": [
+        [
+          {
+            "value": "orders_customer_idx"
+          }
+        ],
+        [
+          {
+            "value": "orders_pkey"
+          }
+        ],
+        [
+          {
+            "value": "orders_placed_idx"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

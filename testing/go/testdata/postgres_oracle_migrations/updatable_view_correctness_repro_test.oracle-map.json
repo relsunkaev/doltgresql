@@ -1,0 +1,92 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map updatable_view_correctness_repro_test.go",
+  "sourceFile": "testing/go/updatable_view_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewInsertWritesBaseTableRepro#0001",
+      "source": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewInsertWritesBaseTableRepro",
+      "ordinal": 1,
+      "scriptName": "simple updatable view INSERT writes base table",
+      "oracle": "postgres",
+      "postgresId": "updatable-view-correctness-repro-test-testsimpleupdatableviewinsertwritesbasetablerepro-0001-select-id-label-from-updatable_view_insert_base",
+      "suggestedId": "updatable-view-correctness-repro-test-testsimpleupdatableviewinsertwritesbasetablerepro-0001-select-id-label-from-updatable_view_insert_base",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM updatable_view_insert_base;",
+      "querySha256": "13b979a90cc5f0ffdf2fbba47cc22511c02e7edbd74966d94d97d822fb00c420",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewUpdateWritesBaseTableRepro#0001",
+      "source": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewUpdateWritesBaseTableRepro",
+      "ordinal": 1,
+      "scriptName": "simple updatable view UPDATE writes base table",
+      "oracle": "postgres",
+      "postgresId": "updatable-view-correctness-repro-test-testsimpleupdatableviewupdatewritesbasetablerepro-0001-select-id-label-from-updatable_view_update_base",
+      "suggestedId": "updatable-view-correctness-repro-test-testsimpleupdatableviewupdatewritesbasetablerepro-0001-select-id-label-from-updatable_view_update_base",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM updatable_view_update_base;",
+      "querySha256": "aaff77723f1740a95f124937819b01544501b634dc5363420ea7c0398c1a91db",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "updated"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewDeleteWritesBaseTableRepro#0001",
+      "source": "testing/go/updatable_view_correctness_repro_test.go:TestSimpleUpdatableViewDeleteWritesBaseTableRepro",
+      "ordinal": 1,
+      "scriptName": "simple updatable view DELETE writes base table",
+      "oracle": "postgres",
+      "postgresId": "updatable-view-correctness-repro-test-testsimpleupdatableviewdeletewritesbasetablerepro-0001-select-id-label-from-updatable_view_delete_base",
+      "suggestedId": "updatable-view-correctness-repro-test-testsimpleupdatableviewdeletewritesbasetablerepro-0001-select-id-label-from-updatable_view_delete_base",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM updatable_view_delete_base\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "68d9f0a95c25dedb4ebededbaa05523b8ad5319339eef8a9a0c03674d371c1c4",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "keep me"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

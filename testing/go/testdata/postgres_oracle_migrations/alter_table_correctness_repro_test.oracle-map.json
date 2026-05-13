@@ -1,0 +1,1146 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map alter_table_correctness_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/alter_table_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableNoopsGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE IF EXISTS no-ops on missing table",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableifexistsmissingtablenoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_table",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableifexistsmissingtablenoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_table",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE IF EXISTS alter_if_exists_missing_table ADD PRIMARY KEY (id);",
+      "querySha256": "d2966cd772a75e8504139c829514bbebca028faf8e59b5e97b0bc57bc228e1ba",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableIfExistsMissingTableDropColumnNoopsGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE IF EXISTS DROP COLUMN no-ops on missing table",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableifexistsmissingtabledropcolumnnoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_drop_column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableifexistsmissingtabledropcolumnnoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_drop_column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE IF EXISTS alter_if_exists_missing_drop_column DROP COLUMN id;",
+      "querySha256": "dd21698b178beb12b0ac4f75f997653a4e3498fefa53ec44f460db3fae657d00",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN IF EXISTS no-ops on missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0001-alter-table-drop_missing_column_if_exists_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0001-alter-table-drop_missing_column_if_exists_items-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE drop_missing_column_if_exists_items DROP COLUMN IF EXISTS missing_label;",
+      "querySha256": "4c995c17884313c737256bbc9c2c584260880d5a646f1432a267fd41419fe49f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMissingColumnNoops",
+      "ordinal": 2,
+      "scriptName": "DROP COLUMN IF EXISTS no-ops on missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0002-select-id-label-from-drop_missing_column_if_exists_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0002-select-id-label-from-drop_missing_column_if_exists_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM drop_missing_column_if_exists_items;",
+      "querySha256": "365e1423aa82d977fb174defe56f4cf741099722a54a369ddec0d323cf75e8c2",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0001-alter-table-drop_existing_column_if_exists_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0001-alter-table-drop_existing_column_if_exists_items-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE drop_existing_column_if_exists_items DROP COLUMN IF EXISTS note;",
+      "querySha256": "18c1dcb88ae553d98277e339ad499255ef595a4087a4cc409fdfa051191aaa4b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "ordinal": 2,
+      "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0002-select-id-label-from-drop_existing_column_if_exists_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0002-select-id-label-from-drop_existing_column_if_exists_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label FROM drop_existing_column_if_exists_items;",
+      "querySha256": "ccb06dcf2eb8d24518e932f63cbf53b430897f6d90b802ac5a1a8cf81d0eeab6",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsExistingColumnDrops",
+      "ordinal": 3,
+      "scriptName": "DROP COLUMN IF EXISTS drops the column when it exists",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0003-select-note-from-drop_existing_column_if_exists_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0003-select-note-from-drop_existing_column_if_exists_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT note FROM drop_existing_column_if_exists_items;",
+      "querySha256": "33caef7ed6caaea2eb1f42c55c67b4524862c9844d85449edcd87e838facc41b",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsEmitsNotice",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN IF EXISTS emits a NOTICE on missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsemitsnotice-0001-alter-table-drop_if_exists_notice_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsemitsnotice-0001-alter-table-drop_if_exists_notice_items-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE drop_if_exists_notice_items DROP COLUMN IF EXISTS missing_label;",
+      "querySha256": "cb02e02eb2b41f26338accb8ac61d5f38493c44792f8a7d648a55f53c0238f2f",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0001-alter-table-drop_if_exists_multi_clause_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0001-alter-table-drop_if_exists_multi_clause_items-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE drop_if_exists_multi_clause_items\n\t\t\t\t\t\t\t\tDROP COLUMN IF EXISTS missing_col,\n\t\t\t\t\t\t\t\tDROP COLUMN drop_me,\n\t\t\t\t\t\t\t\tADD COLUMN added_col INT;",
+      "querySha256": "d3eb4fbbb02bef6089532cd1f0c14fc3c3db826a18d8afe7466a5a6d66321638",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0002-select-id-keep_me-added_col-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0002-select-id-keep_me-added_col-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, keep_me, added_col FROM drop_if_exists_multi_clause_items;",
+      "querySha256": "ba8e6ba5bcd6468771e3449e90a51d7ea50ca20591a2e45d8f0c9f65699cde34",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "kept"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsMultiClause",
+      "ordinal": 3,
+      "scriptName": "ALTER TABLE applies surviving clauses when DROP COLUMN IF EXISTS targets a missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0003-select-drop_me-from-drop_if_exists_multi_clause_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0003-select-drop_me-from-drop_if_exists_multi_clause_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT drop_me FROM drop_if_exists_multi_clause_items;",
+      "querySha256": "c876333a8db1b138352e1b497b729d6a4ce8a899a6ecc6884527b870b261734e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnWithoutIfExistsStillErrors",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN without IF EXISTS still errors on missing column",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnwithoutifexistsstillerrors-0001-alter-table-drop_missing_strict_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnwithoutifexistsstillerrors-0001-alter-table-drop_missing_strict_items-drop-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE drop_missing_strict_items DROP COLUMN missing_col;",
+      "querySha256": "116954554553b54f1995690e785be74258c12bad387efa9feb241449ed562a33",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "ordinal": 1,
+      "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0001-alter-table-drop_if_exists_case_items-drop-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0001-alter-table-drop_if_exists_case_items-drop-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE drop_if_exists_case_items DROP COLUMN IF EXISTS MixedCaseCol;",
+      "querySha256": "30dbbeda695c8e7e7e787a30f714e9d49bcfc1ff9ffda3809164a0aeebb779ea",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "ordinal": 2,
+      "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0002-select-id-from-drop_if_exists_case_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0002-select-id-from-drop_if_exists_case_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id FROM drop_if_exists_case_items;",
+      "querySha256": "ca3a64670b18c3ea0247aa1d9019b494ac0303fe18701d7db54f30c940a9ab58",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableDropColumnIfExistsCaseInsensitiveMatch",
+      "ordinal": 3,
+      "scriptName": "DROP COLUMN IF EXISTS folds unquoted identifiers to lowercase",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0003-select-mixedcasecol-from-drop_if_exists_case_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0003-select-mixedcasecol-from-drop_if_exists_case_items",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42703",
+      "errorSeverity": "ERROR",
+      "query": "SELECT mixedcasecol FROM drop_if_exists_case_items;",
+      "querySha256": "512734ab215c227189887b11fb84b201779dc786fc041fc0eeb4e3757b7b8795",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeUsingConvertsExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE USING converts existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeusingconvertsexistingrowsrepro-0001-select-id-amount_text-pg_typeof-amount_text",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeusingconvertsexistingrowsrepro-0001-select-id-amount_text-pg_typeof-amount_text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, amount_text, pg_typeof(amount_text)::text\n\t\t\t\t\t\tFROM alter_type_using_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "c8eaa192a9e2943e3682c5741c0a2862675365ea0dbaa55dce4202588df5d946",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "integer"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "25"
+          },
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSameTypeRejectsRowTypeDependentsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE rejects row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesametyperejectsrowtypedependentsrepro-0001-alter-table-row_type_parent-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesametyperejectsrowtypedependentsrepro-0001-alter-table-row_type_parent-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "0A000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE row_type_parent\n\t\t\t\t\t\tALTER COLUMN a SET DATA TYPE INT;",
+      "querySha256": "325cd7d36bb784c5fda57794fa1031acce69256dfd9168341a59bf51c84124fe",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "ordinal": 1,
+      "scriptName": "SET and DROP NOT NULL allow row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0001-alter-table-row_type_not_null_parent-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0001-alter-table-row_type_not_null_parent-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE row_type_not_null_parent ALTER COLUMN a SET NOT NULL;",
+      "querySha256": "8392199a94fd3f470bffbb0a280458d18d455625a21cc05b7c9f9925f490b49b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "ordinal": 2,
+      "scriptName": "SET and DROP NOT NULL allow row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0002-insert-into-row_type_not_null_parent-values-null",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0002-insert-into-row_type_not_null_parent-values-null",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23502",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');",
+      "querySha256": "a9d1654fb991a67f9b42e54ffd34f6a8a1dce92ca93a366e3780ac03f8356d70",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "ordinal": 3,
+      "scriptName": "SET and DROP NOT NULL allow row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0003-insert-into-row_type_not_null_child-values-1",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0003-insert-into-row_type_not_null_child-values-1",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO row_type_not_null_child VALUES (1, ROW(NULL, 'child'));",
+      "querySha256": "9b54464aa5df7ea03fa79cd965042bada0177eb16a34adf72be1e759a01be91b",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0004",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "ordinal": 4,
+      "scriptName": "SET and DROP NOT NULL allow row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0004-alter-table-row_type_not_null_parent-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0004-alter-table-row_type_not_null_parent-alter-column",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "ALTER TABLE row_type_not_null_parent ALTER COLUMN a DROP NOT NULL;",
+      "querySha256": "68ad97160fe571e7a322cf3fbddf600b6ea467ef2f85d9eeece4aeda3af93c4d",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro#0005",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro",
+      "ordinal": 5,
+      "scriptName": "SET and DROP NOT NULL allow row type dependents",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0005-insert-into-row_type_not_null_parent-values-null",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0005-insert-into-row_type_not_null_parent-values-null",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');",
+      "querySha256": "a9d1654fb991a67f9b42e54ffd34f6a8a1dce92ca93a366e3780ac03f8356d70",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE applies typmods to existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0001-select-amount::text-created_at::text-from-alter_type_typmod_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0001-select-amount::text-created_at::text-from-alter_type_typmod_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amount::text, created_at::text\n\t\t\t\t\t\tFROM alter_type_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "736a50b0ffad74b31db19e2aab353ad0d250b70b9d3999741a1a87c8cc7b4860",
+      "expectedRows": [
+        [
+          {
+            "value": "123.46"
+          },
+          {
+            "value": "2021-09-15 21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER COLUMN TYPE rejects typmod overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0002-alter-table-alter_type_typmod_overflow_items-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0002-alter-table-alter_type_typmod_overflow_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22003",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_type_typmod_overflow_items\n\t\t\t\t\t\tALTER COLUMN amount TYPE NUMERIC(5,2);",
+      "querySha256": "d6f7c008e88169a63ba2a4c8a4e2e906aa145775cb17fa432e8ac071e03a275d",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER COLUMN TYPE rejects typmod overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0003-select-amount::text-from-alter_type_typmod_overflow_items-order",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0003-select-amount::text-from-alter_type_typmod_overflow_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT amount::text\n\t\t\t\t\t\tFROM alter_type_typmod_overflow_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "76b32826ac5180195c1bbd9a647e9ad966bad551479fcecda73965e40387586f",
+      "expectedRows": [
+        [
+          {
+            "value": "999.995"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE varchar rejects existing overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0001-alter-table-alter_type_varchar_overflow_items-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0001-alter-table-alter_type_varchar_overflow_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_type_varchar_overflow_items\n\t\t\t\t\t\tALTER COLUMN label TYPE VARCHAR(3);",
+      "querySha256": "821b09bb67c3775120bd4ef7cbbc16bfde254937492df926ececc89ce9b14f6a",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER COLUMN TYPE varchar rejects existing overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0002-select-id-label-pg_typeof-label",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0002-select-id-label-pg_typeof-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, pg_typeof(label)::text\n\t\t\t\t\t\tFROM alter_type_varchar_overflow_items;",
+      "querySha256": "3ca6d7fe7382d9cc8af6cd53f50b5a993f7fb980ae7c684ed3f84502cfb2da5b",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abcd"
+          },
+          {
+            "value": "text"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE varchar truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypevarchartruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypevarchartruncatestrailingspacesrepro-0001-select-id-label-length-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM alter_type_varchar_trailing_items;",
+      "querySha256": "73bf67a95bf9c163942e584ec15d6d0e5aafb23e67b2c814acb857532e20a981",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character varying"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE character rejects existing overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0001-alter-table-alter_type_character_overflow_items-alter-column",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0001-alter-table-alter_type_character_overflow_items-alter-column",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "22001",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_type_character_overflow_items\n\t\t\t\t\t\tALTER COLUMN label TYPE CHARACTER(3);",
+      "querySha256": "ba10d350b5bd99138d2e4afd26ac9377dba4e933ba21e309ec5c86e7e7becdfc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0002",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER COLUMN TYPE character rejects existing overflow",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0002-select-id-label-pg_typeof-label",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0002-select-id-label-pg_typeof-label",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label, pg_typeof(label)::text, octet_length(label)\n\t\t\t\t\t\tFROM alter_type_character_overflow_items;",
+      "querySha256": "2c1c13dbc684003e2f704cf85f84eb00f3952fc78666596aaf3eb57290501395",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "abcd"
+          },
+          {
+            "value": "text"
+          },
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro#0003",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterAppliesTypmodRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER COLUMN TYPE character pads existing short values",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0003-select-id-label-=-ab",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0003-select-id-label-=-ab",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label)\n\t\t\t\t\t\tFROM alter_type_character_padding_items;",
+      "querySha256": "844e6096d12a2759a3c23aa16f5b6eaf2580d2c4ecf764e0a90b26ffb7b1fcfd",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "character"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE character truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypecharactertruncatestrailingspacesrepro-0001-select-id-label-=-abc",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypecharactertruncatestrailingspacesrepro-0001-select-id-label-=-abc",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM alter_type_character_trailing_items;",
+      "querySha256": "9095a689a94b8a94ccc5242d67712a4091c3c1fca38f4f6114b1eb85373b3070",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE applies timetz typmod to existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimetztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timetz_typmod_items-order",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimetztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timetz_typmod_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM alter_type_timetz_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "b50bd2a9409fa5dabce32416e234842f0df375b918bba567c231ffe43e355d3a",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE applies time typmod to existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimetypmodtoexistingrowsrepro-0001-select-tm::text-from-alter_type_time_typmod_items-order",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimetypmodtoexistingrowsrepro-0001-select-tm::text-from-alter_type_time_typmod_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tm::text\n\t\t\t\t\t\tFROM alter_type_time_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "875bda9f8cb8a3a3f953ad5fe4c7b13f9ed67ed074fcc16eaa9eafa70dad3cd5",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE applies timestamptz typmod to existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimestamptztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timestamptz_typmod_items-order",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliestimestamptztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timestamptz_typmod_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text\n\t\t\t\t\t\tFROM alter_type_timestamptz_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "941b86ef5f78ea0ee96f06f7e61058be2c4b757c61e7ddef27bd6c0a33f8d8f6",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN TYPE applies interval typmod to existing rows",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumntypeappliesintervaltypmodtoexistingrowsrepro-0001-select-ds::text-from-alter_type_interval_typmod_items-order",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumntypeappliesintervaltypmodtoexistingrowsrepro-0001-select-ds::text-from-alter_type_interval_typmod_items-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text\n\t\t\t\t\t\tFROM alter_type_interval_typmod_items\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "cee326bd1c617ec6ef7cf1945e5fc3d4b70e40e9c9802e4f0686b0257e7c865a",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD timetz typmod column default backfills rounded value",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddtimetztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddtimetztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text, count(*)\n\t\t\t\t\t\tFROM alter_add_timetz_typmod_default_items\n\t\t\t\t\t\tGROUP BY tz::text;",
+      "querySha256": "adc0c012c95058116bf3537f99cbdcbac617111d533f22ab85a525da47270a3c",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57+00"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD time typmod column default backfills rounded value",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddtimetypmodcolumndefaultbackfillsroundedvalueguard-0001-select-tm::text-count-*-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddtimetypmodcolumndefaultbackfillsroundedvalueguard-0001-select-tm::text-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tm::text, count(*)\n\t\t\t\t\t\tFROM alter_add_time_typmod_default_items\n\t\t\t\t\t\tGROUP BY tm::text;",
+      "querySha256": "872f25302a162a4f8d09ba4ca0d54606b831b728fa91049a8aad18e1246fc556",
+      "expectedRows": [
+        [
+          {
+            "value": "21:43:57"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD timestamp typmod column default backfills rounded value",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddtimestamptypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-ts::text-count-*-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddtimestamptypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-ts::text-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ts::text, count(*)\n\t\t\t\t\t\tFROM alter_add_timestamp_typmod_default_items\n\t\t\t\t\t\tGROUP BY ts::text;",
+      "querySha256": "651efc02e0a4b7bff9999c311812a5aaca1c27159f2414ab6da21b0411edd092",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD timestamptz typmod column default backfills rounded value",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddtimestamptztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddtimestamptztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT tz::text, count(*)\n\t\t\t\t\t\tFROM alter_add_timestamptz_typmod_default_items\n\t\t\t\t\t\tGROUP BY tz::text;",
+      "querySha256": "8595d5cdd6863da51272904a6b907bd7c9c479e5e29fdaffd5c931d5f039ac42",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-09-15 21:43:57+00"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD interval typmod column default backfills restricted value",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddintervaltypmodcolumndefaultbackfillsrestrictedvaluerepro-0001-select-ds::text-count-*-from",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddintervaltypmodcolumndefaultbackfillsrestrictedvaluerepro-0001-select-ds::text-count-*-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ds::text, count(*)\n\t\t\t\t\t\tFROM alter_add_interval_typmod_default_items\n\t\t\t\t\t\tGROUP BY ds::text;",
+      "querySha256": "d507f09c1552f6bef64d72412d0be5ea3969777436fe6d990745a7ed87054486",
+      "expectedRows": [
+        [
+          {
+            "value": "3 days 04:05:07"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD varchar typmod column default truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddvarchartypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-length-label-count",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddvarchartypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-length-label-count",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label, length(label), count(*)\n\t\t\t\t\t\tFROM alter_add_varchar_trailing_default_items\n\t\t\t\t\t\tGROUP BY label;",
+      "querySha256": "6dcedbc60577e68b07a949f68adb6d328e12f09df9f0e1a517b0f1da6c7d75e9",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD character typmod column default truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label = 'abc'::CHARACTER(3), octet_length(label), count(*)\n\t\t\t\t\t\tFROM alter_add_character_trailing_default_items\n\t\t\t\t\t\tGROUP BY label;",
+      "querySha256": "d55dea90181718ffe61ceef98d56310e58fa54b8f930511e4424c1c02c9b9ba3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE ADD character typmod column default pads backfill",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaultpadsbackfillrepro-0001-select-label-=-ab-::character",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaultpadsbackfillrepro-0001-select-label-=-ab-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label), count(*)\n\t\t\t\t\t\tFROM alter_add_character_typmod_default_items\n\t\t\t\t\t\tGROUP BY label;",
+      "querySha256": "1a1696270971057dd2ff6c0b0c7aa1db8e04f3ecb8c75d7fdeff6f8df536b6e3",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "character"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN SET DEFAULT varchar truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumnsetdefaultvarchartruncatestrailingspacesrepro-0001-select-label-length-label-pg_typeof",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumnsetdefaultvarchartruncatestrailingspacesrepro-0001-select-label-length-label-pg_typeof",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label, length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM alter_set_default_varchar_trailing_items;",
+      "querySha256": "c193b92c183f2b5c11af6f34bf1d25d6bb841a1bc2553f024ce49db754fc7d87",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character varying"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER COLUMN SET DEFAULT character truncates trailing spaces",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltercolumnsetdefaultcharactertruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "suggestedId": "alter-table-correctness-repro-test-testaltercolumnsetdefaultcharactertruncatestrailingspacesrepro-0001-select-label-=-abc-::character",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text\n\t\t\t\t\t\tFROM alter_set_default_character_trailing_items;",
+      "querySha256": "ed95f3c2e06e917b5abd2ba2e64382415b66da0ebd5d47c61df8c86b6877f71b",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "character"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableReloptionsPersistRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE reloptions persist in pg_class",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablereloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablereloptionspersistrepro-0001-select-cast-reloptions-as-text",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT CAST(reloptions AS TEXT)\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'alter_table_reloptions_items'::regclass;",
+      "querySha256": "468b519d51f997b83887a74ff6dd43b76d47af9ff535560396e7415c806f76c8",
+      "expectedRows": [
+        [
+          {
+            "value": "{fillfactor=40,autovacuum_enabled=false}"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetDefaultTablespace",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE SET TABLESPACE pg_default",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetdefaulttablespace-0001-select-id-label-from-alter_table_default_tablespace_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetdefaulttablespace-0001-select-id-label-from-alter_table_default_tablespace_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM alter_table_default_tablespace_items;",
+      "querySha256": "0a5220415eeacb7e2504c25747579220c732241152e10e33cfb43a832e9ce181",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetTablespaceUnknownErrors",
+      "ordinal": 1,
+      "scriptName": "SET TABLESPACE rejects unknown tablespace",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesettablespaceunknownerrors-0001-alter-table-alter_table_unknown_tablespace_items-set-tablespace",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesettablespaceunknownerrors-0001-alter-table-alter_table_unknown_tablespace_items-set-tablespace",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_table_unknown_tablespace_items\n\t\t\t\t\t\tSET TABLESPACE custom_space;",
+      "querySha256": "9c4499640281e315507c18c52d3558f8436c471e9a03e0766cee96ada6551e0f",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetHeapAccessMethod",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE SET ACCESS METHOD heap",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetheapaccessmethod-0001-select-id-label-from-alter_table_access_method_items",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetheapaccessmethod-0001-select-id-label-from-alter_table_access_method_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM alter_table_access_method_items;",
+      "querySha256": "5f104638a25eee1b109588aba607c3d1eebf8a4b64f2e5e2767e4cc63e6f8ce9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "ok"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors#0001",
+      "source": "testing/go/alter_table_correctness_repro_test.go:TestAlterTableSetAccessMethodUnknownErrors",
+      "ordinal": 1,
+      "scriptName": "SET ACCESS METHOD rejects non-heap target",
+      "oracle": "postgres",
+      "postgresId": "alter-table-correctness-repro-test-testaltertablesetaccessmethodunknownerrors-0001-alter-table-alter_table_unknown_access_method_items-set-access",
+      "suggestedId": "alter-table-correctness-repro-test-testaltertablesetaccessmethodunknownerrors-0001-alter-table-alter_table_unknown_access_method_items-set-access",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "55000",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE alter_table_unknown_access_method_items\n\t\t\t\t\t\tSET ACCESS METHOD btree;",
+      "querySha256": "b81c04e33a6c50b5a8cb2d16760d79b5d7edea2d8b8b8295f6f6cca4b029478c",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
