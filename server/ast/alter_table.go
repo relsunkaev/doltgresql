@@ -70,6 +70,27 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			return nodeAlterTableSetCompression(ctx, treeTableName, cmd, node.IfExists)
 		case *tree.AlterTableRowLevelSecurity:
 			return nodeAlterTableRowLevelSecurity(treeTableName, cmd)
+		case *tree.AlterTableInherit:
+			parentTreeTableName := cmd.Table
+			parentTableName, err := nodeTableName(ctx, &parentTreeTableName)
+			if err != nil {
+				return nil, err
+			}
+			return vitess.InjectedStatement{
+				Statement: pgnodes.NewAlterTableInherit(
+					node.IfExists,
+					tableName.SchemaQualifier.String(),
+					tableName.Name.String(),
+					parentTableName.SchemaQualifier.String(),
+					parentTableName.Name.String(),
+					cmd.Inherit,
+				),
+				Auth: vitess.AuthInformation{
+					AuthType:    auth.AuthType_OWNER,
+					TargetType:  auth.AuthTargetType_TableIdentifiers,
+					TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+				},
+			}, nil
 		case *tree.AlterTableAddConstraint:
 			if statement, handled, err := nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx, cmd, tableName, node.IfExists); handled || err != nil {
 				return statement, err

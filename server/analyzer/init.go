@@ -78,6 +78,7 @@ const (
 	ruleId_PreserveTableMetadata                                                  // preserveTableMetadata
 	ruleId_ValidateCreateIndexOwnership                                           // validateCreateIndexOwnership
 	ruleId_AssignUnpopulatedMatviewScans                                          // assignUnpopulatedMaterializedViewScans
+	ruleId_AssignInheritedTableScans                                              // assignInheritedTableScans
 	ruleId_AssignIndexStats                                                       // assignIndexStats
 	ruleId_ClearUncorrelatedSubqueryAliasVisibility                               // clearUncorrelatedSubqueryAliasVisibility
 	ruleId_PruneNotNullSortProbes                                                 // pruneNotNullSortProbes
@@ -150,6 +151,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_PreserveLateralLeftJoin, Apply: PreserveLateralLeftJoin},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
 		analyzer.Rule{Id: ruleId_AssignUnpopulatedMatviewScans, Apply: AssignUnpopulatedMaterializedViewScans},
+		analyzer.Rule{Id: ruleId_AssignInheritedTableScans, Apply: AssignInheritedTableScans},
 		analyzer.Rule{Id: ruleId_AssignBatchedIndexLookups, Apply: AssignBatchedIndexLookups},
 		analyzer.Rule{Id: ruleId_AssignJsonbGinLookups, Apply: AssignJsonbGinLookups},
 		analyzer.Rule{Id: ruleId_InferInnerJoinPredicates, Apply: InferInnerJoinPredicates},
