@@ -16,6 +16,7 @@ package tablemetadata
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 
 	"github.com/dolthub/doltgresql/core/id"
@@ -43,6 +44,14 @@ type Metadata struct {
 	ColumnCompression           map[string]string   `json:"columnCompression,omitempty"`
 	ColumnStatisticsTargets     map[string]int16    `json:"columnStatisticsTargets,omitempty"`
 	ColumnIdentity              map[string]string   `json:"columnIdentity,omitempty"`
+	ColumnMissingValues         map[string]string   `json:"columnMissingValues,omitempty"`
+	DroppedColumns              []DroppedColumn     `json:"droppedColumns,omitempty"`
+}
+
+// DroppedColumn stores the original attribute slot for a dropped table column.
+type DroppedColumn struct {
+	Name   string `json:"name,omitempty"`
+	AttNum int16  `json:"attNum,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -57,6 +66,8 @@ func EncodeComment(metadata Metadata) string {
 	normalizeColumnStringMetadata(metadata.ColumnCompression)
 	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	normalizeColumnIdentity(metadata.ColumnIdentity)
+	normalizeColumnMissingValues(metadata.ColumnMissingValues)
+	normalizeDroppedColumns(&metadata.DroppedColumns)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -81,6 +92,8 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeColumnStringMetadata(metadata.ColumnCompression)
 	normalizeColumnStatisticsTargets(metadata.ColumnStatisticsTargets)
 	normalizeColumnIdentity(metadata.ColumnIdentity)
+	normalizeColumnMissingValues(metadata.ColumnMissingValues)
+	normalizeDroppedColumns(&metadata.DroppedColumns)
 	return metadata, true
 }
 
@@ -254,6 +267,26 @@ func ColumnIdentity(comment string, column string) string {
 		return ""
 	}
 	return metadata.ColumnIdentity[strings.TrimSpace(column)]
+}
+
+// ColumnMissingValue returns the PostgreSQL attmissingval element encoded for a
+// column, if one exists.
+func ColumnMissingValue(comment string, column string) (string, bool) {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ColumnMissingValues) == 0 {
+		return "", false
+	}
+	value, ok := metadata.ColumnMissingValues[strings.TrimSpace(column)]
+	return value, ok
+}
+
+// DroppedColumns returns dropped columns sorted by their original attnum.
+func DroppedColumns(comment string) []DroppedColumn {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.DroppedColumns) == 0 {
+		return nil
+	}
+	return append([]DroppedColumn(nil), metadata.DroppedColumns...)
 }
 
 // SetRelPersistence returns a table metadata comment with the given
@@ -464,6 +497,70 @@ func SetColumnIdentity(comment string, column string, identity string) string {
 	return EncodeComment(metadata)
 }
 
+// SetColumnMissingValue returns a table metadata comment with PostgreSQL
+// attmissingval metadata for a single column.
+func SetColumnMissingValue(comment string, column string, value string) string {
+	column = strings.TrimSpace(column)
+	metadata, _ := DecodeComment(comment)
+	if column == "" {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	if metadata.ColumnMissingValues == nil {
+		metadata.ColumnMissingValues = make(map[string]string)
+	}
+	metadata.ColumnMissingValues[column] = value
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// AddDroppedColumn returns a table metadata comment that preserves the original
+// pg_attribute slot for a dropped column.
+func AddDroppedColumn(comment string, column string, attnum int16) string {
+	column = strings.TrimSpace(column)
+	metadata, _ := DecodeComment(comment)
+	if column == "" || attnum <= 0 {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	metadata.DroppedColumns = append(metadata.DroppedColumns, DroppedColumn{Name: column, AttNum: attnum})
+	delete(metadata.ColumnOptions, column)
+	delete(metadata.ColumnStorage, column)
+	delete(metadata.ColumnCompression, column)
+	delete(metadata.ColumnStatisticsTargets, column)
+	delete(metadata.ColumnIdentity, column)
+	delete(metadata.ColumnMissingValues, column)
+	normalizeDroppedColumns(&metadata.DroppedColumns)
+	if len(metadata.ColumnOptions) == 0 {
+		metadata.ColumnOptions = nil
+	}
+	if len(metadata.ColumnStorage) == 0 {
+		metadata.ColumnStorage = nil
+	}
+	if len(metadata.ColumnCompression) == 0 {
+		metadata.ColumnCompression = nil
+	}
+	if len(metadata.ColumnStatisticsTargets) == 0 {
+		metadata.ColumnStatisticsTargets = nil
+	}
+	if len(metadata.ColumnIdentity) == 0 {
+		metadata.ColumnIdentity = nil
+	}
+	if len(metadata.ColumnMissingValues) == 0 {
+		metadata.ColumnMissingValues = nil
+	}
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
 // MergeRelOptions applies updates to an existing reloptions slice while
 // preserving first-seen key order.
 func MergeRelOptions(existing []string, updates []string) []string {
@@ -593,6 +690,41 @@ func normalizeColumnIdentity(values map[string]string) {
 	}
 }
 
+func normalizeColumnMissingValues(values map[string]string) {
+	for column, value := range values {
+		trimmedColumn := strings.TrimSpace(column)
+		if trimmedColumn == "" {
+			delete(values, column)
+			continue
+		}
+		if trimmedColumn != column {
+			delete(values, column)
+		}
+		values[trimmedColumn] = value
+	}
+}
+
+func normalizeDroppedColumns(values *[]DroppedColumn) {
+	if len(*values) == 0 {
+		return
+	}
+	byAttNum := make(map[int16]DroppedColumn, len(*values))
+	for _, value := range *values {
+		value.Name = strings.TrimSpace(value.Name)
+		if value.Name == "" || value.AttNum <= 0 {
+			continue
+		}
+		byAttNum[value.AttNum] = value
+	}
+	*values = (*values)[:0]
+	for _, value := range byAttNum {
+		*values = append(*values, value)
+	}
+	sort.Slice(*values, func(i, j int) bool {
+		return (*values)[i].AttNum < (*values)[j].AttNum
+	})
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		!metadata.MaterializedView &&
@@ -610,5 +742,7 @@ func (metadata Metadata) empty() bool {
 		len(metadata.ColumnStorage) == 0 &&
 		len(metadata.ColumnCompression) == 0 &&
 		len(metadata.ColumnStatisticsTargets) == 0 &&
-		len(metadata.ColumnIdentity) == 0
+		len(metadata.ColumnIdentity) == 0 &&
+		len(metadata.ColumnMissingValues) == 0 &&
+		len(metadata.DroppedColumns) == 0
 }

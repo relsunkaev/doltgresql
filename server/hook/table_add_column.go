@@ -33,6 +33,7 @@ import (
 	"github.com/dolthub/doltgresql/server/ast"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions/framework"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -276,38 +277,58 @@ func quoteIdentifier(identifier string) string {
 	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
 
-func tableHasRows(ctx *sql.Context, node sql.Node) (bool, error) {
+func tableHasRows(ctx *sql.Context, node any) (bool, error) {
 	table, ok := node.(sql.Table)
 	if !ok {
 		return false, nil
 	}
+	_, ok, err := firstRow(ctx, table)
+	return ok, err
+}
+
+func firstColumnValue(ctx *sql.Context, table sql.Table, columnName string) (any, bool, error) {
+	columnIndex := table.Schema(ctx).IndexOfColName(columnName)
+	if columnIndex < 0 {
+		return nil, false, nil
+	}
+	row, ok, err := firstRow(ctx, table)
+	if err != nil || !ok {
+		return nil, ok, err
+	}
+	if columnIndex >= len(row) {
+		return nil, false, nil
+	}
+	return row[columnIndex], true, nil
+}
+
+func firstRow(ctx *sql.Context, table sql.Table) (sql.Row, bool, error) {
 	partitions, err := table.Partitions(ctx)
 	if err != nil {
-		return false, err
+		return nil, false, err
 	}
 	defer partitions.Close(ctx)
 	for {
 		partition, err := partitions.Next(ctx)
 		if errors.Is(err, io.EOF) {
-			return false, nil
+			return nil, false, nil
 		}
 		if err != nil {
-			return false, err
+			return nil, false, err
 		}
 		rows, err := table.PartitionRows(ctx, partition)
 		if err != nil {
-			return false, err
+			return nil, false, err
 		}
-		_, err = rows.Next(ctx)
+		row, err := rows.Next(ctx)
 		closeErr := rows.Close(ctx)
 		if err == nil {
-			return true, closeErr
+			return row, true, closeErr
 		}
 		if !errors.Is(err, io.EOF) {
-			return false, err
+			return nil, false, err
 		}
 		if closeErr != nil {
-			return false, closeErr
+			return nil, false, closeErr
 		}
 	}
 }
@@ -343,6 +364,9 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 		return err
 	}
 	sch := doltTable.Schema(ctx)
+	if err = recordColumnMissingValueMetadata(ctx, n); err != nil {
+		return err
+	}
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {
@@ -405,4 +429,101 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 		}
 	}
 	return nil
+}
+
+func recordColumnMissingValueMetadata(ctx *sql.Context, n *plan.AddColumn) error {
+	col := n.Column()
+	for _, targetCol := range n.TargetSchema() {
+		if targetCol.Name == col.Name {
+			col = targetCol
+			break
+		}
+	}
+	if col.Default == nil || !col.Default.IsLiteral() {
+		return nil
+	}
+	table, err := alteredTableFromNode(ctx, n.Database(), n.Table)
+	if err != nil {
+		return err
+	}
+	value, ok, err := firstColumnValue(ctx, table, col.Name)
+	if err != nil {
+		return err
+	}
+	if !ok || value == nil {
+		return nil
+	}
+	missingValue, err := columnMissingValueText(ctx, col, value)
+	if err != nil {
+		return err
+	}
+	commented, ok := table.(sql.CommentedTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	return alterable.ModifyComment(ctx, tablemetadata.SetColumnMissingValue(commented.Comment(), col.Name, missingValue))
+}
+
+func columnMissingValueText(ctx *sql.Context, col *sql.Column, value any) (string, error) {
+	if typ, ok := col.Type.(*pgtypes.DoltgresType); ok {
+		output, err := typ.IoOutput(ctx, value)
+		if err != nil || output != "" {
+			return output, err
+		}
+	}
+	output := fmt.Sprint(value)
+	if output != "" {
+		return output, nil
+	}
+	defaultText := strings.TrimSpace(col.Default.String())
+	if defaultText == "" || strings.EqualFold(defaultText, "NULL") {
+		return "", nil
+	}
+	return strings.Trim(defaultText, "'"), nil
+}
+
+func alteredTableFromNode(ctx *sql.Context, db sql.Database, tableNode sql.Node) (sql.Table, error) {
+	tableName := alteredTableName(tableNode)
+	if tableName == "" {
+		return nil, sql.ErrTableNotFound.New(tableName)
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, tableName)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, sql.ErrTableNotFound.New(tableName)
+	}
+	return table, nil
+}
+
+func alteredTableName(nodeToSearch sql.Node) string {
+	nodeStack := []sql.Node{nodeToSearch}
+	for len(nodeStack) > 0 {
+		node := nodeStack[len(nodeStack)-1]
+		nodeStack = nodeStack[:len(nodeStack)-1]
+		switch n := node.(type) {
+		case *plan.TableAlias:
+			if n.UnaryNode != nil {
+				nodeStack = append(nodeStack, n.UnaryNode.Child)
+				continue
+			}
+		case *plan.ResolvedTable:
+			return n.Table.Name()
+		case *plan.UnresolvedTable:
+			return n.Name()
+		case *plan.IndexedTableAccess:
+			return n.Name()
+		case sql.TableWrapper:
+			return n.Underlying().Name()
+		case sql.Table:
+			return n.Name()
+		}
+		nodeStack = append(nodeStack, node.Children()...)
+	}
+	return ""
 }

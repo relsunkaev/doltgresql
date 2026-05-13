@@ -25,6 +25,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -53,6 +54,9 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	}
 	sch := n.TargetSchema()
 	clearDroppedColumnComment(tableName.Schema, tableName.Name, n.Column, sch)
+	if err = recordDroppedColumnMetadata(ctx, n, sch); err != nil {
+		return err
+	}
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {
@@ -134,4 +138,44 @@ func clearDroppedColumnComment(schemaName string, tableName string, columnName s
 		}, nil)
 		return
 	}
+}
+
+func recordDroppedColumnMetadata(ctx *sql.Context, n *plan.DropColumn, sch sql.Schema) error {
+	table, err := alteredTableFromNode(ctx, n.Database(), n.Table)
+	if err != nil {
+		return err
+	}
+	commented, ok := table.(sql.CommentedTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	attnum := droppedColumnAttNum(commented.Comment(), sch, n.Column)
+	if attnum == 0 {
+		return errors.New("DROP COLUMN post-hook could not find the index of the column to remove")
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	return alterable.ModifyComment(ctx, tablemetadata.AddDroppedColumn(commented.Comment(), n.Column, attnum))
+}
+
+func droppedColumnAttNum(comment string, sch sql.Schema, columnName string) int16 {
+	droppedColumns := tablemetadata.DroppedColumns(comment)
+	nextDropped := 0
+	attnum := int16(0)
+	for _, col := range sch {
+		if col.HiddenSystem {
+			continue
+		}
+		attnum++
+		for nextDropped < len(droppedColumns) && droppedColumns[nextDropped].AttNum == attnum {
+			nextDropped++
+			attnum++
+		}
+		if col.Name == columnName {
+			return attnum
+		}
+	}
+	return 0
 }

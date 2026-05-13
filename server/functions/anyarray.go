@@ -48,7 +48,10 @@ var anyarray_out = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		// TODO
+		if output, ok := val.(string); ok {
+			return output, nil
+		}
+		// TODO: implement full polymorphic array serialization.
 		return "", nil
 	},
 }

@@ -15,6 +15,7 @@
 package pgcatalog
 
 import (
+	"fmt"
 	"io"
 	"math"
 	"strings"
@@ -96,15 +97,28 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			attnum := int16(0)
 			comment := tableComment(table.Item)
+			droppedColumns := tablemetadata.DroppedColumns(comment)
+			nextDropped := 0
+			addAttr := func(attr *pgAttribute) {
+				attrelidIdx.Add(attr)
+				attrelidAttnameIdx.Add(attr)
+				attributes = append(attributes, attr)
+			}
 			for _, col := range table.Item.Schema(ctx) {
 				if col.HiddenSystem {
 					continue
 				}
 				attnum++
+				for nextDropped < len(droppedColumns) && droppedColumns[nextDropped].AttNum == attnum {
+					addAttr(droppedColumnAttribute(table.OID.AsId(), droppedColumns[nextDropped]))
+					nextDropped++
+					attnum++
+				}
 				attstattarget, ok := tablemetadata.ColumnStatisticsTarget(comment, col.Name)
 				if !ok {
 					attstattarget = -1
 				}
+				missingValue, atthasmissing := tablemetadata.ColumnMissingValue(comment, col.Name)
 				attr := tableColumnAttribute(
 					table.OID.AsId(),
 					schema.Item.SchemaName(),
@@ -116,10 +130,14 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 					tablemetadata.ColumnCompression(comment, col.Name),
 					attstattarget,
 					tablemetadata.ColumnIdentity(comment, col.Name),
+					atthasmissing,
+					missingValue,
 				)
-				attrelidIdx.Add(attr)
-				attrelidAttnameIdx.Add(attr)
-				attributes = append(attributes, attr)
+				addAttr(attr)
+			}
+			for nextDropped < len(droppedColumns) {
+				addAttr(droppedColumnAttribute(table.OID.AsId(), droppedColumns[nextDropped]))
+				nextDropped++
 			}
 			return true, nil
 		},
@@ -157,7 +175,7 @@ func cachePgAttributes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	return nil
 }
 
-func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string, attstorage string, attcompression string, attstattarget int16, attidentity string) *pgAttribute {
+func tableColumnAttribute(relationID id.Id, schemaName string, tableName string, attnum int16, col *sql.Column, attoptions []string, attstorage string, attcompression string, attstattarget int16, attidentity string, atthasmissing bool, missingValue string) *pgAttribute {
 	typeMeta := attributeTypeMetadata(col.Type)
 	generated := ""
 	if col.Generated != nil && attidentity == "" {
@@ -165,6 +183,10 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 	}
 	if attstorage == "" {
 		attstorage = typeMeta.attstorage
+	}
+	var attmissingval any
+	if atthasmissing {
+		attmissingval = "{" + missingValue + "}"
 	}
 	return &pgAttribute{
 		attrelid:       relationID,
@@ -180,6 +202,7 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		attalign:       typeMeta.attalign,
 		attnotnull:     !col.Nullable,
 		atthasdef:      col.Default != nil,
+		atthasmissing:  atthasmissing,
 		attidentity:    attidentity,
 		attgenerated:   generated,
 		attstorage:     attstorage,
@@ -188,6 +211,22 @@ func tableColumnAttribute(relationID id.Id, schemaName string, tableName string,
 		attcollation:   typeMeta.attcollation,
 		atttypmod:      typeMeta.atttypmod,
 		attoptions:     attoptions,
+		attmissingval:  attmissingval,
+	}
+}
+
+func droppedColumnAttribute(relationID id.Id, dropped tablemetadata.DroppedColumn) *pgAttribute {
+	return &pgAttribute{
+		attrelid:       relationID,
+		attrelidNative: id.Cache().ToOID(relationID),
+		attname:        fmt.Sprintf("........pg.dropped.%d........", dropped.AttNum),
+		atttypid:       id.Null,
+		attnum:         dropped.AttNum,
+		attalign:       "i",
+		attstorage:     "p",
+		attisdropped:   true,
+		attstattarget:  -1,
+		attcollation:   id.Null,
 	}
 }
 
@@ -267,7 +306,7 @@ func viewAttributes(ctx *sql.Context, schemaName string, view functions.ItemView
 		if err != nil {
 			return nil, err
 		}
-		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil, "", "", -1, ""))
+		attrs = append(attrs, tableColumnAttribute(view.OID.AsId(), schemaName, view.Item.Name, attnum, resolvedCol, nil, "", "", -1, "", false, ""))
 	}
 	return attrs, nil
 }
@@ -652,14 +691,17 @@ type pgAttribute struct {
 	attalign       string
 	attnotnull     bool
 	atthasdef      bool
+	atthasmissing  bool
 	attidentity    string
 	attgenerated   string
+	attisdropped   bool
 	attstorage     string
 	attcompression string
 	attstattarget  int16
 	attcollation   id.Id
 	atttypmod      int32
 	attoptions     []string
+	attmissingval  any
 }
 
 // lessAttNum is a sort function for pgAttribute based on attrelid.
@@ -736,10 +778,10 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		attr.attcompression, // attcompression
 		attr.attnotnull,     // attnotnull
 		attr.atthasdef,      // atthasdef
-		false,               // atthasmissing
+		attr.atthasmissing,  // atthasmissing
 		attr.attidentity,    // attidentity
 		attr.attgenerated,   // attgenerated
-		false,               // attisdropped
+		attr.attisdropped,   // attisdropped
 		true,                // attislocal
 		int16(0),            // attinhcount
 		attr.attstattarget,  // attstattarget
@@ -747,6 +789,6 @@ func pgAttributeToRow(attr *pgAttribute) sql.Row {
 		attacl,              // attacl
 		attoptions,          // attoptions
 		nil,                 // attfdwoptions
-		nil,                 // attmissingval
+		attr.attmissingval,  // attmissingval
 	}
 }

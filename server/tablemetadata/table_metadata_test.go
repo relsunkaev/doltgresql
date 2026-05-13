@@ -203,12 +203,17 @@ func TestColumnAttributeMetadata(t *testing.T) {
 	if got := ColumnIdentity(comment, "id"); got != "d" {
 		t.Fatalf("unexpected column identity: %q", got)
 	}
+	comment = SetColumnMissingValue(comment, "marker", "7")
+	if got, ok := ColumnMissingValue(comment, "marker"); !ok || got != "7" {
+		t.Fatalf("unexpected column missing value: %q, %v", got, ok)
+	}
 
 	comment = SetPrimaryKeyConstraintName(comment, "items_pkey")
 	comment = SetColumnStorage(comment, "payload", "")
 	comment = SetColumnCompression(comment, "payload", "")
 	comment = SetColumnStatisticsTarget(comment, "payload", -1)
 	comment = SetColumnIdentity(comment, "id", "")
+	comment = AddDroppedColumn(comment, "marker", 2)
 	if got := PrimaryKeyConstraintName(comment); got != "items_pkey" {
 		t.Fatalf("expected unrelated metadata to be preserved, got %q", got)
 	}
@@ -224,10 +229,21 @@ func TestColumnAttributeMetadata(t *testing.T) {
 	if got := ColumnIdentity(comment, "id"); got != "" {
 		t.Fatalf("expected identity metadata to be cleared, got %q", got)
 	}
+	if got, ok := ColumnMissingValue(comment, "marker"); ok || got != "" {
+		t.Fatalf("expected missing-value metadata to be cleared, got %q, %v", got, ok)
+	}
+	dropped := DroppedColumns(comment)
+	if len(dropped) != 1 || dropped[0].Name != "marker" || dropped[0].AttNum != 2 {
+		t.Fatalf("unexpected dropped columns: %#v", dropped)
+	}
 
 	comment = SetPrimaryKeyConstraintName(comment, "")
-	if comment != "" {
-		t.Fatalf("expected clearing only metadata to clear the comment, got %q", comment)
+	if comment == "" {
+		t.Fatalf("expected dropped-column metadata to preserve the comment")
+	}
+	dropped = DroppedColumns(comment)
+	if len(dropped) != 1 || dropped[0].Name != "marker" || dropped[0].AttNum != 2 {
+		t.Fatalf("unexpected dropped columns after clearing primary key: %#v", dropped)
 	}
 }
 
