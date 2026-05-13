@@ -183,3 +183,109 @@ func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestRowLevelSecurityUpdatePolicyUsingTrueRepro reproduces the unsupported
+// true-expression bug for UPDATE policies: PostgreSQL allows the update, while
+// Doltgres filters every row out.
+func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_true_update_policy_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_update_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_update_policy_writer; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_true_update_policy_writer",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "UPDATE policy USING true allows all rows",
+			SetUpScript: []string{
+				`CREATE USER rls_true_update_policy_writer PASSWORD 'writer';`,
+				`CREATE TABLE rls_true_update_policy_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_true_update_policy_docs VALUES (1, 'original');`,
+				`GRANT USAGE ON SCHEMA public TO rls_true_update_policy_writer;`,
+				`GRANT SELECT, UPDATE ON rls_true_update_policy_docs TO rls_true_update_policy_writer;`,
+				`CREATE POLICY rls_true_update_policy_docs_update
+					ON rls_true_update_policy_docs
+					FOR UPDATE
+					USING (true)
+					WITH CHECK (true);`,
+				`CREATE POLICY rls_true_update_policy_docs_select
+					ON rls_true_update_policy_docs
+					FOR SELECT
+					USING (true);`,
+				`ALTER TABLE rls_true_update_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE rls_true_update_policy_docs
+						SET label = 'updated'
+						WHERE id = 1
+						RETURNING id, label;`,
+					Expected: []sql.Row{{1, "updated"}},
+					Username: `rls_true_update_policy_writer`,
+					Password: `writer`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-update-policy-using-true-allows-all",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityDeletePolicyUsingTrueRepro reproduces the unsupported
+// true-expression bug for DELETE policies: PostgreSQL allows the delete, while
+// Doltgres filters every row out.
+func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_true_delete_policy_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_true_delete_policy_writer') THEN REVOKE USAGE ON SCHEMA public FROM rls_true_delete_policy_writer; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_true_delete_policy_writer",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DELETE policy USING true allows all rows",
+			SetUpScript: []string{
+				`CREATE USER rls_true_delete_policy_writer PASSWORD 'writer';`,
+				`CREATE TABLE rls_true_delete_policy_docs (
+					id INT PRIMARY KEY,
+					label TEXT
+				);`,
+				`INSERT INTO rls_true_delete_policy_docs VALUES (1, 'delete me');`,
+				`GRANT USAGE ON SCHEMA public TO rls_true_delete_policy_writer;`,
+				`GRANT SELECT, DELETE ON rls_true_delete_policy_docs TO rls_true_delete_policy_writer;`,
+				`CREATE POLICY rls_true_delete_policy_docs_delete
+					ON rls_true_delete_policy_docs
+					FOR DELETE
+					USING (true);`,
+				`CREATE POLICY rls_true_delete_policy_docs_select
+					ON rls_true_delete_policy_docs
+					FOR SELECT
+					USING (true);`,
+				`ALTER TABLE rls_true_delete_policy_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DELETE FROM rls_true_delete_policy_docs
+						WHERE id = 1
+						RETURNING id, label;`,
+					Expected: []sql.Row{{1, "delete me"}},
+					Username: `rls_true_delete_policy_writer`,
+					Password: `writer`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-delete-policy-using-true-allows-all",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
