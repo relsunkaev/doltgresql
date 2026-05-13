@@ -94,12 +94,16 @@ func nodeCreateSubscription(ctx *Context, node *tree.CreateSubscription) (vitess
 	if node == nil {
 		return nil, nil
 	}
+	options, err := nodeSubscriptionKVOptions(node.Options)
+	if err != nil {
+		return nil, err
+	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.CreateSubscription{
 			Name:         string(node.Name),
 			ConnInfo:     node.ConnInfo,
 			Publications: nodeNameListStrings(node.Publications),
-			Options:      nodeKVOptions(node.Options),
+			Options:      options,
 		},
 	}, nil
 }
@@ -113,6 +117,10 @@ func nodeAlterSubscription(ctx *Context, node *tree.AlterSubscription) (vitess.S
 	if err != nil {
 		return nil, err
 	}
+	options, err := nodeSubscriptionKVOptions(node.Options)
+	if err != nil {
+		return nil, err
+	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.AlterSubscription{
 			Name:         string(node.Name),
@@ -121,7 +129,7 @@ func nodeAlterSubscription(ctx *Context, node *tree.AlterSubscription) (vitess.S
 			Owner:        node.Owner,
 			ConnInfo:     node.ConnInfo,
 			Publications: nodeNameListStrings(node.Publications),
-			Options:      nodeKVOptions(node.Options),
+			Options:      options,
 		},
 	}, nil
 }
@@ -223,6 +231,20 @@ func nodeKVOptions(options tree.KVOptions) map[string]string {
 		ret[strings.ToLower(string(option.Key))] = nodeOptionValue(option.Value)
 	}
 	return ret
+}
+
+func nodeSubscriptionKVOptions(options tree.KVOptions) (map[string]string, error) {
+	ret := make(map[string]string, len(options))
+	seen := make(map[string]struct{}, len(options))
+	for _, option := range options {
+		key := strings.ToLower(string(option.Key))
+		if _, ok := seen[key]; ok {
+			return nil, errors.Errorf("conflicting or redundant options: %s", key)
+		}
+		seen[key] = struct{}{}
+		ret[key] = nodeOptionValue(option.Value)
+	}
+	return ret, nil
 }
 
 func nodeOptionValue(expr tree.Expr) string {

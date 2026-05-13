@@ -290,10 +290,11 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		pub.ID = newID
 		return sql.RowsToRowIter(), collection.AddPublication(ctx, pub)
 	case PublicationAlterOwner:
-		if !auth.RoleExists(a.Owner) {
-			return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
+		owner := resolveOwnerRole(ctx, a.Owner)
+		if !auth.RoleExists(owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, owner)
 		}
-		pub.Owner = id.NewId(id.Section_User, a.Owner)
+		pub.Owner = id.NewId(id.Section_User, owner)
 	default:
 		return nil, errors.Errorf("unknown ALTER PUBLICATION action: %s", a.Action)
 	}
@@ -399,6 +400,9 @@ func (c *CreateSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, 
 	if len(c.Publications) == 0 {
 		return nil, errors.New("CREATE SUBSCRIPTION requires at least one publication")
 	}
+	if err := validateSubscriptionPublicationsUnique(c.Publications); err != nil {
+		return nil, err
+	}
 	connect, err := optionBool(c.Options, "connect", true)
 	if err != nil {
 		return nil, err
@@ -495,6 +499,9 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	case SubscriptionAlterConnection:
 		sub.ConnInfo = a.ConnInfo
 	case SubscriptionAlterSetPublication:
+		if err = validateSubscriptionPublicationsUnique(a.Publications); err != nil {
+			return nil, err
+		}
 		if err = validateSubscriptionPublicationAlterOptions(sub, a.Options); err != nil {
 			return nil, err
 		}
@@ -503,6 +510,9 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 			return nil, err
 		}
 	case SubscriptionAlterAddPublication:
+		if err = validateSubscriptionPublicationsUnique(a.Publications); err != nil {
+			return nil, err
+		}
 		if err = validateSubscriptionPublicationAlterOptions(sub, a.Options); err != nil {
 			return nil, err
 		}
@@ -542,6 +552,9 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	case SubscriptionAlterDisable:
 		sub.Enabled = false
 	case SubscriptionAlterSetOptions:
+		if _, ok := a.Options["two_phase"]; ok {
+			return nil, errors.New(`ALTER SUBSCRIPTION cannot set option "two_phase"`)
+		}
 		if err = applySubscriptionOptions(&sub, a.Options); err != nil {
 			return nil, err
 		}
@@ -549,6 +562,10 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		lsn, ok := a.Options["lsn"]
 		if !ok {
 			return nil, errors.New(`ALTER SUBSCRIPTION SKIP requires "lsn"`)
+		}
+		if strings.EqualFold(lsn, "none") {
+			sub.SkipLSN = pgtypes.FormatPgLsn(0)
+			break
 		}
 		if _, err = pgtypes.ParsePgLsn(lsn); err != nil {
 			return nil, err
@@ -568,10 +585,11 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		sub.ID = newID
 		return sql.RowsToRowIter(), collection.AddSubscription(ctx, sub)
 	case SubscriptionAlterOwner:
-		if !auth.RoleExists(a.Owner) {
-			return nil, errors.Errorf(`role "%s" does not exist`, a.Owner)
+		owner := resolveOwnerRole(ctx, a.Owner)
+		if !auth.RoleExists(owner) {
+			return nil, errors.Errorf(`role "%s" does not exist`, owner)
 		}
-		sub.Owner = id.NewId(id.Section_User, a.Owner)
+		sub.Owner = id.NewId(id.Section_User, owner)
 	default:
 		return nil, errors.Errorf("unknown ALTER SUBSCRIPTION action: %s", a.Action)
 	}
@@ -703,6 +721,26 @@ func ownerNameFromID(owner id.Id) string {
 		return owner.Segment(0)
 	}
 	return "postgres"
+}
+
+func resolveOwnerRole(ctx *sql.Context, owner string) string {
+	switch strings.ToLower(owner) {
+	case "current_role", "current_user", "session_user":
+		return ctx.Client().User
+	default:
+		return owner
+	}
+}
+
+func validateSubscriptionPublicationsUnique(publications []string) error {
+	seen := make(map[string]struct{}, len(publications))
+	for _, publication := range publications {
+		if _, ok := seen[publication]; ok {
+			return errors.Errorf(`publication name "%s" used more than once`, publication)
+		}
+		seen[publication] = struct{}{}
+	}
+	return nil
 }
 
 func resolvePublicationTables(ctx *sql.Context, specs []PublicationTableSpec) ([]publications.PublicationRelation, error) {
@@ -956,7 +994,11 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 			}
 			sub.Binary = parsed
 		case "streaming":
-			sub.Stream = parseStreamingOption(value)
+			parsed, err := parseStreamingOption(value)
+			if err != nil {
+				return err
+			}
+			sub.Stream = parsed
 		case "two_phase":
 			parsed, err := parseReplicationBoolOption(key, value)
 			if err != nil {
@@ -974,12 +1016,21 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 			}
 			sub.DisableOnError = parsed
 		case "slot_name":
+			if value == "" {
+				return errors.New(`replication slot name "" is too short`)
+			}
 			if strings.EqualFold(value, "none") {
+				if sub.Enabled {
+					return errors.New("cannot set slot_name = NONE for enabled subscription")
+				}
 				sub.SlotName = ""
 			} else {
 				sub.SlotName = value
 			}
 		case "synchronous_commit":
+			if err := validateSynchronousCommitOption(value); err != nil {
+				return err
+			}
 			sub.SyncCommit = value
 		case "copy_data":
 			if _, err := parseReplicationBoolOption(key, value); err != nil {
@@ -989,10 +1040,21 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 			if _, err := parseReplicationBoolOption(key, value); err != nil {
 				return err
 			}
-		case "origin", "run_as_owner", "password_required":
+		case "origin":
+			if err := validateSubscriptionOriginOption(value); err != nil {
+				return err
+			}
+		case "run_as_owner", "password_required":
+			if _, err := parseReplicationBoolOption(key, value); err != nil {
+				return err
+			}
 			// These options affect remote apply behavior. They are accepted so metadata-only
 			// subscriptions can round-trip PgDog setup, but no local worker is started.
 		case "lsn":
+			if strings.EqualFold(value, "none") {
+				sub.SkipLSN = pgtypes.FormatPgLsn(0)
+				break
+			}
 			if _, err := pgtypes.ParsePgLsn(value); err != nil {
 				return err
 			}
@@ -1077,12 +1139,32 @@ func parseReplicationBoolOption(key string, value string) (bool, error) {
 	}
 }
 
-func parseStreamingOption(value string) bool {
+func parseStreamingOption(value string) (bool, error) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "true", "on", "yes", "1", "parallel":
-		return true
+		return true, nil
+	case "false", "off", "no", "0":
+		return false, nil
 	default:
-		return false
+		return false, errors.Errorf(`invalid value for option "streaming": "%s"`, value)
+	}
+}
+
+func validateSynchronousCommitOption(value string) error {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "local", "remote_write", "remote_apply", "on", "off":
+		return nil
+	default:
+		return errors.Errorf(`invalid value for option "synchronous_commit": "%s"`, value)
+	}
+}
+
+func validateSubscriptionOriginOption(value string) error {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "none", "any":
+		return nil
+	default:
+		return errors.Errorf(`invalid value for option "origin": "%s"`, value)
 	}
 }
 

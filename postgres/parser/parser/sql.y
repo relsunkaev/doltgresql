@@ -4977,6 +4977,10 @@ skip_option:
   {
     $$.val = tree.KVOption{Key: tree.Name($1), Value: $3.expr()}
   }
+| unrestricted_name '=' NONE
+  {
+    $$.val = tree.KVOption{Key: tree.Name($1), Value: tree.NewStrVal($3)}
+  }
 
 create_aggregate_stmt:
   create_aggregate_args_only_stmt
