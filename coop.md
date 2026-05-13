@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 02:00 America/Phoenix
+
+- Lane complete: COPY server-file/program privilege parsing from `TestCopyToServerFileRequiresPrivilegeRepro`, `TestCopyFromProgramRequiresPrivilegeRepro`, and `TestCopyToProgramRequiresPrivilegeRepro`.
+- Expected files: COPY parser/tree/AST/node plumbing plus `server/connection_handler.go`; avoided beta network type files, alpha statement-atomicity files, auditor oracle artifacts, delta JSON files, and dirty `server/node/grant.go`.
+- Red proof in clean verifier `/Users/ramazan/.cache/doltgresql-gamma-probe-20260513-014209` at `fe597633`: `COPY ... TO '<file>'` failed at parse time near the file path, and `COPY ... FROM/TO PROGRAM` failed at parse time near `program`, so the PostgreSQL server-file/program privilege checks were unreachable.
+- Fix: parser/tree/AST/node COPY plumbing now preserves server file and `PROGRAM` targets; non-STDOUT COPY TO and COPY FROM PROGRAM create a server context, enforce `pg_write_server_files` / `pg_execute_server_program`, then stop with an unsupported error for authorized users rather than writing files or executing local programs in this narrow privilege slice.
+- Focused green in clean verifier `/Users/ramazan/.cache/doltgresql-gamma-copy-20260513-015418` at `ec8b3f77` with gamma patch applied after `./postgres/parser/build.sh`:
+  - `go test -vet=off ./testing/go -run '^(TestCopyToServerFileRequiresPrivilegeRepro|TestCopyFromProgramRequiresPrivilegeRepro|TestCopyToProgramRequiresPrivilegeRepro|TestCopyFromServerFileRequiresPrivilegeRepro|TestCopyFromServerFileRejectsRelativePathRepro)$' -count=1 -v`
+  - `go test -vet=off ./postgres/parser/parser ./postgres/parser/sem/tree ./server/ast ./server/node ./server -run '^$' -count=1`
+- `TestPostgres18CopyOnErrorRejectLimitRepro` remains a separate broader COPY data-loader/parser option lane; gamma did not claim it.
+
 ### gamma - 2026-05-13 01:19 America/Phoenix
 
 - Lane: `to_char` timezone fields from `TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro`.
