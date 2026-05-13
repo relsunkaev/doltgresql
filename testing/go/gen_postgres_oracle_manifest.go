@@ -132,6 +132,7 @@ func main() {
 	refreshOracleMap := flag.String("refresh-oracle-map", "", "promote one ScriptTest source file and refresh its cached expected rows from PostgreSQL")
 	promoteOracleMapOutput := flag.String("promote-oracle-map-output", "", "output path for --promote-oracle-map; defaults to testdata/postgres_oracle_migrations/<source>.oracle-map.json")
 	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
+	oracleScriptName := flag.String("oracle-script-name", "", "optional comma-separated ScriptTest Name filter for --promote-oracle-map or --refresh-oracle-map")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
@@ -146,7 +147,8 @@ func main() {
 			os.Exit(1)
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, dsn); err != nil {
+		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, scriptNames, dsn); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -159,7 +161,8 @@ func main() {
 			os.Exit(1)
 		}
 		testNames := parseOracleTestNameFilter(*oracleTestName)
-		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames); err != nil {
+		scriptNames := parseOracleScriptNameFilter(*oracleScriptName)
+		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames, scriptNames); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -194,6 +197,14 @@ func main() {
 }
 
 func parseOracleTestNameFilter(value string) map[string]struct{} {
+	return parseOracleNameFilter(value)
+}
+
+func parseOracleScriptNameFilter(value string) map[string]struct{} {
+	return parseOracleNameFilter(value)
+}
+
+func parseOracleNameFilter(value string) map[string]struct{} {
 	if strings.TrimSpace(value) == "" {
 		return nil
 	}
@@ -465,7 +476,7 @@ func writeMigrationCandidates(dir string) error {
 		if strings.HasPrefix(file, "postgres_oracle_") {
 			continue
 		}
-		candidates, err := migrationCandidatesForFile(file, migrationOverrides, nil)
+		candidates, err := migrationCandidatesForFile(file, migrationOverrides, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -484,7 +495,7 @@ func writeMigrationCandidates(dir string) error {
 	return nil
 }
 
-func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}) error {
+func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if sourceFile == "" || strings.Contains(sourceFile, string(filepath.Separator)+".."+string(filepath.Separator)) || strings.HasPrefix(sourceFile, "..") {
 		return fmt.Errorf("invalid source file %q", sourceFile)
@@ -497,7 +508,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	if err != nil {
 		return err
 	}
-	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides, testNameFilter)
+	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides, testNameFilter, scriptNameFilter)
 	if err != nil {
 		return err
 	}
@@ -507,6 +518,9 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	candidates.GeneratedBy = "go run gen_postgres_oracle_manifest.go --promote-oracle-map " + sourceFile
 	if len(testNameFilter) > 0 {
 		candidates.GeneratedBy += " --oracle-test-name " + strings.Join(sortedFilterKeys(testNameFilter), ",")
+	}
+	if len(scriptNameFilter) > 0 {
+		candidates.GeneratedBy += " --oracle-script-name " + strings.Join(sortedFilterKeys(scriptNameFilter), ",")
 	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
@@ -546,12 +560,12 @@ func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, dsn string) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}, dsn string) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
 	}
-	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter); err != nil {
+	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter, scriptNameFilter); err != nil {
 		return err
 	}
 
@@ -942,7 +956,7 @@ func expandOracleVariables(query string, variables map[string]string) string {
 	return expanded
 }
 
-func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta, testNameFilter map[string]struct{}) (migrationFile, error) {
+func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta, testNameFilter map[string]struct{}, scriptNameFilter map[string]struct{}) (migrationFile, error) {
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, file, nil, 0)
 	if err != nil {
@@ -985,6 +999,10 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 				}
 				scriptFields := compositeFields(scriptLit)
 				scriptName, _ := optionalStringLiteral(scriptFields["Name"])
+				includeScript := len(scriptNameFilter) == 0
+				if !includeScript {
+					_, includeScript = scriptNameFilter[scriptName]
+				}
 				assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
 				if !ok {
 					continue
@@ -999,6 +1017,9 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 						continue
 					}
 					ordinal++
+					if !includeScript {
+						continue
+					}
 					candidate, err := migrationCandidate(source, ordinal, scriptName, assertionFields, stringSlices, migrationOverrides)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s#%04d: %w", source, ordinal, err)

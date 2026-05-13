@@ -233,6 +233,41 @@ func TestPostgresOraclePromotedMapSupportsTestNameFilter(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSupportsScriptNameFilter(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "publication_subscription_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "publication_subscription_test.go",
+		"--oracle-test-name", "TestPublicationDDLAndCatalogs",
+		"--oracle-script-name", "publication table lists accept repeated and omitted table keywords",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		GeneratedBy string `json:"generatedBy"`
+		SourceFile  string `json:"sourceFile"`
+		Assertions  []struct {
+			Source     string `json:"source"`
+			ScriptName string `json:"scriptName"`
+			Ordinal    int    `json:"ordinal"`
+			Oracle     string `json:"oracle"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Equal(t, "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestPublicationDDLAndCatalogs --oracle-script-name publication table lists accept repeated and omitted table keywords", generated.GeneratedBy)
+	require.Equal(t, "testing/go/publication_subscription_test.go", generated.SourceFile)
+	require.Len(t, generated.Assertions, 2)
+	require.Equal(t, 12, generated.Assertions[0].Ordinal)
+	require.Equal(t, 13, generated.Assertions[1].Ordinal)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs", assertion.Source)
+		require.Equal(t, "publication table lists accept repeated and omitted table keywords", assertion.ScriptName)
+		require.Equal(t, "postgres", assertion.Oracle)
+	}
+}
+
 func TestPostgresOracleReplicaIdentityCacheUsesCatalogCharText(t *testing.T) {
 	manifest := loadPostgresOracleManifest(t)
 	seen := map[string]string{}

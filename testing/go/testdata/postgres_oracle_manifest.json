@@ -1023,6 +1023,89 @@
       ]
     },
     {
+      "id": "publication-subscription-test-testpublicationddlandcatalogs-0012-select-schemaname-tablename-from-pg_catalog.pg_publication_tables",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 12,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA dgzero;",
+        "CREATE SCHEMA zmeta;",
+        "CREATE TABLE dgzero.permissions (id BIGINT PRIMARY KEY);",
+        "CREATE TABLE zmeta.clients (id BIGINT PRIMARY KEY);",
+        "CREATE TABLE zmeta.mutations (id BIGINT PRIMARY KEY);",
+        "CREATE PUBLICATION \"_dgzero_metadata_0\" FOR TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;"
+      ],
+      "query": "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;",
+      "expectedRows": [
+        [
+          {
+            "value": "dgzero"
+          },
+          {
+            "value": "permissions"
+          }
+        ],
+        [
+          {
+            "value": "zmeta"
+          },
+          {
+            "value": "clients"
+          }
+        ],
+        [
+          {
+            "value": "zmeta"
+          },
+          {
+            "value": "mutations"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP PUBLICATION IF EXISTS \"_dgzero_metadata_0\"",
+        "DROP SCHEMA IF EXISTS dgzero CASCADE",
+        "DROP SCHEMA IF EXISTS zmeta CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testpublicationddlandcatalogs-0013-select-count-*-from-pg_catalog.pg_publication_tables",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 13,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA dgzero;",
+        "CREATE SCHEMA zmeta;",
+        "CREATE TABLE dgzero.permissions (id BIGINT PRIMARY KEY);",
+        "CREATE TABLE zmeta.clients (id BIGINT PRIMARY KEY);",
+        "CREATE TABLE zmeta.mutations (id BIGINT PRIMARY KEY);",
+        "CREATE PUBLICATION \"_dgzero_metadata_0\" FOR TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;",
+        "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;",
+        "ALTER PUBLICATION \"_dgzero_metadata_0\" SET TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;"
+      ],
+      "query": "SELECT count(*) FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0';",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP PUBLICATION IF EXISTS \"_dgzero_metadata_0\"",
+        "DROP SCHEMA IF EXISTS dgzero CASCADE",
+        "DROP SCHEMA IF EXISTS zmeta CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where",
       "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
       "ordinal": 1,

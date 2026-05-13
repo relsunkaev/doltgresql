@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestElectricInspectorArrayAlias,TestReplicaIdentityDDLAndCatalogs",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestElectricInspectorArrayAlias,TestPublicationDDLAndCatalogs,TestReplicaIdentityDDLAndCatalogs --oracle-script-name electric inspector array alias,publication table lists accept repeated and omitted table keywords,replica identity ddl and catalogs",
   "sourceFile": "testing/go/publication_subscription_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -13,6 +13,69 @@
     "ExpectedNotices"
   ],
   "assertions": [
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0012",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 12,
+      "scriptName": "publication table lists accept repeated and omitted table keywords",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0012-select-schemaname-tablename-from-pg_catalog.pg_publication_tables",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0012-select-schemaname-tablename-from-pg_catalog.pg_publication_tables",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;",
+      "querySha256": "22264cab034d007c3bcf9aed342eccb1a192b0ad0683ee6c528e761234ca8719",
+      "expectedRows": [
+        [
+          {
+            "value": "dgzero"
+          },
+          {
+            "value": "permissions"
+          }
+        ],
+        [
+          {
+            "value": "zmeta"
+          },
+          {
+            "value": "clients"
+          }
+        ],
+        [
+          {
+            "value": "zmeta"
+          },
+          {
+            "value": "mutations"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs#0013",
+      "source": "testing/go/publication_subscription_test.go:TestPublicationDDLAndCatalogs",
+      "ordinal": 13,
+      "scriptName": "publication table lists accept repeated and omitted table keywords",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testpublicationddlandcatalogs-0013-select-count-*-from-pg_catalog.pg_publication_tables",
+      "suggestedId": "publication-subscription-test-testpublicationddlandcatalogs-0013-select-count-*-from-pg_catalog.pg_publication_tables",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0';",
+      "querySha256": "9cdc22d2be26e33044710cb0f2a85543babce088cd9145ce248c718e83bf6ba7",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
     {
       "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0001",
       "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
