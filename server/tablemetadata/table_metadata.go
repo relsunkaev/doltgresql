@@ -47,12 +47,20 @@ type Metadata struct {
 	ColumnIdentity              map[string]string   `json:"columnIdentity,omitempty"`
 	ColumnMissingValues         map[string]string   `json:"columnMissingValues,omitempty"`
 	DroppedColumns              []DroppedColumn     `json:"droppedColumns,omitempty"`
+	ExtendedStatistics          []ExtendedStatistic `json:"extendedStatistics,omitempty"`
 }
 
 // DroppedColumn stores the original attribute slot for a dropped table column.
 type DroppedColumn struct {
 	Name   string `json:"name,omitempty"`
 	AttNum int16  `json:"attNum,omitempty"`
+}
+
+// ExtendedStatistic stores the metadata for a CREATE STATISTICS object.
+type ExtendedStatistic struct {
+	Name    string   `json:"name,omitempty"`
+	Columns []string `json:"columns,omitempty"`
+	Kinds   []string `json:"kinds,omitempty"`
 }
 
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
@@ -70,6 +78,7 @@ func EncodeComment(metadata Metadata) string {
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
+	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	encoded, _ := json.Marshal(metadata)
 	return commentPrefix + string(encoded)
 }
@@ -97,6 +106,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 	normalizeColumnIdentity(metadata.ColumnIdentity)
 	normalizeColumnMissingValues(metadata.ColumnMissingValues)
 	normalizeDroppedColumns(&metadata.DroppedColumns)
+	normalizeExtendedStatistics(&metadata.ExtendedStatistics)
 	return metadata, true
 }
 
@@ -311,6 +321,15 @@ func DroppedColumns(comment string) []DroppedColumn {
 		return nil
 	}
 	return append([]DroppedColumn(nil), metadata.DroppedColumns...)
+}
+
+// ExtendedStatistics returns CREATE STATISTICS metadata for a table.
+func ExtendedStatistics(comment string) []ExtendedStatistic {
+	metadata, ok := DecodeComment(comment)
+	if !ok || len(metadata.ExtendedStatistics) == 0 {
+		return nil
+	}
+	return append([]ExtendedStatistic(nil), metadata.ExtendedStatistics...)
 }
 
 // SetRelPersistence returns a table metadata comment with the given
@@ -585,6 +604,32 @@ func AddDroppedColumn(comment string, column string, attnum int16) string {
 	return EncodeComment(metadata)
 }
 
+// AddExtendedStatistic records metadata for a CREATE STATISTICS object on a
+// table. Reusing a statistic name replaces the previous metadata.
+func AddExtendedStatistic(comment string, statistic ExtendedStatistic) string {
+	metadata, _ := DecodeComment(comment)
+	statistic.Name = strings.TrimSpace(statistic.Name)
+	normalizeExtendedStatistic(&statistic)
+	if statistic.Name == "" || len(statistic.Columns) == 0 || len(statistic.Kinds) == 0 {
+		if metadata.empty() {
+			return ""
+		}
+		return EncodeComment(metadata)
+	}
+	replaced := false
+	for i, existing := range metadata.ExtendedStatistics {
+		if existing.Name == statistic.Name {
+			metadata.ExtendedStatistics[i] = statistic
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		metadata.ExtendedStatistics = append(metadata.ExtendedStatistics, statistic)
+	}
+	return EncodeComment(metadata)
+}
+
 // MergeRelOptions applies updates to an existing reloptions slice while
 // preserving first-seen key order.
 func MergeRelOptions(existing []string, updates []string) []string {
@@ -749,6 +794,48 @@ func normalizeDroppedColumns(values *[]DroppedColumn) {
 	})
 }
 
+func normalizeExtendedStatistics(values *[]ExtendedStatistic) {
+	if len(*values) == 0 {
+		return
+	}
+	byName := make(map[string]ExtendedStatistic, len(*values))
+	for _, value := range *values {
+		normalizeExtendedStatistic(&value)
+		if value.Name == "" || len(value.Columns) == 0 || len(value.Kinds) == 0 {
+			continue
+		}
+		byName[value.Name] = value
+	}
+	*values = (*values)[:0]
+	for _, value := range byName {
+		*values = append(*values, value)
+	}
+	sort.Slice(*values, func(i, j int) bool {
+		return (*values)[i].Name < (*values)[j].Name
+	})
+}
+
+func normalizeExtendedStatistic(value *ExtendedStatistic) {
+	value.Name = strings.TrimSpace(value.Name)
+	value.Columns = normalizeStringList(value.Columns)
+	value.Kinds = normalizeStringList(value.Kinds)
+}
+
+func normalizeStringList(values []string) []string {
+	ret := values[:0]
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		ret = append(ret, value)
+	}
+	if len(ret) == 0 {
+		return nil
+	}
+	return ret
+}
+
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
 		metadata.PrimaryKeyIndexComment == "" &&
@@ -769,5 +856,6 @@ func (metadata Metadata) empty() bool {
 		len(metadata.ColumnStatisticsTargets) == 0 &&
 		len(metadata.ColumnIdentity) == 0 &&
 		len(metadata.ColumnMissingValues) == 0 &&
-		len(metadata.DroppedColumns) == 0
+		len(metadata.DroppedColumns) == 0 &&
+		len(metadata.ExtendedStatistics) == 0
 }

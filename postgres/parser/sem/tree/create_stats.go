@@ -44,6 +44,7 @@ var _ Statement = &CreateStats{}
 // CreateStats represents a CREATE STATISTICS statement.
 type CreateStats struct {
 	Name        Name
+	Kinds       NameList
 	ColumnNames NameList
 	Table       TableExpr
 	Options     CreateStatsOptions
@@ -53,6 +54,12 @@ type CreateStats struct {
 func (node *CreateStats) Format(ctx *FmtCtx) {
 	ctx.WriteString("CREATE STATISTICS ")
 	ctx.FormatNode(&node.Name)
+
+	if len(node.Kinds) > 0 {
+		ctx.WriteString(" (")
+		ctx.FormatNode(&node.Kinds)
+		ctx.WriteString(")")
+	}
 
 	if len(node.ColumnNames) > 0 {
 		ctx.WriteString(" ON ")

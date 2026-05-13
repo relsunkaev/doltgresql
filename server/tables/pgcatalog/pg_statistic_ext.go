@@ -15,10 +15,14 @@
 package pgcatalog
 
 import (
-	"io"
+	"strconv"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +47,36 @@ func (p PgStatisticExtHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatisticExtHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_statistic_ext row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			schemaName := schema.Item.SchemaName()
+			comment := tableComment(table.Item)
+			for _, statistic := range tablemetadata.ExtendedStatistics(comment) {
+				stxKeys, ok := statisticKeyText(ctx, table.Item, statistic.Columns)
+				if !ok {
+					continue
+				}
+				rows = append(rows, sql.Row{
+					id.NewId(id.Section_OID, PgStatisticExtName, schemaName, statistic.Name), // oid
+					table.OID.AsId(),                      // stxrelid
+					statistic.Name,                        // stxname
+					id.NewNamespace(schemaName).AsId(),    // stxnamespace
+					id.NewId(id.Section_User, "postgres"), // stxowner
+					int32(-1),                             // stxstattarget
+					stxKeys,                               // stxkeys
+					statisticKindArray(statistic.Kinds),   // stxkind
+					nil,                                   // stxexprs
+					id.NewTable(PgCatalogName, PgStatisticExtName).AsId(), // tableoid
+				})
+			}
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -63,24 +95,35 @@ var pgStatisticExtSchema = sql.Schema{
 	{Name: "stxnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgStatisticExtName},
 	{Name: "stxowner", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgStatisticExtName},
 	{Name: "stxstattarget", Type: pgtypes.Int32, Default: nil, Nullable: false, Source: PgStatisticExtName},
-	{Name: "stxkeys", Type: pgtypes.Int16Array, Default: nil, Nullable: false, Source: PgStatisticExtName}, // TODO: int2vector type
+	{Name: "stxkeys", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgStatisticExtName}, // TODO: int2vector type
 	{Name: "stxkind", Type: pgtypes.InternalCharArray, Default: nil, Nullable: false, Source: PgStatisticExtName},
 	{Name: "stxexprs", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgStatisticExtName}, // TODO: collation C, pg_node_tree type
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgStatisticExtName},
 }
 
-// pgStatisticExtRowIter is the sql.RowIter for the pg_statistic_ext table.
-type pgStatisticExtRowIter struct {
+func statisticKeyText(ctx *sql.Context, table sql.Table, columns []string) (string, bool) {
+	columnIndexes := make(map[string]int, len(table.Schema(ctx)))
+	for i, column := range table.Schema(ctx) {
+		if column.HiddenSystem {
+			continue
+		}
+		columnIndexes[column.Name] = i + 1
+	}
+	keys := make([]string, 0, len(columns))
+	for _, column := range columns {
+		idx, ok := columnIndexes[column]
+		if !ok {
+			return "", false
+		}
+		keys = append(keys, strconv.Itoa(idx))
+	}
+	return strings.Join(keys, " "), true
 }
 
-var _ sql.RowIter = (*pgStatisticExtRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatisticExtRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatisticExtRowIter) Close(ctx *sql.Context) error {
-	return nil
+func statisticKindArray(kinds []string) []any {
+	ret := make([]any, 0, len(kinds))
+	for _, kind := range kinds {
+		ret = append(ret, kind)
+	}
+	return ret
 }

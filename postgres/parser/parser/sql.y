@@ -1357,7 +1357,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <str> explain_verb
 %type <bool> distinct_clause opt_external definer_or_invoker opt_not opt_col_with_options
 %type <tree.DistinctOn> distinct_on_clause
-%type <tree.NameList> opt_column_list insert_column_list opt_stats_columns opt_of_cols
+%type <tree.NameList> opt_column_list insert_column_list opt_stats_columns opt_stats_kinds opt_of_cols
 %type <tree.OrderBy> sort_clause single_sort_clause opt_sort_clause
 %type <[]*tree.Order> sortby_list
 %type <tree.IndexParams> constraint_index_params
@@ -5702,16 +5702,27 @@ create_ddl_stmt_schema_element:
 //   [ON <colname> [, ...]]
 //   FROM <tablename> [AS OF SYSTEM TIME <expr>]
 create_stats_stmt:
-  CREATE STATISTICS statistics_name opt_stats_columns FROM create_stats_target opt_create_stats_options
+  CREATE STATISTICS statistics_name opt_stats_kinds opt_stats_columns FROM create_stats_target opt_create_stats_options
   {
     $$.val = &tree.CreateStats{
       Name: tree.Name($3),
-      ColumnNames: $4.nameList(),
-      Table: $6.tblExpr(),
-      Options: *$7.createStatsOptions(),
+      Kinds: $4.nameList(),
+      ColumnNames: $5.nameList(),
+      Table: $7.tblExpr(),
+      Options: *$8.createStatsOptions(),
     }
   }
 | CREATE STATISTICS error // SHOW HELP: CREATE STATISTICS
+
+opt_stats_kinds:
+  '(' name_list ')'
+  {
+    $$.val = $2.nameList()
+  }
+| /* EMPTY */
+  {
+    $$.val = tree.NameList(nil)
+  }
 
 opt_stats_columns:
   ON name_list
