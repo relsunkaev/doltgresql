@@ -413,6 +413,16 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 				TableName: colName.Qualifier,
 			}, nil
 		}
+		if wholeRowExpr, ok := wholeRowDuplicateAliasExpr(ctx, expr); ok {
+			if node.As == "" {
+				node.As = tree.UnrestrictedName(expr.Parts[0])
+			}
+			return &vitess.AliasedExpr{
+				Expr:            wholeRowExpr,
+				As:              vitess.NewColIdent(string(node.As)),
+				InputExpression: inputExpressionForSelectExpr(node),
+			}, nil
+		}
 
 		if ctx.InSetOpOperand() {
 			if node.As == "" {

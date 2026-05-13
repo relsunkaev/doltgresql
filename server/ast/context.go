@@ -40,6 +40,13 @@ type Context struct {
 	// scramble set-op schemas when a catalog query selects a sparse
 	// subset of columns.
 	setOpOperandDepth int
+
+	wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
+}
+
+type wholeRowDuplicateAlias struct {
+	tableName  string
+	fieldNames []string
 }
 
 // NewContext returns a new *Context.

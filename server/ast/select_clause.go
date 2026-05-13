@@ -32,7 +32,12 @@ func nodeSelectClause(ctx *Context, node *tree.SelectClause) (*vitess.Select, er
 	if node == nil {
 		return nil, nil
 	}
+	var wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
+	node, wholeRowDuplicateAliases = rewriteWholeRowDuplicateSubqueryAliases(node)
 	node = rewriteValuesCaseDistinctAliases(node)
+	prevWholeRowDuplicateAliases := ctx.wholeRowDuplicateAliases
+	ctx.wholeRowDuplicateAliases = wholeRowDuplicateAliases
+	defer func() { ctx.wholeRowDuplicateAliases = prevWholeRowDuplicateAliases }()
 	selectExprs, err := nodeSelectExprs(ctx, node.Exprs)
 	if err != nil {
 		return nil, err
@@ -166,6 +171,284 @@ PostJoinRewrite:
 		Window:      window,
 		Comments:    vitess.Comments{[]byte(node.BlockComment)},
 	}, nil
+}
+
+type duplicateSubqueryAliasCandidate struct {
+	encodedNames map[int]string
+	fieldNames   []string
+}
+
+func rewriteWholeRowDuplicateSubqueryAliases(node *tree.SelectClause) (*tree.SelectClause, map[string]wholeRowDuplicateAlias) {
+	candidates := duplicateSubqueryAliasCandidates(node.From)
+	if len(candidates) == 0 {
+		return node, nil
+	}
+	usedAliases := wholeRowAliasUses(node, candidates)
+	if len(usedAliases) == 0 {
+		return node, nil
+	}
+
+	tables := make(tree.TableExprs, len(node.From.Tables))
+	changed := false
+	for i, table := range node.From.Tables {
+		rewritten, ok := rewriteDuplicateAliasTableExpr(table, usedAliases, candidates)
+		tables[i] = rewritten
+		changed = changed || ok
+	}
+	if !changed {
+		return node, nil
+	}
+	ret := *node
+	ret.From = tree.From{Tables: tables}
+	return &ret, wholeRowDuplicateAliasesForContext(usedAliases, candidates)
+}
+
+func duplicateSubqueryAliasCandidates(from tree.From) map[string]duplicateSubqueryAliasCandidate {
+	if len(from.Tables) == 0 {
+		return nil
+	}
+	candidates := make(map[string]duplicateSubqueryAliasCandidate)
+	for i, table := range from.Tables {
+		aliased, ok := table.(*tree.AliasedTableExpr)
+		if !ok || aliased.As.Alias == "" || len(aliased.As.Cols) > 0 {
+			continue
+		}
+		subquery, ok := tree.StripTableParens(aliased.Expr).(*tree.Subquery)
+		if !ok {
+			continue
+		}
+		encodedNames := duplicateSelectAliasEncodings(subquery.Select, i)
+		if len(encodedNames) == 0 {
+			continue
+		}
+		fieldNames := selectAliasNames(subquery.Select, encodedNames)
+		if len(fieldNames) == 0 {
+			continue
+		}
+		candidates[strings.ToLower(string(aliased.As.Alias))] = duplicateSubqueryAliasCandidate{
+			encodedNames: encodedNames,
+			fieldNames:   fieldNames,
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	return candidates
+}
+
+func wholeRowDuplicateAliasesForContext(usedAliases map[string]struct{}, candidates map[string]duplicateSubqueryAliasCandidate) map[string]wholeRowDuplicateAlias {
+	aliases := make(map[string]wholeRowDuplicateAlias)
+	for alias := range usedAliases {
+		candidate, ok := candidates[alias]
+		if !ok {
+			continue
+		}
+		aliases[alias] = wholeRowDuplicateAlias{
+			tableName:  alias,
+			fieldNames: candidate.fieldNames,
+		}
+	}
+	if len(aliases) == 0 {
+		return nil
+	}
+	return aliases
+}
+
+func duplicateSelectAliasEncodings(statement tree.SelectStatement, tableIndex int) map[int]string {
+	clause := selectStatementClause(statement)
+	if clause == nil {
+		return nil
+	}
+	counts := make(map[string]int, len(clause.Exprs))
+	for _, expr := range clause.Exprs {
+		if expr.As == "" {
+			continue
+		}
+		counts[strings.ToLower(string(expr.As))]++
+	}
+	encodedNames := make(map[int]string)
+	for i, expr := range clause.Exprs {
+		if expr.As == "" || counts[strings.ToLower(string(expr.As))] <= 1 {
+			continue
+		}
+		encodedNames[i] = pgexprs.EncodeDuplicateCompositeFieldAlias(tableIndex, i, string(expr.As))
+	}
+	return encodedNames
+}
+
+func selectAliasNames(statement tree.SelectStatement, encodedNames map[int]string) []string {
+	clause := selectStatementClause(statement)
+	if clause == nil {
+		return nil
+	}
+	fieldNames := make([]string, len(clause.Exprs))
+	for i, expr := range clause.Exprs {
+		if encodedName, ok := encodedNames[i]; ok {
+			fieldNames[i] = encodedName
+			continue
+		}
+		if expr.As != "" {
+			fieldNames[i] = string(expr.As)
+		} else {
+			fieldNames[i] = tree.AsString(expr.Expr)
+		}
+	}
+	return fieldNames
+}
+
+func selectStatementClause(statement tree.SelectStatement) *tree.SelectClause {
+	switch stmt := statement.(type) {
+	case *tree.SelectClause:
+		return stmt
+	case *tree.ParenSelect:
+		if stmt.Select == nil {
+			return nil
+		}
+		return selectStatementClause(stmt.Select.Select)
+	default:
+		return nil
+	}
+}
+
+func wholeRowAliasUses(node *tree.SelectClause, candidates map[string]duplicateSubqueryAliasCandidate) map[string]struct{} {
+	collector := &wholeRowAliasUseCollector{
+		candidates: candidates,
+		used:       make(map[string]struct{}),
+	}
+	for _, expr := range node.Exprs {
+		collector.walk(expr.Expr)
+	}
+	for _, expr := range node.DistinctOn {
+		collector.walk(expr)
+	}
+	for _, expr := range node.GroupBy {
+		collector.walk(expr)
+	}
+	if node.Where != nil {
+		collector.walk(node.Where.Expr)
+	}
+	if node.Having != nil {
+		collector.walk(node.Having.Expr)
+	}
+	if len(collector.used) == 0 {
+		return nil
+	}
+	return collector.used
+}
+
+type wholeRowAliasUseCollector struct {
+	candidates map[string]duplicateSubqueryAliasCandidate
+	used       map[string]struct{}
+}
+
+func (c *wholeRowAliasUseCollector) walk(expr tree.Expr) {
+	if expr != nil {
+		tree.WalkExpr(c, expr)
+	}
+}
+
+func (c *wholeRowAliasUseCollector) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	switch expr := expr.(type) {
+	case *tree.Subquery:
+		return false, expr
+	case *tree.UnresolvedName:
+		if expr.Star || expr.NumParts != 1 {
+			return true, expr
+		}
+		alias := strings.ToLower(expr.Parts[0])
+		if _, ok := c.candidates[alias]; ok {
+			c.used[alias] = struct{}{}
+		}
+		return false, expr
+	case *tree.ColumnItem:
+		if expr.TableName != nil {
+			return true, expr
+		}
+		alias := strings.ToLower(string(expr.ColumnName))
+		if _, ok := c.candidates[alias]; ok {
+			c.used[alias] = struct{}{}
+		}
+		return false, expr
+	default:
+		return true, expr
+	}
+}
+
+func (c *wholeRowAliasUseCollector) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
+}
+
+func rewriteDuplicateAliasTableExpr(table tree.TableExpr, usedAliases map[string]struct{}, candidates map[string]duplicateSubqueryAliasCandidate) (tree.TableExpr, bool) {
+	aliased, ok := table.(*tree.AliasedTableExpr)
+	if !ok {
+		return table, false
+	}
+	alias := strings.ToLower(string(aliased.As.Alias))
+	if _, ok := usedAliases[alias]; !ok {
+		return table, false
+	}
+	candidate, ok := candidates[alias]
+	if !ok {
+		return table, false
+	}
+	subquery, ok := tree.StripTableParens(aliased.Expr).(*tree.Subquery)
+	if !ok {
+		return table, false
+	}
+	rewrittenSelect, changed := rewriteDuplicateAliasSelectStatement(subquery.Select, candidate.encodedNames)
+	if !changed {
+		return table, false
+	}
+	rewrittenSubquery := *subquery
+	rewrittenSubquery.Select = rewrittenSelect
+	rewrittenAliased := *aliased
+	rewrittenAliased.Expr = &rewrittenSubquery
+	return &rewrittenAliased, true
+}
+
+func rewriteDuplicateAliasSelectStatement(statement tree.SelectStatement, encodedNames map[int]string) (tree.SelectStatement, bool) {
+	switch stmt := statement.(type) {
+	case *tree.SelectClause:
+		exprs := make(tree.SelectExprs, len(stmt.Exprs))
+		copy(exprs, stmt.Exprs)
+		changed := false
+		for idx, encodedName := range encodedNames {
+			if idx < 0 || idx >= len(exprs) {
+				continue
+			}
+			exprs[idx].As = tree.UnrestrictedName(encodedName)
+			changed = true
+		}
+		if !changed {
+			return statement, false
+		}
+		ret := *stmt
+		ret.Exprs = exprs
+		return &ret, true
+	case *tree.ParenSelect:
+		if stmt.Select == nil {
+			return statement, false
+		}
+		rewrittenSelect, changed := rewriteDuplicateAliasSelect(stmt.Select, encodedNames)
+		if !changed {
+			return statement, false
+		}
+		ret := *stmt
+		ret.Select = rewrittenSelect
+		return &ret, true
+	default:
+		return statement, false
+	}
+}
+
+func rewriteDuplicateAliasSelect(sel *tree.Select, encodedNames map[int]string) (*tree.Select, bool) {
+	rewrittenStatement, changed := rewriteDuplicateAliasSelectStatement(sel.Select, encodedNames)
+	if !changed {
+		return sel, false
+	}
+	ret := *sel
+	ret.Select = rewrittenStatement
+	return &ret, true
 }
 
 func rewriteValuesCaseDistinctAliases(node *tree.SelectClause) *tree.SelectClause {

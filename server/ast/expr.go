@@ -359,6 +359,11 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			Children:   vitess.Exprs{expr},
 		}, nil
 	case *tree.ColumnItem:
+		if node.TableName == nil {
+			if expr, ok := wholeRowDuplicateAliasExprForName(ctx, string(node.ColumnName)); ok {
+				return expr, nil
+			}
+		}
 		var tableName vitess.TableName
 		if node.TableName != nil {
 			if node.TableName.NumParts > 2 {
@@ -976,6 +981,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if node.Star {
 			return nil, errors.Errorf("* syntax is not yet supported in this context")
 		}
+		if expr, ok := wholeRowDuplicateAliasExpr(ctx, node); ok {
+			return expr, nil
+		}
 		if ctx.ResolveExcludedRefs() && isExcludedRef(node) {
 			return excludedToValuesFunc(node)
 		}
@@ -985,6 +993,38 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 	default:
 		return nil, errors.Errorf("unknown expression: `%T`", node)
 	}
+}
+
+func wholeRowDuplicateAliasExpr(ctx *Context, node *tree.UnresolvedName) (vitess.Expr, bool) {
+	if node.Star || node.NumParts != 1 || len(ctx.wholeRowDuplicateAliases) == 0 {
+		return nil, false
+	}
+	return wholeRowDuplicateAliasExprForName(ctx, node.Parts[0])
+}
+
+func wholeRowDuplicateAliasExprForName(ctx *Context, name string) (vitess.Expr, bool) {
+	if len(ctx.wholeRowDuplicateAliases) == 0 {
+		return nil, false
+	}
+	aliasName := strings.ToLower(name)
+	alias, ok := ctx.wholeRowDuplicateAliases[aliasName]
+	if !ok {
+		return nil, false
+	}
+	tableName := vitess.NewTableIdent(alias.tableName)
+	children := make(vitess.SelectExprs, len(alias.fieldNames))
+	for i, fieldName := range alias.fieldNames {
+		children[i] = &vitess.AliasedExpr{
+			Expr: &vitess.ColName{
+				Qualifier: vitess.TableName{Name: tableName},
+				Name:      vitess.NewColIdent(fieldName),
+			},
+		}
+	}
+	return vitess.InjectedExpr{
+		Expression:         pgexprs.NewTableToCompositeExpr(alias.tableName),
+		SelectExprChildren: children,
+	}, true
 }
 
 func astFunctionExpr(name string, args ...vitess.Expr) *vitess.FuncExpr {

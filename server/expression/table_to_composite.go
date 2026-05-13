@@ -15,22 +15,31 @@
 package expression
 
 import (
+	"context"
+	"encoding/hex"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
+const duplicateCompositeFieldAliasPrefix = "__doltgres_duplicate_field_"
+
 // TableToComposite is a set of sql.Expressions wrapped together in a single value.
 type TableToComposite struct {
-	fields []sql.Expression
-	typ    *pgtypes.DoltgresType
+	tableName string
+	fields    []sql.Expression
+	typ       *pgtypes.DoltgresType
 }
 
 var _ sql.Expression = (*TableToComposite)(nil)
+var _ vitess.Injectable = (*TableToComposite)(nil)
 
 // NewTableToComposite creates a new composite table type.
 func NewTableToComposite(ctx *sql.Context, tableName string, fields []sql.Expression) (sql.Expression, error) {
@@ -58,6 +67,39 @@ func NewTableToComposite(ctx *sql.Context, tableName string, fields []sql.Expres
 	}, nil
 }
 
+// NewTableToCompositeExpr creates an unresolved injectable expression for a
+// whole-row reference whose field expressions will be resolved by the builder.
+func NewTableToCompositeExpr(tableName string) *TableToComposite {
+	return &TableToComposite{tableName: tableName}
+}
+
+// EncodeDuplicateCompositeFieldAlias creates a unique planner-visible alias for
+// duplicate subquery output names that still carries the PostgreSQL field name.
+func EncodeDuplicateCompositeFieldAlias(tableIndex, fieldIndex int, fieldName string) string {
+	return fmt.Sprintf("%s%d_%d_%s", duplicateCompositeFieldAliasPrefix, tableIndex, fieldIndex, hex.EncodeToString([]byte(fieldName)))
+}
+
+func decodeDuplicateCompositeFieldAlias(fieldName string) (string, bool) {
+	if !strings.HasPrefix(fieldName, duplicateCompositeFieldAliasPrefix) {
+		return "", false
+	}
+	parts := strings.SplitN(strings.TrimPrefix(fieldName, duplicateCompositeFieldAliasPrefix), "_", 3)
+	if len(parts) != 3 {
+		return "", false
+	}
+	if _, err := strconv.Atoi(parts[0]); err != nil {
+		return "", false
+	}
+	if _, err := strconv.Atoi(parts[1]); err != nil {
+		return "", false
+	}
+	decoded, err := hex.DecodeString(parts[2])
+	if err != nil {
+		return "", false
+	}
+	return string(decoded), true
+}
+
 func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Expression) (*pgtypes.DoltgresType, error) {
 	typeID := id.NewType("", tableName)
 	relID := id.NewTable("", tableName).AsId()
@@ -76,6 +118,9 @@ func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Ex
 		if nameable, ok := field.(sql.Nameable); ok && nameable.Name() != "" {
 			fieldName = nameable.Name()
 		}
+		if decodedFieldName, ok := decodeDuplicateCompositeFieldAlias(fieldName); ok {
+			fieldName = decodedFieldName
+		}
 		attrs[i] = pgtypes.NewCompositeAttribute(ctx, relID, fieldName, colType.ID, colType.GetAttTypMod(), int16(i+1), "")
 	}
 	return pgtypes.NewCompositeType(ctx, relID, arrayID, typeID, attrs), nil
@@ -83,6 +128,9 @@ func compositeTypeFromFields(ctx *sql.Context, tableName string, fields []sql.Ex
 
 // Resolved implements the sql.Expression interface.
 func (t *TableToComposite) Resolved() bool {
+	if t.fields == nil {
+		return false
+	}
 	for _, expr := range t.fields {
 		if !expr.Resolved() {
 			return false
@@ -98,6 +146,9 @@ func (t *TableToComposite) String() string {
 
 // Type implements the sql.Expression interface.
 func (t *TableToComposite) Type(ctx *sql.Context) sql.Type {
+	if t.typ == nil {
+		return pgtypes.Record
+	}
 	return t.typ
 }
 
@@ -138,4 +189,21 @@ func (t *TableToComposite) WithChildren(ctx *sql.Context, children ...sql.Expres
 	tCopy := *t
 	tCopy.fields = children
 	return &tCopy, nil
+}
+
+// WithResolvedChildren implements the vitess.Injectable interface.
+func (t *TableToComposite) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	sqlCtx, ok := ctx.(*sql.Context)
+	if !ok {
+		return nil, fmt.Errorf("expected *sql.Context but found %T", ctx)
+	}
+	fields := make([]sql.Expression, len(children))
+	for i, child := range children {
+		expr, ok := child.(sql.Expression)
+		if !ok {
+			return nil, fmt.Errorf("expected sql.Expression child but found %T", child)
+		}
+		fields[i] = expr
+	}
+	return NewTableToComposite(sqlCtx, t.tableName, fields)
 }
