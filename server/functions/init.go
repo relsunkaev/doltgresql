@@ -24,6 +24,7 @@ func initTypeFunctions() {
 	initArray()
 	initBit()
 	initBool()
+	initBox()
 	initBpChar()
 	initBytea()
 	initChar()

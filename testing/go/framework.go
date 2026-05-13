@@ -764,6 +764,19 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			return nil
 		}
 		return functions.FormatDateTimeWithBC(v.(time.Time), "2006-01-02", false)
+	case types.Box.ID:
+		switch val := v.(type) {
+		case types.BoxValue:
+			return types.FormatBox(val)
+		case pgtype.Box:
+			if !val.Valid {
+				return nil
+			}
+			return types.FormatBox(types.BoxValue{
+				High: types.PointValue{X: val.P[0].X, Y: val.P[0].Y},
+				Low:  types.PointValue{X: val.P[1].X, Y: val.P[1].Y},
+			})
+		}
 	case types.Timestamp.ID, types.TimestampTZ.ID:
 		if v == nil {
 			return nil

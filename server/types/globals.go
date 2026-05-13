@@ -214,7 +214,7 @@ func init() {
 		toInternal("anyrange"):         Unknown,
 		toInternal("bit"):              Bit,
 		toInternal("bool"):             Bool,
-		toInternal("box"):              Unknown,
+		toInternal("box"):              Box,
 		toInternal("bpchar"):           BpChar,
 		toInternal("bytea"):            Bytea,
 		toInternal("char"):             InternalChar,
