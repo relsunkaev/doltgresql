@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 01:05 America/Phoenix
+
+- Lane: `to_char` ordinal suffix teen dates from `TestToCharOrdinalSuffixTeenDatesRepro`.
+- Expected files: `server/functions/formatting.go` only. Avoiding delta hstore extension runtime files, alpha PL/pgSQL DELETE RETURNING, epsilon `pg_constraint.go`, beta domain files, auditor oracle artifacts, and dirty grant files.
+- Red proof: focused run formats 11/12/13 as `11ST 11st`, `12ND 12nd`, `13RD 13rd`; PostgreSQL expects `TH/th` for teen ordinals.
+- Fix: ordinal suffix selection now treats final two-digit teen dates as `th` before applying the usual `st`/`nd`/`rd` final-digit suffixes.
+- Focused green:
+  - `go test -vet=off ./testing/go -run '^TestToCharOrdinalSuffixTeenDatesRepro$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestToCharOrdinalSuffixTeenDatesRepro|TestToCharFractionalSecondPrecisionTokensRepro|TestToCharIntervalPreservesFractionalSecondsRepro|TestToCharNumericFormatsPostgresPatternsRepro)$' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Lane committed: `1cdae06d fix: handle teen ordinal suffixes in to_char`.
+
 ### gamma - 2026-05-13 01:03 America/Phoenix
 
 - Lane: `to_char` `FF1..FF5` fractional-second precision from `TestToCharFractionalSecondPrecisionTokensRepro`.
