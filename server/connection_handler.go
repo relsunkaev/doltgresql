@@ -104,6 +104,8 @@ type ConnectionHandler struct {
 	pendingReplicationAdvance bool
 	// pendingReplicationSavepoints records replication-buffer positions for transaction savepoints.
 	pendingReplicationSavepoints []replicationSavepointState
+	// cursors stores simple SQL cursor materializations for this connection.
+	cursors map[string]*cursorData
 	// replicationMode is true when the client connected with replication=database.
 	replicationMode bool
 	// startupParams stores startup parameters that are needed after authentication, such as application_name.
@@ -125,6 +127,52 @@ type replicationSavepointState struct {
 	name       string
 	captures   int
 	advanceLSN bool
+}
+
+type cursorData struct {
+	fields []pgproto3.FieldDescription
+	rows   []Row
+	pos    int
+	hold   bool
+}
+
+type sqlCursorDeclareStatement struct {
+	Name  string
+	Hold  bool
+	Query string
+}
+
+func (s sqlCursorDeclareStatement) String() string {
+	return "DECLARE CURSOR"
+}
+
+func (s sqlCursorDeclareStatement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	return s, nil
+}
+
+type sqlCursorFetchStatement struct {
+	Name      string
+	Direction string
+}
+
+func (s sqlCursorFetchStatement) String() string {
+	return "FETCH"
+}
+
+func (s sqlCursorFetchStatement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	return s, nil
+}
+
+type sqlCursorCloseStatement struct {
+	Name string
+}
+
+func (s sqlCursorCloseStatement) String() string {
+	return "CLOSE CURSOR"
+}
+
+func (s sqlCursorCloseStatement) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	return s, nil
 }
 
 // Set this env var to disable panic handling in the connection, which is useful when debugging a panic
@@ -189,6 +237,7 @@ func NewConnectionHandler(conn net.Conn, handler mysql.Handler, sel server.Serve
 		portals:            portals,
 		doltgresHandler:    doltgresHandler,
 		backend:            pgproto3.NewBackend(conn, conn),
+		cursors:            make(map[string]*cursorData),
 		cancelSecretKey:    cancelSecretKey,
 	}
 }
@@ -661,6 +710,11 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 	if handled || err != nil {
 		return true, err
 	}
+	handled, err = h.handleSQLCursorCommand(message.String)
+	if handled || err != nil {
+		h.releaseXactAdvisoryLocksIfOutsideTransaction()
+		return true, err
+	}
 
 	queries, err := h.convertQuery(message.String)
 	if err != nil {
@@ -724,6 +778,232 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 	return true, nil
 }
 
+var (
+	declareCursorPattern = regexp.MustCompile(`(?is)^\s*DECLARE\s+([A-Za-z_][A-Za-z0-9_$]*)\s+(?:BINARY\s+)?(?:INSENSITIVE\s+)?(?:(?:NO\s+)?SCROLL\s+)?CURSOR(?:\s+(WITH|WITHOUT)\s+HOLD)?\s+FOR\s+(.+?)\s*;?\s*$`)
+	closeCursorPattern   = regexp.MustCompile(`(?is)^\s*CLOSE\s+(ALL|[A-Za-z_][A-Za-z0-9_$]*)\s*;?\s*$`)
+)
+
+func (h *ConnectionHandler) handleSQLCursorCommand(query string) (bool, error) {
+	converted, ok, err := h.convertSQLCursorCommand(query)
+	if err != nil || !ok {
+		return ok, err
+	}
+	return true, h.executeSQLCursorCommand(converted)
+}
+
+func (h *ConnectionHandler) convertSQLCursorCommand(query string) (ConvertedQuery, bool, error) {
+	if matches := declareCursorPattern.FindStringSubmatch(query); matches != nil {
+		return ConvertedQuery{
+			String:       query,
+			AST:          sqlparser.InjectedStatement{Statement: sqlCursorDeclareStatement{Name: matches[1], Hold: strings.EqualFold(matches[2], "WITH"), Query: strings.TrimSpace(matches[3])}},
+			StatementTag: "DECLARE CURSOR",
+		}, true, nil
+	}
+	if name, direction, ok := parseFetchCursor(query); ok {
+		return ConvertedQuery{
+			String:       query,
+			AST:          sqlparser.InjectedStatement{Statement: sqlCursorFetchStatement{Name: name, Direction: direction}},
+			StatementTag: "FETCH",
+		}, true, nil
+	}
+	if matches := closeCursorPattern.FindStringSubmatch(query); matches != nil {
+		return ConvertedQuery{
+			String:       query,
+			AST:          sqlparser.InjectedStatement{Statement: sqlCursorCloseStatement{Name: matches[1]}},
+			StatementTag: "CLOSE CURSOR",
+		}, true, nil
+	}
+	return ConvertedQuery{}, false, nil
+}
+
+func (h *ConnectionHandler) executeSQLCursorCommand(query ConvertedQuery) error {
+	injected, ok := query.AST.(sqlparser.InjectedStatement)
+	if !ok {
+		return errors.Errorf("expected injected cursor statement")
+	}
+	switch stmt := injected.Statement.(type) {
+	case sqlCursorDeclareStatement:
+		return h.declareSQLCursor(stmt.Name, stmt.Hold, stmt.Query)
+	case sqlCursorFetchStatement:
+		return h.fetchSQLCursor(stmt.Name, stmt.Direction)
+	case sqlCursorCloseStatement:
+		return h.closeSQLCursor(stmt.Name)
+	default:
+		return errors.Errorf("unexpected cursor statement: %T", stmt)
+	}
+}
+
+func (h *ConnectionHandler) cursorReturnFields(query ConvertedQuery) []pgproto3.FieldDescription {
+	injected, ok := query.AST.(sqlparser.InjectedStatement)
+	if !ok {
+		return nil
+	}
+	stmt, ok := injected.Statement.(sqlCursorFetchStatement)
+	if !ok {
+		return nil
+	}
+	if cursor, ok := h.cursors[normalizeCursorName(stmt.Name)]; ok {
+		return cloneCursorFields(cursor.fields)
+	}
+	return nil
+}
+
+func parseFetchCursor(query string) (string, string, bool) {
+	trimmed := strings.TrimSpace(query)
+	trimmed = strings.TrimSpace(strings.TrimSuffix(trimmed, ";"))
+	parts := strings.Fields(trimmed)
+	if len(parts) < 2 || !strings.EqualFold(parts[0], "FETCH") {
+		return "", "", false
+	}
+	direction := "NEXT"
+	idx := 1
+	switch {
+	case strings.EqualFold(parts[idx], "NEXT"):
+		idx++
+	case strings.EqualFold(parts[idx], "ALL"):
+		direction = "ALL"
+		idx++
+	case strings.EqualFold(parts[idx], "FORWARD") && idx+1 < len(parts) && parts[idx+1] == "1":
+		idx += 2
+	}
+	if idx < len(parts) && strings.EqualFold(parts[idx], "FROM") {
+		idx++
+	}
+	if idx != len(parts)-1 {
+		return "", "", false
+	}
+	return parts[idx], direction, true
+}
+
+func (h *ConnectionHandler) declareSQLCursor(name string, hold bool, selectSQL string) error {
+	name = normalizeCursorName(name)
+	if name == "" {
+		return pgerror.New(pgcode.InvalidCursorName, "invalid cursor name")
+	}
+	if _, ok := h.cursors[name]; ok {
+		return pgerror.Newf(pgcode.DuplicateCursor, `cursor "%s" already exists`, name)
+	}
+	queries, err := h.convertQuery(selectSQL)
+	if err != nil {
+		return err
+	}
+	if len(queries) != 1 {
+		return pgerror.New(pgcode.InvalidCursorDefinition, "cursor declaration must contain a single query")
+	}
+	cursorQuery := queries[0]
+	if !returnsRow(cursorQuery) {
+		return pgerror.New(pgcode.InvalidCursorDefinition, "cursor query must return rows")
+	}
+
+	cursor := &cursorData{
+		hold: hold,
+	}
+	err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, cursorQuery.String, cursorQuery.AST, func(ctx *sql.Context, res *Result) error {
+		if cursor.fields == nil {
+			cursor.fields = cloneCursorFields(res.Fields)
+		}
+		for _, row := range res.Rows {
+			cursor.rows = append(cursor.rows, cloneCursorRow(row))
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if cursor.fields == nil {
+		cursor.fields = []pgproto3.FieldDescription{}
+	}
+	h.cursors[name] = cursor
+	h.markCursorTransactionStatement()
+	h.sendBuffered(makeCommandComplete("DECLARE CURSOR", 0))
+	return nil
+}
+
+func (h *ConnectionHandler) fetchSQLCursor(name string, direction string) error {
+	cursor, ok := h.cursors[normalizeCursorName(name)]
+	if !ok {
+		return pgerror.Newf(pgcode.InvalidCursorName, `cursor "%s" does not exist`, name)
+	}
+	h.sendBuffered(&pgproto3.RowDescription{
+		Fields: cloneCursorFields(cursor.fields),
+	})
+	var fetched int32
+	switch direction {
+	case "ALL":
+		for cursor.pos < len(cursor.rows) {
+			h.sendBuffered(&pgproto3.DataRow{Values: cloneCursorRow(cursor.rows[cursor.pos]).val})
+			cursor.pos++
+			fetched++
+		}
+	default:
+		if cursor.pos < len(cursor.rows) {
+			h.sendBuffered(&pgproto3.DataRow{Values: cloneCursorRow(cursor.rows[cursor.pos]).val})
+			cursor.pos++
+			fetched = 1
+		}
+	}
+	h.markCursorTransactionStatement()
+	h.sendBuffered(makeCommandComplete("FETCH", fetched))
+	return nil
+}
+
+func (h *ConnectionHandler) closeSQLCursor(name string) error {
+	if strings.EqualFold(name, "ALL") {
+		clear(h.cursors)
+		h.sendBuffered(makeCommandComplete("CLOSE CURSOR", 0))
+		return nil
+	}
+	normalized := normalizeCursorName(name)
+	if _, ok := h.cursors[normalized]; !ok {
+		return pgerror.Newf(pgcode.InvalidCursorName, `cursor "%s" does not exist`, name)
+	}
+	delete(h.cursors, normalized)
+	h.markCursorTransactionStatement()
+	h.sendBuffered(makeCommandComplete("CLOSE CURSOR", 0))
+	return nil
+}
+
+func (h *ConnectionHandler) closeNonHoldCursors() {
+	for name, cursor := range h.cursors {
+		if !cursor.hold {
+			delete(h.cursors, name)
+		}
+	}
+}
+
+func (h *ConnectionHandler) markCursorTransactionStatement() {
+	if h.inTransaction {
+		h.transactionStatementCount++
+	}
+}
+
+func normalizeCursorName(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
+}
+
+func cloneCursorFields(fields []pgproto3.FieldDescription) []pgproto3.FieldDescription {
+	if fields == nil {
+		return nil
+	}
+	cloned := make([]pgproto3.FieldDescription, len(fields))
+	copy(cloned, fields)
+	for i := range cloned {
+		cloned[i].Name = slices.Clone(fields[i].Name)
+	}
+	return cloned
+}
+
+func cloneCursorRow(row Row) Row {
+	if row.val == nil {
+		return Row{}
+	}
+	values := make([][]byte, len(row.val))
+	for i := range row.val {
+		values[i] = slices.Clone(row.val[i])
+	}
+	return Row{val: values}
+}
+
 // releaseXactAdvisoryLocksIfOutsideTransaction releases every transaction-scope
 // advisory lock the session holds when the wire-protocol transaction has ended
 // (either via COMMIT/ROLLBACK or because we are running in autocommit mode and
@@ -781,9 +1061,11 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 	case *sqlparser.Commit:
 		h.inTransaction = false
 		h.transactionStatementCount = 0
+		h.closeNonHoldCursors()
 	case *sqlparser.Rollback:
 		h.inTransaction = false
 		h.transactionStatementCount = 0
+		h.closeNonHoldCursors()
 	case *sqlparser.Deallocate:
 		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
 	case sqlparser.InjectedStatement:
@@ -792,6 +1074,8 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 			return true, true, h.setTransaction(injectedStmt, query)
 		case node.SetSessionCharacteristics:
 			return true, true, h.setSessionCharacteristics(injectedStmt, query)
+		case sqlCursorDeclareStatement, sqlCursorFetchStatement, sqlCursorCloseStatement:
+			return true, true, h.executeSQLCursorCommand(query)
 		}
 		if err := h.rejectReadOnlyTransactionWrite(query); err != nil {
 			if copyFrom, ok := stmt.Statement.(*node.CopyFrom); ok && copyFrom.Stdin {
@@ -990,7 +1274,8 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		case node.SetTransaction, node.SetSessionCharacteristics,
 			node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.CreateTableAsExecuteStatement, node.PrepareTransaction,
 			node.CommitPrepared, node.RollbackPrepared, node.ListenStatement, node.UnlistenStatement,
-			node.NotifyStatement, *node.CopyFrom, *node.CopyTo:
+			node.NotifyStatement, *node.CopyFrom, *node.CopyTo,
+			sqlCursorDeclareStatement, sqlCursorFetchStatement, sqlCursorCloseStatement:
 			return true
 		}
 	}
@@ -1722,6 +2007,18 @@ func (h *ConnectionHandler) evaluateExecuteParameter(param string) ([]byte, erro
 func (h *ConnectionHandler) handleParse(message *pgproto3.Parse) error {
 	h.waitForSync = true
 
+	if query, ok, err := h.convertSQLCursorCommand(message.Query); ok || err != nil {
+		if err != nil {
+			return err
+		}
+		h.preparedStatements[message.Name] = PreparedStatementData{
+			Query:        query,
+			ReturnFields: h.cursorReturnFields(query),
+		}
+		h.sendBuffered(&pgproto3.ParseComplete{})
+		return nil
+	}
+
 	// TODO: "Named prepared statements must be explicitly closed before they can be redefined by another Parse message, but this is not required for the unnamed statement"
 	queries, err := h.convertQuery(message.Query)
 	if err != nil {
@@ -1851,7 +2148,8 @@ func (h *ConnectionHandler) handleBind(message *pgproto3.Bind) error {
 
 	if h.queryHandledOutsideEngine(preparedData.Query) {
 		h.portals[message.DestinationPortal] = PortalData{
-			Query: preparedData.Query,
+			Query:  preparedData.Query,
+			Fields: preparedData.ReturnFields,
 		}
 		h.sendBuffered(&pgproto3.BindComplete{})
 		return nil
