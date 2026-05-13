@@ -26,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropSequence handles the DROP SEQUENCE statement.
@@ -107,6 +108,7 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err = collection.DropSequence(ctx, sequenceID); err != nil {
 		return nil, err
 	}
+	comments.RemoveObject(sequenceID.AsId(), "pg_class")
 	var persistErr error
 	auth.LockWrite(func() {
 		auth.RemoveAllSequencePrivileges(schema, c.sequence)

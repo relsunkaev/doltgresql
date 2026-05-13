@@ -19,7 +19,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropDatabase is a node that implements PostgreSQL ownership checks before dropping a database.
@@ -62,6 +64,7 @@ func (d *DropDatabase) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r s
 	if err != nil {
 		return nil, err
 	}
+	comments.RemoveObject(id.NewDatabase(d.gmsDropDB.DbName).AsId(), "pg_database")
 	auth.LockWrite(func() {
 		auth.RemoveDatabaseMetadata(d.gmsDropDB.DbName)
 		auth.RemoveAllDatabasePrivileges(d.gmsDropDB.DbName)

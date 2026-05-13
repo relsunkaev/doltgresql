@@ -22,7 +22,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropRole handles the DROP ROLE statement.
@@ -83,6 +85,7 @@ func (c *DropRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	auth.LockWrite(func() {
 		for _, role := range roles {
 			auth.DropRole(role.Name)
+			comments.RemoveObject(id.NewId(id.Section_User, role.Name), "pg_authid")
 		}
 		err = auth.PersistChanges()
 	})
