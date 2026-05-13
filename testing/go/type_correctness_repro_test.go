@@ -1749,6 +1749,11 @@ func TestArrayReplaceReplacesMatchingElementsRepro(t *testing.T) {
 							array_replace(ARRAY[1,NULL,3,NULL], NULL, 0);`,
 					Expected: []sql.Row{{"{9,2,9}", "{1,0,3,0}"}},
 				},
+				{
+					Query: `SELECT array_replace(ARRAY[1,2,3], 2, NULL),
+							array_replace(ARRAY[1,2,3], 9, 0);`,
+					Expected: []sql.Row{{"{1,NULL,3}", "{1,2,3}"}},
+				},
 			},
 		},
 	})

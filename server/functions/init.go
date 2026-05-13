@@ -94,6 +94,7 @@ func Init() {
 	initArrayMetadata()
 	initArrayOrder()
 	initArrayPosition()
+	initArrayReplace()
 	initArrayRemove()
 	initArrayRandom()
 	initArrayToString()
