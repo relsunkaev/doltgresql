@@ -31,10 +31,10 @@ func TestAnalyzeTableRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ANALYZE analyze_private;`,
-					ExpectedErr: `permission denied`,
-					Username:    `analyze_intruder`,
-					Password:    `pw`,
+					Query: `ANALYZE analyze_private;`,
+
+					Username: `analyze_intruder`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "analyze-privilege-repro-test-testanalyzetablerequiresownershiprepro-0001-analyze-analyze_private"},
 				},
 			},
 		},

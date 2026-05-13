@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestBoolAndInfersValuesBooleanTypeGuard guards that PostgreSQL-style type
@@ -156,17 +154,18 @@ func TestDropAggregateRemovesUserAggregateRepro(t *testing.T) {
 					Query: `DROP AGGREGATE drop_custom_sum(INT);`,
 				},
 				{
-					Query:       `SELECT drop_custom_sum(v) FROM drop_custom_sum_items;`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT drop_custom_sum(v) FROM drop_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items",
+
+						// TestAlterAggregateRenameRepro reproduces a PostgreSQL compatibility gap:
+						// ALTER AGGREGATE can rename a user-defined aggregate while preserving its
+						// implementation.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestAlterAggregateRenameRepro reproduces a PostgreSQL compatibility gap:
-// ALTER AGGREGATE can rename a user-defined aggregate while preserving its
-// implementation.
 func TestAlterAggregateRenameRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -194,8 +193,7 @@ func TestAlterAggregateRenameRepro(t *testing.T) {
 					Query: `SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0001-select-rename_custom_sum_new-v-from-rename_custom_sum_items"},
 				},
 				{
-					Query:       `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`,
-					ExpectedErr: `does not exist`,
+					Query: `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items"},
 				},
 			},
 		},
@@ -278,8 +276,7 @@ func TestCreateAggregateSqlTransitionFunctionEdges(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT overloaded_custom_sum(v_int), overloaded_custom_sum(v_bigint)
-						FROM overloaded_custom_sum_items;`,
-					Expected: []sql.Row{{5, int64(230)}},
+						FROM overloaded_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0003-select-overloaded_custom_sum-v_int-overloaded_custom_sum-v_bigint"},
 				},
 			},
 		},
@@ -336,17 +333,18 @@ func TestGroupByNonKeyRejectsUngroupedColumnsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM group_by_nonkey_items
-						GROUP BY label;`,
-					ExpectedErr: `not functionally dependent`,
+						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items",
+
+						// TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro guards
+						// PostgreSQL functional-dependency grouping through joins: grouping by the
+						// left table's primary key permits selecting other columns from that table.
+						Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro guards
-// PostgreSQL functional-dependency grouping through joins: grouping by the
-// left table's primary key permits selecting other columns from that table.
 func TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{

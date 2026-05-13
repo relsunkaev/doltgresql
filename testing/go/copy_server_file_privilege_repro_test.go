@@ -21,7 +21,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -83,8 +82,7 @@ func TestCopyFromServerFileRejectsRelativePathRepro(t *testing.T) {
 					ExpectedErr: `relative path not allowed`,
 				},
 				{
-					Query:    `SELECT count(*) FROM copy_relative_file_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM copy_relative_file_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0002-select-count-*-from-copy_relative_file_items"},
 				},
 			},
 		},
@@ -139,20 +137,22 @@ func TestCopyFromProgramRequiresPrivilegeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `COPY copy_program_private (id, label) FROM PROGRAM 'printf ''1,program\n''' WITH (FORMAT CSV);`,
-					ExpectedErr: "pg_execute_server_program",
-					Username:    "copy_program_reader",
-					Password:    "pw",
+					Query: `COPY copy_program_private (id, label) FROM PROGRAM 'printf ''1,program\n''' WITH (FORMAT CSV);`,
+
+					Username: "copy_program_reader",
+					Password: "pw", PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestCopyToProgramRequiresPrivilegeRepro reproduces a COPY privilege
+						// semantics bug: PostgreSQL parses COPY TO PROGRAM and requires
+						// pg_execute_server_program or superuser privileges before executing a server
+						// program.
+						ID: "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestCopyToProgramRequiresPrivilegeRepro reproduces a COPY privilege
-// semantics bug: PostgreSQL parses COPY TO PROGRAM and requires
-// pg_execute_server_program or superuser privileges before executing a server
-// program.
 func TestCopyToProgramRequiresPrivilegeRepro(t *testing.T) {
 	copyPath := filepath.Join(t.TempDir(), "copy_program_out.csv")
 	escapedPath := strings.ReplaceAll(copyPath, "'", "'\"'\"'")

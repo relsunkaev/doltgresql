@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateConversionPersistsPgConversionRepro reproduces a catalog
@@ -36,8 +34,7 @@ func TestCreateConversionPersistsPgConversionRepro(t *testing.T) {
 				{
 					Query: `SELECT conname
 						FROM pg_catalog.pg_conversion
-						WHERE conname = 'custom_latin1_to_utf8';`,
-					Expected: []sql.Row{{"custom_latin1_to_utf8"}},
+						WHERE conname = 'custom_latin1_to_utf8';`, PostgresOracle: ScriptTestPostgresOracle{ID: "conversion-definition-repro-test-testcreateconversionpersistspgconversionrepro-0001-select-conname-from-pg_catalog.pg_conversion-where"},
 				},
 			},
 		},
@@ -59,17 +56,19 @@ func TestCreateConversionRequiresSchemaCreatePrivilegeRepro(t *testing.T) {
 					Query: `CREATE CONVERSION unauthorized_latin1_to_utf8
 						FOR 'LATIN1' TO 'UTF8'
 						FROM iso8859_1_to_utf8;`,
-					ExpectedErr: `permission denied`,
-					Username:    `conversion_creator`,
-					Password:    `pw`,
+
+					Username: `conversion_creator`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{
+
+						// TestDropConversionRequiresOwnershipRepro reproduces a security bug:
+						// PostgreSQL requires conversion ownership to drop a conversion.
+						ID: "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1", Compare: "sqlstate"},
 				},
 			},
 		},
 	})
 }
 
-// TestDropConversionRequiresOwnershipRepro reproduces a security bug:
-// PostgreSQL requires conversion ownership to drop a conversion.
 func TestDropConversionRequiresOwnershipRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -82,16 +81,15 @@ func TestDropConversionRequiresOwnershipRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP CONVERSION owner_private_latin1_to_utf8;`,
-					ExpectedErr: `must be owner`,
-					Username:    `conversion_dropper`,
-					Password:    `pw`,
+					Query: `DROP CONVERSION owner_private_latin1_to_utf8;`,
+
+					Username: `conversion_dropper`,
+					Password: `pw`, PostgresOracle: ScriptTestPostgresOracle{ID: "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0001-drop-conversion-owner_private_latin1_to_utf8", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT conname
 						FROM pg_catalog.pg_conversion
-						WHERE conname = 'owner_private_latin1_to_utf8';`,
-					Expected: []sql.Row{{"owner_private_latin1_to_utf8"}},
+						WHERE conname = 'owner_private_latin1_to_utf8';`, PostgresOracle: ScriptTestPostgresOracle{ID: "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0002-select-conname-from-pg_catalog.pg_conversion-where"},
 				},
 			},
 		},
@@ -122,8 +120,7 @@ func TestAlterConversionMissingReachesValidationRepro(t *testing.T) {
 			Name: "ALTER CONVERSION missing target reaches validation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER CONVERSION missing_conversion_repro RENAME TO renamed_conversion_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER CONVERSION missing_conversion_repro RENAME TO renamed_conversion_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "conversion-definition-repro-test-testalterconversionmissingreachesvalidationrepro-0001-alter-conversion-missing_conversion_repro-rename-to", Compare: "sqlstate"},
 				},
 			},
 		},

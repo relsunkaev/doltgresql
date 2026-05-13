@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map aggregate_correctness_repro_test.go",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map aggregate_correctness_repro_test.go --force-postgres-oracle",
   "sourceFile": "testing/go/aggregate_correctness_repro_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -126,12 +126,16 @@
       "source": "testing/go/aggregate_correctness_repro_test.go:TestDropAggregateRemovesUserAggregateRepro",
       "ordinal": 1,
       "scriptName": "DROP AGGREGATE removes user aggregate",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items",
       "suggestedId": "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42883",
+      "errorSeverity": "ERROR",
       "query": "SELECT drop_custom_sum(v) FROM drop_custom_sum_items;",
       "querySha256": "82f49822988b644c58fc16184855495d957baa9d3027951d0c930f48eb172907",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -161,12 +165,21 @@
       "source": "testing/go/aggregate_correctness_repro_test.go:TestAlterAggregateRenameRepro",
       "ordinal": 2,
       "scriptName": "ALTER AGGREGATE RENAME TO updates aggregate lookup",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items",
       "suggestedId": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items",
+      "compare": "structural",
       "expectedKind": "error",
       "query": "SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;",
       "querySha256": "3eac0af1ddf0b781f156516b93c1568d4ef2aaf941a4711ef3705eea6ef5f115",
-      "needsCleanup": true,
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -229,15 +242,27 @@
       "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregateSqlTransitionFunctionEdges",
       "ordinal": 3,
       "scriptName": "overloaded SQL aggregates use their resolved transition function",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0003-select-overloaded_custom_sum-v_int-overloaded_custom_sum-v_bigint",
       "suggestedId": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0003-select-overloaded_custom_sum-v_int-overloaded_custom_sum-v_bigint",
+      "compare": "structural",
       "expectedKind": "rows",
       "query": "SELECT overloaded_custom_sum(v_int), overloaded_custom_sum(v_bigint)\n\t\t\t\t\t\tFROM overloaded_custom_sum_items;",
       "querySha256": "cae8289e793ba46cc8fbb52b3220bb373a2cc489b26cf2284a8b1f7791b15740",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "230"
+          }
+        ]
+      ],
       "nonLiteral": [
         "Expected"
       ],
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {
@@ -284,12 +309,16 @@
       "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByNonKeyRejectsUngroupedColumnsRepro",
       "ordinal": 1,
       "scriptName": "GROUP BY non-key rejects ungrouped columns",
-      "oracle": "internal",
+      "oracle": "postgres",
+      "postgresId": "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items",
       "suggestedId": "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items",
+      "compare": "sqlstate",
       "expectedKind": "error",
+      "sqlstate": "42803",
+      "errorSeverity": "ERROR",
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM group_by_nonkey_items\n\t\t\t\t\t\tGROUP BY label;",
       "querySha256": "a3f28c800a47dbc0bfd125879cc2c7d6e2874ff34d966b354b2efb71edc85357",
-      "needsCleanup": true,
+      "needsCleanup": false,
       "cleanupProvided": false
     },
     {

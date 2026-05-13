@@ -1,0 +1,119 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map copy_server_file_privilege_repro_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/copy_server_file_privilege_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRequiresPrivilegeRepro#0001",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRequiresPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "COPY FROM server file requires server-file privilege",
+      "oracle": "internal",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopyfromserverfilerequiresprivilegerepro-0001",
+      "expectedKind": "error",
+      "username": "copy_file_reader",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRejectsRelativePathRepro#0001",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRejectsRelativePathRepro",
+      "ordinal": 1,
+      "scriptName": "COPY FROM server file rejects relative path",
+      "oracle": "internal",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0001",
+      "expectedKind": "error",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRejectsRelativePathRepro#0002",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRejectsRelativePathRepro",
+      "ordinal": 2,
+      "scriptName": "COPY FROM server file rejects relative path",
+      "oracle": "postgres",
+      "postgresId": "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0002-select-count-*-from-copy_relative_file_items",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0002-select-count-*-from-copy_relative_file_items",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT count(*) FROM copy_relative_file_items;",
+      "querySha256": "c7cebfdae8ee3eb80ff6a30e757caf42e0248d7fd9715fc3e062d4e7cebd5f0c",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyToServerFileRequiresPrivilegeRepro#0001",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyToServerFileRequiresPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "COPY TO server file requires server-file privilege",
+      "oracle": "internal",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopytoserverfilerequiresprivilegerepro-0001",
+      "expectedKind": "error",
+      "username": "copy_file_writer",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromProgramRequiresPrivilegeRepro#0001",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromProgramRequiresPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "COPY FROM PROGRAM requires server-program privilege",
+      "oracle": "postgres",
+      "postgresId": "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42501",
+      "errorSeverity": "ERROR",
+      "username": "copy_program_reader",
+      "query": "COPY copy_program_private (id, label) FROM PROGRAM 'printf ''1,program\\n''' WITH (FORMAT CSV);",
+      "querySha256": "4bb5395c1a4a9c488ae1810e48946fb2a2c2da314c9c76f2437fc7f79949df8e",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyToProgramRequiresPrivilegeRepro#0001",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyToProgramRequiresPrivilegeRepro",
+      "ordinal": 1,
+      "scriptName": "COPY TO PROGRAM requires server-program privilege",
+      "oracle": "internal",
+      "suggestedId": "copy-server-file-privilege-repro-test-testcopytoprogramrequiresprivilegerepro-0001",
+      "expectedKind": "error",
+      "username": "copy_program_writer",
+      "nonLiteral": [
+        "Query"
+      ],
+      "needsCleanup": true,
+      "cleanupProvided": false
+    }
+  ]
+}

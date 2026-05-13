@@ -300,6 +300,28 @@
       ]
     },
     {
+      "id": "aggregate-correctness-repro-test-testdropaggregateremovesuseraggregaterepro-0001-select-drop_custom_sum-v-from-drop_custom_sum_items",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestDropAggregateRemovesUserAggregateRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION drop_custom_sum_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;",
+        "CREATE AGGREGATE drop_custom_sum(INT) (\n\t\t\t\t\tSFUNC = drop_custom_sum_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE TABLE drop_custom_sum_items (v INT);",
+        "INSERT INTO drop_custom_sum_items VALUES (1), (2);",
+        "DROP AGGREGATE drop_custom_sum(INT);"
+      ],
+      "query": "SELECT drop_custom_sum(v) FROM drop_custom_sum_items;",
+      "expectedSqlstate": "42883",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0001-select-rename_custom_sum_new-v-from-rename_custom_sum_items",
       "source": "testing/go/aggregate_correctness_repro_test.go:TestAlterAggregateRenameRepro",
       "ordinal": 1,
@@ -315,6 +337,34 @@
         "ALTER AGGREGATE rename_custom_sum_old(INT)\n\t\t\t\t\t\tRENAME TO rename_custom_sum_new;"
       ],
       "query": "SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0002-select-rename_custom_sum_old-v-from-rename_custom_sum_items",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestAlterAggregateRenameRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION rename_custom_sum_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;",
+        "CREATE AGGREGATE rename_custom_sum_old(INT) (\n\t\t\t\t\tSFUNC = rename_custom_sum_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE TABLE rename_custom_sum_items (v INT);",
+        "INSERT INTO rename_custom_sum_items VALUES (1), (2);",
+        "ALTER AGGREGATE rename_custom_sum_old(INT)\n\t\t\t\t\t\tRENAME TO rename_custom_sum_new;",
+        "SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;"
+      ],
+      "query": "SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;",
       "expectedRows": [
         [
           {
@@ -391,6 +441,37 @@
       ]
     },
     {
+      "id": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0003-select-overloaded_custom_sum-v_int-overloaded_custom_sum-v_bigint",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregateSqlTransitionFunctionEdges",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION overloaded_custom_sum_int_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) + 1 $$;",
+        "CREATE FUNCTION overloaded_custom_sum_bigint_sfunc(state BIGINT, next_value BIGINT)\n\t\t\t\t\tRETURNS BIGINT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0::BIGINT) + COALESCE(next_value, 0::BIGINT) + 100::BIGINT $$;",
+        "CREATE AGGREGATE overloaded_custom_sum(INT) (\n\t\t\t\t\tSFUNC = overloaded_custom_sum_int_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE AGGREGATE overloaded_custom_sum(BIGINT) (\n\t\t\t\t\tSFUNC = overloaded_custom_sum_bigint_sfunc,\n\t\t\t\t\tSTYPE = BIGINT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE TABLE overloaded_custom_sum_items (\n\t\t\t\t\tv_int INT,\n\t\t\t\t\tv_bigint BIGINT\n\t\t\t\t);",
+        "INSERT INTO overloaded_custom_sum_items VALUES\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(2, 20);"
+      ],
+      "query": "SELECT overloaded_custom_sum(v_int), overloaded_custom_sum(v_bigint)\n\t\t\t\t\t\tFROM overloaded_custom_sum_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "230"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "aggregate-correctness-repro-test-testgroupbyprimarykeyallowsdependentcolumnsrepro-0001-select-id-label-amount-from",
       "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByPrimaryKeyAllowsDependentColumnsRepro",
       "ordinal": 1,
@@ -427,6 +508,25 @@
           }
         ]
       ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbynonkeyrejectsungroupedcolumnsrepro-0001-select-id-label-from-group_by_nonkey_items",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByNonKeyRejectsUngroupedColumnsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE group_by_nonkey_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO group_by_nonkey_items VALUES\n\t\t\t\t\t(1, 'same', 10),\n\t\t\t\t\t(2, 'same', 20);"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM group_by_nonkey_items\n\t\t\t\t\t\tGROUP BY label;",
+      "expectedSqlstate": "42803",
+      "expectedErrorSeverity": "ERROR",
       "cleanup": [
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
@@ -2531,6 +2631,31 @@
       ]
     },
     {
+      "id": "analyze-privilege-repro-test-testanalyzetablerequiresownershiprepro-0001-analyze-analyze_private",
+      "source": "testing/go/analyze_privilege_repro_test.go:TestAnalyzeTableRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE analyze_private (id INT PRIMARY KEY, secret TEXT);",
+        "INSERT INTO analyze_private VALUES (1, 'hidden');",
+        "CREATE USER analyze_intruder PASSWORD 'pw';",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO analyze_intruder;",
+        "SET ROLE analyze_intruder"
+      ],
+      "query": "ANALYZE analyze_private;",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'analyze_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('analyze_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS analyze_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "auth-transaction-repro-test-testrollbackrevertsalterdatabasesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting",
       "source": "testing/go/auth_transaction_repro_test.go:TestRollbackRevertsAlterDatabaseSetRepro",
       "ordinal": 1,
@@ -3802,6 +3927,687 @@
         ]
       ],
       "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "conversion-definition-repro-test-testcreateconversionpersistspgconversionrepro-0001-select-conname-from-pg_catalog.pg_conversion-where",
+      "source": "testing/go/conversion_definition_repro_test.go:TestCreateConversionPersistsPgConversionRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE CONVERSION custom_latin1_to_utf8\n\t\t\t\t\tFOR 'LATIN1' TO 'UTF8'\n\t\t\t\t\tFROM iso8859_1_to_utf8;"
+      ],
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_conversion\n\t\t\t\t\t\tWHERE conname = 'custom_latin1_to_utf8';",
+      "expectedRows": [
+        [
+          {
+            "value": "custom_latin1_to_utf8"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "conversion-definition-repro-test-testcreateconversionrequiresschemacreateprivilegerepro-0001-create-conversion-unauthorized_latin1_to_utf8-for-latin1",
+      "source": "testing/go/conversion_definition_repro_test.go:TestCreateConversionRequiresSchemaCreatePrivilegeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER conversion_creator PASSWORD 'pw';",
+        "SET ROLE conversion_creator"
+      ],
+      "query": "CREATE CONVERSION unauthorized_latin1_to_utf8\n\t\t\t\t\t\tFOR 'LATIN1' TO 'UTF8'\n\t\t\t\t\t\tFROM iso8859_1_to_utf8;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'conversion_creator') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('conversion_creator'); END IF; END $$",
+        "DROP ROLE IF EXISTS conversion_creator",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0001-drop-conversion-owner_private_latin1_to_utf8",
+      "source": "testing/go/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER conversion_dropper PASSWORD 'pw';",
+        "CREATE CONVERSION owner_private_latin1_to_utf8\n\t\t\t\t\tFOR 'LATIN1' TO 'UTF8'\n\t\t\t\t\tFROM iso8859_1_to_utf8;",
+        "SET ROLE conversion_dropper"
+      ],
+      "query": "DROP CONVERSION owner_private_latin1_to_utf8;",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'conversion_dropper') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('conversion_dropper'); END IF; END $$",
+        "DROP ROLE IF EXISTS conversion_dropper",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "conversion-definition-repro-test-testdropconversionrequiresownershiprepro-0002-select-conname-from-pg_catalog.pg_conversion-where",
+      "source": "testing/go/conversion_definition_repro_test.go:TestDropConversionRequiresOwnershipRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER conversion_dropper PASSWORD 'pw';",
+        "CREATE CONVERSION owner_private_latin1_to_utf8\n\t\t\t\t\tFOR 'LATIN1' TO 'UTF8'\n\t\t\t\t\tFROM iso8859_1_to_utf8;"
+      ],
+      "query": "SELECT conname\n\t\t\t\t\t\tFROM pg_catalog.pg_conversion\n\t\t\t\t\t\tWHERE conname = 'owner_private_latin1_to_utf8';",
+      "expectedRows": [
+        [
+          {
+            "value": "owner_private_latin1_to_utf8"
+          }
+        ]
+      ],
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'conversion_dropper') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('conversion_dropper'); END IF; END $$",
+        "DROP ROLE IF EXISTS conversion_dropper",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "conversion-definition-repro-test-testalterconversionmissingreachesvalidationrepro-0001-alter-conversion-missing_conversion_repro-rename-to",
+      "source": "testing/go/conversion_definition_repro_test.go:TestAlterConversionMissingReachesValidationRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "ALTER CONVERSION missing_conversion_repro RENAME TO renamed_conversion_repro;",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
+      "id": "copy-server-file-privilege-repro-test-testcopyfromserverfilerejectsrelativepathrepro-0002-select-count-*-from-copy_relative_file_items",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromServerFileRejectsRelativePathRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE copy_relative_file_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);"
+      ],
+      "query": "SELECT count(*) FROM copy_relative_file_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "copy-server-file-privilege-repro-test-testcopyfromprogramrequiresprivilegerepro-0001-copy-copy_program_private-id-label-from",
+      "source": "testing/go/copy_server_file_privilege_repro_test.go:TestCopyFromProgramRequiresPrivilegeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE copy_program_private (id INT PRIMARY KEY, label TEXT);",
+        "CREATE USER copy_program_reader PASSWORD 'pw';",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO copy_program_reader;",
+        "GRANT INSERT ON copy_program_private TO copy_program_reader;",
+        "SET ROLE copy_program_reader"
+      ],
+      "query": "COPY copy_program_private (id, label) FROM PROGRAM 'printf ''1,program\\n''' WITH (FORMAT CSV);",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'copy_program_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('copy_program_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS copy_program_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testcreatedatabaserequirescreatedbprivilegerepro-0001-create-database-unauthorized_db",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestCreateDatabaseRequiresCreatedbPrivilegeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_creator PASSWORD 'creator';",
+        "SET ROLE db_creator"
+      ],
+      "query": "CREATE DATABASE unauthorized_db;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'unauthorized_db') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('unauthorized_db') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS unauthorized_db",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_creator') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_creator'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_creator",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testdropdatabaserequiresownershiprepro-0001-drop-database-protected_db",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_dropper PASSWORD 'dropper';",
+        "CREATE DATABASE protected_db;",
+        "SET ROLE db_dropper"
+      ],
+      "query": "DROP DATABASE protected_db;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'protected_db') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('protected_db') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS protected_db",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_dropper') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_dropper'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_dropper",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0001-drop-database-protected_all_db",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER drop_database_intruder PASSWORD 'dropper';",
+        "CREATE DATABASE protected_all_db;",
+        "GRANT ALL PRIVILEGES ON DATABASE protected_all_db TO drop_database_intruder;",
+        "SET ROLE drop_database_intruder"
+      ],
+      "query": "DROP DATABASE protected_all_db;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'protected_all_db') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('protected_all_db') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS protected_all_db",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'drop_database_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('drop_database_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS drop_database_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testdropdatabaserequiresownershipdespiteallprivilegesrepro-0002-select-datname-from-pg_database-where",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestDropDatabaseRequiresOwnershipDespiteAllPrivilegesRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER drop_database_intruder PASSWORD 'dropper';",
+        "CREATE DATABASE protected_all_db;",
+        "GRANT ALL PRIVILEGES ON DATABASE protected_all_db TO drop_database_intruder;"
+      ],
+      "query": "SELECT datname FROM pg_database WHERE datname = 'protected_all_db';",
+      "expectedRows": [
+        [
+          {
+            "value": "protected_all_db"
+          }
+        ]
+      ],
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'protected_all_db') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('protected_all_db') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS protected_all_db",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'drop_database_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('drop_database_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS drop_database_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaseownertorequiresownershiprepro-0001-alter-database-owner_to_database_private-owner-to",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseOwnerToRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_owner_hijacker PASSWORD 'hijacker';",
+        "CREATE DATABASE owner_to_database_private;",
+        "SET ROLE db_owner_hijacker"
+      ],
+      "query": "ALTER DATABASE owner_to_database_private OWNER TO db_owner_hijacker;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'owner_to_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('owner_to_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS owner_to_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_owner_hijacker') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_owner_hijacker'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_owner_hijacker",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0001-alter-database-rename_to_database_private-rename-to",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_renamer PASSWORD 'renamer';",
+        "CREATE DATABASE rename_to_database_private;",
+        "SET ROLE db_renamer"
+      ],
+      "query": "ALTER DATABASE rename_to_database_private\n\t\t\t\t\t\tRENAME TO renamed_by_non_owner;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'rename_to_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('rename_to_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS rename_to_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_renamer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_renamer'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_renamer",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaserenametorequiresownershiprepro-0002-select-datname-from-pg_catalog.pg_database-where",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseRenameToRequiresOwnershipRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_renamer PASSWORD 'renamer';",
+        "CREATE DATABASE rename_to_database_private;"
+      ],
+      "query": "SELECT datname\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname IN ('rename_to_database_private', 'renamed_by_non_owner')\n\t\t\t\t\t\tORDER BY datname;",
+      "expectedRows": [
+        [
+          {
+            "value": "rename_to_database_private"
+          }
+        ]
+      ],
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'rename_to_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('rename_to_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS rename_to_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_renamer') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_renamer'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_renamer",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0001-alter-database-setting_database_private-set-work_mem",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_setting_intruder PASSWORD 'setter';",
+        "CREATE DATABASE setting_database_private;",
+        "SET ROLE db_setting_intruder"
+      ],
+      "query": "ALTER DATABASE setting_database_private SET work_mem = '64kB';",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'setting_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('setting_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS setting_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_setting_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_setting_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_setting_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasesetrequiresownershiprepro-0002-select-count-*-from-pg_catalog.pg_db_role_setting",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseSetRequiresOwnershipRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_setting_intruder PASSWORD 'setter';",
+        "CREATE DATABASE setting_database_private;"
+      ],
+      "query": "SELECT COUNT(*)\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase = 'setting_database_private'::regdatabase;",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'setting_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('setting_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS setting_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_setting_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_setting_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_setting_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0001-alter-database-metadata_allow_database_private-with-allow_connections",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_metadata_intruder PASSWORD 'metadata';",
+        "CREATE DATABASE metadata_allow_database_private;",
+        "CREATE DATABASE metadata_connection_database_private;",
+        "CREATE DATABASE metadata_template_database_private;",
+        "SET ROLE db_metadata_intruder"
+      ],
+      "query": "ALTER DATABASE metadata_allow_database_private\n\t\t\t\t\t\tWITH ALLOW_CONNECTIONS false;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_allow_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_allow_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_allow_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_connection_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_connection_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_connection_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_template_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_template_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_template_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_metadata_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_metadata_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_metadata_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0002-alter-database-metadata_connection_database_private-with-connection",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_metadata_intruder PASSWORD 'metadata';",
+        "CREATE DATABASE metadata_allow_database_private;",
+        "CREATE DATABASE metadata_connection_database_private;",
+        "CREATE DATABASE metadata_template_database_private;",
+        "SET ROLE db_metadata_intruder"
+      ],
+      "query": "ALTER DATABASE metadata_connection_database_private\n\t\t\t\t\t\tWITH CONNECTION LIMIT 0;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_allow_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_allow_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_allow_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_connection_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_connection_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_connection_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_template_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_template_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_template_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_metadata_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_metadata_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_metadata_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0003-alter-database-metadata_template_database_private-with-is_template",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_metadata_intruder PASSWORD 'metadata';",
+        "CREATE DATABASE metadata_allow_database_private;",
+        "CREATE DATABASE metadata_connection_database_private;",
+        "CREATE DATABASE metadata_template_database_private;",
+        "SET ROLE db_metadata_intruder"
+      ],
+      "query": "ALTER DATABASE metadata_template_database_private\n\t\t\t\t\t\tWITH IS_TEMPLATE true;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_allow_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_allow_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_allow_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_connection_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_connection_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_connection_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_template_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_template_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_template_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_metadata_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_metadata_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_metadata_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabasecatalogoptionsrequireownershiprepro-0004-select-datname-datallowconn-datconnlimit-datistemplate",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseCatalogOptionsRequireOwnershipRepro",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_metadata_intruder PASSWORD 'metadata';",
+        "CREATE DATABASE metadata_allow_database_private;",
+        "CREATE DATABASE metadata_connection_database_private;",
+        "CREATE DATABASE metadata_template_database_private;"
+      ],
+      "query": "SELECT datname, datallowconn, datconnlimit, datistemplate\n\t\t\t\t\t\tFROM pg_catalog.pg_database\n\t\t\t\t\t\tWHERE datname IN (\n\t\t\t\t\t\t\t'metadata_allow_database_private',\n\t\t\t\t\t\t\t'metadata_connection_database_private',\n\t\t\t\t\t\t\t'metadata_template_database_private'\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY datname;",
+      "expectedRows": [
+        [
+          {
+            "value": "metadata_allow_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "metadata_connection_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ],
+        [
+          {
+            "value": "metadata_template_database_private"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "-1"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_allow_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_allow_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_allow_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_connection_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_connection_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_connection_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'metadata_template_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('metadata_template_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS metadata_template_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_metadata_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_metadata_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_metadata_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0001-alter-database-reset_setting_database_private-reset-work_mem",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_reset_intruder PASSWORD 'resetter';",
+        "CREATE DATABASE reset_setting_database_private;",
+        "CREATE DATABASE reset_all_database_private;",
+        "ALTER DATABASE reset_setting_database_private SET work_mem = '64kB';",
+        "ALTER DATABASE reset_all_database_private SET work_mem = '64kB';",
+        "SET ROLE db_reset_intruder"
+      ],
+      "query": "ALTER DATABASE reset_setting_database_private RESET work_mem;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_setting_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_setting_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_setting_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_all_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_all_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_all_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_reset_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_reset_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_reset_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0002-alter-database-reset_all_database_private-reset-all",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_reset_intruder PASSWORD 'resetter';",
+        "CREATE DATABASE reset_setting_database_private;",
+        "CREATE DATABASE reset_all_database_private;",
+        "ALTER DATABASE reset_setting_database_private SET work_mem = '64kB';",
+        "ALTER DATABASE reset_all_database_private SET work_mem = '64kB';",
+        "SET ROLE db_reset_intruder"
+      ],
+      "query": "ALTER DATABASE reset_all_database_private RESET ALL;",
+      "expectedSqlstate": "42501",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "RESET ROLE",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_setting_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_setting_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_setting_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_all_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_all_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_all_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_reset_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_reset_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_reset_intruder",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "create-database-privilege-repro-test-testalterdatabaseresetrequiresownershiprepro-0003-select-setdatabase::regdatabase::text-array_to_string-setconfig-from",
+      "source": "testing/go/create_database_privilege_repro_test.go:TestAlterDatabaseResetRequiresOwnershipRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER db_reset_intruder PASSWORD 'resetter';",
+        "CREATE DATABASE reset_setting_database_private;",
+        "CREATE DATABASE reset_all_database_private;",
+        "ALTER DATABASE reset_setting_database_private SET work_mem = '64kB';",
+        "ALTER DATABASE reset_all_database_private SET work_mem = '64kB';"
+      ],
+      "query": "SELECT setdatabase::regdatabase::text, array_to_string(setconfig, ',')\n\t\t\t\t\t\tFROM pg_catalog.pg_db_role_setting\n\t\t\t\t\t\tWHERE setdatabase IN (\n\t\t\t\t\t\t\t'reset_setting_database_private'::regdatabase,\n\t\t\t\t\t\t\t'reset_all_database_private'::regdatabase\n\t\t\t\t\t\t)\n\t\t\t\t\t\tORDER BY setdatabase::regdatabase::text;",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_setting_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_setting_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_setting_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_database WHERE datname = 'reset_all_database_private') THEN EXECUTE 'ALTER DATABASE ' || quote_ident('reset_all_database_private') || ' IS_TEMPLATE false'; END IF; END $$",
+        "DROP DATABASE IF EXISTS reset_all_database_private",
+        "CREATE EXTENSION IF NOT EXISTS plpgsql",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'db_reset_intruder') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('db_reset_intruder'); END IF; END $$",
+        "DROP ROLE IF EXISTS db_reset_intruder",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
