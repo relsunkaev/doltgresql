@@ -173,6 +173,38 @@ func TestAlterTableQualifiedRenameStaysInSchemaRepro(t *testing.T) {
 	})
 }
 
+func TestAlterTableQualifiedRenamePreservesForeignKeysRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "schema-qualified ALTER TABLE RENAME preserves foreign keys",
+			SetUpScript: []string{
+				`CREATE SCHEMA rename_fk_schema;`,
+				`CREATE TABLE rename_fk_schema.parent_table (
+					id INT PRIMARY KEY
+				);`,
+				`CREATE TABLE rename_fk_schema.child_table (
+					id INT PRIMARY KEY,
+					parent_id INT REFERENCES rename_fk_schema.parent_table(id)
+				);`,
+				`INSERT INTO rename_fk_schema.parent_table VALUES (1);`,
+				`INSERT INTO rename_fk_schema.child_table VALUES (10, 1);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `ALTER TABLE rename_fk_schema.parent_table RENAME TO renamed_parent;`,
+				},
+				{
+					Query: `INSERT INTO rename_fk_schema.child_table VALUES (11, 1);`,
+				},
+				{
+					Query:       `INSERT INTO rename_fk_schema.child_table VALUES (12, 99);`,
+					ExpectedErr: `Foreign key violation`,
+				},
+			},
+		},
+	})
+}
+
 // TestAlterSchemaRenameRepro reproduces a schema DDL correctness bug:
 // PostgreSQL supports ALTER SCHEMA ... RENAME TO and keeps contained objects
 // accessible through the new schema name.

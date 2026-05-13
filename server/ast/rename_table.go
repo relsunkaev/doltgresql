@@ -50,6 +50,33 @@ func nodeRenameTable(ctx *Context, node *tree.RenameTable) (vitess.Statement, er
 			},
 		}, nil
 	}
+	if fromName.SchemaQualifier.String() != "" || toName.SchemaQualifier.String() != "" || node.IsMaterialized {
+		var statement vitess.Injectable
+		if node.IsMaterialized {
+			statement = pgnodes.NewRenameMaterializedView(
+				node.IfExists,
+				fromName.SchemaQualifier.String(),
+				fromName.Name.String(),
+				toName.SchemaQualifier.String(),
+				toName.Name.String(),
+			)
+		} else {
+			statement = pgnodes.NewRenameTable(
+				node.IfExists,
+				fromName.SchemaQualifier.String(),
+				fromName.Name.String(),
+				toName.SchemaQualifier.String(),
+				toName.Name.String(),
+			)
+		}
+		return vitess.InjectedStatement{
+			Statement: statement,
+			Auth: vitess.AuthInformation{
+				AuthType:   auth.AuthType_IGNORE,
+				TargetType: auth.AuthTargetType_Ignore,
+			},
+		}, nil
+	}
 	return &vitess.DDL{
 		Action:     vitess.RenameStr,
 		FromTables: vitess.TableNames{fromName},
