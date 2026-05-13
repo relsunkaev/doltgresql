@@ -28,11 +28,17 @@ func nodeDiscard(ctx *Context, discard *tree.Discard) (vitess.Statement, error) 
 	if discard == nil {
 		return nil, nil
 	}
-	if discard.Mode != tree.DiscardModeAll {
+	var mode node.DiscardMode
+	switch discard.Mode {
+	case tree.DiscardModeAll:
+		mode = node.DiscardModeAll
+	case tree.DiscardModeTemp:
+		mode = node.DiscardModeTemp
+	default:
 		return nil, errors.Errorf("unhandled DISCARD mode: %v", discard.Mode)
 	}
 
 	return vitess.InjectedStatement{
-		Statement: node.DiscardStatement{},
+		Statement: node.DiscardStatement{Mode: mode},
 	}, nil
 }

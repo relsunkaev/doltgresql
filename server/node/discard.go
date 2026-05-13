@@ -16,15 +16,27 @@ package node
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 )
 
+// DiscardMode identifies the DISCARD variant that must be handled by the
+// connection handler.
+type DiscardMode int
+
+const (
+	DiscardModeAll DiscardMode = iota
+	DiscardModeTemp
+)
+
 // DiscardStatement is just a marker type, since all functionality is handled by the connection handler,
 // rather than the engine. It has to conform to the sql.ExecSourceRel interface to be used in the handler, but this
 // functionality is all unused.
-type DiscardStatement struct{}
+type DiscardStatement struct {
+	Mode DiscardMode
+}
 
 var _ vitess.Injectable = DiscardStatement{}
 var _ sql.ExecSourceRel = DiscardStatement{}
@@ -46,7 +58,7 @@ func (d DiscardStatement) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (d DiscardStatement) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	panic("DISCARD ALL should be handled by the connection handler")
+	panic(fmt.Sprintf("%s should be handled by the connection handler", d.String()))
 }
 
 // Schema implements the interface sql.ExecSourceRel.
@@ -56,7 +68,12 @@ func (d DiscardStatement) Schema(ctx *sql.Context) sql.Schema {
 
 // String implements the interface sql.ExecSourceRel.
 func (d DiscardStatement) String() string {
-	return "DISCARD ALL"
+	switch d.Mode {
+	case DiscardModeTemp:
+		return "DISCARD TEMP"
+	default:
+		return "DISCARD ALL"
+	}
 }
 
 // WithChildren implements the interface sql.ExecSourceRel.

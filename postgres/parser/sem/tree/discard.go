@@ -37,6 +37,8 @@ type DiscardMode int
 const (
 	// DiscardModeAll represents a DISCARD ALL statement.
 	DiscardModeAll DiscardMode = iota
+	// DiscardModeTemp represents a DISCARD TEMP statement.
+	DiscardModeTemp
 )
 
 // Format implements the NodeFormatter interface.
@@ -44,6 +46,8 @@ func (node *Discard) Format(ctx *FmtCtx) {
 	switch node.Mode {
 	case DiscardModeAll:
 		ctx.WriteString("DISCARD ALL")
+	case DiscardModeTemp:
+		ctx.WriteString("DISCARD TEMP")
 	}
 }
 

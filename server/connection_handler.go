@@ -732,7 +732,12 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 	case sqlparser.InjectedStatement:
 		switch injectedStmt := stmt.Statement.(type) {
 		case node.DiscardStatement:
-			return true, true, h.discardAll(query)
+			switch injectedStmt.Mode {
+			case node.DiscardModeTemp:
+				return true, true, h.discardTemp(query)
+			default:
+				return true, true, h.discardAll(query)
+			}
 		case node.PrepareStatement:
 			return true, true, h.prepareSQLStatement(injectedStmt, query)
 		case node.ExecuteStatement:
@@ -4524,6 +4529,34 @@ func (h *ConnectionHandler) discardAll(query ConvertedQuery) error {
 		return err
 	}
 
+	return h.send(&pgproto3.CommandComplete{
+		CommandTag: []byte(query.StatementTag),
+	})
+}
+
+// discardTemp handles DISCARD TEMP by dropping all temporary tables visible to
+// the current session in the current database.
+func (h *ConnectionHandler) discardTemp(query ConvertedQuery) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.StatementTag)
+	if err != nil {
+		return err
+	}
+	dbName := sqlCtx.GetCurrentDatabase()
+	db, err := core.GetSqlDatabaseFromContext(sqlCtx, dbName)
+	if err != nil {
+		return err
+	}
+	tempDB, ok := db.(sql.TemporaryTableDatabase)
+	if ok {
+		tempTables, err := tempDB.GetAllTemporaryTables(sqlCtx)
+		if err != nil {
+			return err
+		}
+		session := dsess.DSessFromSess(sqlCtx.Session)
+		for _, table := range tempTables {
+			session.DropTemporaryTable(sqlCtx, dbName, table.Name())
+		}
+	}
 	return h.send(&pgproto3.CommandComplete{
 		CommandTag: []byte(query.StatementTag),
 	})
