@@ -191,7 +191,7 @@ func (c *CreateFunction) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, erro
 			return nil, err
 		}
 		if err = checkFunctionOwnership(ctx, existing); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "permission denied")
 		}
 		if existing.Owner != "" {
 			owner = existing.Owner
