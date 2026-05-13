@@ -50,7 +50,7 @@ func WrapInheritedScanTable(ctx *sql.Context, table sql.Table) (sql.Table, bool,
 	}
 	parentID, ok, err := id.GetFromTable(ctx, table)
 	if err != nil || !ok {
-		return table, false, err
+		return table, false, nil
 	}
 	parent := tablemetadata.InheritedTable{Schema: parentID.SchemaName(), Name: parentID.TableName()}
 	children, err := inheritedScanChildren(ctx, parent)
