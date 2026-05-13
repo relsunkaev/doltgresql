@@ -96,8 +96,7 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 		return nil, nil
 	}
 
-	switch child := childVal.(type) {
-	case []interface{}:
+	if child, ok := types.ArrayElements(childVal); ok {
 		index, ok := indexVal.(int32)
 		if !ok {
 			converted, _, err := types.Int32.Convert(ctx, indexVal)
@@ -108,10 +107,16 @@ func (s Subscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error) {
 		}
 
 		lowerBound := arrayLowerBound(ctx, s.Child)
+		if types.ArrayHasNonDefaultLowerBounds(types.ArrayLowerBounds(childVal)) {
+			lowerBound = types.ArrayLowerBound(childVal, 1)
+		}
 		if index < lowerBound || int(index-lowerBound) >= len(child) {
 			return nil, nil
 		}
 		return child[index-lowerBound], nil
+	}
+
+	switch child := childVal.(type) {
 	case string:
 		dt, ok := s.Child.Type(ctx).(*types.DoltgresType)
 		if !ok || dt != types.Name {
@@ -253,12 +258,15 @@ func (s SliceSubscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error)
 		return nil, nil
 	}
 
-	child, ok := childVal.([]interface{})
+	child, ok := types.ArrayElements(childVal)
 	if !ok {
 		return nil, fmt.Errorf("unsupported type %T for slice subscript", childVal)
 	}
 
 	lowerBound := arrayLowerBound(ctx, s.Child)
+	if types.ArrayHasNonDefaultLowerBounds(types.ArrayLowerBounds(childVal)) {
+		lowerBound = types.ArrayLowerBound(childVal, 1)
+	}
 	upperBound := lowerBound + int32(len(child)) - 1
 	begin := lowerBound
 	end := upperBound
@@ -289,12 +297,12 @@ func (s SliceSubscript) Eval(ctx *sql.Context, row sql.Row) (interface{}, error)
 		end = upperBound
 	}
 	if end < begin {
-		return []interface{}{}, nil
+		return []any{}, nil
 	}
 
 	start := int(begin - lowerBound)
 	stop := int(end-lowerBound) + 1
-	result := make([]interface{}, stop-start)
+	result := make([]any, stop-start)
 	copy(result, child[start:stop])
 	return result, nil
 }

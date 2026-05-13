@@ -322,7 +322,15 @@ func getCast(mutex *sync.RWMutex,
 				if err != nil {
 					return nil, err
 				}
-				return castArrayValues(ctx, vals.([]any), targetBaseType, baseCast)
+				arrayVals, ok := pgtypes.ArrayElements(vals)
+				if !ok {
+					return nil, errors.Errorf("expected array value but received %T", vals)
+				}
+				castVals, err := castArrayValues(ctx, arrayVals, targetBaseType, baseCast)
+				if err != nil {
+					return nil, err
+				}
+				return pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals)), nil
 			}
 		}
 
@@ -347,7 +355,15 @@ func runtimeArrayCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTy
 		if baseCast == nil {
 			return nil, errors.Errorf("cannot find cast function from %s to %s", fromBaseType.String(), targetBaseType.String())
 		}
-		return castArrayValues(ctx, vals.([]any), targetBaseType, baseCast)
+		arrayVals, ok := pgtypes.ArrayElements(vals)
+		if !ok {
+			return nil, errors.Errorf("expected array value but received %T", vals)
+		}
+		castVals, err := castArrayValues(ctx, arrayVals, targetBaseType, baseCast)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.NewArrayValue(castVals, pgtypes.ArrayLowerBounds(vals)), nil
 	}
 }
 

@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -49,8 +50,70 @@ var array_in = framework.Function3{
 		baseType := pgtypes.IDToBuiltInDoltgresType[id.Type(baseTypeOid)]
 		typmod := val3.(int32)
 		baseType = baseType.WithAttTypMod(typmod)
-		return parseArrayLiteral(ctx, input, baseType)
+		return parseArrayInput(ctx, input, baseType)
 	},
+}
+
+func parseArrayInput(ctx *sql.Context, input string, baseType *pgtypes.DoltgresType) (any, error) {
+	lowerBounds, expectedDimensions, literal, hasBounds, err := parseArrayBoundsPrefix(input)
+	if err != nil {
+		return nil, err
+	}
+	values, err := parseArrayLiteral(ctx, literal, baseType)
+	if err != nil {
+		return nil, err
+	}
+	if hasBounds {
+		dimensions := arrayDimensions(values)
+		if len(expectedDimensions) > len(dimensions) {
+			return nil, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		for i, expected := range expectedDimensions {
+			if dimensions[i] != expected {
+				return nil, errors.Errorf(`malformed array literal: "%s"`, input)
+			}
+		}
+		return pgtypes.NewArrayValue(values, lowerBounds), nil
+	}
+	return values, nil
+}
+
+func parseArrayBoundsPrefix(input string) ([]int32, []int32, string, bool, error) {
+	if !strings.HasPrefix(input, "[") {
+		return nil, nil, input, false, nil
+	}
+	pos := 0
+	var lowerBounds []int32
+	var dimensions []int32
+	for pos < len(input) && input[pos] == '[' {
+		end := strings.IndexByte(input[pos:], ']')
+		if end < 0 {
+			return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		spec := input[pos+1 : pos+end]
+		parts := strings.Split(spec, ":")
+		if len(parts) != 2 {
+			return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		lower, err := strconv.ParseInt(strings.TrimSpace(parts[0]), 10, 32)
+		if err != nil {
+			return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		upper, err := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 32)
+		if err != nil {
+			return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		if upper < lower {
+			return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+		}
+		lowerBounds = append(lowerBounds, int32(lower))
+		dimensions = append(dimensions, int32(upper-lower+1))
+		pos += end + 1
+	}
+	if pos >= len(input) || input[pos] != '=' {
+		return nil, nil, "", false, errors.Errorf(`malformed array literal: "%s"`, input)
+	}
+	return lowerBounds, dimensions, input[pos+1:], true, nil
 }
 
 func parseArrayLiteral(ctx *sql.Context, input string, baseType *pgtypes.DoltgresType) ([]any, error) {
@@ -162,7 +225,7 @@ var array_out = framework.Function1{
 		if err != nil {
 			return nil, err
 		}
-		return pgtypes.ArrToString(ctx, val.([]any), baseType, false)
+		return pgtypes.ArrayToString(ctx, val, baseType, false)
 	},
 }
 
@@ -201,9 +264,10 @@ func array_recv_callable(ctx *sql.Context, t [4]*pgtypes.DoltgresType, val1, val
 		return nil, errors.Errorf("array dimensions greater than 1 are not yet supported")
 	}
 	var vals []any
+	lowerBounds := make([]int32, 0, dimensions)
 	for dimensionIdx := int32(0); dimensionIdx < dimensions; dimensionIdx++ {
 		elementsCount := reader.ReadInt32()
-		_ = reader.ReadInt32() // Lower bound, not sure what to do with this
+		lowerBounds = append(lowerBounds, reader.ReadInt32())
 		for i := int32(0); i < elementsCount; i++ {
 			elementLen := reader.ReadInt32()
 			if elementLen != -1 {
@@ -218,7 +282,7 @@ func array_recv_callable(ctx *sql.Context, t [4]*pgtypes.DoltgresType, val1, val
 			}
 		}
 	}
-	return vals, nil
+	return pgtypes.NewArrayValue(vals, lowerBounds), nil
 }
 
 // array_send represents the PostgreSQL function of array type IO send.
@@ -238,7 +302,10 @@ var array_send = framework.Function1{
 				return nil, nil
 			}
 		}
-		vals := val.([]any)
+		vals, ok := pgtypes.ArrayElements(val)
+		if !ok {
+			return nil, errors.Errorf("expected array value but received %T", val)
+		}
 		dimensions := arrayBinaryDimensions(vals)
 		hasNull, err := validateArrayBinaryShape(vals, dimensions, 0)
 		if err != nil {
@@ -256,9 +323,14 @@ var array_send = framework.Function1{
 			return nil, err
 		}
 		writer.WriteUint32(id.Cache().ToOID(baseType.ID.AsId())) // Element OID
-		for _, dimension := range dimensions {
-			writer.WriteInt32(dimension) // Elements in this dimension
-			writer.WriteInt32(1)         // Lower bound, or what index number we start at
+		lowerBounds := pgtypes.ArrayLowerBounds(val)
+		for i, dimension := range dimensions {
+			lowerBound := int32(1)
+			if i < len(lowerBounds) {
+				lowerBound = lowerBounds[i]
+			}
+			writer.WriteInt32(dimension)  // Elements in this dimension
+			writer.WriteInt32(lowerBound) // Lower bound, or what index number we start at
 		}
 		if err := writeArrayBinaryElements(ctx, writer, vals, dimensions, 0, baseType); err != nil {
 			return nil, err
@@ -371,8 +443,14 @@ var btarraycmp = framework.Function2{
 			return nil, errors.Errorf("different type comparison is not supported yet")
 		}
 
-		ab := val1.([]any)
-		bb := val2.([]any)
+		ab, ok := pgtypes.ArrayElements(val1)
+		if !ok {
+			return nil, errors.Errorf("expected array value but received %T", val1)
+		}
+		bb, ok := pgtypes.ArrayElements(val2)
+		if !ok {
+			return nil, errors.Errorf("expected array value but received %T", val2)
+		}
 		minLength := utils.Min(len(ab), len(bb))
 		baseType, err := at.ResolveArrayBaseType(ctx)
 		if err != nil {

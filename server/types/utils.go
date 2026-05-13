@@ -134,7 +134,7 @@ func sqlString(ctx *sql.Context, t *DoltgresType, val any) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return ArrToString(ctx, val.([]any), baseType, true)
+		return ArrayToString(ctx, val, baseType, true)
 	} else if t.ID == Bool.ID {
 		if val.(bool) {
 			return "t", nil
@@ -153,6 +153,46 @@ func ArrToString(ctx *sql.Context, arr []any, baseType *DoltgresType, trimBool b
 		return "", err
 	}
 	return sb.String(), nil
+}
+
+// ArrayToString formats either a plain array or an array with explicit lower bounds.
+func ArrayToString(ctx *sql.Context, val any, baseType *DoltgresType, trimBool bool) (string, error) {
+	arr, ok := ArrayElements(val)
+	if !ok {
+		return "", fmt.Errorf("expected array value but received %T", val)
+	}
+	arrayText, err := ArrToString(ctx, arr, baseType, trimBool)
+	if err != nil {
+		return "", err
+	}
+	lowerBounds := ArrayLowerBounds(val)
+	if !ArrayHasNonDefaultLowerBounds(lowerBounds) {
+		return arrayText, nil
+	}
+	dimensions := arrayStringDimensions(arr)
+	sb := strings.Builder{}
+	for i, length := range dimensions {
+		lowerBound := int32(1)
+		if i < len(lowerBounds) {
+			lowerBound = lowerBounds[i]
+		}
+		sb.WriteString(fmt.Sprintf("[%d:%d]", lowerBound, lowerBound+length-1))
+	}
+	sb.WriteRune('=')
+	sb.WriteString(arrayText)
+	return sb.String(), nil
+}
+
+func arrayStringDimensions(arr []any) []int32 {
+	if len(arr) == 0 {
+		return nil
+	}
+	dimensions := []int32{int32(len(arr))}
+	nested, ok := arr[0].([]any)
+	if !ok {
+		return dimensions
+	}
+	return append(dimensions, arrayStringDimensions(nested)...)
 }
 
 func writeArrayToString(ctx *sql.Context, sb *strings.Builder, arr []any, baseType *DoltgresType, trimBool bool) error {

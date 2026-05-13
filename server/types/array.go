@@ -25,6 +25,67 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 )
 
+const serializedArrayBoundsMarker = ^uint32(0)
+
+// ArrayValue carries PostgreSQL array bound metadata for arrays whose lower
+// bounds are not the default one-based bounds.
+type ArrayValue struct {
+	Elements    []any
+	LowerBounds []int32
+}
+
+// NewArrayValue returns a wrapped array only when metadata must be preserved.
+func NewArrayValue(elements []any, lowerBounds []int32) any {
+	if !ArrayHasNonDefaultLowerBounds(lowerBounds) {
+		return elements
+	}
+	return ArrayValue{
+		Elements:    elements,
+		LowerBounds: append([]int32(nil), lowerBounds...),
+	}
+}
+
+// ArrayElements unwraps both plain and bound-carrying array values.
+func ArrayElements(value any) ([]any, bool) {
+	switch v := value.(type) {
+	case ArrayValue:
+		return v.Elements, true
+	case []any:
+		return v, true
+	default:
+		return nil, false
+	}
+}
+
+// ArrayLowerBounds returns explicit array lower bounds, if present.
+func ArrayLowerBounds(value any) []int32 {
+	if v, ok := value.(ArrayValue); ok {
+		return v.LowerBounds
+	}
+	return nil
+}
+
+// ArrayHasNonDefaultLowerBounds reports whether lower bounds differ from PostgreSQL's default of 1.
+func ArrayHasNonDefaultLowerBounds(lowerBounds []int32) bool {
+	for _, lowerBound := range lowerBounds {
+		if lowerBound != 1 {
+			return true
+		}
+	}
+	return false
+}
+
+// ArrayLowerBound returns the stored lower bound for a dimension, defaulting to 1.
+func ArrayLowerBound(value any, dimension int32) int32 {
+	if dimension <= 0 {
+		return 1
+	}
+	if lowerBounds := ArrayLowerBounds(value); int(dimension) <= len(lowerBounds) {
+		return lowerBounds[dimension-1]
+	}
+	return 1
+}
+
 // CreateArrayTypeFromBaseType create array type from given type.
 func CreateArrayTypeFromBaseType(baseType *DoltgresType) *DoltgresType {
 	align := TypeAlignment_Int
@@ -85,7 +146,29 @@ func serializeTypeArray(ctx *sql.Context, t *DoltgresType, val any) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	return serializeArray(ctx, val.([]any), baseType)
+	vals, ok := ArrayElements(val)
+	if !ok {
+		return nil, errors.Errorf("expected array value but received %T", val)
+	}
+	data, err := serializeArray(ctx, vals, baseType)
+	if err != nil {
+		return nil, err
+	}
+	lowerBounds := ArrayLowerBounds(val)
+	if !ArrayHasNonDefaultLowerBounds(lowerBounds) {
+		return data, nil
+	}
+	var header [8]byte
+	binary.LittleEndian.PutUint32(header[0:4], serializedArrayBoundsMarker)
+	binary.LittleEndian.PutUint32(header[4:8], uint32(len(lowerBounds)))
+	output := bytes.NewBuffer(header[:])
+	var bound [4]byte
+	for _, lowerBound := range lowerBounds {
+		binary.LittleEndian.PutUint32(bound[:], uint32(lowerBound))
+		output.Write(bound[:])
+	}
+	output.Write(data)
+	return output.Bytes(), nil
 }
 
 // deserializeTypeArray handles deserialization from the Dolt serialized format to our standard representation used by
@@ -94,6 +177,22 @@ func deserializeTypeArray(ctx *sql.Context, t *DoltgresType, data []byte) (any, 
 	baseType, err := t.ResolveArrayBaseType(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if len(data) >= 8 && binary.LittleEndian.Uint32(data[0:4]) == serializedArrayBoundsMarker {
+		dimensionCount := binary.LittleEndian.Uint32(data[4:8])
+		boundsEnd := 8 + int(dimensionCount)*4
+		if len(data) < boundsEnd {
+			return nil, errors.Errorf("deserializing array value has invalid bounds header")
+		}
+		lowerBounds := make([]int32, dimensionCount)
+		for i := range lowerBounds {
+			lowerBounds[i] = int32(binary.LittleEndian.Uint32(data[8+(i*4):]))
+		}
+		elements, err := deserializeArray(ctx, data[boundsEnd:], baseType)
+		if err != nil {
+			return nil, err
+		}
+		return NewArrayValue(elements, lowerBounds), nil
 	}
 	return deserializeArray(ctx, data, baseType)
 }

@@ -39,13 +39,22 @@ var array_dims_anyarray = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		dimensions := arrayDimensions(val.([]any))
+		array, ok := pgtypes.ArrayElements(val)
+		if !ok {
+			return nil, fmt.Errorf("expected array value but received %T", val)
+		}
+		dimensions := arrayDimensions(array)
 		if len(dimensions) == 0 {
 			return nil, nil
 		}
+		lowerBounds := pgtypes.ArrayLowerBounds(val)
 		sb := strings.Builder{}
-		for _, length := range dimensions {
-			sb.WriteString(fmt.Sprintf("[1:%d]", length))
+		for i, length := range dimensions {
+			lowerBound := int32(1)
+			if i < len(lowerBounds) {
+				lowerBound = lowerBounds[i]
+			}
+			sb.WriteString(fmt.Sprintf("[%d:%d]", lowerBound, lowerBound+length-1))
 		}
 		return sb.String(), nil
 	},
@@ -58,10 +67,9 @@ var array_lower_anyarray_int32 = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		array := val1.([]any)
 		dimension := val2.(int32)
-		if _, ok := arrayDimensionLength(array, dimension); ok {
-			return int32(1), nil
+		if _, ok := arrayDimensionLength(val1, dimension); ok {
+			return pgtypes.ArrayLowerBound(val1, dimension), nil
 		}
 		return nil, nil
 	},
@@ -74,7 +82,11 @@ var array_ndims_anyarray = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		dimensions := arrayDimensions(val.([]any))
+		array, ok := pgtypes.ArrayElements(val)
+		if !ok {
+			return nil, fmt.Errorf("expected array value but received %T", val)
+		}
+		dimensions := arrayDimensions(array)
 		if len(dimensions) == 0 {
 			return nil, nil
 		}
@@ -89,7 +101,11 @@ var cardinality_anyarray = framework.Function1{
 	Parameters: [1]*pgtypes.DoltgresType{pgtypes.AnyArray},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [2]*pgtypes.DoltgresType, val any) (any, error) {
-		return arrayCardinality(val.([]any)), nil
+		array, ok := pgtypes.ArrayElements(val)
+		if !ok {
+			return nil, fmt.Errorf("expected array value but received %T", val)
+		}
+		return arrayCardinality(array), nil
 	},
 }
 

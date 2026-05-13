@@ -33,10 +33,9 @@ var array_upper_anyarray_int32 = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyArray, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		array := val1.([]any)
 		dimension := val2.(int32)
-		if upper, ok := arrayDimensionLength(array, dimension); ok {
-			return upper, nil
+		if length, ok := arrayDimensionLength(val1, dimension); ok {
+			return pgtypes.ArrayLowerBound(val1, dimension) + length - 1, nil
 		}
 		return nil, nil
 	},

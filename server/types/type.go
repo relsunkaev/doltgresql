@@ -362,12 +362,19 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		return cmp.Compare(id.Cache().ToOID(ab), id.Cache().ToOID(v2.(id.Id))), nil
 	case id.Oid:
 		return cmp.Compare(ab.OID(), v2.(id.Oid).OID()), nil
-	case []any:
+	case ArrayValue, []any:
 		if !t.IsArrayType() {
 			return 0, errors.New("array value received in Compare for non array type")
 		}
-		bb := v2.([]any)
-		minLength := utils.Min(len(ab), len(bb))
+		left, ok := ArrayElements(v1)
+		if !ok {
+			return 0, errors.Errorf("expected array value but received %T", v1)
+		}
+		right, ok := ArrayElements(v2)
+		if !ok {
+			return 0, errors.Errorf("expected array value but received %T", v2)
+		}
+		minLength := utils.Min(len(left), len(right))
 		baseType := t.ArrayBaseType()
 		if sqlCtx, ok := ctx.(*sql.Context); ok {
 			var err error
@@ -377,7 +384,7 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 			}
 		}
 		for i := 0; i < minLength; i++ {
-			res, err := baseType.Compare(ctx, ab[i], bb[i])
+			res, err := baseType.Compare(ctx, left[i], right[i])
 			if err != nil {
 				return 0, err
 			}
@@ -385,9 +392,9 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 				return res, nil
 			}
 		}
-		if len(ab) == len(bb) {
+		if len(left) == len(right) {
 			return 0, nil
-		} else if len(ab) < len(bb) {
+		} else if len(left) < len(right) {
 			return -1, nil
 		} else {
 			return 1, nil
@@ -702,7 +709,7 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 	}
 
 	if targetType.IsArrayType() {
-		vals, ok := v.([]any)
+		vals, ok := ArrayElements(v)
 		if !ok {
 			return nil, false, nil
 		}
@@ -715,7 +722,7 @@ func (t *DoltgresType) convertValueWithTypmod(ctx context.Context, v interface{}
 			}
 		}
 		converted, err := convertArrayElementsWithTypmod(ctx, baseType, vals)
-		return converted, true, err
+		return NewArrayValue(converted, ArrayLowerBounds(v)), true, err
 	}
 
 	switch targetType.ID.TypeName() {
