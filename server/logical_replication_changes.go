@@ -804,7 +804,7 @@ func rowFilterValuesEqual(ctx *sql.Context, left rowFilterValue, right rowFilter
 	if left.null || right.null {
 		return false
 	}
-	if cmp, ok := rowFilterTemporalCompare(ctx, left, right); ok {
+	if cmp, ok := rowFilterTypedCompare(ctx, left, right); ok {
 		return cmp == 0
 	}
 	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
@@ -819,7 +819,7 @@ func rowFilterValuesCompare(ctx *sql.Context, left rowFilterValue, right rowFilt
 	if left.null || right.null {
 		return 0, false
 	}
-	if cmp, ok := rowFilterTemporalCompare(ctx, left, right); ok {
+	if cmp, ok := rowFilterTypedCompare(ctx, left, right); ok {
 		return cmp, true
 	}
 	if leftNum, ok := parseRowFilterNumeric(left.data); ok {
@@ -830,47 +830,60 @@ func rowFilterValuesCompare(ctx *sql.Context, left rowFilterValue, right rowFilt
 	return bytes.Compare(left.data, right.data), true
 }
 
-func rowFilterTemporalCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
-	doltgresType := rowFilterTemporalType(left)
+func rowFilterTypedCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
+	doltgresType := rowFilterComparableType(left)
 	if doltgresType == nil {
-		doltgresType = rowFilterTemporalType(right)
+		doltgresType = rowFilterComparableType(right)
 	}
 	if doltgresType == nil {
 		return 0, false
 	}
-	leftTime, ok := parseRowFilterTemporal(ctx, doltgresType, left.data)
+	leftValue, ok := parseRowFilterTypedValue(ctx, doltgresType, left.data)
 	if !ok {
 		return 0, false
 	}
-	rightTime, ok := parseRowFilterTemporal(ctx, doltgresType, right.data)
+	rightValue, ok := parseRowFilterTypedValue(ctx, doltgresType, right.data)
 	if !ok {
 		return 0, false
 	}
-	return leftTime.UTC().Compare(rightTime.UTC()), true
+	cmp, err := doltgresType.Compare(ctx, leftValue, rightValue)
+	if err != nil {
+		return 0, false
+	}
+	return cmp, true
 }
 
-func rowFilterTemporalType(value rowFilterValue) *pgtypes.DoltgresType {
+func rowFilterComparableType(value rowFilterValue) *pgtypes.DoltgresType {
 	switch value.typeOID {
-	case id.Cache().ToOID(pgtypes.TimestampTZ.ID.AsId()):
-		return pgtypes.TimestampTZ
+	case id.Cache().ToOID(pgtypes.Bytea.ID.AsId()):
+		return pgtypes.Bytea
+	case id.Cache().ToOID(pgtypes.Date.ID.AsId()):
+		return pgtypes.Date
+	case id.Cache().ToOID(pgtypes.Interval.ID.AsId()):
+		return pgtypes.Interval
+	case id.Cache().ToOID(pgtypes.JsonB.ID.AsId()):
+		return pgtypes.JsonB
 	case id.Cache().ToOID(pgtypes.Timestamp.ID.AsId()):
 		return pgtypes.Timestamp
+	case id.Cache().ToOID(pgtypes.TimestampTZ.ID.AsId()):
+		return pgtypes.TimestampTZ
+	case id.Cache().ToOID(pgtypes.Uuid.ID.AsId()):
+		return pgtypes.Uuid
 	default:
 		return nil
 	}
 }
 
-func parseRowFilterTemporal(ctx *sql.Context, doltgresType *pgtypes.DoltgresType, data []byte) (time.Time, bool) {
+func parseRowFilterTypedValue(ctx *sql.Context, doltgresType *pgtypes.DoltgresType, data []byte) (any, bool) {
 	input := strings.TrimSpace(string(data))
 	if input == "" {
-		return time.Time{}, false
+		return nil, false
 	}
 	value, err := doltgresType.IoInput(ctx, input)
 	if err != nil {
-		return time.Time{}, false
+		return nil, false
 	}
-	t, ok := value.(time.Time)
-	return t, ok
+	return value, true
 }
 
 func parseRowFilterNumeric(data []byte) (*big.Rat, bool) {
