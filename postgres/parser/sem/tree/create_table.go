@@ -1154,6 +1154,7 @@ type LikeTableOpt int
 const (
 	LikeTableOptConstraints LikeTableOpt = 1 << iota
 	LikeTableOptDefaults
+	LikeTableOptIdentity
 	LikeTableOptGenerated
 	LikeTableOptIndexes
 
@@ -1175,6 +1176,8 @@ func (o LikeTableOpt) String() string {
 		return "CONSTRAINTS"
 	case LikeTableOptDefaults:
 		return "DEFAULTS"
+	case LikeTableOptIdentity:
+		return "IDENTITY"
 	case LikeTableOptGenerated:
 		return "GENERATED"
 	case LikeTableOptIndexes:

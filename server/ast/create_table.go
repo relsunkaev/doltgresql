@@ -121,6 +121,30 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			Children: typedTableChildren,
 		}, nil
 	}
+	if likeDef, ok := singleLikeTableDef(node.Defs); ok && node.AsSource == nil && len(node.Inherits) == 0 {
+		likeTableName, err := nodeTableName(ctx, &likeDef.Name)
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.NewCreateTableLike(
+				node.IfNotExists,
+				isTemporary,
+				tableName.DbQualifier.String(),
+				tableName.SchemaQualifier.String(),
+				tableName.Name.String(),
+				likeTableName.DbQualifier.String(),
+				likeTableName.SchemaQualifier.String(),
+				likeTableName.Name.String(),
+				createTableLikeOptions(likeDef.Options),
+			),
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_CREATE,
+				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
+			},
+		}, nil
+	}
 	if node.AsSource != nil {
 		selectStmt, err := nodeSelect(ctx, node.AsSource)
 		if err != nil {
@@ -230,6 +254,41 @@ func forceLimitZero(stmt vitess.SelectStatement) vitess.SelectStatement {
 		s.Select = forceLimitZero(s.Select)
 	}
 	return stmt
+}
+
+func singleLikeTableDef(defs tree.TableDefs) (*tree.LikeTableDef, bool) {
+	if len(defs) != 1 {
+		return nil, false
+	}
+	likeDef, ok := defs[0].(*tree.LikeTableDef)
+	return likeDef, ok
+}
+
+func createTableLikeOptions(options []tree.LikeTableOption) pgnodes.CreateTableLikeOptions {
+	var opts pgnodes.CreateTableLikeOptions
+	for _, option := range options {
+		var bit pgnodes.CreateTableLikeOptions
+		switch option.Opt {
+		case tree.LikeTableOptConstraints:
+			bit = pgnodes.CreateTableLikeOptionConstraints
+		case tree.LikeTableOptDefaults:
+			bit = pgnodes.CreateTableLikeOptionDefaults
+		case tree.LikeTableOptIdentity:
+			bit = pgnodes.CreateTableLikeOptionIdentity
+		case tree.LikeTableOptGenerated:
+			bit = pgnodes.CreateTableLikeOptionGenerated
+		case tree.LikeTableOptIndexes:
+			bit = pgnodes.CreateTableLikeOptionIndexes
+		case tree.LikeTableOptAll:
+			bit = pgnodes.CreateTableLikeOptionAll
+		}
+		if option.Excluded {
+			opts &^= bit
+		} else {
+			opts |= bit
+		}
+	}
+	return opts
 }
 
 func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, vitess.Exprs, error) {
