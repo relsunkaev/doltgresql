@@ -586,6 +586,14 @@ func ReadRows(rows pgx.Rows, normalizeRows bool) (readRows []sql.Row, readRawRow
 		if err != nil {
 			return nil, nil, err
 		}
+		for i, field := range rows.FieldDescriptions() {
+			dt, ok := types.IDToBuiltInDoltgresType[id.Type(id.Cache().ToInternal(field.DataTypeOID))]
+			if ok && dt.ID == types.Xml.ID && row[i] == nil && rawSlice[i] != nil {
+				// pgx's XML DecodeValue unmarshals into any as nil. The raw bytes are
+				// the canonical text representation the tests need to compare.
+				row[i] = string(rawSlice[i])
+			}
+		}
 		slices = append(slices, row)
 	}
 	return NormalizeRows(rows.FieldDescriptions(), slices, normalizeRows), rawSlices, nil
