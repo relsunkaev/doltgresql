@@ -136,6 +136,8 @@ type ScriptTestAssertion struct {
 
 	// CopyFromSTDIN is used to test the COPY FROM STDIN command.
 	CopyFromStdInFile string
+
+	postgresOracleCached *postgresOracleCachedEntry
 }
 
 // ScriptTestPostgresOracle marks a ScriptTestAssertion for promotion into the
@@ -260,10 +262,19 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				}
 				return
 			}
+			if assertion.postgresOracleCached != nil && assertion.postgresOracleCached.ExpectedSQLState != "" {
+				_, err := conn.Exec(ctx, assertion.Query, assertion.BindVars...)
+				requirePostgresOracleCachedSQLState(t, err, assertion.postgresOracleCached)
+				return
+			}
+
+			cachedExpectedRows, err := assertion.postgresOracleCachedRows()
+			require.NoError(t, err)
+
 			// If we're skipping the results check, then we call Execute, as it uses a simplified message model.
 			if assertion.CopyFromStdInFile != "" {
 				copyFromStdin(t, conn.Current, assertion.Query, assertion.CopyFromStdInFile)
-			} else if assertion.SkipResultsCheck || assertion.ExpectedErr != "" {
+			} else if assertion.SkipResultsCheck || (assertion.ExpectedErr != "" && cachedExpectedRows == nil) {
 				_, err := conn.Exec(ctx, assertion.Query, assertion.BindVars...)
 				if assertion.ExpectedErr != "" {
 					require.Error(t, err)
@@ -309,7 +320,19 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				// not an exact match but works well enough for our tests
 				orderBy := strings.Contains(strings.ToLower(assertion.Query), "order by")
 
-				if assertion.ExpectedRaw != nil {
+				expectedRows := assertion.Expected
+				if cachedExpectedRows != nil {
+					expectedRows = cachedExpectedRows
+				}
+
+				if cachedExpectedRows != nil {
+					actualRows := postgresOracleStringRows(readRows)
+					if orderBy {
+						assert.Equal(t, expectedRows, actualRows, "wrong result for query %s", assertion.Query)
+					} else {
+						assert.ElementsMatch(t, expectedRows, actualRows, "wrong result for query %s", assertion.Query)
+					}
+				} else if assertion.ExpectedRaw != nil {
 					if orderBy {
 						assert.Equal(t, assertion.ExpectedRaw, readRawRows, "wrong result for query %s", assertion.Query)
 					} else {
@@ -318,15 +341,15 @@ func runScript(t *testing.T, ctx context.Context, script ScriptTest, conn *Conne
 				} else {
 					if normalizeRows {
 						if orderBy {
-							assert.Equal(t, NormalizeExpectedRow(rows.FieldDescriptions(), assertion.Expected), readRows, "wrong result for query %s", assertion.Query)
+							assert.Equal(t, NormalizeExpectedRow(rows.FieldDescriptions(), expectedRows), readRows, "wrong result for query %s", assertion.Query)
 						} else {
-							assert.ElementsMatch(t, NormalizeExpectedRow(rows.FieldDescriptions(), assertion.Expected), readRows, "wrong result for query %s", assertion.Query)
+							assert.ElementsMatch(t, NormalizeExpectedRow(rows.FieldDescriptions(), expectedRows), readRows, "wrong result for query %s", assertion.Query)
 						}
 					} else {
 						if orderBy {
-							assert.Equal(t, assertion.Expected, readRows, "wrong result for query %s", assertion.Query)
+							assert.Equal(t, expectedRows, readRows, "wrong result for query %s", assertion.Query)
 						} else {
-							assert.ElementsMatch(t, assertion.Expected, readRows, "wrong result for query %s", assertion.Query)
+							assert.ElementsMatch(t, expectedRows, readRows, "wrong result for query %s", assertion.Query)
 						}
 					}
 				}
@@ -377,6 +400,8 @@ func RunScriptsWithoutNormalization(t *testing.T, scripts []ScriptTest) {
 
 // runScripts is the implementation of both RunScripts and RunScriptsWithoutNormalization.
 func runScripts(t *testing.T, scripts []ScriptTest, normalizeRows bool) {
+	scripts = attachPostgresOracleCache(t, scripts)
+
 	// First, we'll run through the scripts to check for the Focus variable. If it's true, then append it to the new slice.
 	focusScripts := make([]ScriptTest, 0, len(scripts))
 	for _, script := range scripts {

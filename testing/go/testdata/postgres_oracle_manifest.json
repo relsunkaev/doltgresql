@@ -148,8 +148,861 @@
       ]
     },
     {
+      "id": "aggregate-correctness-repro-test-testboolandinfersvaluesbooleantypeguard-0001-select-bool_and-a-from-values",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestBoolAndInfersValuesBooleanTypeGuard",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT bool_and(a) FROM (VALUES (true), (false), (null)) r(a);",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testunaryminusoversumdistinctrepro-0001-select-sum-distinct-71-::text",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestUnaryMinusOverSumDistinctRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE unary_sum_items (v INT);",
+        "INSERT INTO unary_sum_items VALUES (1), (2);"
+      ],
+      "query": "SELECT (- SUM(DISTINCT - - 71))::text\n\t\t\t\t\t\tFROM unary_sum_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "-71"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionrepro-0001-select-grp-custom_sum-v-from",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregateSqlTransitionFunctionRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION custom_sum_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;",
+        "CREATE AGGREGATE custom_sum(INT) (\n\t\t\t\t\tSFUNC = custom_sum_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE TABLE custom_aggregate_items (\n\t\t\t\t\tgrp TEXT,\n\t\t\t\t\tv INT\n\t\t\t\t);",
+        "INSERT INTO custom_aggregate_items VALUES\n\t\t\t\t\t('a', 1),\n\t\t\t\t\t('a', 2),\n\t\t\t\t\t('b', 10);"
+      ],
+      "query": "SELECT grp, custom_sum(v)\n\t\t\t\t\t\tFROM custom_aggregate_items\n\t\t\t\t\t\tGROUP BY grp\n\t\t\t\t\t\tORDER BY grp;",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testcreateaggregatepgaggregatecatalogrowrepro-0001-select-aggfnoid::text-aggtransfn::text-aggtranstype::regtype::text-agginitval",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregatePgAggregateCatalogRowRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION catalog_custom_sum_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;",
+        "CREATE AGGREGATE catalog_custom_sum(INT) (\n\t\t\t\t\tSFUNC = catalog_custom_sum_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);"
+      ],
+      "query": "SELECT\n\t\t\t\t\t\t\taggfnoid::text,\n\t\t\t\t\t\t\taggtransfn::text,\n\t\t\t\t\t\t\taggtranstype::regtype::text,\n\t\t\t\t\t\t\tagginitval\n\t\t\t\t\t\tFROM pg_catalog.pg_aggregate\n\t\t\t\t\t\tWHERE aggfnoid::text = 'catalog_custom_sum';",
+      "expectedRows": [
+        [
+          {
+            "value": "catalog_custom_sum"
+          },
+          {
+            "value": "catalog_custom_sum_sfunc"
+          },
+          {
+            "value": "integer"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0001-select-rename_custom_sum_new-v-from-rename_custom_sum_items",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestAlterAggregateRenameRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION rename_custom_sum_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + COALESCE(next_value, 0) $$;",
+        "CREATE AGGREGATE rename_custom_sum_old(INT) (\n\t\t\t\t\tSFUNC = rename_custom_sum_sfunc,\n\t\t\t\t\tSTYPE = INT,\n\t\t\t\t\tINITCOND = '0'\n\t\t\t\t);",
+        "CREATE TABLE rename_custom_sum_items (v INT);",
+        "INSERT INTO rename_custom_sum_items VALUES (1), (2);",
+        "ALTER AGGREGATE rename_custom_sum_old(INT)\n\t\t\t\t\t\tRENAME TO rename_custom_sum_new;"
+      ],
+      "query": "SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0001-select-grp-custom_count_seen-v-from",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregateSqlTransitionFunctionEdges",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION custom_count_seen_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + CASE WHEN next_value IS NULL THEN 0 ELSE 1 END $$;",
+        "CREATE AGGREGATE custom_count_seen(\n\t\t\t\t\tBASETYPE = INT,\n\t\t\t\t\tSFUNC = custom_count_seen_sfunc,\n\t\t\t\t\tSTYPE = INT\n\t\t\t\t);",
+        "CREATE TABLE custom_count_seen_items (\n\t\t\t\t\tgrp TEXT,\n\t\t\t\t\tv INT\n\t\t\t\t);",
+        "INSERT INTO custom_count_seen_items VALUES\n\t\t\t\t\t('a', 1),\n\t\t\t\t\t('a', NULL),\n\t\t\t\t\t('a', 3),\n\t\t\t\t\t('b', NULL);"
+      ],
+      "query": "SELECT grp, custom_count_seen(v)\n\t\t\t\t\t\tFROM custom_count_seen_items\n\t\t\t\t\t\tGROUP BY grp\n\t\t\t\t\t\tORDER BY grp;",
+      "expectedRows": [
+        [
+          {
+            "value": "a"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "b"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0002-select-custom_count_seen-v-from-custom_count_seen_items",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestCreateAggregateSqlTransitionFunctionEdges",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE FUNCTION custom_count_seen_sfunc(state INT, next_value INT)\n\t\t\t\t\tRETURNS INT\n\t\t\t\t\tLANGUAGE SQL\n\t\t\t\t\tIMMUTABLE\n\t\t\t\t\tAS $$ SELECT COALESCE(state, 0) + CASE WHEN next_value IS NULL THEN 0 ELSE 1 END $$;",
+        "CREATE AGGREGATE custom_count_seen(\n\t\t\t\t\tBASETYPE = INT,\n\t\t\t\t\tSFUNC = custom_count_seen_sfunc,\n\t\t\t\t\tSTYPE = INT\n\t\t\t\t);",
+        "CREATE TABLE custom_count_seen_items (\n\t\t\t\t\tgrp TEXT,\n\t\t\t\t\tv INT\n\t\t\t\t);",
+        "INSERT INTO custom_count_seen_items VALUES\n\t\t\t\t\t('a', 1),\n\t\t\t\t\t('a', NULL),\n\t\t\t\t\t('a', 3),\n\t\t\t\t\t('b', NULL);",
+        "SELECT grp, custom_count_seen(v)\n\t\t\t\t\t\tFROM custom_count_seen_items\n\t\t\t\t\t\tGROUP BY grp\n\t\t\t\t\t\tORDER BY grp;"
+      ],
+      "query": "SELECT custom_count_seen(v)\n\t\t\t\t\t\tFROM custom_count_seen_items\n\t\t\t\t\t\tWHERE grp = 'missing';",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbyprimarykeyallowsdependentcolumnsrepro-0001-select-id-label-amount-from",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByPrimaryKeyAllowsDependentColumnsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE group_by_pk_items (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO group_by_pk_items VALUES\n\t\t\t\t\t(1, 'one', 10),\n\t\t\t\t\t(2, 'two', 20);"
+      ],
+      "query": "SELECT id, label, amount\n\t\t\t\t\t\tFROM group_by_pk_items\n\t\t\t\t\t\tGROUP BY id\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "one"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "two"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbyprimarykeythroughjoinallowsdependentcolumnsrepro-0001-select-a.id-a.title-a.body-from",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE group_by_join_articles (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\ttitle TEXT,\n\t\t\t\t\tbody TEXT\n\t\t\t\t);",
+        "CREATE TABLE group_by_join_categories (\n\t\t\t\t\tarticle_id INT REFERENCES group_by_join_articles(id),\n\t\t\t\t\tcategory_id INT,\n\t\t\t\t\tPRIMARY KEY (article_id, category_id)\n\t\t\t\t);",
+        "INSERT INTO group_by_join_articles VALUES\n\t\t\t\t\t(1, 'first', 'body one'),\n\t\t\t\t\t(2, 'second', 'body two');",
+        "INSERT INTO group_by_join_categories VALUES\n\t\t\t\t\t(1, 10),\n\t\t\t\t\t(1, 20),\n\t\t\t\t\t(2, 10);"
+      ],
+      "query": "SELECT a.id, a.title, a.body\n\t\t\t\t\t\tFROM group_by_join_articles AS a\n\t\t\t\t\t\tJOIN group_by_join_categories AS c\n\t\t\t\t\t\t\tON a.id = c.article_id\n\t\t\t\t\t\tWHERE c.category_id IN (10, 20)\n\t\t\t\t\t\tGROUP BY a.id\n\t\t\t\t\t\tORDER BY a.id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "first"
+          },
+          {
+            "value": "body one"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "second"
+          },
+          {
+            "value": "body two"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbygroupingsetsrepro-0001-select-coalesce-region-all-as",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByGroupingSetsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE grouping_sets_sales (\n\t\t\t\t\tregion TEXT,\n\t\t\t\t\tproduct TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO grouping_sets_sales VALUES\n\t\t\t\t\t('east', 'a', 10),\n\t\t\t\t\t('east', 'b', 20),\n\t\t\t\t\t('west', 'a', 5);"
+      ],
+      "query": "SELECT COALESCE(region, 'ALL') AS region,\n\t\t\t\t\t\t\tCOALESCE(product, 'ALL') AS product,\n\t\t\t\t\t\t\tsum(amount)::text AS total\n\t\t\t\t\t\tFROM grouping_sets_sales\n\t\t\t\t\t\tGROUP BY GROUPING SETS ((region, product), (region), ())\n\t\t\t\t\t\tORDER BY region NULLS LAST, product NULLS LAST;",
+      "expectedRows": [
+        [
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "35"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbyrolluprepro-0001-select-coalesce-region-all-as",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByRollupRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE rollup_sales (\n\t\t\t\t\tregion TEXT,\n\t\t\t\t\tproduct TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO rollup_sales VALUES\n\t\t\t\t\t('east', 'a', 10),\n\t\t\t\t\t('east', 'b', 20),\n\t\t\t\t\t('west', 'a', 5);"
+      ],
+      "query": "SELECT COALESCE(region, 'ALL') AS region,\n\t\t\t\t\t\t\tCOALESCE(product, 'ALL') AS product,\n\t\t\t\t\t\t\tsum(amount)::text AS total\n\t\t\t\t\t\tFROM rollup_sales\n\t\t\t\t\t\tGROUP BY ROLLUP (region, product)\n\t\t\t\t\t\tORDER BY region NULLS LAST, product NULLS LAST;",
+      "expectedRows": [
+        [
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "35"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testgroupbycuberepro-0001-select-coalesce-region-all-as",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestGroupByCubeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE cube_sales (\n\t\t\t\t\tregion TEXT,\n\t\t\t\t\tproduct TEXT,\n\t\t\t\t\tamount INT\n\t\t\t\t);",
+        "INSERT INTO cube_sales VALUES\n\t\t\t\t\t('east', 'a', 10),\n\t\t\t\t\t('east', 'b', 20),\n\t\t\t\t\t('west', 'a', 5);"
+      ],
+      "query": "SELECT COALESCE(region, 'ALL') AS region,\n\t\t\t\t\t\t\tCOALESCE(product, 'ALL') AS product,\n\t\t\t\t\t\t\tsum(amount)::text AS total\n\t\t\t\t\t\tFROM cube_sales\n\t\t\t\t\t\tGROUP BY CUBE (region, product)\n\t\t\t\t\t\tORDER BY region NULLS LAST, product NULLS LAST;",
+      "expectedRows": [
+        [
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "35"
+          }
+        ],
+        [
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "east"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "20"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "ALL"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "west"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testpercentilecontwithingrouprepro-0001-select-percentile_cont-0.5-within-group",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestPercentileContWithinGroupRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (percentile_cont(0.5) WITHIN GROUP (ORDER BY v))::text\n\t\t\t\t\t\tFROM (VALUES (10), (20), (30), (40)) AS t(v);",
+      "expectedRows": [
+        [
+          {
+            "value": "25"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testpercentilediscwithingrouprepro-0001-select-percentile_disc-0.5-within-group",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestPercentileDiscWithinGroupRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (percentile_disc(0.5) WITHIN GROUP (ORDER BY v))::text\n\t\t\t\t\t\tFROM (VALUES (10), (20), (30), (40)) AS t(v);",
+      "expectedRows": [
+        [
+          {
+            "value": "20"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testmodewithingrouprepro-0001-select-mode-within-group-order",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestModeWithinGroupRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT mode() WITHIN GROUP (ORDER BY v)\n\t\t\t\t\t\tFROM (VALUES ('b'), ('a'), ('b'), ('c')) AS t(v);",
+      "expectedRows": [
+        [
+          {
+            "value": "b"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "aggregate-correctness-repro-test-testhypotheticalrankwithingrouprepro-0001-select-rank-25-within-group",
+      "source": "testing/go/aggregate_correctness_repro_test.go:TestHypotheticalRankWithinGroupRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (rank(25) WITHIN GROUP (ORDER BY v))::text\n\t\t\t\t\t\tFROM (VALUES (10), (20), (30), (40)) AS t(v);",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testilikepatternmatchrepro-0001-select-alpha-ilike-a%-alpha",
+      "source": "testing/go/expression_operator_repro_test.go:TestILikePatternMatchRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 'Alpha' ILIKE 'a%',\n\t\t\t\t\t\t'Alpha' ILIKE 'ALP_A',\n\t\t\t\t\t\t'Alpha' NOT ILIKE 'b%';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testsimilartopatternmatchrepro-0001-select-abc-similar-to-a%",
+      "source": "testing/go/expression_operator_repro_test.go:TestSimilarToPatternMatchRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 'abc' SIMILAR TO 'a%(b|c)',\n\t\t\t\t\t\t'adc' SIMILAR TO 'a%(b|c)',\n\t\t\t\t\t\t'abx' SIMILAR TO 'a%(b|c)';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testcaseinsensitiveregexmatchrepro-0001-select-alpha-~*-^a-alpha",
+      "source": "testing/go/expression_operator_repro_test.go:TestCaseInsensitiveRegexMatchRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 'Alpha' ~* '^a',\n\t\t\t\t\t\t'Alpha' ~* 'LPH',\n\t\t\t\t\t\t'Alpha' !~* '^b';",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testpoweroperatorrepro-0001-select-2-^-3-::text",
+      "source": "testing/go/expression_operator_repro_test.go:TestPowerOperatorRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (2 ^ 3)::text, (4 ^ 0.5)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          },
+          {
+            "value": "2.0000000000000000"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testunarynumericoperatorsrepro-0001-select-|/-25.0-::text-||/",
+      "source": "testing/go/expression_operator_repro_test.go:TestUnaryNumericOperatorsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (|/ 25.0)::text, (||/ 27.0)::text, (@ -5.0)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5.0"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testunaryplusoperatorguard-0001-select-+1-::text-+-2",
+      "source": "testing/go/expression_operator_repro_test.go:TestUnaryPlusOperatorGuard",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (+1)::text, (+(-2))::text, (+'3'::int)::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "-2"
+          },
+          {
+            "value": "3"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0001-select-1_000::text",
+      "source": "testing/go/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 1_000::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "1000"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0002-select-0x10::text",
+      "source": "testing/go/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 1_000::text;"
+      ],
+      "query": "SELECT 0x10::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "16"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0003-select-0o10::text",
+      "source": "testing/go/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 1_000::text;",
+        "SELECT 0x10::text;"
+      ],
+      "query": "SELECT 0o10::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "8"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0004-select-0b1010::text",
+      "source": "testing/go/expression_operator_repro_test.go:TestPostgres16IntegerLiteralSyntaxRepro",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 1_000::text;",
+        "SELECT 0x10::text;",
+        "SELECT 0o10::text;"
+      ],
+      "query": "SELECT 0b1010::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "expression-operator-repro-test-testtemporaloverlapsoperatorrepro-0001-select-date-2024-01-01-date-2024-01-10",
+      "source": "testing/go/expression_operator_repro_test.go:TestTemporalOverlapsOperatorRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT (DATE '2024-01-01', DATE '2024-01-10')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-05', DATE '2024-01-20'),\n\t\t\t\t\t\t(DATE '2024-01-01', DATE '2024-01-02')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-02', DATE '2024-01-03'),\n\t\t\t\t\t\t(DATE '2024-01-01', INTERVAL '2 days')\n\t\t\t\t\t\t\tOVERLAPS (DATE '2024-01-02', INTERVAL '1 day');",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          },
+          {
+            "value": "f"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -196,6 +1049,7 @@
     {
       "id": "rls-select-policy-using-true-allows-all",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecuritySelectPolicyUsingTrueRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -241,6 +1095,7 @@
     {
       "id": "rls-insert-policy-check-true-allows-all",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityInsertPolicyWithCheckTrueRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -278,6 +1133,7 @@
     {
       "id": "rls-update-policy-using-true-allows-all",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityUpdatePolicyUsingTrueRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -316,6 +1172,7 @@
     {
       "id": "rls-delete-policy-using-true-allows-all",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityDeletePolicyUsingTrueRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -354,6 +1211,7 @@
     {
       "id": "rls-select-policy-reversed-current-user",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -391,6 +1249,7 @@
     {
       "id": "rls-create-policy-rejects-duplicate-name",
       "source": "testing/go/row_level_security_policy_ddl_repro_test.go:TestCreatePolicyRejectsDuplicatePolicyNameRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -407,6 +1266,7 @@
     {
       "id": "rls-policy-role-list-allows-listed-role",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -447,6 +1307,7 @@
     {
       "id": "rls-policy-role-list-denies-unlisted-role",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "ordinal": 2,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -459,6 +1320,7 @@
         "GRANT SELECT ON rls_policy_list_docs\n\t\t\t\t\tTO rls_policy_list_allowed, rls_policy_list_unlisted;",
         "CREATE POLICY rls_policy_list_docs_owner_select\n\t\t\t\t\tON rls_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
         "ALTER TABLE rls_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
         "SET ROLE rls_policy_list_unlisted"
       ],
       "query": "SELECT id, label\n\t\t\t\t\t\tFROM rls_policy_list_docs\n\t\t\t\t\t\tORDER BY id;",
@@ -478,6 +1340,7 @@
     {
       "id": "rls-policy-role-list-allows-listed-insert",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -518,6 +1381,7 @@
     {
       "id": "rls-policy-role-list-denies-unlisted-insert",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro",
+      "ordinal": 2,
       "oracle": "postgres",
       "compare": "sqlstate",
       "setup": [
@@ -530,6 +1394,7 @@
         "CREATE POLICY rls_insert_policy_list_docs_owner_insert\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR INSERT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tWITH CHECK (owner_name = current_user);",
         "CREATE POLICY rls_insert_policy_list_docs_owner_select\n\t\t\t\t\tON rls_insert_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_insert_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
         "ALTER TABLE rls_insert_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (1, 'rls_insert_policy_list_allowed', 'allowed insert')\n\t\t\t\t\t\tRETURNING id, label;",
         "SET ROLE rls_insert_policy_list_unlisted"
       ],
       "query": "INSERT INTO rls_insert_policy_list_docs\n\t\t\t\t\t\tVALUES (2, 'rls_insert_policy_list_unlisted', 'unlisted insert')\n\t\t\t\t\t\tRETURNING id, label;",
@@ -546,6 +1411,7 @@
     {
       "id": "rls-policy-role-list-allows-listed-update",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -587,6 +1453,7 @@
     {
       "id": "rls-policy-role-list-denies-unlisted-update",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro",
+      "ordinal": 2,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -600,6 +1467,7 @@
         "CREATE POLICY rls_update_policy_list_docs_owner_update\n\t\t\t\t\tON rls_update_policy_list_docs\n\t\t\t\t\tFOR UPDATE\n\t\t\t\t\tTO rls_update_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user)\n\t\t\t\t\tWITH CHECK (owner_name = current_user);",
         "CREATE POLICY rls_update_policy_list_docs_owner_select\n\t\t\t\t\tON rls_update_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_update_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
         "ALTER TABLE rls_update_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "UPDATE rls_update_policy_list_docs\n\t\t\t\t\t\tSET label = 'allowed updated'\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
         "SET ROLE rls_update_policy_list_unlisted"
       ],
       "query": "UPDATE rls_update_policy_list_docs\n\t\t\t\t\t\tSET label = 'unlisted updated'\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
@@ -619,6 +1487,7 @@
     {
       "id": "rls-policy-role-list-allows-listed-delete",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -660,6 +1529,7 @@
     {
       "id": "rls-policy-role-list-denies-unlisted-delete",
       "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro",
+      "ordinal": 2,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [
@@ -673,6 +1543,7 @@
         "CREATE POLICY rls_delete_policy_list_docs_owner_delete\n\t\t\t\t\tON rls_delete_policy_list_docs\n\t\t\t\t\tFOR DELETE\n\t\t\t\t\tTO rls_delete_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
         "CREATE POLICY rls_delete_policy_list_docs_owner_select\n\t\t\t\t\tON rls_delete_policy_list_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tTO rls_delete_policy_list_allowed\n\t\t\t\t\tUSING (owner_name = current_user);",
         "ALTER TABLE rls_delete_policy_list_docs ENABLE ROW LEVEL SECURITY;",
+        "DELETE FROM rls_delete_policy_list_docs\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
         "SET ROLE rls_delete_policy_list_unlisted"
       ],
       "query": "DELETE FROM rls_delete_policy_list_docs\n\t\t\t\t\t\tWHERE owner_name = current_user\n\t\t\t\t\t\tRETURNING id, label;",
@@ -692,6 +1563,7 @@
     {
       "id": "rls-table-owner-bypasses-unforced-rls",
       "source": "testing/go/row_level_security_repro_test.go:TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro",
+      "ordinal": 1,
       "oracle": "postgres",
       "compare": "structural",
       "setup": [

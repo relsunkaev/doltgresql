@@ -63,6 +63,7 @@ type postgresOracleInventory struct {
 type postgresOracleEntry struct {
 	ID                    string            `json:"id"`
 	Source                string            `json:"source"`
+	Ordinal               int               `json:"ordinal"`
 	Oracle                string            `json:"oracle"`
 	Compare               string            `json:"compare"`
 	Setup                 []string          `json:"setup"`
@@ -84,6 +85,26 @@ type postgresCell struct {
 
 func TestPostgresOracleManifestSchema(t *testing.T) {
 	validatePostgresOracleManifest(t, loadPostgresOracleManifest(t))
+}
+
+func TestPostgresOracleCacheCoversManifestScriptEntries(t *testing.T) {
+	manifest := loadPostgresOracleManifest(t)
+	cache, err := loadPostgresOracleCache()
+	require.NoError(t, err)
+
+	cachedEntries := 0
+	for _, entry := range manifest.Entries {
+		if entry.Oracle != "postgres" || entry.Ordinal == 0 {
+			continue
+		}
+		testName, ok := postgresOracleCacheSourceTestName(entry.Source)
+		require.True(t, ok, "source for %s", entry.ID)
+		cached := cache.entriesByAssertion[postgresOracleCacheKey(testName, entry.Ordinal)]
+		require.NotNil(t, cached, "cache entry for %s", entry.ID)
+		require.Equal(t, entry.ID, cached.ID)
+		cachedEntries++
+	}
+	require.Greater(t, cachedEntries, 20)
 }
 
 func TestPostgresOracleManifestGenerated(t *testing.T) {
@@ -147,6 +168,40 @@ func TestPostgresOracleMigrationCandidatesGenerated(t *testing.T) {
 	}
 	require.Greater(t, totalAssertions, 10000)
 	require.Greater(t, postgresAssertions, 0)
+}
+
+func TestPostgresOraclePromotedMapGenerated(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "expression_operator_repro_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "expression_operator_repro_test.go",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		GeneratedBy string `json:"generatedBy"`
+		SourceFile  string `json:"sourceFile"`
+		Assertions  []struct {
+			Oracle      string `json:"oracle"`
+			PostgresID  string `json:"postgresId"`
+			SuggestedID string `json:"suggestedId"`
+			Compare     string `json:"compare"`
+			Query       string `json:"query"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Equal(t, "go run gen_postgres_oracle_manifest.go --promote-oracle-map expression_operator_repro_test.go", generated.GeneratedBy)
+	require.Equal(t, "testing/go/expression_operator_repro_test.go", generated.SourceFile)
+	require.Len(t, generated.Assertions, 11)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "postgres", assertion.Oracle)
+		require.NotEmpty(t, assertion.PostgresID)
+		require.NotEmpty(t, assertion.SuggestedID)
+		require.NotEmpty(t, assertion.Compare)
+		require.NotEmpty(t, assertion.Query)
+	}
 }
 
 func TestPostgresOracleManifestInventory(t *testing.T) {
@@ -456,9 +511,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 	switch v := value.(type) {
 	case bool:
 		if v {
-			return "true"
+			return "t"
 		}
-		return "false"
+		return "f"
 	case int16, int32, int64, int:
 		return fmt.Sprint(v)
 	case float32, float64:
