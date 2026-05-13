@@ -4359,6 +4359,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.CheckViolation.String(), true
 	case strings.HasPrefix(msg, "column ") && strings.Contains(msg, "could not be found"):
 		return pgcode.UndefinedColumn.String(), true
+	case strings.HasPrefix(msg, `table "`) && strings.Contains(msg, `" does not have column "`):
+		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):

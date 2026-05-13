@@ -93,6 +93,12 @@ func TestErrMessageToSQLStateFormatsMaterializedViewAliasErrors(t *testing.T) {
 	require.Equal(t, pgcode.DuplicateColumn.String(), code)
 }
 
+func TestErrMessageToSQLStateFormatsMissingAlterTableColumn(t *testing.T) {
+	code, ok := errMessageToSQLState(`table "drop_missing_strict_items" does not have column "missing_col"`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedColumn.String(), code)
+}
+
 func TestMysqlErrnoToSQLStateFormatsDuplicateInsertTargetColumns(t *testing.T) {
 	code, ok := mysqlErrnoToSQLState(mysql.ERFieldSpecifiedTwice)
 	require.True(t, ok)
