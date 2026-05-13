@@ -1839,6 +1839,16 @@
       ]
     },
     {
+      "id": "create-database-test-testcreatedatabase-0001-create-database-testdb3-encoding=notexist",
+      "source": "testing/go/create_database_test.go:TestCreateDatabase",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "query": "CREATE DATABASE testdb3 encoding=notexist",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR"
+    },
+    {
       "id": "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i",
       "source": "testing/go/delete_correctness_repro_test.go:TestDeleteUsingDeletesJoinedRowsRepro",
       "ordinal": 1,

@@ -44,6 +44,11 @@ func TestCreateDatabase(t *testing.T) {
 				{
 					Query: "USE testdb2",
 				},
+			},
+		},
+		{
+			Name: "invalid encoding",
+			Assertions: []ScriptTestAssertion{
 				{
 					Query:       "CREATE DATABASE testdb3 encoding=notexist",
 					ExpectedErr: "not a valid encoding name",
