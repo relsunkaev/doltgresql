@@ -28,9 +28,6 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 	if node == nil {
 		return nil, nil
 	}
-	if node.IsRecursive {
-		return nil, errors.Errorf("CREATE RECURSIVE VIEW is not yet supported")
-	}
 	var checkOption = tree.ViewCheckOptionUnspecified
 	var sqlSecurity string
 	if node.Options != nil {
@@ -82,7 +79,13 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 	if err != nil {
 		return nil, err
 	}
-	selectStmt, err := nodeSelect(ctx, node.AsSource)
+	selectSource := node.AsSource
+	subStatement := createViewSelectDefinition(ctx, node.AsSource.String())
+	if node.IsRecursive {
+		selectSource = recursiveViewSelect(node)
+		subStatement = selectSource.String()
+	}
+	selectStmt, err := nodeSelect(ctx, selectSource)
 	if err != nil {
 		return nil, err
 	}
@@ -102,9 +105,51 @@ func nodeCreateView(ctx *Context, node *tree.CreateView) (*vitess.DDL, error) {
 			Security:    sqlSecurity,
 			CheckOption: vCheckOpt,
 		},
-		SubStatementStr: createViewSelectDefinition(ctx, node.AsSource.String()),
+		SubStatementStr: subStatement,
 	}
 	return stmt, nil
+}
+
+func recursiveViewSelect(node *tree.CreateView) *tree.Select {
+	cteName := node.Name.ObjectName
+	cols := append(tree.NameList(nil), node.ColumnNames...)
+	return &tree.Select{
+		With: &tree.With{
+			Recursive: true,
+			CTEList: []*tree.CTE{
+				{
+					Name: tree.AliasClause{
+						Alias: cteName,
+						Cols:  cols,
+					},
+					Stmt: node.AsSource,
+				},
+			},
+		},
+		Select: &tree.SelectClause{
+			Exprs: recursiveViewSelectExprs(cols),
+			From: tree.From{
+				Tables: tree.TableExprs{
+					&tree.AliasedTableExpr{
+						Expr: tree.NewUnqualifiedTableName(cteName),
+					},
+				},
+			},
+		},
+	}
+}
+
+func recursiveViewSelectExprs(cols tree.NameList) tree.SelectExprs {
+	if len(cols) == 0 {
+		return tree.SelectExprs{tree.StarSelectExpr()}
+	}
+	exprs := make(tree.SelectExprs, len(cols))
+	for i, col := range cols {
+		exprs[i] = tree.SelectExpr{
+			Expr: tree.NewUnresolvedName(string(col)),
+		}
+	}
+	return exprs
 }
 
 func createViewSelectDefinition(ctx *Context, fallback string) string {
