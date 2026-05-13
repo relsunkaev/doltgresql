@@ -4390,6 +4390,10 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedFunction.String(), true
 	case strings.HasPrefix(msg, "function ") && strings.HasSuffix(msg, " does not exist"):
 		return pgcode.UndefinedFunction.String(), true
+	case strings.HasPrefix(msg, "stored procedure ") && strings.HasSuffix(msg, " does not exist"):
+		return pgcode.UndefinedFunction.String(), true
+	case strings.HasPrefix(msg, `procedure "`) && strings.HasSuffix(msg, `" does not exist`):
+		return pgcode.UndefinedFunction.String(), true
 	}
 	return "", false
 }

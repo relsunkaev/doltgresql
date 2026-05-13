@@ -131,4 +131,12 @@ func TestErrMessageToSQLStateFormatsUndefinedFunction(t *testing.T) {
 	code, ok = errMessageToSQLState(`function missing_sum(integer) does not exist`)
 	require.True(t, ok)
 	require.Equal(t, pgcode.UndefinedFunction.String(), code)
+
+	code, ok = errMessageToSQLState(`stored procedure "missing_proc" does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedFunction.String(), code)
+
+	code, ok = errMessageToSQLState(`procedure "missing_proc" does not exist`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.UndefinedFunction.String(), code)
 }
