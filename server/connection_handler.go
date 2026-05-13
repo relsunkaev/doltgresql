@@ -3899,7 +3899,7 @@ func rewriteCreateRuleDoAlsoInsert(query string) (string, string, bool) {
 	ruleName := normalizeTransformFunctionName(matches[1])
 	tableName := matches[2]
 	insertStatement := strings.TrimSuffix(strings.TrimSpace(matches[3]), ";")
-	functionName := quoteSQLIdentifier("__dolt_rule_" + strings.ReplaceAll(ruleName, `"`, "_"))
+	functionName := quoteSQLIdentifier(ruleBackingFunctionName(ruleName))
 	triggerName := quoteSQLIdentifier(ruleName)
 	return fmt.Sprintf(
 		"CREATE FUNCTION %s() RETURNS trigger AS $$ BEGIN %s; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER %s AFTER INSERT ON %s FOR EACH ROW EXECUTE FUNCTION %s()",
@@ -3909,6 +3909,10 @@ func rewriteCreateRuleDoAlsoInsert(query string) (string, string, bool) {
 		tableName,
 		functionName,
 	), tableName, true
+}
+
+func ruleBackingFunctionName(ruleName string) string {
+	return "__dolt_rule_" + strings.ReplaceAll(ruleName, `"`, "_")
 }
 
 func (h *ConnectionHandler) checkCreateRuleTableOwnership(query string, rawTableName string) error {
@@ -3978,7 +3982,16 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 	case dropPolicyIfExistsPattern.MatchString(query):
 		statementTag = "DROP POLICY"
 	case dropRuleIfExistsPattern.MatchString(query):
-		statementTag = "DROP RULE"
+		matches := dropRuleIfExistsPattern.FindStringSubmatch(query)
+		tableSchema, tableName := splitQualifiedCatalogName(matches[2])
+		ruleName := normalizeTransformFunctionName(matches[1])
+		return ConvertedQuery{
+			String: query,
+			AST: sqlparser.InjectedStatement{
+				Statement: node.NewDropRule(tableSchema, tableName, ruleName, ruleBackingFunctionName(ruleName), true),
+			},
+			StatementTag: "DROP RULE",
+		}, true
 	default:
 		return ConvertedQuery{}, false
 	}
