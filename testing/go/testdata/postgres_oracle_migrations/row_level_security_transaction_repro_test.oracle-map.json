@@ -1,0 +1,65 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_transaction_repro_test.go",
+  "sourceFile": "testing/go/row_level_security_transaction_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro#0001",
+      "source": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro",
+      "ordinal": 1,
+      "scriptName": "ROLLBACK reverts ENABLE ROW LEVEL SECURITY",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0001-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "suggestedId": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0001-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rollback_rls_docs'::regclass;",
+      "querySha256": "c9dc0661c3c4349d7b2518faf17c50560b3dd347662c6f7f19205a2c881ef950",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro#0002",
+      "source": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro",
+      "ordinal": 2,
+      "scriptName": "ROLLBACK reverts ENABLE ROW LEVEL SECURITY",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0002-select-id-label-from-rollback_rls_docs",
+      "suggestedId": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0002-select-id-label-from-rollback_rls_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rollback_rls_reader",
+      "query": "SELECT id, label FROM rollback_rls_docs;",
+      "querySha256": "c330f47805bd090f559ffe766c3eea4d7f9e97587e509cd8b183305fcc7122bf",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

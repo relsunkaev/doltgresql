@@ -1,0 +1,60 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_drop_policy_repro_test.go",
+  "sourceFile": "testing/go/row_level_security_drop_policy_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro#0001",
+      "source": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro",
+      "ordinal": 1,
+      "scriptName": "DROP POLICY removes active policy",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0001-select-id-label-from-drop_policy_docs",
+      "suggestedId": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0001-select-id-label-from-drop_policy_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_policy_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "44619f5f4408ba86660018601ded8a5a12db3cfe7bbbe9192e6ea284faecddb8",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro#0002",
+      "source": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro",
+      "ordinal": 2,
+      "scriptName": "DROP POLICY removes active policy",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0002-select-id-label-from-drop_policy_docs",
+      "suggestedId": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0002-select-id-label-from-drop_policy_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "drop_policy_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "44619f5f4408ba86660018601ded8a5a12db3cfe7bbbe9192e6ea284faecddb8",
+      "expectedRows": [],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

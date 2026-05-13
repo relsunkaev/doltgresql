@@ -1403,12 +1403,17 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 			"CREATE SCHEMA {{quotedSchema}}",
 			"SET search_path TO {{quotedSchema}}, public, pg_catalog",
 		}, generatedSetup...)
+		generatedSetup = rewriteAutoIsolatedSetupSchemaReferences(generatedSetup)
+		if setupSetsRole(generatedSetup) {
+			generatedCleanup = append(generatedCleanup, "RESET ROLE")
+		}
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedPublications(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedExtensions(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedLanguages(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedDatabases(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedUsers(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedRoles(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
 	}
@@ -1445,6 +1450,33 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 	return generated, true, nil
 }
 
+func setupSetsRole(statements []string) bool {
+	for _, statement := range statements {
+		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(statement)), "set role ") {
+			return true
+		}
+	}
+	return false
+}
+
+func rewriteAutoIsolatedSetupSchemaReferences(statements []string) []string {
+	rewritten := make([]string, len(statements))
+	for i, statement := range statements {
+		statement = replaceCaseInsensitive(statement, "ON SCHEMA public TO", "ON SCHEMA {{quotedSchema}} TO")
+		statement = replaceCaseInsensitive(statement, "ON SCHEMA \"public\" TO", "ON SCHEMA {{quotedSchema}} TO")
+		rewritten[i] = statement
+	}
+	return rewritten
+}
+
+func replaceCaseInsensitive(statement string, old string, replacement string) string {
+	index := strings.Index(strings.ToLower(statement), strings.ToLower(old))
+	if index < 0 {
+		return statement
+	}
+	return statement[:index] + replacement + statement[index+len(old):]
+}
+
 func cleanupForCreatedSubscriptions(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create subscription ", "DROP SUBSCRIPTION IF EXISTS ")
 }
@@ -1461,8 +1493,38 @@ func cleanupForCreatedDatabases(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create database ", "DROP DATABASE IF EXISTS ", "")
 }
 
+func cleanupForCreatedUsers(statements []string) []string {
+	return cleanupForCreatedRoleObjects(statements, "create user ")
+}
+
 func cleanupForCreatedRoles(statements []string) []string {
-	return cleanupForCreatedObjects(statements, "create role ", "DROP ROLE IF EXISTS ", "")
+	return cleanupForCreatedRoleObjects(statements, "create role ")
+}
+
+func cleanupForCreatedRoleObjects(statements []string, prefix string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		name, ok := createdObjectName(statement, prefix)
+		if !ok {
+			continue
+		}
+		if strings.Contains(name, "{{") || strings.Contains(name, "}}") {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		cleanup = append(cleanup, dropOwnedByIfRoleExists(name), "DROP ROLE IF EXISTS "+name)
+	}
+	return cleanup
+}
+
+func dropOwnedByIfRoleExists(name string) string {
+	roleName := unquoteSQLName(name)
+	roleLiteral := quoteSQLString(roleName)
+	return "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = " + roleLiteral + ") THEN EXECUTE 'DROP OWNED BY ' || quote_ident(" + roleLiteral + "); END IF; END $$"
 }
 
 func cleanupForCreatedLanguages(statements []string) []string {
@@ -1781,6 +1843,17 @@ func quoteIdentifier(identifier string) string {
 		return identifier
 	}
 	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
+}
+
+func unquoteSQLName(name string) string {
+	if len(name) >= 2 && name[0] == '"' && name[len(name)-1] == '"' {
+		return strings.ReplaceAll(name[1:len(name)-1], `""`, `"`)
+	}
+	return strings.ToLower(name)
+}
+
+func quoteSQLString(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "''") + "'"
 }
 
 func isSimpleIdentifier(identifier string) bool {

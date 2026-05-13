@@ -5951,6 +5951,78 @@
       ]
     },
     {
+      "id": "materialized-view-rename-privilege-repro-test-testaltermaterializedviewrenamepreservesselectprivilegerepro-0001-select-id-label-from-rename_mv_target",
+      "source": "testing/go/materialized_view_rename_privilege_repro_test.go:TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rename_mv_reader PASSWORD 'reader';",
+        "CREATE TABLE rename_mv_source (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rename_mv_source VALUES (1, 'visible after rename');",
+        "CREATE MATERIALIZED VIEW rename_mv_target AS\n\t\t\t\t\tSELECT id, label FROM rename_mv_source;",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rename_mv_reader;",
+        "GRANT SELECT ON rename_mv_target TO rename_mv_reader;",
+        "SET ROLE rename_mv_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_mv_target;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible after rename"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rename_mv_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rename_mv_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rename_mv_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-rename-privilege-repro-test-testaltermaterializedviewrenamepreservesselectprivilegerepro-0002-select-id-label-from-rename_mv_target_new",
+      "source": "testing/go/materialized_view_rename_privilege_repro_test.go:TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rename_mv_reader PASSWORD 'reader';",
+        "CREATE TABLE rename_mv_source (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rename_mv_source VALUES (1, 'visible after rename');",
+        "CREATE MATERIALIZED VIEW rename_mv_target AS\n\t\t\t\t\tSELECT id, label FROM rename_mv_source;",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rename_mv_reader;",
+        "GRANT SELECT ON rename_mv_target TO rename_mv_reader;",
+        "SELECT id, label\n\t\t\t\t\t\tFROM rename_mv_target;",
+        "ALTER TABLE rename_mv_target\n\t\t\t\t\t\tRENAME TO rename_mv_target_new;",
+        "SET ROLE rename_mv_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_mv_target_new;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible after rename"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rename_mv_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rename_mv_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rename_mv_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,
@@ -7394,6 +7466,7 @@
         ]
       ],
       "cleanup": [
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'drop_recreate_comment_role') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('drop_recreate_comment_role'); END IF; END $$",
         "DROP ROLE IF EXISTS drop_recreate_comment_role",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
@@ -7418,6 +7491,71 @@
         ]
       ],
       "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0001-select-id-label-from-drop_policy_docs",
+      "source": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER drop_policy_reader PASSWORD 'reader';",
+        "CREATE TABLE drop_policy_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO drop_policy_docs VALUES\n\t\t\t\t\t(1, 'drop_policy_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO drop_policy_reader;",
+        "GRANT SELECT ON drop_policy_docs TO drop_policy_reader;",
+        "CREATE POLICY drop_policy_docs_owner_select\n\t\t\t\t\tON drop_policy_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE drop_policy_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE drop_policy_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'drop_policy_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('drop_policy_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS drop_policy_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0002-select-id-label-from-drop_policy_docs",
+      "source": "testing/go/row_level_security_drop_policy_repro_test.go:TestDropPolicyRemovesRowSecurityPolicyRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER drop_policy_reader PASSWORD 'reader';",
+        "CREATE TABLE drop_policy_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO drop_policy_docs VALUES\n\t\t\t\t\t(1, 'drop_policy_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO drop_policy_reader;",
+        "GRANT SELECT ON drop_policy_docs TO drop_policy_reader;",
+        "CREATE POLICY drop_policy_docs_owner_select\n\t\t\t\t\tON drop_policy_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE drop_policy_docs ENABLE ROW LEVEL SECURITY;",
+        "SELECT id, label\n\t\t\t\t\t\tFROM drop_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+        "DROP POLICY IF EXISTS drop_policy_docs_owner_select\n\t\t\t\t\t\tON drop_policy_docs;",
+        "SET ROLE drop_policy_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM drop_policy_docs\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'drop_policy_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('drop_policy_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS drop_policy_reader",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
@@ -7983,6 +8121,116 @@
       ]
     },
     {
+      "id": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0001-select-id-label-from-rename_rls_docs",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rename_rls_reader PASSWORD 'reader';",
+        "CREATE TABLE rename_rls_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rename_rls_docs VALUES\n\t\t\t\t\t(1, 'rename_rls_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rename_rls_reader;",
+        "GRANT SELECT ON rename_rls_docs TO rename_rls_reader;",
+        "CREATE POLICY rename_rls_docs_owner_select\n\t\t\t\t\tON rename_rls_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rename_rls_docs ENABLE ROW LEVEL SECURITY;",
+        "SET ROLE rename_rls_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rename_rls_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rename_rls_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rename_rls_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rename_rls_reader PASSWORD 'reader';",
+        "CREATE TABLE rename_rls_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rename_rls_docs VALUES\n\t\t\t\t\t(1, 'rename_rls_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rename_rls_reader;",
+        "GRANT SELECT ON rename_rls_docs TO rename_rls_reader;",
+        "CREATE POLICY rename_rls_docs_owner_select\n\t\t\t\t\tON rename_rls_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rename_rls_docs ENABLE ROW LEVEL SECURITY;",
+        "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+        "ALTER TABLE rename_rls_docs\n\t\t\t\t\t\tRENAME TO rename_rls_docs_renamed;",
+        "GRANT SELECT ON rename_rls_docs_renamed\n\t\t\t\t\t\tTO rename_rls_reader;"
+      ],
+      "query": "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rename_rls_docs_renamed'::regclass;",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rename_rls_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rename_rls_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rename_rls_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0003-select-id-label-from-rename_rls_docs_renamed",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rename_rls_reader PASSWORD 'reader';",
+        "CREATE TABLE rename_rls_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\towner_name TEXT,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rename_rls_docs VALUES\n\t\t\t\t\t(1, 'rename_rls_reader', 'visible'),\n\t\t\t\t\t(2, 'other_user', 'hidden');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rename_rls_reader;",
+        "GRANT SELECT ON rename_rls_docs TO rename_rls_reader;",
+        "CREATE POLICY rename_rls_docs_owner_select\n\t\t\t\t\tON rename_rls_docs\n\t\t\t\t\tFOR SELECT\n\t\t\t\t\tUSING (owner_name = current_user);",
+        "ALTER TABLE rename_rls_docs ENABLE ROW LEVEL SECURITY;",
+        "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+        "ALTER TABLE rename_rls_docs\n\t\t\t\t\t\tRENAME TO rename_rls_docs_renamed;",
+        "GRANT SELECT ON rename_rls_docs_renamed\n\t\t\t\t\t\tTO rename_rls_reader;",
+        "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rename_rls_docs_renamed'::regclass;",
+        "SET ROLE rename_rls_reader"
+      ],
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs_renamed\n\t\t\t\t\t\tORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rename_rls_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rename_rls_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rename_rls_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-table-owner-bypasses-unforced-rls",
       "source": "testing/go/row_level_security_repro_test.go:TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro",
       "ordinal": 1,
@@ -8018,6 +8266,76 @@
         "DROP TABLE IF EXISTS rls_owner_bypass_docs",
         "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_owner_bypass_user') THEN REVOKE USAGE ON SCHEMA public FROM rls_owner_bypass_user; END IF; END $$",
         "DROP ROLE IF EXISTS rls_owner_bypass_user"
+      ]
+    },
+    {
+      "id": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0001-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "source": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rollback_rls_reader PASSWORD 'reader';",
+        "CREATE TABLE rollback_rls_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rollback_rls_docs VALUES (1, 'visible');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rollback_rls_reader;",
+        "GRANT SELECT ON rollback_rls_docs TO rollback_rls_reader;",
+        "BEGIN;",
+        "ALTER TABLE rollback_rls_docs ENABLE ROW LEVEL SECURITY;",
+        "ROLLBACK;"
+      ],
+      "query": "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rollback_rls_docs'::regclass;",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rollback_rls_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rollback_rls_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rollback_rls_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0002-select-id-label-from-rollback_rls_docs",
+      "source": "testing/go/row_level_security_transaction_repro_test.go:TestRollbackRevertsRowLevelSecurityModeRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE USER rollback_rls_reader PASSWORD 'reader';",
+        "CREATE TABLE rollback_rls_docs (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tlabel TEXT\n\t\t\t\t);",
+        "INSERT INTO rollback_rls_docs VALUES (1, 'visible');",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO rollback_rls_reader;",
+        "GRANT SELECT ON rollback_rls_docs TO rollback_rls_reader;",
+        "BEGIN;",
+        "ALTER TABLE rollback_rls_docs ENABLE ROW LEVEL SECURITY;",
+        "ROLLBACK;",
+        "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rollback_rls_docs'::regclass;",
+        "SET ROLE rollback_rls_reader"
+      ],
+      "query": "SELECT id, label FROM rollback_rls_docs;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "cleanup": [
+        "RESET ROLE",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'rollback_rls_reader') THEN EXECUTE 'DROP OWNED BY ' || quote_ident('rollback_rls_reader'); END IF; END $$",
+        "DROP ROLE IF EXISTS rollback_rls_reader",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
     {

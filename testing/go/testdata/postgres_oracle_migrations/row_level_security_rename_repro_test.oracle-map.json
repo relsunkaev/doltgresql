@@ -1,0 +1,91 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map row_level_security_rename_repro_test.go",
+  "sourceFile": "testing/go/row_level_security_rename_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro#0001",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 1,
+      "scriptName": "ALTER TABLE RENAME preserves row-level security state",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0001-select-id-label-from-rename_rls_docs",
+      "suggestedId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0001-select-id-label-from-rename_rls_docs",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rename_rls_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "9b9502edaff083aa749204d31f612ebc7f294a2e3ca7a29700240fc93b482b2f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro#0002",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 2,
+      "scriptName": "ALTER TABLE RENAME preserves row-level security state",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "suggestedId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relrowsecurity\n\t\t\t\t\t\tFROM pg_catalog.pg_class\n\t\t\t\t\t\tWHERE oid = 'rename_rls_docs_renamed'::regclass;",
+      "querySha256": "ec8a26b026a129bc8a32032e11191f96e24279bef58bcce827d7438a4fe0840c",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro#0003",
+      "source": "testing/go/row_level_security_rename_repro_test.go:TestRenameTablePreservesRowLevelSecurityStateRepro",
+      "ordinal": 3,
+      "scriptName": "ALTER TABLE RENAME preserves row-level security state",
+      "oracle": "postgres",
+      "postgresId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0003-select-id-label-from-rename_rls_docs_renamed",
+      "suggestedId": "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0003-select-id-label-from-rename_rls_docs_renamed",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "username": "rename_rls_reader",
+      "query": "SELECT id, label\n\t\t\t\t\t\tFROM rename_rls_docs_renamed\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "81145bf1b54bc9a7981bdcfa079b3f61ff83031aa23654594bffc8248dcbf5e1",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "visible"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
