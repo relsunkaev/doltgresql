@@ -938,6 +938,15 @@ func (stmt *CreateTable) walkStmt(v Visitor) Statement {
 			ret.AsSource = rows.(*Select)
 		}
 	}
+	if stmt.AsExecute != nil {
+		execStmt, changed := walkStmt(v, stmt.AsExecute)
+		if changed {
+			if ret == stmt {
+				ret = stmt.copyNode()
+			}
+			ret.AsExecute = execStmt.(*Execute)
+		}
+	}
 	return ret
 }
 

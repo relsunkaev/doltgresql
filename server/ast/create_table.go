@@ -82,7 +82,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		}
 	}
 	if node.OfType != nil {
-		if node.AsSource != nil {
+		if node.As() {
 			return nil, errors.Errorf("CREATE TABLE OF cannot use AS")
 		}
 		if len(node.Inherits) > 0 {
@@ -121,7 +121,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			Children: typedTableChildren,
 		}, nil
 	}
-	if likeDef, ok := singleLikeTableDef(node.Defs); ok && node.AsSource == nil && len(node.Inherits) == 0 {
+	if likeDef, ok := singleLikeTableDef(node.Defs); ok && !node.As() && len(node.Inherits) == 0 {
 		likeTableName, err := nodeTableName(ctx, &likeDef.Name)
 		if err != nil {
 			return nil, err
@@ -138,6 +138,31 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 				likeTableName.Name.String(),
 				createTableLikeOptions(likeDef.Options),
 			),
+			Auth: vitess.AuthInformation{
+				AuthType:    auth.AuthType_CREATE,
+				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
+				TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
+			},
+		}, nil
+	}
+	if node.AsExecute != nil {
+		if err = validateCreateTableAsColumnDefs(node.Defs); err != nil {
+			return nil, err
+		}
+		params := make([]string, len(node.AsExecute.Params))
+		for i, param := range node.AsExecute.Params {
+			params[i] = tree.AsString(param)
+		}
+		return vitess.InjectedStatement{
+			Statement: pgnodes.CreateTableAsExecuteStatement{
+				CreatePrefix: createTableAsExecutePrefix(node),
+				Execute: pgnodes.ExecuteStatement{
+					Name:        string(node.AsExecute.Name),
+					Params:      params,
+					DiscardRows: node.AsExecute.DiscardRows,
+				},
+				WithNoData: node.WithNoData,
+			},
 			Auth: vitess.AuthInformation{
 				AuthType:    auth.AuthType_CREATE,
 				TargetType:  auth.AuthTargetType_SchemaIdentifiers,
@@ -304,6 +329,40 @@ func validateCreateTableAsColumnDefs(defs tree.TableDefs) error {
 		}
 	}
 	return nil
+}
+
+func createTableAsExecutePrefix(node *tree.CreateTable) string {
+	var b strings.Builder
+	b.WriteString("CREATE ")
+	switch node.Persistence {
+	case tree.PersistenceTemporary:
+		b.WriteString("TEMPORARY ")
+	case tree.PersistenceUnlogged:
+		b.WriteString("UNLOGGED ")
+	}
+	b.WriteString("TABLE ")
+	if node.IfNotExists {
+		b.WriteString("IF NOT EXISTS ")
+	}
+	b.WriteString(tree.AsString(&node.Table))
+	if len(node.Defs) > 0 {
+		b.WriteString(" (")
+		b.WriteString(tree.AsString(&node.Defs))
+		b.WriteByte(')')
+	}
+	if node.Using != "" {
+		b.WriteString(" USING ")
+		b.WriteString(node.Using)
+	}
+	if node.StorageParams != nil {
+		b.WriteString(tree.AsString(&node.StorageParams))
+	}
+	if node.Tablespace != "" {
+		b.WriteString(" TABLESPACE ")
+		b.WriteString(tree.AsString(&node.Tablespace))
+	}
+	b.WriteString(" AS ")
+	return b.String()
 }
 
 func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, vitess.Exprs, error) {

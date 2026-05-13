@@ -735,6 +735,8 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 			return true, true, h.prepareSQLStatement(injectedStmt, query)
 		case node.ExecuteStatement:
 			return true, true, h.executeSQLStatement(injectedStmt)
+		case node.CreateTableAsExecuteStatement:
+			return true, true, h.createTableAsExecuteSQLStatement(injectedStmt, query)
 		case node.ListenStatement:
 			return true, true, h.listen(injectedStmt, query)
 		case node.UnlistenStatement:
@@ -840,7 +842,7 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		return true
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
-		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.PrepareTransaction,
+		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.CreateTableAsExecuteStatement, node.PrepareTransaction,
 			node.CommitPrepared, node.RollbackPrepared, node.ListenStatement, node.UnlistenStatement,
 			node.NotifyStatement, *node.CopyFrom, *node.CopyTo:
 			return true
@@ -1393,6 +1395,71 @@ func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) erro
 	sessionstate.IncrementPreparedStatementPlanCount(h.mysqlConn.ConnectionID, stmt.Name, len(stmt.Params) == 0)
 	preparedData.ReturnFields = fields
 	h.preparedStatements[stmt.Name] = preparedData
+	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
+}
+
+func (h *ConnectionHandler) createTableAsExecuteSQLStatement(stmt node.CreateTableAsExecuteStatement, query ConvertedQuery) error {
+	preparedData, ok := h.preparedStatements[stmt.Execute.Name]
+	if !ok {
+		return errors.Errorf("prepared statement %s does not exist", stmt.Execute.Name)
+	}
+	if stmt.Execute.DiscardRows {
+		return errors.Errorf("EXECUTE DISCARD ROWS is not supported")
+	}
+	if len(stmt.Execute.Params) != len(preparedData.BindVarTypes) {
+		return errors.Errorf("prepared statement %s expected %d parameters but got %d", stmt.Execute.Name, len(preparedData.BindVarTypes), len(stmt.Execute.Params))
+	}
+
+	params := make([][]byte, len(stmt.Execute.Params))
+	for i, param := range stmt.Execute.Params {
+		value, err := h.evaluateExecuteParameter(param)
+		if err != nil {
+			return err
+		}
+		params[i] = value
+	}
+
+	sourceQuery := strings.TrimSpace(preparedData.Query.String)
+	for strings.HasSuffix(sourceQuery, ";") {
+		sourceQuery = strings.TrimSpace(strings.TrimSuffix(sourceQuery, ";"))
+	}
+	createQueryString := stmt.CreatePrefix + sourceQuery
+	if stmt.WithNoData {
+		createQueryString += " WITH NO DATA"
+	}
+	createQueries, err := h.convertQuery(createQueryString)
+	if err != nil {
+		return err
+	}
+	if len(createQueries) != 1 || createQueries[0].AST == nil {
+		return errors.Errorf("CREATE TABLE AS EXECUTE must expand to a single statement")
+	}
+	createQuery := createQueries[0]
+	boundQuery, fields, err := h.doltgresHandler.ComBind(
+		context.Background(),
+		h.mysqlConn,
+		createQuery.String,
+		createQuery.AST,
+		BindVariables{
+			varTypes:   preparedData.BindVarTypes,
+			parameters: params,
+		},
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+	boundPlan, ok := boundQuery.(sql.Node)
+	if !ok {
+		return errors.Errorf("expected a sql.Node, got %T", boundQuery)
+	}
+
+	rowsAffected := int32(0)
+	if err = h.executeBoundWithReplication(query, createQuery, boundPlan, nil, fields, nil, false, &rowsAffected, false); err != nil {
+		return err
+	}
+	h.invalidatePreparedPlanCacheIfNeeded(createQuery)
+	sessionstate.IncrementPreparedStatementPlanCount(h.mysqlConn.ConnectionID, stmt.Execute.Name, len(stmt.Execute.Params) == 0)
 	return h.send(makeCommandComplete(query.StatementTag, rowsAffected))
 }
 

@@ -8758,6 +8758,39 @@ create_table_as_stmt:
       WithNoData: $15.bool(),
     }
   }
+| CREATE opt_persistence_temp_table TABLE table_name opt_index_params_name_only opt_using_method opt_table_with opt_create_table_on_commit opt_tablespace AS execute_stmt opt_create_as_with_data
+  {
+    name := $4.unresolvedObjectName().ToTableName()
+    tblDefs := tree.ConvertIdxElemsToTblDefsForColumnNameOnly($5.idxElems())
+    $$.val = &tree.CreateTable{
+      Table: name,
+      Defs: tblDefs,
+      Using: $6,
+      Tablespace: tree.Name($9),
+      AsExecute: $11.stmt().(*tree.Execute),
+      StorageParams: $7.storageParams(),
+      OnCommit: $8.createTableOnCommitSetting(),
+      Persistence: $2.persistence(),
+      WithNoData: $12.bool(),
+    }
+  }
+| CREATE opt_persistence_temp_table TABLE IF NOT EXISTS table_name opt_index_params_name_only opt_using_method opt_table_with opt_create_table_on_commit opt_tablespace AS execute_stmt opt_create_as_with_data
+  {
+    name := $7.unresolvedObjectName().ToTableName()
+    tblDefs := tree.ConvertIdxElemsToTblDefsForColumnNameOnly($8.idxElems())
+    $$.val = &tree.CreateTable{
+      Table: name,
+      IfNotExists: true,
+      Using: $9,
+      Tablespace: tree.Name($12),
+      Defs: tblDefs,
+      AsExecute: $14.stmt().(*tree.Execute),
+      StorageParams: $10.storageParams(),
+      OnCommit: $11.createTableOnCommitSetting(),
+      Persistence: $2.persistence(),
+      WithNoData: $15.bool(),
+    }
+  }
 
 opt_create_as_with_data:
   /* EMPTY */

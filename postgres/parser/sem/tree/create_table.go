@@ -64,8 +64,10 @@ type CreateTable struct {
 	// In CREATE...AS queries, Defs represents a list of ColumnTableDefs, one for
 	// each column, and a ConstraintTableDef for each constraint on a subset of
 	// these columns.
-	Defs       TableDefs
-	AsSource   *Select
+	Defs      TableDefs
+	AsSource  *Select
+	AsExecute *Execute
+	// WithNoData applies to both CREATE TABLE AS SELECT and CREATE TABLE AS EXECUTE.
 	WithNoData bool
 	// Used for `CREATE TABLE ... OF type_name ...` statements.
 	OfType *UnresolvedObjectName
@@ -77,7 +79,7 @@ type CreateTable struct {
 // As returns true if this table represents a CREATE TABLE ... AS statement,
 // false otherwise.
 func (node *CreateTable) As() bool {
-	return node.AsSource != nil
+	return node.AsSource != nil || node.AsExecute != nil
 }
 
 // AsHasUserSpecifiedPrimaryKey returns true if a CREATE TABLE ... AS statement
@@ -141,7 +143,11 @@ func (node *CreateTable) FormatBody(ctx *FmtCtx) {
 			ctx.FormatNode(&node.Tablespace)
 		}
 		ctx.WriteString(" AS ")
-		ctx.FormatNode(node.AsSource)
+		if node.AsExecute != nil {
+			ctx.FormatNode(node.AsExecute)
+		} else {
+			ctx.FormatNode(node.AsSource)
+		}
 		if node.WithNoData {
 			ctx.WriteString(" WITH NO DATA")
 		}
