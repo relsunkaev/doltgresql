@@ -159,6 +159,9 @@ func checkSchemaCreatePrivilege(ctx *sql.Context, schemaName string) error {
 	if !userRole.IsValid() {
 		return errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
 	}
+	if auth.SchemaOwnedByRole(schemaName, userRole.Name) {
+		return nil
+	}
 	roleKey := auth.SchemaPrivilegeKey{Role: userRole.ID(), Schema: schemaName}
 	publicKey := auth.SchemaPrivilegeKey{Role: publicRole.ID(), Schema: schemaName}
 	if !auth.HasSchemaPrivilege(roleKey, auth.Privilege_CREATE) && !auth.HasSchemaPrivilege(publicKey, auth.Privilege_CREATE) {

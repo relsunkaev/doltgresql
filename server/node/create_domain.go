@@ -69,6 +69,9 @@ func (c *CreateDomain) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err != nil {
 		return nil, err
 	}
+	if err = checkSchemaCreatePrivilege(ctx, schema); err != nil {
+		return nil, err
+	}
 	collection, err := core.GetTypesCollectionFromContextForDatabase(ctx, c.DatabaseName)
 	if err != nil {
 		return nil, err

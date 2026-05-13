@@ -24,7 +24,6 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
-	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -87,16 +86,11 @@ func (c *CreateType) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	var userRole auth.Role
-	auth.LockRead(func() {
-		userRole = auth.GetRole(ctx.Client().User)
-	})
-	if !userRole.IsValid() {
-		return nil, errors.Errorf(`role "%s" does not exist`, ctx.Client().User)
-	}
-
 	schema, err := core.GetSchemaName(ctx, nil, c.SchemaName)
 	if err != nil {
+		return nil, err
+	}
+	if err = checkSchemaCreatePrivilege(ctx, schema); err != nil {
 		return nil, err
 	}
 	collection, err := core.GetTypesCollectionFromContextForDatabase(ctx, c.DatabaseName)
