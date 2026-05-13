@@ -9346,6 +9346,41 @@
       ]
     },
     {
+      "id": "view-search-path-repro-test-testsearchpathresolvesviewsinlaterschemasrepro-0001-select-v-from-search_path_view-order",
+      "source": "testing/go/view_search_path_repro_test.go:TestSearchPathResolvesViewsInLaterSchemasRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA first_schema;",
+        "CREATE SCHEMA second_schema;",
+        "CREATE TABLE second_schema.search_path_source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO second_schema.search_path_source VALUES (1, 4), (2, 5);",
+        "CREATE VIEW second_schema.search_path_view AS\n\t\t\t\t\tSELECT id, v FROM second_schema.search_path_source;",
+        "SET search_path = first_schema, second_schema;"
+      ],
+      "query": "SELECT v FROM search_path_view ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS first_schema CASCADE",
+        "DROP SCHEMA IF EXISTS second_schema CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "window-functions-test-testwindowfunctions-0001-select-day-price-lag-price",
       "source": "testing/go/window_functions_test.go:TestWindowFunctions",
       "ordinal": 1,
