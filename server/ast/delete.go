@@ -36,6 +36,7 @@ func nodeDelete(ctx *Context, node *tree.Delete) (*vitess.Delete, error) {
 		if err != nil {
 			return nil, err
 		}
+		returningExprs = rewriteInsertDeleteReturningAliases(returningExprs, returningAliasDelete)
 	}
 
 	with, err := nodeWith(ctx, node.With)

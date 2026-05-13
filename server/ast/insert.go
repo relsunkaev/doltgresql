@@ -39,6 +39,7 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 		if err != nil {
 			return nil, err
 		}
+		returningExprs = rewriteInsertDeleteReturningAliases(returningExprs, returningAliasInsert)
 	}
 	var ignore string
 	var onDuplicate vitess.OnDup
