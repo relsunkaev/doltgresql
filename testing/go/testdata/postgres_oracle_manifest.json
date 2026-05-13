@@ -2951,6 +2951,370 @@
       ]
     },
     {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0001-select-count-*-::text-from",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE accounts (id INT PRIMARY KEY, email TEXT);",
+        "CREATE INDEX accounts_email_text_ops_idx\n\t\t\t\t\t\tON accounts (email text_ops);"
+      ],
+      "query": "SELECT count(*)::text FROM pg_indexes WHERE indexname = 'accounts_email_text_ops_idx';",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0002-select-count-*-::text-from",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE orders (id INT PRIMARY KEY, customer_id INT);",
+        "CREATE INDEX orders_customer_int4_ops_idx\n\t\t\t\t\t\tON orders (customer_id int4_ops);"
+      ],
+      "query": "SELECT count(*)::text FROM pg_indexes WHERE indexname = 'orders_customer_int4_ops_idx';",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0003-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts ASC, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0004-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);",
+        "SELECT id::text FROM events ORDER BY ts ASC, id ASC;"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts DESC, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0005-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);",
+        "SELECT id::text FROM events ORDER BY ts ASC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts DESC, id ASC;"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0006-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 6,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);",
+        "SELECT id::text FROM events ORDER BY ts ASC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts DESC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0007-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 7,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);",
+        "SELECT id::text FROM events ORDER BY ts ASC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts DESC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts DESC NULLS FIRST, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0008-select-id::text-from-events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 8,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE events (id INT PRIMARY KEY, ts TIMESTAMP);",
+        "INSERT INTO events VALUES\n\t\t\t\t\t(1, NULL),\n\t\t\t\t\t(2, '2024-01-01 00:00:00'),\n\t\t\t\t\t(3, '2024-01-02 00:00:00'),\n\t\t\t\t\t(4, NULL);",
+        "CREATE INDEX events_ts_desc_idx\n\t\t\t\t\t\tON events (ts DESC NULLS LAST);",
+        "CREATE INDEX events_ts_asc_idx\n\t\t\t\t\t\tON events (ts ASC NULLS FIRST);",
+        "SELECT id::text FROM events ORDER BY ts ASC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts DESC, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;",
+        "SELECT id::text FROM events ORDER BY ts DESC NULLS FIRST, id ASC;"
+      ],
+      "query": "SELECT id::text FROM events ORDER BY ts DESC NULLS LAST, id ASC;",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0009-insert-into-unique_null_order_events-values-4",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 9,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE unique_null_order_events (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tts TIMESTAMP\n\t\t\t\t);",
+        "CREATE UNIQUE INDEX unique_null_order_events_ts_idx\n\t\t\t\t\tON unique_null_order_events (ts ASC NULLS LAST);",
+        "INSERT INTO unique_null_order_events VALUES\n\t\t\t\t\t\t(1, NULL),\n\t\t\t\t\t\t(2, NULL),\n\t\t\t\t\t\t(3, '2024-01-01 00:00:00');"
+      ],
+      "query": "INSERT INTO unique_null_order_events VALUES (4, '2024-01-01 00:00:00');",
+      "expectedSqlstate": "23505",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0010-select-id::text-from-unique_null_order_events-order",
+      "source": "testing/go/index_opclass_nulls_probe_test.go:TestIndexOpclassesAndNullOrdering",
+      "ordinal": 10,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE unique_null_order_events (\n\t\t\t\t\tid INT PRIMARY KEY,\n\t\t\t\t\tts TIMESTAMP\n\t\t\t\t);",
+        "CREATE UNIQUE INDEX unique_null_order_events_ts_idx\n\t\t\t\t\tON unique_null_order_events (ts ASC NULLS LAST);",
+        "INSERT INTO unique_null_order_events VALUES\n\t\t\t\t\t\t(1, NULL),\n\t\t\t\t\t\t(2, NULL),\n\t\t\t\t\t\t(3, '2024-01-01 00:00:00');"
+      ],
+      "query": "SELECT id::text FROM unique_null_order_events ORDER BY ts ASC NULLS LAST, id;",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "json-correctness-repro-test-testjsonextractionpreservesjsonsubdocumenttextrepro-0001-select-{-a-:-{",
       "source": "testing/go/json_correctness_repro_test.go:TestJsonExtractionPreservesJsonSubdocumentTextRepro",
       "ordinal": 1,
