@@ -131,12 +131,14 @@ func foreignKeyComparableTypes(ctx *sql.Context, from sql.Type, to sql.Type) boo
 		return true
 	}
 
+	if foreignKeyFloatReferencesInteger(ctx, dtFrom, dtTo) {
+		return false
+	}
+
 	fromLiteral := expression.NewLiteral(dtFrom.Zero(), from)
 	toLiteral := expression.NewLiteral(dtTo.Zero(), to)
 
 	// a foreign key between two different types is valid if there is an equality operator on the two types
-	// TODO: there are some subtleties in postgres not captured by this logic, e.g. a foreign key from double -> int
-	//  is valid, but the reverse is not. This works fine, but is more permissive than postgres is.
 	eq := framework.GetBinaryFunction(framework.Operator_BinaryEqual).Compile(ctx, "=", fromLiteral, toLiteral)
 	if eq == nil || eq.StashedError() != nil {
 		return false
@@ -148,4 +150,39 @@ func foreignKeyComparableTypes(ctx *sql.Context, from sql.Type, to sql.Type) boo
 	reverseConversion := types.GetAssignmentCast(dtTo, dtFrom)
 
 	return forwardConversion != nil && reverseConversion != nil
+}
+
+func foreignKeyFloatReferencesInteger(ctx *sql.Context, child *types.DoltgresType, parent *types.DoltgresType) bool {
+	child = foreignKeyComparableBaseType(ctx, child)
+	parent = foreignKeyComparableBaseType(ctx, parent)
+	return foreignKeyBinaryFloatType(child) && foreignKeyIntegerType(parent)
+}
+
+func foreignKeyComparableBaseType(ctx *sql.Context, typ *types.DoltgresType) *types.DoltgresType {
+	if typ.TypType != types.TypeType_Domain {
+		return typ
+	}
+	baseType, err := typ.DomainUnderlyingBaseTypeWithContext(ctx)
+	if err != nil {
+		return typ
+	}
+	return baseType
+}
+
+func foreignKeyBinaryFloatType(typ *types.DoltgresType) bool {
+	switch typ.ID.TypeName() {
+	case "float4", "float8":
+		return true
+	default:
+		return false
+	}
+}
+
+func foreignKeyIntegerType(typ *types.DoltgresType) bool {
+	switch typ.ID.TypeName() {
+	case "int2", "int4", "int8", "smallserial", "serial", "bigserial":
+		return true
+	default:
+		return false
+	}
 }
