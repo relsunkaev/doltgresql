@@ -28,6 +28,7 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -139,6 +140,13 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			return nil, err
 		}
 		if ok {
+			if ofTypeID, typedTable := tablemetadata.OfType(unwrappedTableComment(t)); typedTable && ofTypeID == typeID {
+				if c.cascade {
+					// TODO: handle cascade
+					return nil, errors.Errorf(`cascading type drops are not yet supported`)
+				}
+				return nil, errors.Errorf(`cannot drop type %s because other objects depend on it - table %s depends on type %s'`, c.typName, t.Name(), c.typName)
+			}
 			for _, col := range t.Schema(ctx) {
 				if dt, isDoltgresType := col.Type.(*types.DoltgresType); isDoltgresType {
 					if dt.ID == typ.ID {
