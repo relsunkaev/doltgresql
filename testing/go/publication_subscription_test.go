@@ -230,13 +230,14 @@ func TestElectricInspectorArrayAlias(t *testing.T) {
 		{
 			Name: "electric inspector array alias",
 			SetUpScript: []string{
-				"CREATE TABLE electric_alias_items (id INT PRIMARY KEY);",
+				"CREATE SCHEMA electric_alias;",
+				"CREATE TABLE electric_alias.electric_alias_items (id INT PRIMARY KEY);",
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items';",
+					Query: "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
 					Expected: []sql.Row{
-						{"{public,electric_alias_items}"},
+						{"{electric_alias,electric_alias_items}"},
 					},
 					ExpectedColNames: []string{"parent"},
 				},

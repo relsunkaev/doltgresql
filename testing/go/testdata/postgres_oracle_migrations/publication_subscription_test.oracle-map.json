@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestReplicaIdentityDDLAndCatalogs",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestElectricInspectorArrayAlias,TestReplicaIdentityDDLAndCatalogs",
   "sourceFile": "testing/go/publication_subscription_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -143,6 +143,28 @@
       "errorSeverity": "ERROR",
       "query": "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;",
       "querySha256": "0a57f23549f2f097e136a409316b88e4f92dc68ba02d7ff4435e3e0c8ed2aa67",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias#0001",
+      "source": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias",
+      "ordinal": 1,
+      "scriptName": "electric inspector array alias",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "suggestedId": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
+      "querySha256": "1500f91b7c2da165042138e62b4dfb8e6e21684114bccbd676e033b7425caedc",
+      "expectedRows": [
+        [
+          {
+            "value": "{electric_alias,electric_alias_items}"
+          }
+        ]
+      ],
       "needsCleanup": false,
       "cleanupProvided": false
     }

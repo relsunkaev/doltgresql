@@ -750,6 +750,9 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 		case "array":
 			return normalizeGeneratedPostgresArray(v)
 		default:
+			if normalized, ok := normalizeGeneratedPostgresBracketArray(v); ok {
+				return normalized
+			}
 			return v
 		}
 	default:
@@ -764,6 +767,9 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 			}
 		}
 		text := fmt.Sprint(v)
+		if normalized, ok := normalizeGeneratedPostgresBracketArray(text); ok {
+			return normalized
+		}
 		if mode == "numeric" {
 			return normalizeGeneratedPostgresNumeric(text)
 		}
@@ -861,8 +867,23 @@ func normalizeGeneratedPostgresJSON(value string) string {
 
 func normalizeGeneratedPostgresArray(value string) string {
 	trimmed := strings.TrimSpace(value)
+	if normalized, ok := normalizeGeneratedPostgresBracketArray(trimmed); ok {
+		return normalized
+	}
 	trimmed = strings.ReplaceAll(trimmed, ", ", ",")
 	return trimmed
+}
+
+func normalizeGeneratedPostgresBracketArray(value string) (string, bool) {
+	trimmed := strings.TrimSpace(value)
+	if !strings.HasPrefix(trimmed, "[") || !strings.HasSuffix(trimmed, "]") {
+		return "", false
+	}
+	parts := strings.Fields(strings.TrimSuffix(strings.TrimPrefix(trimmed, "["), "]"))
+	if len(parts) == 0 {
+		return "", false
+	}
+	return "{" + strings.Join(parts, ",") + "}", true
 }
 
 func normalizeGeneratedPostgresSlice(value interface{}) (string, bool) {

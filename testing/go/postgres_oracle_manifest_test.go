@@ -248,6 +248,21 @@ func TestPostgresOracleReplicaIdentityCacheUsesCatalogCharText(t *testing.T) {
 	require.Equal(t, "n", seen["publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where"])
 }
 
+func TestPostgresOracleElectricInspectorArrayCacheUsesArrayText(t *testing.T) {
+	manifest := loadPostgresOracleManifest(t)
+	for _, entry := range manifest.Entries {
+		if entry.Source != "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias" {
+			continue
+		}
+		require.Len(t, entry.ExpectedRows, 1)
+		require.Len(t, entry.ExpectedRows[0], 1)
+		require.NotNil(t, entry.ExpectedRows[0][0].Value)
+		require.Equal(t, "{electric_alias,electric_alias_items}", *entry.ExpectedRows[0][0].Value)
+		return
+	}
+	require.Fail(t, "expected Electric inspector oracle entry")
+}
+
 func TestPostgresOracleManifestCleansGeneratedDatabaseObjects(t *testing.T) {
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--stdout")
 	output, err := cmd.CombinedOutput()
@@ -611,6 +626,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 		case "array":
 			return normalizePostgresOracleArray(v)
 		default:
+			if normalized, ok := normalizePostgresOracleBracketArray(v); ok {
+				return normalized
+			}
 			return v
 		}
 	default:
@@ -625,6 +643,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 			}
 		}
 		text := fmt.Sprint(v)
+		if normalized, ok := normalizePostgresOracleBracketArray(text); ok {
+			return normalized
+		}
 		if mode == "numeric" {
 			return normalizePostgresOracleNumeric(text)
 		}
@@ -712,8 +733,23 @@ func normalizePostgresOracleJSON(value string) string {
 
 func normalizePostgresOracleArray(value string) string {
 	trimmed := strings.TrimSpace(value)
+	if normalized, ok := normalizePostgresOracleBracketArray(trimmed); ok {
+		return normalized
+	}
 	trimmed = strings.ReplaceAll(trimmed, ", ", ",")
 	return trimmed
+}
+
+func normalizePostgresOracleBracketArray(value string) (string, bool) {
+	trimmed := strings.TrimSpace(value)
+	if !strings.HasPrefix(trimmed, "[") || !strings.HasSuffix(trimmed, "]") {
+		return "", false
+	}
+	parts := strings.Fields(strings.TrimSuffix(strings.TrimPrefix(trimmed, "["), "]"))
+	if len(parts) == 0 {
+		return "", false
+	}
+	return "{" + strings.Join(parts, ",") + "}", true
 }
 
 func normalizePostgresOracleSlice(value any) (string, bool) {

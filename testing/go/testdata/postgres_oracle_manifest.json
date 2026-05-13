@@ -1197,6 +1197,31 @@
       ]
     },
     {
+      "id": "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from",
+      "source": "testing/go/publication_subscription_test.go:TestElectricInspectorArrayAlias",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE SCHEMA electric_alias;",
+        "CREATE TABLE electric_alias.electric_alias_items (id INT PRIMARY KEY);"
+      ],
+      "query": "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
+      "expectedRows": [
+        [
+          {
+            "value": "{electric_alias,electric_alias_items}"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS electric_alias CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,
