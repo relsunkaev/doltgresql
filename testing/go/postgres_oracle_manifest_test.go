@@ -15,6 +15,7 @@
 package _go
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -61,6 +63,10 @@ type postgresCell struct {
 	Null  bool    `json:"null,omitempty"`
 }
 
+func TestPostgresOracleManifestSchema(t *testing.T) {
+	validatePostgresOracleManifest(t, loadPostgresOracleManifest(t))
+}
+
 func TestPostgresOracleManifest(t *testing.T) {
 	dsn, ok := postgresOracleDSN()
 	if !ok {
@@ -68,9 +74,7 @@ func TestPostgresOracleManifest(t *testing.T) {
 	}
 
 	manifest := loadPostgresOracleManifest(t)
-	require.Equal(t, 1, manifest.Version)
-	require.Equal(t, "pg16-structural-v1", manifest.NormalizationProfile)
-	require.NotEmpty(t, manifest.Entries)
+	validatePostgresOracleManifest(t, manifest)
 
 	ctx := context.Background()
 	conn := connectPostgresOracle(t, ctx, dsn)
@@ -79,21 +83,47 @@ func TestPostgresOracleManifest(t *testing.T) {
 	}()
 	requirePostgresMajor(t, ctx, conn, manifest.CanonicalPostgresMajor)
 
-	seen := map[string]struct{}{}
 	for _, entry := range manifest.Entries {
 		entry := entry
-		require.NotEmpty(t, entry.ID)
-		if _, ok := seen[entry.ID]; ok {
-			t.Fatalf("duplicate oracle manifest id %q", entry.ID)
-		}
-		seen[entry.ID] = struct{}{}
-		require.Contains(t, []string{"postgres", "internal"}, entry.Oracle, "oracle classification for %s", entry.ID)
 		if entry.Oracle != "postgres" {
 			continue
 		}
 		t.Run(entry.ID, func(t *testing.T) {
 			runPostgresOracleEntry(t, ctx, conn, manifest.NormalizationProfile, entry)
 		})
+	}
+}
+
+func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifest) {
+	t.Helper()
+	require.Equal(t, 1, manifest.Version)
+	require.Equal(t, 16, manifest.CanonicalPostgresMajor)
+	require.Equal(t, "pg16-structural-v1", manifest.NormalizationProfile)
+	require.NotEmpty(t, manifest.Entries)
+
+	seen := map[string]struct{}{}
+	for _, entry := range manifest.Entries {
+		require.NotEmpty(t, entry.ID)
+		require.NotEmpty(t, entry.Source, "source for %s", entry.ID)
+		if _, ok := seen[entry.ID]; ok {
+			t.Fatalf("duplicate oracle manifest id %q", entry.ID)
+		}
+		seen[entry.ID] = struct{}{}
+		require.Contains(t, []string{"postgres", "internal"}, entry.Oracle, "oracle classification for %s", entry.ID)
+		require.Contains(t, []string{"exact", "structural", "regex", "sqlstate"}, entry.Compare, "comparison mode for %s", entry.ID)
+		for _, mode := range entry.ColumnModes {
+			require.Contains(t, []string{"exact", "structural", "numeric", "timestamp", "timestamptz", "array", "json"}, mode,
+				"column mode for %s", entry.ID)
+		}
+		if entry.Oracle == "postgres" {
+			require.NotEmpty(t, entry.Query, "query for %s", entry.ID)
+			if entry.ExpectedSQLState != "" {
+				require.Empty(t, entry.ExpectedRows, "sqlstate oracle entries cannot also expect rows: %s", entry.ID)
+			} else {
+				require.NotEmpty(t, entry.ExpectedRows, "expected rows for %s", entry.ID)
+				require.NotEqual(t, "sqlstate", entry.Compare, "sqlstate comparison requires expectedSqlstate for %s", entry.ID)
+			}
+		}
 	}
 }
 
@@ -224,6 +254,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 	if mode == "exact" {
 		return fmt.Sprint(value)
 	}
+	if mode == "structural" {
+		mode = inferPostgresOracleMode(oid)
+	}
 	switch v := value.(type) {
 	case bool:
 		if v {
@@ -235,12 +268,89 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 	case float32, float64:
 		return fmt.Sprint(v)
 	case []byte:
-		return string(v)
+		switch mode {
+		case "json":
+			return normalizePostgresOracleJSON(string(v))
+		case "numeric":
+			return normalizePostgresOracleNumeric(string(v))
+		case "array":
+			return normalizePostgresOracleArray(string(v))
+		default:
+			return string(v)
+		}
 	case time.Time:
-		return v.UTC().Format(time.RFC3339Nano)
+		if mode == "timestamptz" {
+			return v.UTC().Format(time.RFC3339Nano)
+		}
+		return v.Format("2006-01-02T15:04:05.999999999")
+	case string:
+		switch mode {
+		case "json":
+			return normalizePostgresOracleJSON(v)
+		case "numeric":
+			return normalizePostgresOracleNumeric(v)
+		case "array":
+			return normalizePostgresOracleArray(v)
+		default:
+			return v
+		}
 	default:
-		return fmt.Sprint(v)
+		text := fmt.Sprint(v)
+		if mode == "numeric" {
+			return normalizePostgresOracleNumeric(text)
+		}
+		return text
 	}
+}
+
+func inferPostgresOracleMode(oid uint32) string {
+	switch oid {
+	case 114, 3802:
+		return "json"
+	case 1700:
+		return "numeric"
+	case 1114, 1082, 1083:
+		return "timestamp"
+	case 1184, 1266:
+		return "timestamptz"
+	case 1000, 1005, 1007, 1016, 1021, 1022, 1009, 1015, 1231:
+		return "array"
+	default:
+		return "structural"
+	}
+}
+
+func normalizePostgresOracleNumeric(value string) string {
+	dec, err := decimal.NewFromString(strings.TrimSpace(value))
+	if err != nil {
+		return strings.TrimSpace(value)
+	}
+	if dec.IsZero() {
+		return "0"
+	}
+	return dec.String()
+}
+
+func normalizePostgresOracleJSON(value string) string {
+	trimmed := strings.TrimSpace(value)
+	var decoded any
+	if err := json.Unmarshal([]byte(trimmed), &decoded); err == nil {
+		canonical, err := json.Marshal(decoded)
+		if err == nil {
+			return string(canonical)
+		}
+	}
+	var compacted bytes.Buffer
+	if err := json.Compact(&compacted, []byte(trimmed)); err == nil {
+		return compacted.String()
+	}
+	return trimmed
+}
+
+func normalizePostgresOracleArray(value string) string {
+	trimmed := strings.TrimSpace(value)
+	trimmed = strings.ReplaceAll(trimmed, ", ", ",")
+	return trimmed
 }
 
 func comparePostgresOracleRows(t testing.TB, entry postgresOracleEntry, actual [][]string) {
