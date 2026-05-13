@@ -55,6 +55,7 @@ func init() {
 	framework.RegisterFunction(tsquery_phrase_text_text)
 	framework.RegisterFunction(ts_rewrite_text_text_text)
 	framework.RegisterFunction(ts_filter_text_text)
+	framework.RegisterFunction(ts_filter_tsvector_text)
 	framework.RegisterFunction(ts_match_vq_text)
 }
 
@@ -332,6 +333,15 @@ var ts_filter_text_text = framework.Function2{
 	Name:       "ts_filter",
 	Return:     pgtypes.Text,
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Text, pgtypes.Text},
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, vector any, weights any) (any, error) {
+		return simpleTSFilter(fmt.Sprint(vector), fmt.Sprint(weights)), nil
+	},
+}
+
+var ts_filter_tsvector_text = framework.Function2{
+	Name:       "ts_filter",
+	Return:     pgtypes.TsVector,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TsVector, pgtypes.Text},
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, vector any, weights any) (any, error) {
 		return simpleTSFilter(fmt.Sprint(vector), fmt.Sprint(weights)), nil
 	},
