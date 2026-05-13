@@ -26,6 +26,7 @@ import (
 
 const (
 	AccessMethodBtree = "btree"
+	AccessMethodGist  = "gist"
 	AccessMethodGin   = "gin"
 
 	OpClassJsonbOps     = "jsonb_ops"

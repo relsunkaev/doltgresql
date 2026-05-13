@@ -38,8 +38,11 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	// two-phase state-machine node below so external sessions can observe
 	// the in-progress build via pg_index.indisready/indisvalid.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
-	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
+	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGist && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
+	}
+	if node.Unique && accessMethod == indexmetadata.AccessMethodGist {
+		return nil, errors.Errorf("unique gist indexes are not yet supported")
 	}
 	if node.Predicate != nil {
 		if accessMethod != indexmetadata.AccessMethodBtree {
@@ -290,6 +293,8 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	switch accessMethod {
 	case indexmetadata.AccessMethodBtree:
 		return nodeBtreeIndexMetadata(node)
+	case indexmetadata.AccessMethodGist:
+		return nodeGistIndexMetadata(node)
 	case indexmetadata.AccessMethodGin:
 		if len(node.IndexParams.IncludeColumns) > 0 {
 			return nil, errors.Errorf("INCLUDE is not yet supported for gin indexes")
@@ -321,6 +326,41 @@ func nodeIndexMetadata(node *tree.CreateIndex, accessMethod string) (*indexmetad
 	default:
 		return nil, fmt.Errorf("unknown index access method %s", accessMethod)
 	}
+}
+
+func nodeGistIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, error) {
+	if len(node.IndexParams.IncludeColumns) > 0 {
+		return nil, errors.Errorf("INCLUDE is not yet supported for gist indexes")
+	}
+	if len(node.IndexParams.StorageParams) > 0 {
+		return nil, errors.Errorf("storage parameters are not yet supported for gist indexes")
+	}
+	opClasses := make([]string, len(node.Columns))
+	for i, column := range node.Columns {
+		if column.Collation != "" {
+			return nil, errors.Errorf("index collation %s is not yet supported for gist indexes", column.Collation)
+		}
+		if column.OpClass != nil {
+			if len(column.OpClass.Options) > 0 {
+				return nil, errors.Errorf("index operator class options are not yet supported")
+			}
+			opClasses[i] = indexmetadata.NormalizeOpClass(column.OpClass.Name)
+		}
+		switch column.Direction {
+		case tree.DefaultDirection, tree.Ascending:
+		default:
+			return nil, errors.Errorf("index sorting direction is not supported for gist indexes")
+		}
+		switch column.NullsOrder {
+		case tree.DefaultNullsOrder:
+		default:
+			return nil, errors.Errorf("NULL ordering is not supported for gist indexes")
+		}
+	}
+	return &indexmetadata.Metadata{
+		AccessMethod: indexmetadata.AccessMethodGist,
+		OpClasses:    opClasses,
+	}, nil
 }
 
 func nodeBtreeIndexMetadata(node *tree.CreateIndex) (*indexmetadata.Metadata, error) {
