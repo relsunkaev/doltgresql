@@ -23,6 +23,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/triggers"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
@@ -99,8 +100,8 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 					node.IfExists,
 					tableName.SchemaQualifier.String(),
 					tableName.Name.String(),
-					string(cmd.Constraint),
-					string(cmd.NewName),
+					core.EncodePhysicalConstraintName(string(cmd.Constraint)),
+					core.EncodePhysicalConstraintName(string(cmd.NewName)),
 				),
 				Auth: vitess.AuthInformation{
 					AuthType:   auth.AuthType_IGNORE,
@@ -114,7 +115,7 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 						node.IfExists,
 						tableName.SchemaQualifier.String(),
 						tableName.Name.String(),
-						string(cmd.Constraint),
+						core.EncodePhysicalConstraintName(string(cmd.Constraint)),
 						cmd.Inherit,
 					),
 					Auth: vitess.AuthInformation{
@@ -131,7 +132,7 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 				Statement: pgnodes.NewAlterForeignKeyConstraintTiming(
 					tableName.SchemaQualifier.String(),
 					tableName.Name.String(),
-					string(cmd.Constraint),
+					core.EncodePhysicalConstraintName(string(cmd.Constraint)),
 					timing,
 				),
 				Auth: vitess.AuthInformation{

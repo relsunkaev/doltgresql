@@ -21,6 +21,7 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
@@ -49,7 +50,7 @@ func nodeCheckConstraintTableDef(
 		TableSpec: &vitess.TableSpec{
 			Constraints: []*vitess.ConstraintDefinition{
 				{
-					Name: node.Name.String(),
+					Name: core.EncodePhysicalConstraintName(node.Name.String()),
 					Details: &vitess.CheckConstraintDefinition{
 						Expr:     expr,
 						Enforced: !node.NotEnforced,
@@ -82,7 +83,7 @@ func nodeAlterTableDropConstraint(
 		ConstraintIfExists: node.IfExists,
 		TableSpec: &vitess.TableSpec{
 			Constraints: []*vitess.ConstraintDefinition{
-				{Name: node.Constraint.String()},
+				{Name: core.EncodePhysicalConstraintName(node.Constraint.String())},
 			},
 		},
 	}, nil

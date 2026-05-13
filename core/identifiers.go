@@ -23,6 +23,7 @@ const (
 	physicalColumnNamePrefix = "__doltgres_column_name_"
 	physicalIndexNamePrefix  = "__doltgres_index_name_"
 	physicalViewNamePrefix   = "__doltgres_view_name_"
+	physicalConstraintPrefix = "__doltgres_constraint_name_"
 )
 
 // IsValidPostgresIdentifier returns true according to Postgres quoted identifier rules.
@@ -101,6 +102,29 @@ func DecodePhysicalViewName(name string) string {
 		return name
 	}
 	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalViewNamePrefix))
+	if err != nil {
+		return name
+	}
+	return string(decoded)
+}
+
+// EncodePhysicalConstraintName maps PostgreSQL's case-sensitive constraint
+// identifiers onto GMS constraint names, which are otherwise validated
+// case-insensitively.
+func EncodePhysicalConstraintName(name string) string {
+	if name == strings.ToLower(name) && !strings.HasPrefix(name, physicalConstraintPrefix) {
+		return name
+	}
+	return physicalConstraintPrefix + hex.EncodeToString([]byte(name))
+}
+
+// DecodePhysicalConstraintName returns the PostgreSQL-facing constraint name
+// for a constraint encoded by EncodePhysicalConstraintName.
+func DecodePhysicalConstraintName(name string) string {
+	if !strings.HasPrefix(name, physicalConstraintPrefix) {
+		return name
+	}
+	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalConstraintPrefix))
 	if err != nil {
 		return name
 	}

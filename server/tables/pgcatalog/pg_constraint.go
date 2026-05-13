@@ -22,6 +22,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions"
@@ -65,11 +66,15 @@ func (p PgConstraintHandler) RowIter(ctx *sql.Context, partition sql.Partition) 
 		}
 	}
 	if constraintIdxPart, ok := partition.(inMemIndexPartition); ok {
-		return &inMemIndexScanIter[*pgConstraint]{
+		iter := &inMemIndexScanIter[*pgConstraint]{
 			lookup:         constraintIdxPart.lookup,
 			rangeConverter: p,
 			btreeAccess:    pgCatalogCache.pgConstraints,
 			rowConverter:   pgConstraintToRow,
+		}
+		return &pgConstraintIndexScanIter{
+			iter: iter,
+			seen: make(map[id.Id]struct{}),
 		}, nil
 	}
 
@@ -452,7 +457,7 @@ func cachePgConstraints(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error 
 			constraint := &pgConstraint{
 				oid:             check.OID.AsId(),
 				oidNative:       id.Cache().ToOID(check.OID.AsId()),
-				name:            check.Item.Name,
+				name:            core.DecodePhysicalConstraintName(check.Item.Name),
 				schemaOid:       schema.OID.AsId(),
 				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
 				conType:         "c",
@@ -743,6 +748,36 @@ type pgConstraintTableScanIter struct {
 }
 
 var _ sql.RowIter = (*pgConstraintTableScanIter)(nil)
+
+// pgConstraintIndexScanIter filters duplicate rows from overlapping index
+// ranges, which can be produced by IN-list predicates.
+type pgConstraintIndexScanIter struct {
+	iter *inMemIndexScanIter[*pgConstraint]
+	seen map[id.Id]struct{}
+}
+
+var _ sql.RowIter = (*pgConstraintIndexScanIter)(nil)
+
+// Next implements the interface sql.RowIter.
+func (iter *pgConstraintIndexScanIter) Next(ctx *sql.Context) (sql.Row, error) {
+	for {
+		row, err := iter.iter.Next(ctx)
+		if err != nil {
+			return nil, err
+		}
+		oid := row[0].(id.Id)
+		if _, ok := iter.seen[oid]; ok {
+			continue
+		}
+		iter.seen[oid] = struct{}{}
+		return row, nil
+	}
+}
+
+// Close implements the interface sql.RowIter.
+func (iter *pgConstraintIndexScanIter) Close(ctx *sql.Context) error {
+	return iter.iter.Close(ctx)
+}
 
 // Next implements the interface sql.RowIter.
 func (iter *pgConstraintTableScanIter) Next(ctx *sql.Context) (sql.Row, error) {

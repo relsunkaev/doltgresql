@@ -21,6 +21,7 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -40,7 +41,7 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 			return err
 		}
 		target.TableSpec.Constraints = append(target.TableSpec.Constraints, &vitess.ConstraintDefinition{
-			Name: string(node.Name),
+			Name: core.EncodePhysicalConstraintName(string(node.Name)),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
 				Enforced: !node.NotEnforced,
@@ -238,7 +239,7 @@ func appendAdditionalColumnCheckConstraints(ctx *Context, tableSpec *vitess.Tabl
 			name = defaultColumnCheckConstraintName(tableName, columnDef.Name)
 		}
 		tableSpec.Constraints = append(tableSpec.Constraints, &vitess.ConstraintDefinition{
-			Name: name,
+			Name: core.EncodePhysicalConstraintName(name),
 			Details: &vitess.CheckConstraintDefinition{
 				Expr:     expr,
 				Enforced: true,

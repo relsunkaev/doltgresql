@@ -836,10 +836,11 @@ func resolveCommentConstraint(ctx *sql.Context, relation vitess.TableName, const
 		if err != nil {
 			return id.Null, err
 		}
+		physicalName := core.EncodePhysicalConstraintName(constraintName)
 		for _, check := range checks {
-			if check.Name == constraintName {
+			if check.Name == physicalName {
 				tableID := id.Table(relationID)
-				return id.NewCheck(tableID.SchemaName(), tableID.TableName(), constraintName).AsId(), nil
+				return id.NewCheck(tableID.SchemaName(), tableID.TableName(), physicalName).AsId(), nil
 			}
 		}
 	}
