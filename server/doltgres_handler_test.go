@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	gmstypes "github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
 
@@ -89,6 +90,17 @@ func TestSchemaToFieldDescriptionsDecodesPhysicalColumnNames(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, fields, 1)
 	require.Equal(t, []byte("tableName"), fields[0].Name)
+}
+
+func TestSchemaToFieldDescriptionsConvertsGMSNullToText(t *testing.T) {
+	fields, err := schemaToFieldDescriptionsWithSource(sql.NewEmptyContext(), sql.Schema{
+		{Name: "extra", Type: gmstypes.Null},
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, fields, 1)
+	require.Equal(t, []byte("extra"), fields[0].Name)
+	require.Equal(t, uint32(25), fields[0].DataTypeOID)
+	require.Equal(t, int32(-1), fields[0].TypeModifier)
 }
 
 func TestSchemaToFieldDescriptionsExpandsBinaryFormat(t *testing.T) {

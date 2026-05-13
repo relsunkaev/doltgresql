@@ -270,6 +270,7 @@ func castSQLError(err error) error {
 		pgcode.ObjectNotInPrerequisiteState,
 		pgcode.RaiseException,
 		pgcode.Syntax,
+		pgcode.UndefinedFunction,
 		pgcode.UndefinedObject,
 		pgcode.Windowing:
 		return err
@@ -734,7 +735,23 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 			oid = id.Cache().ToOID(doltgresType.ID.AsId())
 			typmod = doltgresType.GetAttTypMod() // pg_attribute.atttypmod
 		} else {
-			oid, err = VitessTypeToObjectID(columnType)
+			doltgresType, convErr := pgtypes.FromGmsTypeToDoltgresType(columnType)
+			if convErr == nil && doltgresType.ID == pgtypes.Unknown.ID {
+				// GMS represents an untyped NULL projection as its own null
+				// type rather than Doltgres Unknown. PostgreSQL reports such
+				// result columns as text, so keep Parse and Bind RowDescription
+				// metadata stable for prepared client reflection queries.
+				doltgresType = pgtypes.Text
+				oid = id.Cache().ToOID(doltgresType.ID.AsId())
+				typmod = doltgresType.GetAttTypMod()
+				dataTypeSize = int16(doltgresType.MaxTextResponseByteLength(ctx))
+				if colName == "" {
+					colName = "?column?"
+				}
+				tableAttributeNumber = 0
+			} else {
+				oid, err = VitessTypeToObjectID(columnType)
+			}
 			if err != nil {
 				panic(err)
 			}
