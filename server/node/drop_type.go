@@ -27,6 +27,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/types"
 )
 
@@ -153,6 +154,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	if err = collection.DropType(ctx, typeID); err != nil {
 		return nil, err
 	}
+	clearTypeComment(typeID)
 
 	// undefined/shell type doesn't create array type.
 	if typ.IsDefined {
@@ -161,6 +163,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		if err = collection.DropType(ctx, arrayID); err != nil {
 			return nil, err
 		}
+		clearTypeComment(arrayID)
 	}
 	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
 		return nil, err
@@ -177,6 +180,14 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 	}
 
 	return sql.RowsToRowIter(), nil
+}
+
+func clearTypeComment(typeID id.Type) {
+	comments.Set(comments.Key{
+		ObjOID:   id.Cache().ToOID(typeID.AsId()),
+		ClassOID: comments.ClassOID("pg_type"),
+		ObjSubID: 0,
+	}, nil)
 }
 
 // Schema implements the interface sql.ExecSourceRel.
