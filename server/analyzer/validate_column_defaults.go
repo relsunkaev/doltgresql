@@ -24,6 +24,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgnode "github.com/dolthub/doltgresql/server/node"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -217,22 +219,22 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 		}
 		if !allowColumnReferences {
 			if _, ok := e.(sql.Aggregation); ok {
-				err = fmt.Errorf("aggregate functions are not allowed in DEFAULT expressions")
+				err = defaultExpressionAggregateError()
 				return false
 			}
 			if _, ok := e.(sql.WindowAggregation); ok {
-				err = fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+				err = defaultExpressionWindowError()
 				return false
 			}
 			if expr, ok := e.(sql.WindowAdaptableExpression); ok {
 				if expr.Window() != nil {
-					err = fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+					err = defaultExpressionWindowError()
 					return false
 				}
 			}
 			if expr, ok := e.(sql.RowIterExpression); ok {
 				if expr.ReturnsRowIter() {
-					err = fmt.Errorf("set-returning functions are not allowed in DEFAULT expressions")
+					err = defaultExpressionSetReturningError()
 					return false
 				}
 			}
@@ -240,7 +242,7 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 		switch e.(type) {
 		case *expression.GetField:
 			if !allowColumnReferences {
-				err = fmt.Errorf("cannot use column reference in DEFAULT expression")
+				err = defaultExpressionColumnReferenceError()
 				return false
 			}
 			if !colDefault.IsParenthesized() {
@@ -268,24 +270,40 @@ func validateColumnDefault(ctx *sql.Context, col *sql.Column, colDefault *sql.Co
 func validateColumnDefaultExpressionText(expr string) error {
 	lower := strings.ToLower(expr)
 	if strings.Contains(lower, " over (") {
-		return fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+		return defaultExpressionWindowError()
 	}
 	for _, name := range generatedColumnAggregateFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("aggregate functions are not allowed in DEFAULT expressions")
+			return defaultExpressionAggregateError()
 		}
 	}
 	for _, name := range generatedColumnWindowFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("window functions are not allowed in DEFAULT expressions")
+			return defaultExpressionWindowError()
 		}
 	}
 	for _, name := range generatedColumnSetReturningFunctions {
 		if containsFunctionCall(lower, name) {
-			return fmt.Errorf("set-returning functions are not allowed in DEFAULT expressions")
+			return defaultExpressionSetReturningError()
 		}
 	}
 	return nil
+}
+
+func defaultExpressionColumnReferenceError() error {
+	return pgerror.New(pgcode.FeatureNotSupported, "cannot use column reference in DEFAULT expression")
+}
+
+func defaultExpressionAggregateError() error {
+	return pgerror.New(pgcode.Grouping, "aggregate functions are not allowed in DEFAULT expressions")
+}
+
+func defaultExpressionWindowError() error {
+	return pgerror.New(pgcode.Windowing, "window functions are not allowed in DEFAULT expressions")
+}
+
+func defaultExpressionSetReturningError() error {
+	return pgerror.New(pgcode.FeatureNotSupported, "set-returning functions are not allowed in DEFAULT expressions")
 }
 
 func isGeneratedColumnDefault(col *sql.Column, colDefault *sql.ColumnDefaultValue) bool {
