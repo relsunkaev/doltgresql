@@ -1644,16 +1644,16 @@ func tsToChar(t *tmToChar, format string, isInterval bool) (string, error) {
 			}
 			s += makeNumTh(getStringFromIntWithWidth(width, t.sec), n.suffix)
 		case DCH_FF1:
-			s += makeNumTh(getStringFromIntWithWidth(1, int(t.fsec/1000)), n.suffix)
+			s += makeNumTh(getStringFromIntWithWidth(1, int(t.fsec/100000)), n.suffix)
 		case DCH_FF2:
-			s += makeNumTh(getStringFromIntWithWidth(2, int(t.fsec/1000)), n.suffix)
+			s += makeNumTh(getStringFromIntWithWidth(2, int(t.fsec/10000)), n.suffix)
 		case DCH_FF3, DCH_MS:
 			// millisecond
 			s += makeNumTh(getStringFromIntWithWidth(3, int(t.fsec/1000)), n.suffix)
 		case DCH_FF4:
-			s += makeNumTh(getStringFromIntWithWidth(4, int(t.fsec/1000)), n.suffix)
+			s += makeNumTh(getStringFromIntWithWidth(4, int(t.fsec/100)), n.suffix)
 		case DCH_FF5:
-			s += makeNumTh(getStringFromIntWithWidth(5, int(t.fsec/1000)), n.suffix)
+			s += makeNumTh(getStringFromIntWithWidth(5, int(t.fsec/10)), n.suffix)
 		case DCH_FF6, DCH_US:
 			// microsecond
 			s += makeNumTh(getStringFromIntWithWidth(6, int(t.fsec)), n.suffix)
