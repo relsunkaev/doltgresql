@@ -622,8 +622,8 @@ func (f *gmsCastWindowFunction) DefaultFramer() sql.WindowFramer {
 }
 
 func (f *gmsCastWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) (interface{}, error) {
-	if avgChild, ok := avgWindowChild(f.child); ok {
-		hasNonNull, err := windowIntervalHasNonNull(ctx, avgChild, interval, buffer)
+	if aggregateChild, ok := nullableAggregateWindowChild(f.child); ok {
+		hasNonNull, err := windowIntervalHasNonNull(ctx, aggregateChild, interval, buffer)
 		if err != nil {
 			return nil, err
 		}
@@ -638,9 +638,15 @@ func (f *gmsCastWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInt
 	return castGMSExpressionValue(ctx, val, f.child)
 }
 
-func avgWindowChild(expr sql.Expression) (sql.Expression, bool) {
+func nullableAggregateWindowChild(expr sql.Expression) (sql.Expression, bool) {
 	fn, ok := expr.(sql.FunctionExpression)
-	if !ok || !strings.EqualFold(fn.FunctionName(), "avg") {
+	if !ok {
+		return nil, false
+	}
+	switch {
+	case strings.EqualFold(fn.FunctionName(), "avg"):
+	case strings.EqualFold(fn.FunctionName(), "sum"):
+	default:
 		return nil, false
 	}
 	children := expr.Children()
