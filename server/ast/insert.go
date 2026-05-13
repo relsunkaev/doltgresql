@@ -125,6 +125,19 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 	if node.Override != tree.InsertOverrideNone {
 		rows = wrapIdentityOverrideRows(rows)
 	}
+	insertAuth := vitess.AuthInformation{
+		AuthType:    auth.AuthType_INSERT,
+		TargetType:  auth.AuthTargetType_TableIdentifiers,
+		TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
+	}
+	if len(columns) > 0 {
+		insertColumns := make([]string, len(columns))
+		for i, column := range columns {
+			insertColumns[i] = column.String()
+		}
+		insertAuth.TargetType = auth.AuthTargetType_TableColumnIdents
+		insertAuth.TargetNames = tableColumnAuthTargets(insertAuth.TargetNames, insertColumns)
+	}
 	return &vitess.Insert{
 		Action:    vitess.InsertStr,
 		Ignore:    ignore,
@@ -134,11 +147,7 @@ func nodeInsert(ctx *Context, node *tree.Insert) (insert *vitess.Insert, err err
 		Columns:   columns,
 		Rows:      rows,
 		OnDup:     onDuplicate,
-		Auth: vitess.AuthInformation{
-			AuthType:    auth.AuthType_INSERT,
-			TargetType:  auth.AuthTargetType_TableIdentifiers,
-			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String(), tableName.Name.String()},
-		},
+		Auth:      insertAuth,
 	}, nil
 }
 

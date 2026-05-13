@@ -178,13 +178,8 @@ func applySelectColumnAuth(node *tree.SelectClause, from vitess.TableExprs) {
 	if !ok || tableExpr.Auth.AuthType != auth.AuthType_SELECT || tableExpr.Auth.TargetType != auth.AuthTargetType_TableIdentifiers || len(tableExpr.Auth.TargetNames) != 3 {
 		return
 	}
-	tableTarget := tableExpr.Auth.TargetNames
-	targetNames := make([]string, 0, len(columns)*4)
-	for _, column := range columns {
-		targetNames = append(targetNames, tableTarget[0], tableTarget[1], tableTarget[2], column)
-	}
 	tableExpr.Auth.TargetType = auth.AuthTargetType_TableColumnIdents
-	tableExpr.Auth.TargetNames = targetNames
+	tableExpr.Auth.TargetNames = tableColumnAuthTargets(tableExpr.Auth.TargetNames, columns)
 }
 
 func selectColumnAuthColumns(node *tree.SelectClause) ([]string, bool) {

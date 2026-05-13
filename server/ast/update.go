@@ -15,6 +15,8 @@
 package ast
 
 import (
+	"strings"
+
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -70,6 +72,9 @@ func nodeUpdate(ctx *Context, node *tree.Update) (update *vitess.Update, err err
 	if err != nil {
 		return nil, err
 	}
+	if columns, ok := updateColumnAuthColumns(node.Exprs); ok {
+		applyAliasedTableColumnAuth(table, auth.AuthType_UPDATE, columns)
+	}
 	where, err := nodeWhere(ctx, node.Where)
 	if err != nil {
 		return nil, err
@@ -91,6 +96,19 @@ func nodeUpdate(ctx *Context, node *tree.Update) (update *vitess.Update, err err
 		Limit:      limit,
 		Returning:  returningExprs,
 	}, nil
+}
+
+func updateColumnAuthColumns(exprs tree.UpdateExprs) ([]string, bool) {
+	columns := make([]string, 0, len(exprs))
+	for _, expr := range exprs {
+		for _, name := range expr.Names {
+			if strings.Contains(string(name), ".") {
+				return nil, false
+			}
+			columns = append(columns, string(name))
+		}
+	}
+	return columns, true
 }
 
 // buildJoinTableExpressionTree returns an expression tree of JoinTableExprs with |tableExprs| as the
