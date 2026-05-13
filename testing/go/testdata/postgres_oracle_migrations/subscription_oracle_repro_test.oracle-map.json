@@ -29,6 +29,28 @@
       "querySha256": "f4981470f9a337d7ed03d7c3021569095fc9553a04adc5e2dc4245055dbf22ca",
       "needsCleanup": false,
       "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog#0001",
+      "source": "testing/go/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog",
+      "ordinal": 1,
+      "scriptName": "subscription add publication refresh false updates catalog",
+      "oracle": "postgres",
+      "postgresId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "suggestedId": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';",
+      "querySha256": "beed11c9313eb6d0be9b2df502c6cbee155d69868eb3debeb61eca59c85d5c24",
+      "expectedRows": [
+        [
+          {
+            "value": "sub_refresh_false_pub,sub_refresh_false_extra"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
     }
   ]
 }

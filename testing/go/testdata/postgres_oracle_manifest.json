@@ -1924,6 +1924,37 @@
         "DROP PUBLICATION IF EXISTS sub_disabled_pub",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
+    },
+    {
+      "id": "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription",
+      "source": "testing/go/subscription_oracle_repro_test.go:TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE sub_refresh_false_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+        "CREATE TABLE sub_refresh_false_extra_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+        "CREATE PUBLICATION sub_refresh_false_pub FOR TABLE sub_refresh_false_items;",
+        "CREATE PUBLICATION sub_refresh_false_extra FOR TABLE sub_refresh_false_extra_items;",
+        "CREATE SUBSCRIPTION sub_refresh_false_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION sub_refresh_false_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false);",
+        "ALTER SUBSCRIPTION sub_refresh_false_sub ADD PUBLICATION sub_refresh_false_extra WITH (copy_data = false, refresh = false);"
+      ],
+      "query": "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';",
+      "expectedRows": [
+        [
+          {
+            "value": "sub_refresh_false_pub,sub_refresh_false_extra"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SUBSCRIPTION IF EXISTS sub_refresh_false_sub",
+        "DROP PUBLICATION IF EXISTS sub_refresh_false_pub",
+        "DROP PUBLICATION IF EXISTS sub_refresh_false_extra",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
     }
   ]
 }

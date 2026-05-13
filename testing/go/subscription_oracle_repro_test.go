@@ -14,7 +14,11 @@
 
 package _go
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dolthub/go-mysql-server/sql"
+)
 
 // TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro pins
 // PostgreSQL's metadata-only subscription boundary: ADD PUBLICATION still
@@ -33,6 +37,35 @@ func TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro(t *testing.T
 				{
 					Query:       "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);",
 					ExpectedErr: "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions",
+				},
+			},
+		},
+	})
+}
+
+// TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog pins the valid
+// metadata-only companion to the default-refresh rejection: a disabled
+// subscription may add a publication when refresh=false is explicit.
+func TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "subscription add publication refresh false updates catalog",
+			SetUpScript: []string{
+				"CREATE TABLE sub_refresh_false_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+				"CREATE TABLE sub_refresh_false_extra_items (tenant_id BIGINT PRIMARY KEY, label TEXT);",
+				"CREATE PUBLICATION sub_refresh_false_pub FOR TABLE sub_refresh_false_items;",
+				"CREATE PUBLICATION sub_refresh_false_extra FOR TABLE sub_refresh_false_extra_items;",
+				"CREATE SUBSCRIPTION sub_refresh_false_sub CONNECTION 'host=127.0.0.1 dbname=postgres' PUBLICATION sub_refresh_false_pub WITH (connect = false, enabled = false, slot_name = NONE, create_slot = false);",
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: "ALTER SUBSCRIPTION sub_refresh_false_sub ADD PUBLICATION sub_refresh_false_extra WITH (copy_data = false, refresh = false);",
+				},
+				{
+					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';",
+					Expected: []sql.Row{
+						{"sub_refresh_false_pub,sub_refresh_false_extra"},
+					},
 				},
 			},
 		},
