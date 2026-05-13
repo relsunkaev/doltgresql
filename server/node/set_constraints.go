@@ -16,6 +16,7 @@ package node
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -70,6 +71,9 @@ func (s *SetConstraints) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (s *SetConstraints) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := s.validateNamedConstraints(ctx); err != nil {
+		return nil, err
+	}
 	connectionID := ctx.Session.ID()
 	if !deferrable.Active(connectionID) {
 		return sql.RowsToRowIter(), nil
@@ -140,4 +144,53 @@ func (s *SetConstraints) hasViolation(ctx *sql.Context, query string) (bool, err
 		return false, err
 	}
 	return len(rows) > 0, nil
+}
+
+func (s *SetConstraints) validateNamedConstraints(ctx *sql.Context) error {
+	if s.all {
+		return nil
+	}
+	for _, name := range s.names {
+		found, isDeferrable, err := s.constraintDeferrability(ctx, name)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return errors.Errorf(`constraint "%s" does not exist`, name)
+		}
+		if !isDeferrable {
+			return errors.Errorf(`constraint "%s" is not deferrable`, name)
+		}
+	}
+	return nil
+}
+
+func (s *SetConstraints) constraintDeferrability(ctx *sql.Context, name string) (bool, bool, error) {
+	if s.Runner.Runner == nil {
+		return false, false, errors.Errorf("statement runner is not available")
+	}
+	query := "SELECT condeferrable FROM pg_catalog.pg_constraint WHERE conname = '" + escapeSQLString(name) + "'"
+	rows, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+		_, rowIter, _, err := s.Runner.Runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		return sql.RowIterToRows(subCtx, rowIter)
+	})
+	if err != nil {
+		return false, false, err
+	}
+	if len(rows) == 0 {
+		return false, false, nil
+	}
+	for _, row := range rows {
+		if len(row) > 0 && row[0] == true {
+			return true, true, nil
+		}
+	}
+	return true, false, nil
+}
+
+func escapeSQLString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
 }
