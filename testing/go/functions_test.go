@@ -2115,7 +2115,7 @@ func TestJsonFunctions(t *testing.T) {
 				},
 				{
 					Query:    `SELECT jsonb_set('{"a":1}'::jsonb, '{}', '2'::jsonb);`,
-					Expected: []sql.Row{{`{"a": 1}`}},
+					Expected: []sql.Row{{`2`}},
 				},
 				{
 					Query:    `SELECT jsonb_set('{"a":1}'::jsonb, '{b,c}', '2'::jsonb);`,

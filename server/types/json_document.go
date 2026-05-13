@@ -397,6 +397,9 @@ func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 		key := path[0]
 		if len(path) == 1 {
 			if _, ok := value.Index[key]; ok {
+				if position == 1 {
+					return nil, false, errors.New("cannot replace existing key")
+				}
 				return JsonValueCopy(value), false, nil
 			}
 			items := make([]JsonValueObjectItem, 0, len(value.Items)+1)
@@ -451,7 +454,7 @@ func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, ins
 		newArray[idx] = newChild
 		return newArray, true, nil
 	default:
-		return JsonValueCopy(value), false, nil
+		return nil, false, errors.New("cannot set path in scalar")
 	}
 }
 
