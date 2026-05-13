@@ -370,13 +370,20 @@ var jsonb_exists = framework.Function2{
 			str := val2.(string)
 			for _, arrayItem := range value {
 				itemStr, ok := arrayItem.(pgtypes.JsonValueString)
-				if ok && str == string(itemStr) {
+				if !ok {
+					continue
+				}
+				matches, err := jsonbStringValueEqualsText(itemStr, str)
+				if err != nil {
+					return nil, err
+				}
+				if matches {
 					return true, nil
 				}
 			}
 			return false, nil
 		case pgtypes.JsonValueString:
-			return string(value) == val2.(string), nil
+			return jsonbStringValueEqualsText(value, val2.(string))
 		default:
 			return false, nil
 		}
@@ -430,7 +437,14 @@ var jsonb_exists_any = framework.Function2{
 			for _, key := range keys {
 				for _, arrayItem := range value {
 					itemStr, ok := arrayItem.(pgtypes.JsonValueString)
-					if ok && string(itemStr) == key.(string) {
+					if !ok {
+						continue
+					}
+					matches, err := jsonbStringValueEqualsText(itemStr, key.(string))
+					if err != nil {
+						return nil, err
+					}
+					if matches {
 						return true, nil
 					}
 				}
@@ -438,7 +452,11 @@ var jsonb_exists_any = framework.Function2{
 			return false, nil
 		case pgtypes.JsonValueString:
 			for _, key := range keys {
-				if string(value) == key.(string) {
+				matches, err := jsonbStringValueEqualsText(value, key.(string))
+				if err != nil {
+					return nil, err
+				}
+				if matches {
 					return true, nil
 				}
 			}
@@ -475,7 +493,14 @@ var jsonb_exists_all = framework.Function2{
 				found := false
 				for _, arrayItem := range value {
 					itemStr, ok := arrayItem.(pgtypes.JsonValueString)
-					if ok && string(itemStr) == key.(string) {
+					if !ok {
+						continue
+					}
+					matches, err := jsonbStringValueEqualsText(itemStr, key.(string))
+					if err != nil {
+						return nil, err
+					}
+					if matches {
 						found = true
 						break
 					}
@@ -487,7 +512,11 @@ var jsonb_exists_all = framework.Function2{
 			return true, nil
 		case pgtypes.JsonValueString:
 			for _, key := range keys {
-				if string(value) != key.(string) {
+				matches, err := jsonbStringValueEqualsText(value, key.(string))
+				if err != nil {
+					return nil, err
+				}
+				if !matches {
 					return false, nil
 				}
 			}
@@ -496,6 +525,14 @@ var jsonb_exists_all = framework.Function2{
 			return false, nil
 		}
 	},
+}
+
+func jsonbStringValueEqualsText(value pgtypes.JsonValueString, text string) (bool, error) {
+	decoded, err := pgtypes.JsonStringUnescape(value)
+	if err != nil {
+		return false, err
+	}
+	return decoded == text, nil
 }
 
 // jsonb_delete_text represents the PostgreSQL function of the same name, taking the same parameters.
