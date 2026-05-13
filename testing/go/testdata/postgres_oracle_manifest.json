@@ -1000,6 +1000,53 @@
       ]
     },
     {
+      "id": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3",
+      "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT GREATEST(1, 2, 3), LEAST(1, 2, 3);",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0002-select-greatest-null-1-2",
+      "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT GREATEST(1, 2, 3), LEAST(1, 2, 3);"
+      ],
+      "query": "SELECT GREATEST(NULL, 1, 2), LEAST(NULL, 1, 2), GREATEST(NULL, NULL);",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
       "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
       "ordinal": 1,

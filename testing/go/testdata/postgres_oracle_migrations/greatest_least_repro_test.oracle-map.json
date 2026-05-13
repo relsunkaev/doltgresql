@@ -1,0 +1,70 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map greatest_least_repro_test.go",
+  "sourceFile": "testing/go/greatest_least_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro#0001",
+      "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
+      "ordinal": 1,
+      "scriptName": "GREATEST and LEAST evaluate scalar arguments",
+      "oracle": "postgres",
+      "postgresId": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3",
+      "suggestedId": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT GREATEST(1, 2, 3), LEAST(1, 2, 3);",
+      "querySha256": "766abb9b4ea44319ba7e3e8fa5dff4b43a6c4bf67cddef398016acd73d0c5a20",
+      "expectedRows": [
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro#0002",
+      "source": "testing/go/greatest_least_repro_test.go:TestGreatestLeastEvaluateScalarArgumentsRepro",
+      "ordinal": 2,
+      "scriptName": "GREATEST and LEAST evaluate scalar arguments",
+      "oracle": "postgres",
+      "postgresId": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0002-select-greatest-null-1-2",
+      "suggestedId": "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0002-select-greatest-null-1-2",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT GREATEST(NULL, 1, 2), LEAST(NULL, 1, 2), GREATEST(NULL, NULL);",
+      "querySha256": "25bdb14778835c9a26c84f82bb5b184b5ab9c9a4eacbb86d59bb85255bdf68df",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "null": true
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
