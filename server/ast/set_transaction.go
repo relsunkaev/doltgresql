@@ -18,6 +18,7 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeSetTransaction handles *tree.SetTransaction nodes.
@@ -26,5 +27,34 @@ func nodeSetTransaction(ctx *Context, node *tree.SetTransaction) (vitess.Stateme
 		return nil, nil
 	}
 
-	return NewNoOp(), nil
+	return vitess.InjectedStatement{
+		Statement: pgnodes.SetTransaction{
+			ReadWriteMode:  nodeTransactionReadWriteMode(node.Modes.ReadWriteMode),
+			DeferrableMode: nodeTransactionDeferrableMode(node.Modes.Deferrable),
+			Isolation:      node.Modes.Isolation != tree.UnspecifiedIsolation,
+			Snapshot:       node.Snapshot,
+		},
+	}, nil
+}
+
+func nodeTransactionReadWriteMode(mode tree.ReadWriteMode) pgnodes.TransactionReadWriteMode {
+	switch mode {
+	case tree.ReadOnly:
+		return pgnodes.TransactionReadOnly
+	case tree.ReadWrite:
+		return pgnodes.TransactionReadWrite
+	default:
+		return pgnodes.TransactionReadWriteUnspecified
+	}
+}
+
+func nodeTransactionDeferrableMode(mode tree.DeferrableMode) pgnodes.TransactionDeferrableMode {
+	switch mode {
+	case tree.Deferrable:
+		return pgnodes.TransactionDeferrable
+	case tree.NotDeferrable:
+		return pgnodes.TransactionNotDeferrable
+	default:
+		return pgnodes.TransactionDeferrableUnspecified
+	}
 }

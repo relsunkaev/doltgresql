@@ -15,11 +15,10 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
 // nodeSetSessionCharacteristics handles *tree.SetSessionCharacteristics nodes.
@@ -27,5 +26,9 @@ func nodeSetSessionCharacteristics(ctx *Context, node *tree.SetSessionCharacteri
 	if node == nil {
 		return nil, nil
 	}
-	return nil, errors.Errorf("SET SESSION CHARACTERISTICS is not yet supported")
+	return vitess.InjectedStatement{
+		Statement: pgnodes.SetSessionCharacteristics{
+			ReadWriteMode: nodeTransactionReadWriteMode(node.Modes.ReadWriteMode),
+		},
+	}, nil
 }

@@ -52,6 +52,9 @@ var nextval_text = framework.Function1{
 			return nil, err
 		}
 		sequenceID := id.NewSequence(schema, sequence)
+		if err = rejectReadOnlyPersistentSequenceWrite(ctx, collection, sequenceID); err != nil {
+			return nil, err
+		}
 		value, err := collection.NextVal(ctx, sequenceID)
 		if err != nil {
 			return nil, err
@@ -83,6 +86,9 @@ var nextval_regclass = framework.Function1{
 			return nil, err
 		}
 		sequenceID := id.NewSequence(schema, sequence)
+		if err = rejectReadOnlyPersistentSequenceWrite(ctx, collection, sequenceID); err != nil {
+			return nil, err
+		}
 		value, err := collection.NextVal(ctx, sequenceID)
 		if err != nil {
 			return nil, err

@@ -66,7 +66,11 @@ var setval_text_int64_boolean = framework.Function3{
 		if err != nil {
 			return nil, err
 		}
-		return val2.(int64), collection.SetVal(ctx, id.NewSequence(schema, relation), val2.(int64), val3.(bool))
+		sequenceID := id.NewSequence(schema, relation)
+		if err = rejectReadOnlyPersistentSequenceWrite(ctx, collection, sequenceID); err != nil {
+			return nil, err
+		}
+		return val2.(int64), collection.SetVal(ctx, sequenceID, val2.(int64), val3.(bool))
 	},
 }
 

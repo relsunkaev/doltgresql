@@ -95,6 +95,9 @@ type ConnectionHandler struct {
 	copyFromStdinFailed bool
 	// inTransaction is set to true with BEGIN query and false with COMMIT query.
 	inTransaction bool
+	// transactionStatementCount tracks successful statements after BEGIN for
+	// PostgreSQL's SET TRANSACTION "before any query" validation.
+	transactionStatementCount int
 	// pendingReplicationCaptures stores row changes produced inside an explicit transaction until COMMIT.
 	pendingReplicationCaptures []*replicationChangeCapture
 	// pendingReplicationAdvance records a row-producing transaction without an active logical sender.
@@ -688,6 +691,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		if err == nil {
 			err = h.applyXactVarSavepointHook(queries[0])
 		}
+		if err == nil {
+			h.markTransactionStatement(queries[0])
+		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		return true, err
 	}
@@ -706,6 +712,9 @@ func (h *ConnectionHandler) handleQuery(message *pgproto3.Query) (endOfMessages 
 		err = h.query(query)
 		if err == nil {
 			err = h.applyXactVarSavepointHook(query)
+		}
+		if err == nil {
+			h.markTransactionStatement(query)
 		}
 		h.releaseXactAdvisoryLocksIfOutsideTransaction()
 		if err != nil {
@@ -767,14 +776,30 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 			transactionCharacteristic = sql.ReadOnly
 		}
 		h.inTransaction = true
+		h.transactionStatementCount = 0
 		return true, true, h.beginTransaction(query, transactionCharacteristic)
 	case *sqlparser.Commit:
 		h.inTransaction = false
+		h.transactionStatementCount = 0
 	case *sqlparser.Rollback:
 		h.inTransaction = false
+		h.transactionStatementCount = 0
 	case *sqlparser.Deallocate:
 		return true, true, h.deallocatePreparedStatement(stmt.Name, h.preparedStatements, query)
 	case sqlparser.InjectedStatement:
+		switch injectedStmt := stmt.Statement.(type) {
+		case node.SetTransaction:
+			return true, true, h.setTransaction(injectedStmt, query)
+		case node.SetSessionCharacteristics:
+			return true, true, h.setSessionCharacteristics(injectedStmt, query)
+		}
+		if err := h.rejectReadOnlyTransactionWrite(query); err != nil {
+			if copyFrom, ok := stmt.Statement.(*node.CopyFrom); ok && copyFrom.Stdin {
+				h.copyFromStdinState = nil
+				h.copyFromStdinFailed = true
+			}
+			return true, true, err
+		}
 		switch injectedStmt := stmt.Statement.(type) {
 		case node.DiscardStatement:
 			switch injectedStmt.Mode {
@@ -842,6 +867,74 @@ func (h *ConnectionHandler) beginTransaction(query ConvertedQuery, transactionCh
 	return h.finishNotifications(query)
 }
 
+func (h *ConnectionHandler) setTransaction(stmt node.SetTransaction, query ConvertedQuery) error {
+	if stmt.Snapshot != "" {
+		return pgerror.New(pgcode.InvalidParameterValue, "invalid snapshot identifier")
+	}
+	if stmt.Isolation && h.transactionStatementCount > 0 {
+		return pgerror.New(pgcode.ActiveSQLTransaction, "SET TRANSACTION ISOLATION LEVEL must be called before any query")
+	}
+	if stmt.DeferrableMode != node.TransactionDeferrableUnspecified && h.transactionStatementCount > 0 {
+		return pgerror.New(pgcode.ActiveSQLTransaction, "SET TRANSACTION [NOT] DEFERRABLE must be called before any query")
+	}
+	if stmt.ReadWriteMode != node.TransactionReadWriteUnspecified && h.transactionStatementCount > 0 {
+		return pgerror.New(pgcode.ActiveSQLTransaction, "transaction read-write mode must be set before any query")
+	}
+	if h.inTransaction && stmt.ReadWriteMode != node.TransactionReadWriteUnspecified {
+		transactionCharacteristic := sql.ReadWrite
+		if stmt.ReadWriteMode == node.TransactionReadOnly {
+			transactionCharacteristic = sql.ReadOnly
+		}
+		if err := h.restartCurrentTransaction(query, transactionCharacteristic); err != nil {
+			return err
+		}
+	}
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
+func (h *ConnectionHandler) restartCurrentTransaction(query ConvertedQuery, transactionCharacteristic sql.TransactionCharacteristic) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	ts, ok := sqlCtx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
+	}
+	if currentTx := sqlCtx.GetTransaction(); currentTx != nil {
+		if err = ts.Rollback(sqlCtx, currentTx); err != nil {
+			return err
+		}
+		sqlCtx.SetTransaction(nil)
+	}
+	transaction, err := ts.StartTransaction(sqlCtx, transactionCharacteristic)
+	if err != nil {
+		return err
+	}
+	sqlCtx.SetTransaction(transaction)
+	sqlCtx.SetIgnoreAutoCommit(true)
+	return nil
+}
+
+func (h *ConnectionHandler) setSessionCharacteristics(stmt node.SetSessionCharacteristics, query ConvertedQuery) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	switch stmt.ReadWriteMode {
+	case node.TransactionReadOnly:
+		err = sqlCtx.SetSessionVariable(sqlCtx, "default_transaction_read_only", int8(1))
+	case node.TransactionReadWrite:
+		err = sqlCtx.SetSessionVariable(sqlCtx, "default_transaction_read_only", int8(0))
+	}
+	if err != nil {
+		return err
+	}
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
 func defaultTransactionReadOnly(ctx *sql.Context) (bool, error) {
 	value, err := ctx.GetSessionVariable(ctx, "default_transaction_read_only")
 	if err != nil {
@@ -894,7 +987,8 @@ func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool
 		return true
 	case sqlparser.InjectedStatement:
 		switch stmt.Statement.(type) {
-		case node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.CreateTableAsExecuteStatement, node.PrepareTransaction,
+		case node.SetTransaction, node.SetSessionCharacteristics,
+			node.DiscardStatement, node.PrepareStatement, node.ExecuteStatement, node.CreateTableAsExecuteStatement, node.PrepareTransaction,
 			node.CommitPrepared, node.RollbackPrepared, node.ListenStatement, node.UnlistenStatement,
 			node.NotifyStatement, *node.CopyFrom, *node.CopyTo:
 			return true
@@ -916,6 +1010,80 @@ func (h *ConnectionHandler) rejectConcurrentIndexInTransaction(query ConvertedQu
 			"DROP INDEX CONCURRENTLY cannot run inside a transaction block")
 	}
 	return nil
+}
+
+func (h *ConnectionHandler) rejectReadOnlyTransactionWrite(query ConvertedQuery) error {
+	if !h.inTransaction || !queryWritesPersistentState(query) {
+		return nil
+	}
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	tx := sqlCtx.GetTransaction()
+	if tx == nil || !tx.IsReadOnly() {
+		return nil
+	}
+	return readOnlyTransactionError()
+}
+
+func readOnlyTransactionError() error {
+	return pgerror.New(pgcode.ReadOnlySQLTransaction, "cannot execute statement in a read-only transaction (READ ONLY transaction)")
+}
+
+func isReadOnlyTransactionError(err error) bool {
+	return sql.ErrReadOnlyTransaction.Is(err) || strings.Contains(err.Error(), "READ ONLY transaction")
+}
+
+func queryWritesPersistentState(query ConvertedQuery) bool {
+	if stmt, ok := query.AST.(sqlparser.InjectedStatement); ok {
+		return injectedStatementWritesPersistentState(stmt.Statement)
+	}
+	switch strings.ToUpper(query.StatementTag) {
+	case "ALTER TABLE", "DROP TABLE", "CREATE INDEX", "DROP INDEX", "ALTER INDEX", "DROP SEQUENCE":
+		return true
+	case "CREATE TABLE", "CREATE SEQUENCE":
+		return !readOnlyTemporaryCreatePattern.MatchString(query.String)
+	default:
+		return false
+	}
+}
+
+func injectedStatementWritesPersistentState(stmt any) bool {
+	if stmt == nil {
+		return false
+	}
+	switch stmt.(type) {
+	case node.SetTransaction, node.SetSessionCharacteristics, node.NoOp,
+		node.ListenStatement, node.UnlistenStatement, node.NotifyStatement:
+		return false
+	}
+	if sqlNode, ok := stmt.(sql.Node); ok {
+		return !sqlNode.IsReadOnly()
+	}
+	return false
+}
+
+func (h *ConnectionHandler) markTransactionStatement(query ConvertedQuery) {
+	if !h.inTransaction || isTransactionControlQuery(query) {
+		return
+	}
+	h.transactionStatementCount++
+}
+
+func isTransactionControlQuery(query ConvertedQuery) bool {
+	switch query.AST.(type) {
+	case *sqlparser.Begin, *sqlparser.Commit, *sqlparser.Rollback,
+		*sqlparser.Savepoint, *sqlparser.RollbackSavepoint, *sqlparser.ReleaseSavepoint:
+		return true
+	case sqlparser.InjectedStatement:
+		stmt := query.AST.(sqlparser.InjectedStatement)
+		switch stmt.Statement.(type) {
+		case node.SetTransaction:
+			return true
+		}
+	}
+	return false
 }
 
 func (h *ConnectionHandler) listen(stmt node.ListenStatement, query ConvertedQuery) error {
@@ -1837,6 +2005,9 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 	if err = h.rejectConcurrentIndexInTransaction(query); err != nil {
 		return err
 	}
+	if err = h.rejectReadOnlyTransactionWrite(query); err != nil {
+		return err
+	}
 
 	if isTruncateQuery(query) {
 		return h.query(query)
@@ -1863,11 +2034,15 @@ func (h *ConnectionHandler) handleExecute(message *pgproto3.Execute) error {
 		}
 	}
 	if err = h.executeBoundWithReplication(query, executionQuery, executionPlan, executionFormatCodes, executionFields, replicationCapture, advanceLSN, &rowsAffected, true); err != nil {
+		if isReadOnlyTransactionError(err) {
+			return readOnlyTransactionError()
+		}
 		return err
 	}
 	if err = h.applyXactVarSavepointHook(query); err != nil {
 		return err
 	}
+	h.markTransactionStatement(query)
 
 	// Invalidate cached prepared plans for schema-mutating queries that
 	// reach the engine through the extended Parse/Bind/Execute path. The
@@ -3308,6 +3483,9 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 			return err
 		}
 	}
+	if err := h.rejectReadOnlyTransactionWrite(query); err != nil {
+		return err
+	}
 	if h.inTransaction && isTruncateQuery(query) {
 		return h.executeTransactionalTruncate(query)
 	}
@@ -3390,6 +3568,9 @@ func (h *ConnectionHandler) query(query ConvertedQuery) error {
 	}
 	err = h.doltgresHandler.ComQuery(context.Background(), h.mysqlConn, queryToExecute.String, queryToExecute.AST, callback)
 	if err != nil {
+		if isReadOnlyTransactionError(err) {
+			return readOnlyTransactionError()
+		}
 		if strings.HasPrefix(err.Error(), "syntax error at position") {
 			return errors.Errorf("This statement is not yet supported")
 		}
@@ -4047,6 +4228,7 @@ var (
 
 var createIndexConcurrentlyPattern = regexp.MustCompile(`(?is)^\s*create\s+(?:unique\s+)?index\s+concurrently\b`)
 var dropIndexConcurrentlyPattern = regexp.MustCompile(`(?is)^\s*drop\s+index\s+concurrently\b`)
+var readOnlyTemporaryCreatePattern = regexp.MustCompile(`(?is)^\s*create\s+(?:temp|temporary)\s+(?:table|sequence)\b`)
 
 func (h *ConnectionHandler) convertedAlterSystem(query string) (ConvertedQuery, bool, error) {
 	if !alterSystemPattern.MatchString(query) {
