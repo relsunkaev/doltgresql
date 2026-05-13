@@ -1257,8 +1257,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.DropBehavior> opt_drop_behavior
 %type <tree.ValidationBehavior> opt_validate_behavior
 
-%type <str> opt_owner opt_template opt_encoding opt_strategy opt_locale opt_lc_collate opt_lc_ctype opt_icu_locale
-%type <str> lock_mode opt_lock_mode opt_icu_rules opt_locale_provider opt_collation_version opt_tablespace opt_using_index_tablespace
+%type <str> lock_mode opt_lock_mode opt_tablespace opt_using_index_tablespace
 
 %type <tree.IsolationLevel> transaction_iso_level
 %type <tree.UserPriority> transaction_user_priority
@@ -1425,7 +1424,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <*tree.When> when_clause
 %type <[]*tree.When> when_clause_list
 %type <tree.ComparisonOperator> sub_type
-%type <tree.Expr> numeric_only opt_allow_connections opt_connection_limit opt_is_template opt_oid
+%type <tree.Expr> numeric_only
 %type <tree.AliasClause> alias_clause opt_alias_clause func_table_alias_clause opt_func_table_alias_clause
 %type <bool> opt_ordinality opt_compact
 %type <*tree.Order> sortby
@@ -11144,116 +11143,6 @@ create_database_option:
     $$.val = &tree.CreateDatabase{Oid: $3.expr()}
   }
 
-opt_owner:
-  OWNER opt_equal role_spec
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_template:
-  TEMPLATE opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_encoding:
-  ENCODING opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_strategy:
-  STRATEGY opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_locale:
-  LOCALE opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_lc_collate:
-  LC_COLLATE opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_lc_ctype:
-  LC_CTYPE opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_icu_locale:
-  ICU_LOCALE opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_icu_rules:
-  ICU_RULES opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_locale_provider:
-  LOCALE_PROVIDER opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
-opt_collation_version:
-  COLLATION_VERSION opt_equal non_reserved_word_or_sconst
-  {
-    $$ = $3
-  }
-| /* EMPTY */
-  {
-    $$ = ""
-  }
-
 opt_tablespace:
   TABLESPACE opt_equal tablespace_name
   {
@@ -11262,46 +11151,6 @@ opt_tablespace:
 | /* EMPTY */
   {
     $$ = ""
-  }
-
-opt_allow_connections:
-  ALLOW_CONNECTIONS opt_equal a_expr
-  {
-    $$.val = $3.expr()
-  }
-| /* EMPTY */
-  {
-    $$.val = nil
-  }
-
-opt_connection_limit:
-  CONNECTION LIMIT opt_equal signed_iconst
-  {
-    $$.val = $4.expr()
-  }
-| /* EMPTY */
-  {
-    $$.val = nil
-  }
-
-opt_is_template:
-  IS_TEMPLATE opt_equal a_expr
-  {
-    $$.val = $3.expr()
-  }
-| /* EMPTY */
-  {
-    $$.val = nil
-  }
-
-opt_oid:
-  OID opt_equal signed_iconst
-  {
-    $$.val = $3.expr()
-  }
-| /* EMPTY */
-  {
-    $$.val = nil
   }
 
 opt_equal:
