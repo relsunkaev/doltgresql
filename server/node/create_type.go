@@ -39,6 +39,9 @@ type CreateType struct {
 	// enum type
 	Labels []string
 
+	// range type
+	RangeSubtype *types.DoltgresType
+
 	typType types.TypeType
 }
 
@@ -61,6 +64,11 @@ func NewCreateCompositeType(database, schema, name string, typs []CompositeAsTyp
 // NewCreateEnumType creates CreateType node for creating ENUM type.
 func NewCreateEnumType(database, schema, name string, labels []string) *CreateType {
 	return &CreateType{DatabaseName: database, SchemaName: schema, Name: name, Labels: labels, typType: types.TypeType_Enum}
+}
+
+// NewCreateRangeType creates CreateType node for creating RANGE type.
+func NewCreateRangeType(database, schema, name string, subtype *types.DoltgresType) *CreateType {
+	return &CreateType{DatabaseName: database, SchemaName: schema, Name: name, RangeSubtype: subtype, typType: types.TypeType_Range}
 }
 
 // NewCreateShellType creates CreateType node for creating
@@ -130,6 +138,11 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			attrs[i] = types.NewCompositeAttribute(ctx, relID, a.AttrName, a.Typ.ID, a.Typ.GetAttTypMod(), int16(i+1), a.Collation)
 		}
 		newType = types.NewCompositeType(ctx, relID, arrayID, typeID, attrs)
+	case types.TypeType_Range:
+		if c.RangeSubtype == nil {
+			return nil, errors.Errorf("range subtype is required")
+		}
+		newType = types.NewRangeType(arrayID, typeID)
 	default:
 		return nil, errors.Errorf("create type as %s is not supported", c.typType)
 	}

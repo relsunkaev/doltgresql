@@ -60,7 +60,11 @@ func nodeCreateType(ctx *Context, node *tree.CreateType) (vitess.Statement, erro
 	case tree.Enum:
 		createTypeNode = pgnodes.NewCreateEnumType(databaseName, schemaName, typName, node.Enum.Labels)
 	case tree.Range:
-		return nil, errors.Errorf("CREATE RANGE TYPE is not yet supported")
+		_, subtype, err := nodeResolvableTypeReference(ctx, node.Range.Subtype, false)
+		if err != nil {
+			return nil, err
+		}
+		createTypeNode = pgnodes.NewCreateRangeType(databaseName, schemaName, typName, subtype)
 	case tree.Base:
 		return nil, errors.Errorf("CREATE BASE TYPE is not yet supported")
 	case tree.Shell:
