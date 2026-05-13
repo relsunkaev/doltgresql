@@ -15,8 +15,6 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/tables"
@@ -43,8 +41,27 @@ func (p PgSequencesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgSequencesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_sequences row iter
-	return emptyRowIter()
+	entries, err := pgSequenceCatalogEntries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]sql.Row, 0, len(entries))
+	for _, entry := range entries {
+		rows = append(rows, sql.Row{
+			entry.schemaName,                       // schemaname
+			entry.sequenceName,                     // sequencename
+			entry.sequence.Owner,                   // sequenceowner
+			pgSequenceDataTypeName(entry.sequence), // data_type
+			entry.sequence.Start,                   // start_value
+			entry.sequence.Minimum,                 // min_value
+			entry.sequence.Maximum,                 // max_value
+			entry.sequence.Increment,               // increment_by
+			entry.sequence.Cycle,                   // cycle
+			entry.sequence.Cache,                   // cache_size
+			pgSequenceLastValue(entry.sequence),    // last_value
+		})
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,20 +85,4 @@ var pgSequencesSchema = sql.Schema{
 	{Name: "cycle", Type: pgtypes.Bool, Default: nil, Nullable: true, Source: PgSequencesName},
 	{Name: "cache_size", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgSequencesName},
 	{Name: "last_value", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgSequencesName},
-}
-
-// pgSequencesRowIter is the sql.RowIter for the pg_sequences table.
-type pgSequencesRowIter struct {
-}
-
-var _ sql.RowIter = (*pgSequencesRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgSequencesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgSequencesRowIter) Close(ctx *sql.Context) error {
-	return nil
 }

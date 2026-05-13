@@ -15,8 +15,6 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/tables"
@@ -43,8 +41,7 @@ func (p PgStatioAllSequencesHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgStatioAllSequencesHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_statio_all_sequences row iter
-	return emptyRowIter()
+	return pgStatioSequenceRows(ctx, pgSequenceStatsScopeAll)
 }
 
 // Schema implements the interface tables.Handler.
@@ -62,20 +59,4 @@ var pgStatioAllSequencesSchema = sql.Schema{
 	{Name: "relname", Type: pgtypes.Name, Default: nil, Nullable: true, Source: PgStatioAllSequencesName},
 	{Name: "blks_read", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgStatioAllSequencesName},
 	{Name: "blks_hit", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgStatioAllSequencesName},
-}
-
-// pgStatioAllSequencesRowIter is the sql.RowIter for the pg_statio_all_sequences table.
-type pgStatioAllSequencesRowIter struct {
-}
-
-var _ sql.RowIter = (*pgStatioAllSequencesRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgStatioAllSequencesRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgStatioAllSequencesRowIter) Close(ctx *sql.Context) error {
-	return nil
 }
