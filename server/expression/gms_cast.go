@@ -622,11 +622,45 @@ func (f *gmsCastWindowFunction) DefaultFramer() sql.WindowFramer {
 }
 
 func (f *gmsCastWindowFunction) Compute(ctx *sql.Context, interval sql.WindowInterval, buffer sql.WindowBuffer) (interface{}, error) {
+	if avgChild, ok := avgWindowChild(f.child); ok {
+		hasNonNull, err := windowIntervalHasNonNull(ctx, avgChild, interval, buffer)
+		if err != nil {
+			return nil, err
+		}
+		if !hasNonNull {
+			return nil, nil
+		}
+	}
 	val, err := f.inner.Compute(ctx, interval, buffer)
 	if err != nil {
 		return nil, err
 	}
 	return castGMSExpressionValue(ctx, val, f.child)
+}
+
+func avgWindowChild(expr sql.Expression) (sql.Expression, bool) {
+	fn, ok := expr.(sql.FunctionExpression)
+	if !ok || !strings.EqualFold(fn.FunctionName(), "avg") {
+		return nil, false
+	}
+	children := expr.Children()
+	if len(children) == 0 {
+		return nil, false
+	}
+	return children[0], true
+}
+
+func windowIntervalHasNonNull(ctx *sql.Context, expr sql.Expression, interval sql.WindowInterval, buffer sql.WindowBuffer) (bool, error) {
+	for i := interval.Start; i < interval.End; i++ {
+		val, err := expr.Eval(ctx, buffer[i])
+		if err != nil {
+			return false, err
+		}
+		if val != nil {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // IsNullable implements the sql.Expression interface.
