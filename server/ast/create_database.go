@@ -22,6 +22,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -33,7 +35,7 @@ func nodeCreateDatabase(_ *Context, node *tree.CreateDatabase) (vitess.Statement
 
 	if len(node.Encoding) > 0 {
 		if !isPostgresEncodingName(node.Encoding) {
-			return nil, errors.Errorf("%s is not a valid encoding name", node.Encoding)
+			return nil, pgerror.Newf(pgcode.UndefinedObject, "%s is not a valid encoding name", node.Encoding)
 		}
 		logrus.Warnf("unsupported clause ENCODING, ignoring")
 	}
