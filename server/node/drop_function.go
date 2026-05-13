@@ -26,6 +26,7 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // RoutineWithParams represent a function or a procedure with schema name, routine name and its parameters.
@@ -130,12 +131,21 @@ func dropFunction(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineW
 	if err = funcColl.DropFunction(ctx, funcId); err != nil {
 		return err
 	}
+	clearFunctionComment(funcId)
 	var persistErr error
 	auth.LockWrite(func() {
 		auth.RemoveAllRoutinePrivileges(funcId.SchemaName(), funcId.FunctionName())
 		persistErr = auth.PersistChanges()
 	})
 	return persistErr
+}
+
+func clearFunctionComment(funcId id.Function) {
+	comments.Set(comments.Key{
+		ObjOID:   id.Cache().ToOID(funcId.AsId()),
+		ClassOID: comments.ClassOID("pg_proc"),
+		ObjSubID: 0,
+	}, nil)
 }
 
 func resolveFunctionID(ctx *sql.Context, funcColl *functions.Collection, fn *RoutineWithParams) (id.Function, error) {
