@@ -13234,7 +13234,13 @@ simple_typename:
     if err != nil { return setErr(sqllex, err) }
     $$.val = typ
   }
-| POLYGON error { return unimplementedWithIssueDetail(sqllex, 21286, "polygon") } // needed or else it generates a syntax error.
+| POLYGON
+  {
+    aIdx := sqllex.(*lexer).NewAnnotation()
+    typ, err := tree.NewUnresolvedObjectName(1, [3]string{"polygon"}, aIdx)
+    if err != nil { return setErr(sqllex, err) }
+    $$.val = typ
+  }
 
 geo_shape_type:
   POINT { $$.val = geopb.ShapeType_Point }

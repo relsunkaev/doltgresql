@@ -59,6 +59,7 @@ func initTypeFunctions() {
 	initPgLsn()
 	initPgSnapshot()
 	initPoint()
+	initPolygon()
 	initRecord()
 	initRegclass()
 	initRegconfig()

@@ -267,7 +267,7 @@ func init() {
 		toInternal("pg_shseclabel"):    Unknown,
 		toInternal("pg_type"):          Unknown,
 		toInternal("point"):            Point,
-		toInternal("polygon"):          Unknown,
+		toInternal("polygon"):          Polygon,
 		toInternal("record"):           Record,
 		toInternal("refcursor"):        Unknown,
 		toInternal("regclass"):         Regclass,

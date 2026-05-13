@@ -827,6 +827,20 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			}
 			return types.FormatPath(types.PathValue{Points: points, Closed: val.Closed})
 		}
+	case types.Polygon.ID:
+		switch val := v.(type) {
+		case types.PolygonValue:
+			return types.FormatPolygon(val)
+		case pgtype.Polygon:
+			if !val.Valid {
+				return nil
+			}
+			points := make([]types.PointValue, len(val.P))
+			for i, point := range val.P {
+				points[i] = types.PointValue{X: point.X, Y: point.Y}
+			}
+			return types.FormatPolygon(types.PolygonValue{Points: points})
+		}
 	case types.Timestamp.ID, types.TimestampTZ.ID:
 		if v == nil {
 			return nil
