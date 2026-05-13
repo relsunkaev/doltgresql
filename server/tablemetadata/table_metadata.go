@@ -28,6 +28,7 @@ const commentPrefix = "doltgres:table-metadata:v1:"
 // does not currently expose.
 type Metadata struct {
 	PrimaryKeyConstraint        string              `json:"primaryKeyConstraint,omitempty"`
+	PrimaryKeyIndexComment      string              `json:"primaryKeyIndexComment,omitempty"`
 	MaterializedView            bool                `json:"materializedView,omitempty"`
 	MaterializedViewDefinition  string              `json:"materializedViewDefinition,omitempty"`
 	MaterializedViewUnpopulated bool                `json:"materializedViewUnpopulated,omitempty"`
@@ -57,6 +58,7 @@ type DroppedColumn struct {
 // EncodeComment returns a durable table comment containing PostgreSQL metadata.
 func EncodeComment(metadata Metadata) string {
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
+	metadata.PrimaryKeyIndexComment = strings.TrimSpace(metadata.PrimaryKeyIndexComment)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	metadata.ForeignServer = strings.TrimSpace(metadata.ForeignServer)
 	NormalizeRelOptions(metadata.RelOptions)
@@ -82,6 +84,7 @@ func DecodeComment(comment string) (Metadata, bool) {
 		return Metadata{}, false
 	}
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(metadata.PrimaryKeyConstraint)
+	metadata.PrimaryKeyIndexComment = strings.TrimSpace(metadata.PrimaryKeyIndexComment)
 	metadata.MaterializedViewDefinition = strings.TrimSpace(metadata.MaterializedViewDefinition)
 	metadata.Owner = strings.TrimSpace(metadata.Owner)
 	NormalizeRelOptions(metadata.RelOptions)
@@ -113,6 +116,27 @@ func PrimaryKeyConstraintName(comment string) string {
 func SetPrimaryKeyConstraintName(comment string, name string) string {
 	metadata, _ := DecodeComment(comment)
 	metadata.PrimaryKeyConstraint = strings.TrimSpace(name)
+	if metadata.empty() {
+		return ""
+	}
+	return EncodeComment(metadata)
+}
+
+// PrimaryKeyIndexComment returns PostgreSQL index metadata for the native
+// primary-key index, which cannot carry a Dolt index comment directly.
+func PrimaryKeyIndexComment(comment string) string {
+	metadata, ok := DecodeComment(comment)
+	if !ok {
+		return ""
+	}
+	return metadata.PrimaryKeyIndexComment
+}
+
+// SetPrimaryKeyIndexComment returns a table metadata comment carrying
+// PostgreSQL index metadata for the native primary-key index.
+func SetPrimaryKeyIndexComment(comment string, indexComment string) string {
+	metadata, _ := DecodeComment(comment)
+	metadata.PrimaryKeyIndexComment = strings.TrimSpace(indexComment)
 	if metadata.empty() {
 		return ""
 	}
@@ -727,6 +751,7 @@ func normalizeDroppedColumns(values *[]DroppedColumn) {
 
 func (metadata Metadata) empty() bool {
 	return metadata.PrimaryKeyConstraint == "" &&
+		metadata.PrimaryKeyIndexComment == "" &&
 		!metadata.MaterializedView &&
 		metadata.MaterializedViewDefinition == "" &&
 		!metadata.MaterializedViewUnpopulated &&

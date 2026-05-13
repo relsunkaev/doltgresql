@@ -26,6 +26,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/server/sessionstate"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -143,6 +144,12 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	if err != nil {
 		return nil, err
 	}
+	if !tableAlreadyExisted && !c.gmsCreateTable.Temporary() {
+		if err = c.applyPrimaryKeyIndexMetadata(ctx); err != nil {
+			_ = createTableIter.Close(ctx)
+			return nil, err
+		}
+	}
 	databaseName := databaseNameForSQLDatabase(c.gmsCreateTable.Db)
 	for _, sequence := range c.sequences {
 		sequence.database = databaseName
@@ -160,6 +167,19 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 		}
 	}
 	return createTableIter, err
+}
+
+func (c *CreateTable) applyPrimaryKeyIndexMetadata(ctx *sql.Context) error {
+	for _, indexDef := range c.gmsCreateTable.Indexes() {
+		if indexDef == nil || indexDef.Constraint != sql.IndexConstraint_Primary || indexDef.Comment == "" {
+			continue
+		}
+		if _, ok := indexmetadata.DecodeComment(indexDef.Comment); !ok {
+			continue
+		}
+		return modifyPrimaryKeyIndexComment(ctx, c.gmsCreateTable.Db, c.gmsCreateTable.Name(), indexDef.Comment)
+	}
+	return nil
 }
 
 type revisionQualifiedDatabase interface {
@@ -381,6 +401,29 @@ func modifyTableComment(ctx *sql.Context, db sql.Database, tableName string, com
 		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
 	}
 	return alterable.ModifyComment(ctx, comment)
+}
+
+func modifyPrimaryKeyIndexComment(ctx *sql.Context, db sql.Database, tableName string, indexComment string) error {
+	db, err := freshDatabase(ctx, db)
+	if err != nil {
+		return err
+	}
+	table, ok, err := db.GetTableInsensitive(ctx, tableName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return sql.ErrTableNotFound.New(tableName)
+	}
+	alterable, ok := table.(sql.CommentAlterableTable)
+	if !ok {
+		return sql.ErrAlterTableCommentNotSupported.New(table.Name())
+	}
+	comment := ""
+	if commented, ok := table.(sql.CommentedTable); ok {
+		comment = commented.Comment()
+	}
+	return alterable.ModifyComment(ctx, tablemetadata.SetPrimaryKeyIndexComment(comment, indexComment))
 }
 
 func freshDatabase(ctx *sql.Context, db sql.Database) (sql.Database, error) {

@@ -61,16 +61,30 @@ func Definition(index sql.Index, schema string) string {
 // DefinitionForSchema returns a PostgreSQL CREATE INDEX definition for index,
 // using tableSchema to deparse hidden functional-index columns when available.
 func DefinitionForSchema(index sql.Index, schema string, tableSchema sql.Schema) string {
-	return definitionForSchema(index, schema, tableSchema, DisplayName(index))
+	return definitionForSchema(index, schema, tableSchema, DisplayName(index), index.Comment())
 }
 
 // DefinitionForTable returns a PostgreSQL CREATE INDEX definition for index,
 // using table-level metadata for PostgreSQL-facing names when needed.
 func DefinitionForTable(index sql.Index, schema string, table sql.Table, tableSchema sql.Schema) string {
-	return definitionForSchema(index, schema, tableSchema, DisplayNameForTable(index, table))
+	return definitionForSchema(index, schema, tableSchema, DisplayNameForTable(index, table), CommentForTable(index, table))
 }
 
-func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema, displayName string) string {
+// CommentForTable returns PostgreSQL index metadata for index, using table
+// metadata for the native primary-key index because Dolt does not store that
+// index in the secondary index collection.
+func CommentForTable(idx sql.Index, table sql.Table) string {
+	if strings.EqualFold(idx.ID(), "PRIMARY") {
+		if commentedTable, ok := table.(sql.CommentedTable); ok {
+			if comment := tablemetadata.PrimaryKeyIndexComment(commentedTable.Comment()); comment != "" {
+				return comment
+			}
+		}
+	}
+	return idx.Comment()
+}
+
+func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema, displayName string, comment string) string {
 	unique := ""
 	if IsUnique(index) {
 		unique = " UNIQUE"
@@ -80,19 +94,19 @@ func definitionForSchema(index sql.Index, schema string, tableSchema sql.Schema,
 		quoteIdentifier(displayName),
 		quoteIdentifier(schema),
 		quoteIdentifier(index.Table()),
-		AccessMethod(index.IndexType(), index.Comment()),
+		AccessMethod(index.IndexType(), comment),
 		strings.Join(ColumnDefinitionsForSchema(index, tableSchema), ", "),
 	)
-	if includeColumns := IncludeColumns(index.Comment()); len(includeColumns) > 0 {
+	if includeColumns := IncludeColumns(comment); len(includeColumns) > 0 {
 		definition += " INCLUDE (" + strings.Join(quoteIdentifiers(includeColumns), ", ") + ")"
 	}
-	if NullsNotDistinct(index.Comment()) {
+	if NullsNotDistinct(comment) {
 		definition += " NULLS NOT DISTINCT"
 	}
-	if relOptions := relOptionsDefinition(index.Comment()); relOptions != "" {
+	if relOptions := relOptionsDefinition(comment); relOptions != "" {
 		definition += " WITH (" + relOptions + ")"
 	}
-	if predicate := Predicate(index.Comment()); predicate != "" {
+	if predicate := Predicate(comment); predicate != "" {
 		definition += " WHERE " + predicate
 	}
 	return definition

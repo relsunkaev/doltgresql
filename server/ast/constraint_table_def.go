@@ -102,15 +102,15 @@ func nodeUniqueConstraintTableDef(
 	tableName vitess.TableName,
 	ifExists bool) (*vitess.DDL, error) {
 
-	if len(node.IndexParams.StorageParams) > 0 {
-		return nil, errors.Errorf("STORAGE parameters not yet supported for indexes")
+	indexTableDef := node.IndexTableDef
+	if !node.PrimaryKey && bareIdentifier(indexTableDef.Name) == "" {
+		indexTableDef.Name = tree.Name(defaultUniqueConstraintNameForDef(tableName.Name.String(), node))
 	}
-
-	if node.IndexParams.Tablespace != "" {
-		return nil, errors.Errorf("TABLESPACE is not yet supported")
+	indexDef, err := nodeIndexTableDefAllowingStorageParams(ctx, &indexTableDef)
+	if err != nil {
+		return nil, err
 	}
-
-	indexFields, err := nodeIndexElemList(ctx, node.Columns)
+	indexOptions, err := uniqueConstraintIndexOptionsForDef(node)
 	if err != nil {
 		return nil, err
 	}
@@ -119,21 +119,17 @@ func nodeUniqueConstraintTableDef(
 	if node.PrimaryKey {
 		indexType = "primary"
 	}
-	indexName := bareIdentifier(node.Name)
-	if indexName == "" && !node.PrimaryKey {
-		indexName = defaultUniqueConstraintName(tableName.Name.String(), node.Columns)
-	}
 
 	ddl := &vitess.DDL{
 		Action:   "alter",
 		Table:    tableName,
 		IfExists: ifExists,
 		IndexSpec: &vitess.IndexSpec{
-			ToName:  vitess.NewColIdent(indexName),
+			ToName:  indexDef.Info.Name,
 			Action:  "create",
 			Type:    indexType,
-			Fields:  indexFields,
-			Options: uniqueConstraintIndexOptions(node.NullsNotDistinct),
+			Fields:  indexDef.Fields,
+			Options: indexOptions,
 		},
 	}
 	return ddl, nil
@@ -148,6 +144,27 @@ func uniqueConstraintIndexOptions(nullsNotDistinct bool) []*vitess.IndexOption {
 		NullsNotDistinct: true,
 	}
 	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}
+}
+
+func uniqueConstraintIndexOptionsForDef(node *tree.UniqueConstraintTableDef) ([]*vitess.IndexOption, error) {
+	includeColumns, err := nodeIndexIncludeColumns(node.IndexParams.IncludeColumns)
+	if err != nil {
+		return nil, err
+	}
+	relOptions, err := nodeIndexRelOptions(node.IndexParams.StorageParams)
+	if err != nil {
+		return nil, err
+	}
+	if len(includeColumns) == 0 && len(relOptions) == 0 && !node.NullsNotDistinct {
+		return nil, nil
+	}
+	metadata := indexmetadata.Metadata{
+		AccessMethod:     indexmetadata.AccessMethodBtree,
+		IncludeColumns:   includeColumns,
+		RelOptions:       relOptions,
+		NullsNotDistinct: node.NullsNotDistinct,
+	}
+	return []*vitess.IndexOption{indexMetadataCommentOption(metadata)}, nil
 }
 
 func primaryKeyConstraintMetadataDDL(tableName vitess.TableName, ifExists bool, name string) *vitess.DDL {
@@ -204,6 +221,13 @@ func defaultUniqueConstraintName(tableName string, columns tree.IndexElemList) s
 	}
 	parts = append(parts, "key")
 	return strings.Join(parts, "_")
+}
+
+func defaultUniqueConstraintNameForDef(tableName string, node *tree.UniqueConstraintTableDef) string {
+	columns := make(tree.IndexElemList, 0, len(node.Columns)+len(node.IndexParams.IncludeColumns))
+	columns = append(columns, node.Columns...)
+	columns = append(columns, node.IndexParams.IncludeColumns...)
+	return defaultUniqueConstraintName(tableName, columns)
 }
 
 func defaultColumnCheckConstraintName(tableName string, column tree.Name) string {

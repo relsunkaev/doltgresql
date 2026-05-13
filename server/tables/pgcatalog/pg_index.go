@@ -318,7 +318,8 @@ func cachePgIndexes(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 			s := tableSchemas[table.OID.AsId()]
 			logicalColumns := indexmetadata.LogicalColumns(index.Item, s)
 			indexColumns := make([]string, len(logicalColumns))
-			includeColumns := indexmetadata.IncludeColumns(index.Item.Comment())
+			indexComment := indexmetadata.CommentForTable(index.Item, table.Item)
+			includeColumns := indexmetadata.IncludeColumns(indexComment)
 			indKey := make([]any, 0, len(logicalColumns)+len(includeColumns))
 			for i, col := range logicalColumns {
 				indexColumns[i] = col.StorageName

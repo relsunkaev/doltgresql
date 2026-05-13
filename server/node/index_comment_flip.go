@@ -71,9 +71,10 @@ func flipIndexComment(ctx *sql.Context, schemaName, tableName, indexName, newCom
 	}
 	newSch := currentSch.Copy()
 
-	existing := newSch.Indexes().GetByName(indexName)
+	indexID := located.index.ID()
+	existing := newSch.Indexes().GetByName(indexID)
 	if existing == nil {
-		return errors.Errorf(`index "%s" missing from schema while flipping comment`, indexName)
+		return errors.Errorf(`index "%s" missing from schema while flipping comment`, indexID)
 	}
 	props := schema.IndexProperties{
 		IsUnique:           existing.IsUnique(),
@@ -89,11 +90,11 @@ func flipIndexComment(ctx *sql.Context, schemaName, tableName, indexName, newCom
 	// the old entry first; the index data file is keyed by name and is
 	// not touched by this metadata-collection edit, so the prolly tree
 	// from Phase 1 is reused as-is.
-	if _, err = newSch.Indexes().RemoveIndex(indexName); err != nil {
+	if _, err = newSch.Indexes().RemoveIndex(indexID); err != nil {
 		return err
 	}
 	if _, err = newSch.Indexes().AddIndexByColTags(
-		indexName,
+		indexID,
 		existing.IndexedColumnTags(),
 		existing.PrefixLengths(),
 		props,

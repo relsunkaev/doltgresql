@@ -447,7 +447,7 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 			if def.PrimaryKey {
 				constraintKind = "primary key"
 			}
-			columns, err := nodeTypedTableConstraintColumns(def, constraintKind)
+			constraint, err := nodeTypedTableUniqueConstraint(tableName, def, constraintKind)
 			if err != nil {
 				return options, children, err
 			}
@@ -455,13 +455,11 @@ func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) 
 				if len(options.PrimaryKeyColumns) > 0 {
 					return options, children, errors.Errorf("multiple primary keys for table are not allowed")
 				}
-				options.PrimaryKeyColumns = columns
+				options.PrimaryKeyColumns = constraint.Columns
+				options.PrimaryKeyInclude = constraint.IncludeColumns
+				options.PrimaryKeyRelOptions = constraint.RelOptions
 			} else {
-				options.UniqueConstraints = append(options.UniqueConstraints, pgnodes.TypedTableUniqueConstraint{
-					Name:             typedTableConstraintName(def.Name, defaultUniqueConstraintNameFromNames(tableName, columns)),
-					Columns:          columns,
-					NullsNotDistinct: def.NullsNotDistinct,
-				})
+				options.UniqueConstraints = append(options.UniqueConstraints, constraint)
 			}
 		case *tree.CheckConstraintTableDef:
 			check, err := nodeTypedTableCheckConstraint(ctx, string(def.Name), def.Expr, def.NoInherit)
@@ -655,24 +653,33 @@ func typedTableDefaultExprIsNumericLiteral(expr tree.Expr) bool {
 	}
 }
 
-func nodeTypedTableConstraintColumns(def *tree.UniqueConstraintTableDef, constraintKind string) ([]string, error) {
-	if len(def.IndexParams.IncludeColumns) > 0 {
-		return nil, errors.Errorf("CREATE TABLE OF %s INCLUDE columns are not yet supported", constraintKind)
-	}
-	if len(def.IndexParams.StorageParams) > 0 {
-		return nil, errors.Errorf("STORAGE parameters not yet supported for indexes")
-	}
-	if def.IndexParams.Tablespace != "" {
-		return nil, errors.Errorf("TABLESPACE is not yet supported")
-	}
+func nodeTypedTableUniqueConstraint(tableName string, def *tree.UniqueConstraintTableDef, constraintKind string) (pgnodes.TypedTableUniqueConstraint, error) {
 	columns := make([]string, len(def.Columns))
 	for i, column := range def.Columns {
 		if column.Expr != nil || column.Column == "" {
-			return nil, errors.Errorf("CREATE TABLE OF %s expressions are not yet supported", constraintKind)
+			return pgnodes.TypedTableUniqueConstraint{}, errors.Errorf("CREATE TABLE OF %s expressions are not yet supported", constraintKind)
 		}
 		columns[i] = string(column.Column)
 	}
-	return columns, nil
+	includeColumns, err := nodeIndexIncludeColumns(def.IndexParams.IncludeColumns)
+	if err != nil {
+		return pgnodes.TypedTableUniqueConstraint{}, err
+	}
+	relOptions, err := nodeIndexRelOptions(def.IndexParams.StorageParams)
+	if err != nil {
+		return pgnodes.TypedTableUniqueConstraint{}, err
+	}
+	if def.IndexParams.Tablespace != "" && !isDefaultIndexTablespace(def.IndexParams.Tablespace) {
+		return pgnodes.TypedTableUniqueConstraint{}, errors.Errorf("TABLESPACE is not yet supported for indexes")
+	}
+	name := typedTableConstraintName(def.Name, defaultUniqueConstraintNameFromNames(tableName, append(columns, includeColumns...)))
+	return pgnodes.TypedTableUniqueConstraint{
+		Name:             name,
+		Columns:          columns,
+		IncludeColumns:   includeColumns,
+		RelOptions:       relOptions,
+		NullsNotDistinct: def.NullsNotDistinct,
+	}, nil
 }
 
 func typedTableConstraintName(explicit tree.Name, defaultName string) string {

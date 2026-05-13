@@ -57,6 +57,8 @@ var _ vitess.Injectable = (*CreateTypedTable)(nil)
 type TypedTableOptions struct {
 	ColumnOptions         []TypedTableColumnOptions
 	PrimaryKeyColumns     []string
+	PrimaryKeyInclude     []string
+	PrimaryKeyRelOptions  []string
 	UniqueConstraints     []TypedTableUniqueConstraint
 	CheckConstraints      []TypedTableCheckConstraint
 	ForeignKeyConstraints []TypedTableForeignKeyConstraint
@@ -82,6 +84,8 @@ type TypedTableColumnOptions struct {
 type TypedTableUniqueConstraint struct {
 	Name             string
 	Columns          []string
+	IncludeColumns   []string
+	RelOptions       []string
 	NullsNotDistinct bool
 }
 
@@ -220,6 +224,9 @@ func (c *CreateTypedTable) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 	if err != nil {
 		return nil, err
 	}
+	if err = c.updatePrimaryKeyIndexMetadata(ctx, db); err != nil {
+		return nil, err
+	}
 	if err = c.createUniqueConstraints(ctx, db); err != nil {
 		return nil, err
 	}
@@ -268,16 +275,9 @@ func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Data
 		for i, column := range constraint.Columns {
 			indexColumns[i] = sql.IndexColumn{Name: column}
 		}
-		var comment string
-		if constraint.NullsNotDistinct {
-			comment = indexmetadata.EncodeComment(indexmetadata.Metadata{
-				AccessMethod:     indexmetadata.AccessMethodBtree,
-				NullsNotDistinct: true,
-			})
-		}
 		if err = indexAlterable.CreateIndex(ctx, sql.IndexDef{
 			Name:       constraint.Name,
-			Comment:    comment,
+			Comment:    typedTableUniqueConstraintComment(constraint),
 			Columns:    indexColumns,
 			Constraint: sql.IndexConstraint_Unique,
 			Storage:    sql.IndexUsing_BTree,
@@ -286,6 +286,31 @@ func (c *CreateTypedTable) createUniqueConstraints(ctx *sql.Context, db sql.Data
 		}
 	}
 	return nil
+}
+
+func (c *CreateTypedTable) updatePrimaryKeyIndexMetadata(ctx *sql.Context, db sql.Database) error {
+	if len(c.Options.PrimaryKeyInclude) == 0 && len(c.Options.PrimaryKeyRelOptions) == 0 {
+		return nil
+	}
+	constraint := TypedTableUniqueConstraint{
+		Name:           fmt.Sprintf("%s_pkey", c.TableName),
+		Columns:        c.Options.PrimaryKeyColumns,
+		IncludeColumns: c.Options.PrimaryKeyInclude,
+		RelOptions:     c.Options.PrimaryKeyRelOptions,
+	}
+	return modifyPrimaryKeyIndexComment(ctx, db, c.TableName, typedTableUniqueConstraintComment(constraint))
+}
+
+func typedTableUniqueConstraintComment(constraint TypedTableUniqueConstraint) string {
+	if len(constraint.IncludeColumns) == 0 && len(constraint.RelOptions) == 0 && !constraint.NullsNotDistinct {
+		return ""
+	}
+	return indexmetadata.EncodeComment(indexmetadata.Metadata{
+		AccessMethod:     indexmetadata.AccessMethodBtree,
+		IncludeColumns:   constraint.IncludeColumns,
+		RelOptions:       constraint.RelOptions,
+		NullsNotDistinct: constraint.NullsNotDistinct,
+	})
 }
 
 func (c *CreateTypedTable) createForeignKeyConstraints(ctx *sql.Context, db sql.Database, schemaName string) error {
@@ -710,6 +735,16 @@ func applyTypedTableOptions(ctx *sql.Context, schema sql.Schema, typ *pgtypes.Do
 				return errors.Errorf(`column "%s" appears twice in unique constraint`, columnName)
 			}
 			seenUniqueColumns[columnKey] = struct{}{}
+		}
+		for _, columnName := range unique.IncludeColumns {
+			if typedTableColumnIndex(schema, columnName) < 0 {
+				return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
+			}
+		}
+	}
+	for _, columnName := range options.PrimaryKeyInclude {
+		if typedTableColumnIndex(schema, columnName) < 0 {
+			return errors.Errorf(`column "%s" does not exist in composite type "%s"`, columnName, typ.ID.TypeName())
 		}
 	}
 	return nil
