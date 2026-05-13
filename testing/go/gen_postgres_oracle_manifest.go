@@ -1410,6 +1410,7 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedPublications(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedExtensions(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedLargeObjects(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedLanguages(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedDatabases(generatedSetup)...)
@@ -1487,6 +1488,46 @@ func cleanupForCreatedPublications(statements []string) []string {
 
 func cleanupForCreatedExtensions(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create extension ", "DROP EXTENSION IF EXISTS ", " CASCADE")
+}
+
+func cleanupForCreatedLargeObjects(statements []string) []string {
+	seen := map[string]struct{}{}
+	cleanup := make([]string, 0)
+	for _, statement := range statements {
+		oid, ok := createdLargeObjectOID(statement)
+		if !ok {
+			continue
+		}
+		if _, ok := seen[oid]; ok {
+			continue
+		}
+		seen[oid] = struct{}{}
+		cleanup = append(cleanup, "SELECT pg_catalog.lo_unlink("+oid+") WHERE EXISTS (SELECT 1 FROM pg_catalog.pg_largeobject_metadata WHERE oid = "+oid+")")
+	}
+	return cleanup
+}
+
+func createdLargeObjectOID(statement string) (string, bool) {
+	lower := strings.ToLower(statement)
+	index := strings.Index(lower, "lo_create(")
+	if index < 0 {
+		return "", false
+	}
+	rest := statement[index+len("lo_create("):]
+	end := strings.Index(rest, ")")
+	if end < 0 {
+		return "", false
+	}
+	oid := strings.TrimSpace(rest[:end])
+	if oid == "" {
+		return "", false
+	}
+	for _, r := range oid {
+		if r < '0' || r > '9' {
+			return "", false
+		}
+	}
+	return oid, true
 }
 
 func cleanupForCreatedDatabases(statements []string) []string {

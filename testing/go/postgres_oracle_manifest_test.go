@@ -326,6 +326,9 @@ func TestPostgresOracleManifestCleansGeneratedObjects(t *testing.T) {
 
 	roleEntry := entriesByID["role-comment-drop-repro-test-testdroproleclearscommentrepro-0001-select-shobj_description-select-oid-from"]
 	require.Contains(t, roleEntry.Cleanup, "DROP ROLE IF EXISTS drop_recreate_comment_role")
+
+	largeObjectEntry := entriesByID["large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0002-select-lo_create-424260"]
+	require.Contains(t, largeObjectEntry.Cleanup, "SELECT pg_catalog.lo_unlink(424260) WHERE EXISTS (SELECT 1 FROM pg_catalog.pg_largeobject_metadata WHERE oid = 424260)")
 }
 
 func TestPostgresOracleManifestInventory(t *testing.T) {

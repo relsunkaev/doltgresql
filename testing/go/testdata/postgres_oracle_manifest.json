@@ -3845,6 +3845,78 @@
       ]
     },
     {
+      "id": "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0001-select-lo_unlink-424260",
+      "source": "testing/go/large_object_comment_drop_repro_test.go:TestLargeObjectUnlinkClearsCommentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT lo_create(424260);",
+        "COMMENT ON LARGE OBJECT 424260 IS 'old private large object';"
+      ],
+      "query": "SELECT lo_unlink(424260);",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ]
+      ],
+      "cleanup": [
+        "SELECT pg_catalog.lo_unlink(424260) WHERE EXISTS (SELECT 1 FROM pg_catalog.pg_largeobject_metadata WHERE oid = 424260)",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0002-select-lo_create-424260",
+      "source": "testing/go/large_object_comment_drop_repro_test.go:TestLargeObjectUnlinkClearsCommentRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT lo_create(424260);",
+        "COMMENT ON LARGE OBJECT 424260 IS 'old private large object';",
+        "SELECT lo_unlink(424260);"
+      ],
+      "query": "SELECT lo_create(424260);",
+      "expectedRows": [
+        [
+          {
+            "value": "424260"
+          }
+        ]
+      ],
+      "cleanup": [
+        "SELECT pg_catalog.lo_unlink(424260) WHERE EXISTS (SELECT 1 FROM pg_catalog.pg_largeobject_metadata WHERE oid = 424260)",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0003-select-description-from-pg_catalog.pg_description-where",
+      "source": "testing/go/large_object_comment_drop_repro_test.go:TestLargeObjectUnlinkClearsCommentRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT lo_create(424260);",
+        "COMMENT ON LARGE OBJECT 424260 IS 'old private large object';",
+        "SELECT lo_unlink(424260);",
+        "SELECT lo_create(424260);"
+      ],
+      "query": "SELECT description\n\t\t\t\t\t\tFROM pg_catalog.pg_description\n\t\t\t\t\t\tWHERE objoid = 424260\n\t\t\t\t\t\t\tAND classoid = 'pg_largeobject_metadata'::regclass;",
+      "expectedRows": [],
+      "cleanup": [
+        "SELECT pg_catalog.lo_unlink(424260) WHERE EXISTS (SELECT 1 FROM pg_catalog.pg_largeobject_metadata WHERE oid = 424260)",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "lateral-test-testlateraljoins-0001-select-c.id-c.name-o.amount-as",
       "source": "testing/go/lateral_test.go:TestLateralJoins",
       "ordinal": 1,
