@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
+	"github.com/dolthub/go-mysql-server/sql/types"
 
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -120,6 +121,17 @@ func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs 
 			// Only non-Doltgres destination tables will have GMS types (such as system tables), so we don't error here
 			toType = pgtypes.FromGmsType(setField.LeftChild.Type(ctx))
 		}
+		rightChild, same, err := transform.Expr(ctx, setField.RightChild, replaceArithmeticExpression)
+		if err != nil {
+			return nil, err
+		}
+		if !same {
+			newSetField, err := setField.WithChildren(ctx, setField.LeftChild, rightChild)
+			if err != nil {
+				return nil, err
+			}
+			setField = newSetField.(*expression.SetField)
+		}
 		fromSqlType := setFieldRightChildType(ctx, setField.RightChild)
 		if fromSqlType == nil {
 			defaultExpr, err := updateDefaultExpression(ctx, a, setField, toType, destinationSchema)
@@ -133,9 +145,9 @@ func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs 
 			setField = newSetField.(*expression.SetField)
 			fromSqlType = setField.RightChild.Type(ctx)
 		}
-		fromType, ok := fromSqlType.(*pgtypes.DoltgresType)
-		if !ok {
-			return nil, errors.Errorf("UPDATE: non-Doltgres type found in source: %s", setField.RightChild.String())
+		fromType, err := updateSourceType(fromSqlType)
+		if err != nil {
+			return nil, errors.Wrapf(err, "UPDATE: non-Doltgres type found in source: %s", setField.RightChild.String())
 		}
 		// We only assign the existing expression if the types perfectly match (same parameters), otherwise we'll cast
 		if fromType.Equals(toType) {
@@ -149,6 +161,20 @@ func assignUpdateFieldCasts(ctx *sql.Context, a *analyzer.Analyzer, updateExprs 
 		}
 	}
 	return newUpdateExprs, nil
+}
+
+func updateSourceType(typ sql.Type) (*pgtypes.DoltgresType, error) {
+	if typ == nil || typ == types.Null {
+		return pgtypes.Unknown, nil
+	}
+	if doltgresType, ok := typ.(*pgtypes.DoltgresType); ok {
+		return doltgresType, nil
+	}
+	doltgresType, err := pgtypes.FromGmsTypeToDoltgresType(typ)
+	if err != nil {
+		return nil, errors.Errorf("%s", typ.String())
+	}
+	return doltgresType, nil
 }
 
 func setFieldRightChildType(ctx *sql.Context, expr sql.Expression) sql.Type {

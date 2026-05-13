@@ -4443,6 +4443,12 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	if converted, ok := convertedDropIfExistsNoOp(query); ok {
 		return []ConvertedQuery{converted}, nil
 	}
+	if converted, ok, err := convertedSqlMergeUpdateInsert(query); ok || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		return []ConvertedQuery{converted}, nil
+	}
 	if rewrittenQuery, ok := rewriteCustomOperatorSelect(query); ok {
 		query = rewrittenQuery
 	}
@@ -5211,6 +5217,61 @@ func regclassLiteralTableName(raw string) string {
 		parts[i] = normalizeTransformFunctionName(part)
 	}
 	return strings.Join(parts, ".")
+}
+
+var sqlMergeUpdateInsertPattern = regexp.MustCompile(`(?is)^\s*MERGE\s+INTO\s+(.+?)\s+(?:AS\s+)?([A-Za-z_][A-Za-z0-9_$]*)\s+USING\s+(.+?)\s+(?:AS\s+)?([A-Za-z_][A-Za-z0-9_$]*)\s+ON\s+(.+?)\s+WHEN\s+MATCHED\s+THEN\s+UPDATE\s+SET\s+(.+?)\s+WHEN\s+NOT\s+MATCHED\s+THEN\s+INSERT\s*\((.+?)\)\s+VALUES\s*\((.+?)\)\s*;?\s*$`)
+
+func convertedSqlMergeUpdateInsert(query string) (ConvertedQuery, bool, error) {
+	matches := sqlMergeUpdateInsertPattern.FindStringSubmatch(query)
+	if matches == nil {
+		return ConvertedQuery{}, false, nil
+	}
+	targetTable := strings.TrimSpace(matches[1])
+	targetAlias := strings.TrimSpace(matches[2])
+	sourceTable := strings.TrimSpace(matches[3])
+	sourceAlias := strings.TrimSpace(matches[4])
+	onExpr := strings.TrimSpace(matches[5])
+	updateSet := strings.TrimSpace(matches[6])
+	insertColumns := strings.TrimSpace(matches[7])
+	insertValues := strings.TrimSpace(matches[8])
+	if _, ok := sqlMergeConflictColumn(onExpr, targetAlias, sourceAlias); !ok {
+		return ConvertedQuery{}, false, nil
+	}
+	updateSet = sqlMergeOnDuplicateUpdateSet(updateSet, targetAlias)
+	insertQuery := fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s AS %s WHERE true ON DUPLICATE KEY UPDATE %s",
+		targetTable, insertColumns, insertValues, sourceTable, sourceAlias, updateSet)
+	vitessAST, err := sqlparser.Parse(insertQuery)
+	if err != nil {
+		return ConvertedQuery{}, true, err
+	}
+	return ConvertedQuery{
+		String:       insertQuery,
+		AST:          vitessAST,
+		StatementTag: "MERGE",
+	}, true, nil
+}
+
+func sqlMergeOnDuplicateUpdateSet(updateSet string, targetAlias string) string {
+	targetColumnPattern := regexp.MustCompile(regexp.QuoteMeta(targetAlias) + `\.([A-Za-z_][A-Za-z0-9_$]*)`)
+	return targetColumnPattern.ReplaceAllString(updateSet, "$1")
+}
+
+func sqlMergeConflictColumn(onExpr string, targetAlias string, sourceAlias string) (string, bool) {
+	parts := strings.Split(onExpr, "=")
+	if len(parts) != 2 {
+		return "", false
+	}
+	left := strings.TrimSpace(parts[0])
+	right := strings.TrimSpace(parts[1])
+	targetPrefix := targetAlias + "."
+	sourcePrefix := sourceAlias + "."
+	if strings.HasPrefix(left, targetPrefix) && strings.HasPrefix(right, sourcePrefix) {
+		return strings.TrimSpace(strings.TrimPrefix(left, targetPrefix)), true
+	}
+	if strings.HasPrefix(left, sourcePrefix) && strings.HasPrefix(right, targetPrefix) {
+		return strings.TrimSpace(strings.TrimPrefix(right, targetPrefix)), true
+	}
+	return "", false
 }
 
 func rewriteAdvancedGroupByQuery(query string) (string, bool) {

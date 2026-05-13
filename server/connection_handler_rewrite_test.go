@@ -53,6 +53,29 @@ func TestRewriteDMLReturningTableOID(t *testing.T) {
 	}
 }
 
+func TestConvertedSqlMergeUpdateInsert(t *testing.T) {
+	got, ok, err := convertedSqlMergeUpdateInsert(`MERGE INTO sql_merge_target AS target
+		USING sql_merge_source AS source
+		ON target.id = source.id
+		WHEN MATCHED THEN
+			UPDATE SET label = source.label
+		WHEN NOT MATCHED THEN
+			INSERT (id, label) VALUES (source.id, source.label);`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("expected rewrite")
+	}
+	if got.AST == nil {
+		t.Fatal("expected converted AST")
+	}
+	want := `INSERT INTO sql_merge_target (id, label) SELECT source.id, source.label FROM sql_merge_source AS source WHERE true ON DUPLICATE KEY UPDATE label = source.label`
+	if got.String != want {
+		t.Fatalf("got %q, want %q", got.String, want)
+	}
+}
+
 func TestRewritePostgres16IntegerLiterals(t *testing.T) {
 	tests := []struct {
 		query string
