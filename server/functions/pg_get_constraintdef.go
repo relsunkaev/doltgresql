@@ -20,6 +20,7 @@ import (
 
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/deferrable"
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -141,9 +142,9 @@ func getColumnNamesString(exprs []string) string {
 			return ""
 		}
 		if len(split) == 1 {
-			colNames[i] = pgQuoteIdentifier(split[0])
+			colNames[i] = pgQuoteIdentifier(core.DecodePhysicalColumnName(split[0]))
 		} else {
-			colNames[i] = pgQuoteIdentifier(split[len(split)-1])
+			colNames[i] = pgQuoteIdentifier(core.DecodePhysicalColumnName(split[len(split)-1]))
 		}
 	}
 	return strings.Join(colNames, ", ")
