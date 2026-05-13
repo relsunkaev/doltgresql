@@ -10,6 +10,27 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### beta - 2026-05-12 17:18 America/Phoenix
+
+- User directive: alpha owns full `./testing/go` runs from now on.
+- Beta will not start or restart full manifests; beta work is limited to focused red/green verifiers and build/failure lanes that do not overlap active peer claims.
+- Lane: table/view privilege leak after `DROP ...` followed by recreate, from latest committed repros `TestDropTableClearsTablePrivilegesRepro` and `TestDropViewClearsViewPrivilegesRepro`.
+- Expected files: auth privilege cleanup around drop table/view paths; avoiding delta's rename metadata lane and alpha's full manifest.
+
+### beta - 2026-05-12 17:16 America/Phoenix
+
+- Coordination: no active full `./testing/go` manifest was running after alpha's zero-byte `20260512-1715` list attempt, so beta is claiming the stats lane from committed HEAD `1b8e4033`.
+- Planned output paths: `/tmp/doltgresql-testing-go-beta-20260512-1716-tests.txt`, `/tmp/doltgresql-testing-go-beta-20260512-1716.jsonl`, `/tmp/doltgresql-testing-go-beta-20260512-1716.log`.
+- Peers should keep focusing on isolated build/failure lanes and avoid starting another full `./testing/go` run unless this beta runner exits or is superseded.
+- Superseded update: beta's detached runner aborted during clean-worktree setup before producing a test list or JSON manifest; the temp worktree was removed. Alpha is now actively running the full stats lane again from `/tmp/doltgresql-alpha-manifest.kMNwqY`, so beta is not retrying.
+
+### delta - 2026-05-12 17:17 America/Phoenix
+
+- Lane: rename metadata repros now committed on HEAD: table/view/materialized-view privileges after `ALTER TABLE ... RENAME`, plus row-level-security policy predicates after `ALTER TABLE ... RENAME COLUMN`.
+- Expected files: relation/table rename metadata helpers, auth metadata, and RLS policy storage/rewrite code; focused repro tests are already committed.
+- Avoiding: alpha's full manifest `/tmp/doltgresql-testing-go-alpha-20260512-1713*`, beta's active drop/grant verifier, and gamma's dirty `server/functions/sqrt.go` patch.
+- Next action: run focused red in a clean verifier, then implement the narrow metadata rewrite/preservation fix.
+
 ### delta - 2026-05-12 16:56 America/Phoenix
 
 - Lane: `ALTER DOMAIN` implementation for current failing domain correctness repros.
@@ -1318,6 +1339,27 @@ Use this file to avoid overlapping work. Add short entries with:
   - `GOCACHE=/Users/ramazan/.cache/doltgresql-beta-excluded-gocache-165217 GOTMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* TMPDIR=/Users/ramazan/.cache/doltgresql-beta-excluded-gotmp-green-* GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/ast -run '^$' -count=1`
 - Manifest coordination: alpha still owns `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl`; latest beta-read snapshot is `112` top-level started, `109` passed, `2` failed (`TestAuthQuick`, `TestAuthTests`), `0` skipped, still running.
 
+### gamma - 2026-05-12 17:12 America/Phoenix
+
+- Coordination: alpha's `/tmp/doltgresql-testing-go-alpha-20260512-1649.jsonl` has finished but is stale; it ran from `ee0b0d87` and failed in auth before later commits. Gamma is not starting a duplicate full suite.
+- Full stats handoff: gamma asked Hilbert to check `coop.md` and `ps`, claim the full-manifest role only if no peer has already restarted it, and otherwise defer. Expected output path if Hilbert owns it: `/tmp/doltgresql-testing-go-hilbert-YYYYMMDD-HHMM.jsonl`.
+- Auth lane complete: committed `9934aa3c fix: reset auth persistence for in-memory tests`. The stale alpha manifest failed `TestAuthQuick`/`TestAuthTests` and then panicked in `TestAuthDoltProcedures` after an in-memory auth server kept stale on-disk auth state from a prior local-server test.
+- Green after auth fix in the shared checkout:
+  `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-gamma-authprocedures-gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-gamma-authprocedures-gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestRoleMembershipSurvivesRestart|TestInMemoryServerClearsOnDiskAuthStateAfterLocalServer|TestAuthTests|TestAuthDoltProcedures)$' -count=1 -v`
+- Current build-error side: beta has an active focused `TestAuthQuick` verifier for drop/grant ownership changes. Gamma is holding the uncommitted `server/functions/sqrt.go` precision patch until the focused `TestSqrtNumericMatchesPostgresPrecisionRepro` can be proven without adding more concurrent compile pressure.
+
+### gamma - 2026-05-12 17:15 America/Phoenix
+
+- Coordination: alpha re-claimed the full `./testing/go` stats lane at 17:13, so gamma told Hilbert not to start a duplicate full manifest. Gamma stayed on focused failure work.
+- Lane complete: `sqrt(numeric)` now computes through decimal precision instead of float64 and strips only redundant trailing decimal zero scale.
+- Source touched and committed: `server/functions/sqrt.go`.
+- Result: committed `d42058c6 fix: preserve numeric sqrt precision`.
+- Red: the stale manifest showed `TestSqrtNumericMatchesPostgresPrecisionRepro` returning `1.4142135623730951` for `sqrt(2::numeric)::text`. Gamma's first focused patch fixed that but regressed the exact square-root case by returning `100000000000000000000000000000000.000000000000000`; the final patch trims redundant zero scale.
+- Green in the shared checkout:
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-gamma-sqrt-shared-gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-gamma-sqrt-shared-gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^TestSqrtNumericMatchesPostgresPrecisionRepro$' -count=1 -v`
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-gamma-sqrt-shared-gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-gamma-sqrt-shared-gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/functions -run 'Sqrt|sqrt' -count=1`
+- Manifest follow-up: alpha's active full runner is `/tmp/doltgresql-alpha-manifest.kMNwqY`, output `/tmp/doltgresql-testing-go-alpha-20260512-1716.jsonl`, but that worktree is at `6f7ef3af` while shared HEAD has advanced to `1b8e4033`. Gamma is not duplicating it; stats owner should refresh after this active pass if current-HEAD stats are needed.
+
 ### alpha - 2026-05-12 17:13 America/Phoenix
 
 - Latest exact full-suite denominator remains `2667` top-level tests from `go test -list '^Test' ./testing/go`.
@@ -1329,3 +1371,14 @@ Use this file to avoid overlapping work. Add short entries with:
   - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestRoleMembershipSurvivesRestart|TestInMemoryServerClearsOnDiskAuthStateAfterLocalServer|TestAuthTests)$' -count=1 -v`
   - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-alpha-authfix-170510/gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAuthQuick|TestDropTableRequiresOwnershipDespiteAllPrivilegesRepro|TestDropTableAllowsMemberOfOwningRoleRepro|TestGrantSuperuserRoleDoesNotTripCircularMembershipRepro)$' -count=1 -v`
 - Alpha is restarting the full manifest from committed HEAD `30b16fe7`; peers should keep avoiding duplicate full `./testing/go` runs and focus on isolated build/failure lanes.
+
+### gamma - 2026-05-12 17:17 America/Phoenix
+
+- User clarification: alpha owns all full `./testing/go` runs from now on. Gamma told Hilbert not to claim or start a full manifest under any condition.
+- Gamma will only read alpha full-manifest stats and work focused, non-overlapping failure lanes.
+
+### alpha - 2026-05-12 17:19 America/Phoenix
+
+- User directed that alpha owns all full `./testing/go` runs from now on. Peers should not start full-suite manifests; send build/failure findings to alpha or work focused lanes only.
+- Current full manifest: `/tmp/doltgresql-testing-go-alpha-20260512-1716.jsonl` from committed HEAD `6f7ef3af`, worktree `/tmp/doltgresql-alpha-manifest.kMNwqY`.
+- Regenerated denominator: `/tmp/doltgresql-testing-go-alpha-20260512-1716-tests.txt` has `2676` top-level tests.
