@@ -24,6 +24,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/comments"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -51,6 +52,7 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 		return err
 	}
 	sch := n.TargetSchema()
+	clearDroppedColumnComment(tableName.Schema, tableName.Name, n.Column, sch)
 
 	for _, otherTableName := range allTableNames {
 		if doltdb.IsSystemTable(otherTableName) {
@@ -118,4 +120,18 @@ func AfterTableDropColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 		}
 	}
 	return nil
+}
+
+func clearDroppedColumnComment(schemaName string, tableName string, columnName string, sch sql.Schema) {
+	for idx, col := range sch {
+		if col.Name != columnName {
+			continue
+		}
+		comments.Set(comments.Key{
+			ObjOID:   id.Cache().ToOID(id.NewTable(schemaName, tableName).AsId()),
+			ClassOID: comments.ClassOID("pg_class"),
+			ObjSubID: int32(idx + 1),
+		}, nil)
+		return
+	}
 }
