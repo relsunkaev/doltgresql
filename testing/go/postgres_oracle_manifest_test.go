@@ -96,6 +96,59 @@ func TestPostgresOracleManifestGenerated(t *testing.T) {
 	require.Equal(t, string(expected), string(actual), "run go generate ./testing/go after editing oracle manifest inputs")
 }
 
+func TestPostgresOracleMigrationCandidatesGenerated(t *testing.T) {
+	outDir := filepath.Join(t.TempDir(), "oracle-migration")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--migration-candidates-dir", outDir)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	files, err := filepath.Glob(filepath.Join(outDir, "*.oracle-map.json"))
+	require.NoError(t, err)
+	require.Greater(t, len(files), 100)
+
+	totalAssertions := 0
+	postgresAssertions := 0
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		require.NoError(t, err)
+		var generated struct {
+			GeneratedBy       string `json:"generatedBy"`
+			SourceFile        string `json:"sourceFile"`
+			DefaultOracle     string `json:"defaultOracle"`
+			AssertionKeyStyle string `json:"assertionKeyStyle"`
+			Assertions        []struct {
+				Key          string `json:"key"`
+				Source       string `json:"source"`
+				Ordinal      int    `json:"ordinal"`
+				Oracle       string `json:"oracle"`
+				SuggestedID  string `json:"suggestedId"`
+				ExpectedKind string `json:"expectedKind"`
+				QuerySHA256  string `json:"querySha256"`
+			} `json:"assertions"`
+		}
+		require.NoError(t, json.Unmarshal(data, &generated), file)
+		require.Equal(t, "go run gen_postgres_oracle_manifest.go --migration-candidates-dir", generated.GeneratedBy)
+		require.True(t, strings.HasPrefix(generated.SourceFile, "testing/go/"), file)
+		require.Equal(t, "internal", generated.DefaultOracle)
+		require.NotEmpty(t, generated.AssertionKeyStyle)
+		require.NotEmpty(t, generated.Assertions)
+		totalAssertions += len(generated.Assertions)
+		for _, assertion := range generated.Assertions {
+			require.NotEmpty(t, assertion.Key)
+			require.NotEmpty(t, assertion.Source)
+			require.Positive(t, assertion.Ordinal)
+			require.Contains(t, []string{"internal", "postgres"}, assertion.Oracle)
+			if assertion.Oracle == "postgres" {
+				postgresAssertions++
+			}
+			require.NotEmpty(t, assertion.SuggestedID)
+			require.NotEmpty(t, assertion.ExpectedKind)
+		}
+	}
+	require.Greater(t, totalAssertions, 10000)
+	require.Greater(t, postgresAssertions, 0)
+}
+
 func TestPostgresOracleManifestInventory(t *testing.T) {
 	manifest := loadPostgresOracleManifest(t)
 	validatePostgresOracleManifest(t, manifest)

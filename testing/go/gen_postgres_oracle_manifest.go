@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -30,6 +31,16 @@ import (
 	"strconv"
 	"strings"
 )
+
+var manifestAssertionFields = []string{
+	"Expected",
+	"ExpectedRaw",
+	"ExpectedErr",
+	"ExpectedTag",
+	"ExpectedColNames",
+	"ExpectedColTypes",
+	"ExpectedNotices",
+}
 
 type manifest struct {
 	GeneratedBy            string    `json:"generatedBy"`
@@ -70,9 +81,52 @@ type cell struct {
 	Null  bool    `json:"null,omitempty"`
 }
 
+type migrationFile struct {
+	GeneratedBy       string               `json:"generatedBy"`
+	SourceFile        string               `json:"sourceFile"`
+	DefaultOracle     string               `json:"defaultOracle"`
+	AssertionKeyStyle string               `json:"assertionKeyStyle"`
+	AssertionFields   []string             `json:"assertionFields"`
+	Assertions        []migrationAssertion `json:"assertions"`
+}
+
+type migrationAssertion struct {
+	Key             string   `json:"key"`
+	Source          string   `json:"source"`
+	Ordinal         int      `json:"ordinal"`
+	ScriptName      string   `json:"scriptName,omitempty"`
+	Oracle          string   `json:"oracle"`
+	PostgresID      string   `json:"postgresId,omitempty"`
+	SuggestedID     string   `json:"suggestedId"`
+	Compare         string   `json:"compare,omitempty"`
+	ColumnModes     []string `json:"columnModes,omitempty"`
+	ExpectedKind    string   `json:"expectedKind"`
+	SQLState        string   `json:"sqlstate,omitempty"`
+	ErrorSeverity   string   `json:"errorSeverity,omitempty"`
+	Username        string   `json:"username,omitempty"`
+	Query           string   `json:"query,omitempty"`
+	QuerySHA256     string   `json:"querySha256,omitempty"`
+	NonLiteral      []string `json:"nonLiteral,omitempty"`
+	NeedsCleanup    bool     `json:"needsCleanup"`
+	CleanupProvided bool     `json:"cleanupProvided"`
+}
+
 func main() {
 	stdout := flag.Bool("stdout", false, "write generated manifest to stdout instead of testdata/postgres_oracle_manifest.json")
+	migrationCandidatesDir := flag.String("migration-candidates-dir", "", "write per-file ScriptTest oracle migration candidate maps to this directory")
 	flag.Parse()
+
+	if *migrationCandidatesDir != "" {
+		if *stdout {
+			fmt.Fprintln(os.Stderr, "--stdout cannot be combined with --migration-candidates-dir")
+			os.Exit(1)
+		}
+		if err := writeMigrationCandidates(*migrationCandidatesDir); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	data, err := generateManifest()
 	if err != nil {
@@ -104,15 +158,7 @@ func generateManifest() ([]byte, error) {
 			Scope:                   "testing/go/*_test.go ScriptTest expectation literals",
 			AssertionsDefaultOracle: "internal",
 			PostgresOverrides:       "entries where oracle == postgres",
-			AssertionFields: []string{
-				"Expected",
-				"ExpectedRaw",
-				"ExpectedErr",
-				"ExpectedTag",
-				"ExpectedColNames",
-				"ExpectedColTypes",
-				"ExpectedNotices",
-			},
+			AssertionFields:         manifestAssertionFields,
 		},
 		Entries: append(
 			oracleSelftestEntries(),
@@ -281,6 +327,230 @@ func annotatedScriptTestEntries() ([]entry, error) {
 	return entries, nil
 }
 
+func writeMigrationCandidates(dir string) error {
+	files, err := filepath.Glob("*_test.go")
+	if err != nil {
+		return err
+	}
+	sort.Strings(files)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	for _, file := range files {
+		if strings.HasPrefix(file, "postgres_oracle_") {
+			continue
+		}
+		candidates, err := migrationCandidatesForFile(file)
+		if err != nil {
+			return err
+		}
+		if len(candidates.Assertions) == 0 {
+			continue
+		}
+		data, err := marshalJSON(candidates)
+		if err != nil {
+			return err
+		}
+		outPath := filepath.Join(dir, strings.TrimSuffix(file, ".go")+".oracle-map.json")
+		if err := os.WriteFile(outPath, data, 0644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func migrationCandidatesForFile(file string) (migrationFile, error) {
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, file, nil, 0)
+	if err != nil {
+		return migrationFile{}, err
+	}
+	candidates := migrationFile{
+		GeneratedBy:       "go run gen_postgres_oracle_manifest.go --migration-candidates-dir",
+		SourceFile:        "testing/go/" + file,
+		DefaultOracle:     "internal",
+		AssertionKeyStyle: "testing/go/<file>:<TestName>#<expectation-ordinal>",
+		AssertionFields:   manifestAssertionFields,
+	}
+	fieldSet := assertionFieldSet()
+	for _, decl := range parsed.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
+			continue
+		}
+		stringSlices := localStringSlices(fn.Body)
+		source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
+		ordinal := 0
+		var inspectErr error
+		ast.Inspect(fn.Body, func(node ast.Node) bool {
+			if inspectErr != nil {
+				return false
+			}
+			lit, ok := node.(*ast.CompositeLit)
+			if !ok || !isScriptTestSliceType(lit.Type) {
+				return true
+			}
+			for _, element := range lit.Elts {
+				scriptLit, ok := element.(*ast.CompositeLit)
+				if !ok {
+					continue
+				}
+				scriptFields := compositeFields(scriptLit)
+				scriptName, _ := optionalStringLiteral(scriptFields["Name"])
+				assertionsLit, ok := scriptFields["Assertions"].(*ast.CompositeLit)
+				if !ok {
+					continue
+				}
+				for _, assertionExpr := range assertionsLit.Elts {
+					assertionLit, ok := assertionExpr.(*ast.CompositeLit)
+					if !ok {
+						continue
+					}
+					assertionFields := compositeFields(assertionLit)
+					if !hasAnyField(assertionFields, fieldSet) {
+						continue
+					}
+					ordinal++
+					candidate, err := migrationCandidate(source, ordinal, scriptName, assertionFields, stringSlices)
+					if err != nil {
+						inspectErr = fmt.Errorf("%s#%04d: %w", source, ordinal, err)
+						return false
+					}
+					candidates.Assertions = append(candidates.Assertions, candidate)
+				}
+			}
+			return false
+		})
+		if inspectErr != nil {
+			return migrationFile{}, inspectErr
+		}
+	}
+	return candidates, nil
+}
+
+func migrationCandidate(source string, ordinal int, scriptName string, fields map[string]ast.Expr, stringSlices map[string][]string) (migrationAssertion, error) {
+	query, nonLiteral := candidateStringLiteral(fields["Query"], "Query", nil)
+	key := fmt.Sprintf("%s#%04d", source, ordinal)
+	candidate := migrationAssertion{
+		Key:          key,
+		Source:       source,
+		Ordinal:      ordinal,
+		ScriptName:   scriptName,
+		Oracle:       "internal",
+		SuggestedID:  suggestedOracleID(source, ordinal, query),
+		ExpectedKind: expectationKind(fields),
+		Query:        query,
+		NonLiteral:   nonLiteral,
+		NeedsCleanup: true,
+	}
+	if query != "" {
+		sum := sha256.Sum256([]byte(query))
+		candidate.QuerySHA256 = fmt.Sprintf("%x", sum[:])
+	}
+	username, nonLiteral := candidateStringLiteral(fields["Username"], "Username", candidate.NonLiteral)
+	candidate.Username = username
+	candidate.NonLiteral = nonLiteral
+	if len(candidate.NonLiteral) == 0 {
+		candidate.NonLiteral = nil
+	}
+	if metaExpr, ok := fields["PostgresOracle"]; ok {
+		meta, err := parseOracleMeta(metaExpr, stringSlices)
+		if err != nil {
+			return migrationAssertion{}, fmt.Errorf("PostgresOracle: %w", err)
+		}
+		if meta.ID != "" {
+			candidate.Oracle = "postgres"
+			candidate.PostgresID = meta.ID
+			candidate.Compare = meta.Compare
+			candidate.ColumnModes = meta.ColumnModes
+			candidate.SQLState = meta.ExpectedSQLState
+			candidate.ErrorSeverity = meta.ExpectedErrorSeverity
+			candidate.CleanupProvided = len(meta.Cleanup) > 0
+		}
+	}
+	return candidate, nil
+}
+
+func candidateStringLiteral(expr ast.Expr, name string, nonLiteral []string) (string, []string) {
+	if expr == nil {
+		return "", nonLiteral
+	}
+	value, err := optionalStringLiteral(expr)
+	if err == nil {
+		return value, nonLiteral
+	}
+	return "", append(nonLiteral, name)
+}
+
+func assertionFieldSet() map[string]struct{} {
+	fields := map[string]struct{}{}
+	for _, field := range manifestAssertionFields {
+		fields[field] = struct{}{}
+	}
+	return fields
+}
+
+func hasAnyField(fields map[string]ast.Expr, fieldSet map[string]struct{}) bool {
+	for field := range fieldSet {
+		if _, ok := fields[field]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func expectationKind(fields map[string]ast.Expr) string {
+	switch {
+	case fields["ExpectedErr"] != nil:
+		return "error"
+	case fields["Expected"] != nil:
+		return "rows"
+	case fields["ExpectedRaw"] != nil:
+		return "rawRows"
+	case fields["ExpectedTag"] != nil:
+		return "tag"
+	case fields["ExpectedColNames"] != nil || fields["ExpectedColTypes"] != nil:
+		return "columns"
+	case fields["ExpectedNotices"] != nil:
+		return "notices"
+	default:
+		return "unknown"
+	}
+}
+
+func suggestedOracleID(source string, ordinal int, query string) string {
+	source = strings.TrimPrefix(source, "testing/go/")
+	source = strings.TrimSuffix(source, "_test.go")
+	source = strings.ReplaceAll(source, ".go:", "-")
+	source = strings.ReplaceAll(source, ":", "-")
+	source = strings.ReplaceAll(source, "_", "-")
+	source = strings.ToLower(source)
+	queryWords := oracleIDWords(query)
+	if queryWords != "" {
+		return fmt.Sprintf("%s-%04d-%s", source, ordinal, queryWords)
+	}
+	return fmt.Sprintf("%s-%04d", source, ordinal)
+}
+
+func oracleIDWords(query string) string {
+	query = strings.ToLower(query)
+	replacer := strings.NewReplacer("\n", " ", "\t", " ", "(", " ", ")", " ", ",", " ", ";", " ", "'", " ", `"`, " ")
+	query = replacer.Replace(query)
+	parts := strings.Fields(query)
+	kept := make([]string, 0, 5)
+	for _, part := range parts {
+		part = strings.Trim(part, "_-")
+		if part == "" || len(part) > 40 {
+			continue
+		}
+		kept = append(kept, part)
+		if len(kept) == 5 {
+			break
+		}
+	}
+	return strings.Join(kept, "-")
+}
+
 func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit, stringSlices map[string][]string) ([]entry, error) {
 	fields := compositeFields(scriptLit)
 	assertionsLit, ok := fields["Assertions"].(*ast.CompositeLit)
@@ -399,6 +669,17 @@ func parseOracleMeta(expr ast.Expr, stringSlices map[string][]string) (oracleMet
 		return oracleMeta{}, fmt.Errorf("Cleanup: %w", err)
 	}
 	return meta, nil
+}
+
+func marshalJSON(value interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(value); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func compositeFields(lit *ast.CompositeLit) map[string]ast.Expr {
