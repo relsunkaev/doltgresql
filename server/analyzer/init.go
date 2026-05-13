@@ -81,6 +81,7 @@ const (
 	ruleId_PreferOrderedSortOptionIndexes                                         // preferOrderedSortOptionIndexes
 	ruleId_ResolveDropColumnIfExists                                              // resolveDropColumnIfExists
 	ruleId_ValidateOrderBy                                                        // validateOrderBy
+	ruleId_ValidateCheckConstraints                                               // validateCheckConstraints
 )
 
 // Init adds additional rules to the analyzer to handle Doltgres-specific functionality.
@@ -127,6 +128,8 @@ func Init() {
 		analyzer.Rule{Id: ruleId_ResolveAlterColumn, Apply: resolveAlterColumn})
 	analyzer.OnceBeforeDefault = replaceAnalyzerRuleByName(analyzer.OnceBeforeDefault, "validateGroupBy",
 		analyzer.Rule{Id: ruleId_ValidateGroupBy, Apply: ValidateGroupBy})
+	analyzer.DefaultRules = replaceAnalyzerRuleByName(analyzer.DefaultRules, "validateCheckConstraints",
+		analyzer.Rule{Id: ruleId_ValidateCheckConstraints, Apply: ValidateCheckConstraints})
 
 	analyzer.OnceBeforeDefault = removeAnalyzerRules(
 		analyzer.OnceBeforeDefault,

@@ -22,7 +22,9 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 )
 
-func validateCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstraint) error {
+// ValidateCheckConstraintExpression validates PostgreSQL CHECK expression
+// classes that are rejected before execution.
+func ValidateCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstraint) error {
 	if check == nil || check.Expr == nil {
 		return nil
 	}
@@ -59,6 +61,10 @@ func validateCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstra
 		return true
 	})
 	return err
+}
+
+func validateCheckConstraintExpression(ctx *sql.Context, check *sql.CheckConstraint) error {
+	return ValidateCheckConstraintExpression(ctx, check)
 }
 
 func validateDomainCheckExpressionText(expr string) error {
