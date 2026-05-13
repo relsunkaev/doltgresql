@@ -33,6 +33,17 @@ var _ sql.ExecSourceRel = (*jsonbPopulateRecordTableFunction)(nil)
 var _ sql.TableFunction = (*jsonToRecordTableFunction)(nil)
 var _ sql.ExecSourceRel = (*jsonToRecordTableFunction)(nil)
 
+// json_populate_record represents the PostgreSQL function json_populate_record(anyelement, json).
+var json_populate_record = framework.Function2{
+	Name:       "json_populate_record",
+	Return:     pgtypes.AnyElement,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.AnyElement, pgtypes.Json},
+	Strict:     false,
+	Callable: func(ctx *sql.Context, t [3]*pgtypes.DoltgresType, base any, fromJson any) (any, error) {
+		return jsonPopulateRecord(ctx, t[2], base, fromJson, pgtypes.Json, "json_populate_record")
+	},
+}
+
 // jsonb_populate_record represents the PostgreSQL function jsonb_populate_record(anyelement, jsonb).
 var jsonb_populate_record = framework.Function2{
 	Name:       "jsonb_populate_record",
@@ -466,13 +477,24 @@ func jsonbPopulateRecordCompositeType(ctx *sql.Context, expr sql.Expression) (*p
 }
 
 func jsonbPopulateRecord(ctx *sql.Context, compositeType *pgtypes.DoltgresType, base any, fromJson any) ([]pgtypes.RecordValue, error) {
+	return jsonPopulateRecord(ctx, compositeType, base, fromJson, pgtypes.JsonB, "jsonb_populate_record")
+}
+
+func jsonPopulateRecord(
+	ctx *sql.Context,
+	compositeType *pgtypes.DoltgresType,
+	base any,
+	fromJson any,
+	inputType *pgtypes.DoltgresType,
+	fnName string,
+) ([]pgtypes.RecordValue, error) {
 	var err error
 	compositeType, err = jsonPopulateResolveType(ctx, compositeType)
 	if err != nil {
 		return nil, err
 	}
 	if compositeType == nil || !compositeType.IsCompositeType() || len(compositeType.CompositeAttrs) == 0 {
-		return nil, errors.Errorf("first argument of jsonb_populate_record must be a composite type")
+		return nil, errors.Errorf("first argument of %s must be a composite type", fnName)
 	}
 	resolvedJson, err := sql.UnwrapAny(ctx, fromJson)
 	if err != nil {
@@ -481,13 +503,13 @@ func jsonbPopulateRecord(ctx *sql.Context, compositeType *pgtypes.DoltgresType, 
 	if resolvedJson == nil {
 		return nil, nil
 	}
-	doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, resolvedJson)
+	doc, err := jsonDocumentFromFunctionValue(ctx, inputType, resolvedJson)
 	if err != nil {
 		return nil, err
 	}
 	object, ok := pgtypes.JsonValueUnwrapRaw(doc.Value).(pgtypes.JsonValueObject)
 	if !ok {
-		return nil, errors.New("cannot call jsonb_populate_record on a non-object")
+		return nil, errors.Errorf("cannot call %s on a non-object", fnName)
 	}
 	baseRecord, err := jsonbPopulateRecordBase(ctx, base)
 	if err != nil {
