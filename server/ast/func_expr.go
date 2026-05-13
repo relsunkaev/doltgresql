@@ -50,16 +50,23 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	}
 	var qualifier vitess.TableIdent
 	var name vitess.ColIdent
+	authName := ""
 	switch funcRef := node.Func.FunctionReference.(type) {
 	case *tree.FunctionDefinition:
 		name = vitess.NewColIdent(funcRef.Name)
+		authName = funcRef.Name
 	case *tree.UnresolvedName:
 		if funcRef.NumParts == 3 {
 			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
 			name = vitess.NewColIdent(qualifiedFunctionName(funcRef.Parts[2], funcRef.Parts[1], funcRef.Parts[0]))
+			authName = funcRef.Parts[0]
 		} else if funcRef.NumParts == 2 {
 			qualifier = vitess.NewTableIdent(funcRef.Parts[1])
 			name = vitess.NewColIdent(qualifiedFunctionName("", funcRef.Parts[1], funcRef.Parts[0]))
+			authName = funcRef.Parts[0]
+		} else if funcRef.NumParts == 1 && funcRef.Parts[0] != strings.ToLower(funcRef.Parts[0]) {
+			name = vitess.NewColIdent(qualifiedFunctionName("", "", funcRef.Parts[0]))
+			authName = funcRef.Parts[0]
 		} else {
 			colName, err := unresolvedNameToColName(funcRef)
 			if err != nil {
@@ -68,9 +75,13 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 
 			qualifier = colName.Qualifier.Name
 			name = colName.Name
+			authName = name.String()
 		}
 	default:
 		return nil, errors.Errorf("unknown function reference")
+	}
+	if authName == "" {
+		authName = name.String()
 	}
 	var distinct bool
 	switch node.Type {
@@ -324,7 +335,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_EXECUTE,
 			TargetType:  auth.AuthTargetType_FunctionIdentifiers,
-			TargetNames: []string{qualifier.String(), name.String()},
+			TargetNames: []string{qualifier.String(), authName},
 		},
 	}, nil
 }

@@ -54,37 +54,32 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 	var funcName id.Function
 	var overloads []corefunctions.Function
 	if qualified {
-		funcName = id.NewFunction(schemaName, functionName)
-		overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
-		if err != nil || len(overloads) == 0 {
-			if fn, ok := compiledPgCatalogFunction(schemaName, functionName); ok {
-				return fn, true
+		if schemaName == "" {
+			overloads, err = getUnqualifiedFunctionOverloads(ctx, funcCollection, functionName)
+			if err != nil {
+				return nil, false
 			}
-			if fn, ok := compiledExtensionFunction(ctx, schemaName, functionName); ok {
-				return fn, true
+		} else {
+			funcName = id.NewFunction(schemaName, functionName)
+			overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
+			if err != nil || len(overloads) == 0 {
+				if fn, ok := compiledPgCatalogFunction(schemaName, functionName); ok {
+					return fn, true
+				}
+				if fn, ok := compiledExtensionFunction(ctx, schemaName, functionName); ok {
+					return fn, true
+				}
+				return nil, false
 			}
-			return nil, false
 		}
 	} else {
 		// TODO: this should search all schemas in the search path, but the search path doesn't handle pg_catalog yet
-		funcName = id.NewFunction("pg_catalog", functionName)
-		overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
+		overloads, err = getUnqualifiedFunctionOverloads(ctx, funcCollection, functionName)
 		if err != nil {
 			return nil, false
 		}
 		if len(overloads) == 0 {
-			currentSchema, err := core.GetCurrentSchema(ctx)
-			if err != nil {
-				return nil, false
-			}
-			funcName = id.NewFunction(currentSchema, functionName)
-			overloads, err = funcCollection.GetFunctionOverloads(ctx, funcName)
-			if err != nil {
-				return nil, false
-			}
-			if len(overloads) == 0 {
-				return nil, false
-			}
+			return nil, false
 		}
 	}
 
@@ -217,6 +212,18 @@ func (fp *FunctionProvider) Function(ctx *sql.Context, name string) (sql.Functio
 			return NewCompiledFunction(ctx, functionName, params, overloadTree, false), nil
 		},
 	}, true
+}
+
+func getUnqualifiedFunctionOverloads(ctx *sql.Context, funcCollection *corefunctions.Collection, functionName string) ([]corefunctions.Function, error) {
+	overloads, err := funcCollection.GetFunctionOverloads(ctx, id.NewFunction("pg_catalog", functionName))
+	if err != nil || len(overloads) > 0 {
+		return overloads, err
+	}
+	currentSchema, err := core.GetCurrentSchema(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return funcCollection.GetFunctionOverloads(ctx, id.NewFunction(currentSchema, functionName))
 }
 
 func compiledPgCatalogFunction(schemaName string, functionName string) (sql.Function, bool) {

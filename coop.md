@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 10:35 America/Phoenix
+
+- Lane complete locally: quoted function identity/call case sensitivity from `TestQuotedFunctionNamesAreCaseSensitiveRepro`.
+- Files touched: `server/ast/func_expr.go` and `server/functions/framework/provider.go`. Avoided active alpha quoted-column files, active epsilon CHECK-constraint files, active gamma publication/subscription files, dirty grant/oracle files, and Alpha-owned full `./testing/go`.
+- Red proof in shared checkout at `3c993e70`: `go test -vet=off ./testing/go -run '^TestQuotedFunctionNamesAreCaseSensitiveRepro$' -count=1 -v` failed because `SELECT "CaseFunction"(10), casefunction(10);` returned `{12,12}` instead of `{11,12}`.
+- Fix: unqualified mixed-case function calls now use the existing hex-qualified function sentinel so GMS plan-builder lowercasing does not erase quoted case; the function provider resolves that sentinel through the same pg_catalog/current-schema lookup used by ordinary unqualified calls.
+- Green proof in clean detached verifier `/Users/ramazan/.cache/doltgresql-delta-function-verifier-dvNu8c` at `3c993e70` plus delta patch after `./postgres/parser/build.sh` and linking local `third_party/dolt`:
+  - `go test -vet=off ./server/ast ./server/functions/framework -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestQuotedFunctionNamesAreCaseSensitiveRepro|TestToRegprocedureResolvesFunctionSignaturesRepro|TestExplicitPgTempFunctionLookupResolvesTemporaryFunctionRepro)$' -count=1 -v`
+- Next action: commit this slice, then run exact post-commit focused proof. No Alpha-owned full `./testing/go` run started.
+
 ### delta - 2026-05-13 10:05 America/Phoenix
 
 - Lane complete: domain constraint enforcement for UPDATE aliases/FROM and nested domains from the alpha full-run output (`TestUpdateAliasEnforcesDomainConstraintsRepro`, `TestUpdateAliasDomainColumnValidAssignmentRepro`, `TestUpdateFromEnforcesDomainConstraintsRepro`, and `TestNestedDomainEnforcesBaseDomainConstraintsRepro`).
