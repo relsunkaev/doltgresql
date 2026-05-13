@@ -24,13 +24,16 @@ import (
 	pgtransform "github.com/dolthub/doltgresql/server/transform"
 )
 
-// AssignInheritedTableScans wraps read-only parent-table scans so SELECTs see
+// AssignInheritedTableScans wraps parent-table scans so reads and parent DML see
 // rows stored in inherited child tables, matching PostgreSQL's default scan.
 func AssignInheritedTableScans(ctx *sql.Context, _ *analyzer.Analyzer, node sql.Node, _ *plan.Scope, _ analyzer.RuleSelector, _ *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
-	if !node.IsReadOnly() {
+	if !shouldAssignInheritedTableScans(node) {
 		return node, transform.SameTree, nil
 	}
 	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		if deleteFrom, ok := node.(*plan.DeleteFrom); ok && !deleteFrom.HasExplicitTargets() {
+			return deleteFrom.WithTargets([]sql.Node{deleteFrom.Child}), transform.NewTree, nil
+		}
 		resolvedTable, ok := node.(*plan.ResolvedTable)
 		if !ok {
 			return node, transform.SameTree, nil
@@ -45,4 +48,20 @@ func AssignInheritedTableScans(ctx *sql.Context, _ *analyzer.Analyzer, node sql.
 		}
 		return newNode.(sql.Node), transform.NewTree, nil
 	})
+}
+
+func shouldAssignInheritedTableScans(node sql.Node) bool {
+	if node.IsReadOnly() {
+		return true
+	}
+	switch node := node.(type) {
+	case *plan.Update, *plan.DeleteFrom, *plan.Truncate:
+		return true
+	case *plan.ForeignKeyHandler:
+		return shouldAssignInheritedTableScans(node.OriginalNode)
+	case *plan.TriggerExecutor:
+		return shouldAssignInheritedTableScans(node.Left())
+	default:
+		return false
+	}
 }

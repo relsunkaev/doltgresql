@@ -121,6 +121,7 @@ func Init() {
 		analyzer.Rule{Id: ruleId_AssignPartitionedTableWrites, Apply: AssignPartitionedTableWrites},
 		analyzer.Rule{Id: ruleId_AssignNullsNotDistinctUniqueChecks, Apply: AssignNullsNotDistinctUniqueChecks},
 		analyzer.Rule{Id: ruleId_AssignBtreePlannerBoundaries, Apply: AssignBtreePlannerBoundaries},
+		analyzer.Rule{Id: ruleId_AssignInheritedTableScans, Apply: AssignInheritedTableScans},
 		analyzer.Rule{Id: ruleId_AssignRowLevelLocking, Apply: AssignRowLevelLocking},
 		analyzer.Rule{Id: ruleId_AssignTriggers, Apply: AssignTriggers},
 		analyzer.Rule{Id: ruleId_ValidateCreateFunction, Apply: ValidateCreateFunction},
