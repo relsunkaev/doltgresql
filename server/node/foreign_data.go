@@ -23,6 +23,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -217,14 +219,14 @@ func (a *AlterForeignDataWrapper) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	var err error
 	auth.LockRead(func() {
 		if _, ok := auth.GetForeignDataWrapper(a.Name); !ok {
-			err = errors.Errorf(`foreign-data wrapper "%s" does not exist`, a.Name)
+			err = pgerror.Newf(pgcode.UndefinedObject, `foreign-data wrapper "%s" does not exist`, a.Name)
 		}
 	})
 	return rowIterOrError(err)
 }
 
 func (a *AlterForeignTableOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
-	if err := requireForeignTableExists(ctx, a.SchemaName, a.Name, false); err != nil {
+	if err := requireForeignTableExists(ctx, a.SchemaName, a.Name, false, foreignTableUndefinedTableError); err != nil {
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
@@ -232,7 +234,7 @@ func (a *AlterForeignTableOptions) RowIter(ctx *sql.Context, _ sql.Row) (sql.Row
 
 func (d *DropForeignTable) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 	for _, table := range d.Tables {
-		if err := requireForeignTableExists(ctx, table.Schema, table.Name, d.IfExists); err != nil {
+		if err := requireForeignTableExists(ctx, table.Schema, table.Name, d.IfExists, foreignTableUndefinedObjectError); err != nil {
 			return nil, err
 		}
 		if d.IfExists {
@@ -269,13 +271,13 @@ func (d *DropForeignDataWrapper) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIt
 		for _, name := range d.Names {
 			if _, ok := auth.GetForeignDataWrapper(name); !ok {
 				if !d.IfExists {
-					err = errors.Errorf(`foreign-data wrapper "%s" does not exist`, name)
+					err = pgerror.Newf(pgcode.UndefinedObject, `foreign-data wrapper "%s" does not exist`, name)
 					return
 				}
 				continue
 			}
 			if !auth.DropForeignDataWrapper(name) && !d.IfExists {
-				err = errors.Errorf(`foreign-data wrapper "%s" does not exist`, name)
+				err = pgerror.Newf(pgcode.UndefinedObject, `foreign-data wrapper "%s" does not exist`, name)
 				return
 			}
 		}
@@ -321,13 +323,13 @@ func (d *DropForeignServer) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, e
 		for _, name := range d.Names {
 			if _, ok := auth.GetForeignServer(name); !ok {
 				if !d.IfExists {
-					err = errors.Errorf(`server "%s" does not exist`, name)
+					err = pgerror.Newf(pgcode.UndefinedObject, `server "%s" does not exist`, name)
 					return
 				}
 				continue
 			}
 			if !auth.DropForeignServer(name) && !d.IfExists {
-				err = errors.Errorf(`server "%s" does not exist`, name)
+				err = pgerror.Newf(pgcode.UndefinedObject, `server "%s" does not exist`, name)
 				return
 			}
 		}
@@ -381,7 +383,7 @@ func (i *ImportForeignSchema) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter,
 		_, exists = auth.GetForeignServer(i.Server)
 	})
 	if !exists {
-		return nil, errors.Errorf(`server "%s" does not exist`, i.Server)
+		return nil, pgerror.Newf(pgcode.UndefinedObject, `server "%s" does not exist`, i.Server)
 	}
 	return nil, errors.New("IMPORT FOREIGN SCHEMA is not yet supported")
 }
@@ -402,7 +404,7 @@ func resolveUserMappingUser(ctx *sql.Context, user string) string {
 	}
 }
 
-func requireForeignTableExists(ctx *sql.Context, schema string, table string, ifExists bool) error {
+func requireForeignTableExists(ctx *sql.Context, schema string, table string, ifExists bool, missingErr func(string) error) error {
 	relationType, err := foreignTableRelationType(ctx, schema, table)
 	if err != nil {
 		return err
@@ -411,9 +413,17 @@ func requireForeignTableExists(ctx *sql.Context, schema string, table string, if
 		if ifExists {
 			return nil
 		}
-		return errors.Errorf(`foreign table "%s" does not exist`, table)
+		return missingErr(table)
 	}
 	return nil
+}
+
+func foreignTableUndefinedObjectError(table string) error {
+	return pgerror.Newf(pgcode.UndefinedObject, `foreign table "%s" does not exist`, table)
+}
+
+func foreignTableUndefinedTableError(table string) error {
+	return sql.ErrTableNotFound.New(table)
 }
 
 func foreignTableRelationType(ctx *sql.Context, schema string, table string) (core.RelationType, error) {

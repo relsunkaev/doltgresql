@@ -22,6 +22,8 @@ import (
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -86,7 +88,7 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			_, exists = auth.GetForeignServer(foreignServer)
 		})
 		if !exists {
-			return nil, errors.Errorf(`server "%s" does not exist`, foreignServer)
+			return nil, pgerror.Newf(pgcode.UndefinedObject, `server "%s" does not exist`, foreignServer)
 		}
 	}
 	if node.OfType != nil {

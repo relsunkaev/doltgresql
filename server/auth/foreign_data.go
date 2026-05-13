@@ -20,6 +20,8 @@ import (
 
 	"github.com/cockroachdb/errors"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -137,7 +139,7 @@ func CreateForeignServer(server ForeignServer) error {
 		return errors.Errorf(`server "%s" already exists`, server.Name)
 	}
 	if _, ok := globalDatabase.foreignDataWrappers.Data[server.Wrapper]; !ok {
-		return errors.Errorf(`foreign-data wrapper "%s" does not exist`, server.Wrapper)
+		return foreignDataWrapperDoesNotExistError(server.Wrapper)
 	}
 	globalDatabase.foreignServers.Data[server.Name] = server
 	return nil
@@ -166,7 +168,7 @@ func AlterForeignServerVersion(name string, version string) error {
 	name = foreignDataNameKey(name)
 	server, ok := globalDatabase.foreignServers.Data[name]
 	if !ok {
-		return errors.Errorf(`server "%s" does not exist`, name)
+		return foreignServerDoesNotExistError(name)
 	}
 	server.Version = version
 	globalDatabase.foreignServers.Data[name] = server
@@ -189,7 +191,7 @@ func CreateUserMapping(mapping UserMapping) error {
 	mapping.User = strings.TrimSpace(mapping.User)
 	mapping.Server = foreignDataNameKey(mapping.Server)
 	if _, ok := globalDatabase.foreignServers.Data[mapping.Server]; !ok {
-		return errors.Errorf(`server "%s" does not exist`, mapping.Server)
+		return foreignServerDoesNotExistError(mapping.Server)
 	}
 	key := userMappingKey(mapping.User, mapping.Server)
 	if _, ok := globalDatabase.userMappings.Data[key]; ok {
@@ -218,7 +220,7 @@ func GetAllUserMappings() []UserMapping {
 func AlterUserMapping(user string, server string) error {
 	server = foreignDataNameKey(server)
 	if _, ok := globalDatabase.foreignServers.Data[server]; !ok {
-		return errors.Errorf(`server "%s" does not exist`, server)
+		return foreignServerDoesNotExistError(server)
 	}
 	if _, ok := globalDatabase.userMappings.Data[userMappingKey(user, server)]; !ok {
 		return errors.Errorf(`user mapping for "%s" does not exist for server "%s"`, user, server)
@@ -230,7 +232,7 @@ func AlterUserMapping(user string, server string) error {
 func DropUserMapping(user string, server string) error {
 	server = foreignDataNameKey(server)
 	if _, ok := globalDatabase.foreignServers.Data[server]; !ok {
-		return errors.Errorf(`server "%s" does not exist`, server)
+		return foreignServerDoesNotExistError(server)
 	}
 	key := userMappingKey(user, server)
 	if _, ok := globalDatabase.userMappings.Data[key]; !ok {
@@ -254,6 +256,14 @@ func foreignDataNameKey(name string) string {
 
 func userMappingKey(user string, server string) string {
 	return strings.TrimSpace(user) + "\x00" + foreignDataNameKey(server)
+}
+
+func foreignDataWrapperDoesNotExistError(name string) error {
+	return pgerror.Newf(pgcode.UndefinedObject, `foreign-data wrapper "%s" does not exist`, name)
+}
+
+func foreignServerDoesNotExistError(name string) error {
+	return pgerror.Newf(pgcode.UndefinedObject, `server "%s" does not exist`, name)
 }
 
 func (wrappers *ForeignDataWrappers) serialize(writer *utils.Writer) {
