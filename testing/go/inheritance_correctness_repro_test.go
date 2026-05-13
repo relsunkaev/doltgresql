@@ -569,6 +569,41 @@ func TestAlterInheritedParentSetDefaultPropagatesToChildRepro(t *testing.T) {
 	})
 }
 
+// TestAlterInheritedParentSetDefaultPropagatesToGrandchildGuard guards that
+// parent default changes propagate through multiple inheritance levels.
+func TestAlterInheritedParentSetDefaultPropagatesToGrandchildGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER parent SET DEFAULT propagates to inherited grandchild",
+			SetUpScript: []string{
+				`CREATE TABLE inherit_parent_set_default_grandchild (
+					id INT,
+					label TEXT
+				);`,
+				`CREATE TABLE inherit_child_set_default_grandchild (
+					child_extra TEXT
+				) INHERITS (inherit_parent_set_default_grandchild);`,
+				`CREATE TABLE inherit_grandchild_set_default (
+					grandchild_extra TEXT
+				) INHERITS (inherit_child_set_default_grandchild);`,
+				`ALTER TABLE inherit_parent_set_default_grandchild
+					ALTER COLUMN label SET DEFAULT 'grandparent-default';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO inherit_grandchild_set_default (id, child_extra, grandchild_extra)
+						VALUES (1, 'child', 'grandchild');`,
+				},
+				{
+					Query: `SELECT id, label, child_extra, grandchild_extra
+						FROM inherit_grandchild_set_default;`,
+					Expected: []sql.Row{{1, "grandparent-default", "child", "grandchild"}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterInheritedParentDropDefaultPropagatesToChildRepro reproduces an
 // inheritance schema persistence bug: dropping a parent-column default should
 // remove the inherited child-column default as well.
