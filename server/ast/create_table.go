@@ -188,8 +188,14 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 			TargetNames: []string{tableName.DbQualifier.String(), tableName.SchemaQualifier.String()},
 		},
 	}
-	if err = assignTableDefs(ctx, node.Defs, ddl); err != nil {
-		return nil, err
+	if node.AsSource != nil {
+		if err = validateCreateTableAsColumnDefs(node.Defs); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = assignTableDefs(ctx, node.Defs, ddl); err != nil {
+			return nil, err
+		}
 	}
 	if len(relOptions) > 0 {
 		if ddl.TableSpec == nil {
@@ -289,6 +295,15 @@ func createTableLikeOptions(options []tree.LikeTableOption) pgnodes.CreateTableL
 		}
 	}
 	return opts
+}
+
+func validateCreateTableAsColumnDefs(defs tree.TableDefs) error {
+	for _, def := range defs {
+		if _, ok := def.(*tree.ColumnTableDef); !ok {
+			return errors.Errorf("CREATE TABLE AS column list may only contain column names")
+		}
+	}
+	return nil
 }
 
 func nodeTypedTableOptions(ctx *Context, tableName string, defs tree.TableDefs) (pgnodes.TypedTableOptions, vitess.Exprs, error) {

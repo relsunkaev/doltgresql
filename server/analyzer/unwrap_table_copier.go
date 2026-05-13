@@ -39,25 +39,33 @@ func UnwrapTableCopierCreateTable(ctx *sql.Context, a *analyzer.Analyzer, node s
 	if !ok {
 		return node, transform.SameTree, nil
 	}
+	createTable = sanitizeCreateTableAsDestination(createTable)
 	copied := *tableCopier
-	copied.Destination = createTable
+	copied.Destination = pgnode.NewCreateTable(createTable, nil)
+	child := sql.Node(pgnode.NewCreateTableAs(&copied))
+	ctasAliases, hasCtasAliases := createTableAsColumnAliases(ctx, createTable.Name())
 	mvInfo, hasMvInfo := createMaterializedViewInfo(ctx, createTable.Name())
 	if hasMvInfo {
 		if err := pgnode.ValidateColumnAliases(createTable.PkSchema().Schema, mvInfo.columnAliases); err != nil {
 			return nil, transform.SameTree, err
 		}
 	}
-	if comment, ok := doltgresCreateTableMetadataComment(createTable.TableOpts); ok {
+	if comment, ok := doltgresCreateTableMetadataComment(ctx, createTable.TableOpts); ok {
 		var columnAliases []string
 		if hasMvInfo {
 			columnAliases = mvInfo.columnAliases
+		} else if hasCtasAliases {
+			columnAliases = ctasAliases
 		}
-		return pgnode.NewTableMetadataApplierWithColumnAliases(&copied, createTable.Database(), createTable.Name(), comment, columnAliases), transform.NewTree, nil
+		return pgnode.NewTableMetadataApplierWithColumnAliases(child, createTable.Database(), createTable.Name(), comment, columnAliases), transform.NewTree, nil
 	}
 	if hasMvInfo {
-		return pgnode.NewTableMetadataApplierWithColumnAliases(&copied, createTable.Database(), createTable.Name(), mvInfo.comment, mvInfo.columnAliases), transform.NewTree, nil
+		return pgnode.NewTableMetadataApplierWithColumnAliases(child, createTable.Database(), createTable.Name(), mvInfo.comment, mvInfo.columnAliases), transform.NewTree, nil
 	}
-	return &copied, transform.NewTree, nil
+	if hasCtasAliases {
+		return pgnode.NewTableMetadataApplierWithColumnAliases(child, createTable.Database(), createTable.Name(), "", ctasAliases), transform.NewTree, nil
+	}
+	return child, transform.NewTree, nil
 }
 
 func unwrapCreateTableDestination(node sql.Node) (*plan.CreateTable, bool) {
@@ -73,7 +81,7 @@ func unwrapCreateTableDestination(node sql.Node) (*plan.CreateTable, bool) {
 	}
 }
 
-func doltgresCreateTableMetadataComment(tableOpts map[string]any) (string, bool) {
+func doltgresCreateTableMetadataComment(ctx *sql.Context, tableOpts map[string]any) (string, bool) {
 	if tableOpts == nil {
 		return "", false
 	}
@@ -84,7 +92,59 @@ func doltgresCreateTableMetadataComment(tableOpts map[string]any) (string, bool)
 	if _, ok = tablemetadata.DecodeComment(comment); !ok {
 		return "", false
 	}
+	if user := ctx.Client().User; user != "" {
+		comment = tablemetadata.SetOwner(comment, user)
+	}
 	return comment, true
+}
+
+func sanitizeCreateTableAsDestination(createTable *plan.CreateTable) *plan.CreateTable {
+	sourceSchema := createTable.PkSchema().Schema
+	schema := make(sql.Schema, 0, len(sourceSchema))
+	for _, col := range sourceSchema {
+		copied := col.Copy()
+		copied.Default = nil
+		copied.Generated = nil
+		copied.OnUpdate = nil
+		copied.PrimaryKey = false
+		copied.Nullable = true
+		copied.Virtual = false
+		copied.AutoIncrement = false
+		copied.Extra = ""
+		schema = append(schema, copied)
+	}
+	return plan.NewCreateTable(createTable.Database(), createTable.Name(), createTable.IfNotExists(), createTable.Temporary(), &plan.TableSpec{
+		Schema:    sql.NewPrimaryKeySchema(schema),
+		Collation: createTable.Collation,
+		TableOpts: createTable.TableOpts,
+	})
+}
+
+func createTableAsColumnAliases(ctx *sql.Context, tableName string) ([]string, bool) {
+	query := ctx.Query()
+	if strings.TrimSpace(query) == "" {
+		return nil, false
+	}
+	stmts, err := parser.Parse(query)
+	if err != nil || len(stmts) != 1 {
+		return nil, false
+	}
+	node, ok := stmts[0].AST.(*tree.CreateTable)
+	if !ok || node.AsSource == nil || !strings.EqualFold(string(node.Table.ObjectName), tableName) {
+		return nil, false
+	}
+	if len(node.Defs) == 0 {
+		return nil, false
+	}
+	aliases := make([]string, 0, len(node.Defs))
+	for _, def := range node.Defs {
+		column, ok := def.(*tree.ColumnTableDef)
+		if !ok {
+			return nil, false
+		}
+		aliases = append(aliases, string(column.Name))
+	}
+	return aliases, true
 }
 
 type materializedViewInfo struct {
