@@ -39,14 +39,8 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	// two-phase state-machine node below so external sessions can observe
 	// the in-progress build via pg_index.indisready/indisvalid.
 	accessMethod := indexmetadata.NormalizeAccessMethod(node.Using)
-	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGist && accessMethod != indexmetadata.AccessMethodGin {
+	if accessMethod != indexmetadata.AccessMethodBtree && accessMethod != indexmetadata.AccessMethodGin {
 		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
-	}
-	if node.Concurrently && accessMethod == indexmetadata.AccessMethodGist {
-		return nil, errors.Errorf("index method %s is not yet supported", node.Using)
-	}
-	if node.Unique && accessMethod == indexmetadata.AccessMethodGist {
-		return nil, errors.Errorf("unique gist indexes are not yet supported")
 	}
 	if node.Predicate != nil {
 		if accessMethod != indexmetadata.AccessMethodBtree {
