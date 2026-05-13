@@ -606,9 +606,32 @@ func validateACLTableTarget(ctx *sql.Context, table doltdb.TableName) (string, e
 		return "", err
 	}
 	if relationType == core.RelationType_DoesNotExist {
-		return "", errors.Errorf(`relation "%s" does not exist`, table.Name)
+		exists, err := aclViewExists(ctx, schemaName, table.Name)
+		if err != nil {
+			return "", err
+		}
+		if !exists {
+			return "", errors.Errorf(`relation "%s" does not exist`, table.Name)
+		}
 	}
 	return schemaName, nil
+}
+
+func aclViewExists(ctx *sql.Context, schemaName string, viewName string) (bool, error) {
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return false, err
+	}
+	schema, ok, err := schemaDatabase.GetSchema(ctx, schemaName)
+	if err != nil || !ok {
+		return false, err
+	}
+	viewDatabase, ok := schema.(sql.ViewDatabase)
+	if !ok {
+		return false, nil
+	}
+	_, exists, err := viewDatabase.GetViewDefinition(ctx, viewName)
+	return exists, err
 }
 
 func validateACLSequenceTarget(ctx *sql.Context, seq auth.SequencePrivilegeKey) (string, error) {
