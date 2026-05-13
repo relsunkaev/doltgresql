@@ -15,10 +15,10 @@
 package pgcatalog
 
 import (
-	"io"
-
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/tables"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -43,8 +43,17 @@ func (p PgRewriteHandler) Name() string {
 
 // RowIter implements the interface tables.Handler.
 func (p PgRewriteHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	// TODO: Implement pg_rewrite row iter
-	return emptyRowIter()
+	var rows []sql.Row
+	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+			rows = append(rows, pgRewriteViewRow(schema.Item.SchemaName(), view))
+			return true, nil
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return sql.RowsToRowIter(rows...), nil
 }
 
 // Schema implements the interface tables.Handler.
@@ -68,18 +77,23 @@ var pgRewriteSchema = sql.Schema{
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgRewriteName},
 }
 
-// pgRewriteRowIter is the sql.RowIter for the pg_rewrite table.
-type pgRewriteRowIter struct {
+func pgRewriteViewRow(schemaName string, view functions.ItemView) sql.Row {
+	return sql.Row{
+		id.NewId(id.Section_View, schemaName, view.Item.Name, "_RETURN"), // oid
+		"_RETURN",                    // rulename
+		view.OID.AsId(),              // ev_class
+		"1",                          // ev_type, SELECT
+		"O",                          // ev_enabled, enabled
+		true,                         // is_instead
+		"<>",                         // ev_qual
+		viewRewriteAction(view.Item), // ev_action
+		id.NewTable(PgCatalogName, PgRewriteName).AsId(), // tableoid
+	}
 }
 
-var _ sql.RowIter = (*pgRewriteRowIter)(nil)
-
-// Next implements the interface sql.RowIter.
-func (iter *pgRewriteRowIter) Next(ctx *sql.Context) (sql.Row, error) {
-	return nil, io.EOF
-}
-
-// Close implements the interface sql.RowIter.
-func (iter *pgRewriteRowIter) Close(ctx *sql.Context) error {
-	return nil
+func viewRewriteAction(view sql.ViewDefinition) string {
+	if view.TextDefinition != "" {
+		return view.TextDefinition
+	}
+	return view.CreateViewStatement
 }
