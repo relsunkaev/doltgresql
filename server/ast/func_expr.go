@@ -362,6 +362,14 @@ func nodeFuncArgExprsToSelectExprs(ctx *Context, node tree.Exprs) (vitess.Select
 }
 
 func tableStarFunctionArg(node tree.Expr) (vitess.SelectExpr, bool, error) {
+	tableRef, ok, err := tableStarCompositeRef(node)
+	if err != nil || !ok {
+		return nil, ok, err
+	}
+	return &vitess.AliasedExpr{Expr: tableRef}, true, nil
+}
+
+func tableStarCompositeRef(node tree.Expr) (vitess.Expr, bool, error) {
 	tableName := vitess.NewTableIdent("")
 	switch expr := node.(type) {
 	case *tree.AllColumnsSelector:
@@ -387,9 +395,7 @@ func tableStarFunctionArg(node tree.Expr) (vitess.SelectExpr, bool, error) {
 	if tableName.IsEmpty() {
 		return nil, false, nil
 	}
-	return &vitess.AliasedExpr{
-		Expr: &vitess.ColName{Name: vitess.NewColIdent(tableName.String())},
-	}, true, nil
+	return &vitess.ColName{Name: vitess.NewColIdent(tableName.String())}, true, nil
 }
 
 func applyFuncArgNames(exprs vitess.SelectExprs, argNames []string) error {

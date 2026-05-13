@@ -50,6 +50,29 @@ func nodeExprs(ctx *Context, node tree.Exprs) (vitess.Exprs, error) {
 	return exprs, nil
 }
 
+func nodeRecordExprs(ctx *Context, node tree.Exprs) (vitess.Exprs, error) {
+	if len(node) == 0 {
+		return nil, nil
+	}
+	exprs := make(vitess.Exprs, len(node))
+	for i := range node {
+		if tableRef, ok, err := tableStarCompositeRef(node[i]); err != nil {
+			return nil, err
+		} else if ok {
+			exprs[i] = vitess.InjectedExpr{
+				Expression: pgexprs.NewRecordExpansion(),
+				Children:   vitess.Exprs{tableRef},
+			}
+			continue
+		}
+		var err error
+		if exprs[i], err = nodeExpr(ctx, node[i]); err != nil {
+			return nil, err
+		}
+	}
+	return exprs, nil
+}
+
 // nodeCompositeDatum handles tree.CompositeDatum nodes.
 func nodeCompositeDatum(ctx *Context, node tree.CompositeDatum) (vitess.Expr, error) {
 	return nodeExpr(ctx, node)
@@ -904,7 +927,7 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			return nil, errors.Errorf("tuple labels are not yet supported")
 		}
 
-		valTuple, err := nodeExprs(ctx, node.Exprs)
+		valTuple, err := nodeRecordExprs(ctx, node.Exprs)
 		if err != nil {
 			return nil, err
 		}
