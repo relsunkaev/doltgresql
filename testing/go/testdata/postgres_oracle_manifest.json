@@ -1767,6 +1767,26 @@
       ]
     },
     {
+      "id": "collation-correctness-repro-test-testicucollationuniqueconstraintusescollationequalityrepro-0001-insert-into-collation_unique_items-values-abc",
+      "source": "testing/go/collation_correctness_repro_test.go:TestIcuCollationUniqueConstraintUsesCollationEqualityRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE COLLATION case_insensitive_unique (\n\t\t\t\t\tprovider = icu,\n\t\t\t\t\tlocale = 'und-u-ks-level2',\n\t\t\t\t\tdeterministic = false\n\t\t\t\t);",
+        "CREATE TABLE collation_unique_items (\n\t\t\t\t\tlabel TEXT COLLATE case_insensitive_unique UNIQUE\n\t\t\t\t);",
+        "INSERT INTO collation_unique_items VALUES ('abc');"
+      ],
+      "query": "INSERT INTO collation_unique_items VALUES ('ABC');",
+      "expectedSqlstate": "23505",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "column-comment-drop-repro-test-testdropcolumnclearscommentrepro-0001-select-col_description-drop_recreate_comment_column_table-::regclass-2",
       "source": "testing/go/column_comment_drop_repro_test.go:TestDropColumnClearsCommentRepro",
       "ordinal": 1,

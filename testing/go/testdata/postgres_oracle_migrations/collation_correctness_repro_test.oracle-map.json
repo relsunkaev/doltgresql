@@ -1,0 +1,34 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map collation_correctness_repro_test.go --oracle-test-name TestIcuCollationUniqueConstraintUsesCollationEqualityRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/collation_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/collation_correctness_repro_test.go:TestIcuCollationUniqueConstraintUsesCollationEqualityRepro#0001",
+      "source": "testing/go/collation_correctness_repro_test.go:TestIcuCollationUniqueConstraintUsesCollationEqualityRepro",
+      "ordinal": 1,
+      "scriptName": "ICU collation unique constraint uses collation equality",
+      "oracle": "postgres",
+      "postgresId": "collation-correctness-repro-test-testicucollationuniqueconstraintusescollationequalityrepro-0001-insert-into-collation_unique_items-values-abc",
+      "suggestedId": "collation-correctness-repro-test-testicucollationuniqueconstraintusescollationequalityrepro-0001-insert-into-collation_unique_items-values-abc",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "23505",
+      "errorSeverity": "ERROR",
+      "query": "INSERT INTO collation_unique_items VALUES ('ABC');",
+      "querySha256": "93f51011e177809584093d50eac659381d5f5affc901d9f21a57bc1223abdfdc",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
