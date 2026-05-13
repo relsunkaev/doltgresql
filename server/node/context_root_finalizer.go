@@ -15,8 +15,10 @@
 package node
 
 import (
+	"fmt"
 	"io"
 	"strings"
+	"sync/atomic"
 
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
@@ -79,6 +81,7 @@ func (rf *ContextRootFinalizer) BuildRowIter(ctx *sql.Context, b sql.NodeExecBui
 	return &rootFinalizerIter{
 		childIter:              childIter,
 		clearContextAfterClose: clearsContextOnSuccess(rf.child),
+		useStatementSavepoint:  usesStatementSavepoint(rf.child),
 	}, nil
 }
 
@@ -104,16 +107,28 @@ func (rf *ContextRootFinalizer) WithChildren(ctx *sql.Context, children ...sql.N
 type rootFinalizerIter struct {
 	childIter              sql.RowIter
 	clearContextAfterClose bool
+	useStatementSavepoint  bool
+	savepointInitialized   bool
+	savepointName          string
 	hadErr                 bool
+	err                    error
 }
 
 var _ sql.MutableRowIter = (*rootFinalizerIter)(nil)
 
+var statementSavepointCounter uint64
+
 // Next implements the interface sql.RowIter.
 func (r *rootFinalizerIter) Next(ctx *sql.Context) (sql.Row, error) {
+	if err := r.ensureStatementSavepoint(ctx); err != nil {
+		r.hadErr = true
+		r.err = err
+		return nil, err
+	}
 	row, err := r.childIter.Next(ctx)
 	if err != nil && err != io.EOF {
 		r.hadErr = true
+		r.err = err
 	}
 	return row, err
 }
@@ -122,25 +137,37 @@ func (r *rootFinalizerIter) Next(ctx *sql.Context) (sql.Row, error) {
 func (r *rootFinalizerIter) Close(ctx *sql.Context) error {
 	err := r.childIter.Close(ctx)
 	if r.hadErr {
+		if err == nil {
+			err = r.err
+		}
+		err = r.rollbackStatementSavepoint(ctx, err)
 		deferrable.DiscardPendingForeignKeys(ctx)
 		core.ClearContextValues(ctx)
 		return err
 	}
 	if err != nil {
+		err = r.rollbackStatementSavepoint(ctx, err)
 		_ = deferrable.FlushPendingForeignKeys(ctx)
 		_ = core.CloseContextRootFinalizer(ctx)
 		return err
 	}
 	if r.clearContextAfterClose {
+		if err := r.releaseStatementSavepoint(ctx); err != nil {
+			return err
+		}
 		deferrable.DiscardPendingForeignKeys(ctx)
 		core.ClearContextValues(ctx)
 		return nil
 	}
 	if err := deferrable.FlushPendingForeignKeys(ctx); err != nil {
+		err = r.rollbackStatementSavepoint(ctx, err)
 		core.ClearContextValues(ctx)
 		return err
 	}
-	return core.CloseContextRootFinalizer(ctx)
+	if err := core.CloseContextRootFinalizer(ctx); err != nil {
+		return r.rollbackStatementSavepoint(ctx, err)
+	}
+	return r.releaseStatementSavepoint(ctx)
 }
 
 // GetChildIter implements the interface sql.CustomRowIter.
@@ -155,11 +182,86 @@ func (r *rootFinalizerIter) WithChildIter(childIter sql.RowIter) sql.RowIter {
 	return &nr
 }
 
+func (r *rootFinalizerIter) ensureStatementSavepoint(ctx *sql.Context) error {
+	if r.savepointInitialized {
+		return nil
+	}
+	r.savepointInitialized = true
+	if !r.useStatementSavepoint {
+		return nil
+	}
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return nil
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
+	}
+	r.savepointName = fmt.Sprintf("__doltgresql_statement_%d", atomic.AddUint64(&statementSavepointCounter, 1))
+	return txSession.CreateSavepoint(ctx, tx, r.savepointName)
+}
+
+func (r *rootFinalizerIter) rollbackStatementSavepoint(ctx *sql.Context, err error) error {
+	if r.savepointName == "" {
+		return err
+	}
+	savepoint := r.savepointName
+	r.savepointName = ""
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return err
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return err
+	}
+	if rollbackErr := txSession.RollbackToSavepoint(ctx, tx, savepoint); rollbackErr != nil {
+		if err != nil {
+			return fmt.Errorf("%w; rollback to statement savepoint failed: %v", err, rollbackErr)
+		}
+		return rollbackErr
+	}
+	if releaseErr := txSession.ReleaseSavepoint(ctx, tx, savepoint); releaseErr != nil {
+		if err != nil {
+			return fmt.Errorf("%w; release statement savepoint failed: %v", err, releaseErr)
+		}
+		return releaseErr
+	}
+	return err
+}
+
+func (r *rootFinalizerIter) releaseStatementSavepoint(ctx *sql.Context) error {
+	if r.savepointName == "" {
+		return nil
+	}
+	savepoint := r.savepointName
+	r.savepointName = ""
+	tx := ctx.GetTransaction()
+	if tx == nil {
+		return nil
+	}
+	txSession, ok := ctx.Session.(sql.TransactionSession)
+	if !ok {
+		return nil
+	}
+	return txSession.ReleaseSavepoint(ctx, tx, savepoint)
+}
+
 func clearsContextOnSuccess(child sql.Node) bool {
 	switch child.(type) {
 	case *plan.Rollback, *plan.RollbackSavepoint:
 		return true
 	default:
 		return strings.HasPrefix(strings.ToUpper(child.String()), "ROLLBACK")
+	}
+}
+
+func usesStatementSavepoint(child sql.Node) bool {
+	switch child.(type) {
+	case *plan.Commit, *plan.Rollback, *plan.StartTransaction, *plan.CreateSavepoint, *plan.RollbackSavepoint, *plan.ReleaseSavepoint:
+		return false
+	default:
+		return true
 	}
 }
