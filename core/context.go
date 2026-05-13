@@ -15,6 +15,7 @@
 package core
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 
@@ -449,7 +450,37 @@ func GetSequencesCollectionFromContext(ctx *sql.Context, database string) (*sequ
 			return nil, err
 		}
 	}
+	cv.seqs[database].SetDatabaseName(sequenceRuntimeScope(ctx, database, dsess.DSessFromSess(ctx.Session)))
 	return cv.seqs[database], nil
+}
+
+func sequenceRuntimeScope(ctx *sql.Context, database string, session *dsess.DoltSession) string {
+	baseName, rev := doltdb.SplitRevisionDbName(database)
+	baseScope := baseName
+	if ddb, ok := session.GetDoltDB(ctx, baseName); ok {
+		baseScope = fmt.Sprintf("%p:%s", ddb, baseName)
+	}
+	if rev != "" {
+		return doltdb.RevisionDbName(baseScope, rev)
+	}
+	head, ok, err := session.CurrentHead(ctx, baseName)
+	if err != nil || !ok || head == "" {
+		return baseScope
+	}
+	return doltdb.RevisionDbName(baseScope, head)
+}
+
+// ClearSequenceRuntimeStateForRootReplacement clears process-local sequence runtime state after a root replacement.
+func ClearSequenceRuntimeStateForRootReplacement(ctx *sql.Context) {
+	sequences.ClearAllSharedRuntimeState()
+	if !IsContextValid(ctx) {
+		return
+	}
+	database := contextDatabaseName(ctx, "")
+	session := dsess.DSessFromSess(ctx.Session)
+	if cv, ok := session.DoltgresSessObj.(*contextValues); ok && cv.seqs != nil {
+		delete(cv.seqs, database)
+	}
 }
 
 // GetSubscriptionsCollectionFromContext returns the subscriptions collection from the given context.

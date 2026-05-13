@@ -37,6 +37,7 @@ type Collection struct {
 	accessedMap   map[id.Sequence]*Sequence // Whenever a sequence is accessed, it is added to the access map for faster retrieval
 	underlyingMap prolly.AddressMap
 	ns            tree.NodeStore
+	database      string
 }
 
 // Persistence controls the persistence of a Sequence.
@@ -73,7 +74,12 @@ var _ doltdb.RootObject = (*Sequence)(nil)
 
 // GetSequence returns the sequence with the given schema and name. Returns nil if the sequence cannot be found.
 func (pgs *Collection) GetSequence(ctx context.Context, name id.Sequence) (*Sequence, error) {
-	return pgs.getSequence(ctx, name)
+	seq, err := pgs.getSequence(ctx, name)
+	if err != nil || seq == nil {
+		return seq, err
+	}
+	applySharedRuntimeState(pgs.database, seq)
+	return seq, nil
 }
 
 // GetSequencesWithTable returns all sequences with the given table as the owner.
@@ -150,6 +156,7 @@ func (pgs *Collection) CreateSequence(ctx context.Context, seq *Sequence) error 
 		return errors.Errorf(`relation "%s" already exists`, seq.Id)
 	}
 	// Add it to our cache, which will be emptied when we do anything permanent
+	clearSharedRuntimeState(pgs.database, seq.Id)
 	pgs.accessedMap[seq.Id] = seq
 	return nil
 }
@@ -281,7 +288,13 @@ func (pgs *Collection) NextVal(ctx context.Context, name id.Sequence) (int64, er
 	if seq == nil {
 		return 0, errors.Errorf(`relation "%s" does not exist`, name.SequenceName())
 	}
-	return seq.nextValForSequence()
+	applySharedRuntimeState(pgs.database, seq)
+	val, err := seq.nextValForSequence()
+	if err != nil {
+		return 0, err
+	}
+	rememberSharedRuntimeState(pgs.database, seq)
+	return val, nil
 }
 
 // SetVal sets the sequence to the
@@ -293,6 +306,7 @@ func (pgs *Collection) SetVal(ctx context.Context, name id.Sequence, newValue in
 	if seq == nil {
 		return errors.Errorf(`relation "%s" does not exist`, name.SequenceName())
 	}
+	applySharedRuntimeState(pgs.database, seq)
 	if newValue < seq.Minimum || newValue > seq.Maximum {
 		return errors.Errorf(`setval: value %d is out of bounds for sequence "%s" (%d..%d)`,
 			newValue, name, seq.Minimum, seq.Maximum)
@@ -300,10 +314,14 @@ func (pgs *Collection) SetVal(ctx context.Context, name id.Sequence, newValue in
 	seq.Current = newValue
 	seq.IsAtEnd = false
 	if autoAdvance {
-		_, err := seq.nextValForSequence()
-		return err
+		if _, err := seq.nextValForSequence(); err != nil {
+			return err
+		}
+		rememberSharedRuntimeState(pgs.database, seq)
+		return nil
 	}
 	seq.IsCalled = false
+	rememberSharedRuntimeState(pgs.database, seq)
 	return nil
 }
 
@@ -313,6 +331,7 @@ func (pgs *Collection) Clone(ctx context.Context) *Collection {
 		accessedMap:   make(map[id.Sequence]*Sequence),
 		underlyingMap: pgs.underlyingMap,
 		ns:            pgs.ns,
+		database:      pgs.database,
 	}
 	for seqID, seq := range pgs.accessedMap {
 		newCollection.accessedMap[seqID] = seq
@@ -361,6 +380,7 @@ func (pgs *Collection) cacheAllSequences(ctx context.Context) error {
 	found := make(map[id.Sequence]struct{})
 	for seqID := range pgs.accessedMap {
 		found[seqID] = struct{}{}
+		applySharedRuntimeState(pgs.database, pgs.accessedMap[seqID])
 	}
 	return pgs.underlyingMap.IterAll(ctx, func(k string, v hash.Hash) error {
 		seqID := id.Sequence(k)
@@ -376,6 +396,7 @@ func (pgs *Collection) cacheAllSequences(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		applySharedRuntimeState(pgs.database, seq)
 		pgs.accessedMap[seq.Id] = seq
 		return nil
 	})

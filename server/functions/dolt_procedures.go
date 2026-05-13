@@ -123,8 +123,22 @@ func varArgCallableForDoltProcedure(p *plan.ExternalProcedure, funcVal reflect.V
 			rowIter = sql.RowsToRowIter()
 		}
 
-		return drainRowIter(ctx, rowIter)
+		result, err := drainRowIter(ctx, rowIter)
+		if err != nil {
+			return nil, err
+		}
+		if doltProcedureReplacesSequenceRuntimeRoot(p.Name) {
+			core.ClearSequenceRuntimeStateForRootReplacement(ctx)
+		}
+		return result, nil
 	}
+}
+
+func doltProcedureReplacesSequenceRuntimeRoot(procedureName string) bool {
+	return strings.EqualFold(procedureName, "dolt_reset") ||
+		strings.EqualFold(procedureName, "dolt_merge") ||
+		strings.EqualFold(procedureName, "dolt_revert") ||
+		strings.EqualFold(procedureName, "dolt_cherry_pick")
 }
 
 func rewriteDoltProcedureArgs(ctx *sql.Context, procedureName string, values []any) ([]any, error) {
@@ -219,7 +233,14 @@ func noArgCallableForDoltProcedure(p *plan.ExternalProcedure, funcVal reflect.Va
 		} else {
 			rowIter = sql.RowsToRowIter()
 		}
-		return drainRowIter(ctx, rowIter)
+		result, err := drainRowIter(ctx, rowIter)
+		if err != nil {
+			return nil, err
+		}
+		if doltProcedureReplacesSequenceRuntimeRoot(p.Name) {
+			core.ClearSequenceRuntimeStateForRootReplacement(ctx)
+		}
+		return result, nil
 	}
 }
 

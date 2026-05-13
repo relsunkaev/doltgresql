@@ -149,6 +149,11 @@ func LoadSequences(ctx context.Context, root objinterface.RootValue) (*Collectio
 	}, nil
 }
 
+// SetDatabaseName sets the database name used for process-local runtime sequence state.
+func (pgs *Collection) SetDatabaseName(database string) {
+	pgs.database = database
+}
+
 // ResolveNameFromObjects implements the interface objinterface.Collection.
 func (*Collection) ResolveNameFromObjects(ctx context.Context, name doltdb.TableName, rootObjects []objinterface.RootObject) (doltdb.TableName, id.Id, error) {
 	// First we'll check if there are any objects to search through in the first place
