@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/expression"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
+	"github.com/goccy/go-json"
 
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -319,6 +320,46 @@ func jsonAggOutput(value pgtypes.JsonValue, jsonb bool) interface{} {
 		return pgtypes.JsonDocument{Value: value}
 	}
 	sb := strings.Builder{}
-	pgtypes.JsonValueFormatterCompact(&sb, value)
+	jsonAggFormatPlain(&sb, value)
 	return sb.String()
+}
+
+func jsonAggFormatPlain(sb *strings.Builder, value pgtypes.JsonValue) {
+	if raw, ok := pgtypes.JsonValueRawText(value); ok {
+		sb.WriteString(raw)
+		return
+	}
+	switch value := pgtypes.JsonValueUnwrapRaw(value).(type) {
+	case pgtypes.JsonValueArray:
+		sb.WriteRune('[')
+		for i, item := range value {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			jsonAggFormatPlain(sb, item)
+		}
+		sb.WriteRune(']')
+	case pgtypes.JsonValueObject:
+		if len(value.Items) == 0 {
+			sb.WriteString("{}")
+			return
+		}
+		sb.WriteString("{ ")
+		for i, item := range value.Items {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			jsonAggWriteKey(sb, item.Key)
+			sb.WriteString(" : ")
+			jsonAggFormatPlain(sb, item.Value)
+		}
+		sb.WriteString(" }")
+	default:
+		pgtypes.JsonValueFormatterCompact(sb, value)
+	}
+}
+
+func jsonAggWriteKey(sb *strings.Builder, value string) {
+	bytes, _ := json.MarshalWithOption(value, json.DisableHTMLEscape())
+	sb.Write(bytes)
 }

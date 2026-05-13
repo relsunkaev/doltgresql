@@ -16,6 +16,7 @@ package binary
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -62,20 +63,14 @@ var json_array_element = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
-		if err != nil {
-			return nil, err
-		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		retVal, err := jsonb_array_element.Callable(ctx, unusedTypes, newVal, val2)
+		retVal, err := plainJsonArrayElement(val1, int(val2.(int32)))
 		if err != nil {
 			return nil, err
 		}
 		if retVal == nil {
-			return "", nil
+			return nil, nil
 		}
-		return pgtypes.JsonB.IoOutput(ctx, retVal)
+		return plainJsonOutput(retVal), nil
 	},
 }
 
@@ -112,20 +107,14 @@ var json_object_field = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
-		if err != nil {
-			return nil, err
-		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		retVal, err := jsonb_object_field.Callable(ctx, unusedTypes, newVal, val2)
+		retVal, err := plainJsonObjectField(val1, val2.(string))
 		if err != nil {
 			return nil, err
 		}
 		if retVal == nil {
-			return "", nil
+			return nil, nil
 		}
-		return pgtypes.JsonB.IoOutput(ctx, retVal)
+		return plainJsonOutput(retVal), nil
 	},
 }
 
@@ -159,13 +148,11 @@ var json_array_element_text = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.Int32},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
+		retVal, err := plainJsonArrayElement(val1, int(val2.(int32)))
 		if err != nil {
 			return nil, err
 		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		return jsonb_array_element_text.Callable(ctx, unusedTypes, newVal, val2)
+		return plainJsonTextOutput(ctx, retVal)
 	},
 }
 
@@ -191,13 +178,11 @@ var json_object_field_text = framework.Function2{
 	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Json, pgtypes.Text},
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
+		retVal, err := plainJsonObjectField(val1, val2.(string))
 		if err != nil {
 			return nil, err
 		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		return jsonb_object_field_text.Callable(ctx, unusedTypes, newVal, val2)
+		return plainJsonTextOutput(ctx, retVal)
 	},
 }
 
@@ -224,20 +209,14 @@ var json_extract_path = framework.Function2{
 	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
-		if err != nil {
-			return nil, err
-		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		retVal, err := jsonb_extract_path.Callable(ctx, unusedTypes, newVal, val2)
+		retVal, err := plainJsonExtractPath(val1, val2)
 		if err != nil {
 			return nil, err
 		}
 		if retVal == nil {
 			return nil, nil
 		}
-		return pgtypes.JsonB.IoOutput(ctx, retVal)
+		return plainJsonOutput(retVal), nil
 	},
 }
 
@@ -295,13 +274,11 @@ var json_extract_path_text = framework.Function2{
 	Variadic:   true,
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		// TODO: make a bespoke implementation that preserves whitespace
-		newVal, err := pgtypes.JsonB.IoInput(ctx, val1.(string))
+		retVal, err := plainJsonExtractPath(val1, val2)
 		if err != nil {
 			return nil, err
 		}
-		var unusedTypes [3]*pgtypes.DoltgresType
-		return jsonb_extract_path_text.Callable(ctx, unusedTypes, newVal, val2)
+		return plainJsonTextOutput(ctx, retVal)
 	},
 }
 
@@ -533,6 +510,109 @@ func jsonbStringValueEqualsText(value pgtypes.JsonValueString, text string) (boo
 		return false, err
 	}
 	return decoded == text, nil
+}
+
+func plainJsonValue(val any) (pgtypes.JsonValue, error) {
+	doc, err := pgtypes.UnmarshalToJsonDocumentPreserveObjectItems([]byte(val.(string)))
+	if err != nil {
+		return nil, err
+	}
+	return doc.Value, nil
+}
+
+func plainJsonArrayElement(val any, idx int) (pgtypes.JsonValue, error) {
+	value, err := plainJsonValue(val)
+	if err != nil {
+		return nil, err
+	}
+	array, ok := pgtypes.JsonValueUnwrapRaw(value).(pgtypes.JsonValueArray)
+	if !ok {
+		return nil, nil
+	}
+	if idx < 0 {
+		idx += len(array)
+	}
+	if idx < 0 || idx >= len(array) {
+		return nil, nil
+	}
+	return array[idx], nil
+}
+
+func plainJsonObjectField(val any, key string) (pgtypes.JsonValue, error) {
+	value, err := plainJsonValue(val)
+	if err != nil {
+		return nil, err
+	}
+	object, ok := pgtypes.JsonValueUnwrapRaw(value).(pgtypes.JsonValueObject)
+	if !ok {
+		return nil, nil
+	}
+	idx, ok := object.Index[key]
+	if !ok {
+		return nil, nil
+	}
+	return object.Items[idx].Value, nil
+}
+
+func plainJsonExtractPath(val any, pathVal any) (pgtypes.JsonValue, error) {
+	value, err := plainJsonValue(val)
+	if err != nil {
+		return nil, err
+	}
+	paths := pathVal.([]interface{})
+	for _, path := range paths {
+		textPath, ok := path.(string)
+		if !ok {
+			return nil, nil
+		}
+		switch currentValue := pgtypes.JsonValueUnwrapRaw(value).(type) {
+		case pgtypes.JsonValueObject:
+			idx, ok := currentValue.Index[textPath]
+			if !ok {
+				return nil, nil
+			}
+			value = currentValue.Items[idx].Value
+		case pgtypes.JsonValueArray:
+			idx, err := strconv.Atoi(textPath)
+			if err != nil {
+				return nil, nil
+			}
+			if idx < 0 {
+				idx += len(currentValue)
+			}
+			if idx < 0 || idx >= len(currentValue) {
+				return nil, nil
+			}
+			value = currentValue[idx]
+		default:
+			return nil, nil
+		}
+	}
+	return value, nil
+}
+
+func plainJsonOutput(value pgtypes.JsonValue) string {
+	sb := strings.Builder{}
+	pgtypes.JsonValueFormatterPreserveRaw(&sb, value)
+	return sb.String()
+}
+
+func plainJsonTextOutput(ctx *sql.Context, value pgtypes.JsonValue) (any, error) {
+	if value == nil {
+		return nil, nil
+	}
+	raw, hasRaw := pgtypes.JsonValueRawText(value)
+	switch value := pgtypes.JsonValueUnwrapRaw(value).(type) {
+	case pgtypes.JsonValueString:
+		return pgtypes.JsonStringUnescape(value)
+	case pgtypes.JsonValueNull:
+		return nil, nil
+	default:
+		if hasRaw {
+			return raw, nil
+		}
+		return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
+	}
 }
 
 // jsonb_delete_text represents the PostgreSQL function of the same name, taking the same parameters.

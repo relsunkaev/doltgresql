@@ -109,7 +109,8 @@ func TestUnmarshalToJsonDocumentPreserveObjectItems(t *testing.T) {
 	doc, err := UnmarshalToJsonDocumentPreserveObjectItems([]byte(`{"b":1,"a":2,"a":3}`))
 	require.NoError(t, err)
 
-	object, ok := doc.Value.(JsonValueObject)
+	require.Equal(t, `{"b":1,"a":2,"a":3}`, doc.Value.(JsonValueRaw).Raw)
+	object, ok := JsonValueUnwrapRaw(doc.Value).(JsonValueObject)
 	require.True(t, ok)
 	require.Len(t, object.Items, 3)
 	require.Equal(t, []string{"b", "a", "a"}, []string{

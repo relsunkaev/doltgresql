@@ -18,7 +18,6 @@ import (
 	"bytes"
 	stdjson "encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"regexp"
 	"sort"
@@ -68,6 +67,13 @@ type JsonValue interface {
 	enforceJsonInterfaceInheritance(error)
 }
 
+// JsonValueRaw wraps a parsed JSON value with its original plain-json input
+// text. jsonb values should not use this wrapper.
+type JsonValueRaw struct {
+	Value JsonValue
+	Raw   string
+}
+
 // JsonValueObject represents a JSON object.
 type JsonValueObject struct {
 	Items []JsonValueObjectItem
@@ -101,6 +107,10 @@ var _ JsonValue = JsonValueString("")
 var _ JsonValue = JsonValueNumber{}
 var _ JsonValue = JsonValueBoolean(false)
 var _ JsonValue = JsonValueNull(0)
+var _ JsonValue = JsonValueRaw{}
+
+// enforceJsonInterfaceInheritance implements the JsonValue interface.
+func (JsonValueRaw) enforceJsonInterfaceInheritance(error) {}
 
 // enforceJsonInterfaceInheritance implements the JsonValue interface.
 func (JsonValueObject) enforceJsonInterfaceInheritance(error) {}
@@ -120,9 +130,31 @@ func (JsonValueBoolean) enforceJsonInterfaceInheritance(error) {}
 // enforceJsonInterfaceInheritance implements the JsonValue interface.
 func (JsonValueNull) enforceJsonInterfaceInheritance(error) {}
 
+// JsonValueUnwrapRaw removes any plain-json raw-text wrapper from the value.
+func JsonValueUnwrapRaw(value JsonValue) JsonValue {
+	for {
+		raw, ok := value.(JsonValueRaw)
+		if !ok {
+			return value
+		}
+		value = raw.Value
+	}
+}
+
+// JsonValueRawText returns the original plain-json text for a value when it is available.
+func JsonValueRawText(value JsonValue) (string, bool) {
+	raw, ok := value.(JsonValueRaw)
+	if !ok || raw.Raw == "" {
+		return "", false
+	}
+	return raw.Raw, true
+}
+
 // JsonValueCopy returns a new copy of the given JsonValue that may be freely modified.
 func JsonValueCopy(value JsonValue) JsonValue {
 	switch value := value.(type) {
+	case JsonValueRaw:
+		return JsonValueRaw{Value: JsonValueCopy(value.Value), Raw: value.Raw}
 	case JsonValueObject:
 		newItems := make([]JsonValueObjectItem, len(value.Items))
 		newIndex := make(map[string]int)
@@ -182,6 +214,8 @@ func JsonObjectFromItems(items []JsonValueObjectItem, sortKeys bool) JsonValueOb
 
 // JsonValueCompare compares two values.
 func JsonValueCompare(v1 JsonValue, v2 JsonValue) int {
+	v1 = JsonValueUnwrapRaw(v1)
+	v2 = JsonValueUnwrapRaw(v2)
 	// Some types sort before others, so we'll check those first
 	v1TypeSortOrder := jsonValueTypeSortOrder(v1)
 	v2TypeSortOrder := jsonValueTypeSortOrder(v2)
@@ -257,11 +291,14 @@ func JsonValueCompare(v1 JsonValue, v2 JsonValue) int {
 
 // JsonBContainsValue returns whether the container JSONB value contains the contained JSONB value.
 func JsonBContainsValue(container JsonValue, contained JsonValue) bool {
+	container = JsonValueUnwrapRaw(container)
+	contained = JsonValueUnwrapRaw(contained)
 	return jsonBContainsValue(container, contained, true)
 }
 
 // JsonValueDeleteKey returns a copy of value with the given object key or array string element removed.
 func JsonValueDeleteKey(value JsonValue, key string) (JsonValue, error) {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		return jsonValueObjectDeleteKeys(value, map[string]struct{}{key: {}}), nil
@@ -274,6 +311,7 @@ func JsonValueDeleteKey(value JsonValue, key string) (JsonValue, error) {
 
 // JsonValueDeleteKeys returns a copy of value with all matching object keys or array string elements removed.
 func JsonValueDeleteKeys(value JsonValue, keys []string) (JsonValue, error) {
+	value = JsonValueUnwrapRaw(value)
 	keySet := make(map[string]struct{}, len(keys))
 	for _, key := range keys {
 		keySet[key] = struct{}{}
@@ -290,6 +328,7 @@ func JsonValueDeleteKeys(value JsonValue, keys []string) (JsonValue, error) {
 
 // JsonValueDeleteIndex returns a copy of value with the array element at idx removed.
 func JsonValueDeleteIndex(value JsonValue, idx int) (JsonValue, error) {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueArray:
 		return jsonValueArrayDeleteIndex(value, idx), nil
@@ -302,6 +341,7 @@ func JsonValueDeleteIndex(value JsonValue, idx int) (JsonValue, error) {
 
 // JsonValueDeletePath returns a copy of value with the item at path removed.
 func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
+	value = JsonValueUnwrapRaw(value)
 	switch value.(type) {
 	case JsonValueObject, JsonValueArray:
 		newValue, _, err := jsonValueDeletePath(value, path, 1)
@@ -313,6 +353,7 @@ func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
 
 // JsonValueStripNulls returns a copy of value with all object fields containing JSON null removed recursively.
 func JsonValueStripNulls(value JsonValue) JsonValue {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		items := make([]JsonValueObjectItem, 0, len(value.Items))
@@ -360,7 +401,7 @@ func jsonValueObjectDeleteKeys(value JsonValueObject, keys map[string]struct{}) 
 func jsonValueArrayDeleteStrings(value JsonValueArray, keys map[string]struct{}) (JsonValueArray, error) {
 	items := make(JsonValueArray, 0, len(value))
 	for _, item := range value {
-		if str, ok := item.(JsonValueString); ok {
+		if str, ok := JsonValueUnwrapRaw(item).(JsonValueString); ok {
 			decoded, err := JsonStringUnescape(str)
 			if err != nil {
 				return nil, err
@@ -392,6 +433,7 @@ func jsonValueArrayDeleteIndex(value JsonValueArray, idx int) JsonValueArray {
 }
 
 func jsonValueInsertPath(value JsonValue, path []string, newValue JsonValue, insertAfter bool, position int) (JsonValue, bool, error) {
+	value = JsonValueUnwrapRaw(value)
 	if len(path) == 0 {
 		return JsonValueCopy(value), false, nil
 	}
@@ -481,6 +523,7 @@ func jsonValueArrayInsertIndex(value JsonValueArray, idx int, newValue JsonValue
 }
 
 func jsonValueDeletePath(value JsonValue, path []string, position int) (JsonValue, bool, error) {
+	value = JsonValueUnwrapRaw(value)
 	if len(path) == 0 {
 		return JsonValueCopy(value), false, nil
 	}
@@ -534,6 +577,8 @@ func jsonValueDeletePath(value JsonValue, path []string, position int) (JsonValu
 }
 
 func jsonBContainsValue(container JsonValue, contained JsonValue, allowArrayScalar bool) bool {
+	container = JsonValueUnwrapRaw(container)
+	contained = JsonValueUnwrapRaw(contained)
 	switch contained := contained.(type) {
 	case JsonValueObject:
 		object, ok := container.(JsonValueObject)
@@ -610,6 +655,7 @@ func jsonValueTypeSortOrder(value JsonValue) int {
 
 // JsonValueSerialize is the recursive serializer for JSON values.
 func JsonValueSerialize(writer *utils.Writer, value JsonValue) {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		writer.Byte(byte(JsonValueType_Object))
@@ -684,6 +730,7 @@ func JsonValueDeserialize(reader *utils.Reader) (_ JsonValue, err error) {
 
 // JsonValueFormatter is the recursive formatter for JSON values.
 func JsonValueFormatter(sb *strings.Builder, value JsonValue) {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		sb.WriteRune('{')
@@ -722,6 +769,7 @@ func JsonValueFormatter(sb *strings.Builder, value JsonValue) {
 
 // JsonValueFormatterCompact is the recursive compact formatter for JSON values.
 func JsonValueFormatterCompact(sb *strings.Builder, value JsonValue) {
+	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		sb.WriteRune('{')
@@ -755,6 +803,40 @@ func JsonValueFormatterCompact(sb *strings.Builder, value JsonValue) {
 		}
 	case JsonValueNull:
 		sb.WriteString("null")
+	}
+}
+
+// JsonValueFormatterPreserveRaw is the recursive formatter for plain JSON
+// values when original input text is available.
+func JsonValueFormatterPreserveRaw(sb *strings.Builder, value JsonValue) {
+	if raw, ok := JsonValueRawText(value); ok {
+		sb.WriteString(raw)
+		return
+	}
+	value = JsonValueUnwrapRaw(value)
+	switch value := value.(type) {
+	case JsonValueObject:
+		sb.WriteRune('{')
+		for i, item := range value.Items {
+			if i > 0 {
+				sb.WriteRune(',')
+			}
+			writeJsonKeyString(sb, item.Key)
+			sb.WriteRune(':')
+			JsonValueFormatterPreserveRaw(sb, item.Value)
+		}
+		sb.WriteRune('}')
+	case JsonValueArray:
+		sb.WriteRune('[')
+		for i, item := range value {
+			if i > 0 {
+				sb.WriteRune(',')
+			}
+			JsonValueFormatterPreserveRaw(sb, item)
+		}
+		sb.WriteRune(']')
+	default:
+		JsonValueFormatterCompact(sb, value)
 	}
 }
 
@@ -818,6 +900,7 @@ func jsonParsedStringEscape(value string) string {
 
 // JsonValueTypeName returns the PostgreSQL json/jsonb type name for the given JSON value.
 func JsonValueTypeName(value JsonValue) string {
+	value = JsonValueUnwrapRaw(value)
 	switch value.(type) {
 	case JsonValueObject:
 		return "object"
@@ -850,7 +933,16 @@ func JsonValueFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonVa
 	}
 	if typ != nil {
 		switch typ.ID.TypeName() {
-		case "json", "jsonb":
+		case "json":
+			str, ok := res.(string)
+			if ok {
+				doc, err := UnmarshalToJsonDocumentPreserveObjectItems([]byte(str))
+				if err != nil {
+					return nil, err
+				}
+				return doc.Value, nil
+			}
+		case "jsonb":
 			str, ok := res.(string)
 			if ok {
 				doc, err := UnmarshalToJsonDocument([]byte(str))
@@ -1013,88 +1105,195 @@ func UnmarshalToJsonDocument(val []byte) (JsonDocument, error) {
 // type. jsonb should continue to use UnmarshalToJsonDocument for canonical
 // object ordering and duplicate-key collapse.
 func UnmarshalToJsonDocumentPreserveObjectItems(val []byte) (JsonDocument, error) {
-	decoder := stdjson.NewDecoder(bytes.NewReader(val))
-	decoder.UseNumber()
-	jsonValue, err := decodeJsonValuePreserveObjectItems(decoder)
+	if !stdjson.Valid(val) {
+		return JsonDocument{}, errors.Errorf("invalid JSON")
+	}
+	parser := jsonRawParser{input: val}
+	jsonValue, err := parser.parseValue()
 	if err != nil {
 		return JsonDocument{}, err
 	}
-	if token, err := decoder.Token(); err != io.EOF {
-		if err != nil {
-			return JsonDocument{}, err
-		}
-		return JsonDocument{}, errors.Errorf("unexpected trailing token while constructing JsonDocument: %v", token)
+	parser.skipWhitespace()
+	if parser.pos != len(parser.input) {
+		return JsonDocument{}, errors.Errorf("unexpected trailing data while constructing JsonDocument")
 	}
 	return JsonDocument{Value: jsonValue}, nil
 }
 
-func decodeJsonValuePreserveObjectItems(decoder *stdjson.Decoder) (JsonValue, error) {
-	token, err := decoder.Token()
+type jsonRawParser struct {
+	input []byte
+	pos   int
+}
+
+func (p *jsonRawParser) parseValue() (JsonValue, error) {
+	p.skipWhitespace()
+	start := p.pos
+	if p.pos >= len(p.input) {
+		return nil, errors.Errorf("unexpected end while constructing JsonDocument")
+	}
+	var value JsonValue
+	var err error
+	switch p.input[p.pos] {
+	case '{':
+		value, err = p.parseObject()
+	case '[':
+		value, err = p.parseArray()
+	case '"':
+		value, err = p.parseString()
+	case 't':
+		err = p.consumeLiteral("true")
+		value = JsonValueBoolean(true)
+	case 'f':
+		err = p.consumeLiteral("false")
+		value = JsonValueBoolean(false)
+	case 'n':
+		err = p.consumeLiteral("null")
+		value = JsonValueNull(0)
+	default:
+		value, err = p.parseNumber()
+	}
 	if err != nil {
 		return nil, err
 	}
-	switch token := token.(type) {
-	case stdjson.Delim:
-		switch token {
-		case '{':
-			items := make([]JsonValueObjectItem, 0)
-			for decoder.More() {
-				keyToken, err := decoder.Token()
-				if err != nil {
-					return nil, err
-				}
-				key, ok := keyToken.(string)
-				if !ok {
-					return nil, errors.Errorf("unexpected object key token while constructing JsonDocument: %v", keyToken)
-				}
-				value, err := decodeJsonValuePreserveObjectItems(decoder)
-				if err != nil {
-					return nil, err
-				}
-				items = append(items, JsonValueObjectItem{Key: key, Value: value})
-			}
-			endToken, err := decoder.Token()
-			if err != nil {
-				return nil, err
-			}
-			if endToken != stdjson.Delim('}') {
-				return nil, errors.Errorf("unexpected object end token while constructing JsonDocument: %v", endToken)
-			}
-			return JsonObjectFromItems(items, false), nil
-		case '[':
-			values := make(JsonValueArray, 0)
-			for decoder.More() {
-				value, err := decodeJsonValuePreserveObjectItems(decoder)
-				if err != nil {
-					return nil, err
-				}
-				values = append(values, value)
-			}
-			endToken, err := decoder.Token()
-			if err != nil {
-				return nil, err
-			}
-			if endToken != stdjson.Delim(']') {
-				return nil, errors.Errorf("unexpected array end token while constructing JsonDocument: %v", endToken)
-			}
-			return values, nil
-		default:
-			return nil, errors.Errorf("unexpected delimiter while constructing JsonDocument: %v", token)
-		}
-	case string:
-		return JsonValueString(jsonParsedStringEscape(token)), nil
-	case stdjson.Number:
-		number, err := decimal.NewFromString(token.String())
+	return JsonValueRaw{Value: value, Raw: string(p.input[start:p.pos])}, nil
+}
+
+func (p *jsonRawParser) parseObject() (JsonValue, error) {
+	p.pos++
+	items := make([]JsonValueObjectItem, 0)
+	p.skipWhitespace()
+	if p.consumeByte('}') {
+		return JsonObjectFromItems(items, false), nil
+	}
+	for {
+		p.skipWhitespace()
+		key, err := p.parseObjectKey()
 		if err != nil {
 			return nil, err
 		}
-		return JsonValueNumber(number), nil
-	case bool:
-		return JsonValueBoolean(token), nil
-	case nil:
-		return JsonValueNull(0), nil
-	default:
-		return nil, errors.Errorf("unexpected token while constructing JsonDocument: %v", token)
+		p.skipWhitespace()
+		if !p.consumeByte(':') {
+			return nil, errors.Errorf("expected object colon while constructing JsonDocument")
+		}
+		value, err := p.parseValue()
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, JsonValueObjectItem{Key: key, Value: value})
+		p.skipWhitespace()
+		if p.consumeByte('}') {
+			return JsonObjectFromItems(items, false), nil
+		}
+		if !p.consumeByte(',') {
+			return nil, errors.Errorf("expected object comma while constructing JsonDocument")
+		}
+	}
+}
+
+func (p *jsonRawParser) parseArray() (JsonValue, error) {
+	p.pos++
+	values := make(JsonValueArray, 0)
+	p.skipWhitespace()
+	if p.consumeByte(']') {
+		return values, nil
+	}
+	for {
+		value, err := p.parseValue()
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+		p.skipWhitespace()
+		if p.consumeByte(']') {
+			return values, nil
+		}
+		if !p.consumeByte(',') {
+			return nil, errors.Errorf("expected array comma while constructing JsonDocument")
+		}
+	}
+}
+
+func (p *jsonRawParser) parseObjectKey() (string, error) {
+	value, err := p.parseString()
+	if err != nil {
+		return "", err
+	}
+	return JsonStringUnescape(value)
+}
+
+func (p *jsonRawParser) parseString() (JsonValueString, error) {
+	start := p.pos
+	if p.pos >= len(p.input) || p.input[p.pos] != '"' {
+		return "", errors.Errorf("expected string while constructing JsonDocument")
+	}
+	p.pos++
+	escaped := false
+	for p.pos < len(p.input) {
+		ch := p.input[p.pos]
+		p.pos++
+		if escaped {
+			escaped = false
+			continue
+		}
+		switch ch {
+		case '\\':
+			escaped = true
+		case '"':
+			var decoded string
+			if err := stdjson.Unmarshal(p.input[start:p.pos], &decoded); err != nil {
+				return "", err
+			}
+			return JsonValueString(jsonParsedStringEscape(decoded)), nil
+		}
+	}
+	return "", errors.Errorf("unterminated string while constructing JsonDocument")
+}
+
+func (p *jsonRawParser) parseNumber() (JsonValue, error) {
+	start := p.pos
+	for p.pos < len(p.input) {
+		switch p.input[p.pos] {
+		case ' ', '\n', '\r', '\t', ',', '}', ']':
+			number, err := decimal.NewFromString(string(p.input[start:p.pos]))
+			if err != nil {
+				return nil, err
+			}
+			return JsonValueNumber(number), nil
+		default:
+			p.pos++
+		}
+	}
+	number, err := decimal.NewFromString(string(p.input[start:p.pos]))
+	if err != nil {
+		return nil, err
+	}
+	return JsonValueNumber(number), nil
+}
+
+func (p *jsonRawParser) consumeLiteral(literal string) error {
+	if !bytes.HasPrefix(p.input[p.pos:], []byte(literal)) {
+		return errors.Errorf("expected %s while constructing JsonDocument", literal)
+	}
+	p.pos += len(literal)
+	return nil
+}
+
+func (p *jsonRawParser) consumeByte(ch byte) bool {
+	if p.pos < len(p.input) && p.input[p.pos] == ch {
+		p.pos++
+		return true
+	}
+	return false
+}
+
+func (p *jsonRawParser) skipWhitespace() {
+	for p.pos < len(p.input) {
+		switch p.input[p.pos] {
+		case ' ', '\n', '\r', '\t':
+			p.pos++
+		default:
+			return
+		}
 	}
 }
 

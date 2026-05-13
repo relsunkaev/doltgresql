@@ -343,13 +343,13 @@ func (j *jsonToRecordTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.
 		return nil, err
 	}
 	if j.recordSet {
-		array, ok := doc.Value.(pgtypes.JsonValueArray)
+		array, ok := pgtypes.JsonValueUnwrapRaw(doc.Value).(pgtypes.JsonValueArray)
 		if !ok {
 			return nil, errors.Errorf("cannot call %s on a non-array", j.Name())
 		}
 		rows := make([]sql.Row, len(array))
 		for i, item := range array {
-			object, ok := item.(pgtypes.JsonValueObject)
+			object, ok := pgtypes.JsonValueUnwrapRaw(item).(pgtypes.JsonValueObject)
 			if !ok {
 				return nil, errors.Errorf("cannot call %s on an array containing a non-object", j.Name())
 			}
@@ -360,7 +360,7 @@ func (j *jsonToRecordTableFunction) RowIter(ctx *sql.Context, row sql.Row) (sql.
 		}
 		return sql.RowsToRowIter(rows...), nil
 	}
-	object, ok := doc.Value.(pgtypes.JsonValueObject)
+	object, ok := pgtypes.JsonValueUnwrapRaw(doc.Value).(pgtypes.JsonValueObject)
 	if !ok {
 		return nil, errors.Errorf("cannot call %s on a non-object", j.Name())
 	}
@@ -485,7 +485,7 @@ func jsonbPopulateRecord(ctx *sql.Context, compositeType *pgtypes.DoltgresType, 
 	if err != nil {
 		return nil, err
 	}
-	object, ok := doc.Value.(pgtypes.JsonValueObject)
+	object, ok := pgtypes.JsonValueUnwrapRaw(doc.Value).(pgtypes.JsonValueObject)
 	if !ok {
 		return nil, errors.New("cannot call jsonb_populate_record on a non-object")
 	}
@@ -546,7 +546,8 @@ func jsonPopulateRecordFromObject(
 }
 
 func jsonPopulateValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, baseValue any, value pgtypes.JsonValue) (any, error) {
-	if _, ok := value.(pgtypes.JsonValueNull); ok {
+	unwrapped := pgtypes.JsonValueUnwrapRaw(value)
+	if _, ok := unwrapped.(pgtypes.JsonValueNull); ok {
 		return nil, nil
 	}
 	switch targetType.ID.TypeName() {
@@ -556,7 +557,7 @@ func jsonPopulateValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, baseV
 		return jsonValueOutput(ctx, pgtypes.JsonValueCopy(value))
 	}
 	if targetType.IsCompositeType() {
-		if object, ok := value.(pgtypes.JsonValueObject); ok {
+		if object, ok := unwrapped.(pgtypes.JsonValueObject); ok {
 			baseRecord, ok := baseValue.([]pgtypes.RecordValue)
 			if baseValue != nil && !ok {
 				return nil, errors.Errorf("expected []RecordValue, but got %T", baseValue)
@@ -565,7 +566,7 @@ func jsonPopulateValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, baseV
 		}
 	}
 	if targetType.IsArrayType() {
-		if array, ok := value.(pgtypes.JsonValueArray); ok {
+		if array, ok := unwrapped.(pgtypes.JsonValueArray); ok {
 			baseType := targetType.ArrayBaseType()
 			output := make([]any, len(array))
 			for i, item := range array {
@@ -579,7 +580,7 @@ func jsonPopulateValue(ctx *sql.Context, targetType *pgtypes.DoltgresType, baseV
 		}
 	}
 	var input string
-	if str, ok := value.(pgtypes.JsonValueString); ok {
+	if str, ok := unwrapped.(pgtypes.JsonValueString); ok {
 		decoded, err := pgtypes.JsonStringUnescape(str)
 		if err != nil {
 			return nil, err

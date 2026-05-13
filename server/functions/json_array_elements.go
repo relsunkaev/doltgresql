@@ -49,6 +49,7 @@ func jsonDocumentFromFunctionValue(ctx *sql.Context, typ *pgtypes.DoltgresType, 
 
 // jsonValueAsArrayForElements validates that a JSON value is an array for *_array_elements.
 func jsonValueAsArrayForElements(value pgtypes.JsonValue) (pgtypes.JsonValueArray, error) {
+	value = pgtypes.JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case pgtypes.JsonValueArray:
 		return value, nil
@@ -60,6 +61,7 @@ func jsonValueAsArrayForElements(value pgtypes.JsonValue) (pgtypes.JsonValueArra
 }
 
 func jsonValueAsArrayForLength(value pgtypes.JsonValue) (pgtypes.JsonValueArray, error) {
+	value = pgtypes.JsonValueUnwrapRaw(value)
 	array, ok := value.(pgtypes.JsonValueArray)
 	if !ok {
 		return nil, errors.New("cannot get array length of a non-array")
@@ -68,6 +70,7 @@ func jsonValueAsArrayForLength(value pgtypes.JsonValue) (pgtypes.JsonValueArray,
 }
 
 func jsonValueAsObjectForKeys(fnName string, value pgtypes.JsonValue) (pgtypes.JsonValueObject, error) {
+	value = pgtypes.JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case pgtypes.JsonValueObject:
 		return value, nil
@@ -135,18 +138,24 @@ func jsonEachRowIter(
 
 // jsonValueAsText returns the textual representation used by *_text helpers.
 func jsonValueAsText(ctx *sql.Context, value pgtypes.JsonValue) (any, error) {
-	switch value := value.(type) {
+	raw, hasRaw := pgtypes.JsonValueRawText(value)
+	switch value := pgtypes.JsonValueUnwrapRaw(value).(type) {
 	case pgtypes.JsonValueString:
 		return pgtypes.JsonStringUnescape(value)
 	case pgtypes.JsonValueNull:
 		return nil, nil
 	default:
+		if hasRaw {
+			return raw, nil
+		}
 		return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
 	}
 }
 
 func jsonValueToOutput(ctx *sql.Context, value pgtypes.JsonValue) (any, error) {
-	return pgtypes.JsonB.IoOutput(ctx, pgtypes.JsonDocument{Value: value})
+	sb := strings.Builder{}
+	pgtypes.JsonValueFormatterPreserveRaw(&sb, value)
+	return sb.String(), nil
 }
 
 func jsonbValueToOutput(_ *sql.Context, value pgtypes.JsonValue) (any, error) {
