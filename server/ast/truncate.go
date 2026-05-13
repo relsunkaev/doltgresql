@@ -17,8 +17,6 @@ package ast
 import (
 	"strings"
 
-	"github.com/cockroachdb/errors"
-
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
@@ -36,13 +34,14 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 		// RESTRICT matches PostgreSQL's default truncate-dependency policy
 		// (foreign-key references already error); accept the keyword.
 	case tree.DropCascade:
-		return nil, errors.Errorf("CASCADE is not yet supported")
+		// Handled by the injected truncate helper below.
 	}
+	cascade := node.DropBehavior == tree.DropCascade
 	tableName, err := nodeTableName(ctx, &node.Tables[0])
 	if err != nil {
 		return nil, err
 	}
-	if len(node.Tables) > 1 || hasExplicitNonTempSchema(node.Tables) {
+	if cascade || len(node.Tables) > 1 || hasExplicitNonTempSchema(node.Tables) {
 		statements := make([]pgnodes.TruncateTableStatement, 0, len(node.Tables))
 		for i := range node.Tables {
 			tableName, err = nodeTableName(ctx, &node.Tables[i])
@@ -52,7 +51,7 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 			statements = append(statements, truncateTableStatement(tableName, &node.Tables[i]))
 		}
 		return vitess.InjectedStatement{
-			Statement: pgnodes.NewTruncateTables(statements),
+			Statement: pgnodes.NewTruncateTables(statements, cascade),
 			Children:  nil,
 		}, nil
 	}
@@ -78,7 +77,10 @@ func hasExplicitNonTempSchema(tableNames tree.TableNames) bool {
 
 func truncateTableStatement(tableName vitess.TableName, original *tree.TableName) pgnodes.TruncateTableStatement {
 	statement := pgnodes.TruncateTableStatement{
-		Query: "TRUNCATE TABLE " + vitess.String(tableName),
+		Query:    "TRUNCATE TABLE " + vitess.String(tableName),
+		Database: tableName.DbQualifier.String(),
+		Schema:   tableName.SchemaQualifier.String(),
+		Table:    tableName.Name.String(),
 	}
 	if original.ExplicitSchema && !isTempSchemaName(string(original.SchemaName)) {
 		statement.TempShadow = &pgnodes.TruncateTempShadow{
