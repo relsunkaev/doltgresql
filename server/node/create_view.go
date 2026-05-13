@@ -58,6 +58,15 @@ func (c *CreateView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql
 	if err != nil {
 		return nil, err
 	}
+	if !existed {
+		schemaName, err := core.GetSchemaName(ctx, c.gmsCreateView.Database(), "")
+		if err != nil {
+			return nil, err
+		}
+		if err = checkSchemaCreatePrivilege(ctx, schemaName); err != nil {
+			return nil, err
+		}
+	}
 	iter, err := b.Build(ctx, c.gmsCreateView, r)
 	if err != nil {
 		return nil, err
