@@ -35,8 +35,9 @@ package tree
 
 // Truncate represents a TRUNCATE statement.
 type Truncate struct {
-	Tables       TableNames
-	DropBehavior DropBehavior
+	Tables          TableNames
+	RestartIdentity bool
+	DropBehavior    DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
@@ -47,6 +48,9 @@ func (node *Truncate) Format(ctx *FmtCtx) {
 		ctx.WriteString(sep)
 		ctx.FormatNode(&node.Tables[i])
 		sep = ", "
+	}
+	if node.RestartIdentity {
+		ctx.WriteString(" RESTART IDENTITY")
 	}
 	if node.DropBehavior != DropDefault {
 		ctx.WriteByte(' ')

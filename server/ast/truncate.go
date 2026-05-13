@@ -41,7 +41,7 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
-	if cascade || len(node.Tables) > 1 || hasExplicitNonTempSchema(node.Tables) {
+	if cascade || node.RestartIdentity || len(node.Tables) > 1 || hasExplicitNonTempSchema(node.Tables) {
 		statements := make([]pgnodes.TruncateTableStatement, 0, len(node.Tables))
 		for i := range node.Tables {
 			tableName, err = nodeTableName(ctx, &node.Tables[i])
@@ -51,7 +51,7 @@ func nodeTruncate(ctx *Context, node *tree.Truncate) (vitess.Statement, error) {
 			statements = append(statements, truncateTableStatement(tableName, &node.Tables[i]))
 		}
 		return vitess.InjectedStatement{
-			Statement: pgnodes.NewTruncateTables(statements, cascade),
+			Statement: pgnodes.NewTruncateTables(statements, cascade, node.RestartIdentity),
 			Children:  nil,
 		}, nil
 	}

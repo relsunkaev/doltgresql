@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/mysql_db"
@@ -26,15 +27,17 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	coreid "github.com/dolthub/doltgresql/core/id"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 // TruncateTables executes a PostgreSQL TRUNCATE relation list by delegating each
 // relation to the existing single-table TRUNCATE implementation.
 type TruncateTables struct {
-	Statements []TruncateTableStatement
-	Cascade    bool
-	Runner     pgexprs.StatementRunner
+	Statements      []TruncateTableStatement
+	Cascade         bool
+	RestartIdentity bool
+	Runner          pgexprs.StatementRunner
 }
 
 // TruncateTableStatement is a single-table TRUNCATE statement delegated by
@@ -59,8 +62,8 @@ var _ sql.Expressioner = (*TruncateTables)(nil)
 var _ vitess.Injectable = (*TruncateTables)(nil)
 
 // NewTruncateTables returns a new *TruncateTables.
-func NewTruncateTables(statements []TruncateTableStatement, cascade bool) *TruncateTables {
-	return &TruncateTables{Statements: statements, Cascade: cascade}
+func NewTruncateTables(statements []TruncateTableStatement, cascade bool, restartIdentity bool) *TruncateTables {
+	return &TruncateTables{Statements: statements, Cascade: cascade, RestartIdentity: restartIdentity}
 }
 
 // Children implements the interface sql.ExecSourceRel.
@@ -111,6 +114,11 @@ func (t *TruncateTables) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, erro
 			if types.IsOkResult(row) {
 				rowsAffected += int(types.GetOkResult(row).RowsAffected)
 			}
+		}
+	}
+	if t.RestartIdentity {
+		if err := t.restartOwnedSequences(ctx, statements); err != nil {
+			return nil, err
 		}
 	}
 	return sql.RowsToRowIter(sql.NewRow(types.NewOkResult(rowsAffected))), nil
@@ -282,6 +290,52 @@ func (t *TruncateTables) runStatement(ctx *sql.Context, statement TruncateTableS
 		}
 		return sql.RowIterToRows(subCtx, rowIter)
 	})
+}
+
+func (t *TruncateTables) restartOwnedSequences(ctx *sql.Context, statements []TruncateTableStatement) error {
+	seen := make(map[string]struct{}, len(statements))
+	for _, statement := range statements {
+		database, tableName, err := resolveTruncateTableName(ctx, statement)
+		if err != nil {
+			return err
+		}
+		key := strings.ToLower(database + "." + tableName.Schema + "." + tableName.Name)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		collection, err := core.GetSequencesCollectionFromContext(ctx, database)
+		if err != nil {
+			return err
+		}
+		if err = collection.RestartSequencesWithTable(ctx, tableName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func resolveTruncateTableName(ctx *sql.Context, statement TruncateTableStatement) (string, doltdb.TableName, error) {
+	database := statement.Database
+	if database == "" {
+		database = ctx.GetCurrentDatabase()
+	}
+	tableName := doltdb.TableName{Schema: statement.Schema, Name: statement.Table}
+	table, err := core.GetSqlTableFromContext(ctx, database, tableName)
+	if err != nil {
+		return "", doltdb.TableName{}, err
+	}
+	if table == nil {
+		return "", doltdb.TableName{}, errors.Errorf(`relation "%s" does not exist`, statement.Table)
+	}
+	tableID, ok, err := coreid.GetFromTable(ctx, table)
+	if err != nil {
+		return "", doltdb.TableName{}, err
+	}
+	if !ok {
+		return "", doltdb.TableName{}, errors.Errorf(`table "%s" does not specify a schema`, statement.Table)
+	}
+	return database, doltdb.TableName{Schema: tableID.SchemaName(), Name: tableID.TableName()}, nil
 }
 
 // Schema implements the interface sql.ExecSourceRel.

@@ -98,6 +98,22 @@ func (pgs *Collection) GetSequencesWithTable(ctx context.Context, name doltdb.Ta
 	return seqs, nil
 }
 
+// RestartSequencesWithTable resets all sequences owned by the given table to
+// their configured start value.
+func (pgs *Collection) RestartSequencesWithTable(ctx context.Context, name doltdb.TableName) error {
+	seqs, err := pgs.GetSequencesWithTable(ctx, name)
+	if err != nil {
+		return err
+	}
+	for _, seq := range seqs {
+		seq.Current = seq.Start
+		seq.IsAtEnd = false
+		seq.IsCalled = false
+		rememberSharedRuntimeState(pgs.database, seq)
+	}
+	return nil
+}
+
 // GetAllSequences returns a map containing all sequences in the collection, grouped by the schema they're contained in.
 // Each sequence array is also sorted by the sequence name.
 func (pgs *Collection) GetAllSequences(ctx context.Context) (sequences map[string][]*Sequence, schemaNames []string, totalCount int, err error) {

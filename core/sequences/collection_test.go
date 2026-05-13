@@ -20,6 +20,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/store/hash"
 	"github.com/dolthub/dolt/go/store/prolly"
 	"github.com/dolthub/dolt/go/store/prolly/tree"
@@ -70,6 +71,24 @@ func TestDropSequence_RemainsUsableAfterFlushFailure(t *testing.T) {
 	require.NotPanics(t, func() {
 		_ = coll.DropSequence(ctx, id.NewSequence("public", "pending"))
 	})
+}
+
+func TestRestartSequencesWithTableResetsOwnedSequences(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	coll := newTestCollection(t, newCountingFailNodeStore(t))
+	seq := newTestSequence("public", "items_id_seq")
+	seq.OwnerTable = id.NewTable("public", "items")
+	seq.Current = 42
+	seq.IsAtEnd = true
+	seq.IsCalled = true
+	coll.accessedMap[seq.Id] = seq
+
+	err := coll.RestartSequencesWithTable(ctx, doltdb.TableName{Schema: "public", Name: "items"})
+	require.NoError(t, err)
+	require.Equal(t, seq.Start, seq.Current)
+	require.False(t, seq.IsAtEnd)
+	require.False(t, seq.IsCalled)
 }
 
 // newTestCollection returns a Collection backed by |ns| with an empty

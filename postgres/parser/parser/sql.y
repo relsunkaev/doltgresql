@@ -1278,7 +1278,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <[]tree.AlterColComputed> alter_column_set_seq_elem_list
 %type <tree.AlterIndexCmd> alter_index_cmd
 %type <tree.StorageType> col_storage_option
-%type <bool> unique_or_primary logged_or_unlogged opt_nowait opt_no opt_view_recursive
+%type <bool> unique_or_primary logged_or_unlogged opt_nowait opt_no opt_view_recursive opt_truncate_restart_identity
 %type <str> trigger_name trigger_option
 %type <tree.AlterViewCmd> alter_view_cmd
 
@@ -9870,14 +9870,24 @@ seq_restart:
 
 // %Help: TRUNCATE - empty one or more tables
 // %Category: DML
-// %Text: TRUNCATE [TABLE] <tablename> [, ...] [CASCADE | RESTRICT]
+// %Text: TRUNCATE [TABLE] <tablename> [, ...] [RESTART IDENTITY] [CASCADE | RESTRICT]
 // %SeeAlso: WEBDOCS/truncate.html
 truncate_stmt:
-  TRUNCATE opt_table relation_expr_list opt_drop_behavior
+  TRUNCATE opt_table relation_expr_list opt_truncate_restart_identity opt_drop_behavior
   {
-    $$.val = &tree.Truncate{Tables: $3.tableNames(), DropBehavior: $4.dropBehavior()}
+    $$.val = &tree.Truncate{Tables: $3.tableNames(), RestartIdentity: $4.bool(), DropBehavior: $5.dropBehavior()}
   }
 | TRUNCATE error // SHOW HELP: TRUNCATE
+
+opt_truncate_restart_identity:
+  /* EMPTY */
+  {
+    $$.val = false
+  }
+| RESTART IDENTITY
+  {
+    $$.val = true
+  }
 
 // %Help: LOCK - lock one or more tables
 // %Category: Misc
