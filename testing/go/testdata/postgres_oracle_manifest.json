@@ -1023,6 +1023,180 @@
       ]
     },
     {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);"
+      ],
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;"
+      ],
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;"
+      ],
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "expectedRows": [
+        [
+          {
+            "value": "n"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0004-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 4,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_label_idx;"
+      ],
+      "query": "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0005-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 5,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_label_idx;",
+        "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY DEFAULT;"
+      ],
+      "query": "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "publication-subscription-test-testreplicaidentityddlandcatalogs-0006-alter-table-repl_ident_items-replica-identity",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 6,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE repl_ident_items (id INT PRIMARY KEY, label TEXT NOT NULL);",
+        "CREATE UNIQUE INDEX repl_ident_label_idx ON repl_ident_items (label);",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;",
+        "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_label_idx;",
+        "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+        "ALTER TABLE repl_ident_items REPLICA IDENTITY DEFAULT;",
+        "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';"
+      ],
+      "query": "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;",
+      "expectedSqlstate": "42704",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,

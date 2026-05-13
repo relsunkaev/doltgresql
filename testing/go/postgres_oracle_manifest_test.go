@@ -204,6 +204,50 @@ func TestPostgresOraclePromotedMapGenerated(t *testing.T) {
 	}
 }
 
+func TestPostgresOraclePromotedMapSupportsTestNameFilter(t *testing.T) {
+	outPath := filepath.Join(t.TempDir(), "publication_subscription_test.oracle-map.json")
+	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go",
+		"--promote-oracle-map", "publication_subscription_test.go",
+		"--oracle-test-name", "TestReplicaIdentityDDLAndCatalogs",
+		"--promote-oracle-map-output", outPath)
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+
+	data, err := os.ReadFile(outPath)
+	require.NoError(t, err)
+	var generated struct {
+		GeneratedBy string `json:"generatedBy"`
+		SourceFile  string `json:"sourceFile"`
+		Assertions  []struct {
+			Source string `json:"source"`
+			Oracle string `json:"oracle"`
+		} `json:"assertions"`
+	}
+	require.NoError(t, json.Unmarshal(data, &generated))
+	require.Equal(t, "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestReplicaIdentityDDLAndCatalogs", generated.GeneratedBy)
+	require.Equal(t, "testing/go/publication_subscription_test.go", generated.SourceFile)
+	require.Len(t, generated.Assertions, 6)
+	for _, assertion := range generated.Assertions {
+		require.Equal(t, "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs", assertion.Source)
+		require.Equal(t, "postgres", assertion.Oracle)
+	}
+}
+
+func TestPostgresOracleReplicaIdentityCacheUsesCatalogCharText(t *testing.T) {
+	manifest := loadPostgresOracleManifest(t)
+	seen := map[string]string{}
+	for _, entry := range manifest.Entries {
+		if entry.Source != "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs" ||
+			len(entry.ExpectedRows) == 0 || len(entry.ExpectedRows[0]) == 0 || entry.ExpectedRows[0][0].Value == nil {
+			continue
+		}
+		seen[entry.ID] = *entry.ExpectedRows[0][0].Value
+	}
+	require.Equal(t, "d", seen["publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where"])
+	require.Equal(t, "f", seen["publication-subscription-test-testreplicaidentityddlandcatalogs-0002-select-relreplident-from-pg_catalog.pg_class-where"])
+	require.Equal(t, "n", seen["publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where"])
+}
+
 func TestPostgresOracleManifestCleansGeneratedDatabaseObjects(t *testing.T) {
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--stdout")
 	output, err := cmd.CombinedOutput()
@@ -521,6 +565,9 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 	if value == nil {
 		return "<null>"
 	}
+	if oid == 18 {
+		return normalizePostgresOracleChar(value)
+	}
 	if mode == "exact" {
 		return fmt.Sprint(value)
 	}
@@ -582,6 +629,27 @@ func normalizePostgresOracleValue(profile string, mode string, value any, oid ui
 			return normalizePostgresOracleNumeric(text)
 		}
 		return text
+	}
+}
+
+func normalizePostgresOracleChar(value any) string {
+	switch v := value.(type) {
+	case byte:
+		return string([]byte{v})
+	case int16:
+		return string(rune(v))
+	case int32:
+		return string(rune(v))
+	case int64:
+		return string(rune(v))
+	case int:
+		return string(rune(v))
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return fmt.Sprint(v)
 	}
 }
 

@@ -131,6 +131,7 @@ func main() {
 	promoteOracleMap := flag.String("promote-oracle-map", "", "write a postgres oracle migration map for one ScriptTest source file")
 	refreshOracleMap := flag.String("refresh-oracle-map", "", "promote one ScriptTest source file and refresh its cached expected rows from PostgreSQL")
 	promoteOracleMapOutput := flag.String("promote-oracle-map-output", "", "output path for --promote-oracle-map; defaults to testdata/postgres_oracle_migrations/<source>.oracle-map.json")
+	oracleTestName := flag.String("oracle-test-name", "", "optional comma-separated Test function filter for --promote-oracle-map or --refresh-oracle-map")
 	postgresDSN := flag.String("postgres-dsn", "", "PostgreSQL DSN for --refresh-oracle-map; defaults to DOLTGRES_POSTGRES_TEST_DSN, POSTGRES_TEST_DSN, or DOLTGRES_ORACLE default")
 	flag.Parse()
 
@@ -144,7 +145,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, dsn); err != nil {
+		testNames := parseOracleTestNameFilter(*oracleTestName)
+		if err := refreshPromotedOracleMap(*refreshOracleMap, *promoteOracleMapOutput, testNames, dsn); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -156,7 +158,8 @@ func main() {
 			fmt.Fprintln(os.Stderr, "--promote-oracle-map cannot be combined with --stdout or --migration-candidates-dir")
 			os.Exit(1)
 		}
-		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput); err != nil {
+		testNames := parseOracleTestNameFilter(*oracleTestName)
+		if err := writePromotedOracleMap(*promoteOracleMap, *promoteOracleMapOutput, testNames); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -188,6 +191,21 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func parseOracleTestNameFilter(value string) map[string]struct{} {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	filter := map[string]struct{}{}
+	for _, part := range strings.Split(value, ",") {
+		name := strings.TrimSpace(part)
+		if name == "" {
+			continue
+		}
+		filter[name] = struct{}{}
+	}
+	return filter
 }
 
 func generateManifest() ([]byte, error) {
@@ -447,7 +465,7 @@ func writeMigrationCandidates(dir string) error {
 		if strings.HasPrefix(file, "postgres_oracle_") {
 			continue
 		}
-		candidates, err := migrationCandidatesForFile(file, migrationOverrides)
+		candidates, err := migrationCandidatesForFile(file, migrationOverrides, nil)
 		if err != nil {
 			return err
 		}
@@ -466,7 +484,7 @@ func writeMigrationCandidates(dir string) error {
 	return nil
 }
 
-func writePromotedOracleMap(sourceFile string, outputPath string) error {
+func writePromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if sourceFile == "" || strings.Contains(sourceFile, string(filepath.Separator)+".."+string(filepath.Separator)) || strings.HasPrefix(sourceFile, "..") {
 		return fmt.Errorf("invalid source file %q", sourceFile)
@@ -479,7 +497,7 @@ func writePromotedOracleMap(sourceFile string, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides)
+	candidates, err := migrationCandidatesForFile(sourceFile, migrationOverrides, testNameFilter)
 	if err != nil {
 		return err
 	}
@@ -487,6 +505,9 @@ func writePromotedOracleMap(sourceFile string, outputPath string) error {
 		return fmt.Errorf("%s has no ScriptTest expectation assertions", sourceFile)
 	}
 	candidates.GeneratedBy = "go run gen_postgres_oracle_manifest.go --promote-oracle-map " + sourceFile
+	if len(testNameFilter) > 0 {
+		candidates.GeneratedBy += " --oracle-test-name " + strings.Join(sortedFilterKeys(testNameFilter), ",")
+	}
 	for i := range candidates.Assertions {
 		assertion := &candidates.Assertions[i]
 		if assertion.Query == "" || len(assertion.NonLiteral) > 0 {
@@ -525,12 +546,12 @@ func writePromotedOracleMap(sourceFile string, outputPath string) error {
 	return os.WriteFile(outputPath, data, 0644)
 }
 
-func refreshPromotedOracleMap(sourceFile string, outputPath string, dsn string) error {
+func refreshPromotedOracleMap(sourceFile string, outputPath string, testNameFilter map[string]struct{}, dsn string) error {
 	sourceFile = strings.TrimPrefix(sourceFile, "testing/go/")
 	if outputPath == "" {
 		outputPath = filepath.Join("testdata", "postgres_oracle_migrations", strings.TrimSuffix(sourceFile, ".go")+".oracle-map.json")
 	}
-	if err := writePromotedOracleMap(sourceFile, outputPath); err != nil {
+	if err := writePromotedOracleMap(sourceFile, outputPath, testNameFilter); err != nil {
 		return err
 	}
 
@@ -593,6 +614,15 @@ func refreshPromotedOracleMap(sourceFile string, outputPath string, dsn string) 
 		return err
 	}
 	return os.WriteFile(outputPath, refreshed, 0644)
+}
+
+func sortedFilterKeys(filter map[string]struct{}) []string {
+	keys := make([]string, 0, len(filter))
+	for key := range filter {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func postgresOracleDSN(flagValue string) (string, error) {
@@ -673,6 +703,9 @@ func readPostgresOracleExpected(ctx context.Context, conn *pgx.Conn, entry entry
 }
 
 func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, oid uint32) string {
+	if oid == 18 {
+		return normalizeGeneratedPostgresChar(value)
+	}
 	mode := generatedColumnMode(entry, index)
 	if mode == "structural" {
 		mode = inferGeneratedPostgresMode(oid)
@@ -735,6 +768,27 @@ func normalizeGeneratedPostgresValue(entry entry, index int, value interface{}, 
 			return normalizeGeneratedPostgresNumeric(text)
 		}
 		return text
+	}
+}
+
+func normalizeGeneratedPostgresChar(value interface{}) string {
+	switch v := value.(type) {
+	case byte:
+		return string([]byte{v})
+	case int16:
+		return string(rune(v))
+	case int32:
+		return string(rune(v))
+	case int64:
+		return string(rune(v))
+	case int:
+		return string(rune(v))
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return fmt.Sprint(v)
 	}
 }
 
@@ -867,7 +921,7 @@ func expandOracleVariables(query string, variables map[string]string) string {
 	return expanded
 }
 
-func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta) (migrationFile, error) {
+func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta, testNameFilter map[string]struct{}) (migrationFile, error) {
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, file, nil, 0)
 	if err != nil {
@@ -885,6 +939,11 @@ func migrationCandidatesForFile(file string, migrationOverrides map[string]oracl
 		fn, ok := decl.(*ast.FuncDecl)
 		if !ok || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
 			continue
+		}
+		if len(testNameFilter) > 0 {
+			if _, ok := testNameFilter[fn.Name.Name]; !ok {
+				continue
+			}
 		}
 		stringSlices := localStringSlices(fn.Body)
 		source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)

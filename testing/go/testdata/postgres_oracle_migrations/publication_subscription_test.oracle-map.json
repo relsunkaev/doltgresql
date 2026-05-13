@@ -1,0 +1,150 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map publication_subscription_test.go --oracle-test-name TestReplicaIdentityDDLAndCatalogs",
+  "sourceFile": "testing/go/publication_subscription_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0001",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 1,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "querySha256": "c91dacc41514966b7599ca8874ebe252dbc00f920b3f38a31d3be38814194215",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0002",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 2,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0002-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "querySha256": "c91dacc41514966b7599ca8874ebe252dbc00f920b3f38a31d3be38814194215",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0003",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 3,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
+      "querySha256": "c91dacc41514966b7599ca8874ebe252dbc00f920b3f38a31d3be38814194215",
+      "expectedRows": [
+        [
+          {
+            "value": "n"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0004",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 4,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0004-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0004-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+      "querySha256": "56e61b09e8e5bce7a71a30328ff5afb23e6bf605f6d6c9ad627d3af2d8afda93",
+      "expectedRows": [
+        [
+          {
+            "value": "i"
+          },
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0005",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 5,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0005-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0005-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
+      "querySha256": "56e61b09e8e5bce7a71a30328ff5afb23e6bf605f6d6c9ad627d3af2d8afda93",
+      "expectedRows": [
+        [
+          {
+            "value": "d"
+          },
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs#0006",
+      "source": "testing/go/publication_subscription_test.go:TestReplicaIdentityDDLAndCatalogs",
+      "ordinal": 6,
+      "scriptName": "replica identity ddl and catalogs",
+      "oracle": "postgres",
+      "postgresId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0006-alter-table-repl_ident_items-replica-identity",
+      "suggestedId": "publication-subscription-test-testreplicaidentityddlandcatalogs-0006-alter-table-repl_ident_items-replica-identity",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42704",
+      "errorSeverity": "ERROR",
+      "query": "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;",
+      "querySha256": "0a57f23549f2f097e136a409316b88e4f92dc68ba02d7ff4435e3e0c8ed2aa67",
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
