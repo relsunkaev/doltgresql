@@ -1813,6 +1813,78 @@
       ]
     },
     {
+      "id": "column-storage-metadata-repro-test-testaltercolumnsetstoragepersistscatalogrepro-0001-select-attstorage-from-pg_attribute-where",
+      "source": "testing/go/column_storage_metadata_repro_test.go:TestAlterColumnSetStoragePersistsCatalogRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE storage_catalog_target (id INT PRIMARY KEY, payload TEXT);",
+        "ALTER TABLE storage_catalog_target ALTER COLUMN payload SET STORAGE EXTERNAL;"
+      ],
+      "query": "SELECT attstorage\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'storage_catalog_target'::regclass\n\t\t\t\t\t\t\tAND attname = 'payload';",
+      "expectedRows": [
+        [
+          {
+            "value": "e"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "column-storage-metadata-repro-test-testaltercolumnsetcompressionpersistscatalogrepro-0001-select-attcompression-from-pg_attribute-where",
+      "source": "testing/go/column_storage_metadata_repro_test.go:TestAlterColumnSetCompressionPersistsCatalogRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE compression_catalog_target (id INT PRIMARY KEY, payload TEXT);",
+        "ALTER TABLE compression_catalog_target ALTER COLUMN payload SET COMPRESSION pglz;"
+      ],
+      "query": "SELECT attcompression\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'compression_catalog_target'::regclass\n\t\t\t\t\t\t\tAND attname = 'payload';",
+      "expectedRows": [
+        [
+          {
+            "value": "p"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "column-storage-metadata-repro-test-testaltercolumnsetstatisticspersistscatalogrepro-0001-select-attstattarget-from-pg_attribute-where",
+      "source": "testing/go/column_storage_metadata_repro_test.go:TestAlterColumnSetStatisticsPersistsCatalogRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE statistics_catalog_target (id INT PRIMARY KEY, payload TEXT);",
+        "ALTER TABLE statistics_catalog_target ALTER COLUMN payload SET STATISTICS 42;"
+      ],
+      "query": "SELECT attstattarget\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'statistics_catalog_target'::regclass\n\t\t\t\t\t\t\tAND attname = 'payload';",
+      "expectedRows": [
+        [
+          {
+            "value": "42"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "constraint-comment-drop-repro-test-testdropconstraintclearscommentrepro-0001-select-obj_description-select-oid-from",
       "source": "testing/go/constraint_comment_drop_repro_test.go:TestDropConstraintClearsCommentRepro",
       "ordinal": 1,
@@ -6464,6 +6536,89 @@
         [
           {
             "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-attribute-index-names-test-testpgattributeindexattributenames-0001-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "source": "testing/go/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t_idxnames (id INT PRIMARY KEY, code TEXT, hits INT);",
+        "CREATE INDEX t_idxnames_code_idx ON t_idxnames (code);",
+        "CREATE INDEX t_idxnames_multi_idx ON t_idxnames (hits, code);"
+      ],
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_code_idx'\nORDER BY a.attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "code"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-attribute-index-names-test-testpgattributeindexattributenames-0002-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "source": "testing/go/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t_idxnames (id INT PRIMARY KEY, code TEXT, hits INT);",
+        "CREATE INDEX t_idxnames_code_idx ON t_idxnames (code);",
+        "CREATE INDEX t_idxnames_multi_idx ON t_idxnames (hits, code);",
+        "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_code_idx'\nORDER BY a.attnum;"
+      ],
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_multi_idx'\nORDER BY a.attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "hits"
+          }
+        ],
+        [
+          {
+            "value": "code"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "pg-attribute-index-names-test-testpgattributeindexattributenames-0003-select-a.attname-from-pg_catalog.pg_attribute-a",
+      "source": "testing/go/pg_attribute_index_names_test.go:TestPgAttributeIndexAttributeNames",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE t_idxnames (id INT PRIMARY KEY, code TEXT, hits INT);",
+        "CREATE INDEX t_idxnames_code_idx ON t_idxnames (code);",
+        "CREATE INDEX t_idxnames_multi_idx ON t_idxnames (hits, code);",
+        "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_code_idx'\nORDER BY a.attnum;",
+        "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_multi_idx'\nORDER BY a.attnum;"
+      ],
+      "query": "SELECT a.attname\nFROM pg_catalog.pg_attribute a\nJOIN pg_catalog.pg_class c ON c.oid = a.attrelid\nWHERE c.relname = 't_idxnames_pkey'\nORDER BY a.attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "id"
           }
         ]
       ],
