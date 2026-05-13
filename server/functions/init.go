@@ -28,6 +28,7 @@ func initTypeFunctions() {
 	initBpChar()
 	initBytea()
 	initChar()
+	initCircle()
 	initCstring()
 	initDate()
 	initDateBin()

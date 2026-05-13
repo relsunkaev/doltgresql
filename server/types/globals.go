@@ -220,7 +220,7 @@ func init() {
 		toInternal("char"):             InternalChar,
 		toInternal("cid"):              Unknown,
 		toInternal("cidr"):             Cidr,
-		toInternal("circle"):           Unknown,
+		toInternal("circle"):           Circle,
 		toInternal("cstring"):          Cstring,
 		toInternal("date"):             Date,
 		toInternal("daterange"):        Unknown,

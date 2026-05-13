@@ -777,6 +777,19 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 				Low:  types.PointValue{X: val.P[1].X, Y: val.P[1].Y},
 			})
 		}
+	case types.Circle.ID:
+		switch val := v.(type) {
+		case types.CircleValue:
+			return types.FormatCircle(val)
+		case pgtype.Circle:
+			if !val.Valid {
+				return nil
+			}
+			return types.FormatCircle(types.CircleValue{
+				Center: types.PointValue{X: val.P.X, Y: val.P.Y},
+				Radius: val.R,
+			})
+		}
 	case types.Timestamp.ID, types.TimestampTZ.ID:
 		if v == nil {
 			return nil
