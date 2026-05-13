@@ -55,6 +55,7 @@ func initTypeFunctions() {
 	initNumeric()
 	initOid()
 	initOidvector()
+	initPath()
 	initPgLsn()
 	initPgSnapshot()
 	initPoint()

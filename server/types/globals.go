@@ -253,7 +253,7 @@ func init() {
 		toInternal("oid"):              Oid,
 		toInternal("oidvector"):        Oidvector,
 		toInternal("opaque"):           Unknown,
-		toInternal("path"):             Unknown,
+		toInternal("path"):             Path,
 		toInternal("pg_attribute"):     Unknown,
 		toInternal("pg_auth_members"):  Unknown,
 		toInternal("pg_authid"):        Unknown,
