@@ -167,3 +167,156 @@ func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) 
 		},
 	})
 }
+
+// TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro reproduces the
+// role-list applicability bug for UPDATE policies: PostgreSQL applies the
+// policy only to the listed role, but Doltgres lets an unlisted role update rows.
+func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_update_policy_list_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_update_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_update_policy_list_unlisted; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_update_policy_list_allowed",
+		"DROP ROLE IF EXISTS rls_update_policy_list_unlisted",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS policy role list restricts update policy applicability",
+			SetUpScript: []string{
+				`CREATE USER rls_update_policy_list_allowed PASSWORD 'allowed';`,
+				`CREATE USER rls_update_policy_list_unlisted PASSWORD 'unlisted';`,
+				`CREATE TABLE rls_update_policy_list_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`INSERT INTO rls_update_policy_list_docs VALUES
+					(1, 'rls_update_policy_list_allowed', 'allowed row'),
+					(2, 'rls_update_policy_list_unlisted', 'unlisted row');`,
+				`GRANT USAGE ON SCHEMA public TO rls_update_policy_list_allowed;`,
+				`GRANT USAGE ON SCHEMA public TO rls_update_policy_list_unlisted;`,
+				`GRANT UPDATE, SELECT ON rls_update_policy_list_docs
+					TO rls_update_policy_list_allowed, rls_update_policy_list_unlisted;`,
+				`CREATE POLICY rls_update_policy_list_docs_owner_update
+					ON rls_update_policy_list_docs
+					FOR UPDATE
+					TO rls_update_policy_list_allowed
+					USING (owner_name = current_user)
+					WITH CHECK (owner_name = current_user);`,
+				`CREATE POLICY rls_update_policy_list_docs_owner_select
+					ON rls_update_policy_list_docs
+					FOR SELECT
+					TO rls_update_policy_list_allowed
+					USING (owner_name = current_user);`,
+				`ALTER TABLE rls_update_policy_list_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `UPDATE rls_update_policy_list_docs
+						SET label = 'allowed updated'
+						WHERE owner_name = current_user
+						RETURNING id, label;`,
+					Expected: []sql.Row{{1, "allowed updated"}},
+					Username: `rls_update_policy_list_allowed`,
+					Password: `allowed`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-allows-listed-update",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+				{
+					Query: `UPDATE rls_update_policy_list_docs
+						SET label = 'unlisted updated'
+						WHERE owner_name = current_user
+						RETURNING id, label;`,
+					Expected: []sql.Row{},
+					Username: `rls_update_policy_list_unlisted`,
+					Password: `unlisted`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-denies-unlisted-update",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro reproduces the
+// role-list applicability bug for DELETE policies: PostgreSQL applies the
+// policy only to the listed role, but Doltgres lets an unlisted role delete rows.
+func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) {
+	cleanup := []string{
+		"RESET ROLE",
+		"DROP TABLE IF EXISTS rls_delete_policy_list_docs",
+		"DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_allowed') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_allowed; END IF; IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_delete_policy_list_unlisted') THEN REVOKE USAGE ON SCHEMA public FROM rls_delete_policy_list_unlisted; END IF; END $$",
+		"DROP ROLE IF EXISTS rls_delete_policy_list_allowed",
+		"DROP ROLE IF EXISTS rls_delete_policy_list_unlisted",
+	}
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "RLS policy role list restricts delete policy applicability",
+			SetUpScript: []string{
+				`CREATE USER rls_delete_policy_list_allowed PASSWORD 'allowed';`,
+				`CREATE USER rls_delete_policy_list_unlisted PASSWORD 'unlisted';`,
+				`CREATE TABLE rls_delete_policy_list_docs (
+					id INT PRIMARY KEY,
+					owner_name TEXT,
+					label TEXT
+				);`,
+				`INSERT INTO rls_delete_policy_list_docs VALUES
+					(1, 'rls_delete_policy_list_allowed', 'allowed row'),
+					(2, 'rls_delete_policy_list_unlisted', 'unlisted row');`,
+				`GRANT USAGE ON SCHEMA public TO rls_delete_policy_list_allowed;`,
+				`GRANT USAGE ON SCHEMA public TO rls_delete_policy_list_unlisted;`,
+				`GRANT DELETE, SELECT ON rls_delete_policy_list_docs
+					TO rls_delete_policy_list_allowed, rls_delete_policy_list_unlisted;`,
+				`CREATE POLICY rls_delete_policy_list_docs_owner_delete
+					ON rls_delete_policy_list_docs
+					FOR DELETE
+					TO rls_delete_policy_list_allowed
+					USING (owner_name = current_user);`,
+				`CREATE POLICY rls_delete_policy_list_docs_owner_select
+					ON rls_delete_policy_list_docs
+					FOR SELECT
+					TO rls_delete_policy_list_allowed
+					USING (owner_name = current_user);`,
+				`ALTER TABLE rls_delete_policy_list_docs ENABLE ROW LEVEL SECURITY;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DELETE FROM rls_delete_policy_list_docs
+						WHERE owner_name = current_user
+						RETURNING id, label;`,
+					Expected: []sql.Row{{1, "allowed row"}},
+					Username: `rls_delete_policy_list_allowed`,
+					Password: `allowed`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-allows-listed-delete",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+				{
+					Query: `DELETE FROM rls_delete_policy_list_docs
+						WHERE owner_name = current_user
+						RETURNING id, label;`,
+					Expected: []sql.Row{},
+					Username: `rls_delete_policy_list_unlisted`,
+					Password: `unlisted`,
+					PostgresOracle: ScriptTestPostgresOracle{
+						ID:          "rls-policy-role-list-denies-unlisted-delete",
+						Compare:     "structural",
+						ColumnModes: []string{"structural", "structural"},
+						Cleanup:     cleanup,
+					},
+				},
+			},
+		},
+	})
+}
