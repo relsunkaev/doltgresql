@@ -33,6 +33,8 @@ import (
 	"github.com/dolthub/dolt/go/store/hash"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
@@ -151,6 +153,9 @@ func PrepareTransaction(ctx *sql.Context, gid string, replication *PreparedRepli
 	if workingSet == nil {
 		return errors.Errorf("cannot prepare transaction on detached head")
 	}
+	if err = rejectPrepareWithTemporaryTables(ctx, sess, dbName); err != nil {
+		return err
+	}
 	doltDB, err := doltDBForPreparedTransaction(ctx, sess, dbName)
 	if err != nil {
 		return err
@@ -208,6 +213,17 @@ func PrepareTransaction(ctx *sql.Context, gid string, replication *PreparedRepli
 	ctx.SetTransaction(nil)
 	ctx.SetIgnoreAutoCommit(false)
 	return nil
+}
+
+func rejectPrepareWithTemporaryTables(ctx *sql.Context, sess *dsess.DoltSession, dbName string) error {
+	tempTables, err := sess.GetAllTemporaryTables(ctx, dbName)
+	if err != nil {
+		return err
+	}
+	if len(tempTables) == 0 {
+		return nil
+	}
+	return pgerror.New(pgcode.FeatureNotSupported, "cannot PREPARE a transaction that has operated on temporary objects")
 }
 
 // CommitPreparedTransaction commits and removes the prepared transaction with gid.
