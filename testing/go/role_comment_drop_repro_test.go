@@ -28,6 +28,7 @@ func TestDropRoleClearsCommentRepro(t *testing.T) {
 		{
 			Name: "DROP ROLE clears role comment before recreate",
 			SetUpScript: []string{
+				`DROP ROLE IF EXISTS drop_recreate_comment_role;`,
 				`CREATE ROLE drop_recreate_comment_role;`,
 				`COMMENT ON ROLE drop_recreate_comment_role
 					IS 'old private role';`,

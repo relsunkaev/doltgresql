@@ -7183,6 +7183,33 @@
       ]
     },
     {
+      "id": "role-comment-drop-repro-test-testdroproleclearscommentrepro-0001-select-shobj_description-select-oid-from",
+      "source": "testing/go/role_comment_drop_repro_test.go:TestDropRoleClearsCommentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "DROP ROLE IF EXISTS drop_recreate_comment_role;",
+        "CREATE ROLE drop_recreate_comment_role;",
+        "COMMENT ON ROLE drop_recreate_comment_role\n\t\t\t\t\tIS 'old private role';",
+        "DROP ROLE drop_recreate_comment_role;",
+        "CREATE ROLE drop_recreate_comment_role;"
+      ],
+      "query": "SELECT shobj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_authid\n\t\t\t\t\t\t WHERE rolname = 'drop_recreate_comment_role'),\n\t\t\t\t\t\t'pg_authid');",
+      "expectedRows": [
+        [
+          {
+            "null": true
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,
