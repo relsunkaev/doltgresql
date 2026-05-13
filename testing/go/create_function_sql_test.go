@@ -147,7 +147,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 				},
 				{
 					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{nil}},
 				},
 				{
 					Query:    `SELECT * from view_bathymetry_layer`,
@@ -155,7 +155,7 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 				},
 				{
 					Query:    `SELECT public.sp_build_view_bathymetry_layer()`,
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{nil}},
 				},
 				{
 					Query:    `SELECT * from view_bathymetry_layer`,
