@@ -10,4 +10,6 @@ query_server -c "INSERT INTO test_table VALUES (1)" -t
 cd ..
 DOLTGRES_VERSION=$( doltgres --version | sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p' )
 node $1 $USER $PORT $DOLTGRES_VERSION $PWD/testdata
+status=$?
 teardown_doltgres_repo
+exit $status

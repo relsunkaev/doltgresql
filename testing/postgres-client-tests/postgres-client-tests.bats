@@ -32,6 +32,10 @@ teardown() {
     node $BATS_TEST_DIRNAME/node/index.js $USER $PORT
 }
 
+@test "postgres-js pipelined queries" {
+    node $BATS_TEST_DIRNAME/node/postgresjs-pipeline.js $USER $PORT
+}
+
 @test "knex node postgres client" {
     DOLTGRES_VERSION=$( doltgres --version | sed -nre 's/^[^0-9]*(([0-9]+\.)*[0-9]+).*/\1/p' )
     echo $DOLTGRES_VERSION
