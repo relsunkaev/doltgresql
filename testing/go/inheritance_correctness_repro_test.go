@@ -359,6 +359,38 @@ func TestAlterInheritedParentAddCheckPropagatesToChildRepro(t *testing.T) {
 	})
 }
 
+func TestAlterInheritedParentAddCheckNoInheritStaysLocalRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "ALTER parent ADD CHECK NO INHERIT stays local",
+			SetUpScript: []string{
+				`CREATE TABLE inherit_parent_add_check_no_inherit (
+					id INT,
+					label TEXT
+				);`,
+				`CREATE TABLE inherit_child_add_check_no_inherit (
+					extra TEXT
+				) INHERITS (inherit_parent_add_check_no_inherit);`,
+				`ALTER TABLE inherit_parent_add_check_no_inherit
+					ADD CONSTRAINT inherit_parent_add_check_no_inherit_positive CHECK (id > 0) NO INHERIT;`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:       `INSERT INTO inherit_parent_add_check_no_inherit VALUES (-1, 'bad parent');`,
+					ExpectedErr: `inherit_parent_add_check_no_inherit_positive`,
+				},
+				{
+					Query: `INSERT INTO inherit_child_add_check_no_inherit VALUES (-1, 'allowed child', 'extra');`,
+				},
+				{
+					Query:    `SELECT count(*) FROM inherit_child_add_check_no_inherit;`,
+					Expected: []sql.Row{{1}},
+				},
+			},
+		},
+	})
+}
+
 // TestAlterInheritedParentSetNotNullPropagatesToChildRepro reproduces a data
 // integrity bug: NOT NULL constraints added to a parent column must be
 // inherited by child tables and enforced on child writes.
@@ -413,6 +445,16 @@ func TestAlterInheritedParentAddCheckValidatesExistingChildRowsRepro(t *testing.
 					Query: `ALTER TABLE inherit_parent_existing_check
 						ADD CONSTRAINT inherit_parent_existing_positive CHECK (id > 0);`,
 					ExpectedErr: `is violated by some row`,
+				},
+				{
+					Query: `SELECT count(*)
+						FROM pg_catalog.pg_constraint
+						WHERE conname = 'inherit_parent_existing_positive';`,
+					Expected: []sql.Row{{0}},
+				},
+				{
+					Query: `INSERT INTO inherit_child_existing_check
+						VALUES (-2, 'still allowed after failed ALTER', 'extra');`,
 				},
 			},
 		},

@@ -21,12 +21,24 @@ import "strings"
 // PostgreSQL's "skip existing rows but enforce future writes" state, so the
 // AST converter threads the bit through the constraint name until the analyzer
 // can wrap the resolved *plan.CreateCheck.
-const notValidCheckConstraintMarker = "\x00pg_not_valid_check\x00"
+const notValidCheckConstraintMarker = "dgcv_"
+
+// noInheritCheckConstraintMarker tags CHECK constraints declared with
+// NO INHERIT. GMS plan nodes do not model the bit, but inherited ALTER
+// propagation must know to keep the constraint local to the parent table.
+const noInheritCheckConstraintMarker = "dgci_"
 
 // notValidForeignKeyConstraintMarker tags foreign keys declared with
 // ALTER TABLE ... ADD CONSTRAINT ... NOT VALID until the analyzer can wrap the
 // resolved *plan.CreateForeignKey.
 const notValidForeignKeyConstraintMarker = "\x00pg_not_valid_fk\x00"
+
+// CheckConstraintNameOptions records CHECK constraint options threaded through
+// the GMS plan by internal name markers.
+type CheckConstraintNameOptions struct {
+	NotValid  bool
+	NoInherit bool
+}
 
 // EncodeNotValidCheckConstraintName wraps a constraint name with the NOT VALID
 // marker.
@@ -34,13 +46,48 @@ func EncodeNotValidCheckConstraintName(name string) string {
 	return notValidCheckConstraintMarker + name
 }
 
+// EncodeNoInheritCheckConstraintName wraps a constraint name with the NO
+// INHERIT marker.
+func EncodeNoInheritCheckConstraintName(name string) string {
+	return noInheritCheckConstraintMarker + name
+}
+
 // DecodeNotValidCheckConstraintName strips the NOT VALID marker and reports
 // whether it was present.
 func DecodeNotValidCheckConstraintName(name string) (cleaned string, hadMarker bool) {
-	if strings.HasPrefix(name, notValidCheckConstraintMarker) {
-		return strings.TrimPrefix(name, notValidCheckConstraintMarker), true
+	cleaned, options := DecodeCheckConstraintNameOptions(name)
+	return cleaned, options.NotValid
+}
+
+// DecodeNoInheritCheckConstraintName strips the NO INHERIT marker and reports
+// whether it was present.
+func DecodeNoInheritCheckConstraintName(name string) (cleaned string, hadMarker bool) {
+	cleaned, options := DecodeCheckConstraintNameOptions(name)
+	return cleaned, options.NoInherit
+}
+
+// DecodeCheckConstraintNameOptions strips all CHECK option markers and returns
+// the decoded option bits.
+func DecodeCheckConstraintNameOptions(name string) (cleaned string, options CheckConstraintNameOptions) {
+	for {
+		switch {
+		case strings.HasPrefix(name, notValidCheckConstraintMarker):
+			options.NotValid = true
+			name = strings.TrimPrefix(name, notValidCheckConstraintMarker)
+		case strings.HasPrefix(name, noInheritCheckConstraintMarker):
+			options.NoInherit = true
+			name = strings.TrimPrefix(name, noInheritCheckConstraintMarker)
+		default:
+			return name, options
+		}
 	}
-	return name, false
+}
+
+// HasCheckConstraintNameOptionMarker reports whether name carries any internal
+// CHECK constraint option marker.
+func HasCheckConstraintNameOptionMarker(name string) bool {
+	_, options := DecodeCheckConstraintNameOptions(name)
+	return options.NotValid || options.NoInherit
 }
 
 // EncodeNotValidForeignKeyConstraintName wraps a foreign key name with the NOT

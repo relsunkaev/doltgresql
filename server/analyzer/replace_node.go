@@ -46,13 +46,13 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 		return pgnodes.NewDropView(node), transform.NewTree, nil
 	case *plan.CreateCheck:
 		logicalName := core.DecodePhysicalConstraintName(node.Check.Name)
-		cleanName, notValid := ast.DecodeNotValidCheckConstraintName(logicalName)
-		if notValid {
+		cleanName, options := ast.DecodeCheckConstraintNameOptions(logicalName)
+		if options.NotValid || options.NoInherit {
 			stripped := *node
 			check := *node.Check
 			check.Name = core.EncodePhysicalConstraintName(cleanName)
 			stripped.Check = &check
-			return pgnodes.NewCreateCheck(&stripped, a.Overrides, true), transform.NewTree, nil
+			return pgnodes.NewCreateCheck(&stripped, a.Overrides, options.NotValid), transform.NewTree, nil
 		}
 		return pgnodes.NewCreateCheck(node, a.Overrides, false), transform.NewTree, nil
 	case *plan.CreateForeignKey:
