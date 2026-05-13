@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 	"github.com/dolthub/doltgresql/utils"
 )
@@ -61,6 +62,13 @@ func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
 	code := errorResponseCode(errors.New("duplicate unique key given: [10] (exclusion_items_resource_id_excl) (errno 1062) (sqlstate HY000)"))
 
 	require.Equal(t, pgcode.ExclusionViolation.String(), code)
+}
+
+func TestCastSQLErrorPreservesPLpgSQLCodes(t *testing.T) {
+	for _, code := range []pgcode.Code{pgcode.Syntax, pgcode.RaiseException} {
+		err := pgerror.New(code, "plpgsql error")
+		require.Equal(t, code, pgerror.GetPGCode(castSQLError(err)))
+	}
 }
 
 func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {

@@ -74,6 +74,16 @@ func OptimizeFunctions(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, sc
 			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, topNNode)
 			return newNode, sameTopN && sameFunctions, err
 		}
+		if filterNode, ok := n.(*plan.Filter); ok {
+			filterNode, sameGetFields := rewriteFilterGetFieldsFromChildSchema(ctx, filterNode)
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, filterNode)
+			return newNode, sameGetFields && sameFunctions, err
+		}
+		if havingNode, ok := n.(*plan.Having); ok {
+			havingNode, sameGetFields := rewriteHavingGetFieldsFromChildSchema(ctx, havingNode)
+			newNode, sameFunctions, err := optimizeNodeCompiledFunctions(ctx, a, havingNode)
+			return newNode, sameGetFields && sameFunctions, err
+		}
 
 		projectNode, ok := n.(*plan.Project)
 		if !ok {
@@ -320,6 +330,22 @@ func rewriteProjectionGetFieldsFromChildSchema(ctx *sql.Context, projectNode *pl
 		return projectNode, transform.SameTree
 	}
 	return copyProjectWithProjections(projectNode, projections), transform.NewTree
+}
+
+func rewriteFilterGetFieldsFromChildSchema(ctx *sql.Context, filterNode *plan.Filter) (*plan.Filter, transform.TreeIdentity) {
+	rewritten, ok := rewriteGetFieldsFromSchema(ctx, filterNode.Child.Schema(ctx), filterNode.Expression)
+	if !ok {
+		return filterNode, transform.SameTree
+	}
+	return plan.NewFilter(rewritten, filterNode.Child), transform.NewTree
+}
+
+func rewriteHavingGetFieldsFromChildSchema(ctx *sql.Context, havingNode *plan.Having) (*plan.Having, transform.TreeIdentity) {
+	rewritten, ok := rewriteGetFieldsFromSchema(ctx, havingNode.Child.Schema(ctx), havingNode.Cond)
+	if !ok {
+		return havingNode, transform.SameTree
+	}
+	return plan.NewHaving(rewritten, havingNode.Child), transform.NewTree
 }
 
 func rewriteGetFieldsFromSchema(ctx *sql.Context, schema sql.Schema, expr sql.Expression) (sql.Expression, bool) {

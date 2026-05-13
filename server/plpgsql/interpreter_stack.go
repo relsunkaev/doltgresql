@@ -209,7 +209,7 @@ func (is *InterpreterStack) NewRecord(name string, sch sql.Schema, val sql.Row) 
 // NewVariable creates a new variable in the current scope. If a variable with the same name exists in a previous scope,
 // then that variable will be shadowed until the current scope exits.
 func (is *InterpreterStack) NewVariable(name string, typ *pgtypes.DoltgresType) {
-	is.NewVariableWithValue(name, typ, typ.Zero())
+	is.NewVariableWithValue(name, typ, nil)
 }
 
 // NewVariableWithValue creates a new variable in the current scope, setting its initial value to the one given.

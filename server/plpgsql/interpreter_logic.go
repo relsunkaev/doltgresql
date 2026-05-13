@@ -169,7 +169,13 @@ func Call(ctx *sql.Context, iFunc InterpretedFunction, runner sql.StatementRunne
 	if iFunc.IsSRF() {
 		return sql.RowsToRowIter(), nil
 	}
-	return procedureOutputRow(iFunc, stack), nil
+	if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil {
+		return outputRow, nil
+	}
+	if iFunc.GetReturn().ID == pgtypes.Void.ID {
+		return "", nil
+	}
+	return nil, nil
 }
 
 func procedureOutputRow(iFunc InterpretedFunction, stack InterpreterStack) sql.Row {
@@ -549,7 +555,8 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				state.lastExceptionContext = diagnosticPGExceptionContext(ctx, iFunc, operation)
 				return nil, false, err
 			}
-			if retVal.(bool) {
+			condition, _ := retVal.(bool)
+			if condition {
 				// We're never changing the scope, so we can just assign it directly.
 				// Also, we must assign to index-1, so that the increment hits our target.
 				counter = operation.Index - 1
@@ -574,7 +581,7 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 			// https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-CLIENT-MIN-MESSAGES
 
 			if validationErr := operation.Options[raiseValidationErrorOption]; validationErr != "" {
-				return nil, false, errors.New(validationErr)
+				return nil, false, pgerror.New(pgcode.Syntax, validationErr)
 			}
 
 			message, err := evaluteNoticeMessage(ctx, iFunc, operation, stack)
@@ -584,9 +591,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 
 			if operation.PrimaryData == "EXCEPTION" {
 				// TODO: Notices at the EXCEPTION level should also abort the current tx.
-				return nil, false, plpgsqlExceptionError{
-					diagnostics: plpgsqlExceptionDiagnosticsFromRaise(ctx, iFunc, operation, message),
-				}
+				diagnostics := plpgsqlExceptionDiagnosticsFromRaise(ctx, iFunc, operation, message)
+				err := plpgsqlExceptionError{diagnostics: diagnostics}
+				return nil, false, pgerror.WithCandidateCode(err, pgcode.MakeCode(diagnostics.ReturnedSQLState))
 			} else {
 				noticeResponse := &pgproto3.NoticeResponse{
 					Severity: operation.PrimaryData,
@@ -617,6 +624,9 @@ func runOperations(ctx *sql.Context, iFunc InterpretedFunction, stack Interprete
 				}
 				if outputRow := procedureOutputRow(iFunc, stack); outputRow != nil {
 					return outputRow, true, nil
+				}
+				if iFunc.GetReturn().ID == pgtypes.Void.ID {
+					return "", true, nil
 				}
 				return nil, true, nil
 			}

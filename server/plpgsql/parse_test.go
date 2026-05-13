@@ -14,7 +14,10 @@
 
 package plpgsql
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseDeclareAliasesArraysAndRecords(t *testing.T) {
 	ops, err := Parse(`CREATE FUNCTION test_block() RETURNS void AS $$
@@ -125,6 +128,9 @@ func TestParseReturnQueryOperations(t *testing.T) {
 	}
 	if len(ops[1].SecondaryData) != 1 || ops[1].SecondaryData[0] != "n" {
 		t.Fatalf("RETURN QUERY bindings = %#v, expected n", ops[1].SecondaryData)
+	}
+	if !strings.Contains(ops[1].PrimaryData, ">= $1") {
+		t.Fatalf("RETURN QUERY text = %q, expected >= $1", ops[1].PrimaryData)
 	}
 }
 
