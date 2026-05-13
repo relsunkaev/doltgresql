@@ -46,6 +46,13 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 	if err := prepareSerialAddColumn(ctx, n); err != nil {
 		return nil, err
 	}
+	var domainType *pgtypes.DoltgresType
+	if normalized, dt, err := normalizeAddColumnDomainNullability(ctx, n); err != nil {
+		return nil, err
+	} else {
+		n = normalized
+		domainType = dt
+	}
 	// A NOT NULL column with no default would rewrite existing rows with NULL in
 	// PostgreSQL, so non-empty tables must reject it before the schema changes.
 	if n.Column().Default == nil && n.Column().Generated == nil {
@@ -55,6 +62,9 @@ func BeforeTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInte
 				return nil, err
 			}
 			if hasRows {
+				if domainType != nil {
+					return nil, pgtypes.ErrDomainDoesNotAllowNullValues.New(domainType.Name())
+				}
 				return nil, errors.Errorf(`column "%s" of relation "%s" contains null values`, n.Column().Name, nodeTableName(n.Table))
 			}
 		}
@@ -429,6 +439,50 @@ func AfterTableAddColumn(ctx *sql.Context, runner sql.StatementRunner, nodeInter
 		}
 	}
 	return nil
+}
+
+func normalizeAddColumnDomainNullability(ctx *sql.Context, n *plan.AddColumn) (*plan.AddColumn, *pgtypes.DoltgresType, error) {
+	col := n.Column()
+	domainType, ok := col.Type.(*pgtypes.DoltgresType)
+	if !ok || domainType.TypType != pgtypes.TypeType_Domain {
+		return n, nil, nil
+	}
+	if !domainType.IsResolvedType() {
+		typeCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		schema, err := core.GetSchemaName(ctx, nil, domainType.ID.SchemaName())
+		if err != nil {
+			return nil, nil, err
+		}
+		resolvedType, err := typeCollection.GetType(ctx, id.NewType(schema, domainType.ID.TypeName()))
+		if err != nil {
+			return nil, nil, err
+		}
+		if resolvedType == nil {
+			return nil, nil, pgtypes.ErrTypeDoesNotExist.New(domainType.ID.TypeName())
+		}
+		domainType = resolvedType
+		col.Type = resolvedType
+	}
+	col.Nullable = !domainType.NotNull
+	targetSchema := n.TargetSchema().Copy()
+	for _, targetCol := range targetSchema {
+		if targetCol.Name == col.Name {
+			targetCol.Type = col.Type
+			targetCol.Nullable = col.Nullable
+			targetCol.Default = col.Default
+			targetCol.Generated = col.Generated
+			targetCol.OnUpdate = col.OnUpdate
+			break
+		}
+	}
+	updated, err := n.WithTargetSchema(targetSchema)
+	if err != nil {
+		return nil, nil, err
+	}
+	return updated.(*plan.AddColumn), domainType, nil
 }
 
 func recordColumnMissingValueMetadata(ctx *sql.Context, n *plan.AddColumn) error {

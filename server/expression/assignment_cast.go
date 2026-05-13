@@ -27,21 +27,23 @@ import (
 
 // AssignmentCast handles assignment casts.
 type AssignmentCast struct {
-	expr     sql.Expression
-	fromType *pgtypes.DoltgresType
-	toType   *pgtypes.DoltgresType
+	expr           sql.Expression
+	fromType       *pgtypes.DoltgresType
+	toType         *pgtypes.DoltgresType
+	domainNullable bool
+	domainChecks   sql.CheckConstraints
 }
 
 var _ sql.Expression = (*AssignmentCast)(nil)
 
 // NewAssignmentCast returns a new *AssignmentCast expression.
 func NewAssignmentCast(expr sql.Expression, fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresType) *AssignmentCast {
-	toType = checkForDomainType(toType)
 	fromType = checkForDomainType(fromType)
 	return &AssignmentCast{
-		expr:     expr,
-		fromType: fromType,
-		toType:   toType,
+		expr:           expr,
+		fromType:       fromType,
+		toType:         toType,
+		domainNullable: true,
 	}
 }
 
@@ -53,8 +55,14 @@ func (ac *AssignmentCast) Children() []sql.Expression {
 // Eval implements the sql.Expression interface.
 func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 	val, err := ac.expr.Eval(ctx, row)
-	if err != nil || val == nil {
+	if err != nil {
 		return val, err
+	}
+	if val == nil {
+		if ac.toType.TypType == pgtypes.TypeType_Domain && !ac.domainNullable {
+			return nil, pgtypes.ErrDomainDoesNotAllowNullValues.New(ac.toType.Name())
+		}
+		return nil, nil
 	}
 	fromType, err := checkForDomainTypeWithContext(ctx, ac.fromType)
 	if err != nil {
@@ -69,7 +77,22 @@ func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		return nil, errors.Errorf("ASSIGNMENT_CAST: target is of type %s but expression is of type %s: %s",
 			toType.String(), fromType.String(), ac.expr.String())
 	}
-	return castFunc(ctx, val, toType)
+	castResult, err := castFunc(ctx, val, toType)
+	if err != nil {
+		return nil, err
+	}
+	if ac.toType.TypType == pgtypes.TypeType_Domain {
+		for _, check := range ac.domainChecks {
+			res, err := sql.EvaluateCondition(ctx, check.Expr, sql.Row{castResult})
+			if err != nil {
+				return nil, err
+			}
+			if sql.IsFalse(res) {
+				return nil, pgtypes.ErrDomainValueViolatesCheckConstraint.New(ac.toType.Name(), check.Name)
+			}
+		}
+	}
+	return castResult, nil
 }
 
 // IsNullable implements the sql.Expression interface.
@@ -97,7 +120,17 @@ func (ac *AssignmentCast) WithChildren(ctx *sql.Context, children ...sql.Express
 	if len(children) != 1 {
 		return nil, sql.ErrInvalidChildrenNumber.New(ac, len(children), 1)
 	}
-	return NewAssignmentCast(children[0], ac.fromType, ac.toType), nil
+	newCast := *ac
+	newCast.expr = children[0]
+	return &newCast, nil
+}
+
+// WithDomainConstraints returns a copy of the expression with domain constraints defined.
+func (ac *AssignmentCast) WithDomainConstraints(nullable bool, checks sql.CheckConstraints) sql.Expression {
+	newCast := *ac
+	newCast.domainNullable = nullable
+	newCast.domainChecks = checks
+	return &newCast
 }
 
 func checkForDomainType(t *pgtypes.DoltgresType) *pgtypes.DoltgresType {

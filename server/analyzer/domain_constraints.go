@@ -237,8 +237,22 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 				expr = e.WithDomainConstraints(!rt.NotNull, colChecks)
 			}
 			return expr, same, nil
+		case *expression.AssignmentCast:
+			if rt, ok := e.Type(ctx).(*pgtypes.DoltgresType); ok && rt.TypType == pgtypes.TypeType_Domain {
+				checkDefs, err := collectDomainCheckDefinitions(ctx, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				same = transform.NewTree
+				expr = e.WithDomainConstraints(!rt.NotNull, colChecks)
+			}
+			return expr, same, nil
 		default:
-			// TODO: add ASSIGNMENT, IMPLICIT cast and other expressions that use domain types
+			// TODO: add IMPLICIT cast and other expressions that use domain types
 			return e, transform.SameTree, nil
 		}
 	})

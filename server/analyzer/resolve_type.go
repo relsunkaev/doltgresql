@@ -64,6 +64,21 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 				same = transform.NewTree
 				col.Type = dt
 			}
+			resolvedDefault, err := resolveDefaultColumnType(ctx, db, col.Default)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			resolvedGenerated, err := resolveDefaultColumnType(ctx, db, col.Generated)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			resolvedOnUpdate, err := resolveDefaultColumnType(ctx, db, col.OnUpdate)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			if resolvedDefault || resolvedGenerated || resolvedOnUpdate {
+				same = transform.NewTree
+			}
 			return node, same, nil
 		case *pgnodes.CreateFunction:
 			retType, err := resolveType(ctx, db, n.ReturnType)
@@ -153,6 +168,21 @@ func ResolveTypeForNodes(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, 
 				}
 				same = transform.NewTree
 				col.Type = dt
+			}
+			resolvedDefault, err := resolveDefaultColumnType(ctx, db, col.Default)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			resolvedGenerated, err := resolveDefaultColumnType(ctx, db, col.Generated)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			resolvedOnUpdate, err := resolveDefaultColumnType(ctx, db, col.OnUpdate)
+			if err != nil {
+				return nil, transform.NewTree, err
+			}
+			if resolvedDefault || resolvedGenerated || resolvedOnUpdate {
+				same = transform.NewTree
 			}
 			return node, same, nil
 		default:
