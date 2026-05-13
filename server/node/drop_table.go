@@ -15,6 +15,8 @@
 package node
 
 import (
+	"strings"
+
 	"github.com/cockroachdb/errors"
 
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -25,19 +27,23 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	"github.com/dolthub/doltgresql/server/functions"
+	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
 // DropTable is a node that implements functionality specifically relevant to Doltgres' table dropping needs.
 type DropTable struct {
 	gmsDropTable *plan.DropTable
+	cascade      bool
 }
 
 var _ sql.ExecBuilderNode = (*DropTable)(nil)
 
 // NewDropTable returns a new *DropTable.
-func NewDropTable(dropTable *plan.DropTable) *DropTable {
+func NewDropTable(dropTable *plan.DropTable, cascade bool) *DropTable {
 	return &DropTable{
 		gmsDropTable: dropTable,
+		cascade:      cascade,
 	}
 }
 
@@ -58,10 +64,14 @@ func (c *DropTable) Resolved() bool {
 
 // BuildRowIter implements the interface sql.ExecBuilderNode.
 func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.Row) (sql.RowIter, error) {
-	targets := make([]dropTableTarget, 0, len(c.gmsDropTable.Tables))
-	for _, table := range c.gmsDropTable.Tables {
+	dropTables, err := c.inheritanceExpandedDropTables(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	targets := make([]dropTableTarget, 0, len(dropTables))
+	for _, table := range dropTables {
 		var dbName string
-		var err error
 		var schemaName string
 		var tableName string
 		switch table := table.(type) {
@@ -88,7 +98,10 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 		targets = append(targets, dropTableTarget{dbName: dbName, tableID: tableID, relation: doltTableName})
 	}
 
-	dropTableIter, err := b.Build(ctx, c.gmsDropTable, r)
+	rewritten := *c.gmsDropTable
+	rewritten.Tables = dropTables
+	gmsDropTable := &rewritten
+	dropTableIter, err := b.Build(ctx, gmsDropTable, r)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +128,126 @@ func (c *DropTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.
 	return dropTableIter, err
 }
 
+func (c *DropTable) inheritanceExpandedDropTables(ctx *sql.Context) ([]sql.Node, error) {
+	explicitKeys := make(map[string]struct{}, len(c.gmsDropTable.Tables))
+	for _, table := range c.gmsDropTable.Tables {
+		resolved, ok := table.(*plan.ResolvedTable)
+		if !ok {
+			continue
+		}
+		key, err := dropTableKey(ctx, resolved)
+		if err != nil {
+			return nil, err
+		}
+		explicitKeys[key] = struct{}{}
+	}
+
+	seen := make(map[string]struct{}, len(c.gmsDropTable.Tables))
+	ret := make([]sql.Node, 0, len(c.gmsDropTable.Tables))
+	for _, table := range c.gmsDropTable.Tables {
+		resolved, ok := table.(*plan.ResolvedTable)
+		if !ok {
+			ret = append(ret, table)
+			continue
+		}
+		key, err := dropTableKey(ctx, resolved)
+		if err != nil {
+			return nil, err
+		}
+		children, err := inheritedDropTableDescendants(ctx, resolved, map[string]struct{}{key: {}})
+		if err != nil {
+			return nil, err
+		}
+		for _, child := range children {
+			childKey, err := dropTableKey(ctx, child)
+			if err != nil {
+				return nil, err
+			}
+			if _, explicit := explicitKeys[childKey]; !c.cascade && !explicit {
+				return nil, errors.Errorf("cannot drop table %s because table %s depends on table %s", resolved.Name(), child.Name(), resolved.Name())
+			}
+			if _, ok := seen[childKey]; ok {
+				continue
+			}
+			seen[childKey] = struct{}{}
+			ret = append(ret, child)
+		}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		ret = append(ret, resolved)
+	}
+	return ret, nil
+}
+
+func inheritedDropTableDescendants(ctx *sql.Context, parent *plan.ResolvedTable, seen map[string]struct{}) ([]*plan.ResolvedTable, error) {
+	parentSchema, err := core.GetSchemaName(ctx, parent.Database(), "")
+	if err != nil {
+		return nil, err
+	}
+	parentRef := tablemetadata.InheritedTable{Schema: parentSchema, Name: parent.Name()}
+	var children []*plan.ResolvedTable
+	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			childRef := tablemetadata.InheritedTable{Schema: schema.Item.SchemaName(), Name: table.Item.Name()}
+			childKey := inheritedDropTableKey(childRef)
+			if _, ok := seen[childKey]; ok {
+				return true, nil
+			}
+			for _, inheritedParent := range tablemetadata.Inherits(inheritedDropTableComment(table.Item)) {
+				if inheritedParent.Schema == "" {
+					inheritedParent.Schema = schema.Item.SchemaName()
+				}
+				if !inheritedDropTableParentMatches(inheritedParent, parentRef) {
+					continue
+				}
+				seen[childKey] = struct{}{}
+				child := plan.NewResolvedTable(table.Item, schema.Item, nil)
+				grandchildren, err := inheritedDropTableDescendants(ctx, child, seen)
+				if err != nil {
+					return false, err
+				}
+				children = append(children, grandchildren...)
+				children = append(children, child)
+				break
+			}
+			return true, nil
+		},
+	})
+	return children, err
+}
+
+func dropTableKey(ctx *sql.Context, table *plan.ResolvedTable) (string, error) {
+	schemaName, err := core.GetSchemaName(ctx, table.Database(), "")
+	if err != nil {
+		return "", err
+	}
+	return inheritedDropTableKey(tablemetadata.InheritedTable{Schema: schemaName, Name: table.Name()}), nil
+}
+
+func inheritedDropTableComment(table sql.Table) string {
+	for table != nil {
+		if commented, ok := table.(sql.CommentedTable); ok {
+			return commented.Comment()
+		}
+		wrapper, ok := table.(sql.TableWrapper)
+		if !ok {
+			return ""
+		}
+		table = wrapper.Underlying()
+	}
+	return ""
+}
+
+func inheritedDropTableParentMatches(left tablemetadata.InheritedTable, right tablemetadata.InheritedTable) bool {
+	return strings.EqualFold(left.Schema, right.Schema) && strings.EqualFold(left.Name, right.Name)
+}
+
+func inheritedDropTableKey(table tablemetadata.InheritedTable) string {
+	return strings.ToLower(table.Schema) + "." + strings.ToLower(table.Name)
+}
+
 type dropTableTarget struct {
 	dbName   string
 	tableID  id.Id
@@ -139,5 +272,6 @@ func (c *DropTable) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.No
 	}
 	return &DropTable{
 		gmsDropTable: gmsDropTable.(*plan.DropTable),
+		cascade:      c.cascade,
 	}, nil
 }

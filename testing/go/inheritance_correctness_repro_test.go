@@ -506,6 +506,36 @@ func TestDropInheritedParentCascadeDropsChildRepro(t *testing.T) {
 	})
 }
 
+func TestDropInheritedParentCascadeDropsGrandchildGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP parent table CASCADE recursively drops inherited descendants",
+			SetUpScript: []string{
+				`CREATE TABLE inherit_parent_drop_cascade_deep (
+					id INT
+				);`,
+				`CREATE TABLE inherit_child_drop_cascade_deep (
+					extra TEXT
+				) INHERITS (inherit_parent_drop_cascade_deep);`,
+				`CREATE TABLE inherit_grandchild_drop_cascade_deep (
+					more TEXT
+				) INHERITS (inherit_child_drop_cascade_deep);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `DROP TABLE inherit_parent_drop_cascade_deep CASCADE;`,
+				},
+				{
+					Query: `SELECT to_regclass('inherit_parent_drop_cascade_deep') IS NULL,
+							to_regclass('inherit_child_drop_cascade_deep') IS NULL,
+							to_regclass('inherit_grandchild_drop_cascade_deep') IS NULL;`,
+					Expected: []sql.Row{{"t", "t", "t"}},
+				},
+			},
+		},
+	})
+}
+
 // TestInheritedChildUsesParentDefaultsGuard guards that default expressions on
 // inherited parent columns are available when inserting into the child table.
 func TestInheritedChildUsesParentDefaultsGuard(t *testing.T) {

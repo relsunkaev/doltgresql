@@ -21,6 +21,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/ast"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
@@ -39,7 +41,7 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 	case *plan.DropDB:
 		return pgnodes.NewDropDatabase(node), transform.NewTree, nil
 	case *plan.DropTable:
-		return pgnodes.NewDropTable(node), transform.NewTree, nil
+		return pgnodes.NewDropTable(node, dropTableCascadeFromQuery(ctx.Query())), transform.NewTree, nil
 	case *plan.DropView:
 		return pgnodes.NewDropView(node), transform.NewTree, nil
 	case *plan.CreateCheck:
@@ -78,4 +80,16 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 	default:
 		return node, transform.SameTree, nil
 	}
+}
+
+func dropTableCascadeFromQuery(query string) bool {
+	if query == "" {
+		return false
+	}
+	statements, err := parser.Parse(query)
+	if err != nil || len(statements) != 1 {
+		return false
+	}
+	dropTable, ok := statements[0].AST.(*tree.DropTable)
+	return ok && dropTable.DropBehavior == tree.DropCascade
 }
