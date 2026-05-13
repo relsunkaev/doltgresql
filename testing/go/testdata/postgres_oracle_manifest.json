@@ -3502,6 +3502,21 @@
       ]
     },
     {
+      "id": "pg-notify-probe-test-testpgnotifyprobe-0001-select-pg_notify-my_channel-payload",
+      "source": "testing/go/pg_notify_probe_test.go:TestPgNotifyProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT pg_notify('my_channel', 'payload');",
+      "expectedRows": [
+        [
+          {
+            "value": ""
+          }
+        ]
+      ]
+    },
+    {
       "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
       "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
       "ordinal": 1,
