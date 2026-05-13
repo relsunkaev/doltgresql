@@ -1002,6 +1002,9 @@ func rowFilterValuesEqual(ctx *sql.Context, left rowFilterValue, right rowFilter
 	if left.null || right.null {
 		return false
 	}
+	if rowFilterUsesTextComparison(left, right) {
+		return string(left.data) == string(right.data)
+	}
 	if cmp, ok := rowFilterTypedCompare(ctx, left, right); ok {
 		return cmp == 0
 	}
@@ -1016,6 +1019,9 @@ func rowFilterValuesEqual(ctx *sql.Context, left rowFilterValue, right rowFilter
 func rowFilterValuesCompare(ctx *sql.Context, left rowFilterValue, right rowFilterValue) (int, bool) {
 	if left.null || right.null {
 		return 0, false
+	}
+	if rowFilterUsesTextComparison(left, right) {
+		return bytes.Compare(left.data, right.data), true
 	}
 	if cmp, ok := rowFilterTypedCompare(ctx, left, right); ok {
 		return cmp, true
@@ -1110,6 +1116,19 @@ func rowFilterComparableType(value rowFilterValue) *pgtypes.DoltgresType {
 		return pgtypes.Uuid
 	default:
 		return nil
+	}
+}
+
+func rowFilterUsesTextComparison(left rowFilterValue, right rowFilterValue) bool {
+	return rowFilterIsTextComparable(left) || rowFilterIsTextComparable(right)
+}
+
+func rowFilterIsTextComparable(value rowFilterValue) bool {
+	switch value.typeOID {
+	case id.Cache().ToOID(pgtypes.Text.ID.AsId()), id.Cache().ToOID(pgtypes.VarChar.ID.AsId()):
+		return true
+	default:
+		return false
 	}
 }
 

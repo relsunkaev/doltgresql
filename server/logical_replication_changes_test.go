@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -411,6 +412,56 @@ func TestPublicationRowFilterArithmeticErrors(t *testing.T) {
 		"label": {data: []byte("shown")},
 	})
 	require.ErrorContains(t, err, `requires numeric operands`)
+}
+
+func TestPublicationRowFilterTextColumnPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  string
+		match  bool
+	}{
+		{
+			name:   "text equality does not coerce numeric-looking values",
+			filter: "label = '1.0'",
+			value:  "1",
+			match:  false,
+		},
+		{
+			name:   "text inequality does not coerce numeric-looking values",
+			filter: "label <> '1.0'",
+			value:  "1",
+			match:  true,
+		},
+		{
+			name:   "text ordering remains lexical",
+			filter: "label < '2'",
+			value:  "10",
+			match:  true,
+		},
+		{
+			name:   "text greater-than remains lexical",
+			filter: "label > '2'",
+			value:  "10",
+			match:  false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"label": {
+					data:    []byte(tt.value),
+					typeOID: id.Cache().ToOID(pgtypes.Text.ID.AsId()),
+				},
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
 }
 
 func TestPublicationRowFilterLikePredicates(t *testing.T) {
