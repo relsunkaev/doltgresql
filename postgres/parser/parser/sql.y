@@ -54,6 +54,64 @@ type publicationTargetList struct {
     last    publicationTargetKind
 }
 
+func mergeCreateDatabaseOption(target, option *tree.CreateDatabase) *tree.CreateDatabase {
+    if target == nil {
+        target = &tree.CreateDatabase{}
+    }
+    if option == nil {
+        return target
+    }
+    if option.Owner != "" {
+        target.Owner = option.Owner
+    }
+    if option.Template != "" {
+        target.Template = option.Template
+    }
+    if option.Encoding != "" {
+        target.Encoding = option.Encoding
+    }
+    if option.Strategy != "" {
+        target.Strategy = option.Strategy
+    }
+    if option.Locale != "" {
+        target.Locale = option.Locale
+    }
+    if option.Collate != "" {
+        target.Collate = option.Collate
+    }
+    if option.CType != "" {
+        target.CType = option.CType
+    }
+    if option.IcuLocale != "" {
+        target.IcuLocale = option.IcuLocale
+    }
+    if option.IcuRules != "" {
+        target.IcuRules = option.IcuRules
+    }
+    if option.LocaleProvider != "" {
+        target.LocaleProvider = option.LocaleProvider
+    }
+    if option.CollationVersion != "" {
+        target.CollationVersion = option.CollationVersion
+    }
+    if option.Tablespace != "" {
+        target.Tablespace = option.Tablespace
+    }
+    if option.AllowConnections != nil {
+        target.AllowConnections = option.AllowConnections
+    }
+    if option.ConnectionLimit != nil {
+        target.ConnectionLimit = option.ConnectionLimit
+    }
+    if option.IsTemplate != nil {
+        target.IsTemplate = option.IsTemplate
+    }
+    if option.Oid != nil {
+        target.Oid = option.Oid
+    }
+    return target
+}
+
 func unimplemented(sqllex sqlLexer, feature string) int {
     sqllex.(*lexer).Unimplemented(feature)
     return 1
@@ -585,6 +643,9 @@ func (u *sqlSymUnion) databaseOption() tree.DatabaseOption {
 }
 func (u *sqlSymUnion) databaseOptionList() []tree.DatabaseOption {
     return u.val.([]tree.DatabaseOption)
+}
+func (u *sqlSymUnion) createDatabase() *tree.CreateDatabase {
+    return u.val.(*tree.CreateDatabase)
 }
 func (u *sqlSymUnion) setVar() *tree.SetVar {
     return u.val.(*tree.SetVar)
@@ -1178,6 +1239,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 
 %type <tree.DatabaseOption> opt_database_options
 %type <[]tree.DatabaseOption> opt_database_options_list opt_database_with_options
+%type <*tree.CreateDatabase> opt_create_database_options create_database_option_list create_database_option
 %type <str> access_method_type
 
 %type <tree.AlterTableCmd> alter_table_action enable_or_disable_trigger enable_or_disable_rule
@@ -10050,6 +10112,18 @@ role_option:
   {
     $$.val = tree.KVOption{Key: tree.Name($1), Value: nil}
   }
+| IN ROLE name_list
+  {
+    $$.val = tree.KVOption{Key: tree.Name("IN_ROLE"), Value: tree.NewDString(strings.Join($3.nameList().ToStrings(), "\x00"))}
+  }
+| ROLE name_list
+  {
+    $$.val = tree.KVOption{Key: tree.Name("ROLE"), Value: tree.NewDString(strings.Join($2.nameList().ToStrings(), "\x00"))}
+  }
+| ADMIN name_list
+  {
+    $$.val = tree.KVOption{Key: tree.Name("ADMIN"), Value: tree.NewDString(strings.Join($2.nameList().ToStrings(), "\x00"))}
+  }
 | CONNECTION LIMIT signed_iconst32
   {
     $$.val = tree.KVOption{Key: tree.Name(fmt.Sprintf("%s_%s", $1, $2)), Value: tree.NewDInt(tree.DInt($3.val.(int32)))}
@@ -10968,54 +11042,108 @@ deferrable_mode:
 // %Text: CREATE DATABASE [IF NOT EXISTS] <name>
 // %SeeAlso: WEBDOCS/create-database.html
 create_database_stmt:
-  CREATE DATABASE database_name opt_with opt_owner opt_template opt_encoding opt_strategy opt_locale opt_lc_collate opt_lc_ctype opt_icu_locale opt_icu_rules opt_locale_provider opt_collation_version opt_tablespace opt_allow_connections opt_connection_limit opt_is_template opt_oid
+  CREATE DATABASE database_name opt_with opt_create_database_options
   {
-    $$.val = &tree.CreateDatabase{
-      Name: tree.Name($3),
-      Owner: $5,
-      Template: $6,
-      Encoding: $7,
-      Strategy: $8,
-      Locale: $9,
-      Collate: $10,
-      CType: $11,
-      IcuLocale: $12,
-      IcuRules: $13,
-      LocaleProvider: $14,
-      CollationVersion: $15,
-      Tablespace: $16,
-      AllowConnections: $17.expr(),
-      ConnectionLimit: $18.expr(),
-      IsTemplate: $19.expr(),
-      Oid: $20.expr(),
-    }
+    stmt := $5.createDatabase()
+    stmt.Name = tree.Name($3)
+    $$.val = stmt
   }
-| CREATE DATABASE IF NOT EXISTS database_name opt_with opt_owner opt_template opt_encoding opt_strategy opt_locale opt_lc_collate opt_lc_ctype opt_icu_locale opt_icu_rules opt_locale_provider opt_collation_version opt_tablespace opt_allow_connections opt_connection_limit opt_is_template opt_oid
+| CREATE DATABASE IF NOT EXISTS database_name opt_with opt_create_database_options
   {
-    $$.val = &tree.CreateDatabase{
-      IfNotExists: true,
-      Name: tree.Name($6),
-      Owner: $8,
-      Template: $9,
-      Encoding: $10,
-      Strategy: $11,
-      Locale: $12,
-      Collate: $13,
-      CType: $14,
-      IcuLocale: $15,
-      IcuRules: $16,
-      LocaleProvider: $17,
-      CollationVersion: $18,
-      Tablespace: $19,
-      AllowConnections: $20.expr(),
-      ConnectionLimit: $21.expr(),
-      IsTemplate: $22.expr(),
-      Oid: $23.expr(),
-    }
+    stmt := $8.createDatabase()
+    stmt.IfNotExists = true
+    stmt.Name = tree.Name($6)
+    $$.val = stmt
    }
 | CREATE DATABASE error // SHOW HELP: CREATE DATABASE
 
 // Optional parameters can be written in any order, not only the order illustrated above.
+opt_create_database_options:
+  /* EMPTY */
+  {
+    $$.val = &tree.CreateDatabase{}
+  }
+| create_database_option_list
+  {
+    $$.val = $1.createDatabase()
+  }
+
+create_database_option_list:
+  create_database_option
+  {
+    $$.val = $1.createDatabase()
+  }
+| create_database_option_list create_database_option
+  {
+    $$.val = mergeCreateDatabaseOption($1.createDatabase(), $2.createDatabase())
+  }
+
+create_database_option:
+  OWNER opt_equal role_spec
+  {
+    $$.val = &tree.CreateDatabase{Owner: $3}
+  }
+| TEMPLATE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Template: $3}
+  }
+| ENCODING opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Encoding: $3}
+  }
+| STRATEGY opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Strategy: $3}
+  }
+| LOCALE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Locale: $3}
+  }
+| LC_COLLATE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Collate: $3}
+  }
+| LC_CTYPE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{CType: $3}
+  }
+| ICU_LOCALE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{IcuLocale: $3}
+  }
+| ICU_RULES opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{IcuRules: $3}
+  }
+| LOCALE_PROVIDER opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{LocaleProvider: $3}
+  }
+| COLLATION_VERSION opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{CollationVersion: $3}
+  }
+| TABLESPACE opt_equal non_reserved_word_or_sconst
+  {
+    $$.val = &tree.CreateDatabase{Tablespace: $3}
+  }
+| ALLOW_CONNECTIONS opt_equal a_expr
+  {
+    $$.val = &tree.CreateDatabase{AllowConnections: $3.expr()}
+  }
+| CONNECTION LIMIT opt_equal a_expr
+  {
+    $$.val = &tree.CreateDatabase{ConnectionLimit: $4.expr()}
+  }
+| IS_TEMPLATE opt_equal a_expr
+  {
+    $$.val = &tree.CreateDatabase{IsTemplate: $3.expr()}
+  }
+| OID opt_equal a_expr
+  {
+    $$.val = &tree.CreateDatabase{Oid: $3.expr()}
+  }
+
 opt_owner:
   OWNER opt_equal role_spec
   {
