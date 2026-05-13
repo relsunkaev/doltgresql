@@ -26,6 +26,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 )
 
@@ -130,6 +132,8 @@ func (d *DropIndex) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 			return nil, err
 		}
+		indexID := id.NewIndex(target.located.schema, target.located.tableName, target.located.index.ID()).AsId()
+		comments.RemoveObject(indexID, "pg_class")
 		if target.hasMetadata && target.metadata.Gin != nil && target.metadata.Gin.PostingTable != "" {
 			if err := dropTable(ctx, target.located.db, target.metadata.Gin.PostingTable); err != nil && !sql.ErrTableNotFound.Is(err) {
 				return nil, err

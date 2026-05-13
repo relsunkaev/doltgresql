@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropView is a node that implements functionality specifically relevant to Doltgres' view dropping needs.
@@ -99,6 +100,7 @@ func (d *DropView) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sql.R
 		if err = id.PerformOperation(ctx, id.Section_View, id.Operation_Delete, target.dbName, target.viewID, id.Null); err != nil {
 			return nil, err
 		}
+		comments.RemoveObject(target.viewID, "pg_class")
 	}
 	if len(targets) > 0 {
 		var persistErr error
