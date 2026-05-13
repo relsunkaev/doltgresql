@@ -10,6 +10,17 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 01:14 America/Phoenix
+
+- Lane: `to_char` month and weekday name tokens from `TestToCharFirstMonthAndWeekdayNamesRepro`.
+- Expected files: `server/functions/formatting.go` only. Avoiding active beta SQL-function files, epsilon parser/check-constraint files, dirty grant files, and alpha full-suite ownership.
+- Red proof: focused run emitted only `"      01       1"` for `MONTH Month month MON Mon mon MM DAY Day day DY Dy dy D`, dropping January and Sunday name tokens.
+- Fix: `getFromArray` now treats array index 0 as valid for January/Sunday and only errors on true out-of-range values.
+- Focused green:
+  - `go test -vet=off ./testing/go -run '^(TestToCharFirstMonthAndWeekdayNamesRepro|TestToCharOrdinalSuffixTeenDatesRepro|TestToCharFractionalSecondPrecisionTokensRepro|TestToCharIntervalPreservesFractionalSecondsRepro|TestToCharNumericFormatsPostgresPatternsRepro)$' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Lane committed: `98cbd8c0 fix: render first month and weekday names`.
+
 ### gamma - 2026-05-13 01:05 America/Phoenix
 
 - Lane: `to_char` ordinal suffix teen dates from `TestToCharOrdinalSuffixTeenDatesRepro`.
