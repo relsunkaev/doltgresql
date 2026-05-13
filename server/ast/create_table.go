@@ -216,6 +216,9 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if ddl.TableSpec == nil {
 			ddl.TableSpec = &vitess.TableSpec{}
 		}
+		if err = setColumnIdentitySequenceOptions(ddl.TableSpec, node.Defs); err != nil {
+			return nil, err
+		}
 		setColumnIdentityMetadata(ddl.TableSpec, node.Defs)
 		setNotNullConstraintMetadata(ddl.TableSpec, node.Defs)
 	}
@@ -322,6 +325,41 @@ func setColumnIdentityMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs)
 			return tablemetadata.SetColumnIdentity(comment, columnName, identity)
 		})
 	}
+}
+
+func setColumnIdentitySequenceOptions(tableSpec *vitess.TableSpec, defs tree.TableDefs) error {
+	if tableSpec == nil {
+		return nil
+	}
+	optionsByColumn := make(map[string][]pgnodes.AlterSequenceOption)
+	for _, def := range defs {
+		columnDef, ok := def.(*tree.ColumnTableDef)
+		if !ok || !columnDef.IsComputed() || columnDef.Computed.Expr != nil || len(columnDef.Computed.Options) == 0 {
+			continue
+		}
+		columnName := string(columnDef.Name)
+		options := make([]pgnodes.AlterSequenceOption, 0, len(columnDef.Computed.Options))
+		for _, option := range columnDef.Computed.Options {
+			converted, err := alterTableIdentitySequenceOption(option)
+			if err != nil {
+				return err
+			}
+			if converted.Name != "" {
+				options = append(options, converted)
+			}
+		}
+		if len(options) > 0 {
+			optionsByColumn[columnName] = options
+		}
+	}
+	if len(optionsByColumn) == 0 {
+		return nil
+	}
+	tableSpec.TableOpts = append(tableSpec.TableOpts, &vitess.TableOption{
+		Name:  pgnodes.TableOptionIdentitySequenceOptions,
+		Value: pgnodes.EncodeIdentitySequenceOptions(optionsByColumn),
+	})
+	return nil
 }
 
 func setNotNullConstraintMetadata(tableSpec *vitess.TableSpec, defs tree.TableDefs) {

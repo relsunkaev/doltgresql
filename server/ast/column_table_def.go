@@ -96,10 +96,6 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema str
 		}
 	}
 
-	if len(node.Computed.Options) > 0 {
-		return nil, errors.Errorf("sequence options are not yet supported, create a sequence separately")
-	}
-
 	var generated vitess.Expr
 	hasGeneratedExpr := node.IsComputed() && node.Computed.Expr != nil
 	computedByDefaultAsIdentity := node.IsComputed() && !hasGeneratedExpr && node.Computed.ByDefault

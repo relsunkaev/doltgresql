@@ -16,6 +16,7 @@ package analyzer
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/cockroachdb/errors"
@@ -55,6 +56,7 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 	}
 
 	var ctSequences []*pgnodes.CreateSequence
+	identitySequenceOptions := pgnodes.DecodeIdentitySequenceOptions(createTable.TableOpts)
 	for _, col := range createTable.PkSchema().Schema {
 		doltgresType, isDoltgresType := col.Type.(*pgtypes.DoltgresType)
 		if !isDoltgresType || !doltgresType.IsSerial {
@@ -139,7 +141,7 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			maxValue = 9223372036854775807
 		}
 
-		ctSequences = append(ctSequences, pgnodes.NewCreateSequence(false, databaseName, "", false, &sequences.Sequence{
+		seq := &sequences.Sequence{
 			Id:          id.NewSequence("", sequenceName),
 			DataTypeID:  col.Type.(*pgtypes.DoltgresType).ID,
 			Persistence: sequences.Persistence_Permanent,
@@ -153,9 +155,108 @@ func ReplaceSerial(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope 
 			IsAtEnd:     false,
 			OwnerTable:  id.NewTable("", createTable.Name()),
 			OwnerColumn: col.Name,
-		}))
+		}
+		if options := identitySequenceOptions[col.Name]; len(options) > 0 {
+			if err = applyIdentitySequenceOptions(seq, options); err != nil {
+				return nil, transform.NewTree, err
+			}
+		}
+		ctSequences = append(ctSequences, pgnodes.NewCreateSequence(false, databaseName, "", false, seq))
 	}
 	return pgnodes.NewCreateTable(createTable, ctSequences), transform.NewTree, nil
+}
+
+func applyIdentitySequenceOptions(seq *sequences.Sequence, options []pgnodes.AlterSequenceOption) error {
+	minValueLimit, maxValueLimit := sequenceTypeBounds(seq.DataTypeID)
+	increment := seq.Increment
+	minValue := seq.Minimum
+	maxValue := seq.Maximum
+	start := seq.Start
+	minValueSet := false
+	maxValueSet := false
+	startSet := false
+
+	for _, option := range options {
+		switch option.Name {
+		case pgnodes.AlterSequenceOptionStart:
+			start = *option.IntVal
+			startSet = true
+		case pgnodes.AlterSequenceOptionIncrement:
+			increment = *option.IntVal
+			if increment == 0 {
+				return errors.Errorf("INCREMENT must not be zero")
+			}
+		case pgnodes.AlterSequenceOptionMinValue:
+			if option.IntVal != nil {
+				minValue = *option.IntVal
+				minValueSet = true
+			}
+		case pgnodes.AlterSequenceOptionMaxValue:
+			if option.IntVal != nil {
+				maxValue = *option.IntVal
+				maxValueSet = true
+			}
+		case pgnodes.AlterSequenceOptionCycle:
+			seq.Cycle = true
+		case pgnodes.AlterSequenceOptionNoCycle:
+			seq.Cycle = false
+		default:
+			return errors.Errorf(`unsupported identity sequence option "%s"`, option.Name)
+		}
+	}
+	if minValueSet {
+		if minValue < minValueLimit || minValue > maxValueLimit {
+			return errors.Errorf("MINVALUE (%d) is out of range for sequence data type", minValue)
+		}
+	} else if increment > 0 {
+		minValue = 1
+	} else {
+		minValue = minValueLimit
+	}
+	if maxValueSet {
+		if maxValue < minValueLimit || maxValue > maxValueLimit {
+			return errors.Errorf("MAXVALUE (%d) is out of range for sequence data type", maxValue)
+		}
+	} else if increment > 0 {
+		maxValue = maxValueLimit
+	} else {
+		maxValue = -1
+	}
+	if startSet {
+		if start < minValue {
+			return errors.Errorf("START value (%d) cannot be less than MINVALUE (%d))", start, minValue)
+		}
+		if start > maxValue {
+			return errors.Errorf("START value (%d) cannot be greater than MAXVALUE (%d)", start, maxValue)
+		}
+	} else if increment > 0 {
+		start = minValue
+	} else {
+		start = maxValue
+	}
+	if minValue > maxValue {
+		return errors.Errorf("MINVALUE must be less than or equal to MAXVALUE")
+	}
+
+	seq.Start = start
+	seq.Current = start
+	seq.Increment = increment
+	seq.Minimum = minValue
+	seq.Maximum = maxValue
+	seq.IsAtEnd = false
+	seq.IsCalled = false
+	return nil
+}
+
+func sequenceTypeBounds(dataTypeID id.Type) (int64, int64) {
+	switch dataTypeID {
+	case pgtypes.Int16.ID:
+		return math.MinInt16, math.MaxInt16
+	case pgtypes.Int32.ID:
+		return math.MinInt32, math.MaxInt32
+	default:
+		return math.MinInt64, math.MaxInt64
+	}
 }
 
 func hasDoltgresTableMetadata(tableOpts map[string]any) bool {
