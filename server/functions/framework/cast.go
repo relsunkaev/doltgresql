@@ -189,6 +189,9 @@ func GetAssignmentCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresT
 			if err != nil {
 				return nil, err
 			}
+			if lookupFromType.ID == pgtypes.BpChar.ID && lookupToType.ID == pgtypes.VarChar.ID {
+				str = strings.TrimRight(str, " ")
+			}
 			return assignmentString(str, targetType)
 		}
 	}

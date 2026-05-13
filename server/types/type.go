@@ -320,6 +320,9 @@ func (t *DoltgresType) Compare(ctx context.Context, v1 interface{}, v2 interface
 		if t.ID.TypeName() == "citext" {
 			ab = strings.ToLower(ab)
 			bb = strings.ToLower(bb)
+		} else if t.ID.TypeName() == "bpchar" {
+			ab = strings.TrimRight(ab, " ")
+			bb = strings.TrimRight(bb, " ")
 		}
 		if ab == bb {
 			return 0, nil
