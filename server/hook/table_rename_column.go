@@ -24,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -48,6 +50,15 @@ func AfterTableRenameColumn(ctx *sql.Context, runner sql.StatementRunner, nodeIn
 		return err
 	}
 	tableName := doltTable.TableName()
+	var persistErr error
+	auth.LockWrite(func() {
+		auth.RenameTableColumnPrivileges(tableName, n.ColumnName, n.NewColumnName)
+		persistErr = auth.PersistChanges()
+	})
+	if persistErr != nil {
+		return persistErr
+	}
+	rowsecurity.RenameColumn(ctx.GetCurrentDatabase(), tableName.Schema, tableName.Name, n.ColumnName, n.NewColumnName)
 	tableAsType := id.NewType(tableName.Schema, tableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
 	if err != nil {

@@ -91,6 +91,41 @@ func AddPolicy(database, schema, table string, policy Policy) {
 	registry.tables[key] = state
 }
 
+// RenameTable moves row-level security state to a renamed table.
+func RenameTable(database, oldSchema, oldTable, newSchema, newTable string) {
+	registry.Lock()
+	defer registry.Unlock()
+	oldKey := makeKey(database, oldSchema, oldTable)
+	state, ok := registry.tables[oldKey]
+	if !ok {
+		return
+	}
+	delete(registry.tables, oldKey)
+	registry.tables[makeKey(database, newSchema, newTable)] = state
+}
+
+// RenameColumn rewrites policy column references for a renamed table column.
+func RenameColumn(database, schema, table, oldColumn, newColumn string) {
+	registry.Lock()
+	defer registry.Unlock()
+	key := makeKey(database, schema, table)
+	state, ok := registry.tables[key]
+	if !ok {
+		return
+	}
+	oldColumn = normalizeIdentifier(oldColumn)
+	newColumn = normalizeIdentifier(newColumn)
+	for i := range state.Policies {
+		if state.Policies[i].UsingColumn == oldColumn {
+			state.Policies[i].UsingColumn = newColumn
+		}
+		if state.Policies[i].CheckColumn == oldColumn {
+			state.Policies[i].CheckColumn = newColumn
+		}
+	}
+	registry.tables[key] = state
+}
+
 // Get returns the row-level security state for a table.
 func Get(database, schema, table string) (State, bool) {
 	registry.RLock()

@@ -54,7 +54,12 @@ Use this file to avoid overlapping work. Add short entries with:
 - Lane: rename metadata repros now committed on HEAD: table/view/materialized-view privileges after `ALTER TABLE ... RENAME`, plus row-level-security policy predicates after `ALTER TABLE ... RENAME COLUMN`.
 - Expected files: relation/table rename metadata helpers, auth metadata, and RLS policy storage/rewrite code; focused repro tests are already committed.
 - Avoiding: alpha's full manifest `/tmp/doltgresql-testing-go-alpha-20260512-1713*`, beta's active drop/grant verifier, and gamma's dirty `server/functions/sqrt.go` patch.
-- Next action: run focused red in a clean verifier, then implement the narrow metadata rewrite/preservation fix.
+- Red: clean verifier `/tmp/doltgresql-delta-rename.j3zFDE` failed all four repros with lost SELECT privileges after rename and stale RLS predicate column `owner_name`.
+- Result: relation rename now moves explicit relation owners, table/column privileges, and RLS table state; rename-column updates column-level privilege keys and RLS policy column references.
+- Green on current-HEAD clean verifier `/tmp/doltgresql-delta-rename-current.PFYKut` at `fd289388` plus only delta patch:
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-full/gocache GOTMPDIR=/Users/ramazan/.cache/doltgresql-delta-rename-current-gotmp TMPDIR=/Users/ramazan/.cache/doltgresql-delta-rename-current-gotmp GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./testing/go -run '^(TestAlterTableRenamePreservesTablePrivilegesRepro|TestAlterViewRenamePreservesSelectPrivilegeRepro|TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro|TestRenameColumnUpdatesRowLevelSecurityPolicyRepro)$' -count=1 -v`
+  - `GOCACHE=/Users/ramazan/.cache/doltgresql-alpha-full/gocache GOFLAGS='-p=1' CGO_CPPFLAGS=-I/opt/homebrew/opt/icu4c@78/include CGO_LDFLAGS=-L/opt/homebrew/opt/icu4c@78/lib PKG_CONFIG_PATH=/opt/homebrew/opt/icu4c@78/lib/pkgconfig go test -vet=off ./server/auth ./server/rowsecurity ./server/hook -run '^$' -count=1`
+- Status: delta-owned rename/RLS files are ready to commit; do not stage unrelated peer files.
 
 ### delta - 2026-05-12 16:56 America/Phoenix
 

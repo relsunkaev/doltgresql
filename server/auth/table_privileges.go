@@ -225,6 +225,40 @@ func RemoveTablePrivilege(key TablePrivilegeKey, privilege GrantedPrivilege, gra
 	}
 }
 
+// RenameTablePrivileges renames all explicit privilege entries for a table.
+func RenameTablePrivileges(oldTable doltdb.TableName, newTable doltdb.TableName) {
+	var renamed []TablePrivilegeValue
+	for key, value := range globalDatabase.tablePrivileges.Data {
+		if key.Table.Name == "" || key.Table != oldTable {
+			continue
+		}
+		delete(globalDatabase.tablePrivileges.Data, key)
+		key.Table = newTable
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.tablePrivileges.Data[value.Key] = value
+	}
+}
+
+// RenameTableColumnPrivileges renames explicit column-level privilege entries for a table column.
+func RenameTableColumnPrivileges(table doltdb.TableName, oldColumn string, newColumn string) {
+	var renamed []TablePrivilegeValue
+	for key, value := range globalDatabase.tablePrivileges.Data {
+		if key.Table != table || key.Column != oldColumn {
+			continue
+		}
+		delete(globalDatabase.tablePrivileges.Data, key)
+		key.Column = newColumn
+		value.Key = key
+		renamed = append(renamed, value)
+	}
+	for _, value := range renamed {
+		globalDatabase.tablePrivileges.Data[value.Key] = value
+	}
+}
+
 // serialize writes the TablePrivileges to the given writer.
 func (tp *TablePrivileges) serialize(writer *utils.Writer) {
 	// Version 0

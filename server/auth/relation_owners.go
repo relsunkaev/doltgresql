@@ -48,6 +48,16 @@ func RemoveRelationOwner(relation doltdb.TableName) {
 	delete(globalDatabase.relationOwners.Data, relation)
 }
 
+// RenameRelationOwner moves explicit ownership metadata to a renamed relation.
+func RenameRelationOwner(oldRelation doltdb.TableName, newRelation doltdb.TableName) {
+	owner := GetRelationOwner(oldRelation)
+	if owner == "" {
+		return
+	}
+	delete(globalDatabase.relationOwners.Data, oldRelation)
+	SetRelationOwner(newRelation, owner)
+}
+
 // RelationOwnedByRole returns whether roleName owns relation.
 func RelationOwnedByRole(relation doltdb.TableName, roleName string) bool {
 	return roleName != "" && GetRelationOwner(relation) == roleName

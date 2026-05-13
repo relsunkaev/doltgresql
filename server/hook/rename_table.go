@@ -24,6 +24,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/auth"
+	"github.com/dolthub/doltgresql/server/rowsecurity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -35,24 +37,33 @@ func AfterTableRename(ctx *sql.Context, runner sql.StatementRunner, nodeInterfac
 		return errors.Errorf("RENAME TABLE post-hook expected `*plan.RenameTable` but received `%T`", nodeInterface)
 	}
 
+	oldTableName := doltdb.TableName{Schema: "public", Name: n.OldNames[0]}
+	newTableName := doltdb.TableName{Schema: "public", Name: n.NewNames[0]}
+
 	// Grab the table being altered (so we know the schema)
 	sqlTable, ok := n.TableExists(ctx, n.NewNames[0])
 	if !ok {
-		// Views do not manifest as tables, so we'll return here if this isn't a table
-		return nil
+		// Views do not manifest as tables, but their auth and RLS metadata still
+		// follows relation renames.
+		return renameRelationMetadata(ctx, oldTableName, newTableName)
 	}
 	doltTable := core.SQLTableToDoltTable(sqlTable)
 	if doltTable == nil {
-		// If this table isn't a Dolt table then we don't have anything to do
-		return nil
+		return renameRelationMetadata(ctx, oldTableName, newTableName)
 	}
 	_, root, err := core.GetRootFromContext(ctx)
 	if err != nil {
 		return err
 	}
 	tableName := doltTable.TableName()
-	tableName.Name = n.OldNames[0]
-	tableAsType := id.NewType(tableName.Schema, tableName.Name)
+	oldTableName.Schema = tableName.Schema
+	oldTableName.Name = n.OldNames[0]
+	newTableName.Schema = tableName.Schema
+	newTableName.Name = n.NewNames[0]
+	if err = renameRelationMetadata(ctx, oldTableName, newTableName); err != nil {
+		return err
+	}
+	tableAsType := id.NewType(oldTableName.Schema, oldTableName.Name)
 	allTableNames, err := root.GetAllTableNames(ctx, false)
 	if err != nil {
 		return err
@@ -87,7 +98,7 @@ func AfterTableRename(ctx *sql.Context, runner sql.StatementRunner, nodeInterfac
 			}
 			// The ALTER updates the type on the schema since it still has the old one
 			alterStr := fmt.Sprintf(`ALTER TABLE "%s"."%s" ALTER COLUMN "%s" TYPE "%s"."%s";`,
-				otherTableName.Schema, otherTableName.Name, otherCol.Name, tableName.Schema, n.NewNames[0])
+				otherTableName.Schema, otherTableName.Name, otherCol.Name, oldTableName.Schema, n.NewNames[0])
 			// We run the statement as though it's interpreted since we're running new statements inside the original
 			_, err = sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
 				_, rowIter, _, err := runner.QueryWithBindings(subCtx, alterStr, nil, nil, nil)
@@ -101,5 +112,19 @@ func AfterTableRename(ctx *sql.Context, runner sql.StatementRunner, nodeInterfac
 			}
 		}
 	}
+	return nil
+}
+
+func renameRelationMetadata(ctx *sql.Context, oldTableName doltdb.TableName, newTableName doltdb.TableName) error {
+	var err error
+	auth.LockWrite(func() {
+		auth.RenameRelationOwner(oldTableName, newTableName)
+		auth.RenameTablePrivileges(oldTableName, newTableName)
+		err = auth.PersistChanges()
+	})
+	if err != nil {
+		return err
+	}
+	rowsecurity.RenameTable(ctx.GetCurrentDatabase(), oldTableName.Schema, oldTableName.Name, newTableName.Schema, newTableName.Name)
 	return nil
 }
