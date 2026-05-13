@@ -24,9 +24,6 @@ import (
 
 // nodeCreateExtension handles *tree.CreateExtension nodes.
 func nodeCreateExtension(ctx *Context, node *tree.CreateExtension) (vitess.Statement, error) {
-	if len(node.Version) > 0 {
-		return NotYetSupportedError("VERSION is not yet supported")
-	}
 	if node.Cascade {
 		return NotYetSupportedError("CASCADE is not yet supported")
 	}

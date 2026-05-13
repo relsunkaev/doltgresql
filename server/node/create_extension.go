@@ -97,6 +97,9 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 	if err != nil {
 		return nil, err
 	}
+	if err = c.validateVersion(ext); err != nil {
+		return nil, err
+	}
 	if err = checkExtensionDatabaseCreatePrivilege(ctx); err != nil {
 		return nil, err
 	}
@@ -169,6 +172,13 @@ func (c *CreateExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, err
 		return nil, err
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+func (c *CreateExtension) validateVersion(ext *pg_extension.ExtensionFiles) error {
+	if c.Version == "" || c.Version == ext.Control.DefaultVersion.String() {
+		return nil
+	}
+	return errors.Errorf(`extension "%s" has no installation script nor update path for version "%s"`, c.Name, c.Version)
 }
 
 func checkExtensionDatabaseCreatePrivilege(ctx *sql.Context) error {

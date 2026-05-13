@@ -33,6 +33,13 @@ func TestCreateExtensionVersionOptionRepro(t *testing.T) {
 					Query:       `CREATE EXTENSION hstore VERSION "999.0";`,
 					ExpectedErr: `has no installation script`,
 				},
+				{
+					Query: `CREATE EXTENSION hstore VERSION "1.8";`,
+				},
+				{
+					Query:    `SELECT extversion FROM pg_catalog.pg_extension WHERE extname = 'hstore';`,
+					Expected: []sql.Row{{"1.8"}},
+				},
 			},
 		},
 	})
