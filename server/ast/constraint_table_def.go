@@ -50,7 +50,7 @@ func nodeCheckConstraintTableDef(
 		TableSpec: &vitess.TableSpec{
 			Constraints: []*vitess.ConstraintDefinition{
 				{
-					Name: core.EncodePhysicalConstraintName(node.Name.String()),
+					Name: physicalCheckConstraintName(node.Name),
 					Details: &vitess.CheckConstraintDefinition{
 						Expr:     expr,
 						Enforced: !node.NotEnforced,
@@ -59,6 +59,14 @@ func nodeCheckConstraintTableDef(
 			},
 		},
 	}, nil
+}
+
+func physicalCheckConstraintName(name tree.Name) string {
+	logicalName := name.String()
+	if _, markedNotValid := DecodeNotValidCheckConstraintName(string(name)); markedNotValid {
+		logicalName = string(name)
+	}
+	return core.EncodePhysicalConstraintName(logicalName)
 }
 
 // nodeAlterTableDropConstraint converts a tree.AlterTableDropConstraint instance

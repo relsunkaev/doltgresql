@@ -20,6 +20,8 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 
+	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/server/ast"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
 )
 
@@ -41,7 +43,16 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 	case *plan.DropView:
 		return pgnodes.NewDropView(node), transform.NewTree, nil
 	case *plan.CreateCheck:
-		return pgnodes.NewCreateCheck(node, a.Overrides), transform.NewTree, nil
+		logicalName := core.DecodePhysicalConstraintName(node.Check.Name)
+		cleanName, notValid := ast.DecodeNotValidCheckConstraintName(logicalName)
+		if notValid {
+			stripped := *node
+			check := *node.Check
+			check.Name = core.EncodePhysicalConstraintName(cleanName)
+			stripped.Check = &check
+			return pgnodes.NewCreateCheck(&stripped, a.Overrides, true), transform.NewTree, nil
+		}
+		return pgnodes.NewCreateCheck(node, a.Overrides, false), transform.NewTree, nil
 	case *plan.DropCheck:
 		return pgnodes.NewDropCheck(node), transform.NewTree, nil
 	case *plan.InsertInto:

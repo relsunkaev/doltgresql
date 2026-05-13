@@ -74,6 +74,19 @@ func nodeAlterTable(ctx *Context, node *tree.AlterTable) (vitess.Statement, erro
 			if statement, handled, err := nodeAlterTableAddNullsNotDistinctUniqueConstraint(ctx, cmd, tableName, node.IfExists); handled || err != nil {
 				return statement, err
 			}
+		case *tree.AlterTableValidateConstraint:
+			return vitess.InjectedStatement{
+				Statement: pgnodes.NewValidateCheckConstraint(
+					node.IfExists,
+					tableName.SchemaQualifier.String(),
+					tableName.Name.String(),
+					core.EncodePhysicalConstraintName(string(cmd.Constraint)),
+				),
+				Auth: vitess.AuthInformation{
+					AuthType:   auth.AuthType_IGNORE,
+					TargetType: auth.AuthTargetType_Ignore,
+				},
+			}, nil
 		case *tree.AlterTableAlterColumnType:
 			if cmd.Using != nil {
 				return vitess.InjectedStatement{
@@ -643,17 +656,23 @@ func nodeAlterTableAddConstraint(
 	tableName vitess.TableName,
 	ifExists bool) (*vitess.DDL, error) {
 
-	if node.ValidationBehavior == tree.ValidationSkip {
-		// currently only allowed for foreign key and CHECK constraints
-		return nil, errors.Errorf("NOT VALID is not supported yet")
-	}
-
 	switch constraintDef := node.ConstraintDef.(type) {
 	case *tree.CheckConstraintTableDef:
+		if node.ValidationBehavior == tree.ValidationSkip {
+			notValidDef := *constraintDef
+			notValidDef.Name = tree.Name(EncodeNotValidCheckConstraintName(string(notValidDef.Name)))
+			return nodeCheckConstraintTableDef(ctx, &notValidDef, tableName, ifExists)
+		}
 		return nodeCheckConstraintTableDef(ctx, constraintDef, tableName, ifExists)
 	case *tree.UniqueConstraintTableDef:
+		if node.ValidationBehavior == tree.ValidationSkip {
+			return nil, errors.Errorf("NOT VALID is not supported yet")
+		}
 		return nodeUniqueConstraintTableDef(ctx, constraintDef, tableName, ifExists)
 	case *tree.ForeignKeyConstraintTableDef:
+		if node.ValidationBehavior == tree.ValidationSkip {
+			return nil, errors.Errorf("NOT VALID is not supported yet")
+		}
 		foreignKeyDefinition, err := nodeForeignKeyConstraintTableDef(ctx, tableName.Name.String(), constraintDef)
 		if err != nil {
 			return nil, err

@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### delta - 2026-05-13 11:26 America/Phoenix
+
+- Lane complete locally: `ALTER TABLE ... ADD CHECK ... NOT VALID` and `VALIDATE CONSTRAINT` behavior from `TestNotValidCheckConstraintEnforcesNewRowsRepro`.
+- Files touched: `server/ast/alter_table.go`, `server/ast/constraint_table_def.go`, `server/ast/not_valid_check_marker.go`, `server/analyzer/replace_node.go`, `server/node/create_check.go`, and `server/node/validate_check_constraint.go`. Avoided beta's EXCLUDE constraint files, active deferrable unique/PK files, active JSONB GIN, non-table root-object merge, view root-object lanes, dirty grant/oracle files, and Alpha-owned full `./testing/go`.
+- Clean red proof at `97b36657` in `/Users/ramazan/.cache/doltgresql-delta-notvalid-red-tPe5e5` after `./postgres/parser/build.sh`: `go test -vet=off ./testing/go -run '^TestNotValidCheckConstraintEnforcesNewRowsRepro$' -count=1 -v` failed because `ADD CONSTRAINT ... NOT VALID` returned `NOT VALID is not supported yet`, the invalid new row was accepted, and `VALIDATE CONSTRAINT` was unsupported.
+- Fix: mark NOT VALID CHECK DDL until the resolved `plan.CreateCheck` can skip existing-row validation while storing an enforced check for future writes, and add a table CHECK `VALIDATE CONSTRAINT` node that owner-checks the relation and scans existing rows with the stored check expression.
+- Green proof in clean detached verifier `/Users/ramazan/.cache/doltgresql-delta-notvalid-current-4FxYnP` at `08c543e5` plus delta patch after `./postgres/parser/build.sh` and symlinking local `third_party/dolt`:
+  - `go test -vet=off ./server/ast ./server/analyzer ./server/node -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^(TestNotValidCheckConstraintEnforcesNewRowsRepro|TestAddCheckConstraintValidatesExistingRowsRepro|TestCheckConstraintAcceptsImmutableFunctionRepro|TestCreateTableCheckConstraintNoInheritGuard|TestAlterTableAddCheckConstraintNoInheritRepro)$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^TestPostgres18CheckConstraintNotEnforcedRepro$' -count=1 -v`
+- Next action: commit this slice, then refresh current lanes/status before claiming another unowned failure.
+
 ### delta - 2026-05-13 11:12 America/Phoenix
 
 - Lane complete locally: Dolt procedure result type handling for `DOLT_STASH` from `TestDoltStashPushPopRestoresTrackedRowRepro` and `TestDoltStashPushPopRestoresUntrackedTableRepro`.

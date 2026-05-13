@@ -23,15 +23,20 @@ import (
 // CreateCheck wraps GMS check creation so non-enforced PostgreSQL checks are
 // stored as metadata without validating existing table rows.
 type CreateCheck struct {
-	gmsCreateCheck *plan.CreateCheck
-	overrides      sql.EngineOverrides
+	gmsCreateCheck         *plan.CreateCheck
+	skipExistingValidation bool
+	overrides              sql.EngineOverrides
 }
 
 var _ sql.ExecBuilderNode = (*CreateCheck)(nil)
 
 // NewCreateCheck returns a new *CreateCheck.
-func NewCreateCheck(createCheck *plan.CreateCheck, overrides sql.EngineOverrides) *CreateCheck {
-	return &CreateCheck{gmsCreateCheck: createCheck, overrides: overrides}
+func NewCreateCheck(createCheck *plan.CreateCheck, overrides sql.EngineOverrides, skipExistingValidation bool) *CreateCheck {
+	return &CreateCheck{
+		gmsCreateCheck:         createCheck,
+		skipExistingValidation: skipExistingValidation,
+		overrides:              overrides,
+	}
 }
 
 // Children implements sql.ExecBuilderNode.
@@ -54,7 +59,7 @@ func (c *CreateCheck) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 	if err := validateCheckConstraintExpression(ctx, c.gmsCreateCheck.Check); err != nil {
 		return nil, err
 	}
-	if c.gmsCreateCheck.Check.Enforced {
+	if c.gmsCreateCheck.Check.Enforced && !c.skipExistingValidation {
 		return b.Build(ctx, c.gmsCreateCheck, r)
 	}
 	checkAlterable, ok := typedTableCheckAlterable(c.gmsCreateCheck.Table.UnderlyingTable())
@@ -87,7 +92,11 @@ func (c *CreateCheck) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.
 	if err != nil {
 		return nil, err
 	}
-	return &CreateCheck{gmsCreateCheck: gmsCreateCheck.(*plan.CreateCheck), overrides: c.overrides}, nil
+	return &CreateCheck{
+		gmsCreateCheck:         gmsCreateCheck.(*plan.CreateCheck),
+		skipExistingValidation: c.skipExistingValidation,
+		overrides:              c.overrides,
+	}, nil
 }
 
 // WithOverrides implements sql.NodeOverriding.
