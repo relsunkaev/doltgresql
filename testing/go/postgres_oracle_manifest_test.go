@@ -298,23 +298,34 @@ func TestPostgresOracleElectricInspectorArrayCacheUsesArrayText(t *testing.T) {
 	require.Fail(t, "expected Electric inspector oracle entry")
 }
 
-func TestPostgresOracleManifestCleansGeneratedDatabaseObjects(t *testing.T) {
+func TestPostgresOracleManifestCleansGeneratedObjects(t *testing.T) {
 	cmd := exec.Command("go", "run", "gen_postgres_oracle_manifest.go", "--stdout")
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, string(output))
 
 	var generated postgresOracleManifest
 	require.NoError(t, json.Unmarshal(output, &generated))
+	entriesByID := map[string]postgresOracleEntry{}
 	for _, entry := range generated.Entries {
-		if entry.Source != "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro" {
-			continue
-		}
-		require.Contains(t, entry.Cleanup, "DROP PUBLICATION IF EXISTS pub_filter_pub")
-		require.Contains(t, entry.Cleanup, "DROP SCHEMA IF EXISTS pub_filter_aux CASCADE")
-		require.Contains(t, entry.Cleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
-		return
+		entriesByID[entry.ID] = entry
 	}
-	require.Fail(t, "expected publication oracle manifest entry")
+
+	publicationEntry := entriesByID["publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables"]
+	require.Contains(t, publicationEntry.Cleanup, "DROP PUBLICATION IF EXISTS pub_filter_pub")
+	require.Contains(t, publicationEntry.Cleanup, "DROP SCHEMA IF EXISTS pub_filter_aux CASCADE")
+	require.Contains(t, publicationEntry.Cleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
+
+	extensionEntry := entriesByID["extension-comment-drop-repro-test-testdropextensionclearscommentrepro-0001-select-obj_description-select-oid-from"]
+	require.Contains(t, extensionEntry.Cleanup, "DROP EXTENSION IF EXISTS hstore CASCADE")
+
+	databaseEntry := entriesByID["database-comment-drop-repro-test-testdropdatabaseclearscommentrepro-0001-select-shobj_description-select-oid-from"]
+	require.Contains(t, databaseEntry.Cleanup, "DROP DATABASE IF EXISTS drop_recreate_comment_database")
+
+	languageEntry := entriesByID["language-comment-drop-repro-test-testdroplanguageclearscommentrepro-0001-select-obj_description-select-oid-from"]
+	require.Contains(t, languageEntry.Cleanup, "DROP LANGUAGE IF EXISTS drop_recreate_comment_language CASCADE")
+
+	roleEntry := entriesByID["role-comment-drop-repro-test-testdroproleclearscommentrepro-0001-select-shobj_description-select-oid-from"]
+	require.Contains(t, roleEntry.Cleanup, "DROP ROLE IF EXISTS drop_recreate_comment_role")
 }
 
 func TestPostgresOracleManifestInventory(t *testing.T) {

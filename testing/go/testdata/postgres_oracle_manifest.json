@@ -1872,6 +1872,7 @@
         ]
       ],
       "cleanup": [
+        "DROP DATABASE IF EXISTS drop_recreate_comment_database",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
@@ -2719,6 +2720,33 @@
             "value": "t"
           }
         ]
+      ]
+    },
+    {
+      "id": "extension-comment-drop-repro-test-testdropextensionclearscommentrepro-0001-select-obj_description-select-oid-from",
+      "source": "testing/go/extension_comment_drop_repro_test.go:TestDropExtensionClearsCommentRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE EXTENSION hstore WITH SCHEMA public;",
+        "COMMENT ON EXTENSION hstore IS 'old private extension';",
+        "DROP EXTENSION hstore;",
+        "CREATE EXTENSION hstore WITH SCHEMA public;"
+      ],
+      "query": "SELECT obj_description(\n\t\t\t\t\t\t(SELECT oid FROM pg_extension WHERE extname = 'hstore'),\n\t\t\t\t\t\t'pg_extension');",
+      "expectedRows": [
+        [
+          {
+            "value": "data type for storing sets of (key, value) pairs"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP EXTENSION IF EXISTS hstore CASCADE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
     {
@@ -3740,6 +3768,7 @@
         ]
       ],
       "cleanup": [
+        "DROP LANGUAGE IF EXISTS drop_recreate_comment_language CASCADE",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },
@@ -7233,6 +7262,7 @@
         ]
       ],
       "cleanup": [
+        "DROP ROLE IF EXISTS drop_recreate_comment_role",
         "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
       ]
     },

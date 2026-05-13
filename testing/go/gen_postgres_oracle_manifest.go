@@ -1347,7 +1347,11 @@ func entryFromScriptTestAssertion(source string, setup []string, ordinal int, as
 		}, generatedSetup...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSubscriptions(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedPublications(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedExtensions(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, cleanupForCreatedSchemas(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedLanguages(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedDatabases(generatedSetup)...)
+		generatedCleanup = append(generatedCleanup, cleanupForCreatedRoles(generatedSetup)...)
 		generatedCleanup = append(generatedCleanup, "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE")
 	}
 
@@ -1391,7 +1395,27 @@ func cleanupForCreatedPublications(statements []string) []string {
 	return cleanupForCreatedObjects(statements, "create publication ", "DROP PUBLICATION IF EXISTS ")
 }
 
-func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix string) []string {
+func cleanupForCreatedExtensions(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create extension ", "DROP EXTENSION IF EXISTS ", " CASCADE")
+}
+
+func cleanupForCreatedDatabases(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create database ", "DROP DATABASE IF EXISTS ", "")
+}
+
+func cleanupForCreatedRoles(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create role ", "DROP ROLE IF EXISTS ", "")
+}
+
+func cleanupForCreatedLanguages(statements []string) []string {
+	return cleanupForCreatedObjects(statements, "create language ", "DROP LANGUAGE IF EXISTS ", " CASCADE")
+}
+
+func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix string, dropSuffixes ...string) []string {
+	dropSuffix := ""
+	if len(dropSuffixes) > 0 {
+		dropSuffix = dropSuffixes[0]
+	}
 	seen := map[string]struct{}{}
 	cleanup := make([]string, 0)
 	for _, statement := range statements {
@@ -1406,7 +1430,7 @@ func cleanupForCreatedObjects(statements []string, prefix string, dropPrefix str
 			continue
 		}
 		seen[name] = struct{}{}
-		cleanup = append(cleanup, dropPrefix+name)
+		cleanup = append(cleanup, dropPrefix+name+dropSuffix)
 	}
 	return cleanup
 }
