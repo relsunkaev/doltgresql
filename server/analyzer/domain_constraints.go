@@ -23,6 +23,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
+	"github.com/dolthub/go-mysql-server/sql/procedures"
 	"github.com/dolthub/go-mysql-server/sql/transform"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
@@ -42,7 +43,7 @@ import (
 func AddDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *plan.Scope, selector analyzer.RuleSelector, qFlags *sql.QueryFlags) (sql.Node, transform.TreeIdentity, error) {
 	switch n := node.(type) {
 	case *plan.InsertInto:
-		return loadDomainConstraints(ctx, a, n, n.Schema(ctx))
+		return loadDomainConstraints(ctx, a, n, n.Destination.Schema(ctx))
 	case *plan.Update:
 		return loadDomainConstraints(ctx, a, n, n.Schema(ctx))
 	default:
@@ -82,7 +83,17 @@ func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckCo
 	if same == transform.SameTree {
 		return c, same, nil
 	}
-	return c.WithChecks(checks), same, nil
+	node := c.WithChecks(checks)
+	if insert, ok := node.(*plan.InsertInto); ok {
+		source, sourceSame, err := updateInsertDomainDefaultExpressions(ctx, insert.Source, schema)
+		if err != nil {
+			return nil, transform.SameTree, err
+		}
+		if sourceSame == transform.NewTree {
+			node = insert.WithSource(source)
+		}
+	}
+	return node, same, nil
 }
 
 // getDomainDefault takes the default value definition, parses, builds and returns sql.ColumnDefaultValue.
@@ -103,8 +114,81 @@ func getDomainDefault(ctx *sql.Context, a *analyzer.Analyzer, defExpr, tblName s
 	if !ok {
 		return nil, sql.ErrInvalidColumnDefaultValue.New(defExpr)
 	}
+	if _, ok = ae.Expr.(*vitess.FuncExpr); ok {
+		ae.Expr = &vitess.ParenExpr{Expr: ae.Expr}
+	}
 	builder := planbuilder.New(ctx, a.Catalog, nil)
-	return builder.BuildColumnDefaultValueWithTable(ae.Expr, selectStmt.From[0], typ, nullable), nil
+	defaultValue := builder.BuildColumnDefaultValueWithTable(ae.Expr, selectStmt.From[0], typ, nullable)
+	resolvedExpr, _, err := transform.Expr(ctx, defaultValue.Expr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
+		if interp, ok := expr.(procedures.InterpreterExpr); ok {
+			return interp.SetStatementRunner(ctx, a.Runner), transform.NewTree, nil
+		}
+		return expr, transform.SameTree, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	defaultValue.Expr = resolvedExpr
+	return defaultValue, nil
+}
+
+func updateInsertDomainDefaultExpressions(ctx *sql.Context, source sql.Node, schema sql.Schema) (sql.Node, transform.TreeIdentity, error) {
+	switch source := source.(type) {
+	case *plan.Values:
+		tuples, same := updateDomainDefaultTuples(source.ExpressionTuples, schema)
+		if same == transform.SameTree {
+			return source, same, nil
+		}
+		return plan.NewValuesWithAlias(source.AliasName, source.ColumnNames, tuples), transform.NewTree, nil
+	case *plan.Project:
+		projections, same := updateDomainDefaultExpressions(source.Projections, schema)
+		if same == transform.SameTree {
+			return source, same, nil
+		}
+		node, err := source.WithExpressions(ctx, projections...)
+		return node, transform.NewTree, err
+	default:
+		return source, transform.SameTree, nil
+	}
+}
+
+func updateDomainDefaultTuples(tuples [][]sql.Expression, schema sql.Schema) ([][]sql.Expression, transform.TreeIdentity) {
+	var newTuples [][]sql.Expression
+	for rowIdx, tuple := range tuples {
+		newTuple, same := updateDomainDefaultExpressions(tuple, schema)
+		if same == transform.NewTree {
+			if newTuples == nil {
+				newTuples = make([][]sql.Expression, len(tuples))
+				copy(newTuples, tuples)
+			}
+			newTuples[rowIdx] = newTuple
+		}
+	}
+	if newTuples == nil {
+		return tuples, transform.SameTree
+	}
+	return newTuples, transform.NewTree
+}
+
+func updateDomainDefaultExpressions(exprs []sql.Expression, schema sql.Schema) ([]sql.Expression, transform.TreeIdentity) {
+	var newExprs []sql.Expression
+	for idx, expr := range exprs {
+		if idx >= len(schema) || schema[idx].Default == nil {
+			continue
+		}
+		if _, ok := expr.(plan.ColDefaultExpression); !ok {
+			continue
+		}
+		if newExprs == nil {
+			newExprs = make([]sql.Expression, len(exprs))
+			copy(newExprs, exprs)
+		}
+		newExprs[idx] = plan.ColDefaultExpression{Column: schema[idx]}
+	}
+	if newExprs == nil {
+		return exprs, transform.SameTree
+	}
+	return newExprs, transform.NewTree
 }
 
 // getDomainCheckConstraintsForTable takes the check constraint definitions, parses, builds and returns sql.CheckConstraints.
