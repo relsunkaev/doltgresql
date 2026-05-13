@@ -2643,7 +2643,37 @@ func (h *ConnectionHandler) rowSecurityState(rawTable string) (rowsecurity.State
 	if role.IsSuperUser || role.CanBypassRowLevelSecurity {
 		return state, role.Name, false, nil
 	}
+	if !state.Forced {
+		owner, err := rowSecurityTableOwner(sqlCtx, schema, table)
+		if err != nil {
+			return rowsecurity.State{}, role.Name, false, err
+		}
+		if rowsecurity.NormalizeName(owner) == rowsecurity.NormalizeName(role.Name) {
+			return state, role.Name, false, nil
+		}
+	}
 	return state, role.Name, true, nil
+}
+
+func rowSecurityTableOwner(ctx *sql.Context, schema string, table string) (string, error) {
+	schemaName, err := core.GetSchemaName(ctx, nil, schema)
+	if err != nil {
+		return "", err
+	}
+	relation := doltdb.TableName{Name: table, Schema: schemaName}
+	if owner := auth.GetRelationOwner(relation); owner != "" {
+		return owner, nil
+	}
+	sqlTable, err := core.GetSqlTableFromContext(ctx, "", relation)
+	if err != nil {
+		return "", err
+	}
+	if commented, ok := sqlTable.(sql.CommentedTable); ok {
+		if owner := tablemetadata.Owner(commented.Comment()); owner != "" {
+			return owner, nil
+		}
+	}
+	return "postgres", nil
 }
 
 func (h *ConnectionHandler) checkRowSecurityGUC(rawTable string) error {
