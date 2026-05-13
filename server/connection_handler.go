@@ -34,6 +34,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
@@ -999,17 +1000,17 @@ func (h *ConnectionHandler) prepareSQLStatement(stmt node.PrepareStatement, quer
 }
 
 func (h *ConnectionHandler) resolvePreparedStatementTypes(typeNames []string, analyzedPlan sql.Node) ([]uint32, error) {
+	ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "PREPARE")
+	if err != nil {
+		return nil, err
+	}
 	if len(typeNames) == 0 {
-		ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "PREPARE")
-		if err != nil {
-			return nil, err
-		}
 		return extractBindVarTypes(ctx, analyzedPlan)
 	}
 
 	typeOIDs := make([]uint32, len(typeNames))
 	for i, typeName := range typeNames {
-		typeOID, err := resolvePreparedStatementTypeOID(typeName)
+		typeOID, err := resolvePreparedStatementTypeOID(ctx, typeName)
 		if err != nil {
 			return nil, err
 		}
@@ -1018,36 +1019,163 @@ func (h *ConnectionHandler) resolvePreparedStatementTypes(typeNames []string, an
 	return typeOIDs, nil
 }
 
-func resolvePreparedStatementTypeOID(typeName string) (uint32, error) {
-	normalized := strings.ToLower(strings.TrimSpace(typeName))
-	normalized = strings.Trim(normalized, `"`)
-	normalized = strings.TrimPrefix(normalized, "pg_catalog.")
-	switch normalized {
-	case "int", "integer":
-		normalized = "int4"
-	case "smallint":
-		normalized = "int2"
-	case "bigint":
-		normalized = "int8"
-	case "double precision":
-		normalized = "float8"
-	case "real":
-		normalized = "float4"
-	case "boolean":
-		normalized = "bool"
-	case "character varying":
-		normalized = "varchar"
+func resolvePreparedStatementTypeOID(ctx *sql.Context, typeName string) (uint32, error) {
+	schemaName, normalized, err := preparedStatementTypeNameParts(typeName)
+	if err != nil {
+		return 0, err
+	}
+	canonical := canonicalPreparedStatementTypeName(normalized)
+
+	typeCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	lookupInSchema := func(schema string) (*pgtypes.DoltgresType, error) {
+		if schema == "pg_catalog" {
+			if internalID, ok := pgtypes.NameToInternalID[canonical]; ok && internalID.SchemaName() == schema {
+				if dgType := pgtypes.GetTypeByID(internalID); dgType != nil {
+					return dgType, nil
+				}
+			}
+		}
+		dgType, err := typeCollection.GetType(ctx, id.NewType(schema, normalized))
+		if err != nil || dgType != nil || canonical == normalized {
+			return dgType, err
+		}
+		return typeCollection.GetType(ctx, id.NewType(schema, canonical))
 	}
 
-	internalID, ok := pgtypes.NameToInternalID[normalized]
-	if !ok {
+	if schemaName != "" {
+		dgType, err := lookupInSchema(schemaName)
+		if err != nil {
+			return 0, err
+		}
+		if dgType != nil {
+			return id.Cache().ToOID(dgType.ID.AsId()), nil
+		}
 		return 0, errors.Errorf("type %s does not exist", typeName)
 	}
-	dgType := pgtypes.GetTypeByID(internalID)
-	if dgType == nil {
-		return 0, errors.Errorf("type %s does not exist", typeName)
+
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return 0, err
 	}
-	return id.Cache().ToOID(dgType.ID.AsId()), nil
+	for _, schema := range searchPath {
+		dgType, err := lookupInSchema(schema)
+		if err != nil {
+			return 0, err
+		}
+		if dgType != nil {
+			return id.Cache().ToOID(dgType.ID.AsId()), nil
+		}
+	}
+	return 0, errors.Errorf("type %s does not exist", typeName)
+}
+
+func canonicalPreparedStatementTypeName(typeName string) string {
+	switch typeName {
+	case "int", "integer":
+		return "int4"
+	case "smallint":
+		return "int2"
+	case "bigint":
+		return "int8"
+	case "double precision":
+		return "float8"
+	case "real":
+		return "float4"
+	case "boolean":
+		return "bool"
+	case "character varying":
+		return "varchar"
+	}
+	return typeName
+}
+
+func preparedStatementTypeNameParts(typeName string) (schemaName string, baseName string, err error) {
+	parts, err := splitPreparedStatementTypeName(stripPreparedStatementTypeModifiers(typeName))
+	if err != nil {
+		return "", "", err
+	}
+	switch len(parts) {
+	case 1:
+		return "", parts[0], nil
+	case 2:
+		return parts[0], parts[1], nil
+	default:
+		return "", "", errors.Errorf("type %s does not exist", typeName)
+	}
+}
+
+func stripPreparedStatementTypeModifiers(typeName string) string {
+	var b strings.Builder
+	inQuotes := false
+	trimmed := strings.TrimSpace(typeName)
+	for i := 0; i < len(trimmed); i++ {
+		r := rune(trimmed[i])
+		if r == '"' {
+			b.WriteRune(r)
+			if inQuotes && i+1 < len(trimmed) && trimmed[i+1] == '"' {
+				i++
+				b.WriteRune('"')
+			} else {
+				inQuotes = !inQuotes
+			}
+			continue
+		}
+		if r == '(' && !inQuotes {
+			break
+		}
+		b.WriteRune(r)
+	}
+	return strings.TrimSpace(b.String())
+}
+
+func splitPreparedStatementTypeName(typeName string) ([]string, error) {
+	if typeName == "" {
+		return nil, errors.Errorf("invalid name syntax")
+	}
+	var parts []string
+	var b strings.Builder
+	inQuotes := false
+	for i := 0; i < len(typeName); i++ {
+		r := rune(typeName[i])
+		switch r {
+		case '"':
+			if inQuotes && i+1 < len(typeName) && typeName[i+1] == '"' {
+				b.WriteRune('"')
+				i++
+			} else {
+				inQuotes = !inQuotes
+			}
+		case '.':
+			if inQuotes {
+				b.WriteRune(r)
+			} else {
+				part := strings.TrimSpace(b.String())
+				if part == "" {
+					return nil, errors.Errorf("invalid name syntax")
+				}
+				parts = append(parts, part)
+				b.Reset()
+			}
+		default:
+			if inQuotes {
+				b.WriteRune(r)
+			} else {
+				b.WriteRune(unicode.ToLower(r))
+			}
+		}
+	}
+	if inQuotes {
+		return nil, errors.Errorf("invalid name syntax")
+	}
+	part := strings.TrimSpace(b.String())
+	if part == "" {
+		return nil, errors.Errorf("invalid name syntax")
+	}
+	parts = append(parts, part)
+	return parts, nil
 }
 
 func (h *ConnectionHandler) executeSQLStatement(stmt node.ExecuteStatement) error {

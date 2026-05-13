@@ -16,7 +16,6 @@ package pgcatalog
 
 import (
 	"io"
-	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -67,8 +66,8 @@ var pgPreparedStatementsSchema = sql.Schema{
 	{Name: "name", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
 	{Name: "statement", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
 	{Name: "prepare_time", Type: pgtypes.TimestampTZ, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
-	{Name: "parameter_types", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPreparedStatementsName}, // TODO: regtype[] type
-	{Name: "result_types", Type: pgtypes.Text, Default: nil, Nullable: true, Source: PgPreparedStatementsName},    // TODO: regtype[] type
+	{Name: "parameter_types", Type: pgtypes.RegtypeArray, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
+	{Name: "result_types", Type: pgtypes.RegtypeArray, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
 	{Name: "from_sql", Type: pgtypes.Bool, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
 	{Name: "generic_plans", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
 	{Name: "custom_plans", Type: pgtypes.Int64, Default: nil, Nullable: true, Source: PgPreparedStatementsName},
@@ -93,8 +92,8 @@ func (iter *pgPreparedStatementsRowIter) Next(ctx *sql.Context) (sql.Row, error)
 		statement.Name,
 		statement.Statement,
 		statement.PrepareTime,
-		formatOIDArray(statement.ParameterOIDs),
-		formatOIDArray(statement.ResultOIDs),
+		regtypeArrayValues(statement.ParameterOIDs),
+		regtypeArrayValues(statement.ResultOIDs),
 		statement.FromSQL,
 		statement.GenericPlans,
 		statement.CustomPlans,
@@ -106,18 +105,14 @@ func (iter *pgPreparedStatementsRowIter) Close(ctx *sql.Context) error {
 	return nil
 }
 
-func formatOIDArray(oids []uint32) string {
-	if len(oids) == 0 {
-		return "{}"
-	}
-	names := make([]string, len(oids))
+func regtypeArrayValues(oids []uint32) []any {
+	values := make([]any, len(oids))
 	for i, oid := range oids {
-		internalID := id.Type(id.Cache().ToInternal(oid))
-		if typ := pgtypes.GetTypeByID(internalID); typ != nil {
-			names[i] = typ.Name()
-		} else {
-			names[i] = "unknown"
+		internalID := id.Cache().ToInternal(oid)
+		if !internalID.IsValid() {
+			internalID = id.NewOID(oid).AsId()
 		}
+		values[i] = internalID
 	}
-	return "{" + strings.Join(names, ",") + "}"
+	return values
 }
