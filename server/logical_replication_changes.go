@@ -858,9 +858,34 @@ func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterVa
 		return rowFilterValue{null: true}, nil
 	case *vitess.ParenExpr:
 		return evalPublicationFilterScalar(typed.Expr, values)
+	case *vitess.FuncExpr:
+		return evalPublicationFilterFunc(typed, values)
 	default:
 		return rowFilterValue{}, errors.Errorf("publication row filter scalar expression %T is not supported", expr)
 	}
+}
+
+func evalPublicationFilterFunc(expr *vitess.FuncExpr, values map[string]rowFilterValue) (rowFilterValue, error) {
+	if !expr.Name.EqualString("coalesce") || !expr.Qualifier.IsEmpty() || expr.Distinct || expr.Over != nil {
+		return rowFilterValue{}, errors.Errorf("publication row filter function %q is not supported", expr.Name.String())
+	}
+	if len(expr.Exprs) == 0 {
+		return rowFilterValue{}, errors.Errorf("publication row filter COALESCE requires at least one argument")
+	}
+	for _, selectExpr := range expr.Exprs {
+		aliasedExpr, ok := selectExpr.(*vitess.AliasedExpr)
+		if !ok {
+			return rowFilterValue{}, errors.Errorf("publication row filter COALESCE argument %T is not supported", selectExpr)
+		}
+		value, err := evalPublicationFilterScalar(aliasedExpr.Expr, values)
+		if err != nil {
+			return rowFilterValue{}, err
+		}
+		if !value.null {
+			return value, nil
+		}
+	}
+	return rowFilterValue{null: true}, nil
 }
 
 func rowFilterValueBool(ctx *sql.Context, value rowFilterValue) (bool, bool) {

@@ -135,6 +135,68 @@ func TestPublicationRowFilterDistinctFromPredicates(t *testing.T) {
 	}
 }
 
+func TestPublicationRowFilterCoalescePredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		values map[string]rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "uses first non-null column",
+			filter: "COALESCE(label, 'fallback') = 'shown'",
+			values: map[string]rowFilterValue{
+				"label": {data: []byte("shown")},
+			},
+			match: true,
+		},
+		{
+			name:   "uses fallback literal for null column",
+			filter: "COALESCE(label, 'fallback') = 'fallback'",
+			values: map[string]rowFilterValue{
+				"label": {null: true},
+			},
+			match: true,
+		},
+		{
+			name:   "uses later non-null argument",
+			filter: "COALESCE(label, backup_label, 'fallback') = 'backup'",
+			values: map[string]rowFilterValue{
+				"label":        {null: true},
+				"backup_label": {data: []byte("backup")},
+			},
+			match: true,
+		},
+		{
+			name:   "all null remains null",
+			filter: "COALESCE(label, NULL) IS NULL",
+			values: map[string]rowFilterValue{
+				"label": {null: true},
+			},
+			match: true,
+		},
+		{
+			name:   "non-matching fallback rejects row",
+			filter: "COALESCE(label, 'fallback') = 'shown'",
+			values: map[string]rowFilterValue{
+				"label": {null: true},
+			},
+			match: false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, tt.values)
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
 func TestPublicationRowFilterLikePredicates(t *testing.T) {
 	tests := []struct {
 		name   string
