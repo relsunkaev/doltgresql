@@ -1,0 +1,111 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map plpgsql_trigger_function_probe_test.go --oracle-test-name TestPlpgsqlTriggerFunctionProbe --force-postgres-oracle",
+  "sourceFile": "testing/go/plpgsql_trigger_function_probe_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe#0001",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 1,
+      "scriptName": "AFTER INSERT trigger function writes to audit table",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0001-select-main_id-marked-from-audit_log",
+      "suggestedId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0001-select-main_id-marked-from-audit_log",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT main_id, marked FROM audit_log ORDER BY main_id;",
+      "querySha256": "1b88712f0fb699a0547cae464395c524c3716f8b3ea9d9a83db2ebdd11007f9f",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "inserted"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe#0002",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 2,
+      "scriptName": "BEFORE INSERT NEW-field assignment with full column list",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0002-select-id-marked-from-rows",
+      "suggestedId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0002-select-id-marked-from-rows",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, marked FROM rows ORDER BY id;",
+      "querySha256": "66e81f60e7322cb96fa48a046911b564cf6d0bab5af42844c9c4c90b115877b9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "HELLO"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "WORLD"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe#0003",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 3,
+      "scriptName": "BEFORE INSERT partial-column INSERT propagates NEW changes",
+      "oracle": "postgres",
+      "postgresId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0003-select-marked-from-partial_rows-where",
+      "suggestedId": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0003-select-marked-from-partial_rows-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT marked FROM partial_rows WHERE id = 1;",
+      "querySha256": "a23d191d1a276cf23dd8dcc3839fec8f08678f947142771cfdc19aec35188d24",
+      "expectedRows": [
+        [
+          {
+            "value": "HELLO"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

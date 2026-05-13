@@ -4369,6 +4369,107 @@
       ]
     },
     {
+      "id": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0001-select-main_id-marked-from-audit_log",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE main (id INT PRIMARY KEY, v INT);",
+        "CREATE TABLE audit_log (id SERIAL PRIMARY KEY, main_id INT, marked TEXT);",
+        "CREATE FUNCTION log_main_insert() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tINSERT INTO audit_log (main_id, marked)\n\t\t\t\t\t\tVALUES (NEW.id, 'inserted');\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER log_after_insert\n\t\t\t\t\tAFTER INSERT ON main\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION log_main_insert();",
+        "INSERT INTO main (id, v) VALUES (1, 100), (2, 200);"
+      ],
+      "query": "SELECT main_id, marked FROM audit_log ORDER BY main_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "inserted"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "inserted"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0002-select-id-marked-from-rows",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE rows (id INT PRIMARY KEY, label TEXT, marked TEXT);",
+        "CREATE FUNCTION mark_label() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tNEW.marked := upper(NEW.label);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER mark_before_insert\n\t\t\t\t\tBEFORE INSERT ON rows\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION mark_label();",
+        "INSERT INTO rows (id, label, marked) VALUES (1, 'hello', NULL), (2, 'world', NULL);"
+      ],
+      "query": "SELECT id, marked FROM rows ORDER BY id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "HELLO"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "WORLD"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0003-select-marked-from-partial_rows-where",
+      "source": "testing/go/plpgsql_trigger_function_probe_test.go:TestPlpgsqlTriggerFunctionProbe",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE partial_rows (id INT PRIMARY KEY, label TEXT, marked TEXT);",
+        "CREATE FUNCTION mark_label_partial() RETURNS trigger AS $$\n\t\t\t\t\tBEGIN\n\t\t\t\t\t\tNEW.marked := upper(NEW.label);\n\t\t\t\t\t\tRETURN NEW;\n\t\t\t\t\tEND;\n\t\t\t\t$$ LANGUAGE plpgsql;",
+        "CREATE TRIGGER mark_before_insert_partial\n\t\t\t\t\tBEFORE INSERT ON partial_rows\n\t\t\t\t\tFOR EACH ROW EXECUTE FUNCTION mark_label_partial();",
+        "INSERT INTO partial_rows (id, label) VALUES (1, 'hello');"
+      ],
+      "query": "SELECT marked FROM partial_rows WHERE id = 1;",
+      "expectedRows": [
+        [
+          {
+            "value": "HELLO"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables",
       "source": "testing/go/publication_oracle_repro_test.go:TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro",
       "ordinal": 1,
