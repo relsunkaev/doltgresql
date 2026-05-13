@@ -372,7 +372,11 @@ func (root *RootValue) GetForeignKeyCollection(ctx context.Context) (*doltdb.For
 
 // GetRootObject implements the interface doltdb.RootValue.
 func (root *RootValue) GetRootObject(ctx context.Context, tName doltdb.TableName) (doltdb.RootObject, bool, error) {
-	return rootobject.GetRootObject(ctx, root, tName)
+	rootObj, ok, err := rootobject.GetRootObject(ctx, root, tName)
+	if err != nil || ok {
+		return rootObj, ok, err
+	}
+	return root.getViewRootObject(ctx, tName)
 }
 
 // GetStorage returns the underlying storage.
@@ -526,7 +530,7 @@ func (root *RootValue) IterRootObjects(ctx context.Context, cb func(name doltdb.
 			return err
 		}
 	}
-	return nil
+	return root.iterViewRootObjects(ctx, cb)
 }
 
 // IterTables implements the interface doltdb.RootValue.

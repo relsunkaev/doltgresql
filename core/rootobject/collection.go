@@ -22,6 +22,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/merge"
+	"github.com/dolthub/dolt/go/store/hash"
 
 	"github.com/dolthub/doltgresql/core/conflicts"
 	"github.com/dolthub/doltgresql/core/extensions"
@@ -245,6 +246,9 @@ func GetRootObjectConflicts(ctx context.Context, root objinterface.RootValue, tN
 
 // HandleMerge handles merging root objects.
 func HandleMerge(ctx context.Context, mro merge.MergeRootObject) (doltdb.RootObject, *merge.MergeStats, error) {
+	if rootObjectMergeUsesOpaqueObjects(mro) {
+		return handleOpaqueRootObjectMerge(ctx, mro)
+	}
 	if mro.OurRootObj == nil {
 		switch {
 		case mro.TheirRootObj != nil && mro.AncestorRootObj != nil:
@@ -399,6 +403,85 @@ func HandleMerge(ctx context.Context, mro merge.MergeRootObject) (doltdb.RootObj
 		return nil, nil, errors.Newf("invalid root object found, ID: %d", int64(identifier))
 	}
 	return coll.HandleMerge(ctx, mro)
+}
+
+func rootObjectMergeUsesOpaqueObjects(mro merge.MergeRootObject) bool {
+	for _, rootObj := range []doltdb.RootObject{mro.OurRootObj, mro.TheirRootObj, mro.AncestorRootObj} {
+		if rootObj == nil {
+			continue
+		}
+		_, ok := rootObj.(objinterface.RootObject)
+		return !ok
+	}
+	return false
+}
+
+func handleOpaqueRootObjectMerge(ctx context.Context, mro merge.MergeRootObject) (doltdb.RootObject, *merge.MergeStats, error) {
+	ourHash, hasOurs, err := rootObjectHash(ctx, mro.OurRootObj)
+	if err != nil {
+		return nil, nil, err
+	}
+	theirHash, hasTheirs, err := rootObjectHash(ctx, mro.TheirRootObj)
+	if err != nil {
+		return nil, nil, err
+	}
+	ancestorHash, hasAncestor, err := rootObjectHash(ctx, mro.AncestorRootObj)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	switch {
+	case !hasOurs && !hasTheirs:
+		return nil, rootObjectMergeStats(merge.TableUnmodified, 0), nil
+	case !hasOurs:
+		if hasAncestor && theirHash != ancestorHash {
+			return nil, rootObjectMergeStats(merge.TableModified, 1), nil
+		}
+		if hasAncestor {
+			return nil, rootObjectMergeStats(merge.TableRemoved, 0), nil
+		}
+		return mro.TheirRootObj, rootObjectMergeStats(merge.TableAdded, 0), nil
+	case !hasTheirs:
+		if hasAncestor && ourHash != ancestorHash {
+			return nil, rootObjectMergeStats(merge.TableModified, 1), nil
+		}
+		if hasAncestor {
+			return nil, rootObjectMergeStats(merge.TableRemoved, 0), nil
+		}
+		return mro.OurRootObj, rootObjectMergeStats(merge.TableAdded, 0), nil
+	case ourHash == theirHash:
+		if hasAncestor && ourHash != ancestorHash {
+			return mro.OurRootObj, rootObjectMergeStats(merge.TableModified, 0), nil
+		}
+		return mro.OurRootObj, rootObjectMergeStats(merge.TableUnmodified, 0), nil
+	case hasAncestor && ourHash == ancestorHash:
+		return mro.TheirRootObj, rootObjectMergeStats(merge.TableModified, 0), nil
+	case hasAncestor && theirHash == ancestorHash:
+		return mro.OurRootObj, rootObjectMergeStats(merge.TableModified, 0), nil
+	default:
+		return nil, rootObjectMergeStats(merge.TableModified, 1), nil
+	}
+}
+
+func rootObjectHash(ctx context.Context, rootObj doltdb.RootObject) (hash.Hash, bool, error) {
+	if rootObj == nil {
+		return hash.Hash{}, false, nil
+	}
+	h, err := rootObj.HashOf(ctx)
+	return h, true, err
+}
+
+func rootObjectMergeStats(operation merge.TableMergeOp, rootObjectConflicts int) *merge.MergeStats {
+	return &merge.MergeStats{
+		Operation:            operation,
+		Adds:                 0,
+		Deletes:              0,
+		Modifications:        0,
+		DataConflicts:        0,
+		SchemaConflicts:      0,
+		RootObjectConflicts:  rootObjectConflicts,
+		ConstraintViolations: 0,
+	}
 }
 
 // LoadAllCollections loads and returns all collections from the root.
