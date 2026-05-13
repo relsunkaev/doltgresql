@@ -117,6 +117,7 @@ type rootFinalizerIter struct {
 	useStatementSavepoint  bool
 	savepointInitialized   bool
 	savepointName          string
+	savepointTx            sql.Transaction
 	hadErr                 bool
 	err                    error
 }
@@ -206,6 +207,7 @@ func (r *rootFinalizerIter) ensureStatementSavepoint(ctx *sql.Context) error {
 		return nil
 	}
 	r.savepointName = fmt.Sprintf("__doltgresql_statement_%d", atomic.AddUint64(&statementSavepointCounter, 1))
+	r.savepointTx = tx
 	return txSession.CreateSavepoint(ctx, tx, r.savepointName)
 }
 
@@ -215,8 +217,13 @@ func (r *rootFinalizerIter) rollbackStatementSavepoint(ctx *sql.Context, err err
 	}
 	savepoint := r.savepointName
 	r.savepointName = ""
+	savepointTx := r.savepointTx
+	r.savepointTx = nil
 	tx := ctx.GetTransaction()
 	if tx == nil {
+		return err
+	}
+	if tx != savepointTx {
 		return err
 	}
 	txSession, ok := ctx.Session.(sql.TransactionSession)
@@ -244,8 +251,13 @@ func (r *rootFinalizerIter) releaseStatementSavepoint(ctx *sql.Context) error {
 	}
 	savepoint := r.savepointName
 	r.savepointName = ""
+	savepointTx := r.savepointTx
+	r.savepointTx = nil
 	tx := ctx.GetTransaction()
 	if tx == nil {
+		return nil
+	}
+	if tx != savepointTx {
 		return nil
 	}
 	txSession, ok := ctx.Session.(sql.TransactionSession)
