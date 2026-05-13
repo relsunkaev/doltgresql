@@ -51,7 +51,6 @@ func (c *DropRole) Resolved() bool {
 
 // RowIter implements the interface sql.ExecSourceRel.
 func (c *DropRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
-	// TODO: disallow dropping the role if it owns anything
 	// First we'll loop over all of the names to check that they all exist
 	var userRole auth.Role
 	var roles []auth.Role
@@ -69,6 +68,10 @@ func (c *DropRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			if !userRole.IsSuperUser && (role.IsSuperUser || !userRole.CanCreateRoles) {
 				// TODO: grab the actual error message
 				err = errors.Errorf(`role "%s" does not have permission to drop role "%s"`, userRole.Name, role.Name)
+				break
+			}
+			if role.IsValid() && auth.RoleHasDependencies(role) {
+				err = errors.Errorf(`role "%s" cannot be dropped because some objects depend on it`, role.Name)
 				break
 			}
 		}
