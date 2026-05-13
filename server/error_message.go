@@ -26,6 +26,7 @@ func sanitizeErrorMessage(message string) string {
 	message = formatMissingNonNullableColumnError(message)
 	message = formatProvidedNullNonNullableColumnError(message)
 	message = formatColumnSpecifiedTwiceError(message)
+	message = formatExclusionConstraintUniqueError(message)
 	if strings.Contains(message, "duplicate unique key given: [") {
 		message = formatSerializedJSONBInUniqueKeyError(message)
 	}
@@ -70,6 +71,31 @@ func formatColumnSpecifiedTwiceError(message string) string {
 		return message
 	}
 	return `column "` + columnName + `" specified more than once` + trailing
+}
+
+func formatExclusionConstraintUniqueError(message string) string {
+	constraint, trailing, ok := exclusionConstraintNameFromUniqueError(message)
+	if !ok {
+		return message
+	}
+	return `conflicting key value violates exclusion constraint "` + constraint + `"` + trailing
+}
+
+func exclusionConstraintNameFromUniqueError(message string) (string, string, bool) {
+	const prefix = "duplicate unique key given: ["
+	if !strings.HasPrefix(message, prefix) {
+		return "", "", false
+	}
+	keyEnd := strings.LastIndex(message, "] (")
+	if keyEnd < 0 {
+		return "", "", false
+	}
+	constraintAndTrailing := message[keyEnd+3:]
+	constraint, trailing, ok := strings.Cut(constraintAndTrailing, ")")
+	if !ok || !strings.HasSuffix(constraint, "_excl") {
+		return "", "", false
+	}
+	return constraint, trailing, true
 }
 
 func formatSerializedJSONBInUniqueKeyError(message string) string {

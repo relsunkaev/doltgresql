@@ -23,6 +23,7 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/indexmetadata"
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -118,6 +119,16 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 		}
 		target.TableSpec.Indexes = append(target.TableSpec.Indexes, indexDef)
 		return nil
+	case *tree.ExcludeConstraintTableDef:
+		if target.TableSpec == nil {
+			target.TableSpec = &vitess.TableSpec{}
+		}
+		indexDef, err := nodeExcludeConstraintTableDef(ctx, target.Table.Name.String(), node)
+		if err != nil {
+			return err
+		}
+		target.TableSpec.Indexes = append(target.TableSpec.Indexes, indexDef)
+		return nil
 	case *tree.LikeTableDef:
 		if len(node.Options) > 0 {
 			return errors.Errorf("options for LIKE are not yet supported")
@@ -171,6 +182,76 @@ func assignTableDef(ctx *Context, node tree.TableDef, target *vitess.DDL) error 
 	default:
 		return errors.Errorf("unknown table definition encountered")
 	}
+}
+
+func nodeExcludeConstraintTableDef(ctx *Context, tableName string, node *tree.ExcludeConstraintTableDef) (*vitess.IndexDefinition, error) {
+	if node == nil {
+		return nil, nil
+	}
+	if indexmetadata.NormalizeAccessMethod(node.Using) != indexmetadata.AccessMethodBtree {
+		return nil, errors.Errorf("EXCLUDE constraints only support btree equality operators")
+	}
+	if node.Predicate != nil {
+		return nil, errors.Errorf("EXCLUDE constraint predicates are not yet supported")
+	}
+	fields, err := exclusionConstraintIndexFields(ctx, node.Columns)
+	if err != nil {
+		return nil, err
+	}
+	if len(fields) == 0 {
+		return nil, errors.Errorf("EXCLUDE constraint requires at least one column")
+	}
+	name := bareIdentifier(node.Name)
+	if name == "" {
+		name = defaultExclusionConstraintName(tableName, node.Columns)
+	}
+	metadata := indexmetadata.Metadata{
+		AccessMethod: indexmetadata.AccessMethodBtree,
+		Unique:       true,
+		Constraint:   "exclusion",
+	}
+	return &vitess.IndexDefinition{
+		Info: &vitess.IndexInfo{
+			Name:   vitess.NewColIdent(core.EncodePhysicalIndexName(name)),
+			Unique: true,
+		},
+		Fields: fields,
+		Options: []*vitess.IndexOption{
+			indexMetadataCommentOption(metadata),
+		},
+	}, nil
+}
+
+func exclusionConstraintIndexFields(ctx *Context, columns tree.IndexElemList) ([]*vitess.IndexField, error) {
+	indexColumns := make(tree.IndexElemList, len(columns))
+	for i, column := range columns {
+		op, ok := column.ExcludeOp.(tree.ComparisonOperator)
+		if !ok || op != tree.EQ {
+			return nil, errors.Errorf("EXCLUDE constraints only support btree equality operators")
+		}
+		if column.Expr != nil {
+			return nil, errors.Errorf("EXCLUDE constraint expressions are not yet supported")
+		}
+		indexColumns[i] = column
+		indexColumns[i].ExcludeOp = nil
+	}
+	return nodeIndexElemList(ctx, indexColumns)
+}
+
+func defaultExclusionConstraintName(tableName string, columns tree.IndexElemList) string {
+	parts := make([]string, 0, len(columns)+2)
+	parts = append(parts, sanitizeIndexNamePart(tableName, "table"))
+	for _, column := range columns {
+		part := ""
+		if column.Column != "" {
+			part = string(column.Column)
+		} else if column.Expr != nil {
+			part = tree.AsString(column.Expr)
+		}
+		parts = append(parts, sanitizeIndexNamePart(part, "expr"))
+	}
+	parts = append(parts, "excl")
+	return strings.Join(parts, "_")
 }
 
 // nodeForeignKeyDefinitionFromColumnTableDef returns a vitess ForeignKeyDefinition from the specified column

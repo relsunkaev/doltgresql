@@ -4226,6 +4226,9 @@ func errorResponseCode(err error) string {
 	if code := pgerror.GetPGCode(err); code != pgcode.Uncategorized {
 		return code.String()
 	}
+	if _, _, ok := exclusionConstraintNameFromUniqueError(err.Error()); ok {
+		return pgcode.ExclusionViolation.String()
+	}
 	// Map common GMS / Dolt error kinds to PostgreSQL SQLSTATE codes
 	// drivers and ORMs branch on. Without this mapping every error
 	// surfaces as XX000 (internal_error), so retry/typed-exception

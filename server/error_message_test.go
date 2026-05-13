@@ -15,6 +15,7 @@
 package server
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -48,6 +49,18 @@ func TestSanitizeErrorMessageFormatsDuplicateTargetColumn(t *testing.T) {
 
 	wrapped := sanitizeErrorMessage("column 'a' specified twice (errno 1110) (sqlstate HY000)")
 	require.Equal(t, `column "a" specified more than once (errno 1110) (sqlstate HY000)`, wrapped)
+}
+
+func TestSanitizeErrorMessageFormatsExclusionConstraintViolation(t *testing.T) {
+	sanitized := sanitizeErrorMessage("duplicate unique key given: [10] (exclusion_items_resource_id_excl) (errno 1062) (sqlstate HY000)")
+
+	require.Equal(t, `conflicting key value violates exclusion constraint "exclusion_items_resource_id_excl" (errno 1062) (sqlstate HY000)`, sanitized)
+}
+
+func TestErrorResponseCodeFormatsExclusionConstraintViolation(t *testing.T) {
+	code := errorResponseCode(errors.New("duplicate unique key given: [10] (exclusion_items_resource_id_excl) (errno 1062) (sqlstate HY000)"))
+
+	require.Equal(t, pgcode.ExclusionViolation.String(), code)
 }
 
 func TestSanitizeErrorMessageFormatsMissingNonNullableColumn(t *testing.T) {
