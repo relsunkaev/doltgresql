@@ -355,9 +355,8 @@ func TestCreateFunctionsLanguageSQL(t *testing.T) {
 					Expected: []sql.Row{},
 				},
 				{
-					// TODO: the error message should be "function dfunc(integer) is not unique"
 					Query:       `SELECT dfunc(50);`,
-					ExpectedErr: `does not exist`,
+					ExpectedErr: `not unique`,
 				},
 			},
 		},

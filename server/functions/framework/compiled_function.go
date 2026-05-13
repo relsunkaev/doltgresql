@@ -37,6 +37,9 @@ import (
 // ErrFunctionDoesNotExist is returned when the function in use cannot be found.
 var ErrFunctionDoesNotExist = errors.NewKind(`function %s does not exist`)
 
+// ErrFunctionNotUnique is returned when a function call matches multiple overloads.
+var ErrFunctionNotUnique = errors.NewKind(`function %s is not unique`)
+
 // Function is an expression that represents either a CompiledFunction or a QuickFunction.
 type Function interface {
 	sql.FunctionExpression
@@ -811,8 +814,8 @@ func (c *CompiledFunction) resolveFunction(argTypes []*pgtypes.DoltgresType, ove
 		return unknownOverloads[0], nil
 	}
 
-	// No matching function overload found
-	return overloadMatch{}, nil
+	// More than one candidate survived all resolution steps, so the call is ambiguous.
+	return overloadMatch{}, ErrFunctionNotUnique.New(c.OverloadString(argTypes))
 }
 
 // typeCompatibleOverloads returns all overloads that have a matching number of params whose types can be
