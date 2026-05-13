@@ -4076,8 +4076,14 @@ func TestPgStatDatabase(t *testing.T) {
 			Name: "pg_stat_database",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_database";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_database";`,
+					Expected: []sql.Row{{nil, "postgres",
+						int64(1), int64(0), int64(0), int64(0), int64(0),
+						int64(0), int64(0), int64(0), int64(0), int64(0),
+						int64(0), int64(0), int64(0), int64(0), int64(0),
+						nil, float64(0), float64(0), float64(0), float64(0),
+						float64(0), int64(1), int64(0), int64(0), int64(0),
+						nil}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_stat_database";`,
@@ -4089,7 +4095,7 @@ func TestPgStatDatabase(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT datname FROM PG_catalog.pg_STAT_DATABASE ORDER BY datname;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"postgres"}},
 				},
 			},
 		},
@@ -4102,8 +4108,11 @@ func TestPgStatDatabaseConflicts(t *testing.T) {
 			Name: "pg_stat_database_conflicts",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM "pg_catalog"."pg_stat_database_conflicts";`,
-					Expected: []sql.Row{},
+					Query: `SELECT * FROM "pg_catalog"."pg_stat_database_conflicts";`,
+					Expected: []sql.Row{{
+						nil, "postgres",
+						int64(0), int64(0), int64(0), int64(0), int64(0), int64(0),
+					}},
 				},
 				{ // Different cases and quoted, so it fails
 					Query:       `SELECT * FROM "PG_catalog"."pg_stat_database_conflicts";`,
@@ -4115,7 +4124,7 @@ func TestPgStatDatabaseConflicts(t *testing.T) {
 				},
 				{ // Different cases but non-quoted, so it works
 					Query:    "SELECT datname FROM PG_catalog.pg_STAT_DATABASE_CONFLICTS ORDER BY datname;",
-					Expected: []sql.Row{},
+					Expected: []sql.Row{{"postgres"}},
 				},
 			},
 		},
