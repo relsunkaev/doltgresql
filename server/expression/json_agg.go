@@ -274,6 +274,26 @@ func jsonAggDoltgresType(ctx *sql.Context, expr sql.Expression) *pgtypes.Doltgre
 	return dt
 }
 
+const jsonAggObjectNonScalarKeyErr = "key value must be scalar, not array, composite, or json"
+
+func jsonAggObjectKeyIsNonScalar(typ *pgtypes.DoltgresType, val any) bool {
+	if _, ok := val.([]pgtypes.RecordValue); ok {
+		return true
+	}
+	switch val.(type) {
+	case []any, sql.Row, pgtypes.JsonDocument:
+		return true
+	}
+	if typ == nil {
+		return false
+	}
+	switch typ.ID.TypeName() {
+	case "json", "jsonb":
+		return true
+	}
+	return typ.IsArrayCategory() || typ.IsCompositeType()
+}
+
 func jsonAggObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (string, error) {
 	res, err := sql.UnwrapAny(ctx, val)
 	if err != nil {
@@ -281,6 +301,9 @@ func jsonAggObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (str
 	}
 	if res == nil {
 		return "", errors.New("field name must not be null")
+	}
+	if jsonAggObjectKeyIsNonScalar(typ, res) {
+		return "", errors.New(jsonAggObjectNonScalarKeyErr)
 	}
 	if str, ok := res.(string); ok {
 		return str, nil
