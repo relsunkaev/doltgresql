@@ -194,9 +194,9 @@ func initEngine() {
 	plan.ValidateForeignKeyDefinition = validateForeignKeyDefinition
 
 	planbuilder.IsAggregateFunc = IsAggregateFunc
-	gmsfunction.BuiltIns = append(gmsfunction.BuiltIns, sql.Function1{
+	gmsfunction.BuiltIns = append(gmsfunction.BuiltIns, sql.FunctionN{
 		Name: pgexpression.ArrayAggWindowFunctionName,
-		Fn:   pgexpression.NewArrayAggWindow,
+		Fn:   pgexpression.NewDoltgresWindowAggregate,
 	})
 	sql.ErrFunctionNotFound = goerrors.NewKind("function: '%s' not found; function does not exist")
 	sql.ErrTableNotFound = goerrors.NewKind("table not found: %s; relation does not exist")

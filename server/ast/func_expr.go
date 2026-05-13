@@ -130,6 +130,30 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 				},
 			}, nil
 		}
+	case "bool_and", "bool_or":
+		if windowDef != nil {
+			if distinct {
+				return nil, errors.Errorf("%s DISTINCT with OVER is not yet supported", name.String())
+			}
+			if len(node.OrderBy) > 0 {
+				return nil, errors.Errorf("%s ORDER BY with OVER is not yet supported", name.String())
+			}
+			if len(exprs) != 1 {
+				return nil, errors.Errorf("%s requires one argument", name.String())
+			}
+			marker := pgexprs.BoolOrWindowMarker
+			if strings.EqualFold(name.String(), "bool_and") {
+				marker = pgexprs.BoolAndWindowMarker
+			}
+			return &vitess.FuncExpr{
+				Name: vitess.NewColIdent(pgexprs.ArrayAggWindowFunctionName),
+				Exprs: vitess.SelectExprs{
+					&vitess.AliasedExpr{Expr: vitess.NewStrVal([]byte(marker))},
+					exprs[0],
+				},
+				Over: (*vitess.Over)(windowDef),
+			}, nil
+		}
 	// special case for string_agg, which maps to the mysql aggregate function group_concat
 	case "string_agg":
 		if len(node.Exprs) != 2 {
