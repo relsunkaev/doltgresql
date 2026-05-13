@@ -163,7 +163,7 @@ func (a *AlterTypeAlterAttribute) addAttribute(ctx *sql.Context, typ *types.Dolt
 	}
 	for _, attr := range typ.CompositeAttrs {
 		if attr.Name == action.AttrName {
-			return errors.Errorf(`column "%s" of relation "%s" already exists`, action.AttrName, a.typName)
+			return sql.ErrColumnSpecifiedTwice.New(action.AttrName)
 		}
 	}
 	typ.CompositeAttrs = append(typ.CompositeAttrs, types.NewCompositeAttribute(
