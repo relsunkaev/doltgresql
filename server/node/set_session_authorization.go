@@ -63,6 +63,9 @@ func (s *SetSessionAuthorization) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	if ctx == nil || ctx.Session == nil {
 		return nil, errors.Errorf("SET SESSION AUTHORIZATION requires an active session")
 	}
+	if ctx.GetIgnoreAutoCommit() {
+		return nil, errors.Errorf("SET SESSION AUTHORIZATION cannot run inside a transaction block")
+	}
 	if s.User == "" {
 		return s.reset(ctx)
 	}
