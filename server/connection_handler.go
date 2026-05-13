@@ -4363,6 +4363,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.UndefinedColumn.String(), true
 	case strings.HasPrefix(msg, `cannot alter table "`) && strings.Contains(msg, `" uses its row type`):
 		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, "cannot truncate table ") && strings.Contains(msg, " as it is referenced in foreign key "):
+		return pgcode.FeatureNotSupported.String(), true
 	case strings.HasPrefix(msg, "column '") && strings.HasSuffix(msg, "' specified twice"):
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, `column "`) && strings.HasSuffix(msg, `" specified more than once`):

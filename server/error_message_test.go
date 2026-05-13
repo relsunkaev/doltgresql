@@ -105,6 +105,12 @@ func TestErrMessageToSQLStateFormatsAlterTableRowTypeDependency(t *testing.T) {
 	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
 }
 
+func TestErrMessageToSQLStateFormatsTruncateForeignKeyDependency(t *testing.T) {
+	code, ok := errMessageToSQLState(`cannot truncate table fk_truncate_parent as it is referenced in foreign key fk_truncate_child_parent_id_fkey on table fk_truncate_child`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
+}
+
 func TestErrMessageToSQLStateFormatsTypmodOverflow(t *testing.T) {
 	code, ok := errMessageToSQLState(`numeric field overflow - A field with precision 5, scale 2 must round to an absolute value less than 10^3`)
 	require.True(t, ok)
