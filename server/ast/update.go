@@ -37,6 +37,7 @@ func nodeUpdate(ctx *Context, node *tree.Update) (update *vitess.Update, err err
 		if err != nil {
 			return nil, err
 		}
+		returningExprs = rewriteUpdateReturningAliases(returningExprs)
 	}
 
 	with, err := nodeWith(ctx, node.With)

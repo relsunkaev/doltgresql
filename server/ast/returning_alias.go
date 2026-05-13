@@ -18,6 +18,8 @@ import (
 	"strings"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
+
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
 type returningAliasMode int
@@ -43,6 +45,91 @@ func rewriteInsertDeleteReturningAliases(exprs vitess.SelectExprs, mode returnin
 		rewritten[i] = &copy
 	}
 	return rewritten
+}
+
+func rewriteUpdateReturningAliases(exprs vitess.SelectExprs) vitess.SelectExprs {
+	if len(exprs) == 0 {
+		return exprs
+	}
+	rewritten := make(vitess.SelectExprs, len(exprs))
+	for i, selectExpr := range exprs {
+		aliased, ok := selectExpr.(*vitess.AliasedExpr)
+		if !ok {
+			rewritten[i] = selectExpr
+			continue
+		}
+		copy := *aliased
+		copy.Expr = rewriteUpdateReturningAliasExpr(copy.Expr)
+		rewritten[i] = &copy
+	}
+	return rewritten
+}
+
+func rewriteUpdateReturningAliasExpr(expr vitess.Expr) vitess.Expr {
+	switch expr := expr.(type) {
+	case *vitess.ColName:
+		return rewriteUpdateReturningAliasColumn(expr)
+	case *vitess.IsExpr:
+		copy := *expr
+		copy.Expr = rewriteUpdateReturningAliasExpr(copy.Expr)
+		return &copy
+	case *vitess.AndExpr:
+		copy := *expr
+		copy.Left = rewriteUpdateReturningAliasExpr(copy.Left)
+		copy.Right = rewriteUpdateReturningAliasExpr(copy.Right)
+		return &copy
+	case *vitess.OrExpr:
+		copy := *expr
+		copy.Left = rewriteUpdateReturningAliasExpr(copy.Left)
+		copy.Right = rewriteUpdateReturningAliasExpr(copy.Right)
+		return &copy
+	case *vitess.NotExpr:
+		copy := *expr
+		copy.Expr = rewriteUpdateReturningAliasExpr(copy.Expr)
+		return &copy
+	case *vitess.ComparisonExpr:
+		copy := *expr
+		copy.Left = rewriteUpdateReturningAliasExpr(copy.Left)
+		copy.Right = rewriteUpdateReturningAliasExpr(copy.Right)
+		return &copy
+	case *vitess.BinaryExpr:
+		copy := *expr
+		copy.Left = rewriteUpdateReturningAliasExpr(copy.Left)
+		copy.Right = rewriteUpdateReturningAliasExpr(copy.Right)
+		return &copy
+	case *vitess.UnaryExpr:
+		copy := *expr
+		copy.Expr = rewriteUpdateReturningAliasExpr(copy.Expr)
+		return &copy
+	case *vitess.ParenExpr:
+		copy := *expr
+		copy.Expr = rewriteUpdateReturningAliasExpr(copy.Expr)
+		return &copy
+	default:
+		return expr
+	}
+}
+
+func rewriteUpdateReturningAliasColumn(col *vitess.ColName) vitess.Expr {
+	qualifier := col.Qualifier
+	if qualifier.SchemaQualifier.String() != "" || qualifier.DbQualifier.String() != "" {
+		return col
+	}
+	var kind pgexprs.UpdateReturningAliasKind
+	switch {
+	case strings.EqualFold(qualifier.Name.String(), "old"):
+		kind = pgexprs.UpdateReturningAliasOld
+	case strings.EqualFold(qualifier.Name.String(), "new"):
+		kind = pgexprs.UpdateReturningAliasNew
+	default:
+		return col
+	}
+	copy := *col
+	copy.Qualifier = vitess.TableName{}
+	return vitess.InjectedExpr{
+		Expression: pgexprs.NewUpdateReturningAlias(kind),
+		Children:   vitess.Exprs{&copy},
+	}
 }
 
 func rewriteInsertDeleteReturningAliasExpr(expr vitess.Expr, mode returningAliasMode) vitess.Expr {

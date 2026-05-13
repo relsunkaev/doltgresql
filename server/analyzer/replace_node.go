@@ -49,6 +49,11 @@ func ReplaceNode(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope *p
 			return pgnodes.NewOnConflictReturningInsert(node), transform.NewTree, nil
 		}
 		return node, transform.SameTree, nil
+	case *plan.Update:
+		if pgnodes.HasUpdateReturningAlias(ctx, node.Returning) {
+			return pgnodes.NewUpdateReturningAliases(node), transform.NewTree, nil
+		}
+		return node, transform.SameTree, nil
 	default:
 		return node, transform.SameTree, nil
 	}
