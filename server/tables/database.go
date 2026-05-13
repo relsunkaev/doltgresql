@@ -93,29 +93,6 @@ func (d Database) GetTableNames(ctx *sql.Context) ([]string, error) {
 	for handlerName := range handlers[d.Database.Schema()] {
 		tableNameSet[handlerName] = struct{}{}
 	}
-	collection, err := core.GetSequencesCollectionFromContext(ctx, d.Database.Name())
-	if err != nil {
-		return nil, err
-	}
-	sequences, _, _, err := collection.GetAllSequences(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if schemaName := d.Database.Schema(); schemaName != "" {
-		for _, sequence := range sequences[schemaName] {
-			tableNameSet[sequence.Id.SequenceName()] = struct{}{}
-		}
-	} else {
-		searchPath, err := core.SearchPath(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, schemaName := range searchPath {
-			for _, sequence := range sequences[schemaName] {
-				tableNameSet[sequence.Id.SequenceName()] = struct{}{}
-			}
-		}
-	}
 	return utils.GetMapKeysSorted(tableNameSet), nil
 }
 
