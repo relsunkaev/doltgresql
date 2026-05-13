@@ -109,6 +109,12 @@ func (c *AlterRole) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		return nil, errors.New("invalid connection limit")
 	}
 	if !userRole.IsSuperUser {
+		for optionName := range c.Options {
+			switch optionName {
+			case "BYPASSRLS", "NOBYPASSRLS", "REPLICATION", "NOREPLICATION", "SUPERUSER", "NOSUPERUSER":
+				return nil, errors.Errorf(`role "%s" does not have permission to alter role "%s"`, userRole.Name, role.Name)
+			}
+		}
 		if _, ok := c.Options["CREATEDB"]; ok && !userRole.CanCreateDB {
 			return nil, errors.New("permission denied")
 		}
