@@ -233,6 +233,9 @@ func getRowsFromTable(ctx *sql.Context, db information_schema.DbWithNames, t sql
 	tblName := t.Name()
 	comment := tableComment(t)
 	for i, col := range information_schema.SchemaForTable(t, db.Database, allColsWithDefaultValue) {
+		if !columnVisibleToCurrentUser(ctx, db.SchemaName, tblName, col.Name, t) {
+			continue
+		}
 		r := getRowFromColumn(ctx, i, col, db.CatalogName, db.SchemaName, tblName, tablemetadata.ColumnIdentity(comment, col.Name))
 		if r != nil {
 			rows = append(rows, r)
@@ -254,6 +257,9 @@ func getRowsFromViews(ctx *sql.Context, db information_schema.DbWithNames) ([]sq
 	}
 
 	for _, view := range views {
+		if !relationVisibleToCurrentUser(ctx, db.SchemaName, view.Name, nil) {
+			continue
+		}
 		rows = append(rows, sql.Row{
 			db.CatalogName, // table_catalog
 			db.SchemaName,  // table_schema

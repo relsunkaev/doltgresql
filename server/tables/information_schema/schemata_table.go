@@ -49,6 +49,9 @@ func schemataRowIter(ctx *sql.Context, c sql.Catalog) (sql.RowIter, error) {
 	var rows []sql.Row
 
 	for _, db := range dbs {
+		if !schemaVisibleToCurrentUser(ctx, db.SchemaName) {
+			continue
+		}
 		rows = append(rows, sql.Row{
 			db.CatalogName, // catalog_name
 			db.SchemaName,  // schema_name

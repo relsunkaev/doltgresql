@@ -192,8 +192,7 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 			return errors.Errorf("table identifiers has an unsupported count: %d", len(auth.TargetNames))
 		}
 		for i := 0; i < len(auth.TargetNames); i += 3 {
-			// TODO: handle database
-			schemaName, err := core.GetSchemaName(ctx, nil, auth.TargetNames[i+1])
+			schemaName, err := authTargetSchemaName(ctx, auth.TargetNames[i], auth.TargetNames[i+1])
 			if err != nil {
 				// If this fails, then there's an issue with the search path.
 				// This will error later in the process, so we'll pass auth for now.
@@ -209,8 +208,7 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 			return errors.Errorf("table column identifiers has an unsupported count: %d", len(auth.TargetNames))
 		}
 		for i := 0; i < len(auth.TargetNames); i += 4 {
-			// TODO: handle database
-			schemaName, err := core.GetSchemaName(ctx, nil, auth.TargetNames[i+1])
+			schemaName, err := authTargetSchemaName(ctx, auth.TargetNames[i], auth.TargetNames[i+1])
 			if err != nil {
 				// If this fails, then there's an issue with the search path.
 				// This will error later in the process, so we'll pass auth for now.
@@ -269,7 +267,7 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 }
 
 func checkPrivilegeOnTableColumn(ctx *sql.Context, state AuthorizationQueryState, schemaName, tableName, columnName string, privileges []Privilege) error {
-	if strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid") && onlySelectPrivileges(privileges) {
+	if systemCatalogTableReadable(schemaName, tableName, privileges) {
 		return nil
 	}
 	if tableOwnedByRole(ctx, schemaName, tableName, state.role.Name) {
@@ -413,7 +411,7 @@ func checkPrivilegeOnSchema(state AuthorizationQueryState, schemaName string, pr
 
 // checkPrivilegeOnTable checks privileges for given table provided with schema name.
 func checkPrivilegeOnTable(ctx *sql.Context, state AuthorizationQueryState, schemaName, tableName string, privileges []Privilege) error {
-	if strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid") && onlySelectPrivileges(privileges) {
+	if systemCatalogTableReadable(schemaName, tableName, privileges) {
 		return nil
 	}
 	roleTableKey := TablePrivilegeKey{
@@ -433,6 +431,23 @@ func checkPrivilegeOnTable(ctx *sql.Context, state AuthorizationQueryState, sche
 		}
 	}
 	return nil
+}
+
+func authTargetSchemaName(ctx *sql.Context, databaseName string, schemaName string) (string, error) {
+	if strings.EqualFold(databaseName, sql.InformationSchemaDatabaseName) && schemaName == "" {
+		return sql.InformationSchemaDatabaseName, nil
+	}
+	return core.GetSchemaName(ctx, nil, schemaName)
+}
+
+func systemCatalogTableReadable(schemaName, tableName string, privileges []Privilege) bool {
+	if !onlySelectPrivileges(privileges) {
+		return false
+	}
+	if strings.EqualFold(schemaName, "information_schema") {
+		return true
+	}
+	return strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid")
 }
 
 func tableOwnedByRole(ctx *sql.Context, schemaName, tableName, roleName string) bool {

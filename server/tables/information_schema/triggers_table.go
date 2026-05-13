@@ -66,6 +66,9 @@ func triggersRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 	var rows []sql.Row
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
+			if !relationVisibleToCurrentUser(ctx, schema.Item.SchemaName(), table.Item.Name(), table.Item) {
+				return true, nil
+			}
 			tableID := id.NewTable(schema.Item.SchemaName(), table.Item.Name())
 			tableTriggers := collection.GetTriggersForTable(ctx, tableID)
 			sort.Slice(tableTriggers, func(i, j int) bool {

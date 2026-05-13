@@ -55,6 +55,9 @@ func viewsRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.RowIter, error) {
 
 	err := functions.IterateCurrentDatabase(ctx, functions.Callbacks{
 		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+			if !relationVisibleToCurrentUser(ctx, schema.Item.SchemaName(), view.Item.Name, nil) {
+				return true, nil
+			}
 			stmts, err := parser.Parse(view.Item.CreateViewStatement)
 			if err != nil {
 				return false, err

@@ -57,6 +57,9 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 			if isMaterializedViewTable(table.Item) {
 				return true, nil
 			}
+			if !relationVisibleToCurrentUser(ctx, schema.Item.SchemaName(), table.Item.Name(), table.Item) {
+				return true, nil
+			}
 			isTyped := "NO"
 			var userDefinedTypeCatalog any
 			var userDefinedTypeSchema any
@@ -85,6 +88,9 @@ func tablesRowIter(ctx *sql.Context, cat sql.Catalog) (sql.RowIter, error) {
 			return true, nil
 		},
 		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
+			if !relationVisibleToCurrentUser(ctx, schema.Item.SchemaName(), view.Item.Name, nil) {
+				return true, nil
+			}
 			// TODO: Fill out the rest of the columns.
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // table_catalog
