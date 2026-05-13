@@ -17,6 +17,7 @@ package _go
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
@@ -592,11 +593,62 @@ func ReadRows(rows pgx.Rows, normalizeRows bool) (readRows []sql.Row, readRawRow
 				// pgx's XML DecodeValue unmarshals into any as nil. The raw bytes are
 				// the canonical text representation the tests need to compare.
 				row[i] = string(rawSlice[i])
+			} else if ok && dt.IsArrayType() && field.Format == pgtype.BinaryFormatCode && rawSlice[i] != nil {
+				if flatArray, ok := row[i].([]any); ok {
+					if dimensions, ok := multidimensionalArrayHeader(rawSlice[i]); ok {
+						row[i] = nestFlatArray(flatArray, dimensions)
+					}
+				}
 			}
 		}
 		slices = append(slices, row)
 	}
 	return NormalizeRows(rows.FieldDescriptions(), slices, normalizeRows), rawSlices, nil
+}
+
+func multidimensionalArrayHeader(raw []byte) ([]int32, bool) {
+	if len(raw) < 12 {
+		return nil, false
+	}
+	dimensionCount := int(int32(binary.BigEndian.Uint32(raw)))
+	if dimensionCount <= 1 {
+		return nil, false
+	}
+	headerLength := 12 + dimensionCount*8
+	if len(raw) < headerLength {
+		return nil, false
+	}
+	dimensions := make([]int32, dimensionCount)
+	offset := 12
+	for i := range dimensions {
+		dimensions[i] = int32(binary.BigEndian.Uint32(raw[offset:]))
+		offset += 8
+	}
+	return dimensions, true
+}
+
+func nestFlatArray(flatArray []any, dimensions []int32) []any {
+	nested, _ := nestFlatArrayAtDimension(flatArray, dimensions, 0, 0)
+	return nested
+}
+
+func nestFlatArrayAtDimension(flatArray []any, dimensions []int32, depth int, offset int) ([]any, int) {
+	length := int(dimensions[depth])
+	nested := make([]any, length)
+	if depth == len(dimensions)-1 {
+		for i := range nested {
+			if offset+i < len(flatArray) {
+				nested[i] = flatArray[offset+i]
+			}
+		}
+		return nested, offset + length
+	}
+	for i := range nested {
+		var next []any
+		next, offset = nestFlatArrayAtDimension(flatArray, dimensions, depth+1, offset)
+		nested[i] = next
+	}
+	return nested, offset
 }
 
 // NormalizeRows normalizes each value's type within each row, as the tests only want to compare values. Returns a new

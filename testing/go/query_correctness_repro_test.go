@@ -267,7 +267,7 @@ func TestArrayAggOverArrayColumnReturnsHigherDimensionalArrayRepro(t *testing.T)
 					Query: `SELECT array_agg(vals)
 						FROM array_agg_array_items
 						ORDER BY min(id);`,
-					Expected: []sql.Row{{"{{1.0,2.0},{3.0,4.0},{5.0,6.0}}"}},
+					Expected: []sql.Row{{"{{1,2},{3,4},{5,6}}"}},
 				},
 			},
 		},

@@ -156,10 +156,9 @@ func TestAggregateFunctions(t *testing.T) {
 					},
 				},
 				{
-					Skip:  true, // Higher-level arrays don't work because they panic during output
 					Query: `SELECT array_agg(f) FROM t1;`,
 					Expected: []sql.Row{
-						{"{{1.0,2.0},{3.0,4.0},{5.0,6.0}}"},
+						{"{{1,2},{3,4},{5,6}}"},
 					},
 				},
 			},

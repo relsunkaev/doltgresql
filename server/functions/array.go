@@ -229,30 +229,13 @@ var array_send = framework.Function1{
 			}
 		}
 		vals := val.([]any)
-		// Check for nulls first
-		hasNull := false
-		for _, val := range vals {
-			if val == nil {
-				hasNull = true
-				break
-			}
-		}
-		// Count the number of dimensions
-		dimensions := int32(0)
-		innerVals := vals
-		for len(innerVals) > 0 {
-			dimensions++
-			slice, ok := innerVals[0].([]any)
-			if !ok {
-				break
-			}
-			innerVals = slice
-		}
-		if dimensions > 1 {
-			return nil, errors.Errorf("arrays with %d dimensions are not yet supported using the binary format", dimensions)
+		dimensions := arrayBinaryDimensions(vals)
+		hasNull, err := validateArrayBinaryShape(vals, dimensions, 0)
+		if err != nil {
+			return nil, err
 		}
 		writer := utils.NewWireWriter()
-		writer.WriteInt32(dimensions) // Write the number of dimensions
+		writer.WriteInt32(int32(len(dimensions))) // Write the number of dimensions
 		if hasNull {
 			writer.WriteInt32(1)
 		} else {
@@ -263,28 +246,104 @@ var array_send = framework.Function1{
 			return nil, err
 		}
 		writer.WriteUint32(id.Cache().ToOID(baseType.ID.AsId())) // Element OID
-		for i := int32(0); i < dimensions; i++ {
-			writer.WriteInt32(int32(len(vals))) // Elements in this dimension
-			if t[0].IsArrayType() {
-				writer.WriteInt32(1) // Lower bound, or what index number we start at (seems to always be 1?)
-			} else {
-				writer.WriteInt32(0)
-			}
-			for _, val := range vals {
-				if val == nil {
-					writer.WriteInt32(-1)
-				} else {
-					valBytes, err := baseType.CallSend(ctx, val)
-					if err != nil {
-						return nil, err
-					}
-					writer.WriteInt32(int32(len(valBytes)))
-					writer.WriteBytes(valBytes)
-				}
-			}
+		for _, dimension := range dimensions {
+			writer.WriteInt32(dimension) // Elements in this dimension
+			writer.WriteInt32(1)         // Lower bound, or what index number we start at
+		}
+		if err := writeArrayBinaryElements(ctx, writer, vals, dimensions, 0, baseType); err != nil {
+			return nil, err
 		}
 		return writer.BufferData(), nil
 	},
+}
+
+func arrayBinaryDimensions(vals []any) []int32 {
+	if len(vals) == 0 {
+		return nil
+	}
+	dimensions := make([]int32, 0, 1)
+	for {
+		dimensions = append(dimensions, int32(len(vals)))
+		var next []any
+		for _, val := range vals {
+			if val == nil {
+				continue
+			}
+			nested, ok := val.([]any)
+			if !ok {
+				return dimensions
+			}
+			next = nested
+			break
+		}
+		if next == nil {
+			return dimensions
+		}
+		vals = next
+	}
+}
+
+func validateArrayBinaryShape(vals []any, dimensions []int32, depth int) (bool, error) {
+	if len(dimensions) == 0 {
+		return false, nil
+	}
+	if depth >= len(dimensions) || int32(len(vals)) != dimensions[depth] {
+		return false, errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
+	}
+	hasNull := false
+	leafDepth := depth == len(dimensions)-1
+	for _, val := range vals {
+		if val == nil {
+			if !leafDepth {
+				return false, errors.Errorf("multidimensional arrays cannot contain null subarrays")
+			}
+			hasNull = true
+			continue
+		}
+		nested, ok := val.([]any)
+		if leafDepth {
+			if ok {
+				return false, errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
+			}
+			continue
+		}
+		if !ok {
+			return false, errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
+		}
+		nestedHasNull, err := validateArrayBinaryShape(nested, dimensions, depth+1)
+		if err != nil {
+			return false, err
+		}
+		hasNull = hasNull || nestedHasNull
+	}
+	return hasNull, nil
+}
+
+func writeArrayBinaryElements(ctx *sql.Context, writer *utils.WireRW, vals []any, dimensions []int32, depth int, baseType *pgtypes.DoltgresType) error {
+	if len(dimensions) == 0 {
+		return nil
+	}
+	if depth == len(dimensions)-1 {
+		for _, val := range vals {
+			if val == nil {
+				writer.WriteInt32(-1)
+				continue
+			}
+			valBytes, err := baseType.CallSend(ctx, val)
+			if err != nil {
+				return err
+			}
+			writer.WriteInt32(int32(len(valBytes)))
+			writer.WriteBytes(valBytes)
+		}
+		return nil
+	}
+	for _, val := range vals {
+		if err := writeArrayBinaryElements(ctx, writer, val.([]any), dimensions, depth+1, baseType); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // btarraycmp represents the PostgreSQL function of array type byte compare.
