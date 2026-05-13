@@ -44,7 +44,7 @@ func nodeBeginTransaction(ctx *Context, node *tree.BeginTransaction) (*vitess.Be
 	var characteristic string
 	switch node.Modes.ReadWriteMode {
 	case tree.UnspecifiedReadWriteMode:
-		characteristic = vitess.TxReadWrite
+		characteristic = ""
 	case tree.ReadOnly:
 		characteristic = vitess.TxReadOnly
 	case tree.ReadWrite:

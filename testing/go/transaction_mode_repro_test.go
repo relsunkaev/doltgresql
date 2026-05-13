@@ -465,10 +465,45 @@ func TestDefaultTransactionReadOnlyPreventsWritesRepro(t *testing.T) {
 				},
 				{
 					Query:       `INSERT INTO default_read_only_target VALUES (1);`,
-					ExpectedErr: `read-only transaction`,
+					ExpectedErr: `READ ONLY transaction`,
 				},
 				{
 					Query: `ROLLBACK;`,
+				},
+				{
+					Query: `RESET default_transaction_read_only;`,
+				},
+			},
+		},
+	})
+}
+
+// TestBeginReadWriteOverridesDefaultReadOnlyGuard guards PostgreSQL's
+// transaction mode precedence: an explicit READ WRITE mode on BEGIN overrides
+// default_transaction_read_only for that transaction.
+func TestBeginReadWriteOverridesDefaultReadOnlyGuard(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "BEGIN READ WRITE overrides default_transaction_read_only",
+			SetUpScript: []string{
+				`CREATE TABLE begin_read_write_default_target (id INT PRIMARY KEY);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SET default_transaction_read_only TO on;`,
+				},
+				{
+					Query: `BEGIN READ WRITE;`,
+				},
+				{
+					Query: `INSERT INTO begin_read_write_default_target VALUES (1);`,
+				},
+				{
+					Query: `COMMIT;`,
+				},
+				{
+					Query:    `SELECT id FROM begin_read_write_default_target;`,
+					Expected: []sql.Row{{1}},
 				},
 				{
 					Query: `RESET default_transaction_read_only;`,

@@ -703,7 +703,24 @@ func (h *ConnectionHandler) releaseXactAdvisoryLocksIfOutsideTransaction() {
 func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (handled bool, endOfMessages bool, err error) {
 	switch stmt := query.AST.(type) {
 	case *sqlparser.Begin:
+		transactionCharacteristic := sql.ReadWrite
+		if query.UsesDefaultTransactionReadMode {
+			sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.StatementTag)
+			if err != nil {
+				return false, true, err
+			}
+			readOnly, err := defaultTransactionReadOnly(sqlCtx)
+			if err != nil {
+				return false, true, err
+			}
+			if readOnly {
+				transactionCharacteristic = sql.ReadOnly
+			}
+		} else if stmt.TransactionCharacteristic == sqlparser.TxReadOnly {
+			transactionCharacteristic = sql.ReadOnly
+		}
 		h.inTransaction = true
+		return true, true, h.beginTransaction(query, transactionCharacteristic)
 	case *sqlparser.Commit:
 		h.inTransaction = false
 	case *sqlparser.Rollback:
@@ -745,6 +762,76 @@ func (h *ConnectionHandler) handleQueryOutsideEngine(query ConvertedQuery) (hand
 		}
 	}
 	return false, true, nil
+}
+
+func (h *ConnectionHandler) beginTransaction(query ConvertedQuery, transactionCharacteristic sql.TransactionCharacteristic) error {
+	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String)
+	if err != nil {
+		return err
+	}
+	ts, ok := sqlCtx.Session.(sql.TransactionSession)
+	if ok {
+		currentTx := sqlCtx.GetTransaction()
+		if currentTx != nil {
+			if err := ts.CommitTransaction(sqlCtx, currentTx); err != nil {
+				return err
+			}
+		}
+		transaction, err := ts.StartTransaction(sqlCtx, transactionCharacteristic)
+		if err != nil {
+			return err
+		}
+		sqlCtx.SetTransaction(transaction)
+		sqlCtx.SetIgnoreAutoCommit(true)
+	}
+	h.sendBuffered(makeCommandComplete(query.StatementTag, 0))
+	return h.finishNotifications(query)
+}
+
+func defaultTransactionReadOnly(ctx *sql.Context) (bool, error) {
+	value, err := ctx.GetSessionVariable(ctx, "default_transaction_read_only")
+	if err != nil {
+		return false, err
+	}
+	switch v := value.(type) {
+	case int:
+		return v != 0, nil
+	case int8:
+		return v != 0, nil
+	case int16:
+		return v != 0, nil
+	case int32:
+		return v != 0, nil
+	case int64:
+		return v != 0, nil
+	case uint:
+		return v != 0, nil
+	case uint8:
+		return v != 0, nil
+	case uint16:
+		return v != 0, nil
+	case uint32:
+		return v != 0, nil
+	case uint64:
+		return v != 0, nil
+	case bool:
+		return v, nil
+	case string:
+		normalized := strings.ToLower(strings.TrimSpace(v))
+		switch normalized {
+		case "on", "true", "yes":
+			return true, nil
+		case "off", "false", "no":
+			return false, nil
+		}
+		parsed, err := strconv.ParseInt(normalized, 10, 64)
+		if err == nil {
+			return parsed != 0, nil
+		}
+		return false, nil
+	default:
+		return false, nil
+	}
 }
 
 func (h *ConnectionHandler) queryHandledOutsideEngine(query ConvertedQuery) bool {
@@ -3428,19 +3515,25 @@ func (h *ConnectionHandler) convertQuery(query string) ([]ConvertedQuery, error)
 	for i := range s {
 		vitessAST, err := ast.Convert(s[i])
 		stmtTag := s[i].AST.StatementTag()
+		usesDefaultTransactionReadMode := false
+		if begin, ok := s[i].AST.(*tree.BeginTransaction); ok {
+			usesDefaultTransactionReadMode = begin.Modes.ReadWriteMode == tree.UnspecifiedReadWriteMode
+		}
 		if err != nil {
 			return nil, err
 		}
 		if vitessAST == nil {
 			converted[i] = ConvertedQuery{
-				String:       s[i].AST.String(),
-				StatementTag: stmtTag,
+				String:                         s[i].AST.String(),
+				StatementTag:                   stmtTag,
+				UsesDefaultTransactionReadMode: usesDefaultTransactionReadMode,
 			}
 		} else {
 			converted[i] = ConvertedQuery{
-				String:       query,
-				AST:          vitessAST,
-				StatementTag: stmtTag,
+				String:                         query,
+				AST:                            vitessAST,
+				StatementTag:                   stmtTag,
+				UsesDefaultTransactionReadMode: usesDefaultTransactionReadMode,
 			}
 		}
 	}
