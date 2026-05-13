@@ -38,7 +38,19 @@ func nodeSelectClause(ctx *Context, node *tree.SelectClause) (*vitess.Select, er
 	prevWholeRowDuplicateAliases := ctx.wholeRowDuplicateAliases
 	ctx.wholeRowDuplicateAliases = wholeRowDuplicateAliases
 	defer func() { ctx.wholeRowDuplicateAliases = prevWholeRowDuplicateAliases }()
-	selectExprs, err := nodeSelectExprs(ctx, node.Exprs)
+	tableOIDName, tableOIDOk, err := selectTableOIDRelation(ctx, node.From)
+	if err != nil {
+		return nil, err
+	}
+	var selectExprs vitess.SelectExprs
+	if tableOIDOk {
+		err = ctx.WithTableOIDRelation(tableOIDName.SchemaQualifier.String(), tableOIDName.Name.String(), func() error {
+			selectExprs, err = nodeSelectExprs(ctx, node.Exprs)
+			return err
+		})
+	} else {
+		selectExprs, err = nodeSelectExprs(ctx, node.Exprs)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +183,30 @@ PostJoinRewrite:
 		Window:      window,
 		Comments:    vitess.Comments{[]byte(node.BlockComment)},
 	}, nil
+}
+
+func selectTableOIDRelation(ctx *Context, from tree.From) (vitess.TableName, bool, error) {
+	if len(from.Tables) != 1 {
+		return vitess.TableName{}, false, nil
+	}
+	tableExpr := tree.StripTableParens(from.Tables[0])
+	if aliased, ok := tableExpr.(*tree.AliasedTableExpr); ok {
+		tableExpr = tree.StripTableParens(aliased.Expr)
+	}
+	var tableName tree.TableName
+	switch expr := tableExpr.(type) {
+	case *tree.TableName:
+		tableName = *expr
+	case *tree.UnresolvedObjectName:
+		tableName = expr.ToTableName()
+	default:
+		return vitess.TableName{}, false, nil
+	}
+	resolved, err := nodeTableName(ctx, &tableName)
+	if err != nil {
+		return vitess.TableName{}, false, err
+	}
+	return resolved, true, nil
 }
 
 type duplicateSubqueryAliasCandidate struct {

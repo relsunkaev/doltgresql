@@ -31,7 +31,7 @@ import (
 const DoltCreateTablePlaceholderSequenceName = "dolt_create_table_placeholder_sequence"
 
 // nodeColumnTableDef handles *tree.ColumnTableDef nodes.
-func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema string) (*vitess.ColumnDefinition, error) {
+func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vitess.TableName) (*vitess.ColumnDefinition, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -67,7 +67,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema str
 	} else if node.Unique {
 		keyOpt = 3 // colKeyUnique
 	}
-	defaultExprTree := qualifySameSchemaNextvalDefault(node.DefaultExpr.Expr, tableSchema)
+	defaultExprTree := qualifySameSchemaNextvalDefault(node.DefaultExpr.Expr, tableName.SchemaQualifier.String())
 	defaultExpr, err := nodeExpr(ctx, defaultExprTree)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,10 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableSchema str
 	computedAsIdentity := node.IsComputed() && !hasGeneratedExpr && !node.Computed.ByDefault
 
 	if hasGeneratedExpr {
-		generated, err = nodeExpr(ctx, node.Computed.Expr)
+		err = ctx.WithTableOIDRelation(tableName.SchemaQualifier.String(), tableName.Name.String(), func() error {
+			generated, err = nodeExpr(ctx, node.Computed.Expr)
+			return err
+		})
 		if err != nil {
 			return nil, err
 		}

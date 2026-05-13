@@ -364,6 +364,9 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 			if expr, ok := wholeRowDuplicateAliasExprForName(ctx, string(node.ColumnName)); ok {
 				return expr, nil
 			}
+			if expr, ok, err := tableOIDExprForContext(ctx, string(node.ColumnName)); ok || err != nil {
+				return expr, err
+			}
 		}
 		var tableName vitess.TableName
 		if node.TableName != nil {
@@ -988,12 +991,43 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 		if ctx.ResolveExcludedRefs() && isExcludedRef(node) {
 			return excludedToValuesFunc(node)
 		}
+		if node.NumParts == 1 {
+			if expr, ok, err := tableOIDExprForContext(ctx, node.Parts[0]); ok || err != nil {
+				return expr, err
+			}
+		}
 		return unresolvedNameToColName(node)
 	case nil:
 		return nil, nil
 	default:
 		return nil, errors.Errorf("unknown expression: `%T`", node)
 	}
+}
+
+func tableOIDExprForContext(ctx *Context, columnName string) (vitess.Expr, bool, error) {
+	if !strings.EqualFold(columnName, "tableoid") {
+		return nil, false, nil
+	}
+	schemaName, tableName, ok := ctx.TableOIDRelation()
+	if !ok {
+		return nil, false, nil
+	}
+	regclassName := tableName
+	if schemaName != "" {
+		regclassName = schemaName + "." + tableName
+	}
+	cast, err := pgexprs.NewExplicitCastInjectable(pgtypes.Regclass)
+	if err != nil {
+		return nil, false, err
+	}
+	return vitess.InjectedExpr{
+		Expression: cast,
+		Children: vitess.Exprs{
+			vitess.InjectedExpr{
+				Expression: expression.NewLiteral(regclassName, pgtypes.Unknown),
+			},
+		},
+	}, true, nil
 }
 
 func wholeRowDuplicateAliasExpr(ctx *Context, node *tree.UnresolvedName) (vitess.Expr, bool) {

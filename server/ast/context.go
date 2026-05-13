@@ -41,6 +41,9 @@ type Context struct {
 	// subset of columns.
 	setOpOperandDepth int
 
+	tableOIDSchema string
+	tableOIDTable  string
+
 	wholeRowDuplicateAliases map[string]wholeRowDuplicateAlias
 }
 
@@ -87,4 +90,20 @@ func (ctx *Context) WithSetOpOperand(fn func() error) error {
 
 func (ctx *Context) InSetOpOperand() bool {
 	return ctx.setOpOperandDepth > 0
+}
+
+func (ctx *Context) WithTableOIDRelation(schemaName, tableName string, fn func() error) error {
+	prevSchema := ctx.tableOIDSchema
+	prevTable := ctx.tableOIDTable
+	ctx.tableOIDSchema = schemaName
+	ctx.tableOIDTable = tableName
+	defer func() {
+		ctx.tableOIDSchema = prevSchema
+		ctx.tableOIDTable = prevTable
+	}()
+	return fn()
+}
+
+func (ctx *Context) TableOIDRelation() (schemaName, tableName string, ok bool) {
+	return ctx.tableOIDSchema, ctx.tableOIDTable, ctx.tableOIDTable != ""
 }
