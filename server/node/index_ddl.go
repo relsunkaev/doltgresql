@@ -227,7 +227,7 @@ func (r *RenameIndex) RowIter(ctx *sql.Context, row sql.Row) (sql.RowIter, error
 	if err = checkLocatedIndexTableOwnership(ctx, located); err != nil {
 		return nil, err
 	}
-	if err = located.alterable.RenameIndex(ctx, located.index.ID(), r.to); err != nil {
+	if err = located.alterable.RenameIndex(ctx, located.index.ID(), core.EncodePhysicalIndexName(r.to)); err != nil {
 		if sql.ErrIndexNotFound.Is(err) && r.ifExists {
 			return sql.RowsToRowIter(), nil
 		}
@@ -679,7 +679,7 @@ func checkLocatedIndexTableOwnership(ctx *sql.Context, located *locatedIndex) er
 }
 
 func indexNameMatches(index sql.Index, table sql.Table, name string) bool {
-	return strings.EqualFold(index.ID(), name) || strings.EqualFold(indexmetadata.DisplayNameForTable(index, table), name)
+	return index.ID() == core.EncodePhysicalIndexName(name) || indexmetadata.DisplayNameForTable(index, table) == name
 }
 
 func isPrimaryKeyIndex(index sql.Index) bool {

@@ -19,7 +19,10 @@ import (
 	"strings"
 )
 
-const physicalColumnNamePrefix = "__doltgres_column_name_"
+const (
+	physicalColumnNamePrefix = "__doltgres_column_name_"
+	physicalIndexNamePrefix  = "__doltgres_index_name_"
+)
 
 // IsValidPostgresIdentifier returns true according to Postgres quoted identifier rules.
 // Quoted identifiers can contain any character except the null character (code zero),
@@ -53,6 +56,28 @@ func DecodePhysicalColumnName(name string) string {
 		return name
 	}
 	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalColumnNamePrefix))
+	if err != nil {
+		return name
+	}
+	return string(decoded)
+}
+
+// EncodePhysicalIndexName maps PostgreSQL's case-sensitive index identifiers
+// onto GMS index names, which are otherwise validated case-insensitively.
+func EncodePhysicalIndexName(name string) string {
+	if name == strings.ToLower(name) && !strings.HasPrefix(name, physicalIndexNamePrefix) {
+		return name
+	}
+	return physicalIndexNamePrefix + hex.EncodeToString([]byte(name))
+}
+
+// DecodePhysicalIndexName returns the PostgreSQL-facing index name for an
+// index that was encoded by EncodePhysicalIndexName.
+func DecodePhysicalIndexName(name string) string {
+	if !strings.HasPrefix(name, physicalIndexNamePrefix) {
+		return name
+	}
+	decoded, err := hex.DecodeString(strings.TrimPrefix(name, physicalIndexNamePrefix))
 	if err != nil {
 		return name
 	}

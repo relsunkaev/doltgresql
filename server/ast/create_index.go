@@ -24,6 +24,7 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgnodes "github.com/dolthub/doltgresql/server/node"
@@ -64,6 +65,7 @@ func nodeCreateIndex(ctx *Context, node *tree.CreateIndex) (vitess.Statement, er
 	if indexName == "" {
 		indexName = defaultCreateIndexName(tableName.Name.String(), node.Columns)
 	}
+	indexName = core.EncodePhysicalIndexName(indexName)
 	indexDef, err := nodeIndexTableDefAllowingStorageParams(ctx, &tree.IndexTableDef{
 		Name:        tree.Name(indexName),
 		Columns:     node.Columns,

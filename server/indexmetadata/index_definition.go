@@ -22,6 +22,7 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/index"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/lex"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
@@ -37,7 +38,7 @@ func DisplayName(idx sql.Index) string {
 		return fmt.Sprintf("%s_%s_key", idx.Table(), idx.ID())
 	}
 
-	return idx.ID()
+	return core.DecodePhysicalIndexName(idx.ID())
 }
 
 // DisplayNameForTable returns the PostgreSQL-facing name for index using
