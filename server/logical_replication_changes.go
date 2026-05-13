@@ -45,6 +45,9 @@ type replicationChangeAction byte
 var (
 	publicationRowFilterIsNotDistinctFromNull = regexp.MustCompile(`(?i)\bis\s+not\s+distinct\s+from\s+null\b`)
 	publicationRowFilterIsDistinctFromNull    = regexp.MustCompile(`(?i)\bis\s+distinct\s+from\s+null\b`)
+	publicationRowFilterSimpleOperand         = `(?:[a-z_][a-z0-9_]*|true|false|null|[0-9]+(?:\.[0-9]+)?|'(?:''|[^'])*')`
+	publicationRowFilterIsNotDistinctFrom     = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+not\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
+	publicationRowFilterIsDistinctFrom        = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
 	publicationRowFilterIsNotUnknown          = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
 	publicationRowFilterIsUnknown             = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
 )
@@ -681,6 +684,8 @@ func parsePublicationRowFilter(rowFilter string) (vitess.Expr, error) {
 func normalizePublicationRowFilter(rowFilter string) string {
 	rowFilter = publicationRowFilterIsNotDistinctFromNull.ReplaceAllString(rowFilter, "IS NULL")
 	rowFilter = publicationRowFilterIsDistinctFromNull.ReplaceAllString(rowFilter, "IS NOT NULL")
+	rowFilter = publicationRowFilterIsNotDistinctFrom.ReplaceAllString(rowFilter, "($1 <=> $2)")
+	rowFilter = publicationRowFilterIsDistinctFrom.ReplaceAllString(rowFilter, "NOT ($1 <=> $2)")
 	rowFilter = publicationRowFilterIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
 	return rowFilter
@@ -797,6 +802,11 @@ func evalPublicationFilterComparison(ctx *sql.Context, expr *vitess.ComparisonEx
 	}
 	switch strings.ToLower(expr.Operator) {
 	case vitess.EqualStr:
+		return rowFilterValuesEqual(ctx, left, right), nil
+	case vitess.NullSafeEqualStr:
+		if left.null || right.null {
+			return left.null && right.null, nil
+		}
 		return rowFilterValuesEqual(ctx, left, right), nil
 	case vitess.NotEqualStr, "<>":
 		if left.null || right.null {

@@ -66,4 +66,71 @@ func TestNormalizePublicationRowFilterUnknownPredicates(t *testing.T) {
 	require.Equal(t, "visible IS NOT NULL", normalizePublicationRowFilter("visible IS NOT UNKNOWN"))
 	require.Equal(t, "visible IS NULL", normalizePublicationRowFilter("visible IS NOT DISTINCT FROM NULL"))
 	require.Equal(t, "visible IS NOT NULL", normalizePublicationRowFilter("visible IS DISTINCT FROM NULL"))
+	require.Equal(t, "NOT (customer_id <=> 5)", normalizePublicationRowFilter("customer_id IS DISTINCT FROM 5"))
+	require.Equal(t, "(status <=> 'ready')", normalizePublicationRowFilter("status IS NOT DISTINCT FROM 'ready'"))
+}
+
+func TestPublicationRowFilterDistinctFromPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "distinct from different literal",
+			filter: "customer_id IS DISTINCT FROM 5",
+			value:  rowFilterValue{data: []byte("7")},
+			match:  true,
+		},
+		{
+			name:   "distinct from equal literal",
+			filter: "customer_id IS DISTINCT FROM 5",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  false,
+		},
+		{
+			name:   "distinct from non-null literal matches null",
+			filter: "customer_id IS DISTINCT FROM 5",
+			value:  rowFilterValue{null: true},
+			match:  true,
+		},
+		{
+			name:   "not distinct from equal literal",
+			filter: "customer_id IS NOT DISTINCT FROM 5",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  true,
+		},
+		{
+			name:   "not distinct from different literal",
+			filter: "customer_id IS NOT DISTINCT FROM 5",
+			value:  rowFilterValue{data: []byte("7")},
+			match:  false,
+		},
+		{
+			name:   "not distinct from non-null literal rejects null",
+			filter: "customer_id IS NOT DISTINCT FROM 5",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+		{
+			name:   "not distinct from null matches null",
+			filter: "customer_id IS NOT DISTINCT FROM NULL",
+			value:  rowFilterValue{null: true},
+			match:  true,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"customer_id": tt.value,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
 }
