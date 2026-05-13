@@ -91,6 +91,7 @@ func (p PgClassHandler) RowIter(ctx *sql.Context, partition sql.Partition) (sql.
 // cachePgClasses caches the pg_class data for the current database in the session.
 func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	var classes []*pgClass
+	tableCheckCounts := make(map[uint32]int16)
 	tableHasIndexes := make(map[uint32]struct{})
 	tableHasTriggers := make(map[uint32]struct{})
 	nameIdx := NewUniqueInMemIndexStorage[*pgClass](lessName)
@@ -110,6 +111,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 	}
 
 	err = functions.IterateCurrentDatabase(ctx, functions.Callbacks{
+		Check: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, check functions.ItemCheck) (cont bool, err error) {
+			tableCheckCounts[id.Cache().ToOID(table.OID.AsId())]++
+			return true, nil
+		},
 		Index: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable, index functions.ItemIndex) (cont bool, err error) {
 			tableHasIndexes[id.Cache().ToOID(table.OID.AsId())] = struct{}{}
 			schemaOid := schema.OID
@@ -144,6 +149,7 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 		Table: func(ctx *sql.Context, schema functions.ItemSchema, table functions.ItemTable) (cont bool, err error) {
 			_, hasIndexes := tableHasIndexes[id.Cache().ToOID(table.OID.AsId())]
 			_, hasTriggers := tableHasTriggers[id.Cache().ToOID(table.OID.AsId())]
+			tableOidNative := id.Cache().ToOID(table.OID.AsId())
 			kind := "r"
 			if isMaterializedViewTable(table.Item) {
 				kind = "m"
@@ -179,6 +185,8 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				relOfType:       relOfType,
 				reloptions:      pgClassRelOptions(comment),
 				relpersistence:  relPersistence,
+				relNatts:        int16(len(table.Item.Schema(ctx))),
+				relChecks:       tableCheckCounts[tableOidNative],
 				owner:           owner,
 			}
 			nameIdx.Add(class)
@@ -188,6 +196,10 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 		},
 		View: func(ctx *sql.Context, schema functions.ItemSchema, view functions.ItemView) (cont bool, err error) {
 			relOptions, err := viewRelOptions(view.Item.CreateViewStatement)
+			if err != nil {
+				return false, err
+			}
+			targetSchema, err := viewTargetSchema(ctx, view.Item)
 			if err != nil {
 				return false, err
 			}
@@ -203,6 +215,8 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				relType:         id.NewType(view.OID.SchemaName(), view.OID.SchemaName()).AsId(),
 				owner:           auth.GetRelationOwner(doltdb.TableName{Name: view.Item.Name, Schema: schema.Item.SchemaName()}),
 				reloptions:      relOptions,
+				relNatts:        int16(len(targetSchema)),
+				hasRules:        true,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -228,6 +242,36 @@ func cachePgClasses(ctx *sql.Context, pgCatalogCache *pgCatalogCache) error {
 				relType:         id.Null,
 				relpersistence:  relPersistence,
 				owner:           sequence.Item.Owner,
+			}
+			nameIdx.Add(class)
+			oidIdx.Add(class)
+			classes = append(classes, class)
+			return true, nil
+		},
+		Type: func(ctx *sql.Context, schema functions.ItemSchema, typ functions.ItemType) (cont bool, err error) {
+			if typ.Item.TypType != pgtypes.TypeType_Composite || !typ.Item.IsDefined {
+				return true, nil
+			}
+			relID := typ.Item.RelID
+			if !relID.IsValid() {
+				relID = id.NewTable(typ.Oid.SchemaName(), typ.Oid.TypeName()).AsId()
+			}
+			owner := typ.Item.Owner
+			if owner == "" {
+				owner = "postgres"
+			}
+			class := &pgClass{
+				oid:             relID,
+				oidNative:       id.Cache().ToOID(relID),
+				name:            typ.Oid.TypeName(),
+				schemaName:      schema.Item.SchemaName(),
+				hasIndexes:      false,
+				kind:            "c",
+				schemaOid:       schema.OID.AsId(),
+				schemaOidNative: id.Cache().ToOID(schema.OID.AsId()),
+				relType:         typ.Oid.AsId(),
+				relNatts:        int16(len(typ.Item.CompositeAttrs)),
+				owner:           owner,
 			}
 			nameIdx.Add(class)
 			oidIdx.Add(class)
@@ -485,6 +529,9 @@ type pgClass struct {
 	relam           id.Id
 	reloptions      []any
 	relpersistence  string
+	relNatts        int16
+	relChecks       int16
+	hasRules        bool
 	owner           string
 }
 
@@ -578,9 +625,9 @@ func pgClassToRow(class *pgClass) sql.Row {
 		false,                               // relisshared
 		relPersistence,                      // relpersistence
 		class.kind,                          // relkind
-		int16(0),                            // relnatts
-		int16(0),                            // relchecks
-		false,                               // relhasrules
+		class.relNatts,                      // relnatts
+		class.relChecks,                     // relchecks
+		class.hasRules,                      // relhasrules
 		class.hasTriggers,                   // relhastriggers
 		false,                               // relhassubclass
 		rlsState.Enabled,                    // relrowsecurity
