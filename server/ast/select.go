@@ -21,6 +21,7 @@ import (
 	"github.com/cockroachdb/errors"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
+	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
@@ -71,6 +72,10 @@ func uint64ToBase36(n uint64) string {
 		n /= 36
 	}
 	return string(buf[i:])
+}
+
+func outputColumnIdent(name string) vitess.ColIdent {
+	return vitess.NewColIdent(core.EncodePhysicalColumnName(name))
 }
 
 // nodeSelect handles *tree.Select nodes.
@@ -409,7 +414,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			}
 			return &vitess.AliasedExpr{
 				Expr: vitessExpr,
-				As:   vitess.NewColIdent(string(node.As)),
+				As:   outputColumnIdent(string(node.As)),
 			}, nil
 		}
 
@@ -429,7 +434,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 			}
 			return &vitess.AliasedExpr{
 				Expr:            wholeRowExpr,
-				As:              vitess.NewColIdent(string(node.As)),
+				As:              outputColumnIdent(string(node.As)),
 				InputExpression: inputExpressionForSelectExpr(node),
 			}, nil
 		}
@@ -443,7 +448,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 					Expression: pgexprs.NewSetOpProjection(),
 					Children:   vitess.Exprs{colName},
 				},
-				As: vitess.NewColIdent(string(node.As)),
+				As: outputColumnIdent(string(node.As)),
 			}, nil
 		}
 		// We don't set the InputExpression for ColName expressions. This matches the behavior in vitess's
@@ -451,7 +456,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 		// so we need to match the behavior exactly.
 		return &vitess.AliasedExpr{
 			Expr: colName,
-			As:   vitess.NewColIdent(string(node.As)),
+			As:   outputColumnIdent(string(node.As)),
 		}, nil
 	default:
 		vitessExpr, err := nodeExpr(ctx, expr)
@@ -521,7 +526,7 @@ func nodeSelectExpr(ctx *Context, node tree.SelectExpr) (vitess.SelectExpr, erro
 
 		return &vitess.AliasedExpr{
 			Expr:            vitessExpr,
-			As:              vitess.NewColIdent(string(node.As)),
+			As:              outputColumnIdent(string(node.As)),
 			InputExpression: inputExpressionForSelectExpr(node),
 		}, nil
 	}

@@ -21,6 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dolthub/doltgresql/core"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
@@ -79,6 +80,15 @@ func TestSchemaToFieldDescriptionsUsesDefaultTextFormat(t *testing.T) {
 	require.Len(t, fields, 2)
 	require.Equal(t, int16(0), fields[0].Format)
 	require.Equal(t, int16(0), fields[1].Format)
+}
+
+func TestSchemaToFieldDescriptionsDecodesPhysicalColumnNames(t *testing.T) {
+	fields, err := schemaToFieldDescriptionsWithSource(sql.NewEmptyContext(), sql.Schema{
+		{Name: core.EncodePhysicalColumnName("tableName"), Type: pgtypes.Text},
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, fields, 1)
+	require.Equal(t, []byte("tableName"), fields[0].Name)
 }
 
 func TestSchemaToFieldDescriptionsExpandsBinaryFormat(t *testing.T) {

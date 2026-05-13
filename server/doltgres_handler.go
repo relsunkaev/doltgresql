@@ -688,6 +688,7 @@ func schemaToFieldDescriptionsWithSource(ctx *sql.Context, s sql.Schema, sourceN
 		if display, ok := ast.AnonColumnAliasDisplayName(colName); ok {
 			colName = display
 		}
+		colName = core.DecodePhysicalColumnName(colName)
 		columnType := c.Type
 		if i < len(projectionTypes) && projectionTypes[i] != nil {
 			columnType = projectionTypes[i]
