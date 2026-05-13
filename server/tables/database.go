@@ -40,16 +40,42 @@ func (d Database) GetTableInsensitive(ctx *sql.Context, tblName string) (sql.Tab
 			return NewVirtualTable(handler, d.Database), true, nil
 		}
 	}
-	if table, ok, err := d.Database.GetTableInsensitive(ctx, tblName); err != nil || ok {
+	if table, ok, err := d.Database.GetTableInsensitive(ctx, tblName); err != nil {
+		if !sql.ErrTableNotFound.Is(err) {
+			return table, ok, err
+		}
+	} else if ok {
 		return table, ok, err
 	}
-	sequenceID := id.NewSequence(d.Database.Schema(), tblName)
 	collection, err := core.GetSequencesCollectionFromContext(ctx, d.Database.Name())
 	if err != nil {
 		return nil, false, err
 	}
-	if collection.HasSequence(ctx, sequenceID) {
-		return newSequenceTable(d, sequenceID), true, nil
+
+	if schemaName := d.Database.Schema(); schemaName != "" {
+		sequenceID := id.NewSequence(schemaName, tblName)
+		if collection.HasSequence(ctx, sequenceID) {
+			return newSequenceTable(d, sequenceID), true, nil
+		}
+		return nil, false, nil
+	}
+
+	searchPath, err := core.SearchPath(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	for _, schemaName := range searchPath {
+		sequenceID := id.NewSequence(schemaName, tblName)
+		if collection.HasSequence(ctx, sequenceID) {
+			schema, ok, err := d.Database.GetSchema(ctx, schemaName)
+			if err != nil {
+				return nil, false, err
+			}
+			if ok {
+				return newSequenceTable(schema, sequenceID), true, nil
+			}
+			return newSequenceTable(d, sequenceID), true, nil
+		}
 	}
 	return nil, false, nil
 }
@@ -66,6 +92,29 @@ func (d Database) GetTableNames(ctx *sql.Context) ([]string, error) {
 	}
 	for handlerName := range handlers[d.Database.Schema()] {
 		tableNameSet[handlerName] = struct{}{}
+	}
+	collection, err := core.GetSequencesCollectionFromContext(ctx, d.Database.Name())
+	if err != nil {
+		return nil, err
+	}
+	sequences, _, _, err := collection.GetAllSequences(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if schemaName := d.Database.Schema(); schemaName != "" {
+		for _, sequence := range sequences[schemaName] {
+			tableNameSet[sequence.Id.SequenceName()] = struct{}{}
+		}
+	} else {
+		searchPath, err := core.SearchPath(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, schemaName := range searchPath {
+			for _, sequence := range sequences[schemaName] {
+				tableNameSet[sequence.Id.SequenceName()] = struct{}{}
+			}
+		}
 	}
 	return utils.GetMapKeysSorted(tableNameSet), nil
 }

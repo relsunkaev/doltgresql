@@ -30,6 +30,7 @@ import (
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dfunctions"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/dsess"
 	"github.com/dolthub/dolt/go/libraries/doltcore/sqle/resolve"
+	runningsqlserver "github.com/dolthub/dolt/go/libraries/doltcore/sqlserver"
 	"github.com/dolthub/dolt/go/libraries/utils/argparser"
 	"github.com/dolthub/dolt/go/libraries/utils/config"
 	"github.com/dolthub/dolt/go/libraries/utils/filesys"
@@ -46,6 +47,7 @@ import (
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	"github.com/dolthub/doltgresql/server/replsource"
 	"github.com/dolthub/doltgresql/server/sessionstate"
+	pgtables "github.com/dolthub/doltgresql/server/tables"
 	"github.com/dolthub/doltgresql/servercfg"
 	"github.com/dolthub/doltgresql/servercfg/cfgdetails"
 )
@@ -195,6 +197,9 @@ func runServer(ctx context.Context, cfg *servercfg.DoltgresConfig, dEnv *env.Dol
 	err = controller.WaitForStart()
 	if err != nil {
 		return nil, err
+	}
+	if runningServer := runningsqlserver.GetRunningServer(); runningServer != nil {
+		runningServer.Engine.Analyzer.Catalog.DbProvider = pgtables.WrapDatabaseProvider(runningServer.Engine.Analyzer.Catalog.DbProvider)
 	}
 
 	if initializeDefaultDatabase {
