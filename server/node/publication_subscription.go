@@ -413,15 +413,19 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	case SubscriptionAlterConnection:
 		sub.ConnInfo = a.ConnInfo
 	case SubscriptionAlterSetPublication:
+		if err = validateSubscriptionPublicationAlterOptions(sub, a.Options); err != nil {
+			return nil, err
+		}
 		sub.Publications = slices.Clone(a.Publications)
 		if err = applySubscriptionOptions(&sub, a.Options); err != nil {
 			return nil, err
 		}
 	case SubscriptionAlterAddPublication:
+		if err = validateSubscriptionPublicationAlterOptions(sub, a.Options); err != nil {
+			return nil, err
+		}
 		for _, publication := range a.Publications {
-			if slices.ContainsFunc(sub.Publications, func(existing string) bool {
-				return strings.EqualFold(existing, publication)
-			}) {
+			if slices.Contains(sub.Publications, publication) {
 				return nil, errors.Errorf(`publication "%s" is already in subscription "%s"`, publication, a.Name)
 			}
 			sub.Publications = append(sub.Publications, publication)
@@ -430,10 +434,11 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 			return nil, err
 		}
 	case SubscriptionAlterDropPublication:
+		if err = validateSubscriptionPublicationAlterOptions(sub, a.Options); err != nil {
+			return nil, err
+		}
 		for _, publication := range a.Publications {
-			idx := slices.IndexFunc(sub.Publications, func(existing string) bool {
-				return strings.EqualFold(existing, publication)
-			})
+			idx := slices.Index(sub.Publications, publication)
 			if idx < 0 {
 				return nil, errors.Errorf(`publication "%s" is not in subscription "%s"`, publication, a.Name)
 			}
@@ -444,7 +449,7 @@ func (a *AlterSubscription) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 		}
 	case SubscriptionAlterRefresh:
 		if !sub.Enabled {
-			return nil, errors.New("ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions")
+			return nil, pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, "ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions")
 		}
 		return nil, errors.New("subscription refresh requires publisher connections, which are not yet supported")
 	case SubscriptionAlterEnable:
@@ -781,7 +786,15 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 			}
 		case "synchronous_commit":
 			sub.SyncCommit = value
-		case "copy_data", "origin", "run_as_owner", "password_required":
+		case "copy_data":
+			if _, err := parseReplicationBoolOption(key, value); err != nil {
+				return err
+			}
+		case "refresh":
+			if _, err := parseReplicationBoolOption(key, value); err != nil {
+				return err
+			}
+		case "origin", "run_as_owner", "password_required":
 			// These options affect remote apply behavior. They are accepted so metadata-only
 			// subscriptions can round-trip PgDog setup, but no local worker is started.
 		case "lsn":
@@ -794,6 +807,26 @@ func applySubscriptionOptions(sub *subscriptions.Subscription, options map[strin
 		}
 	}
 	return nil
+}
+
+func validateSubscriptionPublicationAlterOptions(sub subscriptions.Subscription, options map[string]string) error {
+	// copy_data only affects refresh worker behavior, which Doltgres does not
+	// run yet. Parsing it here preserves PostgreSQL boolean validation before
+	// any publication membership is mutated.
+	if _, _, err := explicitBoolOption(options, "copy_data"); err != nil {
+		return err
+	}
+	refresh, err := optionBool(options, "refresh", true)
+	if err != nil {
+		return err
+	}
+	if !refresh {
+		return nil
+	}
+	if !sub.Enabled {
+		return pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions")
+	}
+	return errors.New("subscription refresh requires publisher connections, which are not yet supported")
 }
 
 func validateMetadataOnlySubscriptionCreateOptions(options map[string]string) error {

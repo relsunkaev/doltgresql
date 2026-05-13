@@ -291,8 +291,23 @@ func (subscription *Subscription) normalize() {
 	if subscription.SyncCommit == "" {
 		subscription.SyncCommit = "off"
 	}
-	slices.Sort(subscription.Publications)
-	subscription.Publications = slices.Compact(subscription.Publications)
+	subscription.Publications = compactStringsPreservingOrder(subscription.Publications)
+}
+
+func compactStringsPreservingOrder(values []string) []string {
+	if len(values) < 2 {
+		return values
+	}
+	seen := make(map[string]struct{}, len(values))
+	out := values[:0]
+	for _, value := range values {
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		out = append(out, value)
+	}
+	return out
 }
 
 func (subscription Subscription) summary() string {

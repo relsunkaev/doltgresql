@@ -287,7 +287,7 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 					},
 				},
 				{
-					Query: "ALTER SUBSCRIPTION dg_sub ADD PUBLICATION dg_pub2 WITH (copy_data = false);",
+					Query: "ALTER SUBSCRIPTION dg_sub ADD PUBLICATION dg_pub2 WITH (copy_data = false, refresh = false);",
 				},
 				{
 					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'dg_sub';",
@@ -296,7 +296,7 @@ func TestSubscriptionDDLAndCatalogs(t *testing.T) {
 					},
 				},
 				{
-					Query: "ALTER SUBSCRIPTION dg_sub SET PUBLICATION dg_pub2;",
+					Query: "ALTER SUBSCRIPTION dg_sub SET PUBLICATION dg_pub2 WITH (refresh = false);",
 				},
 				{
 					Query:       "ALTER SUBSCRIPTION dg_sub ENABLE;",
