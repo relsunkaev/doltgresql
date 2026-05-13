@@ -824,7 +824,7 @@ func nodeAlterTableSetDefault(ctx *Context, node *tree.AlterTableSetDefault, tab
 		IfExists: ifExists,
 		DefaultSpec: &vitess.DefaultSpec{
 			Action: "set",
-			Column: vitess.NewColIdent(bareIdentifier(node.Column)),
+			Column: vitess.NewColIdent(core.EncodePhysicalColumnName(string(node.Column))),
 			Value:  expr,
 		},
 	}, nil

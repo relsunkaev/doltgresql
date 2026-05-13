@@ -1111,6 +1111,14 @@ func TestAlterTable(t *testing.T) {
 					Query:    `ALTER TABLE ONLY pages_links ALTER COLUMN "idRefferer" SET DEFAULT nextval('pages_links_idrefferer_seq'::regclass);`,
 					Expected: []sql.Row{},
 				},
+				{
+					Query:    `INSERT INTO pages_links ("idDestination") VALUES (1);`,
+					Expected: []sql.Row{},
+				},
+				{
+					Query:    `SELECT "idRefferer"::text, "idDestination"::text FROM pages_links;`,
+					Expected: []sql.Row{{"1", "1"}},
+				},
 			},
 		},
 		{
