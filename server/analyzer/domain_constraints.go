@@ -62,12 +62,14 @@ func loadDomainConstraints(ctx *sql.Context, a *analyzer.Analyzer, c sql.CheckCo
 		if dt, ok := col.Type.(*pgtypes.DoltgresType); ok && dt.TypType == pgtypes.TypeType_Domain {
 			// assign column nullable
 			col.Nullable = !dt.NotNull
-			// get domain default value and assign to the column default value
-			defVal, err := getDomainDefault(ctx, a, dt.Default, col.Source, col.Type, col.Nullable)
-			if err != nil {
-				return nil, transform.SameTree, err
+			if col.Default == nil {
+				// get domain default value and assign to the column default value
+				defVal, err := getDomainDefault(ctx, a, dt.Default, col.Source, col.Type, col.Nullable)
+				if err != nil {
+					return nil, transform.SameTree, err
+				}
+				col.Default = defVal
 			}
-			col.Default = defVal
 			// get domain checks
 			checkDefs, err := collectDomainCheckDefinitions(ctx, dt)
 			if err != nil {
