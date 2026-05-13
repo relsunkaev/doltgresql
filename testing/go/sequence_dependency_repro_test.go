@@ -78,8 +78,8 @@ func TestDropSequenceCascadeRemovesColumnDefaultRepro(t *testing.T) {
 						FROM cascade_default_items
 						ORDER BY label;`,
 					Expected: []sql.Row{
-						{1, "before cascade"},
 						{nil, "after cascade"},
+						{1, "before cascade"},
 					},
 				},
 			},

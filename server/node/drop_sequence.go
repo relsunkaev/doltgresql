@@ -16,8 +16,11 @@ package node
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/sqle"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
@@ -25,8 +28,10 @@ import (
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/sequences"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	serverfunctions "github.com/dolthub/doltgresql/server/functions"
 )
 
 // DropSequence handles the DROP SEQUENCE statement.
@@ -96,13 +101,16 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 	if err = checkSequenceOwnership(ctx, sequence); err != nil {
 		return nil, errors.Wrap(err, "permission denied")
 	}
-	if sequence.OwnerTable.IsValid() {
-		if c.cascade {
-			// TODO: if the sequence is referenced by the column's default value, then we also need to delete the default
-			return nil, errors.Errorf(`cascading sequence drops are not yet supported`)
-		} else {
-			// TODO: this error is only true if the sequence is referenced by the column's default value
-			return nil, errors.Errorf(`cannot drop sequence %s because other objects depend on it`, c.sequence)
+	dependentDefaults, err := sequenceDefaultDependencies(ctx, sequenceID)
+	if err != nil {
+		return nil, err
+	}
+	if len(dependentDefaults) > 0 {
+		if !c.cascade {
+			return nil, errors.Errorf(`cannot drop sequence %s because another object depends on it`, c.sequence)
+		}
+		if err = clearSequenceDefaultDependencies(ctx, dependentDefaults); err != nil {
+			return nil, err
 		}
 	}
 	if err = collection.DropSequence(ctx, sequenceID); err != nil {
@@ -137,6 +145,119 @@ func checkSequenceOwnership(ctx *sql.Context, sequence *sequences.Sequence) erro
 		return nil
 	}
 	return errors.Errorf("must be owner of sequence %s", sequence.Id.SequenceName())
+}
+
+type sequenceDefaultDependency struct {
+	table          sql.Table
+	column         *sql.Column
+	clearDefault   bool
+	clearGenerated bool
+}
+
+func sequenceDefaultDependencies(ctx *sql.Context, sequenceID id.Sequence) ([]sequenceDefaultDependency, error) {
+	dependencies := make([]sequenceDefaultDependency, 0)
+	err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
+		ColumnDefault: func(ctx *sql.Context, schema serverfunctions.ItemSchema, table serverfunctions.ItemTable, columnDefault serverfunctions.ItemColumnDefault) (cont bool, err error) {
+			column := columnDefault.Item.Column
+			dependency := sequenceDefaultDependency{
+				table:          table.Item,
+				column:         column.Copy(),
+				clearDefault:   columnDefaultValueReferencesSequence(column.Default, schema.Item.SchemaName(), sequenceID),
+				clearGenerated: columnDefaultValueReferencesSequence(column.Generated, schema.Item.SchemaName(), sequenceID),
+			}
+			if dependency.clearDefault || dependency.clearGenerated {
+				dependencies = append(dependencies, dependency)
+			}
+			return true, nil
+		},
+	})
+	return dependencies, err
+}
+
+func clearSequenceDefaultDependencies(ctx *sql.Context, dependencies []sequenceDefaultDependency) error {
+	for _, dependency := range dependencies {
+		alterableTable, ok := dependency.table.(*sqle.AlterableDoltTable)
+		if !ok {
+			return errors.Errorf(`expected a Dolt table but received "%T"`, dependency.table)
+		}
+		updatedColumn := dependency.column.Copy()
+		if dependency.clearDefault {
+			updatedColumn.Default = nil
+		}
+		if dependency.clearGenerated {
+			updatedColumn.Generated = nil
+		}
+		if err := alterableTable.ModifyColumn(ctx, dependency.column.Name, updatedColumn, nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var (
+	nextvalQuotedArgPattern = regexp.MustCompile(`(?i)nextval\s*\(\s*'([^']+)'`)
+	nextvalBareArgPattern   = regexp.MustCompile(`(?i)nextval\s*\(\s*([A-Za-z0-9_."']+)`)
+)
+
+func columnDefaultValueReferencesSequence(defaultValue *sql.ColumnDefaultValue, defaultSchema string, sequenceID id.Sequence) bool {
+	if defaultValue == nil {
+		return false
+	}
+	expressions := []string{defaultValue.String()}
+	if defaultValue.Expr != nil && defaultValue.Expr.String() != defaultValue.String() {
+		expressions = append(expressions, defaultValue.Expr.String())
+	}
+	for _, expr := range expressions {
+		for _, sequenceName := range nextvalSequenceNamesFromDefaultText(expr) {
+			if sequenceReferenceMatches(sequenceName, defaultSchema, sequenceID) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func nextvalSequenceNamesFromDefaultText(defaultText string) []string {
+	matches := nextvalQuotedArgPattern.FindAllStringSubmatch(defaultText, -1)
+	if len(matches) == 0 {
+		matches = nextvalBareArgPattern.FindAllStringSubmatch(defaultText, -1)
+	}
+	sequenceNames := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if len(match) < 2 {
+			continue
+		}
+		if sequenceName := cleanNextvalSequenceName(match[1]); sequenceName != "" {
+			sequenceNames = append(sequenceNames, sequenceName)
+		}
+	}
+	return sequenceNames
+}
+
+func cleanNextvalSequenceName(name string) string {
+	name = strings.TrimSpace(name)
+	if beforeCast, _, ok := strings.Cut(name, "::"); ok {
+		name = beforeCast
+	}
+	name = strings.TrimSpace(name)
+	name = strings.Trim(name, "'")
+	return strings.TrimSpace(name)
+}
+
+func sequenceReferenceMatches(sequenceName string, defaultSchema string, sequenceID id.Sequence) bool {
+	sequenceName = cleanNextvalSequenceName(sequenceName)
+	if sequenceName == "" {
+		return false
+	}
+	tableName, err := parser.ParseQualifiedTableName(sequenceName)
+	if err != nil {
+		return defaultSchema == sequenceID.SchemaName() && sequenceName == sequenceID.SequenceName()
+	}
+	schema := defaultSchema
+	if tableName.ExplicitSchema {
+		schema = string(tableName.SchemaName)
+	}
+	return schema == sequenceID.SchemaName() && tableName.Table() == sequenceID.SequenceName()
 }
 
 // Schema implements the interface sql.ExecSourceRel.
