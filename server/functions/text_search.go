@@ -410,6 +410,8 @@ func jsonToTSVectorFilter(ctx *sql.Context, filter any) (map[string]bool, error)
 	var visit func(value pgtypes.JsonValue) error
 	visit = func(value pgtypes.JsonValue) error {
 		switch value := value.(type) {
+		case pgtypes.JsonValueRaw:
+			return visit(value.Value)
 		case pgtypes.JsonValueString:
 			option, err := pgtypes.JsonStringUnescape(value)
 			if err != nil {
@@ -445,6 +447,8 @@ func jsonTextSearchTerms(value pgtypes.JsonValue, filter map[string]bool) ([]str
 	}
 	visit = func(value pgtypes.JsonValue) error {
 		switch value := value.(type) {
+		case pgtypes.JsonValueRaw:
+			return visit(value.Value)
 		case pgtypes.JsonValueObject:
 			for _, item := range value.Items {
 				if enabled("key") {

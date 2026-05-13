@@ -98,6 +98,14 @@ func TestSimpleJsonToTSVector(t *testing.T) {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 
+	got, err = simpleJsonToTSVector(ctx, pgtypes.Json, `{"a": "aaa in bbb"}`, pgtypes.JsonValueString("string"), "english")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "'aaa':1 'bbb':3"; got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+
 	got, err = simpleJsonToTSVector(ctx, pgtypes.Json, `{"title": "ignored"}`, `"key"`, "simple")
 	if err != nil {
 		t.Fatal(err)

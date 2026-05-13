@@ -1043,6 +1043,9 @@ func JsonValueFromSQLValue(ctx *sql.Context, typ *DoltgresType, val any) (JsonVa
 	if doc, ok := res.(JsonDocument); ok {
 		return JsonValueCopy(doc.Value), nil
 	}
+	if value, ok := res.(JsonValue); ok {
+		return JsonValueCopy(value), nil
+	}
 	if typ != nil {
 		switch typ.ID.TypeName() {
 		case "json":
