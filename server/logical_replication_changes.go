@@ -49,6 +49,7 @@ var (
 	publicationRowFilterIsNotDistinctFrom     = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+not\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
 	publicationRowFilterIsDistinctFrom        = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s+is\s+distinct\s+from\s+(` + publicationRowFilterSimpleOperand + `)`)
 	publicationRowFilterTextCast              = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s*::\s*(?:text|varchar|character\s+varying)\b`)
+	publicationRowFilterStringAnnotation      = regexp.MustCompile(`(?i)(` + publicationRowFilterSimpleOperand + `)\s*:::\s*string\b`)
 	publicationRowFilterIsNotUnknown          = regexp.MustCompile(`(?i)\bis\s+not\s+unknown\b`)
 	publicationRowFilterIsUnknown             = regexp.MustCompile(`(?i)\bis\s+unknown\b`)
 )
@@ -688,9 +689,92 @@ func normalizePublicationRowFilter(rowFilter string) string {
 	rowFilter = publicationRowFilterIsNotDistinctFrom.ReplaceAllString(rowFilter, "($1 <=> $2)")
 	rowFilter = publicationRowFilterIsDistinctFrom.ReplaceAllString(rowFilter, "NOT ($1 <=> $2)")
 	rowFilter = publicationRowFilterTextCast.ReplaceAllString(rowFilter, "$1")
+	rowFilter = publicationRowFilterStringAnnotation.ReplaceAllString(rowFilter, "$1")
+	rowFilter = normalizePublicationEscapedStringLiterals(rowFilter)
+	rowFilter = normalizePublicationTrailingTupleCommas(rowFilter)
 	rowFilter = publicationRowFilterIsNotUnknown.ReplaceAllString(rowFilter, "IS NOT NULL")
 	rowFilter = publicationRowFilterIsUnknown.ReplaceAllString(rowFilter, "IS NULL")
 	return rowFilter
+}
+
+func normalizePublicationEscapedStringLiterals(rowFilter string) string {
+	var b strings.Builder
+	b.Grow(len(rowFilter))
+	for i := 0; i < len(rowFilter); {
+		if i+1 < len(rowFilter) && (rowFilter[i] == 'e' || rowFilter[i] == 'E') && rowFilter[i+1] == '\'' && (i == 0 || !isPublicationRowFilterIdentPart(rowFilter[i-1])) {
+			b.WriteByte('\'')
+			i += 2
+			for i < len(rowFilter) {
+				switch rowFilter[i] {
+				case '\\':
+					if i+1 >= len(rowFilter) {
+						b.WriteByte('\\')
+						i++
+						continue
+					}
+					if rowFilter[i+1] == '\'' {
+						b.WriteString("''")
+					} else {
+						b.WriteByte(rowFilter[i+1])
+					}
+					i += 2
+				case '\'':
+					if i+1 < len(rowFilter) && rowFilter[i+1] == '\'' {
+						b.WriteString("''")
+						i += 2
+						continue
+					}
+					b.WriteByte('\'')
+					i++
+					goto escapedLiteralDone
+				default:
+					b.WriteByte(rowFilter[i])
+					i++
+				}
+			}
+		escapedLiteralDone:
+			continue
+		}
+		b.WriteByte(rowFilter[i])
+		i++
+	}
+	return b.String()
+}
+
+func normalizePublicationTrailingTupleCommas(rowFilter string) string {
+	var b strings.Builder
+	b.Grow(len(rowFilter))
+	inString := false
+	for i := 0; i < len(rowFilter); {
+		if rowFilter[i] == '\'' {
+			b.WriteByte(rowFilter[i])
+			i++
+			if inString && i < len(rowFilter) && rowFilter[i] == '\'' {
+				b.WriteByte(rowFilter[i])
+				i++
+				continue
+			}
+			inString = !inString
+			continue
+		}
+		if !inString && rowFilter[i] == ',' {
+			j := i + 1
+			for j < len(rowFilter) && (rowFilter[j] == ' ' || rowFilter[j] == '\t' || rowFilter[j] == '\n' || rowFilter[j] == '\r') {
+				j++
+			}
+			if j < len(rowFilter) && rowFilter[j] == ')' {
+				i = j
+				continue
+			}
+		}
+		b.WriteByte(rowFilter[i])
+		i++
+	}
+	return b.String()
+}
+
+func isPublicationRowFilterIdentPart(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 }
 
 func (capture *replicationChangeCapture) rowMatchesPublicationFilter(ctx *sql.Context, row Row, expr vitess.Expr) (bool, error) {

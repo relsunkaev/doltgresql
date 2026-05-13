@@ -72,6 +72,11 @@ func TestNormalizePublicationRowFilterUnknownPredicates(t *testing.T) {
 	require.Equal(t, "code < 'm'", normalizePublicationRowFilter("code::varchar < 'm'"))
 	require.Equal(t, "code = 'alpha'", normalizePublicationRowFilter("code = 'alpha'::TEXT"))
 	require.Equal(t, "code = 'alpha'", normalizePublicationRowFilter("code::character varying = 'alpha'"))
+	require.Equal(t, "label IN ('1.0')", normalizePublicationRowFilter("label IN ('1.0':::STRING)"))
+	require.Equal(t, "label = 'can''t'", normalizePublicationRowFilter("label = 'can''t':::STRING"))
+	require.Equal(t, "(label IN ('1.0'))", normalizePublicationRowFilter("(label IN ('1.0',))"))
+	require.Equal(t, "(label NOT IN ('1.0'))", normalizePublicationRowFilter("(label NOT IN ('1.0',))"))
+	require.Equal(t, "(label = 'can''t')", normalizePublicationRowFilter(`(label = e'can\'t')`))
 }
 
 func TestPublicationRowFilterDistinctFromPredicates(t *testing.T) {
