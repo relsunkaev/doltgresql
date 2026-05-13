@@ -894,10 +894,72 @@ func evalPublicationFilterScalar(expr vitess.Expr, values map[string]rowFilterVa
 		return rowFilterValue{null: true}, nil
 	case *vitess.ParenExpr:
 		return evalPublicationFilterScalar(typed.Expr, values)
+	case *vitess.BinaryExpr:
+		return evalPublicationFilterBinaryExpr(typed, values)
+	case *vitess.UnaryExpr:
+		return evalPublicationFilterUnaryExpr(typed, values)
 	case *vitess.FuncExpr:
 		return evalPublicationFilterFunc(typed, values)
 	default:
 		return rowFilterValue{}, errors.Errorf("publication row filter scalar expression %T is not supported", expr)
+	}
+}
+
+func evalPublicationFilterBinaryExpr(expr *vitess.BinaryExpr, values map[string]rowFilterValue) (rowFilterValue, error) {
+	left, err := evalPublicationFilterScalar(expr.Left, values)
+	if err != nil {
+		return rowFilterValue{}, err
+	}
+	right, err := evalPublicationFilterScalar(expr.Right, values)
+	if err != nil {
+		return rowFilterValue{}, err
+	}
+	if left.null || right.null {
+		return rowFilterValue{null: true}, nil
+	}
+	leftNum, ok := parseRowFilterNumeric(left.data)
+	if !ok {
+		return rowFilterValue{}, errors.Errorf("publication row filter arithmetic operator %q requires numeric operands", expr.Operator)
+	}
+	rightNum, ok := parseRowFilterNumeric(right.data)
+	if !ok {
+		return rowFilterValue{}, errors.Errorf("publication row filter arithmetic operator %q requires numeric operands", expr.Operator)
+	}
+	result := new(big.Rat)
+	switch strings.ToLower(expr.Operator) {
+	case vitess.PlusStr:
+		result.Add(leftNum, rightNum)
+	case vitess.MinusStr:
+		result.Sub(leftNum, rightNum)
+	case vitess.MultStr:
+		result.Mul(leftNum, rightNum)
+	case vitess.DivStr:
+		if rightNum.Sign() == 0 {
+			return rowFilterValue{}, errors.New("division by zero in publication row filter")
+		}
+		result.Quo(leftNum, rightNum)
+	default:
+		return rowFilterValue{}, errors.Errorf("publication row filter arithmetic operator %q is not supported", expr.Operator)
+	}
+	return rowFilterValue{data: []byte(result.String())}, nil
+}
+
+func evalPublicationFilterUnaryExpr(expr *vitess.UnaryExpr, values map[string]rowFilterValue) (rowFilterValue, error) {
+	value, err := evalPublicationFilterScalar(expr.Expr, values)
+	if err != nil || value.null {
+		return value, err
+	}
+	num, ok := parseRowFilterNumeric(value.data)
+	if !ok {
+		return rowFilterValue{}, errors.Errorf("publication row filter unary operator %q requires a numeric operand", expr.Operator)
+	}
+	switch expr.Operator {
+	case vitess.UPlusStr:
+		return rowFilterValue{data: []byte(num.String())}, nil
+	case vitess.UMinusStr:
+		return rowFilterValue{data: []byte(new(big.Rat).Neg(num).String())}, nil
+	default:
+		return rowFilterValue{}, errors.Errorf("publication row filter unary operator %q is not supported", expr.Operator)
 	}
 }
 

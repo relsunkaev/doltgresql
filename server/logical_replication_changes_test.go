@@ -324,6 +324,95 @@ func TestPublicationRowFilterBetweenPredicates(t *testing.T) {
 	}
 }
 
+func TestPublicationRowFilterArithmeticPredicates(t *testing.T) {
+	tests := []struct {
+		name   string
+		filter string
+		value  rowFilterValue
+		match  bool
+	}{
+		{
+			name:   "addition matches",
+			filter: "score + 1 = 2",
+			value:  rowFilterValue{data: []byte("1")},
+			match:  true,
+		},
+		{
+			name:   "addition rejects non-match",
+			filter: "score + 1 = 2",
+			value:  rowFilterValue{data: []byte("2")},
+			match:  false,
+		},
+		{
+			name:   "subtraction matches",
+			filter: "score - 1 = 4",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  true,
+		},
+		{
+			name:   "multiplication matches",
+			filter: "score * 2 = 10",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  true,
+		},
+		{
+			name:   "division matches",
+			filter: "score / 2 = 3",
+			value:  rowFilterValue{data: []byte("6")},
+			match:  true,
+		},
+		{
+			name:   "nested arithmetic matches",
+			filter: "(score + 1) * 2 = 12",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  true,
+		},
+		{
+			name:   "unary minus matches",
+			filter: "-score = -5",
+			value:  rowFilterValue{data: []byte("5")},
+			match:  true,
+		},
+		{
+			name:   "null arithmetic rejects comparison",
+			filter: "score + 1 = 2",
+			value:  rowFilterValue{null: true},
+			match:  false,
+		},
+	}
+
+	ctx := sql.NewEmptyContext()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := parsePublicationRowFilter(tt.filter)
+			require.NoError(t, err)
+			match, err := evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+				"score": tt.value,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.match, match)
+		})
+	}
+}
+
+func TestPublicationRowFilterArithmeticErrors(t *testing.T) {
+	ctx := sql.NewEmptyContext()
+
+	expr, err := parsePublicationRowFilter("score / 0 = 1")
+	require.NoError(t, err)
+	_, err = evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+		"score": {data: []byte("5")},
+	})
+	require.ErrorContains(t, err, "division by zero")
+
+	expr, err = parsePublicationRowFilter("label + 1 = 2")
+	require.NoError(t, err)
+	_, err = evalPublicationFilterBool(ctx, expr, map[string]rowFilterValue{
+		"label": {data: []byte("shown")},
+	})
+	require.ErrorContains(t, err, `requires numeric operands`)
+}
+
 func TestPublicationRowFilterLikePredicates(t *testing.T) {
 	tests := []struct {
 		name   string
