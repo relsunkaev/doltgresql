@@ -16,6 +16,7 @@ package pgcatalog
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/dolthub/go-mysql-server/sql"
 
@@ -161,6 +162,19 @@ func pgProcRoutineArgs(paramTypes []id.Type, paramNames []string, paramModes []c
 	return int16(len(proargtypes)), proargtypes, proallargtypes, proargmodes, proargnames, provariadic
 }
 
+func pgProcParameterDefaults(defaults []string) (int16, any) {
+	defaultExprs := make([]string, 0, len(defaults))
+	for _, def := range defaults {
+		if def != "" {
+			defaultExprs = append(defaultExprs, def)
+		}
+	}
+	if len(defaultExprs) == 0 {
+		return 0, nil
+	}
+	return int16(len(defaultExprs)), strings.Join(defaultExprs, ", ")
+}
+
 func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 	owner := function.Owner
 	if owner == "" {
@@ -185,6 +199,7 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		parallel = "u"
 	}
 	pronargs, argTypes, allArgTypes, argModes, argNames, variadic := pgProcRoutineArgs(function.ParameterTypes, function.ParameterNames, function.ParameterModes)
+	pronargdefaults, proargdefaults := pgProcParameterDefaults(function.ParameterDefaults)
 	proConfig := []any(nil)
 	for name, value := range function.SetConfig {
 		proConfig = append(proConfig, name+"="+value)
@@ -215,13 +230,13 @@ func pgProcFunctionRow(function corefunctions.Function) sql.Row {
 		volatility,                                       // provolatile
 		parallel,                                         // proparallel
 		pronargs,                                         // pronargs
-		int16(len(function.ParameterDefaults)),           // pronargdefaults
+		pronargdefaults,                                  // pronargdefaults
 		function.ReturnType.AsId(),                       // prorettype
 		argTypes,                                         // proargtypes
 		allArgTypes,                                      // proallargtypes
 		argModes,                                         // proargmodes
 		argNames,                                         // proargnames
-		nil,                                              // proargdefaults
+		proargdefaults,                                   // proargdefaults
 		nil,                                              // protrftypes
 		function.GetInnerDefinition(),                    // prosrc
 		nil,                                              // probin
@@ -314,6 +329,7 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		owner = "postgres"
 	}
 	pronargs, argTypes, allArgTypes, argModes, argNames, variadic := pgProcRoutineArgs(procedure.ParameterTypes, procedure.ParameterNames, procedure.ParameterModes)
+	pronargdefaults, proargdefaults := pgProcParameterDefaults(procedure.ParameterDefaults)
 	proConfig := []any(nil)
 	for name, value := range procedure.SetConfig {
 		proConfig = append(proConfig, name+"="+value)
@@ -340,13 +356,13 @@ func pgProcProcedureRow(procedure coreprocedures.Procedure) sql.Row {
 		"v",                                               // provolatile
 		"u",                                               // proparallel
 		pronargs,                                          // pronargs
-		int16(len(procedure.ParameterDefaults)),           // pronargdefaults
+		pronargdefaults,                                   // pronargdefaults
 		pgtypes.Void.ID.AsId(),                            // prorettype
 		argTypes,                                          // proargtypes
 		allArgTypes,                                       // proallargtypes
 		argModes,                                          // proargmodes
 		argNames,                                          // proargnames
-		nil,                                               // proargdefaults
+		proargdefaults,                                    // proargdefaults
 		nil,                                               // protrftypes
 		procedure.Definition,                              // prosrc
 		nil,                                               // probin

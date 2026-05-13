@@ -188,6 +188,7 @@ func Init() {
 	initPgFunctionIsVisible()
 	initPgGetConstraintdef()
 	initPgGetExpr()
+	initPgGetFunctionArgDefault()
 	initPgGetFunctionArguments()
 	initPgGetFunctionIdentityArguments()
 	initPgGetFunctionDef()

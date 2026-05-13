@@ -83,6 +83,29 @@ func pgGetFunctionArguments(ctx *sql.Context, oidVal id.Id, includeDefaults bool
 	return strings.Join(args, ", "), nil
 }
 
+func pgGetFunctionArgDefault(ctx *sql.Context, oidVal id.Id, argNum int32) (any, error) {
+	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
+	if err != nil || !ok {
+		return nil, err
+	}
+	idx := int(argNum)
+	if idx < 0 || idx >= len(metadata.ParameterTypes) {
+		return nil, nil
+	}
+	if len(metadata.ParameterDefaults) == len(metadata.ParameterTypes) {
+		if metadata.ParameterDefaults[idx] == "" {
+			return nil, nil
+		}
+		return metadata.ParameterDefaults[idx], nil
+	}
+	firstDefault := len(metadata.ParameterTypes) - len(metadata.ParameterDefaults)
+	defaultIdx := idx - firstDefault
+	if defaultIdx < 0 || defaultIdx >= len(metadata.ParameterDefaults) || metadata.ParameterDefaults[defaultIdx] == "" {
+		return nil, nil
+	}
+	return metadata.ParameterDefaults[defaultIdx], nil
+}
+
 func pgGetFunctionDef(ctx *sql.Context, oidVal id.Id) (string, error) {
 	metadata, ok, err := pgFunctionMetadataForOID(ctx, oidVal)
 	if err != nil || !ok {
