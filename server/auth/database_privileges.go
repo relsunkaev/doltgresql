@@ -15,6 +15,8 @@
 package auth
 
 import (
+	"slices"
+
 	"github.com/dolthub/doltgresql/utils"
 )
 
@@ -67,6 +69,10 @@ func HasDatabasePrivilege(key DatabasePrivilegeKey, privilege Privilege) bool {
 		if privilegeMap, ok := databasePrivilegeValue.Privileges[privilege]; ok && len(privilegeMap) > 0 {
 			return true
 		}
+		return false
+	}
+	if isPublicDefaultDatabasePrivilege(key, privilege) {
+		return true
 	}
 	for _, group := range GetAllGroupsWithMember(key.Role, true) {
 		if HasDatabasePrivilege(DatabasePrivilegeKey{
@@ -141,7 +147,30 @@ func RemoveDatabasePrivilege(key DatabasePrivilegeKey, privilege GrantedPrivileg
 		if len(databasePrivilegeValue.Privileges) == 0 {
 			delete(globalDatabase.databasePrivileges.Data, key)
 		}
+	} else if !grantOptionOnly && isPublicDefaultDatabasePrivilege(key, privilege.Privilege) {
+		databasePrivilegeValue = DatabasePrivilegeValue{
+			Key:        key,
+			Privileges: make(map[Privilege]map[GrantedPrivilege]bool),
+		}
+		for _, defaultPrivilege := range PrivilegeObject_DATABASE.DefaultPublicPrivileges() {
+			databasePrivilegeValue.Privileges[defaultPrivilege] = map[GrantedPrivilege]bool{
+				{
+					Privilege: defaultPrivilege,
+					GrantedBy: privilege.GrantedBy,
+				}: false,
+			}
+		}
+		globalDatabase.databasePrivileges.Data[key] = databasePrivilegeValue
+		RemoveDatabasePrivilege(key, privilege, false)
 	}
+}
+
+func isPublicDefaultDatabasePrivilege(key DatabasePrivilegeKey, privilege Privilege) bool {
+	publicRole := GetRole("public")
+	if !publicRole.IsValid() || key.Role != publicRole.ID() {
+		return false
+	}
+	return slices.Contains(PrivilegeObject_DATABASE.DefaultPublicPrivileges(), privilege)
 }
 
 // serialize writes the DatabasePrivileges to the given writer.

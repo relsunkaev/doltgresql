@@ -20,6 +20,25 @@ import (
 	"github.com/dolthub/go-mysql-server/sql"
 )
 
+func TestDefaultPublicDatabaseConnectAllowsNewSessionRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "default PUBLIC CONNECT ON DATABASE allows new sessions",
+			SetUpScript: []string{
+				`CREATE USER default_connect PASSWORD 'pw';`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query:    `SELECT 1;`,
+					Expected: []sql.Row{{1}},
+					Username: `default_connect`,
+					Password: `pw`,
+				},
+			},
+		},
+	})
+}
+
 // TestRevokedDatabaseConnectPreventsNewSessionRepro reproduces a security bug:
 // revoking CONNECT on the database from PUBLIC does not prevent a normal user
 // from opening a new session and querying that database.
