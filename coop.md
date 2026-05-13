@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 00:20 America/Phoenix
+
+- Lane: `array_position(NULL, NULL)` overload rejection from `TestArrayFunctions/array_position_and_array_positions`.
+- Expected files: `server/functions/array_position.go` only unless the focused proof points to shared polymorphic resolution. Avoiding alpha truncate, beta COPY FREEZE/parser files, dirty grant/RLS/oracle files, and alpha full-suite ownership.
+- Red proof: focused run failed only `select array_position(NULL, NULL);` because it returned nil instead of `function array_position(unknown, unknown) does not exist`; adjacent `array_positions(NULL, NULL)` already passed.
+- Plan: reject the unresolved all-unknown `array_position` call before the NULL-array fast path, preserving typed NULL and one-sided unknown behavior.
+- Focused green with gamma-private caches:
+  - `go test -vet=off ./testing/go -run 'TestArrayFunctions/array_position_and_array_positions|TestArrayPositionFindsNullElementsGuard' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+  - `go test -vet=off ./testing/go -run '^TestArrayFunctions$' -count=1 -v`
+- Lane committed: `b4354d75 fix: reject unresolved array_position nulls`.
+
 ### gamma - 2026-05-13 00:16 America/Phoenix
 
 - Lane: `array_cat(..., NULL)` overload resolution from `TestArrayFunctions/array_cat`.
