@@ -86,6 +86,9 @@ func (c *CreatePublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, e
 	if err != nil {
 		return nil, err
 	}
+	if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionColumnList); err != nil {
+		return nil, err
+	}
 	if err = collection.AddPublication(ctx, pub); err != nil {
 		return nil, err
 	}
@@ -156,11 +159,22 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if err != nil {
 			return nil, err
 		}
-		if err = addPublicationTables(&pub, tables); err != nil {
-			return nil, err
-		}
 		schemas, err := resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
+			return nil, err
+		}
+		combinedSchemas := append(slices.Clone(pub.Schemas), schemas...)
+		if err = validatePublicationSchemaMembership(publications.Publication{
+			ID:      pub.ID,
+			Tables:  tables,
+			Schemas: combinedSchemas,
+		}, publicationSchemaRestrictionColumnList); err != nil {
+			return nil, err
+		}
+		if len(schemas) > 0 && publicationHasRestrictedTable(pub.Tables) {
+			return nil, publicationAddSchemaRestrictionError(pub.ID.PublicationName())
+		}
+		if err = addPublicationTables(&pub, tables); err != nil {
 			return nil, err
 		}
 		if err = addPublicationSchemas(&pub, schemas); err != nil {
@@ -174,6 +188,9 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		}
 		pub.Schemas, err = resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
+			return nil, err
+		}
+		if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionColumnList); err != nil {
 			return nil, err
 		}
 	case PublicationAlterDropTables:
@@ -199,10 +216,16 @@ func (a *AlterPublication) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, er
 		if err = addPublicationSchemas(&pub, schemas); err != nil {
 			return nil, err
 		}
+		if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionAddSchema); err != nil {
+			return nil, err
+		}
 	case PublicationAlterSetSchemas:
 		pub.AllTables = false
 		pub.Schemas, err = resolvePublicationSchemas(ctx, a.Schemas)
 		if err != nil {
+			return nil, err
+		}
+		if err = validatePublicationSchemaMembership(pub, publicationSchemaRestrictionAddSchema); err != nil {
 			return nil, err
 		}
 	case PublicationAlterDropSchemas:
@@ -684,6 +707,49 @@ func applyPublicationOptions(pub *publications.Publication, options map[string]s
 		}
 	}
 	return nil
+}
+
+type publicationSchemaRestrictionError string
+
+const (
+	publicationSchemaRestrictionAddSchema  publicationSchemaRestrictionError = "add_schema"
+	publicationSchemaRestrictionColumnList publicationSchemaRestrictionError = "column_list"
+)
+
+func validatePublicationSchemaMembership(pub publications.Publication, errorKind publicationSchemaRestrictionError) error {
+	if len(pub.Schemas) == 0 {
+		return nil
+	}
+	for _, table := range pub.Tables {
+		if len(table.Columns) == 0 && strings.TrimSpace(table.RowFilter) == "" {
+			continue
+		}
+		if errorKind == publicationSchemaRestrictionAddSchema {
+			return publicationAddSchemaRestrictionError(pub.ID.PublicationName())
+		}
+		if len(table.Columns) > 0 {
+			return pgerror.New(pgcode.InvalidParameterValue,
+				"cannot use column list in publication that publishes tables in schemas")
+		}
+		return pgerror.New(pgcode.InvalidParameterValue,
+			"cannot use row filter in publication that publishes tables in schemas")
+	}
+	return nil
+}
+
+func publicationHasRestrictedTable(tables []publications.PublicationRelation) bool {
+	for _, table := range tables {
+		if len(table.Columns) > 0 || strings.TrimSpace(table.RowFilter) != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func publicationAddSchemaRestrictionError(publicationName string) error {
+	return pgerror.Newf(pgcode.InvalidParameterValue,
+		`cannot add schema to publication "%s" because it contains a table where a row filter or column list is specified`,
+		publicationName)
 }
 
 func addPublicationTables(pub *publications.Publication, tables []publications.PublicationRelation) error {
