@@ -113,6 +113,9 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 	if err != nil {
 		return nil, err
 	}
+	if err = checkTableOwnership(ctx, doltdb.TableName{Name: target.table.Name(), Schema: target.schema}); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 	if r.concurrently && !tablemetadata.IsMaterializedViewPopulated(tableComment(target.table)) {
 		return nil, errors.Errorf("CONCURRENTLY cannot be used when the materialized view is not populated")
 	}

@@ -17,12 +17,15 @@ package node
 import (
 	"context"
 
+	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/server/comments"
 )
 
 // DropTrigger handles the DROP TRIGGER statement.
@@ -78,9 +81,13 @@ func (c *DropTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) 
 	if !hasTrigger && c.ifExists {
 		return sql.RowsToRowIter(), nil
 	}
+	if err = checkTableOwnership(ctx, doltdb.TableName{Name: c.onTable, Schema: schema}); err != nil {
+		return nil, errors.Wrap(err, "permission denied")
+	}
 	if err = collection.DropTrigger(ctx, triggerID); err != nil {
 		return nil, err
 	}
+	comments.RemoveObject(triggerID.AsId(), "pg_trigger")
 	return sql.RowsToRowIter(), nil
 }
 

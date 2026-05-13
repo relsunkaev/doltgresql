@@ -54,6 +54,35 @@ func checkIndexTableOwnership(ctx *sql.Context, tableName doltdb.TableName) erro
 	return err
 }
 
+func checkTableTriggerPrivilege(ctx *sql.Context, tableName doltdb.TableName) error {
+	err := checkTableOwnership(ctx, tableName)
+	if err == nil {
+		return nil
+	}
+	if !strings.HasPrefix(err.Error(), "must be owner of table ") {
+		return err
+	}
+	var allowed bool
+	auth.LockRead(func() {
+		userRole := auth.GetRole(ctx.Client().User)
+		publicRole := auth.GetRole("public")
+		if !userRole.IsValid() {
+			return
+		}
+		allowed = auth.HasTablePrivilege(auth.TablePrivilegeKey{
+			Role:  userRole.ID(),
+			Table: tableName,
+		}, auth.Privilege_TRIGGER) || auth.HasTablePrivilege(auth.TablePrivilegeKey{
+			Role:  publicRole.ID(),
+			Table: tableName,
+		}, auth.Privilege_TRIGGER)
+	})
+	if allowed {
+		return nil
+	}
+	return errors.Errorf("permission denied for table %s", tableName.Name)
+}
+
 func roleCanOperateAsOwner(userRole auth.Role, owner string) bool {
 	if !userRole.IsValid() {
 		return false

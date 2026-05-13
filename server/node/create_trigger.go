@@ -28,6 +28,7 @@ import (
 	"github.com/dolthub/doltgresql/core/functions"
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/core/triggers"
+	"github.com/dolthub/doltgresql/server/comments"
 	"github.com/dolthub/doltgresql/server/plpgsql"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
@@ -112,6 +113,9 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	} else if relationType != core.RelationType_Table {
 		return nil, errors.Errorf(`"%s" is not a table or view`, c.Name.TableName())
 	}
+	if err = checkTableTriggerPrivilege(ctx, doltdb.TableName{Name: c.Name.TableName(), Schema: schema}); err != nil {
+		return nil, err
+	}
 	if err = c.validateGeneratedColumnWhen(ctx, schema); err != nil {
 		return nil, err
 	}
@@ -133,6 +137,7 @@ func (c *CreateTrigger) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		if err = trigCollection.DropTrigger(ctx, triggerID); err != nil {
 			return nil, err
 		}
+		comments.RemoveObject(triggerID.AsId(), "pg_trigger")
 	}
 	err = trigCollection.AddTrigger(ctx, triggers.Trigger{
 		ID:                  triggerID,
