@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/errors"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
 	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
@@ -30,6 +31,8 @@ import (
 
 	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/core/id"
+	"github.com/dolthub/doltgresql/postgres/parser/parser"
+	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
 	pgexpression "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
@@ -62,11 +65,89 @@ func validateCreateTable(ctx *sql.Context, a *analyzer.Analyzer, n sql.Node, sco
 		return ct, transform.NewTree, nil
 	}
 
+	if err = validateInheritedGeneratedColumnOverrides(ctx, ct); err != nil {
+		return nil, transform.SameTree, err
+	}
+
 	if err = validateCreateTableForeignKeyReferencePrivileges(ctx, a, ct); err != nil {
 		return nil, transform.SameTree, err
 	}
 
 	return n, transform.SameTree, nil
+}
+
+func validateInheritedGeneratedColumnOverrides(ctx *sql.Context, ct *plan.CreateTable) error {
+	createTable := createTableStatementForQuery(ctx.Query(), ct.Name())
+	if createTable == nil || len(createTable.Inherits) == 0 {
+		return nil
+	}
+	overrides := inheritedGeneratedColumnOverrides(createTable.Defs)
+	if len(overrides) == 0 {
+		return nil
+	}
+	for _, inherited := range createTable.Inherits {
+		parent, err := core.GetSqlTableFromContext(ctx, "", doltdb.TableName{
+			Name:   string(inherited.ObjectName),
+			Schema: inheritedSchemaName(inherited),
+		})
+		if err != nil {
+			return err
+		}
+		if parent == nil {
+			continue
+		}
+		for _, parentColumn := range parent.Schema(ctx) {
+			if parentColumn.Generated == nil {
+				continue
+			}
+			override, ok := overrides[strings.ToLower(parentColumn.Name)]
+			if ok {
+				return errors.Errorf(`column "%s" inherits from generated column but specifies %s`, parentColumn.Name, override)
+			}
+		}
+	}
+	return nil
+}
+
+func createTableStatementForQuery(query string, tableName string) *tree.CreateTable {
+	if query == "" {
+		return nil
+	}
+	statements, err := parser.Parse(query)
+	if err != nil {
+		return nil
+	}
+	for _, statement := range statements {
+		createTable, ok := statement.AST.(*tree.CreateTable)
+		if ok && strings.EqualFold(string(createTable.Table.ObjectName), tableName) {
+			return createTable
+		}
+	}
+	return nil
+}
+
+func inheritedGeneratedColumnOverrides(defs tree.TableDefs) map[string]string {
+	overrides := make(map[string]string)
+	for _, def := range defs {
+		columnDef, ok := def.(*tree.ColumnTableDef)
+		if !ok {
+			continue
+		}
+		switch {
+		case columnDef.IsComputed() && columnDef.Computed.Expr == nil:
+			overrides[strings.ToLower(string(columnDef.Name))] = "identity"
+		case columnDef.HasDefaultExpr() || columnDef.IsSerial:
+			overrides[strings.ToLower(string(columnDef.Name))] = "default"
+		}
+	}
+	return overrides
+}
+
+func inheritedSchemaName(tableName tree.TableName) string {
+	if tableName.ExplicitSchema {
+		return string(tableName.SchemaName)
+	}
+	return ""
 }
 
 func validateCreateTableForeignKeyReferencePrivileges(ctx *sql.Context, a *analyzer.Analyzer, ct *plan.CreateTable) error {
