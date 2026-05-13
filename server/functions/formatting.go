@@ -2001,9 +2001,8 @@ func getFromArray(arr []string, v int, suffix int, isInterval bool, width int) (
 	if isInterval {
 		return "", errors.Errorf("invalid format specification for an interval value")
 	}
-	if v == 0 {
-		// TODO
-		return "", nil
+	if v < 0 || v >= len(arr) {
+		return "", errors.Errorf("formatting field value out of range")
 	}
 	if suffix&DCH_S_TM != 0 {
 		return "", errors.Errorf("TM suffix is not supported yet.")
