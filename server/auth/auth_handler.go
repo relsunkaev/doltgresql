@@ -192,6 +192,23 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 				return err
 			}
 		}
+	case AuthTargetType_TableColumnIdents:
+		if len(auth.TargetNames)%4 != 0 {
+			return errors.Errorf("table column identifiers has an unsupported count: %d", len(auth.TargetNames))
+		}
+		for i := 0; i < len(auth.TargetNames); i += 4 {
+			// TODO: handle database
+			schemaName, err := core.GetSchemaName(ctx, nil, auth.TargetNames[i+1])
+			if err != nil {
+				// If this fails, then there's an issue with the search path.
+				// This will error later in the process, so we'll pass auth for now.
+				return nil
+			}
+			err = checkPrivilegeOnTableColumn(ctx, state, schemaName, auth.TargetNames[i+2], auth.TargetNames[i+3], privileges)
+			if err != nil {
+				return err
+			}
+		}
 	case AuthTargetType_FunctionIdentifiers:
 		if len(auth.TargetNames)%2 != 0 {
 			return errors.Errorf("function identifiers has an unsupported count: %d", len(auth.TargetNames))
@@ -234,6 +251,31 @@ func (h *AuthorizationHandler) HandleAuth(ctx *sql.Context, aqs sql.Authorizatio
 			return errors.New("TargetType is unexpectedly empty")
 		} else {
 			return errors.Errorf("TargetType not handled: `%s`", auth.TargetType)
+		}
+	}
+	return nil
+}
+
+func checkPrivilegeOnTableColumn(ctx *sql.Context, state AuthorizationQueryState, schemaName, tableName, columnName string, privileges []Privilege) error {
+	if strings.EqualFold(schemaName, "pg_catalog") && !strings.EqualFold(tableName, "pg_authid") && onlySelectPrivileges(privileges) {
+		return nil
+	}
+	if tableOwnedByRole(ctx, schemaName, tableName, state.role.Name) {
+		return nil
+	}
+	roleTableKey := TablePrivilegeKey{
+		Role:   state.role.ID(),
+		Table:  doltdb.TableName{Name: tableName, Schema: schemaName},
+		Column: columnName,
+	}
+	publicTableKey := TablePrivilegeKey{
+		Role:   state.public.ID(),
+		Table:  doltdb.TableName{Name: tableName, Schema: schemaName},
+		Column: columnName,
+	}
+	for _, privilege := range privileges {
+		if !HasTablePrivilege(roleTableKey, privilege) && !HasTablePrivilege(publicTableKey, privilege) {
+			return errors.Errorf("permission denied for table %s", tableName)
 		}
 	}
 	return nil

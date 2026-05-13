@@ -15,11 +15,14 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql/expression"
 
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/postgres/parser/sem/tree"
+	"github.com/dolthub/doltgresql/server/auth"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 )
 
@@ -119,6 +122,7 @@ PostJoinRewrite:
 	for i, fromExpr := range from {
 		from[i] = rewriteTableFunctionExpr(fromExpr)
 	}
+	applySelectColumnAuth(node, from)
 	distinct := node.Distinct
 	var distinctOn vitess.Exprs
 	if len(node.DistinctOn) > 0 {
@@ -160,6 +164,99 @@ PostJoinRewrite:
 		Window:      window,
 		Comments:    vitess.Comments{[]byte(node.BlockComment)},
 	}, nil
+}
+
+func applySelectColumnAuth(node *tree.SelectClause, from vitess.TableExprs) {
+	if len(from) != 1 {
+		return
+	}
+	columns, ok := selectColumnAuthColumns(node)
+	if !ok || len(columns) == 0 {
+		return
+	}
+	tableExpr, ok := from[0].(*vitess.AliasedTableExpr)
+	if !ok || tableExpr.Auth.AuthType != auth.AuthType_SELECT || tableExpr.Auth.TargetType != auth.AuthTargetType_TableIdentifiers || len(tableExpr.Auth.TargetNames) != 3 {
+		return
+	}
+	tableTarget := tableExpr.Auth.TargetNames
+	targetNames := make([]string, 0, len(columns)*4)
+	for _, column := range columns {
+		targetNames = append(targetNames, tableTarget[0], tableTarget[1], tableTarget[2], column)
+	}
+	tableExpr.Auth.TargetType = auth.AuthTargetType_TableColumnIdents
+	tableExpr.Auth.TargetNames = targetNames
+}
+
+func selectColumnAuthColumns(node *tree.SelectClause) ([]string, bool) {
+	collector := &selectColumnAuthCollector{
+		columns: make(map[string]string),
+	}
+	for _, expr := range node.Exprs {
+		if !collector.walk(expr.Expr) {
+			return nil, false
+		}
+	}
+	for _, expr := range node.DistinctOn {
+		if !collector.walk(expr) {
+			return nil, false
+		}
+	}
+	if node.Where != nil && !collector.walk(node.Where.Expr) {
+		return nil, false
+	}
+	if node.Having != nil && !collector.walk(node.Having.Expr) {
+		return nil, false
+	}
+	for _, expr := range node.GroupBy {
+		if !collector.walk(expr) {
+			return nil, false
+		}
+	}
+	columns := make([]string, 0, len(collector.columns))
+	for _, column := range collector.columns {
+		columns = append(columns, column)
+	}
+	return columns, true
+}
+
+type selectColumnAuthCollector struct {
+	columns map[string]string
+	valid   bool
+}
+
+func (c *selectColumnAuthCollector) walk(expr tree.Expr) bool {
+	c.valid = true
+	tree.WalkExprConst(c, expr)
+	return c.valid
+}
+
+func (c *selectColumnAuthCollector) VisitPre(expr tree.Expr) (bool, tree.Expr) {
+	switch expr := expr.(type) {
+	case tree.UnqualifiedStar, *tree.AllColumnsSelector:
+		c.valid = false
+		return false, expr
+	case *tree.UnresolvedName:
+		if expr.Star || expr.NumParts == 0 || expr.NumParts > 3 {
+			c.valid = false
+			return false, expr
+		}
+		column := expr.Parts[0]
+		if column == "" {
+			c.valid = false
+			return false, expr
+		}
+		key := strings.ToLower(column)
+		if _, ok := c.columns[key]; !ok {
+			c.columns[key] = column
+		}
+		return false, expr
+	default:
+		return true, expr
+	}
+}
+
+func (c *selectColumnAuthCollector) VisitPost(expr tree.Expr) tree.Expr {
+	return expr
 }
 
 func rewriteTableFunctionExpr(fromExpr vitess.TableExpr) vitess.TableExpr {
