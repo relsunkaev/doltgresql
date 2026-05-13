@@ -141,7 +141,7 @@ func (c *DropType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		if ok {
 			for _, col := range t.Schema(ctx) {
 				if dt, isDoltgresType := col.Type.(*types.DoltgresType); isDoltgresType {
-					if dt.Name() == typ.Name() {
+					if dt.ID == typ.ID {
 						if c.cascade {
 							// TODO: handle cascade
 							return nil, errors.Errorf(`cascading type drops are not yet supported`)
