@@ -1,0 +1,154 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map query_correctness_repro_test.go --oracle-test-name TestVarcharColumnComparedToBlankPaddedCharRepro,TestVarcharComparedToBlankPaddedCharRepro --force-postgres-oracle",
+  "sourceFile": "testing/go/query_correctness_repro_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 1,
+      "scriptName": "varchar comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0001-select-def-::varchar-=-cast",
+      "suggestedId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0001-select-def-::varchar-=-cast",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'def'::varchar = CAST('def' AS char(6));",
+      "querySha256": "ceb59256cf949500bd47da3f65e2f0c1030b06f92ab17675057cb3e02a18afcd",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 2,
+      "scriptName": "varchar comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0002-select-def-::varchar-<-cast",
+      "suggestedId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0002-select-def-::varchar-<-cast",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'def'::varchar < CAST('def' AS char(6));",
+      "querySha256": "142759e467a23278442c0cf1cd792c370ea78ecbfa9dbaf54d9551a5917681b3",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 3,
+      "scriptName": "varchar comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0003-select-def-::varchar->=-cast",
+      "suggestedId": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0003-select-def-::varchar->=-cast",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT 'def'::varchar >= CAST('def' AS char(6));",
+      "querySha256": "53c9e2542f93ea78241fcd1dfd064c120f0ff6596a65f62a3c2091a328ecd090",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0001",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 1,
+      "scriptName": "varchar column comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0001-select-v-from-varchar_char_compare_items-where",
+      "suggestedId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0001-select-v-from-varchar_char_compare_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v = CAST('def' AS char(6));",
+      "querySha256": "c7093ec23b65f378af4c0a2bf6e3f008fc2de889ef66cf249b0de9e3fbb6d266",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0002",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 2,
+      "scriptName": "varchar column comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0002-select-v-from-varchar_char_compare_items-where",
+      "suggestedId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0002-select-v-from-varchar_char_compare_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v < CAST('def' AS char(6))\n\t\t\t\t\t\tORDER BY v;",
+      "querySha256": "eca9641527385853ed77c4967fd7184fe7437796de276c6f67a48a192592b6b7",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro#0003",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 3,
+      "scriptName": "varchar column comparison with blank-padded char",
+      "oracle": "postgres",
+      "postgresId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0003-select-v-from-varchar_char_compare_items-where",
+      "suggestedId": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0003-select-v-from-varchar_char_compare_items-where",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v >= CAST('def' AS char(6))\n\t\t\t\t\t\tORDER BY v;",
+      "querySha256": "eb353efc31f173ede99a805af8500b9345328caca3562c11b631a10ffff76ece",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          }
+        ],
+        [
+          {
+            "value": "ghi"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}

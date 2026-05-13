@@ -6848,6 +6848,148 @@
       ]
     },
     {
+      "id": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0001-select-def-::varchar-=-cast",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT 'def'::varchar = CAST('def' AS char(6));",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0002-select-def-::varchar-<-cast",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 'def'::varchar = CAST('def' AS char(6));"
+      ],
+      "query": "SELECT 'def'::varchar < CAST('def' AS char(6));",
+      "expectedRows": [
+        [
+          {
+            "value": "f"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0003-select-def-::varchar->=-cast",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharComparedToBlankPaddedCharRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT 'def'::varchar = CAST('def' AS char(6));",
+        "SELECT 'def'::varchar < CAST('def' AS char(6));"
+      ],
+      "query": "SELECT 'def'::varchar >= CAST('def' AS char(6));",
+      "expectedRows": [
+        [
+          {
+            "value": "t"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0001-select-v-from-varchar_char_compare_items-where",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE varchar_char_compare_items (v VARCHAR(10) PRIMARY KEY);",
+        "INSERT INTO varchar_char_compare_items VALUES ('abc'), ('def'), ('ghi');"
+      ],
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v = CAST('def' AS char(6));",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0002-select-v-from-varchar_char_compare_items-where",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE varchar_char_compare_items (v VARCHAR(10) PRIMARY KEY);",
+        "INSERT INTO varchar_char_compare_items VALUES ('abc'), ('def'), ('ghi');",
+        "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v = CAST('def' AS char(6));"
+      ],
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v < CAST('def' AS char(6))\n\t\t\t\t\t\tORDER BY v;",
+      "expectedRows": [
+        [
+          {
+            "value": "abc"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0003-select-v-from-varchar_char_compare_items-where",
+      "source": "testing/go/query_correctness_repro_test.go:TestVarcharColumnComparedToBlankPaddedCharRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE varchar_char_compare_items (v VARCHAR(10) PRIMARY KEY);",
+        "INSERT INTO varchar_char_compare_items VALUES ('abc'), ('def'), ('ghi');",
+        "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v = CAST('def' AS char(6));",
+        "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v < CAST('def' AS char(6))\n\t\t\t\t\t\tORDER BY v;"
+      ],
+      "query": "SELECT v\n\t\t\t\t\t\tFROM varchar_char_compare_items\n\t\t\t\t\t\tWHERE v >= CAST('def' AS char(6))\n\t\t\t\t\t\tORDER BY v;",
+      "expectedRows": [
+        [
+          {
+            "value": "def"
+          }
+        ],
+        [
+          {
+            "value": "ghi"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "relation-comment-drop-repro-test-testdroptableclearscommentrepro-0001-select-obj_description-drop_recreate_comment_target-::regclass",
       "source": "testing/go/relation_comment_drop_repro_test.go:TestDropTableClearsCommentRepro",
       "ordinal": 1,
