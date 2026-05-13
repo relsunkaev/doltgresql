@@ -1,5 +1,5 @@
 {
-  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name CREATE MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map materialized_view_probe_test.go --oracle-test-name TestMaterializedViewProbe --oracle-script-name CREATE MATERIALIZED VIEW snapshot probe,DROP MATERIALIZED VIEW snapshot probe --force-postgres-oracle",
   "sourceFile": "testing/go/materialized_view_probe_test.go",
   "defaultOracle": "internal",
   "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
@@ -214,6 +214,89 @@
           }
         ]
       ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0009",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 9,
+      "scriptName": "DROP MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0009-select-id-v-from-source_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0009-select-id-v-from-source_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM source_mv ORDER BY id;",
+      "querySha256": "100d87f80104687af7ef6af644b0a936f74dfeb7a56f4f327ef7acfcfcd235a9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0010",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 10,
+      "scriptName": "DROP MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0010-select-id-v-from-source_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0010-select-id-v-from-source_mv",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, v FROM source_mv ORDER BY id;",
+      "querySha256": "100d87f80104687af7ef6af644b0a936f74dfeb7a56f4f327ef7acfcfcd235a9",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe#0011",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 11,
+      "scriptName": "DROP MATERIALIZED VIEW snapshot probe",
+      "oracle": "postgres",
+      "postgresId": "materialized-view-probe-test-testmaterializedviewprobe-0011-select-*-from-source_mv",
+      "suggestedId": "materialized-view-probe-test-testmaterializedviewprobe-0011-select-*-from-source_mv",
+      "compare": "sqlstate",
+      "expectedKind": "error",
+      "sqlstate": "42P01",
+      "errorSeverity": "ERROR",
+      "query": "SELECT * FROM source_mv;",
+      "querySha256": "08ccaaf110e7b0b4ec1e90d5870785022a1e661e7c64921f53a54d0de0ceb068",
       "needsCleanup": false,
       "cleanupProvided": false
     }
