@@ -7146,6 +7146,29 @@
       ]
     },
     {
+      "id": "range-type-definition-repro-test-testcreatetypeasrangerepro-0001-select-[1.5-2.5-::price_range::text",
+      "source": "testing/go/range_type_definition_repro_test.go:TestCreateTypeAsRangeRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TYPE price_range AS RANGE (subtype = numeric);"
+      ],
+      "query": "SELECT '[1.5,2.5)'::price_range::text;",
+      "expectedRows": [
+        [
+          {
+            "value": "[1.5,2.5)"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "relation-comment-drop-repro-test-testdroptableclearscommentrepro-0001-select-obj_description-drop_recreate_comment_target-::regclass",
       "source": "testing/go/relation_comment_drop_repro_test.go:TestDropTableClearsCommentRepro",
       "ordinal": 1,
