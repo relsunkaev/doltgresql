@@ -32,19 +32,21 @@ import (
 
 // Grant handles all of the GRANT statements.
 type Grant struct {
-	GrantTable       *GrantTable
-	GrantSchema      *GrantSchema
-	GrantDatabase    *GrantDatabase
-	GrantSequence    *GrantSequence
-	GrantRoutine     *GrantRoutine
-	GrantLanguage    *GrantLanguage
-	GrantType        *GrantType
-	GrantLargeObject *GrantLargeObject
-	GrantParameter   *GrantParameter
-	GrantRole        *GrantRole
-	ToRoles          []string
-	WithGrantOption  bool // This is "WITH ADMIN OPTION" for GrantRole only
-	GrantedBy        string
+	GrantTable              *GrantTable
+	GrantSchema             *GrantSchema
+	GrantDatabase           *GrantDatabase
+	GrantSequence           *GrantSequence
+	GrantRoutine            *GrantRoutine
+	GrantForeignDataWrapper *GrantForeignDataWrapper
+	GrantForeignServer      *GrantForeignServer
+	GrantLanguage           *GrantLanguage
+	GrantType               *GrantType
+	GrantLargeObject        *GrantLargeObject
+	GrantParameter          *GrantParameter
+	GrantRole               *GrantRole
+	ToRoles                 []string
+	WithGrantOption         bool // This is "WITH ADMIN OPTION" for GrantRole only
+	GrantedBy               string
 }
 
 // GrantTable specifically handles the GRANT ... ON TABLE statement.
@@ -82,6 +84,18 @@ type GrantSequence struct {
 type GrantRoutine struct {
 	Privileges []auth.Privilege
 	Routines   []auth.RoutinePrivilegeKey
+}
+
+// GrantForeignDataWrapper specifically handles the GRANT ... ON FOREIGN DATA WRAPPER statement.
+type GrantForeignDataWrapper struct {
+	Privileges []auth.Privilege
+	Wrappers   []string
+}
+
+// GrantForeignServer specifically handles the GRANT ... ON FOREIGN SERVER statement.
+type GrantForeignServer struct {
+	Privileges []auth.Privilege
+	Servers    []string
 }
 
 // GrantLanguage specifically handles the GRANT ... ON LANGUAGE statement.
@@ -154,6 +168,14 @@ func (g *Grant) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 			}
 		case g.GrantRoutine != nil:
 			if err = g.grantRoutine(ctx); err != nil {
+				return
+			}
+		case g.GrantForeignDataWrapper != nil:
+			if err = g.grantForeignDataWrapper(ctx); err != nil {
+				return
+			}
+		case g.GrantForeignServer != nil:
+			if err = g.grantForeignServer(ctx); err != nil {
 				return
 			}
 		case g.GrantLanguage != nil:
@@ -251,15 +273,19 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedTables := make([]doltdb.TableName, len(g.GrantTable.Tables))
+	for i, table := range g.GrantTable.Tables {
+		schemaName, err := validateACLTableTarget(ctx, table)
+		if err != nil {
+			return err
+		}
+		resolvedTables[i] = doltdb.TableName{Name: table.Name, Schema: schemaName}
+	}
 	for _, role := range roles {
-		for _, table := range g.GrantTable.Tables {
-			schemaName, err := core.GetSchemaName(ctx, nil, table.Schema)
-			if err != nil {
-				return err
-			}
+		for _, table := range resolvedTables {
 			key := auth.TablePrivilegeKey{
 				Role:  userRole.ID(),
-				Table: doltdb.TableName{Name: table.Name, Schema: schemaName},
+				Table: table,
 			}
 			for _, privilege := range g.GrantTable.Privileges {
 				grantedBy := auth.HasTablePrivilegeGrantOption(key, privilege)
@@ -273,7 +299,7 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 				}
 				auth.AddTablePrivilege(auth.TablePrivilegeKey{
 					Role:  role.ID(),
-					Table: doltdb.TableName{Name: table.Name, Schema: schemaName},
+					Table: table,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedBy,
@@ -283,7 +309,7 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 				for _, column := range columnPrivilege.Columns {
 					columnKey := auth.TablePrivilegeKey{
 						Role:   userRole.ID(),
-						Table:  doltdb.TableName{Name: table.Name, Schema: schemaName},
+						Table:  table,
 						Column: column,
 					}
 					grantedBy := auth.HasTablePrivilegeGrantOption(columnKey, columnPrivilege.Privilege)
@@ -297,7 +323,7 @@ func (g *Grant) grantTable(ctx *sql.Context) error {
 					}
 					auth.AddTablePrivilege(auth.TablePrivilegeKey{
 						Role:   role.ID(),
-						Table:  doltdb.TableName{Name: table.Name, Schema: schemaName},
+						Table:  table,
 						Column: column,
 					}, auth.GrantedPrivilege{
 						Privilege: columnPrivilege.Privilege,
@@ -315,6 +341,11 @@ func (g *Grant) grantSchema(ctx *sql.Context) error {
 	roles, userRole, err := g.common(ctx)
 	if err != nil {
 		return err
+	}
+	for _, schema := range g.GrantSchema.Schemas {
+		if err := validateACLSchemaTarget(ctx, schema); err != nil {
+			return err
+		}
 	}
 	for _, role := range roles {
 		for _, schema := range g.GrantSchema.Schemas {
@@ -347,6 +378,11 @@ func (g *Grant) grantDatabase(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	for _, database := range g.GrantDatabase.Databases {
+		if err := validateACLDatabaseTarget(ctx, database); err != nil {
+			return err
+		}
+	}
 	for _, role := range roles {
 		for _, database := range g.GrantDatabase.Databases {
 			key := auth.DatabasePrivilegeKey{
@@ -378,15 +414,22 @@ func (g *Grant) grantSequence(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedSequences := make([]auth.SequencePrivilegeKey, len(g.GrantSequence.Sequences))
+	for i, seq := range g.GrantSequence.Sequences {
+		schemaName, err := validateACLSequenceTarget(ctx, seq)
+		if err != nil {
+			return err
+		}
+		resolvedSequences[i] = auth.SequencePrivilegeKey{
+			Schema: schemaName,
+			Name:   seq.Name,
+		}
+	}
 	for _, role := range roles {
-		for _, seq := range g.GrantSequence.Sequences {
-			schemaName, err := core.GetSchemaName(ctx, nil, seq.Schema)
-			if err != nil {
-				return err
-			}
+		for _, seq := range resolvedSequences {
 			key := auth.SequencePrivilegeKey{
 				Role:   userRole.ID(),
-				Schema: schemaName,
+				Schema: seq.Schema,
 				Name:   seq.Name,
 			}
 			for _, privilege := range g.GrantSequence.Privileges {
@@ -397,7 +440,7 @@ func (g *Grant) grantSequence(ctx *sql.Context) error {
 				}
 				auth.AddSequencePrivilege(auth.SequencePrivilegeKey{
 					Role:   role.ID(),
-					Schema: schemaName,
+					Schema: seq.Schema,
 					Name:   seq.Name,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
@@ -415,15 +458,23 @@ func (g *Grant) grantRoutine(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedRoutines := make([]auth.RoutinePrivilegeKey, len(g.GrantRoutine.Routines))
+	for i, routine := range g.GrantRoutine.Routines {
+		schemaName, err := validateACLRoutineTarget(ctx, routine)
+		if err != nil {
+			return err
+		}
+		resolvedRoutines[i] = auth.RoutinePrivilegeKey{
+			Schema:   schemaName,
+			Name:     routine.Name,
+			ArgTypes: routine.ArgTypes,
+		}
+	}
 	for _, role := range roles {
-		for _, routine := range g.GrantRoutine.Routines {
-			schemaName, err := core.GetSchemaName(ctx, nil, routine.Schema)
-			if err != nil {
-				return err
-			}
+		for _, routine := range resolvedRoutines {
 			key := auth.RoutinePrivilegeKey{
 				Role:     userRole.ID(),
-				Schema:   schemaName,
+				Schema:   routine.Schema,
 				Name:     routine.Name,
 				ArgTypes: routine.ArgTypes,
 			}
@@ -435,7 +486,7 @@ func (g *Grant) grantRoutine(ctx *sql.Context) error {
 				}
 				auth.AddRoutinePrivilege(auth.RoutinePrivilegeKey{
 					Role:     role.ID(),
-					Schema:   schemaName,
+					Schema:   routine.Schema,
 					Name:     routine.Name,
 					ArgTypes: routine.ArgTypes,
 				}, auth.GrantedPrivilege{
@@ -446,6 +497,32 @@ func (g *Grant) grantRoutine(ctx *sql.Context) error {
 		}
 	}
 	return nil
+}
+
+// grantForeignDataWrapper handles *GrantForeignDataWrapper from within RowIter.
+func (g *Grant) grantForeignDataWrapper(ctx *sql.Context) error {
+	if _, _, err := g.common(ctx); err != nil {
+		return err
+	}
+	for _, wrapper := range g.GrantForeignDataWrapper.Wrappers {
+		if _, ok := auth.GetForeignDataWrapper(wrapper); !ok {
+			return errors.Errorf(`foreign-data wrapper "%s" does not exist`, wrapper)
+		}
+	}
+	return errors.Errorf("GRANT on foreign data wrappers is not yet supported")
+}
+
+// grantForeignServer handles *GrantForeignServer from within RowIter.
+func (g *Grant) grantForeignServer(ctx *sql.Context) error {
+	if _, _, err := g.common(ctx); err != nil {
+		return err
+	}
+	for _, server := range g.GrantForeignServer.Servers {
+		if _, ok := auth.GetForeignServer(server); !ok {
+			return errors.Errorf(`server "%s" does not exist`, server)
+		}
+	}
+	return errors.Errorf("GRANT on foreign servers is not yet supported")
 }
 
 // grantLanguage handles *GrantLanguage from within RowIter.
@@ -479,6 +556,134 @@ func (g *Grant) grantLanguage(ctx *sql.Context) error {
 		}
 	}
 	return nil
+}
+
+func validateACLSchemaTarget(ctx *sql.Context, schema string) error {
+	schemaDatabase, err := currentSchemaDatabase(ctx)
+	if err != nil {
+		return err
+	}
+	if _, ok, err := schemaDatabase.GetSchema(ctx, schema); err != nil {
+		return err
+	} else if !ok {
+		return errors.Errorf(`schema "%s" does not exist`, schema)
+	}
+	return nil
+}
+
+func resolveExistingACLSchema(ctx *sql.Context, schema string) (string, error) {
+	schemaName, err := core.GetSchemaName(ctx, nil, schema)
+	if err != nil {
+		return "", err
+	}
+	if err = validateACLSchemaTarget(ctx, schemaName); err != nil {
+		return "", err
+	}
+	return schemaName, nil
+}
+
+func validateACLDatabaseTarget(ctx *sql.Context, database string) error {
+	db, err := core.GetSqlDatabaseFromContext(ctx, database)
+	if err != nil {
+		return err
+	}
+	if db == nil {
+		return errors.Errorf(`database "%s" does not exist`, database)
+	}
+	return nil
+}
+
+func validateACLTableTarget(ctx *sql.Context, table doltdb.TableName) (string, error) {
+	schemaName, err := resolveExistingACLSchema(ctx, table.Schema)
+	if err != nil {
+		return "", err
+	}
+	if table.Name == "" {
+		return schemaName, nil
+	}
+	relationType, err := core.GetRelationType(ctx, schemaName, table.Name)
+	if err != nil {
+		return "", err
+	}
+	if relationType == core.RelationType_DoesNotExist {
+		return "", errors.Errorf(`relation "%s" does not exist`, table.Name)
+	}
+	return schemaName, nil
+}
+
+func validateACLSequenceTarget(ctx *sql.Context, seq auth.SequencePrivilegeKey) (string, error) {
+	schemaName, err := resolveExistingACLSchema(ctx, seq.Schema)
+	if err != nil {
+		return "", err
+	}
+	if seq.Name == "" {
+		return schemaName, nil
+	}
+	collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
+	if err != nil {
+		return "", err
+	}
+	if !collection.HasSequence(ctx, id.NewSequence(schemaName, seq.Name)) {
+		return "", errors.Errorf(`sequence "%s" does not exist`, seq.Name)
+	}
+	return schemaName, nil
+}
+
+func validateACLRoutineTarget(ctx *sql.Context, routine auth.RoutinePrivilegeKey) (string, error) {
+	schemaName, err := resolveExistingACLSchema(ctx, routine.Schema)
+	if err != nil {
+		return "", err
+	}
+	if routine.Name == "" {
+		return schemaName, nil
+	}
+	exists, err := aclRoutineExists(ctx, schemaName, routine.Name, routine.ArgTypes)
+	if err != nil {
+		return "", err
+	}
+	if !exists {
+		return "", errors.Errorf(`routine "%s" does not exist`, routine.Name)
+	}
+	return schemaName, nil
+}
+
+func aclRoutineExists(ctx *sql.Context, schema string, name string, argTypes string) (bool, error) {
+	funcColl, err := core.GetFunctionsCollectionFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	funcs, err := funcColl.GetFunctionOverloads(ctx, id.NewFunction(schema, name))
+	if err != nil {
+		return false, err
+	}
+	for _, fn := range funcs {
+		if argTypes == "" || aclRoutineArgTypesKey(fn.ID.Parameters()) == argTypes {
+			return true, nil
+		}
+	}
+
+	procColl, err := core.GetProceduresCollectionFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	procs, err := procColl.GetProcedureOverloads(ctx, id.NewProcedure(schema, name))
+	if err != nil {
+		return false, err
+	}
+	for _, proc := range procs {
+		if argTypes == "" || aclRoutineArgTypesKey(proc.ID.Parameters()) == argTypes {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func aclRoutineArgTypesKey(argTypes []id.Type) string {
+	parts := make([]string, len(argTypes))
+	for i, argType := range argTypes {
+		parts[i] = argType.TypeName()
+	}
+	return strings.Join(parts, ",")
 }
 
 // grantType handles *GrantType from within RowIter.

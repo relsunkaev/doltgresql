@@ -36,6 +36,8 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	var revokeDatabase *pgnodes.RevokeDatabase
 	var revokeSequence *pgnodes.RevokeSequence
 	var revokeRoutine *pgnodes.RevokeRoutine
+	var revokeForeignDataWrapper *pgnodes.RevokeForeignDataWrapper
+	var revokeForeignServer *pgnodes.RevokeForeignServer
 	var revokeLanguage *pgnodes.RevokeLanguage
 	var revokeParameter *pgnodes.RevokeParameter
 	switch node.Targets.TargetType {
@@ -145,6 +147,24 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 			Privileges: privileges,
 			Routines:   routines,
 		}
+	case privilege.ForeignDataWrapper:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_FOREIGN_DATA_WRAPPER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		revokeForeignDataWrapper = &pgnodes.RevokeForeignDataWrapper{
+			Privileges: privileges,
+			Wrappers:   node.Targets.Names,
+		}
+	case privilege.ForeignServer:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_FOREIGN_SERVER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		revokeForeignServer = &pgnodes.RevokeForeignServer{
+			Privileges: privileges,
+			Servers:    node.Targets.Names,
+		}
 	case privilege.Language:
 		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_LANGUAGE, node.Privileges)
 		if err != nil {
@@ -168,18 +188,20 @@ func nodeRevoke(ctx *Context, node *tree.Revoke) (vitess.Statement, error) {
 	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.Revoke{
-			RevokeTable:     revokeTable,
-			RevokeSchema:    revokeSchema,
-			RevokeDatabase:  revokeDatabase,
-			RevokeSequence:  revokeSequence,
-			RevokeRoutine:   revokeRoutine,
-			RevokeLanguage:  revokeLanguage,
-			RevokeParameter: revokeParameter,
-			RevokeRole:      nil,
-			FromRoles:       node.Grantees,
-			GrantedBy:       node.GrantedBy,
-			GrantOptionFor:  node.GrantOptionFor,
-			Cascade:         node.DropBehavior == tree.DropCascade,
+			RevokeTable:              revokeTable,
+			RevokeSchema:             revokeSchema,
+			RevokeDatabase:           revokeDatabase,
+			RevokeSequence:           revokeSequence,
+			RevokeRoutine:            revokeRoutine,
+			RevokeForeignDataWrapper: revokeForeignDataWrapper,
+			RevokeForeignServer:      revokeForeignServer,
+			RevokeLanguage:           revokeLanguage,
+			RevokeParameter:          revokeParameter,
+			RevokeRole:               nil,
+			FromRoles:                node.Grantees,
+			GrantedBy:                node.GrantedBy,
+			GrantOptionFor:           node.GrantOptionFor,
+			Cascade:                  node.DropBehavior == tree.DropCascade,
 		},
 		Children: nil,
 	}, nil

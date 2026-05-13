@@ -23,24 +23,25 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
-	"github.com/dolthub/doltgresql/core"
 	"github.com/dolthub/doltgresql/server/auth"
 )
 
 // Revoke handles all of the REVOKE statements.
 type Revoke struct {
-	RevokeTable     *RevokeTable
-	RevokeSchema    *RevokeSchema
-	RevokeDatabase  *RevokeDatabase
-	RevokeSequence  *RevokeSequence
-	RevokeRoutine   *RevokeRoutine
-	RevokeLanguage  *RevokeLanguage
-	RevokeParameter *RevokeParameter
-	RevokeRole      *RevokeRole
-	FromRoles       []string
-	GrantedBy       string
-	GrantOptionFor  bool // This is "ADMIN OPTION FOR" for RevokeRole only
-	Cascade         bool // When false, represents RESTRICT
+	RevokeTable              *RevokeTable
+	RevokeSchema             *RevokeSchema
+	RevokeDatabase           *RevokeDatabase
+	RevokeSequence           *RevokeSequence
+	RevokeRoutine            *RevokeRoutine
+	RevokeForeignDataWrapper *RevokeForeignDataWrapper
+	RevokeForeignServer      *RevokeForeignServer
+	RevokeLanguage           *RevokeLanguage
+	RevokeParameter          *RevokeParameter
+	RevokeRole               *RevokeRole
+	FromRoles                []string
+	GrantedBy                string
+	GrantOptionFor           bool // This is "ADMIN OPTION FOR" for RevokeRole only
+	Cascade                  bool // When false, represents RESTRICT
 }
 
 // RevokeTable specifically handles the REVOKE ... ON TABLE statement.
@@ -71,6 +72,18 @@ type RevokeSequence struct {
 type RevokeRoutine struct {
 	Privileges []auth.Privilege
 	Routines   []auth.RoutinePrivilegeKey
+}
+
+// RevokeForeignDataWrapper specifically handles the REVOKE ... ON FOREIGN DATA WRAPPER statement.
+type RevokeForeignDataWrapper struct {
+	Privileges []auth.Privilege
+	Wrappers   []string
+}
+
+// RevokeForeignServer specifically handles the REVOKE ... ON FOREIGN SERVER statement.
+type RevokeForeignServer struct {
+	Privileges []auth.Privilege
+	Servers    []string
 }
 
 // RevokeLanguage specifically handles the REVOKE ... ON LANGUAGE statement.
@@ -135,6 +148,14 @@ func (r *Revoke) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
 			}
 		case r.RevokeRoutine != nil:
 			if err = r.revokeRoutine(ctx); err != nil {
+				return
+			}
+		case r.RevokeForeignDataWrapper != nil:
+			if err = r.revokeForeignDataWrapper(ctx); err != nil {
+				return
+			}
+		case r.RevokeForeignServer != nil:
+			if err = r.revokeForeignServer(ctx); err != nil {
 				return
 			}
 		case r.RevokeLanguage != nil:
@@ -227,15 +248,19 @@ func (r *Revoke) revokeTable(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedTables := make([]doltdb.TableName, len(r.RevokeTable.Tables))
+	for i, table := range r.RevokeTable.Tables {
+		schemaName, err := validateACLTableTarget(ctx, table)
+		if err != nil {
+			return err
+		}
+		resolvedTables[i] = doltdb.TableName{Name: table.Name, Schema: schemaName}
+	}
 	for _, role := range roles {
-		for _, table := range r.RevokeTable.Tables {
-			schemaName, err := core.GetSchemaName(ctx, nil, table.Schema)
-			if err != nil {
-				return err
-			}
+		for _, table := range resolvedTables {
 			key := auth.TablePrivilegeKey{
 				Role:  userRole.ID(),
-				Table: doltdb.TableName{Name: table.Name, Schema: schemaName},
+				Table: table,
 			}
 			for _, privilege := range r.RevokeTable.Privileges {
 				if id := auth.HasTablePrivilegeGrantOption(key, privilege); !id.IsValid() {
@@ -244,7 +269,7 @@ func (r *Revoke) revokeTable(ctx *sql.Context) error {
 				}
 				auth.RemoveTablePrivilege(auth.TablePrivilegeKey{
 					Role:  role.ID(),
-					Table: doltdb.TableName{Name: table.Name, Schema: schemaName},
+					Table: table,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
 					GrantedBy: grantedByID,
@@ -260,6 +285,11 @@ func (r *Revoke) revokeSchema(ctx *sql.Context) error {
 	roles, userRole, grantedByID, err := r.common(ctx)
 	if err != nil {
 		return err
+	}
+	for _, schema := range r.RevokeSchema.Schemas {
+		if err := validateACLSchemaTarget(ctx, schema); err != nil {
+			return err
+		}
 	}
 	for _, role := range roles {
 		for _, schema := range r.RevokeSchema.Schemas {
@@ -291,6 +321,11 @@ func (r *Revoke) revokeDatabase(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	for _, database := range r.RevokeDatabase.Databases {
+		if err := validateACLDatabaseTarget(ctx, database); err != nil {
+			return err
+		}
+	}
 	for _, role := range roles {
 		for _, databases := range r.RevokeDatabase.Databases {
 			key := auth.DatabasePrivilegeKey{
@@ -321,15 +356,22 @@ func (r *Revoke) revokeSequence(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedSequences := make([]auth.SequencePrivilegeKey, len(r.RevokeSequence.Sequences))
+	for i, seq := range r.RevokeSequence.Sequences {
+		schemaName, err := validateACLSequenceTarget(ctx, seq)
+		if err != nil {
+			return err
+		}
+		resolvedSequences[i] = auth.SequencePrivilegeKey{
+			Schema: schemaName,
+			Name:   seq.Name,
+		}
+	}
 	for _, role := range roles {
-		for _, seq := range r.RevokeSequence.Sequences {
-			schemaName, err := core.GetSchemaName(ctx, nil, seq.Schema)
-			if err != nil {
-				return err
-			}
+		for _, seq := range resolvedSequences {
 			key := auth.SequencePrivilegeKey{
 				Role:   userRole.ID(),
-				Schema: schemaName,
+				Schema: seq.Schema,
 				Name:   seq.Name,
 			}
 			for _, privilege := range r.RevokeSequence.Privileges {
@@ -339,7 +381,7 @@ func (r *Revoke) revokeSequence(ctx *sql.Context) error {
 				}
 				auth.RemoveSequencePrivilege(auth.SequencePrivilegeKey{
 					Role:   role.ID(),
-					Schema: schemaName,
+					Schema: seq.Schema,
 					Name:   seq.Name,
 				}, auth.GrantedPrivilege{
 					Privilege: privilege,
@@ -357,15 +399,23 @@ func (r *Revoke) revokeRoutine(ctx *sql.Context) error {
 	if err != nil {
 		return err
 	}
+	resolvedRoutines := make([]auth.RoutinePrivilegeKey, len(r.RevokeRoutine.Routines))
+	for i, routine := range r.RevokeRoutine.Routines {
+		schemaName, err := validateACLRoutineTarget(ctx, routine)
+		if err != nil {
+			return err
+		}
+		resolvedRoutines[i] = auth.RoutinePrivilegeKey{
+			Schema:   schemaName,
+			Name:     routine.Name,
+			ArgTypes: routine.ArgTypes,
+		}
+	}
 	for _, role := range roles {
-		for _, routine := range r.RevokeRoutine.Routines {
-			schemaName, err := core.GetSchemaName(ctx, nil, routine.Schema)
-			if err != nil {
-				return err
-			}
+		for _, routine := range resolvedRoutines {
 			key := auth.RoutinePrivilegeKey{
 				Role:     userRole.ID(),
-				Schema:   schemaName,
+				Schema:   routine.Schema,
 				Name:     routine.Name,
 				ArgTypes: routine.ArgTypes,
 			}
@@ -376,7 +426,7 @@ func (r *Revoke) revokeRoutine(ctx *sql.Context) error {
 				}
 				auth.RemoveRoutinePrivilege(auth.RoutinePrivilegeKey{
 					Role:     role.ID(),
-					Schema:   schemaName,
+					Schema:   routine.Schema,
 					Name:     routine.Name,
 					ArgTypes: routine.ArgTypes,
 				}, auth.GrantedPrivilege{
@@ -387,6 +437,32 @@ func (r *Revoke) revokeRoutine(ctx *sql.Context) error {
 		}
 	}
 	return nil
+}
+
+// revokeForeignDataWrapper handles *RevokeForeignDataWrapper from within RowIter.
+func (r *Revoke) revokeForeignDataWrapper(ctx *sql.Context) error {
+	if _, _, _, err := r.common(ctx); err != nil {
+		return err
+	}
+	for _, wrapper := range r.RevokeForeignDataWrapper.Wrappers {
+		if _, ok := auth.GetForeignDataWrapper(wrapper); !ok {
+			return errors.Errorf(`foreign-data wrapper "%s" does not exist`, wrapper)
+		}
+	}
+	return errors.Errorf("REVOKE on foreign data wrappers is not yet supported")
+}
+
+// revokeForeignServer handles *RevokeForeignServer from within RowIter.
+func (r *Revoke) revokeForeignServer(ctx *sql.Context) error {
+	if _, _, _, err := r.common(ctx); err != nil {
+		return err
+	}
+	for _, server := range r.RevokeForeignServer.Servers {
+		if _, ok := auth.GetForeignServer(server); !ok {
+			return errors.Errorf(`server "%s" does not exist`, server)
+		}
+	}
+	return errors.Errorf("REVOKE on foreign servers is not yet supported")
 }
 
 // revokeLanguage handles *RevokeLanguage from within RowIter.

@@ -36,6 +36,8 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	var grantDatabase *pgnodes.GrantDatabase
 	var grantSequence *pgnodes.GrantSequence
 	var grantRoutine *pgnodes.GrantRoutine
+	var grantForeignDataWrapper *pgnodes.GrantForeignDataWrapper
+	var grantForeignServer *pgnodes.GrantForeignServer
 	var grantLanguage *pgnodes.GrantLanguage
 	var grantType *pgnodes.GrantType
 	var grantLargeObject *pgnodes.GrantLargeObject
@@ -152,6 +154,24 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 			Privileges: privileges,
 			Routines:   routines,
 		}
+	case privilege.ForeignDataWrapper:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_FOREIGN_DATA_WRAPPER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		grantForeignDataWrapper = &pgnodes.GrantForeignDataWrapper{
+			Privileges: privileges,
+			Wrappers:   node.Targets.Names,
+		}
+	case privilege.ForeignServer:
+		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_FOREIGN_SERVER, node.Privileges)
+		if err != nil {
+			return nil, err
+		}
+		grantForeignServer = &pgnodes.GrantForeignServer{
+			Privileges: privileges,
+			Servers:    node.Targets.Names,
+		}
 	case privilege.Language:
 		privileges, err := convertPrivilegeKinds(auth.PrivilegeObject_LANGUAGE, node.Privileges)
 		if err != nil {
@@ -208,19 +228,21 @@ func nodeGrant(ctx *Context, node *tree.Grant) (vitess.Statement, error) {
 	}
 	return vitess.InjectedStatement{
 		Statement: &pgnodes.Grant{
-			GrantTable:       grantTable,
-			GrantSchema:      grantSchema,
-			GrantDatabase:    grantDatabase,
-			GrantSequence:    grantSequence,
-			GrantRoutine:     grantRoutine,
-			GrantLanguage:    grantLanguage,
-			GrantType:        grantType,
-			GrantLargeObject: grantLargeObject,
-			GrantParameter:   grantParameter,
-			GrantRole:        nil,
-			ToRoles:          node.Grantees,
-			WithGrantOption:  node.WithGrantOption,
-			GrantedBy:        node.GrantedBy,
+			GrantTable:              grantTable,
+			GrantSchema:             grantSchema,
+			GrantDatabase:           grantDatabase,
+			GrantSequence:           grantSequence,
+			GrantRoutine:            grantRoutine,
+			GrantForeignDataWrapper: grantForeignDataWrapper,
+			GrantForeignServer:      grantForeignServer,
+			GrantLanguage:           grantLanguage,
+			GrantType:               grantType,
+			GrantLargeObject:        grantLargeObject,
+			GrantParameter:          grantParameter,
+			GrantRole:               nil,
+			ToRoles:                 node.Grantees,
+			WithGrantOption:         node.WithGrantOption,
+			GrantedBy:               node.GrantedBy,
 		},
 		Children: nil,
 	}, nil
