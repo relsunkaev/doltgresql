@@ -213,6 +213,9 @@ func nodeCreateTable(ctx *Context, node *tree.CreateTable) (vitess.Statement, er
 		if err = assignTableDefs(ctx, node.Defs, ddl); err != nil {
 			return nil, err
 		}
+		if ddl.TableSpec == nil {
+			ddl.TableSpec = &vitess.TableSpec{}
+		}
 		setColumnIdentityMetadata(ddl.TableSpec, node.Defs)
 	}
 	if len(relOptions) > 0 {
