@@ -1,0 +1,685 @@
+{
+  "generatedBy": "go run gen_postgres_oracle_manifest.go --promote-oracle-map window_functions_test.go --force-postgres-oracle",
+  "sourceFile": "testing/go/window_functions_test.go",
+  "defaultOracle": "internal",
+  "assertionKeyStyle": "testing/go/<file>:<TestName>#<expectation-ordinal>",
+  "assertionFields": [
+    "Expected",
+    "ExpectedRaw",
+    "ExpectedErr",
+    "ExpectedTag",
+    "ExpectedColNames",
+    "ExpectedColTypes",
+    "ExpectedNotices"
+  ],
+  "assertions": [
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0001",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 1,
+      "scriptName": "lag / lead",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0001-select-day-price-lag-price",
+      "suggestedId": "window-functions-test-testwindowfunctions-0001-select-day-price-lag-price",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT day, price,\n\t\t\t\t\t\tlag(price)  OVER (ORDER BY day) AS prev_price,\n\t\t\t\t\t\tlead(price) OVER (ORDER BY day) AS next_price,\n\t\t\t\t\t\tprice - lag(price) OVER (ORDER BY day) AS change\n\t\t\t\t\t\tFROM prices\n\t\t\t\t\t\tORDER BY day;",
+      "querySha256": "aca0c7575710f12c653ad37d98e8bd35d14ceb98dd9e0a19f0d0452a7073015d",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "110"
+          },
+          {
+            "null": true
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "110"
+          },
+          {
+            "value": "100"
+          },
+          {
+            "value": "95"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "95"
+          },
+          {
+            "value": "110"
+          },
+          {
+            "value": "120"
+          },
+          {
+            "value": "-15"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "120"
+          },
+          {
+            "value": "95"
+          },
+          {
+            "null": true
+          },
+          {
+            "value": "25"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0002",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 2,
+      "scriptName": "count over partitioned window",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0002-select-id-grp-count-*",
+      "suggestedId": "window-functions-test-testwindowfunctions-0002-select-id-grp-count-*",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, grp,\n\t\t\t\t\t\tcount(*) OVER (PARTITION BY grp) AS group_total,\n\t\t\t\t\t\tcount(*) OVER () AS overall_total\n\t\t\t\t\t\tFROM events\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "8ddd9a5b74520a842b98282d3efb61c1be2c6f11c7056c63a497e8ac8a2a97dc",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "5"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0003",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 3,
+      "scriptName": "running aggregates over explicit row frames",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0003-select-id-grp-sum-amount",
+      "suggestedId": "window-functions-test-testwindowfunctions-0003-select-id-grp-sum-amount",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, grp,\n\t\t\t\t\t\tsum(amount) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t) AS rolling_sum\n\t\t\t\t\t\tFROM measurements\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "972004d5c14c8b1fc00e7f21c69d33c19f955f621cbf66d1e7c73bb463982f75",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "50"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "20"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0004",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 4,
+      "scriptName": "running aggregates over explicit row frames",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0004-select-id-grp-avg-amount",
+      "suggestedId": "window-functions-test-testwindowfunctions-0004-select-id-grp-avg-amount",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, grp,\n\t\t\t\t\t\tavg(amount) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t) AS rolling_avg\n\t\t\t\t\t\tFROM measurements\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "4eed71f47f02bb0d2d4cc037761edc206204cc4e412d68a9477890806b5b36b4",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "25"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "5"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "10"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0005",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 5,
+      "scriptName": "running aggregates over explicit row frames",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0005-select-pg_typeof-sum-amount-over",
+      "suggestedId": "window-functions-test-testwindowfunctions-0005-select-pg_typeof-sum-amount-over",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\tpg_typeof(sum(amount) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t)),\n\t\t\t\t\t\tpg_typeof(avg(amount) OVER (\n\t\t\t\t\t\t\tPARTITION BY grp\n\t\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\t\tROWS BETWEEN 1 PRECEDING AND CURRENT ROW\n\t\t\t\t\t\t))\n\t\t\t\t\t\tFROM measurements\n\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\tLIMIT 1;",
+      "querySha256": "b434c1514d465bac896648167e789eb31b4dcf752db46c6c4be486cd201d970f",
+      "expectedRows": [
+        [
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "numeric"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0006",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 6,
+      "scriptName": "first_value / last_value over partition",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0006-select-id-grp-n-first_value",
+      "suggestedId": "window-functions-test-testwindowfunctions-0006-select-id-grp-n-first_value",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, grp, n,\n\t\t\t\t\t\tfirst_value(n) OVER (PARTITION BY grp ORDER BY id) AS first_n,\n\t\t\t\t\t\tlast_value(n)  OVER (PARTITION BY grp ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_n\n\t\t\t\t\t\tFROM events\n\t\t\t\t\t\tORDER BY id;",
+      "querySha256": "fd047048fbda3c8c20409644376918e5a09f0e78a5f4be51a462e0af7e1b17d7",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "30"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "30"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "15"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "15"
+          },
+          {
+            "value": "5"
+          },
+          {
+            "value": "15"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0007",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 7,
+      "scriptName": "rank family over partition",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0007-select-id-grp-score-row_number",
+      "suggestedId": "window-functions-test-testwindowfunctions-0007-select-id-grp-score-row_number",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT id, grp, score,\n\t\t\t\t\t\trow_number() OVER (PARTITION BY grp ORDER BY score DESC, id) AS row_num,\n\t\t\t\t\t\trank() OVER (PARTITION BY grp ORDER BY score DESC) AS rank_num,\n\t\t\t\t\t\tdense_rank() OVER (PARTITION BY grp ORDER BY score DESC) AS dense_rank_num,\n\t\t\t\t\t\tpercent_rank() OVER (PARTITION BY grp ORDER BY score DESC) AS pct_rank,\n\t\t\t\t\t\tntile(2) OVER (PARTITION BY grp ORDER BY score DESC, id) AS bucket\n\t\t\t\t\t\tFROM scores\n\t\t\t\t\t\tORDER BY grp, score DESC, id;",
+      "querySha256": "8652e74e10d160cc6045a59769a816143d4a6b713af45d4772e99eb6142734e4",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "20"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "a"
+          },
+          {
+            "value": "10"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ],
+        [
+          {
+            "value": "5"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "9"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "6"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "9"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "0"
+          },
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "4"
+          },
+          {
+            "value": "b"
+          },
+          {
+            "value": "7"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "3"
+          },
+          {
+            "value": "2"
+          },
+          {
+            "value": "1"
+          },
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "nonLiteral": [
+        "Expected"
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    },
+    {
+      "key": "testing/go/window_functions_test.go:TestWindowFunctions#0008",
+      "source": "testing/go/window_functions_test.go:TestWindowFunctions",
+      "ordinal": 8,
+      "scriptName": "rank family over partition",
+      "oracle": "postgres",
+      "postgresId": "window-functions-test-testwindowfunctions-0008-select-pg_typeof-row_number-over-order",
+      "suggestedId": "window-functions-test-testwindowfunctions-0008-select-pg_typeof-row_number-over-order",
+      "compare": "structural",
+      "expectedKind": "rows",
+      "query": "SELECT\n\t\t\t\t\t\tpg_typeof(row_number() OVER (ORDER BY id)),\n\t\t\t\t\t\tpg_typeof(rank() OVER (ORDER BY score DESC)),\n\t\t\t\t\t\tpg_typeof(dense_rank() OVER (ORDER BY score DESC)),\n\t\t\t\t\t\tpg_typeof(percent_rank() OVER (ORDER BY score DESC)),\n\t\t\t\t\t\tpg_typeof(ntile(2) OVER (ORDER BY score DESC, id))\n\t\t\t\t\t\tFROM scores\n\t\t\t\t\t\tORDER BY id\n\t\t\t\t\t\tLIMIT 1;",
+      "querySha256": "d74354bab362306bd9887f75d941ca8a1ac8c480dab09749fb69059fbaad7886",
+      "expectedRows": [
+        [
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "bigint"
+          },
+          {
+            "value": "double precision"
+          },
+          {
+            "value": "integer"
+          }
+        ]
+      ],
+      "needsCleanup": false,
+      "cleanupProvided": false
+    }
+  ]
+}
