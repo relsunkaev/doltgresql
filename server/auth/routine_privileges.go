@@ -164,6 +164,16 @@ func RemoveRoutinePrivilege(key RoutinePrivilegeKey, privilege GrantedPrivilege,
 	}
 }
 
+// RemoveAllRoutinePrivileges removes explicit privilege entries for a dropped
+// routine. Schema-wide entries for all routines are left intact.
+func RemoveAllRoutinePrivileges(schema, routine string) {
+	for key := range globalDatabase.routinePrivileges.Data {
+		if key.Schema == schema && key.Name == routine {
+			delete(globalDatabase.routinePrivileges.Data, key)
+		}
+	}
+}
+
 // serialize writes the RoutinePrivileges to the given writer.
 func (rp *RoutinePrivileges) serialize(writer *utils.Writer) {
 	// Version 1
