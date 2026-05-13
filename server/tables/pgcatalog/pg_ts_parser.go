@@ -60,11 +60,11 @@ var pgTsParserSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},
 	{Name: "prsname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgTsParserName},
 	{Name: "prsnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},
-	{Name: "prsstart", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},    // TODO: regproc type
-	{Name: "prstoken", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},    // TODO: regproc type
-	{Name: "prsend", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},      // TODO: regproc type
-	{Name: "prsheadline", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName}, // TODO: regproc type
-	{Name: "prslextype", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsParserName},  // TODO: regproc type
+	{Name: "prsstart", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},    // TODO: regproc type
+	{Name: "prstoken", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},    // TODO: regproc type
+	{Name: "prsend", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},      // TODO: regproc type
+	{Name: "prsheadline", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName}, // TODO: regproc type
+	{Name: "prslextype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},  // TODO: regproc type
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsParserName},
 }
 
@@ -85,11 +85,11 @@ func (iter *pgTsParserRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		id.NewId(id.Section_TextSearchParser, PgCatalogName, "default"),
 		"default",
 		id.NewNamespace(PgCatalogName).AsId(),
-		"",
-		"",
-		"",
-		"",
-		"",
+		id.NewFunction(PgCatalogName, "prsd_start", pgtypes.Int32.ID, pgtypes.Internal.ID).AsId(),
+		id.NewFunction(PgCatalogName, "prsd_nexttoken", pgtypes.Internal.ID, pgtypes.Internal.ID, pgtypes.Internal.ID).AsId(),
+		id.NewFunction(PgCatalogName, "prsd_end", pgtypes.Internal.ID).AsId(),
+		id.NewFunction(PgCatalogName, "prsd_headline", pgtypes.Internal.ID, pgtypes.Internal.ID, pgtypes.TsQuery.ID).AsId(),
+		id.NewFunction(PgCatalogName, "prsd_lextype", pgtypes.Internal.ID).AsId(),
 		id.NewTable(PgCatalogName, PgTsParserName).AsId(),
 	}, nil
 }

@@ -83,6 +83,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	if authName == "" {
 		authName = name.String()
 	}
+	normalizedName := strings.ToLower(authName)
 	var distinct bool
 	switch node.Type {
 	case 0, tree.AllFuncType:
@@ -111,11 +112,11 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 				return nil, err
 			}
 		}
-		switch strings.ToLower(name.String()) {
+		switch normalizedName {
 		case "percentile_cont", "percentile_disc", "mode", "rank":
 			return &vitess.OrderedInjectedExpr{
 				InjectedExpr: vitess.InjectedExpr{
-					Expression:         pgexprs.NewOrderedSetAgg(strings.ToLower(name.String())),
+					Expression:         pgexprs.NewOrderedSetAgg(normalizedName),
 					SelectExprChildren: exprs,
 					Auth:               vitess.AuthInformation{},
 				},
@@ -126,7 +127,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 		}
 	}
 
-	switch strings.ToLower(name.String()) {
+	switch normalizedName {
 	case "count":
 		if distinct && windowDef == nil {
 			return &vitess.OrderedInjectedExpr{
@@ -164,16 +165,16 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	case "lag", "lead":
 		if windowDef != nil {
 			if distinct {
-				return nil, errors.Errorf("%s DISTINCT with OVER is not supported", name.String())
+				return nil, errors.Errorf("%s DISTINCT with OVER is not supported", normalizedName)
 			}
 			if len(node.OrderBy) > 0 {
-				return nil, errors.Errorf("%s ORDER BY with OVER is not supported", name.String())
+				return nil, errors.Errorf("%s ORDER BY with OVER is not supported", normalizedName)
 			}
 			if len(exprs) < 1 || len(exprs) > 3 {
-				return nil, errors.Errorf("%s requires one, two, or three arguments", name.String())
+				return nil, errors.Errorf("%s requires one, two, or three arguments", normalizedName)
 			}
 			marker := pgexprs.LagWindowMarker
-			if strings.EqualFold(name.String(), "lead") {
+			if normalizedName == "lead" {
 				marker = pgexprs.LeadWindowMarker
 			}
 			return markedDoltgresWindowFunc(marker, exprs, windowDef), nil
@@ -207,16 +208,16 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 	case "bool_and", "bool_or":
 		if windowDef != nil {
 			if distinct {
-				return nil, errors.Errorf("%s DISTINCT with OVER is not yet supported", name.String())
+				return nil, errors.Errorf("%s DISTINCT with OVER is not yet supported", normalizedName)
 			}
 			if len(node.OrderBy) > 0 {
-				return nil, errors.Errorf("%s ORDER BY with OVER is not yet supported", name.String())
+				return nil, errors.Errorf("%s ORDER BY with OVER is not yet supported", normalizedName)
 			}
 			if len(exprs) != 1 {
-				return nil, errors.Errorf("%s requires one argument", name.String())
+				return nil, errors.Errorf("%s requires one argument", normalizedName)
 			}
 			marker := pgexprs.BoolOrWindowMarker
-			if strings.EqualFold(name.String(), "bool_and") {
+			if normalizedName == "bool_and" {
 				marker = pgexprs.BoolAndWindowMarker
 			}
 			return &vitess.FuncExpr{
@@ -297,7 +298,7 @@ func nodeFuncExpr(ctx *Context, node *tree.FuncExpr) (vitess.Expr, error) {
 			OrderBy: orderBy,
 		}, nil
 	case "json_agg", "jsonb_agg", "json_object_agg", "jsonb_object_agg":
-		fnName := strings.ToLower(name.String())
+		fnName := normalizedName
 		isObjectAgg := strings.Contains(fnName, "object")
 		if isObjectAgg && len(node.Exprs) != 2 {
 			return nil, errors.Errorf("%s requires two arguments", fnName)

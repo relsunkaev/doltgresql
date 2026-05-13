@@ -60,8 +60,8 @@ var pgTsTemplateSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsTemplateName},
 	{Name: "tmplname", Type: pgtypes.Name, Default: nil, Nullable: false, Source: PgTsTemplateName},
 	{Name: "tmplnamespace", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsTemplateName},
-	{Name: "tmplinit", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsTemplateName},   // TODO: regproc type
-	{Name: "tmpllexize", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTsTemplateName}, // TODO: regproc type
+	{Name: "tmplinit", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsTemplateName},   // TODO: regproc type
+	{Name: "tmpllexize", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsTemplateName}, // TODO: regproc type
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTsTemplateName},
 }
 
@@ -82,8 +82,8 @@ func (iter *pgTsTemplateRowIter) Next(ctx *sql.Context) (sql.Row, error) {
 		id.NewId(id.Section_TextSearchTemplate, PgCatalogName, "simple"),
 		"simple",
 		id.NewNamespace(PgCatalogName).AsId(),
-		"",
-		"",
+		id.NewFunction(PgCatalogName, "dsimple_init", pgtypes.Internal.ID).AsId(),
+		id.NewFunction(PgCatalogName, "dsimple_lexize", pgtypes.Internal.ID, pgtypes.Internal.ID, pgtypes.Internal.ID, pgtypes.Internal.ID).AsId(),
 		id.NewTable(PgCatalogName, PgTsTemplateName).AsId(),
 	}, nil
 }

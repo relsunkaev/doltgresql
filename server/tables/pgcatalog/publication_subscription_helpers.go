@@ -167,5 +167,5 @@ func nullableString(value string) any {
 }
 
 func catalogOwnerOID() id.Id {
-	return id.NewOID(10).AsId()
+	return id.NewId(id.Section_User, "postgres")
 }

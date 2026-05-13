@@ -26,7 +26,10 @@ import (
 )
 
 func initPgOptionsToTable() {
-	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions, &pgOptionsToTableFunction{})
+	dtablefunctions.DoltTableFunctions = append(dtablefunctions.DoltTableFunctions,
+		newPgOptionsToTableFunction("pg_options_to_table"),
+		newPgOptionsToTableFunction(qualifiedPgCatalogFunctionName("pg_options_to_table")),
+	)
 }
 
 var _ sql.TableFunction = (*pgOptionsToTableFunction)(nil)
@@ -34,19 +37,24 @@ var _ sql.ExecSourceRel = (*pgOptionsToTableFunction)(nil)
 
 type pgOptionsToTableFunction struct {
 	db    sql.Database
+	name  string
 	expr  sql.Expression
 	exprs []sql.Expression
+}
+
+func newPgOptionsToTableFunction(name string) *pgOptionsToTableFunction {
+	return &pgOptionsToTableFunction{name: name}
 }
 
 func (p *pgOptionsToTableFunction) NewInstance(ctx *sql.Context, db sql.Database, args []sql.Expression) (sql.Node, error) {
 	if len(args) != 1 {
 		return nil, sql.ErrInvalidArgumentNumber.New(p.Name(), 1, len(args))
 	}
-	return &pgOptionsToTableFunction{db: db, expr: args[0], exprs: args}, nil
+	return &pgOptionsToTableFunction{db: db, name: p.name, expr: args[0], exprs: args}, nil
 }
 
 func (p *pgOptionsToTableFunction) Name() string {
-	return "pg_options_to_table"
+	return p.name
 }
 
 func (p *pgOptionsToTableFunction) String() string {

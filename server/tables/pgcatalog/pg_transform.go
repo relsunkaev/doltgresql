@@ -52,9 +52,9 @@ func (p PgTransformHandler) RowIter(ctx *sql.Context, partition sql.Partition) (
 				id.NewId(id.Section_Table, PgCatalogName, PgTransformName, string(transform.TypeID), transform.Lang), // oid
 				transform.TypeID, // trftype
 				id.NewId(id.Section_FunctionLanguage, transform.Lang), // trflang
-				transform.FromSQL, // trffromsql
-				transform.ToSQL,   // trftosql
-				id.NewTable(PgCatalogName, PgTransformName).AsId(), // tableoid
+				transformFunctionID(transform.FromSQL),                // trffromsql
+				transformFunctionID(transform.ToSQL),                  // trftosql
+				id.NewTable(PgCatalogName, PgTransformName).AsId(),    // tableoid
 			})
 		}
 	})
@@ -74,9 +74,16 @@ var pgTransformSchema = sql.Schema{
 	{Name: "oid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
 	{Name: "trftype", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
 	{Name: "trflang", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
-	{Name: "trffromsql", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTransformName}, // TODO: regproc type
-	{Name: "trftosql", Type: pgtypes.Text, Default: nil, Nullable: false, Source: PgTransformName},   // TODO: regproc type
+	{Name: "trffromsql", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName}, // TODO: regproc type
+	{Name: "trftosql", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},   // TODO: regproc type
 	{Name: "tableoid", Type: pgtypes.Oid, Default: nil, Nullable: false, Source: PgTransformName},
+}
+
+func transformFunctionID(name string) id.Id {
+	if name == "" {
+		return id.Null
+	}
+	return id.NewFunction(PgCatalogName, name).AsId()
 }
 
 // pgTransformRowIter is the sql.RowIter for the pg_transform table.
