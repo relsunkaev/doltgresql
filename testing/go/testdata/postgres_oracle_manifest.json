@@ -8726,6 +8726,36 @@
       ]
     },
     {
+      "id": "truncate-correctness-repro-test-testtruncatemultipletablesrepro-0001-select-select-count-*-from",
+      "source": "testing/go/truncate_correctness_repro_test.go:TestTruncateMultipleTablesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE truncate_multi_a (id INT PRIMARY KEY, label TEXT);",
+        "CREATE TABLE truncate_multi_b (id INT PRIMARY KEY, label TEXT);",
+        "INSERT INTO truncate_multi_a VALUES (1, 'a');",
+        "INSERT INTO truncate_multi_b VALUES (2, 'b');",
+        "TRUNCATE truncate_multi_a, truncate_multi_b;"
+      ],
+      "query": "SELECT\n\t\t\t\t\t\t(SELECT count(*) FROM truncate_multi_a),\n\t\t\t\t\t\t(SELECT count(*) FROM truncate_multi_b);",
+      "expectedRows": [
+        [
+          {
+            "value": "0"
+          },
+          {
+            "value": "0"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "type-comment-drop-repro-test-testdroptypeclearscommentrepro-0001-select-obj_description-select-oid-from",
       "source": "testing/go/type_comment_drop_repro_test.go:TestDropTypeClearsCommentRepro",
       "ordinal": 1,
