@@ -26,12 +26,15 @@ package tree
 
 import (
 	"github.com/cockroachdb/errors"
+
+	"github.com/dolthub/doltgresql/postgres/parser/lex"
 )
 
 // CopyFrom represents a COPY FROM statement.
 type CopyFrom struct {
 	Table   TableName
 	File    string
+	Program string
 	Columns NameList
 	Stdin   bool
 	Options CopyOptions
@@ -41,6 +44,8 @@ type CopyFrom struct {
 type CopyTo struct {
 	Table   TableName
 	Query   *Select
+	File    string
+	Program string
 	Columns NameList
 	Stdout  bool
 	Options CopyOptions
@@ -68,8 +73,13 @@ func (node *CopyFrom) Format(ctx *FmtCtx) {
 		ctx.WriteString(")")
 	}
 	ctx.WriteString(" FROM ")
-	if node.Stdin {
+	if node.Program != "" {
+		ctx.WriteString("PROGRAM ")
+		ctx.WriteString(lex.EscapeSQLString(node.Program))
+	} else if node.Stdin {
 		ctx.WriteString("STDIN")
+	} else {
+		ctx.WriteString(lex.EscapeSQLString(node.File))
 	}
 	if !node.Options.IsDefault() {
 		ctx.WriteString(" WITH ")
@@ -93,8 +103,13 @@ func (node *CopyTo) Format(ctx *FmtCtx) {
 		}
 	}
 	ctx.WriteString(" TO ")
-	if node.Stdout {
+	if node.Program != "" {
+		ctx.WriteString("PROGRAM ")
+		ctx.WriteString(lex.EscapeSQLString(node.Program))
+	} else if node.Stdout {
 		ctx.WriteString("STDOUT")
+	} else {
+		ctx.WriteString(lex.EscapeSQLString(node.File))
 	}
 	if !node.Options.IsDefault() {
 		ctx.WriteString(" WITH ")

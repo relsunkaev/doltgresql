@@ -15,7 +15,6 @@
 package ast
 
 import (
-	"github.com/cockroachdb/errors"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
@@ -27,9 +26,6 @@ import (
 func nodeCopyTo(ctx *Context, node *tree.CopyTo) (vitess.Statement, error) {
 	if node == nil {
 		return nil, nil
-	}
-	if !node.Stdout {
-		return nil, errors.Errorf("COPY TO only supports STDOUT")
 	}
 
 	var query string
@@ -45,6 +41,8 @@ func nodeCopyTo(ctx *Context, node *tree.CopyTo) (vitess.Statement, error) {
 				Schema: node.Table.Schema(),
 			},
 			query,
+			node.File,
+			node.Program,
 			node.Stdout,
 			node.Columns,
 			node.Options,

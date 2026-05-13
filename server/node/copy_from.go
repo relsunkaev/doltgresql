@@ -31,6 +31,7 @@ type CopyFrom struct {
 	DatabaseName string
 	TableName    doltdb.TableName
 	File         string
+	Program      string
 	Stdin        bool
 	Columns      tree.NameList
 	CopyOptions  tree.CopyOptions
@@ -47,6 +48,7 @@ func NewCopyFrom(
 	tableName doltdb.TableName,
 	options tree.CopyOptions,
 	fileName string,
+	program string,
 	stdin bool,
 	columns tree.NameList,
 	insertStub *vitess.Insert,
@@ -62,6 +64,7 @@ func NewCopyFrom(
 		DatabaseName: databaseName,
 		TableName:    tableName,
 		File:         fileName,
+		Program:      program,
 		Stdin:        stdin,
 		Columns:      columns,
 		CopyOptions:  options,
@@ -101,7 +104,9 @@ func (cf *CopyFrom) Schema(ctx *sql.Context) sql.Schema {
 // String implements the interface sql.ExecSourceRel.
 func (cf *CopyFrom) String() string {
 	source := "STDIN"
-	if cf.File != "" {
+	if cf.Program != "" {
+		source = fmt.Sprintf("PROGRAM '%s'", cf.Program)
+	} else if cf.File != "" {
 		source = fmt.Sprintf("'%s'", cf.File)
 	}
 	return fmt.Sprintf("COPY FROM %s", source)

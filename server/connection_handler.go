@@ -2063,13 +2063,19 @@ func (h *ConnectionHandler) copyFromFileQuery(stmt *node.CopyFrom) error {
 		copyFromStdinNode: stmt,
 	}
 
-	if !filepath.IsAbs(stmt.File) {
-		return errors.Errorf("relative path not allowed for COPY FROM")
-	}
-
 	sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "COPY FROM")
 	if err != nil {
 		return err
+	}
+	if stmt.Program != "" {
+		if err = requireCopyServerProgramPrivilege(sqlCtx); err != nil {
+			return err
+		}
+		return errors.Errorf("COPY FROM PROGRAM is not supported")
+	}
+
+	if !filepath.IsAbs(stmt.File) {
+		return errors.Errorf("relative path not allowed for COPY FROM")
 	}
 	if err = requireCopyFromServerFilePrivilege(sqlCtx); err != nil {
 		return err
@@ -2165,13 +2171,25 @@ func (h *ConnectionHandler) handleCopyDataHelper(copyState *copyFromStdinState, 
 }
 
 func requireCopyFromServerFilePrivilege(ctx *sql.Context) error {
+	return requireCopyServerRolePrivilege(ctx, "pg_read_server_files", "COPY from a file")
+}
+
+func requireCopyToServerFilePrivilege(ctx *sql.Context) error {
+	return requireCopyServerRolePrivilege(ctx, "pg_write_server_files", "COPY to a file")
+}
+
+func requireCopyServerProgramPrivilege(ctx *sql.Context) error {
+	return requireCopyServerRolePrivilege(ctx, "pg_execute_server_program", "COPY to or from a program")
+}
+
+func requireCopyServerRolePrivilege(ctx *sql.Context, roleName string, action string) error {
 	var allowed bool
 	auth.LockRead(func() {
 		role := auth.GetRole(ctx.Client().User)
-		allowed = role.IsValid() && (role.IsSuperUser || auth.HasInheritedRole(role.ID(), "pg_read_server_files"))
+		allowed = role.IsValid() && (role.IsSuperUser || auth.HasInheritedRole(role.ID(), roleName))
 	})
 	if !allowed {
-		return errors.Errorf("permission denied to COPY from a file: must be superuser or have privileges of the pg_read_server_files role")
+		return errors.Errorf("permission denied to %s: must be superuser or have privileges of the %s role", action, roleName)
 	}
 	return nil
 }
@@ -2493,7 +2511,23 @@ func (h *ConnectionHandler) handleCopyToStdoutQuery(copyTo *node.CopyTo) error {
 		return nil
 	}
 	if !copyTo.Stdout {
-		return errors.Errorf("COPY TO only supports STDOUT")
+		sqlCtx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, "COPY TO")
+		if err != nil {
+			return err
+		}
+		if copyTo.Program != "" {
+			if err = requireCopyServerProgramPrivilege(sqlCtx); err != nil {
+				return err
+			}
+			return errors.Errorf("COPY TO PROGRAM is not supported")
+		}
+		if err = requireCopyToServerFilePrivilege(sqlCtx); err != nil {
+			return err
+		}
+		if !filepath.IsAbs(copyTo.File) {
+			return errors.Errorf("relative path not allowed for COPY TO")
+		}
+		return errors.Errorf("COPY TO server files is not supported")
 	}
 	if copyTo.CopyOptions.CopyFormat == tree.CopyFormatBinary && copyTo.CopyOptions.Header {
 		return errors.Errorf("COPY TO cannot use HEADER with BINARY format")

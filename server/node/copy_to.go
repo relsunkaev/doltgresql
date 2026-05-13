@@ -29,6 +29,8 @@ type CopyTo struct {
 	DatabaseName string
 	TableName    doltdb.TableName
 	Query        string
+	File         string
+	Program      string
 	Stdout       bool
 	Columns      tree.NameList
 	CopyOptions  tree.CopyOptions
@@ -37,11 +39,13 @@ type CopyTo struct {
 var _ vitess.Injectable = (*CopyTo)(nil)
 
 // NewCopyTo returns a new *CopyTo.
-func NewCopyTo(databaseName string, tableName doltdb.TableName, query string, stdout bool, columns tree.NameList, options tree.CopyOptions) *CopyTo {
+func NewCopyTo(databaseName string, tableName doltdb.TableName, query string, file string, program string, stdout bool, columns tree.NameList, options tree.CopyOptions) *CopyTo {
 	return &CopyTo{
 		DatabaseName: databaseName,
 		TableName:    tableName,
 		Query:        query,
+		File:         file,
+		Program:      program,
 		Stdout:       stdout,
 		Columns:      columns,
 		CopyOptions:  options,
@@ -51,8 +55,10 @@ func NewCopyTo(databaseName string, tableName doltdb.TableName, query string, st
 // String implements the interface vitess.Injectable.
 func (ct *CopyTo) String() string {
 	target := "STDOUT"
-	if !ct.Stdout {
-		target = "<unsupported>"
+	if ct.Program != "" {
+		target = fmt.Sprintf("PROGRAM '%s'", ct.Program)
+	} else if ct.File != "" {
+		target = fmt.Sprintf("'%s'", ct.File)
 	}
 	return fmt.Sprintf("COPY TO %s", target)
 }

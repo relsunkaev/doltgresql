@@ -58,6 +58,7 @@ func nodeCopyFrom(ctx *Context, node *tree.CopyFrom) (vitess.Statement, error) {
 			},
 			node.Options,
 			node.File,
+			node.Program,
 			node.Stdin,
 			node.Columns,
 			&vitess.Insert{

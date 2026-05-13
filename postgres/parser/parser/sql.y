@@ -912,7 +912,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <str> PARALLEL PARAMETER PARENT PARSER PARTIAL PARTITION PARTITIONS PASSEDBYVALUE PASSWORD PATH PAUSE PAUSED PHYSICAL
 %token <str> PLACING PLAIN PLAN PLANS POINT POINTM POINTZ POINTZM POLICY POLYGON POLYGONM POLYGONZ POLYGONZM
 %token <str> POSITION PRECEDING PRECISION PREFERRED PREPARE PREPARED PRESERVE PRIMARY PRIORITY PRIVILEGES
-%token <str> PROCEDURAL PROCEDURE PROCEDURES PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
+%token <str> PROCEDURAL PROCEDURE PROCEDURES PROGRAM PROCESS_MAIN PROCESS_TOAST PUBLIC PUBLICATION
 
 %token <str> QUERIES QUERY
 
@@ -4078,6 +4078,28 @@ copy_from_stmt:
        Options: *$6.copyOptions(),
     }
   }
+| COPY table_name opt_column_list FROM PROGRAM SCONST opt_with '(' copy_options_list ')'
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyFrom{
+       Table: name,
+       Program: $6,
+       Columns: $3.nameList(),
+       Stdin: false,
+       Options: *$9.copyOptions(),
+    }
+  }
+| COPY table_name opt_column_list FROM PROGRAM SCONST opt_legacy_copy_options
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyFrom{
+       Table: name,
+       Program: $6,
+       Columns: $3.nameList(),
+       Stdin: false,
+       Options: *$7.copyOptions(),
+    }
+  }
 | COPY table_name opt_column_list FROM STDIN opt_with '(' copy_options_list ')'
   {
     name := $2.unresolvedObjectName().ToTableName()
@@ -4120,6 +4142,50 @@ copy_to_stmt:
        Options: *$6.copyOptions(),
     }
   }
+| COPY table_name opt_column_list TO SCONST opt_with '(' copy_options_list ')'
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       File: $5,
+       Columns: $3.nameList(),
+       Stdout: false,
+       Options: *$8.copyOptions(),
+    }
+  }
+| COPY table_name opt_column_list TO SCONST opt_legacy_copy_options
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       File: $5,
+       Columns: $3.nameList(),
+       Stdout: false,
+       Options: *$6.copyOptions(),
+    }
+  }
+| COPY table_name opt_column_list TO PROGRAM SCONST opt_with '(' copy_options_list ')'
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       Program: $6,
+       Columns: $3.nameList(),
+       Stdout: false,
+       Options: *$9.copyOptions(),
+    }
+  }
+| COPY table_name opt_column_list TO PROGRAM SCONST opt_legacy_copy_options
+  {
+    name := $2.unresolvedObjectName().ToTableName()
+    $$.val = &tree.CopyTo{
+       Table: name,
+       Program: $6,
+       Columns: $3.nameList(),
+       Stdout: false,
+       Options: *$7.copyOptions(),
+    }
+  }
 | COPY copy_to_query TO STDOUT opt_with '(' copy_options_list ')'
   {
     $$.val = &tree.CopyTo{
@@ -4134,6 +4200,42 @@ copy_to_stmt:
        Query: $2.slct(),
        Stdout: true,
        Options: *$5.copyOptions(),
+    }
+  }
+| COPY copy_to_query TO SCONST opt_with '(' copy_options_list ')'
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       File: $4,
+       Stdout: false,
+       Options: *$7.copyOptions(),
+    }
+  }
+| COPY copy_to_query TO SCONST opt_legacy_copy_options
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       File: $4,
+       Stdout: false,
+       Options: *$5.copyOptions(),
+    }
+  }
+| COPY copy_to_query TO PROGRAM SCONST opt_with '(' copy_options_list ')'
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       Program: $5,
+       Stdout: false,
+       Options: *$8.copyOptions(),
+    }
+  }
+| COPY copy_to_query TO PROGRAM SCONST opt_legacy_copy_options
+  {
+    $$.val = &tree.CopyTo{
+       Query: $2.slct(),
+       Program: $5,
+       Stdout: false,
+       Options: *$6.copyOptions(),
     }
   }
 
@@ -16580,6 +16682,7 @@ unreserved_keyword:
 | PROCEDURAL
 | PROCEDURE
 | PROCEDURES
+| PROGRAM
 | PROCESS_MAIN
 | PROCESS_TOAST
 | PUBLIC
