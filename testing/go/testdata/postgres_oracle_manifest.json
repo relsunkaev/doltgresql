@@ -94,6 +94,63 @@
       "expectedRows": [[{"value": "0"}]],
       "columnModes": ["structural"],
       "cleanup": ["DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"]
+    },
+    {
+      "id": "rls-policy-role-list-allows-listed-role",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "CREATE ROLE {{schema}}_allowed LOGIN",
+        "CREATE ROLE {{schema}}_unlisted LOGIN",
+        "CREATE TABLE {{quotedSchema}}.docs (id integer PRIMARY KEY, owner_name text, label text)",
+        "INSERT INTO {{quotedSchema}}.docs VALUES (1, '{{schema}}_allowed', 'allowed row'), (2, '{{schema}}_unlisted', 'unlisted row')",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO {{schema}}_allowed, {{schema}}_unlisted",
+        "GRANT SELECT ON {{quotedSchema}}.docs TO {{schema}}_allowed, {{schema}}_unlisted",
+        "CREATE POLICY docs_owner_select ON {{quotedSchema}}.docs FOR SELECT TO {{schema}}_allowed USING (owner_name = current_user)",
+        "ALTER TABLE {{quotedSchema}}.docs ENABLE ROW LEVEL SECURITY",
+        "SET ROLE {{schema}}_allowed"
+      ],
+      "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
+      "expectedRows": [[
+        {"value": "1"},
+        {"value": "allowed row"}
+      ]],
+      "columnModes": ["structural", "structural"],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
+        "DROP ROLE IF EXISTS {{schema}}_allowed",
+        "DROP ROLE IF EXISTS {{schema}}_unlisted"
+      ]
+    },
+    {
+      "id": "rls-policy-role-list-denies-unlisted-role",
+      "source": "testing/go/row_level_security_policy_role_repro_test.go:TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro",
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "CREATE ROLE {{schema}}_allowed LOGIN",
+        "CREATE ROLE {{schema}}_unlisted LOGIN",
+        "CREATE TABLE {{quotedSchema}}.docs (id integer PRIMARY KEY, owner_name text, label text)",
+        "INSERT INTO {{quotedSchema}}.docs VALUES (1, '{{schema}}_allowed', 'allowed row'), (2, '{{schema}}_unlisted', 'unlisted row')",
+        "GRANT USAGE ON SCHEMA {{quotedSchema}} TO {{schema}}_allowed, {{schema}}_unlisted",
+        "GRANT SELECT ON {{quotedSchema}}.docs TO {{schema}}_allowed, {{schema}}_unlisted",
+        "CREATE POLICY docs_owner_select ON {{quotedSchema}}.docs FOR SELECT TO {{schema}}_allowed USING (owner_name = current_user)",
+        "ALTER TABLE {{quotedSchema}}.docs ENABLE ROW LEVEL SECURITY",
+        "SET ROLE {{schema}}_unlisted"
+      ],
+      "query": "SELECT id, label FROM {{quotedSchema}}.docs ORDER BY id",
+      "expectedRows": [],
+      "columnModes": ["structural", "structural"],
+      "cleanup": [
+        "RESET ROLE",
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE",
+        "DROP ROLE IF EXISTS {{schema}}_allowed",
+        "DROP ROLE IF EXISTS {{schema}}_unlisted"
+      ]
     }
   ]
 }

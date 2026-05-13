@@ -152,7 +152,7 @@ func validatePostgresOracleManifest(t testing.TB, manifest postgresOracleManifes
 			if entry.ExpectedSQLState != "" {
 				require.Empty(t, entry.ExpectedRows, "sqlstate oracle entries cannot also expect rows: %s", entry.ID)
 			} else {
-				require.NotEmpty(t, entry.ExpectedRows, "expected rows for %s", entry.ID)
+				require.NotNil(t, entry.ExpectedRows, "expected rows for %s", entry.ID)
 				require.NotEqual(t, "sqlstate", entry.Compare, "sqlstate comparison requires expectedSqlstate for %s", entry.ID)
 			}
 		}
