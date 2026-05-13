@@ -55,6 +55,7 @@ func initJsonB() {
 	framework.RegisterFunction(jsonb_each_text)
 	framework.RegisterFunction(jsonb_typeof)
 	framework.RegisterFunction(jsonb_strip_nulls)
+	framework.RegisterFunction(jsonb_strip_nulls_strip_in_arrays)
 	framework.RegisterFunction(jsonb_set)
 	framework.RegisterFunction(jsonb_set_create)
 	framework.RegisterFunction(jsonb_set_lax)
@@ -443,7 +444,22 @@ var jsonb_strip_nulls = framework.Function1{
 		if err != nil {
 			return nil, err
 		}
-		return pgtypes.JsonDocument{Value: pgtypes.JsonValueStripNulls(doc.Value)}, nil
+		return pgtypes.JsonDocument{Value: pgtypes.JsonValueStripNulls(doc.Value, false)}, nil
+	},
+}
+
+// jsonb_strip_nulls_strip_in_arrays represents the PostgreSQL function jsonb_strip_nulls(jsonb, boolean).
+var jsonb_strip_nulls_strip_in_arrays = framework.Function2{
+	Name:       "jsonb_strip_nulls",
+	Return:     pgtypes.JsonB,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.JsonB, pgtypes.Bool},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val any, stripInArrays any) (any, error) {
+		doc, err := jsonDocumentFromFunctionValue(ctx, pgtypes.JsonB, val)
+		if err != nil {
+			return nil, err
+		}
+		return pgtypes.JsonDocument{Value: pgtypes.JsonValueStripNulls(doc.Value, stripInArrays.(bool))}, nil
 	},
 }
 

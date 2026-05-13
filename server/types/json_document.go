@@ -351,26 +351,34 @@ func JsonValueDeletePath(value JsonValue, path []string) (JsonValue, error) {
 	}
 }
 
-// JsonValueStripNulls returns a copy of value with all object fields containing JSON null removed recursively.
-func JsonValueStripNulls(value JsonValue) JsonValue {
+// JsonValueStripNulls returns a copy of value with all object fields
+// containing JSON null removed recursively. When stripInArrays is true, JSON
+// null array elements are removed as well.
+func JsonValueStripNulls(value JsonValue, stripInArrays bool) JsonValue {
 	value = JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case JsonValueObject:
 		items := make([]JsonValueObjectItem, 0, len(value.Items))
 		for _, item := range value.Items {
-			if _, ok := item.Value.(JsonValueNull); ok {
+			if _, ok := JsonValueUnwrapRaw(item.Value).(JsonValueNull); ok {
 				continue
 			}
 			items = append(items, JsonValueObjectItem{
 				Key:   item.Key,
-				Value: JsonValueStripNulls(item.Value),
+				Value: JsonValueStripNulls(item.Value, stripInArrays),
 			})
 		}
 		return JsonObjectFromItems(items, false)
 	case JsonValueArray:
-		items := make(JsonValueArray, len(value))
-		for i, item := range value {
-			items[i] = JsonValueStripNulls(item)
+		items := make(JsonValueArray, 0, len(value))
+		for _, item := range value {
+			stripped := JsonValueStripNulls(item, stripInArrays)
+			if stripInArrays {
+				if _, ok := JsonValueUnwrapRaw(stripped).(JsonValueNull); ok {
+					continue
+				}
+			}
+			items = append(items, stripped)
 		}
 		return items
 	default:
