@@ -4972,7 +4972,19 @@ func convertedDropIfExistsNoOp(query string) (ConvertedQuery, bool) {
 			}, true
 		}
 	case dropPolicyIfExistsPattern.MatchString(query):
-		statementTag = "DROP POLICY"
+		matches := dropPolicyIfExistsPattern.FindStringSubmatch(query)
+		tableSchema, tableName := splitQualifiedCatalogName(matches[2])
+		return ConvertedQuery{
+			String: query,
+			AST: sqlparser.InjectedStatement{
+				Statement: node.NewDropPolicy(
+					doltdb.TableName{Schema: tableSchema, Name: tableName},
+					matches[1],
+					true,
+				),
+			},
+			StatementTag: "DROP POLICY",
+		}, true
 	case dropRuleIfExistsPattern.MatchString(query):
 		matches := dropRuleIfExistsPattern.FindStringSubmatch(query)
 		tableSchema, tableName := splitQualifiedCatalogName(matches[2])

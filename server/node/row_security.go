@@ -115,3 +115,51 @@ func (c *CreatePolicy) WithResolvedChildren(ctx context.Context, children []any)
 	}
 	return c, nil
 }
+
+// DropPolicy implements the supported subset of DROP POLICY.
+type DropPolicy struct {
+	TableName  doltdb.TableName
+	PolicyName string
+	IfExists   bool
+}
+
+var _ sql.ExecSourceRel = (*DropPolicy)(nil)
+var _ vitess.Injectable = (*DropPolicy)(nil)
+
+// NewDropPolicy returns a new DROP POLICY node.
+func NewDropPolicy(tableName doltdb.TableName, policyName string, ifExists bool) *DropPolicy {
+	return &DropPolicy{TableName: tableName, PolicyName: policyName, IfExists: ifExists}
+}
+
+func (d *DropPolicy) Children() []sql.Node { return nil }
+func (d *DropPolicy) IsReadOnly() bool     { return false }
+func (d *DropPolicy) Resolved() bool       { return true }
+func (d *DropPolicy) Schema(ctx *sql.Context) sql.Schema {
+	return nil
+}
+func (d *DropPolicy) String() string { return "DROP POLICY" }
+
+func (d *DropPolicy) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowIter, error) {
+	if err := checkTableOwnership(ctx, d.TableName); err != nil {
+		return nil, err
+	}
+	if !rowsecurity.DropPolicy(uint32(ctx.Session.ID()), ctx.GetCurrentDatabase(), d.TableName.Schema, d.TableName.Name, d.PolicyName) && !d.IfExists {
+		return nil, pgerror.Newf(pgcode.UndefinedObject,
+			`policy "%s" for table "%s" does not exist`,
+			d.PolicyName,
+			d.TableName.Name,
+		)
+	}
+	return sql.RowsToRowIter(), nil
+}
+
+func (d *DropPolicy) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
+	return plan.NillaryWithChildren(d, children...)
+}
+
+func (d *DropPolicy) WithResolvedChildren(ctx context.Context, children []any) (any, error) {
+	if len(children) != 0 {
+		return nil, ErrVitessChildCount.New(0, len(children))
+	}
+	return d, nil
+}

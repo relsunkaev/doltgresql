@@ -135,6 +135,29 @@ func AddPolicy(connectionID uint32, database, schema, table string, policy Polic
 	return true
 }
 
+// DropPolicy removes a row-level security policy. It returns false when the
+// policy does not exist for the table.
+func DropPolicy(connectionID uint32, database, schema, table string, policyName string) bool {
+	registry.Lock()
+	defer registry.Unlock()
+	key := makeKey(database, schema, table)
+	state, ok := registry.tables[key]
+	if !ok {
+		return false
+	}
+	policyName = normalizeIdentifier(policyName)
+	for i, existing := range state.Policies {
+		if existing.Name != policyName {
+			continue
+		}
+		trackMutationLocked(connectionID)
+		state.Policies = append(state.Policies[:i], state.Policies[i+1:]...)
+		registry.tables[key] = state
+		return true
+	}
+	return false
+}
+
 // RenameTable moves row-level security state to a renamed table.
 func RenameTable(connectionID uint32, database, oldSchema, oldTable, newSchema, newTable string) {
 	registry.Lock()
