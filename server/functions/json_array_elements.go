@@ -35,7 +35,7 @@ func jsonDocumentFromFunctionValue(ctx *sql.Context, typ *pgtypes.DoltgresType, 
 	}
 	switch typ {
 	case pgtypes.Json:
-		doc, err := pgtypes.UnmarshalToJsonDocument([]byte(res.(string)))
+		doc, err := pgtypes.UnmarshalToJsonDocumentPreserveObjectItems([]byte(res.(string)))
 		if err != nil {
 			return pgtypes.JsonDocument{}, err
 		}

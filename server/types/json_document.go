@@ -15,7 +15,10 @@
 package types
 
 import (
+	"bytes"
+	stdjson "encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"regexp"
 	"sort"
@@ -1003,6 +1006,96 @@ func UnmarshalToJsonDocument(val []byte) (JsonDocument, error) {
 		return JsonDocument{}, err
 	}
 	return JsonDocument{Value: jsonValue}, nil
+}
+
+// UnmarshalToJsonDocumentPreserveObjectItems converts JSON text into a document
+// while preserving object field order and duplicate fields for the plain json
+// type. jsonb should continue to use UnmarshalToJsonDocument for canonical
+// object ordering and duplicate-key collapse.
+func UnmarshalToJsonDocumentPreserveObjectItems(val []byte) (JsonDocument, error) {
+	decoder := stdjson.NewDecoder(bytes.NewReader(val))
+	decoder.UseNumber()
+	jsonValue, err := decodeJsonValuePreserveObjectItems(decoder)
+	if err != nil {
+		return JsonDocument{}, err
+	}
+	if token, err := decoder.Token(); err != io.EOF {
+		if err != nil {
+			return JsonDocument{}, err
+		}
+		return JsonDocument{}, errors.Errorf("unexpected trailing token while constructing JsonDocument: %v", token)
+	}
+	return JsonDocument{Value: jsonValue}, nil
+}
+
+func decodeJsonValuePreserveObjectItems(decoder *stdjson.Decoder) (JsonValue, error) {
+	token, err := decoder.Token()
+	if err != nil {
+		return nil, err
+	}
+	switch token := token.(type) {
+	case stdjson.Delim:
+		switch token {
+		case '{':
+			items := make([]JsonValueObjectItem, 0)
+			for decoder.More() {
+				keyToken, err := decoder.Token()
+				if err != nil {
+					return nil, err
+				}
+				key, ok := keyToken.(string)
+				if !ok {
+					return nil, errors.Errorf("unexpected object key token while constructing JsonDocument: %v", keyToken)
+				}
+				value, err := decodeJsonValuePreserveObjectItems(decoder)
+				if err != nil {
+					return nil, err
+				}
+				items = append(items, JsonValueObjectItem{Key: key, Value: value})
+			}
+			endToken, err := decoder.Token()
+			if err != nil {
+				return nil, err
+			}
+			if endToken != stdjson.Delim('}') {
+				return nil, errors.Errorf("unexpected object end token while constructing JsonDocument: %v", endToken)
+			}
+			return JsonObjectFromItems(items, false), nil
+		case '[':
+			values := make(JsonValueArray, 0)
+			for decoder.More() {
+				value, err := decodeJsonValuePreserveObjectItems(decoder)
+				if err != nil {
+					return nil, err
+				}
+				values = append(values, value)
+			}
+			endToken, err := decoder.Token()
+			if err != nil {
+				return nil, err
+			}
+			if endToken != stdjson.Delim(']') {
+				return nil, errors.Errorf("unexpected array end token while constructing JsonDocument: %v", endToken)
+			}
+			return values, nil
+		default:
+			return nil, errors.Errorf("unexpected delimiter while constructing JsonDocument: %v", token)
+		}
+	case string:
+		return JsonValueString(jsonParsedStringEscape(token)), nil
+	case stdjson.Number:
+		number, err := decimal.NewFromString(token.String())
+		if err != nil {
+			return nil, err
+		}
+		return JsonValueNumber(number), nil
+	case bool:
+		return JsonValueBoolean(token), nil
+	case nil:
+		return JsonValueNull(0), nil
+	default:
+		return nil, errors.Errorf("unexpected token while constructing JsonDocument: %v", token)
+	}
 }
 
 // ConvertToJsonDocument recursively constructs a valid JsonDocument based on the structures returned by the decoder.

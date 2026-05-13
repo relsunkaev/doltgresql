@@ -105,6 +105,21 @@ func TestJsonDocumentString(t *testing.T) {
 	require.Equal(t, scalar.String(), fmt.Sprint(scalar))
 }
 
+func TestUnmarshalToJsonDocumentPreserveObjectItems(t *testing.T) {
+	doc, err := UnmarshalToJsonDocumentPreserveObjectItems([]byte(`{"b":1,"a":2,"a":3}`))
+	require.NoError(t, err)
+
+	object, ok := doc.Value.(JsonValueObject)
+	require.True(t, ok)
+	require.Len(t, object.Items, 3)
+	require.Equal(t, []string{"b", "a", "a"}, []string{
+		object.Items[0].Key,
+		object.Items[1].Key,
+		object.Items[2].Key,
+	})
+	require.Equal(t, `{"b": 1, "a": 2, "a": 3}`, doc.String())
+}
+
 func TestJsonStringUnescape(t *testing.T) {
 	tests := []struct {
 		name  string
