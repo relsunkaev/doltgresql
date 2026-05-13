@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/dolthub/go-mysql-server/sql"
+	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
 
@@ -25,6 +26,36 @@ import (
 	"github.com/dolthub/doltgresql/server/replicaidentity"
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
+
+func TestReplicationChangeCaptureSkipsDoltSystemTables(t *testing.T) {
+	tests := []string{
+		"INSERT INTO dolt_ignore VALUES ('*.tmp', true)",
+		"UPDATE dolt_conflicts_items SET our_value = their_value",
+		"DELETE FROM dolt_conflicts_items",
+		"DELETE FROM dolt.dolt_conflicts_items",
+		"TRUNCATE TABLE dolt_conflicts_items",
+	}
+
+	for _, query := range tests {
+		t.Run(query, func(t *testing.T) {
+			stmt, err := vitess.Parse(query)
+			require.NoError(t, err)
+			_, ok := replicationChangeCaptureFromStatement(stmt)
+			require.False(t, ok)
+		})
+	}
+}
+
+func TestReplicationChangeCaptureKeepsUserTables(t *testing.T) {
+	stmt, err := vitess.Parse("DELETE FROM items")
+	require.NoError(t, err)
+
+	capture, ok := replicationChangeCaptureFromStatement(stmt)
+	require.True(t, ok)
+	require.Equal(t, replicationChangeDelete, capture.action)
+	require.Equal(t, "", capture.schema)
+	require.Equal(t, "items", capture.table)
+}
 
 func TestEncodeRelationMessageReplicaIdentity(t *testing.T) {
 	tableSchema := sql.Schema{

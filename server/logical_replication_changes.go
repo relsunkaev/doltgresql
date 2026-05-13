@@ -115,46 +115,49 @@ func prepareReplicationChangeCapture(query ConvertedQuery, fullRowColumns []stri
 func replicationChangeCaptureFromStatement(statement vitess.Statement) (*replicationChangeCapture, bool) {
 	switch stmt := statement.(type) {
 	case *vitess.Insert:
-		return &replicationChangeCapture{
-			action:            replicationChangeInsert,
-			schema:            stmt.Table.SchemaQualifier.String(),
-			table:             stmt.Table.Name.String(),
-			clientReturnsRows: len(stmt.Returning) > 0,
-		}, true
+		return newReplicationChangeCapture(
+			replicationChangeInsert,
+			stmt.Table.SchemaQualifier.String(),
+			stmt.Table.Name.String(),
+			len(stmt.Returning) > 0,
+		)
 	case *vitess.Update:
 		schema, table, ok := tableNameFromTableExprs(stmt.TableExprs)
 		if !ok {
 			return nil, false
 		}
-		return &replicationChangeCapture{
-			action:            replicationChangeUpdate,
-			schema:            schema,
-			table:             table,
-			clientReturnsRows: len(stmt.Returning) > 0,
-		}, true
+		return newReplicationChangeCapture(replicationChangeUpdate, schema, table, len(stmt.Returning) > 0)
 	case *vitess.Delete:
 		schema, table, ok := tableNameFromTableExprs(stmt.TableExprs)
 		if !ok {
 			return nil, false
 		}
-		return &replicationChangeCapture{
-			action:            replicationChangeDelete,
-			schema:            schema,
-			table:             table,
-			clientReturnsRows: len(stmt.Returning) > 0,
-		}, true
+		return newReplicationChangeCapture(replicationChangeDelete, schema, table, len(stmt.Returning) > 0)
 	case *vitess.DDL:
 		if stmt.Action != vitess.TruncateStr {
 			return nil, false
 		}
-		return &replicationChangeCapture{
-			action: replicationChangeTruncate,
-			schema: stmt.Table.SchemaQualifier.String(),
-			table:  stmt.Table.Name.String(),
-		}, true
+		return newReplicationChangeCapture(
+			replicationChangeTruncate,
+			stmt.Table.SchemaQualifier.String(),
+			stmt.Table.Name.String(),
+			false,
+		)
 	default:
 		return nil, false
 	}
+}
+
+func newReplicationChangeCapture(action replicationChangeAction, schema string, table string, clientReturnsRows bool) (*replicationChangeCapture, bool) {
+	if doltdb.IsSystemTable(doltdb.TableName{Schema: schema, Name: table}) {
+		return nil, false
+	}
+	return &replicationChangeCapture{
+		action:            action,
+		schema:            schema,
+		table:             table,
+		clientReturnsRows: clientReturnsRows,
+	}, true
 }
 
 func tableNameFromTableExprs(exprs vitess.TableExprs) (schema string, table string, ok bool) {
