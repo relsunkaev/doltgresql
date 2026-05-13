@@ -90,6 +90,7 @@ func Init() {
 	initAdvisoryLockFunctions()
 	initAge()
 	initArrayLength()
+	initArrayMetadata()
 	initArrayOrder()
 	initArrayPosition()
 	initArrayRemove()

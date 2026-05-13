@@ -86,6 +86,10 @@ func (array *Array) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		if err != nil {
 			return nil, err
 		}
+		if _, ok := val.([]any); ok && doltgresType.IsArrayType() && doltgresType.ID == array.coercedType.ID {
+			values[i] = val
+			continue
+		}
 
 		// We always cast the element, as there may be parameter restrictions in place
 		castFunc := framework.GetImplicitCast(doltgresType, resultTyp)
