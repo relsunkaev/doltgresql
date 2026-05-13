@@ -410,7 +410,7 @@ func TestInfoSchemaViews(t *testing.T) {
 				{
 					Query: `SELECT * FROM information_schema.views order by table_schema;`,
 					Expected: []sql.Row{
-						{"postgres", "public", "test_view", "SELECT * FROM test_table", "NONE", nil, nil, nil, nil, nil},
+						{"postgres", "public", "test_view", "SELECT * FROM test_table", "NONE", "YES", "YES", "NO", "NO", "NO"},
 					},
 				},
 				{

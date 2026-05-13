@@ -15,6 +15,8 @@
 package information_schema
 
 import (
+	"strings"
+
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
 
@@ -67,26 +69,20 @@ func viewsRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.RowIter, error) {
 
 			viewDef := cv.AsSource.String()
 
-			checkOpt := "NONE"
-			if cv.CheckOption == tree.ViewCheckOptionCascaded {
-				checkOpt = "CASCADED"
-			}
-			if cv.CheckOption == tree.ViewCheckOptionLocal {
-				checkOpt = "LOCAL"
-			}
+			checkOpt := viewCheckOption(cv)
+			isUpdatable, isInsertable := viewUpdatability(cv)
 
-			// TODO: Fill out the rest of the columns.
 			rows = append(rows, sql.Row{
 				schema.Item.Name(),       // table_catalog
 				schema.Item.SchemaName(), // table_schema
 				view.Item.Name,           // table_name
 				viewDef,                  // view_definition
 				checkOpt,                 // check_option
-				nil,                      // is_updatable
-				nil,                      // is_insertable_into
-				nil,                      // is_trigger_updatable
-				nil,                      // is_trigger_deletable
-				nil,                      // is_trigger_insertable_into
+				isUpdatable,              // is_updatable
+				isInsertable,             // is_insertable_into
+				"NO",                     // is_trigger_updatable
+				"NO",                     // is_trigger_deletable
+				"NO",                     // is_trigger_insertable_into
 			})
 			return true, nil
 		},
@@ -96,4 +92,53 @@ func viewsRowIter(ctx *sql.Context, catalog sql.Catalog) (sql.RowIter, error) {
 	}
 
 	return sql.RowsToRowIter(rows...), nil
+}
+
+func viewCheckOption(cv *tree.CreateView) string {
+	switch cv.CheckOption {
+	case tree.ViewCheckOptionCascaded:
+		return "CASCADED"
+	case tree.ViewCheckOptionLocal:
+		return "LOCAL"
+	}
+	for _, opt := range cv.Options {
+		if strings.EqualFold(opt.Name, "check_option") {
+			switch strings.ToLower(opt.CheckOpt) {
+			case "cascaded":
+				return "CASCADED"
+			case "local":
+				return "LOCAL"
+			}
+		}
+	}
+	return "NONE"
+}
+
+func viewUpdatability(cv *tree.CreateView) (string, string) {
+	if isSimpleSingleTableView(cv) {
+		return "YES", "YES"
+	}
+	return "NO", "NO"
+}
+
+func isSimpleSingleTableView(cv *tree.CreateView) bool {
+	if cv.AsSource == nil || cv.AsSource.With != nil || cv.AsSource.Limit != nil || len(cv.AsSource.OrderBy) > 0 || len(cv.AsSource.Locking) > 0 {
+		return false
+	}
+	selectClause, ok := cv.AsSource.Select.(*tree.SelectClause)
+	if !ok {
+		return false
+	}
+	if selectClause.Distinct || len(selectClause.DistinctOn) > 0 || len(selectClause.GroupBy) > 0 || selectClause.Having != nil || len(selectClause.Window) > 0 {
+		return false
+	}
+	if len(selectClause.From.Tables) != 1 {
+		return false
+	}
+	tableExpr := tree.StripTableParens(selectClause.From.Tables[0])
+	if aliased, ok := tableExpr.(*tree.AliasedTableExpr); ok {
+		tableExpr = tree.StripTableParens(aliased.Expr)
+	}
+	_, ok = tableExpr.(*tree.TableName)
+	return ok
 }
