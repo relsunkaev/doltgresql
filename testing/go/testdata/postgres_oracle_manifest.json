@@ -3742,6 +3742,24 @@
       ]
     },
     {
+      "id": "relation-size-correctness-repro-test-testpgrelationsizerejectsinvalidforkrepro-0001-select-pg_relation_size-relation_size_fork_items-::regclass-badfork",
+      "source": "testing/go/relation_size_correctness_repro_test.go:TestPgRelationSizeRejectsInvalidForkRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE relation_size_fork_items (id INT PRIMARY KEY);"
+      ],
+      "query": "SELECT pg_relation_size('relation_size_fork_items'::regclass, 'badfork');",
+      "expectedSqlstate": "22023",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "rls-multiple-select-policies-combine",
       "source": "testing/go/row_level_security_policy_composition_repro_test.go:TestRowLevelSecurityMultipleSelectPoliciesCombineRepro",
       "ordinal": 1,
