@@ -10,6 +10,19 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 01:19 America/Phoenix
+
+- Lane: `to_char` timezone fields from `TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro`.
+- Expected files: `server/functions/formatting.go` and `server/functions/to_char.go` only. Avoiding active epsilon parser/check files, auditor oracle artifacts, dirty grant files, and alpha full-suite ownership.
+- Red proof: shared-tree focused run showed plain `timestamp` rendering `AMERICA/NEW_YORK -04:00 -04:00` instead of blank/zero timezone fields, and `timestamptz` rendering the location name plus `OF` minutes instead of `EDT -04`.
+- Fix: plain `timestamp` formatting no longer applies the session zone to timezone fields; `timestamptz` uses the `time.Zone()` abbreviation; `OF` omits `:00` when the offset has zero minutes.
+- Focused green in clean verifier `/Users/ramazan/.cache/doltgresql-gamma-tz-worktree-20260513-0119` after `./postgres/parser/build.sh`:
+  - `go test -vet=off ./testing/go -run '^TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro|TestToCharFirstMonthAndWeekdayNamesRepro|TestToCharOrdinalSuffixTeenDatesRepro|TestToCharFractionalSecondPrecisionTokensRepro|TestToCharIntervalPreservesFractionalSecondsRepro|TestToCharNumericFormatsPostgresPatternsRepro)$' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Shared-tree validation was blocked before test execution by active peer parser generated-file drift (`undefined: ENFORCED`, `undefined: NOT_ENFORCED_LA`).
+- Lane committed: `62c821a6 fix: format to_char timezone fields`.
+
 ### gamma - 2026-05-13 01:14 America/Phoenix
 
 - Lane: `to_char` month and weekday name tokens from `TestToCharFirstMonthAndWeekdayNamesRepro`.
