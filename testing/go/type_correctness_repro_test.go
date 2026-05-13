@@ -1765,6 +1765,18 @@ func TestArrayFillConstructsArraysRepro(t *testing.T) {
 					Query:    `SELECT array_fill(7, ARRAY[3]);`,
 					Expected: []sql.Row{{"{7,7,7}"}},
 				},
+				{
+					Query:    `SELECT array_fill(NULL::int, ARRAY[2]);`,
+					Expected: []sql.Row{{"{NULL,NULL}"}},
+				},
+				{
+					Query:    `SELECT array_fill(7, ARRAY[0]);`,
+					Expected: []sql.Row{{"{}"}},
+				},
+				{
+					Query:       `SELECT array_fill(7, ARRAY[-1]);`,
+					ExpectedErr: `dimension values cannot be negative`,
+				},
 			},
 		},
 	})
