@@ -5164,6 +5164,648 @@
       ]
     },
     {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0042-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 42,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0043-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 43,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "250"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "300"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0044-select-hasindexes::text-ispopulated::text-from-pg_matviews",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 44,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;"
+      ],
+      "query": "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0045-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 45,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "250"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "350"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0046-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 46,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "250"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "450"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0047-refresh-materialized-view-concurrently-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 47,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv WITH NO DATA;",
+      "expectedSqlstate": "42601",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0048-select-ispopulated::text-from-pg_matviews-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 48,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;"
+      ],
+      "query": "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0049-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 49,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0050-refresh-materialized-view-concurrently-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 50,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+      "expectedSqlstate": "0A000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0051-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 51,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "250"
+          }
+        ],
+        [
+          {
+            "value": "3"
+          },
+          {
+            "value": "450"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0052-refresh-materialized-view-plain_table",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 52,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE TABLE plain_table (id INT);"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW plain_table;",
+      "expectedSqlstate": "0A000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0053-refresh-materialized-view-dup_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 53,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE TABLE plain_table (id INT);",
+        "CREATE TABLE dup_source (id INT PRIMARY KEY, grp INT);",
+        "INSERT INTO dup_source VALUES (1, 1), (2, 2);",
+        "CREATE MATERIALIZED VIEW dup_mv AS SELECT grp FROM dup_source;",
+        "CREATE UNIQUE INDEX dup_mv_grp_idx ON dup_mv (grp);",
+        "UPDATE dup_source SET grp = 1 WHERE id = 2;"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW dup_mv;",
+      "expectedSqlstate": "23505",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0054-select-grp-from-dup_mv-order",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 54,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE TABLE plain_table (id INT);",
+        "CREATE TABLE dup_source (id INT PRIMARY KEY, grp INT);",
+        "INSERT INTO dup_source VALUES (1, 1), (2, 2);",
+        "CREATE MATERIALIZED VIEW dup_mv AS SELECT grp FROM dup_source;",
+        "CREATE UNIQUE INDEX dup_mv_grp_idx ON dup_mv (grp);",
+        "UPDATE dup_source SET grp = 1 WHERE id = 2;"
+      ],
+      "query": "SELECT grp FROM dup_mv ORDER BY grp;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0055-refresh-materialized-view-concurrently-no_unique_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 55,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE TABLE plain_table (id INT);",
+        "CREATE TABLE dup_source (id INT PRIMARY KEY, grp INT);",
+        "INSERT INTO dup_source VALUES (1, 1), (2, 2);",
+        "CREATE MATERIALIZED VIEW dup_mv AS SELECT grp FROM dup_source;",
+        "CREATE UNIQUE INDEX dup_mv_grp_idx ON dup_mv (grp);",
+        "UPDATE dup_source SET grp = 1 WHERE id = 2;",
+        "SELECT grp FROM dup_mv ORDER BY grp;",
+        "CREATE MATERIALIZED VIEW no_unique_mv AS SELECT id, v FROM source;"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY no_unique_mv;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0056-refresh-materialized-view-concurrently-partial_unique_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 56,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "INSERT INTO source VALUES (3, 300);",
+        "UPDATE source SET v = 250 WHERE id = 2;",
+        "DELETE FROM source WHERE id = 1;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "UPDATE source SET v = 350 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "UPDATE source SET v = 450 WHERE id = 3;",
+        "REFRESH MATERIALIZED VIEW CONCURRENTLY source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE TABLE plain_table (id INT);",
+        "CREATE TABLE dup_source (id INT PRIMARY KEY, grp INT);",
+        "INSERT INTO dup_source VALUES (1, 1), (2, 2);",
+        "CREATE MATERIALIZED VIEW dup_mv AS SELECT grp FROM dup_source;",
+        "CREATE UNIQUE INDEX dup_mv_grp_idx ON dup_mv (grp);",
+        "UPDATE dup_source SET grp = 1 WHERE id = 2;",
+        "SELECT grp FROM dup_mv ORDER BY grp;",
+        "CREATE MATERIALIZED VIEW no_unique_mv AS SELECT id, v FROM source;",
+        "CREATE MATERIALIZED VIEW partial_unique_mv AS SELECT id, v FROM source;",
+        "CREATE UNIQUE INDEX partial_unique_mv_idx ON partial_unique_mv (id) WHERE v IS NOT NULL;"
+      ],
+      "query": "REFRESH MATERIALIZED VIEW CONCURRENTLY partial_unique_mv;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,

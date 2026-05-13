@@ -76,3 +76,21 @@ func TestErrMessageToSQLStateFormatsUnpopulatedMaterializedView(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.ObjectNotInPrerequisiteState.String(), code)
 }
+
+func TestErrMessageToSQLStateFormatsRefreshMaterializedViewErrors(t *testing.T) {
+	code, ok := errMessageToSQLState("REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together")
+	require.True(t, ok)
+	require.Equal(t, pgcode.Syntax.String(), code)
+
+	code, ok = errMessageToSQLState("CONCURRENTLY cannot be used when the materialized view is not populated")
+	require.True(t, ok)
+	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
+
+	code, ok = errMessageToSQLState(`relation "plain_table" is not a materialized view`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.FeatureNotSupported.String(), code)
+
+	code, ok = errMessageToSQLState(`cannot refresh materialized view "public.no_unique_mv" concurrently`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.ObjectNotInPrerequisiteState.String(), code)
+}

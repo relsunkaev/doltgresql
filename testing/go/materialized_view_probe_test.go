@@ -456,7 +456,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT hasindexes::text, ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"true", "true"},
 					},
@@ -465,7 +465,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 					Query: `UPDATE source SET v = 350 WHERE id = 3;`,
 				},
 				{
-					Query: `REFRESH MATERIALIZED VIEW public.source_mv WITH DATA;`,
+					Query: `REFRESH MATERIALIZED VIEW source_mv WITH DATA;`,
 				},
 				{
 					Query: `SELECT account_id, amount FROM source_mv ORDER BY account_id;`,
@@ -497,7 +497,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"false"},
 					},

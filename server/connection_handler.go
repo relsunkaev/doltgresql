@@ -3796,6 +3796,14 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.Syntax.String(), true
 	case strings.HasPrefix(msg, `materialized view "`) && strings.HasSuffix(msg, `" has not been populated`):
 		return pgcode.ObjectNotInPrerequisiteState.String(), true
+	case strings.HasPrefix(msg, "REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together"):
+		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, "CONCURRENTLY cannot be used when the materialized view is not populated"):
+		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, `relation "`) && strings.HasSuffix(msg, `" is not a materialized view`):
+		return pgcode.FeatureNotSupported.String(), true
+	case strings.HasPrefix(msg, `cannot refresh materialized view "`) && strings.HasSuffix(msg, `" concurrently`):
+		return pgcode.ObjectNotInPrerequisiteState.String(), true
 	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):

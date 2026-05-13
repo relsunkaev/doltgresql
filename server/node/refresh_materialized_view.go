@@ -32,6 +32,8 @@ import (
 	vitess "github.com/dolthub/vitess/go/vt/sqlparser"
 
 	"github.com/dolthub/doltgresql/core"
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	pgexprs "github.com/dolthub/doltgresql/server/expression"
 	"github.com/dolthub/doltgresql/server/functions"
 	"github.com/dolthub/doltgresql/server/indexmetadata"
@@ -117,10 +119,10 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 		return nil, errors.Wrap(err, "permission denied")
 	}
 	if r.concurrently && !tablemetadata.IsMaterializedViewPopulated(tableComment(target.table)) {
-		return nil, errors.Errorf("CONCURRENTLY cannot be used when the materialized view is not populated")
+		return nil, pgerror.New(pgcode.FeatureNotSupported, "CONCURRENTLY cannot be used when the materialized view is not populated")
 	}
 	if r.concurrently && r.withNoData {
-		return nil, errors.Errorf("REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together")
+		return nil, pgerror.New(pgcode.Syntax, "REFRESH options CONCURRENTLY and WITH NO DATA cannot be used together")
 	}
 	if r.concurrently {
 		hasUniqueIndex, err := hasUsableConcurrentRefreshUniqueIndex(ctx, target.table)
@@ -128,7 +130,8 @@ func (r *RefreshMaterializedView) RowIter(ctx *sql.Context, _ sql.Row) (sql.RowI
 			return nil, err
 		}
 		if !hasUniqueIndex {
-			return nil, errors.Errorf(
+			return nil, pgerror.Newf(
+				pgcode.ObjectNotInPrerequisiteState,
 				`cannot refresh materialized view "%s" concurrently`,
 				materializedViewDisplayName(target.schema, target.table.Name()),
 			)
@@ -422,7 +425,7 @@ func resolveMaterializedViewTarget(ctx *sql.Context, name string, schema string)
 		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" does not exist`, name)
 	}
 	if !tablemetadata.IsMaterializedView(tableComment(found.table)) {
-		return refreshMaterializedViewTarget{}, errors.Errorf(`relation "%s" is not a materialized view`, name)
+		return refreshMaterializedViewTarget{}, pgerror.Newf(pgcode.FeatureNotSupported, `relation "%s" is not a materialized view`, name)
 	}
 	return found, nil
 }
