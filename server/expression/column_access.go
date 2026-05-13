@@ -118,10 +118,8 @@ func (expr *ColumnAccess) Type(ctx *sql.Context) sql.Type {
 	if !ok {
 		return pgtypes.Unknown
 	}
-	if !childType.IsResolvedType() {
-		if resolvedType, err := resolveColumnAccessType(ctx, childType); err == nil {
-			childType = resolvedType
-		}
+	if accessType, err := resolveColumnAccessCompositeType(ctx, childType); err == nil {
+		childType = accessType
 	}
 	idx := expr.colNameIdx
 	if idx < 0 && expr.colName != "" {
@@ -150,12 +148,10 @@ func (expr *ColumnAccess) WithChildren(ctx *sql.Context, children ...sql.Express
 	if !ok {
 		return nil, errors.New("column access is only valid for Doltgres types")
 	}
-	if !doltgresType.IsResolvedType() {
-		var err error
-		doltgresType, err = resolveColumnAccessType(ctx, doltgresType)
-		if err != nil {
-			return nil, err
-		}
+	var err error
+	doltgresType, err = resolveColumnAccessCompositeType(ctx, doltgresType)
+	if err != nil {
+		return nil, err
 	}
 	if !doltgresType.IsCompositeType() {
 		if len(expr.colName) > 0 {
@@ -192,6 +188,23 @@ func (expr *ColumnAccess) WithChildren(ctx *sql.Context, children ...sql.Express
 		colTyp:     expr.colTyp,
 		child:      children[0],
 	}, nil
+}
+
+func resolveColumnAccessCompositeType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ == nil {
+		return typ, nil
+	}
+	if !typ.IsResolvedType() {
+		resolved, err := resolveColumnAccessType(ctx, typ)
+		if err != nil {
+			return nil, err
+		}
+		typ = resolved
+	}
+	if typ.TypType != pgtypes.TypeType_Domain {
+		return typ, nil
+	}
+	return typ.DomainUnderlyingBaseTypeWithContext(ctx)
 }
 
 // WithResolvedChildren implements the vitess.InjectableExpression interface.

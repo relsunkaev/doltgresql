@@ -35,6 +35,7 @@ type AssignmentCast struct {
 	domainElemType *pgtypes.DoltgresType
 	domainElemNull bool
 	domainElemChk  sql.CheckConstraints
+	compositeAttrs []CompositeDomainAttributeConstraint
 }
 
 var _ sql.Expression = (*AssignmentCast)(nil)
@@ -94,6 +95,9 @@ func (ac *AssignmentCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 			return nil, err
 		}
 	}
+	if err = validateCompositeDomainAttributes(ctx, ac.compositeAttrs, castResult); err != nil {
+		return nil, err
+	}
 	return castResult, nil
 }
 
@@ -141,6 +145,13 @@ func (ac *AssignmentCast) WithDomainElementConstraints(domainType *pgtypes.Doltg
 	newCast.domainElemType = domainType
 	newCast.domainElemNull = nullable
 	newCast.domainElemChk = checks
+	return &newCast
+}
+
+// WithCompositeDomainAttributeConstraints returns a copy of the expression with composite attribute domain constraints defined.
+func (ac *AssignmentCast) WithCompositeDomainAttributeConstraints(constraints []CompositeDomainAttributeConstraint) sql.Expression {
+	newCast := *ac
+	newCast.compositeAttrs = constraints
 	return &newCast
 }
 

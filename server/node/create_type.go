@@ -135,7 +135,17 @@ func (c *CreateType) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error) {
 		relID := id.NewTable(schema, c.Name).AsId()
 		attrs := make([]types.CompositeAttribute, len(c.AsTypes))
 		for i, a := range c.AsTypes {
-			attrs[i] = types.NewCompositeAttribute(ctx, relID, a.AttrName, a.Typ.ID, a.Typ.GetAttTypMod(), int16(i+1), a.Collation)
+			attrType := a.Typ
+			if !attrType.IsResolvedType() {
+				attrType, err = resolveCreateDomainBaseType(ctx, collection, attrType)
+				if err != nil {
+					return nil, err
+				}
+				if !attrType.IsDefined {
+					return nil, types.ErrTypeIsOnlyAShell.New(attrType.Name())
+				}
+			}
+			attrs[i] = types.NewCompositeAttribute(ctx, relID, a.AttrName, attrType.ID, attrType.GetAttTypMod(), int16(i+1), a.Collation)
 		}
 		newType = types.NewCompositeType(ctx, relID, arrayID, typeID, attrs)
 	case types.TypeType_Range:

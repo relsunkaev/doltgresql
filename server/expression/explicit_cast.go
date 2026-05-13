@@ -41,6 +41,7 @@ type ExplicitCast struct {
 	domainElemType *pgtypes.DoltgresType
 	domainElemNull bool
 	domainElemChk  sql.CheckConstraints
+	compositeAttrs []CompositeDomainAttributeConstraint
 	runner         sql.StatementRunner
 }
 
@@ -151,7 +152,7 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 			fromType.String(), c.castToType.String(), c.sqlChild.String(),
 		)
 	}
-	castResult, err := castFunction(ctx, val, c.castToType)
+	castResult, err := castFunction(ctx, val, baseCastToType)
 	if err != nil {
 		// For string types and string array types, we intentionally ignore the error as using a length-restricted cast
 		// is a way to intentionally truncate the data. All string types will always return the truncated result, even
@@ -175,6 +176,9 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		if err = validateDomainArrayElements(ctx, c.domainElemType, c.domainElemNull, c.domainElemChk, castResult); err != nil {
 			return nil, err
 		}
+	}
+	if err = validateCompositeDomainAttributes(ctx, c.compositeAttrs, castResult); err != nil {
+		return nil, err
 	}
 
 	return castResult, nil
@@ -322,6 +326,10 @@ func (c *ExplicitCast) WithChildren(ctx *sql.Context, children ...sql.Expression
 		castToType:     c.castToType,
 		domainNullable: c.domainNullable,
 		domainChecks:   c.domainChecks,
+		domainElemType: c.domainElemType,
+		domainElemNull: c.domainElemNull,
+		domainElemChk:  c.domainElemChk,
+		compositeAttrs: c.compositeAttrs,
 		runner:         c.runner,
 	}, nil
 }
@@ -343,6 +351,7 @@ func (c *ExplicitCast) WithResolvedChildren(ctx context.Context, children []any)
 		domainElemType: c.domainElemType,
 		domainElemNull: c.domainElemNull,
 		domainElemChk:  c.domainElemChk,
+		compositeAttrs: c.compositeAttrs,
 		runner:         c.runner,
 	}, nil
 }
@@ -368,6 +377,13 @@ func (c *ExplicitCast) WithDomainElementConstraints(domainType *pgtypes.Doltgres
 	ec.domainElemType = domainType
 	ec.domainElemNull = nullable
 	ec.domainElemChk = checks
+	return &ec
+}
+
+// WithCompositeDomainAttributeConstraints returns a copy of the expression with composite attribute domain constraints defined.
+func (c *ExplicitCast) WithCompositeDomainAttributeConstraints(constraints []CompositeDomainAttributeConstraint) sql.Expression {
+	ec := *c
+	ec.compositeAttrs = constraints
 	return &ec
 }
 

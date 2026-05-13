@@ -20,6 +20,13 @@ import (
 	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
+type CompositeDomainAttributeConstraint struct {
+	Index      int
+	DomainType *pgtypes.DoltgresType
+	Nullable   bool
+	Checks     sql.CheckConstraints
+}
+
 func validateDomainValue(ctx *sql.Context, domainType *pgtypes.DoltgresType, nullable bool, checks sql.CheckConstraints, val any) error {
 	if val == nil {
 		if !nullable {
@@ -34,6 +41,25 @@ func validateDomainValue(ctx *sql.Context, domainType *pgtypes.DoltgresType, nul
 		}
 		if sql.IsFalse(res) {
 			return pgtypes.ErrDomainValueViolatesCheckConstraint.New(domainType.Name(), check.Name)
+		}
+	}
+	return nil
+}
+
+func validateCompositeDomainAttributes(ctx *sql.Context, constraints []CompositeDomainAttributeConstraint, val any) error {
+	if len(constraints) == 0 || val == nil {
+		return nil
+	}
+	recordVals, ok := val.([]pgtypes.RecordValue)
+	if !ok {
+		return nil
+	}
+	for _, constraint := range constraints {
+		if constraint.Index < 0 || constraint.Index >= len(recordVals) {
+			continue
+		}
+		if err := validateDomainValue(ctx, constraint.DomainType, constraint.Nullable, constraint.Checks, recordVals[constraint.Index].Value); err != nil {
+			return err
 		}
 	}
 	return nil

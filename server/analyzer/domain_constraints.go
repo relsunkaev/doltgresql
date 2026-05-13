@@ -252,6 +252,14 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 					same = transform.NewTree
 					expr = e.WithDomainElementConstraints(elemDomain, !elemDomain.NotNull, colChecks)
 				}
+				compositeChecks, err := getCompositeDomainAttributeConstraints(ctx, a, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				if len(compositeChecks) > 0 {
+					same = transform.NewTree
+					expr = expr.(*expression.ExplicitCast).WithCompositeDomainAttributeConstraints(compositeChecks)
+				}
 			}
 			return expr, same, nil
 		case *expression.AssignmentCast:
@@ -283,6 +291,14 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 					same = transform.NewTree
 					expr = e.WithDomainElementConstraints(elemDomain, !elemDomain.NotNull, colChecks)
 				}
+				compositeChecks, err := getCompositeDomainAttributeConstraints(ctx, a, rt)
+				if err != nil {
+					return nil, transform.NewTree, err
+				}
+				if len(compositeChecks) > 0 {
+					same = transform.NewTree
+					expr = expr.(*expression.AssignmentCast).WithCompositeDomainAttributeConstraints(compositeChecks)
+				}
 			}
 			return expr, same, nil
 		default:
@@ -304,6 +320,83 @@ func resolveArrayElementDomainType(ctx *sql.Context, typ *pgtypes.DoltgresType) 
 		return nil, nil
 	}
 	return elemType, nil
+}
+
+func getCompositeDomainAttributeConstraints(ctx *sql.Context, a *analyzer.Analyzer, typ *pgtypes.DoltgresType) ([]expression.CompositeDomainAttributeConstraint, error) {
+	compositeType, err := resolveCompositeDomainAttributeType(ctx, typ)
+	if err != nil || compositeType == nil {
+		return nil, err
+	}
+	typeCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var constraints []expression.CompositeDomainAttributeConstraint
+	for idx, attr := range compositeType.CompositeAttrs {
+		attrType, err := attr.ResolveType(ctx, typeCollection)
+		if err != nil {
+			return nil, err
+		}
+		if attrType == nil || attrType.TypType != pgtypes.TypeType_Domain {
+			continue
+		}
+		checkDefs, err := collectDomainCheckDefinitions(ctx, attrType)
+		if err != nil {
+			return nil, err
+		}
+		checks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, attrType)
+		if err != nil {
+			return nil, err
+		}
+		constraints = append(constraints, expression.CompositeDomainAttributeConstraint{
+			Index:      idx,
+			DomainType: attrType,
+			Nullable:   !attrType.NotNull,
+			Checks:     checks,
+		})
+	}
+	return constraints, nil
+}
+
+func resolveCompositeDomainAttributeType(ctx *sql.Context, typ *pgtypes.DoltgresType) (*pgtypes.DoltgresType, error) {
+	if typ == nil {
+		return nil, nil
+	}
+	if !typ.IsResolvedType() {
+		typeCollection, err := pgtypes.GetTypesCollectionFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		schema, err := core.GetSchemaName(ctx, nil, typ.ID.SchemaName())
+		if err != nil {
+			return nil, err
+		}
+		resolved, err := typeCollection.GetType(ctx, id.NewType(schema, typ.ID.TypeName()))
+		if err != nil {
+			return nil, err
+		}
+		if resolved == nil && typ.ID.SchemaName() == "" {
+			resolved, err = typeCollection.GetType(ctx, id.NewType("pg_catalog", typ.ID.TypeName()))
+			if err != nil {
+				return nil, err
+			}
+		}
+		if resolved == nil {
+			return nil, pgtypes.ErrTypeDoesNotExist.New(typ.ID.TypeName())
+		}
+		typ = resolved
+	}
+	if typ.TypType == pgtypes.TypeType_Domain {
+		var err error
+		typ, err = typ.DomainUnderlyingBaseTypeWithContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if !typ.IsCompositeType() {
+		return nil, nil
+	}
+	return typ, nil
 }
 
 func collectDomainCheckDefinitions(ctx *sql.Context, dt *pgtypes.DoltgresType) ([]*sql.CheckDefinition, error) {
@@ -365,7 +458,7 @@ func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, ch
 	checks := make(sql.CheckConstraints, len(checkDefs))
 	for i, check := range checkDefs {
 		q := fmt.Sprintf("select %s", check.CheckExpression)
-		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, tree.DomainColumn{})
+		checkExpr, err := parseAndReplaceDomainCheckConstraint(ctx, a, check.CheckExpression, q, domainColumnForType(domainType))
 		if err != nil {
 			return nil, err
 		}
@@ -386,6 +479,22 @@ func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, ch
 		}
 	}
 	return checks, nil
+}
+
+func domainColumnForType(domainType *pgtypes.DoltgresType) tree.DomainColumn {
+	typID := domainType.ID
+	numParts := 1
+	parts := [3]string{typID.TypeName()}
+	if schemaName := typID.SchemaName(); schemaName != "" {
+		numParts = 2
+		parts[1] = schemaName
+	}
+	return tree.DomainColumn{
+		Typ: &tree.UnresolvedObjectName{
+			NumParts: numParts,
+			Parts:    parts,
+		},
+	}
 }
 
 // parseAndReplaceDomainCheckConstraint parses check constraint and replaces the `VALUE` column
