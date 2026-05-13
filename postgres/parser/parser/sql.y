@@ -281,6 +281,12 @@ func (u *sqlSymUnion) cte() *tree.CTE {
     }
     return nil
 }
+func (u *sqlSymUnion) callArg() tree.CallArg {
+    return u.val.(tree.CallArg)
+}
+func (u *sqlSymUnion) callArgs() tree.CallArgs {
+    return u.val.(tree.CallArgs)
+}
 func (u *sqlSymUnion) ctes() []*tree.CTE {
     return u.val.([]*tree.CTE)
 }
@@ -813,7 +819,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %token <*tree.NumVal> ICONST FCONST
 %token <*tree.Placeholder> PLACEHOLDER
 %token <str> TYPECAST TYPEANNOTATE DOT_DOT
-%token <str> LESS_EQUALS GREATER_EQUALS NOT_EQUALS
+%token <str> LESS_EQUALS GREATER_EQUALS EQUALS_GREATER NOT_EQUALS
 %token <str> HSTORE_LESS HSTORE_LESS_EQUALS HSTORE_GREATER HSTORE_GREATER_EQUALS
 %token <str> HSTORE_TO_ARRAY HSTORE_TO_MATRIX HSTORE_POPULATE
 %token <str> VECTOR_L2_DISTANCE VECTOR_NEGATIVE_INNER_PRODUCT VECTOR_COSINE_DISTANCE VECTOR_L1_DISTANCE VECTOR_HAMMING_DISTANCE VECTOR_JACCARD_DISTANCE
@@ -1502,6 +1508,8 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.InitiallyMode> opt_initially
 
 %type <tree.Expr> func_application func_expr_common_subexpr special_function
+%type <tree.CallArg> call_arg
+%type <tree.CallArgs> call_arg_list
 %type <tree.Expr> func_expr func_expr_windowless
 %type <empty> opt_with
 %type <*tree.With> with_clause opt_with_clause
@@ -3971,9 +3979,43 @@ foreign_option:
 // %Text: CALL <name> ( [ <expr> [, ...] ] )
 // %SeeAlso: CREATE PROCEDURE
 call_stmt:
-  CALL func_application
+  CALL func_name '(' ')'
   {
-    $$.val = &tree.Call{Procedure: $2.expr().(*tree.FuncExpr)}
+    $$.val = &tree.Call{Procedure: &tree.FuncExpr{Func: $2.resolvableFuncRefFromName()}}
+  }
+| CALL func_name '(' call_arg_list ')'
+  {
+    args := $4.callArgs()
+    exprs := make(tree.Exprs, len(args))
+    names := make([]string, len(args))
+    for i, arg := range args {
+      exprs[i] = arg.Expr
+      names[i] = arg.Name
+    }
+    $$.val = &tree.Call{
+      Procedure: &tree.FuncExpr{Func: $2.resolvableFuncRefFromName(), Exprs: exprs},
+      ArgNames: names,
+    }
+  }
+
+call_arg_list:
+  call_arg
+  {
+    $$.val = tree.CallArgs{$1.callArg()}
+  }
+| call_arg_list ',' call_arg
+  {
+    $$.val = append($1.callArgs(), $3.callArg())
+  }
+
+call_arg:
+  a_expr
+  {
+    $$.val = tree.CallArg{Expr: $1.expr()}
+  }
+| name EQUALS_GREATER a_expr
+  {
+    $$.val = tree.CallArg{Name: $1, Expr: $3.expr()}
   }
 
 // The COPY grammar in postgres has 3 different versions, all of which are supported by postgres:

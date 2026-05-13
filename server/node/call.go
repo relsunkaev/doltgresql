@@ -34,6 +34,7 @@ type Call struct {
 	SchemaName    string
 	ProcedureName string
 	Exprs         []sql.Expression
+	ArgNames      []string
 	Runner        pgexprs.StatementRunner
 	cachedSch     sql.Schema
 	originalExprs vitess.Exprs
@@ -45,12 +46,13 @@ var _ sql.Expressioner = (*Call)(nil)
 var _ vitess.Injectable = (*Call)(nil)
 
 // NewCall returns a new *Call.
-func NewCall(database string, schema string, name string, originalExprs vitess.Exprs) *Call {
+func NewCall(database string, schema string, name string, originalExprs vitess.Exprs, argNames []string) *Call {
 	return &Call{
 		DatabaseName:  database,
 		SchemaName:    schema,
 		ProcedureName: name,
 		Exprs:         nil,
+		ArgNames:      append([]string(nil), argNames...),
 		originalExprs: originalExprs,
 	}
 }

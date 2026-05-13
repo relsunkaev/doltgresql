@@ -256,6 +256,15 @@ func (s *scanner) scan(lval *sqlSymType) {
 		}
 		return
 
+	case '=':
+		switch s.peek() {
+		case '>': // =>
+			s.pos++
+			lval.id = EQUALS_GREATER
+			return
+		}
+		return
+
 	case '<':
 		switch s.peek() {
 		case '-': // <->

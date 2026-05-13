@@ -19,6 +19,7 @@ var _ Statement = &Call{}
 // Call represents a CALL statement.
 type Call struct {
 	Procedure *FuncExpr
+	ArgNames  []string
 }
 
 // StatementType implements the interface Statement.
@@ -34,10 +35,31 @@ func (c *Call) StatementTag() string {
 // Format implements the interface Statement.
 func (c *Call) Format(ctx *FmtCtx) {
 	ctx.WriteString("CALL ")
-	ctx.FormatNode(c.Procedure)
+	ctx.FormatNode(&c.Procedure.Func)
+	ctx.WriteString("(")
+	for i, expr := range c.Procedure.Exprs {
+		if i > 0 {
+			ctx.WriteString(", ")
+		}
+		if i < len(c.ArgNames) && c.ArgNames[i] != "" {
+			ctx.WriteString(c.ArgNames[i])
+			ctx.WriteString(" => ")
+		}
+		ctx.FormatNode(expr)
+	}
+	ctx.WriteString(")")
 }
 
 // String implements the interface Statement.
 func (c *Call) String() string {
 	return AsString(c)
 }
+
+// CallArg represents a CALL statement argument.
+type CallArg struct {
+	Name string
+	Expr Expr
+}
+
+// CallArgs represents a list of CALL statement arguments.
+type CallArgs []CallArg

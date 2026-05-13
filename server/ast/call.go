@@ -73,7 +73,7 @@ func nodeCall(ctx *Context, node *tree.Call) (vitess.Statement, error) {
 		return nil, err
 	}
 	return vitess.InjectedStatement{
-		Statement: pgnodes.NewCall(database, qualifier.String(), name.String(), exprs),
+		Statement: pgnodes.NewCall(database, qualifier.String(), name.String(), exprs, node.ArgNames),
 		Children:  exprs,
 		Auth: vitess.AuthInformation{
 			AuthType:    auth.AuthType_EXECUTE,

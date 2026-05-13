@@ -63,6 +63,14 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 		}
 
 		same := transform.SameTree
+		if hasNamedProcedureArgs(n.ArgNames) {
+			orderedExprs, err := orderProcedureCallArgs(n.ArgNames, n.Exprs, overloads)
+			if err != nil {
+				return nil, transform.SameTree, err
+			}
+			n.Exprs = orderedExprs
+			same = transform.NewTree
+		}
 		overloadTree := framework.NewOverloads()
 		outputSchema := sql.Schema(nil)
 		for _, overload := range overloads {
@@ -143,6 +151,88 @@ func ResolveProcedureDefaults(ctx *sql.Context, a *analyzer.Analyzer, node sql.N
 	default:
 		return node, transform.SameTree, nil
 	}
+}
+
+func hasNamedProcedureArgs(argNames []string) bool {
+	for _, argName := range argNames {
+		if argName != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func orderProcedureCallArgs(argNames []string, exprs []sql.Expression, overloads []procedures.Procedure) ([]sql.Expression, error) {
+	for _, overload := range overloads {
+		orderedExprs, ok, err := orderProcedureCallArgsForOverload(argNames, exprs, overload.ParameterNames, len(overload.ParameterTypes))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return orderedExprs, nil
+		}
+	}
+	return nil, fmt.Errorf("could not match named arguments to procedure parameters")
+}
+
+func orderProcedureCallArgsForOverload(argNames []string, exprs []sql.Expression, paramNames []string, paramCount int) ([]sql.Expression, bool, error) {
+	if len(argNames) != len(exprs) {
+		return nil, false, fmt.Errorf("procedure argument metadata length mismatch")
+	}
+	if len(exprs) > paramCount {
+		return nil, false, nil
+	}
+	orderedExprs := make([]sql.Expression, paramCount)
+	filled := make([]bool, paramCount)
+	nextPositional := 0
+	seenNamed := false
+	maxFilled := -1
+	for i, expr := range exprs {
+		argName := argNames[i]
+		if argName == "" {
+			if seenNamed {
+				return nil, false, fmt.Errorf("positional argument cannot follow named argument")
+			}
+			for nextPositional < paramCount && filled[nextPositional] {
+				nextPositional++
+			}
+			if nextPositional >= paramCount {
+				return nil, false, nil
+			}
+			orderedExprs[nextPositional] = expr
+			filled[nextPositional] = true
+			if nextPositional > maxFilled {
+				maxFilled = nextPositional
+			}
+			nextPositional++
+			continue
+		}
+		seenNamed = true
+		paramIndex := -1
+		for j, paramName := range paramNames {
+			if strings.EqualFold(paramName, argName) {
+				paramIndex = j
+				break
+			}
+		}
+		if paramIndex < 0 || paramIndex >= paramCount {
+			return nil, false, nil
+		}
+		if filled[paramIndex] {
+			return nil, false, fmt.Errorf("duplicate procedure argument name %q", argName)
+		}
+		orderedExprs[paramIndex] = expr
+		filled[paramIndex] = true
+		if paramIndex > maxFilled {
+			maxFilled = paramIndex
+		}
+	}
+	for i := 0; i <= maxFilled; i++ {
+		if !filled[i] {
+			return nil, false, nil
+		}
+	}
+	return orderedExprs[:maxFilled+1], true, nil
 }
 
 func procedureParameterModes(modes []procedures.ParameterMode) []uint8 {
