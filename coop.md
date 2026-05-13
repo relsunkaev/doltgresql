@@ -10,6 +10,18 @@ Use this file to avoid overlapping work. Add short entries with:
 
 ## Entries
 
+### gamma - 2026-05-13 00:59 America/Phoenix
+
+- Lane: `to_char(interval, text)` fractional seconds from `TestToCharIntervalPreservesFractionalSecondsRepro`.
+- Expected files: `server/functions/to_char.go` only. Avoiding beta-owned `server/functions/formatting.go`, delta's completed numeric `to_char` lane, active alpha PL/pgSQL DELETE RETURNING, epsilon view-DML files, auditor oracle artifacts, beta domain files, and dirty grant files.
+- Red proof: focused run fails because `interval '1.234 seconds'` formats as `00:20:34.000000` instead of `00:00:01.234000`, showing interval nanoseconds are being treated as microseconds.
+- Fix: convert interval nanoseconds to microseconds before populating `tmToChar`, and preserve the fractional microsecond remainder for `US`.
+- Focused green:
+  - `go test -vet=off ./testing/go -run '^TestToCharIntervalPreservesFractionalSecondsRepro$' -count=1 -v`
+  - `go test -vet=off ./testing/go -run '^(TestToCharIntervalPreservesFractionalSecondsRepro|TestToCharNumericFormatsPostgresPatternsRepro)$' -count=1 -v`
+  - `go test -vet=off ./server/functions -run '^$' -count=1`
+- Lane committed: `409350e1 fix: preserve interval fractions in to_char`.
+
 ### gamma - 2026-05-13 00:29 America/Phoenix
 
 - Lane: `DELETE ... USING` joined target deletion from `TestDeleteUsingDeletesJoinedRowsRepro`.
