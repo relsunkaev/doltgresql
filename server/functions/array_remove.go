@@ -15,6 +15,7 @@
 package functions
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
 	"github.com/dolthub/doltgresql/server/functions/framework"
@@ -42,6 +43,9 @@ var array_remove_anyarray_anyelement = framework.Function2{
 		baseType := t[0].ArrayBaseType()
 		result := make([]any, 0, len(array))
 		for _, element := range array {
+			if _, ok := element.([]any); ok {
+				return nil, errors.New("removing elements from multidimensional arrays is not supported")
+			}
 			if element == nil || val2 == nil {
 				if element == nil && val2 == nil {
 					continue

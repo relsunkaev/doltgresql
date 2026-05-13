@@ -49,98 +49,95 @@ var array_in = framework.Function3{
 		baseType := pgtypes.IDToBuiltInDoltgresType[id.Type(baseTypeOid)]
 		typmod := val3.(int32)
 		baseType = baseType.WithAttTypMod(typmod)
-		if len(input) < 2 || input[0] != '{' || input[len(input)-1] != '}' {
-			// This error is regarded as a critical error, and thus we immediately return the error alongside a nil
-			// value. Returning a nil value is a signal to not ignore the error.
-			return nil, errors.Errorf(`malformed array literal: "%s"`, input)
-		}
-		// We'll remove the surrounding braces since we've already verified that they're there
-		input = input[1 : len(input)-1]
-		var values []any
-		var err error
-		sb := strings.Builder{}
-		quoteStartCount := 0
-		quoteEndCount := 0
-		escaped := false
-		// Iterate over each rune in the input to collect and process the rune elements
-		for _, r := range input {
-			if escaped {
-				sb.WriteRune(r)
-				escaped = false
-			} else if quoteStartCount > quoteEndCount {
-				switch r {
-				case '\\':
-					escaped = true
-				case '"':
-					quoteEndCount++
-				default:
-					sb.WriteRune(r)
-				}
-			} else {
-				switch r {
-				case ' ', '\t', '\n', '\r':
-					continue
-				case '\\':
-					escaped = true
-				case '"':
-					quoteStartCount++
-				case ',':
-					if quoteStartCount >= 2 {
-						// This is a malformed string, thus we treat it as a critical error.
-						return nil, errors.Errorf(`malformed array literal: "%s"`, input)
-					}
-					str := sb.String()
-					var innerValue any
-					if quoteStartCount == 0 && strings.EqualFold(str, "null") {
-						// An unquoted case-insensitive NULL is treated as an actual null value
-						innerValue = nil
-					} else {
-						var nErr error
-						innerValue, nErr = baseType.IoInput(ctx, str)
-						if nErr != nil && err == nil {
-							// This is a non-critical error, therefore the error may be ignored at a higher layer (such as
-							// an explicit cast) and the inner type will still return a valid result, so we must allow the
-							// values to propagate.
-							err = nErr
-						}
-					}
-					values = append(values, innerValue)
-					sb.Reset()
-					quoteStartCount = 0
-					quoteEndCount = 0
-				default:
-					sb.WriteRune(r)
-				}
-			}
-		}
-		// Use anything remaining in the buffer as the last element
-		if sb.Len() > 0 {
-			if escaped || quoteStartCount > quoteEndCount || quoteStartCount >= 2 {
-				// These errors are regarded as critical errors, and thus we immediately return the error alongside a nil
-				// value. Returning a nil value is a signal to not ignore the error.
-				return nil, errors.Errorf(`malformed array literal: "%s"`, input)
-			} else {
-				str := sb.String()
-				var innerValue any
-				if quoteStartCount == 0 && strings.EqualFold(str, "NULL") {
-					// An unquoted case-insensitive NULL is treated as an actual null value
-					innerValue = nil
-				} else {
-					var nErr error
-					innerValue, nErr = baseType.IoInput(ctx, str)
-					if nErr != nil && err == nil {
-						// This is a non-critical error, therefore the error may be ignored at a higher layer (such as
-						// an explicit cast) and the inner type will still return a valid result, so we must allow the
-						// values to propagate.
-						err = nErr
-					}
-				}
-				values = append(values, innerValue)
-			}
-		}
-
-		return values, err
+		return parseArrayLiteral(ctx, input, baseType)
 	},
+}
+
+func parseArrayLiteral(ctx *sql.Context, input string, baseType *pgtypes.DoltgresType) ([]any, error) {
+	if len(input) < 2 || input[0] != '{' || input[len(input)-1] != '}' {
+		return nil, errors.Errorf(`malformed array literal: "%s"`, input)
+	}
+	input = input[1 : len(input)-1]
+	if len(input) == 0 {
+		return []any{}, nil
+	}
+
+	var values []any
+	var err error
+	sb := strings.Builder{}
+	braceDepth := 0
+	inQuotes := false
+	tokenQuoted := false
+	escaped := false
+	for _, r := range input {
+		if escaped {
+			sb.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if inQuotes {
+			switch r {
+			case '\\':
+				escaped = true
+			case '"':
+				inQuotes = false
+			default:
+				sb.WriteRune(r)
+			}
+			continue
+		}
+		switch r {
+		case ' ', '\t', '\n', '\r':
+			continue
+		case '\\':
+			escaped = true
+		case '"':
+			inQuotes = true
+			tokenQuoted = true
+		case '{':
+			braceDepth++
+			sb.WriteRune(r)
+		case '}':
+			if braceDepth == 0 {
+				return nil, errors.Errorf(`malformed array literal: "%s"`, input)
+			}
+			braceDepth--
+			sb.WriteRune(r)
+		case ',':
+			if braceDepth > 0 {
+				sb.WriteRune(r)
+				continue
+			}
+			innerValue, nErr := parseArrayValue(ctx, sb.String(), tokenQuoted, baseType)
+			if nErr != nil && err == nil {
+				err = nErr
+			}
+			values = append(values, innerValue)
+			sb.Reset()
+			tokenQuoted = false
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	if escaped || inQuotes || braceDepth != 0 {
+		return nil, errors.Errorf(`malformed array literal: "%s"`, input)
+	}
+	innerValue, nErr := parseArrayValue(ctx, sb.String(), tokenQuoted, baseType)
+	if nErr != nil && err == nil {
+		err = nErr
+	}
+	values = append(values, innerValue)
+	return values, err
+}
+
+func parseArrayValue(ctx *sql.Context, value string, quoted bool, baseType *pgtypes.DoltgresType) (any, error) {
+	if !quoted && strings.EqualFold(value, "null") {
+		return nil, nil
+	}
+	if !quoted && strings.HasPrefix(value, "{") {
+		return parseArrayLiteral(ctx, value, baseType)
+	}
+	return baseType.IoInput(ctx, value)
 }
 
 // array_out represents the PostgreSQL function of array type IO output.
