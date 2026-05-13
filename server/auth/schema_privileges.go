@@ -63,6 +63,9 @@ func HasSchemaPrivilege(key SchemaPrivilegeKey, privilege Privilege) bool {
 	if IsSuperUser(key.Role) {
 		return true
 	}
+	if privilege == Privilege_USAGE && hasAllDataSchemaUsage(key.Role) {
+		return true
+	}
 	if schemaPrivilegeValue, ok := globalDatabase.schemaPrivileges.Data[key]; ok {
 		if privilegeMap, ok := schemaPrivilegeValue.Privileges[privilege]; ok && len(privilegeMap) > 0 {
 			return true
@@ -77,6 +80,10 @@ func HasSchemaPrivilege(key SchemaPrivilegeKey, privilege Privilege) bool {
 		}
 	}
 	return false
+}
+
+func hasAllDataSchemaUsage(role RoleID) bool {
+	return HasInheritedRole(role, "pg_read_all_data") || HasInheritedRole(role, "pg_write_all_data")
 }
 
 // HasSchemaPrivilegeGrantOption checks whether the user has WITH GRANT OPTION for the given privilege on the associated

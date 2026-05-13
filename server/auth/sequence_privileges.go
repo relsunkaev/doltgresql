@@ -64,6 +64,9 @@ func HasSequencePrivilege(key SequencePrivilegeKey, privilege Privilege) bool {
 	if IsSuperUser(key.Role) {
 		return true
 	}
+	if hasAllDataSequencePrivilege(key.Role, privilege) {
+		return true
+	}
 	// If a sequence name was provided, also check for privileges on all sequences in the schema.
 	if len(key.Name) > 0 {
 		if HasSequencePrivilege(SequencePrivilegeKey{
@@ -87,6 +90,16 @@ func HasSequencePrivilege(key SequencePrivilegeKey, privilege Privilege) bool {
 		}, privilege) {
 			return true
 		}
+	}
+	return false
+}
+
+func hasAllDataSequencePrivilege(role RoleID, privilege Privilege) bool {
+	if privilege == Privilege_SELECT && HasInheritedRole(role, "pg_read_all_data") {
+		return true
+	}
+	if (privilege == Privilege_UPDATE || privilege == Privilege_USAGE) && HasInheritedRole(role, "pg_write_all_data") {
+		return true
 	}
 	return false
 }
