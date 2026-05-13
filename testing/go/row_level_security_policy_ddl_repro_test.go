@@ -20,9 +20,6 @@ import "testing"
 // compatibility bug: CREATE POLICY must reject a duplicate policy name for the
 // same table, but Doltgres replaces the existing policy in memory.
 func TestCreatePolicyRejectsDuplicatePolicyNameRepro(t *testing.T) {
-	cleanup := []string{
-		"DROP TABLE IF EXISTS rls_duplicate_policy_docs",
-	}
 	RunScripts(t, []ScriptTest{
 		{
 			Name: "CREATE POLICY rejects duplicate policy name",
@@ -43,13 +40,6 @@ func TestCreatePolicyRejectsDuplicatePolicyNameRepro(t *testing.T) {
 						FOR SELECT
 						USING (false);`,
 					ExpectedErr: `already exists`,
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:                    "rls-create-policy-rejects-duplicate-name",
-						Compare:               "sqlstate",
-						ExpectedSQLState:      "42710",
-						ExpectedErrorSeverity: "ERROR",
-						Cleanup:               cleanup,
-					},
 				},
 			},
 		},

@@ -107,6 +107,7 @@ type migrationAssertion struct {
 	Query           string   `json:"query,omitempty"`
 	QuerySHA256     string   `json:"querySha256,omitempty"`
 	NonLiteral      []string `json:"nonLiteral,omitempty"`
+	Cleanup         []string `json:"cleanup,omitempty"`
 	NeedsCleanup    bool     `json:"needsCleanup"`
 	CleanupProvided bool     `json:"cleanupProvided"`
 }
@@ -144,7 +145,11 @@ func main() {
 }
 
 func generateManifest() ([]byte, error) {
-	scriptEntries, err := annotatedScriptTestEntries()
+	migrationOverrides, err := loadMigrationOverrides()
+	if err != nil {
+		return nil, err
+	}
+	scriptEntries, err := annotatedScriptTestEntries(migrationOverrides)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +277,49 @@ type oracleMeta struct {
 	Cleanup               []string
 }
 
-func annotatedScriptTestEntries() ([]entry, error) {
+func loadMigrationOverrides() (map[string]oracleMeta, error) {
+	overrides := map[string]oracleMeta{}
+	files, err := filepath.Glob("testdata/postgres_oracle_migrations/*.oracle-map.json")
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(files)
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		var mapped migrationFile
+		if err := json.Unmarshal(data, &mapped); err != nil {
+			return nil, fmt.Errorf("%s: %w", file, err)
+		}
+		for _, assertion := range mapped.Assertions {
+			if assertion.Oracle != "postgres" {
+				continue
+			}
+			if assertion.Key == "" {
+				return nil, fmt.Errorf("%s: postgres migration entry missing key", file)
+			}
+			if assertion.PostgresID == "" {
+				return nil, fmt.Errorf("%s: %s postgres migration entry missing postgresId", file, assertion.Key)
+			}
+			if _, ok := overrides[assertion.Key]; ok {
+				return nil, fmt.Errorf("%s: duplicate migration key %s", file, assertion.Key)
+			}
+			overrides[assertion.Key] = oracleMeta{
+				ID:                    assertion.PostgresID,
+				Compare:               assertion.Compare,
+				ColumnModes:           assertion.ColumnModes,
+				ExpectedSQLState:      assertion.SQLState,
+				ExpectedErrorSeverity: assertion.ErrorSeverity,
+				Cleanup:               assertion.Cleanup,
+			}
+		}
+	}
+	return overrides, nil
+}
+
+func annotatedScriptTestEntries(migrationOverrides map[string]oracleMeta) ([]entry, error) {
 	files, err := filepath.Glob("*_test.go")
 	if err != nil {
 		return nil, err
@@ -295,6 +342,8 @@ func annotatedScriptTestEntries() ([]entry, error) {
 				continue
 			}
 			stringSlices := localStringSlices(fn.Body)
+			source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
+			ordinal := 0
 			var inspectErr error
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
 				if inspectErr != nil {
@@ -309,8 +358,7 @@ func annotatedScriptTestEntries() ([]entry, error) {
 					if !ok {
 						continue
 					}
-					source := fmt.Sprintf("testing/go/%s:%s", file, fn.Name.Name)
-					generated, err := entriesFromScriptTest(source, scriptLit, stringSlices)
+					generated, err := entriesFromScriptTest(source, &ordinal, scriptLit, stringSlices, migrationOverrides)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s: %w", source, err)
 						return false
@@ -328,6 +376,10 @@ func annotatedScriptTestEntries() ([]entry, error) {
 }
 
 func writeMigrationCandidates(dir string) error {
+	migrationOverrides, err := loadMigrationOverrides()
+	if err != nil {
+		return err
+	}
 	files, err := filepath.Glob("*_test.go")
 	if err != nil {
 		return err
@@ -340,7 +392,7 @@ func writeMigrationCandidates(dir string) error {
 		if strings.HasPrefix(file, "postgres_oracle_") {
 			continue
 		}
-		candidates, err := migrationCandidatesForFile(file)
+		candidates, err := migrationCandidatesForFile(file, migrationOverrides)
 		if err != nil {
 			return err
 		}
@@ -359,7 +411,7 @@ func writeMigrationCandidates(dir string) error {
 	return nil
 }
 
-func migrationCandidatesForFile(file string) (migrationFile, error) {
+func migrationCandidatesForFile(file string, migrationOverrides map[string]oracleMeta) (migrationFile, error) {
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, file, nil, 0)
 	if err != nil {
@@ -411,7 +463,7 @@ func migrationCandidatesForFile(file string) (migrationFile, error) {
 						continue
 					}
 					ordinal++
-					candidate, err := migrationCandidate(source, ordinal, scriptName, assertionFields, stringSlices)
+					candidate, err := migrationCandidate(source, ordinal, scriptName, assertionFields, stringSlices, migrationOverrides)
 					if err != nil {
 						inspectErr = fmt.Errorf("%s#%04d: %w", source, ordinal, err)
 						return false
@@ -428,7 +480,7 @@ func migrationCandidatesForFile(file string) (migrationFile, error) {
 	return candidates, nil
 }
 
-func migrationCandidate(source string, ordinal int, scriptName string, fields map[string]ast.Expr, stringSlices map[string][]string) (migrationAssertion, error) {
+func migrationCandidate(source string, ordinal int, scriptName string, fields map[string]ast.Expr, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) (migrationAssertion, error) {
 	query, nonLiteral := candidateStringLiteral(fields["Query"], "Query", nil)
 	key := fmt.Sprintf("%s#%04d", source, ordinal)
 	candidate := migrationAssertion{
@@ -465,8 +517,19 @@ func migrationCandidate(source string, ordinal int, scriptName string, fields ma
 			candidate.ColumnModes = meta.ColumnModes
 			candidate.SQLState = meta.ExpectedSQLState
 			candidate.ErrorSeverity = meta.ExpectedErrorSeverity
+			candidate.Cleanup = meta.Cleanup
 			candidate.CleanupProvided = len(meta.Cleanup) > 0
 		}
+	}
+	if meta, ok := migrationOverrides[key]; ok {
+		candidate.Oracle = "postgres"
+		candidate.PostgresID = meta.ID
+		candidate.Compare = meta.Compare
+		candidate.ColumnModes = meta.ColumnModes
+		candidate.SQLState = meta.ExpectedSQLState
+		candidate.ErrorSeverity = meta.ExpectedErrorSeverity
+		candidate.Cleanup = meta.Cleanup
+		candidate.CleanupProvided = len(meta.Cleanup) > 0
 	}
 	return candidate, nil
 }
@@ -551,21 +614,49 @@ func oracleIDWords(query string) string {
 	return strings.Join(kept, "-")
 }
 
-func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit, stringSlices map[string][]string) ([]entry, error) {
+func entriesFromScriptTest(source string, ordinal *int, scriptLit *ast.CompositeLit, stringSlices map[string][]string, migrationOverrides map[string]oracleMeta) ([]entry, error) {
 	fields := compositeFields(scriptLit)
 	assertionsLit, ok := fields["Assertions"].(*ast.CompositeLit)
 	if !ok {
 		return nil, nil
 	}
 
-	assertionLits := make([]*ast.CompositeLit, 0)
+	fieldSet := assertionFieldSet()
+	type mappedAssertion struct {
+		lit  *ast.CompositeLit
+		meta oracleMeta
+	}
+	assertionLits := make([]mappedAssertion, 0)
 	for _, assertionExpr := range assertionsLit.Elts {
 		assertionLit, ok := assertionExpr.(*ast.CompositeLit)
 		if !ok {
 			continue
 		}
-		if _, ok := compositeFields(assertionLit)["PostgresOracle"]; ok {
-			assertionLits = append(assertionLits, assertionLit)
+		assertionFields := compositeFields(assertionLit)
+		key := ""
+		if hasAnyField(assertionFields, fieldSet) {
+			*ordinal = *ordinal + 1
+			key = fmt.Sprintf("%s#%04d", source, *ordinal)
+		}
+		meta := oracleMeta{}
+		if key != "" {
+			if mapped, ok := migrationOverrides[key]; ok {
+				meta = mapped
+			}
+		}
+		if meta.ID == "" {
+			metaExpr, ok := assertionFields["PostgresOracle"]
+			if !ok {
+				continue
+			}
+			parsed, err := parseOracleMeta(metaExpr, stringSlices)
+			if err != nil {
+				return nil, fmt.Errorf("PostgresOracle: %w", err)
+			}
+			meta = parsed
+		}
+		if meta.ID != "" {
+			assertionLits = append(assertionLits, mappedAssertion{lit: assertionLit, meta: meta})
 		}
 	}
 	if len(assertionLits) == 0 {
@@ -578,8 +669,8 @@ func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit, stringSli
 	}
 
 	entries := make([]entry, 0, len(assertionLits))
-	for _, assertionLit := range assertionLits {
-		generated, ok, err := entryFromScriptTestAssertion(source, setup, assertionLit, stringSlices)
+	for _, assertion := range assertionLits {
+		generated, ok, err := entryFromScriptTestAssertion(source, setup, assertion.lit, assertion.meta)
 		if err != nil {
 			return nil, err
 		}
@@ -590,16 +681,8 @@ func entriesFromScriptTest(source string, scriptLit *ast.CompositeLit, stringSli
 	return entries, nil
 }
 
-func entryFromScriptTestAssertion(source string, setup []string, assertionLit *ast.CompositeLit, stringSlices map[string][]string) (entry, bool, error) {
+func entryFromScriptTestAssertion(source string, setup []string, assertionLit *ast.CompositeLit, meta oracleMeta) (entry, bool, error) {
 	fields := compositeFields(assertionLit)
-	metaExpr, ok := fields["PostgresOracle"]
-	if !ok {
-		return entry{}, false, nil
-	}
-	meta, err := parseOracleMeta(metaExpr, stringSlices)
-	if err != nil {
-		return entry{}, false, fmt.Errorf("PostgresOracle: %w", err)
-	}
 	if meta.ID == "" {
 		return entry{}, false, nil
 	}
