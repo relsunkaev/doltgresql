@@ -148,6 +148,7 @@ func (c *CreateTable) BuildRowIter(ctx *sql.Context, b sql.NodeExecBuilder, r sq
 			_ = createTableIter.Close(ctx)
 			return nil, err
 		}
+		c.registerTemporaryCreateRollback(ctx)
 	}
 
 	schemaName, err := core.GetSchemaName(ctx, c.gmsCreateTable.Db, "")
@@ -324,6 +325,22 @@ func (c *CreateTable) registerTemporaryOnCommit(ctx *sql.Context) error {
 		}
 	})
 	return nil
+}
+
+func (c *CreateTable) registerTemporaryCreateRollback(ctx *sql.Context) {
+	if !c.gmsCreateTable.Temporary() || !ctx.GetIgnoreAutoCommit() {
+		return
+	}
+	dbName := c.gmsCreateTable.Db.Name()
+	tableName := c.gmsCreateTable.Name()
+	connectionID := ctx.Session.ID()
+	callbackCtx := ctx.WithContext(context.Background())
+	key := "create-temp:" + strings.ToLower(dbName) + "." + strings.ToLower(tableName)
+	sessionstate.RegisterRollbackAction(connectionID, key, func() error {
+		session := dsess.DSessFromSess(callbackCtx.Session)
+		session.DropTemporaryTable(callbackCtx, dbName, tableName)
+		return nil
+	})
 }
 
 func deleteAllTemporaryRows(ctx *sql.Context, table sql.Table) error {

@@ -4079,6 +4079,7 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		deferrable.Commit(connectionID)
 		auth.CommitTransaction(connectionID)
 		rowsecurity.CommitTransaction(connectionID)
+		sessionstate.ClearRollbackActions(connectionID)
 		if err := largeobject.CommitTransaction(connectionID); err != nil {
 			return err
 		}
@@ -4096,6 +4097,9 @@ func (h *ConnectionHandler) finishNotifications(query ConvertedQuery) error {
 		rowsecurity.RollbackTransaction(connectionID)
 		if ctx, err := h.doltgresHandler.NewContext(context.Background(), h.mysqlConn, query.String); err == nil {
 			core.ClearContextValues(ctx)
+		}
+		if err := sessionstate.RunRollbackActions(connectionID); err != nil {
+			return err
 		}
 		functions.RollbackSessionLogicalDecodingMessages(connectionID)
 		notifications.Rollback(connectionID)
