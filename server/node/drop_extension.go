@@ -16,7 +16,9 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
@@ -29,6 +31,9 @@ import (
 	"github.com/dolthub/doltgresql/core/id"
 	"github.com/dolthub/doltgresql/server/auth"
 	"github.com/dolthub/doltgresql/server/comments"
+	pgexprs "github.com/dolthub/doltgresql/server/expression"
+	serverfunctions "github.com/dolthub/doltgresql/server/functions"
+	pgtypes "github.com/dolthub/doltgresql/server/types"
 )
 
 // DropExtension implements DROP EXTENSION.
@@ -36,9 +41,11 @@ type DropExtension struct {
 	Names    []string
 	IfExists bool
 	Cascade  bool
+	Runner   pgexprs.StatementRunner
 }
 
 var _ sql.ExecSourceRel = (*DropExtension)(nil)
+var _ sql.Expressioner = (*DropExtension)(nil)
 var _ vitess.Injectable = (*DropExtension)(nil)
 
 // NewDropExtension returns a new *DropExtension.
@@ -53,6 +60,11 @@ func NewDropExtension(names []string, ifExists bool, cascade bool) *DropExtensio
 // Children implements the interface sql.ExecSourceRel.
 func (c *DropExtension) Children() []sql.Node {
 	return nil
+}
+
+// Expressions implements the interface sql.Expressioner.
+func (c *DropExtension) Expressions() []sql.Expression {
+	return []sql.Expression{c.Runner}
 }
 
 // IsReadOnly implements the interface sql.ExecSourceRel.
@@ -76,6 +88,7 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		return nil, err
 	}
 	extensionsToDrop := make([]id.Extension, 0, len(c.Names))
+	loadedExtensionsToDrop := make([]coreextensions.Extension, 0, len(c.Names))
 	for _, name := range c.Names {
 		extID := id.NewExtension(name)
 		if !extCollection.HasLoadedExtension(ctx, extID) {
@@ -92,6 +105,7 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 			return nil, errors.Wrap(err, "permission denied")
 		}
 		extensionsToDrop = append(extensionsToDrop, extID)
+		loadedExtensionsToDrop = append(loadedExtensionsToDrop, ext)
 	}
 	functionsToDrop := make([]id.Function, 0)
 	err = funcCollection.IterateFunctions(ctx, func(f corefunctions.Function) (stop bool, err error) {
@@ -109,7 +123,25 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 	if err != nil {
 		return nil, err
 	}
+	memberTypes := extensionMemberTypesByID(loadedExtensionsToDrop)
+	dependentColumns, err := extensionDependentColumns(ctx, memberTypes)
+	if err != nil {
+		return nil, err
+	}
+	if len(dependentColumns) > 0 && !c.Cascade {
+		return nil, errors.Errorf(`cannot drop extension "%s" because other objects depend on it`, dependentColumns[0].extension)
+	}
+	if c.Cascade {
+		for _, dep := range dependentColumns {
+			if err = c.dropDependentColumn(ctx, dep); err != nil {
+				return nil, err
+			}
+		}
+	}
 	if err = funcCollection.DropFunction(ctx, functionsToDrop...); err != nil {
+		return nil, err
+	}
+	if err = dropExtensionMemberTypes(ctx, memberTypes); err != nil {
 		return nil, err
 	}
 	if err = extCollection.DropLoadedExtension(ctx, extensionsToDrop...); err != nil {
@@ -119,6 +151,135 @@ func (c *DropExtension) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error
 		clearExtensionComment(extID)
 	}
 	return sql.RowsToRowIter(), nil
+}
+
+type extensionDependentColumn struct {
+	schema    string
+	table     string
+	column    string
+	extension string
+}
+
+func extensionDependentColumns(ctx *sql.Context, memberTypes map[id.Type]string) ([]extensionDependentColumn, error) {
+	if len(memberTypes) == 0 {
+		return nil, nil
+	}
+	dependentColumns := make([]extensionDependentColumn, 0)
+	err := serverfunctions.IterateCurrentDatabase(ctx, serverfunctions.Callbacks{
+		Table: func(ctx *sql.Context, schema serverfunctions.ItemSchema, table serverfunctions.ItemTable) (cont bool, err error) {
+			if schema.IsSystemSchema() {
+				return true, nil
+			}
+			for _, col := range table.Item.Schema(ctx) {
+				typ, ok := col.Type.(*pgtypes.DoltgresType)
+				if !ok {
+					continue
+				}
+				extension, ok := memberTypes[typ.ID]
+				if !ok {
+					continue
+				}
+				dependentColumns = append(dependentColumns, extensionDependentColumn{
+					schema:    schema.Item.SchemaName(),
+					table:     table.Item.Name(),
+					column:    col.Name,
+					extension: extension,
+				})
+			}
+			return true, nil
+		},
+	})
+	return dependentColumns, err
+}
+
+func (c *DropExtension) dropDependentColumn(ctx *sql.Context, dep extensionDependentColumn) error {
+	if c.Runner.Runner == nil {
+		return errors.New("statement runner is not available for DROP EXTENSION CASCADE")
+	}
+	query := fmt.Sprintf(`ALTER TABLE %s.%s DROP COLUMN %s`,
+		quoteDropExtensionIdent(dep.schema),
+		quoteDropExtensionIdent(dep.table),
+		quoteDropExtensionIdent(dep.column),
+	)
+	_, err := sql.RunInterpreted(ctx, func(subCtx *sql.Context) ([]sql.Row, error) {
+		_, rowIter, _, err := c.Runner.Runner.QueryWithBindings(subCtx, query, nil, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		return sql.RowIterToRows(subCtx, rowIter)
+	})
+	return err
+}
+
+func dropExtensionMemberTypes(ctx *sql.Context, memberTypes map[id.Type]string) error {
+	if len(memberTypes) == 0 {
+		return nil
+	}
+	typesCollection, err := core.GetTypesCollectionFromContext(ctx)
+	if err != nil {
+		return err
+	}
+	droppedTypes := make([]id.Type, 0, len(memberTypes))
+	for typeID := range memberTypes {
+		typ, err := typesCollection.GetType(ctx, typeID)
+		if err != nil {
+			return err
+		}
+		if typ == nil {
+			continue
+		}
+		if err = typesCollection.DropType(ctx, typeID); err != nil {
+			return err
+		}
+		clearTypeComment(typeID)
+		droppedTypes = append(droppedTypes, typeID)
+	}
+	if len(droppedTypes) == 0 {
+		return nil
+	}
+	if err = core.MarkTypesCollectionDirty(ctx, ""); err != nil {
+		return err
+	}
+	auth.LockWrite(func() {
+		for _, typeID := range droppedTypes {
+			auth.RemoveAllTypePrivileges(typeID.SchemaName(), typeID.TypeName())
+		}
+		err = auth.PersistChanges()
+	})
+	return err
+}
+
+func extensionOwningType(ctx *sql.Context, typeID id.Type) (string, bool, error) {
+	extCollection, err := core.GetExtensionsCollectionFromContext(ctx, "")
+	if err != nil {
+		return "", false, err
+	}
+	memberTypes := extensionMemberTypesByID(extCollection.GetLoadedExtensions(ctx))
+	extension, ok := memberTypes[typeID]
+	return extension, ok, nil
+}
+
+func extensionMemberTypesByID(extensions []coreextensions.Extension) map[id.Type]string {
+	memberTypes := make(map[id.Type]string)
+	for _, ext := range extensions {
+		extName := strings.ToLower(ext.ExtName.Name())
+		switch extName {
+		case "citext", "hstore", "vector":
+		default:
+			continue
+		}
+		schemaName := ext.Namespace.SchemaName()
+		if schemaName == "" {
+			schemaName = "public"
+		}
+		memberTypes[id.NewType(schemaName, extName)] = extName
+		memberTypes[id.NewType(schemaName, "_"+extName)] = extName
+	}
+	return memberTypes
+}
+
+func quoteDropExtensionIdent(ident string) string {
+	return `"` + strings.ReplaceAll(ident, `"`, `""`) + `"`
 }
 
 func clearExtensionComment(extID id.Extension) {
@@ -154,6 +315,16 @@ func (c *DropExtension) String() string {
 // WithChildren implements the interface sql.ExecSourceRel.
 func (c *DropExtension) WithChildren(ctx *sql.Context, children ...sql.Node) (sql.Node, error) {
 	return plan.NillaryWithChildren(c, children...)
+}
+
+// WithExpressions implements the interface sql.Expressioner.
+func (c *DropExtension) WithExpressions(ctx *sql.Context, expressions ...sql.Expression) (sql.Node, error) {
+	if len(expressions) != 1 {
+		return nil, sql.ErrInvalidChildrenNumber.New(c, len(expressions), 1)
+	}
+	newC := *c
+	newC.Runner = expressions[0].(pgexprs.StatementRunner)
+	return &newC, nil
 }
 
 // WithResolvedChildren implements the interface vitess.Injectable.
