@@ -121,6 +121,14 @@ func (c *ExplicitCast) Eval(ctx *sql.Context, row sql.Row) (any, error) {
 		return nil, nil
 	}
 	fromType = runtimeFromTypeForExplicitCast(fromType, val)
+	fromType, err = resolveRuntimeCastType(ctx, fromType)
+	if err != nil {
+		return nil, err
+	}
+	fromType, err = checkForDomainTypeWithContext(ctx, fromType)
+	if err != nil {
+		return nil, err
+	}
 
 	baseCastToType, err := checkForDomainTypeWithContext(ctx, c.castToType)
 	if err != nil {

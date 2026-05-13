@@ -21,6 +21,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/analyzer"
+	gmsexpression "github.com/dolthub/go-mysql-server/sql/expression"
 	"github.com/dolthub/go-mysql-server/sql/plan"
 	"github.com/dolthub/go-mysql-server/sql/planbuilder"
 	"github.com/dolthub/go-mysql-server/sql/procedures"
@@ -226,7 +227,7 @@ func AddDomainConstraintsToCasts(ctx *sql.Context, a *analyzer.Analyzer, node sq
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
-				colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, e.Child())
+				colChecks, err := getDomainCheckConstraintsForCast(ctx, a, checkDefs, rt)
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
@@ -292,7 +293,11 @@ func resolveBaseDomainType(ctx *sql.Context, dt *pgtypes.DoltgresType) (*pgtypes
 }
 
 // getDomainCheckConstraintsForCast takes the check constraint definitions, parses, builds and returns sql.CheckConstraints.
-func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, checkDefs []*sql.CheckDefinition, value sql.Expression) (sql.CheckConstraints, error) {
+func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, checkDefs []*sql.CheckDefinition, domainType *pgtypes.DoltgresType) (sql.CheckConstraints, error) {
+	baseType, err := domainType.DomainUnderlyingBaseTypeWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	checks := make(sql.CheckConstraints, len(checkDefs))
 	for i, check := range checkDefs {
 		q := fmt.Sprintf("select %s", check.CheckExpression)
@@ -305,8 +310,7 @@ func getDomainCheckConstraintsForCast(ctx *sql.Context, a *analyzer.Analyzer, ch
 		checkExpr, _, _ = transform.Expr(ctx, checkExpr, func(ctx *sql.Context, expr sql.Expression) (sql.Expression, transform.TreeIdentity, error) {
 			switch e := expr.(type) {
 			case *node.DomainColumn:
-				expr = value
-				return expr, transform.NewTree, nil
+				return gmsexpression.NewGetField(0, baseType, "VALUE", true), transform.NewTree, nil
 			default:
 				return e, transform.SameTree, nil
 			}
