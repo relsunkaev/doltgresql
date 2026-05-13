@@ -305,6 +305,45 @@ func TestBeforeInsertTriggerSeesEarlierRowsInSameStatementRepro(t *testing.T) {
 	})
 }
 
+// TestBeforeInsertTriggerVisibleRowsRollBackOnLaterErrorRepro guards statement
+// atomicity when an earlier row made visible to a later row-level BEFORE INSERT
+// trigger must still roll back after a later row fails.
+func TestBeforeInsertTriggerVisibleRowsRollBackOnLaterErrorRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "BEFORE INSERT trigger-visible prior rows roll back on later error",
+			SetUpScript: []string{
+				`CREATE TABLE trigger_visibility_atomic_items (
+					pk INT PRIMARY KEY,
+					v1 TEXT,
+					qty INT CHECK (qty > 0)
+				);`,
+				`CREATE FUNCTION trigger_visibility_atomic_insert_func() RETURNS TRIGGER AS $$
+				BEGIN
+					UPDATE trigger_visibility_atomic_items SET v1 = v1 || NEW.pk::text;
+					RETURN NEW;
+				END;
+				$$ LANGUAGE plpgsql;`,
+				`CREATE TRIGGER trigger_visibility_atomic_before_insert
+					BEFORE INSERT ON trigger_visibility_atomic_items
+					FOR EACH ROW EXECUTE FUNCTION trigger_visibility_atomic_insert_func();`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `INSERT INTO trigger_visibility_atomic_items VALUES
+						(1, 'hi', 1),
+						(2, 'bad', -1);`,
+					ExpectedErr: `Check constraint`,
+				},
+				{
+					Query:    `SELECT count(*) FROM trigger_visibility_atomic_items;`,
+					Expected: []sql.Row{{int64(0)}},
+				},
+			},
+		},
+	})
+}
+
 // TestUpdateFromFiresRowTriggersRepro reproduces a trigger correctness bug:
 // UPDATE ... FROM should fire row-level UPDATE triggers for changed target rows.
 func TestUpdateFromFiresRowTriggersRepro(t *testing.T) {

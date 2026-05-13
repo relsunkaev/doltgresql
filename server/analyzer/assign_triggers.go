@@ -106,6 +106,12 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 				if err != nil {
 					return nil, transform.NewTree, err
 				}
+				if insert, ok := newNode.(*plan.InsertInto); ok {
+					newNode, err = wrapBeforeInsertTriggerDestination(ctx, insert, triggerInfo.dbName)
+					if err != nil {
+						return nil, transform.NewTree, err
+					}
+				}
 			}
 			if len(triggerInfo.afterRow) > 0 {
 				newNode = &pgnodes.TriggerExecution{
@@ -136,6 +142,32 @@ func AssignTriggers(ctx *sql.Context, a *analyzer.Analyzer, node sql.Node, scope
 		default:
 			return node, transform.SameTree, nil
 		}
+	})
+}
+
+func wrapBeforeInsertTriggerDestination(ctx *sql.Context, insert *plan.InsertInto, dbName string) (sql.Node, error) {
+	destination, same, err := wrapBeforeInsertVisibleTables(ctx, insert.Destination, dbName)
+	if err != nil || same == transform.SameTree {
+		return insert, err
+	}
+	return insert.WithChildren(ctx, destination)
+}
+
+func wrapBeforeInsertVisibleTables(ctx *sql.Context, node sql.Node, dbName string) (sql.Node, transform.TreeIdentity, error) {
+	return pgtransform.NodeWithOpaque(ctx, node, func(ctx *sql.Context, node sql.Node) (sql.Node, transform.TreeIdentity, error) {
+		resolvedTable, ok := node.(*plan.ResolvedTable)
+		if !ok {
+			return node, transform.SameTree, nil
+		}
+		wrappedTable, wrapped := pgnodes.WrapBeforeInsertVisibleTable(dbName, resolvedTable.Table)
+		if !wrapped {
+			return node, transform.SameTree, nil
+		}
+		newNode, err := resolvedTable.ReplaceTable(ctx, wrappedTable)
+		if err != nil {
+			return nil, transform.NewTree, err
+		}
+		return newNode.(sql.Node), transform.NewTree, nil
 	})
 }
 
