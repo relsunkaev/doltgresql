@@ -62,3 +62,37 @@ func TestDropOperatorIfExistsMissingRepro(t *testing.T) {
 		},
 	})
 }
+
+// TestDropOperatorIfExistsDropsExistingOperatorRepro reproduces a catalog
+// consistency bug: DROP OPERATOR IF EXISTS is currently converted to a no-op,
+// so an existing user-defined operator remains in pg_operator.
+func TestDropOperatorIfExistsDropsExistingOperatorRepro(t *testing.T) {
+	RunScripts(t, []ScriptTest{
+		{
+			Name: "DROP OPERATOR IF EXISTS removes existing operator",
+			SetUpScript: []string{
+				`CREATE FUNCTION drop_if_exists_operator_func(left_value INT, right_value INT)
+					RETURNS BOOL
+					LANGUAGE SQL
+					IMMUTABLE
+					AS $$ SELECT (left_value % 2) = (right_value % 2) $$;`,
+				`CREATE OPERATOR === (
+					LEFTARG = INT,
+					RIGHTARG = INT,
+					PROCEDURE = drop_if_exists_operator_func
+				);`,
+				`DROP OPERATOR IF EXISTS === (integer, integer);`,
+			},
+			Assertions: []ScriptTestAssertion{
+				{
+					Query: `SELECT COUNT(*)
+						FROM pg_operator
+						WHERE oprname = '==='
+						  AND oprleft = 'integer'::regtype
+						  AND oprright = 'integer'::regtype;`,
+					Expected: []sql.Row{{0}},
+				},
+			},
+		},
+	})
+}
