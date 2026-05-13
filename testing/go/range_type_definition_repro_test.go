@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL supports user-defined range types. Doltgres currently rejects
@@ -31,8 +29,7 @@ func TestCreateTypeAsRangeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT '[1.5,2.5)'::price_range::text;`,
-					Expected: []sql.Row{{"[1.5,2.5)"}},
+					Query: `SELECT '[1.5,2.5)'::price_range::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "range-type-definition-repro-test-testcreatetypeasrangerepro-0001-select-[1.5-2.5-::price_range::text"},
 				},
 			},
 		},

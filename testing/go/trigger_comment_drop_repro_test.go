@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropTriggerClearsCommentRepro reproduces a metadata persistence bug:
@@ -60,8 +58,7 @@ func TestDropTriggerClearsCommentRepro(t *testing.T) {
 						(SELECT oid FROM pg_trigger
 						 WHERE tgname = 'drop_recreate_comment_trigger'
 						   AND tgrelid = 'drop_recreate_comment_trigger_table'::regclass),
-						'pg_trigger');`,
-					Expected: []sql.Row{{nil}},
+						'pg_trigger');`, PostgresOracle: ScriptTestPostgresOracle{ID: "trigger-comment-drop-repro-test-testdroptriggerclearscommentrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestIndexOpclassesAndNullOrdering pins how far explicit opclass
@@ -38,8 +36,7 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 						ON accounts (email text_ops);`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'accounts_email_text_ops_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'accounts_email_text_ops_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0001-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -54,8 +51,7 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 						ON orders (customer_id int4_ops);`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'orders_customer_int4_ops_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'orders_customer_int4_ops_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0002-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -84,28 +80,22 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 						ON events (ts ASC NULLS FIRST);`,
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts ASC, id ASC;`,
-					Expected: []sql.Row{{"2"}, {"3"}, {"1"}, {"4"}},
+					Query: `SELECT id::text FROM events ORDER BY ts ASC, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0003-select-id::text-from-events-order"},
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts DESC, id ASC;`,
-					Expected: []sql.Row{{"1"}, {"4"}, {"3"}, {"2"}},
+					Query: `SELECT id::text FROM events ORDER BY ts DESC, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0004-select-id::text-from-events-order"},
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;`,
-					Expected: []sql.Row{{"1"}, {"4"}, {"2"}, {"3"}},
+					Query: `SELECT id::text FROM events ORDER BY ts ASC NULLS FIRST, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0005-select-id::text-from-events-order"},
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;`,
-					Expected: []sql.Row{{"2"}, {"3"}, {"1"}, {"4"}},
+					Query: `SELECT id::text FROM events ORDER BY ts ASC NULLS LAST, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0006-select-id::text-from-events-order"},
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts DESC NULLS FIRST, id ASC;`,
-					Expected: []sql.Row{{"1"}, {"4"}, {"3"}, {"2"}},
+					Query: `SELECT id::text FROM events ORDER BY ts DESC NULLS FIRST, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0007-select-id::text-from-events-order"},
 				},
 				{
-					Query:    `SELECT id::text FROM events ORDER BY ts DESC NULLS LAST, id ASC;`,
-					Expected: []sql.Row{{"3"}, {"2"}, {"1"}, {"4"}},
+					Query: `SELECT id::text FROM events ORDER BY ts DESC NULLS LAST, id ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0008-select-id::text-from-events-order"},
 				},
 			},
 		},
@@ -127,12 +117,10 @@ func TestIndexOpclassesAndNullOrdering(t *testing.T) {
 						(3, '2024-01-01 00:00:00');`,
 				},
 				{
-					Query:       `INSERT INTO unique_null_order_events VALUES (4, '2024-01-01 00:00:00');`,
-					ExpectedErr: `duplicate`,
+					Query: `INSERT INTO unique_null_order_events VALUES (4, '2024-01-01 00:00:00');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0009-insert-into-unique_null_order_events-values-4", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT id::text FROM unique_null_order_events ORDER BY ts ASC NULLS LAST, id;`,
-					Expected: []sql.Row{{"3"}, {"1"}, {"2"}},
+					Query: `SELECT id::text FROM unique_null_order_events ORDER BY ts ASC NULLS LAST, id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-opclass-nulls-probe-test-testindexopclassesandnullordering-0010-select-id::text-from-unique_null_order_events-order"},
 				},
 			},
 		},

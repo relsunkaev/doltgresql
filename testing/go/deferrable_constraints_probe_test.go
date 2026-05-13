@@ -69,8 +69,7 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO c VALUES (1, 999);`,
-					ExpectedErr: "Foreign key violation",
+					Query: `INSERT INTO c VALUES (1, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0001-insert-into-c-values-1", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -122,12 +121,7 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 							'child_immediate_catalog_parent_fk',
 							'child_not_deferrable_catalog_parent_fk'
 						)
-						ORDER BY conname;`,
-					Expected: []sql.Row{
-						{"child_deferred_catalog_parent_fk", "t", "t"},
-						{"child_immediate_catalog_parent_fk", "t", "f"},
-						{"child_not_deferrable_catalog_parent_fk", "f", "f"},
-					},
+						ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0002-select-conname-condeferrable-condeferred-from"},
 				},
 				{
 					Query: `SELECT conname, pg_get_constraintdef(oid)
@@ -137,21 +131,7 @@ func TestDeferrableConstraintsProbe(t *testing.T) {
 							'child_immediate_catalog_parent_fk',
 							'child_not_deferrable_catalog_parent_fk'
 						)
-						ORDER BY conname;`,
-					Expected: []sql.Row{
-						{
-							"child_deferred_catalog_parent_fk",
-							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE INITIALLY DEFERRED",
-						},
-						{
-							"child_immediate_catalog_parent_fk",
-							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id) DEFERRABLE",
-						},
-						{
-							"child_not_deferrable_catalog_parent_fk",
-							"FOREIGN KEY (parent_id) REFERENCES parent_catalog(id)",
-						},
-					},
+						ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "deferrable-constraints-probe-test-testdeferrableconstraintsprobe-0003-select-conname-pg_get_constraintdef-oid-from"},
 				},
 			},
 		},

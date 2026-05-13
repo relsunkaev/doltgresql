@@ -778,16 +778,13 @@ func TestVarcharComparedToBlankPaddedCharRepro(t *testing.T) {
 			Name: "varchar comparison with blank-padded char",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 'def'::varchar = CAST('def' AS char(6));`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 'def'::varchar = CAST('def' AS char(6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0001-select-def-::varchar-=-cast"},
 				},
 				{
-					Query:    `SELECT 'def'::varchar < CAST('def' AS char(6));`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT 'def'::varchar < CAST('def' AS char(6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0002-select-def-::varchar-<-cast"},
 				},
 				{
-					Query:    `SELECT 'def'::varchar >= CAST('def' AS char(6));`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT 'def'::varchar >= CAST('def' AS char(6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcomparedtoblankpaddedcharrepro-0003-select-def-::varchar->=-cast"},
 				},
 			},
 		},
@@ -808,22 +805,19 @@ func TestVarcharColumnComparedToBlankPaddedCharRepro(t *testing.T) {
 				{
 					Query: `SELECT v
 						FROM varchar_char_compare_items
-						WHERE v = CAST('def' AS char(6));`,
-					Expected: []sql.Row{{"def"}},
+						WHERE v = CAST('def' AS char(6));`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0001-select-v-from-varchar_char_compare_items-where"},
 				},
 				{
 					Query: `SELECT v
 						FROM varchar_char_compare_items
 						WHERE v < CAST('def' AS char(6))
-						ORDER BY v;`,
-					Expected: []sql.Row{{"abc"}},
+						ORDER BY v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0002-select-v-from-varchar_char_compare_items-where"},
 				},
 				{
 					Query: `SELECT v
 						FROM varchar_char_compare_items
 						WHERE v >= CAST('def' AS char(6))
-						ORDER BY v;`,
-					Expected: []sql.Row{{"def"}, {"ghi"}},
+						ORDER BY v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "query-correctness-repro-test-testvarcharcolumncomparedtoblankpaddedcharrepro-0003-select-v-from-varchar_char_compare_items-where"},
 				},
 			},
 		},

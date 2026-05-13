@@ -42,8 +42,7 @@ func TestCreateTableLikeIncludingDefaultsCopiesDefaultsRepro(t *testing.T) {
 					Query: `INSERT INTO like_defaults_copy (id) VALUES (1);`,
 				},
 				{
-					Query:    `SELECT id, label FROM like_defaults_copy;`,
-					Expected: []sql.Row{{1, "copied"}},
+					Query: `SELECT id, label FROM like_defaults_copy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-like-correctness-repro-test-testcreatetablelikeincludingdefaultscopiesdefaultsrepro-0001-select-id-label-from-like_defaults_copy"},
 				},
 			},
 		},
@@ -69,8 +68,7 @@ func TestCreateTableLikeExcludesDefaultsByDefaultRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, label FROM like_no_defaults_copy;`,
-					Expected: []sql.Row{{1, nil}},
+					Query: `SELECT id, label FROM like_no_defaults_copy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-like-correctness-repro-test-testcreatetablelikeexcludesdefaultsbydefaultrepro-0001-select-id-label-from-like_no_defaults_copy"},
 				},
 			},
 		},
@@ -168,8 +166,7 @@ func TestCreateTableLikeIncludingIdentityCopiesIdentityRepro(t *testing.T) {
 					Query: `INSERT INTO like_identity_copy (label) VALUES ('copied identity');`,
 				},
 				{
-					Query:    `SELECT id, label FROM like_identity_copy;`,
-					Expected: []sql.Row{{int64(1), "copied identity"}},
+					Query: `SELECT id, label FROM like_identity_copy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-like-correctness-repro-test-testcreatetablelikeincludingidentitycopiesidentityrepro-0001-select-id-label-from-like_identity_copy"},
 				},
 			},
 		},
@@ -231,8 +228,7 @@ func TestCreateTableLikeIncludingGeneratedCopiesGeneratedColumnsRepro(t *testing
 					Query: `INSERT INTO like_generated_copy (base_value) VALUES (7);`,
 				},
 				{
-					Query:    `SELECT base_value, doubled FROM like_generated_copy;`,
-					Expected: []sql.Row{{7, 14}},
+					Query: `SELECT base_value, doubled FROM like_generated_copy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-like-correctness-repro-test-testcreatetablelikeincludinggeneratedcopiesgeneratedcolumnsrepro-0001-select-base_value-doubled-from-like_generated_copy"},
 				},
 			},
 		},
@@ -258,8 +254,7 @@ func TestCreateTableLikeExcludesGeneratedByDefaultRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT base_value, doubled FROM like_no_generated_copy;`,
-					Expected: []sql.Row{{7, nil}},
+					Query: `SELECT base_value, doubled FROM like_no_generated_copy;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-like-correctness-repro-test-testcreatetablelikeexcludesgeneratedbydefaultrepro-0001-select-base_value-doubled-from-like_no_generated_copy"},
 				},
 			},
 		},

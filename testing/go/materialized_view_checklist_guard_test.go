@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestMaterializedViewConcurrentUniqueIndexChecklistGuard(t *testing.T) {
@@ -36,11 +34,7 @@ func TestMaterializedViewConcurrentUniqueIndexChecklistGuard(t *testing.T) {
 					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_multi;`,
 				},
 				{
-					Query: `SELECT a, b, v FROM mv_multi ORDER BY a, b;`,
-					Expected: []sql.Row{
-						{1, 1, "new"},
-						{1, 2, "keep"},
-					},
+					Query: `SELECT a, b, v FROM mv_multi ORDER BY a, b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0001-select-a-b-v-from"},
 				},
 			},
 		},
@@ -58,11 +52,7 @@ func TestMaterializedViewConcurrentUniqueIndexChecklistGuard(t *testing.T) {
 					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_include;`,
 				},
 				{
-					Query: `SELECT id, v FROM mv_include ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "new"},
-						{2, "keep"},
-					},
+					Query: `SELECT id, v FROM mv_include ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0002-select-id-v-from-mv_include"},
 				},
 			},
 		},
@@ -76,15 +66,10 @@ func TestMaterializedViewConcurrentUniqueIndexChecklistGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_expr;`,
-					ExpectedErr: `cannot refresh materialized view "public.mv_expr" concurrently`,
+					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_expr;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0003-refresh-materialized-view-concurrently-mv_expr", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT id, v FROM mv_expr ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "old"},
-						{2, "keep"},
-					},
+					Query: `SELECT id, v FROM mv_expr ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testmaterializedviewconcurrentuniqueindexchecklistguard-0004-select-id-v-from-mv_expr"},
 				},
 			},
 		},
@@ -103,15 +88,10 @@ func TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REFRESH MATERIALIZED VIEW mv_refresh_error;`,
-					ExpectedErr: "division by zero",
+					Query: `REFRESH MATERIALIZED VIEW mv_refresh_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0001-refresh-materialized-view-mv_refresh_error", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT id, quotient FROM mv_refresh_error ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, -10},
-						{3, 10},
-					},
+					Query: `SELECT id, quotient FROM mv_refresh_error ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0002-select-id-quotient-from-mv_refresh_error"},
 				},
 			},
 		},
@@ -126,15 +106,10 @@ func TestRefreshMaterializedViewFailedQueryPreservesSnapshotGuard(t *testing.T) 
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_concurrent_refresh_error;`,
-					ExpectedErr: "division by zero",
+					Query: `REFRESH MATERIALIZED VIEW CONCURRENTLY mv_concurrent_refresh_error;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0003-refresh-materialized-view-concurrently-mv_concurrent_refresh_error", Compare: "sqlstate"},
 				},
 				{
-					Query: `SELECT id, quotient FROM mv_concurrent_refresh_error ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, -10},
-						{3, 10},
-					},
+					Query: `SELECT id, quotient FROM mv_concurrent_refresh_error ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-checklist-guard-test-testrefreshmaterializedviewfailedquerypreservessnapshotguard-0004-select-id-quotient-from-mv_concurrent_refresh_error"},
 				},
 			},
 		},

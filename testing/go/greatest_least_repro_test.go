@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL treats GREATEST and LEAST as conditional expressions over resolved
@@ -29,12 +27,10 @@ func TestGreatestLeastEvaluateScalarArgumentsRepro(t *testing.T) {
 			Name: "GREATEST and LEAST evaluate scalar arguments",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT GREATEST(1, 2, 3), LEAST(1, 2, 3);`,
-					Expected: []sql.Row{{3, 1}},
+					Query: `SELECT GREATEST(1, 2, 3), LEAST(1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0001-select-greatest-1-2-3"},
 				},
 				{
-					Query:    `SELECT GREATEST(NULL, 1, 2), LEAST(NULL, 1, 2), GREATEST(NULL, NULL);`,
-					Expected: []sql.Row{{2, 1, nil}},
+					Query: `SELECT GREATEST(NULL, 1, 2), LEAST(NULL, 1, 2), GREATEST(NULL, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "greatest-least-repro-test-testgreatestleastevaluatescalarargumentsrepro-0002-select-greatest-null-1-2"},
 				},
 			},
 		},

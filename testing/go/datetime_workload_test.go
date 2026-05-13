@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDateTimeWorkload pins the date/time casts and helpers that real
@@ -28,96 +26,80 @@ import (
 func TestDateTimeWorkload(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
-			Name: "text-to-date and text-to-timestamp casts",
+			Name:        "text-to-date and text-to-timestamp casts",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT '2026-05-08'::date::text;`,
-					Expected: []sql.Row{{"2026-05-08"}},
+					Query: `SELECT '2026-05-08'::date::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0001-select-2026-05-08-::date::text"},
 				},
 				{
-					Query:    `SELECT '2026-05-08 10:30:45'::timestamp::text;`,
-					Expected: []sql.Row{{"2026-05-08 10:30:45"}},
+					Query: `SELECT '2026-05-08 10:30:45'::timestamp::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0002-select-2026-05-08-10:30:45-::timestamp::text"},
 				},
 				{
-					Query:    `SELECT CAST('2026-05-08' AS DATE)::text;`,
-					Expected: []sql.Row{{"2026-05-08"}},
+					Query: `SELECT CAST('2026-05-08' AS DATE)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0003-select-cast-2026-05-08-as-date"},
 				},
 			},
 		},
 		{
-			Name: "make_date and make_timestamp",
+			Name:        "make_date and make_timestamp",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT make_date(2026, 5, 8)::text;`,
-					Expected: []sql.Row{{"2026-05-08"}},
+					Query: `SELECT make_date(2026, 5, 8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0004-select-make_date-2026-5-8"},
 				},
 				{
-					Query:    `SELECT make_timestamp(2026, 5, 8, 10, 30, 45)::text;`,
-					Expected: []sql.Row{{"2026-05-08 10:30:45"}},
+					Query: `SELECT make_timestamp(2026, 5, 8, 10, 30, 45)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0005-select-make_timestamp-2026-5-8"},
 				},
 			},
 		},
 		{
-			Name: "extract for date parts",
+			Name:        "extract for date parts",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extract(year FROM '2026-05-08'::date)::text;`,
-					Expected: []sql.Row{{"2026"}},
+					Query: `SELECT extract(year FROM '2026-05-08'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0006-select-extract-year-from-2026-05-08"},
 				},
 				{
-					Query:    `SELECT extract(month FROM '2026-05-08'::date)::text;`,
-					Expected: []sql.Row{{"5"}},
+					Query: `SELECT extract(month FROM '2026-05-08'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0007-select-extract-month-from-2026-05-08"},
 				},
 				{
-					Query:    `SELECT extract(day FROM '2026-05-08'::date)::text;`,
-					Expected: []sql.Row{{"8"}},
+					Query: `SELECT extract(day FROM '2026-05-08'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0008-select-extract-day-from-2026-05-08"},
 				},
 				{
-					Query:    `SELECT extract(quarter FROM '2026-05-08'::date)::text;`,
-					Expected: []sql.Row{{"2"}},
+					Query: `SELECT extract(quarter FROM '2026-05-08'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0009-select-extract-quarter-from-2026-05-08"},
 				},
 				{
-					Query:    `SELECT extract(dow FROM '2026-05-08'::date)::text;`,
-					Expected: []sql.Row{{"5"}},
+					Query: `SELECT extract(dow FROM '2026-05-08'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0010-select-extract-dow-from-2026-05-08"},
 				},
 				{
-					Query:    `SELECT extract(hour FROM '2026-05-08 10:30:45'::timestamp)::text;`,
-					Expected: []sql.Row{{"10"}},
+					Query: `SELECT extract(hour FROM '2026-05-08 10:30:45'::timestamp)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0011-select-extract-hour-from-2026-05-08"},
 				},
 			},
 		},
 		{
-			Name: "date arithmetic and INTERVAL math",
+			Name:        "date arithmetic and INTERVAL math",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('2026-05-08'::date + INTERVAL '1 day')::date::text;`,
-					Expected: []sql.Row{{"2026-05-09"}},
+					Query: `SELECT ('2026-05-08'::date + INTERVAL '1 day')::date::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0012-select-2026-05-08-::date-+-interval"},
 				},
 				{
-					Query:    `SELECT ('2026-05-08'::date - INTERVAL '1 month')::date::text;`,
-					Expected: []sql.Row{{"2026-04-08"}},
+					Query: `SELECT ('2026-05-08'::date - INTERVAL '1 month')::date::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0013-select-2026-05-08-::date-interval-1"},
 				},
 				{
-					Query:    `SELECT ('2026-05-08'::date - '2026-05-01'::date)::text;`,
-					Expected: []sql.Row{{"7"}},
+					Query: `SELECT ('2026-05-08'::date - '2026-05-01'::date)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0014-select-2026-05-08-::date-2026-05-01-::date"},
 				},
 			},
 		},
 		{
-			Name: "date_trunc",
+			Name:        "date_trunc",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT date_trunc('month', '2026-05-08 10:30:45'::timestamp)::text;`,
-					Expected: []sql.Row{{"2026-05-01 00:00:00"}},
+					Query: `SELECT date_trunc('month', '2026-05-08 10:30:45'::timestamp)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0015-select-date_trunc-month-2026-05-08-10:30:45"},
 				},
 				{
-					Query:    `SELECT date_trunc('hour', '2026-05-08 10:30:45'::timestamp)::text;`,
-					Expected: []sql.Row{{"2026-05-08 10:00:00"}},
+					Query: `SELECT date_trunc('hour', '2026-05-08 10:30:45'::timestamp)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-workload-test-testdatetimeworkload-0016-select-date_trunc-hour-2026-05-08-10:30:45"},
 				},
 			},
 		},

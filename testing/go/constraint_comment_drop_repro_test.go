@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropConstraintClearsCommentRepro reproduces a metadata persistence bug:
@@ -51,8 +49,7 @@ func TestDropConstraintClearsCommentRepro(t *testing.T) {
 						(SELECT oid FROM pg_constraint
 						 WHERE conname = 'drop_recreate_comment_constraint'
 						   AND conrelid = 'drop_recreate_comment_constraint_table'::regclass),
-						'pg_constraint');`,
-					Expected: []sql.Row{{nil}},
+						'pg_constraint');`, PostgresOracle: ScriptTestPostgresOracle{ID: "constraint-comment-drop-repro-test-testdropconstraintclearscommentrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},

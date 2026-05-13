@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSearchPathResolvesViewsInLaterSchemasRepro reproduces a query
@@ -38,11 +36,7 @@ func TestSearchPathResolvesViewsInLaterSchemasRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT v FROM search_path_view ORDER BY id;`,
-					Expected: []sql.Row{
-						{4},
-						{5},
-					},
+					Query: `SELECT v FROM search_path_view ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-search-path-repro-test-testsearchpathresolvesviewsinlaterschemasrepro-0001-select-v-from-search_path_view-order"},
 				},
 			},
 		},

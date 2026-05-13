@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestToTimestampRejectsOutputOnlyOFPatternRepro reproduces a timestamp
@@ -29,8 +27,7 @@ func TestToTimestampRejectsOutputOnlyOFPatternRepro(t *testing.T) {
 			Name: "to_timestamp rejects output-only OF pattern",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT to_timestamp('2011-12-18 11:38 +05', 'YYYY-MM-DD HH12:MI OF');`,
-					ExpectedErr: `formatting field "OF" is only supported in to_char`,
+					Query: `SELECT to_timestamp('2011-12-18 11:38 +05', 'YYYY-MM-DD HH12:MI OF');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-timestamp-correctness-repro-test-testtotimestamprejectsoutputonlyofpatternrepro-0001-select-to_timestamp-2011-12-18-11:38-+05", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -49,8 +46,7 @@ func TestToTimestampIsoWeekdayParsesMondayRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_timestamp('2005521', 'IYYYIWID')::text;`,
-					Expected: []sql.Row{{"2005-12-26 00:00:00+00"}},
+					Query: `SELECT to_timestamp('2005521', 'IYYYIWID')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-timestamp-correctness-repro-test-testtotimestampisoweekdayparsesmondayrepro-0001-select-to_timestamp-2005521-iyyyiwid-::text"},
 				},
 			},
 		},

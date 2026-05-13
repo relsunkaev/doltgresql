@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL supports renaming table constraints and persists the new
@@ -39,12 +37,10 @@ func TestAlterTableRenameConstraintRepro(t *testing.T) {
 					Query: `SELECT conname
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'rename_constraint_items'::regclass
-						ORDER BY conname;`,
-					Expected: []sql.Row{{"amount_above_zero"}},
+						ORDER BY conname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "rename-constraint-repro-test-testaltertablerenameconstraintrepro-0001-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
-					Query:       `INSERT INTO rename_constraint_items VALUES (1, -1);`,
-					ExpectedErr: `amount_above_zero`,
+					Query: `INSERT INTO rename_constraint_items VALUES (1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "rename-constraint-repro-test-testaltertablerenameconstraintrepro-0002-insert-into-rename_constraint_items-values-1", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -65,8 +61,7 @@ func TestAlterTableRenameConstraintRepro(t *testing.T) {
 					Query: `SELECT obj_description(oid, 'pg_constraint')
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'rename_constraint_comment_items'::regclass
-							AND conname = 'amount_above_zero_comment';`,
-					Expected: []sql.Row{{"kept constraint comment"}},
+							AND conname = 'amount_above_zero_comment';`, PostgresOracle: ScriptTestPostgresOracle{ID: "rename-constraint-repro-test-testaltertablerenameconstraintrepro-0003-select-obj_description-oid-pg_constraint-from"},
 				},
 			},
 		},

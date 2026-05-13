@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSqlFunctionReturnExpressionBodyRepro reproduces a SQL routine
@@ -35,8 +33,7 @@ func TestSqlFunctionReturnExpressionBodyRepro(t *testing.T) {
 						RETURN input_value + 1;`,
 				},
 				{
-					Query:    `SELECT sql_return_expression_body(7);`,
-					Expected: []sql.Row{{8}},
+					Query: `SELECT sql_return_expression_body(7);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-sql-body-repro-test-testsqlfunctionreturnexpressionbodyrepro-0001-select-sql_return_expression_body-7"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSessionReplicationRoleProbe pins `SET session_replication_role`
@@ -34,15 +32,13 @@ func TestSessionReplicationRoleProbe(t *testing.T) {
 					Query: `SET session_replication_role = 'replica';`,
 				},
 				{
-					Query:    `SHOW session_replication_role;`,
-					Expected: []sql.Row{{"replica"}},
+					Query: `SHOW session_replication_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-replication-role-probe-test-testsessionreplicationroleprobe-0001-show-session_replication_role"},
 				},
 				{
 					Query: `SET session_replication_role = 'origin';`,
 				},
 				{
-					Query:    `SHOW session_replication_role;`,
-					Expected: []sql.Row{{"origin"}},
+					Query: `SHOW session_replication_role;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-replication-role-probe-test-testsessionreplicationroleprobe-0002-show-session_replication_role"},
 				},
 			},
 		},
@@ -63,8 +59,7 @@ func TestSessionReplicationRoleProbe(t *testing.T) {
 					Query: `SET session_replication_role = 'origin';`,
 				},
 				{
-					Query:       `INSERT INTO c VALUES (2, 999);`,
-					ExpectedErr: "Foreign key violation",
+					Query: `INSERT INTO c VALUES (2, 999);`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-replication-role-probe-test-testsessionreplicationroleprobe-0003-insert-into-c-values-2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -90,8 +85,7 @@ $$ LANGUAGE plpgsql;`,
 					Query: `INSERT INTO main VALUES (1, 'suppressed');`,
 				},
 				{
-					Query:    `SELECT count(*)::TEXT FROM audit_log;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT count(*)::TEXT FROM audit_log;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-replication-role-probe-test-testsessionreplicationroleprobe-0004-select-count-*-::text-from"},
 				},
 				{
 					Query: `SET session_replication_role = 'origin';`,
@@ -100,8 +94,7 @@ $$ LANGUAGE plpgsql;`,
 					Query: `INSERT INTO main VALUES (2, 'logged');`,
 				},
 				{
-					Query:    `SELECT count(*)::TEXT FROM audit_log;`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::TEXT FROM audit_log;`, PostgresOracle: ScriptTestPostgresOracle{ID: "session-replication-role-probe-test-testsessionreplicationroleprobe-0005-select-count-*-::text-from"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestTruncateMultipleTablesRepro reproduces a PostgreSQL correctness bug:
@@ -40,8 +38,7 @@ func TestTruncateMultipleTablesRepro(t *testing.T) {
 				{
 					Query: `SELECT
 						(SELECT count(*) FROM truncate_multi_a),
-						(SELECT count(*) FROM truncate_multi_b);`,
-					Expected: []sql.Row{{0, 0}},
+						(SELECT count(*) FROM truncate_multi_b);`, PostgresOracle: ScriptTestPostgresOracle{ID: "truncate-correctness-repro-test-testtruncatemultipletablesrepro-0001-select-select-count-*-from"},
 				},
 			},
 		},

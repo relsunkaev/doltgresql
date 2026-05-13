@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestExplain(t *testing.T) {
@@ -30,10 +28,7 @@ func TestExplain(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Skip:  true, // Our explain output is very different
-					Query: `EXPLAIN SELECT * FROM T;`,
-					Expected: []sql.Row{
-						{"Seq Scan on t  (cost=0.00..35.50 rows=2550 width=4)"},
-					},
+					Query: `EXPLAIN SELECT * FROM T;`, PostgresOracle: ScriptTestPostgresOracle{ID: "explain-test-testexplain-0001-explain-select-*-from-t", ColumnModes: []string{"explain"}},
 				},
 				{
 					Skip: true, // Need to properly support explain options
@@ -51,10 +46,7 @@ EXPLAIN
 	FORMAT TEXT
 ) 
 	SELECT * FROM t;
-`,
-					Expected: []sql.Row{
-						{"Seq Scan on t  (cost=0.00..35.50 rows=2550 width=4)"},
-					},
+`, PostgresOracle: ScriptTestPostgresOracle{ID: "explain-test-testexplain-0002-explain-analyze-verbose-costs-settings", ColumnModes: []string{"explain"}},
 				},
 				{
 					Skip: true, // Need to properly support explain options
@@ -72,10 +64,7 @@ EXPLAIN
 	FORMAT TEXT
 ) 
 	SELECT * FROM t;
-`,
-					Expected: []sql.Row{
-						{"Seq Scan on t  (cost=0.00..35.50 rows=2550 width=4)"},
-					},
+`, PostgresOracle: ScriptTestPostgresOracle{ID: "explain-test-testexplain-0003-explain-analyze-on-verbose-off", ColumnModes: []string{"explain"}},
 				},
 				{
 					Skip: true, // Need to properly support explain options
@@ -85,8 +74,7 @@ EXPLAIN
 	NOTAVALIDOPTION
 ) 
 	SELECT * FROM t;
-`,
-					ExpectedErr: "ERROR:  unrecognized EXPLAIN option \"NOTAVALIDOPTION\"",
+`, PostgresOracle: ScriptTestPostgresOracle{ID: "explain-test-testexplain-0004-explain-notavalidoption-select-*-from", Compare: "sqlstate"},
 				},
 			},
 		},

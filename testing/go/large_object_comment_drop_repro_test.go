@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestLargeObjectUnlinkClearsCommentRepro reproduces a metadata persistence
@@ -33,19 +31,16 @@ func TestLargeObjectUnlinkClearsCommentRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT lo_unlink(424260);`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT lo_unlink(424260);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0001-select-lo_unlink-424260"},
 				},
 				{
-					Query:    `SELECT lo_create(424260);`,
-					Expected: []sql.Row{{"424260"}},
+					Query: `SELECT lo_create(424260);`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0002-select-lo_create-424260"},
 				},
 				{
 					Query: `SELECT description
 						FROM pg_catalog.pg_description
 						WHERE objoid = 424260
-							AND classoid = 'pg_largeobject_metadata'::regclass;`,
-					Expected: []sql.Row{},
+							AND classoid = 'pg_largeobject_metadata'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "large-object-comment-drop-repro-test-testlargeobjectunlinkclearscommentrepro-0003-select-description-from-pg_catalog.pg_description-where"},
 				},
 			},
 		},

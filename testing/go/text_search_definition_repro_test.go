@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL's built-in text-search functions can parse documents and queries
@@ -32,8 +30,7 @@ func TestBuiltInTextSearchFunctionsMatchTermsRepro(t *testing.T) {
 					Query: `SELECT to_tsvector('simple'::regconfig, 'jumped cats')::text,
 							to_tsquery('simple'::regconfig, 'jumped & cats')::text,
 							to_tsvector('simple'::regconfig, 'jumped cats') @@
-								to_tsquery('simple'::regconfig, 'cats');`,
-					Expected: []sql.Row{{"'cats':2 'jumped':1", "'jumped' & 'cats'", true}},
+								to_tsquery('simple'::regconfig, 'cats');`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testbuiltintextsearchfunctionsmatchtermsrepro-0001-select-to_tsvector-simple-::regconfig-jumped"},
 				},
 			},
 		},
@@ -48,8 +45,7 @@ func TestPlainToTsQueryFunctionRepro(t *testing.T) {
 			Name: "plainto_tsquery parses plain text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT plainto_tsquery('simple'::regconfig, 'fat cats')::text;`,
-					Expected: []sql.Row{{"'fat' & 'cats'"}},
+					Query: `SELECT plainto_tsquery('simple'::regconfig, 'fat cats')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testplaintotsqueryfunctionrepro-0001-select-plainto_tsquery-simple-::regconfig-fat"},
 				},
 			},
 		},
@@ -65,8 +61,7 @@ func TestPhraseToTsQueryFunctionRepro(t *testing.T) {
 			Name: "phraseto_tsquery parses phrase text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT phraseto_tsquery('simple'::regconfig, 'fat cats')::text;`,
-					Expected: []sql.Row{{"'fat' <-> 'cats'"}},
+					Query: `SELECT phraseto_tsquery('simple'::regconfig, 'fat cats')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testphrasetotsqueryfunctionrepro-0001-select-phraseto_tsquery-simple-::regconfig-fat"},
 				},
 			},
 		},
@@ -82,8 +77,7 @@ func TestWebsearchToTsQueryFunctionRepro(t *testing.T) {
 			Name: "websearch_to_tsquery parses web search text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT websearch_to_tsquery('simple'::regconfig, 'fat cat')::text;`,
-					Expected: []sql.Row{{"'fat' & 'cat'"}},
+					Query: `SELECT websearch_to_tsquery('simple'::regconfig, 'fat cat')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testwebsearchtotsqueryfunctionrepro-0001-select-websearch_to_tsquery-simple-::regconfig-fat"},
 				},
 			},
 		},
@@ -99,8 +93,7 @@ func TestTsHeadlineFunctionRepro(t *testing.T) {
 			Name: "ts_headline highlights matching text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ts_headline('simple'::regconfig, 'fat cats ate rats', to_tsquery('simple'::regconfig, 'cats'))::text;`,
-					Expected: []sql.Row{{"fat <b>cats</b> ate rats"}},
+					Query: `SELECT ts_headline('simple'::regconfig, 'fat cats ate rats', to_tsquery('simple'::regconfig, 'cats'))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsheadlinefunctionrepro-0001-select-ts_headline-simple-::regconfig-fat"},
 				},
 			},
 		},
@@ -118,8 +111,7 @@ func TestTsRankFunctionRepro(t *testing.T) {
 					Query: `SELECT ts_rank(
 						to_tsvector('simple'::regconfig, 'fat cats ate rats'),
 						to_tsquery('simple'::regconfig, 'cats')
-					) > 0;`,
-					Expected: []sql.Row{{true}},
+					) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsrankfunctionrepro-0001-select-ts_rank-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -138,8 +130,7 @@ func TestTsRankCdFunctionRepro(t *testing.T) {
 					Query: `SELECT ts_rank_cd(
 						to_tsvector('simple'::regconfig, 'fat cats ate rats'),
 						to_tsquery('simple'::regconfig, 'cats')
-					) > 0;`,
-					Expected: []sql.Row{{true}},
+					) > 0;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsrankcdfunctionrepro-0001-select-ts_rank_cd-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -155,8 +146,7 @@ func TestTsVectorToArrayFunctionRepro(t *testing.T) {
 			Name: "tsvector_to_array extracts lexemes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT tsvector_to_array(to_tsvector('simple'::regconfig, 'fat cats'))::text;`,
-					Expected: []sql.Row{{`{cats,fat}`}},
+					Query: `SELECT tsvector_to_array(to_tsvector('simple'::regconfig, 'fat cats'))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsvectortoarrayfunctionrepro-0001-select-tsvector_to_array-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -172,8 +162,7 @@ func TestArrayToTsVectorFunctionRepro(t *testing.T) {
 			Name: "array_to_tsvector constructs sorted lexemes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT array_to_tsvector(ARRAY['foo', 'bar', 'baz', 'bar'])::text;`,
-					Expected: []sql.Row{{"'bar' 'baz' 'foo'"}},
+					Query: `SELECT array_to_tsvector(ARRAY['foo', 'bar', 'baz', 'bar'])::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testarraytotsvectorfunctionrepro-0001-select-array_to_tsvector-array[-foo-bar"},
 				},
 			},
 		},
@@ -188,8 +177,7 @@ func TestTsDeleteFunctionRepro(t *testing.T) {
 			Name: "ts_delete removes a lexeme",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ts_delete(to_tsvector('simple'::regconfig, 'fat cats'), 'cats')::text;`,
-					Expected: []sql.Row{{"'fat':1"}},
+					Query: `SELECT ts_delete(to_tsvector('simple'::regconfig, 'fat cats'), 'cats')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsdeletefunctionrepro-0001-select-ts_delete-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -204,8 +192,7 @@ func TestSetWeightFunctionRepro(t *testing.T) {
 			Name: "setweight assigns lexeme weights",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT setweight(to_tsvector('simple'::regconfig, 'fat cats'), 'A')::text;`,
-					Expected: []sql.Row{{"'cats':2A 'fat':1A"}},
+					Query: `SELECT setweight(to_tsvector('simple'::regconfig, 'fat cats'), 'A')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testsetweightfunctionrepro-0001-select-setweight-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -221,8 +208,7 @@ func TestStripTsVectorFunctionRepro(t *testing.T) {
 			Name: "strip removes tsvector positions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT strip(to_tsvector('simple'::regconfig, 'fat cats'))::text;`,
-					Expected: []sql.Row{{"'cats' 'fat'"}},
+					Query: `SELECT strip(to_tsvector('simple'::regconfig, 'fat cats'))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-teststriptsvectorfunctionrepro-0001-select-strip-to_tsvector-simple-::regconfig"},
 				},
 			},
 		},
@@ -238,8 +224,7 @@ func TestNumNodeFunctionRepro(t *testing.T) {
 			Name: "numnode counts tsquery nodes",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT numnode(to_tsquery('simple'::regconfig, 'fat & cats'));`,
-					Expected: []sql.Row{{3}},
+					Query: `SELECT numnode(to_tsquery('simple'::regconfig, 'fat & cats'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testnumnodefunctionrepro-0001-select-numnode-to_tsquery-simple-::regconfig"},
 				},
 			},
 		},
@@ -255,8 +240,7 @@ func TestQueryTreeFunctionRepro(t *testing.T) {
 			Name: "querytree returns indexable tsquery text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT querytree(to_tsquery('simple'::regconfig, 'fat & cats'));`,
-					Expected: []sql.Row{{"'fat' & 'cats'"}},
+					Query: `SELECT querytree(to_tsquery('simple'::regconfig, 'fat & cats'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testquerytreefunctionrepro-0001-select-querytree-to_tsquery-simple-::regconfig"},
 				},
 			},
 		},
@@ -275,8 +259,7 @@ func TestTsQueryPhraseFunctionRepro(t *testing.T) {
 					Query: `SELECT tsquery_phrase(
 						to_tsquery('simple'::regconfig, 'fat'),
 						to_tsquery('simple'::regconfig, 'cats')
-					)::text;`,
-					Expected: []sql.Row{{"'fat' <-> 'cats'"}},
+					)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsqueryphrasefunctionrepro-0001-select-tsquery_phrase-to_tsquery-simple-::regconfig"},
 				},
 			},
 		},
@@ -295,8 +278,7 @@ func TestTsRewriteFunctionRepro(t *testing.T) {
 						to_tsquery('simple'::regconfig, 'fat'),
 						to_tsquery('simple'::regconfig, 'fat'),
 						to_tsquery('simple'::regconfig, 'cat')
-					)::text;`,
-					Expected: []sql.Row{{"'cat'"}},
+					)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsrewritefunctionrepro-0001-select-ts_rewrite-to_tsquery-simple-::regconfig"},
 				},
 			},
 		},
@@ -311,8 +293,7 @@ func TestTsFilterFunctionRepro(t *testing.T) {
 			Name: "ts_filter keeps selected tsvector weights",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ts_filter('base:1A hidden:2B rebel:3A'::tsvector, '{a}')::text;`,
-					Expected: []sql.Row{{"'base':1A 'rebel':3A"}},
+					Query: `SELECT ts_filter('base:1A hidden:2B rebel:3A'::tsvector, '{a}')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testtsfilterfunctionrepro-0001-select-ts_filter-base:1a-hidden:2b-rebel:3a"},
 				},
 			},
 		},
@@ -328,8 +309,7 @@ func TestJsonToTsVectorFunctionRepro(t *testing.T) {
 			Name: "json_to_tsvector extracts JSON string tokens",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT json_to_tsvector('english'::regconfig, '{"a": "aaa in bbb"}'::json, '"string"')::text;`,
-					Expected: []sql.Row{{"'aaa':1 'bbb':3"}},
+					Query: `SELECT json_to_tsvector('english'::regconfig, '{"a": "aaa in bbb"}'::json, '"string"')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testjsontotsvectorfunctionrepro-0001-select-json_to_tsvector-english-::regconfig-{"},
 				},
 			},
 		},
@@ -350,12 +330,10 @@ func TestCreateTextSearchConfigurationCopyIsUsableRepro(t *testing.T) {
 				{
 					Query: `SELECT cfgname
 						FROM pg_catalog.pg_ts_config
-						WHERE cfgname = 'copied_simple_config';`,
-					Expected: []sql.Row{{"copied_simple_config"}},
+						WHERE cfgname = 'copied_simple_config';`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0001-select-cfgname-from-pg_catalog.pg_ts_config-where"},
 				},
 				{
-					Query:    `SELECT to_tsvector('copied_simple_config', 'jumped cats');`,
-					Expected: []sql.Row{{"'cats':2 'jumped':1"}},
+					Query: `SELECT to_tsvector('copied_simple_config', 'jumped cats');`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testcreatetextsearchconfigurationcopyisusablerepro-0002-select-to_tsvector-copied_simple_config-jumped-cats"},
 				},
 			},
 		},
@@ -395,8 +373,7 @@ func TestDropTextSearchConfigurationIfExistsDropsExistingRepro(t *testing.T) {
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_ts_config
 						WHERE cfgname = 'drop_existing_ts_config_repro'
-						  AND cfgnamespace = 'public'::regnamespace;`,
-					Expected: []sql.Row{{0}},
+						  AND cfgnamespace = 'public'::regnamespace;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testdroptextsearchconfigurationifexistsdropsexistingrepro-0001-select-count-*-from-pg_catalog.pg_ts_config"},
 				},
 			},
 		},
@@ -459,20 +436,16 @@ func TestAlterTextSearchObjectsReachMissingObjectValidationRepro(t *testing.T) {
 			Name: "ALTER TEXT SEARCH objects validate missing targets",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TEXT SEARCH CONFIGURATION missing_ts_config_repro RENAME TO renamed_ts_config_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER TEXT SEARCH CONFIGURATION missing_ts_config_repro RENAME TO renamed_ts_config_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0001-alter-text-search-configuration-missing_ts_config_repro", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER TEXT SEARCH DICTIONARY missing_ts_dictionary_repro RENAME TO renamed_ts_dictionary_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER TEXT SEARCH DICTIONARY missing_ts_dictionary_repro RENAME TO renamed_ts_dictionary_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0002-alter-text-search-dictionary-missing_ts_dictionary_repro", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER TEXT SEARCH PARSER missing_ts_parser_repro RENAME TO renamed_ts_parser_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER TEXT SEARCH PARSER missing_ts_parser_repro RENAME TO renamed_ts_parser_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0003-alter-text-search-parser-missing_ts_parser_repro", Compare: "sqlstate"},
 				},
 				{
-					Query:       `ALTER TEXT SEARCH TEMPLATE missing_ts_template_repro RENAME TO renamed_ts_template_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER TEXT SEARCH TEMPLATE missing_ts_template_repro RENAME TO renamed_ts_template_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "text-search-definition-repro-test-testaltertextsearchobjectsreachmissingobjectvalidationrepro-0004-alter-text-search-template-missing_ts_template_repro", Compare: "sqlstate"},
 				},
 			},
 		},

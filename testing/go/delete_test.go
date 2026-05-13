@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestDelete(t *testing.T) {
@@ -30,12 +28,10 @@ func TestDelete(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DELETE FROM t123 where id = 1;",
-					Expected: []sql.Row{},
+					Query: "DELETE FROM t123 where id = 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "delete-test-testdelete-0001-delete-from-t123-where-id"},
 				},
 				{
-					Query:    "SELECT * FROM t123;",
-					Expected: []sql.Row{{2, "two"}},
+					Query: "SELECT * FROM t123;", PostgresOracle: ScriptTestPostgresOracle{ID: "delete-test-testdelete-0002-select-*-from-t123"},
 				},
 			},
 		},
@@ -47,18 +43,15 @@ func TestDelete(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "DELETE FROM t123 where id = 1 RETURNING id, c1;",
-					Expected: []sql.Row{{1, "one"}},
+					Query: "DELETE FROM t123 where id = 1 RETURNING id, c1;", PostgresOracle: ScriptTestPostgresOracle{ID: "delete-test-testdelete-0003-delete-from-t123-where-id"},
 				},
 				{
 					// Test a DELETE with no filter, to test that we don't convert
 					// to a TRUNCATE operation
-					Query:    "DELETE FROM t123 RETURNING *;",
-					Expected: []sql.Row{{2, "two"}, {3, "three"}},
+					Query: "DELETE FROM t123 RETURNING *;", PostgresOracle: ScriptTestPostgresOracle{ID: "delete-test-testdelete-0004-delete-from-t123-returning-*"},
 				},
 				{
-					Query:    "SELECT * FROM t123;",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM t123;", PostgresOracle: ScriptTestPostgresOracle{ID: "delete-test-testdelete-0005-select-*-from-t123"},
 				},
 			},
 		},

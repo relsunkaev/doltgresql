@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestWindowFunctions pins the window-function shapes real PG views and
@@ -42,13 +40,7 @@ func TestWindowFunctions(t *testing.T) {
 						lead(price) OVER (ORDER BY day) AS next_price,
 						price - lag(price) OVER (ORDER BY day) AS change
 						FROM prices
-						ORDER BY day;`,
-					Expected: []sql.Row{
-						{int32(1), int32(100), nil, int32(110), nil},
-						{int32(2), int32(110), int32(100), int32(95), int32(10)},
-						{int32(3), int32(95), int32(110), int32(120), int32(-15)},
-						{int32(4), int32(120), int32(95), nil, int32(25)},
-					},
+						ORDER BY day;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0001-select-day-price-lag-price"},
 				},
 			},
 		},
@@ -70,14 +62,7 @@ func TestWindowFunctions(t *testing.T) {
 						count(*) OVER (PARTITION BY grp) AS group_total,
 						count(*) OVER () AS overall_total
 						FROM events
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "a", int64(3), int64(5)},
-						{int32(2), "a", int64(3), int64(5)},
-						{int32(3), "a", int64(3), int64(5)},
-						{int32(4), "b", int64(2), int64(5)},
-						{int32(5), "b", int64(2), int64(5)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0002-select-id-grp-count-*"},
 				},
 			},
 		},
@@ -102,14 +87,7 @@ func TestWindowFunctions(t *testing.T) {
 							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
 						) AS rolling_sum
 						FROM measurements
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "a", int64(10)},
-						{int32(2), "a", int64(30)},
-						{int32(3), "a", int64(50)},
-						{int32(4), "b", int64(5)},
-						{int32(5), "b", int64(20)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0003-select-id-grp-sum-amount"},
 				},
 				{
 					Query: `SELECT id, grp,
@@ -119,14 +97,7 @@ func TestWindowFunctions(t *testing.T) {
 							ROWS BETWEEN 1 PRECEDING AND CURRENT ROW
 						) AS rolling_avg
 						FROM measurements
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "a", Numeric("10")},
-						{int32(2), "a", Numeric("15")},
-						{int32(3), "a", Numeric("25")},
-						{int32(4), "b", Numeric("5")},
-						{int32(5), "b", Numeric("10")},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0004-select-id-grp-avg-amount"},
 				},
 				{
 					Query: `SELECT
@@ -142,8 +113,7 @@ func TestWindowFunctions(t *testing.T) {
 						))
 						FROM measurements
 						ORDER BY id
-						LIMIT 1;`,
-					Expected: []sql.Row{{"bigint", "numeric"}},
+						LIMIT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0005-select-pg_typeof-sum-amount-over"},
 				},
 			},
 		},
@@ -164,14 +134,7 @@ func TestWindowFunctions(t *testing.T) {
 						first_value(n) OVER (PARTITION BY grp ORDER BY id) AS first_n,
 						last_value(n)  OVER (PARTITION BY grp ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_n
 						FROM events
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "a", int32(10), int32(10), int32(30)},
-						{int32(2), "a", int32(20), int32(10), int32(30)},
-						{int32(3), "a", int32(30), int32(10), int32(30)},
-						{int32(4), "b", int32(5), int32(5), int32(15)},
-						{int32(5), "b", int32(15), int32(5), int32(15)},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0006-select-id-grp-n-first_value"},
 				},
 			},
 		},
@@ -196,15 +159,7 @@ func TestWindowFunctions(t *testing.T) {
 						percent_rank() OVER (PARTITION BY grp ORDER BY score DESC) AS pct_rank,
 						ntile(2) OVER (PARTITION BY grp ORDER BY score DESC, id) AS bucket
 						FROM scores
-						ORDER BY grp, score DESC, id;`,
-					Expected: []sql.Row{
-						{int32(2), "a", int32(20), int64(1), int64(1), int64(1), float64(0), int32(1)},
-						{int32(3), "a", int32(20), int64(2), int64(1), int64(1), float64(0), int32(1)},
-						{int32(1), "a", int32(10), int64(3), int64(3), int64(2), float64(1), int32(2)},
-						{int32(5), "b", int32(9), int64(1), int64(1), int64(1), float64(0), int32(1)},
-						{int32(6), "b", int32(9), int64(2), int64(1), int64(1), float64(0), int32(1)},
-						{int32(4), "b", int32(7), int64(3), int64(3), int64(2), float64(1), int32(2)},
-					},
+						ORDER BY grp, score DESC, id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0007-select-id-grp-score-row_number"},
 				},
 				{
 					Query: `SELECT
@@ -215,8 +170,7 @@ func TestWindowFunctions(t *testing.T) {
 						pg_typeof(ntile(2) OVER (ORDER BY score DESC, id))
 						FROM scores
 						ORDER BY id
-						LIMIT 1;`,
-					Expected: []sql.Row{{"bigint", "bigint", "bigint", "double precision", "integer"}},
+						LIMIT 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "window-functions-test-testwindowfunctions-0008-select-pg_typeof-row_number-over-order"},
 				},
 			},
 		},

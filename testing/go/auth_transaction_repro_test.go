@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRollbackRevertsAlterDatabaseSetRepro reproduces a transaction
@@ -43,8 +41,7 @@ func TestRollbackRevertsAlterDatabaseSetRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setdatabase = 'rollback_database_setting_catalog'::regdatabase;`,
-					Expected: []sql.Row{{0}},
+						WHERE setdatabase = 'rollback_database_setting_catalog'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsalterdatabasesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -71,8 +68,7 @@ func TestCommitKeepsAlterDatabaseSet(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(setconfig, ',')
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setdatabase = 'commit_database_setting_catalog'::regdatabase;`,
-					Expected: []sql.Row{{"work_mem=64kB"}},
+						WHERE setdatabase = 'commit_database_setting_catalog'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testcommitkeepsalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -100,8 +96,7 @@ func TestRollbackRestoresPreviousAlterDatabaseSet(t *testing.T) {
 				{
 					Query: `SELECT array_to_string(setconfig, ',')
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setdatabase = 'rollback_restore_database_setting'::regdatabase;`,
-					Expected: []sql.Row{{"work_mem=64kB"}},
+						WHERE setdatabase = 'rollback_restore_database_setting'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrestorespreviousalterdatabaseset-0001-select-array_to_string-setconfig-from-pg_catalog.pg_db_role_setting", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -132,8 +127,7 @@ func TestRollbackRevertsAlterDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datconnlimit
 						FROM pg_catalog.pg_database
-						WHERE datname = 'rollback_database_options_catalog';`,
-					Expected: []sql.Row{{int64(-1)}},
+						WHERE datname = 'rollback_database_options_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsalterdatabasecatalogoptionsrepro-0001-select-datconnlimit-from-pg_catalog.pg_database-where"},
 				},
 			},
 		},
@@ -163,8 +157,7 @@ func TestRollbackRevertsAlterRoleSetRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setrole = 'rollback_role_setting_catalog'::regrole;`,
-					Expected: []sql.Row{{0}},
+						WHERE setrole = 'rollback_role_setting_catalog'::regrole;`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsalterrolesetrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting"},
 				},
 			},
 		},
@@ -194,8 +187,7 @@ func TestRollbackRevertsAlterRoleOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT rolconnlimit
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'rollback_role_options_catalog';`,
-					Expected: []sql.Row{{int32(-1)}},
+						WHERE rolname = 'rollback_role_options_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsalterroleoptionsrepro-0001-select-rolconnlimit-from-pg_catalog.pg_roles-where"},
 				},
 			},
 		},
@@ -222,8 +214,7 @@ func TestRollbackDropsCreatedRoleRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'rollback_created_role';`,
-					Expected: []sql.Row{{0}},
+						WHERE rolname = 'rollback_created_role';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackdropscreatedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles"},
 				},
 			},
 		},
@@ -253,8 +244,7 @@ func TestRollbackRestoresDroppedRoleRepro(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_roles
-						WHERE rolname = 'rollback_dropped_role';`,
-					Expected: []sql.Row{{1}},
+						WHERE rolname = 'rollback_dropped_role';`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrestoresdroppedrolerepro-0001-select-count-*-from-pg_catalog.pg_roles"},
 				},
 			},
 		},
@@ -288,8 +278,7 @@ func TestRollbackRevertsGrantTablePrivilegeRepro(t *testing.T) {
 						'rollback_grant_table_reader',
 						'rollback_grant_table_private',
 						'SELECT'
-					);`,
-					Expected: []sql.Row{{false}},
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsgranttableprivilegerepro-0001-select-has_table_privilege-rollback_grant_table_reader-rollback_grant_table_private-select"},
 				},
 			},
 		},
@@ -325,8 +314,7 @@ func TestRollbackRevertsRevokeTablePrivilegeRepro(t *testing.T) {
 						'rollback_revoke_table_reader',
 						'rollback_revoke_table_private',
 						'SELECT'
-					);`,
-					Expected: []sql.Row{{true}},
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "auth-transaction-repro-test-testrollbackrevertsrevoketableprivilegerepro-0001-select-has_table_privilege-rollback_revoke_table_reader-rollback_revoke_table_private-select"},
 				},
 			},
 		},

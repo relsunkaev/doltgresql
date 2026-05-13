@@ -45,8 +45,7 @@ func TestDoBlockProbe(t *testing.T) {
 					Query: `INSERT INTO created_by_do VALUES (1);`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM created_by_do;`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM created_by_do;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockprobe-0001-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -70,8 +69,7 @@ func TestDoBlockProbe(t *testing.T) {
 				{
 					Query: `DO LANGUAGE sql $$
 						SELECT 1;
-					$$;`,
-					ExpectedErr: `DO only supports LANGUAGE plpgsql`,
+					$$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "do-block-probe-test-testdoblockprobe-0002-do-language-sql-$$-select", Compare: "sqlstate"},
 				},
 			},
 		},

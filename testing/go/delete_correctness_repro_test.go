@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDeleteUsingDeletesJoinedRowsRepro reproduces a PostgreSQL compatibility
@@ -52,11 +50,7 @@ func TestDeleteUsingDeletesJoinedRowsRepro(t *testing.T) {
 						USING delete_using_groups AS g
 						WHERE i.group_id = g.group_id
 							AND g.should_delete
-						RETURNING i.id;`,
-					Expected: []sql.Row{
-						{2},
-						{3},
-					},
+						RETURNING i.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "delete-correctness-repro-test-testdeleteusingdeletesjoinedrowsrepro-0001-delete-from-delete_using_items-as-i"},
 				},
 			},
 		},

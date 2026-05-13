@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro reproduces an
@@ -43,9 +41,9 @@ func TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro(t *testing.T) 
 				{
 					Query: `SELECT id, label
 						FROM rename_mv_target;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_mv_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-rename-privilege-repro-test-testaltermaterializedviewrenamepreservesselectprivilegerepro-0001-select-id-label-from-rename_mv_target"},
 				},
 				{
 					Query: `ALTER TABLE rename_mv_target
@@ -54,9 +52,9 @@ func TestAlterMaterializedViewRenamePreservesSelectPrivilegeRepro(t *testing.T) 
 				{
 					Query: `SELECT id, label
 						FROM rename_mv_target_new;`,
-					Expected: []sql.Row{{1, "visible after rename"}},
+
 					Username: `rename_mv_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "materialized-view-rename-privilege-repro-test-testaltermaterializedviewrenamepreservesselectprivilegerepro-0002-select-id-label-from-rename_mv_target_new"},
 				},
 			},
 		},

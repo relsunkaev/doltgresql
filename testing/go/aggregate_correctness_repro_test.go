@@ -29,8 +29,7 @@ func TestBoolAndInfersValuesBooleanTypeGuard(t *testing.T) {
 			Name: "bool_and infers VALUES boolean type with untyped NULL",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT bool_and(a) FROM (VALUES (true), (false), (null)) r(a);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `SELECT bool_and(a) FROM (VALUES (true), (false), (null)) r(a);`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testboolandinfersvaluesbooleantypeguard-0001-select-bool_and-a-from-values"},
 				},
 			},
 		},
@@ -52,8 +51,7 @@ func TestUnaryMinusOverSumDistinctRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (- SUM(DISTINCT - - 71))::text
-						FROM unary_sum_items;`,
-					Expected: []sql.Row{{"-71"}},
+						FROM unary_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testunaryminusoversumdistinctrepro-0001-select-sum-distinct-71-::text"},
 				},
 			},
 		},
@@ -92,11 +90,7 @@ func TestCreateAggregateSqlTransitionFunctionRepro(t *testing.T) {
 					Query: `SELECT grp, custom_sum(v)
 						FROM custom_aggregate_items
 						GROUP BY grp
-						ORDER BY grp;`,
-					Expected: []sql.Row{
-						{"a", 3},
-						{"b", 10},
-					},
+						ORDER BY grp;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionrepro-0001-select-grp-custom_sum-v-from"},
 				},
 			},
 		},
@@ -130,8 +124,7 @@ func TestCreateAggregatePgAggregateCatalogRowRepro(t *testing.T) {
 							aggtranstype::regtype::text,
 							agginitval
 						FROM pg_catalog.pg_aggregate
-						WHERE aggfnoid::text = 'catalog_custom_sum';`,
-					Expected: []sql.Row{{"catalog_custom_sum", "catalog_custom_sum_sfunc", "integer", "0"}},
+						WHERE aggfnoid::text = 'catalog_custom_sum';`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testcreateaggregatepgaggregatecatalogrowrepro-0001-select-aggfnoid::text-aggtransfn::text-aggtranstype::regtype::text-agginitval"},
 				},
 			},
 		},
@@ -198,8 +191,7 @@ func TestAlterAggregateRenameRepro(t *testing.T) {
 						RENAME TO rename_custom_sum_new;`,
 				},
 				{
-					Query:    `SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;`,
-					Expected: []sql.Row{{3}},
+					Query: `SELECT rename_custom_sum_new(v) FROM rename_custom_sum_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testalteraggregaterenamerepro-0001-select-rename_custom_sum_new-v-from-rename_custom_sum_items"},
 				},
 				{
 					Query:       `SELECT rename_custom_sum_old(v) FROM rename_custom_sum_items;`,
@@ -243,17 +235,12 @@ func TestCreateAggregateSqlTransitionFunctionEdges(t *testing.T) {
 					Query: `SELECT grp, custom_count_seen(v)
 						FROM custom_count_seen_items
 						GROUP BY grp
-						ORDER BY grp;`,
-					Expected: []sql.Row{
-						{"a", 2},
-						{"b", 0},
-					},
+						ORDER BY grp;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0001-select-grp-custom_count_seen-v-from"},
 				},
 				{
 					Query: `SELECT custom_count_seen(v)
 						FROM custom_count_seen_items
-						WHERE grp = 'missing';`,
-					Expected: []sql.Row{{nil}},
+						WHERE grp = 'missing';`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testcreateaggregatesqltransitionfunctionedges-0002-select-custom_count_seen-v-from-custom_count_seen_items"},
 				},
 			},
 		},
@@ -321,11 +308,7 @@ func TestGroupByPrimaryKeyAllowsDependentColumnsRepro(t *testing.T) {
 					Query: `SELECT id, label, amount
 						FROM group_by_pk_items
 						GROUP BY id
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "one", 10},
-						{2, "two", 20},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbyprimarykeyallowsdependentcolumnsrepro-0001-select-id-label-amount-from"},
 				},
 			},
 		},
@@ -395,11 +378,7 @@ func TestGroupByPrimaryKeyThroughJoinAllowsDependentColumnsRepro(t *testing.T) {
 							ON a.id = c.article_id
 						WHERE c.category_id IN (10, 20)
 						GROUP BY a.id
-						ORDER BY a.id;`,
-					Expected: []sql.Row{
-						{1, "first", "body one"},
-						{2, "second", "body two"},
-					},
+						ORDER BY a.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbyprimarykeythroughjoinallowsdependentcolumnsrepro-0001-select-a.id-a.title-a.body-from"},
 				},
 			},
 		},
@@ -431,15 +410,7 @@ func TestGroupByGroupingSetsRepro(t *testing.T) {
 							sum(amount)::text AS total
 						FROM grouping_sets_sales
 						GROUP BY GROUPING SETS ((region, product), (region), ())
-						ORDER BY region NULLS LAST, product NULLS LAST;`,
-					Expected: []sql.Row{
-						{"east", "a", "10"},
-						{"east", "b", "20"},
-						{"east", "ALL", "30"},
-						{"west", "a", "5"},
-						{"west", "ALL", "5"},
-						{"ALL", "ALL", "35"},
-					},
+						ORDER BY region NULLS LAST, product NULLS LAST;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbygroupingsetsrepro-0001-select-coalesce-region-all-as"},
 				},
 			},
 		},
@@ -470,15 +441,7 @@ func TestGroupByRollupRepro(t *testing.T) {
 							sum(amount)::text AS total
 						FROM rollup_sales
 						GROUP BY ROLLUP (region, product)
-						ORDER BY region NULLS LAST, product NULLS LAST;`,
-					Expected: []sql.Row{
-						{"east", "a", "10"},
-						{"east", "b", "20"},
-						{"east", "ALL", "30"},
-						{"west", "a", "5"},
-						{"west", "ALL", "5"},
-						{"ALL", "ALL", "35"},
-					},
+						ORDER BY region NULLS LAST, product NULLS LAST;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbyrolluprepro-0001-select-coalesce-region-all-as"},
 				},
 			},
 		},
@@ -509,17 +472,7 @@ func TestGroupByCubeRepro(t *testing.T) {
 							sum(amount)::text AS total
 						FROM cube_sales
 						GROUP BY CUBE (region, product)
-						ORDER BY region NULLS LAST, product NULLS LAST;`,
-					Expected: []sql.Row{
-						{"east", "a", "10"},
-						{"east", "b", "20"},
-						{"east", "ALL", "30"},
-						{"west", "a", "5"},
-						{"west", "ALL", "5"},
-						{"ALL", "a", "15"},
-						{"ALL", "b", "20"},
-						{"ALL", "ALL", "35"},
-					},
+						ORDER BY region NULLS LAST, product NULLS LAST;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testgroupbycuberepro-0001-select-coalesce-region-all-as"},
 				},
 			},
 		},
@@ -535,8 +488,7 @@ func TestPercentileContWithinGroupRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (percentile_cont(0.5) WITHIN GROUP (ORDER BY v))::text
-						FROM (VALUES (10), (20), (30), (40)) AS t(v);`,
-					Expected: []sql.Row{{"25"}},
+						FROM (VALUES (10), (20), (30), (40)) AS t(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testpercentilecontwithingrouprepro-0001-select-percentile_cont-0.5-within-group"},
 				},
 			},
 		},
@@ -552,8 +504,7 @@ func TestPercentileDiscWithinGroupRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (percentile_disc(0.5) WITHIN GROUP (ORDER BY v))::text
-						FROM (VALUES (10), (20), (30), (40)) AS t(v);`,
-					Expected: []sql.Row{{"20"}},
+						FROM (VALUES (10), (20), (30), (40)) AS t(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testpercentilediscwithingrouprepro-0001-select-percentile_disc-0.5-within-group"},
 				},
 			},
 		},
@@ -569,8 +520,7 @@ func TestModeWithinGroupRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT mode() WITHIN GROUP (ORDER BY v)
-						FROM (VALUES ('b'), ('a'), ('b'), ('c')) AS t(v);`,
-					Expected: []sql.Row{{"b"}},
+						FROM (VALUES ('b'), ('a'), ('b'), ('c')) AS t(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testmodewithingrouprepro-0001-select-mode-within-group-order"},
 				},
 			},
 		},
@@ -586,8 +536,7 @@ func TestHypotheticalRankWithinGroupRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (rank(25) WITHIN GROUP (ORDER BY v))::text
-						FROM (VALUES (10), (20), (30), (40)) AS t(v);`,
-					Expected: []sql.Row{{"3"}},
+						FROM (VALUES (10), (20), (30), (40)) AS t(v);`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-correctness-repro-test-testhypotheticalrankwithingrouprepro-0001-select-rank-25-within-group"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRowLevelSecurityMultipleSelectPoliciesCombineRepro reproduces a data
@@ -56,21 +54,20 @@ func TestRowLevelSecurityMultipleSelectPoliciesCombineRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_multi_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "owned"},
-						{2, "shared"},
-					},
+
 					Username: `rls_multi_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-multiple-select-policies-combine"},
+
+					// TestRowLevelSecuritySelectPolicyUsingTrueRepro reproduces a data consistency
+					// bug: PostgreSQL treats USING (true) as an allow-all permissive policy, but
+					// Doltgres rewrites unsupported policy expressions as false.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecuritySelectPolicyUsingTrueRepro reproduces a data consistency
-// bug: PostgreSQL treats USING (true) as an allow-all permissive policy, but
-// Doltgres rewrites unsupported policy expressions as false.
 func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -97,21 +94,20 @@ func TestRowLevelSecuritySelectPolicyUsingTrueRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_true_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "visible"},
-						{2, "also visible"},
-					},
+
 					Username: `rls_true_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-select-policy-using-true-allows-all"},
+
+					// TestRowLevelSecurityInsertPolicyWithCheckTrueRepro reproduces the same
+					// unsupported-expression data consistency bug for INSERT policies: PostgreSQL
+					// treats WITH CHECK (true) as allowing every inserted row.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityInsertPolicyWithCheckTrueRepro reproduces the same
-// unsupported-expression data consistency bug for INSERT policies: PostgreSQL
-// treats WITH CHECK (true) as allowing every inserted row.
 func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -139,18 +135,20 @@ func TestRowLevelSecurityInsertPolicyWithCheckTrueRepro(t *testing.T) {
 					Query: `INSERT INTO rls_true_insert_policy_docs
 						VALUES (1, 'inserted')
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "inserted"}},
+
 					Username: `rls_true_insert_policy_writer`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-insert-policy-check-true-allows-all"},
+
+					// TestRowLevelSecurityUpdatePolicyUsingTrueRepro reproduces the unsupported
+					// true-expression bug for UPDATE policies: PostgreSQL allows the update, while
+					// Doltgres filters every row out.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityUpdatePolicyUsingTrueRepro reproduces the unsupported
-// true-expression bug for UPDATE policies: PostgreSQL allows the update, while
-// Doltgres filters every row out.
 func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -181,18 +179,20 @@ func TestRowLevelSecurityUpdatePolicyUsingTrueRepro(t *testing.T) {
 						SET label = 'updated'
 						WHERE id = 1
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "updated"}},
+
 					Username: `rls_true_update_policy_writer`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-update-policy-using-true-allows-all"},
+
+					// TestRowLevelSecurityDeletePolicyUsingTrueRepro reproduces the unsupported
+					// true-expression bug for DELETE policies: PostgreSQL allows the delete, while
+					// Doltgres filters every row out.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityDeletePolicyUsingTrueRepro reproduces the unsupported
-// true-expression bug for DELETE policies: PostgreSQL allows the delete, while
-// Doltgres filters every row out.
 func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -221,18 +221,20 @@ func TestRowLevelSecurityDeletePolicyUsingTrueRepro(t *testing.T) {
 					Query: `DELETE FROM rls_true_delete_policy_docs
 						WHERE id = 1
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "delete me"}},
+
 					Username: `rls_true_delete_policy_writer`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-delete-policy-using-true-allows-all"},
+
+					// TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro reproduces an RLS
+					// expression-parsing bug: PostgreSQL treats current_user = owner_name the same
+					// as owner_name = current_user, but Doltgres only recognizes the latter form.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro reproduces an RLS
-// expression-parsing bug: PostgreSQL treats current_user = owner_name the same
-// as owner_name = current_user, but Doltgres only recognizes the latter form.
 func TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -260,9 +262,9 @@ func TestRowLevelSecuritySelectPolicyReversedCurrentUserRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_reversed_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rls_reversed_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-select-policy-reversed-current-user"},
 				},
 			},
 		},

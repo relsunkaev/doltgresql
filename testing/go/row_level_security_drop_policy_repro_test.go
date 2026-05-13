@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropPolicyRemovesRowSecurityPolicyRepro reproduces a security/correctness
@@ -49,9 +47,9 @@ func TestDropPolicyRemovesRowSecurityPolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM drop_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `drop_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0001-select-id-label-from-drop_policy_docs"},
 				},
 				{
 					Query: `DROP POLICY IF EXISTS drop_policy_docs_owner_select
@@ -61,9 +59,9 @@ func TestDropPolicyRemovesRowSecurityPolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM drop_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{},
+
 					Username: `drop_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-drop-policy-repro-test-testdroppolicyremovesrowsecuritypolicyrepro-0002-select-id-label-from-drop_policy_docs"},
 				},
 			},
 		},

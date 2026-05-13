@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateCastFunctionIsUsedByExplicitCastRepro reproduces a type correctness
@@ -39,8 +37,7 @@ func TestCreateCastFunctionIsUsedByExplicitCastRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('green'::cast_color)::INT;`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT ('green'::cast_color)::INT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "cast-correctness-repro-test-testcreatecastfunctionisusedbyexplicitcastrepro-0001-select-green-::cast_color-::int"},
 				},
 			},
 		},

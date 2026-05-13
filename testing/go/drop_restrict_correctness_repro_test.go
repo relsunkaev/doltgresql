@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropTableAcceptsRestrict guards that PostgreSQL
@@ -120,8 +118,7 @@ func TestDropTriggerAcceptsRestrict(t *testing.T) {
 					Query: `INSERT INTO drop_trigger_restrict_items VALUES (1);`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM drop_trigger_restrict_audit;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM drop_trigger_restrict_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-restrict-correctness-repro-test-testdroptriggeracceptsrestrict-0001-select-count-*-from-drop_trigger_restrict_audit"},
 				},
 			},
 		},
@@ -206,8 +203,7 @@ func TestDropTriggerAcceptsCascade(t *testing.T) {
 					Query: `INSERT INTO drop_trigger_cascade_items VALUES (1);`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM drop_trigger_cascade_audit;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM drop_trigger_cascade_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-restrict-correctness-repro-test-testdroptriggeracceptscascade-0001-select-count-*-from-drop_trigger_cascade_audit"},
 				},
 			},
 		},
@@ -242,8 +238,7 @@ func TestDropFunctionCascadeRepro(t *testing.T) {
 					Query: `INSERT INTO drop_function_cascade_items VALUES (1);`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM drop_function_cascade_audit;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM drop_function_cascade_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-restrict-correctness-repro-test-testdropfunctioncascaderepro-0001-select-count-*-from-drop_function_cascade_audit"},
 				},
 			},
 		},
@@ -269,8 +264,7 @@ func TestDropProcedureAcceptsCascade(t *testing.T) {
 				{
 					Query: `SELECT COUNT(*)
 						FROM pg_proc
-						WHERE proname = 'drop_procedure_cascade_proc';`,
-					Expected: []sql.Row{{0}},
+						WHERE proname = 'drop_procedure_cascade_proc';`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-restrict-correctness-repro-test-testdropprocedureacceptscascade-0001-select-count-*-from-pg_proc"},
 				},
 			},
 		},
@@ -293,8 +287,7 @@ func TestTruncateAcceptsRestrict(t *testing.T) {
 					Query: `TRUNCATE truncate_restrict_items RESTRICT;`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM truncate_restrict_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM truncate_restrict_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "drop-restrict-correctness-repro-test-testtruncateacceptsrestrict-0001-select-count-*-from-truncate_restrict_items"},
 				},
 			},
 		},

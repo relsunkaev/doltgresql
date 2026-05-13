@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestReplicationStatCatalogsExposePgAttributeLsnMetadataRepro reproduces a
@@ -41,18 +39,7 @@ func TestReplicationStatCatalogsExposePgAttributeLsnMetadataRepro(t *testing.T) 
 								OR (c.relname = 'pg_subscription_rel' AND a.attname = 'srsublsn')
 								OR (c.relname = 'pg_replication_origin_status' AND a.attname IN ('remote_lsn', 'local_lsn'))
 							)
-						ORDER BY c.relname, a.attnum;`,
-					Expected: []sql.Row{
-						{"pg_replication_origin_status", "remote_lsn", "pg_lsn"},
-						{"pg_replication_origin_status", "local_lsn", "pg_lsn"},
-						{"pg_stat_subscription", "received_lsn", "pg_lsn"},
-						{"pg_stat_subscription", "latest_end_lsn", "pg_lsn"},
-						{"pg_stat_wal_receiver", "receive_start_lsn", "pg_lsn"},
-						{"pg_stat_wal_receiver", "written_lsn", "pg_lsn"},
-						{"pg_stat_wal_receiver", "flushed_lsn", "pg_lsn"},
-						{"pg_stat_wal_receiver", "latest_end_lsn", "pg_lsn"},
-						{"pg_subscription_rel", "srsublsn", "pg_lsn"},
-					},
+						ORDER BY c.relname, a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "replication-catalog-correctness-repro-test-testreplicationstatcatalogsexposepgattributelsnmetadatarepro-0001-select-c.relname-a.attname-format_type-a.atttypid"},
 				},
 			},
 		},

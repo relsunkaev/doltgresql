@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestToDateRejectsOutputOnlyOFPatternRepro reproduces a date formatting
@@ -29,8 +27,7 @@ func TestToDateRejectsOutputOnlyOFPatternRepro(t *testing.T) {
 			Name: "to_date rejects output-only OF pattern",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT to_date('2011-12-18 +05', 'YYYY-MM-DD OF');`,
-					ExpectedErr: `formatting field "OF" is only supported in to_char`,
+					Query: `SELECT to_date('2011-12-18 +05', 'YYYY-MM-DD OF');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-date-correctness-repro-test-testtodaterejectsoutputonlyofpatternrepro-0001-select-to_date-2011-12-18-+05-yyyy-mm-dd", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -46,8 +43,7 @@ func TestToDateIsoWeekdayParsesMondayRepro(t *testing.T) {
 			Name: "to_date ISO weekday parses Monday",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_date('2005521', 'IYYYIWID')::text;`,
-					Expected: []sql.Row{{"2005-12-26"}},
+					Query: `SELECT to_date('2005521', 'IYYYIWID')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-date-correctness-repro-test-testtodateisoweekdayparsesmondayrepro-0001-select-to_date-2005521-iyyyiwid-::text"},
 				},
 			},
 		},

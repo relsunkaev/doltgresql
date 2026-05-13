@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestBitStringOperatorsAndFunctionsRepro reproduces a PostgreSQL bit-string
@@ -43,8 +41,7 @@ func TestBitStringOperatorsAndFunctionsRepro(t *testing.T) {
 							(flex || B'00')::text,
 							get_bit(flags, 1),
 							bit_count(flex)
-						FROM bit_string_items;`,
-					Expected: []sql.Row{{"1010", "101011", "1000", "10101100", 0, int64(4)}},
+						FROM bit_string_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "bit-string-correctness-repro-test-testbitstringoperatorsandfunctionsrepro-0001-select-flags::text-flex::text-flags-&"},
 				},
 			},
 		},

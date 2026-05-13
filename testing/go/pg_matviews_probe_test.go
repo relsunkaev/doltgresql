@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgMatviewsProbe pins the empty pg_matviews catalog surface dump
@@ -32,8 +30,7 @@ func TestPgMatviewsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'matviews_probe_schema';`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT count(*)::text FROM pg_matviews WHERE schemaname = 'matviews_probe_schema';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-matviews-probe-test-testpgmatviewsprobe-0001-select-count-*-::text-from"},
 				},
 				{
 					// dump tools issue this exact shape to discover
@@ -43,17 +40,7 @@ func TestPgMatviewsProbe(t *testing.T) {
 							tablespace, hasindexes, ispopulated, definition
 						FROM pg_matviews
 						WHERE schemaname = 'matviews_probe_schema'
-						ORDER BY schemaname, matviewname;`,
-					ExpectedColNames: []string{
-						"schemaname",
-						"matviewname",
-						"matviewowner",
-						"tablespace",
-						"hasindexes",
-						"ispopulated",
-						"definition",
-					},
-					Expected: []sql.Row{},
+						ORDER BY schemaname, matviewname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-matviews-probe-test-testpgmatviewsprobe-0002-select-schemaname-matviewname-matviewowner-tablespace"},
 				},
 			},
 		},

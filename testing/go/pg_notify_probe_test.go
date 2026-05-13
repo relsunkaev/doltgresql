@@ -49,8 +49,7 @@ func TestPgNotifyProbe(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT pg_notify('my_channel', 'payload');`,
-					Expected: []sql.Row{{""}},
+					Query: `SELECT pg_notify('my_channel', 'payload');`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-notify-probe-test-testpgnotifyprobe-0001-select-pg_notify-my_channel-payload"},
 				},
 			},
 		},

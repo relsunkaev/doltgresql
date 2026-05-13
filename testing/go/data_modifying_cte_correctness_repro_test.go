@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDataModifyingCtesRepro reproduces a PostgreSQL write-query correctness
@@ -39,14 +37,12 @@ func TestDataModifyingCtesRepro(t *testing.T) {
 							INSERT INTO insert_cte_items VALUES (1, 'one'), (2, 'two')
 							RETURNING id, label
 						)
-						SELECT id, label FROM inserted ORDER BY id;`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+						SELECT id, label FROM inserted ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0001-with-inserted-as-insert-into"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM insert_cte_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "one"}, {2, "two"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0002-select-id-label-from-insert_cte_items"},
 				},
 			},
 		},
@@ -67,14 +63,12 @@ func TestDataModifyingCtesRepro(t *testing.T) {
 							WHERE id = 1
 							RETURNING id, qty
 						)
-						SELECT id, qty FROM updated;`,
-					Expected: []sql.Row{{1, 15}},
+						SELECT id, qty FROM updated;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0003-with-updated-as-update-update_cte_items"},
 				},
 				{
 					Query: `SELECT id, qty
 						FROM update_cte_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, 15}, {2, 20}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0004-select-id-qty-from-update_cte_items"},
 				},
 			},
 		},
@@ -94,14 +88,12 @@ func TestDataModifyingCtesRepro(t *testing.T) {
 							WHERE id = 1
 							RETURNING id, label
 						)
-						SELECT id, label FROM deleted;`,
-					Expected: []sql.Row{{1, "remove"}},
+						SELECT id, label FROM deleted;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0005-with-deleted-as-delete-from"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM delete_cte_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{2, "keep"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testdatamodifyingctesrepro-0006-select-id-label-from-delete_cte_items"},
 				},
 			},
 		},
@@ -126,12 +118,10 @@ func TestReadOnlyCteFeedsOuterDataModificationRepro(t *testing.T) {
 						)
 						INSERT INTO cte_insert_target
 						SELECT id, qty + 1 FROM source_rows
-						RETURNING id, qty;`,
-					Expected: []sql.Row{{1, 11}, {2, 21}},
+						RETURNING id, qty;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0001-with-source_rows-as-select-id"},
 				},
 				{
-					Query:    `SELECT id, qty FROM cte_insert_target ORDER BY id;`,
-					Expected: []sql.Row{{1, 11}, {2, 21}},
+					Query: `SELECT id, qty FROM cte_insert_target ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0002-select-id-qty-from-cte_insert_target"},
 				},
 			},
 		},
@@ -152,12 +142,10 @@ func TestReadOnlyCteFeedsOuterDataModificationRepro(t *testing.T) {
 						SET qty = qty + d.delta
 						FROM deltas AS d
 						WHERE t.id = d.id
-						RETURNING t.id, t.qty;`,
-					Expected: []sql.Row{{1, 15}, {2, 27}},
+						RETURNING t.id, t.qty;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0003-with-deltas-as-select-id"},
 				},
 				{
-					Query:    `SELECT id, qty FROM cte_update_target ORDER BY id;`,
-					Expected: []sql.Row{{1, 15}, {2, 27}},
+					Query: `SELECT id, qty FROM cte_update_target ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0004-select-id-qty-from-cte_update_target"},
 				},
 			},
 		},
@@ -176,12 +164,10 @@ func TestReadOnlyCteFeedsOuterDataModificationRepro(t *testing.T) {
 						)
 						DELETE FROM cte_delete_target
 						WHERE id IN (SELECT id FROM doomed)
-						RETURNING id, label;`,
-					Expected: []sql.Row{{2, "delete-a"}, {3, "delete-b"}},
+						RETURNING id, label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0005-with-doomed-as-select-id"},
 				},
 				{
-					Query:    `SELECT id, label FROM cte_delete_target ORDER BY id;`,
-					Expected: []sql.Row{{1, "keep"}},
+					Query: `SELECT id, label FROM cte_delete_target ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "data-modifying-cte-correctness-repro-test-testreadonlyctefeedsouterdatamodificationrepro-0006-select-id-label-from-cte_delete_target"},
 				},
 			},
 		},

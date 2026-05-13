@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropLanguageClearsCommentRepro reproduces a metadata persistence bug:
@@ -46,8 +44,7 @@ func TestDropLanguageClearsCommentRepro(t *testing.T) {
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_language
 						 WHERE lanname = 'drop_recreate_comment_language'),
-						'pg_language');`,
-					Expected: []sql.Row{{nil}},
+						'pg_language');`, PostgresOracle: ScriptTestPostgresOracle{ID: "language-comment-drop-repro-test-testdroplanguageclearscommentrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},

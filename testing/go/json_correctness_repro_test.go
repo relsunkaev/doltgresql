@@ -86,14 +86,7 @@ func TestJsonExtractionPreservesJsonSubdocumentTextRepro(t *testing.T) {
 						('{"a": { "b" : 1, "c" : 2 }}'::json #> ARRAY['a'])::text,
 						('[{ "b" : 1, "c" : 2 }]'::json -> 0)::text,
 						json_extract_path('{"a": { "b" : 1, "c" : 2 }}'::json, 'a')::text,
-						json_extract_path_text('{"a": { "b" : 1, "c" : 2 }}'::json, 'a');`,
-					Expected: []sql.Row{{
-						`{ "b" : 1, "c" : 2 }`,
-						`{ "b" : 1, "c" : 2 }`,
-						`{ "b" : 1, "c" : 2 }`,
-						`{ "b" : 1, "c" : 2 }`,
-						`{ "b" : 1, "c" : 2 }`,
-					}},
+						json_extract_path_text('{"a": { "b" : 1, "c" : 2 }}'::json, 'a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonextractionpreservesjsonsubdocumenttextrepro-0001-select-{-a-:-{"},
 				},
 			},
 		},
@@ -109,8 +102,7 @@ func TestJsonExtractionPreservesJsonObjectKeyOrderRepro(t *testing.T) {
 			Name: "json extraction preserves object key order",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('{"z":0,"a":{"b":1,"a":2}}'::json -> 'a')::text;`,
-					Expected: []sql.Row{{`{"b":1,"a":2}`}},
+					Query: `SELECT ('{"z":0,"a":{"b":1,"a":2}}'::json -> 'a')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonextractionpreservesjsonobjectkeyorderrepro-0001-select-{-z-:0-a"},
 				},
 			},
 		},
@@ -127,13 +119,11 @@ func TestJsonEachPreservesJsonObjectOrderAndDuplicatesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT string_agg(key || ':' || value::text, ',')
-						FROM json_each('{"b":1,"a":2}'::json);`,
-					Expected: []sql.Row{{`b:1,a:2`}},
+						FROM json_each('{"b":1,"a":2}'::json);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsoneachpreservesjsonobjectorderandduplicatesrepro-0001-select-string_agg-key-||-:"},
 				},
 				{
 					Query: `SELECT string_agg(key || ':' || value::text, ',')
-						FROM json_each('{"a":1,"a":2}'::json);`,
-					Expected: []sql.Row{{`a:1,a:2`}},
+						FROM json_each('{"a":1,"a":2}'::json);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsoneachpreservesjsonobjectorderandduplicatesrepro-0002-select-string_agg-key-||-:"},
 				},
 			},
 		},
@@ -150,13 +140,11 @@ func TestJsonObjectKeysPreservesJsonObjectOrderAndDuplicatesRepro(t *testing.T) 
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT string_agg(key, ',')
-						FROM json_object_keys('{"b":1,"a":2}'::json) AS key;`,
-					Expected: []sql.Row{{`b,a`}},
+						FROM json_object_keys('{"b":1,"a":2}'::json) AS key;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectkeyspreservesjsonobjectorderandduplicatesrepro-0001-select-string_agg-key-from-json_object_keys"},
 				},
 				{
 					Query: `SELECT string_agg(key, ',')
-						FROM json_object_keys('{"a":1,"a":2}'::json) AS key;`,
-					Expected: []sql.Row{{`a,a`}},
+						FROM json_object_keys('{"a":1,"a":2}'::json) AS key;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonobjectkeyspreservesjsonobjectorderandduplicatesrepro-0002-select-string_agg-key-from-json_object_keys"},
 				},
 			},
 		},
@@ -173,13 +161,11 @@ func TestJsonArrayElementsPreservesJsonElementTextRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT string_agg(value::text, '|')
-						FROM json_array_elements('[{"b":1,"a":2},{"a":1,"a":2},{ "c" : 3 }]'::json) AS value;`,
-					Expected: []sql.Row{{`{"b":1,"a":2}|{"a":1,"a":2}|{ "c" : 3 }`}},
+						FROM json_array_elements('[{"b":1,"a":2},{"a":1,"a":2},{ "c" : 3 }]'::json) AS value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonarrayelementspreservesjsonelementtextrepro-0001-select-string_agg-value::text-|-from"},
 				},
 				{
 					Query: `SELECT string_agg(value, '|')
-						FROM json_array_elements_text('[{"b":1,"a":2},{"a":1,"a":2},{ "c" : 3 }]'::json) AS value;`,
-					Expected: []sql.Row{{`{"b":1,"a":2}|{"a":1,"a":2}|{ "c" : 3 }`}},
+						FROM json_array_elements_text('[{"b":1,"a":2},{"a":1,"a":2},{ "c" : 3 }]'::json) AS value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonarrayelementspreservesjsonelementtextrepro-0002-select-string_agg-value-|-from"},
 				},
 			},
 		},
@@ -273,14 +259,12 @@ func TestJsonAggregatesPreserveJsonInputTextRepro(t *testing.T) {
 					Query: `SELECT json_agg(doc)::text
 						FROM (VALUES ('{"b":1,"a":2}'::json),
 							('{"a":1,"a":2}'::json),
-							('{ "c" : 3 }'::json)) AS v(doc);`,
-					Expected: []sql.Row{{`[{"b":1,"a":2}, {"a":1,"a":2}, { "c" : 3 }]`}},
+							('{ "c" : 3 }'::json)) AS v(doc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonaggregatespreservejsoninputtextrepro-0001-select-json_agg-doc-::text-from"},
 				},
 				{
 					Query: `SELECT json_object_agg(k, doc)::text
 						FROM (VALUES ('x', '{"b":1,"a":2}'::json),
-							('y', '{"a":1,"a":2}'::json)) AS v(k, doc);`,
-					Expected: []sql.Row{{`{ "x" : {"b":1,"a":2}, "y" : {"a":1,"a":2} }`}},
+							('y', '{"a":1,"a":2}'::json)) AS v(k, doc);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonaggregatespreservejsoninputtextrepro-0002-select-json_object_agg-k-doc-::text"},
 				},
 			},
 		},
@@ -296,13 +280,11 @@ func TestJsonToRecordPreservesNestedJsonTextRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT nested::text
-						FROM json_to_record('{"nested":{"b":1,"a":2}}'::json) AS r(nested json);`,
-					Expected: []sql.Row{{`{"b":1,"a":2}`}},
+						FROM json_to_record('{"nested":{"b":1,"a":2}}'::json) AS r(nested json);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsontorecordpreservesnestedjsontextrepro-0001-select-nested::text-from-json_to_record-{"},
 				},
 				{
 					Query: `SELECT nested::text
-						FROM json_to_record('{"nested":{"a":1,"a":2}}'::json) AS r(nested json);`,
-					Expected: []sql.Row{{`{"a":1,"a":2}`}},
+						FROM json_to_record('{"nested":{"a":1,"a":2}}'::json) AS r(nested json);`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsontorecordpreservesnestedjsontextrepro-0002-select-nested::text-from-json_to_record-{"},
 				},
 			},
 		},
@@ -322,13 +304,11 @@ func TestJsonPopulateRecordPreservesNestedJsonTextRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT (json_populate_record(NULL::json_populate_plain_row,
-						'{"nested":{"b":1,"a":2}}'::json)).nested::text;`,
-					Expected: []sql.Row{{`{"b":1,"a":2}`}},
+						'{"nested":{"b":1,"a":2}}'::json)).nested::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonpopulaterecordpreservesnestedjsontextrepro-0001-select-json_populate_record-null::json_populate_plain_row-{-nested"},
 				},
 				{
 					Query: `SELECT (json_populate_record(NULL::json_populate_plain_row,
-						'{"nested":{"a":1,"a":2}}'::json)).nested::text;`,
-					Expected: []sql.Row{{`{"a":1,"a":2}`}},
+						'{"nested":{"a":1,"a":2}}'::json)).nested::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "json-correctness-repro-test-testjsonpopulaterecordpreservesnestedjsontextrepro-0002-select-json_populate_record-null::json_populate_plain_row-{-nested"},
 				},
 			},
 		},

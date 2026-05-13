@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestJsonbExpansionWorkload pins the JSONB navigation operators and SRFs
@@ -39,11 +37,7 @@ func TestJsonbExpansionWorkload(t *testing.T) {
 					// ->> returns text; -> returns jsonb. Top-level keys.
 					Query: `SELECT id, payload->>'kind' AS kind, payload->>'ts' AS ts
 						FROM events
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "click", "1234"},
-						{int32(2), "view", "1235"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0001-select-id-payload->>-kind-as"},
 				},
 				{
 					// Chained -> followed by ->> for nested object access.
@@ -51,11 +45,7 @@ func TestJsonbExpansionWorkload(t *testing.T) {
 						payload->'user'->>'name' AS user_name,
 						payload->'user'->>'id'   AS user_id
 						FROM events
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "Alice", "100"},
-						{int32(2), "Bob", "200"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0002-select-id-payload->-user->>"},
 				},
 			},
 		},
@@ -69,13 +59,11 @@ func TestJsonbExpansionWorkload(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					// #>> returns text along a key path.
-					Query:    `SELECT doc#>>'{a,b,c}' AS deep FROM docs WHERE id = 1;`,
-					Expected: []sql.Row{{"deep"}},
+					Query: `SELECT doc#>>'{a,b,c}' AS deep FROM docs WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0003-select-doc#>>-{a-b-c}"},
 				},
 				{
 					// Indexed array access via path.
-					Query:    `SELECT doc#>>'{list,1}' AS second FROM docs WHERE id = 1;`,
-					Expected: []sql.Row{{"20"}},
+					Query: `SELECT doc#>>'{list,1}' AS second FROM docs WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0004-select-doc#>>-{list-1}-as"},
 				},
 			},
 		},
@@ -89,19 +77,17 @@ func TestJsonbExpansionWorkload(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM (SELECT jsonb_array_elements(items) FROM bags) t;`,
-					Expected: []sql.Row{{"5"}},
+					Query: `SELECT count(*)::text FROM (SELECT jsonb_array_elements(items) FROM bags) t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0005-select-count-*-::text-from"},
 				},
 			},
 		},
 		{
-			Name: "jsonb_object_keys lists object keys",
+			Name:        "jsonb_object_keys lists object keys",
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT k FROM jsonb_object_keys('{"a": 1, "b": 2, "c": 3}'::jsonb) k
-						ORDER BY k;`,
-					Expected: []sql.Row{{"a"}, {"b"}, {"c"}},
+						ORDER BY k;`, PostgresOracle: ScriptTestPostgresOracle{ID: "jsonb-expansion-test-testjsonbexpansionworkload-0006-select-k-from-jsonb_object_keys-{"},
 				},
 			},
 		},

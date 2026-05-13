@@ -29,11 +29,9 @@ func TestGistIndexProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE INDEX shapes_geom_gist_idx ON shapes USING gist (geom);`,
-					ExpectedRaw: [][][]byte{},
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID: "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes",
-					},
+					Query: `CREATE INDEX shapes_geom_gist_idx ON shapes USING gist (geom);`,
+
+					PostgresOracle: ScriptTestPostgresOracle{ID: "gist-index-probe-test-testgistindexprobe-0001-create-index-shapes_geom_gist_idx-on-shapes"},
 				},
 			},
 		},

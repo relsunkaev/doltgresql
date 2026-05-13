@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgGetKeywordsExposesReservedWordsRepro reproduces a PostgreSQL catalog
@@ -31,8 +29,7 @@ func TestPgGetKeywordsExposesReservedWordsRepro(t *testing.T) {
 				{
 					Query: `SELECT word, catcode, catdesc
 						FROM pg_catalog.pg_get_keywords()
-						WHERE word = 'select';`,
-					Expected: []sql.Row{{"select", "R", "reserved"}},
+						WHERE word = 'select';`, PostgresOracle: ScriptTestPostgresOracle{ID: "keyword-catalog-repro-test-testpggetkeywordsexposesreservedwordsrepro-0001-select-word-catcode-catdesc-from"},
 				},
 			},
 		},

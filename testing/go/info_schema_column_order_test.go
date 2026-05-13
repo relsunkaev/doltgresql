@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestInfoSchemaColumnsOrdering pins the column-order queries pg_dump
@@ -48,14 +46,7 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 					Query: `SELECT column_name, ordinal_position::text
 						FROM information_schema.columns
 						WHERE table_name = 'invoices'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "1"},
-						{"customer", "2"},
-						{"amount", "3"},
-						{"currency", "4"},
-						{"due_date", "5"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-column-order-test-testinfoschemacolumnsordering-0001-select-column_name-ordinal_position::text-from-information_schema.columns"},
 				},
 			},
 		},
@@ -73,12 +64,7 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 					Query: `SELECT column_name, is_nullable
 						FROM information_schema.columns
 						WHERE table_name = 'accounts'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "NO"},
-						{"email", "NO"},
-						{"nickname", "YES"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-column-order-test-testinfoschemacolumnsordering-0002-select-column_name-is_nullable-from-information_schema.columns"},
 				},
 			},
 		},
@@ -99,15 +85,7 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 					Query: `SELECT column_name, data_type
 						FROM information_schema.columns
 						WHERE table_name = 'shapes'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "integer"},
-						{"label", "text"},
-						{"qty", "integer"},
-						{"price", "numeric"},
-						{"ts", "timestamp without time zone"},
-						{"code", "character varying"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-column-order-test-testinfoschemacolumnsordering-0003-select-column_name-data_type-from-information_schema.columns"},
 				},
 			},
 		},
@@ -125,12 +103,7 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 					Query: `SELECT column_name, data_type, udt_name
 						FROM information_schema.columns
 						WHERE table_name = 'array_shapes'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "integer", "int4"},
-						{"tags", "ARRAY", "_text"},
-						{"scores", "ARRAY", "_int4"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-column-order-test-testinfoschemacolumnsordering-0004-select-column_name-data_type-udt_name-from"},
 				},
 			},
 		},
@@ -153,13 +126,7 @@ func TestInfoSchemaColumnsOrdering(t *testing.T) {
 						(column_default IS NOT NULL)::text AS has_default
 						FROM information_schema.columns
 						WHERE table_name = 'flags'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "false"},
-						{"active", "true"},
-						{"ttl", "true"},
-						{"created_at", "true"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "info-schema-column-order-test-testinfoschemacolumnsordering-0005-select-column_name-column_default-is-not"},
 				},
 			},
 		},

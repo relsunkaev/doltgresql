@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterDatabaseRenameRepro reproduces a database DDL correctness bug:
@@ -60,8 +58,7 @@ func TestAlterDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datallowconn
 						FROM pg_database
-						WHERE datname = 'alter_no_connections_db';`,
-					Expected: []sql.Row{{"f"}},
+						WHERE datname = 'alter_no_connections_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0001-select-datallowconn-from-pg_database-where"},
 				},
 			},
 		},
@@ -78,8 +75,7 @@ func TestAlterDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datconnlimit
 						FROM pg_database
-						WHERE datname = 'alter_connection_limit_db';`,
-					Expected: []sql.Row{{int64(0)}},
+						WHERE datname = 'alter_connection_limit_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0002-select-datconnlimit-from-pg_database-where"},
 				},
 			},
 		},
@@ -96,8 +92,7 @@ func TestAlterDatabaseCatalogOptionsRepro(t *testing.T) {
 				{
 					Query: `SELECT datistemplate
 						FROM pg_database
-						WHERE datname = 'alter_template_option_db';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE datname = 'alter_template_option_db';`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-database-correctness-repro-test-testalterdatabasecatalogoptionsrepro-0003-select-datistemplate-from-pg_database-where"},
 				},
 			},
 		},
@@ -120,8 +115,7 @@ func TestAlterDatabaseSetPopulatesPgDbRoleSettingRepro(t *testing.T) {
 					Query: `SELECT setrole, setdatabase::regdatabase::text,
 							array_to_string(setconfig, ',')
 						FROM pg_catalog.pg_db_role_setting
-						WHERE setdatabase = 'database_setting_catalog'::regdatabase;`,
-					Expected: []sql.Row{{uint32(0), "database_setting_catalog", "work_mem=64kB"}},
+						WHERE setdatabase = 'database_setting_catalog'::regdatabase;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-database-correctness-repro-test-testalterdatabasesetpopulatespgdbrolesettingrepro-0001-select-setrole-setdatabase::regdatabase::text-array_to_string-setconfig", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -146,8 +140,7 @@ func TestAlterDatabaseResetSettingRepro(t *testing.T) {
 					Query: `SELECT COUNT(*)
 						FROM pg_catalog.pg_db_role_setting
 						JOIN pg_catalog.pg_database ON setdatabase = pg_database.oid
-						WHERE datname = 'database_reset_setting_catalog';`,
-					Expected: []sql.Row{{0}},
+						WHERE datname = 'database_reset_setting_catalog';`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-database-correctness-repro-test-testalterdatabaseresetsettingrepro-0001-select-count-*-from-pg_catalog.pg_db_role_setting"},
 				},
 			},
 		},

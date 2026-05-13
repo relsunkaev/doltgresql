@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestLateralJoins pins the LATERAL join shapes real PG views use to
@@ -55,12 +53,7 @@ func TestLateralJoins(t *testing.T) {
 							ORDER BY placed_at DESC
 							LIMIT 1
 						) o ON true
-						ORDER BY c.id;`,
-					Expected: []sql.Row{
-						{int32(1), "Alice", int32(200)},
-						{int32(2), "Bob", int32(30)},
-						{int32(3), "Cara", nil},
-					},
+						ORDER BY c.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "lateral-test-testlateraljoins-0001-select-c.id-c.name-o.amount-as"},
 				},
 			},
 		},
@@ -93,13 +86,7 @@ func TestLateralJoins(t *testing.T) {
 							ORDER BY salary DESC
 							LIMIT 2
 						) e
-						ORDER BY d.id, e.salary DESC;`,
-					Expected: []sql.Row{
-						{"Eng", "A", int32(100)},
-						{"Eng", "B", int32(90)},
-						{"Sales", "D", int32(70)},
-						{"Sales", "E", int32(60)},
-					},
+						ORDER BY d.id, e.salary DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "lateral-test-testlateraljoins-0002-select-d.name-as-dept-e.name"},
 				},
 			},
 		},
@@ -118,12 +105,7 @@ func TestLateralJoins(t *testing.T) {
 					Query: `SELECT p.id, p.price, p.qty, t.total
 						FROM products p
 						CROSS JOIN LATERAL (SELECT p.price * p.qty AS total) t
-						ORDER BY p.id;`,
-					Expected: []sql.Row{
-						{int32(1), int32(100), int32(5), int32(500)},
-						{int32(2), int32(50), int32(10), int32(500)},
-						{int32(3), int32(200), int32(1), int32(200)},
-					},
+						ORDER BY p.id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "lateral-test-testlateraljoins-0003-select-p.id-p.price-p.qty-t.total"},
 				},
 			},
 		},

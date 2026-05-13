@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropIndexClearsCommentRepro reproduces a metadata persistence bug:
@@ -48,8 +46,7 @@ func TestDropIndexClearsCommentRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						'drop_recreate_comment_index_idx'::regclass,
-						'pg_class');`,
-					Expected: []sql.Row{{nil}},
+						'pg_class');`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-comment-drop-repro-test-testdropindexclearscommentrepro-0001-select-obj_description-drop_recreate_comment_index_idx-::regclass-pg_class"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestInsertRejectsDuplicateTargetColumnsRepro reproduces an INSERT correctness
@@ -37,12 +35,10 @@ func TestInsertRejectsDuplicateTargetColumnsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO insert_duplicate_column_items (id, a, a)
-						VALUES (1, 10, 20);`,
-					ExpectedErr: `column "a" specified more than once`,
+						VALUES (1, 10, 20);`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0001-insert-into-insert_duplicate_column_items-id-a", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM insert_duplicate_column_items;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM insert_duplicate_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "insert-correctness-repro-test-testinsertrejectsduplicatetargetcolumnsrepro-0002-select-count-*-from-insert_duplicate_column_items"},
 				},
 			},
 		},

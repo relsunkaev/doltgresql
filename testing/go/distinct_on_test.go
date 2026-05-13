@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDistinctOn pins the SELECT DISTINCT ON (...) shapes real views use
@@ -56,11 +54,7 @@ func TestDistinctOn(t *testing.T) {
 					// Latest order per customer.
 					Query: `SELECT DISTINCT ON (customer_id) customer_id, id, amount
 						FROM orders
-						ORDER BY customer_id, placed_at DESC;`,
-					Expected: []sql.Row{
-						{int32(100), int32(3), int32(200)},
-						{int32(200), int32(5), int32(90)},
-					},
+						ORDER BY customer_id, placed_at DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "distinct-on-test-testdistincton-0001-select-distinct-on-customer_id-customer_id"},
 				},
 			},
 		},
@@ -86,12 +80,7 @@ func TestDistinctOn(t *testing.T) {
 					// Latest event per (tenant, stream).
 					Query: `SELECT DISTINCT ON (tenant, stream) tenant, stream, seq, payload
 						FROM events
-						ORDER BY tenant, stream, seq DESC;`,
-					Expected: []sql.Row{
-						{"a", "x", int32(5), "a-x-5"},
-						{"a", "y", int32(2), "a-y-2"},
-						{"b", "x", int32(4), "b-x-4"},
-					},
+						ORDER BY tenant, stream, seq DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "distinct-on-test-testdistincton-0002-select-distinct-on-tenant-stream"},
 				},
 			},
 		},
@@ -117,11 +106,7 @@ func TestDistinctOn(t *testing.T) {
 					Query: `SELECT DISTINCT ON (sku) sku, price
 						FROM prices
 						WHERE region = 'us'
-						ORDER BY sku, price ASC;`,
-					Expected: []sql.Row{
-						{"a", int32(9)},
-						{"b", int32(5)},
-					},
+						ORDER BY sku, price ASC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "distinct-on-test-testdistincton-0003-select-distinct-on-sku-sku"},
 				},
 			},
 		},
@@ -142,11 +127,7 @@ func TestDistinctOn(t *testing.T) {
 					// non-NULL keys.
 					Query: `SELECT DISTINCT ON (k) k, v
 						FROM t
-						ORDER BY k, ts DESC;`,
-					Expected: []sql.Row{
-						{int32(1), int32(11)},
-						{nil, int32(21)},
-					},
+						ORDER BY k, ts DESC;`, PostgresOracle: ScriptTestPostgresOracle{ID: "distinct-on-test-testdistincton-0004-select-distinct-on-k-k"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgGetIndexdefQuotesIdentifiersRepro reproduces a catalog correctness
@@ -41,11 +39,7 @@ func TestPgGetIndexdefQuotesIdentifiersRepro(t *testing.T) {
 							pg_catalog.pg_get_indexdef(c.oid),
 							pg_catalog.pg_get_indexdef(c.oid, 1, false)
 						FROM pg_catalog.pg_class c
-						WHERE c.relname = 'IndexQuoteIdx';`,
-					Expected: []sql.Row{{
-						`CREATE INDEX "IndexQuoteIdx" ON public."IndexQuoteItems" USING btree ("CaseColumn")`,
-						`"CaseColumn"`,
-					}},
+						WHERE c.relname = 'IndexQuoteIdx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testpggetindexdefquotesidentifiersrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid"},
 				},
 			},
 		},
@@ -70,11 +64,7 @@ func TestRenameTableUpdatesIndexDefinitionsRepro(t *testing.T) {
 				{
 					Query: `SELECT tablename, indexdef
 						FROM pg_catalog.pg_indexes
-						WHERE indexname = 'index_rename_table_label_idx';`,
-					Expected: []sql.Row{{
-						"index_rename_table_new",
-						"CREATE INDEX index_rename_table_label_idx ON public.index_rename_table_new USING btree (label)",
-					}},
+						WHERE indexname = 'index_rename_table_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenametableupdatesindexdefinitionsrepro-0001-select-tablename-indexdef-from-pg_catalog.pg_indexes"},
 				},
 			},
 		},
@@ -100,11 +90,7 @@ func TestRenameColumnUpdatesIndexDefinitionsRepro(t *testing.T) {
 							pg_catalog.pg_get_indexdef(c.oid),
 							pg_catalog.pg_get_indexdef(c.oid, 1, false)
 						FROM pg_catalog.pg_class c
-						WHERE c.relname = 'index_rename_column_label_idx';`,
-					Expected: []sql.Row{{
-						"CREATE INDEX index_rename_column_label_idx ON public.index_rename_column_items USING btree (new_label)",
-						"new_label",
-					}},
+						WHERE c.relname = 'index_rename_column_label_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "index-metadata-repro-test-testrenamecolumnupdatesindexdefinitionsrepro-0001-select-pg_catalog.pg_get_indexdef-c.oid-pg_catalog.pg_get_indexdef-c.oid"},
 				},
 			},
 		},

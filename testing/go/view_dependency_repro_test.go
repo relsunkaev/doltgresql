@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropColumnUsedByViewRequiresCascadeRepro reproduces a dependency
@@ -38,8 +36,7 @@ func TestDropColumnUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE view_dependency_source DROP COLUMN drop_value;`,
-					ExpectedErr: `depends on`,
+					Query: `ALTER TABLE view_dependency_source DROP COLUMN drop_value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumnusedbyviewrequirescascaderepro-0001-alter-table-view_dependency_source-drop-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -65,8 +62,7 @@ func TestDropColumnUsedByMaterializedViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE matview_column_dependency_source DROP COLUMN drop_value;`,
-					ExpectedErr: `depends on`,
+					Query: `ALTER TABLE matview_column_dependency_source DROP COLUMN drop_value;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumnusedbymaterializedviewrequirescascaderepro-0001-alter-table-matview_column_dependency_source-drop-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -95,15 +91,13 @@ func TestDropColumnCascadeDropsDependentViewRepro(t *testing.T) {
 						DROP COLUMN drop_value CASCADE;`,
 				},
 				{
-					Query:    `SELECT to_regclass('cascade_column_reader') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('cascade_column_reader') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumncascadedropsdependentviewrepro-0001-select-to_regclass-cascade_column_reader-is-null"},
 				},
 				{
 					Query: `SELECT column_name
 						FROM information_schema.columns
 						WHERE table_name = 'cascade_column_source'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{{"id"}, {"keep_value"}},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumncascadedropsdependentviewrepro-0002-select-column_name-from-information_schema.columns-where"},
 				},
 			},
 		},
@@ -133,15 +127,13 @@ func TestDropColumnCascadeDropsDependentMaterializedViewRepro(t *testing.T) {
 						DROP COLUMN drop_value CASCADE;`,
 				},
 				{
-					Query:    `SELECT to_regclass('cascade_mat_column_reader') IS NULL;`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT to_regclass('cascade_mat_column_reader') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumncascadedropsdependentmaterializedviewrepro-0001-select-to_regclass-cascade_mat_column_reader-is-null"},
 				},
 				{
 					Query: `SELECT column_name
 						FROM information_schema.columns
 						WHERE table_name = 'cascade_mat_column_source'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{{"id"}, {"keep_value"}},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropcolumncascadedropsdependentmaterializedviewrepro-0002-select-column_name-from-information_schema.columns-where"},
 				},
 			},
 		},
@@ -165,8 +157,7 @@ func TestDropTableUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE view_table_dependency_source;`,
-					ExpectedErr: `depends on`,
+					Query: `DROP TABLE view_table_dependency_source;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdroptableusedbyviewrequirescascaderepro-0001-drop-table-view_table_dependency_source", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -191,8 +182,7 @@ func TestDropTableUsedByMaterializedViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP TABLE matview_table_dependency_source;`,
-					ExpectedErr: `depends on`,
+					Query: `DROP TABLE matview_table_dependency_source;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdroptableusedbymaterializedviewrequirescascaderepro-0001-drop-table-matview_table_dependency_source", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -220,8 +210,7 @@ func TestDropTableCascadeDropsDependentViewRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT to_regclass('cascade_view_table_source') IS NULL,
-							to_regclass('cascade_view_table_reader') IS NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+							to_regclass('cascade_view_table_reader') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdroptablecascadedropsdependentviewrepro-0001-select-to_regclass-cascade_view_table_source-is-null"},
 				},
 			},
 		},
@@ -250,8 +239,7 @@ func TestDropTableCascadeDropsDependentMaterializedViewRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT to_regclass('cascade_matview_table_source') IS NULL,
-							to_regclass('cascade_matview_table_reader') IS NULL;`,
-					Expected: []sql.Row{{"t", "t"}},
+							to_regclass('cascade_matview_table_reader') IS NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdroptablecascadedropsdependentmaterializedviewrepro-0001-select-to_regclass-cascade_matview_table_source-is-null"},
 				},
 			},
 		},
@@ -277,8 +265,7 @@ func TestDropViewUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP VIEW view_chain_base;`,
-					ExpectedErr: `depends on`,
+					Query: `DROP VIEW view_chain_base;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropviewusedbyviewrequirescascaderepro-0001-drop-view-view_chain_base", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -305,8 +292,7 @@ func TestDropMaterializedViewUsedByViewRequiresCascadeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP MATERIALIZED VIEW matview_chain_base;`,
-					ExpectedErr: `depends on`,
+					Query: `DROP MATERIALIZED VIEW matview_chain_base;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testdropmaterializedviewusedbyviewrequirescascaderepro-0001-drop-materialized-view-matview_chain_base", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -337,8 +323,7 @@ func TestRenameColumnUsedByViewKeepsViewUsableRepro(t *testing.T) {
 				{
 					Query: `SELECT id, old_label
 						FROM view_rename_dependency_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "before rename"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testrenamecolumnusedbyviewkeepsviewusablerepro-0001-select-id-old_label-from-view_rename_dependency_reader"},
 				},
 			},
 		},
@@ -369,8 +354,7 @@ func TestRenameTableUsedByViewKeepsViewUsableRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM view_rename_table_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "before table rename"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testrenametableusedbyviewkeepsviewusablerepro-0001-select-id-label-from-view_rename_table_reader"},
 				},
 			},
 		},
@@ -409,8 +393,7 @@ func TestRenameTableUsedByMaterializedViewKeepsRefreshUsableRepro(t *testing.T) 
 				{
 					Query: `SELECT id, label
 						FROM matview_rename_table_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "after rename"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testrenametableusedbymaterializedviewkeepsrefreshusablerepro-0001-select-id-label-from-matview_rename_table_reader"},
 				},
 			},
 		},
@@ -443,8 +426,7 @@ func TestRenameViewUsedByViewKeepsViewUsableRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM view_rename_view_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "before view rename"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testrenameviewusedbyviewkeepsviewusablerepro-0001-select-id-label-from-view_rename_view_reader"},
 				},
 			},
 		},
@@ -477,8 +459,7 @@ func TestRenameMaterializedViewUsedByViewKeepsViewUsableRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM view_rename_matview_reader
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "before rename"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "view-dependency-repro-test-testrenamematerializedviewusedbyviewkeepsviewusablerepro-0001-select-id-label-from-view_rename_matview_reader"},
 				},
 			},
 		},

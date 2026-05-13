@@ -144,21 +144,13 @@ func TestPublicationDDLAndCatalogs(t *testing.T) {
 					Query: `CREATE PUBLICATION "_dgzero_metadata_0" FOR TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;`,
 				},
 				{
-					Query: `SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;`,
-					Expected: []sql.Row{
-						{"dgzero", "permissions"},
-						{"zmeta", "clients"},
-						{"zmeta", "mutations"},
-					},
+					Query: `SELECT schemaname, tablename FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0' ORDER BY schemaname, tablename;`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0012-select-schemaname-tablename-from-pg_catalog.pg_publication_tables"},
 				},
 				{
 					Query: `ALTER PUBLICATION "_dgzero_metadata_0" SET TABLE dgzero.permissions, TABLE zmeta.clients, zmeta.mutations;`,
 				},
 				{
-					Query: `SELECT count(*) FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0';`,
-					Expected: []sql.Row{
-						{3},
-					},
+					Query: `SELECT count(*) FROM pg_catalog.pg_publication_tables WHERE pubname = '_dgzero_metadata_0';`, PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testpublicationddlandcatalogs-0013-select-count-*-from-pg_catalog.pg_publication_tables"},
 				},
 			},
 		},
@@ -175,50 +167,34 @@ func TestReplicaIdentityDDLAndCatalogs(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
-					Expected: []sql.Row{
-						{"d"},
-					},
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0001-select-relreplident-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY FULL;",
 				},
 				{
-					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
-					Expected: []sql.Row{
-						{"f"},
-					},
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0002-select-relreplident-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY NOTHING;",
 				},
 				{
-					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';",
-					Expected: []sql.Row{
-						{"n"},
-					},
+					Query: "SELECT relreplident FROM pg_catalog.pg_class WHERE relname = 'repl_ident_items';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0003-select-relreplident-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_label_idx;",
 				},
 				{
-					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
-					Expected: []sql.Row{
-						{"i", "t"},
-					},
+					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0004-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class"},
 				},
 				{
 					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY DEFAULT;",
 				},
 				{
-					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';",
-					Expected: []sql.Row{
-						{"d", "f"},
-					},
+					Query: "SELECT c.relreplident, i.indisreplident FROM pg_catalog.pg_class c JOIN pg_catalog.pg_index i ON i.indrelid = c.oid JOIN pg_catalog.pg_class ic ON ic.oid = i.indexrelid WHERE c.relname = 'repl_ident_items' AND ic.relname = 'repl_ident_label_idx';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0005-select-c.relreplident-i.indisreplident-from-pg_catalog.pg_class"},
 				},
 				{
-					Query:       "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;",
-					ExpectedErr: `index "repl_ident_missing_idx" does not exist`,
+					Query: "ALTER TABLE repl_ident_items REPLICA IDENTITY USING INDEX repl_ident_missing_idx;", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testreplicaidentityddlandcatalogs-0006-alter-table-repl_ident_items-replica-identity", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -235,11 +211,7 @@ func TestElectricInspectorArrayAlias(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';",
-					Expected: []sql.Row{
-						{"{electric_alias,electric_alias_items}"},
-					},
-					ExpectedColNames: []string{"parent"},
+					Query: "SELECT ARRAY[pn.nspname, pc.relname] parent FROM pg_catalog.pg_class pc JOIN pg_catalog.pg_namespace pn ON pn.oid = pc.relnamespace WHERE pc.relname = 'electric_alias_items' AND pn.nspname = 'electric_alias';", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-subscription-test-testelectricinspectorarrayalias-0001-select-array[pn.nspname-pc.relname]-parent-from"},
 				},
 			},
 		},

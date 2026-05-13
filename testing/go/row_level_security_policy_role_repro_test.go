@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro reproduces a security
@@ -54,26 +52,28 @@ func TestRowLevelSecurityPolicyRoleListRestrictsPolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_policy_list_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "allowed row"}},
+
 					Username: `rls_policy_list_allowed`,
-					Password: `allowed`,
+					Password: `allowed`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-allows-listed-role"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM rls_policy_list_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_policy_list_unlisted`,
-					Password: `unlisted`,
+					Password: `unlisted`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-denies-unlisted-role"},
+
+					// TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro reproduces the
+					// same role-list applicability bug for write policies: an unlisted role can use
+					// an INSERT policy that PostgreSQL only applies to the listed role.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro reproduces the
-// same role-list applicability bug for write policies: an unlisted role can use
-// an INSERT policy that PostgreSQL only applies to the listed role.
 func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -107,26 +107,28 @@ func TestRowLevelSecurityPolicyRoleListRestrictsInsertPolicyRepro(t *testing.T) 
 					Query: `INSERT INTO rls_insert_policy_list_docs
 						VALUES (1, 'rls_insert_policy_list_allowed', 'allowed insert')
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "allowed insert"}},
+
 					Username: `rls_insert_policy_list_allowed`,
-					Password: `allowed`,
+					Password: `allowed`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-allows-listed-insert"},
 				},
 				{
 					Query: `INSERT INTO rls_insert_policy_list_docs
 						VALUES (2, 'rls_insert_policy_list_unlisted', 'unlisted insert')
 						RETURNING id, label;`,
-					ExpectedErr: `violates row-level security policy`,
-					Username:    `rls_insert_policy_list_unlisted`,
-					Password:    `unlisted`,
+
+					Username: `rls_insert_policy_list_unlisted`,
+					Password: `unlisted`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-denies-unlisted-insert", Compare: "sqlstate"},
+
+					// TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro reproduces the
+					// role-list applicability bug for UPDATE policies: PostgreSQL applies the
+					// policy only to the listed role, but Doltgres lets an unlisted role update rows.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro reproduces the
-// role-list applicability bug for UPDATE policies: PostgreSQL applies the
-// policy only to the listed role, but Doltgres lets an unlisted role update rows.
 func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -165,27 +167,29 @@ func TestRowLevelSecurityPolicyRoleListRestrictsUpdatePolicyRepro(t *testing.T) 
 						SET label = 'allowed updated'
 						WHERE owner_name = current_user
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "allowed updated"}},
+
 					Username: `rls_update_policy_list_allowed`,
-					Password: `allowed`,
+					Password: `allowed`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-allows-listed-update"},
 				},
 				{
 					Query: `UPDATE rls_update_policy_list_docs
 						SET label = 'unlisted updated'
 						WHERE owner_name = current_user
 						RETURNING id, label;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_update_policy_list_unlisted`,
-					Password: `unlisted`,
+					Password: `unlisted`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-denies-unlisted-update"},
+
+					// TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro reproduces the
+					// role-list applicability bug for DELETE policies: PostgreSQL applies the
+					// policy only to the listed role, but Doltgres lets an unlisted role delete rows.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro reproduces the
-// role-list applicability bug for DELETE policies: PostgreSQL applies the
-// policy only to the listed role, but Doltgres lets an unlisted role delete rows.
 func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -222,17 +226,17 @@ func TestRowLevelSecurityPolicyRoleListRestrictsDeletePolicyRepro(t *testing.T) 
 					Query: `DELETE FROM rls_delete_policy_list_docs
 						WHERE owner_name = current_user
 						RETURNING id, label;`,
-					Expected: []sql.Row{{1, "allowed row"}},
+
 					Username: `rls_delete_policy_list_allowed`,
-					Password: `allowed`,
+					Password: `allowed`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-allows-listed-delete"},
 				},
 				{
 					Query: `DELETE FROM rls_delete_policy_list_docs
 						WHERE owner_name = current_user
 						RETURNING id, label;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_delete_policy_list_unlisted`,
-					Password: `unlisted`,
+					Password: `unlisted`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-policy-role-list-denies-unlisted-delete"},
 				},
 			},
 		},

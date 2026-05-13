@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestExplicitCollationProbe pins how runtime `COLLATE` references
@@ -38,13 +36,7 @@ func TestExplicitCollationProbe(t *testing.T) {
 				{
 					// COLLATE "C" sorts ASCII-byte order:
 					// upper-case before lower-case.
-					Query: `SELECT c FROM letters ORDER BY c COLLATE "C", id;`,
-					Expected: []sql.Row{
-						{"A"},
-						{"B"},
-						{"a"},
-						{"b"},
-					},
+					Query: `SELECT c FROM letters ORDER BY c COLLATE "C", id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "explicit-collation-probe-test-testexplicitcollationprobe-0001-select-c-from-letters-order"},
 				},
 			},
 		},
@@ -56,12 +48,7 @@ func TestExplicitCollationProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT w FROM words ORDER BY w COLLATE "POSIX", id;`,
-					Expected: []sql.Row{
-						{"A"},
-						{"Z"},
-						{"a"},
-					},
+					Query: `SELECT w FROM words ORDER BY w COLLATE "POSIX", id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "explicit-collation-probe-test-testexplicitcollationprobe-0002-select-w-from-words-order"},
 				},
 			},
 		},
@@ -74,8 +61,7 @@ func TestExplicitCollationProbe(t *testing.T) {
 				{
 					Query: `SELECT collation_name
 						FROM information_schema.columns
-						WHERE table_name = 'labels' AND column_name = 'name';`,
-					Expected: []sql.Row{{"C"}},
+						WHERE table_name = 'labels' AND column_name = 'name';`, PostgresOracle: ScriptTestPostgresOracle{ID: "explicit-collation-probe-test-testexplicitcollationprobe-0003-select-collation_name-from-information_schema.columns-where"},
 				},
 			},
 		},

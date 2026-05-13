@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL allows CREATE OPERATOR to bind a SQL function as an infix
@@ -40,8 +38,7 @@ func TestCreateOperatorInstallsCallableOperatorRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 2 === 4, 2 === 3;`,
-					Expected: []sql.Row{{"t", "f"}},
+					Query: `SELECT 2 === 4, 2 === 3;`, PostgresOracle: ScriptTestPostgresOracle{ID: "operator-definition-repro-test-testcreateoperatorinstallscallableoperatorrepro-0001-select-2-===-4-2"},
 				},
 			},
 		},
@@ -89,8 +86,7 @@ func TestDropOperatorIfExistsDropsExistingOperatorRepro(t *testing.T) {
 						FROM pg_operator
 						WHERE oprname = '==='
 						  AND oprleft = 'integer'::regtype
-						  AND oprright = 'integer'::regtype;`,
-					Expected: []sql.Row{{0}},
+						  AND oprright = 'integer'::regtype;`, PostgresOracle: ScriptTestPostgresOracle{ID: "operator-definition-repro-test-testdropoperatorifexistsdropsexistingoperatorrepro-0001-select-count-*-from-pg_operator"},
 				},
 			},
 		},

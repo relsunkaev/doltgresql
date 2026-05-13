@@ -27,48 +27,28 @@ func TestPsqlCommands(t *testing.T) {
 			Name: "operator keyword",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select 1 OPERATOR(pg_catalog.+) 1",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "select 1 OPERATOR(pg_catalog.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0001-select-1-operator-pg_catalog.+-1"},
 				},
 				{
-					Query: "select 1 OPERATOR(PG_CATALOG.+) 1",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "select 1 OPERATOR(PG_CATALOG.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0002-select-1-operator-pg_catalog.+-1"},
 				},
 				{
-					Query:       "select 1 OPERATOR(myschema.+) 1",
-					ExpectedErr: "schema \"myschema\" not allowed",
+					Query: "select 1 OPERATOR(myschema.+) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0003-select-1-operator-myschema.+-1", Compare: "sqlstate"},
 				},
 				{
-					Query: "select 1 OPERATOR(pg_catalog.<) 1",
-					Expected: []sql.Row{
-						{"f"},
-					},
+					Query: "select 1 OPERATOR(pg_catalog.<) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0004-select-1-operator-pg_catalog.<-1"},
 				},
 				{
-					Query:       "select 1 OPERATOR(myschema.<) 1",
-					ExpectedErr: "schema \"myschema\" not allowed",
+					Query: "select 1 OPERATOR(myschema.<) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0005-select-1-operator-myschema.<-1", Compare: "sqlstate"},
 				},
 				{
-					Query: "select 1 OPERATOR(pg_catalog.<=) 1",
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: "select 1 OPERATOR(pg_catalog.<=) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0006-select-1-operator-pg_catalog.<=-1"},
 				},
 				{
-					Query: "select 1 OPERATOR(pg_catalog.=) 1",
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: "select 1 OPERATOR(pg_catalog.=) 1", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0007-select-1-operator-pg_catalog.=-1"},
 				},
 				{
-					Query: "select 'hello' OPERATOR(pg_catalog.~) 'hello';",
-					Expected: []sql.Row{
-						{"t"},
-					},
+					Query: "select 'hello' OPERATOR(pg_catalog.~) 'hello';", PostgresOracle: ScriptTestPostgresOracle{ID: "psql-test-testpsqlcommands-0008-select-hello-operator-pg_catalog.~-hello"},
 				},
 			},
 		},

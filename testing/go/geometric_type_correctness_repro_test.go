@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPointAdditionOperatorRepro reproduces a PostgreSQL geometric-type
@@ -28,8 +26,7 @@ func TestPointAdditionOperatorRepro(t *testing.T) {
 			Name: "point addition adds coordinates",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT ('(1,2)'::point + '(3,4)'::point)::text;`,
-					Expected: []sql.Row{{"(4,6)"}},
+					Query: `SELECT ('(1,2)'::point + '(3,4)'::point)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "geometric-type-correctness-repro-test-testpointadditionoperatorrepro-0001-select-1-2-::point-+"},
 				},
 			},
 		},

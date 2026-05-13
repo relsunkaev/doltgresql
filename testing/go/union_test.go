@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestUnion(t *testing.T) {
@@ -32,28 +30,13 @@ func TestUnion(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t1 UNION SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1},
-						{2},
-						{3},
-						{4},
-					},
+					Query: `SELECT * FROM t1 UNION SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testunion-0001-select-*-from-t1-union"},
 				},
 				{
-					Query: `SELECT 123 UNION SELECT 456;`,
-					Expected: []sql.Row{
-						{123},
-						{456},
-					},
+					Query: `SELECT 123 UNION SELECT 456;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testunion-0002-select-123-union-select-456"},
 				},
 				{
-					Query: `SELECT * FROM (VALUES (123), (456)) a UNION SELECT * FROM (VALUES (456), (789)) b;`,
-					Expected: []sql.Row{
-						{123},
-						{456},
-						{789},
-					},
+					Query: `SELECT * FROM (VALUES (123), (456)) a UNION SELECT * FROM (VALUES (456), (789)) b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testunion-0003-select-*-from-values-123"},
 				},
 			},
 		},
@@ -72,21 +55,13 @@ func TestIntersect(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t1 INTERSECT SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{2},
-						{3},
-					},
+					Query: `SELECT * FROM t1 INTERSECT SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testintersect-0001-select-*-from-t1-intersect"},
 				},
 				{
-					Query:    `SELECT 123 INTERSECT SELECT 456;`,
-					Expected: []sql.Row{},
+					Query: `SELECT 123 INTERSECT SELECT 456;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testintersect-0002-select-123-intersect-select-456"},
 				},
 				{
-					Query: `SELECT * FROM (VALUES (123), (456)) a INTERSECT SELECT * FROM (VALUES (456), (789)) b;`,
-					Expected: []sql.Row{
-						{456},
-					},
+					Query: `SELECT * FROM (VALUES (123), (456)) a INTERSECT SELECT * FROM (VALUES (456), (789)) b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testintersect-0003-select-*-from-values-123"},
 				},
 			},
 		},
@@ -105,22 +80,13 @@ func TestExcept(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT * FROM t1 EXCEPT SELECT * FROM t2;`,
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: `SELECT * FROM t1 EXCEPT SELECT * FROM t2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testexcept-0001-select-*-from-t1-except"},
 				},
 				{
-					Query: `SELECT 123 EXCEPT SELECT 456;`,
-					Expected: []sql.Row{
-						{123},
-					},
+					Query: `SELECT 123 EXCEPT SELECT 456;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testexcept-0002-select-123-except-select-456"},
 				},
 				{
-					Query: `SELECT * FROM (VALUES (123), (456)) a EXCEPT SELECT * FROM (VALUES (456), (789)) b;`,
-					Expected: []sql.Row{
-						{123},
-					},
+					Query: `SELECT * FROM (VALUES (123), (456)) a EXCEPT SELECT * FROM (VALUES (456), (789)) b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "union-test-testexcept-0003-select-*-from-values-123"},
 				},
 			},
 		},

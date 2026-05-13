@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSetReturningFunctionsWorkload pins generate_series and unnest workload
@@ -32,16 +30,13 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT generate_series(1, 5);`,
-					Expected: []sql.Row{{int64(1)}, {int64(2)}, {int64(3)}, {int64(4)}, {int64(5)}},
+					Query: `SELECT generate_series(1, 5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0001-select-generate_series-1-5"},
 				},
 				{
-					Query:    `SELECT generate_series(0, 10, 2);`,
-					Expected: []sql.Row{{int64(0)}, {int64(2)}, {int64(4)}, {int64(6)}, {int64(8)}, {int64(10)}},
+					Query: `SELECT generate_series(0, 10, 2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0002-select-generate_series-0-10-2"},
 				},
 				{
-					Query:    `SELECT generate_series(5, 1, -1);`,
-					Expected: []sql.Row{{int64(5)}, {int64(4)}, {int64(3)}, {int64(2)}, {int64(1)}},
+					Query: `SELECT generate_series(5, 1, -1);`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0003-select-generate_series-5-1-1"},
 				},
 			},
 		},
@@ -50,12 +45,10 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT sum(g)::text FROM generate_series(1, 100) g;`,
-					Expected: []sql.Row{{"5050"}},
+					Query: `SELECT sum(g)::text FROM generate_series(1, 100) g;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0004-select-sum-g-::text-from"},
 				},
 				{
-					Query:    `SELECT count(*) FROM generate_series(1, 1000);`,
-					Expected: []sql.Row{{int64(1000)}},
+					Query: `SELECT count(*) FROM generate_series(1, 1000);`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0005-select-count-*-from-generate_series"},
 				},
 			},
 		},
@@ -69,42 +62,28 @@ func TestSetReturningFunctionsWorkload(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT unnest(ARRAY[10, 20, 30]) AS v;`,
-					Expected: []sql.Row{{int32(10)}, {int32(20)}, {int32(30)}},
+					Query: `SELECT unnest(ARRAY[10, 20, 30]) AS v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0006-select-unnest-array[10-20-30]"},
 				},
 				{
-					Query:    `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v;`,
-					Expected: []sql.Row{{int32(1)}, {int32(2)}, {int32(3)}},
+					Query: `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0007-select-unnest-array[3-1-2]"},
 				},
 				{
-					Query:    `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v LIMIT 2;`,
-					Expected: []sql.Row{{int32(1)}, {int32(2)}},
+					Query: `SELECT unnest(ARRAY[3, 1, 2]) AS v ORDER BY v LIMIT 2;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0008-select-unnest-array[3-1-2]"},
 				},
 				{
-					Query:    `SELECT unnest(vals) AS v FROM alias_collision ORDER BY v;`,
-					Expected: []sql.Row{{int32(1)}, {int32(2)}, {int32(3)}},
+					Query: `SELECT unnest(vals) AS v FROM alias_collision ORDER BY v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0009-select-unnest-vals-as-v"},
 				},
 				{
 					Query: `SELECT id, t
 						FROM items
 						CROSS JOIN unnest(vals) AS t
-						ORDER BY id, t;`,
-					Expected: []sql.Row{
-						{int32(1), int32(10)},
-						{int32(1), int32(20)},
-						{int32(2), int32(30)},
-					},
+						ORDER BY id, t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0010-select-id-t-from-items"},
 				},
 				{
 					Query: `SELECT id, x
 						FROM items
 						CROSS JOIN unnest(vals) AS t(x)
-						ORDER BY id, x;`,
-					Expected: []sql.Row{
-						{int32(1), int32(10)},
-						{int32(1), int32(20)},
-						{int32(2), int32(30)},
-					},
+						ORDER BY id, x;`, PostgresOracle: ScriptTestPostgresOracle{ID: "srf-test-testsetreturningfunctionsworkload-0011-select-id-x-from-items"},
 				},
 			},
 		},

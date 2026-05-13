@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRenameTablePreservesRowLevelSecurityStateRepro reproduces a row-level
@@ -50,9 +48,9 @@ func TestRenameTablePreservesRowLevelSecurityStateRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rename_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rename_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0001-select-id-label-from-rename_rls_docs"},
 				},
 				{
 					Query: `ALTER TABLE rename_rls_docs
@@ -65,16 +63,15 @@ func TestRenameTablePreservesRowLevelSecurityStateRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rename_rls_docs_renamed'::regclass;`,
-					Expected: []sql.Row{{"t"}},
+						WHERE oid = 'rename_rls_docs_renamed'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM rename_rls_docs_renamed
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rename_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-rename-repro-test-testrenametablepreservesrowlevelsecuritystaterepro-0003-select-id-label-from-rename_rls_docs_renamed"},
 				},
 			},
 		},

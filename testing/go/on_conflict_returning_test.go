@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestInsertOnConflictReturning pins the INSERT ... ON CONFLICT ... RETURNING
@@ -41,15 +39,10 @@ func TestInsertOnConflictReturning(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `INSERT INTO kv VALUES (1, 10, 100) RETURNING k, v, updated_at;`,
-					Expected: []sql.Row{{int32(1), int32(10), int32(100)}},
+					Query: `INSERT INTO kv VALUES (1, 10, 100) RETURNING k, v, updated_at;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0001-insert-into-kv-values-1"},
 				},
 				{
-					Query: `INSERT INTO kv VALUES (2, 20, 200), (3, 30, 300) RETURNING k, v;`,
-					Expected: []sql.Row{
-						{int32(2), int32(20)},
-						{int32(3), int32(30)},
-					},
+					Query: `INSERT INTO kv VALUES (2, 20, 200), (3, 30, 300) RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0002-insert-into-kv-values-2"},
 				},
 			},
 		},
@@ -66,26 +59,19 @@ func TestInsertOnConflictReturning(t *testing.T) {
 				{
 					Query: `INSERT INTO kv VALUES (1, 99)
 						ON CONFLICT (k) DO NOTHING
-						RETURNING k, v;`,
-					Expected: []sql.Row{},
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0003-insert-into-kv-values-1"},
 				},
 				{
 					// Confirm DO NOTHING preserved the original row.
-					Query:    `SELECT k, v FROM kv WHERE k = 1;`,
-					Expected: []sql.Row{{int32(1), int32(10)}},
+					Query: `SELECT k, v FROM kv WHERE k = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0004-select-k-v-from-kv"},
 				},
 				{
 					Query: `INSERT INTO kv VALUES (2, 20)
 						ON CONFLICT (k) DO NOTHING
-						RETURNING k, v;`,
-					Expected: []sql.Row{{int32(2), int32(20)}},
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0005-insert-into-kv-values-2"},
 				},
 				{
-					Query: "SELECT k, v FROM kv ORDER BY k;",
-					Expected: []sql.Row{
-						{int32(1), int32(10)},
-						{int32(2), int32(20)},
-					},
+					Query: "SELECT k, v FROM kv ORDER BY k;", PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0006-select-k-v-from-kv"},
 				},
 			},
 		},
@@ -99,12 +85,10 @@ func TestInsertOnConflictReturning(t *testing.T) {
 				{
 					Query: `INSERT INTO kv VALUES (1, 99)
 						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
-						RETURNING k, v;`,
-					Expected: []sql.Row{{int32(1), int32(99)}},
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0007-insert-into-kv-values-1"},
 				},
 				{
-					Query:    `SELECT k, v FROM kv WHERE k = 1;`,
-					Expected: []sql.Row{{int32(1), int32(99)}},
+					Query: `SELECT k, v FROM kv WHERE k = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0008-select-k-v-from-kv"},
 				},
 			},
 		},
@@ -118,18 +102,10 @@ func TestInsertOnConflictReturning(t *testing.T) {
 				{
 					Query: `INSERT INTO kv VALUES (1, 11), (2, 22)
 						ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v
-						RETURNING k, v;`,
-					Expected: []sql.Row{
-						{int32(1), int32(11)},
-						{int32(2), int32(22)},
-					},
+						RETURNING k, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0009-insert-into-kv-values-1"},
 				},
 				{
-					Query: "SELECT k, v FROM kv ORDER BY k;",
-					Expected: []sql.Row{
-						{int32(1), int32(11)},
-						{int32(2), int32(22)},
-					},
+					Query: "SELECT k, v FROM kv ORDER BY k;", PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0010-select-k-v-from-kv"},
 				},
 			},
 		},
@@ -165,12 +141,7 @@ func TestInsertOnConflictReturning(t *testing.T) {
 					ExpectedTag: `INSERT 0 2`,
 				},
 				{
-					Query: "SELECT k, v FROM kv ORDER BY k;",
-					Expected: []sql.Row{
-						{int32(1), int32(12)},
-						{int32(2), int32(20)},
-						{int32(3), int32(30)},
-					},
+					Query: "SELECT k, v FROM kv ORDER BY k;", PostgresOracle: ScriptTestPostgresOracle{ID: "on-conflict-returning-test-testinsertonconflictreturning-0015-select-k-v-from-kv"},
 				},
 			},
 		},

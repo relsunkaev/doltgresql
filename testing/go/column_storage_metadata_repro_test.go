@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterColumnSetStoragePersistsCatalogRepro reproduces a persistence bug:
@@ -38,8 +36,7 @@ func TestAlterColumnSetStoragePersistsCatalogRepro(t *testing.T) {
 					Query: `SELECT attstorage
 						FROM pg_attribute
 						WHERE attrelid = 'storage_catalog_target'::regclass
-							AND attname = 'payload';`,
-					Expected: []sql.Row{{"e"}},
+							AND attname = 'payload';`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-storage-metadata-repro-test-testaltercolumnsetstoragepersistscatalogrepro-0001-select-attstorage-from-pg_attribute-where"},
 				},
 			},
 		},
@@ -64,8 +61,7 @@ func TestAlterColumnSetCompressionPersistsCatalogRepro(t *testing.T) {
 					Query: `SELECT attcompression
 						FROM pg_attribute
 						WHERE attrelid = 'compression_catalog_target'::regclass
-							AND attname = 'payload';`,
-					Expected: []sql.Row{{"p"}},
+							AND attname = 'payload';`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-storage-metadata-repro-test-testaltercolumnsetcompressionpersistscatalogrepro-0001-select-attcompression-from-pg_attribute-where"},
 				},
 			},
 		},
@@ -90,8 +86,7 @@ func TestAlterColumnSetStatisticsPersistsCatalogRepro(t *testing.T) {
 					Query: `SELECT attstattarget
 						FROM pg_attribute
 						WHERE attrelid = 'statistics_catalog_target'::regclass
-							AND attname = 'payload';`,
-					Expected: []sql.Row{{int16(42)}},
+							AND attname = 'payload';`, PostgresOracle: ScriptTestPostgresOracle{ID: "column-storage-metadata-repro-test-testaltercolumnsetstatisticspersistscatalogrepro-0001-select-attstattarget-from-pg_attribute-where"},
 				},
 			},
 		},

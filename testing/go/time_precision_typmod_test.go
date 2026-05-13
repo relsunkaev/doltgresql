@@ -15,7 +15,6 @@
 package _go
 
 import (
-	"github.com/dolthub/go-mysql-server/sql"
 	"testing"
 )
 
@@ -61,19 +60,7 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 WHERE c.relname = 'prec_t' AND n.nspname = current_schema() AND a.attnum > 0
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"id", int32(-1)},
-						{"ts0", int32(0)},
-						{"ts3", int32(3)},
-						{"ts6", int32(6)},
-						{"tsd", int32(-1)},
-						{"tz3", int32(3)},
-						{"tz6", int32(6)},
-						{"t0", int32(0)},
-						{"t3", int32(3)},
-						{"t6", int32(6)},
-					},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "time-precision-typmod-test-testtimeprecisiontypmod-0001-select-attname-atttypmod-from-pg_catalog.pg_attribute"},
 				},
 			},
 		},
@@ -94,11 +81,7 @@ FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 WHERE c.relname = 'prec_fmt' AND n.nspname = current_schema() AND a.attname IN ('ts3', 't6')
-ORDER BY a.attname;`,
-					Expected: []sql.Row{
-						{"t6", "time(6) without time zone"},
-						{"ts3", "timestamp(3) without time zone"},
-					},
+ORDER BY a.attname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "time-precision-typmod-test-testtimeprecisiontypmod-0002-select-a.attname-format_type-a.atttypid-a.atttypmod"},
 				},
 			},
 		},

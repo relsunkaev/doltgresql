@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // PostgreSQL supports case-insensitive LIKE pattern matching through ILIKE.
@@ -30,8 +28,7 @@ func TestILikePatternMatchRepro(t *testing.T) {
 				{
 					Query: `SELECT 'Alpha' ILIKE 'a%',
 						'Alpha' ILIKE 'ALP_A',
-						'Alpha' NOT ILIKE 'b%';`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+						'Alpha' NOT ILIKE 'b%';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testilikepatternmatchrepro-0001-select-alpha-ilike-a%-alpha"},
 				},
 			},
 		},
@@ -48,8 +45,7 @@ func TestSimilarToPatternMatchRepro(t *testing.T) {
 				{
 					Query: `SELECT 'abc' SIMILAR TO 'a%(b|c)',
 						'adc' SIMILAR TO 'a%(b|c)',
-						'abx' SIMILAR TO 'a%(b|c)';`,
-					Expected: []sql.Row{{"t", "t", "f"}},
+						'abx' SIMILAR TO 'a%(b|c)';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testsimilartopatternmatchrepro-0001-select-abc-similar-to-a%"},
 				},
 			},
 		},
@@ -66,8 +62,7 @@ func TestCaseInsensitiveRegexMatchRepro(t *testing.T) {
 				{
 					Query: `SELECT 'Alpha' ~* '^a',
 						'Alpha' ~* 'LPH',
-						'Alpha' !~* '^b';`,
-					Expected: []sql.Row{{"t", "t", "t"}},
+						'Alpha' !~* '^b';`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testcaseinsensitiveregexmatchrepro-0001-select-alpha-~*-^a-alpha"},
 				},
 			},
 		},
@@ -82,8 +77,7 @@ func TestPowerOperatorRepro(t *testing.T) {
 			Name: "power operator evaluates numeric exponentiation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (2 ^ 3)::text, (4 ^ 0.5)::text;`,
-					Expected: []sql.Row{{"8", "2.0000000000000000"}},
+					Query: `SELECT (2 ^ 3)::text, (4 ^ 0.5)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testpoweroperatorrepro-0001-select-2-^-3-::text"},
 				},
 			},
 		},
@@ -98,8 +92,7 @@ func TestUnaryNumericOperatorsRepro(t *testing.T) {
 			Name: "unary numeric operators evaluate roots and absolute value",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (|/ 25.0)::text, (||/ 27.0)::text, (@ -5.0)::text;`,
-					Expected: []sql.Row{{"5", "3", "5.0"}},
+					Query: `SELECT (|/ 25.0)::text, (||/ 27.0)::text, (@ -5.0)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testunarynumericoperatorsrepro-0001-select-|/-25.0-::text-||/"},
 				},
 			},
 		},
@@ -114,8 +107,7 @@ func TestUnaryPlusOperatorGuard(t *testing.T) {
 			Name: "unary plus preserves numeric value",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (+1)::text, (+(-2))::text, (+'3'::int)::text;`,
-					Expected: []sql.Row{{"1", "-2", "3"}},
+					Query: `SELECT (+1)::text, (+(-2))::text, (+'3'::int)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testunaryplusoperatorguard-0001-select-+1-::text-+-2"},
 				},
 			},
 		},
@@ -130,20 +122,16 @@ func TestPostgres16IntegerLiteralSyntaxRepro(t *testing.T) {
 			Name: "PostgreSQL integer literal prefixes and underscores",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1_000::text;`,
-					Expected: []sql.Row{{"1000"}},
+					Query: `SELECT 1_000::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0001-select-1_000::text"},
 				},
 				{
-					Query:    `SELECT 0x10::text;`,
-					Expected: []sql.Row{{"16"}},
+					Query: `SELECT 0x10::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0002-select-0x10::text"},
 				},
 				{
-					Query:    `SELECT 0o10::text;`,
-					Expected: []sql.Row{{"8"}},
+					Query: `SELECT 0o10::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0003-select-0o10::text"},
 				},
 				{
-					Query:    `SELECT 0b1010::text;`,
-					Expected: []sql.Row{{"10"}},
+					Query: `SELECT 0b1010::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testpostgres16integerliteralsyntaxrepro-0004-select-0b1010::text"},
 				},
 			},
 		},
@@ -163,8 +151,7 @@ func TestTemporalOverlapsOperatorRepro(t *testing.T) {
 						(DATE '2024-01-01', DATE '2024-01-02')
 							OVERLAPS (DATE '2024-01-02', DATE '2024-01-03'),
 						(DATE '2024-01-01', INTERVAL '2 days')
-							OVERLAPS (DATE '2024-01-02', INTERVAL '1 day');`,
-					Expected: []sql.Row{{"t", "f", "t"}},
+							OVERLAPS (DATE '2024-01-02', INTERVAL '1 day');`, PostgresOracle: ScriptTestPostgresOracle{ID: "expression-operator-repro-test-testtemporaloverlapsoperatorrepro-0001-select-date-2024-01-01-date-2024-01-10"},
 				},
 			},
 		},

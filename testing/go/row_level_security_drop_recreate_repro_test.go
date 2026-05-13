@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropTableClearsRowLevelSecurityStateRepro reproduces a row-level security
@@ -50,9 +48,9 @@ func TestDropTableClearsRowLevelSecurityStateRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM drop_recreate_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "old visible"}},
+
 					Username: `drop_recreate_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0001-select-id-label-from-drop_recreate_rls_docs"},
 				},
 				{
 					Query: `DROP TABLE drop_recreate_rls_docs;`,
@@ -76,16 +74,15 @@ func TestDropTableClearsRowLevelSecurityStateRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'drop_recreate_rls_docs'::regclass;`,
-					Expected: []sql.Row{{"f"}},
+						WHERE oid = 'drop_recreate_rls_docs'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM drop_recreate_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "new visible"}, {2, "new unrestricted"}},
+
 					Username: `drop_recreate_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-drop-recreate-repro-test-testdroptableclearsrowlevelsecuritystaterepro-0003-select-id-label-from-drop_recreate_rls_docs"},
 				},
 			},
 		},

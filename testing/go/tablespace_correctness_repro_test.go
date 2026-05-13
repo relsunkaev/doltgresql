@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTablespaceInPlaceCatalogRepro reproduces a tablespace DDL/catalog
@@ -35,8 +33,7 @@ func TestCreateTablespaceInPlaceCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT spcname
 						FROM pg_catalog.pg_tablespace
-						WHERE spcname = 'repro_tblspace';`,
-					Expected: []sql.Row{{"repro_tblspace"}},
+						WHERE spcname = 'repro_tblspace';`, PostgresOracle: ScriptTestPostgresOracle{ID: "tablespace-correctness-repro-test-testcreatetablespaceinplacecatalogrepro-0001-select-spcname-from-pg_catalog.pg_tablespace-where"},
 				},
 			},
 		},

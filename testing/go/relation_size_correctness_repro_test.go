@@ -28,8 +28,7 @@ func TestPgRelationSizeRejectsInvalidForkRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT pg_relation_size('relation_size_fork_items'::regclass, 'badfork');`,
-					ExpectedErr: `invalid fork name`,
+					Query: `SELECT pg_relation_size('relation_size_fork_items'::regclass, 'badfork');`, PostgresOracle: ScriptTestPostgresOracle{ID: "relation-size-correctness-repro-test-testpgrelationsizerejectsinvalidforkrepro-0001-select-pg_relation_size-relation_size_fork_items-::regclass-badfork", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -15,7 +15,6 @@
 package _go
 
 import (
-	"github.com/dolthub/go-mysql-server/sql"
 	"testing"
 )
 
@@ -58,10 +57,7 @@ WHERE c.relname = 'idxany_code_idx';`,
 				{
 					// Plain ANY(array_literal) for sanity — must
 					// already work and serve as a baseline.
-					Query: `SELECT 1 WHERE 2 = ANY(ARRAY[1, 2, 3]);`,
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: `SELECT 1 WHERE 2 = ANY(ARRAY[1, 2, 3]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexindclassany-0001-select-1-where-2-="},
 				},
 			},
 		},
@@ -82,15 +78,13 @@ func TestPgIndexVectorSlices(t *testing.T) {
 					Query: `SELECT i.indkey[0]::text, i.indkey[1]::text
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'idxslice_label_category_idx';`,
-					Expected: []sql.Row{{"2", "3"}},
+WHERE c.relname = 'idxslice_label_category_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0001-select-i.indkey[0]::text-i.indkey[1]::text-from-pg_catalog.pg_index"},
 				},
 				{
 					Query: `SELECT array_to_string((i.indkey::smallint[])[:i.indnkeyatts - 1], ',')
 FROM pg_catalog.pg_index i
 JOIN pg_catalog.pg_class c ON c.oid = i.indexrelid
-WHERE c.relname = 'idxslice_label_category_idx';`,
-					Expected: []sql.Row{{"2,3"}},
+WHERE c.relname = 'idxslice_label_category_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0002-select-array_to_string-i.indkey::smallint[]-[:i.indnkeyatts-1]"},
 				},
 				{
 					Query: `WITH indexed_columns AS (
@@ -104,8 +98,7 @@ WHERE c.relname = 'idxslice_label_category_idx';`,
   ) AS col ON true
   WHERE c.relname = 'idxslice_label_category_idx'
 )
-SELECT array_to_string(array_agg(table_pos ORDER BY table_pos), ',') FROM indexed_columns;`,
-					Expected: []sql.Row{{"2,3"}},
+SELECT array_to_string(array_agg(table_pos ORDER BY table_pos), ',') FROM indexed_columns;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0003-with-indexed_columns-as-select-col.table_pos"},
 				},
 				{
 					Query: `SELECT array_to_string(array_agg(a.attname ORDER BY idx.ord), ',')
@@ -119,8 +112,7 @@ FROM (
 ) AS idx
 JOIN pg_catalog.pg_attribute a
   ON a.attrelid = idx.indrelid
- AND a.attnum = idx.attnum;`,
-					Expected: []sql.Row{{"label,category"}},
+ AND a.attnum = idx.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0004-select-array_to_string-array_agg-a.attname-order"},
 				},
 				{
 					Query: `WITH indexed_columns AS (
@@ -164,11 +156,7 @@ JOIN pg_catalog.pg_attribute a
 )
 SELECT "schema", "tableName", "name", "col", "dir", "unique", "isPrimaryKey", "isReplicaIdentity", "isImmediate"
 FROM indexed_columns
-ORDER BY "schema", "tableName", "name", "col";`,
-					Expected: []sql.Row{
-						{"public", "idxslice_t", "idxslice_label_category_idx", "category", "ASC", "f", "f", "f", "t"},
-						{"public", "idxslice_t", "idxslice_label_category_idx", "label", "ASC", "f", "f", "f", "t"},
-					},
+ORDER BY "schema", "tableName", "name", "col";`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-index-indclass-any-test-testpgindexvectorslices-0005-with-indexed_columns-as-select-pg_indexes.schemaname", ColumnModes: []string{"schema"}},
 				},
 			},
 		},

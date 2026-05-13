@@ -30,8 +30,7 @@ func TestTimestampMinusIntervalSubtractsDayComponentsRepro(t *testing.T) {
 			Name: "timestamp minus interval subtracts day components",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (timestamp '2025-07-21 04:05:06' - interval '2 days')::text;`,
-					Expected: []sql.Row{{"2025-07-19 04:05:06"}},
+					Query: `SELECT (timestamp '2025-07-21 04:05:06' - interval '2 days')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestampminusintervalsubtractsdaycomponentsrepro-0001-select-timestamp-2025-07-21-04:05:06-interval"},
 				},
 			},
 		},
@@ -47,8 +46,7 @@ func TestTimestampMinusIntervalSubtractsMonthComponentsRepro(t *testing.T) {
 			Name: "timestamp minus interval subtracts month components",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (timestamp '2025-03-31 12:00:00' - interval '1 month')::text;`,
-					Expected: []sql.Row{{"2025-02-28 12:00:00"}},
+					Query: `SELECT (timestamp '2025-03-31 12:00:00' - interval '1 month')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestampminusintervalsubtractsmonthcomponentsrepro-0001-select-timestamp-2025-03-31-12:00:00-interval"},
 				},
 			},
 		},
@@ -64,8 +62,7 @@ func TestTimestampPlusIntervalUsesCalendarMonthsRepro(t *testing.T) {
 			Name: "timestamp plus interval uses calendar month semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (timestamp '2025-01-31 12:00:00' + interval '1 month')::text;`,
-					Expected: []sql.Row{{"2025-02-28 12:00:00"}},
+					Query: `SELECT (timestamp '2025-01-31 12:00:00' + interval '1 month')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestampplusintervalusescalendarmonthsrepro-0001-select-timestamp-2025-01-31-12:00:00-+"},
 				},
 			},
 		},
@@ -85,8 +82,7 @@ func TestTimestamptzPlusIntervalUsesCalendarMonthsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						(timestamp with time zone '2025-01-31 12:00:00+00' + interval '1 month'))::bigint::text;`,
-					Expected: []sql.Row{{"1740744000"}},
+						(timestamp with time zone '2025-01-31 12:00:00+00' + interval '1 month'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptzplusintervalusescalendarmonthsrepro-0001-select-extract-epoch-from-timestamp"},
 				},
 			},
 		},
@@ -102,8 +98,7 @@ func TestDatePlusIntervalUsesCalendarMonthsRepro(t *testing.T) {
 			Name: "date plus interval uses calendar month semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (date '2025-01-31' + interval '1 month')::text;`,
-					Expected: []sql.Row{{"2025-02-28 00:00:00"}},
+					Query: `SELECT (date '2025-01-31' + interval '1 month')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateplusintervalusescalendarmonthsrepro-0001-select-date-2025-01-31-+-interval"},
 				},
 			},
 		},
@@ -119,8 +114,7 @@ func TestIntervalPlusDateUsesCalendarMonthsRepro(t *testing.T) {
 			Name: "interval plus date uses calendar month semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (interval '1 month' + date '2025-01-31')::text;`,
-					Expected: []sql.Row{{"2025-02-28 00:00:00"}},
+					Query: `SELECT (interval '1 month' + date '2025-01-31')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalplusdateusescalendarmonthsrepro-0001-select-interval-1-month-+"},
 				},
 			},
 		},
@@ -136,8 +130,7 @@ func TestIntervalPlusTimestampUsesCalendarMonthsRepro(t *testing.T) {
 			Name: "interval plus timestamp uses calendar month semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (interval '1 month' + timestamp '2025-01-31 12:00:00')::text;`,
-					Expected: []sql.Row{{"2025-02-28 12:00:00"}},
+					Query: `SELECT (interval '1 month' + timestamp '2025-01-31 12:00:00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalplustimestampusescalendarmonthsrepro-0001-select-interval-1-month-+"},
 				},
 			},
 		},
@@ -157,8 +150,7 @@ func TestIntervalPlusTimestamptzUsesCalendarMonthsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						(interval '1 month' + timestamp with time zone '2025-01-31 12:00:00+00'))::bigint::text;`,
-					Expected: []sql.Row{{"1740744000"}},
+						(interval '1 month' + timestamp with time zone '2025-01-31 12:00:00+00'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalplustimestamptzusescalendarmonthsrepro-0001-select-extract-epoch-from-interval"},
 				},
 			},
 		},
@@ -174,8 +166,7 @@ func TestDateMinusIntervalUsesCalendarMonthsRepro(t *testing.T) {
 			Name: "date minus interval uses calendar month semantics",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (date '2025-03-31' - interval '1 month')::text;`,
-					Expected: []sql.Row{{"2025-02-28 00:00:00"}},
+					Query: `SELECT (date '2025-03-31' - interval '1 month')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateminusintervalusescalendarmonthsrepro-0001-select-date-2025-03-31-interval-1"},
 				},
 			},
 		},
@@ -195,8 +186,7 @@ func TestTimestamptzMinusIntervalSubtractsDayComponentsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						(timestamp with time zone '2025-07-21 04:05:06+00' - interval '2 days'))::bigint::text;`,
-					Expected: []sql.Row{{"1752897906"}},
+						(timestamp with time zone '2025-07-21 04:05:06+00' - interval '2 days'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptzminusintervalsubtractsdaycomponentsrepro-0001-select-extract-epoch-from-timestamp"},
 				},
 			},
 		},
@@ -216,8 +206,7 @@ func TestTimestamptzMinusIntervalSubtractsMonthComponentsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						(timestamp with time zone '2025-03-31 12:00:00+00' - interval '1 month'))::bigint::text;`,
-					Expected: []sql.Row{{"1740744000"}},
+						(timestamp with time zone '2025-03-31 12:00:00+00' - interval '1 month'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptzminusintervalsubtractsmonthcomponentsrepro-0001-select-extract-epoch-from-timestamp"},
 				},
 			},
 		},
@@ -236,12 +225,10 @@ func TestExtractTimestampJulianIncludesFractionalDayRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extract(julian FROM timestamp '2001-02-18 20:38:40')::text;`,
-					Expected: []sql.Row{{"2451959.86018518518518518519"}},
+					Query: `SELECT extract(julian FROM timestamp '2001-02-18 20:38:40')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextracttimestampjulianincludesfractionaldayrepro-0001-select-extract-julian-from-timestamp"},
 				},
 				{
-					Query:    `SELECT extract(julian FROM timestamptz '2001-02-18 20:38:40+00')::text;`,
-					Expected: []sql.Row{{"2451959.86018518518518518519"}},
+					Query: `SELECT extract(julian FROM timestamptz '2001-02-18 20:38:40+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextracttimestampjulianincludesfractionaldayrepro-0002-select-extract-julian-from-timestamptz"},
 				},
 			},
 		},
@@ -260,12 +247,10 @@ func TestDatePartTimestampJulianIncludesFractionalDayRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT date_part('julian', timestamp '2001-02-18 20:38:40')::text;`,
-					Expected: []sql.Row{{"2451959.860185185"}},
+					Query: `SELECT date_part('julian', timestamp '2001-02-18 20:38:40')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateparttimestampjulianincludesfractionaldayrepro-0001-select-date_part-julian-timestamp-2001-02-18"},
 				},
 				{
-					Query:    `SELECT date_part('julian', timestamptz '2001-02-18 20:38:40+00')::text;`,
-					Expected: []sql.Row{{"2451959.860185185"}},
+					Query: `SELECT date_part('julian', timestamptz '2001-02-18 20:38:40+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateparttimestampjulianincludesfractionaldayrepro-0002-select-date_part-julian-timestamptz-2001-02-18"},
 				},
 			},
 		},
@@ -286,13 +271,11 @@ func TestDateTruncTimestamptzNamedZoneUsesTruncatedOffsetRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						date_trunc('day', timestamptz '2021-03-14 12:00:00+00', 'America/New_York'))::bigint::text;`,
-					Expected: []sql.Row{{"1615698000"}},
+						date_trunc('day', timestamptz '2021-03-14 12:00:00+00', 'America/New_York'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatetrunctimestamptznamedzoneusestruncatedoffsetrepro-0001-select-extract-epoch-from-date_trunc"},
 				},
 				{
 					Query: `SELECT extract(epoch FROM
-						date_trunc('day', timestamptz '2021-11-07 12:00:00+00', 'America/New_York'))::bigint::text;`,
-					Expected: []sql.Row{{"1636257600"}},
+						date_trunc('day', timestamptz '2021-11-07 12:00:00+00', 'America/New_York'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatetrunctimestamptznamedzoneusestruncatedoffsetrepro-0002-select-extract-epoch-from-date_trunc"},
 				},
 			},
 		},
@@ -315,29 +298,25 @@ func TestDateBinUsesPostgresTimestampRangeRepro(t *testing.T) {
 					Query: `SELECT date_bin(
 						'1 day'::interval,
 						timestamp '1500-01-02 12:00:00',
-						timestamp '1500-01-01 00:00:00')::text;`,
-					Expected: []sql.Row{{"1500-01-02 00:00:00"}},
+						timestamp '1500-01-01 00:00:00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatebinusespostgrestimestamprangerepro-0001-select-date_bin-1-day-::interval"},
 				},
 				{
 					Query: `SELECT date_bin(
 						'5 min'::interval,
 						timestamp '2300-01-01 00:06:00',
-						timestamp '2300-01-01 00:00:00')::text;`,
-					Expected: []sql.Row{{"2300-01-01 00:05:00"}},
+						timestamp '2300-01-01 00:00:00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatebinusespostgrestimestamprangerepro-0002-select-date_bin-5-min-::interval"},
 				},
 				{
 					Query: `SELECT date_bin(
 						'1 day'::interval,
 						timestamptz '1500-01-02 12:00:00+00',
-						timestamptz '1500-01-01 00:00:00+00')::text;`,
-					Expected: []sql.Row{{"1500-01-02 00:00:00+00"}},
+						timestamptz '1500-01-01 00:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatebinusespostgrestimestamprangerepro-0003-select-date_bin-1-day-::interval"},
 				},
 				{
 					Query: `SELECT date_bin(
 						'5 min'::interval,
 						timestamptz '2300-01-01 00:06:00+00',
-						timestamptz '2300-01-01 00:00:00+00')::text;`,
-					Expected: []sql.Row{{"2300-01-01 00:05:00+00"}},
+						timestamptz '2300-01-01 00:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatebinusespostgrestimestamprangerepro-0004-select-date_bin-5-min-::interval"},
 				},
 			},
 		},
@@ -353,12 +332,10 @@ func TestAgeUsesCalendarMonthBorrowingRepro(t *testing.T) {
 			Name: "age uses calendar month borrowing",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT age(timestamp '2001-02-28', timestamp '2001-01-31')::text;`,
-					Expected: []sql.Row{{"28 days"}},
+					Query: `SELECT age(timestamp '2001-02-28', timestamp '2001-01-31')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testageusescalendarmonthborrowingrepro-0001-select-age-timestamp-2001-02-28-timestamp"},
 				},
 				{
-					Query:    `SELECT age(timestamp '2004-03-01', timestamp '2004-01-31')::text;`,
-					Expected: []sql.Row{{"1 mon 1 day"}},
+					Query: `SELECT age(timestamp '2004-03-01', timestamp '2004-01-31')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testageusescalendarmonthborrowingrepro-0002-select-age-timestamp-2004-03-01-timestamp"},
 				},
 			},
 		},
@@ -380,19 +357,16 @@ func TestTimezoneTextTimestamptzUsesTargetOffsetRepro(t *testing.T) {
 				{
 					Query: `SELECT timezone(
 						'America/New_York',
-						timestamptz '2021-03-14 12:00:00+00')::text;`,
-					Expected: []sql.Row{{"2021-03-14 08:00:00"}},
+						timestamptz '2021-03-14 12:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestamptzusestargetoffsetrepro-0001-select-timezone-america/new_york-timestamptz-2021-03-14"},
 				},
 				{
 					Query: `SELECT (timestamptz '2021-03-14 12:00:00+00'
-						AT TIME ZONE 'America/New_York')::text;`,
-					Expected: []sql.Row{{"2021-03-14 08:00:00"}},
+						AT TIME ZONE 'America/New_York')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestamptzusestargetoffsetrepro-0002-select-timestamptz-2021-03-14-12:00:00+00-at"},
 				},
 				{
 					Query: `SELECT timezone(
 						'-04:45',
-						timestamptz '2001-02-16 20:38:40.12-05')::text;`,
-					Expected: []sql.Row{{"2001-02-17 06:23:40.12"}},
+						timestamptz '2001-02-16 20:38:40.12-05')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestamptzusestargetoffsetrepro-0003-select-timezone-04:45-timestamptz-2001-02-16"},
 				},
 			},
 		},
@@ -413,18 +387,15 @@ func TestTimezoneTextTimestampUsesWallTimeOffsetRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT extract(epoch FROM
-						(timestamp '2021-03-14 03:30:00' AT TIME ZONE 'America/New_York'))::bigint::text;`,
-					Expected: []sql.Row{{"1615707000"}},
+						(timestamp '2021-03-14 03:30:00' AT TIME ZONE 'America/New_York'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestampuseswalltimeoffsetrepro-0001-select-extract-epoch-from-timestamp"},
 				},
 				{
 					Query: `SELECT extract(epoch FROM
-						timezone('America/New_York', timestamp '2021-03-14 03:30:00'))::bigint::text;`,
-					Expected: []sql.Row{{"1615707000"}},
+						timezone('America/New_York', timestamp '2021-03-14 03:30:00'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestampuseswalltimeoffsetrepro-0002-select-extract-epoch-from-timezone"},
 				},
 				{
 					Query: `SELECT extract(epoch FROM
-						(timestamp '2021-11-07 03:30:00' AT TIME ZONE 'America/New_York'))::bigint::text;`,
-					Expected: []sql.Row{{"1636273800"}},
+						(timestamp '2021-11-07 03:30:00' AT TIME ZONE 'America/New_York'))::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimezonetexttimestampuseswalltimeoffsetrepro-0003-select-extract-epoch-from-timestamp"},
 				},
 			},
 		},
@@ -440,16 +411,13 @@ func TestMakeDateTimestampRejectInvalidCalendarDateRepro(t *testing.T) {
 			Name: "date constructors reject invalid calendar dates",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT make_date(2021, 2, 29);`,
-					ExpectedErr: `date field value out of range`,
+					Query: `SELECT make_date(2021, 2, 29);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testmakedatetimestamprejectinvalidcalendardaterepro-0001-select-make_date-2021-2-29", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT make_timestamp(2021, 2, 29, 0, 0, 0);`,
-					ExpectedErr: `date field value out of range`,
+					Query: `SELECT make_timestamp(2021, 2, 29, 0, 0, 0);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testmakedatetimestamprejectinvalidcalendardaterepro-0002-select-make_timestamp-2021-2-29", Compare: "sqlstate"},
 				},
 				{
-					Query:       `SELECT make_timestamptz(2021, 2, 29, 0, 0, 0, 'UTC');`,
-					ExpectedErr: `date field value out of range`,
+					Query: `SELECT make_timestamptz(2021, 2, 29, 0, 0, 0, 'UTC');`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testmakedatetimestamprejectinvalidcalendardaterepro-0003-select-make_timestamptz-2021-2-29", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -469,16 +437,13 @@ func TestToTimestampFloatSupportsPostgresRangeAndInfinityRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_timestamp(10413792000)::text;`,
-					Expected: []sql.Row{{"2300-01-01 00:00:00+00"}},
+					Query: `SELECT to_timestamp(10413792000)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtotimestampfloatsupportspostgresrangeandinfinityrepro-0001-select-to_timestamp-10413792000-::text"},
 				},
 				{
-					Query:    `SELECT to_timestamp('Infinity'::float8)::text;`,
-					Expected: []sql.Row{{"infinity"}},
+					Query: `SELECT to_timestamp('Infinity'::float8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtotimestampfloatsupportspostgresrangeandinfinityrepro-0002-select-to_timestamp-infinity-::float8-::text"},
 				},
 				{
-					Query:    `SELECT to_timestamp('-Infinity'::float8)::text;`,
-					Expected: []sql.Row{{"-infinity"}},
+					Query: `SELECT to_timestamp('-Infinity'::float8)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtotimestampfloatsupportspostgresrangeandinfinityrepro-0003-select-to_timestamp-infinity-::float8-::text"},
 				},
 			},
 		},
@@ -497,28 +462,22 @@ func TestTemporalTypmodsRoundFractionalSecondsGuard(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT timestamp(0) '2021-09-15 21:43:56.789'::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+					Query: `SELECT timestamp(0) '2021-09-15 21:43:56.789'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0001-select-timestamp-0-2021-09-15-21:43:56.789"},
 				},
 				{
-					Query:    `SELECT timestamp(2) '2021-09-15 21:43:56.789'::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:56.79"}},
+					Query: `SELECT timestamp(2) '2021-09-15 21:43:56.789'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0002-select-timestamp-2-2021-09-15-21:43:56.789"},
 				},
 				{
-					Query:    `SELECT time(0) '21:43:56.789'::text;`,
-					Expected: []sql.Row{{"21:43:57"}},
+					Query: `SELECT time(0) '21:43:56.789'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0003-select-time-0-21:43:56.789-::text"},
 				},
 				{
-					Query:    `SELECT timetz(0) '21:43:56.789+00'::text;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+					Query: `SELECT timetz(0) '21:43:56.789+00'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0004-select-timetz-0-21:43:56.789+00-::text"},
 				},
 				{
-					Query:    `SELECT timetz(2) '21:43:56.789+00'::text;`,
-					Expected: []sql.Row{{"21:43:56.79+00"}},
+					Query: `SELECT timetz(2) '21:43:56.789+00'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0005-select-timetz-2-21:43:56.789+00-::text"},
 				},
 				{
-					Query:    `SELECT timestamptz(0) '2021-09-15 21:43:56.789+00'::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+					Query: `SELECT timestamptz(0) '2021-09-15 21:43:56.789+00'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodsroundfractionalsecondsguard-0006-select-timestamptz-0-2021-09-15-21:43:56.789+00"},
 				},
 			},
 		},
@@ -550,12 +509,7 @@ func TestTimestampColumnTypmodsRoundStoredFractionalSecondsRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text, ts2::text, tz::text
 						FROM timestamp_column_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						"2021-09-15 21:43:57",
-						"2021-09-15 21:43:56.79",
-						"2021-09-15 21:43:57+00",
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestampcolumntypmodsroundstoredfractionalsecondsrepro-0001-select-ts::text-ts2::text-tz::text-from"},
 				},
 			},
 		},
@@ -580,8 +534,7 @@ func TestTimestampTypmodDefaultRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmoddefaultroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_default_items-order"},
 				},
 			},
 		},
@@ -609,8 +562,7 @@ func TestTimestampTypmodCopyFromRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_copy_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodcopyfromroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_copy_items-order"},
 				},
 			},
 		},
@@ -641,8 +593,7 @@ func TestTimestampTypmodUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodupdateroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_update_items-order"},
 				},
 			},
 		},
@@ -673,8 +624,7 @@ func TestTimestampTypmodOnConflictUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodonconflictupdateroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_upsert_items-order"},
 				},
 			},
 		},
@@ -708,8 +658,7 @@ func TestTimestampTypmodInsertSelectRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_insert_select_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodinsertselectroundsstoredvaluesrepro-0001-select-ts::text-from-timestamp_typmod_insert_select_items-order"},
 				},
 			},
 		},
@@ -748,8 +697,7 @@ func TestTimestampTypmodUpdateFromRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodupdatefromroundsstoredvaluesrepro-0001-select-ts::text-from-timestamp_typmod_update_from_items-order"},
 				},
 			},
 		},
@@ -775,8 +723,7 @@ func TestTimestamptzTypmodDefaultRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmoddefaultroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_default_items-order"},
 				},
 			},
 		},
@@ -805,8 +752,7 @@ func TestTimestamptzTypmodCopyFromRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_copy_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodcopyfromroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_copy_items-order"},
 				},
 			},
 		},
@@ -838,8 +784,7 @@ func TestTimestamptzTypmodUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodupdateroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_update_items-order"},
 				},
 			},
 		},
@@ -871,8 +816,7 @@ func TestTimestamptzTypmodOnConflictUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodonconflictupdateroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_upsert_items-order"},
 				},
 			},
 		},
@@ -907,8 +851,7 @@ func TestTimestamptzTypmodInsertSelectRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_insert_select_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodinsertselectroundsstoredvaluesrepro-0001-select-tz::text-from-timestamptz_typmod_insert_select_items-order"},
 				},
 			},
 		},
@@ -948,8 +891,7 @@ func TestTimestamptzTypmodUpdateFromRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodupdatefromroundsstoredvaluesrepro-0001-select-tz::text-from-timestamptz_typmod_update_from_items-order"},
 				},
 			},
 		},
@@ -972,12 +914,10 @@ func TestTimestampTypmodTableCheckUsesRoundedValueRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO timestamp_typmod_check_items VALUES
-						(1, '2021-09-15 21:43:56.789');`,
-					ExpectedErr: `timestamp_typmod_check_items_ts_check`,
+						(1, '2021-09-15 21:43:56.789');`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodtablecheckusesroundedvaluerepro-0001-insert-into-timestamp_typmod_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM timestamp_typmod_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM timestamp_typmod_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodtablecheckusesroundedvaluerepro-0002-select-count-*-from-timestamp_typmod_check_items"},
 				},
 			},
 		},
@@ -1001,12 +941,10 @@ func TestTimestamptzTypmodTableCheckUsesRoundedValueRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO timestamptz_typmod_check_items VALUES
-						(1, '2021-09-15 21:43:56.789+00');`,
-					ExpectedErr: `timestamptz_typmod_check_items_tz_check`,
+						(1, '2021-09-15 21:43:56.789+00');`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodtablecheckusesroundedvaluerepro-0001-insert-into-timestamptz_typmod_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM timestamptz_typmod_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM timestamptz_typmod_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodtablecheckusesroundedvaluerepro-0002-select-count-*-from-timestamptz_typmod_check_items"},
 				},
 			},
 		},
@@ -1033,8 +971,7 @@ func TestTimestampTypmodGeneratedColumnRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text
 						FROM timestamp_typmod_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodgeneratedcolumnroundsstoredvaluerepro-0001-select-ts::text-from-timestamp_typmod_generated_items-order"},
 				},
 			},
 		},
@@ -1062,8 +999,7 @@ func TestTimestamptzTypmodGeneratedColumnRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM timestamptz_typmod_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodgeneratedcolumnroundsstoredvaluerepro-0001-select-tz::text-from-timestamptz_typmod_generated_items-order"},
 				},
 			},
 		},
@@ -1088,14 +1024,12 @@ func TestTimestampTypmodUniqueUsesRoundedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO timestamp_typmod_unique_items VALUES
-						(2, '2021-09-15 21:43:56.700');`,
-					ExpectedErr: `duplicate`,
+						(2, '2021-09-15 21:43:56.700');`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmoduniqueusesroundedvaluesrepro-0001-insert-into-timestamp_typmod_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, ts::text
 						FROM timestamp_typmod_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmoduniqueusesroundedvaluesrepro-0002-select-id-ts::text-from-timestamp_typmod_unique_items"},
 				},
 			},
 		},
@@ -1121,14 +1055,12 @@ func TestTimestamptzTypmodUniqueUsesRoundedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO timestamptz_typmod_unique_items VALUES
-						(2, '2021-09-15 21:43:56.700+00'::timestamptz);`,
-					ExpectedErr: `duplicate`,
+						(2, '2021-09-15 21:43:56.700+00'::timestamptz);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmoduniqueusesroundedvaluesrepro-0001-insert-into-timestamptz_typmod_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, tz::text
 						FROM timestamptz_typmod_unique_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmoduniqueusesroundedvaluesrepro-0002-select-id-tz::text-from-timestamptz_typmod_unique_items"},
 				},
 			},
 		},
@@ -1159,8 +1091,7 @@ func TestTimestampTypmodForeignKeyUsesRoundedValuesRepro(t *testing.T) {
 						(1, '2021-09-15 21:43:56.700'::timestamp);`,
 				},
 				{
-					Query:    `SELECT ts::text FROM timestamp_typmod_fk_child;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57"}},
+					Query: `SELECT ts::text FROM timestamp_typmod_fk_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptypmodforeignkeyusesroundedvaluesrepro-0001-select-ts::text-from-timestamp_typmod_fk_child"},
 				},
 			},
 		},
@@ -1192,8 +1123,7 @@ func TestTimestamptzTypmodForeignKeyUsesRoundedValuesRepro(t *testing.T) {
 						(1, '2021-09-15 21:43:56.700+00'::timestamptz);`,
 				},
 				{
-					Query:    `SELECT tz::text FROM timestamptz_typmod_fk_child;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+					Query: `SELECT tz::text FROM timestamptz_typmod_fk_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamptztypmodforeignkeyusesroundedvaluesrepro-0001-select-tz::text-from-timestamptz_typmod_fk_child"},
 				},
 			},
 		},
@@ -1229,11 +1159,7 @@ func TestTimestampArrayTypmodsRoundStoredElementsRepro(t *testing.T) {
 				{
 					Query: `SELECT ts_values::text, tz_values::text
 						FROM timestamp_array_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						`{"2021-09-15 21:43:57","2021-09-15 21:43:57"}`,
-						`{"2021-09-15 21:43:56.79+00","2021-09-15 21:43:57.12+00"}`,
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimestamparraytypmodsroundstoredelementsrepro-0001-select-ts_values::text-tz_values::text-from-timestamp_array_typmod_items"},
 				},
 			},
 		},
@@ -1268,11 +1194,7 @@ func TestTimeArrayTypmodsRoundStoredElementsRepro(t *testing.T) {
 				{
 					Query: `SELECT t_values::text, tz_values::text
 						FROM time_array_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						`{21:43:57,21:43:57}`,
-						`{21:43:57+00,21:43:57+00}`,
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimearraytypmodsroundstoredelementsrepro-0001-select-t_values::text-tz_values::text-from-time_array_typmod_items"},
 				},
 			},
 		},
@@ -1299,8 +1221,7 @@ func TestTimeColumnTypmodsRoundStoredFractionalSecondsRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_column_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimecolumntypmodsroundstoredfractionalsecondsrepro-0001-select-t::text-tz::text-from-time_column_typmod_items"},
 				},
 			},
 		},
@@ -1326,8 +1247,7 @@ func TestTimeTypmodDefaultRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmoddefaultroundsstoredvaluerepro-0001-select-t::text-tz::text-from-time_typmod_default_items"},
 				},
 			},
 		},
@@ -1355,8 +1275,7 @@ func TestTimeTypmodCopyFromRoundsStoredValueGuard(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_copy_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodcopyfromroundsstoredvalueguard-0001-select-t::text-tz::text-from-time_typmod_copy_items"},
 				},
 			},
 		},
@@ -1389,8 +1308,7 @@ func TestTimeTypmodUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodupdateroundsstoredvaluerepro-0001-select-t::text-tz::text-from-time_typmod_update_items"},
 				},
 			},
 		},
@@ -1422,8 +1340,7 @@ func TestTimeTypmodOnConflictUpdateRoundsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodonconflictupdateroundsstoredvaluerepro-0001-select-t::text-tz::text-from-time_typmod_upsert_items"},
 				},
 			},
 		},
@@ -1459,8 +1376,7 @@ func TestTimeTypmodInsertSelectRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_insert_select_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodinsertselectroundsstoredvaluesrepro-0001-select-t::text-tz::text-from-time_typmod_insert_select_items"},
 				},
 			},
 		},
@@ -1501,8 +1417,7 @@ func TestTimeTypmodUpdateFromRoundsStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT t::text, tz::text
 						FROM time_typmod_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodupdatefromroundsstoredvaluesrepro-0001-select-t::text-tz::text-from-time_typmod_update_from_items"},
 				},
 			},
 		},
@@ -1525,12 +1440,10 @@ func TestTimeTypmodTableCheckUsesRoundedValueRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO time_typmod_check_items VALUES
-						(1, '21:43:56.789+00'::timetz);`,
-					ExpectedErr: `time_typmod_check_items_tz_check`,
+						(1, '21:43:56.789+00'::timetz);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodtablecheckusesroundedvaluerepro-0001-insert-into-time_typmod_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM time_typmod_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM time_typmod_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodtablecheckusesroundedvaluerepro-0002-select-count-*-from-time_typmod_check_items"},
 				},
 			},
 		},
@@ -1557,8 +1470,7 @@ func TestTimeTypmodGeneratedColumnUsesRoundedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM time_typmod_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodgeneratedcolumnusesroundedvaluerepro-0001-select-tz::text-from-time_typmod_generated_items-order"},
 				},
 			},
 		},
@@ -1583,12 +1495,10 @@ func TestTimeTypmodUniqueUsesRoundedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO time_typmod_unique_items VALUES
-						(2, '21:43:56.700+00'::timetz);`,
-					ExpectedErr: `time_typmod_unique_items_tz_key`,
+						(2, '21:43:56.700+00'::timetz);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmoduniqueusesroundedvaluesrepro-0001-insert-into-time_typmod_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM time_typmod_unique_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT count(*) FROM time_typmod_unique_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmoduniqueusesroundedvaluesrepro-0002-select-count-*-from-time_typmod_unique_items"},
 				},
 			},
 		},
@@ -1618,8 +1528,7 @@ func TestTimeTypmodForeignKeyUsesRoundedValuesRepro(t *testing.T) {
 						('21:43:56.700+00'::timetz);`,
 				},
 				{
-					Query:    `SELECT count(*) FROM time_typmod_fk_child;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT count(*) FROM time_typmod_fk_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodforeignkeyusesroundedvaluesrepro-0001-select-count-*-from-time_typmod_fk_child"},
 				},
 			},
 		},
@@ -1637,8 +1546,7 @@ func TestTimeTypmodCastsUseRoundedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT
 						CAST('21:43:56.789'::time AS TIME(0))::text,
-						CAST('21:43:56.789+00'::timetz AS TIMETZ(0))::text;`,
-					Expected: []sql.Row{{"21:43:57", "21:43:57+00"}},
+						CAST('21:43:56.789+00'::timetz AS TIMETZ(0))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetypmodcastsuseroundedvaluerepro-0001-select-cast-21:43:56.789-::time-as"},
 				},
 			},
 		},
@@ -1654,12 +1562,10 @@ func TestIntervalTypmodsRoundFractionalSecondsGuard(t *testing.T) {
 			Name: "interval typmods round fractional seconds",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT interval(0) '1.789 seconds'::text;`,
-					Expected: []sql.Row{{"00:00:02"}},
+					Query: `SELECT interval(0) '1.789 seconds'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodsroundfractionalsecondsguard-0001-select-interval-0-1.789-seconds"},
 				},
 				{
-					Query:    `SELECT interval(2) '1.789 seconds'::text;`,
-					Expected: []sql.Row{{"00:00:01.79"}},
+					Query: `SELECT interval(2) '1.789 seconds'::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodsroundfractionalsecondsguard-0002-select-interval-2-1.789-seconds"},
 				},
 			},
 		},
@@ -1687,8 +1593,7 @@ func TestIntervalFieldTypmodsRestrictStoredFieldsRepro(t *testing.T) {
 				{
 					Query: `SELECT ym::text, ds::text
 						FROM interval_field_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"1 year 2 mons", "3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalfieldtypmodsrestrictstoredfieldsrepro-0001-select-ym::text-ds::text-from-interval_field_typmod_items"},
 				},
 			},
 		},
@@ -1713,8 +1618,7 @@ func TestIntervalTypmodDefaultRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmoddefaultrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_default_items-order"},
 				},
 			},
 		},
@@ -1747,14 +1651,7 @@ func TestTemporalTypmodExplicitDefaultCoercesStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text, tz::text, tm::text, tzt::text, ds::text
 						FROM temporal_typmod_explicit_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						"2021-09-15 21:43:57",
-						"2021-09-15 21:43:57+00",
-						"21:43:57",
-						"21:43:57+00",
-						"3 days 04:05:07",
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodexplicitdefaultcoercesstoredvaluesrepro-0001-select-ts::text-tz::text-tm::text-tzt::text"},
 				},
 			},
 		},
@@ -1792,14 +1689,7 @@ func TestTemporalTypmodAlterSetDefaultCoercesStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text, tz::text, tm::text, tzt::text, ds::text
 						FROM temporal_typmod_alter_set_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						"2021-09-15 21:43:57",
-						"2021-09-15 21:43:57+00",
-						"21:43:57",
-						"21:43:57+00",
-						"3 days 04:05:07",
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodaltersetdefaultcoercesstoredvaluesrepro-0001-select-ts::text-tz::text-tm::text-tzt::text"},
 				},
 			},
 		},
@@ -1845,14 +1735,7 @@ func TestTemporalTypmodUpdateSetDefaultCoercesStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT ts::text, tz::text, tm::text, tzt::text, ds::text
 						FROM temporal_typmod_update_default_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						"2021-09-15 21:43:57",
-						"2021-09-15 21:43:57+00",
-						"21:43:57",
-						"21:43:57+00",
-						"3 days 04:05:07",
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtemporaltypmodupdatesetdefaultcoercesstoredvaluesrepro-0001-select-ts::text-tz::text-tm::text-tzt::text"},
 				},
 			},
 		},
@@ -1938,8 +1821,7 @@ func TestIntervalTypmodCopyFromRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_copy_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodcopyfromrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_copy_items-order"},
 				},
 			},
 		},
@@ -1970,8 +1852,7 @@ func TestIntervalTypmodUpdateRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_update_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodupdaterestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_update_items-order"},
 				},
 			},
 		},
@@ -2002,8 +1883,7 @@ func TestIntervalTypmodOnConflictUpdateRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_upsert_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodonconflictupdaterestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_upsert_items-order"},
 				},
 			},
 		},
@@ -2037,8 +1917,7 @@ func TestIntervalTypmodInsertSelectRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_insert_select_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodinsertselectrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_insert_select_items-order"},
 				},
 			},
 		},
@@ -2077,8 +1956,7 @@ func TestIntervalTypmodUpdateFromRestrictsStoredValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_update_from_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodupdatefromrestrictsstoredvaluerepro-0001-select-ds::text-from-interval_typmod_update_from_items-order"},
 				},
 			},
 		},
@@ -2101,12 +1979,10 @@ func TestIntervalTypmodTableCheckUsesRestrictedValueRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO interval_typmod_check_items VALUES
-						(1, '3 days 04:05:06.789'::interval);`,
-					ExpectedErr: `interval_typmod_check_items_ds_check`,
+						(1, '3 days 04:05:06.789'::interval);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodtablecheckusesrestrictedvaluerepro-0001-insert-into-interval_typmod_check_items-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM interval_typmod_check_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT count(*) FROM interval_typmod_check_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodtablecheckusesrestrictedvaluerepro-0002-select-count-*-from-interval_typmod_check_items"},
 				},
 			},
 		},
@@ -2133,8 +2009,7 @@ func TestIntervalTypmodGeneratedColumnUsesRestrictedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM interval_typmod_generated_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodgeneratedcolumnusesrestrictedvaluerepro-0001-select-ds::text-from-interval_typmod_generated_items-order"},
 				},
 			},
 		},
@@ -2159,12 +2034,10 @@ func TestIntervalTypmodUniqueUsesRestrictedValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO interval_typmod_unique_items VALUES
-						(2, '3 days 04:05:06.700'::interval);`,
-					ExpectedErr: `interval_typmod_unique_items_ds_key`,
+						(2, '3 days 04:05:06.700'::interval);`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmoduniqueusesrestrictedvaluesrepro-0001-insert-into-interval_typmod_unique_items-values-2", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM interval_typmod_unique_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT count(*) FROM interval_typmod_unique_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmoduniqueusesrestrictedvaluesrepro-0002-select-count-*-from-interval_typmod_unique_items"},
 				},
 			},
 		},
@@ -2194,8 +2067,7 @@ func TestIntervalTypmodForeignKeyUsesRestrictedValuesRepro(t *testing.T) {
 						('3 days 04:05:06.700'::interval);`,
 				},
 				{
-					Query:    `SELECT count(*) FROM interval_typmod_fk_child;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT count(*) FROM interval_typmod_fk_child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodforeignkeyusesrestrictedvaluesrepro-0001-select-count-*-from-interval_typmod_fk_child"},
 				},
 			},
 		},
@@ -2213,8 +2085,7 @@ func TestIntervalTypmodCastsUseRestrictedValueRepro(t *testing.T) {
 				{
 					Query: `SELECT
 						CAST('1 year 2 months 3 days 04:05:06.789'::interval AS INTERVAL YEAR TO MONTH)::text,
-						CAST('3 days 04:05:06.789'::interval AS INTERVAL DAY TO SECOND(0))::text;`,
-					Expected: []sql.Row{{"1 year 2 mons", "3 days 04:05:07"}},
+						CAST('3 days 04:05:06.789'::interval AS INTERVAL DAY TO SECOND(0))::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervaltypmodcastsuserestrictedvaluerepro-0001-select-cast-1-year-2"},
 				},
 			},
 		},
@@ -2249,11 +2120,7 @@ func TestIntervalArrayTypmodsRestrictStoredElementsRepro(t *testing.T) {
 				{
 					Query: `SELECT ym_values::text, ds_values::text
 						FROM interval_array_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{
-						`{"1 year 2 mons","2 years 3 mons"}`,
-						`{"3 days 04:05:07","4 days 05:06:07"}`,
-					}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalarraytypmodsrestrictstoredelementsrepro-0001-select-ym_values::text-ds_values::text-from-interval_array_typmod_items"},
 				},
 			},
 		},
@@ -2272,16 +2139,13 @@ func TestExtractTimestamptzTimezoneUsesSessionTimeZoneRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extract(timezone FROM timestamptz '2025-01-01 00:00:00+00')::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT extract(timezone FROM timestamptz '2025-01-01 00:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextracttimestamptztimezoneusessessiontimezonerepro-0001-select-extract-timezone-from-timestamptz"},
 				},
 				{
-					Query:    `SELECT extract(timezone_hour FROM timestamptz '2025-01-01 00:00:00+00')::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT extract(timezone_hour FROM timestamptz '2025-01-01 00:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextracttimestamptztimezoneusessessiontimezonerepro-0002-select-extract-timezone_hour-from-timestamptz"},
 				},
 				{
-					Query:    `SELECT extract(timezone_minute FROM timestamptz '2025-01-01 00:00:00+00')::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT extract(timezone_minute FROM timestamptz '2025-01-01 00:00:00+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextracttimestamptztimezoneusessessiontimezonerepro-0003-select-extract-timezone_minute-from-timestamptz"},
 				},
 			},
 		},
@@ -2300,16 +2164,13 @@ func TestDatePartTimestamptzTimezoneUsesSessionTimeZoneRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT date_part('timezone', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT date_part('timezone', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateparttimestamptztimezoneusessessiontimezonerepro-0001-select-date_part-timezone-timestamptz-2025-01-01"},
 				},
 				{
-					Query:    `SELECT date_part('timezone_hour', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT date_part('timezone_hour', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateparttimestamptztimezoneusessessiontimezonerepro-0002-select-date_part-timezone_hour-timestamptz-2025-01-01"},
 				},
 				{
-					Query:    `SELECT date_part('timezone_minute', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT date_part('timezone_minute', timestamptz '2025-01-01 00:00:00+00')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdateparttimestamptztimezoneusessessiontimezonerepro-0003-select-date_part-timezone_minute-timestamptz-2025-01-01"},
 				},
 			},
 		},
@@ -2325,8 +2186,7 @@ func TestExtractIntervalQuarterUsesPostgresMonthBucketRepro(t *testing.T) {
 			Name: "extract interval quarter uses PostgreSQL month bucket",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extract(quarter FROM interval '3 months')::text;`,
-					Expected: []sql.Row{{"2"}},
+					Query: `SELECT extract(quarter FROM interval '3 months')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractintervalquarterusespostgresmonthbucketrepro-0001-select-extract-quarter-from-interval"},
 				},
 			},
 		},
@@ -2342,8 +2202,7 @@ func TestDatePartIntervalQuarterUsesPostgresMonthBucketRepro(t *testing.T) {
 			Name: "date_part interval quarter uses PostgreSQL month bucket",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT date_part('quarter', interval '3 months')::bigint::text;`,
-					Expected: []sql.Row{{"2"}},
+					Query: `SELECT date_part('quarter', interval '3 months')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartintervalquarterusespostgresmonthbucketrepro-0001-select-date_part-quarter-interval-3"},
 				},
 			},
 		},
@@ -2360,24 +2219,19 @@ func TestExtractNegativeIntervalFieldsUsePostgresNormalizationRepro(t *testing.T
 			Name: "extract negative interval fields use PostgreSQL normalization",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT extract(hour FROM interval '-65 minutes 10 seconds')::text;`,
-					Expected: []sql.Row{{"-1"}},
+					Query: `SELECT extract(hour FROM interval '-65 minutes 10 seconds')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractnegativeintervalfieldsusepostgresnormalizationrepro-0001-select-extract-hour-from-interval"},
 				},
 				{
-					Query:    `SELECT extract(minute FROM interval '-65 minutes 10 seconds')::text;`,
-					Expected: []sql.Row{{"-4"}},
+					Query: `SELECT extract(minute FROM interval '-65 minutes 10 seconds')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractnegativeintervalfieldsusepostgresnormalizationrepro-0002-select-extract-minute-from-interval"},
 				},
 				{
-					Query:    `SELECT extract(second FROM interval '-65 minutes 10 seconds')::text;`,
-					Expected: []sql.Row{{"-50.000000"}},
+					Query: `SELECT extract(second FROM interval '-65 minutes 10 seconds')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractnegativeintervalfieldsusepostgresnormalizationrepro-0003-select-extract-second-from-interval"},
 				},
 				{
-					Query:    `SELECT extract(year FROM interval '-13 months')::text;`,
-					Expected: []sql.Row{{"-1"}},
+					Query: `SELECT extract(year FROM interval '-13 months')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractnegativeintervalfieldsusepostgresnormalizationrepro-0004-select-extract-year-from-interval"},
 				},
 				{
-					Query:    `SELECT extract(decade FROM interval '-13 months')::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT extract(decade FROM interval '-13 months')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testextractnegativeintervalfieldsusepostgresnormalizationrepro-0005-select-extract-decade-from-interval"},
 				},
 			},
 		},
@@ -2394,24 +2248,19 @@ func TestDatePartNegativeIntervalFieldsUsePostgresNormalizationRepro(t *testing.
 			Name: "date_part negative interval fields use PostgreSQL normalization",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT date_part('hour', interval '-65 minutes 10 seconds')::bigint::text;`,
-					Expected: []sql.Row{{"-1"}},
+					Query: `SELECT date_part('hour', interval '-65 minutes 10 seconds')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartnegativeintervalfieldsusepostgresnormalizationrepro-0001-select-date_part-hour-interval-65"},
 				},
 				{
-					Query:    `SELECT date_part('minute', interval '-65 minutes 10 seconds')::bigint::text;`,
-					Expected: []sql.Row{{"-4"}},
+					Query: `SELECT date_part('minute', interval '-65 minutes 10 seconds')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartnegativeintervalfieldsusepostgresnormalizationrepro-0002-select-date_part-minute-interval-65"},
 				},
 				{
-					Query:    `SELECT date_part('second', interval '-65 minutes 10 seconds')::bigint::text;`,
-					Expected: []sql.Row{{"-50"}},
+					Query: `SELECT date_part('second', interval '-65 minutes 10 seconds')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartnegativeintervalfieldsusepostgresnormalizationrepro-0003-select-date_part-second-interval-65"},
 				},
 				{
-					Query:    `SELECT date_part('year', interval '-13 months')::bigint::text;`,
-					Expected: []sql.Row{{"-1"}},
+					Query: `SELECT date_part('year', interval '-13 months')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartnegativeintervalfieldsusepostgresnormalizationrepro-0004-select-date_part-year-interval-13"},
 				},
 				{
-					Query:    `SELECT date_part('decade', interval '-13 months')::bigint::text;`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT date_part('decade', interval '-13 months')::bigint::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testdatepartnegativeintervalfieldsusepostgresnormalizationrepro-0005-select-date_part-decade-interval-13"},
 				},
 			},
 		},
@@ -2430,8 +2279,7 @@ func TestTimetzMinusIntervalSubtractsIntervalRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (time with time zone '04:05:06+00' - interval '2 minutes')::text;`,
-					Expected: []sql.Row{{"04:03:06+00"}},
+					Query: `SELECT (time with time zone '04:05:06+00' - interval '2 minutes')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testtimetzminusintervalsubtractsintervalrepro-0001-select-time-with-time-zone"},
 				},
 			},
 		},
@@ -2451,8 +2299,7 @@ func TestIntervalMinusTimetzIsRejectedRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT (interval '2 minutes' - time with time zone '04:05:06+00')::text;`,
-					ExpectedErr: `operator does not exist: interval - time with time zone`,
+					Query: `SELECT (interval '2 minutes' - time with time zone '04:05:06+00')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "datetime-correctness-repro-test-testintervalminustimetzisrejectedrepro-0001-select-interval-2-minutes-time", Compare: "sqlstate"},
 				},
 			},
 		},

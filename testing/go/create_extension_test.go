@@ -18,8 +18,6 @@ import (
 	"os"
 	"runtime"
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestCreateExtension(t *testing.T) {
@@ -34,47 +32,37 @@ func TestCreateExtension(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT uuid_ns_url();",
-					Expected: []sql.Row{{"6ba7b811-9dad-11d1-80b4-00c04fd430c8"}},
+					Query: "SELECT uuid_ns_url();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0001-select-uuid_ns_url"},
 				},
 				{
-					Skip:     true, // This is returning different results on different platforms for some reason
-					Query:    "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000000'::uuid, 'example text');",
-					Expected: []sql.Row{{"a55b875a-1bd9-31af-ac66-7d8323785c6e"}},
+					Skip:  true, // This is returning different results on different platforms for some reason
+					Query: "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000000'::uuid, 'example text');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0002-select-uuid_generate_v3-00000000-0000-0000-0000-000000000000-::uuid-example"},
 				},
 				{
-					Skip:     true, // For some reason, this returns the same result as above
-					Query:    "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000001'::uuid, 'example text');",
-					Expected: []sql.Row{{"a319ab51-8e26-37c6-942f-7dd5fda5c3ef"}},
+					Skip:  true, // For some reason, this returns the same result as above
+					Query: "SELECT uuid_generate_v3('00000000-0000-0000-0000-000000000001'::uuid, 'example text');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0003-select-uuid_generate_v3-00000000-0000-0000-0000-000000000001-::uuid-example"},
 				},
 				{
-					Skip:     true, // Need to figure out why the result is wrong
-					Query:    "SELECT uuid_generate_v3(uuid_ns_url(), 'example text');",
-					Expected: []sql.Row{{"6541262f-d622-3e35-8873-2b227591bf69"}},
+					Skip:  true, // Need to figure out why the result is wrong
+					Query: "SELECT uuid_generate_v3(uuid_ns_url(), 'example text');", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0004-select-uuid_generate_v3-uuid_ns_url-example-text"},
 				},
 				{
-					Query:    "SELECT uuid_nil();",
-					Expected: []sql.Row{{"00000000-0000-0000-0000-000000000000"}},
+					Query: "SELECT uuid_nil();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0005-select-uuid_nil"},
 				},
 				{
-					Query:    "SELECT length(uuid_nil()::text);",
-					Expected: []sql.Row{{36}},
+					Query: "SELECT length(uuid_nil()::text);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0006-select-length-uuid_nil-::text"},
 				},
 				{
-					Query:    "SELECT length(uuid_generate_v4()::text);",
-					Expected: []sql.Row{{36}},
+					Query: "SELECT length(uuid_generate_v4()::text);", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0007-select-length-uuid_generate_v4-::text"},
 				},
 				{
-					Query:    "SELECT uuid_generate_v4() = uuid_nil();",
-					Expected: []sql.Row{{"f"}},
+					Query: "SELECT uuid_generate_v4() = uuid_nil();", PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0008-select-uuid_generate_v4-=-uuid_nil"},
 				},
 				{
-					Query:    `WITH u1 AS (SELECT uuid_nil() AS id), u2 AS (SELECT uuid_nil() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);`,
-					Expected: []sql.Row{{"t"}},
+					Query: `WITH u1 AS (SELECT uuid_nil() AS id), u2 AS (SELECT uuid_nil() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0009-with-u1-as-select-uuid_nil"},
 				},
 				{
-					Query:    `WITH u1 AS (SELECT uuid_generate_v4() AS id), u2 AS (SELECT uuid_generate_v4() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);`,
-					Expected: []sql.Row{{"f"}},
+					Query: `WITH u1 AS (SELECT uuid_generate_v4() AS id), u2 AS (SELECT uuid_generate_v4() AS id) SELECT (SELECT id FROM u1) = (SELECT id FROM u2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-extension-test-testcreateextension-0010-with-u1-as-select-uuid_generate_v4"},
 				},
 			},
 		},

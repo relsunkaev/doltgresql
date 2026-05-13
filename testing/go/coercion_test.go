@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestCoercion(t *testing.T) {
@@ -26,56 +24,43 @@ func TestCoercion(t *testing.T) {
 			Name: "Raw Literals",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 0`,
-					Expected: []sql.Row{{int32(0)}},
+					Query: `SELECT 0`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0001-select-0"},
 				},
 				{
-					Query:    `SELECT 0.5`,
-					Expected: []sql.Row{{Numeric("0.5")}},
+					Query: `SELECT 0.5`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0002-select-0.5"},
 				},
 				{
-					Query:    `SELECT 0.50`,
-					Expected: []sql.Row{{Numeric("0.50")}},
+					Query: `SELECT 0.50`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0003-select-0.50"},
 				},
 				{
-					Query:    `SELECT -0.5`,
-					Expected: []sql.Row{{Numeric("-0.5")}},
+					Query: `SELECT -0.5`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0004-select-0.5"},
 				},
 				{
-					Query:    `SELECT 12345671297673227365.5123624235623456`,
-					Expected: []sql.Row{{Numeric("12345671297673227365.5123624235623456")}},
+					Query: `SELECT 12345671297673227365.5123624235623456`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0005-select-12345671297673227365.5123624235623456"},
 				},
 				{
-					Query:    `SELECT 1`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT 1`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0006-select-1"},
 				},
 				{
-					Query:    `SELECT -1`,
-					Expected: []sql.Row{{int32(-1)}},
+					Query: `SELECT -1`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0007-select-1"},
 				},
 				{
-					Query:    `SELECT 70000`,
-					Expected: []sql.Row{{int32(70000)}},
+					Query: `SELECT 70000`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0008-select-70000"},
 				},
 				{
-					Query:    `SELECT 5000000000`,
-					Expected: []sql.Row{{int64(5000000000)}},
+					Query: `SELECT 5000000000`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0009-select-5000000000"},
 				},
 				{
-					Query:    `SELECT 9223372036854775808`,
-					Expected: []sql.Row{{Numeric("9223372036854775808")}},
+					Query: `SELECT 9223372036854775808`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0010-select-9223372036854775808"},
 				},
 				{
-					Query:    `SELECT ''`,
-					Expected: []sql.Row{{""}},
+					Query: `SELECT ''`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0011-select"},
 				},
 				{
-					Query:    `SELECT 'test'`,
-					Expected: []sql.Row{{"test"}},
+					Query: `SELECT 'test'`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0012-select-test"},
 				},
 				{
-					Query:    `SELECT '0'`,
-					Expected: []sql.Row{{"0"}},
+					Query: `SELECT '0'`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0013-select-0"},
 				},
 			},
 		},
@@ -83,40 +68,31 @@ func TestCoercion(t *testing.T) {
 			Name: "Math Functions",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT abs(1)`,
-					Expected: []sql.Row{{int32(1)}},
+					Query: `SELECT abs(1)`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0014-select-abs-1"},
 				},
 				{
-					Query:    `SELECT abs(1.5)`,
-					Expected: []sql.Row{{Numeric("1.5")}},
+					Query: `SELECT abs(1.5)`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0015-select-abs-1.5"},
 				},
 				{
-					Query:    `SELECT abs(5000000000)`,
-					Expected: []sql.Row{{int64(5000000000)}},
+					Query: `SELECT abs(5000000000)`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0016-select-abs-5000000000"},
 				},
 				{
-					Query:    `SELECT abs(9223372036854775808)`,
-					Expected: []sql.Row{{Numeric("9223372036854775808")}},
+					Query: `SELECT abs(9223372036854775808)`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0017-select-abs-9223372036854775808"},
 				},
 				{
-					Query:    `SELECT abs('1')`,
-					Expected: []sql.Row{{float64(1)}},
+					Query: `SELECT abs('1')`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0018-select-abs-1"},
 				},
 				{
-					Query:    `SELECT abs('1.5')`,
-					Expected: []sql.Row{{float64(1.5)}},
+					Query: `SELECT abs('1.5')`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0019-select-abs-1.5"},
 				},
 				{
-					Query:    `SELECT abs('12345671297673227365.5123624235623456')`,
-					Expected: []sql.Row{{float64(1.2345671297673228e+19)}},
+					Query: `SELECT abs('12345671297673227365.5123624235623456')`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0020-select-abs-12345671297673227365.5123624235623456"},
 				},
 				{
-					Query:    `SELECT factorial('1')`,
-					Expected: []sql.Row{{Numeric("1")}},
+					Query: `SELECT factorial('1')`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0021-select-factorial-1"},
 				},
 				{
-					Query:       `SELECT factorial('1.5')`,
-					ExpectedErr: "invalid input",
+					Query: `SELECT factorial('1.5')`, PostgresOracle: ScriptTestPostgresOracle{ID: "coercion-test-testcoercion-0022-select-factorial-1.5", Compare: "sqlstate"},
 				},
 			},
 		},

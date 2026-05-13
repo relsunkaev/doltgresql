@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterTableIfExistsMissingTableNoopsGuard guards that ALTER TABLE IF
@@ -28,8 +26,7 @@ func TestAlterTableIfExistsMissingTableNoopsGuard(t *testing.T) {
 			Name: "ALTER TABLE IF EXISTS no-ops on missing table",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE IF EXISTS alter_if_exists_missing_table ADD PRIMARY KEY (id);`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE IF EXISTS alter_if_exists_missing_table ADD PRIMARY KEY (id);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableifexistsmissingtablenoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_table"},
 				},
 			},
 		},
@@ -45,8 +42,7 @@ func TestAlterTableIfExistsMissingTableDropColumnNoopsGuard(t *testing.T) {
 			Name: "ALTER TABLE IF EXISTS DROP COLUMN no-ops on missing table",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE IF EXISTS alter_if_exists_missing_drop_column DROP COLUMN id;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE IF EXISTS alter_if_exists_missing_drop_column DROP COLUMN id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableifexistsmissingtabledropcolumnnoopsguard-0001-alter-table-if-exists-alter_if_exists_missing_drop_column"},
 				},
 			},
 		},
@@ -68,12 +64,10 @@ func TestAlterTableDropColumnIfExistsMissingColumnNoops(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE drop_missing_column_if_exists_items DROP COLUMN IF EXISTS missing_label;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE drop_missing_column_if_exists_items DROP COLUMN IF EXISTS missing_label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0001-alter-table-drop_missing_column_if_exists_items-drop-column"},
 				},
 				{
-					Query:    `SELECT id, label FROM drop_missing_column_if_exists_items;`,
-					Expected: []sql.Row{{1, "kept"}},
+					Query: `SELECT id, label FROM drop_missing_column_if_exists_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmissingcolumnnoops-0002-select-id-label-from-drop_missing_column_if_exists_items"},
 				},
 			},
 		},
@@ -97,16 +91,13 @@ func TestAlterTableDropColumnIfExistsExistingColumnDrops(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE drop_existing_column_if_exists_items DROP COLUMN IF EXISTS note;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE drop_existing_column_if_exists_items DROP COLUMN IF EXISTS note;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0001-alter-table-drop_existing_column_if_exists_items-drop-column"},
 				},
 				{
-					Query:    `SELECT id, label FROM drop_existing_column_if_exists_items;`,
-					Expected: []sql.Row{{1, "kept"}},
+					Query: `SELECT id, label FROM drop_existing_column_if_exists_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0002-select-id-label-from-drop_existing_column_if_exists_items"},
 				},
 				{
-					Query:       `SELECT note FROM drop_existing_column_if_exists_items;`,
-					ExpectedErr: `column "note" could not be found`,
+					Query: `SELECT note FROM drop_existing_column_if_exists_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsexistingcolumndrops-0003-select-note-from-drop_existing_column_if_exists_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -127,14 +118,7 @@ func TestAlterTableDropColumnIfExistsEmitsNotice(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE drop_if_exists_notice_items DROP COLUMN IF EXISTS missing_label;`,
-					Expected: []sql.Row{},
-					ExpectedNotices: []ExpectedNotice{
-						{
-							Severity: "NOTICE",
-							Message:  `column "missing_label" of relation "drop_if_exists_notice_items" does not exist, skipping`,
-						},
-					},
+					Query: `ALTER TABLE drop_if_exists_notice_items DROP COLUMN IF EXISTS missing_label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsemitsnotice-0001-alter-table-drop_if_exists_notice_items-drop-column"},
 				},
 			},
 		},
@@ -162,16 +146,13 @@ func TestAlterTableDropColumnIfExistsMultiClause(t *testing.T) {
 					Query: `ALTER TABLE drop_if_exists_multi_clause_items
 								DROP COLUMN IF EXISTS missing_col,
 								DROP COLUMN drop_me,
-								ADD COLUMN added_col INT;`,
-					Expected: []sql.Row{},
+								ADD COLUMN added_col INT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0001-alter-table-drop_if_exists_multi_clause_items-drop-column"},
 				},
 				{
-					Query:    `SELECT id, keep_me, added_col FROM drop_if_exists_multi_clause_items;`,
-					Expected: []sql.Row{{1, "kept", nil}},
+					Query: `SELECT id, keep_me, added_col FROM drop_if_exists_multi_clause_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0002-select-id-keep_me-added_col-from"},
 				},
 				{
-					Query:       `SELECT drop_me FROM drop_if_exists_multi_clause_items;`,
-					ExpectedErr: `column "drop_me" could not be found`,
+					Query: `SELECT drop_me FROM drop_if_exists_multi_clause_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistsmulticlause-0003-select-drop_me-from-drop_if_exists_multi_clause_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -189,8 +170,7 @@ func TestAlterTableDropColumnWithoutIfExistsStillErrors(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TABLE drop_missing_strict_items DROP COLUMN missing_col;`,
-					ExpectedErr: "missing_col",
+					Query: `ALTER TABLE drop_missing_strict_items DROP COLUMN missing_col;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnwithoutifexistsstillerrors-0001-alter-table-drop_missing_strict_items-drop-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -214,16 +194,13 @@ func TestAlterTableDropColumnIfExistsCaseInsensitiveMatch(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE drop_if_exists_case_items DROP COLUMN IF EXISTS MixedCaseCol;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE drop_if_exists_case_items DROP COLUMN IF EXISTS MixedCaseCol;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0001-alter-table-drop_if_exists_case_items-drop-column"},
 				},
 				{
-					Query:    `SELECT id FROM drop_if_exists_case_items;`,
-					Expected: []sql.Row{{1}},
+					Query: `SELECT id FROM drop_if_exists_case_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0002-select-id-from-drop_if_exists_case_items"},
 				},
 				{
-					Query:       `SELECT mixedcasecol FROM drop_if_exists_case_items;`,
-					ExpectedErr: `mixedcasecol`,
+					Query: `SELECT mixedcasecol FROM drop_if_exists_case_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertabledropcolumnifexistscaseinsensitivematch-0003-select-mixedcasecol-from-drop_if_exists_case_items", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -255,11 +232,7 @@ func TestAlterColumnTypeUsingConvertsExistingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT id, amount_text, pg_typeof(amount_text)::text
 						FROM alter_type_using_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, 10, "integer"},
-						{2, 25, "integer"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeusingconvertsexistingrowsrepro-0001-select-id-amount_text-pg_typeof-amount_text"},
 				},
 			},
 		},
@@ -287,8 +260,7 @@ func TestAlterTableSameTypeRejectsRowTypeDependentsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE row_type_parent
-						ALTER COLUMN a SET DATA TYPE INT;`,
-					ExpectedErr: `cannot alter table "row_type_parent" because column "row_type_child.parent_row" uses its row type`,
+						ALTER COLUMN a SET DATA TYPE INT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesametyperejectsrowtypedependentsrepro-0001-alter-table-row_type_parent-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -313,24 +285,19 @@ func TestAlterTableSetDropNotNullAllowsRowTypeDependentsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `ALTER TABLE row_type_not_null_parent ALTER COLUMN a SET NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE row_type_not_null_parent ALTER COLUMN a SET NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0001-alter-table-row_type_not_null_parent-alter-column"},
 				},
 				{
-					Query:       `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`,
-					ExpectedErr: `non-nullable`,
+					Query: `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0002-insert-into-row_type_not_null_parent-values-null", Compare: "sqlstate"},
 				},
 				{
-					Query:    `INSERT INTO row_type_not_null_child VALUES (1, ROW(NULL, 'child'));`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO row_type_not_null_child VALUES (1, ROW(NULL, 'child'));`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0003-insert-into-row_type_not_null_child-values-1"},
 				},
 				{
-					Query:    `ALTER TABLE row_type_not_null_parent ALTER COLUMN a DROP NOT NULL;`,
-					Expected: []sql.Row{},
+					Query: `ALTER TABLE row_type_not_null_parent ALTER COLUMN a DROP NOT NULL;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0004-alter-table-row_type_not_null_parent-alter-column"},
 				},
 				{
-					Query:    `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`,
-					Expected: []sql.Row{},
+					Query: `INSERT INTO row_type_not_null_parent VALUES (NULL, 'parent');`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdropnotnullallowsrowtypedependentsrepro-0005-insert-into-row_type_not_null_parent-values-null"},
 				},
 			},
 		},
@@ -363,8 +330,7 @@ func TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT amount::text, created_at::text
 						FROM alter_type_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46", "2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0001-select-amount::text-created_at::text-from-alter_type_typmod_items"},
 				},
 			},
 		},
@@ -380,14 +346,12 @@ func TestAlterColumnTypeAppliesTypmodsToExistingRowsRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_type_typmod_overflow_items
-						ALTER COLUMN amount TYPE NUMERIC(5,2);`,
-					ExpectedErr: `numeric field overflow`,
+						ALTER COLUMN amount TYPE NUMERIC(5,2);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0002-alter-table-alter_type_typmod_overflow_items-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT amount::text
 						FROM alter_type_typmod_overflow_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"999.995"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestypmodstoexistingrowsrepro-0003-select-amount::text-from-alter_type_typmod_overflow_items-order"},
 				},
 			},
 		},
@@ -411,13 +375,11 @@ func TestAlterColumnTypeVarcharRejectsTypmodOverflowRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_type_varchar_overflow_items
-						ALTER COLUMN label TYPE VARCHAR(3);`,
-					ExpectedErr: `too long`,
+						ALTER COLUMN label TYPE VARCHAR(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0001-alter-table-alter_type_varchar_overflow_items-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label, pg_typeof(label)::text
-						FROM alter_type_varchar_overflow_items;`,
-					Expected: []sql.Row{{1, "abcd", "text"}},
+						FROM alter_type_varchar_overflow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypevarcharrejectstypmodoverflowrepro-0002-select-id-label-pg_typeof-label"},
 				},
 			},
 		},
@@ -445,8 +407,7 @@ func TestAlterColumnTypeVarcharTruncatesTrailingSpacesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label, length(label), pg_typeof(label)::text
-						FROM alter_type_varchar_trailing_items;`,
-					Expected: []sql.Row{{1, "abc", 3, "character varying"}},
+						FROM alter_type_varchar_trailing_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypevarchartruncatestrailingspacesrepro-0001-select-id-label-length-label"},
 				},
 			},
 		},
@@ -470,13 +431,11 @@ func TestAlterColumnTypeCharacterAppliesTypmodRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_type_character_overflow_items
-						ALTER COLUMN label TYPE CHARACTER(3);`,
-					ExpectedErr: `too long`,
+						ALTER COLUMN label TYPE CHARACTER(3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0001-alter-table-alter_type_character_overflow_items-alter-column", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, label, pg_typeof(label)::text, octet_length(label)
-						FROM alter_type_character_overflow_items;`,
-					Expected: []sql.Row{{1, "abcd", "text", 4}},
+						FROM alter_type_character_overflow_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0002-select-id-label-pg_typeof-label"},
 				},
 			},
 		},
@@ -496,8 +455,7 @@ func TestAlterColumnTypeCharacterAppliesTypmodRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label)
-						FROM alter_type_character_padding_items;`,
-					Expected: []sql.Row{{1, true, "character", 3}},
+						FROM alter_type_character_padding_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypecharacterappliestypmodrepro-0003-select-id-label-=-ab"},
 				},
 			},
 		},
@@ -525,8 +483,7 @@ func TestAlterColumnTypeCharacterTruncatesTrailingSpacesRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text
-						FROM alter_type_character_trailing_items;`,
-					Expected: []sql.Row{{1, true, 3, "character"}},
+						FROM alter_type_character_trailing_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypecharactertruncatestrailingspacesrepro-0001-select-id-label-=-abc"},
 				},
 			},
 		},
@@ -556,8 +513,7 @@ func TestAlterColumnTypeAppliesTimetzTypmodToExistingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT tz::text
 						FROM alter_type_timetz_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestimetztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timetz_typmod_items-order"},
 				},
 			},
 		},
@@ -587,8 +543,7 @@ func TestAlterColumnTypeAppliesTimeTypmodToExistingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT tm::text
 						FROM alter_type_time_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestimetypmodtoexistingrowsrepro-0001-select-tm::text-from-alter_type_time_typmod_items-order"},
 				},
 			},
 		},
@@ -619,8 +574,7 @@ func TestAlterColumnTypeAppliesTimestamptzTypmodToExistingRowsRepro(t *testing.T
 				{
 					Query: `SELECT tz::text
 						FROM alter_type_timestamptz_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliestimestamptztypmodtoexistingrowsrepro-0001-select-tz::text-from-alter_type_timestamptz_typmod_items-order"},
 				},
 			},
 		},
@@ -650,8 +604,7 @@ func TestAlterColumnTypeAppliesIntervalTypmodToExistingRowsRepro(t *testing.T) {
 				{
 					Query: `SELECT ds::text
 						FROM alter_type_interval_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"3 days 04:05:07"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumntypeappliesintervaltypmodtoexistingrowsrepro-0001-select-ds::text-from-alter_type_interval_typmod_items-order"},
 				},
 			},
 		},
@@ -679,8 +632,7 @@ func TestAlterTableAddTimetzTypmodColumnDefaultBackfillsRoundedValueRepro(t *tes
 				{
 					Query: `SELECT tz::text, count(*)
 						FROM alter_add_timetz_typmod_default_items
-						GROUP BY tz::text;`,
-					Expected: []sql.Row{{"21:43:57+00", 2}},
+						GROUP BY tz::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddtimetztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from"},
 				},
 			},
 		},
@@ -708,8 +660,7 @@ func TestAlterTableAddTimeTypmodColumnDefaultBackfillsRoundedValueGuard(t *testi
 				{
 					Query: `SELECT tm::text, count(*)
 						FROM alter_add_time_typmod_default_items
-						GROUP BY tm::text;`,
-					Expected: []sql.Row{{"21:43:57", 2}},
+						GROUP BY tm::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddtimetypmodcolumndefaultbackfillsroundedvalueguard-0001-select-tm::text-count-*-from"},
 				},
 			},
 		},
@@ -737,8 +688,7 @@ func TestAlterTableAddTimestampTypmodColumnDefaultBackfillsRoundedValueRepro(t *
 				{
 					Query: `SELECT ts::text, count(*)
 						FROM alter_add_timestamp_typmod_default_items
-						GROUP BY ts::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57", 2}},
+						GROUP BY ts::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddtimestamptypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-ts::text-count-*-from"},
 				},
 			},
 		},
@@ -767,8 +717,7 @@ func TestAlterTableAddTimestamptzTypmodColumnDefaultBackfillsRoundedValueRepro(t
 				{
 					Query: `SELECT tz::text, count(*)
 						FROM alter_add_timestamptz_typmod_default_items
-						GROUP BY tz::text;`,
-					Expected: []sql.Row{{"2021-09-15 21:43:57+00", 2}},
+						GROUP BY tz::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddtimestamptztypmodcolumndefaultbackfillsroundedvaluerepro-0001-select-tz::text-count-*-from"},
 				},
 			},
 		},
@@ -796,8 +745,7 @@ func TestAlterTableAddIntervalTypmodColumnDefaultBackfillsRestrictedValueRepro(t
 				{
 					Query: `SELECT ds::text, count(*)
 						FROM alter_add_interval_typmod_default_items
-						GROUP BY ds::text;`,
-					Expected: []sql.Row{{"3 days 04:05:07", 2}},
+						GROUP BY ds::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddintervaltypmodcolumndefaultbackfillsrestrictedvaluerepro-0001-select-ds::text-count-*-from"},
 				},
 			},
 		},
@@ -826,8 +774,7 @@ func TestAlterTableAddVarcharTypmodColumnDefaultTruncatesTrailingSpacesRepro(t *
 				{
 					Query: `SELECT label, length(label), count(*)
 						FROM alter_add_varchar_trailing_default_items
-						GROUP BY label;`,
-					Expected: []sql.Row{{"abc", 3, 2}},
+						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddvarchartypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-length-label-count"},
 				},
 			},
 		},
@@ -856,8 +803,7 @@ func TestAlterTableAddCharacterTypmodColumnDefaultTruncatesTrailingSpacesRepro(t
 				{
 					Query: `SELECT label = 'abc'::CHARACTER(3), octet_length(label), count(*)
 						FROM alter_add_character_trailing_default_items
-						GROUP BY label;`,
-					Expected: []sql.Row{{true, 3, 2}},
+						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaulttruncatestrailingspacesrepro-0001-select-label-=-abc-::character"},
 				},
 			},
 		},
@@ -885,8 +831,7 @@ func TestAlterTableAddCharacterTypmodColumnDefaultPadsBackfillRepro(t *testing.T
 				{
 					Query: `SELECT label = 'ab '::CHARACTER(3), pg_typeof(label)::text, octet_length(label), count(*)
 						FROM alter_add_character_typmod_default_items
-						GROUP BY label;`,
-					Expected: []sql.Row{{true, "character", 3, 2}},
+						GROUP BY label;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertableaddcharactertypmodcolumndefaultpadsbackfillrepro-0001-select-label-=-ab-::character"},
 				},
 			},
 		},
@@ -918,8 +863,7 @@ func TestAlterColumnSetDefaultVarcharTruncatesTrailingSpacesRepro(t *testing.T) 
 				},
 				{
 					Query: `SELECT label, length(label), pg_typeof(label)::text
-						FROM alter_set_default_varchar_trailing_items;`,
-					Expected: []sql.Row{{"abc", 3, "character varying"}},
+						FROM alter_set_default_varchar_trailing_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumnsetdefaultvarchartruncatestrailingspacesrepro-0001-select-label-length-label-pg_typeof"},
 				},
 			},
 		},
@@ -951,8 +895,7 @@ func TestAlterColumnSetDefaultCharacterTruncatesTrailingSpacesRepro(t *testing.T
 				},
 				{
 					Query: `SELECT label = 'abc'::CHARACTER(3), octet_length(label), pg_typeof(label)::text
-						FROM alter_set_default_character_trailing_items;`,
-					Expected: []sql.Row{{true, 3, "character"}},
+						FROM alter_set_default_character_trailing_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltercolumnsetdefaultcharactertruncatestrailingspacesrepro-0001-select-label-=-abc-::character"},
 				},
 			},
 		},
@@ -974,8 +917,7 @@ func TestAlterTableReloptionsPersistRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'alter_table_reloptions_items'::regclass;`,
-					Expected: []sql.Row{{"{fillfactor=40,autovacuum_enabled=false}"}},
+						WHERE oid = 'alter_table_reloptions_items'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablereloptionspersistrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -1006,8 +948,7 @@ func TestAlterTableSetDefaultTablespace(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM alter_table_default_tablespace_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM alter_table_default_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetdefaulttablespace-0001-select-id-label-from-alter_table_default_tablespace_items"},
 				},
 			},
 		},
@@ -1030,8 +971,7 @@ func TestAlterTableSetTablespaceUnknownErrors(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_table_unknown_tablespace_items
-						SET TABLESPACE custom_space;`,
-					ExpectedErr: `tablespace "custom_space" does not exist`,
+						SET TABLESPACE custom_space;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesettablespaceunknownerrors-0001-alter-table-alter_table_unknown_tablespace_items-set-tablespace", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -1061,8 +1001,7 @@ func TestAlterTableSetHeapAccessMethod(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM alter_table_access_method_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM alter_table_access_method_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetheapaccessmethod-0001-select-id-label-from-alter_table_access_method_items"},
 				},
 			},
 		},
@@ -1084,8 +1023,7 @@ func TestAlterTableSetAccessMethodUnknownErrors(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_table_unknown_access_method_items
-						SET ACCESS METHOD btree;`,
-					ExpectedErr: `access method "btree" does not exist`,
+						SET ACCESS METHOD btree;`, PostgresOracle: ScriptTestPostgresOracle{ID: "alter-table-correctness-repro-test-testaltertablesetaccessmethodunknownerrors-0001-alter-table-alter_table_unknown_access_method_items-set-access", Compare: "sqlstate"},
 				},
 			},
 		},

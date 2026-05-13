@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestSetOperations(t *testing.T) {
@@ -32,17 +30,10 @@ func TestSetOperations(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from b intersect select * from c order by 1,2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{3, 4},
-					},
+					Query: "select * from b intersect select * from c order by 1,2;", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0001-select-*-from-b-intersect"},
 				},
 				{
-					Query: "(table b order by m limit 1 offset 1) intersect (table c order by m limit 1);",
-					Expected: []sql.Row{
-						{1, 3},
-					},
+					Query: "(table b order by m limit 1 offset 1) intersect (table c order by m limit 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0002-table-b-order-by-m"},
 				},
 			},
 		},
@@ -56,36 +47,16 @@ func TestSetOperations(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from b union select * from c order by 1,2;",
-					Expected: []sql.Row{
-						{1, 2},
-						{1, 3},
-						{3, 4},
-					},
+					Query: "select * from b union select * from c order by 1,2;", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0003-select-*-from-b-union"},
 				},
 				{
-					Query: "select * from b union all select * from c order by 1,2;",
-					Expected: []sql.Row{
-						{1, 2},
-						{1, 3},
-						{1, 3},
-						{1, 3},
-						{3, 4},
-						{3, 4},
-					},
+					Query: "select * from b union all select * from c order by 1,2;", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0004-select-*-from-b-union"},
 				},
 				{
-					Query: "(table b order by m limit 1 offset 1) union (table c order by m limit 1);",
-					Expected: []sql.Row{
-						{1, 3},
-					},
+					Query: "(table b order by m limit 1 offset 1) union (table c order by m limit 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0005-table-b-order-by-m"},
 				},
 				{
-					Query: "(table b order by m limit 1 offset 1) union all (table c order by m limit 1);",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 3},
-					},
+					Query: "(table b order by m limit 1 offset 1) union all (table c order by m limit 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0006-table-b-order-by-m"},
 				},
 			},
 		},
@@ -99,14 +70,10 @@ func TestSetOperations(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from b except select * from c order by 1,2;",
-					Expected: []sql.Row{
-						{1, 2},
-					},
+					Query: "select * from b except select * from c order by 1,2;", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0007-select-*-from-b-except"},
 				},
 				{
-					Query:    "(table b order by m limit 1 offset 1) except (table c order by m limit 1);",
-					Expected: []sql.Row{},
+					Query: "(table b order by m limit 1 offset 1) except (table c order by m limit 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "set-operations-test-testsetoperations-0008-table-b-order-by-m"},
 				},
 			},
 		},

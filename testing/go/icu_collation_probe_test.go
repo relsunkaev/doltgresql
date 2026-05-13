@@ -36,11 +36,8 @@ func TestIcuCollationProbe(t *testing.T) {
 						locale = 'und-u-ks-level2',
 						deterministic = false
 					);`,
-					ExpectedRaw: [][][]byte{},
-					PostgresOracle: ScriptTestPostgresOracle{
-						ID:      "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=",
-						Cleanup: []string{`DROP COLLATION IF EXISTS case_insensitive;`},
-					},
+
+					PostgresOracle: ScriptTestPostgresOracle{ID: "icu-collation-probe-test-testicucollationprobe-0001-create-collation-case_insensitive-provider-=", Cleanup: []string{"DROP COLLATION IF EXISTS case_insensitive;"}},
 				},
 			},
 		},

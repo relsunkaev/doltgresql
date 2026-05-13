@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropExtensionClearsCommentRepro reproduces a metadata persistence bug:
@@ -41,8 +39,7 @@ func TestDropExtensionClearsCommentRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_extension WHERE extname = 'hstore'),
-						'pg_extension');`,
-					Expected: []sql.Row{{nil}},
+						'pg_extension');`, PostgresOracle: ScriptTestPostgresOracle{ID: "extension-comment-drop-repro-test-testdropextensionclearscommentrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},

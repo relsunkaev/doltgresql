@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestProviderSpecificReplicationBoundaries(t *testing.T) {
@@ -26,24 +24,19 @@ func TestProviderSpecificReplicationBoundaries(t *testing.T) {
 			Name: "Aurora and RDS replication assumptions are explicit boundaries",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT current_setting('rds.logical_replication', true);",
-					Expected: []sql.Row{{nil}},
+					Query: "SELECT current_setting('rds.logical_replication', true);", PostgresOracle: ScriptTestPostgresOracle{ID: "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0001-select-current_setting-rds.logical_replication-true"},
 				},
 				{
-					Query:       "SHOW rds.logical_replication;",
-					ExpectedErr: `unrecognized configuration parameter "rds.logical_replication"`,
+					Query: "SHOW rds.logical_replication;", PostgresOracle: ScriptTestPostgresOracle{ID: "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0002-show-rds.logical_replication", Compare: "sqlstate"},
 				},
 				{
-					Query:    "SHOW track_commit_timestamp;",
-					Expected: []sql.Row{{int8(0)}},
+					Query: "SHOW track_commit_timestamp;", PostgresOracle: ScriptTestPostgresOracle{ID: "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0003-show-track_commit_timestamp"},
 				},
 				{
-					Query:       "SET track_commit_timestamp TO 'on';",
-					ExpectedErr: "is a read only variable",
+					Query: "SET track_commit_timestamp TO 'on';", PostgresOracle: ScriptTestPostgresOracle{ID: "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0004-set-track_commit_timestamp-to-on", Compare: "sqlstate"},
 				},
 				{
-					Query:       "CREATE EXTENSION pglogical;",
-					ExpectedErr: `extension "pglogical" is not supported by Doltgres`,
+					Query: "CREATE EXTENSION pglogical;", PostgresOracle: ScriptTestPostgresOracle{ID: "provider-replication-boundary-test-testproviderspecificreplicationboundaries-0005-create-extension-pglogical", Compare: "sqlstate"},
 				},
 			},
 		},

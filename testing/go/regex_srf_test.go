@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRegexSetReturningFunctions pins regexp_matches and
@@ -34,12 +32,10 @@ func TestRegexSetReturningFunctions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT (regexp_matches('foo bar baz', '(\w+)'))[1];`,
-					Expected: []sql.Row{{"foo"}},
+					Query: `SELECT (regexp_matches('foo bar baz', '(\w+)'))[1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0001-select-regexp_matches-foo-bar-baz"},
 				},
 				{
-					Query:    `SELECT (regexp_matches('Order #123 placed', '#(\d+)'))[1];`,
-					Expected: []sql.Row{{"123"}},
+					Query: `SELECT (regexp_matches('Order #123 placed', '#(\d+)'))[1];`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0002-select-regexp_matches-order-#123-placed"},
 				},
 			},
 		},
@@ -51,12 +47,10 @@ func TestRegexSetReturningFunctions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM regexp_matches('foo bar baz', '(\w+)', 'g') t;`,
-					Expected: []sql.Row{{"3"}},
+					Query: `SELECT count(*)::text FROM regexp_matches('foo bar baz', '(\w+)', 'g') t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0003-select-count-*-::text-from"},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM regexp_matches('a1 b2 c3 d4', '(\w)(\d)', 'g') t;`,
-					Expected: []sql.Row{{"4"}},
+					Query: `SELECT count(*)::text FROM regexp_matches('a1 b2 c3 d4', '(\w)(\d)', 'g') t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0004-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -66,8 +60,7 @@ func TestRegexSetReturningFunctions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM regexp_matches('Foo FOO foo', 'foo', 'gi') t;`,
-					Expected: []sql.Row{{"3"}},
+					Query: `SELECT count(*)::text FROM regexp_matches('Foo FOO foo', 'foo', 'gi') t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0005-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -76,16 +69,13 @@ func TestRegexSetReturningFunctions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT regexp_split_to_table('a,b,c', ',');`,
-					Expected: []sql.Row{{"a"}, {"b"}, {"c"}},
+					Query: `SELECT regexp_split_to_table('a,b,c', ',');`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0006-select-regexp_split_to_table-a-b-c"},
 				},
 				{
-					Query:    `SELECT regexp_split_to_table('one two   three', '\s+');`,
-					Expected: []sql.Row{{"one"}, {"two"}, {"three"}},
+					Query: `SELECT regexp_split_to_table('one two   three', '\s+');`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0007-select-regexp_split_to_table-one-two-three"},
 				},
 				{
-					Query:    `SELECT count(*)::text FROM regexp_split_to_table('1, 2, 3, 4, 5', ',\s*') t;`,
-					Expected: []sql.Row{{"5"}},
+					Query: `SELECT count(*)::text FROM regexp_split_to_table('1, 2, 3, 4, 5', ',\s*') t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "regex-srf-test-testregexsetreturningfunctions-0008-select-count-*-::text-from"},
 				},
 			},
 		},

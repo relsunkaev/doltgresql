@@ -30,8 +30,7 @@ func TestLimitOffset(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT * FROM t LIMIT 2`,
-					Expected: []sql.Row{{1, 1}, {2, 2}},
+					Query: `SELECT * FROM t LIMIT 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "limit-test-testlimitoffset-0001-select-*-from-t-limit"},
 				},
 				{
 					Query:    `SELECT * FROM t LIMIT $1`,
@@ -39,12 +38,10 @@ func TestLimitOffset(t *testing.T) {
 					Expected: []sql.Row{{1, 1}, {2, 2}},
 				},
 				{
-					Query:    `SELECT * FROM t LIMIT 2 OFFSET 2`,
-					Expected: []sql.Row{{3, 3}, {4, 4}},
+					Query: `SELECT * FROM t LIMIT 2 OFFSET 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "limit-test-testlimitoffset-0003-select-*-from-t-limit"},
 				},
 				{
-					Query:    `SELECT * FROM t order by c asc LIMIT 2 OFFSET 2`,
-					Expected: []sql.Row{{3, 3}, {4, 4}},
+					Query: `SELECT * FROM t order by c asc LIMIT 2 OFFSET 2`, PostgresOracle: ScriptTestPostgresOracle{ID: "limit-test-testlimitoffset-0004-select-*-from-t-order"},
 				},
 			},
 		},

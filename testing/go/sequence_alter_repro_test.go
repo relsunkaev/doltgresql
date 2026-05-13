@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterSequenceOptionsAffectNextvalRepro reproduces a sequence correctness
@@ -38,24 +36,19 @@ func TestAlterSequenceOptionsAffectNextvalRepro(t *testing.T) {
 						CYCLE;`,
 				},
 				{
-					Query:    `SELECT nextval('alter_sequence_options_seq');`,
-					Expected: []sql.Row{{int64(24)}},
+					Query: `SELECT nextval('alter_sequence_options_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-alter-repro-test-testaltersequenceoptionsaffectnextvalrepro-0001-select-nextval-alter_sequence_options_seq"},
 				},
 				{
-					Query:    `SELECT nextval('alter_sequence_options_seq');`,
-					Expected: []sql.Row{{int64(28)}},
+					Query: `SELECT nextval('alter_sequence_options_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-alter-repro-test-testaltersequenceoptionsaffectnextvalrepro-0002-select-nextval-alter_sequence_options_seq"},
 				},
 				{
-					Query:    `SELECT nextval('alter_sequence_options_seq');`,
-					Expected: []sql.Row{{int64(32)}},
+					Query: `SELECT nextval('alter_sequence_options_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-alter-repro-test-testaltersequenceoptionsaffectnextvalrepro-0003-select-nextval-alter_sequence_options_seq"},
 				},
 				{
-					Query:    `SELECT nextval('alter_sequence_options_seq');`,
-					Expected: []sql.Row{{int64(36)}},
+					Query: `SELECT nextval('alter_sequence_options_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-alter-repro-test-testaltersequenceoptionsaffectnextvalrepro-0004-select-nextval-alter_sequence_options_seq"},
 				},
 				{
-					Query:    `SELECT nextval('alter_sequence_options_seq');`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT nextval('alter_sequence_options_seq');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-alter-repro-test-testaltersequenceoptionsaffectnextvalrepro-0005-select-nextval-alter_sequence_options_seq"},
 				},
 			},
 		},

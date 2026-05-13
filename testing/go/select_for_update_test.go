@@ -46,19 +46,13 @@ func TestSelectForUpdate(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT id, v FROM t WHERE id = 2 FOR UPDATE;",
-					Expected: []gms.Row{
-						{2, 200},
-					},
+					Query: "SELECT id, v FROM t WHERE id = 2 FOR UPDATE;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0001-select-id-v-from-t"},
 				},
 				{
 					Query: "BEGIN;",
 				},
 				{
-					Query: "SELECT id, v FROM t WHERE id = 2 FOR UPDATE;",
-					Expected: []gms.Row{
-						{2, 200},
-					},
+					Query: "SELECT id, v FROM t WHERE id = 2 FOR UPDATE;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0002-select-id-v-from-t"},
 				},
 				{
 					Query: "UPDATE t SET v = 222 WHERE id = 2;",
@@ -67,10 +61,7 @@ func TestSelectForUpdate(t *testing.T) {
 					Query: "COMMIT;",
 				},
 				{
-					Query: "SELECT v FROM t WHERE id = 2;",
-					Expected: []gms.Row{
-						{222},
-					},
+					Query: "SELECT v FROM t WHERE id = 2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0003-select-v-from-t-where"},
 				},
 			},
 		},
@@ -82,22 +73,13 @@ func TestSelectForUpdate(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT id FROM share_t WHERE id = 1 FOR SHARE;",
-					Expected: []gms.Row{
-						{1},
-					},
+					Query: "SELECT id FROM share_t WHERE id = 1 FOR SHARE;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0004-select-id-from-share_t-where"},
 				},
 				{
-					Query: "SELECT id FROM share_t WHERE id = 1 FOR NO KEY UPDATE;",
-					Expected: []gms.Row{
-						{1},
-					},
+					Query: "SELECT id FROM share_t WHERE id = 1 FOR NO KEY UPDATE;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0005-select-id-from-share_t-where"},
 				},
 				{
-					Query: "SELECT id FROM share_t WHERE id = 1 FOR KEY SHARE;",
-					Expected: []gms.Row{
-						{1},
-					},
+					Query: "SELECT id FROM share_t WHERE id = 1 FOR KEY SHARE;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0006-select-id-from-share_t-where"},
 				},
 			},
 		},
@@ -109,28 +91,16 @@ func TestSelectForUpdate(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT id FROM wait_t ORDER BY id FOR UPDATE NOWAIT;",
-					Expected: []gms.Row{
-						{1}, {2},
-					},
+					Query: "SELECT id FROM wait_t ORDER BY id FOR UPDATE NOWAIT;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0007-select-id-from-wait_t-order"},
 				},
 				{
-					Query: "SELECT id FROM wait_t ORDER BY id FOR UPDATE SKIP LOCKED;",
-					Expected: []gms.Row{
-						{1}, {2},
-					},
+					Query: "SELECT id FROM wait_t ORDER BY id FOR UPDATE SKIP LOCKED;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0008-select-id-from-wait_t-order"},
 				},
 				{
-					Query: "SELECT id FROM wait_t ORDER BY id FOR SHARE NOWAIT;",
-					Expected: []gms.Row{
-						{1}, {2},
-					},
+					Query: "SELECT id FROM wait_t ORDER BY id FOR SHARE NOWAIT;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0009-select-id-from-wait_t-order"},
 				},
 				{
-					Query: "SELECT id FROM wait_t ORDER BY id FOR SHARE SKIP LOCKED;",
-					Expected: []gms.Row{
-						{1}, {2},
-					},
+					Query: "SELECT id FROM wait_t ORDER BY id FOR SHARE SKIP LOCKED;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0010-select-id-from-wait_t-order"},
 				},
 			},
 		},
@@ -148,20 +118,14 @@ func TestSelectForUpdate(t *testing.T) {
 FROM child
 JOIN parent ON child.parent_id = parent.id
 WHERE parent.id = 1
-FOR UPDATE OF child;`,
-					Expected: []gms.Row{
-						{10, 100},
-					},
+FOR UPDATE OF child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0011-select-child.id-child.v-from-child"},
 				},
 				{
 					Query: `SELECT child.id
 FROM child
 JOIN parent ON child.parent_id = parent.id
 ORDER BY child.id
-FOR UPDATE OF parent, child;`,
-					Expected: []gms.Row{
-						{10}, {20},
-					},
+FOR UPDATE OF parent, child;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0012-select-child.id-from-child-join"},
 				},
 			},
 		},
@@ -173,8 +137,7 @@ FOR UPDATE OF parent, child;`,
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "SELECT id FROM for_of_t FOR UPDATE OF nope;",
-					ExpectedErr: "nope",
+					Query: "SELECT id FROM for_of_t FOR UPDATE OF nope;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0013-select-id-from-for_of_t-for", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -189,10 +152,7 @@ FOR UPDATE OF parent, child;`,
 					Query: `WITH locked AS (
   SELECT id, v FROM cte_t WHERE v >= 10 FOR UPDATE
 )
-SELECT id, v FROM locked ORDER BY id;`,
-					Expected: []gms.Row{
-						{1, 10}, {2, 20},
-					},
+SELECT id, v FROM locked ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0014-with-locked-as-select-id"},
 				},
 			},
 		},
@@ -211,10 +171,7 @@ SELECT id, v FROM locked ORDER BY id;`,
 					Query: `SELECT a.id, b.id
 FROM multi_lock_a a, multi_lock_b b
 FOR UPDATE OF a
-FOR SHARE OF b;`,
-					Expected: []gms.Row{
-						{1, 2},
-					},
+FOR SHARE OF b;`, PostgresOracle: ScriptTestPostgresOracle{ID: "select-for-update-test-testselectforupdate-0015-select-a.id-b.id-from-multi_lock_a"},
 				},
 			},
 		},

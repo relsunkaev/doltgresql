@@ -31,8 +31,7 @@ func TestPublicationRejectsSchemaAddAfterColumnListOrFilterRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "ALTER PUBLICATION pub_filter_pub ADD TABLES IN SCHEMA pub_filter_aux;",
-					ExpectedErr: "cannot add schema to publication",
+					Query: "ALTER PUBLICATION pub_filter_pub ADD TABLES IN SCHEMA pub_filter_aux;", PostgresOracle: ScriptTestPostgresOracle{ID: "publication-oracle-repro-test-testpublicationrejectsschemaaddaftercolumnlistorfilterrepro-0001-alter-publication-pub_filter_pub-add-tables", Compare: "sqlstate"},
 				},
 			},
 		},

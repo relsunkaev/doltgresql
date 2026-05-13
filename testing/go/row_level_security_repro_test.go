@@ -43,18 +43,20 @@ func TestRowLevelSecurityDefaultDenyRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT id, label FROM rls_secrets ORDER BY id;`,
-					Expected: []sql.Row{},
+					Query: `SELECT id, label FROM rls_secrets ORDER BY id;`,
+
 					Username: `rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenyrepro-0001-select-id-label-from-rls_secrets"},
+
+					// TestRowLevelSecuritySelectPolicyFiltersRowsRepro reproduces a security bug:
+					// PostgreSQL applies SELECT policies to rows visible to granted non-owners.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowLevelSecuritySelectPolicyFiltersRowsRepro reproduces a security bug:
-// PostgreSQL applies SELECT policies to rows visible to granted non-owners.
 func TestRowLevelSecuritySelectPolicyFiltersRowsRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -82,18 +84,20 @@ func TestRowLevelSecuritySelectPolicyFiltersRowsRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_policy_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rls_policy_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityselectpolicyfiltersrowsrepro-0001-select-id-label-from-rls_policy_docs"},
+
+					// TestRowSecurityOffDoesNotBypassPoliciesRepro reproduces a security bug:
+					// PostgreSQL's row_security=off mode does not bypass RLS for ordinary users;
+					// it errors when a query would be affected by row-level security.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowSecurityOffDoesNotBypassPoliciesRepro reproduces a security bug:
-// PostgreSQL's row_security=off mode does not bypass RLS for ordinary users;
-// it errors when a query would be affected by row-level security.
 func TestRowSecurityOffDoesNotBypassPoliciesRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -121,18 +125,20 @@ func TestRowSecurityOffDoesNotBypassPoliciesRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_guc_docs
 						ORDER BY id;`,
-					ExpectedErr: `row-level security`,
-					Username:    `rls_guc_reader`,
-					Password:    `reader`,
+
+					Username: `rls_guc_reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowsecurityoffdoesnotbypasspoliciesrepro-0001-select-id-label-from-rls_guc_docs", Compare: "sqlstate"},
+
+					// TestDropPolicyIfExistsMissingRepro reproduces a PostgreSQL compatibility gap:
+					// DROP POLICY IF EXISTS should no-op when the named policy is absent on an
+					// existing table.
+
 				},
 			},
 		},
 	})
 }
 
-// TestDropPolicyIfExistsMissingRepro reproduces a PostgreSQL compatibility gap:
-// DROP POLICY IF EXISTS should no-op when the named policy is absent on an
-// existing table.
 func TestDropPolicyIfExistsMissingRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -169,14 +175,13 @@ func TestRowLevelSecurityDefaultDenyInsertRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO rls_insert_secrets VALUES (1, 'leaked');`,
-					ExpectedErr: `row-level security`,
-					Username:    `rls_insert_user`,
-					Password:    `writer`,
+					Query: `INSERT INTO rls_insert_secrets VALUES (1, 'leaked');`,
+
+					Username: `rls_insert_user`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0001-insert-into-rls_insert_secrets-values-1", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM rls_insert_secrets;`,
-					Expected: []sql.Row{{int64(0)}},
+					Query: `SELECT count(*) FROM rls_insert_secrets;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenyinsertrepro-0002-select-count-*-from-rls_insert_secrets"},
 				},
 			},
 		},
@@ -215,15 +220,14 @@ func TestRowLevelSecurityInsertPolicyWithCheckRepro(t *testing.T) {
 				{
 					Query: `INSERT INTO rls_insert_check_docs
 						VALUES (2, 'other_user', 'blocked');`,
-					ExpectedErr: `row-level security`,
-					Username:    `rls_insert_check_user`,
-					Password:    `writer`,
+
+					Username: `rls_insert_check_user`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0001-insert-into-rls_insert_check_docs-values-2", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, owner_name, label
 						FROM rls_insert_check_docs
-						ORDER BY id;`,
-					Expected: []sql.Row{{1, "rls_insert_check_user", "allowed"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityinsertpolicywithcheckrepro-0002-select-id-owner_name-label-from"},
 				},
 			},
 		},
@@ -262,35 +266,31 @@ func TestRowLevelSecurityUpdatePolicyWithCheckRepro(t *testing.T) {
 						SET label = 'changed'
 						WHERE id = 1
 						RETURNING id;`,
-					Expected: []sql.Row{{1}},
+
 					Username: `rls_update_policy_user`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0001-update-rls_update_policy_docs-set-label-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE rls_update_policy_docs
 						SET label = 'blocked'
 						WHERE id = 2
 						RETURNING id;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_update_policy_user`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0002-update-rls_update_policy_docs-set-label-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `UPDATE rls_update_policy_docs
 						SET owner_name = 'other_user'
 						WHERE id = 1;`,
-					ExpectedErr: `row-level security`,
-					Username:    `rls_update_policy_user`,
-					Password:    `writer`,
+
+					Username: `rls_update_policy_user`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0003-update-rls_update_policy_docs-set-owner_name-=", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, owner_name, label
 						FROM rls_update_policy_docs
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "rls_update_policy_user", "changed"},
-						{2, "other_user", "hidden"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecurityupdatepolicywithcheckrepro-0004-select-id-owner_name-label-from"},
 				},
 			},
 		},
@@ -318,13 +318,12 @@ func TestRowLevelSecurityDefaultDenyUpdateRepro(t *testing.T) {
 						SET label = 'changed'
 						WHERE id = 1
 						RETURNING id;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_update_user`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0001-update-rls_update_secrets-set-label-=", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT label FROM rls_update_secrets WHERE id = 1;`,
-					Expected: []sql.Row{{"original"}},
+					Query: `SELECT label FROM rls_update_secrets WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenyupdaterepro-0002-select-label-from-rls_update_secrets-where"},
 				},
 			},
 		},
@@ -360,15 +359,14 @@ func TestRowLevelSecurityDeletePolicyFiltersRowsRepro(t *testing.T) {
 				{
 					Query: `DELETE FROM rls_delete_policy_docs
 						RETURNING id;`,
-					Expected: []sql.Row{{1}},
+
 					Username: `rls_delete_policy_user`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0001-delete-from-rls_delete_policy_docs-returning-id", Compare: "sqlstate"},
 				},
 				{
 					Query: `SELECT id, owner_name, label
 						FROM rls_delete_policy_docs
-						ORDER BY id;`,
-					Expected: []sql.Row{{2, "other_user", "keep me"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydeletepolicyfiltersrowsrepro-0002-select-id-owner_name-label-from"},
 				},
 			},
 		},
@@ -395,13 +393,12 @@ func TestRowLevelSecurityDefaultDenyDeleteRepro(t *testing.T) {
 					Query: `DELETE FROM rls_delete_secrets
 						WHERE id = 1
 						RETURNING id;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_delete_user`,
-					Password: `writer`,
+					Password: `writer`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0001-delete-from-rls_delete_secrets-where-id", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT count(*) FROM rls_delete_secrets;`,
-					Expected: []sql.Row{{int64(1)}},
+					Query: `SELECT count(*) FROM rls_delete_secrets;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritydefaultdenydeleterepro-0002-select-count-*-from-rls_delete_secrets"},
 				},
 			},
 		},
@@ -512,8 +509,7 @@ func TestRowLevelSecurityPgClassMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity, relforcerowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rls_catalog_target'::regclass;`,
-					Expected: []sql.Row{{"t", "t"}},
+						WHERE oid = 'rls_catalog_target'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritypgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -537,8 +533,7 @@ func TestRowLevelSecurityNoForcePgClassMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity, relforcerowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rls_no_force_catalog_target'::regclass;`,
-					Expected: []sql.Row{{"t", "f"}},
+						WHERE oid = 'rls_no_force_catalog_target'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowlevelsecuritynoforcepgclassmetadatarepro-0001-select-relrowsecurity-relforcerowsecurity-from-pg_catalog.pg_class"},
 				},
 			},
 		},
@@ -570,17 +565,19 @@ func TestRowLevelSecurityTableOwnerBypassesPolicyUnlessForcedRepro(t *testing.T)
 					Query: `SELECT id, label
 						FROM rls_owner_bypass_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible to owner"}},
+
 					Username: `rls_owner_bypass_user`,
-					Password: `owner`,
+					Password: `owner`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-table-owner-bypasses-unforced-rls"},
+
+					// TestForcedRowLevelSecurityAppliesToTableOwnerRepro reproduces a security bug:
+					// PostgreSQL FORCE ROW LEVEL SECURITY applies policies to the table owner.
+
 				},
 			},
 		},
 	})
 }
 
-// TestForcedRowLevelSecurityAppliesToTableOwnerRepro reproduces a security bug:
-// PostgreSQL FORCE ROW LEVEL SECURITY applies policies to the table owner.
 func TestForcedRowLevelSecurityAppliesToTableOwnerRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -603,18 +600,20 @@ func TestForcedRowLevelSecurityAppliesToTableOwnerRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rls_force_owner_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{},
+
 					Username: `rls_forced_owner`,
-					Password: `owner`,
+					Password: `owner`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testforcedrowlevelsecurityappliestotableownerrepro-0001-select-id-label-from-rls_force_owner_docs", Compare: "sqlstate"},
+
+					// TestRowSecurityActiveReportsPolicyStateRepro reproduces an RLS catalog
+					// correctness bug: PostgreSQL exposes whether row-level security is active for
+					// the current user on a relation.
+
 				},
 			},
 		},
 	})
 }
 
-// TestRowSecurityActiveReportsPolicyStateRepro reproduces an RLS catalog
-// correctness bug: PostgreSQL exposes whether row-level security is active for
-// the current user on a relation.
 func TestRowSecurityActiveReportsPolicyStateRepro(t *testing.T) {
 	RunScripts(t, []ScriptTest{
 		{
@@ -628,14 +627,13 @@ func TestRowSecurityActiveReportsPolicyStateRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT row_security_active('rls_active_docs'::regclass);`,
-					Expected: []sql.Row{{false}},
+					Query: `SELECT row_security_active('rls_active_docs'::regclass);`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0001-select-row_security_active-rls_active_docs-::regclass"},
 				},
 				{
-					Query:    `SELECT row_security_active('rls_active_docs'::regclass);`,
-					Expected: []sql.Row{{true}},
+					Query: `SELECT row_security_active('rls_active_docs'::regclass);`,
+
 					Username: `rls_active_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-repro-test-testrowsecurityactivereportspolicystaterepro-0002-select-row_security_active-rls_active_docs-::regclass"},
 				},
 			},
 		},

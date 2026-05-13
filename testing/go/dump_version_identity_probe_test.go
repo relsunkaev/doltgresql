@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDumpVersionIdentity pins the version-identity surface that
@@ -37,8 +35,7 @@ func TestDumpVersionIdentity(t *testing.T) {
 					// pg_dump's first probe is `SELECT version()`;
 					// the major version drives the output dialect
 					// branch.
-					Query:    `SELECT version() LIKE 'PostgreSQL %';`,
-					Expected: []sql.Row{{"t"}},
+					Query: `SELECT version() LIKE 'PostgreSQL %';`, PostgresOracle: ScriptTestPostgresOracle{ID: "dump-version-identity-probe-test-testdumpversionidentity-0001-select-version-like-postgresql-%"},
 				},
 			},
 		},
@@ -48,8 +45,7 @@ func TestDumpVersionIdentity(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT length(current_setting('server_version'))::text > '0'
-						AS has_version;`,
-					Expected: []sql.Row{{"t"}},
+						AS has_version;`, PostgresOracle: ScriptTestPostgresOracle{ID: "dump-version-identity-probe-test-testdumpversionidentity-0002-select-length-current_setting-server_version-::text"},
 				},
 			},
 		},
@@ -63,8 +59,7 @@ func TestDumpVersionIdentity(t *testing.T) {
 					// dump dialect quirks.
 					Query: `SELECT
 						current_setting('server_version_num')::int >= 90000
-						AS recent_enough;`,
-					Expected: []sql.Row{{"t"}},
+						AS recent_enough;`, PostgresOracle: ScriptTestPostgresOracle{ID: "dump-version-identity-probe-test-testdumpversionidentity-0003-select-current_setting-server_version_num-::int->="},
 				},
 			},
 		},
@@ -74,8 +69,7 @@ func TestDumpVersionIdentity(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT pg_catalog.version() LIKE 'PostgreSQL %',
-						pg_catalog.current_setting('server_version') = current_setting('server_version');`,
-					Expected: []sql.Row{{"t", "t"}},
+						pg_catalog.current_setting('server_version') = current_setting('server_version');`, PostgresOracle: ScriptTestPostgresOracle{ID: "dump-version-identity-probe-test-testdumpversionidentity-0004-select-pg_catalog.version-like-postgresql-%"},
 				},
 			},
 		},

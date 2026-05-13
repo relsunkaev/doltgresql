@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRenameColumnUpdatesRowLevelSecurityPolicyRepro reproduces a row-level
@@ -50,9 +48,9 @@ func TestRenameColumnUpdatesRowLevelSecurityPolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rename_column_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rename_column_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-column-rename-repro-test-testrenamecolumnupdatesrowlevelsecuritypolicyrepro-0001-select-id-label-from-rename_column_rls_docs"},
 				},
 				{
 					Query: `ALTER TABLE rename_column_rls_docs
@@ -62,9 +60,9 @@ func TestRenameColumnUpdatesRowLevelSecurityPolicyRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rename_column_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rename_column_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-column-rename-repro-test-testrenamecolumnupdatesrowlevelsecuritypolicyrepro-0002-select-id-label-from-rename_column_rls_docs"},
 				},
 			},
 		},

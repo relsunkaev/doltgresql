@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateForeignDataWrapperPersistsCatalogRepro reproduces an FDW metadata
@@ -34,8 +32,7 @@ func TestCreateForeignDataWrapperPersistsCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT fdwname
 						FROM pg_catalog.pg_foreign_data_wrapper
-						WHERE fdwname = 'fdw_catalog_repro';`,
-					Expected: []sql.Row{{"fdw_catalog_repro"}},
+						WHERE fdwname = 'fdw_catalog_repro';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testcreateforeigndatawrapperpersistscatalogrepro-0001-select-fdwname-from-pg_catalog.pg_foreign_data_wrapper-where"},
 				},
 			},
 		},
@@ -51,8 +48,7 @@ func TestCreateForeignServerRequiresExistingWrapperRepro(t *testing.T) {
 			Name: "CREATE SERVER validates referenced foreign data wrapper",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE SERVER server_missing_fdw_repro FOREIGN DATA WRAPPER missing_server_fdw_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `CREATE SERVER server_missing_fdw_repro FOREIGN DATA WRAPPER missing_server_fdw_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testcreateforeignserverrequiresexistingwrapperrepro-0001-create-server-server_missing_fdw_repro-foreign-data", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -68,12 +64,10 @@ func TestAlterAndDropForeignServerRequireExistingServerRepro(t *testing.T) {
 			Name: "ALTER and DROP SERVER validate target server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER SERVER missing_alter_server_repro VERSION '2';`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER SERVER missing_alter_server_repro VERSION '2';`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropforeignserverrequireexistingserverrepro-0001-alter-server-missing_alter_server_repro-version-2", Compare: "sqlstate"},
 				},
 				{
-					Query:       `DROP SERVER missing_drop_server_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP SERVER missing_drop_server_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropforeignserverrequireexistingserverrepro-0002-drop-server-missing_drop_server_repro", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -89,8 +83,7 @@ func TestCreateUserMappingRequiresExistingServerRepro(t *testing.T) {
 			Name: "CREATE USER MAPPING validates referenced foreign server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE USER MAPPING FOR CURRENT_USER SERVER missing_mapping_server_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `CREATE USER MAPPING FOR CURRENT_USER SERVER missing_mapping_server_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testcreateusermappingrequiresexistingserverrepro-0001-create-user-mapping-for-current_user", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -106,8 +99,7 @@ func TestCreateForeignTableRequiresExistingServerRepro(t *testing.T) {
 			Name: "CREATE FOREIGN TABLE validates referenced foreign server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CREATE FOREIGN TABLE foreign_table_missing_server_repro (id integer) SERVER missing_foreign_table_server_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `CREATE FOREIGN TABLE foreign_table_missing_server_repro (id integer) SERVER missing_foreign_table_server_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testcreateforeigntablerequiresexistingserverrepro-0001-create-foreign-table-foreign_table_missing_server_repro-id", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -123,8 +115,7 @@ func TestDropForeignTableRequiresExistingRelationRepro(t *testing.T) {
 			Name: "DROP FOREIGN TABLE validates target relation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `DROP FOREIGN TABLE missing_foreign_table_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP FOREIGN TABLE missing_foreign_table_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testdropforeigntablerequiresexistingrelationrepro-0001-drop-foreign-table-missing_foreign_table_repro", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -140,8 +131,7 @@ func TestImportForeignSchemaRequiresExistingServerRepro(t *testing.T) {
 			Name: "IMPORT FOREIGN SCHEMA validates referenced foreign server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `IMPORT FOREIGN SCHEMA remote_schema FROM SERVER missing_import_schema_server_repro INTO public;`,
-					ExpectedErr: `does not exist`,
+					Query: `IMPORT FOREIGN SCHEMA remote_schema FROM SERVER missing_import_schema_server_repro INTO public;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testimportforeignschemarequiresexistingserverrepro-0001-import-foreign-schema-remote_schema-from", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -157,12 +147,10 @@ func TestAlterAndDropForeignDataWrapperRequireExistingWrapperRepro(t *testing.T)
 			Name: "ALTER and DROP FOREIGN DATA WRAPPER validate target wrapper",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER FOREIGN DATA WRAPPER missing_alter_fdw_repro OPTIONS (ADD host 'localhost');`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER FOREIGN DATA WRAPPER missing_alter_fdw_repro OPTIONS (ADD host 'localhost');`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropforeigndatawrapperrequireexistingwrapperrepro-0001-alter-foreign-data-wrapper-missing_alter_fdw_repro", Compare: "sqlstate"},
 				},
 				{
-					Query:       `DROP FOREIGN DATA WRAPPER missing_drop_fdw_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP FOREIGN DATA WRAPPER missing_drop_fdw_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropforeigndatawrapperrequireexistingwrapperrepro-0002-drop-foreign-data-wrapper-missing_drop_fdw_repro", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -178,12 +166,10 @@ func TestAlterAndDropUserMappingRequireExistingServerRepro(t *testing.T) {
 			Name: "ALTER and DROP USER MAPPING validate referenced server",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER USER MAPPING FOR CURRENT_USER SERVER missing_alter_mapping_server_repro OPTIONS (ADD user 'u');`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER USER MAPPING FOR CURRENT_USER SERVER missing_alter_mapping_server_repro OPTIONS (ADD user 'u');`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropusermappingrequireexistingserverrepro-0001-alter-user-mapping-for-current_user", Compare: "sqlstate"},
 				},
 				{
-					Query:       `DROP USER MAPPING FOR CURRENT_USER SERVER missing_drop_mapping_server_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `DROP USER MAPPING FOR CURRENT_USER SERVER missing_drop_mapping_server_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalteranddropusermappingrequireexistingserverrepro-0002-drop-user-mapping-for-current_user", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -199,8 +185,7 @@ func TestAlterForeignTableRequiresExistingRelationRepro(t *testing.T) {
 			Name: "ALTER FOREIGN TABLE validates target relation",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER FOREIGN TABLE missing_alter_foreign_table_repro OPTIONS (ADD host 'localhost');`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER FOREIGN TABLE missing_alter_foreign_table_repro OPTIONS (ADD host 'localhost');`, PostgresOracle: ScriptTestPostgresOracle{ID: "foreign-data-wrapper-repro-test-testalterforeigntablerequiresexistingrelationrepro-0001-alter-foreign-table-missing_alter_foreign_table_repro-options", Compare: "sqlstate"},
 				},
 			},
 		},

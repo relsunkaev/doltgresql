@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPlpgsqlTriggerFunctionProbe pins the canonical PL/pgSQL trigger
@@ -53,11 +51,7 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 					Query: `INSERT INTO main (id, v) VALUES (1, 100), (2, 200);`,
 				},
 				{
-					Query: `SELECT main_id, marked FROM audit_log ORDER BY main_id;`,
-					Expected: []sql.Row{
-						{int32(1), "inserted"},
-						{int32(2), "inserted"},
-					},
+					Query: `SELECT main_id, marked FROM audit_log ORDER BY main_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0001-select-main_id-marked-from-audit_log"},
 				},
 			},
 		},
@@ -97,11 +91,7 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 					Query: `INSERT INTO rows (id, label, marked) VALUES (1, 'hello', NULL), (2, 'world', NULL);`,
 				},
 				{
-					Query: `SELECT id, marked FROM rows ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), "HELLO"},
-						{int32(2), "WORLD"},
-					},
+					Query: `SELECT id, marked FROM rows ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0002-select-id-marked-from-rows"},
 				},
 			},
 		},
@@ -126,8 +116,7 @@ func TestPlpgsqlTriggerFunctionProbe(t *testing.T) {
 					Query: `INSERT INTO partial_rows (id, label) VALUES (1, 'hello');`,
 				},
 				{
-					Query:    `SELECT marked FROM partial_rows WHERE id = 1;`,
-					Expected: []sql.Row{{"HELLO"}},
+					Query: `SELECT marked FROM partial_rows WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "plpgsql-trigger-function-probe-test-testplpgsqltriggerfunctionprobe-0003-select-marked-from-partial_rows-where"},
 				},
 			},
 		},

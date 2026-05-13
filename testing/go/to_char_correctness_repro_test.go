@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestToCharIntervalPreservesFractionalSecondsRepro reproduces an interval
@@ -30,12 +28,10 @@ func TestToCharIntervalPreservesFractionalSecondsRepro(t *testing.T) {
 			Name: "to_char interval preserves fractional seconds",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_char(interval '1.234 seconds', 'HH24:MI:SS.US');`,
-					Expected: []sql.Row{{"00:00:01.234000"}},
+					Query: `SELECT to_char(interval '1.234 seconds', 'HH24:MI:SS.US');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharintervalpreservesfractionalsecondsrepro-0001-select-to_char-interval-1.234-seconds"},
 				},
 				{
-					Query:    `SELECT to_char(interval '1 hour 2 minutes 3.456 seconds', 'HH24:MI:SS.MS.US SSSS');`,
-					Expected: []sql.Row{{"01:02:03.456.456000 3723"}},
+					Query: `SELECT to_char(interval '1 hour 2 minutes 3.456 seconds', 'HH24:MI:SS.MS.US SSSS');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharintervalpreservesfractionalsecondsrepro-0002-select-to_char-interval-1-hour"},
 				},
 			},
 		},
@@ -52,8 +48,7 @@ func TestToCharFractionalSecondPrecisionTokensRepro(t *testing.T) {
 			Name: "to_char fractional second precision tokens",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_char(timestamp '2021-09-15 21:43:56.123456', 'FF1 FF2 FF3 FF4 FF5 FF6');`,
-					Expected: []sql.Row{{"1 12 123 1234 12345 123456"}},
+					Query: `SELECT to_char(timestamp '2021-09-15 21:43:56.123456', 'FF1 FF2 FF3 FF4 FF5 FF6');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharfractionalsecondprecisiontokensrepro-0001-select-to_char-timestamp-2021-09-15-21:43:56.123456"},
 				},
 			},
 		},
@@ -70,8 +65,7 @@ func TestToCharFirstMonthAndWeekdayNamesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT to_char(timestamp '2021-01-03 12:00:00',
-						'MONTH Month month MON Mon mon MM DAY Day day DY Dy dy D');`,
-					Expected: []sql.Row{{"JANUARY   January   january   JAN Jan jan 01 SUNDAY    Sunday    sunday    SUN Sun sun 1"}},
+						'MONTH Month month MON Mon mon MM DAY Day day DY Dy dy D');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharfirstmonthandweekdaynamesrepro-0001-select-to_char-timestamp-2021-01-03-12:00:00"},
 				},
 			},
 		},
@@ -87,16 +81,13 @@ func TestToCharOrdinalSuffixTeenDatesRepro(t *testing.T) {
 			Name: "to_char ordinal suffix teen dates",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_char(timestamp '2021-01-11', 'DDTH DDth');`,
-					Expected: []sql.Row{{"11TH 11th"}},
+					Query: `SELECT to_char(timestamp '2021-01-11', 'DDTH DDth');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0001-select-to_char-timestamp-2021-01-11-ddth"},
 				},
 				{
-					Query:    `SELECT to_char(timestamp '2021-01-12', 'DDTH DDth');`,
-					Expected: []sql.Row{{"12TH 12th"}},
+					Query: `SELECT to_char(timestamp '2021-01-12', 'DDTH DDth');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0002-select-to_char-timestamp-2021-01-12-ddth"},
 				},
 				{
-					Query:    `SELECT to_char(timestamp '2021-01-13', 'DDTH DDth');`,
-					Expected: []sql.Row{{"13TH 13th"}},
+					Query: `SELECT to_char(timestamp '2021-01-13', 'DDTH DDth');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0003-select-to_char-timestamp-2021-01-13-ddth"},
 				},
 			},
 		},
@@ -117,12 +108,10 @@ func TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_char(timestamp '2021-03-14 12:00:00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');`,
-					Expected: []sql.Row{{"2021-03-14 12:00  +00 +00:00"}},
+					Query: `SELECT to_char(timestamp '2021-03-14 12:00:00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtochartimezonefieldsmatchpostgressessionzonerepro-0001-select-to_char-timestamp-2021-03-14-12:00:00"},
 				},
 				{
-					Query:    `SELECT to_char(timestamptz '2021-03-14 12:00:00+00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');`,
-					Expected: []sql.Row{{"2021-03-14 08:00 EDT -04 -04:00"}},
+					Query: `SELECT to_char(timestamptz '2021-03-14 12:00:00+00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtochartimezonefieldsmatchpostgressessionzonerepro-0002-select-to_char-timestamptz-2021-03-14-12:00:00+00"},
 				},
 			},
 		},
@@ -138,12 +127,10 @@ func TestToCharNumericFormatsPostgresPatternsRepro(t *testing.T) {
 			Name: "to_char numeric formats PostgreSQL patterns",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT to_char(1234.5::numeric, 'FM9,999.00');`,
-					Expected: []sql.Row{{"1,234.50"}},
+					Query: `SELECT to_char(1234.5::numeric, 'FM9,999.00');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharnumericformatspostgrespatternsrepro-0001-select-to_char-1234.5::numeric-fm9-999.00"},
 				},
 				{
-					Query:    `SELECT to_char((-42.5)::numeric, 'S999.9');`,
-					Expected: []sql.Row{{" -42.5"}},
+					Query: `SELECT to_char((-42.5)::numeric, 'S999.9');`, PostgresOracle: ScriptTestPostgresOracle{ID: "to-char-correctness-repro-test-testtocharnumericformatspostgrespatternsrepro-0002-select-to_char-42.5-::numeric-s999.9"},
 				},
 			},
 		},

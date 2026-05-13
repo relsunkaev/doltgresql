@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro reproduces a PostgreSQL
@@ -41,11 +39,7 @@ func TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro(t *testing.T) {
 					Query: `SELECT id, host(addr), masklen(addr),
 							addr << inet '192.168.0.0/16'
 						FROM inet_roundtrip_items
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "192.168.1.5", 24, "t"},
-						{2, "10.0.0.1", 8, "f"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateAccessMethodPersistsPgAmRepro reproduces a DDL/catalog correctness
@@ -34,8 +32,7 @@ func TestCreateAccessMethodPersistsPgAmRepro(t *testing.T) {
 				{
 					Query: `SELECT amname, amtype
 						FROM pg_catalog.pg_am
-						WHERE amname = 'heap_repro_am';`,
-					Expected: []sql.Row{{"heap_repro_am", "t"}},
+						WHERE amname = 'heap_repro_am';`, PostgresOracle: ScriptTestPostgresOracle{ID: "access-method-definition-repro-test-testcreateaccessmethodpersistspgamrepro-0001-select-amname-amtype-from-pg_catalog.pg_am"},
 				},
 			},
 		},

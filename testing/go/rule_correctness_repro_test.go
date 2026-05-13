@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateRuleDoAlsoExecutesAuditInsertRepro reproduces a data consistency
@@ -47,8 +45,7 @@ func TestCreateRuleDoAlsoExecutesAuditInsertRepro(t *testing.T) {
 				{
 					Query: `SELECT source_id, label
 						FROM rule_audit_items
-						ORDER BY source_id;`,
-					Expected: []sql.Row{{1, "alpha"}, {2, "beta"}},
+						ORDER BY source_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "rule-correctness-repro-test-testcreateruledoalsoexecutesauditinsertrepro-0001-select-source_id-label-from-rule_audit_items"},
 				},
 			},
 		},
@@ -101,8 +98,7 @@ func TestDropRuleIfExistsRemovesExistingRuleRepro(t *testing.T) {
 					Query: `INSERT INTO drop_rule_source_items VALUES (1, 'after drop');`,
 				},
 				{
-					Query:    `SELECT COUNT(*) FROM drop_rule_audit_items;`,
-					Expected: []sql.Row{{0}},
+					Query: `SELECT COUNT(*) FROM drop_rule_audit_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "rule-correctness-repro-test-testdropruleifexistsremovesexistingrulerepro-0001-select-count-*-from-drop_rule_audit_items"},
 				},
 			},
 		},
@@ -121,8 +117,7 @@ func TestAlterRuleMissingReachesValidationRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER RULE missing_rule_repro ON alter_missing_rule_target RENAME TO renamed_rule_repro;`,
-					ExpectedErr: `does not exist`,
+					Query: `ALTER RULE missing_rule_repro ON alter_missing_rule_target RENAME TO renamed_rule_repro;`, PostgresOracle: ScriptTestPostgresOracle{ID: "rule-correctness-repro-test-testalterrulemissingreachesvalidationrepro-0001-alter-rule-missing_rule_repro-on-alter_missing_rule_target", Compare: "sqlstate"},
 				},
 			},
 		},

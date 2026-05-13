@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateZeroColumnTableRepro reproduces a DDL correctness/stability bug:
@@ -33,8 +31,7 @@ func TestCreateZeroColumnTableRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT count(*)::text FROM zero_column_items;`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM zero_column_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatezerocolumntablerepro-0001-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -60,8 +57,7 @@ func TestCreateTablePrimaryKeyConstraintNameGuard(t *testing.T) {
 					Query: `SELECT conname
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'named_pk_items'::regclass
-							AND contype = 'p';`,
-					Expected: []sql.Row{{"named_pk_items_custom_pkey"}},
+							AND contype = 'p';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0001-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 				{
 					Query: `ALTER TABLE named_pk_items
@@ -71,8 +67,7 @@ func TestCreateTablePrimaryKeyConstraintNameGuard(t *testing.T) {
 					Query: `SELECT conname
 						FROM pg_catalog.pg_constraint
 						WHERE conrelid = 'named_pk_items'::regclass
-							AND contype = 'p';`,
-					Expected: []sql.Row{},
+							AND contype = 'p';`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetableprimarykeyconstraintnameguard-0002-select-conname-from-pg_catalog.pg_constraint-where"},
 				},
 			},
 		},
@@ -94,8 +89,7 @@ func TestCreateTableReloptionsPersistRepro(t *testing.T) {
 				{
 					Query: `SELECT CAST(reloptions AS TEXT)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'table_reloptions_items'::regclass;`,
-					Expected: []sql.Row{{"{fillfactor=30,autovacuum_enabled=false,autovacuum_analyze_scale_factor=0.2}"}},
+						WHERE oid = 'table_reloptions_items'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetablereloptionspersistrepro-0001-select-cast-reloptions-as-text"},
 				},
 			},
 		},
@@ -119,8 +113,7 @@ func TestCreateTableDefaultTablespace(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, label
-						FROM table_default_tablespace_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM table_default_tablespace_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetabledefaulttablespace-0001-select-id-label-from-table_default_tablespace_items"},
 				},
 			},
 		},
@@ -138,8 +131,7 @@ func TestCreateTableUnknownTablespaceErrors(t *testing.T) {
 				{
 					Query: `CREATE TABLE table_unknown_tablespace_items (
 							id INT PRIMARY KEY
-						) TABLESPACE custom_space;`,
-					ExpectedErr: `tablespace "custom_space" does not exist`,
+						) TABLESPACE custom_space;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetableunknowntablespaceerrors-0001-create-table-table_unknown_tablespace_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -163,8 +155,7 @@ func TestCreateTableUsingHeap(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, label
-						FROM table_using_heap_items;`,
-					Expected: []sql.Row{{1, "ok"}},
+						FROM table_using_heap_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetableusingheap-0001-select-id-label-from-table_using_heap_items"},
 				},
 			},
 		},
@@ -182,8 +173,7 @@ func TestCreateTableUsingUnknownAccessMethodErrors(t *testing.T) {
 				{
 					Query: `CREATE TABLE table_unknown_access_method_items (
 							id INT PRIMARY KEY
-						) USING btree;`,
-					ExpectedErr: `access method "btree" does not exist`,
+						) USING btree;`, PostgresOracle: ScriptTestPostgresOracle{ID: "create-table-correctness-repro-test-testcreatetableusingunknownaccessmethoderrors-0001-create-table-table_unknown_access_method_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},

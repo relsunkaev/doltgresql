@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropDatabaseClearsCommentRepro reproduces a shared-metadata persistence
@@ -44,8 +42,7 @@ func TestDropDatabaseClearsCommentRepro(t *testing.T) {
 					Query: `SELECT shobj_description(
 						(SELECT oid FROM pg_database
 						 WHERE datname = 'drop_recreate_comment_database'),
-						'pg_database');`,
-					Expected: []sql.Row{{nil}},
+						'pg_database');`, PostgresOracle: ScriptTestPostgresOracle{ID: "database-comment-drop-repro-test-testdropdatabaseclearscommentrepro-0001-select-shobj_description-select-oid-from"},
 				},
 			},
 		},

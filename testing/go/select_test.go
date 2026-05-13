@@ -27,8 +27,7 @@ func TestSelect(t *testing.T) {
 			Name: "SELECT empty",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT;",
-					Expected: []sql.Row{nil},
+					Query: "SELECT;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0001-select"},
 				},
 			},
 		},
@@ -42,100 +41,46 @@ func TestSelect(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test ORDER BY v1, v2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 4},
-						{2, 3},
-						{2, 4},
-					},
+					Query: "SELECT * FROM test ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0002-select-*-from-test-order"},
 				},
 				{
-					Query: "SELECT DISTINCT * FROM test ORDER BY v1, v2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 4},
-						{2, 3},
-						{2, 4},
-					},
+					Query: "SELECT DISTINCT * FROM test ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0003-select-distinct-*-from-test"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v1) * FROM test ORDER BY v1, v2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{2, 3},
-					},
+					Query: "SELECT DISTINCT ON(v1) * FROM test ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0004-select-distinct-on-v1-*"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2, v1;",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 4},
-					},
+					Query: "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2, v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0005-select-distinct-on-v2-*"},
 				},
 				{
-					Query:       "SELECT DISTINCT ON(v1) * FROM test ORDER BY v2, v1;",
-					ExpectedErr: sql.ErrDistinctOnMatchOrderBy.Message,
+					Query: "SELECT DISTINCT ON(v1) * FROM test ORDER BY v2, v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0006-select-distinct-on-v1-*", Compare: "sqlstate"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2 DESC, v1 DESC;",
-					Expected: []sql.Row{
-						{2, 4},
-						{2, 3},
-					},
+					Query: "SELECT DISTINCT ON(v2) * FROM test ORDER BY v2 DESC, v1 DESC;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0007-select-distinct-on-v2-*"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2;",
-					Expected: []sql.Row{
-						{1, 3, 5},
-						{1, 4, 5},
-						{2, 3, 5},
-						{2, 4, 5},
-					},
+					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0008-select-distinct-on-v2-v1"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC;",
-					Expected: []sql.Row{
-						{1, 4, 5},
-						{1, 3, 5},
-						{2, 4, 5},
-						{2, 3, 5},
-					},
+					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0009-select-distinct-on-v2-v1"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 LIMIT 1;",
-					Expected: []sql.Row{
-						{1, 3, 5},
-					},
+					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 LIMIT 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0010-select-distinct-on-v2-v1"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC LIMIT 1;",
-					Expected: []sql.Row{
-						{1, 4, 5},
-					},
+					Query: "SELECT DISTINCT ON(v2, v1) * FROM test2 ORDER BY v1, v2 DESC LIMIT 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0011-select-distinct-on-v2-v1"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v1, v2, v3) * FROM test2 ORDER BY v1, v2;",
-					Expected: []sql.Row{
-						{1, 3, 5},
-						{1, 4, 5},
-						{2, 3, 5},
-						{2, 4, 5},
-					},
+					Query: "SELECT DISTINCT ON(v1, v2, v3) * FROM test2 ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0012-select-distinct-on-v1-v2"},
 				},
 				{
-					Query: "SELECT DISTINCT ON(v3) v1 FROM test2;",
-					Expected: []sql.Row{
-						{2},
-					},
+					Query: "SELECT DISTINCT ON(v3) v1 FROM test2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0013-select-distinct-on-v3-v1"},
 				},
 				{
-					Query:       "SELECT DISTINCT ON(v1, v3) * FROM test2 ORDER BY v1, v2;",
-					ExpectedErr: sql.ErrDistinctOnMatchOrderBy.Message,
+					Query: "SELECT DISTINCT ON(v1, v3) * FROM test2 ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0014-select-distinct-on-v1-v3", Compare: "sqlstate"},
 				},
 				{
-					Query:       "SELECT DISTINCT ON(v2) * FROM test2 ORDER BY v1, v2;",
-					ExpectedErr: sql.ErrDistinctOnMatchOrderBy.Message,
+					Query: "SELECT DISTINCT ON(v2) * FROM test2 ORDER BY v1, v2;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0015-select-distinct-on-v2-*", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -143,25 +88,10 @@ func TestSelect(t *testing.T) {
 			Name: "select values",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22));",
-					Expected: []sql.Row{
-						{1, "峰哥", 18},
-						{2, "王哥", 20},
-						{3, "张哥", 22},
-					},
+					Query: "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22));", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0016-select-*-from-values-1"},
 				},
 				{
-					Query: "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age);",
-					Expected: []sql.Row{
-						{1, "峰哥", 18},
-						{2, "王哥", 20},
-						{3, "张哥", 22},
-					},
-					ExpectedColNames: []string{
-						"id",
-						"name",
-						"age",
-					},
+					Query: "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age);", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0017-select-*-from-values-1"},
 				},
 				{
 					Query:    "select * from (values(1,'峰哥',18),(2,'王哥',20),(3,'张哥',22)) x(id,name,age) limit $1;",
@@ -186,13 +116,11 @@ func TestSelect(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select from mytable;",
-					Expected: []sql.Row{{}, {}},
+					Query: "select from mytable;", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0019-select-from-mytable"},
 				},
 				{
 					// https://github.com/dolthub/doltgresql/issues/1470
-					Query:    "SELECT EXISTS (SELECT FROM mytable where pk > 0);",
-					Expected: []sql.Row{{"t"}},
+					Query: "SELECT EXISTS (SELECT FROM mytable where pk > 0);", PostgresOracle: ScriptTestPostgresOracle{ID: "select-test-testselect-0020-select-exists-select-from-mytable"},
 				},
 			},
 		},

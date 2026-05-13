@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropRoleClearsCommentRepro reproduces a shared-metadata persistence bug:
@@ -44,8 +42,7 @@ func TestDropRoleClearsCommentRepro(t *testing.T) {
 					Query: `SELECT shobj_description(
 						(SELECT oid FROM pg_authid
 						 WHERE rolname = 'drop_recreate_comment_role'),
-						'pg_authid');`,
-					Expected: []sql.Row{{nil}},
+						'pg_authid');`, PostgresOracle: ScriptTestPostgresOracle{ID: "role-comment-drop-repro-test-testdroproleclearscommentrepro-0001-select-shobj_description-select-oid-from"},
 				},
 			},
 		},

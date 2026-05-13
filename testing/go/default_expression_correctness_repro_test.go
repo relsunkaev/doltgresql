@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTableDefaultRejectsColumnReferencesRepro reproduces a correctness
@@ -32,8 +30,7 @@ func TestCreateTableDefaultRejectsColumnReferencesRepro(t *testing.T) {
 						id INT PRIMARY KEY,
 						source_value TEXT,
 						copied_value TEXT DEFAULT (source_value)
-					);`,
-					ExpectedErr: `cannot use column reference in DEFAULT expression`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testcreatetabledefaultrejectscolumnreferencesrepro-0001-create-table-default_column_reference_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -57,8 +54,7 @@ func TestAlterColumnDefaultRejectsColumnReferencesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `ALTER TABLE alter_default_column_reference_items
-						ALTER COLUMN copied_value SET DEFAULT (source_value);`,
-					ExpectedErr: `cannot use column reference in DEFAULT expression`,
+						ALTER COLUMN copied_value SET DEFAULT (source_value);`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testaltercolumndefaultrejectscolumnreferencesrepro-0001-alter-table-alter_default_column_reference_items-alter-column", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -76,8 +72,7 @@ func TestDefaultExpressionsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE default_aggregate_items (
 						id INT DEFAULT (avg(1))
-					);`,
-					ExpectedErr: `aggregate functions are not allowed in DEFAULT expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0001-create-table-default_aggregate_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -87,8 +82,7 @@ func TestDefaultExpressionsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE default_window_items (
 						id INT DEFAULT (row_number() OVER ())
-					);`,
-					ExpectedErr: `window functions are not allowed in DEFAULT expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0002-create-table-default_window_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -98,8 +92,7 @@ func TestDefaultExpressionsRejectNonScalarExpressionsRepro(t *testing.T) {
 				{
 					Query: `CREATE TABLE default_srf_items (
 						id INT DEFAULT (generate_series(1, 2))
-					);`,
-					ExpectedErr: `set-returning functions are not allowed in DEFAULT expressions`,
+					);`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testdefaultexpressionsrejectnonscalarexpressionsrepro-0003-create-table-default_srf_items-id-int", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -124,8 +117,7 @@ func TestAddColumnVolatileDefaultBackfillsEachExistingRowGuard(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT count(DISTINCT uid::text)
-						FROM add_volatile_default_items;`,
-					Expected: []sql.Row{{int64(2)}},
+						FROM add_volatile_default_items;`, PostgresOracle: ScriptTestPostgresOracle{ID: "default-expression-correctness-repro-test-testaddcolumnvolatiledefaultbackfillseachexistingrowguard-0001-select-count-distinct-uid::text-from"},
 				},
 			},
 		},

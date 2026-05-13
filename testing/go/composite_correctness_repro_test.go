@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCompositeAttributeTypmodsRoundStoredValuesRepro reproduces a composite
@@ -46,13 +44,11 @@ func TestCompositeAttributeTypmodsRoundStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT (item).amount::text, (item).ts::text
 						FROM composite_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"123.46", "2021-09-15 21:43:57"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0001-select-item-.amount::text-item-.ts::text"},
 				},
 				{
 					Query: `INSERT INTO composite_typmod_items VALUES
-						(2, ROW(999.995, '2021-09-15 21:43:56.789')::composite_typmod_pair);`,
-					ExpectedErr: `numeric field overflow`,
+						(2, ROW(999.995, '2021-09-15 21:43:56.789')::composite_typmod_pair);`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testcompositeattributetypmodsroundstoredvaluesrepro-0002-insert-into-composite_typmod_items-values-2", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -81,8 +77,7 @@ func TestCompositeTimetzAttributeTypmodsRoundStoredValuesRepro(t *testing.T) {
 				{
 					Query: `SELECT (item).tz::text
 						FROM composite_timetz_typmod_items
-						ORDER BY id;`,
-					Expected: []sql.Row{{"21:43:57+00"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testcompositetimetzattributetypmodsroundstoredvaluesrepro-0001-select-item-.tz::text-from-composite_timetz_typmod_items"},
 				},
 			},
 		},
@@ -116,13 +111,11 @@ func TestCompositeArrayColumnRoundTripsValuesRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `SELECT id, lines
-						FROM composite_array_orders;`,
-					Expected: []sql.Row{{1, "{\"(abc,2)\",\"(def,3)\"}"}},
+						FROM composite_array_orders;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0001-select-id-lines-from-composite_array_orders"},
 				},
 				{
 					Query: `SELECT (lines[2]).sku, (lines[2]).qty
-						FROM composite_array_orders;`,
-					Expected: []sql.Row{{"def", 3}},
+						FROM composite_array_orders;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testcompositearraycolumnroundtripsvaluesrepro-0002-select-lines[2]-.sku-lines[2]-.qty"},
 				},
 			},
 		},
@@ -141,12 +134,10 @@ func TestAlterCompositeTypeAddAttributeRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `ALTER TYPE mutable_composite_add ADD ATTRIBUTE b TEXT;`,
-					ExpectedErr: `already exists`,
+					Query: `ALTER TYPE mutable_composite_add ADD ATTRIBUTE b TEXT;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0001-alter-type-mutable_composite_add-add-attribute", Compare: "sqlstate"},
 				},
 				{
-					Query:    `SELECT ROW(1, 'x')::mutable_composite_add::text;`,
-					Expected: []sql.Row{{"(1,x)"}},
+					Query: `SELECT ROW(1, 'x')::mutable_composite_add::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testaltercompositetypeaddattributerepro-0002-select-row-1-x-::mutable_composite_add::text"},
 				},
 			},
 		},
@@ -169,8 +160,7 @@ func TestAlterCompositeTypeDropAttributeRepro(t *testing.T) {
 					Query: `ALTER TYPE mutable_composite_drop DROP ATTRIBUTE IF EXISTS b;`,
 				},
 				{
-					Query:    `SELECT ROW(1)::mutable_composite_drop::text;`,
-					Expected: []sql.Row{{"(1)"}},
+					Query: `SELECT ROW(1)::mutable_composite_drop::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "composite-correctness-repro-test-testaltercompositetypedropattributerepro-0001-select-row-1-::mutable_composite_drop::text"},
 				},
 			},
 		},

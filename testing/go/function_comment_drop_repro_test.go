@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropFunctionClearsCommentRepro reproduces a metadata persistence bug:
@@ -44,8 +42,7 @@ func TestDropFunctionClearsCommentRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						(SELECT oid FROM pg_proc WHERE proname = 'drop_recreate_comment_func'),
-						'pg_proc');`,
-					Expected: []sql.Row{{nil}},
+						'pg_proc');`, PostgresOracle: ScriptTestPostgresOracle{ID: "function-comment-drop-repro-test-testdropfunctionclearscommentrepro-0001-select-obj_description-select-oid-from"},
 				},
 			},
 		},

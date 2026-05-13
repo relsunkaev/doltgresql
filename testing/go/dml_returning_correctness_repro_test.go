@@ -36,21 +36,18 @@ func TestDmlReturningCanProjectTableoidRepro(t *testing.T) {
 			Assertions: []ScriptTestAssertion{
 				{
 					Query: `INSERT INTO returning_tableoid_items VALUES (1, 10)
-						RETURNING tableoid::regclass::text, id, v;`,
-					Expected: []sql.Row{{"returning_tableoid_items", 1, 10}},
+						RETURNING tableoid::regclass::text, id, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0001-insert-into-returning_tableoid_items-values-1"},
 				},
 				{
 					Query: `UPDATE returning_tableoid_items
 						SET v = 20
 						WHERE id = 1
-						RETURNING tableoid::regclass::text, id, v;`,
-					Expected: []sql.Row{{"returning_tableoid_items", 1, 20}},
+						RETURNING tableoid::regclass::text, id, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0002-update-returning_tableoid_items-set-v-="},
 				},
 				{
 					Query: `DELETE FROM returning_tableoid_items
 						WHERE id = 1
-						RETURNING tableoid::regclass::text, id, v;`,
-					Expected: []sql.Row{{"returning_tableoid_items", 1, 20}},
+						RETURNING tableoid::regclass::text, id, v;`, PostgresOracle: ScriptTestPostgresOracle{ID: "dml-returning-correctness-repro-test-testdmlreturningcanprojecttableoidrepro-0003-delete-from-returning_tableoid_items-where-id"},
 				},
 			},
 		},

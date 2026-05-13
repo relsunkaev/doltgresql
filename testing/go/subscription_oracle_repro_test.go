@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro pins
@@ -35,8 +33,7 @@ func TestSubscriptionAddPublicationRefreshRejectedWhenDisabledRepro(t *testing.T
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);",
-					ExpectedErr: "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions",
+					Query: "ALTER SUBSCRIPTION sub_disabled_sub ADD PUBLICATION sub_disabled_extra WITH (copy_data = false);", PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshrejectedwhendisabledrepro-0001-alter-subscription-sub_disabled_sub-add-publication", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -62,10 +59,7 @@ func TestSubscriptionAddPublicationRefreshFalseUpdatesCatalog(t *testing.T) {
 					Query: "ALTER SUBSCRIPTION sub_refresh_false_sub ADD PUBLICATION sub_refresh_false_extra WITH (copy_data = false, refresh = false);",
 				},
 				{
-					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';",
-					Expected: []sql.Row{
-						{"sub_refresh_false_pub,sub_refresh_false_extra"},
-					},
+					Query: "SELECT array_to_string(subpublications, ',') FROM pg_catalog.pg_subscription WHERE subname = 'sub_refresh_false_sub';", PostgresOracle: ScriptTestPostgresOracle{ID: "subscription-oracle-repro-test-testsubscriptionaddpublicationrefreshfalseupdatescatalog-0001-select-array_to_string-subpublications-from-pg_catalog.pg_subscription"},
 				},
 			},
 		},

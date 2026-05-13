@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestDropSequenceClearsCommentRepro reproduces a metadata persistence bug:
@@ -42,8 +40,7 @@ func TestDropSequenceClearsCommentRepro(t *testing.T) {
 				{
 					Query: `SELECT obj_description(
 						'drop_recreate_comment_sequence'::regclass,
-						'pg_class');`,
-					Expected: []sql.Row{{nil}},
+						'pg_class');`, PostgresOracle: ScriptTestPostgresOracle{ID: "sequence-comment-drop-repro-test-testdropsequenceclearscommentrepro-0001-select-obj_description-drop_recreate_comment_sequence-::regclass-pg_class"},
 				},
 			},
 		},

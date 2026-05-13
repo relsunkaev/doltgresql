@@ -27,16 +27,13 @@ func TestRegressions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select nullif(1, 1);",
-					Expected: []sql.Row{{nil}},
+					Query: "select nullif(1, 1);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0001-select-nullif-1-1"},
 				},
 				{
-					Query:    "select nullif('', null);",
-					Expected: []sql.Row{{""}},
+					Query: "select nullif('', null);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0002-select-nullif-null"},
 				},
 				{
-					Query:    "select nullif(10, 'a');",
-					Expected: []sql.Row{{10}},
+					Query: "select nullif(10, 'a');", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0003-select-nullif-10-a", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -45,16 +42,13 @@ func TestRegressions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select coalesce(null + 5, 100);",
-					Expected: []sql.Row{{100}},
+					Query: "select coalesce(null + 5, 100);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0004-select-coalesce-null-+-5"},
 				},
 				{
-					Query:    "select coalesce(null, null, 'abc');",
-					Expected: []sql.Row{{"abc"}},
+					Query: "select coalesce(null, null, 'abc');", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0005-select-coalesce-null-null-abc"},
 				},
 				{
-					Query:    "select coalesce(null, null);",
-					Expected: []sql.Row{{nil}},
+					Query: "select coalesce(null, null);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0006-select-coalesce-null-null"},
 				},
 			},
 		},
@@ -88,16 +82,13 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "select all count(*) from t1;",
-					Expected: []sql.Row{{4}},
+					Query: "select all count(*) from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0009-select-all-count-*-from"},
 				},
 				{
-					Query:    "select all count(distinct pk) from t1;",
-					Expected: []sql.Row{{3}},
+					Query: "select all count(distinct pk) from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0010-select-all-count-distinct-pk"},
 				},
 				{
-					Query:    "select all count(all pk) from t1;",
-					Expected: []sql.Row{{4}},
+					Query: "select all count(all pk) from t1;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0011-select-all-count-all-pk"},
 				},
 			},
 		},
@@ -111,22 +102,10 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "select * from t1 cross join t2 order by pk1, pk2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 4},
-						{2, 3},
-						{2, 4},
-					},
+					Query: "select * from t1 cross join t2 order by pk1, pk2;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0012-select-*-from-t1-cross"},
 				},
 				{
-					Query: "select * from t1, t2 order by pk1, pk2;",
-					Expected: []sql.Row{
-						{1, 3},
-						{1, 4},
-						{2, 3},
-						{2, 4},
-					},
+					Query: "select * from t1, t2 order by pk1, pk2;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0013-select-*-from-t1-t2"},
 				},
 			},
 		},
@@ -138,9 +117,9 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT ALL + 58 FROM tab0 WHERE NULL NOT BETWEEN + 71 * CAST ( NULL AS INTEGER ) AND col4",
-					Skip:     true, // TODO: need to implement casting NULL to a type with a CAST expression
-					Expected: []sql.Row{},
+					Query: "SELECT ALL + 58 FROM tab0 WHERE NULL NOT BETWEEN + 71 * CAST ( NULL AS INTEGER ) AND col4",
+					Skip:  true, PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0014-select-all-+-58-from"}, // TODO: need to implement casting NULL to a type with a CAST expression
+
 				},
 			},
 		},
@@ -152,9 +131,9 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT 1 IN (SELECT x+y FROM t1, t2);`,
-					Skip:     true, // Returns "int64(0)" instead of "false", need to implement "IN" as a Doltgres expression
-					Expected: []sql.Row{{false}},
+					Query: `SELECT 1 IN (SELECT x+y FROM t1, t2);`,
+					Skip:  true, PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0015-select-1-in-select-x+y"}, // Returns "int64(0)" instead of "false", need to implement "IN" as a Doltgres expression
+
 				},
 			},
 		},
@@ -172,8 +151,7 @@ func TestRegressions(t *testing.T) {
 					Expected: []sql.Row{},
 				},*/
 				{
-					Query:    "SELECT * FROM tab0 WHERE - - col0 * + - col4 >= ( + CAST ( col1 AS REAL ) );",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM tab0 WHERE - - col0 * + - col4 >= ( + CAST ( col1 AS REAL ) );", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0016-select-*-from-tab0-where"},
 				},
 			},
 		},
@@ -189,16 +167,13 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT ALL + col2 * + ( ( 43 ) ) - 47 + + col1 * CAST ( - ( + 63 ) / col0 AS INTEGER ) AS col0 FROM tab1 AS cor0;",
-					Expected: []sql.Row{{2490}, {4067}, {2877}},
+					Query: "SELECT ALL + col2 * + ( ( 43 ) ) - 47 + + col1 * CAST ( - ( + 63 ) / col0 AS INTEGER ) AS col0 FROM tab1 AS cor0;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0017-select-all-+-col2-*"},
 				},
 				{
-					Query:    "SELECT - COUNT ( * ) - 26 * + 96 AS col2 FROM tab0 WHERE + 2 * col0 NOT BETWEEN 33 * CAST ( + 7 / 91 AS REAL ) AND 52;",
-					Expected: []sql.Row{{-2498}},
+					Query: "SELECT - COUNT ( * ) - 26 * + 96 AS col2 FROM tab0 WHERE + 2 * col0 NOT BETWEEN 33 * CAST ( + 7 / 91 AS REAL ) AND 52;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0018-select-count-*-26-*"},
 				},
 				{
-					Query:    "SELECT CAST ( + CAST ( 73 AS REAL ) AS INTEGER ) * 62 FROM tab2 WHERE NULL IS NULL;",
-					Expected: []sql.Row{{4526}, {4526}, {4526}},
+					Query: "SELECT CAST ( + CAST ( 73 AS REAL ) AS INTEGER ) * 62 FROM tab2 WHERE NULL IS NULL;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0019-select-cast-+-cast-73"},
 				},
 			},
 		},
@@ -206,12 +181,10 @@ func TestRegressions(t *testing.T) {
 			Name: "SERIAL type column definition",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE TABLE sbtest1(id SERIAL, k INTEGER DEFAULT '0' NOT NULL, c CHAR(120) DEFAULT '' NOT NULL, pad CHAR(60) DEFAULT '' NOT NULL, PRIMARY KEY (id));",
-					Expected: []sql.Row{},
+					Query: "CREATE TABLE sbtest1(id SERIAL, k INTEGER DEFAULT '0' NOT NULL, c CHAR(120) DEFAULT '' NOT NULL, pad CHAR(60) DEFAULT '' NOT NULL, PRIMARY KEY (id));", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0020-create-table-sbtest1-id-serial"},
 				},
 				{
-					Query:    "INSERT INTO sbtest1(k, c, pad) VALUES(4284, '8386864191', '67847967371'),(9261, '339736817', '3861551598704');",
-					Expected: []sql.Row{},
+					Query: "INSERT INTO sbtest1(k, c, pad) VALUES(4284, '8386864191', '67847967371'),(9261, '339736817', '3861551598704');", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0021-insert-into-sbtest1-k-c"},
 				},
 			},
 		},
@@ -223,12 +196,10 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT ALL - col0 * CAST ( col0 AS REAL ) + col1 + CAST ( NULL AS INTEGER ) AS col0 FROM tab2 AS cor0;",
-					Expected: []sql.Row{{nil}, {nil}, {nil}},
+					Query: "SELECT ALL - col0 * CAST ( col0 AS REAL ) + col1 + CAST ( NULL AS INTEGER ) AS col0 FROM tab2 AS cor0;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0022-select-all-col0-*-cast"},
 				},
 				{
-					Query:    "select 1.2 + cast ( null as integer );",
-					Expected: []sql.Row{{nil}},
+					Query: "select 1.2 + cast ( null as integer );", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0023-select-1.2-+-cast-null"},
 				},
 			},
 		},
@@ -240,8 +211,7 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "SELECT * FROM J1_TBL INNER JOIN J2_TBL USING (i);",
-					Expected: []sql.Row{},
+					Query: "SELECT * FROM J1_TBL INNER JOIN J2_TBL USING (i);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0024-select-*-from-j1_tbl-inner"},
 				},
 			},
 		},
@@ -250,20 +220,16 @@ func TestRegressions(t *testing.T) {
 			SetUpScript: []string{},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "select jsonb_array_elements('1'::jsonb);",
-					ExpectedErr: "cannot extract elements from a scalar",
+					Query: "select jsonb_array_elements('1'::jsonb);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0025-select-jsonb_array_elements-1-::jsonb", Compare: "sqlstate"},
 				},
 				{
-					Query:       "select json_array_elements('1'::json);",
-					ExpectedErr: "cannot extract elements from a scalar",
+					Query: "select json_array_elements('1'::json);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0026-select-json_array_elements-1-::json", Compare: "sqlstate"},
 				},
 				{
-					Query:    "select count(*) from jsonb_array_elements('[]'::jsonb);",
-					Expected: []sql.Row{{0}},
+					Query: "select count(*) from jsonb_array_elements('[]'::jsonb);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0027-select-count-*-from-jsonb_array_elements"},
 				},
 				{
-					Query:    "select count(*) from json_array_elements('[]'::json);",
-					Expected: []sql.Row{{0}},
+					Query: "select count(*) from json_array_elements('[]'::json);", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0028-select-count-*-from-json_array_elements"},
 				},
 			},
 		},
@@ -275,8 +241,7 @@ func TestRegressions(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    "CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl;",
-					Expected: []sql.Row{},
+					Query: "CREATE VIEW rw_view15 AS SELECT a, upper(b) FROM base_tbl;", PostgresOracle: ScriptTestPostgresOracle{ID: "regression-test-testregressions-0029-create-view-rw_view15-as-select"},
 				},
 			},
 		},

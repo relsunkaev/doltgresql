@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 func TestRollbackRevertsDisableRowLevelSecurityRepro(t *testing.T) {
@@ -47,9 +45,9 @@ func TestRollbackRevertsDisableRowLevelSecurityRepro(t *testing.T) {
 					Query: `SELECT id, label
 						FROM rollback_disable_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rollback_disable_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-disable-transaction-repro-test-testrollbackrevertsdisablerowlevelsecurityrepro-0001-select-id-label-from-rollback_disable_rls_docs"},
 				},
 				{
 					Query: `BEGIN;`,
@@ -63,16 +61,15 @@ func TestRollbackRevertsDisableRowLevelSecurityRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rollback_disable_rls_docs'::regclass;`,
-					Expected: []sql.Row{{"t"}},
+						WHERE oid = 'rollback_disable_rls_docs'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-disable-transaction-repro-test-testrollbackrevertsdisablerowlevelsecurityrepro-0002-select-relrowsecurity-from-pg_catalog.pg_class-where"},
 				},
 				{
 					Query: `SELECT id, label
 						FROM rollback_disable_rls_docs
 						ORDER BY id;`,
-					Expected: []sql.Row{{1, "visible"}},
+
 					Username: `rollback_disable_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-disable-transaction-repro-test-testrollbackrevertsdisablerowlevelsecurityrepro-0003-select-id-label-from-rollback_disable_rls_docs"},
 				},
 			},
 		},

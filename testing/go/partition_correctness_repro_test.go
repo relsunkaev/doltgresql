@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestCreateTablePartitionByPersistsPartitionMetadataRepro reproduces a
@@ -37,8 +35,7 @@ func TestCreateTablePartitionByPersistsPartitionMetadataRepro(t *testing.T) {
 				{
 					Query: `SELECT relkind, pg_get_partkeydef(oid)
 						FROM pg_catalog.pg_class
-						WHERE oid = 'partition_catalog_parent'::regclass;`,
-					Expected: []sql.Row{{"p", "LIST (id)"}},
+						WHERE oid = 'partition_catalog_parent'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "partition-correctness-repro-test-testcreatetablepartitionbypersistspartitionmetadatarepro-0001-select-relkind-pg_get_partkeydef-oid-from"},
 				},
 			},
 		},
@@ -61,8 +58,7 @@ func TestPartitionedTableWithoutPartitionRejectsInsertRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO partition_insert_parent VALUES (1, 'a');`,
-					ExpectedErr: `no partition of relation`,
+					Query: `INSERT INTO partition_insert_parent VALUES (1, 'a');`, PostgresOracle: ScriptTestPostgresOracle{ID: "partition-correctness-repro-test-testpartitionedtablewithoutpartitionrejectsinsertrepro-0001-insert-into-partition_insert_parent-values-1", Compare: "sqlstate"},
 				},
 			},
 		},

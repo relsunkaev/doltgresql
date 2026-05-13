@@ -37,8 +37,7 @@ func TestIcuCollationUniqueConstraintUsesCollationEqualityRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `INSERT INTO collation_unique_items VALUES ('ABC');`,
-					ExpectedErr: `duplicate key value violates unique constraint`,
+					Query: `INSERT INTO collation_unique_items VALUES ('ABC');`, PostgresOracle: ScriptTestPostgresOracle{ID: "collation-correctness-repro-test-testicucollationuniqueconstraintusescollationequalityrepro-0001-insert-into-collation_unique_items-values-abc", Compare: "sqlstate"},
 				},
 			},
 		},

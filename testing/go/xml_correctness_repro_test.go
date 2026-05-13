@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestXmlTypeColumnCreationRepro reproduces an XML type compatibility gap:
@@ -47,8 +45,7 @@ func TestXmlParseDocumentRepro(t *testing.T) {
 			Name: "XMLPARSE document returns XML text",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT XMLPARSE(DOCUMENT '<doc/>')::text;`,
-					Expected: []sql.Row{{"<doc/>"}},
+					Query: `SELECT XMLPARSE(DOCUMENT '<doc/>')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmlparsedocumentrepro-0001-select-xmlparse-document-<doc/>-::text"},
 				},
 			},
 		},
@@ -64,8 +61,7 @@ func TestXmlTextFunctionRepro(t *testing.T) {
 			Name: "xmltext escapes XML text-node content",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT xmltext('< foo & bar >')::text;`,
-					Expected: []sql.Row{{"&lt; foo &amp; bar &gt;"}},
+					Query: `SELECT xmltext('< foo & bar >')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmltextfunctionrepro-0001-select-xmltext-<-foo-&", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -80,8 +76,7 @@ func TestXmlCommentFunctionRepro(t *testing.T) {
 			Name: "xmlcomment constructs XML comments",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT xmlcomment('hello')::text;`,
-					Expected: []sql.Row{{"<!--hello-->"}},
+					Query: `SELECT xmlcomment('hello')::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmlcommentfunctionrepro-0001-select-xmlcomment-hello-::text"},
 				},
 			},
 		},
@@ -96,8 +91,7 @@ func TestXmlElementFunctionRepro(t *testing.T) {
 			Name: "xmlelement constructs XML elements",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT xmlelement(name foo)::text;`,
-					Expected: []sql.Row{{"<foo/>"}},
+					Query: `SELECT xmlelement(name foo)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmlelementfunctionrepro-0001-select-xmlelement-name-foo-::text"},
 				},
 			},
 		},
@@ -113,8 +107,7 @@ func TestXmlForestFunctionRepro(t *testing.T) {
 			Name: "xmlforest constructs XML fragments",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT xmlforest('abc' AS foo, 123 AS bar)::text;`,
-					Expected: []sql.Row{{"<foo>abc</foo><bar>123</bar>"}},
+					Query: `SELECT xmlforest('abc' AS foo, 123 AS bar)::text;`, PostgresOracle: ScriptTestPostgresOracle{ID: "xml-correctness-repro-test-testxmlforestfunctionrepro-0001-select-xmlforest-abc-as-foo"},
 				},
 			},
 		},

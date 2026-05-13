@@ -50,8 +50,7 @@ func TestCreateDatabase(t *testing.T) {
 			Name: "invalid encoding",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       "CREATE DATABASE testdb3 encoding=notexist",
-					ExpectedErr: "not a valid encoding name",
+					Query: "CREATE DATABASE testdb3 encoding=notexist", PostgresOracle: ScriptTestPostgresOracle{ID: "create-database-test-testcreatedatabase-0001-create-database-testdb3-encoding=notexist", Compare: "sqlstate"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgStatUserIndexesProbe pins pg_stat_user_indexes row shape and live
@@ -40,8 +38,7 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 					// secondary).
 					Query: `SELECT count(*)::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts';`,
-					Expected: []sql.Row{{"2"}},
+						WHERE relname = 'accounts';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0001-select-count-*-::text-from"},
 				},
 				{
 					// Counter columns are queryable in the exact
@@ -53,47 +50,31 @@ func TestPgStatUserIndexesProbe(t *testing.T) {
 							SELECT idx_scan, idx_tup_read, idx_tup_fetch
 							FROM pg_stat_user_indexes
 							WHERE relname = 'accounts'
-					) t;`,
-					Expected: []sql.Row{{"2"}},
+					) t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0002-select-count-*-::text-from"},
 				},
 				{
 					Query: `SELECT idx_scan::text, (last_idx_scan IS NULL)::text, idx_tup_read::text, idx_tup_fetch::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
-					Expected: []sql.Row{{"0", "true", "0", "0"}},
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0003-select-idx_scan::text-last_idx_scan-is-null"},
 				},
 				{
-					Query: `EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';`,
-					Expected: []sql.Row{
-						{"Project"},
-						{" ├─ columns: [accounts.id]"},
-						{" └─ IndexedTableAccess(accounts)"},
-						{"     ├─ index: [accounts.email]"},
-						{"     ├─ filters: [{[a@example.com, a@example.com]}]"},
-						{"     └─ columns: [id email]"},
-					},
+					Query: `EXPLAIN SELECT id FROM accounts WHERE email = 'a@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0004-explain-select-id-from-accounts"},
 				},
 				{
-					Query: `SELECT id FROM accounts WHERE email = 'a@example.com';`,
-					Expected: []sql.Row{
-						{1},
-					},
+					Query: `SELECT id FROM accounts WHERE email = 'a@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0005-select-id-from-accounts-where"},
 				},
 				{
 					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
-					Expected: []sql.Row{{"1", "true", "1", "1"}},
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0006-select-idx_scan::text-last_idx_scan-is-not"},
 				},
 				{
-					Query:    `SELECT id FROM accounts WHERE email = 'missing@example.com';`,
-					Expected: []sql.Row{},
+					Query: `SELECT id FROM accounts WHERE email = 'missing@example.com';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0007-select-id-from-accounts-where"},
 				},
 				{
 					Query: `SELECT idx_scan::text, (last_idx_scan IS NOT NULL)::text, idx_tup_read::text, idx_tup_fetch::text
 						FROM pg_stat_user_indexes
-						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`,
-					Expected: []sql.Row{{"2", "true", "1", "1"}},
+						WHERE relname = 'accounts' AND indexrelname = 'accounts_email_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-stat-user-indexes-probe-test-testpgstatuserindexesprobe-0008-select-idx_scan::text-last_idx_scan-is-not"},
 				},
 			},
 		},

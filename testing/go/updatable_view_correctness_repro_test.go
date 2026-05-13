@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSimpleUpdatableViewInsertWritesBaseTableRepro reproduces an automatic
@@ -42,8 +40,7 @@ func TestSimpleUpdatableViewInsertWritesBaseTableRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM updatable_view_insert_base;`,
-					Expected: []sql.Row{{1, "inserted"}},
+						FROM updatable_view_insert_base;`, PostgresOracle: ScriptTestPostgresOracle{ID: "updatable-view-correctness-repro-test-testsimpleupdatableviewinsertwritesbasetablerepro-0001-select-id-label-from-updatable_view_insert_base"},
 				},
 			},
 		},
@@ -74,8 +71,7 @@ func TestSimpleUpdatableViewUpdateWritesBaseTableRepro(t *testing.T) {
 				},
 				{
 					Query: `SELECT id, label
-						FROM updatable_view_update_base;`,
-					Expected: []sql.Row{{1, "updated"}},
+						FROM updatable_view_update_base;`, PostgresOracle: ScriptTestPostgresOracle{ID: "updatable-view-correctness-repro-test-testsimpleupdatableviewupdatewritesbasetablerepro-0001-select-id-label-from-updatable_view_update_base"},
 				},
 			},
 		},
@@ -107,8 +103,7 @@ func TestSimpleUpdatableViewDeleteWritesBaseTableRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM updatable_view_delete_base
-						ORDER BY id;`,
-					Expected: []sql.Row{{2, "keep me"}},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "updatable-view-correctness-repro-test-testsimpleupdatableviewdeletewritesbasetablerepro-0001-select-id-label-from-updatable_view_delete_base"},
 				},
 			},
 		},

@@ -3759,36 +3759,19 @@ func TestSameTypes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test1 ORDER BY 1;",
-					Expected: []sql.Row{
-						{1, 2, 3},
-						{4, 5, 6},
-					},
+					Query: "SELECT * FROM test1 ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0001-select-*-from-test1-order"},
 				},
 				{
-					Query: "SELECT * FROM test1 ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 2, 3},
-						{4, 5, 6},
-					},
+					Query: "SELECT * FROM test1 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0002-select-*-from-test1-order"},
 				},
 				{
-					Query: "SELECT * FROM test2 ORDER BY 1;",
-					Expected: []sql.Row{
-						{1, 2, 3},
-						{4, 5, 6},
-					},
+					Query: "SELECT * FROM test2 ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0003-select-*-from-test2-order"},
 				},
 				{
-					Query: "SELECT * FROM test2 ORDER BY v1;",
-					Expected: []sql.Row{
-						{1, 2, 3},
-						{4, 5, 6},
-					},
+					Query: "SELECT * FROM test2 ORDER BY v1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0004-select-*-from-test2-order"},
 				},
 				{
-					Query:    "select int2 '2', int4 '3', int8 '4'",
-					Expected: []sql.Row{{2, 3, 4}},
+					Query: "select int2 '2', int4 '3', int8 '4'", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0005-select-int2-2-int4-3"},
 				},
 			},
 		},
@@ -3800,12 +3783,7 @@ func TestSameTypes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test ORDER BY 1;",
-					Expected: []sql.Row{
-						{Numeric("14854.5"), Numeric("2504.25")},
-						{Numeric("21525.0"), Numeric("134574.70")},
-						{Numeric("566821525.5"), Numeric("735134574.75")},
-					},
+					Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0006-select-*-from-test-order"},
 				},
 			},
 		},
@@ -3819,18 +3797,10 @@ func TestSameTypes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test1 ORDER BY 1;",
-					Expected: []sql.Row{
-						{10.125, 20.4},
-						{40.875, 81.6},
-					},
+					Query: "SELECT * FROM test1 ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0007-select-*-from-test1-order"},
 				},
 				{
-					Query: "SELECT * FROM test2 ORDER BY 1;",
-					Expected: []sql.Row{
-						{10.125, 20.4},
-						{40.875, 81.6},
-					},
+					Query: "SELECT * FROM test2 ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0008-select-*-from-test2-order"},
 				},
 			},
 		},
@@ -3843,10 +3813,7 @@ func TestSameTypes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test ORDER BY 1;",
-					Expected: []sql.Row{
-						{"1986-08-02 17:04:22", "2023-09-03"},
-					},
+					Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0009-select-*-from-test-order"},
 				},
 			},
 		},
@@ -3860,11 +3827,7 @@ func TestSameTypes(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: "SELECT * FROM test ORDER BY 1;",
-					Expected: []sql.Row{
-						{"abc", "def", "ghi"},
-						{"jkl", "mno", "pqr"},
-					},
+					Query: "SELECT * FROM test ORDER BY 1;", PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testsametypes-0010-select-*-from-test-order"},
 				},
 			},
 		},
@@ -4031,20 +3994,16 @@ func TestShellTypes(t *testing.T) {
 			Name: "shell type use cases",
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CREATE TYPE undefined_type;`,
-					Expected: []sql.Row{},
+					Query: `CREATE TYPE undefined_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testshelltypes-0001-create-type-undefined_type"},
 				},
 				{
-					Query:       `select 1::undefined_type;`,
-					ExpectedErr: `type "undefined_type" is only a shell`,
+					Query: `select 1::undefined_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testshelltypes-0002-select-1::undefined_type", Compare: "sqlstate"},
 				},
 				{
-					Query:    `DROP TYPE undefined_type;`,
-					Expected: []sql.Row{},
+					Query: `DROP TYPE undefined_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testshelltypes-0003-drop-type-undefined_type"},
 				},
 				{
-					Query:    `DROP TYPE IF EXISTS undefined_type;`,
-					Expected: []sql.Row{},
+					Query: `DROP TYPE IF EXISTS undefined_type;`, PostgresOracle: ScriptTestPostgresOracle{ID: "types-test-testshelltypes-0004-drop-type-if-exists-undefined_type"},
 				},
 			},
 		},

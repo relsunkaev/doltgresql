@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestSqlMergeUpdateAndInsertRepro reproduces a PostgreSQL 15 compatibility
@@ -52,12 +50,7 @@ func TestSqlMergeUpdateAndInsertRepro(t *testing.T) {
 				{
 					Query: `SELECT id, label
 						FROM sql_merge_target
-						ORDER BY id;`,
-					Expected: []sql.Row{
-						{1, "updated"},
-						{2, "keep"},
-						{3, "inserted"},
-					},
+						ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "sql-merge-repro-test-testsqlmergeupdateandinsertrepro-0001-select-id-label-from-sql_merge_target"},
 				},
 			},
 		},

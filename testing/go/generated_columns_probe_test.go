@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestGeneratedColumnsProbe pins how far PG `GENERATED ALWAYS AS (...)
@@ -38,11 +36,7 @@ func TestGeneratedColumnsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query: `SELECT id, area FROM rectangles ORDER BY id;`,
-					Expected: []sql.Row{
-						{int32(1), int32(20)},
-						{int32(2), int32(6)},
-					},
+					Query: `SELECT id, area FROM rectangles ORDER BY id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-columns-probe-test-testgeneratedcolumnsprobe-0001-select-id-area-from-rectangles"},
 				},
 			},
 		},
@@ -62,12 +56,7 @@ func TestGeneratedColumnsProbe(t *testing.T) {
 					Query: `SELECT column_name, is_generated
 						FROM information_schema.columns
 						WHERE table_name = 'box'
-						ORDER BY ordinal_position;`,
-					Expected: []sql.Row{
-						{"id", "NEVER"},
-						{"side", "NEVER"},
-						{"area", "ALWAYS"},
-					},
+						ORDER BY ordinal_position;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-columns-probe-test-testgeneratedcolumnsprobe-0002-select-column_name-is_generated-from-information_schema.columns"},
 				},
 			},
 		},
@@ -84,16 +73,13 @@ func TestGeneratedColumnsProbe(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `SELECT total FROM prices WHERE id = 1;`,
-					Expected: []sql.Row{{int32(110)}},
+					Query: `SELECT total FROM prices WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-columns-probe-test-testgeneratedcolumnsprobe-0003-select-total-from-prices-where"},
 				},
 				{
-					Query:    `UPDATE prices SET tax_pct = 20 WHERE id = 1;`,
-					Expected: []sql.Row{},
+					Query: `UPDATE prices SET tax_pct = 20 WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-columns-probe-test-testgeneratedcolumnsprobe-0004-update-prices-set-tax_pct-="},
 				},
 				{
-					Query:    `SELECT total FROM prices WHERE id = 1;`,
-					Expected: []sql.Row{{int32(120)}},
+					Query: `SELECT total FROM prices WHERE id = 1;`, PostgresOracle: ScriptTestPostgresOracle{ID: "generated-columns-probe-test-testgeneratedcolumnsprobe-0005-select-total-from-prices-where"},
 				},
 			},
 		},

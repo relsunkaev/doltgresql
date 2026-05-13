@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAlterProcedureRenameRepro reproduces a routine DDL correctness bug:
@@ -44,12 +42,10 @@ func TestAlterProcedureRenameRepro(t *testing.T) {
 					Query: `CALL rename_procedure_new();`,
 				},
 				{
-					Query:    `SELECT value FROM rename_procedure_audit;`,
-					Expected: []sql.Row{{7}},
+					Query: `SELECT value FROM rename_procedure_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0001-select-value-from-rename_procedure_audit"},
 				},
 				{
-					Query:       `CALL rename_procedure_old();`,
-					ExpectedErr: `does not exist`,
+					Query: `CALL rename_procedure_old();`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testalterprocedurerenamerepro-0002-call-rename_procedure_old", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -69,8 +65,7 @@ func TestProcedureOutArgumentsReturnRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CALL proc_inout_value(5);`,
-					Expected: []sql.Row{{12}},
+					Query: `CALL proc_inout_value(5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0001-call-proc_inout_value-5"},
 				},
 			},
 		},
@@ -83,8 +78,7 @@ func TestProcedureOutArgumentsReturnRowsRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:    `CALL proc_out_value(7, NULL);`,
-					Expected: []sql.Row{{14}},
+					Query: `CALL proc_out_value(7, NULL);`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testprocedureoutargumentsreturnrowsrepro-0002-call-proc_out_value-7-null"},
 				},
 			},
 		},
@@ -114,8 +108,7 @@ func TestProcedureCallNamedArgumentsRepro(t *testing.T) {
 					Query: `CALL proc_named_call(label_arg => 'custom', value_arg => 7);`,
 				},
 				{
-					Query:    `SELECT value_seen, label_seen FROM proc_named_call_audit;`,
-					Expected: []sql.Row{{7, "custom"}},
+					Query: `SELECT value_seen, label_seen FROM proc_named_call_audit;`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testprocedurecallnamedargumentsrepro-0001-select-value_seen-label_seen-from-proc_named_call_audit"},
 				},
 			},
 		},
@@ -153,14 +146,12 @@ func TestProcedureSetSearchPathOptionAppliesDuringExecutionRepro(t *testing.T) {
 					Query: `CALL procedure_set_path_insert();`,
 				},
 				{
-					Query:    `SELECT current_setting('search_path');`,
-					Expected: []sql.Row{{"dg_proc_set_attacker, public"}},
+					Query: `SELECT current_setting('search_path');`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0001-select-current_setting-search_path"},
 				},
 				{
 					Query: `SELECT
 						(SELECT count(*) FROM dg_proc_set_safe.audit_items),
-						(SELECT count(*) FROM dg_proc_set_attacker.audit_items);`,
-					Expected: []sql.Row{{int64(1), int64(0)}},
+						(SELECT count(*) FROM dg_proc_set_attacker.audit_items);`, PostgresOracle: ScriptTestPostgresOracle{ID: "procedure-argument-modes-repro-test-testproceduresetsearchpathoptionappliesduringexecutionrepro-0002-select-select-count-*-from"},
 				},
 			},
 		},

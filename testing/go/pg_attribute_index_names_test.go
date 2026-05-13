@@ -15,7 +15,6 @@
 package _go
 
 import (
-	"github.com/dolthub/go-mysql-server/sql"
 	"testing"
 )
 
@@ -42,8 +41,7 @@ func TestPgAttributeIndexAttributeNames(t *testing.T) {
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 't_idxnames_code_idx'
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{{"code"}},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-attribute-index-names-test-testpgattributeindexattributenames-0001-select-a.attname-from-pg_catalog.pg_attribute-a"},
 				},
 				{
 					// Multi-column index: attnames should be 'hits', 'code'
@@ -52,11 +50,7 @@ ORDER BY a.attnum;`,
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 't_idxnames_multi_idx'
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{
-						{"hits"},
-						{"code"},
-					},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-attribute-index-names-test-testpgattributeindexattributenames-0002-select-a.attname-from-pg_catalog.pg_attribute-a"},
 				},
 				{
 					// PK index attname is 'id'.
@@ -64,8 +58,7 @@ ORDER BY a.attnum;`,
 FROM pg_catalog.pg_attribute a
 JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
 WHERE c.relname = 't_idxnames_pkey'
-ORDER BY a.attnum;`,
-					Expected: []sql.Row{{"id"}},
+ORDER BY a.attnum;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-attribute-index-names-test-testpgattributeindexattributenames-0003-select-a.attname-from-pg_catalog.pg_attribute-a"},
 				},
 			},
 		},

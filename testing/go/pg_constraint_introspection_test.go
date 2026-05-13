@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgConstraintIntrospectionForORMs pins the exact PK and unique
@@ -47,11 +45,7 @@ JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema,
 JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
   AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
 WHERE tc.table_name = 'customers' and constraint_schema = 'public'
-ORDER BY constraint_type, constraint_name, c.column_name;`,
-					Expected: []sql.Row{
-						{"id", "integer", "PRIMARY KEY", "customers_pkey", "public"},
-						{"email", "text", "UNIQUE", "customers_email_key", "public"},
-					},
+ORDER BY constraint_type, constraint_name, c.column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-constraint-introspection-test-testpgconstraintintrospectionfororms-0001-select-c.column_name-c.data_type-constraint_type-constraint_name"},
 				},
 			},
 		},
@@ -68,20 +62,13 @@ JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema,
 JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
   AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
 WHERE tc.table_name = 'order_items' and constraint_schema = 'public'
-ORDER BY c.column_name;`,
-					Expected: []sql.Row{
-						{"line_no", "integer", "PRIMARY KEY", "order_items_pkey", "public"},
-						{"order_id", "integer", "PRIMARY KEY", "order_items_pkey", "public"},
-					},
+ORDER BY c.column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-constraint-introspection-test-testpgconstraintintrospectionfororms-0002-select-c.column_name-c.data_type-constraint_type-constraint_name"},
 				},
 				{
 					// drizzle-kit's composite-PK lookup against pg_constraint.
 					Query: `SELECT conname AS primary_key
 FROM pg_constraint join pg_class on (pg_class.oid = conrelid)
-WHERE contype = 'p' AND connamespace = 'public'::regnamespace AND pg_class.relname = 'order_items';`,
-					Expected: []sql.Row{
-						{"order_items_pkey"},
-					},
+WHERE contype = 'p' AND connamespace = 'public'::regnamespace AND pg_class.relname = 'order_items';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-constraint-introspection-test-testpgconstraintintrospectionfororms-0003-select-conname-as-primary_key-from"},
 				},
 			},
 		},
@@ -98,10 +85,7 @@ JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema,
 JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
   AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
 WHERE tc.table_name = 'customers' and constraint_schema = 'public' AND constraint_type = 'UNIQUE'
-ORDER BY c.column_name;`,
-					Expected: []sql.Row{
-						{"email", "text", "UNIQUE", "customers_email_key", "public"},
-					},
+ORDER BY c.column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-constraint-introspection-test-testpgconstraintintrospectionfororms-0004-select-c.column_name-c.data_type-constraint_type-constraint_name"},
 				},
 			},
 		},
@@ -140,22 +124,7 @@ JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = 
 WHERE constraint_type = 'FOREIGN KEY'
   AND tc.table_name = 'seq_items'
   AND tc.table_catalog = 'postgres'
-ORDER BY tc.constraint_name, kcu.column_name;`,
-					Expected: []sql.Row{{
-						"seq_items_account_id_fkey",
-						"public",
-						"postgres",
-						"seq_items",
-						"public",
-						"postgres",
-						"YES",
-						"YES",
-						"account_id",
-						"public",
-						"postgres",
-						"seq_accounts",
-						"id",
-					}},
+ORDER BY tc.constraint_name, kcu.column_name;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-constraint-introspection-test-testpgconstraintintrospectionfororms-0005-select-distinct-tc.constraint_name-tc.constraint_schema-tc.constraint_catalog", ColumnModes: []string{"structural", "schema", "structural", "structural", "schema", "structural", "structural", "structural", "structural", "schema"}},
 				},
 			},
 		},

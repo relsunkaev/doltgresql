@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAggregateFilter pins the aggregate FILTER (WHERE pred) shapes that
@@ -47,16 +45,14 @@ func TestAggregateFilter(t *testing.T) {
 						count(*) AS total,
 						count(*) FILTER (WHERE status = 'paid') AS paid_count,
 						count(*) FILTER (WHERE status = 'pending') AS pending_count
-					FROM orders;`,
-					Expected: []sql.Row{{int64(5), int64(3), int64(1)}},
+					FROM orders;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-filter-test-testaggregatefilter-0001-select-count-*-as-total"},
 				},
 				{
 					Query: `SELECT
 						sum(amount)::text AS total_revenue,
 						sum(amount) FILTER (WHERE status = 'paid')::text AS paid_revenue,
 						sum(amount) FILTER (WHERE status = 'cancelled')::text AS cancelled_revenue
-					FROM orders;`,
-					Expected: []sql.Row{{"450", "325", "75"}},
+					FROM orders;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-filter-test-testaggregatefilter-0002-select-sum-amount-::text-as"},
 				},
 			},
 		},
@@ -83,11 +79,7 @@ func TestAggregateFilter(t *testing.T) {
 						sum(n) FILTER (WHERE kind = 'view')::text AS views
 					FROM events
 					GROUP BY day
-					ORDER BY day;`,
-					Expected: []sql.Row{
-						{"2026-05-01", "15", "100"},
-						{"2026-05-02", "20", "200"},
-					},
+					ORDER BY day;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-filter-test-testaggregatefilter-0003-select-day-sum-n-filter"},
 				},
 			},
 		},
@@ -102,8 +94,7 @@ func TestAggregateFilter(t *testing.T) {
 					Query: `SELECT
 						sum(v) FILTER (WHERE k > 100) AS no_match,
 						count(*) FILTER (WHERE k > 100) AS no_match_count
-					FROM t;`,
-					Expected: []sql.Row{{nil, int64(0)}},
+					FROM t;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-filter-test-testaggregatefilter-0004-select-sum-v-filter-where"},
 				},
 			},
 		},
@@ -130,11 +121,7 @@ func TestAggregateFilter(t *testing.T) {
 						(sum(amount) - COALESCE(sum(amount) FILTER (WHERE refunded), 0))::text AS net
 					FROM sales
 					GROUP BY region
-					ORDER BY region;`,
-					Expected: []sql.Row{
-						{"EU", "50"},
-						{"US", "400"},
-					},
+					ORDER BY region;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-filter-test-testaggregatefilter-0005-select-region-sum-amount-coalesce"},
 				},
 			},
 		},

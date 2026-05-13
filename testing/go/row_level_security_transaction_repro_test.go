@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestRollbackRevertsRowLevelSecurityModeRepro reproduces a transaction
@@ -50,14 +48,13 @@ func TestRollbackRevertsRowLevelSecurityModeRepro(t *testing.T) {
 				{
 					Query: `SELECT relrowsecurity
 						FROM pg_catalog.pg_class
-						WHERE oid = 'rollback_rls_docs'::regclass;`,
-					Expected: []sql.Row{{"f"}},
+						WHERE oid = 'rollback_rls_docs'::regclass;`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0001-select-relrowsecurity-from-pg_catalog.pg_class-where"},
 				},
 				{
-					Query:    `SELECT id, label FROM rollback_rls_docs;`,
-					Expected: []sql.Row{{1, "visible"}},
+					Query: `SELECT id, label FROM rollback_rls_docs;`,
+
 					Username: `rollback_rls_reader`,
-					Password: `reader`,
+					Password: `reader`, PostgresOracle: ScriptTestPostgresOracle{ID: "row-level-security-transaction-repro-test-testrollbackrevertsrowlevelsecuritymoderepro-0002-select-id-label-from-rollback_rls_docs"},
 				},
 			},
 		},

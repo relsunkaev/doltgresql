@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestIncludeAndJsonbGinIndexProbe pins the DDL boundary for two
@@ -38,8 +36,7 @@ func TestIncludeAndJsonbGinIndexProbe(t *testing.T) {
 						ON orders (customer_id) INCLUDE (amount, status);`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'orders_customer_inc_amount_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'orders_customer_inc_amount_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "include-jsonb-gin-index-probe-test-testincludeandjsonbginindexprobe-0001-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -58,15 +55,13 @@ func TestIncludeAndJsonbGinIndexProbe(t *testing.T) {
 						ON events USING gin (payload);`,
 				},
 				{
-					Query:    `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'events_payload_gin_idx';`,
-					Expected: []sql.Row{{"1"}},
+					Query: `SELECT count(*)::text FROM pg_indexes WHERE indexname = 'events_payload_gin_idx';`, PostgresOracle: ScriptTestPostgresOracle{ID: "include-jsonb-gin-index-probe-test-testincludeandjsonbginindexprobe-0002-select-count-*-::text-from"},
 				},
 				{
 					// Containment subset that real apps issue:
 					// `payload @> '{"kind": "click"}'` should match
 					// rows 1 and 3.
-					Query:    `SELECT count(*)::text FROM events WHERE payload @> '{"kind": "click"}';`,
-					Expected: []sql.Row{{"2"}},
+					Query: `SELECT count(*)::text FROM events WHERE payload @> '{"kind": "click"}';`, PostgresOracle: ScriptTestPostgresOracle{ID: "include-jsonb-gin-index-probe-test-testincludeandjsonbginindexprobe-0003-select-count-*-::text-from"},
 				},
 			},
 		},

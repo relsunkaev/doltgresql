@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestFunctionDefaultArgumentCatalogRepro reproduces a routine catalog metadata
@@ -39,8 +37,7 @@ func TestFunctionDefaultArgumentCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pronargs::text, pronargdefaults::text, proargdefaults IS NOT NULL
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'default_arg_function';`,
-					Expected: []sql.Row{{"2", "1", true}},
+						WHERE proname = 'default_arg_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testfunctiondefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is"},
 				},
 			},
 		},
@@ -65,8 +62,7 @@ func TestProcedureDefaultArgumentCatalogRepro(t *testing.T) {
 				{
 					Query: `SELECT pronargs::text, pronargdefaults::text, proargdefaults IS NOT NULL
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'default_arg_procedure';`,
-					Expected: []sql.Row{{"2", "1", true}},
+						WHERE proname = 'default_arg_procedure';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testproceduredefaultargumentcatalogrepro-0001-select-pronargs::text-pronargdefaults::text-proargdefaults-is"},
 				},
 			},
 		},
@@ -93,8 +89,7 @@ func TestFunctionDefaultArgumentIntrospectionRepro(t *testing.T) {
 				{
 					Query: `SELECT pg_get_function_arg_default(p.oid, 1)
 						FROM pg_catalog.pg_proc p
-						WHERE p.proname = 'introspect_default_arg_function';`,
-					Expected: []sql.Row{{"2"}},
+						WHERE p.proname = 'introspect_default_arg_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testfunctiondefaultargumentintrospectionrepro-0001-select-pg_get_function_arg_default-p.oid-1-from"},
 				},
 			},
 		},
@@ -120,8 +115,7 @@ func TestFunctionDefaultArgumentAmbiguousOverloadRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `SELECT default_ambiguous_overload(5);`,
-					ExpectedErr: `not unique`,
+					Query: `SELECT default_ambiguous_overload(5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testfunctiondefaultargumentambiguousoverloadrepro-0001-select-default_ambiguous_overload-5", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -144,8 +138,7 @@ func TestProcedureDefaultArgumentAmbiguousOverloadRepro(t *testing.T) {
 			},
 			Assertions: []ScriptTestAssertion{
 				{
-					Query:       `CALL default_ambiguous_proc(5);`,
-					ExpectedErr: `not unique`,
+					Query: `CALL default_ambiguous_proc(5);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testproceduredefaultargumentambiguousoverloadrepro-0001-call-default_ambiguous_proc-5", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -167,24 +160,21 @@ func TestRoutineDefaultArgumentValidationRepro(t *testing.T) {
 					)
 					RETURNS INT
 					LANGUAGE SQL
-					AS $$ SELECT first_value + second_value $$;`,
-					ExpectedErr: `default`,
+					AS $$ SELECT first_value + second_value $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0001-create-function-default_before_required_function-first_value-int", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION out_default_function(
 						OUT result_value INT DEFAULT 1
 					)
 					LANGUAGE SQL
-					AS $$ SELECT 1 $$;`,
-					ExpectedErr: `default`,
+					AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0002-create-function-out_default_function-out-result_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE PROCEDURE out_default_procedure(
 						OUT result_value INT DEFAULT 1
 					)
 					LANGUAGE SQL
-					AS $$ SELECT 1 $$;`,
-					ExpectedErr: `default`,
+					AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0003-create-procedure-out_default_procedure-out-result_value", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE FUNCTION variadic_before_required_function(
@@ -193,8 +183,7 @@ func TestRoutineDefaultArgumentValidationRepro(t *testing.T) {
 					)
 					RETURNS INT
 					LANGUAGE SQL
-					AS $$ SELECT trailing_value $$;`,
-					ExpectedErr: `VARIADIC`,
+					AS $$ SELECT trailing_value $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0004-create-function-variadic_before_required_function-variadic-values_in", Compare: "sqlstate"},
 				},
 				{
 					Query: `CREATE PROCEDURE variadic_before_out_procedure(
@@ -202,8 +191,7 @@ func TestRoutineDefaultArgumentValidationRepro(t *testing.T) {
 						OUT result_value INT
 					)
 					LANGUAGE SQL
-					AS $$ SELECT 1 $$;`,
-					ExpectedErr: `VARIADIC`,
+					AS $$ SELECT 1 $$;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testroutinedefaultargumentvalidationrepro-0005-create-procedure-variadic_before_out_procedure-variadic-values_in", Compare: "sqlstate"},
 				},
 			},
 		},
@@ -228,12 +216,10 @@ func TestFunctionInoutArgumentCatalogRepro(t *testing.T) {
 							array_to_string(proargmodes, ','),
 							array_to_string(proargnames, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'catalog_inout_argument_function';`,
-					Expected: []sql.Row{{"1", "b", "value_seen"}},
+						WHERE proname = 'catalog_inout_argument_function';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string"},
 				},
 				{
-					Query:    `SELECT catalog_inout_argument_function(4);`,
-					Expected: []sql.Row{{5}},
+					Query: `SELECT catalog_inout_argument_function(4);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testfunctioninoutargumentcatalogrepro-0002-select-catalog_inout_argument_function-4"},
 				},
 			},
 		},
@@ -258,8 +244,7 @@ func TestProcedureInoutArgumentCatalogRepro(t *testing.T) {
 							array_to_string(proargmodes, ','),
 							array_to_string(proargnames, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'catalog_inout_argument_procedure';`,
-					Expected: []sql.Row{{"1", "b", "value_seen"}},
+						WHERE proname = 'catalog_inout_argument_procedure';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testprocedureinoutargumentcatalogrepro-0001-select-pronargs::text-array_to_string-proargmodes-array_to_string"},
 				},
 			},
 		},
@@ -283,16 +268,13 @@ func TestVariadicSqlFunctionCallRepro(t *testing.T) {
 				{
 					Query: `SELECT provariadic <> 0, array_to_string(proargmodes, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'variadic_sql_count';`,
-					Expected: []sql.Row{{true, "v"}},
+						WHERE proname = 'variadic_sql_count';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0001-select-provariadic-<>-0-array_to_string"},
 				},
 				{
-					Query:    `SELECT variadic_sql_count(1, 2, 3);`,
-					Expected: []sql.Row{{3}},
+					Query: `SELECT variadic_sql_count(1, 2, 3);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0002-select-variadic_sql_count-1-2-3"},
 				},
 				{
-					Query:    `SELECT variadic_sql_count(VARIADIC ARRAY[4, 5]);`,
-					Expected: []sql.Row{{2}},
+					Query: `SELECT variadic_sql_count(VARIADIC ARRAY[4, 5]);`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testvariadicsqlfunctioncallrepro-0003-select-variadic_sql_count-variadic-array[4-5]"},
 				},
 			},
 		},
@@ -317,8 +299,7 @@ func TestVariadicSqlProcedureCallRepro(t *testing.T) {
 				{
 					Query: `SELECT provariadic <> 0, array_to_string(proargmodes, ',')
 						FROM pg_catalog.pg_proc
-						WHERE proname = 'variadic_sql_proc';`,
-					Expected: []sql.Row{{true, "v"}},
+						WHERE proname = 'variadic_sql_proc';`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0001-select-provariadic-<>-0-array_to_string"},
 				},
 				{
 					Query: `CALL variadic_sql_proc(1, 2, 3);`,
@@ -327,8 +308,7 @@ func TestVariadicSqlProcedureCallRepro(t *testing.T) {
 					Query: `CALL variadic_sql_proc(VARIADIC ARRAY[4, 5]);`,
 				},
 				{
-					Query:    `SELECT value_seen FROM variadic_proc_audit ORDER BY value_seen;`,
-					Expected: []sql.Row{{2}, {3}},
+					Query: `SELECT value_seen FROM variadic_proc_audit ORDER BY value_seen;`, PostgresOracle: ScriptTestPostgresOracle{ID: "routine-argument-repro-test-testvariadicsqlprocedurecallrepro-0002-select-value_seen-from-variadic_proc_audit-order"},
 				},
 			},
 		},

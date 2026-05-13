@@ -38,8 +38,7 @@ func TestCreatePolicyRejectsDuplicatePolicyNameRepro(t *testing.T) {
 					Query: `CREATE POLICY rls_duplicate_policy_docs_select
 						ON rls_duplicate_policy_docs
 						FOR SELECT
-						USING (false);`,
-					ExpectedErr: `already exists`,
+						USING (false);`, PostgresOracle: ScriptTestPostgresOracle{ID: "rls-create-policy-rejects-duplicate-name", Compare: "sqlstate", Cleanup: []string{"DROP TABLE IF EXISTS rls_duplicate_policy_docs"}},
 				},
 			},
 		},

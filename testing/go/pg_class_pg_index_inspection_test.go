@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgClassPgIndexInspection pins low-level catalog inspection that
@@ -42,8 +40,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 						JOIN pg_namespace n ON c.relnamespace = n.oid
 						WHERE c.relname = 'widgets'
 							AND n.nspname = 'public'
-							AND c.relkind = 'r';`,
-					Expected: []sql.Row{{"1"}},
+							AND c.relkind = 'r';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0001-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -66,8 +63,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 						JOIN pg_class c ON i.indexrelid = c.oid
 						WHERE c.relname = 'accounts_pkey'
 							AND i.indisprimary = true
-							AND i.indisunique = true;`,
-					Expected: []sql.Row{{"1"}},
+							AND i.indisunique = true;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0002-select-count-*-::text-from"},
 				},
 				{
 					// Non-PK unique index: indisprimary=false,
@@ -77,8 +73,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 						JOIN pg_class c ON i.indexrelid = c.oid
 						WHERE c.relname = 'accounts_email_uidx'
 							AND i.indisprimary = false
-							AND i.indisunique = true;`,
-					Expected: []sql.Row{{"1"}},
+							AND i.indisunique = true;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0003-select-count-*-::text-from"},
 				},
 				{
 					// Non-unique secondary: indisunique=false.
@@ -86,8 +81,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 						FROM pg_index i
 						JOIN pg_class c ON i.indexrelid = c.oid
 						WHERE c.relname = 'accounts_phone_idx'
-							AND i.indisunique = false;`,
-					Expected: []sql.Row{{"1"}},
+							AND i.indisunique = false;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0004-select-count-*-::text-from"},
 				},
 			},
 		},
@@ -108,8 +102,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 					Query: `SELECT count(*)::text
 						FROM pg_index i
 						JOIN pg_class t ON i.indrelid = t.oid
-						WHERE t.relname = 'orders';`,
-					Expected: []sql.Row{{"3"}},
+						WHERE t.relname = 'orders';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0005-select-count-*-::text-from"},
 				},
 				{
 					// Index names round-trip via pg_class for the
@@ -119,12 +112,7 @@ func TestPgClassPgIndexInspection(t *testing.T) {
 						JOIN pg_class t  ON i.indrelid  = t.oid
 						JOIN pg_class ic ON i.indexrelid = ic.oid
 						WHERE t.relname = 'orders'
-						ORDER BY ic.relname;`,
-					Expected: []sql.Row{
-						{"orders_customer_idx"},
-						{"orders_pkey"},
-						{"orders_placed_idx"},
-					},
+						ORDER BY ic.relname;`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-class-pg-index-inspection-test-testpgclasspgindexinspection-0006-select-ic.relname-from-pg_index-i"},
 				},
 			},
 		},

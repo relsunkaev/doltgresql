@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestAggregateDistinct pins string_agg(DISTINCT ...) and
@@ -47,22 +45,18 @@ func TestAggregateDistinct(t *testing.T) {
 						length(string_agg(DISTINCT tag, '')) AS distinct_tag_chars
 						FROM tags
 						GROUP BY entity_id
-						ORDER BY entity_id;`,
-					Expected: []sql.Row{
-						{int32(1), int32(2)}, // {a, b}
-						{int32(2), int32(2)}, // {c, d}
-					},
+						ORDER BY entity_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-distinct-test-testaggregatedistinct-0001-select-entity_id-length-string_agg-distinct"},
+
+					// {a, b}
+					// {c, d}
+
 				},
 				{
 					Query: `SELECT entity_id,
 						string_agg(DISTINCT tag, ',' ORDER BY tag DESC) AS tags
 						FROM tags
 						GROUP BY entity_id
-						ORDER BY entity_id;`,
-					Expected: []sql.Row{
-						{int32(1), "b,a"},
-						{int32(2), "d,c"},
-					},
+						ORDER BY entity_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-distinct-test-testaggregatedistinct-0002-select-entity_id-string_agg-distinct-tag"},
 				},
 			},
 		},
@@ -87,22 +81,14 @@ func TestAggregateDistinct(t *testing.T) {
 						array_length(array_agg(DISTINCT group_id), 1) AS distinct_count
 						FROM memberships
 						GROUP BY user_id
-						ORDER BY user_id;`,
-					Expected: []sql.Row{
-						{int32(1), int32(2)},
-						{int32(2), int32(2)},
-					},
+						ORDER BY user_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-distinct-test-testaggregatedistinct-0003-select-user_id-array_length-array_agg-distinct"},
 				},
 				{
 					Query: `SELECT user_id,
 						array_agg(DISTINCT group_id ORDER BY group_id DESC) AS group_ids
 						FROM memberships
 						GROUP BY user_id
-						ORDER BY user_id;`,
-					Expected: []sql.Row{
-						{int32(1), "{20,10}"},
-						{int32(2), "{40,30}"},
-					},
+						ORDER BY user_id;`, PostgresOracle: ScriptTestPostgresOracle{ID: "aggregate-distinct-test-testaggregatedistinct-0004-select-user_id-array_agg-distinct-group_id"},
 				},
 			},
 		},

@@ -16,8 +16,6 @@ package _go
 
 import (
 	"testing"
-
-	"github.com/dolthub/go-mysql-server/sql"
 )
 
 // TestPgTriggerIntrospectionProbe pins what `pg_trigger` and
@@ -48,43 +46,28 @@ func TestPgTriggerIntrospectionProbe(t *testing.T) {
 					Query: `SELECT tgname, tgtype::int, tgenabled, tgisinternal,
 							tgnargs::int, pg_get_triggerdef(oid) <> ''
 						FROM pg_trigger
-						WHERE tgname = 'tg_audit_main';`,
-					Expected: []sql.Row{{
-						"tg_audit_main",
-						int32(5), // row-level AFTER INSERT
-						"O",
-						"f",
-						int32(0),
-						"t",
-					}},
+						WHERE tgname = 'tg_audit_main';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0001-select-tgname-tgtype::int-tgenabled-tgisinternal"},
+
+					// row-level AFTER INSERT
+
 				},
 				{
 					Query: `SELECT trigger_name, event_manipulation,
 							(event_object_schema = current_schema())::text, event_object_table,
 							action_timing, action_orientation
 						FROM information_schema.triggers
-						WHERE trigger_name = 'tg_audit_main';`,
-					Expected: []sql.Row{{
-						"tg_audit_main",
-						"INSERT",
-						"true",
-						"main",
-						"AFTER",
-						"ROW",
-					}},
+						WHERE trigger_name = 'tg_audit_main';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0002-select-trigger_name-event_manipulation-event_object_schema-="},
 				},
 				{
 					Query: `SELECT relhastriggers
 						FROM pg_class
-						WHERE relname = 'main';`,
-					Expected: []sql.Row{{"t"}},
+						WHERE relname = 'main';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0003-select-relhastriggers-from-pg_class-where"},
 				},
 				{
 					Query: `SELECT hastriggers
 						FROM pg_tables
 						WHERE schemaname = current_schema()
-							AND tablename = 'main';`,
-					Expected: []sql.Row{{"t"}},
+							AND tablename = 'main';`, PostgresOracle: ScriptTestPostgresOracle{ID: "pg-trigger-introspection-probe-test-testpgtriggerintrospectionprobe-0004-select-hastriggers-from-pg_tables-where"},
 				},
 			},
 		},
