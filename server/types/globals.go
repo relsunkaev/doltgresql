@@ -231,7 +231,7 @@ func init() {
 		toInternal("gtsvector"):        Unknown,
 		toInternal("halfvec"):          Halfvec,
 		toInternal("index_am_handler"): Unknown,
-		toInternal("inet"):             Unknown,
+		toInternal("inet"):             Inet,
 		toInternal("int2"):             Int16,
 		toInternal("int2vector"):       Int16vector,
 		toInternal("int4"):             Int32,

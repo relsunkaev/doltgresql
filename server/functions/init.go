@@ -36,6 +36,7 @@ func initTypeFunctions() {
 	initEnum()
 	initFloat4()
 	initFloat8()
+	initInet()
 	initInt2()
 	initInt2vector()
 	initInt4()

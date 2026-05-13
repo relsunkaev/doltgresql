@@ -29,6 +29,7 @@ func initBinaryShiftLeft() {
 	framework.RegisterBinaryFunction(framework.Operator_BinaryShiftLeft, int2shl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryShiftLeft, int4shl)
 	framework.RegisterBinaryFunction(framework.Operator_BinaryShiftLeft, int8shl)
+	framework.RegisterBinaryFunction(framework.Operator_BinaryShiftLeft, inet_sub)
 }
 
 // int2shl represents the PostgreSQL function of the same name, taking the same parameters.
@@ -61,5 +62,16 @@ var int8shl = framework.Function2{
 	Strict:     true,
 	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
 		return int64(val1.(int64) << int64(val2.(int32))), nil
+	},
+}
+
+// inet_sub implements the inet << inet strictly-contained-by operator.
+var inet_sub = framework.Function2{
+	Name:       "inet_sub",
+	Return:     pgtypes.Bool,
+	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Inet, pgtypes.Inet},
+	Strict:     true,
+	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+		return val1.(pgtypes.InetValue).StrictlyContainedBy(val2.(pgtypes.InetValue)), nil
 	},
 }

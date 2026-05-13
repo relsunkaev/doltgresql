@@ -21,6 +21,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"math"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -767,6 +768,15 @@ func NormalizeValToString(dt *types.DoltgresType, v any) any {
 			return nil
 		}
 		return functions.FormatDateTimeWithBC(v.(time.Time).UTC(), "2006-01-02 15:04:05.999999", dt.ID == types.TimestampTZ.ID)
+	case types.Inet.ID:
+		switch val := v.(type) {
+		case types.InetValue:
+			return types.FormatInet(val)
+		case netip.Prefix:
+			return types.FormatInet(types.InetValue{Addr: val.Addr().Unmap(), Bits: uint8(val.Bits())})
+		case netip.Addr:
+			return types.FormatInet(types.InetValue{Addr: val.Unmap(), Bits: 32})
+		}
 	}
 
 	switch val := v.(type) {

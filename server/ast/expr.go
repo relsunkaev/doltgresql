@@ -597,7 +597,13 @@ func nodeExpr(ctx *Context, node tree.Expr) (vitess.Expr, error) {
 	case *tree.DGeometry:
 		return nil, errors.Errorf("the statement is not yet supported")
 	case *tree.DIPAddr:
-		return nil, errors.Errorf("the statement is not yet supported")
+		inet, err := pgtypes.ParseInet(node.IPAddr.String())
+		if err != nil {
+			return nil, err
+		}
+		return vitess.InjectedExpr{
+			Expression: pgexprs.NewUnsafeLiteral(inet, pgtypes.Inet),
+		}, nil
 	case *tree.DInt:
 		return vitess.InjectedExpr{
 			Expression: pgexprs.NewRawLiteralInt64(int64(*node)),
