@@ -109,6 +109,7 @@ func (c *DropSequence) RowIter(ctx *sql.Context, r sql.Row) (sql.RowIter, error)
 		return nil, err
 	}
 	comments.RemoveObject(sequenceID.AsId(), "pg_class")
+	comments.RemoveObject(id.NewTable(schema, c.sequence).AsId(), "pg_class")
 	var persistErr error
 	auth.LockWrite(func() {
 		auth.RemoveAllSequencePrivileges(schema, c.sequence)

@@ -557,8 +557,7 @@ func (c Comment) resolveObjectID(ctx *sql.Context) (id.Id, sql.Schema, error) {
 		oid, err := resolveCommentView(ctx, c.Relation)
 		return oid, nil, err
 	case CommentTargetSeq:
-		oid, err := resolveCommentSequence(ctx, c.Relation)
-		return oid, nil, err
+		return resolveCommentRelation(ctx, c.Relation)
 	default:
 		return resolveCommentRelation(ctx, c.Relation)
 	}
@@ -1062,25 +1061,6 @@ func resolveCommentView(ctx *sql.Context, relation vitess.TableName) (id.Id, err
 			if view.Name == relationName {
 				return id.NewView(schema.SchemaName(), view.Name).AsId(), nil
 			}
-		}
-	}
-	return id.Null, fmt.Errorf(`relation "%s" does not exist`, relationName)
-}
-
-func resolveCommentSequence(ctx *sql.Context, relation vitess.TableName) (id.Id, error) {
-	relationName := relation.Name.String()
-	searchSchemas, err := commentSearchSchemas(ctx, relation)
-	if err != nil {
-		return id.Null, err
-	}
-	collection, err := core.GetSequencesCollectionFromContext(ctx, ctx.GetCurrentDatabase())
-	if err != nil {
-		return id.Null, err
-	}
-	for _, schemaName := range searchSchemas {
-		sequenceID := id.NewSequence(schemaName, relationName)
-		if collection.HasSequence(ctx, sequenceID) {
-			return sequenceID.AsId(), nil
 		}
 	}
 	return id.Null, fmt.Errorf(`relation "%s" does not exist`, relationName)
