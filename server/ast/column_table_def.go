@@ -101,6 +101,15 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 	hasGeneratedExpr := node.IsComputed() && node.Computed.Expr != nil
 	computedByDefaultAsIdentity := node.IsComputed() && !hasGeneratedExpr && node.Computed.ByDefault
 	computedAsIdentity := node.IsComputed() && !hasGeneratedExpr && !node.Computed.ByDefault
+	computedAsAnyIdentity := computedByDefaultAsIdentity || computedAsIdentity
+
+	if computedAsAnyIdentity {
+		if node.Nullable.Nullability == tree.Null {
+			return nil, errors.Errorf("conflicting NULL/NOT NULL declarations")
+		}
+		isNull = false
+		isNotNull = true
+	}
 
 	if hasGeneratedExpr {
 		err = ctx.WithTableOIDRelation(tableName.SchemaQualifier.String(), tableName.Name.String(), func() error {
@@ -133,7 +142,7 @@ func nodeColumnTableDef(ctx *Context, node *tree.ColumnTableDef, tableName vites
 		generated = clearAliases(generated)
 	}
 
-	if node.IsSerial || computedByDefaultAsIdentity || computedAsIdentity {
+	if node.IsSerial || computedAsAnyIdentity {
 		if resolvedType.IsEmptyType() {
 			return nil, errors.Errorf("serial type was not resolvable")
 		}
