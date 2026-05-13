@@ -1364,7 +1364,7 @@ func (u *sqlSymUnion) vacuumTableAndColsList() tree.VacuumTableAndColsList {
 %type <tree.IndexParams> constraint_index_params
 %type <tree.IndexElemList> index_params index_params_name_only opt_index_params_name_only opt_include_index_cols partition_index_params exclude_elems
 %type <tree.NameList> name_list opt_name_list privilege_list sconst_as_name_list
-%type <[]int32> opt_array_bounds
+%type <[]int32> array_bounds opt_array_bounds
 %type <tree.From> from_clause
 %type <tree.TableExprs> from_list opt_from_list
 %type <tree.TablePatterns> table_pattern_list single_table_pattern_list
@@ -13192,10 +13192,12 @@ cast_target:
   }
 
 opt_array_bounds:
-  // TODO(justin): reintroduce multiple array bounds
-  // opt_array_bounds '[' ']' { $$.val = append($1.int32s(), -1) }
+  array_bounds
+| /* EMPTY */ { $$.val = []int32(nil) }
+
+array_bounds:
   '[' ']' { $$.val = []int32{-1} }
-| '[' ']' '[' error { return unimplementedWithIssue(sqllex, 32552) }
+| array_bounds '[' ']' { $$.val = append($1.int32s(), -1) }
 | '[' ICONST ']'
   {
     /* SKIP DOC */
@@ -13205,8 +13207,15 @@ opt_array_bounds:
     }
     $$.val = []int32{bound}
   }
-| '[' ICONST ']' '[' error { return unimplementedWithIssue(sqllex, 32552) }
-| /* EMPTY */ { $$.val = []int32(nil) }
+| array_bounds '[' ICONST ']'
+  {
+    /* SKIP DOC */
+    bound, err := $3.numVal().AsInt32()
+    if err != nil {
+      return setErr(sqllex, err)
+    }
+    $$.val = append($1.int32s(), bound)
+  }
 
 // general_type_name is a variant of type_or_function_name but does not
 // include some extra keywords (like FAMILY) which cause ambiguity with
