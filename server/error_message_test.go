@@ -70,3 +70,9 @@ func TestErrMessageToSQLStateFormatsMaterializedViewAliasErrors(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, pgcode.DuplicateColumn.String(), code)
 }
+
+func TestErrMessageToSQLStateFormatsUnpopulatedMaterializedView(t *testing.T) {
+	code, ok := errMessageToSQLState(`materialized view "source_mv" has not been populated`)
+	require.True(t, ok)
+	require.Equal(t, pgcode.ObjectNotInPrerequisiteState.String(), code)
+}

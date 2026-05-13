@@ -4761,6 +4761,409 @@
       ]
     },
     {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0030-select-relkind-from-pg_class-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 30,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;"
+      ],
+      "query": "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "m"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0031-select-hasindexes::text-ispopulated::text-trim-trailing",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 31,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';"
+      ],
+      "query": "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "false"
+          },
+          {
+            "value": "false"
+          },
+          {
+            "value": "SELECT id AS account_id, v AS amount FROM source"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0032-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 32,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0033-select-attname-from-pg_attribute-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 33,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';"
+      ],
+      "query": "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+      "expectedRows": [
+        [
+          {
+            "value": "account_id"
+          }
+        ],
+        [
+          {
+            "value": "amount"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0034-select-hasindexes::text-ispopulated::text-from-pg_matviews",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 34,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);"
+      ],
+      "query": "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0035-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 35,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0036-select-ispopulated::text-from-pg_matviews-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 36,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;"
+      ],
+      "query": "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0037-select-hasindexes::text-ispopulated::text-from-pg_matviews",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 37,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;"
+      ],
+      "query": "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "true"
+          },
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0038-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 38,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0039-select-account_id-amount-from-source_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 39,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;"
+      ],
+      "query": "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+      "expectedRows": [
+        [
+          {
+            "value": "1"
+          },
+          {
+            "value": "100"
+          }
+        ],
+        [
+          {
+            "value": "2"
+          },
+          {
+            "value": "200"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0040-select-ispopulated::text-from-pg_matviews-where",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 40,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW paren_mv AS (SELECT id, v FROM source) WITH NO DATA;"
+      ],
+      "query": "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'paren_mv';",
+      "expectedRows": [
+        [
+          {
+            "value": "false"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "materialized-view-probe-test-testmaterializedviewprobe-0041-select-id-v-from-paren_mv",
+      "source": "testing/go/materialized_view_probe_test.go:TestMaterializedViewProbe",
+      "ordinal": 41,
+      "oracle": "postgres",
+      "compare": "sqlstate",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "CREATE TABLE source (id INT PRIMARY KEY, v INT);",
+        "INSERT INTO source VALUES (1, 100), (2, 200);",
+        "CREATE MATERIALIZED VIEW source_mv (account_id, amount) AS SELECT id, v FROM source WITH NO DATA;",
+        "SELECT relkind FROM pg_class WHERE relname = 'source_mv';",
+        "SELECT hasindexes::text, ispopulated::text,\n\t\t\t\t\t\t\ttrim(trailing ';' from regexp_replace(trim(definition), '\\s+', ' ', 'g')) AS definition\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "SELECT attname\n\t\t\t\t\t\tFROM pg_attribute\n\t\t\t\t\t\tWHERE attrelid = 'source_mv'::regclass AND attnum > 0 AND NOT attisdropped\n\t\t\t\t\t\tORDER BY attnum;",
+        "CREATE UNIQUE INDEX source_mv_id_idx ON source_mv (account_id);",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH DATA;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv WITH NO DATA;",
+        "SELECT hasindexes::text, ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'source_mv';",
+        "REFRESH MATERIALIZED VIEW source_mv;",
+        "SELECT account_id, amount FROM source_mv ORDER BY account_id;",
+        "CREATE MATERIALIZED VIEW paren_mv AS (SELECT id, v FROM source) WITH NO DATA;",
+        "SELECT ispopulated::text\n\t\t\t\t\t\tFROM pg_matviews\n\t\t\t\t\t\tWHERE schemaname = current_schema() AND matviewname = 'paren_mv';"
+      ],
+      "query": "SELECT id, v FROM paren_mv ORDER BY id;",
+      "expectedSqlstate": "55000",
+      "expectedErrorSeverity": "ERROR",
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "network-type-correctness-repro-test-testinetcolumnroundtripsandusesnetworkoperatorsrepro-0001-select-id-host-addr-masklen",
       "source": "testing/go/network_type_correctness_repro_test.go:TestInetColumnRoundTripsAndUsesNetworkOperatorsRepro",
       "ordinal": 1,

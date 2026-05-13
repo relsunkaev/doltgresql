@@ -168,7 +168,9 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 	if !strings.EqualFold(string(node.Name.ObjectName), tableName) {
 		return materializedViewInfo{}, false
 	}
-	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated("", node.AsSource.String(), !node.WithNoData)
+	columnAliases := materializedViewColumnAliases(node.ColumnNames)
+	definition := materializedViewDefinitionWithColumnAliases(node.AsSource.String(), columnAliases)
+	comment := tablemetadata.SetMaterializedViewDefinitionWithPopulated("", definition, !node.WithNoData)
 	if len(node.Params) > 0 {
 		comment = tablemetadata.SetRelOptions(comment, materializedViewRelOptions(node.Params))
 	}
@@ -177,7 +179,7 @@ func createMaterializedViewInfo(ctx *sql.Context, tableName string) (materialize
 	}
 	return materializedViewInfo{
 		comment:       comment,
-		columnAliases: materializedViewColumnAliases(node.ColumnNames),
+		columnAliases: columnAliases,
 	}, true
 }
 
@@ -200,4 +202,29 @@ func materializedViewColumnAliases(names tree.NameList) []string {
 		aliases[i] = string(name)
 	}
 	return aliases
+}
+
+func materializedViewDefinitionWithColumnAliases(definition string, aliases []string) string {
+	if len(aliases) == 0 {
+		return definition
+	}
+	statements, err := parser.Parse(definition)
+	if err != nil || len(statements) != 1 {
+		return definition
+	}
+	selectStmt, ok := statements[0].AST.(*tree.Select)
+	if !ok {
+		return definition
+	}
+	selectClause, ok := selectStmt.Select.(*tree.SelectClause)
+	if !ok {
+		return definition
+	}
+	for i, alias := range aliases {
+		if i >= len(selectClause.Exprs) {
+			break
+		}
+		selectClause.Exprs[i].As = tree.UnrestrictedName(alias)
+	}
+	return selectStmt.String()
 }

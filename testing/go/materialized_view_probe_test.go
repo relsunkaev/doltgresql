@@ -325,9 +325,10 @@ func TestMaterializedViewProbe(t *testing.T) {
 					},
 				},
 				{
-					Query: `SELECT hasindexes::text, ispopulated::text, definition
+					Query: `SELECT hasindexes::text, ispopulated::text,
+							trim(trailing ';' from regexp_replace(trim(definition), '\s+', ' ', 'g')) AS definition
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"false", "false", "SELECT id, v FROM source"},
 					},
@@ -352,7 +353,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT hasindexes::text, ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"true", "false"},
 					},
@@ -370,7 +371,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"true"},
 					},
@@ -381,7 +382,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT hasindexes::text, ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'source_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'source_mv';`,
 					Expected: []sql.Row{
 						{"true", "false"},
 					},
@@ -406,7 +407,7 @@ func TestMaterializedViewProbe(t *testing.T) {
 				{
 					Query: `SELECT ispopulated::text
 						FROM pg_matviews
-						WHERE schemaname = 'public' AND matviewname = 'paren_mv';`,
+						WHERE schemaname = current_schema() AND matviewname = 'paren_mv';`,
 					Expected: []sql.Row{
 						{"false"},
 					},

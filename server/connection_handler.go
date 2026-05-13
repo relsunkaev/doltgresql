@@ -3794,6 +3794,8 @@ func errMessageToSQLState(msg string) (string, bool) {
 		return pgcode.DuplicateColumn.String(), true
 	case strings.HasPrefix(msg, "too many column names were specified"):
 		return pgcode.Syntax.String(), true
+	case strings.HasPrefix(msg, `materialized view "`) && strings.HasSuffix(msg, `" has not been populated`):
+		return pgcode.ObjectNotInPrerequisiteState.String(), true
 	case strings.HasPrefix(msg, "duplicate key value violates unique constraint"):
 		return pgcode.UniqueViolation.String(), true
 	case strings.Contains(msg, "Unique Key Constraint Violation"):

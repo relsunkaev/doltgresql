@@ -18,6 +18,8 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/dolthub/go-mysql-server/sql"
 
+	"github.com/dolthub/doltgresql/postgres/parser/pgcode"
+	"github.com/dolthub/doltgresql/postgres/parser/pgerror"
 	"github.com/dolthub/doltgresql/server/tablemetadata"
 )
 
@@ -90,7 +92,7 @@ func (t *UnpopulatedMaterializedViewTable) Partitions(ctx *sql.Context) (sql.Par
 }
 
 func (t *UnpopulatedMaterializedViewTable) PartitionRows(ctx *sql.Context, partition sql.Partition) (sql.RowIter, error) {
-	return nil, errors.Errorf(`materialized view "%s" has not been populated`, t.Name())
+	return nil, pgerror.Newf(pgcode.ObjectNotInPrerequisiteState, `materialized view "%s" has not been populated`, t.Name())
 }
 
 func (t *UnpopulatedMaterializedViewTable) DatabaseSchema() sql.DatabaseSchema {
