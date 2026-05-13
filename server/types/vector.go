@@ -148,6 +148,63 @@ func NewVectorType(dimensions int32) (*DoltgresType, error) {
 	return &newType, nil
 }
 
+// NewVectorExtensionType returns a vector extension type installed in a target schema.
+func NewVectorExtensionType(arrayID, typeID id.Type) *DoltgresType {
+	vector := *Vector
+	vector.ID = typeID
+	vector.Array = arrayID
+	vector.InternalName = "vector"
+	return &vector
+}
+
+// PgvectorBuiltinEquivalent returns the built-in type that should be used for
+// function and cast lookup for pgvector extension types installed outside
+// pg_catalog.
+func PgvectorBuiltinEquivalent(typ *DoltgresType) (*DoltgresType, bool) {
+	if typ == nil {
+		return nil, false
+	}
+	if typ.IsArrayType() && typ.Elem.IsValid() {
+		base, ok := pgvectorBuiltinForTypeName(typ.Elem.TypeName())
+		if !ok || typ.ModInFunc != base.ModInFunc || typ.ModOutFunc != base.ModOutFunc {
+			return nil, false
+		}
+		return base.ToArrayType(), true
+	}
+	base, ok := pgvectorBuiltinForTypeName(typ.ID.TypeName())
+	if !ok {
+		return nil, false
+	}
+	if typ.InputFunc != base.InputFunc || typ.OutputFunc != base.OutputFunc ||
+		typ.ModInFunc != base.ModInFunc || typ.ModOutFunc != base.ModOutFunc {
+		return nil, false
+	}
+	return base, true
+}
+
+// PgvectorBaseTypeName returns the pgvector base type name when typ is a
+// pgvector extension type.
+func PgvectorBaseTypeName(typ *DoltgresType) (string, bool) {
+	base, ok := PgvectorBuiltinEquivalent(typ)
+	if !ok || base.IsArrayType() {
+		return "", false
+	}
+	return base.ID.TypeName(), true
+}
+
+func pgvectorBuiltinForTypeName(typeName string) (*DoltgresType, bool) {
+	switch typeName {
+	case "vector":
+		return Vector, true
+	case "halfvec":
+		return Halfvec, true
+	case "sparsevec":
+		return Sparsevec, true
+	default:
+		return nil, false
+	}
+}
+
 // ParseVector converts pgvector text input into Doltgres' in-memory representation.
 func ParseVector(input string, typmod int32) ([]float32, error) {
 	trimmed := strings.TrimSpace(input)

@@ -875,9 +875,20 @@ func (t *DoltgresType) Equals(otherType sql.Type) bool {
 		if oidAliasTypesEqual(t, otherExtendedType) {
 			return true
 		}
+		if pgvectorTypesEqual(t, otherExtendedType) {
+			return true
+		}
 		return bytes.Equal(t.Serialize(), otherExtendedType.Serialize())
 	}
 	return false
+}
+
+func pgvectorTypesEqual(left *DoltgresType, right *DoltgresType) bool {
+	leftCanonical, leftOK := PgvectorBuiltinEquivalent(left)
+	rightCanonical, rightOK := PgvectorBuiltinEquivalent(right)
+	return leftOK && rightOK &&
+		leftCanonical.ID == rightCanonical.ID &&
+		left.GetAttTypMod() == right.GetAttTypMod()
 }
 
 func oidAliasTypesEqual(left *DoltgresType, right *DoltgresType) bool {

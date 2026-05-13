@@ -353,8 +353,9 @@ func avgDoltgresType(ctx *sql.Context, expr sql.Expression) (*pgtypes.DoltgresTy
 	if !ok {
 		childType = pgtypes.FromGmsType(children[0].Type(ctx))
 	}
+	childTypeName, isPgvectorType := pgtypes.PgvectorBaseTypeName(childType)
 	switch {
-	case childType.ID == pgtypes.Vector.ID:
+	case isPgvectorType && childTypeName == "vector":
 		return pgtypes.Vector, true
 	case childType.Equals(pgtypes.Float32), childType.Equals(pgtypes.Float64):
 		return pgtypes.Float64, true

@@ -200,20 +200,20 @@ func withRuntimeCastTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgt
 	if typmod == -1 {
 		return resolvedTyp, nil
 	}
-	switch resolvedTyp.ID {
-	case pgtypes.Vector.ID:
+	switch pgvectorBaseTypeName(resolvedTyp) {
+	case "vector":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromVectorDimensions(typmod)
 		if err != nil {
 			return nil, err
 		}
-	case pgtypes.Halfvec.ID:
+	case "halfvec":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromHalfvecDimensions(typmod)
 		if err != nil {
 			return nil, err
 		}
-	case pgtypes.Sparsevec.ID:
+	case "sparsevec":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromSparsevecDimensions(typmod)
 		if err != nil {
@@ -221,6 +221,14 @@ func withRuntimeCastTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgt
 		}
 	}
 	return resolvedTyp.WithAttTypMod(typmod), nil
+}
+
+func pgvectorBaseTypeName(typ *pgtypes.DoltgresType) string {
+	typeName, ok := pgtypes.PgvectorBaseTypeName(typ)
+	if !ok {
+		return ""
+	}
+	return typeName
 }
 
 func (c *ExplicitCast) evalUserDefinedCast(ctx *sql.Context, val any, fromType *pgtypes.DoltgresType, cast auth.Cast) (any, error) {

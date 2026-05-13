@@ -207,7 +207,11 @@ func rewriteGroupByVectorAggregates(ctx *sql.Context, groupByNode *plan.GroupBy)
 
 func expressionTypeIsVector(ctx *sql.Context, expr sql.Expression) bool {
 	dt, ok := expr.Type(ctx).(*pgtypes.DoltgresType)
-	return ok && dt.ID == pgtypes.Vector.ID
+	if !ok {
+		return false
+	}
+	typeName, ok := pgtypes.PgvectorBaseTypeName(dt)
+	return ok && typeName == "vector"
 }
 
 func vectorAggregateWithID(newAgg sql.IdExpression, oldAgg sql.IdExpression) sql.Expression {

@@ -206,6 +206,8 @@ func (c *CreateExtension) installBuiltinExtensionObjects(ctx *sql.Context, names
 		return c.installTextCompatibleExtensionType(ctx, namespace, "citext", pgtypes.NewCitextType)
 	case "hstore":
 		return c.installTextCompatibleExtensionType(ctx, namespace, "hstore", pgtypes.NewHstoreType)
+	case "vector":
+		return c.installTextCompatibleExtensionType(ctx, namespace, "vector", pgtypes.NewVectorExtensionType)
 	default:
 		return nil
 	}

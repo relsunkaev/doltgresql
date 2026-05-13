@@ -250,7 +250,10 @@ func GetImplicitCast(fromType *pgtypes.DoltgresType, toType *pgtypes.DoltgresTyp
 
 func castLookupType(typ *pgtypes.DoltgresType) *pgtypes.DoltgresType {
 	if typ.TypType == pgtypes.TypeType_Domain {
-		return typ.DomainUnderlyingBaseType()
+		typ = typ.DomainUnderlyingBaseType()
+	}
+	if base, ok := pgtypes.PgvectorBuiltinEquivalent(typ); ok {
+		return base
 	}
 	return typ
 }

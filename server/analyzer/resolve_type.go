@@ -238,20 +238,20 @@ func withResolvedTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtype
 	if typmod == -1 {
 		return resolvedTyp, nil
 	}
-	switch resolvedTyp.ID {
-	case pgtypes.Vector.ID:
+	switch pgvectorBaseTypeName(resolvedTyp) {
+	case "vector":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromVectorDimensions(typmod)
 		if err != nil {
 			return nil, err
 		}
-	case pgtypes.Halfvec.ID:
+	case "halfvec":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromHalfvecDimensions(typmod)
 		if err != nil {
 			return nil, err
 		}
-	case pgtypes.Sparsevec.ID:
+	case "sparsevec":
 		var err error
 		typmod, err = pgtypes.GetTypmodFromSparsevecDimensions(typmod)
 		if err != nil {
@@ -259,6 +259,14 @@ func withResolvedTypmod(resolvedTyp *pgtypes.DoltgresType, unresolvedTyp *pgtype
 		}
 	}
 	return resolvedTyp.WithAttTypMod(typmod), nil
+}
+
+func pgvectorBaseTypeName(typ *pgtypes.DoltgresType) string {
+	typeName, ok := pgtypes.PgvectorBaseTypeName(typ)
+	if !ok {
+		return ""
+	}
+	return typeName
 }
 
 // resolveDefaultColumnType resolves the OutType of a *sql.ColumnDefaultValue if it's not nil (and not already resolved).
