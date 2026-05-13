@@ -1957,6 +1957,221 @@
       ]
     },
     {
+      "id": "to-char-correctness-repro-test-testtocharintervalpreservesfractionalsecondsrepro-0001-select-to_char-interval-1.234-seconds",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharIntervalPreservesFractionalSecondsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_char(interval '1.234 seconds', 'HH24:MI:SS.US');",
+      "expectedRows": [
+        [
+          {
+            "value": "00:00:01.234000"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharintervalpreservesfractionalsecondsrepro-0002-select-to_char-interval-1-hour",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharIntervalPreservesFractionalSecondsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT to_char(interval '1.234 seconds', 'HH24:MI:SS.US');"
+      ],
+      "query": "SELECT to_char(interval '1 hour 2 minutes 3.456 seconds', 'HH24:MI:SS.MS.US SSSS');",
+      "expectedRows": [
+        [
+          {
+            "value": "01:02:03.456.456000 3723"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharfractionalsecondprecisiontokensrepro-0001-select-to_char-timestamp-2021-09-15-21:43:56.123456",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharFractionalSecondPrecisionTokensRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_char(timestamp '2021-09-15 21:43:56.123456', 'FF1 FF2 FF3 FF4 FF5 FF6');",
+      "expectedRows": [
+        [
+          {
+            "value": "1 12 123 1234 12345 123456"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharfirstmonthandweekdaynamesrepro-0001-select-to_char-timestamp-2021-01-03-12:00:00",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharFirstMonthAndWeekdayNamesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_char(timestamp '2021-01-03 12:00:00',\n\t\t\t\t\t\t'MONTH Month month MON Mon mon MM DAY Day day DY Dy dy D');",
+      "expectedRows": [
+        [
+          {
+            "value": "JANUARY   January   january   JAN Jan jan 01 SUNDAY    Sunday    sunday    SUN Sun sun 1"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0001-select-to_char-timestamp-2021-01-11-ddth",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharOrdinalSuffixTeenDatesRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_char(timestamp '2021-01-11', 'DDTH DDth');",
+      "expectedRows": [
+        [
+          {
+            "value": "11TH 11th"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0002-select-to_char-timestamp-2021-01-12-ddth",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharOrdinalSuffixTeenDatesRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT to_char(timestamp '2021-01-11', 'DDTH DDth');"
+      ],
+      "query": "SELECT to_char(timestamp '2021-01-12', 'DDTH DDth');",
+      "expectedRows": [
+        [
+          {
+            "value": "12TH 12th"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharordinalsuffixteendatesrepro-0003-select-to_char-timestamp-2021-01-13-ddth",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharOrdinalSuffixTeenDatesRepro",
+      "ordinal": 3,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT to_char(timestamp '2021-01-11', 'DDTH DDth');",
+        "SELECT to_char(timestamp '2021-01-12', 'DDTH DDth');"
+      ],
+      "query": "SELECT to_char(timestamp '2021-01-13', 'DDTH DDth');",
+      "expectedRows": [
+        [
+          {
+            "value": "13TH 13th"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtochartimezonefieldsmatchpostgressessionzonerepro-0001-select-to_char-timestamp-2021-03-14-12:00:00",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SET TIME ZONE 'America/New_York';"
+      ],
+      "query": "SELECT to_char(timestamp '2021-03-14 12:00:00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-03-14 12:00  +00 +00:00"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtochartimezonefieldsmatchpostgressessionzonerepro-0002-select-to_char-timestamptz-2021-03-14-12:00:00+00",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharTimezoneFieldsMatchPostgresSessionZoneRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SET TIME ZONE 'America/New_York';",
+        "SELECT to_char(timestamp '2021-03-14 12:00:00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');"
+      ],
+      "query": "SELECT to_char(timestamptz '2021-03-14 12:00:00+00', 'YYYY-MM-DD HH24:MI TZ OF TZH:TZM');",
+      "expectedRows": [
+        [
+          {
+            "value": "2021-03-14 08:00 EDT -04 -04:00"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharnumericformatspostgrespatternsrepro-0001-select-to_char-1234.5::numeric-fm9-999.00",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharNumericFormatsPostgresPatternsRepro",
+      "ordinal": 1,
+      "oracle": "postgres",
+      "compare": "structural",
+      "query": "SELECT to_char(1234.5::numeric, 'FM9,999.00');",
+      "expectedRows": [
+        [
+          {
+            "value": "1,234.50"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "to-char-correctness-repro-test-testtocharnumericformatspostgrespatternsrepro-0002-select-to_char-42.5-::numeric-s999.9",
+      "source": "testing/go/to_char_correctness_repro_test.go:TestToCharNumericFormatsPostgresPatternsRepro",
+      "ordinal": 2,
+      "oracle": "postgres",
+      "compare": "structural",
+      "setup": [
+        "CREATE SCHEMA {{quotedSchema}}",
+        "SET search_path TO {{quotedSchema}}, public, pg_catalog",
+        "SELECT to_char(1234.5::numeric, 'FM9,999.00');"
+      ],
+      "query": "SELECT to_char((-42.5)::numeric, 'S999.9');",
+      "expectedRows": [
+        [
+          {
+            "value": " -42.5"
+          }
+        ]
+      ],
+      "cleanup": [
+        "DROP SCHEMA IF EXISTS {{quotedSchema}} CASCADE"
+      ]
+    },
+    {
       "id": "to-date-correctness-repro-test-testtodaterejectsoutputonlyofpatternrepro-0001-select-to_date-2011-12-18-+05-yyyy-mm-dd",
       "source": "testing/go/to_date_correctness_repro_test.go:TestToDateRejectsOutputOnlyOFPatternRepro",
       "ordinal": 1,
