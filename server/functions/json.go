@@ -678,7 +678,7 @@ func jsonBuildObjectKey(ctx *sql.Context, typ *pgtypes.DoltgresType, val any) (s
 
 func jsonValueOutput(ctx *sql.Context, value pgtypes.JsonValue) (string, error) {
 	sb := strings.Builder{}
-	pgtypes.JsonValueFormatterCompact(&sb, value)
+	pgtypes.JsonValueFormatterPreserveRaw(&sb, value)
 	return sb.String(), nil
 }
 
@@ -689,6 +689,11 @@ func jsonBuildValueOutput(ctx *sql.Context, value pgtypes.JsonValue) (string, er
 }
 
 func jsonBuildValueFormatter(sb *strings.Builder, value pgtypes.JsonValue) {
+	if raw, ok := pgtypes.JsonValueRawText(value); ok {
+		sb.WriteString(raw)
+		return
+	}
+	value = pgtypes.JsonValueUnwrapRaw(value)
 	switch value := value.(type) {
 	case pgtypes.JsonValueObject:
 		sb.WriteRune('{')

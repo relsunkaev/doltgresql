@@ -1359,6 +1359,12 @@ func jsonValueFromFloat64(val float64, bitSize int) JsonValue {
 	case math.IsInf(val, -1):
 		return JsonValueString(jsonStringEscape("-Infinity"))
 	}
+	if val == 0 && math.Signbit(val) {
+		return JsonValueRaw{
+			Value: JsonValueNumber(decimal.Zero),
+			Raw:   "-0",
+		}
+	}
 	if bitSize == 32 {
 		return JsonValueNumber(decimal.NewFromFloat32(float32(val)))
 	}
