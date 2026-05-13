@@ -39,8 +39,8 @@ func handleStringCast(input string, targetType *pgtypes.DoltgresType) (string, e
 		}
 		length := uint32(pgtypes.GetCharLengthFromTypmod(tm))
 		str, runeLength := truncateString(input, length)
-		if runeLength > length {
-			return input, cerrors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
+		if runeLength > length && strings.TrimSpace(input[len(str):]) != "" {
+			return str, cerrors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
 		} else if runeLength < length {
 			return str + strings.Repeat(" ", int(length-runeLength)), nil
 		} else {
@@ -59,8 +59,8 @@ func handleStringCast(input string, targetType *pgtypes.DoltgresType) (string, e
 		}
 		length := uint32(pgtypes.GetCharLengthFromTypmod(tm))
 		str, runeLength := truncateString(input, length)
-		if runeLength > length {
-			return input, cerrors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
+		if runeLength > length && strings.TrimSpace(input[len(str):]) != "" {
+			return str, cerrors.Wrap(pgtypes.ErrCastOutOfRange, fmt.Sprintf("value too long for type %s", targetType.String()))
 		} else {
 			return str, nil
 		}
